@@ -10,7 +10,8 @@ if (!convexUrl) {
   throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
 }
 
-const convex = new ConvexReactClient(convexUrl);
+// Export client for use in public routes that don't need auth
+export const convex = new ConvexReactClient(convexUrl);
 
 function ConvexProviderWithEntityAuth({ children }: { children: ReactNode }) {
   return (
