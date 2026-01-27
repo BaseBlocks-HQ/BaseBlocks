@@ -1,18 +1,13 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
-import { useQuery, useConvex } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, ChevronRight, Download } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-console.log("========== PAGE MODULE LOAD ==========");
-console.log("[PAGE] api object:", api);
-console.log("[PAGE] api.sites:", api?.sites);
-console.log("[PAGE] api.sites.queries:", api?.sites?.queries);
 
 type Props = {
   params: Promise<{ subdomain: string; path: string[] }>;
@@ -21,61 +16,16 @@ type Props = {
 export default function PublicSitePage({ params }: Props) {
   const { subdomain, path } = use(params);
   const pageSlug = path[0] || "home";
-  const [renderCount, setRenderCount] = useState(0);
 
-  console.log("========== PAGE RENDER ==========");
-  console.log("[PAGE] subdomain:", subdomain);
-  console.log("[PAGE] path:", path);
-  console.log("[PAGE] pageSlug:", pageSlug);
-  console.log("[PAGE] render count:", renderCount);
-
-  // Try to get convex client from context
-  let convexClient: ReturnType<typeof useConvex> | null = null;
-  try {
-    convexClient = useConvex();
-    console.log("[PAGE] useConvex() returned:", convexClient);
-    console.log("[PAGE] convexClient type:", typeof convexClient);
-  } catch (error) {
-    console.error("[PAGE] useConvex() ERROR:", error);
-  }
-
-  // Fetch site by company slug
-  console.log("[PAGE] Calling useQuery for site with:", { companySlug: subdomain });
   const site = useQuery(api.sites.queries.getBySlug, {
     companySlug: subdomain,
   });
-  console.log("[PAGE] site query result:", site);
-  console.log("[PAGE] site === undefined:", site === undefined);
 
-  // Fetch company for branding
-  console.log("[PAGE] Calling useQuery for company with:", { slug: subdomain });
   const company = useQuery(api.companies.queries.getBySlug, {
     slug: subdomain,
   });
-  console.log("[PAGE] company query result:", company);
-  console.log("[PAGE] company === undefined:", company === undefined);
-
-  useEffect(() => {
-    console.log("========== PAGE MOUNTED ==========");
-    console.log("[PAGE] useEffect - component mounted");
-    console.log("[PAGE] useEffect - site value:", site);
-    console.log("[PAGE] useEffect - company value:", company);
-    console.log("[PAGE] useEffect - convexClient:", convexClient);
-    setRenderCount(prev => prev + 1);
-
-    // Log every second to see if values change
-    const interval = setInterval(() => {
-      console.log("[PAGE] Interval check - site:", site, "company:", company);
-    }, 2000);
-
-    return () => {
-      console.log("[PAGE] useEffect cleanup");
-      clearInterval(interval);
-    };
-  }, [site, company, convexClient]);
 
   if (site === undefined || company === undefined) {
-    console.log("[PAGE] Rendering skeleton - queries still loading");
     return <PublicSiteSkeleton />;
   }
 
@@ -156,7 +106,6 @@ function PublicSiteLayout({
                   <NavItem
                     key={page._id}
                     page={page}
-                    companySlug={company.slug}
                     currentSlug={pageSlug}
                   />
                 ))
@@ -203,12 +152,10 @@ function PublicSiteLayout({
 
 function NavItem({
   page,
-  companySlug,
   currentSlug,
   depth = 0,
 }: {
   page: { _id: string; title: string; slug: string; children?: Array<{ _id: string; title: string; slug: string; children?: unknown[] }> };
-  companySlug: string;
   currentSlug: string;
   depth?: number;
 }) {
@@ -217,7 +164,7 @@ function NavItem({
   return (
     <>
       <Link
-        href={`/site/${companySlug}/${page.slug}`}
+        href={`/${page.slug}`}
         className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
           isActive
             ? "bg-primary/10 text-primary font-medium"
@@ -232,7 +179,6 @@ function NavItem({
         <NavItem
           key={child._id}
           page={child as typeof page}
-          companySlug={companySlug}
           currentSlug={currentSlug}
           depth={depth + 1}
         />

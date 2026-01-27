@@ -95,7 +95,7 @@ export default function SiteEditorPage({ params }: Props) {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{site.name}</h2>
                 <p className="text-xs text-muted-foreground truncate">
-                  {company.slug}.baseblocks.dev/{site.slug}
+                  {company.slug}.baseblocks.dev
                 </p>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function SiteEditorPage({ params }: Props) {
               {site.isPublished && (
                 <Button variant="outline" size="sm" asChild>
                   <a
-                    href={`https://${company.slug}.baseblocks.dev/${site.slug}`}
+                    href={`https://${company.slug}.baseblocks.dev/`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
