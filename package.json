@@ -14,7 +14,9 @@
     "typescript": "5.9.2",
     "ultracite": "^7.0.0"
   },
-  "overrides": {
+  "resolutions": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "convex": "^1.31.6"
   },
   "engines": {
