@@ -1,0 +1,132 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  // Companies/Organizations (synced from Entity Auth)
+  companies: defineTable({
+    eaOrgId: v.string(), // Entity Auth org ID
+    name: v.string(),
+    slug: v.string(), // subdomain: acme.baseblocks.dev
+    logoUrl: v.optional(v.string()),
+    createdBy: v.string(), // User ID
+    createdAt: v.number(),
+    settings: v.object({
+      primaryColor: v.optional(v.string()),
+      customDomain: v.optional(v.string()), // docs.acme.com
+    }),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_eaOrgId", ["eaOrgId"]),
+
+  // Sites (a company can have multiple sites)
+  sites: defineTable({
+    companyId: v.id("companies"),
+    name: v.string(),
+    slug: v.string(), // site slug within company
+    description: v.optional(v.string()),
+    isPublished: v.boolean(),
+    publishedAt: v.optional(v.number()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    settings: v.object({
+      favicon: v.optional(v.string()),
+      ogImage: v.optional(v.string()),
+      headerType: v.union(v.literal("logo"), v.literal("text")),
+      navigationStyle: v.union(v.literal("sidebar"), v.literal("topnav")),
+    }),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_slug", ["companyId", "slug"]),
+
+  // Pages within a site
+  pages: defineTable({
+    siteId: v.id("sites"),
+    parentId: v.optional(v.id("pages")), // For nested pages
+    title: v.string(),
+    slug: v.string(),
+    icon: v.optional(v.string()),
+    order: v.number(),
+    isPublished: v.boolean(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_parent", ["siteId", "parentId"])
+    .index("by_slug", ["siteId", "slug"]),
+
+  // Blocks within a page (content)
+  blocks: defineTable({
+    pageId: v.id("pages"),
+    type: v.union(
+      v.literal("heading"),
+      v.literal("paragraph"),
+      v.literal("image"),
+      v.literal("file"),
+      v.literal("document-list"),
+      v.literal("embed"),
+      v.literal("divider"),
+      v.literal("callout"),
+      v.literal("code"),
+      v.literal("table")
+    ),
+    order: v.number(),
+    content: v.any(), // Block-specific content
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_page", ["pageId"]),
+
+  // Files/Documents uploaded
+  documents: defineTable({
+    siteId: v.id("sites"),
+    blobId: v.string(), // Entity Storage blob ID
+    cdnUrl: v.string(), // CDN URL for download
+    filename: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+    // Extracted metadata (Phase 2)
+    extractedText: v.optional(v.string()),
+    pageCount: v.optional(v.number()),
+    // Tracking
+    uploadedBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .searchIndex("search_content", {
+      searchField: "extractedText",
+      filterFields: ["siteId"],
+    }),
+
+  // Access links for sharing
+  accessLinks: defineTable({
+    siteId: v.id("sites"),
+    token: v.string(), // Unique access token
+    name: v.optional(v.string()), // "Marketing Team Link"
+    expiresAt: v.optional(v.number()),
+    maxUses: v.optional(v.number()),
+    useCount: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_token", ["token"]),
+
+  // Audit log for access
+  accessLog: defineTable({
+    siteId: v.id("sites"),
+    accessLinkId: v.optional(v.id("accessLinks")),
+    pageId: v.optional(v.id("pages")),
+    documentId: v.optional(v.id("documents")),
+    action: v.union(
+      v.literal("view_site"),
+      v.literal("view_page"),
+      v.literal("download_document")
+    ),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    timestamp: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_timestamp", ["siteId", "timestamp"]),
+});
