@@ -2,7 +2,7 @@
 
 import { ConvexProvider } from "convex/react";
 import type { ReactNode } from "react";
-import { convex } from "@/lib/convex-provider";
+import { convex } from "@/lib/convex-client";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   // Plain ConvexProvider without auth - queries execute immediately
