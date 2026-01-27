@@ -61,6 +61,12 @@ function extractSubdomain(request: NextRequest): string | null {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Safety net: skip Next.js internals that may still invoke proxy despite matcher
+  if (pathname.startsWith("/_next")) {
+    return NextResponse.next();
+  }
+
   const subdomain = extractSubdomain(request);
 
   // No subdomain = main app (landing, dashboard, auth)
@@ -89,9 +95,15 @@ export async function proxy(request: NextRequest) {
   return NextResponse.rewrite(url);
 }
 
-export const proxyConfig = {
+export const config = {
   matcher: [
-    // Match all paths except API routes, Next.js internals, and static files
-    "/((?!api|_next|_vercel|favicon.ico|.*\\..*).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

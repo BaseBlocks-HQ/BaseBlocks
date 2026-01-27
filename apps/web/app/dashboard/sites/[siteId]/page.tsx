@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/backend";
@@ -16,6 +16,8 @@ import {
   Settings,
   Globe,
   Trash2,
+  Loader2,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -26,6 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useDebounceCallback } from "@/hooks/use-debounce";
 import {
   Sidebar,
   SidebarContent,
@@ -225,6 +228,8 @@ function PageMenuItem({
   );
 }
 
+type SaveStatus = "idle" | "pending" | "saving" | "saved";
+
 function PageEditor({ pageId }: { pageId: string }) {
   const pageData = useQuery(api.pages.queries.getWithBlocks, {
     pageId: pageId as Id<"pages">,
@@ -232,6 +237,24 @@ function PageEditor({ pageId }: { pageId: string }) {
   const createBlock = useMutation(api.blocks.mutations.create);
   const updateBlock = useMutation(api.blocks.mutations.update);
   const removeBlock = useMutation(api.blocks.mutations.remove);
+
+  // Track save status across all blocks
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear "saved" status after 2 seconds
+  useEffect(() => {
+    if (saveStatus === "saved") {
+      saveTimeoutRef.current = setTimeout(() => {
+        setSaveStatus("idle");
+      }, 2000);
+    }
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [saveStatus]);
 
   if (pageData === undefined) {
     return <Skeleton className="h-64 w-full" />;
@@ -253,7 +276,10 @@ function PageEditor({ pageId }: { pageId: string }) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">{page.title}</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">{page.title}</h1>
+        <SaveIndicator status={saveStatus} />
+      </div>
 
       <div className="space-y-4">
         {blocks.map((block) => (
@@ -264,6 +290,7 @@ function PageEditor({ pageId }: { pageId: string }) {
               updateBlock({ blockId: block._id as Id<"blocks">, content })
             }
             onRemove={() => removeBlock({ blockId: block._id as Id<"blocks"> })}
+            onSaveStatusChange={setSaveStatus}
           />
         ))}
 
@@ -291,23 +318,91 @@ function PageEditor({ pageId }: { pageId: string }) {
   );
 }
 
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "idle") {
+    return null;
+  }
+
+  return (
+    <div
+      className={`flex items-center gap-1.5 text-sm transition-opacity duration-300 ${
+        status === "saved" ? "text-green-600" : "text-muted-foreground"
+      }`}
+    >
+      {status === "pending" && (
+        <>
+          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+          <span>Unsaved changes</span>
+        </>
+      )}
+      {status === "saving" && (
+        <>
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <span>Saving...</span>
+        </>
+      )}
+      {status === "saved" && (
+        <>
+          <Check className="h-3.5 w-3.5" />
+          <span>Saved</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 function BlockEditor({
   block,
   onUpdate,
   onRemove,
+  onSaveStatusChange,
 }: {
   block: { _id: string; type: string; content: unknown };
-  onUpdate: (content: unknown) => void;
+  onUpdate: (content: unknown) => Promise<unknown> | void;
   onRemove: () => void;
+  onSaveStatusChange: (status: SaveStatus) => void;
 }) {
   const content = block.content as { text?: string; level?: number };
+
+  // Local state for immediate responsiveness
+  const [localText, setLocalText] = useState(content.text || "");
+
+  // Debounced save to server (500ms delay)
+  const debouncedSave = useDebounceCallback(
+    useCallback(
+      async (text: string) => {
+        onSaveStatusChange("saving");
+        try {
+          await onUpdate({ ...content, text });
+          onSaveStatusChange("saved");
+        } catch (error) {
+          console.error("Failed to save:", error);
+          onSaveStatusChange("idle");
+        }
+      },
+      [onUpdate, content, onSaveStatusChange]
+    ),
+    500
+  );
+
+  // Sync local state when block changes (e.g., switching between blocks)
+  useEffect(() => {
+    setLocalText(content.text || "");
+  }, [block._id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setLocalText(newText); // Instant local update
+    onSaveStatusChange("pending"); // Show unsaved indicator
+    debouncedSave(newText); // Debounced server save
+  };
 
   if (block.type === "heading") {
     return (
       <div className="group relative">
         <Input
-          value={content.text || ""}
-          onChange={(e) => onUpdate({ ...content, text: e.target.value })}
+          value={localText}
+          onChange={handleChange}
           className="text-xl font-semibold border-none shadow-none px-0 focus-visible:ring-0"
           placeholder="Heading..."
         />
@@ -327,8 +422,8 @@ function BlockEditor({
     return (
       <div className="group relative">
         <textarea
-          value={content.text || ""}
-          onChange={(e) => onUpdate({ ...content, text: e.target.value })}
+          value={localText}
+          onChange={handleChange}
           className="w-full min-h-[100px] resize-none border-none bg-transparent focus:outline-none"
           placeholder="Start writing..."
         />
