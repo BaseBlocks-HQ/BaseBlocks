@@ -39,5 +39,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  return (
+    <ConvexProvider client={convex}>
+      {/* Debug marker - remove after testing */}
+      <div id="convex-provider-active" style={{ display: 'none' }} data-url={convexUrl} />
+      {children}
+    </ConvexProvider>
+  );
 }
