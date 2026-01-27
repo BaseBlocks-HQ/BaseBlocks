@@ -24,6 +24,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(), // site slug within company
     description: v.optional(v.string()),
+    defaultPageId: v.optional(v.id("pages")), // The page shown first when visiting
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),
     createdBy: v.string(),
@@ -69,7 +70,7 @@ export default defineSchema({
       v.literal("divider"),
       v.literal("callout"),
       v.literal("code"),
-      v.literal("table")
+      v.literal("table"),
     ),
     order: v.number(),
     content: v.any(), // Block-specific content
@@ -121,7 +122,7 @@ export default defineSchema({
     action: v.union(
       v.literal("view_site"),
       v.literal("view_page"),
-      v.literal("download_document")
+      v.literal("download_document"),
     ),
     ip: v.optional(v.string()),
     userAgent: v.optional(v.string()),

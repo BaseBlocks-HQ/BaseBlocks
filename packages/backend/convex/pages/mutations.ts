@@ -37,7 +37,7 @@ export const create = mutation({
     const siblings = await ctx.db
       .query("pages")
       .withIndex("by_parent", (q) =>
-        q.eq("siteId", siteId).eq("parentId", parentId)
+        q.eq("siteId", siteId).eq("parentId", parentId),
       )
       .collect();
 
@@ -89,7 +89,7 @@ export const update = mutation({
       const existing = await ctx.db
         .query("pages")
         .withIndex("by_slug", (q) =>
-          q.eq("siteId", page.siteId).eq("slug", slug)
+          q.eq("siteId", page.siteId).eq("slug", slug),
         )
         .first();
 
@@ -134,7 +134,7 @@ export const reorder = mutation({
     const siblings = await ctx.db
       .query("pages")
       .withIndex("by_parent", (q) =>
-        q.eq("siteId", page.siteId).eq("parentId", newParentId)
+        q.eq("siteId", page.siteId).eq("parentId", newParentId),
       )
       .collect();
 
@@ -156,6 +156,37 @@ export const reorder = mutation({
   },
 });
 
+// Helper to recursively delete a page and its children
+async function deletePageRecursively(
+  ctx: { db: any },
+  pageId: string,
+  siteId: string,
+) {
+  // Delete all blocks
+  const blocks = await ctx.db
+    .query("blocks")
+    .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+    .collect();
+
+  for (const block of blocks) {
+    await ctx.db.delete(block._id);
+  }
+
+  // Recursively delete child pages
+  const children = await ctx.db
+    .query("pages")
+    .withIndex("by_parent", (q: any) =>
+      q.eq("siteId", siteId).eq("parentId", pageId),
+    )
+    .collect();
+
+  for (const child of children) {
+    await deletePageRecursively(ctx, child._id, siteId);
+  }
+
+  await ctx.db.delete(pageId);
+}
+
 // Delete page
 export const remove = mutation({
   args: { pageId: v.id("pages") },
@@ -173,30 +204,54 @@ export const remove = mutation({
       throw new Error("Unauthorized");
     }
 
-    // Delete all blocks
-    const blocks = await ctx.db
-      .query("blocks")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
+    // Check if this is the default page
+    const isDefaultPage = site.defaultPageId === pageId;
 
-    for (const block of blocks) {
-      await ctx.db.delete(block._id);
-    }
-
-    // Recursively delete child pages
-    const children = await ctx.db
+    // Get all root-level pages (excluding the one being deleted and its children)
+    const allPages = await ctx.db
       .query("pages")
-      .withIndex("by_parent", (q) =>
-        q.eq("siteId", page.siteId).eq("parentId", pageId)
-      )
+      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
-    for (const child of children) {
-      // This will recursively delete blocks and children
-      await ctx.db.delete(child._id);
+    // Find pages that will remain after deletion (excluding this page and its descendants)
+    const pagesToDelete = new Set<string>([pageId]);
+
+    // Collect all descendant IDs
+    const collectDescendants = (parentId: string) => {
+      const children = allPages.filter((p) => p.parentId === parentId);
+      for (const child of children) {
+        pagesToDelete.add(child._id);
+        collectDescendants(child._id);
+      }
+    };
+    collectDescendants(pageId);
+
+    const remainingPages = allPages
+      .filter((p) => !pagesToDelete.has(p._id))
+      .sort((a, b) => a.order - b.order);
+
+    // If deleting the default page, reassign to first remaining page
+    if (isDefaultPage) {
+      // Find the first root-level page or fall back to first page
+      const firstRootPage = remainingPages.find((p) => !p.parentId);
+      const newDefaultPage = firstRootPage ?? remainingPages[0];
+
+      if (newDefaultPage) {
+        await ctx.db.patch(site._id, {
+          defaultPageId: newDefaultPage._id,
+          updatedAt: Date.now(),
+        });
+      } else {
+        // No pages left, clear the default
+        await ctx.db.patch(site._id, {
+          defaultPageId: undefined,
+          updatedAt: Date.now(),
+        });
+      }
     }
 
-    await ctx.db.delete(pageId);
+    // Delete the page and all its descendants
+    await deletePageRecursively(ctx, pageId, page.siteId);
 
     return { success: true };
   },

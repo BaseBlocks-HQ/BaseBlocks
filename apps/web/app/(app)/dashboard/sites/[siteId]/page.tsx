@@ -1,24 +1,16 @@
 "use client";
 
-import { use, useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft,
-  Plus,
-  FileText,
-  ChevronRight,
-  Settings,
-  Globe,
-  Trash2,
-  Loader2,
-  Check,
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +19,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDebounceCallback } from "@/hooks/use-debounce";
 import {
   Sidebar,
   SidebarContent,
@@ -42,9 +41,40 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounceCallback } from "@/hooks/use-debounce";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useMutation, useQuery } from "convex/react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  FileText,
+  Globe,
+  Home,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings,
+  Star,
+  Trash2,
+} from "lucide-react";
+import Link from "next/link";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
   params: Promise<{ siteId: string }>;
+};
+
+type PageType = {
+  _id: string;
+  title: string;
+  slug: string;
+  icon?: string;
+  parentId?: string;
+  order: number;
 };
 
 export default function SiteEditorPage({ params }: Props) {
@@ -119,6 +149,8 @@ export default function SiteEditorPage({ params }: Props) {
                         allPages={pages}
                         selectedPageId={selectedPage?._id}
                         onSelect={setSelectedPageId}
+                        siteId={siteId}
+                        defaultPageId={site.defaultPageId}
                       />
                     ))}
                 </SidebarMenu>
@@ -127,7 +159,11 @@ export default function SiteEditorPage({ params }: Props) {
           </SidebarContent>
 
           <div className="mt-auto border-t p-4 space-y-2">
-            <Button variant="outline" className="w-full justify-start" size="sm">
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              size="sm"
+            >
               <Settings className="h-4 w-4 mr-2" />
               Site Settings
             </Button>
@@ -151,6 +187,11 @@ export default function SiteEditorPage({ params }: Props) {
                 <>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{selectedPage.title}</span>
+                  {site.defaultPageId === selectedPage._id && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                      Default
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -189,30 +230,48 @@ function PageMenuItem({
   allPages,
   selectedPageId,
   onSelect,
+  siteId,
+  defaultPageId,
   depth = 0,
 }: {
-  page: { _id: string; title: string; icon?: string; parentId?: string };
-  allPages: Array<{ _id: string; title: string; icon?: string; parentId?: string; order: number }>;
+  page: PageType;
+  allPages: PageType[];
   selectedPageId?: string;
   onSelect: (id: string) => void;
+  siteId: string;
+  defaultPageId?: string;
   depth?: number;
 }) {
   const children = allPages
     .filter((p) => p.parentId === page._id)
     .sort((a, b) => a.order - b.order);
 
+  const isDefault = defaultPageId === page._id;
+
   return (
     <>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          isActive={selectedPageId === page._id}
-          onClick={() => onSelect(page._id)}
-          className="pl-4"
-          style={{ paddingLeft: `${(depth + 1) * 12}px` }}
-        >
-          <FileText className="h-4 w-4" />
-          <span>{page.title}</span>
-        </SidebarMenuButton>
+      <SidebarMenuItem className="group/page">
+        <div className="flex items-center w-full">
+          <SidebarMenuButton
+            isActive={selectedPageId === page._id}
+            onClick={() => onSelect(page._id)}
+            className="flex-1"
+            style={{ paddingLeft: `${(depth + 1) * 12}px` }}
+          >
+            {isDefault ? (
+              <Home className="h-4 w-4 text-primary" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+            <span className="truncate">{page.title}</span>
+          </SidebarMenuButton>
+          <PageActionsMenu
+            page={page}
+            siteId={siteId}
+            isDefault={isDefault}
+            onSelect={onSelect}
+          />
+        </div>
       </SidebarMenuItem>
       {children.map((child) => (
         <PageMenuItem
@@ -221,10 +280,206 @@ function PageMenuItem({
           allPages={allPages}
           selectedPageId={selectedPageId}
           onSelect={onSelect}
+          siteId={siteId}
+          defaultPageId={defaultPageId}
           depth={depth + 1}
         />
       ))}
     </>
+  );
+}
+
+function PageActionsMenu({
+  page,
+  siteId,
+  isDefault,
+  onSelect,
+}: {
+  page: PageType;
+  siteId: string;
+  isDefault: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
+  const removePage = useMutation(api.pages.mutations.remove);
+
+  const handleSetDefault = async () => {
+    await setDefaultPage({
+      siteId: siteId as Id<"sites">,
+      pageId: page._id as Id<"pages">,
+    });
+  };
+
+  const handleDelete = async () => {
+    await removePage({ pageId: page._id as Id<"pages"> });
+    setDeleteOpen(false);
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover/page:opacity-100 transition-opacity"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => setRenameOpen(true)}>
+            <Pencil className="h-4 w-4" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
+            <Star className="h-4 w-4" />
+            {isDefault ? "Default Page" : "Set as Default"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <RenamePageDialog
+        page={page}
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+      />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Page</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &ldquo;{page.title}&rdquo;? This
+              will also delete all content and child pages. This action cannot
+              be undone.
+              {isDefault && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                  This is the default page. A new default will be assigned
+                  automatically.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function RenamePageDialog({
+  page,
+  open,
+  onOpenChange,
+}: {
+  page: PageType;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [title, setTitle] = useState(page.title);
+  const [slug, setSlug] = useState(page.slug);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const updatePage = useMutation(api.pages.mutations.update);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setTitle(page.title);
+      setSlug(page.slug);
+    }
+  }, [open, page.title, page.slug]);
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    const generatedSlug = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    setSlug(generatedSlug);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await updatePage({
+        pageId: page._id as Id<"pages">,
+        title,
+        slug,
+      });
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Failed to rename page:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rename Page</DialogTitle>
+          <DialogDescription>
+            Update the title and URL slug for this page
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="renameTitle">Page Title</Label>
+            <Input
+              id="renameTitle"
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="renameSlug">URL Slug</Label>
+            <Input
+              id="renameSlug"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase())}
+              required
+              pattern="[a-z0-9-]+"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -266,11 +521,30 @@ function PageEditor({ pageId }: { pageId: string }) {
 
   const { page, blocks } = pageData;
 
-  const handleAddBlock = async (type: "heading" | "paragraph") => {
+  const handleAddBlock = async (
+    type: "heading" | "paragraph" | "divider" | "callout" | "code",
+  ) => {
+    const content = (() => {
+      switch (type) {
+        case "heading":
+          return { text: "New Heading", level: 2 };
+        case "paragraph":
+          return { text: "" };
+        case "divider":
+          return {};
+        case "callout":
+          return { text: "", variant: "info" };
+        case "code":
+          return { text: "", language: "typescript" };
+        default:
+          return { text: "" };
+      }
+    })();
+
     await createBlock({
       pageId: pageId as Id<"pages">,
       type,
-      content: type === "heading" ? { text: "New Heading", level: 2 } : { text: "" },
+      content,
     });
   };
 
@@ -295,7 +569,7 @@ function PageEditor({ pageId }: { pageId: string }) {
         ))}
 
         {/* Add Block Buttons */}
-        <div className="flex gap-2 pt-4">
+        <div className="flex flex-wrap gap-2 pt-4 border-t">
           <Button
             variant="outline"
             size="sm"
@@ -311,6 +585,30 @@ function PageEditor({ pageId }: { pageId: string }) {
           >
             <Plus className="h-4 w-4 mr-1" />
             Paragraph
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAddBlock("callout")}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Callout
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAddBlock("code")}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Code
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAddBlock("divider")}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Divider
           </Button>
         </div>
       </div>
@@ -362,7 +660,12 @@ function BlockEditor({
   onRemove: () => void;
   onSaveStatusChange: (status: SaveStatus) => void;
 }) {
-  const content = block.content as { text?: string; level?: number };
+  const content = block.content as {
+    text?: string;
+    level?: number;
+    language?: string;
+    variant?: string;
+  };
 
   // Local state for immediate responsiveness
   const [localText, setLocalText] = useState(content.text || "");
@@ -380,9 +683,9 @@ function BlockEditor({
           onSaveStatusChange("idle");
         }
       },
-      [onUpdate, content, onSaveStatusChange]
+      [onUpdate, content, onSaveStatusChange],
     ),
-    500
+    500,
   );
 
   // Sync local state when block changes (e.g., switching between blocks)
@@ -390,7 +693,9 @@ function BlockEditor({
     setLocalText(content.text || "");
   }, [block._id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const newText = e.target.value;
     setLocalText(newText); // Instant local update
     onSaveStatusChange("pending"); // Show unsaved indicator
@@ -431,6 +736,69 @@ function BlockEditor({
           variant="ghost"
           size="icon"
           className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (block.type === "divider") {
+    return (
+      <div className="group relative py-4">
+        <hr className="border-border" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (block.type === "callout") {
+    return (
+      <div className="group relative">
+        <div className="bg-muted border rounded-lg p-4">
+          <textarea
+            value={localText}
+            onChange={handleChange}
+            className="w-full min-h-[60px] resize-none border-none bg-transparent focus:outline-none"
+            placeholder="Callout text..."
+          />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (block.type === "code") {
+    return (
+      <div className="group relative">
+        <div className="bg-zinc-950 text-zinc-100 rounded-lg p-4 font-mono text-sm">
+          <textarea
+            value={localText}
+            onChange={handleChange}
+            className="w-full min-h-[100px] resize-none border-none bg-transparent focus:outline-none text-zinc-100"
+            placeholder="// Code here..."
+            spellCheck={false}
+          />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-100"
           onClick={onRemove}
         >
           <Trash2 className="h-4 w-4" />

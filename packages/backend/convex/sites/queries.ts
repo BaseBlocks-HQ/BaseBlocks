@@ -61,7 +61,7 @@ export const getBySlug = query({
     return await ctx.db
       .query("sites")
       .withIndex("by_slug", (q) =>
-        q.eq("companyId", company._id).eq("slug", siteSlug)
+        q.eq("companyId", company._id).eq("slug", siteSlug),
       )
       .first();
   },
@@ -85,5 +85,50 @@ export const getWithCompany = query({
     }
 
     return { site, company };
+  },
+});
+
+// Get site with default page info (for public viewing)
+export const getWithDefaultPage = query({
+  args: {
+    companySlug: v.string(),
+  },
+  handler: async (ctx, { companySlug }) => {
+    // Find company
+    const company = await ctx.db
+      .query("companies")
+      .withIndex("by_slug", (q) => q.eq("slug", companySlug))
+      .first();
+
+    if (!company) return null;
+
+    // Get the first published site for this company
+    const site = await ctx.db
+      .query("sites")
+      .withIndex("by_company", (q) => q.eq("companyId", company._id))
+      .filter((q) => q.eq(q.field("isPublished"), true))
+      .first();
+
+    if (!site) return null;
+
+    // Get the default page
+    let defaultPage = null;
+    if (site.defaultPageId) {
+      defaultPage = await ctx.db.get(site.defaultPageId);
+    }
+
+    // If no default page set, get the first page by order
+    if (!defaultPage) {
+      defaultPage = await ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", site._id))
+        .first();
+    }
+
+    return {
+      site,
+      company,
+      defaultPage,
+    };
   },
 });

@@ -31,7 +31,7 @@ export const create = mutation({
     const existing = await ctx.db
       .query("sites")
       .withIndex("by_slug", (q) =>
-        q.eq("companyId", company._id).eq("slug", slug.toLowerCase())
+        q.eq("companyId", company._id).eq("slug", slug.toLowerCase()),
       )
       .first();
 
@@ -56,7 +56,7 @@ export const create = mutation({
     });
 
     // Create a default home page
-    await ctx.db.insert("pages", {
+    const homePageId = await ctx.db.insert("pages", {
       siteId,
       title: "Home",
       slug: "home",
@@ -66,6 +66,9 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // Set the home page as the default
+    await ctx.db.patch(siteId, { defaultPageId: homePageId });
 
     return siteId;
   },
@@ -83,9 +86,9 @@ export const update = mutation({
         ogImage: v.optional(v.string()),
         headerType: v.optional(v.union(v.literal("logo"), v.literal("text"))),
         navigationStyle: v.optional(
-          v.union(v.literal("sidebar"), v.literal("topnav"))
+          v.union(v.literal("sidebar"), v.literal("topnav")),
         ),
-      })
+      }),
     ),
   },
   handler: async (ctx, { siteId, name, description, settings }) => {
@@ -151,6 +154,38 @@ export const unpublish = mutation({
 
     await ctx.db.patch(siteId, {
       isPublished: false,
+      updatedAt: Date.now(),
+    });
+
+    return siteId;
+  },
+});
+
+// Set default page for the site
+export const setDefaultPage = mutation({
+  args: {
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+  },
+  handler: async (ctx, { siteId, pageId }) => {
+    const auth = await getAuthContext(ctx);
+
+    const site = await ctx.db.get(siteId);
+    if (!site) throw new Error("Site not found");
+
+    const company = await ctx.db.get(site.companyId);
+    if (!company || company.eaOrgId !== auth.eaOrgId) {
+      throw new Error("Unauthorized");
+    }
+
+    // Verify the page belongs to this site
+    const page = await ctx.db.get(pageId);
+    if (!page || page.siteId !== siteId) {
+      throw new Error("Page not found or does not belong to this site");
+    }
+
+    await ctx.db.patch(siteId, {
+      defaultPageId: pageId,
       updatedAt: Date.now(),
     });
 
