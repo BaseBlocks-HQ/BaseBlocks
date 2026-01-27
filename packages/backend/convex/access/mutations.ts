@@ -3,7 +3,8 @@ import { mutation } from "../_generated/server";
 import { getAuthContext } from "../auth";
 
 function generateToken(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let token = "";
   for (let i = 0; i < 32; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -107,14 +108,17 @@ export const recordAccess = mutation({
     action: v.union(
       v.literal("view_site"),
       v.literal("view_page"),
-      v.literal("download_document")
+      v.literal("download_document"),
     ),
     pageId: v.optional(v.id("pages")),
     documentId: v.optional(v.id("documents")),
     ip: v.optional(v.string()),
     userAgent: v.optional(v.string()),
   },
-  handler: async (ctx, { token, action, pageId, documentId, ip, userAgent }) => {
+  handler: async (
+    ctx,
+    { token, action, pageId, documentId, ip, userAgent },
+  ) => {
     const link = await ctx.db
       .query("accessLinks")
       .withIndex("by_token", (q) => q.eq("token", token))

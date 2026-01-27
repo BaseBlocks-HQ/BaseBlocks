@@ -63,7 +63,7 @@ export const getChildren = query({
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_parent", (q) =>
-        q.eq("siteId", siteId).eq("parentId", parentId)
+        q.eq("siteId", siteId).eq("parentId", parentId),
       )
       .collect();
 

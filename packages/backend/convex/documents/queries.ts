@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getOptionalAuthContext } from "../auth";
+import { getAuthContext } from "../auth";
 
 // List documents for a site (authenticated)
 export const list = query({
@@ -43,7 +43,7 @@ export const search = query({
     return await ctx.db
       .query("documents")
       .withSearchIndex("search_content", (q) =>
-        q.search("extractedText", searchQuery).eq("siteId", siteId)
+        q.search("extractedText", searchQuery).eq("siteId", siteId),
       )
       .take(20);
   },

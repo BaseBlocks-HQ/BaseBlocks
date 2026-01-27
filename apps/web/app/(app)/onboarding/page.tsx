@@ -1,12 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
-import { api } from "@repo/backend";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -14,7 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useEntityAuth } from "@/lib/entity-auth";
+import { api } from "@repo/backend";
+import { useMutation } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -103,9 +103,7 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create Workspace"}

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useConvexAuth } from "convex/react";
 import { Spinner } from "@/components/ui/spinner";
+import { useConvexAuth } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -30,7 +30,9 @@ export default function AuthCallbackPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4">Authentication failed: {error}</p>
+          <p className="text-destructive mb-4">
+            Authentication failed: {error}
+          </p>
           <a href="/login" className="text-primary hover:underline">
             Try again
           </a>

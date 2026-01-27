@@ -10,7 +10,7 @@ type AnyFunction = (...args: any[]) => void;
  */
 export function useDebounceCallback<T extends AnyFunction>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
   const callbackRef = useRef(callback);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,7 +50,7 @@ export function useDebounceCallback<T extends AnyFunction>(
  */
 export function useDebounceCallbackWithFlush<T extends AnyFunction>(
   callback: T,
-  delay: number
+  delay: number,
 ): { debouncedCallback: T; flush: () => void; cancel: () => void } {
   const callbackRef = useRef(callback);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useConvexAuth } from "convex/react";
 import { Button } from "@/components/ui/button";
+import { useConvexAuth } from "convex/react";
+import Link from "next/link";
 
 export default function LandingPage() {
   const { isAuthenticated, isLoading } = useConvexAuth();

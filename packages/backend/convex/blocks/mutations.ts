@@ -12,7 +12,7 @@ const blockTypes = v.union(
   v.literal("divider"),
   v.literal("callout"),
   v.literal("code"),
-  v.literal("table")
+  v.literal("table"),
 );
 
 // Create a new block

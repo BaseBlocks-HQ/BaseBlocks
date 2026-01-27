@@ -12,7 +12,10 @@ export const create = mutation({
     contentType: v.string(),
     size: v.number(),
   },
-  handler: async (ctx, { siteId, blobId, cdnUrl, filename, contentType, size }) => {
+  handler: async (
+    ctx,
+    { siteId, blobId, cdnUrl, filename, contentType, size },
+  ) => {
     const auth = await getAuthContext(ctx);
 
     const site = await ctx.db.get(siteId);

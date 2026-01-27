@@ -1,13 +1,13 @@
 "use client";
 
 import {
+  type ReactNode,
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
 
 const ENTITY_AUTH_URL =
@@ -56,7 +56,7 @@ function parseJwt(token: string): Record<string, unknown> | null {
       atob(base64)
         .split("")
         .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch {
@@ -94,7 +94,7 @@ class EntityAuthClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     const response = await fetch(url, {
@@ -107,7 +107,9 @@ class EntityAuthClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || error.error || `Request failed: ${response.status}`);
+      throw new Error(
+        error.message || error.error || `Request failed: ${response.status}`,
+      );
     }
 
     return response.json();
@@ -133,7 +135,7 @@ class EntityAuthClient {
 
   async startSSO(
     provider: "google",
-    returnTo?: string
+    returnTo?: string,
   ): Promise<{ authorizationUrl: string; state: string }> {
     // returnTo is where Entity Auth redirects after OAuth completes
     // Entity Auth handles the OAuth callback internally
@@ -147,7 +149,7 @@ class EntityAuthClient {
           returnTo: finalReturnTo,
           workspaceTenantId: this.workspaceTenantId,
         }),
-      }
+      },
     );
   }
 
@@ -179,7 +181,7 @@ export function EntityAuthProvider({ children }: { children: ReactNode }) {
       setToken(accessToken);
       setUser(extractUserFromToken(accessToken));
     },
-    []
+    [],
   );
 
   const clearTokens = useCallback(() => {
@@ -292,7 +294,7 @@ export function EntityAuthProvider({ children }: { children: ReactNode }) {
       startSSO,
       getToken,
     }),
-    [isLoading, token, user, logout, startSSO, getToken]
+    [isLoading, token, user, logout, startSSO, getToken],
   );
 
   return (
@@ -335,7 +337,7 @@ export function useAuthFromEntityAuth() {
       }
       return await getToken();
     },
-    [getToken]
+    [getToken],
   );
 
   return useMemo(
@@ -344,6 +346,6 @@ export function useAuthFromEntityAuth() {
       isAuthenticated,
       fetchAccessToken,
     }),
-    [isLoading, isAuthenticated, fetchAccessToken]
+    [isLoading, isAuthenticated, fetchAccessToken],
   );
 }

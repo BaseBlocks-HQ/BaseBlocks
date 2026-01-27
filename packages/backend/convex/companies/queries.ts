@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getOptionalAuthContext } from "../auth";
+import { getOptionalAuthContext } from "../auth";
 
 // Get company by slug (for multi-tenant routing)
 export const getBySlug = query({

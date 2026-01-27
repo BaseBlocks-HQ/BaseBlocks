@@ -1,9 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
-import { api } from "@repo/backend";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,10 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Globe, Settings, ExternalLink } from "lucide-react";
-import { useEntityAuth } from "@/lib/entity-auth";
-import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +18,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useEntityAuth } from "@/lib/entity-auth";
+import { api } from "@repo/backend";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { ExternalLink, Globe, Plus, Settings } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -156,7 +156,9 @@ function SiteCard({
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg">{site.name}</CardTitle>
-            <CardDescription>{site.description || "No description"}</CardDescription>
+            <CardDescription>
+              {site.description || "No description"}
+            </CardDescription>
           </div>
           <div
             className={`px-2 py-1 text-xs rounded-full ${

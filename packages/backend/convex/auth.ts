@@ -51,7 +51,7 @@ async function parseIdentity(ctx: AuthCtx): Promise<ParsedIdentity | null> {
 }
 
 export async function getAuthContextOrNull(
-  ctx: AuthCtx
+  ctx: AuthCtx,
 ): Promise<ServerAuthContext | null> {
   const parsed = await parseIdentity(ctx);
   if (!parsed) return null;
@@ -77,14 +77,14 @@ async function requireAuthContext(ctx: AuthCtx): Promise<ServerAuthContext> {
 }
 
 export const getServerAuthContext = (
-  ctx: AuthCtx
+  ctx: AuthCtx,
 ): Promise<ServerAuthContext> => requireAuthContext(ctx);
 
 // Alias for backwards compatibility
 export const getAuthContext = getServerAuthContext;
 
 async function parseIdentityFromAction(
-  ctx: ActionAuthCtx
+  ctx: ActionAuthCtx,
 ): Promise<ParsedIdentity | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
@@ -110,7 +110,7 @@ async function parseIdentityFromAction(
 }
 
 export async function getActionAuthContextOrNull(
-  ctx: ActionAuthCtx
+  ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext | null> {
   const parsed = await parseIdentityFromAction(ctx);
   if (!parsed) return null;
@@ -125,7 +125,7 @@ export async function getActionAuthContextOrNull(
 }
 
 async function requireActionAuthContext(
-  ctx: ActionAuthCtx
+  ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext> {
   const auth = await getActionAuthContextOrNull(ctx);
   if (!auth) {
@@ -135,7 +135,7 @@ async function requireActionAuthContext(
 }
 
 export const getActionAuthContext = (
-  ctx: ActionAuthCtx
+  ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext> => requireActionAuthContext(ctx);
 
 // Query to get the current user's auth context (for client-side use)

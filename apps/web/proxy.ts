@@ -28,7 +28,7 @@ function extractSubdomain(request: NextRequest): string | null {
   // Handle Vercel preview URLs (tenant---branch.vercel.app)
   if (hostname.includes("---") && hostname.endsWith(".vercel.app")) {
     const parts = hostname.split("---");
-    return parts.length > 0 ? (parts[0] || null) : null;
+    return parts.length > 0 ? parts[0] || null : null;
   }
 
   // Regular subdomain detection
