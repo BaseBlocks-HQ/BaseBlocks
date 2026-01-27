@@ -50,6 +50,7 @@ import {
   ArrowLeft,
   Check,
   ChevronRight,
+  Eye,
   FileText,
   Globe,
   Home,
@@ -196,6 +197,7 @@ export default function SiteEditorPage({ params }: Props) {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <PreviewButton companySlug={company.slug} />
               {site.isPublished && (
                 <Button variant="outline" size="sm" asChild>
                   <a
@@ -203,6 +205,7 @@ export default function SiteEditorPage({ params }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    <Globe className="h-4 w-4 mr-1.5" />
                     View Live
                   </a>
                 </Button>
@@ -919,5 +922,19 @@ function EditorSkeleton() {
         <Skeleton className="h-32 w-full" />
       </div>
     </div>
+  );
+}
+
+function PreviewButton({ companySlug }: { companySlug: string }) {
+  const handlePreview = () => {
+    const port = window.location.port || "3000";
+    window.open(`http://${companySlug}.localhost:${port}/`, "_blank");
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={handlePreview}>
+      <Eye className="h-4 w-4 mr-1.5" />
+      Preview
+    </Button>
   );
 }
