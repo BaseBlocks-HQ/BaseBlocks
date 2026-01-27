@@ -1,13 +1,13 @@
 "use client";
 
-import { use } from "react";
-import Link from "next/link";
-import { useQuery } from "convex/react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "convex/react";
+import { Download, FileText } from "lucide-react";
+import Link from "next/link";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ subdomain: string; path: string[] }>;
@@ -37,9 +37,7 @@ export default function PublicSitePage({ params }: Props) {
     return <SiteNotPublished />;
   }
 
-  return (
-    <PublicSiteLayout site={site} company={company} pageSlug={pageSlug} />
-  );
+  return <PublicSiteLayout site={site} company={company} pageSlug={pageSlug} />;
 }
 
 function PublicSiteLayout({
@@ -47,8 +45,18 @@ function PublicSiteLayout({
   company,
   pageSlug,
 }: {
-  site: { _id: string; name: string; slug: string; settings: { navigationStyle: string; headerType: string } };
-  company: { name: string; slug: string; logoUrl?: string; settings: { primaryColor?: string } };
+  site: {
+    _id: string;
+    name: string;
+    slug: string;
+    settings: { navigationStyle: string; headerType: string };
+  };
+  company: {
+    name: string;
+    slug: string;
+    logoUrl?: string;
+    settings: { primaryColor?: string };
+  };
   pageSlug: string;
 }) {
   const pages = useQuery(api.pages.queries.getTree, {
@@ -62,7 +70,7 @@ function PublicSiteLayout({
 
   const pageWithBlocks = useQuery(
     api.pages.queries.getWithBlocks,
-    currentPage ? { pageId: currentPage._id as Id<"pages"> } : "skip"
+    currentPage ? { pageId: currentPage._id as Id<"pages"> } : "skip",
   );
 
   return (
@@ -80,7 +88,9 @@ function PublicSiteLayout({
             ) : (
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
-                style={{ backgroundColor: company.settings.primaryColor || "#0066FF" }}
+                style={{
+                  backgroundColor: company.settings.primaryColor || "#0066FF",
+                }}
               >
                 {company.name[0]}
               </div>
@@ -103,11 +113,7 @@ function PublicSiteLayout({
                 </>
               ) : (
                 pages.map((page) => (
-                  <NavItem
-                    key={page._id}
-                    page={page}
-                    currentSlug={pageSlug}
-                  />
+                  <NavItem key={page._id} page={page} currentSlug={pageSlug} />
                 ))
               )}
             </nav>
@@ -129,7 +135,9 @@ function PublicSiteLayout({
             </div>
           ) : (
             <article className="max-w-3xl mx-auto">
-              <h1 className="text-3xl font-bold mb-8">{pageWithBlocks.page.title}</h1>
+              <h1 className="text-3xl font-bold mb-8">
+                {pageWithBlocks.page.title}
+              </h1>
               <div className="prose prose-neutral dark:prose-invert max-w-none">
                 {pageWithBlocks.blocks.map((block) => (
                   <BlockRenderer key={block._id} block={block} />
@@ -155,7 +163,17 @@ function NavItem({
   currentSlug,
   depth = 0,
 }: {
-  page: { _id: string; title: string; slug: string; children?: Array<{ _id: string; title: string; slug: string; children?: unknown[] }> };
+  page: {
+    _id: string;
+    title: string;
+    slug: string;
+    children?: Array<{
+      _id: string;
+      title: string;
+      slug: string;
+      children?: unknown[];
+    }>;
+  };
   currentSlug: string;
   depth?: number;
 }) {
@@ -187,16 +205,36 @@ function NavItem({
   );
 }
 
-function BlockRenderer({ block }: { block: { type: string; content: unknown } }) {
-  const content = block.content as { text?: string; level?: number; url?: string; filename?: string };
+function BlockRenderer({
+  block,
+}: { block: { type: string; content: unknown } }) {
+  const content = block.content as {
+    text?: string;
+    level?: number;
+    url?: string;
+    filename?: string;
+    language?: string;
+  };
 
   switch (block.type) {
     case "heading": {
       const level = content.level || 2;
-      if (level === 1) return <h1 className="text-3xl font-semibold mt-6 mb-4">{content.text}</h1>;
-      if (level === 2) return <h2 className="text-2xl font-semibold mt-6 mb-4">{content.text}</h2>;
-      if (level === 3) return <h3 className="text-xl font-semibold mt-6 mb-4">{content.text}</h3>;
-      if (level === 4) return <h4 className="text-lg font-semibold mt-6 mb-4">{content.text}</h4>;
+      if (level === 1)
+        return (
+          <h1 className="text-3xl font-semibold mt-6 mb-4">{content.text}</h1>
+        );
+      if (level === 2)
+        return (
+          <h2 className="text-2xl font-semibold mt-6 mb-4">{content.text}</h2>
+        );
+      if (level === 3)
+        return (
+          <h3 className="text-xl font-semibold mt-6 mb-4">{content.text}</h3>
+        );
+      if (level === 4)
+        return (
+          <h4 className="text-lg font-semibold mt-6 mb-4">{content.text}</h4>
+        );
       return <h5 className="font-semibold mt-6 mb-4">{content.text}</h5>;
     }
 
@@ -206,11 +244,7 @@ function BlockRenderer({ block }: { block: { type: string; content: unknown } })
     case "image":
       return (
         <figure className="my-6">
-          <img
-            src={content.url}
-            alt=""
-            className="rounded-lg max-w-full"
-          />
+          <img src={content.url} alt="" className="rounded-lg max-w-full" />
         </figure>
       );
 
@@ -234,10 +268,13 @@ function BlockRenderer({ block }: { block: { type: string; content: unknown } })
       return <hr className="my-8" />;
 
     case "callout":
+      return <div className="my-4 p-4 bg-muted rounded-lg">{content.text}</div>;
+
+    case "code":
       return (
-        <div className="my-4 p-4 bg-muted rounded-lg">
-          {content.text}
-        </div>
+        <pre className="my-4 p-4 bg-zinc-950 text-zinc-100 rounded-lg overflow-x-auto">
+          <code className="text-sm font-mono whitespace-pre-wrap">{content.text}</code>
+        </pre>
       );
 
     default:
@@ -278,7 +315,8 @@ function SiteNotFound({ subdomain }: { subdomain: string }) {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Site Not Found</h1>
         <p className="text-muted-foreground mb-8">
-          The site at <strong>{subdomain}.baseblocks.dev</strong> doesn&apos;t exist.
+          The site at <strong>{subdomain}.baseblocks.dev</strong> doesn&apos;t
+          exist.
         </p>
         <Button asChild>
           <Link href="/">Go to BaseBlocks</Link>

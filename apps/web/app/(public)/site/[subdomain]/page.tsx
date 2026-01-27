@@ -23,12 +23,13 @@ export default function SubdomainRootPage({ params }: Props) {
 
     if (!siteData || !siteData.defaultPage) {
       // No site or no pages - redirect to home as fallback
-      router.replace(`/site/${subdomain}/home`);
+      router.replace(`/home`);
       return;
     }
 
     // Redirect to the default page
-    router.replace(`/site/${subdomain}/${siteData.defaultPage.slug}`);
+    // Use just the slug - middleware handles the /site/subdomain rewrite
+    router.replace(`/${siteData.defaultPage.slug}`);
   }, [siteData, subdomain, router]);
 
   // Show loading state while redirecting
