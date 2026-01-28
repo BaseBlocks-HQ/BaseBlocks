@@ -9,3 +9,4 @@ export { CodeRenderer } from "./code-renderer";
 export { ImageRenderer } from "./image-renderer";
 export { FileRenderer } from "./file-renderer";
 export { DocumentLibraryRenderer } from "./document-library-renderer";
+export { SearchRenderer } from "./search-renderer";

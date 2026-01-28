@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
 import type { CalloutContent } from "@/types";
@@ -10,7 +8,6 @@ import type { CalloutContent } from "@/types";
 export function CalloutEditor({
   block,
   onUpdate,
-  onRemove,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
   const content = block.content as CalloutContent;
@@ -45,7 +42,7 @@ export function CalloutEditor({
   };
 
   return (
-    <div className="group relative">
+    <div className="relative">
       <div className="bg-muted border rounded-lg p-4">
         <textarea
           value={localText}
@@ -54,14 +51,6 @@ export function CalloutEditor({
           placeholder="Callout text..."
         />
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

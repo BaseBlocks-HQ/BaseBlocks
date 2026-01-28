@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
 import type { CodeContent } from "@/types";
@@ -10,7 +8,6 @@ import type { CodeContent } from "@/types";
 export function CodeEditor({
   block,
   onUpdate,
-  onRemove,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
   const content = block.content as CodeContent;
@@ -45,7 +42,7 @@ export function CodeEditor({
   };
 
   return (
-    <div className="group relative">
+    <div className="relative">
       <div className="bg-zinc-950 text-zinc-100 rounded-lg p-4 font-mono text-sm">
         <textarea
           value={localText}
@@ -55,14 +52,6 @@ export function CodeEditor({
           spellCheck={false}
         />
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-100"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

@@ -1,7 +1,27 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: Generic callback type
 type AnyFunction = (...args: any[]) => void;
+
+/**
+ * Debounces a value. Returns the debounced value that only updates
+ * after `delay` ms have passed since the last change.
+ */
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 /**
  * Creates a debounced version of a callback function.

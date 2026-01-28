@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { Trash2, Plus, FolderPlus, Settings2 } from "lucide-react";
+import { Plus, FolderPlus, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -45,7 +45,6 @@ import {
 export function DocumentLibraryEditor({
   block,
   onUpdate,
-  onRemove,
 }: BlockEditorBaseProps) {
   const content = block.content as DocumentLibraryContent;
   const { siteId } = useEditorContext();
@@ -228,7 +227,7 @@ export function DocumentLibraryEditor({
   // Render library selector when no library is selected
   if (!content.libraryId) {
     return (
-      <div className="group relative">
+      <div className="relative">
         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
           <div className="text-center space-y-4">
             <h3 className="text-lg font-medium">Document Library</h3>
@@ -277,14 +276,6 @@ export function DocumentLibraryEditor({
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={onRemove}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
       </div>
     );
   }
@@ -293,7 +284,7 @@ export function DocumentLibraryEditor({
   const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
   return (
-    <div className="group relative">
+    <div className="relative">
       <div className="border rounded-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
@@ -401,15 +392,6 @@ export function DocumentLibraryEditor({
           </div>
         </div>
       </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

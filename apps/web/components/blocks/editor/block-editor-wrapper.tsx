@@ -7,7 +7,7 @@ import type { SaveStatus } from "@/types";
 interface BlockEditorWrapperProps {
   block: BlockData;
   onUpdate: (content: unknown) => Promise<unknown> | void;
-  onRemove: () => Promise<unknown> | void;
+  onRemove?: () => Promise<unknown> | void;
   onSaveStatusChange?: (status: SaveStatus) => void;
 }
 

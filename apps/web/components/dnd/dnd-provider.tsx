@@ -1,0 +1,104 @@
+"use client";
+
+import { type ReactNode, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+  DragOverlay,
+  type UniqueIdentifier,
+  type DropAnimation,
+  defaultDropAnimationSideEffects,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+
+interface DndProviderProps {
+  children: ReactNode;
+  items: string[];
+  onDragEnd: (event: DragEndEvent) => void;
+  onDragStart?: (event: DragStartEvent) => void;
+  renderDragOverlay?: (activeId: UniqueIdentifier) => ReactNode;
+}
+
+export function DndProvider({
+  children,
+  items,
+  onDragEnd,
+  onDragStart,
+  renderDragOverlay,
+}: DndProviderProps) {
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+
+  // Smooth drop animation
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.5",
+        },
+      },
+    }),
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // 200ms hold to start drag on touch
+        tolerance: 5, // 5px movement tolerance during delay
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id);
+    onDragStart?.(event);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    onDragEnd(event);
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {children}
+      </SortableContext>
+      <DragOverlay dropAnimation={dropAnimation}>
+        {activeId && renderDragOverlay ? renderDragOverlay(activeId) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+// Re-export commonly used items
+export { arrayMove } from "@dnd-kit/sortable";
+export type { DragEndEvent, DragStartEvent, UniqueIdentifier };

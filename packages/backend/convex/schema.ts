@@ -67,6 +67,7 @@ export default defineSchema({
       v.literal("file"),
       v.literal("document-list"),
       v.literal("document-library"),
+      v.literal("search"),
       v.literal("embed"),
       v.literal("divider"),
       v.literal("callout"),
@@ -114,9 +115,20 @@ export default defineSchema({
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
-    // Extracted metadata (Phase 2)
+    // Text extraction
     extractedText: v.optional(v.string()),
     pageCount: v.optional(v.number()),
+    wordCount: v.optional(v.number()),
+    extractionStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("unsupported")
+      )
+    ),
+    extractionError: v.optional(v.string()),
     // Tracking
     uploadedBy: v.string(),
     createdAt: v.number(),
@@ -124,6 +136,7 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"])
+    .index("by_extraction_status", ["siteId", "extractionStatus"])
     .searchIndex("search_content", {
       searchField: "extractedText",
       filterFields: ["siteId"],

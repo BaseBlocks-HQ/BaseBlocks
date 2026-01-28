@@ -33,6 +33,7 @@ export const create = mutation({
       filename,
       contentType,
       size,
+      extractionStatus: "pending",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
@@ -90,6 +91,7 @@ export const createInLibrary = mutation({
       filename,
       contentType,
       size,
+      extractionStatus: "pending",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });

@@ -12,6 +12,7 @@ import {
   FolderOpen,
   Heading,
   Minus,
+  Search,
   Text,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreatePageDialog } from "@/components/dialogs";
-import { PageTreeItem } from "@/components/navigation";
+import { SortablePageTree } from "@/components/navigation";
 import { getDisplayDomain } from "@/lib/utils";
 import type { PageListItem, BlockType } from "@/types";
 
@@ -117,17 +118,14 @@ export function EditorSidebar({
               </div>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {rootPages.map((page) => (
-                    <PageTreeItem
-                      key={page._id}
-                      page={page}
-                      allPages={pages}
-                      selectedPageId={selectedPageId}
-                      siteId={site._id}
-                      defaultPageId={site.defaultPageId}
-                      onSelect={handleSelectPage}
-                    />
-                  ))}
+                  <SortablePageTree
+                    pages={rootPages}
+                    allPages={pages}
+                    selectedPageId={selectedPageId}
+                    siteId={site._id}
+                    defaultPageId={site.defaultPageId}
+                    onSelect={handleSelectPage}
+                  />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -170,6 +168,11 @@ export function EditorSidebar({
                       icon={<FolderOpen className="h-4 w-4" />}
                       label="Document Library"
                       onClick={() => handleAddBlock("document-library")}
+                    />
+                    <BlockButton
+                      icon={<Search className="h-4 w-4" />}
+                      label="Document Search"
+                      onClick={() => handleAddBlock("search")}
                     />
                   </div>
                 ) : (
@@ -222,6 +225,8 @@ function getDefaultBlockContent(type: BlockType) {
       return { text: "", language: "typescript" };
     case "document-library":
       return { displayStyle: "list", showFolderTree: true, allowDownloads: true };
+    case "search":
+      return { placeholder: "Search documents...", maxResults: 10, showFileType: true };
     default:
       return { text: "" };
   }

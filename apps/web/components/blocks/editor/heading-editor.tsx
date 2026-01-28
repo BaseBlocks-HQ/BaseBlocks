@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
@@ -11,7 +9,6 @@ import type { HeadingContent } from "@/types";
 export function HeadingEditor({
   block,
   onUpdate,
-  onRemove,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
   const content = block.content as HeadingContent;
@@ -46,21 +43,13 @@ export function HeadingEditor({
   };
 
   return (
-    <div className="group relative">
+    <div className="relative">
       <Input
         value={localText}
         onChange={handleChange}
         className="text-xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent dark:bg-transparent"
         placeholder="Heading..."
       />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

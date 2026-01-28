@@ -11,6 +11,7 @@ export type BlockType =
   | "file"
   | "document-list"
   | "document-library"
+  | "search"
   | "embed"
   | "divider"
   | "callout"
@@ -70,6 +71,12 @@ export interface DocumentLibraryContent {
   allowDownloads?: boolean;
 }
 
+export interface SearchContent {
+  placeholder?: string;
+  maxResults?: number;
+  showFileType?: boolean;
+}
+
 // Union of all content types
 export type BlockContent =
   | HeadingContent
@@ -81,7 +88,8 @@ export type BlockContent =
   | CodeContent
   | EmbedContent
   | TableContent
-  | DocumentLibraryContent;
+  | DocumentLibraryContent
+  | SearchContent;
 
 // Block with typed content
 export interface TypedBlock<T extends BlockType = BlockType> {
@@ -109,7 +117,9 @@ export interface TypedBlock<T extends BlockType = BlockType> {
                     ? TableContent
                     : T extends "document-library"
                       ? DocumentLibraryContent
-                      : BlockContent;
+                      : T extends "search"
+                        ? SearchContent
+                        : BlockContent;
   createdAt: number;
   updatedAt: number;
 }
@@ -138,6 +148,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   file: { url: "", filename: "" },
   "document-list": {},
   "document-library": { displayStyle: "list", showFolderTree: true, allowDownloads: true },
+  search: { placeholder: "Search documents...", maxResults: 10, showFileType: true },
   embed: { url: "" },
   divider: {},
   callout: { text: "", variant: "info" },

@@ -35,6 +35,7 @@ export type {
   EmbedContent,
   TableContent,
   DocumentLibraryContent,
+  SearchContent,
   BlockContent,
   TypedBlock,
   BlockEditorProps,

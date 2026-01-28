@@ -10,6 +10,7 @@ import { DividerEditor } from "./editor/divider-editor";
 import { CalloutEditor } from "./editor/callout-editor";
 import { CodeEditor } from "./editor/code-editor";
 import { DocumentLibraryEditor } from "./editor/document-library-editor";
+import { SearchEditor } from "./editor/search-editor";
 
 // Import renderers
 import { HeadingRenderer } from "./renderer/heading-renderer";
@@ -20,6 +21,7 @@ import { CodeRenderer } from "./renderer/code-renderer";
 import { ImageRenderer } from "./renderer/image-renderer";
 import { FileRenderer } from "./renderer/file-renderer";
 import { DocumentLibraryRenderer } from "./renderer/document-library-renderer";
+import { SearchRenderer } from "./renderer/search-renderer";
 
 // Register all blocks
 registerBlock({
@@ -76,6 +78,13 @@ registerBlock({
   renderer: DocumentLibraryRenderer,
 });
 
+registerBlock({
+  type: "search",
+  label: "Document Search",
+  editor: SearchEditor,
+  renderer: SearchRenderer,
+});
+
 // Export registry functions
 export {
   registerBlock,
@@ -99,6 +108,7 @@ export {
   CalloutEditor,
   CodeEditor,
   DocumentLibraryEditor,
+  SearchEditor,
 } from "./editor";
 
 // Export individual renderers
@@ -111,6 +121,7 @@ export {
   ImageRenderer,
   FileRenderer,
   DocumentLibraryRenderer,
+  SearchRenderer,
 } from "./renderer";
 
 // Export types

@@ -109,20 +109,17 @@ export const update = mutation({
   },
 });
 
-// Reorder page
+// Reorder pages within a parent - takes ordered array of page IDs
 export const reorder = mutation({
   args: {
-    pageId: v.id("pages"),
-    newOrder: v.number(),
-    newParentId: v.optional(v.id("pages")),
+    siteId: v.id("sites"),
+    parentId: v.optional(v.id("pages")),
+    pageIds: v.array(v.id("pages")),
   },
-  handler: async (ctx, { pageId, newOrder, newParentId }) => {
+  handler: async (ctx, { siteId, parentId, pageIds }) => {
     const auth = await getAuthContext(ctx);
 
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
+    const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
     const company = await ctx.db.get(site.companyId);
@@ -130,29 +127,16 @@ export const reorder = mutation({
       throw new Error("Unauthorized");
     }
 
-    // Get siblings in new location
-    const siblings = await ctx.db
-      .query("pages")
-      .withIndex("by_parent", (q) =>
-        q.eq("siteId", page.siteId).eq("parentId", newParentId),
-      )
-      .collect();
-
-    // Update orders
-    for (const sibling of siblings) {
-      if (sibling._id === pageId) continue;
-      if (sibling.order >= newOrder) {
-        await ctx.db.patch(sibling._id, { order: sibling.order + 1 });
+    // Update order for each page based on its position in the array
+    const now = Date.now();
+    for (let i = 0; i < pageIds.length; i++) {
+      const pageId = pageIds[i];
+      if (pageId) {
+        await ctx.db.patch(pageId, { order: i, updatedAt: now });
       }
     }
 
-    await ctx.db.patch(pageId, {
-      order: newOrder,
-      parentId: newParentId,
-      updatedAt: Date.now(),
-    });
-
-    return pageId;
+    return pageIds;
   },
 });
 

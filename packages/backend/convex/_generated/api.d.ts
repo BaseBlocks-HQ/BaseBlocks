@@ -10,6 +10,7 @@
 
 import type * as access_mutations from "../access/mutations.js";
 import type * as access_queries from "../access/queries.js";
+import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as auth from "../auth.js";
 import type * as blocks_mutations from "../blocks/mutations.js";
 import type * as blocks_queries from "../blocks/queries.js";
@@ -19,6 +20,7 @@ import type * as documentFolders_mutations from "../documentFolders/mutations.js
 import type * as documentFolders_queries from "../documentFolders/queries.js";
 import type * as documentLibraries_mutations from "../documentLibraries/mutations.js";
 import type * as documentLibraries_queries from "../documentLibraries/queries.js";
+import type * as documents_internal from "../documents/internal.js";
 import type * as documents_mutations from "../documents/mutations.js";
 import type * as documents_queries from "../documents/queries.js";
 import type * as http from "../http.js";
@@ -36,6 +38,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "access/mutations": typeof access_mutations;
   "access/queries": typeof access_queries;
+  "actions/extractDocument": typeof actions_extractDocument;
   auth: typeof auth;
   "blocks/mutations": typeof blocks_mutations;
   "blocks/queries": typeof blocks_queries;
@@ -45,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   "documentFolders/queries": typeof documentFolders_queries;
   "documentLibraries/mutations": typeof documentLibraries_mutations;
   "documentLibraries/queries": typeof documentLibraries_queries;
+  "documents/internal": typeof documents_internal;
   "documents/mutations": typeof documents_mutations;
   "documents/queries": typeof documents_queries;
   http: typeof http;

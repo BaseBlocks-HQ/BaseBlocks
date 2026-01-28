@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { entityStorageClient, type UploadProgress } from "./client";
 import { useEntityAuth } from "../auth";
+import { isExtractable } from "./extraction";
 
 export interface UploadState {
   isUploading: boolean;
@@ -30,6 +31,8 @@ export function useFileUpload() {
 
   const createDocument = useMutation(api.documents.mutations.create);
   const createInLibrary = useMutation(api.documents.mutations.createInLibrary);
+  // @ts-expect-error - actions.extractDocument may not exist until Convex types are regenerated
+  const triggerExtraction = useAction(api.actions?.extractDocument?.triggerExtraction);
 
   const updateUploadState = useCallback(
     (fileId: string, update: Partial<UploadState>) => {
@@ -106,6 +109,15 @@ export function useFileUpload() {
         updateUploadState(fileId, { isUploading: false, progress: { loaded: file.size, total: file.size, percentage: 100 } });
         options.onSuccess?.(documentId);
 
+        // Trigger text extraction for supported file types (non-blocking)
+        const contentType = file.type || "application/octet-stream";
+        if (isExtractable(contentType) && triggerExtraction) {
+          // Fire and forget - extraction happens in background
+          triggerExtraction({ documentId, authToken: token }).catch((err: unknown) => {
+            console.warn("Failed to trigger extraction:", err);
+          });
+        }
+
         return documentId;
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Upload failed");
@@ -114,7 +126,7 @@ export function useFileUpload() {
         return null;
       }
     },
-    [getToken, user, createDocument, createInLibrary, updateUploadState],
+    [getToken, user, createDocument, createInLibrary, triggerExtraction, updateUploadState],
   );
 
   const uploadFiles = useCallback(
