@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
 import type { ParagraphContent } from "@/types";
@@ -12,6 +12,15 @@ export function ParagraphEditor({
 }: BlockEditorBaseProps) {
   const content = block.content as ParagraphContent;
   const [localText, setLocalText] = useState(content.text || "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
 
   const debouncedSave = useDebounceCallback(
     useCallback(
@@ -34,6 +43,10 @@ export function ParagraphEditor({
     setLocalText(content.text || "");
   }, [block._id]);
 
+  useEffect(() => {
+    autoResize();
+  }, [localText, autoResize]);
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setLocalText(newText);
@@ -44,10 +57,12 @@ export function ParagraphEditor({
   return (
     <div className="relative">
       <textarea
+        ref={textareaRef}
         value={localText}
         onChange={handleChange}
-        className="w-full min-h-[100px] resize-none border-none bg-transparent focus:outline-none"
+        className="w-full resize-none border-none bg-transparent focus:outline-none overflow-hidden"
         placeholder="Start writing..."
+        rows={1}
       />
     </div>
   );

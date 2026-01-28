@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { Id } from "@repo/backend";
-import { Download, Folder, FolderOpen, ChevronRight, Home } from "lucide-react";
+import { Download, Folder, FolderOpen, ChevronRight, Home, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { BlockRendererBaseProps } from "../types";
@@ -16,6 +16,7 @@ import {
   usePublicFolderPath,
 } from "@/components/document-library";
 import { cn } from "@/lib/utils";
+import { useMediaViewer } from "@/components/media-viewer";
 
 interface DocumentLibraryRendererProps extends BlockRendererBaseProps {
   accessToken?: string;
@@ -28,6 +29,7 @@ export function DocumentLibraryRenderer({
   const content = block.content as DocumentLibraryContent;
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const { openFile } = useMediaViewer();
 
   const libraryId = content.libraryId
     ? (content.libraryId as Id<"documentLibraries">)
@@ -71,6 +73,15 @@ export function DocumentLibraryRenderer({
     link.click();
     document.body.removeChild(link);
   }, []);
+
+  const handlePreview = useCallback((file: typeof files[number]) => {
+    openFile({
+      url: file.cdnUrl,
+      filename: file.filename,
+      contentType: file.contentType,
+      size: file.size,
+    });
+  }, [openFile]);
 
   if (!libraryId || !library) {
     return (
@@ -201,7 +212,8 @@ export function DocumentLibraryRenderer({
                 {sortedFiles.map((file) => (
                   <div
                     key={file._id}
-                    className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors"
+                    className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handlePreview(file)}
                   >
                     <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>
                       <FileIcon contentType={file.contentType} className="h-5 w-5" />
@@ -212,16 +224,34 @@ export function DocumentLibraryRenderer({
                         {formatFileSize(file.size)}
                       </p>
                     </div>
-                    {content.allowDownloads !== false && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 flex-shrink-0"
-                        onClick={() => handleDownload(file.cdnUrl, file.filename)}
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(file);
+                        }}
+                        title="Preview"
                       >
-                        <Download className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-                    )}
+                      {content.allowDownloads !== false && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(file.cdnUrl, file.filename);
+                          }}
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

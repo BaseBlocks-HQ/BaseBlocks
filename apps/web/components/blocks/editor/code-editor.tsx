@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
 import type { CodeContent } from "@/types";
@@ -12,6 +12,15 @@ export function CodeEditor({
 }: BlockEditorBaseProps) {
   const content = block.content as CodeContent;
   const [localText, setLocalText] = useState(content.text || "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
 
   const debouncedSave = useDebounceCallback(
     useCallback(
@@ -34,6 +43,10 @@ export function CodeEditor({
     setLocalText(content.text || "");
   }, [block._id]);
 
+  useEffect(() => {
+    autoResize();
+  }, [localText, autoResize]);
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setLocalText(newText);
@@ -45,11 +58,13 @@ export function CodeEditor({
     <div className="relative">
       <div className="bg-zinc-950 text-zinc-100 rounded-lg p-4 font-mono text-sm">
         <textarea
+          ref={textareaRef}
           value={localText}
           onChange={handleChange}
-          className="w-full min-h-[100px] resize-none border-none bg-transparent focus:outline-none text-zinc-100"
+          className="w-full resize-none border-none bg-transparent focus:outline-none text-zinc-100 overflow-hidden"
           placeholder="// Code here..."
           spellCheck={false}
+          rows={1}
         />
       </div>
     </div>

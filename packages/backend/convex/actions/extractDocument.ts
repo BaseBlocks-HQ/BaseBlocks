@@ -14,6 +14,17 @@ import { v } from "convex/values";
 const ENTITY_STORAGE_URL =
 	process.env.ENTITY_STORAGE_URL || "https://gregarious-koala-319.convex.site";
 
+// Type for extraction API response
+interface ExtractionApiResponse {
+	success: boolean;
+	text?: string;
+	pageCount?: number;
+	wordCount?: number;
+	charCount?: number;
+	parseTimeMs?: number;
+	error?: string;
+}
+
 // Content types that support extraction
 const EXTRACTABLE_TYPES = new Set([
 	"application/pdf",
@@ -90,7 +101,7 @@ export const extractAndUpdate = internalAction({
 				throw new Error(`Extraction API error: ${response.status} - ${errorText}`);
 			}
 
-			const result = await response.json();
+			const result = await response.json() as ExtractionApiResponse;
 
 			if (!result.success) {
 				await ctx.runMutation(internal.documents.internal.updateExtraction, {
@@ -168,5 +179,98 @@ export const triggerExtraction = action({
 		});
 
 		return { success: true, scheduled: true };
+	},
+});
+
+/**
+ * Retry extraction for a failed document
+ *
+ * Resets the status and triggers a new extraction attempt.
+ */
+export const retryExtraction = action({
+	args: {
+		documentId: v.id("documents"),
+		authToken: v.string(),
+	},
+	handler: async (ctx, { documentId, authToken }) => {
+		// Get document details
+		const document = await ctx.runQuery(internal.documents.internal.getForExtraction, {
+			documentId,
+		});
+
+		if (!document) {
+			return { success: false, error: "Document not found" };
+		}
+
+		// Only retry failed or unsupported extractions
+		if (document.extractionStatus === "completed") {
+			return { success: true, alreadyExtracted: true };
+		}
+
+		if (document.extractionStatus === "processing") {
+			return { success: false, error: "Extraction already in progress" };
+		}
+
+		// Reset the document status
+		await ctx.runMutation(internal.documents.internal.resetForRetry, {
+			documentId,
+		});
+
+		// Schedule the extraction
+		await ctx.scheduler.runAfter(0, internal.actions.extractDocument.extractAndUpdate, {
+			documentId,
+			blobId: document.blobId,
+			contentType: document.contentType,
+			filename: document.filename,
+			authToken,
+		});
+
+		return { success: true, scheduled: true };
+	},
+});
+
+/**
+ * Retry all failed extractions for a site
+ *
+ * Used for batch retry operations.
+ */
+export const retryAllFailed = action({
+	args: {
+		siteId: v.id("sites"),
+		authToken: v.string(),
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, { siteId, authToken, limit = 10 }) => {
+		// Get failed documents
+		const failedDocs = await ctx.runQuery(internal.documents.internal.getFailedExtraction, {
+			siteId,
+			limit,
+		});
+
+		if (failedDocs.length === 0) {
+			return { success: true, retriedCount: 0 };
+		}
+
+		// Schedule retry for each document
+		let retriedCount = 0;
+		for (const doc of failedDocs) {
+			// Reset status
+			await ctx.runMutation(internal.documents.internal.resetForRetry, {
+				documentId: doc._id,
+			});
+
+			// Schedule extraction with a small delay to avoid overwhelming the service
+			await ctx.scheduler.runAfter(retriedCount * 1000, internal.actions.extractDocument.extractAndUpdate, {
+				documentId: doc._id,
+				blobId: doc.blobId,
+				contentType: doc.contentType,
+				filename: doc.filename,
+				authToken,
+			});
+
+			retriedCount++;
+		}
+
+		return { success: true, retriedCount };
 	},
 });

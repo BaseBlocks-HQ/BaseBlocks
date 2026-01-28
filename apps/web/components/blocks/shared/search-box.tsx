@@ -12,12 +12,14 @@ import {
   Presentation,
   Download,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import type { Id } from "@repo/backend";
+import { useMediaViewer } from "@/components/media-viewer";
 
 // File type icon mapping
 function getFileIcon(contentType: string) {
@@ -46,14 +48,47 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// Highlight text snippet with match
+function HighlightedSnippet({
+  snippet,
+  matchStart,
+  matchEnd,
+}: {
+  snippet: string;
+  matchStart: number;
+  matchEnd: number;
+}) {
+  if (matchStart < 0 || matchEnd < 0 || matchStart >= matchEnd) {
+    return <span className="text-muted-foreground">{snippet}</span>;
+  }
+
+  const before = snippet.slice(0, matchStart);
+  const match = snippet.slice(matchStart, matchEnd);
+  const after = snippet.slice(matchEnd);
+
+  return (
+    <span className="text-muted-foreground text-xs leading-relaxed">
+      {before}
+      <mark className="bg-yellow-200 dark:bg-yellow-800 text-foreground px-0.5 rounded">
+        {match}
+      </mark>
+      {after}
+    </span>
+  );
+}
+
 interface SearchResultItem {
   _id: string;
   filename: string;
   contentType: string;
   size: number;
   cdnUrl: string;
+  blobId?: string;
   libraryId?: string;
   matchType: "content" | "filename";
+  snippet?: string | null;
+  snippetMatchStart?: number | null;
+  snippetMatchEnd?: number | null;
 }
 
 interface SearchBoxProps {
@@ -81,6 +116,7 @@ export function SearchBox({
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
+  const { openFile } = useMediaViewer();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -123,6 +159,15 @@ export function SearchBox({
     document.body.removeChild(link);
   }, []);
 
+  const handlePreview = useCallback((result: SearchResultItem) => {
+    openFile({
+      url: result.cdnUrl,
+      filename: result.filename,
+      contentType: result.contentType,
+      size: result.size,
+    });
+  }, [openFile]);
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Search input */}
@@ -147,7 +192,7 @@ export function SearchBox({
 
       {/* Floating dropdown results */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-lg shadow-lg max-h-[300px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
           {isSearching ? (
             <div className="p-4 text-center text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -158,28 +203,59 @@ export function SearchBox({
               {searchResults.map((result) => (
                 <div
                   key={result._id}
-                  className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => handlePreview(result)}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {showFileType && getFileIcon(result.contentType)}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate text-sm">{result.filename}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(result.size)}
-                        {result.matchType === "content" && (
-                          <span className="ml-2 text-primary">• Content match</span>
-                        )}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {showFileType && getFileIcon(result.contentType)}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate text-sm">{result.filename}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(result.size)}
+                          {result.matchType === "content" && (
+                            <span className="ml-2 text-primary">• Content match</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(result);
+                        }}
+                        title="Preview"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(result.cdnUrl, result.filename);
+                        }}
+                        title="Download"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDownload(result.cdnUrl, result.filename)}
-                    title="Download"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
+                  {/* Show snippet for content matches */}
+                  {result.matchType === "content" && result.snippet && (
+                    <div className="mt-2 pl-7">
+                      <HighlightedSnippet
+                        snippet={result.snippet}
+                        matchStart={result.snippetMatchStart ?? -1}
+                        matchEnd={result.snippetMatchEnd ?? -1}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

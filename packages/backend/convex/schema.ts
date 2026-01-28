@@ -140,6 +140,10 @@ export default defineSchema({
     .searchIndex("search_content", {
       searchField: "extractedText",
       filterFields: ["siteId"],
+    })
+    .searchIndex("search_filename", {
+      searchField: "filename",
+      filterFields: ["siteId"],
     }),
 
   // Access links for sharing

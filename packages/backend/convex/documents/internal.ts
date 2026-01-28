@@ -78,3 +78,36 @@ export const getPendingExtraction = internalQuery({
 			.take(limit);
 	},
 });
+
+/**
+ * Get documents with failed extraction for a site
+ */
+export const getFailedExtraction = internalQuery({
+	args: {
+		siteId: v.id("sites"),
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, { siteId, limit = 10 }) => {
+		return await ctx.db
+			.query("documents")
+			.withIndex("by_extraction_status", (q) =>
+				q.eq("siteId", siteId).eq("extractionStatus", "failed")
+			)
+			.take(limit);
+	},
+});
+
+/**
+ * Reset document extraction status to pending for retry
+ */
+export const resetForRetry = internalMutation({
+	args: {
+		documentId: v.id("documents"),
+	},
+	handler: async (ctx, { documentId }) => {
+		await ctx.db.patch(documentId, {
+			extractionStatus: "pending",
+			extractionError: undefined,
+		});
+	},
+});
