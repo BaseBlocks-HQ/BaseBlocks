@@ -23,7 +23,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEntityAuth } from "@/lib/entity-auth";
 import { api } from "@repo/backend";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { ExternalLink, Globe, Plus, Settings } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
+import { ExternalLink, Globe, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -78,9 +79,7 @@ export default function DashboardPage() {
             <span className="font-medium">{company.name}</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
+            <ModeToggle />
             <Button variant="ghost" size="sm" onClick={logout}>
               Sign Out
             </Button>

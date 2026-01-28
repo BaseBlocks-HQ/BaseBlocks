@@ -42,24 +42,29 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounceCallback } from "@/hooks/use-debounce";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import {
+  AlertTriangle,
   ArrowLeft,
   Check,
   ChevronRight,
+  Code,
   Eye,
   FileText,
   Globe,
+  Heading,
   Home,
   Loader2,
+  Minus,
   MoreHorizontal,
   Pencil,
   Plus,
-  Settings,
   Star,
+  Text,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -81,6 +86,7 @@ type PageType = {
 export default function SiteEditorPage({ params }: Props) {
   const { siteId } = use(params);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("pages");
 
   const siteData = useQuery(api.sites.queries.getWithCompany, {
     siteId: siteId as Id<"sites">,
@@ -89,6 +95,7 @@ export default function SiteEditorPage({ params }: Props) {
     siteId: siteId as Id<"sites">,
   });
   const publishSite = useMutation(api.sites.mutations.publish);
+  const createBlock = useMutation(api.blocks.mutations.create);
 
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
@@ -109,6 +116,35 @@ export default function SiteEditorPage({ params }: Props) {
 
   const handlePublish = async () => {
     await publishSite({ siteId: siteId as Id<"sites"> });
+  };
+
+  const handleAddBlock = async (
+    type: "heading" | "paragraph" | "divider" | "callout" | "code",
+  ) => {
+    if (!selectedPage) return;
+
+    const content = (() => {
+      switch (type) {
+        case "heading":
+          return { text: "New Heading", level: 2 };
+        case "paragraph":
+          return { text: "" };
+        case "divider":
+          return {};
+        case "callout":
+          return { text: "", variant: "info" };
+        case "code":
+          return { text: "", language: "typescript" };
+        default:
+          return { text: "" };
+      }
+    })();
+
+    await createBlock({
+      pageId: selectedPage._id as Id<"pages">,
+      type,
+      content,
+    });
   };
 
   return (
@@ -132,42 +168,111 @@ export default function SiteEditorPage({ params }: Props) {
             </div>
           </SidebarHeader>
 
-          <SidebarContent>
-            <SidebarGroup>
-              <div className="flex items-center justify-between px-2">
-                <SidebarGroupLabel>Pages</SidebarGroupLabel>
-                <CreatePageDialog siteId={siteId} />
-              </div>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {pages
-                    .filter((p) => !p.parentId)
-                    .sort((a, b) => a.order - b.order)
-                    .map((page) => (
-                      <PageMenuItem
-                        key={page._id}
-                        page={page}
-                        allPages={pages}
-                        selectedPageId={selectedPage?._id}
-                        onSelect={setSelectedPageId}
-                        siteId={siteId}
-                        defaultPageId={site.defaultPageId}
-                      />
-                    ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="px-2 pt-2">
+              <TabsList className="w-full">
+                <TabsTrigger value="pages" className="flex-1">Pages</TabsTrigger>
+                <TabsTrigger value="components" className="flex-1">Components</TabsTrigger>
+              </TabsList>
+            </div>
 
-          <div className="mt-auto border-t p-4 space-y-2">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              size="sm"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Site Settings
-            </Button>
+            <TabsContent value="pages" className="flex-1 mt-0">
+              <SidebarContent>
+                <SidebarGroup>
+                  <div className="flex items-center justify-between px-2">
+                    <SidebarGroupLabel>Pages</SidebarGroupLabel>
+                    <CreatePageDialog siteId={siteId} />
+                  </div>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {pages
+                        .filter((p) => !p.parentId)
+                        .sort((a, b) => a.order - b.order)
+                        .map((page) => (
+                          <PageMenuItem
+                            key={page._id}
+                            page={page}
+                            allPages={pages}
+                            selectedPageId={selectedPage?._id}
+                            onSelect={(id) => {
+                              setSelectedPageId(id);
+                              setActiveTab("components");
+                            }}
+                            siteId={siteId}
+                            defaultPageId={site.defaultPageId}
+                          />
+                        ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </SidebarContent>
+            </TabsContent>
+
+            <TabsContent value="components" className="flex-1 mt-0">
+              <SidebarContent>
+                <SidebarGroup>
+                  <SidebarGroupLabel className="px-2">Add to Page</SidebarGroupLabel>
+                  <SidebarGroupContent className="px-2">
+                    {selectedPage ? (
+                      <div className="space-y-1">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          size="sm"
+                          onClick={() => handleAddBlock("heading")}
+                        >
+                          <Heading className="h-4 w-4 mr-2" />
+                          Heading
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          size="sm"
+                          onClick={() => handleAddBlock("paragraph")}
+                        >
+                          <Text className="h-4 w-4 mr-2" />
+                          Paragraph
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          size="sm"
+                          onClick={() => handleAddBlock("callout")}
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Callout
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          size="sm"
+                          onClick={() => handleAddBlock("code")}
+                        >
+                          <Code className="h-4 w-4 mr-2" />
+                          Code
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start"
+                          size="sm"
+                          onClick={() => handleAddBlock("divider")}
+                        >
+                          <Minus className="h-4 w-4 mr-2" />
+                          Divider
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground px-2">
+                        Select a page first
+                      </p>
+                    )}
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              </SidebarContent>
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-auto border-t p-4">
             <Button
               className="w-full"
               onClick={handlePublish}
@@ -492,7 +597,6 @@ function PageEditor({ pageId }: { pageId: string }) {
   const pageData = useQuery(api.pages.queries.getWithBlocks, {
     pageId: pageId as Id<"pages">,
   });
-  const createBlock = useMutation(api.blocks.mutations.create);
   const updateBlock = useMutation(api.blocks.mutations.update);
   const removeBlock = useMutation(api.blocks.mutations.remove);
 
@@ -524,33 +628,6 @@ function PageEditor({ pageId }: { pageId: string }) {
 
   const { page, blocks } = pageData;
 
-  const handleAddBlock = async (
-    type: "heading" | "paragraph" | "divider" | "callout" | "code",
-  ) => {
-    const content = (() => {
-      switch (type) {
-        case "heading":
-          return { text: "New Heading", level: 2 };
-        case "paragraph":
-          return { text: "" };
-        case "divider":
-          return {};
-        case "callout":
-          return { text: "", variant: "info" };
-        case "code":
-          return { text: "", language: "typescript" };
-        default:
-          return { text: "" };
-      }
-    })();
-
-    await createBlock({
-      pageId: pageId as Id<"pages">,
-      type,
-      content,
-    });
-  };
-
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -571,49 +648,11 @@ function PageEditor({ pageId }: { pageId: string }) {
           />
         ))}
 
-        {/* Add Block Buttons */}
-        <div className="flex flex-wrap gap-2 pt-4 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddBlock("heading")}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Heading
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddBlock("paragraph")}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Paragraph
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddBlock("callout")}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Callout
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddBlock("code")}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Code
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddBlock("divider")}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Divider
-          </Button>
-        </div>
+        {blocks.length === 0 && (
+          <p className="text-muted-foreground text-center py-8">
+            Add components from the sidebar to get started
+          </p>
+        )}
       </div>
     </div>
   );
