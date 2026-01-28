@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEntityAuth } from "@/lib/entity-auth";
+import { useEntityAuth } from "@/lib/auth";
+import { generateSlug, SLUG_PATTERN } from "@/lib/validation";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -28,12 +29,7 @@ export default function OnboardingPage() {
 
   const handleCompanyNameChange = (value: string) => {
     setCompanyName(value);
-    // Auto-generate slug from company name
-    const generatedSlug = value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    setSlug(generatedSlug);
+    setSlug(generateSlug(value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +88,7 @@ export default function OnboardingPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase())}
                   required
-                  pattern="[a-z0-9-]+"
+                  pattern={SLUG_PATTERN}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   .baseblocks.dev

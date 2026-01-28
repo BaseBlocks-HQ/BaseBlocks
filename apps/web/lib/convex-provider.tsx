@@ -3,7 +3,7 @@
 import { ConvexProviderWithAuth } from "convex/react";
 import type { ReactNode } from "react";
 import { convex } from "./convex-client";
-import { EntityAuthProvider, useAuthFromEntityAuth } from "./entity-auth";
+import { EntityAuthProvider, useAuthFromEntityAuth } from "./auth";
 
 function ConvexProviderWithEntityAuth({ children }: { children: ReactNode }) {
   return (

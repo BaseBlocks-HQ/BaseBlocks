@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useEntityAuth } from "@/lib/entity-auth";
+import { useEntityAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useState } from "react";
 
