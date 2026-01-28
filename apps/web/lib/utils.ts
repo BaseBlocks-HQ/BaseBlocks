@@ -43,3 +43,26 @@ export function getDisplayDomain(companySlug: string): string {
   }
   return `${companySlug}.${ROOT_DOMAIN}`;
 }
+
+/**
+ * Check if we're currently within a path-based site context (/s/[subdomain]/...)
+ * Returns the subdomain if we are, null otherwise
+ */
+export function getPathBasedSubdomain(): string | null {
+  if (typeof window === "undefined") return null;
+  const match = window.location.pathname.match(/^\/s\/([^/]+)/);
+  return match?.[1] || null;
+}
+
+/**
+ * Generate an internal page link within a published site
+ * - If in path-based context: /s/company/page-slug
+ * - If in subdomain context: /page-slug
+ */
+export function getPageLink(pageSlug: string): string {
+  const pathSubdomain = getPathBasedSubdomain();
+  if (pathSubdomain) {
+    return `/s/${pathSubdomain}/${pageSlug}`;
+  }
+  return `/${pageSlug}`;
+}

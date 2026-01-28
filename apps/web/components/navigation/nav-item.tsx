@@ -6,6 +6,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { getPageLink } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
 
 interface NavItemProps {
@@ -68,7 +69,7 @@ export function NavItem({
   return (
     <>
       <Link
-        href={`/${page.slug}`}
+        href={getPageLink(page.slug)}
         className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
           isActive
             ? "bg-primary/10 text-primary font-medium"

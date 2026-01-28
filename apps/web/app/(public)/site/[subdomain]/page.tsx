@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -23,13 +24,13 @@ export default function SubdomainRootPage({ params }: Props) {
 
     if (!siteData || !siteData.defaultPage) {
       // No site or no pages - redirect to home as fallback
-      router.replace(`/home`);
+      router.replace(getPageLink("home"));
       return;
     }
 
     // Redirect to the default page
-    // Use just the slug - middleware handles the /site/subdomain rewrite
-    router.replace(`/${siteData.defaultPage.slug}`);
+    // getPageLink handles both subdomain and path-based routing
+    router.replace(getPageLink(siteData.defaultPage.slug));
   }, [siteData, subdomain, router]);
 
   // Show loading state while redirecting
