@@ -31,7 +31,6 @@ export function useFileUpload() {
 
   const createDocument = useMutation(api.documents.mutations.create);
   const createInLibrary = useMutation(api.documents.mutations.createInLibrary);
-  // @ts-expect-error - actions.extractDocument may not exist until Convex types are regenerated
   const triggerExtraction = useAction(api.actions?.extractDocument?.triggerExtraction);
 
   const updateUploadState = useCallback(
