@@ -25,9 +25,14 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
     siteId: siteId as Id<"sites">,
   });
   const publishSite = useMutation(api.sites.mutations.publish);
+  const unpublishSite = useMutation(api.sites.mutations.unpublish);
 
   const handlePublish = async () => {
     await publishSite({ siteId: siteId as Id<"sites"> });
+  };
+
+  const handleUnpublish = async () => {
+    await unpublishSite({ siteId: siteId as Id<"sites"> });
   };
 
   if (siteData === undefined || pages === undefined) {
@@ -64,6 +69,7 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
               companySlug={company.slug}
               sitePublished={site.isPublished}
               onPublish={handlePublish}
+              onUnpublish={handleUnpublish}
             />
 
             <div className="flex-1 p-8 overflow-auto">
