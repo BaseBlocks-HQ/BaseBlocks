@@ -24,7 +24,8 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ site, companySlug }: SiteCardProps) {
-  const siteUrl = getSiteUrl(companySlug, site.slug);
+  // Link to the site root - the root page will redirect to the default page
+  const siteUrl = getSiteUrl(companySlug);
 
   return (
     <Card className="hover:border-primary/50 transition-colors">
