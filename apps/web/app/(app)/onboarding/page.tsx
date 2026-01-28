@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEntityAuth } from "@/lib/auth";
 import { generateSlug, SLUG_PATTERN } from "@/lib/validation";
+import { getDisplayDomain, isVercelAppDomain } from "@/lib/utils";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -91,7 +92,7 @@ export default function OnboardingPage() {
                   pattern={SLUG_PATTERN}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  .{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
+                  {isVercelAppDomain() ? `/s/${slug || "acme"}` : `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev"}`}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">

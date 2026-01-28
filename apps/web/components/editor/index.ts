@@ -7,3 +7,8 @@ export { EditorSidebar } from "./editor-sidebar";
 export { EditorHeader } from "./editor-header";
 export { SaveIndicator } from "./save-indicator";
 export { PreviewButton } from "./preview-button";
+export {
+  EditorProvider,
+  useEditorContext,
+  useEditorContextOptional,
+} from "./editor-context";

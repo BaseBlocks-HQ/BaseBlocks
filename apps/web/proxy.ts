@@ -2,6 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 
+// Check if we're on a vercel.app domain (where wildcard subdomains don't work)
+function isVercelAppDomain(hostname: string): boolean {
+  return hostname.endsWith(".vercel.app") && !hostname.includes("---");
+}
+
 function extractSubdomain(request: NextRequest): string | null {
   const url = request.url;
   const host = request.headers.get("host") || "";
@@ -59,11 +64,38 @@ function extractSubdomain(request: NextRequest): string | null {
   return null;
 }
 
+// Extract subdomain from path-based URL (/s/[subdomain]/...)
+function extractSubdomainFromPath(pathname: string): { subdomain: string; remainingPath: string } | null {
+  const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
+  if (match?.[1]) {
+    return {
+      subdomain: match[1],
+      remainingPath: match[2] || "/",
+    };
+  }
+  return null;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
+  const hostname = host.split(":")[0] || "";
 
   // Safety net: skip Next.js internals that may still invoke proxy despite matcher
   if (pathname.startsWith("/_next")) {
+    return NextResponse.next();
+  }
+
+  // Handle path-based routing for vercel.app domains (/s/[subdomain]/...)
+  // This is a fallback since wildcard subdomains don't work on vercel.app
+  if (isVercelAppDomain(hostname)) {
+    const pathBased = extractSubdomainFromPath(pathname);
+    if (pathBased) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/site/${pathBased.subdomain}${pathBased.remainingPath === "/" ? "" : pathBased.remainingPath}`;
+      return NextResponse.rewrite(url);
+    }
+    // No path-based subdomain, continue to main app
     return NextResponse.next();
   }
 

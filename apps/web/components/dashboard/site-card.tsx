@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getSiteUrl } from "@/lib/utils";
 
 interface SiteCardProps {
   site: {
@@ -21,7 +24,7 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ site, companySlug }: SiteCardProps) {
-  const siteUrl = `https://${companySlug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/${site.slug}`;
+  const siteUrl = getSiteUrl(companySlug, site.slug);
 
   return (
     <Card className="hover:border-primary/50 transition-colors">

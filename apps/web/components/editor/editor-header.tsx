@@ -4,6 +4,7 @@ import { ChevronRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PreviewButton } from "./preview-button";
+import { getSiteUrl } from "@/lib/utils";
 import type { PageListItem } from "@/types";
 
 interface EditorHeaderProps {
@@ -40,7 +41,7 @@ export function EditorHeader({
         {sitePublished && (
           <Button variant="outline" size="sm" asChild>
             <a
-              href={`https://${companySlug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/`}
+              href={getSiteUrl(companySlug)}
               target="_blank"
               rel="noopener noreferrer"
             >

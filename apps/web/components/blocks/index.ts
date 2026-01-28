@@ -9,6 +9,7 @@ import { ParagraphEditor } from "./editor/paragraph-editor";
 import { DividerEditor } from "./editor/divider-editor";
 import { CalloutEditor } from "./editor/callout-editor";
 import { CodeEditor } from "./editor/code-editor";
+import { DocumentLibraryEditor } from "./editor/document-library-editor";
 
 // Import renderers
 import { HeadingRenderer } from "./renderer/heading-renderer";
@@ -18,6 +19,7 @@ import { CalloutRenderer } from "./renderer/callout-renderer";
 import { CodeRenderer } from "./renderer/code-renderer";
 import { ImageRenderer } from "./renderer/image-renderer";
 import { FileRenderer } from "./renderer/file-renderer";
+import { DocumentLibraryRenderer } from "./renderer/document-library-renderer";
 
 // Register all blocks
 registerBlock({
@@ -67,6 +69,13 @@ registerBlock({
   renderer: FileRenderer,
 });
 
+registerBlock({
+  type: "document-library",
+  label: "Document Library",
+  editor: DocumentLibraryEditor,
+  renderer: DocumentLibraryRenderer,
+});
+
 // Export registry functions
 export {
   registerBlock,
@@ -89,6 +98,7 @@ export {
   DividerEditor,
   CalloutEditor,
   CodeEditor,
+  DocumentLibraryEditor,
 } from "./editor";
 
 // Export individual renderers
@@ -100,6 +110,7 @@ export {
   CodeRenderer,
   ImageRenderer,
   FileRenderer,
+  DocumentLibraryRenderer,
 } from "./renderer";
 
 // Export types

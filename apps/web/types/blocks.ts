@@ -10,6 +10,7 @@ export type BlockType =
   | "image"
   | "file"
   | "document-list"
+  | "document-library"
   | "embed"
   | "divider"
   | "callout"
@@ -62,6 +63,13 @@ export interface TableContent {
   headers?: string[];
 }
 
+export interface DocumentLibraryContent {
+  libraryId?: string;
+  displayStyle?: "list" | "grid";
+  showFolderTree?: boolean;
+  allowDownloads?: boolean;
+}
+
 // Union of all content types
 export type BlockContent =
   | HeadingContent
@@ -72,7 +80,8 @@ export type BlockContent =
   | CalloutContent
   | CodeContent
   | EmbedContent
-  | TableContent;
+  | TableContent
+  | DocumentLibraryContent;
 
 // Block with typed content
 export interface TypedBlock<T extends BlockType = BlockType> {
@@ -98,7 +107,9 @@ export interface TypedBlock<T extends BlockType = BlockType> {
                   ? EmbedContent
                   : T extends "table"
                     ? TableContent
-                    : BlockContent;
+                    : T extends "document-library"
+                      ? DocumentLibraryContent
+                      : BlockContent;
   createdAt: number;
   updatedAt: number;
 }
@@ -126,6 +137,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   image: { url: "" },
   file: { url: "", filename: "" },
   "document-list": {},
+  "document-library": { displayStyle: "list", showFolderTree: true, allowDownloads: true },
   embed: { url: "" },
   divider: {},
   callout: { text: "", variant: "info" },

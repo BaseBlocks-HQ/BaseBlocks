@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Code,
+  FolderOpen,
   Globe,
   Heading,
   Minus,
@@ -27,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreatePageDialog } from "@/components/dialogs";
 import { PageTreeItem } from "@/components/navigation";
+import { getDisplayDomain } from "@/lib/utils";
 import type { PageListItem, BlockType } from "@/types";
 
 interface EditorSidebarProps {
@@ -91,7 +93,7 @@ export function EditorSidebar({
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold truncate">{site.name}</h2>
             <p className="text-xs text-muted-foreground truncate">
-              {company.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
+              {getDisplayDomain(company.slug)}
             </p>
           </div>
         </div>
@@ -171,6 +173,11 @@ export function EditorSidebar({
                       label="Divider"
                       onClick={() => handleAddBlock("divider")}
                     />
+                    <BlockButton
+                      icon={<FolderOpen className="h-4 w-4" />}
+                      label="Document Library"
+                      onClick={() => handleAddBlock("document-library")}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground px-2">
@@ -231,6 +238,8 @@ function getDefaultBlockContent(type: BlockType) {
       return { text: "", variant: "info" };
     case "code":
       return { text: "", language: "typescript" };
+    case "document-library":
+      return { displayStyle: "list", showFolderTree: true, allowDownloads: true };
     default:
       return { text: "" };
   }

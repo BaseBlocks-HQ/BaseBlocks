@@ -87,3 +87,139 @@ export const listPublic = query({
       .collect();
   },
 });
+
+// List documents in a library (authenticated)
+export const listByLibrary = query({
+  args: { libraryId: v.id("documentLibraries") },
+  handler: async (ctx, { libraryId }) => {
+    const auth = await getAuthContext(ctx);
+
+    const library = await ctx.db.get(libraryId);
+    if (!library) return [];
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site) return [];
+
+    const company = await ctx.db.get(site.companyId);
+    if (!company || company.eaOrgId !== auth.eaOrgId) {
+      throw new Error("Unauthorized");
+    }
+
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .collect();
+  },
+});
+
+// List documents in a specific folder (authenticated)
+export const listByFolder = query({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    folderId: v.optional(v.id("documentFolders")),
+  },
+  handler: async (ctx, { libraryId, folderId }) => {
+    const auth = await getAuthContext(ctx);
+
+    const library = await ctx.db.get(libraryId);
+    if (!library) return [];
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site) return [];
+
+    const company = await ctx.db.get(site.companyId);
+    if (!company || company.eaOrgId !== auth.eaOrgId) {
+      throw new Error("Unauthorized");
+    }
+
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_folder", (q) =>
+        q.eq("libraryId", libraryId).eq("folderId", folderId),
+      )
+      .collect();
+  },
+});
+
+// List documents in a library for public viewing
+export const listByLibraryPublic = query({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    accessToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { libraryId, accessToken }) => {
+    const library = await ctx.db.get(libraryId);
+    if (!library) return [];
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site || !site.isPublished) return [];
+
+    // Verify access token if provided
+    if (accessToken) {
+      const link = await ctx.db
+        .query("accessLinks")
+        .withIndex("by_token", (q) => q.eq("token", accessToken))
+        .first();
+
+      if (!link || link.siteId !== library.siteId) {
+        return [];
+      }
+
+      if (link.expiresAt && link.expiresAt < Date.now()) {
+        return [];
+      }
+
+      if (link.maxUses && link.useCount >= link.maxUses) {
+        return [];
+      }
+    }
+
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .collect();
+  },
+});
+
+// List documents in a folder for public viewing
+export const listByFolderPublic = query({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    folderId: v.optional(v.id("documentFolders")),
+    accessToken: v.optional(v.string()),
+  },
+  handler: async (ctx, { libraryId, folderId, accessToken }) => {
+    const library = await ctx.db.get(libraryId);
+    if (!library) return [];
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site || !site.isPublished) return [];
+
+    // Verify access token if provided
+    if (accessToken) {
+      const link = await ctx.db
+        .query("accessLinks")
+        .withIndex("by_token", (q) => q.eq("token", accessToken))
+        .first();
+
+      if (!link || link.siteId !== library.siteId) {
+        return [];
+      }
+
+      if (link.expiresAt && link.expiresAt < Date.now()) {
+        return [];
+      }
+
+      if (link.maxUses && link.useCount >= link.maxUses) {
+        return [];
+      }
+    }
+
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_folder", (q) =>
+        q.eq("libraryId", libraryId).eq("folderId", folderId),
+      )
+      .collect();
+  },
+});

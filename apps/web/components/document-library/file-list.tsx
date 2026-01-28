@@ -1,0 +1,110 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { FileListItem, type FileData } from "./file-list-item";
+import { RenameDialog } from "./rename-dialog";
+import { DeleteConfirmDialog } from "./delete-confirm-dialog";
+import { EmptyState } from "./empty-state";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+
+interface FileListProps {
+  files: FileData[];
+  onDownload: (file: FileData) => void;
+  onRename: (fileId: string, newName: string) => Promise<void>;
+  onDelete: (fileId: string) => Promise<void>;
+  onMove?: (fileId: string, folderId: string | null) => Promise<void>;
+  isReadOnly?: boolean;
+  className?: string;
+}
+
+export function FileList({
+  files,
+  onDownload,
+  onRename,
+  onDelete,
+  onMove,
+  isReadOnly = false,
+  className,
+}: FileListProps) {
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameFile, setRenameFile] = useState<FileData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteFile, setDeleteFile] = useState<FileData | null>(null);
+
+  const handleRename = useCallback((file: FileData) => {
+    setRenameFile(file);
+    setRenameDialogOpen(true);
+  }, []);
+
+  const handleDelete = useCallback((file: FileData) => {
+    setDeleteFile(file);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleDownload = useCallback((file: FileData) => {
+    // Open download URL in new tab
+    window.open(file.cdnUrl, "_blank");
+    onDownload(file);
+  }, [onDownload]);
+
+  if (files.length === 0) {
+    return <EmptyState type="files" className={className} />;
+  }
+
+  // Sort files by name
+  const sortedFiles = [...files].sort((a, b) =>
+    a.filename.localeCompare(b.filename),
+  );
+
+  return (
+    <>
+      <ScrollArea className={cn("h-full", className)}>
+        <div className="space-y-1 py-2">
+          {sortedFiles.map((file) => (
+            <FileListItem
+              key={file._id}
+              file={file}
+              onDownload={handleDownload}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              isReadOnly={isReadOnly}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Rename dialog */}
+      {renameFile && (
+        <RenameDialog
+          type="file"
+          currentName={renameFile.filename}
+          open={renameDialogOpen}
+          onOpenChange={(open) => {
+            setRenameDialogOpen(open);
+            if (!open) setRenameFile(null);
+          }}
+          onSubmit={async (newName) => {
+            await onRename(renameFile._id, newName);
+          }}
+        />
+      )}
+
+      {/* Delete confirmation dialog */}
+      {deleteFile && (
+        <DeleteConfirmDialog
+          type="file"
+          name={deleteFile.filename}
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+            if (!open) setDeleteFile(null);
+          }}
+          onConfirm={async () => {
+            await onDelete(deleteFile._id);
+          }}
+        />
+      )}
+    </>
+  );
+}

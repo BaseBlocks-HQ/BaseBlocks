@@ -9,6 +9,7 @@ import { EditorSkeleton } from "@/components/skeletons";
 import { EditorSidebar } from "./editor-sidebar";
 import { EditorHeader } from "./editor-header";
 import { PageEditor } from "./page-editor";
+import { EditorProvider } from "./editor-context";
 
 interface SiteEditorProps {
   siteId: string;
@@ -42,35 +43,37 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
     : pages[0];
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <EditorSidebar
-          site={site}
-          company={company}
-          pages={pages}
-          selectedPageId={selectedPage?._id}
-          onSelectPage={setSelectedPageId}
-        />
-
-        <main className="flex-1 flex flex-col">
-          <EditorHeader
-            selectedPage={selectedPage}
-            isDefault={site.defaultPageId === selectedPage?._id}
-            companySlug={company.slug}
-            sitePublished={site.isPublished}
+    <EditorProvider siteId={siteId as Id<"sites">}>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <EditorSidebar
+            site={site}
+            company={company}
+            pages={pages}
+            selectedPageId={selectedPage?._id}
+            onSelectPage={setSelectedPageId}
           />
 
-          <div className="flex-1 p-8 overflow-auto">
-            {selectedPage ? (
-              <PageEditor pageId={selectedPage._id} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Select a page to edit
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+          <main className="flex-1 flex flex-col">
+            <EditorHeader
+              selectedPage={selectedPage}
+              isDefault={site.defaultPageId === selectedPage?._id}
+              companySlug={company.slug}
+              sitePublished={site.isPublished}
+            />
+
+            <div className="flex-1 p-8 overflow-auto">
+              {selectedPage ? (
+                <PageEditor pageId={selectedPage._id} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Select a page to edit
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </EditorProvider>
   );
 }

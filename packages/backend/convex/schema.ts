@@ -66,6 +66,7 @@ export default defineSchema({
       v.literal("image"),
       v.literal("file"),
       v.literal("document-list"),
+      v.literal("document-library"),
       v.literal("embed"),
       v.literal("divider"),
       v.literal("callout"),
@@ -78,9 +79,36 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_page", ["pageId"]),
 
+  // Document Libraries - organized file repositories
+  documentLibraries: defineTable({
+    siteId: v.id("sites"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_site", ["siteId"]),
+
+  // Folder hierarchy within libraries
+  documentFolders: defineTable({
+    libraryId: v.id("documentLibraries"),
+    parentId: v.optional(v.id("documentFolders")), // null = root level
+    name: v.string(),
+    order: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_library", ["libraryId"])
+    .index("by_parent", ["libraryId", "parentId"]),
+
   // Files/Documents uploaded
   documents: defineTable({
     siteId: v.id("sites"),
+    // Library organization (optional - for document-library blocks)
+    libraryId: v.optional(v.id("documentLibraries")),
+    folderId: v.optional(v.id("documentFolders")), // null = root of library
     blobId: v.string(), // Entity Storage blob ID
     cdnUrl: v.string(), // CDN URL for download
     filename: v.string(),
@@ -94,6 +122,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
+    .index("by_library", ["libraryId"])
+    .index("by_folder", ["libraryId", "folderId"])
     .searchIndex("search_content", {
       searchField: "extractedText",
       filterFields: ["siteId"],
