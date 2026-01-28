@@ -50,7 +50,7 @@ export function HeadingEditor({
       <Input
         value={localText}
         onChange={handleChange}
-        className="text-xl font-semibold border-none shadow-none px-0 focus-visible:ring-0"
+        className="text-xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent dark:bg-transparent"
         placeholder="Heading..."
       />
       <Button

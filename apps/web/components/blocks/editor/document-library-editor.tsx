@@ -82,7 +82,12 @@ export function DocumentLibraryEditor({
   const folderPath = useFolderPath(folderId);
 
   // File upload
-  const { uploadFiles, uploadStates, clearUploadState } = useFileUpload();
+  const { uploadFiles, uploadStates } = useFileUpload();
+
+  // Filter to only show uploads that are in progress
+  const activeUploads = Object.fromEntries(
+    Object.entries(uploadStates).filter(([, state]) => state.isUploading)
+  );
 
   // Select library
   const handleSelectLibrary = useCallback(
@@ -373,13 +378,10 @@ export function DocumentLibraryEditor({
               <DropZone onFilesAccepted={handleFilesAccepted} className="min-h-[80px]" />
             </div>
 
-            {/* Upload progress */}
-            {Object.keys(uploadStates).length > 0 && (
+            {/* Upload progress - only show while uploading */}
+            {Object.keys(activeUploads).length > 0 && (
               <div className="px-4 py-2 border-b bg-muted/30">
-                <UploadProgressList
-                  uploads={uploadStates}
-                  onDismiss={clearUploadState}
-                />
+                <UploadProgressList uploads={activeUploads} />
               </div>
             )}
 

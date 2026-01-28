@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -24,6 +24,11 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
   const pages = useQuery(api.pages.queries.list, {
     siteId: siteId as Id<"sites">,
   });
+  const publishSite = useMutation(api.sites.mutations.publish);
+
+  const handlePublish = async () => {
+    await publishSite({ siteId: siteId as Id<"sites"> });
+  };
 
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
@@ -56,10 +61,9 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
 
           <main className="flex-1 flex flex-col">
             <EditorHeader
-              selectedPage={selectedPage}
-              isDefault={site.defaultPageId === selectedPage?._id}
               companySlug={company.slug}
               sitePublished={site.isPublished}
+              onPublish={handlePublish}
             />
 
             <div className="flex-1 p-8 overflow-auto">

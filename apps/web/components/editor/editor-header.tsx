@@ -1,44 +1,30 @@
 "use client";
 
-import { ChevronRight, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { PreviewButton } from "./preview-button";
 import { getSiteUrl } from "@/lib/utils";
-import type { PageListItem } from "@/types";
 
 interface EditorHeaderProps {
-  selectedPage?: PageListItem;
-  isDefault?: boolean;
   companySlug: string;
   sitePublished: boolean;
+  onPublish: () => void;
 }
 
 export function EditorHeader({
-  selectedPage,
-  isDefault,
   companySlug,
   sitePublished,
+  onPublish,
 }: EditorHeaderProps) {
   return (
     <header className="border-b h-14 flex items-center justify-between px-4">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
-        {selectedPage && (
-          <>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{selectedPage.title}</span>
-            {isDefault && (
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                Default
-              </span>
-            )}
-          </>
-        )}
       </div>
       <div className="flex items-center gap-2">
         <PreviewButton companySlug={companySlug} />
-        {sitePublished && (
+        {sitePublished ? (
           <Button variant="outline" size="sm" asChild>
             <a
               href={getSiteUrl(companySlug)}
@@ -48,6 +34,11 @@ export function EditorHeader({
               <Globe className="h-4 w-4 mr-1.5" />
               View Live
             </a>
+          </Button>
+        ) : (
+          <Button size="sm" onClick={onPublish}>
+            <Globe className="h-4 w-4 mr-1.5" />
+            Publish
           </Button>
         )}
       </div>

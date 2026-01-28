@@ -48,26 +48,29 @@ export function PageTreeItem({
   return (
     <>
       <SidebarMenuItem className="group/page">
-        <div className="flex items-center w-full">
-          <SidebarMenuButton
-            isActive={selectedPageId === page._id}
-            onClick={() => onSelect(page._id)}
-            className="flex-1"
-            style={{ paddingLeft: `${(depth + 1) * 12}px` }}
-          >
-            {isDefault ? (
-              <Home className="h-4 w-4 text-primary" />
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-            <span className="truncate">{page.title}</span>
-          </SidebarMenuButton>
+        <SidebarMenuButton
+          isActive={selectedPageId === page._id}
+          onClick={() => onSelect(page._id)}
+          className="w-full relative pr-8"
+          style={{ paddingLeft: `${(depth + 1) * 12}px` }}
+        >
+          {isDefault ? (
+            <Home className="h-4 w-4 text-primary" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+          <span className="truncate">{page.title}</span>
+          {isDefault && (
+            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">
+              Default
+            </span>
+          )}
           <PageActionsMenu
             page={page}
             siteId={siteId}
             isDefault={isDefault}
           />
-        </div>
+        </SidebarMenuButton>
       </SidebarMenuItem>
       {children.map((child) => (
         <PageTreeItem
@@ -119,7 +122,8 @@ function PageActionsMenu({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 opacity-0 group-hover/page:opacity-100 transition-opacity"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover/page:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>

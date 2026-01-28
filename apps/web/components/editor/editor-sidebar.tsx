@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Code,
   FolderOpen,
-  Globe,
   Heading,
   Minus,
   Text,
@@ -54,12 +53,7 @@ export function EditorSidebar({
   onSelectPage,
 }: EditorSidebarProps) {
   const [activeTab, setActiveTab] = useState("pages");
-  const publishSite = useMutation(api.sites.mutations.publish);
   const createBlock = useMutation(api.blocks.mutations.create);
-
-  const handlePublish = async () => {
-    await publishSite({ siteId: site._id as Id<"sites"> });
-  };
 
   const handleAddBlock = async (type: BlockType) => {
     if (!selectedPageId) return;
@@ -74,7 +68,6 @@ export function EditorSidebar({
 
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);
-    setActiveTab("components");
   };
 
   const rootPages = pages
@@ -189,17 +182,6 @@ export function EditorSidebar({
           </SidebarContent>
         </TabsContent>
       </Tabs>
-
-      <div className="mt-auto border-t p-4">
-        <Button
-          className="w-full"
-          onClick={handlePublish}
-          disabled={site.isPublished}
-        >
-          <Globe className="h-4 w-4 mr-2" />
-          {site.isPublished ? "Published" : "Publish Site"}
-        </Button>
-      </div>
     </Sidebar>
   );
 }
