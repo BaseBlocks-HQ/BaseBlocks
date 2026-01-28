@@ -91,7 +91,7 @@ export function EditorSidebar({
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold truncate">{site.name}</h2>
             <p className="text-xs text-muted-foreground truncate">
-              {company.slug}.baseblocks.dev
+              {company.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
             </p>
           </div>
         </div>

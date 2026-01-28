@@ -91,7 +91,7 @@ export default function OnboardingPage() {
                   pattern={SLUG_PATTERN}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  .baseblocks.dev
+                  .{process.env.NEXT_PUBLIC_ROOT_DOMAIN}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">

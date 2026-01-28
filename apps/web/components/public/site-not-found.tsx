@@ -11,7 +11,7 @@ export function SiteNotFound({ subdomain }: SiteNotFoundProps) {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Site Not Found</h1>
         <p className="text-muted-foreground mb-8">
-          The site at <strong>{subdomain}.baseblocks.dev</strong> doesn&apos;t
+          The site at <strong>{subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN}</strong> doesn&apos;t
           exist.
         </p>
         <Button asChild>

@@ -40,7 +40,7 @@ export function EditorHeader({
         {sitePublished && (
           <Button variant="outline" size="sm" asChild>
             <a
-              href={`https://${companySlug}.baseblocks.dev/`}
+              href={`https://${companySlug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/`}
               target="_blank"
               rel="noopener noreferrer"
             >

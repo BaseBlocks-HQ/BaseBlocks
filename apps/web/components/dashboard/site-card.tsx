@@ -21,7 +21,7 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ site, companySlug }: SiteCardProps) {
-  const siteUrl = `https://${companySlug}.baseblocks.dev/${site.slug}`;
+  const siteUrl = `https://${companySlug}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/${site.slug}`;
 
   return (
     <Card className="hover:border-primary/50 transition-colors">
