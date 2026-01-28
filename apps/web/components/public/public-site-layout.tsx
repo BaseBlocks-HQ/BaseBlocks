@@ -11,7 +11,7 @@ import type { PageWithChildren } from "@/types";
 
 interface PublicSiteLayoutProps {
   site: {
-    _id: string;
+    _id: Id<"sites">;
     name: string;
     slug: string;
     settings: { navigationStyle: string; headerType: string };
@@ -31,11 +31,11 @@ export function PublicSiteLayout({
   pageSlug,
 }: PublicSiteLayoutProps) {
   const pages = useQuery(api.pages.queries.getTree, {
-    siteId: site._id as Id<"sites">,
+    siteId: site._id,
   });
 
   const currentPage = useQuery(api.pages.queries.getBySlug, {
-    siteId: site._id as Id<"sites">,
+    siteId: site._id,
     slug: pageSlug,
   });
 

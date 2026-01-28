@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { Id } from "@repo/backend";
 
 interface PublicSiteContextValue {
-  siteId: string;
+  siteId: Id<"sites">;
   companySlug: string;
 }
 
@@ -15,7 +16,7 @@ export function PublicSiteProvider({
   companySlug,
 }: {
   children: ReactNode;
-  siteId: string;
+  siteId: Id<"sites">;
   companySlug: string;
 }) {
   return (

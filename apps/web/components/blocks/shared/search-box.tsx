@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import type { Id } from "@repo/backend";
 
 // File type icon mapping
 function getFileIcon(contentType: string) {
@@ -56,7 +57,7 @@ interface SearchResultItem {
 }
 
 interface SearchBoxProps {
-  siteId: string;
+  siteId: Id<"sites">;
   placeholder?: string;
   maxResults?: number;
   showFileType?: boolean;
