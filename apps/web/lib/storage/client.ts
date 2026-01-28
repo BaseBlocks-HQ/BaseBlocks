@@ -36,11 +36,6 @@ export class EntityStorageClient {
     accessToken: string,
     onProgress?: (progress: UploadProgress) => void,
   ): Promise<UploadResult> {
-    // Create FormData with the file
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("path", path);
-
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
@@ -54,16 +49,36 @@ export class EntityStorageClient {
         }
       });
 
-      xhr.addEventListener("load", () => {
+      xhr.addEventListener("load", async () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const response = JSON.parse(xhr.responseText);
-            resolve({
-              blobId: response.blobId,
-              cdnUrl: response.cdnUrl || `${this.siteUrl}/fs/${response.blobId}`,
+            const blobId = response.blobId;
+
+            // Commit the file to make it accessible via path
+            const commitResponse = await fetch(`${this.siteUrl}/fs/commit`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ blobId, path }),
             });
-          } catch {
-            reject(new Error("Invalid response from storage server"));
+
+            if (!commitResponse.ok) {
+              const commitError = await commitResponse.json().catch(() => ({}));
+              reject(new Error(commitError.error || `Commit failed: ${commitResponse.status}`));
+              return;
+            }
+
+            // Use /fs/download endpoint which sets proper Content-Disposition header with filename
+            const cdnUrl = `${this.siteUrl}/fs/download?path=${encodeURIComponent(path)}`;
+            resolve({
+              blobId,
+              cdnUrl,
+            });
+          } catch (err) {
+            reject(err instanceof Error ? err : new Error("Invalid response from storage server"));
           }
         } else {
           try {
@@ -85,7 +100,9 @@ export class EntityStorageClient {
 
       xhr.open("POST", `${this.siteUrl}/fs/upload`);
       xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-      xhr.send(formData);
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      // Send raw file bytes, not FormData - ConvexFS streams body directly to storage
+      xhr.send(file);
     });
   }
 
@@ -106,7 +123,7 @@ export class EntityStorageClient {
    * Get the download URL for a blob
    */
   getDownloadUrl(blobId: string): string {
-    return `${this.siteUrl}/fs/${blobId}`;
+    return `${this.siteUrl}/fs/blobs/${blobId}`;
   }
 }
 
