@@ -186,6 +186,13 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [moveBlockMutation],
   );
 
+  // Handle click on editor background to deselect
+  // Sections/blocks call stopPropagation(), so this only fires for background clicks
+  const handleEditorClick = useCallback(() => {
+    clearSelection();
+    onSelectionChange?.(null);
+  }, [clearSelection, onSelectionChange]);
+
   if (pageData === undefined || sectionsData === undefined) {
     return <Skeleton className="h-64 w-full" />;
   }
@@ -195,13 +202,14 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-32">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-full w-full" onClick={handleEditorClick}>
+      <div className="max-w-4xl mx-auto relative">
+        <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">{pageData.title}</h1>
         <SaveIndicator status={status} />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3 pb-32">
         {sections.length > 0 ? (
           <DndProvider items={sectionIds} onDragEnd={handleSectionDragEnd}>
             {sections.map((section) => (
@@ -241,7 +249,10 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
             ))}
           </DndProvider>
         ) : (
-          <div className="text-center py-12 border border-dashed rounded-lg bg-muted/20">
+          <div
+            className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
+            onClick={(e) => e.stopPropagation()}
+          >
             <p className="text-muted-foreground text-sm mb-3">
               Add a section to get started
             </p>
@@ -265,6 +276,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { DocumentLibraryContent } from "@/types";
+import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
 import {
   ChevronRight,
@@ -25,15 +25,15 @@ import {
 import { useCallback, useState } from "react";
 import type { BlockRendererBaseProps } from "../types";
 
-interface DocumentLibraryRendererProps extends BlockRendererBaseProps {
+interface LibraryRendererProps extends BlockRendererBaseProps {
   accessToken?: string;
 }
 
-export function DocumentLibraryRenderer({
+export function LibraryRenderer({
   block,
   accessToken,
-}: DocumentLibraryRendererProps) {
-  const content = block.content as DocumentLibraryContent;
+}: LibraryRendererProps) {
+  const content = block.content as LibraryContent;
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
@@ -98,7 +98,7 @@ export function DocumentLibraryRenderer({
   if (!libraryId || !library) {
     return (
       <div className="border rounded-lg p-8 text-center text-muted-foreground">
-        No document library configured
+        No library configured
       </div>
     );
   }

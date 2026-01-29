@@ -9,6 +9,6 @@ export { CalloutRenderer } from "./callout-renderer";
 export { CodeRenderer } from "./code-renderer";
 export { ImageRenderer } from "./image-renderer";
 export { FileRenderer } from "./file-renderer";
-export { DocumentLibraryRenderer } from "./document-library-renderer";
+export { LibraryRenderer } from "./library-renderer";
 export { SearchRenderer } from "./search-renderer";
 export { QuicklinksRenderer } from "./quicklinks-renderer";

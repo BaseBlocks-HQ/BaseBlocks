@@ -35,18 +35,19 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
-import type { DocumentLibraryContent } from "@/types";
+import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
 import { Plus, Settings2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { BlockEditorBaseProps } from "../types";
 
-export function DocumentLibraryEditor({
+export function LibraryEditor({
   block,
+  isSelected,
   onUpdate,
 }: BlockEditorBaseProps) {
-  const content = block.content as DocumentLibraryContent;
+  const content = block.content as LibraryContent;
   const { siteId } = useEditorContext();
   const { openFile } = useMediaViewer();
 
@@ -226,7 +227,7 @@ export function DocumentLibraryEditor({
 
   // Settings update
   const handleSettingsChange = useCallback(
-    (key: keyof DocumentLibraryContent, value: boolean | string) => {
+    (key: keyof LibraryContent, value: boolean | string) => {
       onUpdate({ ...content, [key]: value });
     },
     [content, onUpdate],
@@ -240,10 +241,9 @@ export function DocumentLibraryEditor({
   // Render library selector when no library is selected
   if (!content.libraryId) {
     return (
-      <div className="relative">
-        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-medium">Document Library</h3>
+            <h3 className="text-lg font-medium">Library</h3>
             <p className="text-sm text-muted-foreground">
               Select an existing library or create a new one.
             </p>
@@ -288,7 +288,6 @@ export function DocumentLibraryEditor({
               </Button>
             </div>
           </div>
-        </div>
       </div>
     );
   }
@@ -297,13 +296,12 @@ export function DocumentLibraryEditor({
   const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
   return (
-    <div className="relative">
-      <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
           <div className="flex items-center gap-3">
             <span className="font-medium">
-              {currentLibrary?.name || "Document Library"}
+              {currentLibrary?.name || "Library"}
             </span>
             <Breadcrumbs
               items={folderPath.map((f) => ({ id: f._id, name: f.name }))}
@@ -414,7 +412,6 @@ export function DocumentLibraryEditor({
             </div>
           </div>
         </DropZone>
-      </div>
     </div>
   );
 }

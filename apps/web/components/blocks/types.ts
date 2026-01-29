@@ -26,6 +26,7 @@ export interface BlockData {
 // Block editor props
 export interface BlockEditorBaseProps {
   block: BlockData;
+  isSelected?: boolean;
   onUpdate: (content: BlockContent) => Promise<unknown> | void;
   onRemove?: () => Promise<unknown> | void;
   onSaveStatusChange?: (status: SaveStatus) => void;

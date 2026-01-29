@@ -23,7 +23,7 @@ export interface UploadOptions {
 }
 
 /**
- * Hook for uploading files to document library
+ * Hook for uploading files to Libraryry
  */
 export function useFileUpload() {
   const { getToken, user } = useEntityAuth();

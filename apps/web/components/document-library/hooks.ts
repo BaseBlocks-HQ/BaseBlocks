@@ -4,7 +4,7 @@ import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 
-// Document Library CRUD operations
+// Libraryry CRUD operations
 export function useDocumentLibrary(siteId: Id<"sites">) {
   const libraries = useQuery(api.documentLibraries.queries.list, { siteId });
 

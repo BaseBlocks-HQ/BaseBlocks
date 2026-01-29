@@ -4,11 +4,6 @@ import { CreatePageDialog } from "@/components/dialogs";
 import { SortablePageTree } from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -24,7 +19,6 @@ import type { BlockType, PageListItem, SectionLayout } from "@/types";
 import {
   AlertTriangle,
   ArrowLeft,
-  ChevronDown,
   Code,
   Columns3,
   FolderOpen,
@@ -86,18 +80,18 @@ const BLOCK_ITEMS: Array<{
     icon: <MoveVertical className="h-4 w-4" />,
   },
   {
-    type: "document-library",
-    label: "Document Library",
+    type: "library",
+    label: "Library",
     icon: <FolderOpen className="h-4 w-4" />,
   },
   {
     type: "search",
-    label: "Document Search",
+    label: "Search",
     icon: <Search className="h-4 w-4" />,
   },
   {
     type: "quicklinks",
-    label: "Quick Links",
+    label: "Quicklinks",
     icon: <Link2 className="h-4 w-4" />,
   },
 ];
@@ -113,8 +107,6 @@ export function EditorSidebar({
   onAddBlock,
 }: EditorSidebarProps) {
   const [activeTab, setActiveTab] = useState("pages");
-  const [sectionsOpen, setSectionsOpen] = useState(true);
-  const [blocksOpen, setBlocksOpen] = useState(true);
 
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);
@@ -184,86 +176,53 @@ export function EditorSidebar({
         <TabsContent value="components" className="flex-1 mt-0 overflow-auto">
           <SidebarContent>
             {selectedPageId ? (
-              <>
-                {/* Sections */}
-                <Collapsible
-                  open={sectionsOpen}
-                  onOpenChange={setSectionsOpen}
-                  className="border-b"
-                >
-                  <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between px-4 py-2 hover:bg-muted/50 cursor-pointer">
-                      <span className="text-sm font-medium">Sections</span>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          sectionsOpen ? "" : "-rotate-90"
-                        }`}
-                      />
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-2 pb-3 space-y-1">
-                      <p className="text-xs text-muted-foreground px-2 mb-2">
-                        Layout containers for your content
-                      </p>
-                      {SECTION_TYPES.map((sectionType) => (
+              <div className="p-3 space-y-4">
+                {/* Sections - 3 per row with labels below icon */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
+                    Sections
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {SECTION_TYPES.map((sectionType) => (
+                      <Button
+                        key={sectionType.type}
+                        variant="outline"
+                        className="h-auto w-full flex-col gap-1 py-2 px-1 overflow-hidden"
+                        onClick={() => onAddSection?.(sectionType.type)}
+                      >
+                        {SECTION_ICONS[sectionType.type]}
+                        <span className="text-[10px] w-full text-center truncate">{sectionType.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Blocks - 3 per row with labels below icon */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
+                    Blocks
+                  </p>
+                  {selectedSlotId ? (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {BLOCK_ITEMS.map((item) => (
                         <Button
-                          key={sectionType.type}
-                          variant="ghost"
-                          className="w-full justify-start"
-                          size="sm"
-                          onClick={() => onAddSection?.(sectionType.type)}
+                          key={item.type}
+                          variant="outline"
+                          className="h-auto w-full flex-col gap-1 py-2 px-1 overflow-hidden"
+                          onClick={() => onAddBlock?.(item.type)}
                         >
-                          {SECTION_ICONS[sectionType.type]}
-                          <span className="ml-2">{sectionType.label}</span>
+                          {item.icon}
+                          <span className="text-[10px] w-full text-center truncate">{item.label}</span>
                         </Button>
                       ))}
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                {/* Blocks */}
-                <Collapsible open={blocksOpen} onOpenChange={setBlocksOpen}>
-                  <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between px-4 py-2 hover:bg-muted/50 cursor-pointer">
-                      <span className="text-sm font-medium">Blocks</span>
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          blocksOpen ? "" : "-rotate-90"
-                        }`}
-                      />
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-2 pb-3 space-y-1">
-                      {selectedSlotId ? (
-                        <>
-                          <p className="text-xs text-muted-foreground px-2 mb-2">
-                            Click to add to selected slot
-                          </p>
-                          {BLOCK_ITEMS.map((item) => (
-                            <Button
-                              key={item.type}
-                              variant="ghost"
-                              className="w-full justify-start"
-                              size="sm"
-                              onClick={() => onAddBlock?.(item.type)}
-                            >
-                              {item.icon}
-                              <span className="ml-2">{item.label}</span>
-                            </Button>
-                          ))}
-                        </>
-                      ) : (
-                        <p className="text-xs text-muted-foreground px-2">
-                          Add a section first, then click on a slot to add
-                          blocks
-                        </p>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground px-1">
+                      Select a slot to add blocks
+                    </p>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="p-4">
                 <p className="text-sm text-muted-foreground">

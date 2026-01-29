@@ -8,7 +8,7 @@ const blockTypes = v.union(
   v.literal("image"),
   v.literal("file"),
   v.literal("document-list"),
-  v.literal("document-library"),
+  v.literal("library"),
   v.literal("search"),
   v.literal("embed"),
   v.literal("divider"),

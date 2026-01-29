@@ -14,7 +14,11 @@ const SPACER_HEIGHTS = {
   xlarge: { value: "h-32", label: "XL", pixels: "128px" },
 } as const;
 
-export function SpacerEditor({ block, onUpdate }: BlockEditorBaseProps) {
+export function SpacerEditor({
+  block,
+  isSelected,
+  onUpdate,
+}: BlockEditorBaseProps) {
   const content = block.content as SpacerContent;
   const [height, setHeight] = useState<SpacerContent["height"]>(
     content.height || "medium",

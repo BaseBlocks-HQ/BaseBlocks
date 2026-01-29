@@ -61,21 +61,24 @@ export function SectionRenderer({
         "group/section relative rounded-md transition-colors",
         // Subtle left border for selection instead of ring (no layout shift)
         isSelected
-          ? "border-l-2 border-l-primary bg-muted/20"
-          : "border-l-2 border-l-transparent hover:bg-muted/10",
+          ? "border-l-2 border-l-primary bg-muted/30"
+          : "border-l-2 border-l-transparent hover:bg-muted/20",
         isDragging && "ring-2 ring-primary/30",
       )}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onSelectSection();
-        }
+        e.stopPropagation();
+        onSelectSection();
       }}
     >
-      {/* Section toolbar - compact, left edge */}
+      {/* Section toolbar - compact, left edge. Hidden when a block is selected (contextual controls) */}
       <div
         className={cn(
           "absolute -left-8 top-1 flex flex-col gap-0.5",
-          "opacity-0 group-hover/section:opacity-100 transition-opacity",
+          "transition-opacity",
+          // Only show when hovering section AND no block is selected
+          selectedBlockId
+            ? "opacity-0 pointer-events-none"
+            : "opacity-0 group-hover/section:opacity-100",
         )}
       >
         <div

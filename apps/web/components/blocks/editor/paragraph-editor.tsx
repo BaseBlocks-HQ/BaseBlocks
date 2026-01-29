@@ -7,6 +7,7 @@ import type { BlockEditorBaseProps } from "../types";
 
 export function ParagraphEditor({
   block,
+  isSelected,
   onUpdate,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
@@ -55,7 +56,7 @@ export function ParagraphEditor({
   };
 
   return (
-    <div className="relative">
+    <div className="rounded-md px-2 py-1 -mx-2 -my-1 transition-colors hover:bg-muted/50">
       <textarea
         ref={textareaRef}
         value={localText}

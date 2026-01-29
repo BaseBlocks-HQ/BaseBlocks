@@ -13,7 +13,7 @@ export function EmptyState({ type, className }: EmptyStateProps) {
     library: {
       icon: FolderOpen,
       title: "No libraries yet",
-      description: "Create a document library to start organizing your files.",
+      description: "Create a Libraryry to start organizing your files.",
     },
     folder: {
       icon: FolderOpen,

@@ -66,7 +66,7 @@ export default defineSchema({
       v.literal("image"),
       v.literal("file"),
       v.literal("document-list"),
-      v.literal("document-library"),
+      v.literal("library"),
       v.literal("search"),
       v.literal("embed"),
       v.literal("divider"),
@@ -106,7 +106,7 @@ export default defineSchema({
               v.literal("image"),
               v.literal("file"),
               v.literal("document-list"),
-              v.literal("document-library"),
+              v.literal("library"),
               v.literal("search"),
               v.literal("embed"),
               v.literal("divider"),
@@ -132,7 +132,7 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_page", ["pageId"]),
 
-  // Document Libraries - organized file repositories
+  // Libraryries - organized file repositories
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
@@ -159,7 +159,7 @@ export default defineSchema({
   // Files/Documents uploaded
   documents: defineTable({
     siteId: v.id("sites"),
-    // Library organization (optional - for document-library blocks)
+    // Library organization (optional - for library blocks)
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")), // null = root of library
     blobId: v.string(), // Entity Storage blob ID

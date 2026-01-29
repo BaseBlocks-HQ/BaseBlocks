@@ -218,14 +218,14 @@ function SortablePageItem({
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group/page",
+          "group/page relative",
           isDragging && "opacity-50 ring-2 ring-primary rounded-md",
         )}
       >
         <SidebarMenuButton
           isActive={selectedPageId === page._id}
           onClick={() => onSelect(page._id)}
-          className="w-full relative pr-8"
+          className="w-full pr-8"
           style={{ paddingLeft: `${(depth + 1) * 12 + 20}px` }}
         >
           {/* Drag handle */}
@@ -250,8 +250,8 @@ function SortablePageItem({
               Default
             </span>
           )}
-          <PageActionsMenu page={page} siteId={siteId} isDefault={isDefault} />
         </SidebarMenuButton>
+        <PageActionsMenu page={page} siteId={siteId} isDefault={isDefault} />
       </SidebarMenuItem>
 
       {/* Recursively render children with their own DnD context */}

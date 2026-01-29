@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useEditorContext } from "@/components/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -299,6 +300,7 @@ function QuicklinkEditForm({
 
 export function QuicklinksEditor({
   block,
+  isSelected,
   onUpdate,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
@@ -494,8 +496,7 @@ export function QuicklinksEditor({
   };
 
   return (
-    <div className="relative">
-      <div className="space-y-4">
+    <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-muted-foreground">
@@ -568,7 +569,7 @@ export function QuicklinksEditor({
               })}
           </div>
         ) : !isAddingNew ? (
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
             <ExternalLink className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground">No quick links yet</p>
             <p className="text-xs text-muted-foreground/70 mt-1">
@@ -576,7 +577,6 @@ export function QuicklinksEditor({
             </p>
           </div>
         ) : null}
-      </div>
     </div>
   );
 }

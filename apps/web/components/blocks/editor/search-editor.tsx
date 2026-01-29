@@ -16,7 +16,11 @@ import { useCallback, useState } from "react";
 import { SearchBox } from "../shared";
 import type { BlockEditorBaseProps } from "../types";
 
-export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
+export function SearchEditor({
+  block,
+  isSelected,
+  onUpdate,
+}: BlockEditorBaseProps) {
   const content = block.content as SearchContent;
   const { siteId } = useEditorContext();
 

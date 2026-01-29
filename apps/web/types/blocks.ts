@@ -5,7 +5,7 @@ export type BlockType =
   | "image"
   | "file"
   | "document-list"
-  | "document-library"
+  | "library"
   | "search"
   | "embed"
   | "divider"
@@ -63,7 +63,7 @@ export interface TableContent {
   headers?: string[];
 }
 
-export interface DocumentLibraryContent {
+export interface LibraryContent {
   libraryId?: string;
   displayStyle?: "list" | "grid";
   showFolderTree?: boolean;
@@ -102,7 +102,7 @@ export type BlockContent =
   | CodeContent
   | EmbedContent
   | TableContent
-  | DocumentLibraryContent
+  | LibraryContent
   | SearchContent
   | QuicklinksContent;
 
@@ -132,8 +132,8 @@ export interface TypedBlock<T extends BlockType = BlockType> {
                     ? EmbedContent
                     : T extends "table"
                       ? TableContent
-                      : T extends "document-library"
-                        ? DocumentLibraryContent
+                      : T extends "library"
+                        ? LibraryContent
                         : T extends "search"
                           ? SearchContent
                           : T extends "quicklinks"
@@ -166,13 +166,13 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   image: { url: "" },
   file: { url: "", filename: "" },
   "document-list": {},
-  "document-library": {
+  library: {
     displayStyle: "list",
     showFolderTree: true,
     allowDownloads: true,
   },
   search: {
-    placeholder: "Search documents...",
+    placeholder: "Search...",
     maxResults: 10,
     showFileType: true,
   },

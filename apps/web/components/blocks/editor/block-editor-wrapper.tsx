@@ -6,6 +6,7 @@ import type { BlockData } from "../types";
 
 interface BlockEditorWrapperProps {
   block: BlockData;
+  isSelected?: boolean;
   onUpdate: (content: unknown) => Promise<unknown> | void;
   onRemove?: () => Promise<unknown> | void;
   onSaveStatusChange?: (status: SaveStatus) => void;
@@ -16,6 +17,7 @@ interface BlockEditorWrapperProps {
  */
 export function BlockEditorWrapper({
   block,
+  isSelected,
   onUpdate,
   onRemove,
   onSaveStatusChange,
@@ -33,6 +35,7 @@ export function BlockEditorWrapper({
   return (
     <Editor
       block={block}
+      isSelected={isSelected}
       onUpdate={onUpdate}
       onRemove={onRemove}
       onSaveStatusChange={onSaveStatusChange}

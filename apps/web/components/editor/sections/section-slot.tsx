@@ -63,16 +63,14 @@ export function SectionSlot({
   return (
     <div
       className={cn(
-        "min-h-[48px] rounded transition-colors",
-        // Empty state - dashed border
-        isEmpty && "border border-dashed",
+        "min-h-[48px] rounded",
+        // Empty state only - dashed border
+        isEmpty && "border border-dashed transition-colors",
         isEmpty && isSelected
           ? "border-primary/50 bg-primary/5"
           : isEmpty &&
               "border-muted-foreground/20 hover:border-muted-foreground/30",
-        // Non-empty state - subtle background on selection
-        !isEmpty && isSelected && "bg-accent/30",
-        !isEmpty && !isSelected && "hover:bg-accent/10",
+        // Non-empty state - no wrapper backgrounds, let blocks handle their own styling
       )}
       onClick={(e) => {
         e.stopPropagation();
@@ -100,22 +98,12 @@ export function SectionSlot({
               <SortableBlock
                 key={block.id}
                 id={block.id}
+                block={block}
                 isSelected={selectedBlockId === block.id}
                 onSelect={() => onSelectBlock(block.id)}
+                onUpdate={(content) => onUpdateBlock(block.id, content)}
                 onRemove={() => onRemoveBlock(block.id)}
-              >
-                <BlockEditorWrapper
-                  block={{
-                    _id: block.id,
-                    type: block.type,
-                    content: block.content as BlockContent,
-                  }}
-                  onUpdate={(content) =>
-                    onUpdateBlock(block.id, content as BlockContent)
-                  }
-                  onRemove={() => onRemoveBlock(block.id)}
-                />
-              </SortableBlock>
+              />
             ))}
           </DndProvider>
 
@@ -144,18 +132,24 @@ export function SectionSlot({
 // Sortable block wrapper - internal component
 interface SortableBlockProps {
   id: string;
+  block: {
+    id: string;
+    type: string;
+    content: BlockContent;
+  };
   isSelected: boolean;
   onSelect: () => void;
+  onUpdate: (content: BlockContent) => void;
   onRemove: () => void;
-  children: React.ReactNode;
 }
 
 function SortableBlock({
   id,
+  block,
   isSelected,
   onSelect,
+  onUpdate,
   onRemove,
-  children,
 }: SortableBlockProps) {
   const {
     attributes,
@@ -177,7 +171,7 @@ function SortableBlock({
       <div
         ref={setNodeRef}
         style={style}
-        className="min-h-[40px] rounded border border-dashed border-primary/40 bg-primary/5 mb-1"
+        className="min-h-[40px] rounded border border-dashed border-primary/40 bg-primary/5 mb-2"
       />
     );
   }
@@ -186,52 +180,59 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "group/block relative mb-1 rounded transition-colors",
-        isSelected
-          ? "bg-accent/50 ring-1 ring-primary/30"
-          : "hover:bg-accent/20",
-      )}
+      className="group/block flex items-start gap-1 mb-3"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
-      {/* Block toolbar - appears on hover, compact */}
+      {/* Inline drag handle - highlighted when selected */}
       <div
+        ref={setActivatorNodeRef}
         className={cn(
-          "absolute -left-7 top-0.5 flex flex-col gap-px",
-          "opacity-0 group-hover/block:opacity-100 transition-opacity",
+          "flex-shrink-0 flex items-center justify-center h-6 w-5 mt-1 rounded",
+          "cursor-grab active:cursor-grabbing",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          isSelected
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent",
         )}
+        {...attributes}
+        {...listeners}
       >
-        <div
-          ref={setActivatorNodeRef}
-          className={cn(
-            "flex items-center justify-center h-5 w-5 rounded",
-            "text-muted-foreground hover:text-foreground hover:bg-accent",
-            "cursor-grab active:cursor-grabbing",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-3 w-3" />
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5 text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+        <GripVertical className="h-3.5 w-3.5" />
       </div>
 
-      {/* Block content */}
-      <div className="pl-1">{children}</div>
+      {/* Block content - flex-1 to take remaining space */}
+      <div className="flex-1 min-w-0">
+        <BlockEditorWrapper
+          block={{
+            _id: block.id,
+            type: block.type as any,
+            content: block.content,
+          }}
+          isSelected={isSelected}
+          onUpdate={(content) => onUpdate(content as BlockContent)}
+          onRemove={onRemove}
+        />
+      </div>
+
+      {/* Delete button - appears on hover */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn(
+          "flex-shrink-0 h-6 w-6 mt-1",
+          "text-muted-foreground/40 hover:text-destructive",
+          "opacity-0 group-hover/block:opacity-100 transition-opacity",
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }

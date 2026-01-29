@@ -7,6 +7,7 @@ import type { BlockEditorBaseProps } from "../types";
 
 export function CalloutEditor({
   block,
+  isSelected,
   onUpdate,
   onSaveStatusChange,
 }: BlockEditorBaseProps) {
@@ -55,17 +56,15 @@ export function CalloutEditor({
   };
 
   return (
-    <div className="relative">
-      <div className="bg-muted border rounded-lg p-4">
-        <textarea
-          ref={textareaRef}
-          value={localText}
-          onChange={handleChange}
-          className="w-full resize-none border-none bg-transparent focus:outline-none overflow-hidden"
-          placeholder="Callout text..."
-          rows={1}
-        />
-      </div>
+    <div className="bg-muted border rounded-lg p-4 transition-colors hover:border-muted-foreground/50">
+      <textarea
+        ref={textareaRef}
+        value={localText}
+        onChange={handleChange}
+        className="w-full resize-none border-none bg-transparent focus:outline-none overflow-hidden"
+        placeholder="Callout text..."
+        rows={1}
+      />
     </div>
   );
 }

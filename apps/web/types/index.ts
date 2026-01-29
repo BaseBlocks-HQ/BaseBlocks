@@ -36,7 +36,7 @@ export type {
   CodeContent,
   EmbedContent,
   TableContent,
-  DocumentLibraryContent,
+  LibraryContent,
   SearchContent,
   QuicklinkType,
   QuicklinkItem,
@@ -46,6 +46,7 @@ export type {
   BlockEditorProps,
   BlockRendererProps,
   SaveStatus,
+  SpacerContent,
 } from "./blocks";
 export { DEFAULT_BLOCK_CONTENT } from "./blocks";
 
