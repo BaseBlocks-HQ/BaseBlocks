@@ -13,6 +13,7 @@ import type {
   DividerContent,
   ImageContent,
   FileContent,
+  QuicklinksContent,
 } from "@/types";
 
 // Generic block data structure
@@ -83,6 +84,14 @@ export interface ImageRendererProps extends BlockRendererBaseProps {
 
 export interface FileRendererProps extends BlockRendererBaseProps {
   block: BlockData & { content: FileContent };
+}
+
+export interface QuicklinksEditorProps extends BlockEditorBaseProps {
+  block: BlockData & { content: QuicklinksContent };
+}
+
+export interface QuicklinksRendererProps extends BlockRendererBaseProps {
+  block: BlockData & { content: QuicklinksContent };
 }
 
 // Registry entry

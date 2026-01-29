@@ -11,6 +11,7 @@ import { CalloutEditor } from "./editor/callout-editor";
 import { CodeEditor } from "./editor/code-editor";
 import { DocumentLibraryEditor } from "./editor/document-library-editor";
 import { SearchEditor } from "./editor/search-editor";
+import { QuicklinksEditor } from "./editor/quicklinks-editor";
 
 // Import renderers
 import { HeadingRenderer } from "./renderer/heading-renderer";
@@ -22,6 +23,7 @@ import { ImageRenderer } from "./renderer/image-renderer";
 import { FileRenderer } from "./renderer/file-renderer";
 import { DocumentLibraryRenderer } from "./renderer/document-library-renderer";
 import { SearchRenderer } from "./renderer/search-renderer";
+import { QuicklinksRenderer } from "./renderer/quicklinks-renderer";
 
 // Register all blocks
 registerBlock({
@@ -85,6 +87,13 @@ registerBlock({
   renderer: SearchRenderer,
 });
 
+registerBlock({
+  type: "quicklinks",
+  label: "Quick Links",
+  editor: QuicklinksEditor,
+  renderer: QuicklinksRenderer,
+});
+
 // Export registry functions
 export {
   registerBlock,
@@ -109,6 +118,7 @@ export {
   CodeEditor,
   DocumentLibraryEditor,
   SearchEditor,
+  QuicklinksEditor,
 } from "./editor";
 
 // Export individual renderers
@@ -122,6 +132,7 @@ export {
   FileRenderer,
   DocumentLibraryRenderer,
   SearchRenderer,
+  QuicklinksRenderer,
 } from "./renderer";
 
 // Export types

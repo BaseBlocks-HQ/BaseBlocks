@@ -16,7 +16,8 @@ export type BlockType =
   | "divider"
   | "callout"
   | "code"
-  | "table";
+  | "table"
+  | "quicklinks";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -77,6 +78,17 @@ export interface SearchContent {
   showFileType?: boolean;
 }
 
+export interface QuicklinkItem {
+  id: string;
+  title: string;
+  url: string;
+  imageUrl?: string;
+}
+
+export interface QuicklinksContent {
+  links: QuicklinkItem[];
+}
+
 // Union of all content types
 export type BlockContent =
   | HeadingContent
@@ -89,7 +101,8 @@ export type BlockContent =
   | EmbedContent
   | TableContent
   | DocumentLibraryContent
-  | SearchContent;
+  | SearchContent
+  | QuicklinksContent;
 
 // Block with typed content
 export interface TypedBlock<T extends BlockType = BlockType> {
@@ -119,7 +132,9 @@ export interface TypedBlock<T extends BlockType = BlockType> {
                       ? DocumentLibraryContent
                       : T extends "search"
                         ? SearchContent
-                        : BlockContent;
+                        : T extends "quicklinks"
+                          ? QuicklinksContent
+                          : BlockContent;
   createdAt: number;
   updatedAt: number;
 }
@@ -154,4 +169,5 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   callout: { text: "", variant: "info" },
   code: { text: "", language: "typescript" },
   table: { rows: [[]], headers: [] },
+  quicklinks: { links: [] },
 };

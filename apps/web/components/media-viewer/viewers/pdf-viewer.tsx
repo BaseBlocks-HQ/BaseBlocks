@@ -1,13 +1,55 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { ZoomIn, ZoomOut, Maximize2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { ViewerProps } from "../types";
+import { createBlobUrl, revokeBlobUrl } from "../utils";
 
 export function PdfViewer({ file }: ViewerProps) {
   const [scale, setScale] = useState(100);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch PDF and create blob URL to bypass Content-Disposition: attachment
+  useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    setError(null);
+
+    createBlobUrl(file.url, "application/pdf")
+      .then((url) => {
+        if (mounted) {
+          setBlobUrl(url);
+          setIsLoading(false);
+        } else {
+          revokeBlobUrl(url);
+        }
+      })
+      .catch((err) => {
+        if (mounted) {
+          setError(err.message);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+      if (blobUrl) {
+        revokeBlobUrl(blobUrl);
+      }
+    };
+  }, [file.url]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrl) {
+        revokeBlobUrl(blobUrl);
+      }
+    };
+  }, [blobUrl]);
 
   const handleZoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 25, 300));
@@ -24,8 +66,26 @@ export function PdfViewer({ file }: ViewerProps) {
     }
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground">Loading PDF...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-destructive">
+        <AlertCircle className="h-8 w-8" />
+        <p>Failed to load PDF: {error}</p>
+      </div>
+    );
+  }
+
   // Use browser's built-in PDF viewer with zoom parameter
-  const pdfUrl = `${file.url}#zoom=${scale}&toolbar=1&navpanes=1`;
+  const pdfUrl = `${blobUrl}#zoom=${scale}&toolbar=1&navpanes=1`;
 
   return (
     <div className="flex flex-col h-full">

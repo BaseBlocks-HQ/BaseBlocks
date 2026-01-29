@@ -73,6 +73,7 @@ export default defineSchema({
       v.literal("callout"),
       v.literal("code"),
       v.literal("table"),
+      v.literal("quicklinks"),
     ),
     order: v.number(),
     content: v.any(), // Block-specific content

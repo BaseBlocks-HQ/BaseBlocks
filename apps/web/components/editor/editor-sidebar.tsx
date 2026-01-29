@@ -11,6 +11,7 @@ import {
   Code,
   FolderOpen,
   Heading,
+  Link2,
   Minus,
   Search,
   Text,
@@ -174,6 +175,11 @@ export function EditorSidebar({
                       label="Document Search"
                       onClick={() => handleAddBlock("search")}
                     />
+                    <BlockButton
+                      icon={<Link2 className="h-4 w-4" />}
+                      label="Quick Links"
+                      onClick={() => handleAddBlock("quicklinks")}
+                    />
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground px-2">
@@ -227,6 +233,8 @@ function getDefaultBlockContent(type: BlockType) {
       return { displayStyle: "list", showFolderTree: true, allowDownloads: true };
     case "search":
       return { placeholder: "Search documents...", maxResults: 10, showFileType: true };
+    case "quicklinks":
+      return { links: [] };
     default:
       return { text: "" };
   }

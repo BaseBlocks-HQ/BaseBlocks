@@ -7,6 +7,7 @@ import {
   Pencil,
   Trash2,
   FolderInput,
+  Eye,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ export interface FileData {
 interface FileListItemProps {
   file: FileData;
   onDownload: (file: FileData) => void;
+  onPreview?: (file: FileData) => void;
   onRename: (file: FileData) => void;
   onDelete: (file: FileData) => void;
   onMove?: (file: FileData) => void;
@@ -41,6 +43,7 @@ interface FileListItemProps {
 export function FileListItem({
   file,
   onDownload,
+  onPreview,
   onRename,
   onDelete,
   onMove,
@@ -65,12 +68,20 @@ export function FileListItem({
     });
   };
 
+  const handleClick = () => {
+    if (onPreview) {
+      onPreview(file);
+    }
+  };
+
   return (
     <div
       className={cn(
         "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors",
+        onPreview && "cursor-pointer",
         className,
       )}
+      onClick={handleClick}
     >
       {/* File icon */}
       <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>
@@ -87,14 +98,34 @@ export function FileListItem({
 
       {/* Actions */}
       {isReadOnly ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 flex-shrink-0"
-          onClick={() => onDownload(file)}
-        >
-          <Download className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {onPreview && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview(file);
+              }}
+              title="Preview"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload(file);
+            }}
+            title="Download"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
       ) : (
         <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
           <DropdownMenuTrigger asChild>
@@ -105,11 +136,21 @@ export function FileListItem({
                 "h-8 w-8 flex-shrink-0 opacity-0 group-hover:opacity-100",
                 showMenu && "opacity-100",
               )}
+              onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            {onPreview && (
+              <>
+                <DropdownMenuItem onClick={() => onPreview(file)}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={() => onDownload(file)}>
               <Download className="h-4 w-4 mr-2" />
               Download

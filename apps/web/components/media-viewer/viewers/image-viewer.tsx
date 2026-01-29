@@ -9,6 +9,7 @@ import type { ViewerProps } from "../types";
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.25;
+const WHEEL_ZOOM_SENSITIVITY = 0.002; // Lower = less sensitive
 
 export function ImageViewer({ file }: ViewerProps) {
   const [zoom, setZoom] = useState(1);
@@ -54,8 +55,12 @@ export function ImageViewer({ file }: ViewerProps) {
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-    setZoom((prev) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prev + delta)));
+    // Use smooth proportional zooming with low sensitivity for touchpads
+    const delta = -e.deltaY * WHEEL_ZOOM_SENSITIVITY;
+    setZoom((prev) => {
+      const newZoom = prev * (1 + delta);
+      return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+    });
     setIsFitToScreen(false);
   }, []);
 

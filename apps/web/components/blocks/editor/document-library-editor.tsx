@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { Plus, FolderPlus, Settings2 } from "lucide-react";
+import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -48,6 +49,7 @@ export function DocumentLibraryEditor({
 }: BlockEditorBaseProps) {
   const content = block.content as DocumentLibraryContent;
   const { siteId } = useEditorContext();
+  const { openFile } = useMediaViewer();
 
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isCreatingLibrary, setIsCreatingLibrary] = useState(false);
@@ -184,6 +186,15 @@ export function DocumentLibraryEditor({
   const handleDownloadFile = useCallback((file: FileData) => {
     // The FileList component handles opening the download URL
   }, []);
+
+  const handlePreviewFile = useCallback((file: FileData) => {
+    openFile({
+      url: file.cdnUrl,
+      filename: file.filename,
+      contentType: file.contentType,
+      size: file.size,
+    });
+  }, [openFile]);
 
   const handleRenameFile = useCallback(
     async (fileId: string, newName: string) => {
@@ -382,6 +393,7 @@ export function DocumentLibraryEditor({
                 <FileList
                   files={files as FileData[]}
                   onDownload={handleDownloadFile}
+                  onPreview={handlePreviewFile}
                   onRename={handleRenameFile}
                   onDelete={handleDeleteFile}
                 />

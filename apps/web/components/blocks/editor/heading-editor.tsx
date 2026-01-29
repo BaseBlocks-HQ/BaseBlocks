@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useDebounceCallback } from "@/hooks";
 import type { BlockEditorBaseProps } from "../types";
 import type { HeadingContent } from "@/types";
@@ -13,6 +12,15 @@ export function HeadingEditor({
 }: BlockEditorBaseProps) {
   const content = block.content as HeadingContent;
   const [localText, setLocalText] = useState(content.text || "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
 
   const debouncedSave = useDebounceCallback(
     useCallback(
@@ -35,7 +43,11 @@ export function HeadingEditor({
     setLocalText(content.text || "");
   }, [block._id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    autoResize();
+  }, [localText, autoResize]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setLocalText(newText);
     onSaveStatusChange?.("pending");
@@ -44,11 +56,13 @@ export function HeadingEditor({
 
   return (
     <div className="relative">
-      <Input
+      <textarea
+        ref={textareaRef}
         value={localText}
         onChange={handleChange}
-        className="text-xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent dark:bg-transparent"
+        className="w-full text-xl font-semibold border-none resize-none bg-transparent focus:outline-none overflow-hidden"
         placeholder="Heading..."
+        rows={1}
       />
     </div>
   );

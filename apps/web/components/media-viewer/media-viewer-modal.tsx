@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import {
   X,
   Download,
@@ -12,12 +12,14 @@ import {
   FileVideo,
   Music,
   File,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "./context";
 import { getViewer } from "./viewers";
 import { getMediaFileType } from "./types";
+import { openInNewTab } from "./utils";
 
 function formatFileSize(bytes?: number): string {
   if (!bytes) return "";
@@ -103,10 +105,17 @@ export function MediaViewerModal() {
     document.body.removeChild(link);
   }, [currentFile]);
 
-  const handleOpenExternal = useCallback(() => {
-    if (!currentFile) return;
-    window.open(currentFile.url, "_blank", "noopener,noreferrer");
-  }, [currentFile]);
+  const [isOpeningExternal, setIsOpeningExternal] = useState(false);
+
+  const handleOpenExternal = useCallback(async () => {
+    if (!currentFile || isOpeningExternal) return;
+    setIsOpeningExternal(true);
+    try {
+      await openInNewTab(currentFile.url, currentFile.contentType);
+    } finally {
+      setIsOpeningExternal(false);
+    }
+  }, [currentFile, isOpeningExternal]);
 
   if (!isOpen || !currentFile) {
     return null;
@@ -136,9 +145,14 @@ export function MediaViewerModal() {
             variant="ghost"
             size="icon"
             onClick={handleOpenExternal}
+            disabled={isOpeningExternal}
             title="Open in new tab"
           >
-            <ExternalLink className="h-4 w-4" />
+            {isOpeningExternal ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
           </Button>
           <Button
             variant="ghost"

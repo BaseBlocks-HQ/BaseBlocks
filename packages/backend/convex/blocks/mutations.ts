@@ -15,6 +15,7 @@ const blockTypes = v.union(
   v.literal("callout"),
   v.literal("code"),
   v.literal("table"),
+  v.literal("quicklinks"),
 );
 
 // Create a new block

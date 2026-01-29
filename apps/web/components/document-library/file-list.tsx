@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface FileListProps {
   files: FileData[];
   onDownload: (file: FileData) => void;
+  onPreview?: (file: FileData) => void;
   onRename: (fileId: string, newName: string) => Promise<void>;
   onDelete: (fileId: string) => Promise<void>;
   onMove?: (fileId: string, folderId: string | null) => Promise<void>;
@@ -21,6 +22,7 @@ interface FileListProps {
 export function FileList({
   files,
   onDownload,
+  onPreview,
   onRename,
   onDelete,
   onMove,
@@ -66,6 +68,7 @@ export function FileList({
               key={file._id}
               file={file}
               onDownload={handleDownload}
+              onPreview={onPreview}
               onRename={handleRename}
               onDelete={handleDelete}
               isReadOnly={isReadOnly}
