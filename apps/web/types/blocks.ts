@@ -14,6 +14,7 @@ export type BlockType =
   | "search"
   | "embed"
   | "divider"
+  | "spacer"
   | "callout"
   | "code"
   | "table"
@@ -43,6 +44,10 @@ export interface FileContent {
 
 export interface DividerContent {
   // Empty - dividers have no content
+}
+
+export interface SpacerContent {
+  height: "small" | "medium" | "large" | "xlarge";
 }
 
 export interface CalloutContent {
@@ -96,6 +101,7 @@ export type BlockContent =
   | ImageContent
   | FileContent
   | DividerContent
+  | SpacerContent
   | CalloutContent
   | CodeContent
   | EmbedContent
@@ -120,21 +126,23 @@ export interface TypedBlock<T extends BlockType = BlockType> {
           ? FileContent
           : T extends "divider"
             ? DividerContent
-            : T extends "callout"
-              ? CalloutContent
-              : T extends "code"
-                ? CodeContent
-                : T extends "embed"
-                  ? EmbedContent
-                  : T extends "table"
-                    ? TableContent
-                    : T extends "document-library"
-                      ? DocumentLibraryContent
-                      : T extends "search"
-                        ? SearchContent
-                        : T extends "quicklinks"
-                          ? QuicklinksContent
-                          : BlockContent;
+            : T extends "spacer"
+              ? SpacerContent
+              : T extends "callout"
+                ? CalloutContent
+                : T extends "code"
+                  ? CodeContent
+                  : T extends "embed"
+                    ? EmbedContent
+                    : T extends "table"
+                      ? TableContent
+                      : T extends "document-library"
+                        ? DocumentLibraryContent
+                        : T extends "search"
+                          ? SearchContent
+                          : T extends "quicklinks"
+                            ? QuicklinksContent
+                            : BlockContent;
   createdAt: number;
   updatedAt: number;
 }
@@ -166,6 +174,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   search: { placeholder: "Search documents...", maxResults: 10, showFileType: true },
   embed: { url: "" },
   divider: {},
+  spacer: { height: "medium" },
   callout: { text: "", variant: "info" },
   code: { text: "", language: "typescript" },
   table: { rows: [[]], headers: [] },

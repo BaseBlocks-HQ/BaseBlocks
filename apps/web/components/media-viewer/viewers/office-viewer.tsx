@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Download, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ViewerProps } from "../types";
 
@@ -14,7 +14,7 @@ import type { ViewerProps } from "../types";
  * 2. Converting to PDF server-side
  * 3. Using a different viewer library
  */
-export function OfficeViewer({ file, onClose }: ViewerProps) {
+export function OfficeViewer({ file }: ViewerProps) {
   const [useOnlineViewer, setUseOnlineViewer] = useState(true);
 
   // Microsoft Office Online viewer URL
@@ -23,21 +23,6 @@ export function OfficeViewer({ file, onClose }: ViewerProps) {
 
   // Google Docs viewer as fallback
   const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`;
-
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = file.url;
-    link.download = file.filename;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleOpenExternal = () => {
-    window.open(file.url, "_blank", "noopener,noreferrer");
-  };
 
   return (
     <div className="flex flex-col h-full">
@@ -55,22 +40,6 @@ export function OfficeViewer({ file, onClose }: ViewerProps) {
             onClick={() => setUseOnlineViewer(!useOnlineViewer)}
           >
             Switch viewer
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleOpenExternal}
-            title="Open in new tab"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDownload}
-            title="Download"
-          >
-            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>

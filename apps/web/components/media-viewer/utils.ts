@@ -41,6 +41,21 @@ export function isBlobUrl(url: string): boolean {
 }
 
 /**
+ * Check if a content type is an Office document
+ */
+function isOfficeDocument(contentType?: string): boolean {
+  if (!contentType) return false;
+  const type = contentType.toLowerCase();
+  return (
+    type.includes("officedocument") ||
+    type.includes("msword") ||
+    type.includes("ms-excel") ||
+    type.includes("ms-powerpoint") ||
+    type.includes("opendocument")
+  );
+}
+
+/**
  * Open a file in a new tab by creating a blob URL
  * This works around Content-Disposition: attachment headers
  */
@@ -49,6 +64,13 @@ export async function openInNewTab(
   contentType?: string
 ): Promise<void> {
   try {
+    // For Office documents, open in Microsoft Office Online viewer
+    if (isOfficeDocument(contentType)) {
+      const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+      window.open(viewerUrl, "_blank");
+      return;
+    }
+
     const blobUrl = await createBlobUrl(url, contentType);
     const newWindow = window.open(blobUrl, "_blank");
 

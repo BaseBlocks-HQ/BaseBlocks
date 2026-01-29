@@ -12,6 +12,7 @@ const blockTypes = v.union(
   v.literal("search"),
   v.literal("embed"),
   v.literal("divider"),
+  v.literal("spacer"),
   v.literal("callout"),
   v.literal("code"),
   v.literal("table"),

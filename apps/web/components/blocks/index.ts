@@ -7,6 +7,7 @@ import { registerBlock } from "./registry";
 import { HeadingEditor } from "./editor/heading-editor";
 import { ParagraphEditor } from "./editor/paragraph-editor";
 import { DividerEditor } from "./editor/divider-editor";
+import { SpacerEditor } from "./editor/spacer-editor";
 import { CalloutEditor } from "./editor/callout-editor";
 import { CodeEditor } from "./editor/code-editor";
 import { DocumentLibraryEditor } from "./editor/document-library-editor";
@@ -17,6 +18,7 @@ import { QuicklinksEditor } from "./editor/quicklinks-editor";
 import { HeadingRenderer } from "./renderer/heading-renderer";
 import { ParagraphRenderer } from "./renderer/paragraph-renderer";
 import { DividerRenderer } from "./renderer/divider-renderer";
+import { SpacerRenderer } from "./renderer/spacer-renderer";
 import { CalloutRenderer } from "./renderer/callout-renderer";
 import { CodeRenderer } from "./renderer/code-renderer";
 import { ImageRenderer } from "./renderer/image-renderer";
@@ -45,6 +47,13 @@ registerBlock({
   label: "Divider",
   editor: DividerEditor,
   renderer: DividerRenderer,
+});
+
+registerBlock({
+  type: "spacer",
+  label: "Spacer",
+  editor: SpacerEditor,
+  renderer: SpacerRenderer,
 });
 
 registerBlock({
@@ -114,6 +123,7 @@ export {
   HeadingEditor,
   ParagraphEditor,
   DividerEditor,
+  SpacerEditor,
   CalloutEditor,
   CodeEditor,
   DocumentLibraryEditor,
@@ -126,6 +136,7 @@ export {
   HeadingRenderer,
   ParagraphRenderer,
   DividerRenderer,
+  SpacerRenderer,
   CalloutRenderer,
   CodeRenderer,
   ImageRenderer,

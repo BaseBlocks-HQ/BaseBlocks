@@ -13,6 +13,7 @@ import {
   Heading,
   Link2,
   Minus,
+  MoveVertical,
   Search,
   Text,
 } from "lucide-react";
@@ -166,6 +167,11 @@ export function EditorSidebar({
                       onClick={() => handleAddBlock("divider")}
                     />
                     <BlockButton
+                      icon={<MoveVertical className="h-4 w-4" />}
+                      label="Spacer"
+                      onClick={() => handleAddBlock("spacer")}
+                    />
+                    <BlockButton
                       icon={<FolderOpen className="h-4 w-4" />}
                       label="Document Library"
                       onClick={() => handleAddBlock("document-library")}
@@ -225,6 +231,8 @@ function getDefaultBlockContent(type: BlockType) {
       return { text: "" };
     case "divider":
       return {};
+    case "spacer":
+      return { height: "medium" };
     case "callout":
       return { text: "", variant: "info" };
     case "code":
