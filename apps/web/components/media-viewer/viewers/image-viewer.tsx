@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { ZoomIn, ZoomOut, RotateCw, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Maximize2, Minimize2, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 const MIN_ZOOM = 0.1;
@@ -64,22 +64,28 @@ export function ImageViewer({ file }: ViewerProps) {
     setIsFitToScreen(false);
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    dragStartRef.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    };
-  }, [position]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      };
+    },
+    [position],
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStartRef.current.x,
-      y: e.clientY - dragStartRef.current.y,
-    });
-  }, [isDragging]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDragging) return;
+      setPosition({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y,
+      });
+    },
+    [isDragging],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -150,7 +156,7 @@ export function ImageViewer({ file }: ViewerProps) {
         ref={containerRef}
         className={cn(
           "flex-1 overflow-hidden flex items-center justify-center bg-muted/20",
-          isDragging ? "cursor-grabbing" : "cursor-grab"
+          isDragging ? "cursor-grabbing" : "cursor-grab",
         )}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
@@ -164,7 +170,7 @@ export function ImageViewer({ file }: ViewerProps) {
           alt={file.filename}
           className={cn(
             "max-w-none select-none transition-transform duration-100",
-            isFitToScreen && "max-h-full max-w-full object-contain"
+            isFitToScreen && "max-h-full max-w-full object-contain",
           )}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,

@@ -1,5 +1,5 @@
-import { Check, Loader2 } from "lucide-react";
 import type { SaveStatus } from "@/types";
+import { Check, Loader2 } from "lucide-react";
 
 interface SaveIndicatorProps {
   status: SaveStatus;

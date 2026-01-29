@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useMutation, useAction } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { entityStorageClient, type UploadProgress } from "./client";
+import { useAction, useMutation } from "convex/react";
+import { useCallback, useState } from "react";
 import { useEntityAuth } from "../auth";
+import { type UploadProgress, entityStorageClient } from "./client";
 import { isExtractable } from "./extraction";
 
 export interface UploadState {
@@ -27,18 +27,26 @@ export interface UploadOptions {
  */
 export function useFileUpload() {
   const { getToken, user } = useEntityAuth();
-  const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>({});
+  const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>(
+    {},
+  );
 
   const createDocument = useMutation(api.documents.mutations.create);
   const createInLibrary = useMutation(api.documents.mutations.createInLibrary);
-  const triggerExtraction = useAction(api.actions?.extractDocument?.triggerExtraction);
+  const triggerExtraction = useAction(
+    api.actions?.extractDocument?.triggerExtraction,
+  );
 
   const updateUploadState = useCallback(
     (fileId: string, update: Partial<UploadState>) => {
       setUploadStates((prev) => ({
         ...prev,
         [fileId]: {
-          ...(prev[fileId] || { isUploading: false, progress: null, error: null }),
+          ...(prev[fileId] || {
+            isUploading: false,
+            progress: null,
+            error: null,
+          }),
           ...update,
         },
       }));
@@ -47,11 +55,18 @@ export function useFileUpload() {
   );
 
   const uploadFile = useCallback(
-    async (file: File, options: UploadOptions): Promise<Id<"documents"> | null> => {
+    async (
+      file: File,
+      options: UploadOptions,
+    ): Promise<Id<"documents"> | null> => {
       const fileId = `${file.name}-${Date.now()}`;
 
       try {
-        updateUploadState(fileId, { isUploading: true, progress: null, error: null });
+        updateUploadState(fileId, {
+          isUploading: true,
+          progress: null,
+          error: null,
+        });
 
         // Get auth token
         const token = await getToken();
@@ -105,16 +120,21 @@ export function useFileUpload() {
           });
         }
 
-        updateUploadState(fileId, { isUploading: false, progress: { loaded: file.size, total: file.size, percentage: 100 } });
+        updateUploadState(fileId, {
+          isUploading: false,
+          progress: { loaded: file.size, total: file.size, percentage: 100 },
+        });
         options.onSuccess?.(documentId);
 
         // Trigger text extraction for supported file types (non-blocking)
         const contentType = file.type || "application/octet-stream";
         if (isExtractable(contentType) && triggerExtraction) {
           // Fire and forget - extraction happens in background
-          triggerExtraction({ documentId, authToken: token }).catch((err: unknown) => {
-            console.warn("Failed to trigger extraction:", err);
-          });
+          triggerExtraction({ documentId, authToken: token }).catch(
+            (err: unknown) => {
+              console.warn("Failed to trigger extraction:", err);
+            },
+          );
         }
 
         return documentId;
@@ -125,11 +145,21 @@ export function useFileUpload() {
         return null;
       }
     },
-    [getToken, user, createDocument, createInLibrary, triggerExtraction, updateUploadState],
+    [
+      getToken,
+      user,
+      createDocument,
+      createInLibrary,
+      triggerExtraction,
+      updateUploadState,
+    ],
   );
 
   const uploadFiles = useCallback(
-    async (files: File[], options: UploadOptions): Promise<(Id<"documents"> | null)[]> => {
+    async (
+      files: File[],
+      options: UploadOptions,
+    ): Promise<(Id<"documents"> | null)[]> => {
       const results = await Promise.all(
         files.map((file) => uploadFile(file, options)),
       );
@@ -151,7 +181,9 @@ export function useFileUpload() {
   }, []);
 
   // Check if any files are uploading
-  const isAnyUploading = Object.values(uploadStates).some((state) => state.isUploading);
+  const isAnyUploading = Object.values(uploadStates).some(
+    (state) => state.isUploading,
+  );
 
   // Get total progress across all uploads
   const totalProgress = Object.values(uploadStates).reduce(
@@ -170,12 +202,15 @@ export function useFileUpload() {
     uploadFiles,
     uploadStates,
     isAnyUploading,
-    totalProgress: totalProgress.total > 0
-      ? {
-          ...totalProgress,
-          percentage: Math.round((totalProgress.loaded / totalProgress.total) * 100),
-        }
-      : null,
+    totalProgress:
+      totalProgress.total > 0
+        ? {
+            ...totalProgress,
+            percentage: Math.round(
+              (totalProgress.loaded / totalProgress.total) * 100,
+            ),
+          }
+        : null,
     clearUploadState,
     clearAllUploadStates,
   };

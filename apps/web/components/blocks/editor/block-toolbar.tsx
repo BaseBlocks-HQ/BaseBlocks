@@ -1,13 +1,13 @@
 "use client";
 
-import { forwardRef, type HTMLAttributes, type Ref } from "react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { DragHandle } from "@/components/dnd";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Trash2 } from "lucide-react";
+import { type HTMLAttributes, type Ref, forwardRef } from "react";
 
-interface DragHandlePropsWithRef extends HTMLAttributes<HTMLButtonElement> {
-  ref?: Ref<HTMLButtonElement>;
+interface DragHandlePropsWithRef extends HTMLAttributes<HTMLDivElement> {
+  ref?: Ref<HTMLDivElement>;
 }
 
 interface BlockToolbarProps extends HTMLAttributes<HTMLDivElement> {
@@ -25,7 +25,7 @@ export const BlockToolbar = forwardRef<HTMLDivElement, BlockToolbarProps>(
         className={cn(
           "absolute -left-10 top-0 flex flex-col gap-0.5",
           "opacity-0 group-hover/block:opacity-100 transition-opacity duration-150",
-          className
+          className,
         )}
         {...props}
       >
@@ -40,7 +40,7 @@ export const BlockToolbar = forwardRef<HTMLDivElement, BlockToolbarProps>(
         </Button>
       </div>
     );
-  }
+  },
 );
 
 BlockToolbar.displayName = "BlockToolbar";

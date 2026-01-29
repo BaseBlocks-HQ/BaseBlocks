@@ -1,5 +1,5 @@
-import type { BlockRendererBaseProps } from "../types";
 import type { CalloutContent } from "@/types";
+import type { BlockRendererBaseProps } from "../types";
 
 export function CalloutRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as CalloutContent;

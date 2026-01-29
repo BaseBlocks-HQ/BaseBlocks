@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
+import { useState } from "react";
 
 interface DeleteConfirmDialogProps {
   type: "file" | "folder" | "library";

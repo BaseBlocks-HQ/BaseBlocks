@@ -1,10 +1,10 @@
 "use client";
 
-import { Globe, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { PreviewButton } from "./preview-button";
 import { getSiteUrl } from "@/lib/utils";
+import { EyeOff, Globe } from "lucide-react";
+import { PreviewButton } from "./preview-button";
 
 interface EditorHeaderProps {
   companySlug: string;

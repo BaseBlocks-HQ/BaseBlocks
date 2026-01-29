@@ -1,77 +1,192 @@
 "use client";
 
-import { useMemo } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSaveStatus } from "@/hooks";
+import { createSection } from "@/lib/sections";
+import type {
+  BlockContent,
+  BlockType,
+  SectionData,
+  SectionLayout,
+  SectionSettings,
+} from "@/types";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BlockEditorWrapper } from "@/components/blocks";
-import { SortableBlock } from "@/components/blocks/editor/sortable-block";
-import { DndProvider } from "@/components/dnd";
+import { useMutation, useQuery } from "convex/react";
+import { Plus } from "lucide-react";
+import { useCallback, useMemo } from "react";
+import { useEditorContext } from "./editor-context";
 import { SaveIndicator } from "./save-indicator";
-import { useSaveStatus, useBlockReorder } from "@/hooks";
-import { GripVertical } from "lucide-react";
+import { SortableSection } from "./sections/sortable-section";
 
 interface PageEditorProps {
   pageId: string;
+  onSelectionChange?: (slotId: string | null) => void;
 }
 
-export function PageEditor({ pageId }: PageEditorProps) {
-  const pageData = useQuery(api.pages.queries.getWithBlocks, {
-    pageId: pageId as Id<"pages">,
-  });
-  const updateBlock = useMutation(api.blocks.mutations.update);
-  const removeBlock = useMutation(api.blocks.mutations.remove);
+export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
+  const { selection, selectSection, selectSlot, selectBlock, clearSelection } =
+    useEditorContext();
   const { status, setStatus } = useSaveStatus();
 
-  // Get blocks for reordering - use empty array while loading
-  const blocks = pageData?.blocks ?? [];
-  const { handleDragEnd, blockIds } = useBlockReorder({
-    pageId,
-    blocks: blocks.map((b) => ({ _id: b._id, order: b.order })),
+  // Queries
+  const pageData = useQuery(api.pages.queries.get, {
+    pageId: pageId as Id<"pages">,
+  });
+  const sectionsData = useQuery(api.sections.queries.list, {
+    pageId: pageId as Id<"pages">,
   });
 
-  // Create a map for quick block lookup
-  const blockMap = useMemo(() => {
-    const map = new Map<string, (typeof blocks)[0]>();
-    for (const block of blocks) {
-      map.set(block._id, block);
-    }
-    return map;
-  }, [blocks]);
+  // Mutations
+  const createSectionMutation = useMutation(api.sections.mutations.create);
+  const reorderSectionsMutation = useMutation(api.sections.mutations.reorder);
+  const updateBlockMutation = useMutation(
+    api.sections.mutations.updateBlockInSlot,
+  );
+  const removeBlockMutation = useMutation(
+    api.sections.mutations.removeBlockFromSlot,
+  );
+  const removeSectionMutation = useMutation(api.sections.mutations.remove);
+  const moveBlockMutation = useMutation(api.sections.mutations.moveBlock);
 
-  // Sort blocks by the optimistic order from blockIds
-  const sortedBlocks = useMemo(() => {
-    return blockIds
-      .map((id) => blockMap.get(id))
-      .filter((b): b is (typeof blocks)[0] => b !== undefined);
-  }, [blockIds, blockMap]);
+  // Convert sections from DB to SectionData format
+  const sections: SectionData[] = useMemo(() => {
+    if (!sectionsData) return [];
+    return sectionsData.map((s) => ({
+      id: s._id,
+      type: s.type as SectionLayout,
+      order: s.order,
+      slots: s.slots.map((slot) => ({
+        id: slot.id,
+        position: slot.position,
+        blocks: slot.blocks.map((block) => ({
+          id: block.id,
+          type: block.type as BlockType,
+          content: block.content as BlockContent,
+        })),
+      })),
+      settings: s.settings as SectionSettings,
+    }));
+  }, [sectionsData]);
 
-  // Render drag overlay content
-  const renderDragOverlay = (activeId: string | number) => {
-    const block = blockMap.get(String(activeId));
-    if (!block) return null;
+  // Section IDs for DnD
+  const sectionIds = useMemo(() => sections.map((s) => s.id), [sections]);
 
-    return (
-      <div className="bg-background border rounded-lg shadow-lg p-4 opacity-95 max-w-3xl">
-        <div className="flex items-start gap-3">
-          <div className="flex items-center justify-center h-6 w-6 text-muted-foreground">
-            <GripVertical className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-muted-foreground mb-1">
-              {block.type.charAt(0).toUpperCase() + block.type.slice(1)}
-            </div>
-            <div className="text-sm truncate">
-              {getBlockPreview(block)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Handle section drag end
+  const handleSectionDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
 
-  if (pageData === undefined) {
+      const oldIndex = sectionIds.indexOf(String(active.id));
+      const newIndex = sectionIds.indexOf(String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newOrder = arrayMove(sectionIds, oldIndex, newIndex);
+      await reorderSectionsMutation({
+        pageId: pageId as Id<"pages">,
+        sectionIds: newOrder as Id<"sections">[],
+      });
+    },
+    [sectionIds, pageId, reorderSectionsMutation],
+  );
+
+  // Notify parent of slot selection changes
+  const handleSelectSlot = useCallback(
+    (sectionId: string, slotId: string) => {
+      selectSlot(sectionId, slotId);
+      onSelectionChange?.(slotId);
+    },
+    [selectSlot, onSelectionChange],
+  );
+
+  // Add a new section
+  const handleAddSection = useCallback(
+    async (type: SectionLayout) => {
+      const newSection = createSection(type);
+      const sectionId = await createSectionMutation({
+        pageId: pageId as Id<"pages">,
+        type: newSection.type,
+        slots: newSection.slots,
+        settings: newSection.settings,
+      });
+
+      if (newSection.slots.length > 0) {
+        setTimeout(() => {
+          selectSlot(sectionId as string, newSection.slots[0]!.id);
+          onSelectionChange?.(newSection.slots[0]!.id);
+        }, 100);
+      }
+    },
+    [createSectionMutation, pageId, selectSlot, onSelectionChange],
+  );
+
+  // Update block content
+  const handleUpdateBlock = useCallback(
+    async (
+      sectionId: string,
+      slotId: string,
+      blockId: string,
+      content: BlockContent,
+    ) => {
+      setStatus("saving");
+      await updateBlockMutation({
+        sectionId: sectionId as Id<"sections">,
+        slotId,
+        blockId,
+        content,
+      });
+      setStatus("saved");
+    },
+    [updateBlockMutation, setStatus],
+  );
+
+  // Remove block
+  const handleRemoveBlock = useCallback(
+    async (sectionId: string, slotId: string, blockId: string) => {
+      await removeBlockMutation({
+        sectionId: sectionId as Id<"sections">,
+        slotId,
+        blockId,
+      });
+    },
+    [removeBlockMutation],
+  );
+
+  // Remove section
+  const handleRemoveSection = useCallback(
+    async (sectionId: string) => {
+      await removeSectionMutation({
+        sectionId: sectionId as Id<"sections">,
+      });
+      clearSelection();
+    },
+    [removeSectionMutation, clearSelection],
+  );
+
+  // Move block within section
+  const handleMoveBlock = useCallback(
+    async (
+      sectionId: string,
+      fromSlotId: string,
+      toSlotId: string,
+      blockId: string,
+      toIndex: number,
+    ) => {
+      await moveBlockMutation({
+        sectionId: sectionId as Id<"sections">,
+        fromSlotId,
+        toSlotId,
+        blockId,
+        toIndex,
+      });
+    },
+    [moveBlockMutation],
+  );
+
+  if (pageData === undefined || sectionsData === undefined) {
     return <Skeleton className="h-64 w-full" />;
   }
 
@@ -79,79 +194,80 @@ export function PageEditor({ pageId }: PageEditorProps) {
     return <p className="text-muted-foreground">Page not found</p>;
   }
 
-  const { page } = pageData;
-
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">{page.title}</h1>
+    <div className="max-w-4xl mx-auto pb-32">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">{pageData.title}</h1>
         <SaveIndicator status={status} />
       </div>
 
-      <div className="space-y-4">
-        {sortedBlocks.length > 0 ? (
-          <DndProvider
-            items={blockIds}
-            onDragEnd={handleDragEnd}
-            renderDragOverlay={renderDragOverlay}
-          >
-            {sortedBlocks.map((block) => (
-              <SortableBlock
-                key={block._id}
-                id={block._id}
-                onRemove={() =>
-                  removeBlock({ blockId: block._id as Id<"blocks"> })
+      <div className="space-y-2">
+        {sections.length > 0 ? (
+          <DndProvider items={sectionIds} onDragEnd={handleSectionDragEnd}>
+            {sections.map((section) => (
+              <SortableSection
+                key={section.id}
+                section={section}
+                isSelected={selection.sectionId === section.id}
+                selectedSlotId={
+                  selection.sectionId === section.id ? selection.slotId : null
                 }
-              >
-                <BlockEditorWrapper
-                  block={{
-                    _id: block._id,
-                    type: block.type,
-                    content: block.content,
-                  }}
-                  onUpdate={(content) =>
-                    updateBlock({ blockId: block._id as Id<"blocks">, content })
-                  }
-                  onSaveStatusChange={setStatus}
-                />
-              </SortableBlock>
+                selectedBlockId={
+                  selection.sectionId === section.id ? selection.blockId : null
+                }
+                onSelectSection={() => selectSection(section.id)}
+                onSelectSlot={(slotId) => handleSelectSlot(section.id, slotId)}
+                onSelectBlock={(slotId, blockId) =>
+                  selectBlock(section.id, slotId, blockId)
+                }
+                onAddBlock={(slotId) => handleSelectSlot(section.id, slotId)}
+                onUpdateBlock={(slotId, blockId, content) =>
+                  handleUpdateBlock(section.id, slotId, blockId, content)
+                }
+                onRemoveBlock={(slotId, blockId) =>
+                  handleRemoveBlock(section.id, slotId, blockId)
+                }
+                onMoveBlock={(fromSlotId, toSlotId, blockId, toIndex) =>
+                  handleMoveBlock(
+                    section.id,
+                    fromSlotId,
+                    toSlotId,
+                    blockId,
+                    toIndex,
+                  )
+                }
+                onRemove={() => handleRemoveSection(section.id)}
+              />
             ))}
           </DndProvider>
         ) : (
-          <p className="text-muted-foreground text-center py-8">
-            Add components from the sidebar to get started
-          </p>
+          <div className="text-center py-12 border border-dashed rounded-lg bg-muted/20">
+            <p className="text-muted-foreground text-sm mb-3">
+              Add a section to get started
+            </p>
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddSection("single")}
+              >
+                <Plus className="h-3 w-3 mr-1.5" />
+                Single
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddSection("columns")}
+              >
+                <Plus className="h-3 w-3 mr-1.5" />
+                Columns
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-// Helper to get a text preview of block content
-function getBlockPreview(block: { type: string; content: unknown }): string {
-  const content = block.content as Record<string, unknown> | null;
-  if (!content) return "Empty block";
-
-  switch (block.type) {
-    case "paragraph":
-    case "heading":
-    case "callout":
-      return typeof content.text === "string"
-        ? content.text.slice(0, 100) || "Empty"
-        : "Empty";
-    case "code":
-      return typeof content.code === "string"
-        ? content.code.slice(0, 100) || "Code block"
-        : "Code block";
-    case "divider":
-      return "Divider";
-    case "image":
-      return "Image";
-    case "document-library":
-      return "Document Library";
-    case "search":
-      return "Search";
-    default:
-      return block.type;
-  }
-}
+export { PageEditor as default };

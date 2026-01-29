@@ -1,8 +1,8 @@
 "use client";
 
-import { getBlockEditor } from "../registry";
-import type { BlockEditorBaseProps, BlockData } from "../types";
 import type { SaveStatus } from "@/types";
+import { getBlockEditor } from "../registry";
+import type { BlockData } from "../types";
 
 interface BlockEditorWrapperProps {
   block: BlockData;

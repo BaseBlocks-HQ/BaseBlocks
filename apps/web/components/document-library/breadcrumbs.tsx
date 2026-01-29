@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ChevronRight, Home } from "lucide-react";
 
 export interface BreadcrumbItem {
   id: string;

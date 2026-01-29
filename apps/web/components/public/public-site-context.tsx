@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
 import type { Id } from "@repo/backend";
+import { type ReactNode, createContext, useContext } from "react";
 
 interface PublicSiteContextValue {
   siteId: Id<"sites">;
@@ -29,7 +29,9 @@ export function PublicSiteProvider({
 export function usePublicSiteContext() {
   const context = useContext(PublicSiteContext);
   if (!context) {
-    throw new Error("usePublicSiteContext must be used within PublicSiteProvider");
+    throw new Error(
+      "usePublicSiteContext must be used within PublicSiteProvider",
+    );
   }
   return context;
 }

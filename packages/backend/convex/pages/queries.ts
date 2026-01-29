@@ -34,25 +34,6 @@ export const getBySlug = query({
   },
 });
 
-// Get page with blocks
-export const getWithBlocks = query({
-  args: { pageId: v.id("pages") },
-  handler: async (ctx, { pageId }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) return null;
-
-    const blocks = await ctx.db
-      .query("blocks")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    // Sort by order
-    blocks.sort((a, b) => a.order - b.order);
-
-    return { page, blocks };
-  },
-});
-
 // Get child pages
 export const getChildren = query({
   args: {

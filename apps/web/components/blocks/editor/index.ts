@@ -11,4 +11,3 @@ export { DocumentLibraryEditor } from "./document-library-editor";
 export { SearchEditor } from "./search-editor";
 export { QuicklinksEditor } from "./quicklinks-editor";
 export { BlockToolbar } from "./block-toolbar";
-export { SortableBlock } from "./sortable-block";

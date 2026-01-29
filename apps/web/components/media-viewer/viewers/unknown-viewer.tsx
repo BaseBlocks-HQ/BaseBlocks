@@ -1,7 +1,7 @@
 "use client";
 
-import { Download, FileQuestion, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Download, ExternalLink, FileQuestion } from "lucide-react";
 import type { ViewerProps } from "../types";
 import { getFileExtension } from "../types";
 
@@ -38,9 +38,7 @@ export function UnknownViewer({ file }: ViewerProps) {
 
       <h3 className="text-lg font-medium mb-2">{file.filename}</h3>
 
-      <p className="text-sm text-muted-foreground mb-1">
-        {file.contentType}
-      </p>
+      <p className="text-sm text-muted-foreground mb-1">{file.contentType}</p>
 
       <p className="text-sm text-muted-foreground mb-6">
         {formatFileSize(file.size)}
@@ -48,8 +46,8 @@ export function UnknownViewer({ file }: ViewerProps) {
       </p>
 
       <p className="text-sm text-muted-foreground max-w-md mb-8">
-        This file type cannot be previewed in the browser.
-        Download it to view with a compatible application.
+        This file type cannot be previewed in the browser. Download it to view
+        with a compatible application.
       </p>
 
       <div className="flex items-center gap-3">

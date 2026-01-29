@@ -1,12 +1,12 @@
+import type { BlockType } from "@/types";
 /**
  * Block registry pattern - extensible block system
  * Add new block types by creating component + calling registerBlock()
  */
 import type { ComponentType } from "react";
-import type { BlockType } from "@/types";
 import type {
-  BlockRegistryEntry,
   BlockEditorBaseProps,
+  BlockRegistryEntry,
   BlockRendererBaseProps,
 } from "./types";
 

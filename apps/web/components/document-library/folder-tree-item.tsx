@@ -1,16 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  ChevronRight,
-  ChevronDown,
-  Folder,
-  FolderOpen,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  FolderPlus,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +8,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 
 export interface FolderData {
   _id: string;
@@ -72,9 +72,7 @@ export function FolderTreeItem({
       <div
         className={cn(
           "group flex items-center gap-1 py-1 px-2 rounded-md cursor-pointer transition-colors",
-          isSelected
-            ? "bg-accent text-accent-foreground"
-            : "hover:bg-muted/50",
+          isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50",
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleClick}

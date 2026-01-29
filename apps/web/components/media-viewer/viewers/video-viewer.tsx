@@ -1,18 +1,18 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize2,
-  SkipBack,
-  SkipForward,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import {
+  Maximize2,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -29,7 +29,9 @@ export function VideoViewer({ file }: ViewerProps) {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -94,11 +96,17 @@ export function VideoViewer({ file }: ViewerProps) {
     video.requestFullscreen?.();
   }, []);
 
-  const skip = useCallback((seconds: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(0, Math.min(duration, video.currentTime + seconds));
-  }, [duration]);
+  const skip = useCallback(
+    (seconds: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.currentTime = Math.max(
+        0,
+        Math.min(duration, video.currentTime + seconds),
+      );
+    },
+    [duration],
+  );
 
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
@@ -146,7 +154,7 @@ export function VideoViewer({ file }: ViewerProps) {
       <div
         className={cn(
           "p-3 bg-gradient-to-t from-black/80 to-transparent transition-opacity",
-          showControls ? "opacity-100" : "opacity-0"
+          showControls ? "opacity-100" : "opacity-0",
         )}
       >
         {/* Progress bar */}

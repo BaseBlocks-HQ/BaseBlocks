@@ -1,13 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { FileText, Home } from "lucide-react";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { getPageLink } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
+import { FileText, Home } from "lucide-react";
+import Link from "next/link";
 
 interface NavItemProps {
   page: PageWithChildren;

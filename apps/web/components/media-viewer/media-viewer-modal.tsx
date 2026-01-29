@@ -1,25 +1,25 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
-import {
-  X,
-  Download,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  FileText,
-  FileImage,
-  FileVideo,
-  Music,
-  File,
-  Loader2,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  File,
+  FileImage,
+  FileText,
+  FileVideo,
+  Loader2,
+  Music,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
-import { getViewer } from "./viewers";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
+import { getViewer } from "./viewers";
 
 function formatFileSize(bytes?: number): string {
   if (!bytes) return "";
@@ -185,7 +185,7 @@ export function MediaViewerModal() {
               "absolute left-4 top-1/2 -translate-y-1/2 z-10",
               "w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg",
               "flex items-center justify-center",
-              "hover:bg-background transition-colors"
+              "hover:bg-background transition-colors",
             )}
             title="Previous (←)"
           >
@@ -201,7 +201,7 @@ export function MediaViewerModal() {
               "absolute right-4 top-1/2 -translate-y-1/2 z-10",
               "w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg",
               "flex items-center justify-center",
-              "hover:bg-background transition-colors"
+              "hover:bg-background transition-colors",
             )}
             title="Next (→)"
           >
@@ -223,7 +223,7 @@ export function MediaViewerModal() {
                 "w-2 h-2 rounded-full transition-colors",
                 index === currentIndex
                   ? "bg-primary"
-                  : "bg-muted-foreground/30"
+                  : "bg-muted-foreground/30",
               )}
             />
           ))}

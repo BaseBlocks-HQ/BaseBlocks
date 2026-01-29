@@ -1,6 +1,6 @@
-import { ExternalLink, AppWindow } from "lucide-react";
+import type { QuicklinkItem, QuicklinksContent } from "@/types";
+import { AppWindow, ExternalLink } from "lucide-react";
 import type { BlockRendererBaseProps } from "../types";
-import type { QuicklinksContent, QuicklinkItem } from "@/types";
 
 interface QuicklinkButtonProps {
   link: QuicklinkItem;

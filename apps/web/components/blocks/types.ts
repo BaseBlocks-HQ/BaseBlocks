@@ -1,20 +1,20 @@
+import type {
+  BlockContent,
+  BlockType,
+  CalloutContent,
+  CodeContent,
+  DividerContent,
+  FileContent,
+  HeadingContent,
+  ImageContent,
+  ParagraphContent,
+  QuicklinksContent,
+  SaveStatus,
+} from "@/types";
 /**
  * Block component prop types
  */
 import type { ComponentType } from "react";
-import type {
-  BlockType,
-  BlockContent,
-  SaveStatus,
-  HeadingContent,
-  ParagraphContent,
-  CalloutContent,
-  CodeContent,
-  DividerContent,
-  ImageContent,
-  FileContent,
-  QuicklinksContent,
-} from "@/types";
 
 // Generic block data structure
 export interface BlockData {

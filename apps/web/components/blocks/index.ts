@@ -3,29 +3,29 @@
  */
 import { registerBlock } from "./registry";
 
+import { CalloutEditor } from "./editor/callout-editor";
+import { CodeEditor } from "./editor/code-editor";
+import { DividerEditor } from "./editor/divider-editor";
+import { DocumentLibraryEditor } from "./editor/document-library-editor";
 // Import editors
 import { HeadingEditor } from "./editor/heading-editor";
 import { ParagraphEditor } from "./editor/paragraph-editor";
-import { DividerEditor } from "./editor/divider-editor";
-import { SpacerEditor } from "./editor/spacer-editor";
-import { CalloutEditor } from "./editor/callout-editor";
-import { CodeEditor } from "./editor/code-editor";
-import { DocumentLibraryEditor } from "./editor/document-library-editor";
-import { SearchEditor } from "./editor/search-editor";
 import { QuicklinksEditor } from "./editor/quicklinks-editor";
+import { SearchEditor } from "./editor/search-editor";
+import { SpacerEditor } from "./editor/spacer-editor";
 
-// Import renderers
-import { HeadingRenderer } from "./renderer/heading-renderer";
-import { ParagraphRenderer } from "./renderer/paragraph-renderer";
-import { DividerRenderer } from "./renderer/divider-renderer";
-import { SpacerRenderer } from "./renderer/spacer-renderer";
 import { CalloutRenderer } from "./renderer/callout-renderer";
 import { CodeRenderer } from "./renderer/code-renderer";
-import { ImageRenderer } from "./renderer/image-renderer";
-import { FileRenderer } from "./renderer/file-renderer";
+import { DividerRenderer } from "./renderer/divider-renderer";
 import { DocumentLibraryRenderer } from "./renderer/document-library-renderer";
-import { SearchRenderer } from "./renderer/search-renderer";
+import { FileRenderer } from "./renderer/file-renderer";
+// Import renderers
+import { HeadingRenderer } from "./renderer/heading-renderer";
+import { ImageRenderer } from "./renderer/image-renderer";
+import { ParagraphRenderer } from "./renderer/paragraph-renderer";
 import { QuicklinksRenderer } from "./renderer/quicklinks-renderer";
+import { SearchRenderer } from "./renderer/search-renderer";
+import { SpacerRenderer } from "./renderer/spacer-renderer";
 
 // Register all blocks
 registerBlock({

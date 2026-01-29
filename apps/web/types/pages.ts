@@ -1,8 +1,8 @@
+import type { TypedBlock } from "./blocks";
 /**
  * Page type definitions
  */
-import type { Page, PageId } from "./convex";
-import type { TypedBlock } from "./blocks";
+import type { Page } from "./convex";
 
 // Page list item (for sidebar display)
 export interface PageListItem {

@@ -1,12 +1,30 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { Plus, FolderPlus, Settings2 } from "lucide-react";
+import {
+  Breadcrumbs,
+  CreateFolderButton,
+  DropZone,
+  EmptyState,
+  type FileData,
+  FileList,
+  type FolderData,
+  FolderTree,
+  InlineDropZone,
+  UploadProgressList,
+  useDocumentLibrary,
+  useFileOperations,
+  useFolderOperations,
+  useFolderPath,
+} from "@/components/document-library";
+import { useEditorContext } from "@/components/editor";
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -14,34 +32,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { useEditorContext } from "@/components/editor";
+import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
-import type { BlockEditorBaseProps } from "../types";
 import type { DocumentLibraryContent } from "@/types";
-import {
-  FolderTree,
-  FileList,
-  Breadcrumbs,
-  DropZone,
-  UploadProgressList,
-  CreateFolderButton,
-  EmptyState,
-  useDocumentLibrary,
-  useFolderOperations,
-  useFileOperations,
-  useFolderPath,
-  type FolderData,
-  type FileData,
-} from "@/components/document-library";
+import type { Id } from "@repo/backend";
+import { Plus, Settings2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import type { BlockEditorBaseProps } from "../types";
 
 export function DocumentLibraryEditor({
   block,
@@ -87,7 +86,7 @@ export function DocumentLibraryEditor({
 
   // Filter to only show uploads that are in progress
   const activeUploads = Object.fromEntries(
-    Object.entries(uploadStates).filter(([, state]) => state.isUploading)
+    Object.entries(uploadStates).filter(([, state]) => state.isUploading),
   );
 
   // Select library
@@ -187,14 +186,17 @@ export function DocumentLibraryEditor({
     // The FileList component handles opening the download URL
   }, []);
 
-  const handlePreviewFile = useCallback((file: FileData) => {
-    openFile({
-      url: file.cdnUrl,
-      filename: file.filename,
-      contentType: file.contentType,
-      size: file.size,
-    });
-  }, [openFile]);
+  const handlePreviewFile = useCallback(
+    (file: FileData) => {
+      openFile({
+        url: file.cdnUrl,
+        filename: file.filename,
+        contentType: file.contentType,
+        size: file.size,
+      });
+    },
+    [openFile],
+  );
 
   const handleRenameFile = useCallback(
     async (fileId: string, newName: string) => {
@@ -300,7 +302,9 @@ export function DocumentLibraryEditor({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
           <div className="flex items-center gap-3">
-            <span className="font-medium">{currentLibrary?.name || "Document Library"}</span>
+            <span className="font-medium">
+              {currentLibrary?.name || "Document Library"}
+            </span>
             <Breadcrumbs
               items={folderPath.map((f) => ({ id: f._id, name: f.name }))}
               onNavigate={handleNavigate}
@@ -308,7 +312,9 @@ export function DocumentLibraryEditor({
           </div>
           <div className="flex items-center gap-2">
             <CreateFolderButton
-              onSubmit={(name) => handleCreateFolder(name, selectedFolderId ?? undefined)}
+              onSubmit={(name) =>
+                handleCreateFolder(name, selectedFolderId ?? undefined)
+              }
             />
 
             {/* Settings popover */}
@@ -352,57 +358,62 @@ export function DocumentLibraryEditor({
         </div>
 
         {/* Content area */}
-        <div className="flex min-h-[300px]">
-          {/* Folder tree sidebar */}
-          {content.showFolderTree !== false && (
-            <div className="w-48 border-r bg-muted/30 p-2">
-              {folders.length > 0 ? (
-                <FolderTree
-                  folders={folders as FolderData[]}
-                  selectedFolderId={selectedFolderId}
-                  onSelectFolder={setSelectedFolderId}
-                  onCreateFolder={handleCreateFolder}
-                  onRenameFolder={handleRenameFolder}
-                  onDeleteFolder={handleDeleteFolder}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-xs text-muted-foreground">No folders</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* File area */}
-          <div className="flex-1 flex flex-col">
-            {/* Upload area */}
-            <div className="p-4 border-b">
-              <DropZone onFilesAccepted={handleFilesAccepted} className="min-h-[80px]" />
-            </div>
-
-            {/* Upload progress - only show while uploading */}
-            {Object.keys(activeUploads).length > 0 && (
-              <div className="px-4 py-2 border-b bg-muted/30">
-                <UploadProgressList uploads={activeUploads} />
+        <DropZone
+          onFilesAccepted={handleFilesAccepted}
+          className="border-0 rounded-none cursor-default"
+        >
+          <div className="flex h-[300px]">
+            {/* Folder tree sidebar */}
+            {content.showFolderTree !== false && (
+              <div className="w-48 border-r bg-muted/30 p-2 overflow-y-auto">
+                {folders.length > 0 ? (
+                  <FolderTree
+                    folders={folders as FolderData[]}
+                    selectedFolderId={selectedFolderId}
+                    onSelectFolder={setSelectedFolderId}
+                    onCreateFolder={handleCreateFolder}
+                    onRenameFolder={handleRenameFolder}
+                    onDeleteFolder={handleDeleteFolder}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-xs text-muted-foreground">No folders</p>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* File list */}
-            <div className="flex-1 p-2">
-              {files.length > 0 ? (
-                <FileList
-                  files={files as FileData[]}
-                  onDownload={handleDownloadFile}
-                  onPreview={handlePreviewFile}
-                  onRename={handleRenameFile}
-                  onDelete={handleDeleteFile}
-                />
-              ) : (
-                <EmptyState type="files" />
+            {/* File area */}
+            <div className="flex-1 flex flex-col min-w-0">
+              {/* Upload progress - only show while uploading */}
+              {Object.keys(activeUploads).length > 0 && (
+                <div className="px-4 py-2 border-b bg-muted/30">
+                  <UploadProgressList uploads={activeUploads} />
+                </div>
               )}
+
+              {/* File list */}
+              <div className="flex-1 p-2 overflow-y-auto">
+                {files.length > 0 ? (
+                  <FileList
+                    files={files as FileData[]}
+                    onDownload={handleDownloadFile}
+                    onPreview={handlePreviewFile}
+                    onRename={handleRenameFile}
+                    onDelete={handleDeleteFile}
+                  />
+                ) : (
+                  <EmptyState type="files" />
+                )}
+              </div>
+
+              {/* Compact upload bar */}
+              <div className="px-3 py-2 border-t bg-muted/30">
+                <InlineDropZone onFilesAccepted={handleFilesAccepted} />
+              </div>
             </div>
           </div>
-        </div>
+        </DropZone>
       </div>
     </div>
   );

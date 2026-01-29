@@ -65,7 +65,9 @@ function extractSubdomain(request: NextRequest): string | null {
 }
 
 // Extract subdomain from path-based URL (/s/[subdomain]/...)
-function extractSubdomainFromPath(pathname: string): { subdomain: string; remainingPath: string } | null {
+function extractSubdomainFromPath(
+  pathname: string,
+): { subdomain: string; remainingPath: string } | null {
   const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
   if (match?.[1]) {
     return {

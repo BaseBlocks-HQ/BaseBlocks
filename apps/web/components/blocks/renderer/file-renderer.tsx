@@ -1,7 +1,7 @@
-import { Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { BlockRendererBaseProps } from "../types";
 import type { FileContent } from "@/types";
+import { Download, FileText } from "lucide-react";
+import type { BlockRendererBaseProps } from "../types";
 
 export function FileRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as FileContent;

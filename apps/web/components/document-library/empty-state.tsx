@@ -1,7 +1,7 @@
 "use client";
 
-import { FolderOpen, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FolderOpen, Upload } from "lucide-react";
 
 interface EmptyStateProps {
   type: "library" | "folder" | "files";

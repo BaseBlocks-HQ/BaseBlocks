@@ -60,14 +60,19 @@ export class EntityStorageClient {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
               },
               body: JSON.stringify({ blobId, path }),
             });
 
             if (!commitResponse.ok) {
               const commitError = await commitResponse.json().catch(() => ({}));
-              reject(new Error(commitError.error || `Commit failed: ${commitResponse.status}`));
+              reject(
+                new Error(
+                  commitError.error ||
+                    `Commit failed: ${commitResponse.status}`,
+                ),
+              );
               return;
             }
 
@@ -78,12 +83,20 @@ export class EntityStorageClient {
               cdnUrl,
             });
           } catch (err) {
-            reject(err instanceof Error ? err : new Error("Invalid response from storage server"));
+            reject(
+              err instanceof Error
+                ? err
+                : new Error("Invalid response from storage server"),
+            );
           }
         } else {
           try {
             const error = JSON.parse(xhr.responseText);
-            reject(new Error(error.message || error.error || `Upload failed: ${xhr.status}`));
+            reject(
+              new Error(
+                error.message || error.error || `Upload failed: ${xhr.status}`,
+              ),
+            );
           } catch {
             reject(new Error(`Upload failed: ${xhr.status}`));
           }
@@ -100,7 +113,10 @@ export class EntityStorageClient {
 
       xhr.open("POST", `${this.siteUrl}/fs/upload`);
       xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      xhr.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream",
+      );
       // Send raw file bytes, not FormData - ConvexFS streams body directly to storage
       xhr.send(file);
     });
@@ -109,11 +125,7 @@ export class EntityStorageClient {
   /**
    * Generate a storage path for a document
    */
-  generatePath(
-    siteId: string,
-    userId: string,
-    filename: string,
-  ): string {
+  generatePath(siteId: string, userId: string, filename: string): string {
     const timestamp = Date.now();
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
     return `/${this.workspaceTenantId}/documents/${siteId}/${userId}/${timestamp}_${sanitizedFilename}`;

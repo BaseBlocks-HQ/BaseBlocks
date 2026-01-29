@@ -1,8 +1,8 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { useMutation, useQuery } from "convex/react";
 
 // Document Library CRUD operations
 export function useDocumentLibrary(siteId: Id<"sites">) {
@@ -94,7 +94,10 @@ export function useFileOperations(
       return renameDocument({ documentId, filename });
     },
 
-    move: async (documentId: Id<"documents">, targetFolderId?: Id<"documentFolders">) => {
+    move: async (
+      documentId: Id<"documents">,
+      targetFolderId?: Id<"documentFolders">,
+    ) => {
       return moveDocument({ documentId, folderId: targetFolderId });
     },
 
@@ -119,10 +122,12 @@ export function usePublicFolders(
   libraryId: Id<"documentLibraries"> | null,
   accessToken?: string,
 ) {
-  return useQuery(
-    api.documentFolders.queries.listByLibraryPublic,
-    libraryId ? { libraryId, accessToken } : "skip",
-  ) || [];
+  return (
+    useQuery(
+      api.documentFolders.queries.listByLibraryPublic,
+      libraryId ? { libraryId, accessToken } : "skip",
+    ) || []
+  );
 }
 
 export function usePublicFiles(
@@ -130,20 +135,26 @@ export function usePublicFiles(
   folderId: Id<"documentFolders"> | null | undefined,
   accessToken?: string,
 ) {
-  return useQuery(
-    api.documents.queries.listByFolderPublic,
-    libraryId ? { libraryId, folderId: folderId ?? undefined, accessToken } : "skip",
-  ) || [];
+  return (
+    useQuery(
+      api.documents.queries.listByFolderPublic,
+      libraryId
+        ? { libraryId, folderId: folderId ?? undefined, accessToken }
+        : "skip",
+    ) || []
+  );
 }
 
 export function usePublicFolderPath(
   folderId: Id<"documentFolders"> | null,
   accessToken?: string,
 ) {
-  return useQuery(
-    api.documentFolders.queries.getPathPublic,
-    folderId ? { folderId, accessToken } : "skip",
-  ) || [];
+  return (
+    useQuery(
+      api.documentFolders.queries.getPathPublic,
+      folderId ? { folderId, accessToken } : "skip",
+    ) || []
+  );
 }
 
 export function usePublicLibrary(

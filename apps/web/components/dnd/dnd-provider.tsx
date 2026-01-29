@@ -1,26 +1,26 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
 import {
   DndContext,
-  closestCenter,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  type DropAnimation,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
+  type UniqueIdentifier,
+  closestCenter,
+  defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-  DragOverlay,
-  type UniqueIdentifier,
-  type DropAnimation,
-  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { type ReactNode, useState } from "react";
 
 interface DndProviderProps {
   children: ReactNode;
@@ -64,7 +64,7 @@ export function DndProvider({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragStart = (event: DragStartEvent) => {

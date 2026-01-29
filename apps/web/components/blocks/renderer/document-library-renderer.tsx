@@ -1,22 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import type { Id } from "@repo/backend";
-import { Download, Folder, FolderOpen, ChevronRight, Home, Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { BlockRendererBaseProps } from "../types";
-import type { DocumentLibraryContent } from "@/types";
 import {
   FileIcon,
   getFileTypeColor,
-  usePublicLibrary,
-  usePublicFolders,
   usePublicFiles,
   usePublicFolderPath,
+  usePublicFolders,
+  usePublicLibrary,
 } from "@/components/document-library";
-import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/components/media-viewer";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import type { DocumentLibraryContent } from "@/types";
+import type { Id } from "@repo/backend";
+import {
+  ChevronRight,
+  Download,
+  Eye,
+  Folder,
+  FolderOpen,
+  Home,
+} from "lucide-react";
+import { useCallback, useState } from "react";
+import type { BlockRendererBaseProps } from "../types";
 
 interface DocumentLibraryRendererProps extends BlockRendererBaseProps {
   accessToken?: string;
@@ -28,7 +35,9 @@ export function DocumentLibraryRenderer({
 }: DocumentLibraryRendererProps) {
   const content = block.content as DocumentLibraryContent;
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const { openFile } = useMediaViewer();
 
   const libraryId = content.libraryId
@@ -74,14 +83,17 @@ export function DocumentLibraryRenderer({
     document.body.removeChild(link);
   }, []);
 
-  const handlePreview = useCallback((file: typeof files[number]) => {
-    openFile({
-      url: file.cdnUrl,
-      filename: file.filename,
-      contentType: file.contentType,
-      size: file.size,
-    });
-  }, [openFile]);
+  const handlePreview = useCallback(
+    (file: (typeof files)[number]) => {
+      openFile({
+        url: file.cdnUrl,
+        filename: file.filename,
+        contentType: file.contentType,
+        size: file.size,
+      });
+    },
+    [openFile],
+  );
 
   if (!libraryId || !library) {
     return (
@@ -116,7 +128,9 @@ export function DocumentLibraryRenderer({
           <div
             className={cn(
               "flex items-center gap-1 py-1.5 px-2 rounded-md cursor-pointer transition-colors",
-              isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50",
+              isSelected
+                ? "bg-accent text-accent-foreground"
+                : "hover:bg-muted/50",
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={() => handleSelectFolder(folder._id)}
@@ -133,7 +147,10 @@ export function DocumentLibraryRenderer({
               )}
             >
               <ChevronRight
-                className={cn("h-3 w-3 transition-transform", isExpanded && "rotate-90")}
+                className={cn(
+                  "h-3 w-3 transition-transform",
+                  isExpanded && "rotate-90",
+                )}
               />
             </button>
             {isExpanded ? (
@@ -155,11 +172,13 @@ export function DocumentLibraryRenderer({
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+    return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   // Sort files by name
-  const sortedFiles = [...files].sort((a, b) => a.filename.localeCompare(b.filename));
+  const sortedFiles = [...files].sort((a, b) =>
+    a.filename.localeCompare(b.filename),
+  );
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -215,11 +234,21 @@ export function DocumentLibraryRenderer({
                     className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => handlePreview(file)}
                   >
-                    <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>
-                      <FileIcon contentType={file.contentType} className="h-5 w-5" />
+                    <div
+                      className={cn(
+                        "flex-shrink-0",
+                        getFileTypeColor(file.contentType),
+                      )}
+                    >
+                      <FileIcon
+                        contentType={file.contentType}
+                        className="h-5 w-5"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{file.filename}</p>
+                      <p className="text-sm font-medium truncate">
+                        {file.filename}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {formatFileSize(file.size)}
                       </p>

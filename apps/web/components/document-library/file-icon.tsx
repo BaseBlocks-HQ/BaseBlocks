@@ -1,30 +1,32 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
-  FileText,
-  Image,
-  FileVideo,
-  FileAudio,
-  FileSpreadsheet,
-  FileCode,
-  FileArchive,
   File,
+  FileArchive,
+  FileAudio,
+  FileCode,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
+  Image,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
   // Documents
   "application/pdf": FileText,
   "application/msword": FileText,
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": FileText,
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    FileText,
   "text/plain": FileText,
   "text/markdown": FileText,
   "text/rtf": FileText,
 
   // Spreadsheets
   "application/vnd.ms-excel": FileSpreadsheet,
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": FileSpreadsheet,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    FileSpreadsheet,
   "text/csv": FileSpreadsheet,
 
   // Images
@@ -88,12 +90,28 @@ export function FileIcon({ contentType, className }: FileIconProps) {
 // Helper to get a color class based on file type
 export function getFileTypeColor(contentType: string): string {
   if (contentType.includes("pdf")) return "text-red-500";
-  if (contentType.includes("word") || contentType.includes("document")) return "text-blue-500";
-  if (contentType.includes("sheet") || contentType.includes("excel") || contentType.includes("csv")) return "text-green-500";
+  if (contentType.includes("word") || contentType.includes("document"))
+    return "text-blue-500";
+  if (
+    contentType.includes("sheet") ||
+    contentType.includes("excel") ||
+    contentType.includes("csv")
+  )
+    return "text-green-500";
   if (contentType.startsWith("image/")) return "text-purple-500";
   if (contentType.startsWith("video/")) return "text-pink-500";
   if (contentType.startsWith("audio/")) return "text-orange-500";
-  if (contentType.includes("zip") || contentType.includes("archive") || contentType.includes("rar")) return "text-yellow-600";
-  if (contentType.includes("json") || contentType.includes("javascript") || contentType.includes("html")) return "text-cyan-500";
+  if (
+    contentType.includes("zip") ||
+    contentType.includes("archive") ||
+    contentType.includes("rar")
+  )
+    return "text-yellow-600";
+  if (
+    contentType.includes("json") ||
+    contentType.includes("javascript") ||
+    contentType.includes("html")
+  )
+    return "text-cyan-500";
   return "text-muted-foreground";
 }

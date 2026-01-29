@@ -1,7 +1,7 @@
-import { Globe } from "lucide-react";
+import { CreateSiteDialog } from "@/components/dialogs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreateSiteDialog } from "@/components/dialogs";
+import { Globe } from "lucide-react";
 import { SiteCard } from "./site-card";
 
 interface SitesGridProps {

@@ -1,7 +1,7 @@
 "use client";
 
-import { use } from "react";
 import { SiteEditor } from "@/components/editor";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ siteId: string }>;

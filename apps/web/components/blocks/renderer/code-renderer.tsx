@@ -1,5 +1,5 @@
-import type { BlockRendererBaseProps } from "../types";
 import type { CodeContent } from "@/types";
+import type { BlockRendererBaseProps } from "../types";
 
 export function CodeRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as CodeContent;

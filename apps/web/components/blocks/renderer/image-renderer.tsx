@@ -1,5 +1,5 @@
-import type { BlockRendererBaseProps } from "../types";
 import type { ImageContent } from "@/types";
+import type { BlockRendererBaseProps } from "../types";
 
 export function ImageRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as ImageContent;

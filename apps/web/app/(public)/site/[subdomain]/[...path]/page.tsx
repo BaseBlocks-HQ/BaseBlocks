@@ -1,14 +1,14 @@
 "use client";
 
-import { use } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@repo/backend";
-import { PublicSiteSkeleton } from "@/components/skeletons";
 import {
   PublicSiteLayout,
   SiteNotFound,
   SiteNotPublished,
 } from "@/components/public";
+import { PublicSiteSkeleton } from "@/components/skeletons";
+import { api } from "@repo/backend";
+import { useQuery } from "convex/react";
+import { use } from "react";
 
 type Props = {
   params: Promise<{ subdomain: string; path: string[] }>;

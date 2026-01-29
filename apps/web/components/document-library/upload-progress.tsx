@@ -1,10 +1,10 @@
 "use client";
 
-import { X, Check, AlertCircle, Loader2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import type { UploadState } from "@/lib/storage";
+import { cn } from "@/lib/utils";
+import { AlertCircle, Check, Loader2, X } from "lucide-react";
 
 interface UploadProgressProps {
   filename: string;
@@ -51,15 +51,13 @@ export function UploadProgress({
             </p>
           </div>
         )}
-        {error && (
-          <p className="text-xs text-destructive mt-1">{error}</p>
-        )}
+        {error && <p className="text-xs text-destructive mt-1">{error}</p>}
         {isComplete && (
           <p className="text-xs text-green-600 mt-1">Upload complete</p>
         )}
       </div>
 
-      {(isUploading && onCancel) && (
+      {isUploading && onCancel && (
         <Button
           variant="ghost"
           size="icon"
@@ -70,7 +68,7 @@ export function UploadProgress({
         </Button>
       )}
 
-      {(!isUploading && onDismiss) && (
+      {!isUploading && onDismiss && (
         <Button
           variant="ghost"
           size="icon"

@@ -7,15 +7,14 @@
  * 3. Implement the canHandle function to match content types
  */
 
-import type { ViewerConfig, MediaFileType } from "../types";
-import { getMediaFileType } from "../types";
-import { ImageViewer } from "./image-viewer";
-import { PdfViewer } from "./pdf-viewer";
-import { VideoViewer } from "./video-viewer";
+import type { ViewerConfig } from "../types";
 import { AudioViewer } from "./audio-viewer";
-import { TextViewer } from "./text-viewer";
+import { ImageViewer } from "./image-viewer";
 import { OfficeViewer } from "./office-viewer";
+import { PdfViewer } from "./pdf-viewer";
+import { TextViewer } from "./text-viewer";
 import { UnknownViewer } from "./unknown-viewer";
+import { VideoViewer } from "./video-viewer";
 
 /**
  * Registry of all available viewers

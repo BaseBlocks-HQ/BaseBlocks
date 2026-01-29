@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { FileListItem, type FileData } from "./file-list-item";
-import { RenameDialog } from "./rename-dialog";
-import { DeleteConfirmDialog } from "./delete-confirm-dialog";
-import { EmptyState } from "./empty-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useCallback, useState } from "react";
+import { DeleteConfirmDialog } from "./delete-confirm-dialog";
+import { EmptyState } from "./empty-state";
+import { type FileData, FileListItem } from "./file-list-item";
+import { RenameDialog } from "./rename-dialog";
 
 interface FileListProps {
   files: FileData[];
@@ -44,11 +44,14 @@ export function FileList({
     setDeleteDialogOpen(true);
   }, []);
 
-  const handleDownload = useCallback((file: FileData) => {
-    // Open download URL in new tab
-    window.open(file.cdnUrl, "_blank");
-    onDownload(file);
-  }, [onDownload]);
+  const handleDownload = useCallback(
+    (file: FileData) => {
+      // Open download URL in new tab
+      window.open(file.cdnUrl, "_blank");
+      onDownload(file);
+    },
+    [onDownload],
+  );
 
   if (files.length === 0) {
     return <EmptyState type="files" className={className} />;

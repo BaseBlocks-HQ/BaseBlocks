@@ -1,8 +1,3 @@
-/**
- * Block type definitions for the editor and renderer
- */
-import type { Block, BlockId } from "./convex";
-
 // Block type union (matches Convex schema)
 export type BlockType =
   | "heading"
@@ -42,9 +37,7 @@ export interface FileContent {
   size?: number;
 }
 
-export interface DividerContent {
-  // Empty - dividers have no content
-}
+export type DividerContent = {};
 
 export interface SpacerContent {
   height: "small" | "medium" | "large" | "xlarge";
@@ -173,8 +166,16 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContent> = {
   image: { url: "" },
   file: { url: "", filename: "" },
   "document-list": {},
-  "document-library": { displayStyle: "list", showFolderTree: true, allowDownloads: true },
-  search: { placeholder: "Search documents...", maxResults: 10, showFileType: true },
+  "document-library": {
+    displayStyle: "list",
+    showFolderTree: true,
+    allowDownloads: true,
+  },
+  search: {
+    placeholder: "Search documents...",
+    maxResults: 10,
+    showFileType: true,
+  },
   embed: { url: "" },
   divider: {},
   spacer: { height: "medium" },

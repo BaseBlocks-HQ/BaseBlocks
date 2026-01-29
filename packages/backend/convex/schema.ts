@@ -57,7 +57,7 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
-  // Blocks within a page (content)
+  // Blocks within a page (content) - DEPRECATED: Use sections instead
   blocks: defineTable({
     pageId: v.id("pages"),
     type: v.union(
@@ -78,6 +78,56 @@ export default defineSchema({
     ),
     order: v.number(),
     content: v.any(), // Block-specific content
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_page", ["pageId"]),
+
+  // Sections - layout containers for blocks
+  sections: defineTable({
+    pageId: v.id("pages"),
+    type: v.union(
+      v.literal("single"),
+      v.literal("rows"),
+      v.literal("columns"),
+      v.literal("grid")
+    ),
+    order: v.number(),
+    // Slots contain the blocks - stored as embedded JSON for atomic updates
+    slots: v.array(
+      v.object({
+        id: v.string(),
+        position: v.number(),
+        blocks: v.array(
+          v.object({
+            id: v.string(),
+            type: v.union(
+              v.literal("heading"),
+              v.literal("paragraph"),
+              v.literal("image"),
+              v.literal("file"),
+              v.literal("document-list"),
+              v.literal("document-library"),
+              v.literal("search"),
+              v.literal("embed"),
+              v.literal("divider"),
+              v.literal("spacer"),
+              v.literal("callout"),
+              v.literal("code"),
+              v.literal("table"),
+              v.literal("quicklinks")
+            ),
+            content: v.any(),
+          })
+        ),
+      })
+    ),
+    // Section settings - layout configuration only
+    settings: v.object({
+      rowCount: v.optional(v.number()),
+      columnCount: v.optional(v.number()),
+      gridColumns: v.optional(v.number()),
+      gridRows: v.optional(v.number()),
+    }),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_page", ["pageId"]),

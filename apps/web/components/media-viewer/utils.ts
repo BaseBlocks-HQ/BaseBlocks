@@ -10,7 +10,7 @@
  */
 export async function createBlobUrl(
   url: string,
-  contentType?: string
+  contentType?: string,
 ): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -61,7 +61,7 @@ function isOfficeDocument(contentType?: string): boolean {
  */
 export async function openInNewTab(
   url: string,
-  contentType?: string
+  contentType?: string,
 ): Promise<void> {
   try {
     // For Office documents, open in Microsoft Office Online viewer

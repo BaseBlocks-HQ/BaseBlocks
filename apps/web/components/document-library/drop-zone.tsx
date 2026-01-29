@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import { Upload, X } from "lucide-react";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface DropZoneProps {
   onFilesAccepted: (files: File[]) => void;
@@ -47,7 +47,9 @@ export function DropZone({
         "relative border-2 border-dashed rounded-lg transition-colors cursor-pointer",
         isDragActive && !isDragReject && "border-primary bg-primary/5",
         isDragReject && "border-destructive bg-destructive/5",
-        !isDragActive && !isDragReject && "border-muted-foreground/25 hover:border-muted-foreground/50",
+        !isDragActive &&
+          !isDragReject &&
+          "border-muted-foreground/25 hover:border-muted-foreground/50",
         disabled && "opacity-50 cursor-not-allowed",
         className,
       )}
@@ -81,9 +83,7 @@ export function DropZone({
                 : "Drop files here"
               : "Drag & drop files here"}
           </p>
-          <p className="text-xs text-muted-foreground">
-            or click to browse
-          </p>
+          <p className="text-xs text-muted-foreground">or click to browse</p>
         </div>
       )}
     </div>

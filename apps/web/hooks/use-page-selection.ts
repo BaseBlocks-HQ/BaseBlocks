@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
 import type { PageListItem } from "@/types";
+import { useCallback, useState } from "react";
 
 interface UsePageSelectionOptions {
   /** Initial page list to select from */

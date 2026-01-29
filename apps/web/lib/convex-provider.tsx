@@ -2,8 +2,8 @@
 
 import { ConvexProviderWithAuth } from "convex/react";
 import type { ReactNode } from "react";
-import { convex } from "./convex-client";
 import { EntityAuthProvider, useAuthFromEntityAuth } from "./auth";
+import { convex } from "./convex-client";
 
 function ConvexProviderWithEntityAuth({ children }: { children: ReactNode }) {
   return (

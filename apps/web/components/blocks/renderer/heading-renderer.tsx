@@ -1,5 +1,5 @@
-import type { BlockRendererBaseProps } from "../types";
 import type { HeadingContent } from "@/types";
+import type { BlockRendererBaseProps } from "../types";
 
 export function HeadingRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as HeadingContent;

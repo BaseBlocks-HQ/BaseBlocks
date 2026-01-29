@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
-import { Plus, Trash2, Upload, ExternalLink, Globe, AppWindow, HelpCircle, Settings2, X, Check } from "lucide-react";
+import { useEditorContext } from "@/components/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +11,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import { useEditorContext } from "@/components/editor";
 import { useEntityAuth } from "@/lib/auth";
 import { entityStorageClient } from "@/lib/storage/client";
+import type { QuicklinkItem, QuicklinkType, QuicklinksContent } from "@/types";
+import {
+  AppWindow,
+  Check,
+  ExternalLink,
+  Globe,
+  HelpCircle,
+  Plus,
+  Settings2,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { BlockEditorBaseProps } from "../types";
-import type { QuicklinksContent, QuicklinkItem, QuicklinkType } from "@/types";
 
 const MAX_LINKS = 4;
 
@@ -32,7 +43,11 @@ interface QuicklinkPreviewCardProps {
   onRemove: () => void;
 }
 
-function QuicklinkPreviewCard({ link, onEdit, onRemove }: QuicklinkPreviewCardProps) {
+function QuicklinkPreviewCard({
+  link,
+  onEdit,
+  onRemove,
+}: QuicklinkPreviewCardProps) {
   const isApp = link.linkType === "app";
 
   return (
@@ -163,7 +178,9 @@ function QuicklinkEditForm({
               <Upload className="w-5 h-5 text-muted-foreground" />
             )}
           </button>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">Cover</p>
+          <p className="text-[10px] text-muted-foreground text-center mt-1">
+            Cover
+          </p>
         </div>
 
         {/* Form fields */}
@@ -188,9 +205,28 @@ function QuicklinkEditForm({
                     <TooltipTrigger asChild>
                       <HelpCircle className="w-3 h-3 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[280px] text-xs">
-                      <p className="font-medium mb-1">How to find app URL schemes:</p>
-                      <p>Search online for "[app name] URL scheme" or check the app's documentation. Examples: <code className="bg-black text-white px-1 rounded">spotify://</code>, <code className="bg-black text-white px-1 rounded">slack://</code>, <code className="bg-black text-white px-1 rounded">vscode://</code></p>
+                    <TooltipContent
+                      side="top"
+                      className="max-w-[280px] text-xs"
+                    >
+                      <p className="font-medium mb-1">
+                        How to find app URL schemes:
+                      </p>
+                      <p>
+                        Search online for "[app name] URL scheme" or check the
+                        app's documentation. Examples:{" "}
+                        <code className="bg-black text-white px-1 rounded">
+                          spotify://
+                        </code>
+                        ,{" "}
+                        <code className="bg-black text-white px-1 rounded">
+                          slack://
+                        </code>
+                        ,{" "}
+                        <code className="bg-black text-white px-1 rounded">
+                          vscode://
+                        </code>
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -204,11 +240,19 @@ function QuicklinkEditForm({
               size="sm"
               className="justify-start"
             >
-              <ToggleGroupItem value="website" aria-label="Website link" className="gap-1.5 text-xs px-2.5">
+              <ToggleGroupItem
+                value="website"
+                aria-label="Website link"
+                className="gap-1.5 text-xs px-2.5"
+              >
                 <Globe className="w-3.5 h-3.5" />
                 Website
               </ToggleGroupItem>
-              <ToggleGroupItem value="app" aria-label="Desktop app" className="gap-1.5 text-xs px-2.5">
+              <ToggleGroupItem
+                value="app"
+                aria-label="Desktop app"
+                className="gap-1.5 text-xs px-2.5"
+              >
                 <AppWindow className="w-3.5 h-3.5" />
                 Desktop App
               </ToggleGroupItem>
@@ -222,7 +266,11 @@ function QuicklinkEditForm({
             <Input
               value={link.url}
               onChange={(e) => onChange({ ...link, url: e.target.value })}
-              placeholder={linkType === "website" ? "https://example.com" : "appname://open"}
+              placeholder={
+                linkType === "website"
+                  ? "https://example.com"
+                  : "appname://open"
+              }
               className="h-8 text-sm"
             />
             {linkType === "app" && (
@@ -236,19 +284,11 @@ function QuicklinkEditForm({
 
       {/* Action buttons */}
       <div className="flex justify-end gap-2 pt-2 border-t">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCancel}
-        >
+        <Button variant="ghost" size="sm" onClick={onCancel}>
           <X className="w-4 h-4 mr-1" />
           Cancel
         </Button>
-        <Button
-          size="sm"
-          onClick={onSave}
-          disabled={!canSave}
-        >
+        <Button size="sm" onClick={onSave} disabled={!canSave}>
           <Check className="w-4 h-4 mr-1" />
           {isNew ? "Add" : "Save"}
         </Button>
@@ -267,11 +307,15 @@ export function QuicklinksEditor({
   const { getToken, user } = useEntityAuth();
 
   // Saved links from the database
-  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(content.links || []);
+  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(
+    content.links || [],
+  );
   // IDs of links currently being edited
   const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
   // Local edits for links being edited (unsaved changes)
-  const [editingData, setEditingData] = useState<Map<string, QuicklinkItem>>(new Map());
+  const [editingData, setEditingData] = useState<Map<string, QuicklinkItem>>(
+    new Map(),
+  );
   // Track which link is uploading an image
   const [uploadingLinkId, setUploadingLinkId] = useState<string | null>(null);
   // Track if we're adding a new link
@@ -404,7 +448,11 @@ export function QuicklinksEditor({
     }
   };
 
-  const handleImageUpload = async (file: File, linkId: string, isNew: boolean) => {
+  const handleImageUpload = async (
+    file: File,
+    linkId: string,
+    isNew: boolean,
+  ) => {
     setUploadingLinkId(linkId);
 
     try {
@@ -427,7 +475,9 @@ export function QuicklinksEditor({
       } else {
         const currentData = editingData.get(linkId);
         if (currentData) {
-          setEditingData((prev) => new Map(prev).set(linkId, { ...currentData, imageUrl: cdnUrl }));
+          setEditingData((prev) =>
+            new Map(prev).set(linkId, { ...currentData, imageUrl: cdnUrl }),
+          );
         }
       }
       toast.success("Image uploaded");
@@ -469,7 +519,9 @@ export function QuicklinksEditor({
             onChange={setNewLinkData}
             onSave={handleSaveNew}
             onCancel={handleCancelNew}
-            onImageUpload={(file) => handleImageUpload(file, newLinkData.id, true)}
+            onImageUpload={(file) =>
+              handleImageUpload(file, newLinkData.id, true)
+            }
             isUploading={uploadingLinkId === newLinkData.id}
             isNew={true}
           />
@@ -506,7 +558,9 @@ export function QuicklinksEditor({
                     onChange={(updated) => handleEditChange(link.id, updated)}
                     onSave={() => handleSaveEdit(link.id)}
                     onCancel={() => handleCancelEdit(link.id)}
-                    onImageUpload={(file) => handleImageUpload(file, link.id, false)}
+                    onImageUpload={(file) =>
+                      handleImageUpload(file, link.id, false)
+                    }
                     isUploading={uploadingLinkId === link.id}
                     isNew={false}
                   />
@@ -522,7 +576,6 @@ export function QuicklinksEditor({
             </p>
           </div>
         ) : null}
-
       </div>
     </div>
   );

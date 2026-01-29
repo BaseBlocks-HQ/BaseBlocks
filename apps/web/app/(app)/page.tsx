@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
 import { useConvexAuth } from "convex/react";
 import Link from "next/link";
 

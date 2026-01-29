@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Copy, Check, WrapText, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Check, Copy, Search, WrapText } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ViewerProps } from "../types";
 
 export function TextViewer({ file }: ViewerProps) {
@@ -49,17 +49,23 @@ export function TextViewer({ file }: ViewerProps) {
     if (!content || !searchTerm.trim()) return content;
 
     const term = searchTerm.trim();
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const regex = new RegExp(
+      `(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi",
+    );
     const parts = content.split(regex);
 
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">
+        <mark
+          key={i}
+          className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded"
+        >
           {part}
         </mark>
       ) : (
         part
-      )
+      ),
     );
   }, [content, searchTerm]);
 
@@ -129,7 +135,7 @@ export function TextViewer({ file }: ViewerProps) {
         <pre
           className={cn(
             "p-4 text-sm font-mono",
-            wordWrap ? "whitespace-pre-wrap break-words" : "whitespace-pre"
+            wordWrap ? "whitespace-pre-wrap break-words" : "whitespace-pre",
           )}
         >
           {highlightedContent}

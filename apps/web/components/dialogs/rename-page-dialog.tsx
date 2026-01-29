@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { generateSlug, SLUG_PATTERN } from "@/lib/validation";
-import { FormDialog } from "./form-dialog";
+import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import type { PageListItem } from "@/types";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useMutation } from "convex/react";
+import { useEffect, useState } from "react";
+import { FormDialog } from "./form-dialog";
 
 interface RenamePageDialogProps {
   page: PageListItem;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { ZoomIn, ZoomOut, Maximize2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertCircle, Loader2, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import type { ViewerProps } from "../types";
 import { createBlobUrl, revokeBlobUrl } from "../utils";
 

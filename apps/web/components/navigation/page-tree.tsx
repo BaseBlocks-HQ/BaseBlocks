@@ -1,10 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { FileText, Home, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
+import { ConfirmDialog, RenamePageDialog } from "@/components/dialogs";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,12 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { RenamePageDialog, ConfirmDialog } from "@/components/dialogs";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { PageListItem } from "@/types";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useMutation } from "convex/react";
+import {
+  FileText,
+  Home,
+  MoreHorizontal,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
 
 interface PageTreeItemProps {
   page: PageListItem;
@@ -65,11 +69,7 @@ export function PageTreeItem({
               Default
             </span>
           )}
-          <PageActionsMenu
-            page={page}
-            siteId={siteId}
-            isDefault={isDefault}
-          />
+          <PageActionsMenu page={page} siteId={siteId} isDefault={isDefault} />
         </SidebarMenuButton>
       </SidebarMenuItem>
       {children.map((child) => (

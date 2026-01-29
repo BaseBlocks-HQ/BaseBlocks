@@ -1,11 +1,11 @@
 "use client";
 
 import {
+  type ReactNode,
   createContext,
+  useCallback,
   useContext,
   useState,
-  useCallback,
-  type ReactNode,
 } from "react";
 import type { MediaFile } from "./types";
 
@@ -69,15 +69,18 @@ export function MediaViewerProvider({ children }: MediaViewerProviderProps) {
     setCurrentIndex(0);
   }, []);
 
-  const setFiles = useCallback((newFiles: MediaFile[], startIndex = 0) => {
-    if (newFiles.length === 0) {
-      closeFile();
-      return;
-    }
-    setFilesState(newFiles);
-    setCurrentIndex(startIndex);
-    setCurrentFile(newFiles[startIndex] ?? null);
-  }, [closeFile]);
+  const setFiles = useCallback(
+    (newFiles: MediaFile[], startIndex = 0) => {
+      if (newFiles.length === 0) {
+        closeFile();
+        return;
+      }
+      setFilesState(newFiles);
+      setCurrentIndex(startIndex);
+      setCurrentFile(newFiles[startIndex] ?? null);
+    },
+    [closeFile],
+  );
 
   const goToNext = useCallback(() => {
     if (currentIndex < files.length - 1) {

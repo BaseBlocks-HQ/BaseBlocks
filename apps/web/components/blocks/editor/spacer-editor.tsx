@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { MoveVertical } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { BlockEditorBaseProps } from "../types";
+import { cn } from "@/lib/utils";
 import type { SpacerContent } from "@/types/blocks";
+import { MoveVertical } from "lucide-react";
+import { useState } from "react";
+import type { BlockEditorBaseProps } from "../types";
 
 const SPACER_HEIGHTS = {
   small: { value: "h-8", label: "S", pixels: "32px" },
@@ -17,7 +17,7 @@ const SPACER_HEIGHTS = {
 export function SpacerEditor({ block, onUpdate }: BlockEditorBaseProps) {
   const content = block.content as SpacerContent;
   const [height, setHeight] = useState<SpacerContent["height"]>(
-    content.height || "medium"
+    content.height || "medium",
   );
 
   const handleHeightChange = (newHeight: SpacerContent["height"]) => {
@@ -31,12 +31,14 @@ export function SpacerEditor({ block, onUpdate }: BlockEditorBaseProps) {
         className={cn(
           "w-full border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center transition-colors",
           "hover:border-muted-foreground/50 hover:bg-muted/30",
-          SPACER_HEIGHTS[height].value
+          SPACER_HEIGHTS[height].value,
         )}
       >
         <div className="flex items-center gap-2 text-muted-foreground">
           <MoveVertical className="h-4 w-4" />
-          <span className="text-xs">Spacer ({SPACER_HEIGHTS[height].pixels})</span>
+          <span className="text-xs">
+            Spacer ({SPACER_HEIGHTS[height].pixels})
+          </span>
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export function SpacerEditor({ block, onUpdate }: BlockEditorBaseProps) {
             >
               {SPACER_HEIGHTS[size].label}
             </Button>
-          )
+          ),
         )}
       </div>
     </div>

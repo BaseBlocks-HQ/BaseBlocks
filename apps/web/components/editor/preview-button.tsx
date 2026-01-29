@@ -1,8 +1,8 @@
 "use client";
 
-import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSiteUrl } from "@/lib/utils";
+import { Eye } from "lucide-react";
 
 interface PreviewButtonProps {
   companySlug: string;
@@ -10,9 +10,10 @@ interface PreviewButtonProps {
 
 export function PreviewButton({ companySlug }: PreviewButtonProps) {
   const handlePreview = () => {
-    const isLocalhost = window.location.hostname === "localhost" ||
-                        window.location.hostname === "127.0.0.1" ||
-                        window.location.hostname.endsWith(".localhost");
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.endsWith(".localhost");
 
     if (isLocalhost) {
       const port = window.location.port || "3000";

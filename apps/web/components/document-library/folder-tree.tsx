@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { FolderTreeItem, type FolderData } from "./folder-tree-item";
-import { CreateFolderDialog } from "./create-folder-dialog";
-import { RenameDialog } from "./rename-dialog";
-import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useCallback, useMemo, useState } from "react";
+import { CreateFolderDialog } from "./create-folder-dialog";
+import { DeleteConfirmDialog } from "./delete-confirm-dialog";
+import { type FolderData, FolderTreeItem } from "./folder-tree-item";
+import { RenameDialog } from "./rename-dialog";
 
 interface FolderTreeProps {
   folders: FolderData[];
@@ -27,7 +27,9 @@ export function FolderTree({
   onDeleteFolder,
   className,
 }: FolderTreeProps) {
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createParentId, setCreateParentId] = useState<string | undefined>();
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -116,7 +118,8 @@ export function FolderTree({
           onDelete={handleDelete}
           onCreateSubfolder={handleCreateSubfolder}
         >
-          {expandedFolders.has(folder._id) && renderFolders(folder._id, level + 1)}
+          {expandedFolders.has(folder._id) &&
+            renderFolders(folder._id, level + 1)}
         </FolderTreeItem>
       ));
     },

@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import {
+  MediaViewerModal,
+  MediaViewerProvider,
+} from "@/components/media-viewer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { MediaViewerProvider, MediaViewerModal } from "@/components/media-viewer";
+import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const geistSans = localFont({

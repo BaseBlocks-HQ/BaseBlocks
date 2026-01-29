@@ -1,14 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  MoreHorizontal,
-  Download,
-  Pencil,
-  Trash2,
-  FolderInput,
-  Eye,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +8,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { FileIcon, getFileTypeColor } from "./file-icon";
 import { cn } from "@/lib/utils";
+import {
+  Download,
+  Eye,
+  FolderInput,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { FileIcon, getFileTypeColor } from "./file-icon";
 
 export interface FileData {
   _id: string;
@@ -57,7 +57,7 @@ export function FileListItem({
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+    return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   const formatDate = (timestamp: number) => {

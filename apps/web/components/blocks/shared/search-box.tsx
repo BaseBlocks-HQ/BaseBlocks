@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useQuery } from "convex/react";
-import { api } from "@repo/backend";
-import {
-  Search,
-  FileText,
-  FileSpreadsheet,
-  FileImage,
-  File,
-  Presentation,
-  Download,
-  Loader2,
-  Eye,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
+import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { useMediaViewer } from "@/components/media-viewer";
+import { useQuery } from "convex/react";
+import {
+  Download,
+  Eye,
+  File,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Presentation,
+  Search,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // File type icon mapping
 function getFileIcon(contentType: string) {
@@ -29,7 +29,10 @@ function getFileIcon(contentType: string) {
   if (contentType.includes("spreadsheet") || contentType.includes("excel")) {
     return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
   }
-  if (contentType.includes("presentation") || contentType.includes("powerpoint")) {
+  if (
+    contentType.includes("presentation") ||
+    contentType.includes("powerpoint")
+  ) {
     return <Presentation className="h-4 w-4 text-orange-500" />;
   }
   if (contentType.includes("word") || contentType.includes("document")) {
@@ -121,7 +124,10 @@ export function SearchBox({
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsFocused(false);
       }
     }
@@ -134,14 +140,16 @@ export function SearchBox({
 
   // Use authenticated query for editor, public query for published sites
   const searchResults = useQuery(
-    usePublicQuery ? api.documents.queries.searchPublic : api.documents.queries.search,
+    usePublicQuery
+      ? api.documents.queries.searchPublic
+      : api.documents.queries.search,
     shouldSearch
       ? {
           siteId,
           query: debouncedQuery,
           limit: maxResults,
         }
-      : "skip"
+      : "skip",
   ) as SearchResultItem[] | undefined;
 
   const isSearching = shouldSearch && searchResults === undefined;
@@ -159,14 +167,17 @@ export function SearchBox({
     document.body.removeChild(link);
   }, []);
 
-  const handlePreview = useCallback((result: SearchResultItem) => {
-    openFile({
-      url: result.cdnUrl,
-      filename: result.filename,
-      contentType: result.contentType,
-      size: result.size,
-    });
-  }, [openFile]);
+  const handlePreview = useCallback(
+    (result: SearchResultItem) => {
+      openFile({
+        url: result.cdnUrl,
+        filename: result.filename,
+        contentType: result.contentType,
+        size: result.size,
+      });
+    },
+    [openFile],
+  );
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -182,10 +193,12 @@ export function SearchBox({
           className={cn("pl-10", inputAddon ? "pr-10" : "")}
         />
         {isSearching && (
-          <Loader2 className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground",
-            inputAddon ? "right-10" : "right-3"
-          )} />
+          <Loader2
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground",
+              inputAddon ? "right-10" : "right-3",
+            )}
+          />
         )}
         {inputAddon}
       </div>
@@ -210,11 +223,15 @@ export function SearchBox({
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {showFileType && getFileIcon(result.contentType)}
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-sm">{result.filename}</p>
+                        <p className="font-medium truncate text-sm">
+                          {result.filename}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {formatFileSize(result.size)}
                           {result.matchType === "content" && (
-                            <span className="ml-2 text-primary">• Content match</span>
+                            <span className="ml-2 text-primary">
+                              • Content match
+                            </span>
                           )}
                         </p>
                       </div>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { NavItem } from "@/components/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { PageWithChildren } from "@/types";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { Skeleton } from "@/components/ui/skeleton";
-import { NavItem } from "@/components/navigation";
+import { useQuery } from "convex/react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
-import type { PageWithChildren } from "@/types";
 
 interface PublicSiteLayoutProps {
   site: {

@@ -1,9 +1,9 @@
 "use client";
 
 import { usePublicSiteContextOptional } from "@/components/public";
+import type { SearchContent } from "@/types";
 import { SearchBox } from "../shared";
 import type { BlockRendererBaseProps } from "../types";
-import type { SearchContent } from "@/types";
 
 export function SearchRenderer({ block }: BlockRendererBaseProps) {
   const content = block.content as SearchContent;

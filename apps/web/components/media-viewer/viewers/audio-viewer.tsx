@@ -1,17 +1,17 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  SkipBack,
-  SkipForward,
-  Music,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import {
+  Music,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -85,11 +85,17 @@ export function AudioViewer({ file }: ViewerProps) {
     setIsMuted(audio.muted);
   }, []);
 
-  const skip = useCallback((seconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = Math.max(0, Math.min(duration, audio.currentTime + seconds));
-  }, [duration]);
+  const skip = useCallback(
+    (seconds: number) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.currentTime = Math.max(
+        0,
+        Math.min(duration, audio.currentTime + seconds),
+      );
+    },
+    [duration],
+  );
 
   return (
     <div className="flex flex-col h-full items-center justify-center p-8 bg-gradient-to-b from-muted/50 to-muted">

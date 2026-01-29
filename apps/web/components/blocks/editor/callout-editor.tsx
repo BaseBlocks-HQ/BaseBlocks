@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
 import { useDebounceCallback } from "@/hooks";
-import type { BlockEditorBaseProps } from "../types";
 import type { CalloutContent } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { BlockEditorBaseProps } from "../types";
 
 export function CalloutEditor({
   block,

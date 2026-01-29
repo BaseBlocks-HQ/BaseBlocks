@@ -1,16 +1,16 @@
 "use client";
 
+import { CreateSiteDialog } from "@/components/dialogs";
+import { ModeToggle } from "@/components/mode-toggle";
+import { DashboardSkeleton } from "@/components/skeletons";
+import { Button } from "@/components/ui/button";
+import { useEntityAuth } from "@/lib/auth";
+import { api } from "@repo/backend";
+import { useConvexAuth, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useConvexAuth, useQuery } from "convex/react";
-import { api } from "@repo/backend";
-import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/mode-toggle";
-import { DashboardSkeleton } from "@/components/skeletons";
-import { CreateSiteDialog } from "@/components/dialogs";
 import { SitesGrid } from "./sites-grid";
-import { useEntityAuth } from "@/lib/auth";
 
 export function DashboardContent() {
   const router = useRouter();

@@ -51,13 +51,22 @@
  */
 
 // Context and hooks
-export { MediaViewerProvider, useMediaViewer, useMediaViewerOptional } from "./context";
+export {
+  MediaViewerProvider,
+  useMediaViewer,
+  useMediaViewerOptional,
+} from "./context";
 
 // Main modal component
 export { MediaViewerModal } from "./media-viewer-modal";
 
 // Types
-export type { MediaFile, ViewerProps, ViewerConfig, MediaFileType } from "./types";
+export type {
+  MediaFile,
+  ViewerProps,
+  ViewerConfig,
+  MediaFileType,
+} from "./types";
 export { getMediaFileType, isViewable, getFileExtension } from "./types";
 
 // Individual viewers (for advanced use cases)

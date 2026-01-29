@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useConvexAuth } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface UseAuthRedirectOptions {
   /** Path to redirect to if not authenticated */

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { SaveStatus } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseSaveStatusOptions {
   /** Duration to show "saved" status before returning to idle (ms) */

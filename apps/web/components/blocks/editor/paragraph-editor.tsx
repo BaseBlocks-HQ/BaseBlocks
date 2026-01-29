@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
 import { useDebounceCallback } from "@/hooks";
-import type { BlockEditorBaseProps } from "../types";
 import type { ParagraphContent } from "@/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { BlockEditorBaseProps } from "../types";
 
 export function ParagraphEditor({
   block,

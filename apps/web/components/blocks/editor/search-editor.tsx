@@ -1,27 +1,31 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Settings2 } from "lucide-react";
+import { useEditorContext } from "@/components/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useEditorContext } from "@/components/editor";
+import { Switch } from "@/components/ui/switch";
+import type { SearchContent } from "@/types";
+import { Settings2 } from "lucide-react";
+import { useCallback, useState } from "react";
 import { SearchBox } from "../shared";
 import type { BlockEditorBaseProps } from "../types";
-import type { SearchContent } from "@/types";
 
 export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
   const content = block.content as SearchContent;
   const { siteId } = useEditorContext();
 
-  const [placeholder, setPlaceholder] = useState(content.placeholder || "Search documents...");
-  const [showFileType, setShowFileType] = useState(content.showFileType ?? true);
+  const [placeholder, setPlaceholder] = useState(
+    content.placeholder || "Search documents...",
+  );
+  const [showFileType, setShowFileType] = useState(
+    content.showFileType ?? true,
+  );
   const [maxResults, setMaxResults] = useState(content.maxResults || 10);
 
   const handleUpdate = useCallback(
@@ -31,7 +35,7 @@ export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
         ...updates,
       });
     },
-    [content, onUpdate]
+    [content, onUpdate],
   );
 
   const handlePlaceholderChange = useCallback(
@@ -39,7 +43,7 @@ export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
       setPlaceholder(value);
       handleUpdate({ placeholder: value });
     },
-    [handleUpdate]
+    [handleUpdate],
   );
 
   const handleShowFileTypeChange = useCallback(
@@ -47,7 +51,7 @@ export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
       setShowFileType(value);
       handleUpdate({ showFileType: value });
     },
-    [handleUpdate]
+    [handleUpdate],
   );
 
   const handleMaxResultsChange = useCallback(
@@ -55,7 +59,7 @@ export function SearchEditor({ block, onUpdate }: BlockEditorBaseProps) {
       setMaxResults(value);
       handleUpdate({ maxResults: value });
     },
-    [handleUpdate]
+    [handleUpdate],
   );
 
   // Settings button to inject into the search box

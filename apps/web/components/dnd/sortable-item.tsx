@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
 
 interface SortableItemProps {
   id: string;
@@ -36,11 +36,7 @@ export function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "relative",
-        isDragging && "opacity-50 z-50",
-        className
-      )}
+      className={cn("relative", isDragging && "opacity-50 z-50", className)}
       {...attributes}
       {...listeners}
     >

@@ -1,14 +1,8 @@
 "use client";
 
-import { useCallback, useState, useEffect, useMemo, useRef } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { DndProvider, arrayMove, type DragEndEvent } from "@/components/dnd";
+import { ConfirmDialog, RenamePageDialog } from "@/components/dialogs";
+import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { DragHandle } from "@/components/dnd";
-import { FileText, Home, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,13 +11,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { RenamePageDialog, ConfirmDialog } from "@/components/dialogs";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { PageListItem } from "@/types";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useMutation } from "convex/react";
+import {
+  FileText,
+  Home,
+  MoreHorizontal,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface SortablePageTreeProps {
   pages: PageListItem[];
@@ -57,12 +61,14 @@ export function SortablePageTree({
   // Server-sorted pages
   const serverSortedPages = useMemo(
     () => [...pages].sort((a, b) => a.order - b.order),
-    [pages]
+    [pages],
   );
 
   // Reset optimistic state when server data ACTUALLY changes
   useEffect(() => {
-    const serverOrderKey = serverSortedPages.map((p) => `${p._id}:${p.order}`).join(",");
+    const serverOrderKey = serverSortedPages
+      .map((p) => `${p._id}:${p.order}`)
+      .join(",");
 
     if (serverOrderKey !== prevServerOrderRef.current) {
       prevServerOrderRef.current = serverOrderKey;
@@ -116,7 +122,7 @@ export function SortablePageTree({
         pageIds: reorderedIds as Id<"pages">[],
       });
     },
-    [pageIds, reorderPage, parentId, siteId]
+    [pageIds, reorderPage, parentId, siteId],
   );
 
   // Render drag overlay for pages
@@ -213,7 +219,7 @@ function SortablePageItem({
         style={style}
         className={cn(
           "group/page",
-          isDragging && "opacity-50 ring-2 ring-primary rounded-md"
+          isDragging && "opacity-50 ring-2 ring-primary rounded-md",
         )}
       >
         <SidebarMenuButton
@@ -244,11 +250,7 @@ function SortablePageItem({
               Default
             </span>
           )}
-          <PageActionsMenu
-            page={page}
-            siteId={siteId}
-            isDefault={isDefault}
-          />
+          <PageActionsMenu page={page} siteId={siteId} isDefault={isDefault} />
         </SidebarMenuButton>
       </SidebarMenuItem>
 

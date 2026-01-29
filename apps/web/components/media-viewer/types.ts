@@ -107,5 +107,5 @@ export function isViewable(contentType: string): boolean {
  */
 export function getFileExtension(filename: string): string {
   const parts = filename.split(".");
-  return parts.length > 1 ? parts.pop()?.toLowerCase() ?? "" : "";
+  return parts.length > 1 ? (parts.pop()?.toLowerCase() ?? "") : "";
 }

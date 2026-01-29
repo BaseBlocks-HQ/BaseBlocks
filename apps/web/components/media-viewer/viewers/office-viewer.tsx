@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
+import { useState } from "react";
 import type { ViewerProps } from "../types";
 
 /**
@@ -48,7 +48,8 @@ export function OfficeViewer({ file }: ViewerProps) {
       <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b text-sm">
         <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
         <span className="text-amber-800 dark:text-amber-200">
-          Online viewers require the document to be publicly accessible. If preview fails, download the file instead.
+          Online viewers require the document to be publicly accessible. If
+          preview fails, download the file instead.
         </span>
       </div>
 
