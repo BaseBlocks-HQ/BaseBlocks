@@ -36,6 +36,7 @@ export type {
   TableContent,
   DocumentLibraryContent,
   SearchContent,
+  QuicklinkType,
   QuicklinkItem,
   QuicklinksContent,
   BlockContent,

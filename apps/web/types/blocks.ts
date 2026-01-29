@@ -83,11 +83,14 @@ export interface SearchContent {
   showFileType?: boolean;
 }
 
+export type QuicklinkType = "website" | "app";
+
 export interface QuicklinkItem {
   id: string;
   title: string;
   url: string;
   imageUrl?: string;
+  linkType?: QuicklinkType; // defaults to "website"
 }
 
 export interface QuicklinksContent {

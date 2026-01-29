@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, AppWindow } from "lucide-react";
 import type { BlockRendererBaseProps } from "../types";
 import type { QuicklinksContent, QuicklinkItem } from "@/types";
 
@@ -9,11 +9,14 @@ interface QuicklinkButtonProps {
 function QuicklinkButton({ link }: QuicklinkButtonProps) {
   if (!link.url) return null;
 
+  const isApp = link.linkType === "app";
+
+  // For app links, we don't use target="_blank" since they open native apps
+  // For website links, we open in a new tab
   return (
     <a
       href={link.url}
-      target="_blank"
-      rel="noopener noreferrer"
+      {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
       className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 min-w-[140px] flex-1 max-w-[200px]"
     >
       {/* Image or placeholder */}
@@ -24,6 +27,8 @@ function QuicklinkButton({ link }: QuicklinkButtonProps) {
             alt={link.title || "Link"}
             className="w-full h-full object-cover"
           />
+        ) : isApp ? (
+          <AppWindow className="w-5 h-5 text-muted-foreground" />
         ) : (
           <ExternalLink className="w-5 h-5 text-muted-foreground" />
         )}
