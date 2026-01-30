@@ -20,9 +20,9 @@ import {
 import { getSiteUrl } from "@/lib/utils";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
-import { ExternalLink, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Eye, ExternalLink, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface SiteCardProps {
   site: {
@@ -30,6 +30,7 @@ interface SiteCardProps {
     name: string;
     slug: string;
     description?: string;
+    logoUrl?: string;
     isPublished: boolean;
   };
   companySlug: string;
@@ -44,6 +45,21 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 
   // Link to the site root - the root page will redirect to the default page
   const siteUrl = getSiteUrl(companySlug);
+
+  // Preview handler that works on localhost (subdomain) and production
+  const handlePreview = useCallback(() => {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.endsWith(".localhost");
+
+    if (isLocalhost) {
+      const port = window.location.port || "3000";
+      window.open(`http://${companySlug}.localhost:${port}/`, "_blank");
+    } else {
+      window.open(getSiteUrl(companySlug), "_blank");
+    }
+  }, [companySlug]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -61,7 +77,22 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
     <>
       <Card className="hover:border-primary/50 transition-colors">
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-3">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              {site.logoUrl ? (
+                <img
+                  src={site.logoUrl}
+                  alt={site.name}
+                  className="h-10 w-10 rounded-lg object-contain border bg-muted"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
+                  {site.name[0]?.toUpperCase() || "S"}
+                </div>
+              )}
+            </div>
+            {/* Title and description */}
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg truncate">{site.name}</CardTitle>
               <CardDescription className="truncate">
@@ -110,8 +141,18 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
                 Edit Site
               </Button>
             </Link>
+            {/* Preview button - always available, works on localhost and production */}
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Preview site"
+              onClick={handlePreview}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            {/* Published link - only when published, uses proper domain */}
             {site.isPublished && (
-              <Button variant="ghost" size="icon" asChild>
+              <Button variant="ghost" size="icon" asChild title="View published site">
                 <a href={siteUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" />
                 </a>

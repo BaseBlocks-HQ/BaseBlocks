@@ -11,6 +11,7 @@ interface SitesGridProps {
         name: string;
         slug: string;
         description?: string;
+        logoUrl?: string;
         isPublished: boolean;
       }>
     | undefined;

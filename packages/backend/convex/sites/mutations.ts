@@ -80,6 +80,7 @@ export const update = mutation({
     siteId: v.id("sites"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
     settings: v.optional(
       v.object({
         favicon: v.optional(v.string()),
@@ -91,7 +92,7 @@ export const update = mutation({
       }),
     ),
   },
-  handler: async (ctx, { siteId, name, description, settings }) => {
+  handler: async (ctx, { siteId, name, description, logoUrl, settings }) => {
     const auth = await getAuthContext(ctx);
 
     const site = await ctx.db.get(siteId);
@@ -105,6 +106,7 @@ export const update = mutation({
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
     if (description !== undefined) updates.description = description;
+    if (logoUrl !== undefined) updates.logoUrl = logoUrl;
     if (settings !== undefined) {
       updates.settings = { ...site.settings, ...settings };
     }

@@ -24,6 +24,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(), // site slug within company
     description: v.optional(v.string()),
+    logoUrl: v.optional(v.string()), // Custom logo for the site
     defaultPageId: v.optional(v.id("pages")), // The page shown first when visiting
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),

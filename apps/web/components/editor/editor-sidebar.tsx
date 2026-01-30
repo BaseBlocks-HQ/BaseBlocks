@@ -39,6 +39,7 @@ interface EditorSidebarProps {
   site: {
     _id: string;
     name: string;
+    logoUrl?: string;
     isPublished: boolean;
     defaultPageId?: string;
   };
@@ -126,6 +127,18 @@ export function EditorSidebar({
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
+          {/* Site logo */}
+          {site.logoUrl ? (
+            <img
+              src={site.logoUrl}
+              alt={site.name}
+              className="h-8 w-8 rounded-lg object-contain border bg-muted flex-shrink-0"
+            />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold flex-shrink-0">
+              {site.name[0]?.toUpperCase() || "S"}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold truncate">{site.name}</h2>
             <p className="text-xs text-muted-foreground truncate">

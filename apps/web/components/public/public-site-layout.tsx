@@ -14,6 +14,7 @@ interface PublicSiteLayoutProps {
     _id: Id<"sites">;
     name: string;
     slug: string;
+    logoUrl?: string;
     settings: { navigationStyle: string; headerType: string };
   };
   company: {
@@ -45,11 +46,18 @@ export function PublicSiteLayout({
         <header className="border-b">
           <div className="container mx-auto flex h-14 items-center px-4">
             <div className="flex items-center gap-2">
-              {company.logoUrl ? (
+              {/* Priority: site logo > company logo > auto-generated */}
+              {site.logoUrl ? (
+                <img
+                  src={site.logoUrl}
+                  alt={site.name}
+                  className="h-8 w-8 rounded-lg object-contain"
+                />
+              ) : company.logoUrl ? (
                 <img
                   src={company.logoUrl}
                   alt={company.name}
-                  className="h-8 w-8 object-contain"
+                  className="h-8 w-8 rounded-lg object-contain"
                 />
               ) : (
                 <div
@@ -58,7 +66,7 @@ export function PublicSiteLayout({
                     backgroundColor: company.settings.primaryColor || "#0066FF",
                   }}
                 >
-                  {company.name[0]}
+                  {site.name[0]}
                 </div>
               )}
               <span className="font-semibold">{site.name}</span>
