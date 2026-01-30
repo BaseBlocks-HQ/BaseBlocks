@@ -1,6 +1,5 @@
 "use client";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getSiteUrl } from "@/lib/utils";
@@ -29,7 +28,6 @@ export function EditorHeader({
 				<SidebarTrigger />
 			</div>
 			<div className="flex items-center gap-2">
-				<LanguageSwitcher />
 				<PreviewButton companySlug={companySlug} />
 				{sitePublished ? (
 					<>

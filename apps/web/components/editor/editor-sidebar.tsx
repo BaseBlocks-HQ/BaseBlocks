@@ -33,6 +33,7 @@ import {
   Square,
   Text,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -109,6 +110,7 @@ export function EditorSidebar({
   onAddSection,
   onAddBlock,
 }: EditorSidebarProps) {
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -160,10 +162,10 @@ export function EditorSidebar({
         <div className="px-2 pt-2">
           <TabsList className="w-full">
             <TabsTrigger value="pages" className="flex-1">
-              Pages
+              {t("editor.sidebar.pagesTab")}
             </TabsTrigger>
             <TabsTrigger value="components" className="flex-1">
-              Components
+              {t("editor.sidebar.componentsTab")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -172,7 +174,7 @@ export function EditorSidebar({
           <SidebarContent>
             <SidebarGroup>
               <div className="flex items-center justify-between px-2">
-                <SidebarGroupLabel>Pages</SidebarGroupLabel>
+                <SidebarGroupLabel>{t("editor.sidebar.pagesTab")}</SidebarGroupLabel>
                 <CreatePageDialog siteId={site._id} />
               </div>
               <SidebarGroupContent>
@@ -201,7 +203,7 @@ export function EditorSidebar({
                 {/* Sections - 3 per row with labels below icon */}
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                    Sections
+                    {t("editor.sidebar.sections")}
                   </p>
                   <div className="grid grid-cols-3 gap-1.5">
                     {SECTION_TYPES.map((sectionType) => (
@@ -212,7 +214,7 @@ export function EditorSidebar({
                         onClick={() => onAddSection?.(sectionType.type)}
                       >
                         {SECTION_ICONS[sectionType.type]}
-                        <span className="text-[10px] w-full text-center truncate">{sectionType.label}</span>
+                        <span className="text-[10px] w-full text-center truncate">{t(`editor.sections.${sectionType.type}`)}</span>
                       </Button>
                     ))}
                   </div>
@@ -221,7 +223,7 @@ export function EditorSidebar({
                 {/* Blocks - 3 per row with labels below icon */}
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                    Blocks
+                    {t("editor.sidebar.blocks")}
                   </p>
                   {selectedSlotId ? (
                     <div className="grid grid-cols-3 gap-1.5">
@@ -233,13 +235,13 @@ export function EditorSidebar({
                           onClick={() => onAddBlock?.(item.type)}
                         >
                           {item.icon}
-                          <span className="text-[10px] w-full text-center truncate">{item.label}</span>
+                          <span className="text-[10px] w-full text-center truncate">{t(`blocks.${item.type}`)}</span>
                         </Button>
                       ))}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground px-1">
-                      Select a slot to add blocks
+                      {t("editor.sidebar.selectSlot")}
                     </p>
                   )}
                 </div>
@@ -247,7 +249,7 @@ export function EditorSidebar({
             ) : (
               <div className="p-4">
                 <p className="text-sm text-muted-foreground">
-                  Select a page to add components
+                  {t("editor.sidebar.selectPage")}
                 </p>
               </div>
             )}

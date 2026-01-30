@@ -92,7 +92,22 @@
 		"publish": "Publish",
 		"unpublish": "Unpublish",
 		"preview": "Preview",
-		"viewLive": "View Live"
+		"viewLive": "View Live",
+		"sidebar": {
+			"pagesTab": "Pages",
+			"componentsTab": "Components",
+			"sections": "Sections",
+			"blocks": "Blocks",
+			"selectSlot": "Select a slot to add blocks",
+			"selectPage": "Select a page to add components"
+		},
+		"sections": {
+			"single": "Single",
+			"rows": "Rows",
+			"columns": "Columns",
+			"grid": "Grid",
+			"spacer": "Spacer"
+		}
 	},
 	"onboarding": {
 		"title": "Let's get started",
@@ -181,6 +196,7 @@
 		"image": "Image",
 		"file": "File",
 		"callout": "Callout",
+		"code": "Code",
 		"divider": "Divider",
 		"quicklinks": "Quick Links",
 		"search": "Search",

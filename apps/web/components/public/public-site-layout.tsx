@@ -1,5 +1,6 @@
 "use client";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { NavItem, PageBreadcrumbs } from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PageWithChildren } from "@/types";
@@ -57,7 +58,7 @@ export function PublicSiteLayout({
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
       <div className="min-h-screen bg-background">
         <header className="border-b">
-          <div className="container mx-auto flex h-14 items-center px-4">
+          <div className="container mx-auto flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-2">
               {/* Priority: site logo > company logo > auto-generated */}
               {site.logoUrl ? (
@@ -84,6 +85,7 @@ export function PublicSiteLayout({
               )}
               <span className="font-semibold">{site.name}</span>
             </div>
+            <ModeToggle />
           </div>
         </header>
 

@@ -92,7 +92,22 @@
 		"publish": "Publier",
 		"unpublish": "Depublier",
 		"preview": "Apercu",
-		"viewLive": "Voir en direct"
+		"viewLive": "Voir en direct",
+		"sidebar": {
+			"pagesTab": "Pages",
+			"componentsTab": "Composants",
+			"sections": "Sections",
+			"blocks": "Blocs",
+			"selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
+			"selectPage": "Selectionnez une page pour ajouter des composants"
+		},
+		"sections": {
+			"single": "Simple",
+			"rows": "Lignes",
+			"columns": "Colonnes",
+			"grid": "Grille",
+			"spacer": "Espacement"
+		}
 	},
 	"onboarding": {
 		"title": "Commençons",
@@ -181,6 +196,7 @@
 		"image": "Image",
 		"file": "Fichier",
 		"callout": "Encadre",
+		"code": "Code",
 		"divider": "Separateur",
 		"quicklinks": "Liens rapides",
 		"search": "Recherche",
