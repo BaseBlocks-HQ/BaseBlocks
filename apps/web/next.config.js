@@ -1,6 +1,10 @@
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["*.localhost"],
+	allowedDevOrigins: ["*.localhost"],
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

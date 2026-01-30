@@ -120,8 +120,8 @@ export function EditorSidebar({
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-2">
+      <SidebarHeader className="border-b h-14 px-4 flex items-center">
+        <div className="flex items-center gap-2 w-full">
           <Link href="/dashboard">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />

@@ -1,0 +1,190 @@
+{
+	"common": {
+		"loading": "Chargement...",
+		"error": "Une erreur s'est produite",
+		"save": "Enregistrer",
+		"cancel": "Annuler",
+		"delete": "Supprimer",
+		"edit": "Modifier",
+		"create": "Creer",
+		"search": "Rechercher",
+		"back": "Retour",
+		"backToHome": "Retour a l'accueil",
+		"next": "Suivant",
+		"previous": "Precedent",
+		"confirm": "Confirmer",
+		"close": "Fermer",
+		"settings": "Parametres",
+		"logout": "Se deconnecter",
+		"login": "Se connecter",
+		"signIn": "Connexion",
+		"signUp": "S'inscrire",
+		"signOut": "Deconnexion",
+		"getStarted": "Commencer",
+		"goToDashboard": "Aller au tableau de bord",
+		"redirecting": "Redirection..."
+	},
+	"metadata": {
+		"title": "BaseBlocks - Creez des sites internes pour votre entreprise",
+		"description": "Creez et partagez de la documentation interne, des ressources et des bases de connaissances avec votre equipe."
+	},
+	"landing": {
+		"heroTitle": "Creez des sites internes pour votre entreprise",
+		"heroDescription": "Creez et partagez de la documentation interne, des ressources et des bases de connaissances avec votre equipe. Simple, securise et magnifiquement concu."
+	},
+	"navigation": {
+		"dashboard": "Tableau de bord",
+		"sites": "Sites",
+		"settings": "Parametres",
+		"help": "Aide"
+	},
+	"auth": {
+		"loginTitle": "Bon retour",
+		"loginDescription": "Connectez-vous a votre compte pour continuer",
+		"signUpTitle": "Creer un compte",
+		"signUpDescription": "Commencez avec BaseBlocks",
+		"forgotPassword": "Mot de passe oublie ?",
+		"noAccount": "Vous n'avez pas de compte ?",
+		"hasAccount": "Vous avez deja un compte ?",
+		"continueWith": "Ou continuer avec",
+		"continueWithGoogle": "Continuer avec Google",
+		"signInFailed": "Echec de la connexion"
+	},
+	"dashboard": {
+		"title": "Tableau de bord",
+		"welcomeBack": "Bon retour",
+		"yourSites": "Vos sites",
+		"manageSites": "Gerez votre documentation interne et vos ressources",
+		"recentSites": "Sites recents",
+		"createSite": "Creer un site",
+		"noSites": "Pas encore de sites",
+		"noSitesDescription": "Creez votre premier site pour commencer",
+		"createFirstSite": "Creer votre premier site"
+	},
+	"sites": {
+		"title": "Sites",
+		"create": "Creer un site",
+		"edit": "Modifier le site",
+		"delete": "Supprimer le site",
+		"settings": "Parametres du site",
+		"publish": "Publier",
+		"unpublish": "Depublier",
+		"preview": "Apercu",
+		"viewLive": "Voir en direct",
+		"siteName": "Nom du site",
+		"siteDescription": "Description du site",
+		"confirmDelete": "Etes-vous sur de vouloir supprimer ce site ? Cette action est irreversible.",
+		"deleteWarning": "Cette action est irreversible.",
+		"noDescription": "Aucune description",
+		"published": "Publie",
+		"draft": "Brouillon"
+	},
+	"editor": {
+		"addBlock": "Ajouter un bloc",
+		"deleteBlock": "Supprimer le bloc",
+		"moveUp": "Monter",
+		"moveDown": "Descendre",
+		"duplicate": "Dupliquer",
+		"saveChanges": "Enregistrer les modifications",
+		"unsavedChanges": "Vous avez des modifications non enregistrees",
+		"saving": "Enregistrement...",
+		"saved": "Enregistre",
+		"publish": "Publier",
+		"unpublish": "Depublier",
+		"preview": "Apercu",
+		"viewLive": "Voir en direct"
+	},
+	"onboarding": {
+		"title": "Commençons",
+		"description": "Configurez votre espace de travail en quelques etapes simples",
+		"step1Title": "Creez votre espace de travail",
+		"step1Description": "Donnez un nom a votre espace de travail",
+		"step2Title": "Invitez votre equipe",
+		"step2Description": "Ajoutez des membres pour collaborer",
+		"step3Title": "Creez votre premier site",
+		"step3Description": "Commencez a construire votre site interne",
+		"companyName": "Nom de l'entreprise",
+		"companyNamePlaceholder": "Mon entreprise",
+		"createWorkspace": "Creer l'espace de travail",
+		"creating": "Creation en cours..."
+	},
+	"dialogs": {
+		"createSite": {
+			"title": "Creer un nouveau site",
+			"description": "Ajoutez un nouveau site a votre espace de travail",
+			"nameLabel": "Nom",
+			"namePlaceholder": "Mon site",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "Une breve description de votre site",
+			"creating": "Creation...",
+			"create": "Creer le site"
+		},
+		"createPage": {
+			"title": "Creer une nouvelle page",
+			"description": "Ajoutez une nouvelle page a votre site",
+			"nameLabel": "Nom de la page",
+			"namePlaceholder": "Ma page",
+			"creating": "Creation...",
+			"create": "Creer la page"
+		},
+		"createFolder": {
+			"title": "Creer un nouveau dossier",
+			"description": "Organisez vos fichiers avec des dossiers",
+			"nameLabel": "Nom du dossier",
+			"namePlaceholder": "Mon dossier",
+			"creating": "Creation...",
+			"create": "Creer le dossier"
+		},
+		"rename": {
+			"title": "Renommer",
+			"nameLabel": "Nouveau nom",
+			"renaming": "Renommage...",
+			"rename": "Renommer"
+		},
+		"delete": {
+			"title": "Confirmer la suppression",
+			"description": "Cette action est irreversible.",
+			"deleting": "Suppression...",
+			"delete": "Supprimer"
+		},
+		"editSite": {
+			"title": "Modifier le site",
+			"description": "Modifiez le nom, la description et le logo de votre site",
+			"logoLabel": "Logo du site",
+			"uploadLogo": "Telecharger un logo",
+			"uploading": "Telechargement...",
+			"saving": "Enregistrement...",
+			"logoHint": "Recommande : 128x128px, max 2Mo",
+			"invalidImageType": "Veuillez selectionner un fichier image",
+			"logoTooLarge": "Le logo doit faire moins de 2Mo"
+		}
+	},
+	"errors": {
+		"notFound": "Page non trouvee",
+		"notFoundDescription": "La page que vous recherchez n'existe pas ou a ete deplacee.",
+		"unauthorized": "Non autorise",
+		"unauthorizedDescription": "Vous n'avez pas la permission d'acceder a cette page.",
+		"serverError": "Erreur serveur",
+		"serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
+		"siteNotFound": "Site non trouve",
+		"siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
+		"siteNotPublished": "Site non publie",
+		"siteNotPublishedDescription": "Ce site n'est pas encore publie."
+	},
+	"language": {
+		"select": "Choisir la langue",
+		"current": "Langue actuelle"
+	},
+	"blocks": {
+		"heading": "Titre",
+		"paragraph": "Paragraphe",
+		"image": "Image",
+		"file": "Fichier",
+		"callout": "Encadre",
+		"divider": "Separateur",
+		"quicklinks": "Liens rapides",
+		"search": "Recherche",
+		"library": "Bibliotheque",
+		"spacer": "Espacement"
+	}
+}
