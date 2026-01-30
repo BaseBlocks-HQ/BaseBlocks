@@ -1,6 +1,6 @@
 "use client";
 
-import { NavItem } from "@/components/navigation";
+import { NavItem, PageBreadcrumbs } from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PageWithChildren } from "@/types";
 import { api } from "@repo/backend";
@@ -23,22 +23,35 @@ interface PublicSiteLayoutProps {
     logoUrl?: string;
     settings: { primaryColor?: string };
   };
-  pageSlug: string;
+  pagePath: string[];
 }
 
 export function PublicSiteLayout({
   site,
   company,
-  pageSlug,
+  pagePath,
 }: PublicSiteLayoutProps) {
   const pages = useQuery(api.pages.queries.getTree, {
     siteId: site._id,
   });
 
-  const currentPage = useQuery(api.pages.queries.getBySlug, {
+  // Use path-based lookup for nested pages
+  const currentPage = useQuery(api.pages.queries.getByPath, {
     siteId: site._id,
-    slug: pageSlug,
+    path: pagePath,
   });
+
+  // Get ancestors for breadcrumbs and auto-expanding navigation
+  const ancestors = useQuery(
+    api.pages.queries.getAncestors,
+    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip",
+  );
+
+  // Extract ancestor IDs for auto-expanding navigation
+  const ancestorIds = ancestors?.map((a) => a._id) ?? [];
+
+  // Build the current path string for navigation matching
+  const currentPathString = pagePath.join("/");
 
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
@@ -89,8 +102,9 @@ export function PublicSiteLayout({
                     <NavItem
                       key={page._id}
                       page={page as PageWithChildren}
-                      currentSlug={pageSlug}
+                      currentPath={currentPathString}
                       mode="public"
+                      ancestorIds={ancestorIds}
                     />
                   ))
                 )}
@@ -111,7 +125,14 @@ export function PublicSiteLayout({
                 <p className="text-muted-foreground">Page not found</p>
               </div>
             ) : (
-              <PublicContent pageId={currentPage._id} />
+              <>
+                {/* Breadcrumb navigation */}
+                <PageBreadcrumbs
+                  pageId={currentPage._id}
+                  pageTitle={currentPage.title}
+                />
+                <PublicContent pageId={currentPage._id} />
+              </>
             )}
           </main>
         </div>

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 
 // List pages for a site
@@ -101,5 +102,108 @@ export const getTree = query({
     sortChildren(rootPages);
 
     return rootPages;
+  },
+});
+
+// Get page by nested path (e.g., ["docs", "api", "endpoints"])
+export const getByPath = query({
+  args: {
+    siteId: v.id("sites"),
+    path: v.array(v.string()),
+  },
+  handler: async (ctx, { siteId, path }) => {
+    // Empty path defaults to "home"
+    if (path.length === 0) {
+      return await ctx.db
+        .query("pages")
+        .withIndex("by_slug", (q) => q.eq("siteId", siteId).eq("slug", "home"))
+        .first();
+    }
+
+    // Walk the path from root to leaf
+    let parentId: Id<"pages"> | undefined = undefined;
+
+    for (let i = 0; i < path.length; i++) {
+      const slug = path[i]!;
+      const isLast = i === path.length - 1;
+
+      // Find page with this slug under current parent
+      const page = await ctx.db
+        .query("pages")
+        .withIndex("by_parent", (q) =>
+          q.eq("siteId", siteId).eq("parentId", parentId),
+        )
+        .filter((q) => q.eq(q.field("slug"), slug))
+        .first();
+
+      if (!page) {
+        // Fallback: try single-slug lookup for backwards compatibility
+        if (path.length === 1) {
+          return await ctx.db
+            .query("pages")
+            .withIndex("by_slug", (q) =>
+              q.eq("siteId", siteId).eq("slug", path[0]!),
+            )
+            .first();
+        }
+        return null;
+      }
+
+      if (isLast) {
+        return page;
+      }
+
+      parentId = page._id;
+    }
+
+    return null;
+  },
+});
+
+// Get ancestors of a page (for breadcrumbs)
+export const getAncestors = query({
+  args: { pageId: v.id("pages") },
+  handler: async (ctx, { pageId }) => {
+    const ancestors: Array<{
+      _id: string;
+      title: string;
+      slug: string;
+    }> = [];
+
+    let currentPage = await ctx.db.get(pageId);
+
+    // Walk up the parent chain
+    while (currentPage?.parentId) {
+      const parent = await ctx.db.get(currentPage.parentId);
+      if (!parent) break;
+
+      ancestors.unshift({
+        _id: parent._id,
+        title: parent.title,
+        slug: parent.slug,
+      });
+
+      currentPage = parent;
+    }
+
+    return ancestors;
+  },
+});
+
+// Get full URL path for a page (e.g., "docs/api/endpoints")
+export const getFullPath = query({
+  args: { pageId: v.id("pages") },
+  handler: async (ctx, { pageId }) => {
+    const slugs: string[] = [];
+    let currentPage = await ctx.db.get(pageId);
+
+    // Walk up to root, collecting slugs
+    while (currentPage) {
+      slugs.unshift(currentPage.slug);
+      if (!currentPage.parentId) break;
+      currentPage = await ctx.db.get(currentPage.parentId);
+    }
+
+    return slugs.join("/");
   },
 });

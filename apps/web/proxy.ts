@@ -113,7 +113,8 @@ export async function proxy(request: NextRequest) {
 		const pathBased = extractSubdomainFromPath(pathname);
 		if (pathBased) {
 			const url = request.nextUrl.clone();
-			url.pathname = `/site/${pathBased.subdomain}${pathBased.remainingPath === "/" ? "" : pathBased.remainingPath}`;
+			const pathSuffix = pathBased.remainingPath === "/" ? "" : pathBased.remainingPath;
+			url.pathname = `/${routing.defaultLocale}/site/${pathBased.subdomain}${pathSuffix}`;
 			return NextResponse.rewrite(url);
 		}
 		// No path-based subdomain, continue to intl middleware
@@ -134,7 +135,7 @@ export async function proxy(request: NextRequest) {
 		// Rewrite to custom domain handler
 		const url = request.nextUrl.clone();
 		const pathnameWithoutLocale = removeLocalePrefix(pathname);
-		url.pathname = `/site/_custom/${encodeURIComponent(customDomain)}${pathnameWithoutLocale}`;
+		url.pathname = `/${routing.defaultLocale}/site/_custom/${encodeURIComponent(customDomain)}${pathnameWithoutLocale}`;
 		return NextResponse.rewrite(url);
 	}
 
@@ -148,9 +149,11 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.redirect(new URL("/", request.url));
 	}
 
-	// Rewrite subdomain root to dynamic route /site/[subdomain]/[...path]
+	// Rewrite subdomain root to dynamic route /[locale]/site/[subdomain]/[...path]
+	// We need to include the locale since the route is under [locale] segment
 	const url = request.nextUrl.clone();
-	url.pathname = `/site/${subdomain}${pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale}`;
+	const pathSuffix = pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale;
+	url.pathname = `/${routing.defaultLocale}/site/${subdomain}${pathSuffix}`;
 	return NextResponse.rewrite(url);
 }
 

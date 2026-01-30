@@ -13,6 +13,7 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import { SECTION_TYPES } from "@/types";
 import type { BlockType, PageListItem, SectionLayout } from "@/types";
@@ -109,6 +110,9 @@ export function EditorSidebar({
   onAddBlock,
 }: EditorSidebarProps) {
   const [activeTab, setActiveTab] = useState("pages");
+  const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
+    site._id,
+  );
 
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);
@@ -180,6 +184,9 @@ export function EditorSidebar({
                     siteId={site._id}
                     defaultPageId={site.defaultPageId}
                     onSelect={handleSelectPage}
+                    isExpanded={isExpanded}
+                    onToggleExpand={toggleExpand}
+                    onSetExpanded={setExpanded}
                   />
                 </SidebarMenu>
               </SidebarGroupContent>

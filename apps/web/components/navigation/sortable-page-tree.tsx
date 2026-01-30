@@ -1,6 +1,10 @@
 "use client";
 
-import { ConfirmDialog, RenamePageDialog } from "@/components/dialogs";
+import {
+  ConfirmDialog,
+  CreateSubPageDialog,
+  RenamePageDialog,
+} from "@/components/dialogs";
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { DragHandle } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
@@ -20,7 +24,10 @@ import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import {
+  ChevronDown,
+  ChevronRight,
   FileText,
+  FilePlus,
   Home,
   MoreHorizontal,
   Pencil,
@@ -38,6 +45,9 @@ interface SortablePageTreeProps {
   parentId?: string;
   depth?: number;
   onSelect: (pageId: string) => void;
+  isExpanded?: (pageId: string) => boolean;
+  onToggleExpand?: (pageId: string) => void;
+  onSetExpanded?: (pageId: string, expanded: boolean) => void;
 }
 
 export function SortablePageTree({
@@ -49,6 +59,9 @@ export function SortablePageTree({
   parentId,
   depth = 0,
   onSelect,
+  isExpanded,
+  onToggleExpand,
+  onSetExpanded,
 }: SortablePageTreeProps) {
   const reorderPage = useMutation(api.pages.mutations.reorder);
 
@@ -169,6 +182,9 @@ export function SortablePageTree({
           defaultPageId={defaultPageId}
           depth={depth}
           onSelect={onSelect}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onSetExpanded={onSetExpanded}
         />
       ))}
     </DndProvider>
@@ -183,6 +199,9 @@ interface SortablePageItemProps {
   defaultPageId?: string;
   depth: number;
   onSelect: (pageId: string) => void;
+  isExpanded?: (pageId: string) => boolean;
+  onToggleExpand?: (pageId: string) => void;
+  onSetExpanded?: (pageId: string, expanded: boolean) => void;
 }
 
 function SortablePageItem({
@@ -193,6 +212,9 @@ function SortablePageItem({
   defaultPageId,
   depth,
   onSelect,
+  isExpanded,
+  onToggleExpand,
+  onSetExpanded,
 }: SortablePageItemProps) {
   const {
     attributes,
@@ -210,7 +232,19 @@ function SortablePageItem({
   };
 
   const children = allPages.filter((p) => p.parentId === page._id);
+  const hasChildren = children.length > 0;
   const isDefault = defaultPageId === page._id;
+  const expanded = isExpanded?.(page._id) ?? false;
+
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleExpand?.(page._id);
+  };
+
+  const handleExpandParent = () => {
+    // Expand this page when a sub-page is created
+    onSetExpanded?.(page._id, true);
+  };
 
   return (
     <>
@@ -239,6 +273,23 @@ function SortablePageItem({
             <DragHandle className="h-5 w-5" />
           </div>
 
+          {/* Expand/collapse toggle for pages with children */}
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={handleToggleExpand}
+              className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {expanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          ) : (
+            <span className="w-4" />
+          )}
+
           {isDefault ? (
             <Home className="h-4 w-4 text-primary" />
           ) : (
@@ -251,11 +302,16 @@ function SortablePageItem({
             </span>
           )}
         </SidebarMenuButton>
-        <PageActionsMenu page={page} siteId={siteId} isDefault={isDefault} />
+        <PageActionsMenu
+          page={page}
+          siteId={siteId}
+          isDefault={isDefault}
+          onExpandParent={handleExpandParent}
+        />
       </SidebarMenuItem>
 
-      {/* Recursively render children with their own DnD context */}
-      {children.length > 0 && (
+      {/* Recursively render children when expanded */}
+      {hasChildren && expanded && (
         <SortablePageTree
           pages={children}
           allPages={allPages}
@@ -265,6 +321,9 @@ function SortablePageItem({
           parentId={page._id}
           depth={depth + 1}
           onSelect={onSelect}
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onSetExpanded={onSetExpanded}
         />
       )}
     </>
@@ -275,13 +334,16 @@ function PageActionsMenu({
   page,
   siteId,
   isDefault,
+  onExpandParent,
 }: {
   page: PageListItem;
   siteId: string;
   isDefault: boolean;
+  onExpandParent?: () => void;
 }) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [subPageOpen, setSubPageOpen] = useState(false);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const removePage = useMutation(api.pages.mutations.remove);
@@ -298,6 +360,11 @@ function PageActionsMenu({
     setDeleteOpen(false);
   };
 
+  const handleSubPageCreated = () => {
+    // Expand the parent page to show the new sub-page
+    onExpandParent?.();
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -312,6 +379,11 @@ function PageActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => setSubPageOpen(true)}>
+            <FilePlus className="h-4 w-4" />
+            Add Sub-page
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>
             <Pencil className="h-4 w-4" />
             Rename
@@ -330,6 +402,15 @@ function PageActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CreateSubPageDialog
+        siteId={siteId}
+        parentId={page._id}
+        parentTitle={page.title}
+        open={subPageOpen}
+        onOpenChange={setSubPageOpen}
+        onSuccess={handleSubPageCreated}
+      />
 
       <RenamePageDialog
         page={page}

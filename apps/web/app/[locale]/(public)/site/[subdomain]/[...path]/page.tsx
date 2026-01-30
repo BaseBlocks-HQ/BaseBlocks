@@ -20,7 +20,8 @@ type Props = {
  */
 export default function PublicSitePage({ params }: Props) {
   const { subdomain, path } = use(params);
-  const pageSlug = path[0] || "home";
+  // Pass the full path array for nested page support
+  const pagePath = path.length > 0 ? path : ["home"];
 
   const site = useQuery(api.sites.queries.getBySlug, {
     companySlug: subdomain,
@@ -41,5 +42,5 @@ export default function PublicSitePage({ params }: Props) {
     return <SiteNotPublished />;
   }
 
-  return <PublicSiteLayout site={site} company={company} pageSlug={pageSlug} />;
+  return <PublicSiteLayout site={site} company={company} pagePath={pagePath} />;
 }
