@@ -11,6 +11,7 @@ import {
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
@@ -74,7 +75,7 @@ export function LibraryRenderer({
 
   const handleDownload = useCallback((cdnUrl: string, filename: string) => {
     const link = document.createElement("a");
-    link.href = cdnUrl;
+    link.href = toProxyDownloadUrl(cdnUrl);
     link.download = filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -86,7 +87,7 @@ export function LibraryRenderer({
   const handlePreview = useCallback(
     (file: (typeof files)[number]) => {
       openFile({
-        url: file.cdnUrl,
+        url: toProxyDownloadUrl(file.cdnUrl),
         filename: file.filename,
         contentType: file.contentType,
         size: file.size,

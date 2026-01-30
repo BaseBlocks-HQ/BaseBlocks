@@ -35,6 +35,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
 import { Plus, Settings2 } from "lucide-react";
@@ -190,7 +191,7 @@ export function LibraryEditor({
   const handlePreviewFile = useCallback(
     (file: FileData) => {
       openFile({
-        url: file.cdnUrl,
+        url: toProxyDownloadUrl(file.cdnUrl),
         filename: file.filename,
         contentType: file.contentType,
         size: file.size,

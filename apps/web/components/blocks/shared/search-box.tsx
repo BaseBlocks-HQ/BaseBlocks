@@ -4,6 +4,7 @@ import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -158,7 +159,7 @@ export function SearchBox({
 
   const handleDownload = useCallback((cdnUrl: string, filename: string) => {
     const link = document.createElement("a");
-    link.href = cdnUrl;
+    link.href = toProxyDownloadUrl(cdnUrl);
     link.download = filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -170,7 +171,7 @@ export function SearchBox({
   const handlePreview = useCallback(
     (result: SearchResultItem) => {
       openFile({
-        url: result.cdnUrl,
+        url: toProxyDownloadUrl(result.cdnUrl),
         filename: result.filename,
         contentType: result.contentType,
         size: result.size,

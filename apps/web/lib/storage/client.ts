@@ -79,8 +79,8 @@ export class EntityStorageClient {
               return;
             }
 
-            // Use /fs/download endpoint which sets proper Content-Disposition header with filename
-            const cdnUrl = `${this.siteUrl}/fs/download?path=${encodeURIComponent(path)}`;
+            // Use proxy download endpoint to bypass corporate firewall CORS blocking
+            const cdnUrl = `/api/storage/download?path=${encodeURIComponent(path)}`;
             resolve({
               blobId,
               cdnUrl,
@@ -156,3 +156,28 @@ export const entityStorageClient = new EntityStorageClient(
   ENTITY_STORAGE_SITE_URL,
   WORKSPACE_TENANT_ID,
 );
+
+/**
+ * Convert a storage URL to use the proxy endpoint
+ * This handles both old direct Convex URLs and new proxy URLs
+ * Use this for all downloads to bypass corporate firewall CORS blocking
+ */
+export function toProxyDownloadUrl(cdnUrl: string): string {
+  // Already a proxy URL
+  if (cdnUrl.startsWith("/api/storage/download")) {
+    return cdnUrl;
+  }
+
+  // Extract path from Convex URL: https://xxx.convex.site/fs/download?path=...
+  try {
+    const url = new URL(cdnUrl);
+    const path = url.searchParams.get("path");
+    if (path) {
+      return `/api/storage/download?path=${encodeURIComponent(path)}`;
+    }
+  } catch {
+    // Not a valid URL, return as-is
+  }
+
+  return cdnUrl;
+}

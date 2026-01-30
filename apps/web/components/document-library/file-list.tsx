@@ -2,6 +2,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { useCallback, useState } from "react";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { EmptyState } from "./empty-state";
@@ -46,8 +47,8 @@ export function FileList({
 
   const handleDownload = useCallback(
     (file: FileData) => {
-      // Open download URL in new tab
-      window.open(file.cdnUrl, "_blank");
+      // Open download URL in new tab (via proxy to bypass corporate firewall)
+      window.open(toProxyDownloadUrl(file.cdnUrl), "_blank");
       onDownload(file);
     },
     [onDownload],
