@@ -4,6 +4,8 @@
  * Upload flow:
  * 1. POST /fs/upload with Bearer token -> { blobId }
  * 2. Commit to Convex with blobId reference
+ *
+ * Uses a same-origin proxy (/api/storage/*) to avoid CORS issues with corporate firewalls
  */
 
 export interface UploadResult {
@@ -29,6 +31,7 @@ export class EntityStorageClient {
   /**
    * Upload a file to Entity Storage
    * Returns blobId and CDN URL for the file
+   * Uses same-origin proxy to avoid CORS issues
    */
   async upload(
     file: File,
@@ -55,8 +58,8 @@ export class EntityStorageClient {
             const response = JSON.parse(xhr.responseText);
             const blobId = response.blobId;
 
-            // Commit the file to make it accessible via path
-            const commitResponse = await fetch(`${this.siteUrl}/fs/commit`, {
+            // Commit the file to make it accessible via path (via proxy)
+            const commitResponse = await fetch("/api/storage/commit", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -111,7 +114,8 @@ export class EntityStorageClient {
         reject(new Error("Upload cancelled"));
       });
 
-      xhr.open("POST", `${this.siteUrl}/fs/upload`);
+      // Use same-origin proxy to avoid CORS issues with corporate firewalls
+      xhr.open("POST", "/api/storage/upload");
       xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
       xhr.setRequestHeader(
         "Content-Type",
