@@ -8,11 +8,18 @@ import { useState } from "react";
 import type { BlockEditorBaseProps } from "../types";
 
 const SPACER_HEIGHTS = {
-  small: { value: "h-8", label: "S", pixels: "32px" },
-  medium: { value: "h-16", label: "M", pixels: "64px" },
-  large: { value: "h-24", label: "L", pixels: "96px" },
-  xlarge: { value: "h-32", label: "XL", pixels: "128px" },
+  small: "h-8",
+  medium: "h-16",
+  large: "h-24",
+  xlarge: "h-32",
 } as const;
+
+const SIZE_LABELS: Record<SpacerContent["height"], string> = {
+  small: "S",
+  medium: "M",
+  large: "L",
+  xlarge: "XL",
+};
 
 export function SpacerEditor({
   block,
@@ -30,24 +37,20 @@ export function SpacerEditor({
   };
 
   return (
-    <div className="relative group">
-      <div
-        className={cn(
-          "w-full border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center transition-colors",
-          "hover:border-muted-foreground/50 hover:bg-muted/30",
-          SPACER_HEIGHTS[height].value,
-        )}
-      >
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <MoveVertical className="h-4 w-4" />
-          <span className="text-xs">
-            Spacer ({SPACER_HEIGHTS[height].pixels})
-          </span>
-        </div>
+    <div
+      className={cn(
+        "w-full border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center gap-3 transition-colors",
+        "hover:border-muted-foreground/50 hover:bg-muted/30",
+        SPACER_HEIGHTS[height],
+      )}
+    >
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <MoveVertical className="h-4 w-4" />
+        <span className="text-xs">Spacer</span>
       </div>
 
-      {/* Height controls */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Height controls - always visible */}
+      <div className="flex gap-1">
         {(Object.keys(SPACER_HEIGHTS) as Array<SpacerContent["height"]>).map(
           (size) => (
             <Button
@@ -55,9 +58,12 @@ export function SpacerEditor({
               variant={height === size ? "default" : "outline"}
               size="sm"
               className="h-6 w-6 p-0 text-xs"
-              onClick={() => handleHeightChange(size)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleHeightChange(size);
+              }}
             >
-              {SPACER_HEIGHTS[size].label}
+              {SIZE_LABELS[size]}
             </Button>
           ),
         )}

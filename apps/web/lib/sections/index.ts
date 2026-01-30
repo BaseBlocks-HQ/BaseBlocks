@@ -8,4 +8,5 @@ export {
   createSection,
   createBlock,
   getSectionGridStyle,
+  SPACER_SECTION_HEIGHTS,
 } from "./utils";

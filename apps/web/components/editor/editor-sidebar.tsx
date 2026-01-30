@@ -20,14 +20,14 @@ import {
   AlertTriangle,
   ArrowLeft,
   Code,
-  Columns3,
+  Columns2,
   FolderOpen,
   Heading,
   LayoutGrid,
   Link2,
   Minus,
   MoveVertical,
-  Rows3,
+  Rows2,
   Search,
   Square,
   Text,
@@ -55,9 +55,10 @@ interface EditorSidebarProps {
 
 const SECTION_ICONS: Record<SectionLayout, React.ReactNode> = {
   single: <Square className="h-4 w-4" />,
-  rows: <Rows3 className="h-4 w-4" />,
-  columns: <Columns3 className="h-4 w-4" />,
+  rows: <Rows2 className="h-4 w-4" />,
+  columns: <Columns2 className="h-4 w-4" />,
   grid: <LayoutGrid className="h-4 w-4" />,
+  spacer: <MoveVertical className="h-4 w-4" />,
 };
 
 const BLOCK_ITEMS: Array<{

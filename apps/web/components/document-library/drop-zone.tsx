@@ -12,6 +12,7 @@ interface DropZoneProps {
   accept?: Record<string, string[]>;
   className?: string;
   children?: React.ReactNode;
+  noClick?: boolean;
 }
 
 export function DropZone({
@@ -21,6 +22,7 @@ export function DropZone({
   accept,
   className,
   children,
+  noClick = false,
 }: DropZoneProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -38,6 +40,7 @@ export function DropZone({
       maxSize,
       accept,
       multiple: true,
+      noClick,
     });
 
   return (

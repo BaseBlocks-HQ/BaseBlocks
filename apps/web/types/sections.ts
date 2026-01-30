@@ -9,7 +9,8 @@ export type SectionLayout =
   | "single" // Single column, full width
   | "rows" // Vertical stack of N rows
   | "columns" // Horizontal N columns
-  | "grid"; // N×M grid
+  | "grid" // N×M grid
+  | "spacer"; // Vertical spacer (no slots)
 
 // Block data as stored within a section slot
 export interface SectionBlockData {
@@ -25,6 +26,9 @@ export interface SectionSlot {
   blocks: SectionBlockData[];
 }
 
+// Spacer height options
+export type SpacerSectionHeight = "small" | "medium" | "large" | "xlarge";
+
 // Section settings - simplified (just layout config)
 export interface SectionSettings {
   // Layout configuration (depends on section type)
@@ -32,6 +36,7 @@ export interface SectionSettings {
   columnCount?: number; // For "columns" layout (2-4)
   gridColumns?: number; // For "grid" layout (2-4)
   gridRows?: number; // For "grid" layout (2-4)
+  spacerHeight?: SpacerSectionHeight; // For "spacer" layout
 }
 
 // Complete section data structure
@@ -49,6 +54,7 @@ export const LAYOUT_SLOT_COUNTS: Record<SectionLayout, number | "dynamic"> = {
   rows: "dynamic", // Based on rowCount setting
   columns: "dynamic", // Based on columnCount setting
   grid: "dynamic", // Based on gridColumns × gridRows
+  spacer: 0, // Spacer has no slots
 };
 
 // Default settings per layout type
@@ -58,6 +64,7 @@ export const DEFAULT_SECTION_SETTINGS: Record<SectionLayout, SectionSettings> =
     rows: { rowCount: 2 },
     columns: { columnCount: 2 },
     grid: { gridColumns: 2, gridRows: 2 },
+    spacer: { spacerHeight: "medium" },
   };
 
 // Section metadata for UI display
@@ -92,5 +99,11 @@ export const SECTION_TYPES: SectionTypeInfo[] = [
     label: "Grid",
     description: "Grid layout",
     icon: "LayoutGrid",
+  },
+  {
+    type: "spacer",
+    label: "Spacer",
+    description: "Vertical spacing",
+    icon: "MoveVertical",
   },
 ];

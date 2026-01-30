@@ -23,7 +23,7 @@ export function Breadcrumbs({
 }: BreadcrumbsProps) {
   return (
     <nav
-      className={cn("flex items-center space-x-1 text-sm", className)}
+      className={cn("flex items-center space-x-1 text-sm min-w-0 overflow-hidden", className)}
       aria-label="Breadcrumb"
     >
       <button

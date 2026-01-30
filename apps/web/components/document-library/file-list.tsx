@@ -65,8 +65,8 @@ export function FileList({
 
   return (
     <>
-      <ScrollArea className={cn("h-full", className)}>
-        <div className="space-y-1 py-2">
+      <ScrollArea className={cn("h-full w-full", className)}>
+        <div className="space-y-1 py-2 w-full min-w-0">
           {sortedFiles.map((file) => (
             <FileListItem
               key={file._id}

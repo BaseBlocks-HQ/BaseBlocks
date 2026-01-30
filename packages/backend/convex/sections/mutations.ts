@@ -6,7 +6,8 @@ const sectionTypes = v.union(
   v.literal("single"),
   v.literal("rows"),
   v.literal("columns"),
-  v.literal("grid")
+  v.literal("grid"),
+  v.literal("spacer")
 );
 
 const blockTypes = v.union(
@@ -44,6 +45,14 @@ const settingsSchema = v.object({
   columnCount: v.optional(v.number()),
   gridColumns: v.optional(v.number()),
   gridRows: v.optional(v.number()),
+  spacerHeight: v.optional(
+    v.union(
+      v.literal("small"),
+      v.literal("medium"),
+      v.literal("large"),
+      v.literal("xlarge")
+    )
+  ),
 });
 
 // Create a new section

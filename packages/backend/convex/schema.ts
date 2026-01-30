@@ -89,7 +89,8 @@ export default defineSchema({
       v.literal("single"),
       v.literal("rows"),
       v.literal("columns"),
-      v.literal("grid")
+      v.literal("grid"),
+      v.literal("spacer")
     ),
     order: v.number(),
     // Slots contain the blocks - stored as embedded JSON for atomic updates
@@ -127,6 +128,14 @@ export default defineSchema({
       columnCount: v.optional(v.number()),
       gridColumns: v.optional(v.number()),
       gridRows: v.optional(v.number()),
+      spacerHeight: v.optional(
+        v.union(
+          v.literal("small"),
+          v.literal("medium"),
+          v.literal("large"),
+          v.literal("xlarge")
+        )
+      ),
     }),
     createdAt: v.number(),
     updatedAt: v.number(),

@@ -50,6 +50,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   );
   const removeSectionMutation = useMutation(api.sections.mutations.remove);
   const moveBlockMutation = useMutation(api.sections.mutations.moveBlock);
+  const updateSettingsMutation = useMutation(
+    api.sections.mutations.updateSettings,
+  );
 
   // Convert sections from DB to SectionData format
   const sections: SectionData[] = useMemo(() => {
@@ -186,6 +189,19 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [moveBlockMutation],
   );
 
+  // Update section settings (e.g., spacer height)
+  const handleUpdateSettings = useCallback(
+    async (sectionId: string, settings: SectionSettings) => {
+      setStatus("saving");
+      await updateSettingsMutation({
+        sectionId: sectionId as Id<"sections">,
+        settings,
+      });
+      setStatus("saved");
+    },
+    [updateSettingsMutation, setStatus],
+  );
+
   // Handle click on editor background to deselect
   // Sections/blocks call stopPropagation(), so this only fires for background clicks
   const handleEditorClick = useCallback(() => {
@@ -209,7 +225,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         <SaveIndicator status={status} />
       </div>
 
-      <div className="space-y-3 pb-32">
+      <div className="space-y-3 pb-32 overflow-hidden">
         {sections.length > 0 ? (
           <DndProvider items={sectionIds} onDragEnd={handleSectionDragEnd}>
             {sections.map((section) => (
@@ -245,6 +261,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                   )
                 }
                 onRemove={() => handleRemoveSection(section.id)}
+                onUpdateSettings={(settings) =>
+                  handleUpdateSettings(section.id, settings)
+                }
               />
             ))}
           </DndProvider>

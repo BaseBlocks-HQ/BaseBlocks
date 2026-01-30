@@ -182,10 +182,10 @@ export function LibraryRenderer({
   );
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="w-full border rounded-lg overflow-hidden min-w-0">
       {/* Header */}
-      <div className="px-4 py-3 bg-muted/50 border-b">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="px-4 py-3 bg-muted/50 border-b min-w-0">
+        <div className="flex items-center gap-2 text-sm min-w-0 overflow-hidden">
           <button
             type="button"
             onClick={() => handleSelectFolder(null)}
@@ -214,10 +214,10 @@ export function LibraryRenderer({
       </div>
 
       {/* Content */}
-      <div className="flex min-h-[250px]">
+      <div className="flex min-h-[250px] min-w-0">
         {/* Folder tree */}
         {content.showFolderTree !== false && (
-          <div className="w-48 border-r bg-muted/30">
+          <div className="w-40 min-w-24 border-r bg-muted/30 overflow-hidden">
             <ScrollArea className="h-[250px]">
               <div className="py-2">{renderFolderTree()}</div>
             </ScrollArea>
@@ -225,14 +225,14 @@ export function LibraryRenderer({
         )}
 
         {/* File list */}
-        <div className="flex-1">
-          <ScrollArea className="h-[250px]">
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <ScrollArea className="h-[250px] w-full">
             {sortedFiles.length > 0 ? (
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-1 w-full min-w-0">
                 {sortedFiles.map((file) => (
                   <div
                     key={file._id}
-                    className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer w-full min-w-0"
                     onClick={() => handlePreview(file)}
                   >
                     <div

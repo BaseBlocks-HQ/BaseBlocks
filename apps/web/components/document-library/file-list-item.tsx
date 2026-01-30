@@ -77,7 +77,7 @@ export function FileListItem({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors",
+        "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors w-full min-w-0",
         onPreview && "cursor-pointer",
         className,
       )}

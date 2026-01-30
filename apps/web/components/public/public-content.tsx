@@ -2,12 +2,14 @@
 
 import { BlockRendererWrapper } from "@/components/blocks";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSectionGridStyle } from "@/lib/sections";
+import { getSectionGridStyle, SPACER_SECTION_HEIGHTS } from "@/lib/sections";
+import { cn } from "@/lib/utils";
 import type {
   BlockContent,
   BlockType,
   SectionLayout,
   SectionSettings,
+  SpacerSectionHeight,
 } from "@/types";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -49,6 +51,19 @@ export function PublicContent({ pageId }: PublicContentProps) {
       <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
       <div className="space-y-8">
         {sectionsData.map((section) => {
+          // Handle spacer sections
+          if (section.type === "spacer") {
+            const settings = section.settings as SectionSettings;
+            const height: SpacerSectionHeight = settings.spacerHeight ?? "medium";
+            return (
+              <div
+                key={section._id}
+                className={cn("w-full", SPACER_SECTION_HEIGHTS[height].value)}
+                aria-hidden="true"
+              />
+            );
+          }
+
           const gridStyle = getSectionGridStyle(
             section.type as SectionLayout,
             section.settings as SectionSettings,

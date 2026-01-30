@@ -180,7 +180,7 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className="group/block flex items-start gap-1 mb-3"
+      className="group/block flex items-start gap-1 mb-3 min-w-0"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();

@@ -9,8 +9,6 @@ import {
   FileList,
   type FolderData,
   FolderTree,
-  InlineDropZone,
-  UploadProgressList,
   useDocumentLibrary,
   useFileOperations,
   useFolderOperations,
@@ -38,8 +36,8 @@ import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
-import { Plus, Settings2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Loader2, Plus, Settings2, Upload } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BlockEditorBaseProps } from "../types";
 
@@ -55,6 +53,7 @@ export function LibraryEditor({
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isCreatingLibrary, setIsCreatingLibrary] = useState(false);
   const [newLibraryName, setNewLibraryName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Library CRUD
   const { libraries, create: createLibrary } = useDocumentLibrary(siteId);
@@ -87,9 +86,11 @@ export function LibraryEditor({
   const { uploadFiles, uploadStates } = useFileUpload();
 
   // Filter to only show uploads that are in progress
-  const activeUploads = Object.fromEntries(
-    Object.entries(uploadStates).filter(([, state]) => state.isUploading),
+  const activeUploads = Object.entries(uploadStates).filter(
+    ([, state]) => state.isUploading,
   );
+  const uploadCount = activeUploads.length;
+  const isUploading = uploadCount > 0;
 
   // Select library
   const handleSelectLibrary = useCallback(
@@ -297,11 +298,11 @@ export function LibraryEditor({
   const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
   return (
-    <div className="border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50">
+    <div className="w-full border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50 min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b">
-          <div className="flex items-center gap-3">
-            <span className="font-medium">
+        <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b min-w-0">
+          <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+            <span className="font-medium truncate">
               {currentLibrary?.name || "Library"}
             </span>
             <Breadcrumbs
@@ -310,11 +311,38 @@ export function LibraryEditor({
             />
           </div>
           <div className="flex items-center gap-2">
-            <CreateFolderButton
-              onSubmit={(name) =>
-                handleCreateFolder(name, selectedFolderId ?? undefined)
-              }
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) {
+                  handleFilesAccepted(files);
+                }
+                e.target.value = "";
+              }}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading{uploadCount > 1 ? ` (${uploadCount})` : "..."}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </>
+              )}
+            </Button>
 
             {/* Settings popover */}
             <Popover>
@@ -359,40 +387,43 @@ export function LibraryEditor({
         {/* Content area */}
         <DropZone
           onFilesAccepted={handleFilesAccepted}
-          className="border-0 rounded-none cursor-default"
+          className="border-0 rounded-none cursor-default min-w-0 w-full"
+          noClick
         >
-          <div className="flex h-[300px]">
+          <div className="flex h-[300px] min-w-0">
             {/* Folder tree sidebar */}
             {content.showFolderTree !== false && (
-              <div className="w-48 border-r bg-muted/30 p-2 overflow-y-auto">
-                {folders.length > 0 ? (
-                  <FolderTree
-                    folders={folders as FolderData[]}
-                    selectedFolderId={selectedFolderId}
-                    onSelectFolder={setSelectedFolderId}
-                    onCreateFolder={handleCreateFolder}
-                    onRenameFolder={handleRenameFolder}
-                    onDeleteFolder={handleDeleteFolder}
+              <div className="w-40 min-w-24 border-r bg-muted/30 flex flex-col overflow-hidden">
+                <div className="flex-1 p-2 overflow-y-auto overflow-x-hidden">
+                  {folders.length > 0 ? (
+                    <FolderTree
+                      folders={folders as FolderData[]}
+                      selectedFolderId={selectedFolderId}
+                      onSelectFolder={setSelectedFolderId}
+                      onCreateFolder={handleCreateFolder}
+                      onRenameFolder={handleRenameFolder}
+                      onDeleteFolder={handleDeleteFolder}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-xs text-muted-foreground">No folders</p>
+                    </div>
+                  )}
+                </div>
+                <div className="p-2 border-t">
+                  <CreateFolderButton
+                    onSubmit={(name) =>
+                      handleCreateFolder(name, selectedFolderId ?? undefined)
+                    }
                   />
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-xs text-muted-foreground">No folders</p>
-                  </div>
-                )}
+                </div>
               </div>
             )}
 
             {/* File area */}
-            <div className="flex-1 flex flex-col min-w-0">
-              {/* Upload progress - only show while uploading */}
-              {Object.keys(activeUploads).length > 0 && (
-                <div className="px-4 py-2 border-b bg-muted/30">
-                  <UploadProgressList uploads={activeUploads} />
-                </div>
-              )}
-
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
               {/* File list */}
-              <div className="flex-1 p-2 overflow-y-auto">
+              <div className="flex-1 p-2 overflow-y-auto overflow-x-hidden min-w-0">
                 {files.length > 0 ? (
                   <FileList
                     files={files as FileData[]}
@@ -404,11 +435,6 @@ export function LibraryEditor({
                 ) : (
                   <EmptyState type="files" />
                 )}
-              </div>
-
-              {/* Compact upload bar */}
-              <div className="px-3 py-2 border-t bg-muted/30">
-                <InlineDropZone onFilesAccepted={handleFilesAccepted} />
               </div>
             </div>
           </div>

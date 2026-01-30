@@ -66,6 +66,7 @@ export type {
   SectionSettings,
   SectionData,
   SectionTypeInfo,
+  SpacerSectionHeight,
 } from "./sections";
 export {
   LAYOUT_SLOT_COUNTS,

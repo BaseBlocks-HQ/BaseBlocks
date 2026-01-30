@@ -36,6 +36,8 @@ export function getSlotCount(
       return settings.columnCount ?? 2;
     case "grid":
       return (settings.gridColumns ?? 2) * (settings.gridRows ?? 2);
+    case "spacer":
+      return 0; // Spacer has no slots
     default:
       return 1;
   }
@@ -87,6 +89,14 @@ export function createBlock(
   };
 }
 
+// Spacer height values in pixels and Tailwind classes
+export const SPACER_SECTION_HEIGHTS = {
+  small: { value: "h-8", pixels: "32px" },
+  medium: { value: "h-16", pixels: "64px" },
+  large: { value: "h-24", pixels: "96px" },
+  xlarge: { value: "h-32", pixels: "128px" },
+} as const;
+
 /**
  * Get CSS grid template for section layout
  */
@@ -106,15 +116,17 @@ export function getSectionGridStyle(
     case "columns":
       return {
         display: "grid",
-        gridTemplateColumns: `repeat(${settings.columnCount ?? 2}, 1fr)`,
+        gridTemplateColumns: `repeat(${settings.columnCount ?? 2}, minmax(0, 1fr))`,
         gap: "1.5rem",
       };
     case "grid":
       return {
         display: "grid",
-        gridTemplateColumns: `repeat(${settings.gridColumns ?? 2}, 1fr)`,
+        gridTemplateColumns: `repeat(${settings.gridColumns ?? 2}, minmax(0, 1fr))`,
         gap: "1rem",
       };
+    case "spacer":
+      return { display: "block" }; // Spacer is just a block element
     default:
       return { display: "block" };
   }
