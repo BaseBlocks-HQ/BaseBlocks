@@ -10,7 +10,7 @@ import {
 } from "@/components/document-library";
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { MiddleTruncate } from "@/components/ui/middle-truncate";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { LibraryContent } from "@/types";
@@ -218,15 +218,15 @@ export function LibraryRenderer({
         {/* Folder tree */}
         {content.showFolderTree !== false && (
           <div className="w-40 min-w-24 border-r bg-muted/30 overflow-hidden">
-            <ScrollArea className="h-[250px]">
+            <div className="h-[250px] overflow-y-auto overflow-x-hidden">
               <div className="py-2">{renderFolderTree()}</div>
-            </ScrollArea>
+            </div>
           </div>
         )}
 
         {/* File list */}
         <div className="flex-1 min-w-0 overflow-hidden">
-          <ScrollArea className="h-[250px] w-full">
+          <div className="h-[250px] w-full overflow-y-auto overflow-x-hidden">
             {sortedFiles.length > 0 ? (
               <div className="p-2 space-y-1 w-full min-w-0">
                 {sortedFiles.map((file) => (
@@ -247,9 +247,11 @@ export function LibraryRenderer({
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {file.filename}
-                      </p>
+                      <MiddleTruncate
+                        text={file.filename}
+                        className="text-sm font-medium"
+                        endChars={12}
+                      />
                       <p className="text-xs text-muted-foreground">
                         {formatFileSize(file.size)}
                       </p>
@@ -290,7 +292,7 @@ export function LibraryRenderer({
                 No files in this folder
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       </div>
     </div>

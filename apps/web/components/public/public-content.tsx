@@ -76,15 +76,21 @@ export function PublicContent({ pageId }: PublicContentProps) {
                   key={slot.id}
                   className="prose prose-neutral dark:prose-invert max-w-none"
                 >
-                  {slot.blocks.map((block) => (
-                    <BlockRendererWrapper
+                  {slot.blocks.map((block, index) => (
+                    <div
                       key={block.id}
-                      block={{
-                        _id: block.id,
-                        type: block.type as BlockType,
-                        content: block.content as BlockContent,
-                      }}
-                    />
+                      className={cn(
+                        index < slot.blocks.length - 1 && "mb-3"
+                      )}
+                    >
+                      <BlockRendererWrapper
+                        block={{
+                          _id: block.id,
+                          type: block.type as BlockType,
+                          content: block.content as BlockContent,
+                        }}
+                      />
+                    </div>
                   ))}
                 </div>
               ))}

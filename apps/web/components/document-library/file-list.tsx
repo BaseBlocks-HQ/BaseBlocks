@@ -1,6 +1,5 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { useCallback, useState } from "react";
@@ -65,7 +64,7 @@ export function FileList({
 
   return (
     <>
-      <ScrollArea className={cn("h-full w-full", className)}>
+      <div className={cn("h-full w-full overflow-y-auto overflow-x-hidden", className)}>
         <div className="space-y-1 py-2 w-full min-w-0">
           {sortedFiles.map((file) => (
             <FileListItem
@@ -79,7 +78,7 @@ export function FileList({
             />
           ))}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Rename dialog */}
       {renameFile && (

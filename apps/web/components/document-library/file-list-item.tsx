@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MiddleTruncate } from "@/components/ui/middle-truncate";
 import { cn } from "@/lib/utils";
 import {
   Download,
@@ -90,7 +91,11 @@ export function FileListItem({
 
       {/* File info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{file.filename}</p>
+        <MiddleTruncate
+          text={file.filename}
+          className="text-sm font-medium"
+          endChars={12}
+        />
         <p className="text-xs text-muted-foreground">
           {formatFileSize(file.size)} • {formatDate(file.createdAt)}
         </p>
