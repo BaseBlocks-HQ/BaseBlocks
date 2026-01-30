@@ -225,7 +225,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         <SaveIndicator status={status} />
       </div>
 
-      <div className="space-y-3 pb-32 overflow-hidden">
+      <div className="space-y-3 pb-32 pl-10">
         {sections.length > 0 ? (
           <DndProvider items={sectionIds} onDragEnd={handleSectionDragEnd}>
             {sections.map((section) => (

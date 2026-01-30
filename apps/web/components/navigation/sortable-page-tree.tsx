@@ -275,17 +275,24 @@ function SortablePageItem({
 
           {/* Expand/collapse toggle for pages with children */}
           {hasChildren ? (
-            <button
-              type="button"
+            <span
+              role="button"
+              tabIndex={0}
               onClick={handleToggleExpand}
-              className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleToggleExpand(e as unknown as React.MouseEvent);
+                }
+              }}
+              className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {expanded ? (
                 <ChevronDown className="h-3.5 w-3.5" />
               ) : (
                 <ChevronRight className="h-3.5 w-3.5" />
               )}
-            </button>
+            </span>
           ) : (
             <span className="w-4" />
           )}
