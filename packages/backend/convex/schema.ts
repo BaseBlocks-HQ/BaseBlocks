@@ -217,38 +217,6 @@ export default defineSchema({
       filterFields: ["siteId"],
     }),
 
-  // Access links for sharing
-  accessLinks: defineTable({
-    siteId: v.id("sites"),
-    token: v.string(), // Unique access token
-    name: v.optional(v.string()), // "Marketing Team Link"
-    expiresAt: v.optional(v.number()),
-    maxUses: v.optional(v.number()),
-    useCount: v.number(),
-    createdBy: v.string(),
-    createdAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_token", ["token"]),
-
-  // Audit log for access
-  accessLog: defineTable({
-    siteId: v.id("sites"),
-    accessLinkId: v.optional(v.id("accessLinks")),
-    pageId: v.optional(v.id("pages")),
-    documentId: v.optional(v.id("documents")),
-    action: v.union(
-      v.literal("view_site"),
-      v.literal("view_page"),
-      v.literal("download_document"),
-    ),
-    ip: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
-    timestamp: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_timestamp", ["siteId", "timestamp"]),
-
   // Team members (cached from Entity Auth)
   members: defineTable({
     companyId: v.id("companies"),

@@ -77,6 +77,15 @@ export class EntityAuthClient {
       }),
     });
   }
+
+  async deleteAccount(accessToken: string): Promise<{ ok: boolean }> {
+    return this.request<{ ok: boolean }>("/api/user/delete-account", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+  }
 }
 
 // Environment configuration

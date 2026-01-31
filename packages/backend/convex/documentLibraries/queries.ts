@@ -49,34 +49,13 @@ export const get = query({
 export const getPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, accessToken }) => {
+  handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return null;
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return null;
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return null;
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return null;
-      }
-    }
 
     return library;
   },
@@ -86,31 +65,10 @@ export const getPublic = query({
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { siteId, accessToken }) => {
+  handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     return await ctx.db
       .query("documentLibraries")

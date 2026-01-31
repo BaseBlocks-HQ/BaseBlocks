@@ -223,16 +223,6 @@ export const remove = mutation({
       await ctx.db.delete(doc._id);
     }
 
-    // Delete all access links
-    const accessLinks = await ctx.db
-      .query("accessLinks")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    for (const link of accessLinks) {
-      await ctx.db.delete(link._id);
-    }
-
     // Delete site
     await ctx.db.delete(siteId);
 

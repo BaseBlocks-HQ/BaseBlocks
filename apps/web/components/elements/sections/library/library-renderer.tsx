@@ -53,14 +53,7 @@ function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
   return width;
 }
 
-interface LibraryRendererProps extends ElementRendererProps<"library"> {
-  accessToken?: string;
-}
-
-export function LibraryRenderer({
-  content,
-  accessToken,
-}: LibraryRendererProps) {
+export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
 
@@ -79,10 +72,10 @@ export function LibraryRenderer({
     ? (selectedFolderId as Id<"documentFolders">)
     : null;
 
-  const library = usePublicLibrary(libraryId, accessToken);
-  const folders = usePublicFolders(libraryId, accessToken);
-  const files = usePublicFiles(libraryId, folderId, accessToken);
-  const folderPath = usePublicFolderPath(folderId, accessToken);
+  const library = usePublicLibrary(libraryId);
+  const folders = usePublicFolders(libraryId);
+  const files = usePublicFiles(libraryId, folderId);
+  const folderPath = usePublicFolderPath(folderId);
 
   const handleToggleExpand = useCallback((folderId: string) => {
     setExpandedFolders((prev) => {

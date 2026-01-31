@@ -30,7 +30,11 @@ interface ReceivedInvitation {
   inviterImageUrl: string | null;
 }
 
-export function InvitationInbox() {
+interface InvitationInboxProps {
+  fullWidth?: boolean;
+}
+
+export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const t = useTranslations("inbox");
   const { getToken } = useEntityAuth();
 
@@ -128,17 +132,32 @@ export function InvitationInbox() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Inbox className="h-4 w-4" />
-          {invitations.length > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] font-bold animate-pulse"
-            >
-              {invitations.length}
-            </Badge>
-          )}
-        </Button>
+        {fullWidth ? (
+          <Button variant="ghost" className="w-full justify-start gap-2 h-8 px-2 relative">
+            <Inbox className="h-4 w-4" />
+            <span>{t("title")}</span>
+            {invitations.length > 0 && (
+              <Badge
+                variant="destructive"
+                className="ml-auto h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
+              >
+                {invitations.length}
+              </Badge>
+            )}
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon" className="relative">
+            <Inbox className="h-4 w-4" />
+            {invitations.length > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] font-bold animate-pulse"
+              >
+                {invitations.length}
+              </Badge>
+            )}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

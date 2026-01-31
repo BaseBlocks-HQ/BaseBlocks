@@ -128,11 +128,10 @@ export function useFolderPath(
 // Public view hooks (for renderer)
 export function usePublicFolders(
   libraryId: Id<"documentLibraries"> | null,
-  accessToken?: string,
 ): DocumentFolder[] {
   const folders = useQuery(
     api.documentFolders.queries.listByLibraryPublic,
-    libraryId ? { libraryId, accessToken } : "skip",
+    libraryId ? { libraryId } : "skip",
   );
   return (folders || []) as DocumentFolder[];
 }
@@ -140,34 +139,29 @@ export function usePublicFolders(
 export function usePublicFiles(
   libraryId: Id<"documentLibraries"> | null,
   folderId: Id<"documentFolders"> | null | undefined,
-  accessToken?: string,
 ): Document[] {
   const files = useQuery(
     api.documents.queries.listByFolderPublic,
-    libraryId
-      ? { libraryId, folderId: folderId ?? undefined, accessToken }
-      : "skip",
+    libraryId ? { libraryId, folderId: folderId ?? undefined } : "skip",
   );
   return (files || []) as Document[];
 }
 
 export function usePublicFolderPath(
   folderId: Id<"documentFolders"> | null,
-  accessToken?: string,
 ): FolderPathItem[] {
   const path = useQuery(
     api.documentFolders.queries.getPathPublic,
-    folderId ? { folderId, accessToken } : "skip",
+    folderId ? { folderId } : "skip",
   );
   return (path || []) as FolderPathItem[];
 }
 
 export function usePublicLibrary(
   libraryId: Id<"documentLibraries"> | null,
-  accessToken?: string,
 ): DocumentLibrary | undefined | null {
   return useQuery(
     api.documentLibraries.queries.getPublic,
-    libraryId ? { libraryId, accessToken } : "skip",
+    libraryId ? { libraryId } : "skip",
   );
 }

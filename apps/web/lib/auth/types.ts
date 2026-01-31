@@ -25,6 +25,7 @@ export interface EntityAuthContextValue {
   logout: () => Promise<void>;
   startSSO: (provider: "google" | "microsoft") => Promise<void>;
   getToken: () => Promise<string | null>;
+  deleteAccount: () => Promise<{ ok: boolean }>;
 }
 
 export interface SSOStartResponse {

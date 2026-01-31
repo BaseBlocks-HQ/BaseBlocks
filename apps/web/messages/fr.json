@@ -248,6 +248,21 @@
     "accept": "Accepter",
     "decline": "Refuser"
   },
+  "settings": {
+    "title": "Parametres du compte",
+    "description": "Gerez les parametres et preferences de votre compte",
+    "accountInfo": "Informations du compte",
+    "email": "Email",
+    "userId": "ID utilisateur",
+    "anonymous": "Utilisateur anonyme",
+    "dangerZone": "Zone de danger",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountWarning": "Une fois votre compte supprime, il n'y a pas de retour en arriere. Toutes vos donnees seront definitivement supprimees.",
+    "deleteConfirmTitle": "Etes-vous absolument sur ?",
+    "deleteConfirmDescription": "Cette action est irreversible. Cela supprimera definitivement votre compte et toutes vos donnees de nos serveurs.",
+    "deleting": "Suppression...",
+    "deleteAccountError": "Echec de la suppression du compte"
+  },
   "team": {
     "title": "Membres de l'equipe",
     "description": "Gerez les membres de votre organisation et leurs roles d'acces",

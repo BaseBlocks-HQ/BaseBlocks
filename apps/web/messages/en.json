@@ -248,6 +248,21 @@
     "accept": "Accept",
     "decline": "Decline"
   },
+  "settings": {
+    "title": "Account Settings",
+    "description": "Manage your account settings and preferences",
+    "accountInfo": "Account Information",
+    "email": "Email",
+    "userId": "User ID",
+    "anonymous": "Anonymous User",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountWarning": "Once you delete your account, there is no going back. All your data will be permanently removed.",
+    "deleteConfirmTitle": "Are you absolutely sure?",
+    "deleteConfirmDescription": "This action cannot be undone. This will permanently delete your account and remove all your data from our servers.",
+    "deleting": "Deleting...",
+    "deleteAccountError": "Failed to delete account"
+  },
   "team": {
     "title": "Team Members",
     "description": "Manage your organization's team members and their access roles",

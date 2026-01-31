@@ -8,8 +8,6 @@
  * @module
  */
 
-import type * as access_mutations from "../access/mutations.js";
-import type * as access_queries from "../access/queries.js";
 import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as auth from "../auth.js";
 import type * as blocks_mutations from "../blocks/mutations.js";
@@ -43,8 +41,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "access/mutations": typeof access_mutations;
-  "access/queries": typeof access_queries;
   "actions/extractDocument": typeof actions_extractDocument;
   auth: typeof auth;
   "blocks/mutations": typeof blocks_mutations;

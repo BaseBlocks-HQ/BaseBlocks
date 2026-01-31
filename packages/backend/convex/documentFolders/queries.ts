@@ -124,34 +124,13 @@ export const getPath = query({
 export const listByLibraryPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, accessToken }) => {
+  handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -167,34 +146,13 @@ export const listByParentPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
     parentId: v.optional(v.id("documentFolders")),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, parentId, accessToken }) => {
+  handler: async (ctx, { libraryId, parentId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -211,9 +169,8 @@ export const listByParentPublic = query({
 export const getPathPublic = query({
   args: {
     folderId: v.id("documentFolders"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { folderId, accessToken }) => {
+  handler: async (ctx, { folderId }) => {
     const folder = await ctx.db.get(folderId);
     if (!folder) return [];
 
@@ -222,26 +179,6 @@ export const getPathPublic = query({
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     // Build path from folder to root
     const path: Array<{ _id: string; name: string }> = [];

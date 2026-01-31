@@ -204,39 +204,15 @@ export const searchPublic = query({
   args: {
     siteId: v.id("sites"),
     query: v.string(),
-    accessToken: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
-  handler: async (
-    ctx,
-    { siteId, query: searchQuery, accessToken, limit = 20 },
-  ) => {
+  handler: async (ctx, { siteId, query: searchQuery, limit = 20 }) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
     // Check site is published
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     // Get active library IDs (libraries that are used in blocks on pages)
     const pages = await ctx.db
@@ -273,37 +249,14 @@ export const searchPublic = query({
   },
 });
 
-// List documents for public site viewing (with access token)
+// List documents for public site viewing
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { siteId, accessToken }) => {
+  handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if site requires it
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== siteId) {
-        return [];
-      }
-
-      // Check expiry
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      // Check max uses
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     return await ctx.db
       .query("documents")
@@ -369,34 +322,13 @@ export const listByFolder = query({
 export const listByLibraryPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, accessToken }) => {
+  handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     return await ctx.db
       .query("documents")
@@ -410,34 +342,13 @@ export const listByFolderPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
     folderId: v.optional(v.id("documentFolders")),
-    accessToken: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, folderId, accessToken }) => {
+  handler: async (ctx, { libraryId, folderId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
-
-    // Verify access token if provided
-    if (accessToken) {
-      const link = await ctx.db
-        .query("accessLinks")
-        .withIndex("by_token", (q) => q.eq("token", accessToken))
-        .first();
-
-      if (!link || link.siteId !== library.siteId) {
-        return [];
-      }
-
-      if (link.expiresAt && link.expiresAt < Date.now()) {
-        return [];
-      }
-
-      if (link.maxUses && link.useCount >= link.maxUses) {
-        return [];
-      }
-    }
 
     return await ctx.db
       .query("documents")

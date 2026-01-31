@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountSettings } from "@/components/dashboard/account-settings";
 import { InvitationInbox } from "@/components/dashboard/invitation-inbox";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -86,21 +87,27 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="border-t">
-        <div className="flex items-center justify-between px-2 py-1">
-          <div className="flex items-center gap-1">
-            <LanguageSwitcher />
-            <ModeToggle />
-          </div>
-          <div className="flex items-center gap-1">
-            <InvitationInbox />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={logout}
-              title={t("common.signOut")}
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+        <div className="flex flex-col gap-1 px-2 py-2">
+          {/* First row: Inbox button full width */}
+          <InvitationInbox fullWidth />
+
+          {/* Second row: Settings, Language, Theme, Logout */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <AccountSettings />
+            </div>
+            <div className="flex items-center gap-1">
+              <LanguageSwitcher />
+              <ModeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                title={t("common.signOut")}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </SidebarFooter>

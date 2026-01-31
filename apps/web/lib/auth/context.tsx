@@ -115,6 +115,18 @@ export function EntityAuthProvider({ children }: { children: ReactNode }) {
     clearTokens();
   }, [clearTokens]);
 
+  const deleteAccount = useCallback(async (): Promise<{ ok: boolean }> => {
+    const currentToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!currentToken) {
+      throw new Error("Not authenticated");
+    }
+    const result = await entityAuthClient.deleteAccount(currentToken);
+    if (result.ok) {
+      clearTokens();
+    }
+    return result;
+  }, [clearTokens]);
+
   const startSSO = useCallback(async (provider: "google" | "microsoft") => {
     const { authorizationUrl, state } =
       await entityAuthClient.startSSO(provider);
@@ -143,8 +155,9 @@ export function EntityAuthProvider({ children }: { children: ReactNode }) {
       logout,
       startSSO,
       getToken,
+      deleteAccount,
     }),
-    [isLoading, token, user, logout, startSSO, getToken],
+    [isLoading, token, user, logout, startSSO, getToken, deleteAccount],
   );
 
   return (
