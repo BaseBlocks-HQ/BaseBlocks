@@ -46,15 +46,17 @@ export function UnknownViewer({ file }: ViewerProps) {
       </p>
 
       <p className="text-sm text-muted-foreground max-w-md mb-8">
-        This file type cannot be previewed in the browser. Download it to view
-        with a compatible application.
+        This file type cannot be previewed in the browser.
+        {file.allowDownload !== false && " Download it to view with a compatible application."}
       </p>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleDownload} size="lg">
-          <Download className="h-4 w-4 mr-2" />
-          Download
-        </Button>
+        {file.allowDownload !== false && (
+          <Button onClick={handleDownload} size="lg">
+            <Download className="h-4 w-4 mr-2" />
+            Download
+          </Button>
+        )}
         <Button variant="outline" onClick={handleOpenExternal} size="lg">
           <ExternalLink className="h-4 w-4 mr-2" />
           Open in browser

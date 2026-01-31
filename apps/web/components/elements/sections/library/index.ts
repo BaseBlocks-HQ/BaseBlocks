@@ -6,12 +6,13 @@
 import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
 import { Library } from "lucide-react";
 import { registerElement } from "../../registry";
+import { LibraryConfigPanel } from "./library-config";
 import { LibraryEditor } from "./library-editor";
 import { LibraryPreview } from "./library-preview";
 import { LibraryRenderer } from "./library-renderer";
 
 // Re-export components
-export { LibraryEditor, LibraryRenderer, LibraryPreview };
+export { LibraryEditor, LibraryRenderer, LibraryPreview, LibraryConfigPanel };
 
 // Register the element
 registerElement({
@@ -24,5 +25,6 @@ registerElement({
   editor: LibraryEditor,
   renderer: LibraryRenderer,
   preview: LibraryPreview,
+  configPanel: LibraryConfigPanel,
   defaultContent: DEFAULT_SECTION_CONTENT.library,
 });

@@ -19,7 +19,6 @@ export interface SearchContent {
 
 export interface LibraryContent {
   libraryId?: string;
-  displayStyle?: "list" | "grid";
   showFolderTree?: boolean;
   allowDownloads?: boolean;
 }
@@ -53,7 +52,6 @@ export const DEFAULT_SECTION_CONTENT: Record<SectionType, SectionContentUnion> =
       showFileType: true,
     },
     library: {
-      displayStyle: "list",
       showFolderTree: true,
       allowDownloads: true,
     },

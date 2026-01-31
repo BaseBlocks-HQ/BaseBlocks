@@ -221,7 +221,8 @@ export function LibraryEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
 
-  const showSidebar = containerWidth >= 400;
+  const showFolderTree = content.showFolderTree !== false;
+  const showSidebar = containerWidth >= 400 && showFolderTree;
 
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -297,6 +298,7 @@ export function LibraryEditor({
       filename: file.filename,
       contentType: file.contentType,
       size: file.size,
+      allowDownload: content.allowDownloads !== false,
     });
   };
 
@@ -552,35 +554,43 @@ export function LibraryEditor({
 
           {/* File list area */}
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-            {/* Compact header for mobile - only menu button + breadcrumb + upload */}
+            {/* Header - show mobile folder nav OR simple upload bar */}
             {!showSidebar && (
               <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
-                <Popover open={folderMenuOpen} onOpenChange={setFolderMenuOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                      <Menu className="h-3.5 w-3.5" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="w-56 p-0">
-                    {folderMenuContent}
-                  </PopoverContent>
-                </Popover>
+                {showFolderTree && (
+                  <>
+                    <Popover open={folderMenuOpen} onOpenChange={setFolderMenuOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                          <Menu className="h-3.5 w-3.5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="bottom" align="start" className="w-56 p-0">
+                        {folderMenuContent}
+                      </PopoverContent>
+                    </Popover>
 
-                <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
-                    >
-                      <Home className="h-3 w-3 shrink-0" />
-                      {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
-                      <span className="truncate">{currentLocation}</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="w-48 p-0">
-                    {breadcrumbNavContent}
-                  </PopoverContent>
-                </Popover>
+                    <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
+                        >
+                          <Home className="h-3 w-3 shrink-0" />
+                          {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+                          <span className="truncate">{currentLocation}</span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent side="bottom" align="start" className="w-48 p-0">
+                        {breadcrumbNavContent}
+                      </PopoverContent>
+                    </Popover>
+                  </>
+                )}
+
+                {!showFolderTree && (
+                  <span className="text-xs text-muted-foreground flex-1">{currentLibrary?.name || "Library"}</span>
+                )}
 
                 <input
                   ref={fileInputRef}

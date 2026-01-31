@@ -2,7 +2,16 @@
 
 import { DndProvider, type DragEndEvent } from "@/components/dnd";
 import { ElementEditorWrapper } from "@/components/elements";
+import {
+  getElementConfigPanel,
+  hasElementConfigPanel,
+} from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type {
   AnyContent,
@@ -12,8 +21,8 @@ import type {
 } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -152,6 +161,7 @@ function SortableBlock({
   onUpdate,
   onRemove,
 }: SortableBlockProps) {
+  const [configOpen, setConfigOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -166,6 +176,10 @@ function SortableBlock({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const blockType = block.type as ElementType;
+  const hasConfig = hasElementConfigPanel(blockType);
+  const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
 
   if (isDragging) {
     return (
@@ -213,6 +227,28 @@ function SortableBlock({
           >
             <GripVertical className="h-3.5 w-3.5" />
           </div>
+          {hasConfig && ConfigPanel && (
+            <Popover open={configOpen} onOpenChange={setConfigOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="left"
+                align="start"
+                className="w-64"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ConfigPanel content={block.content} onUpdate={onUpdate} />
+              </PopoverContent>
+            </Popover>
+          )}
           <Button
             variant="ghost"
             size="icon"

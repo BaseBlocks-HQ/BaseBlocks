@@ -21,6 +21,8 @@ export interface MediaFile {
   size?: number;
   /** Optional search term for highlighting in document viewers */
   searchTerm?: string;
+  /** Whether to show download button (defaults to true) */
+  allowDownload?: boolean;
 }
 
 export interface ViewerProps {

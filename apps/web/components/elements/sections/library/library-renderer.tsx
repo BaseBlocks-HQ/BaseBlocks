@@ -125,9 +125,10 @@ export function LibraryRenderer({
         filename: file.filename,
         contentType: file.contentType,
         size: file.size,
+        allowDownload: content.allowDownloads !== false,
       });
     },
-    [openFile],
+    [openFile, content.allowDownloads],
   );
 
   if (!libraryId || !library) {

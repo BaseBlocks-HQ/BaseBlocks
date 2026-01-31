@@ -37,6 +37,12 @@ export interface ElementPreviewProps {
   className?: string;
 }
 
+// Config panel props interface
+export interface ElementConfigPanelProps<T extends ElementType = ElementType> {
+  content: ContentFor<T>;
+  onUpdate: (content: ContentFor<T>) => Promise<unknown> | void;
+}
+
 // Registry entry for an element
 export interface ElementRegistryEntry<T extends ElementType = ElementType> {
   type: T;
@@ -48,6 +54,7 @@ export interface ElementRegistryEntry<T extends ElementType = ElementType> {
   editor?: ComponentType<ElementEditorProps<T>>;
   renderer?: ComponentType<ElementRendererProps<T>>;
   preview?: ComponentType<ElementPreviewProps>;
+  configPanel?: ComponentType<ElementConfigPanelProps<T>>;
   defaultContent: AnyContent; // Using AnyContent for flexibility in registration
 }
 
@@ -142,6 +149,22 @@ class ElementRegistry {
 
     const layoutEntry = this.layouts.get(type as LayoutType);
     return layoutEntry?.preview;
+  }
+
+  // Get config panel component for an element type
+  getConfigPanel<T extends ElementType>(
+    type: T,
+  ): ComponentType<ElementConfigPanelProps<T>> | undefined {
+    const entry = this.elements.get(type);
+    return entry?.configPanel as
+      | ComponentType<ElementConfigPanelProps<T>>
+      | undefined;
+  }
+
+  // Check if an element has a config panel
+  hasConfigPanel(type: ElementType): boolean {
+    const entry = this.elements.get(type);
+    return !!entry?.configPanel;
   }
 
   // Get label for any type
@@ -250,6 +273,12 @@ export const getElementRenderer = <T extends ElementType>(type: T) =>
 
 export const getElementPreview = (type: ElementType | LayoutType) =>
   registry.getPreview(type);
+
+export const getElementConfigPanel = <T extends ElementType>(type: T) =>
+  registry.getConfigPanel(type);
+
+export const hasElementConfigPanel = (type: ElementType) =>
+  registry.hasConfigPanel(type);
 
 export const getElementLabel = (type: ElementType | LayoutType) =>
   registry.getLabel(type);
