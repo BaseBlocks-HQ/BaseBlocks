@@ -7,7 +7,8 @@ const sectionTypes = v.union(
   v.literal("rows"),
   v.literal("columns"),
   v.literal("grid"),
-  v.literal("spacer")
+  v.literal("spacer"),
+  v.literal("vertical")
 );
 
 const blockTypes = v.union(

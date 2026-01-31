@@ -54,7 +54,7 @@ export class EntityAuthClient {
   }
 
   async startSSO(
-    provider: "google",
+    provider: "google" | "microsoft",
     returnTo?: string,
   ): Promise<SSOStartResponse> {
     const finalReturnTo = returnTo || `${window.location.origin}/auth/callback`;

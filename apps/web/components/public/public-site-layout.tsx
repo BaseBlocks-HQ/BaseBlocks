@@ -100,10 +100,10 @@ export function PublicSiteLayout({
                     <Skeleton className="h-8 w-full" />
                   </>
                 ) : (
-                  pages.map((page) => (
+                  pages.map((page: PageWithChildren) => (
                     <NavItem
                       key={page._id}
-                      page={page as PageWithChildren}
+                      page={page}
                       currentPath={currentPathString}
                       mode="public"
                       ancestorIds={ancestorIds}

@@ -32,7 +32,7 @@ export const syncMembers = action({
     companyId: v.id("companies"),
     accessToken: v.string(),
   },
-  handler: async (ctx, { companyId, accessToken }) => {
+  handler: async (ctx, { companyId, accessToken }): Promise<{ added: number; updated: number; removed: number }> => {
     const auth = await getActionAuthContext(ctx);
     if (!auth.eaOrgId) {
       throw new Error("No organization selected");
@@ -160,7 +160,15 @@ export const getPendingInvitations = action({
     companyId: v.id("companies"),
     accessToken: v.string(),
   },
-  handler: async (ctx, { companyId, accessToken }) => {
+  handler: async (ctx, { companyId, accessToken }): Promise<Array<{
+    id: string;
+    inviteeUserId: string;
+    inviteeEmail: string | undefined;
+    inviteeUsername: string | undefined;
+    role: "admin" | "viewer";
+    expiresAt: string;
+    createdAt: string;
+  }>> => {
     const auth = await getActionAuthContext(ctx);
     if (!auth.eaOrgId) {
       throw new Error("No organization selected");

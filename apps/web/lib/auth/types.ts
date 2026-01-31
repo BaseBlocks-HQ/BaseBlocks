@@ -23,7 +23,7 @@ export interface EntityAuthContextValue {
   token: string | null;
   user: User | null;
   logout: () => Promise<void>;
-  startSSO: (provider: "google") => Promise<void>;
+  startSSO: (provider: "google" | "microsoft") => Promise<void>;
   getToken: () => Promise<string | null>;
 }
 

@@ -6,7 +6,7 @@ import { createBlock, createSection } from "@/lib/sections";
 import { DEFAULT_BLOCK_CONTENT } from "@/types";
 import type { BlockType, SectionLayout } from "@/types";
 import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 import { EditorProvider, useEditorContext } from "./editor-context";
@@ -53,7 +53,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   // Get the currently selected page
   const selectedPage = selectedPageId
-    ? pages?.find((p) => p._id === selectedPageId)
+    ? pages?.find((p: Doc<"pages">) => p._id === selectedPageId)
     : pages?.[0];
 
   // Add section from sidebar

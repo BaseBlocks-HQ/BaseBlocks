@@ -105,7 +105,7 @@ export function LibraryRenderer({
   }
 
   // Build folder tree structure
-  const buildFolderTree = (parentId?: string): typeof folders => {
+  const buildFolderTree = (parentId?: string) => {
     return folders
       .filter((f) => f.parentId === parentId)
       .sort((a, b) => a.order - b.order);

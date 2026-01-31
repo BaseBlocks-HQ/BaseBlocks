@@ -35,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { LibraryContent } from "@/types";
-import type { Doc, Id } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import { Loader2, Plus, Settings2, Upload } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -251,13 +251,13 @@ export function LibraryEditor({
             </p>
 
             {libraries && libraries.length > 0 && (
-              <div className="max-w-xs mx-auto">
+              <div className="w-full max-w-xs mx-auto">
                 <Select onValueChange={handleSelectLibrary}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a library" />
                   </SelectTrigger>
                   <SelectContent>
-                    {libraries.map((lib: Doc<"documentLibraries">) => (
+                    {libraries.map((lib) => (
                       <SelectItem key={lib._id} value={lib._id}>
                         {lib.name}
                       </SelectItem>
@@ -269,24 +269,25 @@ export function LibraryEditor({
 
             <Separator className="my-4" />
 
-            <div className="flex items-center gap-2 justify-center max-w-xs mx-auto">
+            <div className="flex flex-col gap-2 w-full max-w-xs mx-auto">
               <input
                 type="text"
                 placeholder="New library name"
                 value={newLibraryName}
                 onChange={(e) => setNewLibraryName(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border rounded-md"
+                className="w-full px-3 py-2 text-sm border rounded-md"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCreateLibrary();
                 }}
               />
               <Button
                 size="sm"
+                className="w-full"
                 onClick={handleCreateLibrary}
                 disabled={!newLibraryName.trim() || isCreatingLibrary}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Create
+                Create Library
               </Button>
             </div>
           </div>
@@ -295,9 +296,7 @@ export function LibraryEditor({
   }
 
   // Get current library info
-  const currentLibrary = libraries?.find(
-    (l: Doc<"documentLibraries">) => l._id === content.libraryId,
-  );
+  const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
   return (
     <div className="w-full border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50 min-w-0">
@@ -308,10 +307,7 @@ export function LibraryEditor({
               {currentLibrary?.name || "Library"}
             </span>
             <Breadcrumbs
-              items={folderPath.map((f: Doc<"documentFolders">) => ({
-                id: f._id,
-                name: f.name,
-              }))}
+              items={folderPath.map((f) => ({ id: f._id, name: f.name }))}
               onNavigate={handleNavigate}
             />
           </div>

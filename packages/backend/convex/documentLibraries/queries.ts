@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContext, getAuthContextOrNull } from "../auth";
 
@@ -124,11 +125,12 @@ export const listAllWithCounts = query({
   handler: async (ctx) => {
     const auth = await getAuthContext(ctx);
     if (!auth.eaOrgId) return [];
+    const eaOrgId = auth.eaOrgId;
 
     // Get all sites for this company
     const company = await ctx.db
       .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", auth.eaOrgId))
+      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
       .first();
 
     if (!company) return [];
@@ -140,8 +142,8 @@ export const listAllWithCounts = query({
 
     // Get all libraries for all sites
     const allLibraries: Array<{
-      _id: string;
-      siteId: string;
+      _id: Id<"documentLibraries">;
+      siteId: Id<"sites">;
       name: string;
       description?: string;
       icon?: string;

@@ -10,7 +10,8 @@ export type SectionLayout =
   | "rows" // Vertical stack of N rows
   | "columns" // Horizontal N columns
   | "grid" // N×M grid
-  | "spacer"; // Vertical spacer (no slots)
+  | "spacer" // Vertical spacer (no slots)
+  | "vertical"; // Sidebar section (rendered beside main content)
 
 // Block data as stored within a section slot
 export interface SectionBlockData {
@@ -55,6 +56,7 @@ export const LAYOUT_SLOT_COUNTS: Record<SectionLayout, number | "dynamic"> = {
   columns: "dynamic", // Based on columnCount setting
   grid: "dynamic", // Based on gridColumns × gridRows
   spacer: 0, // Spacer has no slots
+  vertical: 1, // Sidebar section (single slot, rendered beside main content)
 };
 
 // Default settings per layout type
@@ -65,6 +67,7 @@ export const DEFAULT_SECTION_SETTINGS: Record<SectionLayout, SectionSettings> =
     columns: { columnCount: 2 },
     grid: { gridColumns: 2, gridRows: 2 },
     spacer: { spacerHeight: "medium" },
+    vertical: {}, // Sidebar section - no special settings
   };
 
 // Section metadata for UI display
@@ -99,6 +102,12 @@ export const SECTION_TYPES: SectionTypeInfo[] = [
     label: "Grid",
     description: "Grid layout",
     icon: "LayoutGrid",
+  },
+  {
+    type: "vertical",
+    label: "Sidebar",
+    description: "Sidebar beside main content",
+    icon: "PanelRight",
   },
   {
     type: "spacer",

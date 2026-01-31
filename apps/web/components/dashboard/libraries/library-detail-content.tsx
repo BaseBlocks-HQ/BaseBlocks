@@ -88,7 +88,7 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   // Breadcrumb items
   const breadcrumbItems = [
     { id: null, name: t("libraries.rootFolder") },
-    ...folderPath.map((folder: { _id: string; name: string }) => ({
+    ...folderPath.map((folder) => ({
       id: folder._id,
       name: folder.name,
     })),

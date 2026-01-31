@@ -23,3 +23,11 @@ export {
   usePublicFolderPath,
   usePublicLibrary,
 } from "./hooks";
+
+// Types
+export type {
+  DocumentLibrary,
+  DocumentFolder,
+  Document,
+  FolderPathItem,
+} from "./hooks";

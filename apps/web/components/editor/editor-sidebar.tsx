@@ -29,6 +29,7 @@ import {
   Link2,
   Minus,
   MoveVertical,
+  PanelRight,
   Rows2,
   Search,
   Square,
@@ -62,6 +63,7 @@ const SECTION_ICONS: Record<SectionLayout, React.ReactNode> = {
   rows: <Rows2 className="h-4 w-4" />,
   columns: <Columns2 className="h-4 w-4" />,
   grid: <LayoutGrid className="h-4 w-4" />,
+  vertical: <PanelRight className="h-4 w-4" />,
   spacer: <MoveVertical className="h-4 w-4" />,
 };
 

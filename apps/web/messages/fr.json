@@ -48,6 +48,7 @@
 		"hasAccount": "Vous avez deja un compte ?",
 		"continueWith": "Ou continuer avec",
 		"continueWithGoogle": "Continuer avec Google",
+		"continueWithMicrosoft": "Continuer avec Microsoft",
 		"signInFailed": "Echec de la connexion"
 	},
 	"dashboard": {
@@ -107,6 +108,7 @@
 			"rows": "Lignes",
 			"columns": "Colonnes",
 			"grid": "Grille",
+			"vertical": "Barre latérale",
 			"spacer": "Espacement"
 		}
 	},

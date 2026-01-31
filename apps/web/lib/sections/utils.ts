@@ -38,6 +38,8 @@ export function getSlotCount(
       return (settings.gridColumns ?? 2) * (settings.gridRows ?? 2);
     case "spacer":
       return 0; // Spacer has no slots
+    case "vertical":
+      return 1; // Sidebar section (single slot)
     default:
       return 1;
   }
@@ -125,6 +127,8 @@ export function getSectionGridStyle(
         gridTemplateColumns: `repeat(${settings.gridColumns ?? 2}, minmax(0, 1fr))`,
         gap: "1rem",
       };
+    case "vertical":
+      return { display: "block" }; // Sidebar section - single column
     case "spacer":
       return { display: "block" }; // Spacer is just a block element
     default:

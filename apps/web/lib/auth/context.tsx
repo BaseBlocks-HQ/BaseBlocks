@@ -115,7 +115,7 @@ export function EntityAuthProvider({ children }: { children: ReactNode }) {
     clearTokens();
   }, [clearTokens]);
 
-  const startSSO = useCallback(async (provider: "google") => {
+  const startSSO = useCallback(async (provider: "google" | "microsoft") => {
     const { authorizationUrl, state } =
       await entityAuthClient.startSSO(provider);
     sessionStorage.setItem("sso_state", state);

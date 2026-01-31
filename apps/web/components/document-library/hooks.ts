@@ -1,10 +1,16 @@
 "use client";
 
 import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 
-// Libraryry CRUD operations
+// Export types for consumers
+export type DocumentLibrary = Doc<"documentLibraries">;
+export type DocumentFolder = Doc<"documentFolders">;
+export type Document = Doc<"documents">;
+export type FolderPathItem = { _id: string; name: string };
+
+// Library CRUD operations
 export function useDocumentLibrary(siteId: Id<"sites">) {
   const libraries = useQuery(api.documentLibraries.queries.list, { siteId });
 
@@ -13,7 +19,7 @@ export function useDocumentLibrary(siteId: Id<"sites">) {
   const removeLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   return {
-    libraries,
+    libraries: libraries as DocumentLibrary[] | undefined,
     isLoading: libraries === undefined,
 
     create: async (name: string, description?: string, icon?: string) => {
@@ -46,7 +52,7 @@ export function useFolderOperations(libraryId: Id<"documentLibraries"> | null) {
   const removeFolder = useMutation(api.documentFolders.mutations.remove);
 
   return {
-    folders: folders || [],
+    folders: (folders || []) as DocumentFolder[],
     isLoading: folders === undefined,
 
     create: async (name: string, parentId?: Id<"documentFolders">) => {
@@ -87,7 +93,7 @@ export function useFileOperations(
   const removeDocument = useMutation(api.documents.mutations.remove);
 
   return {
-    files: files || [],
+    files: (files || []) as Document[],
     isLoading: files === undefined,
 
     rename: async (documentId: Id<"documents">, filename: string) => {
@@ -108,59 +114,58 @@ export function useFileOperations(
 }
 
 // Get folder path for breadcrumbs
-export function useFolderPath(folderId: Id<"documentFolders"> | null) {
+export function useFolderPath(
+  folderId: Id<"documentFolders"> | null,
+): FolderPathItem[] {
   const path = useQuery(
     api.documentFolders.queries.getPath,
     folderId ? { folderId } : "skip",
   );
 
-  return path || [];
+  return (path || []) as FolderPathItem[];
 }
 
 // Public view hooks (for renderer)
 export function usePublicFolders(
   libraryId: Id<"documentLibraries"> | null,
   accessToken?: string,
-) {
-  return (
-    useQuery(
-      api.documentFolders.queries.listByLibraryPublic,
-      libraryId ? { libraryId, accessToken } : "skip",
-    ) || []
+): DocumentFolder[] {
+  const folders = useQuery(
+    api.documentFolders.queries.listByLibraryPublic,
+    libraryId ? { libraryId, accessToken } : "skip",
   );
+  return (folders || []) as DocumentFolder[];
 }
 
 export function usePublicFiles(
   libraryId: Id<"documentLibraries"> | null,
   folderId: Id<"documentFolders"> | null | undefined,
   accessToken?: string,
-) {
-  return (
-    useQuery(
-      api.documents.queries.listByFolderPublic,
-      libraryId
-        ? { libraryId, folderId: folderId ?? undefined, accessToken }
-        : "skip",
-    ) || []
+): Document[] {
+  const files = useQuery(
+    api.documents.queries.listByFolderPublic,
+    libraryId
+      ? { libraryId, folderId: folderId ?? undefined, accessToken }
+      : "skip",
   );
+  return (files || []) as Document[];
 }
 
 export function usePublicFolderPath(
   folderId: Id<"documentFolders"> | null,
   accessToken?: string,
-) {
-  return (
-    useQuery(
-      api.documentFolders.queries.getPathPublic,
-      folderId ? { folderId, accessToken } : "skip",
-    ) || []
+): FolderPathItem[] {
+  const path = useQuery(
+    api.documentFolders.queries.getPathPublic,
+    folderId ? { folderId, accessToken } : "skip",
   );
+  return (path || []) as FolderPathItem[];
 }
 
 export function usePublicLibrary(
   libraryId: Id<"documentLibraries"> | null,
   accessToken?: string,
-) {
+): DocumentLibrary | undefined | null {
   return useQuery(
     api.documentLibraries.queries.getPublic,
     libraryId ? { libraryId, accessToken } : "skip",

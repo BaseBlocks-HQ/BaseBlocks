@@ -48,6 +48,7 @@
 		"hasAccount": "Already have an account?",
 		"continueWith": "Or continue with",
 		"continueWithGoogle": "Continue with Google",
+		"continueWithMicrosoft": "Continue with Microsoft",
 		"signInFailed": "Sign in failed"
 	},
 	"dashboard": {
@@ -107,6 +108,7 @@
 			"rows": "Rows",
 			"columns": "Columns",
 			"grid": "Grid",
+			"vertical": "Sidebar",
 			"spacer": "Spacer"
 		}
 	},
