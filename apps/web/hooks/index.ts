@@ -16,3 +16,4 @@ export { useBlockOperations } from "./use-block-operations";
 export { useAuthRedirect } from "./use-auth-redirect";
 export { useLocalStorage } from "./use-local-storage";
 export { usePageExpandState } from "./use-page-expand-state";
+export { usePermissions, useSitePermissions } from "./use-permissions";

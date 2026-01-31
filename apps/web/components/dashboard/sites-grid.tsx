@@ -16,9 +16,14 @@ interface SitesGridProps {
 				description?: string;
 				logoUrl?: string;
 				isPublished: boolean;
+				company?: {
+					_id: string;
+					name: string;
+					slug: string;
+				} | null;
 		  }>
 		| undefined;
-	companySlug: string;
+	companySlug?: string; // Optional fallback for sites without company info
 }
 
 export function SitesGrid({ sites, companySlug }: SitesGridProps) {

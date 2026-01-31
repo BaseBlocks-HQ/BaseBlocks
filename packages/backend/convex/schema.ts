@@ -239,4 +239,20 @@ export default defineSchema({
   })
     .index("by_site", ["siteId"])
     .index("by_timestamp", ["siteId", "timestamp"]),
+
+  // Team members (cached from Entity Auth)
+  members: defineTable({
+    companyId: v.id("companies"),
+    eaUserId: v.string(), // Entity Auth user ID
+    email: v.string(),
+    name: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    role: v.union(v.literal("admin"), v.literal("viewer")),
+    eaRole: v.string(), // Original EA role (owner/admin/member)
+    joinedAt: v.number(),
+    syncedAt: v.number(),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_company_user", ["companyId", "eaUserId"])
+    .index("by_ea_user", ["eaUserId"]),
 });

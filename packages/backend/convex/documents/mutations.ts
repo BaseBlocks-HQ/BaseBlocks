@@ -1,6 +1,16 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireAdminOrLegacy } from "../auth";
+
+// Helper to get companyId from siteId
+async function getCompanyIdFromSite(
+  ctx: { db: any },
+  siteId: string,
+): Promise<string | null> {
+  const site = await ctx.db.get(siteId);
+  if (!site) return null;
+  return site.companyId;
+}
 
 // Create document record (after upload to Entity Storage)
 export const create = mutation({
@@ -16,15 +26,11 @@ export const create = mutation({
     ctx,
     { siteId, blobId, cdnUrl, filename, contentType, size },
   ) => {
-    const auth = await getAuthContext(ctx);
+    const companyId = await getCompanyIdFromSite(ctx, siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    const { auth } = await requireAdminOrLegacy(ctx, companyId as any);
 
     const documentId = await ctx.db.insert("documents", {
       siteId,
@@ -58,15 +64,11 @@ export const createInLibrary = mutation({
     ctx,
     { siteId, libraryId, folderId, blobId, cdnUrl, filename, contentType, size },
   ) => {
-    const auth = await getAuthContext(ctx);
+    const companyId = await getCompanyIdFromSite(ctx, siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    const { auth } = await requireAdminOrLegacy(ctx, companyId as any);
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -107,18 +109,14 @@ export const move = mutation({
     folderId: v.optional(v.id("documentFolders")),
   },
   handler: async (ctx, { documentId, folderId }) => {
-    const auth = await getAuthContext(ctx);
-
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const site = await ctx.db.get(document.siteId);
-    if (!site) throw new Error("Site not found");
+    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, companyId as any);
 
     // Verify document is in a library
     if (!document.libraryId) {
@@ -145,18 +143,14 @@ export const rename = mutation({
     filename: v.string(),
   },
   handler: async (ctx, { documentId, filename }) => {
-    const auth = await getAuthContext(ctx);
-
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const site = await ctx.db.get(document.siteId);
-    if (!site) throw new Error("Site not found");
+    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, companyId as any);
 
     await ctx.db.patch(documentId, { filename });
     return documentId;
@@ -171,18 +165,14 @@ export const updateMetadata = mutation({
     pageCount: v.optional(v.number()),
   },
   handler: async (ctx, { documentId, extractedText, pageCount }) => {
-    const auth = await getAuthContext(ctx);
-
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const site = await ctx.db.get(document.siteId);
-    if (!site) throw new Error("Site not found");
+    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, companyId as any);
 
     const updates: Record<string, unknown> = {};
     if (extractedText !== undefined) updates.extractedText = extractedText;
@@ -197,18 +187,14 @@ export const updateMetadata = mutation({
 export const remove = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    const auth = await getAuthContext(ctx);
-
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const site = await ctx.db.get(document.siteId);
-    if (!site) throw new Error("Site not found");
+    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
+    if (!companyId) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, companyId as any);
 
     await ctx.db.delete(documentId);
   },

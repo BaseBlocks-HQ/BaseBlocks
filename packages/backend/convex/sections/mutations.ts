@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireAdminOrLegacy } from "../auth";
 
 const sectionTypes = v.union(
   v.literal("single"),
@@ -55,6 +55,37 @@ const settingsSchema = v.object({
   ),
 });
 
+// Helper to get companyId from pageId
+async function getCompanyIdFromPage(
+  ctx: { db: any },
+  pageId: string,
+): Promise<{ companyId: string; siteId: string } | null> {
+  const page = await ctx.db.get(pageId);
+  if (!page) return null;
+
+  const site = await ctx.db.get(page.siteId);
+  if (!site) return null;
+
+  return { companyId: site.companyId, siteId: site._id };
+}
+
+// Helper to get companyId from sectionId
+async function getCompanyIdFromSection(
+  ctx: { db: any },
+  sectionId: string,
+): Promise<{ companyId: string; pageId: string } | null> {
+  const section = await ctx.db.get(sectionId);
+  if (!section) return null;
+
+  const page = await ctx.db.get(section.pageId);
+  if (!page) return null;
+
+  const site = await ctx.db.get(page.siteId);
+  if (!site) return null;
+
+  return { companyId: site.companyId, pageId: section.pageId };
+}
+
 // Create a new section
 export const create = mutation({
   args: {
@@ -65,29 +96,21 @@ export const create = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, { pageId, type, slots, settings, order }) => {
-    const auth = await getAuthContext(ctx);
+    const pageInfo = await getCompanyIdFromPage(ctx, pageId);
+    if (!pageInfo) throw new Error("Page not found");
 
-    // Verify access to page
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
 
     // Get max order if not specified
     let sectionOrder = order;
     if (sectionOrder === undefined) {
       const existingSections = await ctx.db
         .query("sections")
-        .withIndex("by_page", (q) => q.eq("pageId", pageId))
+        .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
         .collect();
       sectionOrder =
-        existingSections.reduce((max, s) => Math.max(max, s.order), -1) + 1;
+        existingSections.reduce((max: number, s: any) => Math.max(max, s.order), -1) + 1;
     }
 
     const now = Date.now();
@@ -115,21 +138,14 @@ export const updateSettings = mutation({
     settings: settingsSchema,
   },
   handler: async (ctx, { sectionId, settings }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     const now = Date.now();
     await ctx.db.patch(sectionId, {
@@ -149,21 +165,14 @@ export const updateSlots = mutation({
     slots: v.array(slotSchema),
   },
   handler: async (ctx, { sectionId, slots }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     const now = Date.now();
     await ctx.db.patch(sectionId, {
@@ -189,24 +198,17 @@ export const addBlockToSlot = mutation({
     index: v.optional(v.number()),
   },
   handler: async (ctx, { sectionId, slotId, block, index }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     // Find slot and add block
-    const updatedSlots = section.slots.map((slot) => {
+    const updatedSlots = section.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
       const newBlocks = [...slot.blocks];
@@ -238,27 +240,20 @@ export const updateBlockInSlot = mutation({
     content: v.any(),
   },
   handler: async (ctx, { sectionId, slotId, blockId, content }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     // Find slot and update block
-    const updatedSlots = section.slots.map((slot) => {
+    const updatedSlots = section.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
-      const updatedBlocks = slot.blocks.map((b) =>
+      const updatedBlocks = slot.blocks.map((b: any) =>
         b.id === blockId ? { ...b, content } : b
       );
       return { ...slot, blocks: updatedBlocks };
@@ -283,29 +278,22 @@ export const removeBlockFromSlot = mutation({
     blockId: v.string(),
   },
   handler: async (ctx, { sectionId, slotId, blockId }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     // Find slot and remove block
-    const updatedSlots = section.slots.map((slot) => {
+    const updatedSlots = section.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
       return {
         ...slot,
-        blocks: slot.blocks.filter((b) => b.id !== blockId),
+        blocks: slot.blocks.filter((b: any) => b.id !== blockId),
       };
     });
 
@@ -330,21 +318,14 @@ export const moveBlock = mutation({
     toIndex: v.number(),
   },
   handler: async (ctx, { sectionId, fromSlotId, toSlotId, blockId, toIndex }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     // Find the block - use the same type as in slots
     type SlotBlock = (typeof section.slots)[0]["blocks"][0];
@@ -412,18 +393,11 @@ export const reorder = mutation({
     sectionIds: v.array(v.id("sections")),
   },
   handler: async (ctx, { pageId, sectionIds }) => {
-    const auth = await getAuthContext(ctx);
+    const pageInfo = await getCompanyIdFromPage(ctx, pageId);
+    if (!pageInfo) throw new Error("Page not found");
 
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
 
     // Update order for each section
     for (let i = 0; i < sectionIds.length; i++) {
@@ -441,21 +415,14 @@ export const reorder = mutation({
 export const remove = mutation({
   args: { sectionId: v.id("sections") },
   handler: async (ctx, { sectionId }) => {
-    const auth = await getAuthContext(ctx);
-
     const section = await ctx.db.get(sectionId);
     if (!section) throw new Error("Section not found");
 
-    const page = await ctx.db.get(section.pageId);
-    if (!page) throw new Error("Page not found");
+    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
+    if (!sectionInfo) throw new Error("Section not found");
 
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
 
     await ctx.db.delete(sectionId);
     await ctx.db.patch(section.pageId, { updatedAt: Date.now() });

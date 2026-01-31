@@ -1,5 +1,6 @@
 "use client";
 
+import { useSitePermissions } from "@/hooks";
 import type { Id } from "@repo/backend";
 import {
   type ReactNode,
@@ -26,6 +27,11 @@ interface EditorContextValue {
     blockId: string | null,
   ) => void;
   clearSelection: () => void;
+  // Permissions
+  canEdit: boolean;
+  isAdmin: boolean;
+  isViewer: boolean;
+  isPermissionsLoading: boolean;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -41,6 +47,10 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     slotId: null,
     blockId: null,
   });
+
+  // Get permissions for this site
+  const { canEdit, isAdmin, isViewer, isLoading: isPermissionsLoading } =
+    useSitePermissions(siteId);
 
   const selectSection = useCallback((sectionId: string | null) => {
     setSelection({
@@ -86,6 +96,10 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         selectSlot,
         selectBlock,
         clearSelection,
+        canEdit,
+        isAdmin,
+        isViewer,
+        isPermissionsLoading,
       }}
     >
       {children}

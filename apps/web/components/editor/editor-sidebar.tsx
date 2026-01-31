@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
+import { useEditorContext } from "./editor-context";
 import { SECTION_TYPES } from "@/types";
 import type { BlockType, PageListItem, SectionLayout } from "@/types";
 import {
@@ -111,6 +112,7 @@ export function EditorSidebar({
   onAddBlock,
 }: EditorSidebarProps) {
   const t = useTranslations();
+  const { canEdit } = useEditorContext();
   const [activeTab, setActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -175,7 +177,7 @@ export function EditorSidebar({
             <SidebarGroup>
               <div className="flex items-center justify-between px-2">
                 <SidebarGroupLabel>{t("editor.sidebar.pagesTab")}</SidebarGroupLabel>
-                <CreatePageDialog siteId={site._id} />
+                {canEdit && <CreatePageDialog siteId={site._id} />}
               </div>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -198,7 +200,13 @@ export function EditorSidebar({
 
         <TabsContent value="components" className="flex-1 mt-0 overflow-auto">
           <SidebarContent>
-            {selectedPageId ? (
+            {!canEdit ? (
+              <div className="p-4">
+                <p className="text-sm text-muted-foreground">
+                  {t("editor.sidebar.viewOnly")}
+                </p>
+              </div>
+            ) : selectedPageId ? (
               <div className="p-3 space-y-4">
                 {/* Sections - 3 per row with labels below icon */}
                 <div>

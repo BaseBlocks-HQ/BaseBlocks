@@ -7,6 +7,7 @@ import {
 } from "@/components/dialogs";
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { DragHandle } from "@/components/dnd";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -63,6 +64,8 @@ export function SortablePageTree({
   onToggleExpand,
   onSetExpanded,
 }: SortablePageTreeProps) {
+  const editorContext = useEditorContextOptional();
+  const canEdit = editorContext?.canEdit ?? false;
   const reorderPage = useMutation(api.pages.mutations.reorder);
 
   // Optimistic state for page order
@@ -185,6 +188,7 @@ export function SortablePageTree({
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
           onSetExpanded={onSetExpanded}
+          canEdit={canEdit}
         />
       ))}
     </DndProvider>
@@ -202,6 +206,7 @@ interface SortablePageItemProps {
   isExpanded?: (pageId: string) => boolean;
   onToggleExpand?: (pageId: string) => void;
   onSetExpanded?: (pageId: string, expanded: boolean) => void;
+  canEdit: boolean;
 }
 
 function SortablePageItem({
@@ -215,6 +220,7 @@ function SortablePageItem({
   isExpanded,
   onToggleExpand,
   onSetExpanded,
+  canEdit,
 }: SortablePageItemProps) {
   const {
     attributes,
@@ -262,16 +268,18 @@ function SortablePageItem({
           className="w-full pr-8"
           style={{ paddingLeft: `${(depth + 1) * 12 + 20}px` }}
         >
-          {/* Drag handle */}
-          <div
-            ref={setActivatorNodeRef}
-            {...attributes}
-            {...listeners}
-            className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/page:opacity-100 transition-opacity"
-            style={{ left: `${(depth + 1) * 12 - 4}px` }}
-          >
-            <DragHandle className="h-5 w-5" />
-          </div>
+          {/* Drag handle - only show for users with edit permissions */}
+          {canEdit && (
+            <div
+              ref={setActivatorNodeRef}
+              {...attributes}
+              {...listeners}
+              className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/page:opacity-100 transition-opacity"
+              style={{ left: `${(depth + 1) * 12 - 4}px` }}
+            >
+              <DragHandle className="h-5 w-5" />
+            </div>
+          )}
 
           {/* Expand/collapse toggle for pages with children */}
           {hasChildren ? (
@@ -348,12 +356,20 @@ function PageActionsMenu({
   isDefault: boolean;
   onExpandParent?: () => void;
 }) {
+  const editorContext = useEditorContextOptional();
+  const canEdit = editorContext?.canEdit ?? false;
+
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [subPageOpen, setSubPageOpen] = useState(false);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const removePage = useMutation(api.pages.mutations.remove);
+
+  // Don't render any actions if user can't edit
+  if (!canEdit) {
+    return null;
+  }
 
   const handleSetDefault = async () => {
     await setDefaultPage({

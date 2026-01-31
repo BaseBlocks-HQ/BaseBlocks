@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { getAuthContext, requireAdminOrLegacy } from "../auth";
 
 // Create a new page
 export const create = mutation({
@@ -12,16 +12,12 @@ export const create = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
-    const auth = await getAuthContext(ctx);
-
     // Verify access to site
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    const { auth } = await requireAdminOrLegacy(ctx, site.companyId);
 
     // Check slug uniqueness
     const existing = await ctx.db
@@ -71,18 +67,14 @@ export const update = mutation({
     isPublished: v.optional(v.boolean()),
   },
   handler: async (ctx, { pageId, title, slug, icon, isPublished }) => {
-    const auth = await getAuthContext(ctx);
-
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     // Check slug uniqueness if changing
     if (slug && slug !== page.slug) {
@@ -117,15 +109,11 @@ export const reorder = mutation({
     pageIds: v.array(v.id("pages")),
   },
   handler: async (ctx, { siteId, parentId, pageIds }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     // Update order for each page based on its position in the array
     const now = Date.now();
@@ -175,18 +163,14 @@ async function deletePageRecursively(
 export const remove = mutation({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
-    const auth = await getAuthContext(ctx);
-
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;

@@ -21,7 +21,7 @@ import { Link } from "@/i18n/navigation";
 import { getSiteUrl } from "@/lib/utils";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
-import { Eye, ExternalLink, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Building2, Eye, ExternalLink, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 
@@ -33,8 +33,13 @@ interface SiteCardProps {
 		description?: string;
 		logoUrl?: string;
 		isPublished: boolean;
+		company?: {
+			_id: string;
+			name: string;
+			slug: string;
+		} | null;
 	};
-	companySlug: string;
+	companySlug?: string; // Optional now, will use site.company.slug if available
 }
 
 export function SiteCard({ site, companySlug }: SiteCardProps) {
@@ -45,8 +50,11 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 
 	const deleteSite = useMutation(api.sites.mutations.remove);
 
+	// Use company slug from site object if available, fallback to prop
+	const effectiveCompanySlug = site.company?.slug ?? companySlug ?? "";
+
 	// Link to the site root - the root page will redirect to the default page
-	const siteUrl = getSiteUrl(companySlug);
+	const siteUrl = getSiteUrl(effectiveCompanySlug);
 
 	// Preview handler that works on localhost (subdomain) and production
 	const handlePreview = useCallback(() => {
@@ -57,11 +65,11 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 
 		if (isLocalhost) {
 			const port = window.location.port || "3000";
-			window.open(`http://${companySlug}.localhost:${port}/`, "_blank");
+			window.open(`http://${effectiveCompanySlug}.localhost:${port}/`, "_blank");
 		} else {
-			window.open(getSiteUrl(companySlug), "_blank");
+			window.open(getSiteUrl(effectiveCompanySlug), "_blank");
 		}
-	}, [companySlug]);
+	}, [effectiveCompanySlug]);
 
 	const handleDelete = async () => {
 		setIsDeleting(true);
@@ -100,6 +108,12 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 							<CardDescription className="truncate">
 								{site.description || t("sites.noDescription")}
 							</CardDescription>
+							{site.company && (
+								<div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+									<Building2 className="h-3 w-3" />
+									<span className="truncate">{site.company.name}</span>
+								</div>
+							)}
 						</div>
 						<div className="flex items-center gap-2">
 							<div
@@ -138,7 +152,7 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-2">
-						<Link href={`/dashboard/sites/${site._id}`} className="flex-1">
+						<Link href={`/sites/${site._id}`} className="flex-1">
 							<Button variant="outline" className="w-full">
 								{t("sites.edit")}
 							</Button>

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { getAuthContext, requireAdminOrLegacy } from "../auth";
 
 // Create a new site
 export const create = mutation({
@@ -93,15 +93,11 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, { siteId, name, description, logoUrl, settings }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
@@ -120,15 +116,11 @@ export const update = mutation({
 export const publish = mutation({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     await ctx.db.patch(siteId, {
       isPublished: true,
@@ -144,15 +136,11 @@ export const publish = mutation({
 export const unpublish = mutation({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     await ctx.db.patch(siteId, {
       isPublished: false,
@@ -170,15 +158,11 @@ export const setDefaultPage = mutation({
     pageId: v.id("pages"),
   },
   handler: async (ctx, { siteId, pageId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     // Verify the page belongs to this site
     const page = await ctx.db.get(pageId);
@@ -199,15 +183,11 @@ export const setDefaultPage = mutation({
 export const remove = mutation({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
 
     // Delete all pages
     const pages = await ctx.db

@@ -99,7 +99,8 @@
 			"sections": "Sections",
 			"blocks": "Blocs",
 			"selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
-			"selectPage": "Selectionnez une page pour ajouter des composants"
+			"selectPage": "Selectionnez une page pour ajouter des composants",
+			"viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification."
 		},
 		"sections": {
 			"single": "Simple",
@@ -175,13 +176,13 @@
 		}
 	},
 	"errors": {
-		"notFound": "Page non trouvee",
+		"notFound": "Page non trouvée",
 		"notFoundDescription": "La page que vous recherchez n'existe pas ou a ete deplacee.",
 		"unauthorized": "Non autorise",
 		"unauthorizedDescription": "Vous n'avez pas la permission d'acceder a cette page.",
 		"serverError": "Erreur serveur",
 		"serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
-		"siteNotFound": "Site non trouve",
+		"siteNotFound": "Site non trouvé",
 		"siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
 		"siteNotPublished": "Site non publie",
 		"siteNotPublishedDescription": "Ce site n'est pas encore publie."
@@ -202,5 +203,102 @@
 		"search": "Recherche",
 		"library": "Bibliotheque",
 		"spacer": "Espacement"
+	},
+	"libraries": {
+		"title": "Bibliotheques",
+		"subtitle": "Gerez vos bibliotheques de documents et fichiers",
+		"create": "Creer une bibliotheque",
+		"createTitle": "Nouvelle bibliotheque",
+		"createDescription": "Ajoutez une nouvelle bibliotheque de documents",
+		"editTitle": "Modifier la bibliotheque",
+		"editDescription": "Mettez a jour les parametres de la bibliotheque",
+		"deleteTitle": "Supprimer la bibliotheque",
+		"deleteDescription": "Etes-vous sur de vouloir supprimer \"{name}\" ? Tous les documents et dossiers seront definitivement supprimes. Cette action est irreversible.",
+		"siteLabel": "Site",
+		"selectSite": "Selectionnez un site",
+		"nameLabel": "Nom",
+		"namePlaceholder": "Ma bibliotheque",
+		"descriptionLabel": "Description",
+		"descriptionPlaceholder": "Une breve description de cette bibliotheque",
+		"iconLabel": "Icone",
+		"document": "document",
+		"documents": "documents",
+		"noLibraries": "Aucune bibliotheque",
+		"noLibrariesDescription": "Creez votre premiere bibliotheque pour organiser vos documents",
+		"noSites": "Aucun site disponible",
+		"noSitesDescription": "Creez d'abord un site pour ajouter des bibliotheques",
+		"notFound": "Bibliotheque non trouvée",
+		"folders": "Dossiers",
+		"rootFolder": "Tous les fichiers",
+		"searchPlaceholder": "Rechercher des documents...",
+		"noSearchResults": "Aucun document trouvé",
+		"matchInContent": "Correspondance dans le contenu",
+		"matchInFilename": "Correspondance dans le nom"
+	},
+	"inbox": {
+		"title": "Invitations",
+		"description": "Invitations en attente pour rejoindre des organisations",
+		"noInvitations": "Aucune invitation en attente",
+		"invitedToOrg": "Invitation d'organisation",
+		"invitedYou": "vous a invite a rejoindre son organisation",
+		"asRole": "en tant que {role}",
+		"expires": "Expire le {date}",
+		"accept": "Accepter",
+		"decline": "Refuser"
+	},
+	"team": {
+		"title": "Membres de l'equipe",
+		"description": "Gerez les membres de votre organisation et leurs roles d'acces",
+		"inviteMember": "Inviter un membre",
+		"memberCount": "{count} membres",
+		"syncMembers": "Synchroniser les membres",
+		"syncing": "Synchronisation...",
+		"syncSuccess": "Membres synchronises avec succes",
+		"noMembers": "Aucun membre pour le moment",
+		"noMembersDescription": "Invitez votre premier membre pour collaborer",
+		"member": {
+			"name": "Nom",
+			"email": "Email",
+			"role": "Role",
+			"joined": "Rejoint",
+			"actions": "Actions"
+		},
+		"roles": {
+			"admin": "Administrateur",
+			"viewer": "Lecteur",
+			"owner": "Proprietaire"
+		},
+		"roleDescriptions": {
+			"admin": "Acces complet pour modifier les sites, pages et gerer l'equipe",
+			"viewer": "Acces en lecture seule pour voir les sites et pages"
+		},
+		"invite": {
+			"title": "Inviter un membre",
+			"description": "Recherchez des utilisateurs par email ou nom d'utilisateur pour les inviter dans votre organisation",
+			"searchPlaceholder": "Rechercher par email ou nom d'utilisateur...",
+			"searching": "Recherche...",
+			"noResults": "Aucun utilisateur trouvé",
+			"selectRole": "Selectionner un role",
+			"inviting": "Invitation en cours...",
+			"invite": "Envoyer l'invitation",
+			"success": "Invitation envoyee avec succes",
+			"alreadyMember": "L'utilisateur est deja membre",
+			"userNotFound": "Utilisateur non trouvé. Il doit d'abord avoir un compte Entity Auth."
+		},
+		"actions": {
+			"changeRole": "Changer le role",
+			"removeMember": "Retirer le membre",
+			"confirmRemove": "Etes-vous sur de vouloir retirer {name} de l'equipe ?",
+			"removing": "Suppression...",
+			"cannotRemoveSelf": "Vous ne pouvez pas vous retirer vous-meme",
+			"cannotRemoveOwner": "Impossible de retirer le proprietaire de l'organisation"
+		},
+		"pendingInvitations": {
+			"title": "Invitations en attente",
+			"noInvitations": "Aucune invitation en attente",
+			"expires": "Expire le {date}",
+			"revoke": "Revoquer",
+			"revoking": "Revocation..."
+		}
 	}
 }

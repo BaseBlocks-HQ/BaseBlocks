@@ -2,26 +2,70 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthContext, getOptionalAuthContext } from "../auth";
 
-// List sites for current company
+// List sites for all companies the user is a member of
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const auth = await getOptionalAuthContext(ctx);
-    const eaOrgId = auth?.eaOrgId;
-    if (!eaOrgId) return [];
+    if (!auth) return [];
 
-    // Get user's company
-    const company = await ctx.db
-      .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
-      .first();
-
-    if (!company) return [];
-
-    return await ctx.db
-      .query("sites")
-      .withIndex("by_company", (q) => q.eq("companyId", company._id))
+    // Get all memberships for this user
+    const memberships = await ctx.db
+      .query("members")
+      .withIndex("by_ea_user", (q) => q.eq("eaUserId", auth.userId))
       .collect();
+
+    // Also check for legacy access via eaOrgId (user's own company)
+    let ownCompany = null;
+    const eaOrgId = auth.eaOrgId;
+    if (eaOrgId) {
+      ownCompany = await ctx.db
+        .query("companies")
+        .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
+        .first();
+    }
+
+    // Collect all company IDs (from memberships + own company)
+    const companyIds = new Set(memberships.map((m) => m.companyId));
+    if (ownCompany) {
+      companyIds.add(ownCompany._id);
+    }
+
+    if (companyIds.size === 0) return [];
+
+    // Fetch all companies
+    const companies = await Promise.all(
+      Array.from(companyIds).map((id) => ctx.db.get(id)),
+    );
+    const companyMap = new Map(
+      companies.filter(Boolean).map((c) => [c!._id, c!]),
+    );
+
+    // Fetch sites for all companies
+    const sitesPromises = Array.from(companyIds).map((companyId) =>
+      ctx.db
+        .query("sites")
+        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .collect(),
+    );
+    const sitesArrays = await Promise.all(sitesPromises);
+
+    // Flatten and add company info
+    const sites = sitesArrays.flat().map((site) => {
+      const company = companyMap.get(site.companyId);
+      return {
+        ...site,
+        company: company
+          ? {
+              _id: company._id,
+              name: company.name,
+              slug: company.slug,
+            }
+          : null,
+      };
+    });
+
+    return sites;
   },
 });
 
@@ -79,8 +123,16 @@ export const getWithCompany = query({
     const company = await ctx.db.get(site.companyId);
     if (!company) return null;
 
-    // Verify access
-    if (company.eaOrgId !== auth.eaOrgId) {
+    // Verify access - check eaOrgId OR membership
+    const hasOrgAccess = company.eaOrgId === auth.eaOrgId;
+    const membership = await ctx.db
+      .query("members")
+      .withIndex("by_company_user", (q) =>
+        q.eq("companyId", company._id).eq("eaUserId", auth.userId),
+      )
+      .first();
+
+    if (!hasOrgAccess && !membership) {
       throw new Error("Unauthorized");
     }
 

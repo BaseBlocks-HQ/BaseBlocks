@@ -4,7 +4,7 @@ import type {
   GenericQueryCtx,
 } from "convex/server";
 import { ConvexError } from "convex/values";
-import type { DataModel } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
@@ -180,3 +180,163 @@ export const bootstrap = mutation({
     return { ok: true, userId: auth.userId };
   },
 });
+
+// Role-based authorization helpers
+
+type MemberInfo = {
+  _id: Id<"members">;
+  role: "admin" | "viewer";
+  eaRole: string;
+  eaUserId: string;
+};
+
+type AuthWithMember = {
+  auth: ServerAuthContext;
+  member: MemberInfo;
+};
+
+/**
+ * Get member from members table
+ */
+async function getMemberByUserId(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+  userId: string,
+): Promise<MemberInfo | null> {
+  const member = await ctx.db
+    .query("members")
+    .withIndex("by_company_user", (q) =>
+      q.eq("companyId", companyId).eq("eaUserId", userId),
+    )
+    .first();
+
+  if (!member) return null;
+
+  return {
+    _id: member._id,
+    role: member.role,
+    eaRole: member.eaRole,
+    eaUserId: member.eaUserId,
+  };
+}
+
+/**
+ * Require user to be an admin of the company
+ * Throws if not authenticated or not an admin
+ */
+export async function requireAdmin(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<AuthWithMember> {
+  const auth = await requireAuthContext(ctx);
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+
+  if (!member) {
+    throw new ConvexError("Not a member of this organization");
+  }
+
+  if (member.role !== "admin") {
+    throw new ConvexError("Admin access required");
+  }
+
+  return { auth, member };
+}
+
+/**
+ * Require user to be a member of the company (admin or viewer)
+ * Throws if not authenticated or not a member
+ */
+export async function requireMember(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<AuthWithMember> {
+  const auth = await requireAuthContext(ctx);
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+
+  if (!member) {
+    throw new ConvexError("Not a member of this organization");
+  }
+
+  return { auth, member };
+}
+
+/**
+ * Check if user is an admin (returns boolean, doesn't throw)
+ */
+export async function checkIsAdmin(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<boolean> {
+  const auth = await getAuthContextOrNull(ctx);
+  if (!auth) return false;
+
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  return member?.role === "admin";
+}
+
+/**
+ * Check if user is a member (returns boolean, doesn't throw)
+ */
+export async function checkIsMember(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<boolean> {
+  const auth = await getAuthContextOrNull(ctx);
+  if (!auth) return false;
+
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  return !!member;
+}
+
+/**
+ * Require org access via eaOrgId (legacy check) OR member table
+ * This is a transitional helper during migration to member-based auth
+ */
+export async function requireOrgAccessOrMember(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<{ auth: ServerAuthContext; isMember: boolean }> {
+  const auth = await requireAuthContext(ctx);
+
+  // First check the members table
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  if (member) {
+    return { auth, isMember: true };
+  }
+
+  // Fallback to eaOrgId check (legacy)
+  const company = await ctx.db.get(companyId);
+  if (company && company.eaOrgId === auth.eaOrgId) {
+    return { auth, isMember: false };
+  }
+
+  throw new ConvexError("Not authorized to access this organization");
+}
+
+/**
+ * Require admin access via member table OR legacy eaOrgId (for writes)
+ * This is a transitional helper during migration
+ */
+export async function requireAdminOrLegacy(
+  ctx: AuthCtx,
+  companyId: Id<"companies">,
+): Promise<{ auth: ServerAuthContext; isAdmin: boolean }> {
+  const auth = await requireAuthContext(ctx);
+
+  // First check the members table
+  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  if (member) {
+    if (member.role !== "admin") {
+      throw new ConvexError("Admin access required");
+    }
+    return { auth, isAdmin: true };
+  }
+
+  // Fallback to eaOrgId check (legacy - treat as admin for backwards compat)
+  const company = await ctx.db.get(companyId);
+  if (company && company.eaOrgId === auth.eaOrgId) {
+    return { auth, isAdmin: true };
+  }
+
+  throw new ConvexError("Not authorized to access this organization");
+}

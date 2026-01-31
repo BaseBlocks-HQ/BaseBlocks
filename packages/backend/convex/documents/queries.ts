@@ -77,12 +77,14 @@ function formatSearchResult(
 
 /**
  * Core search logic shared between authenticated and public queries
+ * @param activeLibraryIds - If provided, only return documents from these libraries (for public search filtering)
  */
 async function performSearch(
   ctx: { db: { query: (table: "documents") => any } },
   siteId: Id<"sites">,
   searchTerm: string,
-  limit: number
+  limit: number,
+  activeLibraryIds?: string[]
 ) {
   // 1. Search by content (full-text search)
   const contentResults = await ctx.db
@@ -90,7 +92,7 @@ async function performSearch(
     .withSearchIndex("search_content", (q: any) =>
       q.search("extractedText", searchTerm).eq("siteId", siteId)
     )
-    .take(limit);
+    .take(limit * 2); // Fetch more to account for filtering
 
   // 2. Search by filename (using search index for better performance)
   const filenameResults = await ctx.db
@@ -98,15 +100,25 @@ async function performSearch(
     .withSearchIndex("search_filename", (q: any) =>
       q.search("filename", searchTerm).eq("siteId", siteId)
     )
-    .take(limit);
+    .take(limit * 2);
 
   // 3. Merge and deduplicate, prioritizing content matches
   const seen = new Set<string>();
   const combined: ReturnType<typeof formatSearchResult>[] = [];
 
+  // Helper to check if document should be included
+  const shouldInclude = (doc: Doc<"documents">) => {
+    // If no active library filter, include all
+    if (!activeLibraryIds) return true;
+    // If document has no library, exclude (orphaned)
+    if (!doc.libraryId) return false;
+    // Include only if library is active
+    return activeLibraryIds.includes(doc.libraryId);
+  };
+
   // Content matches first (higher relevance)
   for (const doc of contentResults) {
-    if (!seen.has(doc._id)) {
+    if (!seen.has(doc._id) && shouldInclude(doc)) {
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "content", searchTerm));
     }
@@ -114,7 +126,7 @@ async function performSearch(
 
   // Then filename matches
   for (const doc of filenameResults) {
-    if (!seen.has(doc._id)) {
+    if (!seen.has(doc._id) && shouldInclude(doc)) {
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "filename", searchTerm));
     }
@@ -183,6 +195,7 @@ export const search = query({
 });
 
 // Search documents for public site viewing
+// Only returns documents from libraries that are actively used in blocks
 export const searchPublic = query({
   args: {
     siteId: v.id("sites"),
@@ -218,8 +231,32 @@ export const searchPublic = query({
       }
     }
 
-    // Use shared search logic
-    return performSearch(ctx, siteId, trimmed, limit);
+    // Get active library IDs (libraries that are used in blocks on pages)
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    const activeLibraryIds = new Set<string>();
+    for (const page of pages) {
+      const sections = await ctx.db
+        .query("sections")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+
+      for (const section of sections) {
+        for (const slot of section.slots) {
+          for (const block of slot.blocks) {
+            if (block.type === "library" && block.content?.libraryId) {
+              activeLibraryIds.add(block.content.libraryId);
+            }
+          }
+        }
+      }
+    }
+
+    // Use shared search logic with active library filter
+    return performSearch(ctx, siteId, trimmed, limit, Array.from(activeLibraryIds));
   },
 });
 
@@ -462,5 +499,68 @@ export const listFailedExtraction = query({
         q.eq("siteId", siteId).eq("extractionStatus", "failed")
       )
       .take(limit);
+  },
+});
+
+// Search documents within a specific library (authenticated)
+export const searchByLibrary = query({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    query: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { libraryId, query: searchQuery, limit = 20 }) => {
+    const auth = await getAuthContext(ctx);
+
+    // Verify authorization
+    const library = await ctx.db.get(libraryId);
+    if (!library) return [];
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site) return [];
+
+    const company = await ctx.db.get(site.companyId);
+    if (!company || company.eaOrgId !== auth.eaOrgId) {
+      throw new Error("Unauthorized");
+    }
+
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return [];
+
+    // Search by content
+    const contentResults = await ctx.db
+      .query("documents")
+      .withSearchIndex("search_content", (q: any) =>
+        q.search("extractedText", trimmed).eq("siteId", site._id)
+      )
+      .take(limit * 2);
+
+    // Search by filename
+    const filenameResults = await ctx.db
+      .query("documents")
+      .withSearchIndex("search_filename", (q: any) =>
+        q.search("filename", trimmed).eq("siteId", site._id)
+      )
+      .take(limit * 2);
+
+    // Merge and filter by library
+    const seen = new Set<string>();
+    const combined: ReturnType<typeof formatSearchResult>[] = [];
+
+    for (const doc of contentResults) {
+      if (!seen.has(doc._id) && doc.libraryId === libraryId) {
+        seen.add(doc._id);
+        combined.push(formatSearchResult(doc, "content", trimmed));
+      }
+    }
+
+    for (const doc of filenameResults) {
+      if (!seen.has(doc._id) && doc.libraryId === libraryId) {
+        seen.add(doc._id);
+        combined.push(formatSearchResult(doc, "filename", trimmed));
+      }
+    }
+
+    return combined.slice(0, limit);
   },
 });
