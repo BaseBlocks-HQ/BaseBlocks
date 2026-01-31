@@ -2,14 +2,14 @@
 
 import { BlockRendererWrapper } from "@/components/blocks";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSectionGridStyle, SPACER_SECTION_HEIGHTS } from "@/lib/sections";
+import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
   BlockContent,
   BlockType,
-  SectionLayout,
-  SectionSettings,
-  SpacerSectionHeight,
+  LayoutType,
+  LayoutSettings,
+  SpacerLayoutHeight,
 } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
@@ -23,11 +23,11 @@ export function PublicContent({ pageId }: PublicContentProps) {
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
-  const sectionsData = useQuery(api.sections.queries.list, {
+  const layoutsData = useQuery(api.layouts.queries.list, {
     pageId: pageId as Id<"pages">,
   });
 
-  if (pageData === undefined || sectionsData === undefined) {
+  if (pageData === undefined || layoutsData === undefined) {
     return (
       <div className="max-w-3xl mx-auto">
         <Skeleton className="h-10 w-64 mb-8" />
@@ -46,42 +46,42 @@ export function PublicContent({ pageId }: PublicContentProps) {
     );
   }
 
-  type SectionDoc = Doc<"sections">;
-  type SlotDoc = SectionDoc["slots"][number];
+  type LayoutDoc = Doc<"layouts">;
+  type SlotDoc = LayoutDoc["slots"][number];
   type BlockDoc = SlotDoc["blocks"][number];
 
-  // Separate main sections from sidebar sections
-  const mainSections = sectionsData.filter(
-    (section: SectionDoc) => section.type !== "vertical"
+  // Separate main layouts from sidebar layouts
+  const mainLayouts = layoutsData.filter(
+    (layout: LayoutDoc) => layout.type !== "vertical"
   );
-  const sidebarSections = sectionsData.filter(
-    (section: SectionDoc) => section.type === "vertical"
+  const sidebarLayouts = layoutsData.filter(
+    (layout: LayoutDoc) => layout.type === "vertical"
   );
-  const hasSidebar = sidebarSections.length > 0;
+  const hasSidebar = sidebarLayouts.length > 0;
 
-  // Render a single section
-  const renderSection = (section: SectionDoc) => {
-    // Handle spacer sections
-    if (section.type === "spacer") {
-      const settings = section.settings as SectionSettings;
-      const height: SpacerSectionHeight = settings.spacerHeight ?? "medium";
+  // Render a single layout
+  const renderLayout = (layout: LayoutDoc) => {
+    // Handle spacer layouts
+    if (layout.type === "spacer") {
+      const settings = layout.settings as LayoutSettings;
+      const height: SpacerLayoutHeight = settings.spacerHeight ?? "medium";
       return (
         <div
-          key={section._id}
-          className={cn("w-full", SPACER_SECTION_HEIGHTS[height].value)}
+          key={layout._id}
+          className={cn("w-full", SPACER_LAYOUT_HEIGHTS[height].value)}
           aria-hidden="true"
         />
       );
     }
 
-    const gridStyle = getSectionGridStyle(
-      section.type as SectionLayout,
-      section.settings as SectionSettings
+    const gridStyle = getLayoutGridStyle(
+      layout.type as LayoutType,
+      layout.settings as LayoutSettings
     );
 
     return (
-      <div key={section._id} style={gridStyle}>
-        {section.slots.map((slot: SlotDoc) => (
+      <div key={layout._id} style={gridStyle}>
+        {layout.slots.map((slot: SlotDoc) => (
           <div
             key={slot.id}
             className="prose prose-neutral dark:prose-invert max-w-none"
@@ -115,20 +115,20 @@ export function PublicContent({ pageId }: PublicContentProps) {
         <div className="flex gap-8">
           {/* Main content */}
           <div className="flex-1 min-w-0 space-y-8">
-            {mainSections.map((section: SectionDoc) => renderSection(section))}
+            {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
           </div>
 
           {/* Sidebar */}
           <aside className="w-72 flex-shrink-0 space-y-6">
-            {sidebarSections.map((section: SectionDoc) =>
-              renderSection(section)
+            {sidebarLayouts.map((layout: LayoutDoc) =>
+              renderLayout(layout)
             )}
           </aside>
         </div>
       ) : (
         // Standard layout without sidebar
         <div className="space-y-8">
-          {mainSections.map((section: SectionDoc) => renderSection(section))}
+          {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
         </div>
       )}
     </article>

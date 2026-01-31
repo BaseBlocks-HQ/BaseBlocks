@@ -1,19 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getSectionGridStyle, SPACER_SECTION_HEIGHTS } from "@/lib/sections";
+import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
-import type { BlockContent, SectionData, SpacerSectionHeight } from "@/types";
+import type { BlockContent, LayoutData, SpacerLayoutHeight } from "@/types";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import type { HTMLAttributes, Ref } from "react";
-import { SectionSlot } from "./section-slot";
+import { LayoutSlot } from "./layout-slot";
 
-export interface SectionRendererProps {
-  section: SectionData;
+export interface LayoutRendererProps {
+  layout: LayoutData;
   isSelected: boolean;
   selectedSlotId: string | null;
   selectedBlockId: string | null;
-  onSelectSection: () => void;
+  onSelectLayout: () => void;
   onSelectSlot: (slotId: string) => void;
   onSelectBlock: (slotId: string, blockId: string) => void;
   onAddBlock: (slotId: string) => void;
@@ -30,19 +30,19 @@ export interface SectionRendererProps {
     toIndex: number,
   ) => void;
   onRemove: () => void;
-  onUpdateSettings?: (settings: SectionData["settings"]) => void;
-  // DnD props passed from SortableSection
+  onUpdateSettings?: (settings: LayoutData["settings"]) => void;
+  // DnD props passed from SortableLayout
   dragHandleRef?: Ref<HTMLDivElement>;
   dragHandleProps?: HTMLAttributes<HTMLDivElement>;
   isDragging?: boolean;
 }
 
-export function SectionRenderer({
-  section,
+export function LayoutRenderer({
+  layout,
   isSelected,
   selectedSlotId,
   selectedBlockId,
-  onSelectSection,
+  onSelectLayout,
   onSelectSlot,
   onSelectBlock,
   onAddBlock,
@@ -54,18 +54,18 @@ export function SectionRenderer({
   dragHandleRef,
   dragHandleProps,
   isDragging,
-}: SectionRendererProps) {
-  const gridStyle = getSectionGridStyle(section.type, section.settings);
-  const spacerHeight = section.settings.spacerHeight ?? "medium";
+}: LayoutRendererProps) {
+  const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
+  const spacerHeight = layout.settings.spacerHeight ?? "medium";
 
-  const handleSpacerHeightChange = (height: SpacerSectionHeight) => {
-    onUpdateSettings?.({ ...section.settings, spacerHeight: height });
+  const handleSpacerHeightChange = (height: SpacerLayoutHeight) => {
+    onUpdateSettings?.({ ...layout.settings, spacerHeight: height });
   };
 
   return (
     <div
       className={cn(
-        "group/section relative rounded-md transition-colors",
+        "group/layout relative rounded-md transition-colors",
         // Subtle left border for selection instead of ring (no layout shift)
         isSelected
           ? "border-l-2 border-l-primary bg-muted/30"
@@ -74,18 +74,18 @@ export function SectionRenderer({
       )}
       onClick={(e) => {
         e.stopPropagation();
-        onSelectSection();
+        onSelectLayout();
       }}
     >
-      {/* Section toolbar - compact, left edge. Hidden when a block is selected (contextual controls) */}
+      {/* Layout toolbar - compact, left edge. Hidden when a block is selected (contextual controls) */}
       <div
         className={cn(
           "absolute -left-8 top-1 flex flex-col gap-0.5",
           "transition-opacity",
-          // Only show when hovering section AND no block is selected
+          // Only show when hovering layout AND no block is selected
           selectedBlockId
             ? "opacity-0 pointer-events-none"
-            : "opacity-0 group-hover/section:opacity-100",
+            : "opacity-0 group-hover/layout:opacity-100",
         )}
       >
         <div
@@ -115,14 +115,14 @@ export function SectionRenderer({
         </Button>
       </div>
 
-      {/* Section content */}
-      {section.type === "spacer" ? (
-        /* Spacer section - renders as vertical space with height controls */
+      {/* Layout content */}
+      {layout.type === "spacer" ? (
+        /* Spacer layout - renders as vertical space with height controls */
         <div
           className={cn(
             "w-full border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center gap-3 transition-colors",
             "hover:border-muted-foreground/50 hover:bg-muted/30",
-            SPACER_SECTION_HEIGHTS[spacerHeight].value,
+            SPACER_LAYOUT_HEIGHTS[spacerHeight].value,
           )}
         >
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -133,7 +133,7 @@ export function SectionRenderer({
           {/* Height controls - always visible */}
           <div className="flex gap-1">
             {(
-              Object.keys(SPACER_SECTION_HEIGHTS) as SpacerSectionHeight[]
+              Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]
             ).map((size) => (
               <Button
                 key={size}
@@ -157,14 +157,14 @@ export function SectionRenderer({
           </div>
         </div>
       ) : (
-        /* Regular sections with slots */
+        /* Regular layouts with slots */
         <div style={gridStyle} className="min-h-[48px] p-1 overflow-hidden">
-          {section.slots.map((slot) => (
-            <SectionSlot
+          {layout.slots.map((slot) => (
+            <LayoutSlot
               key={slot.id}
               slot={slot}
-              sectionId={section.id}
-              sectionType={section.type}
+              layoutId={layout.id}
+              layoutType={layout.type}
               isSelected={selectedSlotId === slot.id}
               selectedBlockId={
                 selectedSlotId === slot.id ? selectedBlockId : null

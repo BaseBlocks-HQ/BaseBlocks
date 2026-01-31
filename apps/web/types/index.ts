@@ -8,7 +8,7 @@ export type {
   Site,
   Page,
   Block,
-  Section,
+  Layout,
   Document,
   AccessLink,
   AccessLog,
@@ -16,7 +16,7 @@ export type {
   SiteId,
   PageId,
   BlockId,
-  SectionId,
+  LayoutId,
   DocumentId,
   AccessLinkId,
   AccessLogId,
@@ -58,18 +58,18 @@ export type {
   SiteWithCompany,
 } from "./pages";
 
-// Section types
+// Layout types
 export type {
-  SectionLayout,
-  SectionBlockData,
-  SectionSlot,
-  SectionSettings,
-  SectionData,
-  SectionTypeInfo,
-  SpacerSectionHeight,
-} from "./sections";
+  LayoutType,
+  LayoutBlockData,
+  LayoutSlot,
+  LayoutSettings,
+  LayoutData,
+  LayoutTypeInfo,
+  SpacerLayoutHeight,
+} from "./layouts";
 export {
   LAYOUT_SLOT_COUNTS,
-  DEFAULT_SECTION_SETTINGS,
-  SECTION_TYPES,
-} from "./sections";
+  DEFAULT_LAYOUT_SETTINGS,
+  LAYOUT_TYPES,
+} from "./layouts";

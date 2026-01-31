@@ -11,7 +11,7 @@ import {
 } from "react";
 
 interface EditorSelection {
-  sectionId: string | null;
+  layoutId: string | null;
   slotId: string | null;
   blockId: string | null;
 }
@@ -19,10 +19,10 @@ interface EditorSelection {
 interface EditorContextValue {
   siteId: Id<"sites">;
   selection: EditorSelection;
-  selectSection: (sectionId: string | null) => void;
-  selectSlot: (sectionId: string, slotId: string | null) => void;
+  selectLayout: (layoutId: string | null) => void;
+  selectSlot: (layoutId: string, slotId: string | null) => void;
   selectBlock: (
-    sectionId: string,
+    layoutId: string,
     slotId: string,
     blockId: string | null,
   ) => void;
@@ -43,7 +43,7 @@ interface EditorProviderProps {
 
 export function EditorProvider({ siteId, children }: EditorProviderProps) {
   const [selection, setSelection] = useState<EditorSelection>({
-    sectionId: null,
+    layoutId: null,
     slotId: null,
     blockId: null,
   });
@@ -52,26 +52,26 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   const { canEdit, isAdmin, isViewer, isLoading: isPermissionsLoading } =
     useSitePermissions(siteId);
 
-  const selectSection = useCallback((sectionId: string | null) => {
+  const selectLayout = useCallback((layoutId: string | null) => {
     setSelection({
-      sectionId,
+      layoutId,
       slotId: null,
       blockId: null,
     });
   }, []);
 
-  const selectSlot = useCallback((sectionId: string, slotId: string | null) => {
+  const selectSlot = useCallback((layoutId: string, slotId: string | null) => {
     setSelection({
-      sectionId,
+      layoutId,
       slotId,
       blockId: null,
     });
   }, []);
 
   const selectBlock = useCallback(
-    (sectionId: string, slotId: string, blockId: string | null) => {
+    (layoutId: string, slotId: string, blockId: string | null) => {
       setSelection({
-        sectionId,
+        layoutId,
         slotId,
         blockId,
       });
@@ -81,7 +81,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
 
   const clearSelection = useCallback(() => {
     setSelection({
-      sectionId: null,
+      layoutId: null,
       slotId: null,
       blockId: null,
     });
@@ -92,7 +92,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
       value={{
         siteId,
         selection,
-        selectSection,
+        selectLayout,
         selectSlot,
         selectBlock,
         clearSelection,

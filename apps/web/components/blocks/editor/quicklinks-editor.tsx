@@ -52,14 +52,14 @@ function QuicklinkPreviewCard({
   const isApp = link.linkType === "app";
 
   return (
-    <div className="flex items-start gap-1">
+    <div className="flex items-start gap-1 min-w-0">
       <a
         href={link.url}
         {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-        className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 min-w-[140px]"
+        className="group flex flex-col items-center gap-1.5 p-3 rounded-lg border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 min-w-[80px] max-w-[100px] flex-1"
       >
         {/* Image or placeholder */}
-        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
           {link.imageUrl ? (
             <img
               src={link.imageUrl}
@@ -67,14 +67,14 @@ function QuicklinkPreviewCard({
               className="w-full h-full object-cover"
             />
           ) : isApp ? (
-            <AppWindow className="w-5 h-5 text-muted-foreground" />
+            <AppWindow className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ExternalLink className="w-5 h-5 text-muted-foreground" />
+            <ExternalLink className="w-4 h-4 text-muted-foreground" />
           )}
         </div>
 
         {/* Title */}
-        <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
+        <span className="text-xs font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
           {link.title || "Untitled"}
         </span>
       </a>
@@ -84,18 +84,18 @@ function QuicklinkPreviewCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          className="h-5 w-5 text-muted-foreground hover:text-foreground"
           onClick={onEdit}
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings2 className="h-3 w-3" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          className="h-5 w-5 text-muted-foreground hover:text-destructive"
           onClick={onRemove}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3 w-3" />
         </Button>
       </div>
     </div>
@@ -150,9 +150,9 @@ function QuicklinkEditForm({
   const canSave = link.title.trim() && link.url.trim();
 
   return (
-    <div className="p-4 border rounded-lg bg-card space-y-3">
-      <div className="flex items-start gap-3">
-        {/* Image upload area */}
+    <div className="p-3 border rounded-lg bg-card space-y-3 min-w-0 overflow-hidden">
+      {/* Image upload - small and inline on top */}
+      <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           <input
             ref={fileInputRef}
@@ -165,7 +165,7 @@ function QuicklinkEditForm({
             type="button"
             onClick={handleImageClick}
             disabled={isUploading}
-            className="w-16 h-16 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden hover:border-primary/50 transition-colors disabled:opacity-50"
+            className="w-12 h-12 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden hover:border-primary/50 transition-colors disabled:opacity-50"
           >
             {link.imageUrl ? (
               <img
@@ -176,121 +176,110 @@ function QuicklinkEditForm({
             ) : isUploading ? (
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Upload className="w-5 h-5 text-muted-foreground" />
+              <Upload className="w-4 h-4 text-muted-foreground" />
             )}
           </button>
-          <p className="text-[10px] text-muted-foreground text-center mt-1">
-            Cover
+        </div>
+        <div className="flex-1 min-w-0">
+          <Label className="text-xs text-muted-foreground">Title</Label>
+          <Input
+            value={link.title}
+            onChange={(e) => onChange({ ...link, title: e.target.value })}
+            placeholder="Link title"
+            className="h-8 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Link type toggle - stacked vertically */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5">
+          <Label className="text-xs text-muted-foreground">Type</Label>
+          {linkType === "app" && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-3 h-3 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  className="max-w-[200px] text-xs"
+                >
+                  <p className="font-medium mb-1">
+                    App URL schemes:
+                  </p>
+                  <p>
+                    Examples:{" "}
+                    <code className="bg-black text-white px-1 rounded">
+                      spotify://
+                    </code>
+                    ,{" "}
+                    <code className="bg-black text-white px-1 rounded">
+                      slack://
+                    </code>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        <ToggleGroup
+          type="single"
+          value={linkType}
+          onValueChange={handleLinkTypeChange}
+          variant="outline"
+          size="sm"
+          className="justify-start flex-wrap"
+        >
+          <ToggleGroupItem
+            value="website"
+            aria-label="Website link"
+            className="gap-1 text-xs px-2"
+          >
+            <Globe className="w-3 h-3" />
+            Web
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="app"
+            aria-label="Desktop app"
+            className="gap-1 text-xs px-2"
+          >
+            <AppWindow className="w-3 h-3" />
+            App
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
+      {/* URL field */}
+      <div className="min-w-0">
+        <Label className="text-xs text-muted-foreground">
+          {linkType === "website" ? "URL" : "App URL"}
+        </Label>
+        <Input
+          value={link.url}
+          onChange={(e) => onChange({ ...link, url: e.target.value })}
+          placeholder={
+            linkType === "website"
+              ? "https://example.com"
+              : "appname://open"
+          }
+          className="h-8 text-sm"
+        />
+        {linkType === "app" && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            App must be installed to open
           </p>
-        </div>
-
-        {/* Form fields */}
-        <div className="flex-1 space-y-2">
-          <div>
-            <Label className="text-xs text-muted-foreground">Title</Label>
-            <Input
-              value={link.title}
-              onChange={(e) => onChange({ ...link, title: e.target.value })}
-              placeholder="Link title"
-              className="h-8 text-sm"
-            />
-          </div>
-
-          {/* Link type toggle */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <Label className="text-xs text-muted-foreground">Type</Label>
-              {linkType === "app" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="w-3 h-3 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      className="max-w-[280px] text-xs"
-                    >
-                      <p className="font-medium mb-1">
-                        How to find app URL schemes:
-                      </p>
-                      <p>
-                        Search online for "[app name] URL scheme" or check the
-                        app's documentation. Examples:{" "}
-                        <code className="bg-black text-white px-1 rounded">
-                          spotify://
-                        </code>
-                        ,{" "}
-                        <code className="bg-black text-white px-1 rounded">
-                          slack://
-                        </code>
-                        ,{" "}
-                        <code className="bg-black text-white px-1 rounded">
-                          vscode://
-                        </code>
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <ToggleGroup
-              type="single"
-              value={linkType}
-              onValueChange={handleLinkTypeChange}
-              variant="outline"
-              size="sm"
-              className="justify-start"
-            >
-              <ToggleGroupItem
-                value="website"
-                aria-label="Website link"
-                className="gap-1.5 text-xs px-2.5"
-              >
-                <Globe className="w-3.5 h-3.5" />
-                Website
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value="app"
-                aria-label="Desktop app"
-                className="gap-1.5 text-xs px-2.5"
-              >
-                <AppWindow className="w-3.5 h-3.5" />
-                Desktop App
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              {linkType === "website" ? "URL" : "App URL Scheme"}
-            </Label>
-            <Input
-              value={link.url}
-              onChange={(e) => onChange({ ...link, url: e.target.value })}
-              placeholder={
-                linkType === "website"
-                  ? "https://example.com"
-                  : "appname://open"
-              }
-              className="h-8 text-sm"
-            />
-            {linkType === "app" && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                The app must be installed on the user's device to open
-              </p>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Action buttons */}
       <div className="flex justify-end gap-2 pt-2 border-t">
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          <X className="w-4 h-4 mr-1" />
+        <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2 text-xs">
+          <X className="w-3 h-3 mr-1" />
           Cancel
         </Button>
-        <Button size="sm" onClick={onSave} disabled={!canSave}>
-          <Check className="w-4 h-4 mr-1" />
+        <Button size="sm" onClick={onSave} disabled={!canSave} className="h-7 px-2 text-xs">
+          <Check className="w-3 h-3 mr-1" />
           {isNew ? "Add" : "Save"}
         </Button>
       </div>
@@ -496,20 +485,21 @@ export function QuicklinksEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 min-w-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Quick Links ({savedLinks.length}/{MAX_LINKS})
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h3 className="text-xs font-medium text-muted-foreground">
+            Links ({savedLinks.length}/{MAX_LINKS})
           </h3>
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
             onClick={handleAddClick}
             disabled={savedLinks.length >= MAX_LINKS || isAddingNew}
           >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Link
+            <Plus className="w-3 h-3 mr-1" />
+            Add
           </Button>
         </div>
 

@@ -2,9 +2,9 @@
 
 import { EditorSkeleton } from "@/components/skeletons";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { createBlock, createSection } from "@/lib/sections";
+import { createBlock, createLayout } from "@/lib/layouts";
 import { DEFAULT_BLOCK_CONTENT } from "@/types";
-import type { BlockType, SectionLayout } from "@/types";
+import type { BlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -31,9 +31,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     siteId: siteId as Id<"sites">,
   });
 
-  // Mutations for sections
-  const createSectionMutation = useMutation(api.sections.mutations.create);
-  const addBlockMutation = useMutation(api.sections.mutations.addBlockToSlot);
+  // Mutations for layouts
+  const createLayoutMutation = useMutation(api.layouts.mutations.create);
+  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
 
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
@@ -56,40 +56,40 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     ? pages?.find((p: Doc<"pages">) => p._id === selectedPageId)
     : pages?.[0];
 
-  // Add section from sidebar
-  const handleAddSection = useCallback(
-    async (type: SectionLayout) => {
+  // Add layout from sidebar
+  const handleAddLayout = useCallback(
+    async (type: LayoutType) => {
       if (!selectedPage) return;
 
-      const newSection = createSection(type);
-      const sectionId = await createSectionMutation({
+      const newLayout = createLayout(type);
+      const layoutId = await createLayoutMutation({
         pageId: selectedPage._id as Id<"pages">,
-        type: newSection.type,
-        slots: newSection.slots,
-        settings: newSection.settings,
+        type: newLayout.type,
+        slots: newLayout.slots,
+        settings: newLayout.settings,
       });
 
-      // Select the first slot of the new section
-      if (newSection.slots.length > 0) {
+      // Select the first slot of the new layout
+      if (newLayout.slots.length > 0) {
         setTimeout(() => {
-          selectSlot(sectionId as string, newSection.slots[0]!.id);
-          setSelectedSlotId(newSection.slots[0]!.id);
+          selectSlot(layoutId as string, newLayout.slots[0]!.id);
+          setSelectedSlotId(newLayout.slots[0]!.id);
         }, 100);
       }
     },
-    [selectedPage, createSectionMutation, selectSlot],
+    [selectedPage, createLayoutMutation, selectSlot],
   );
 
   // Add block from sidebar
   const handleAddBlock = useCallback(
     async (type: BlockType) => {
-      if (!selection.sectionId || !selection.slotId) return;
+      if (!selection.layoutId || !selection.slotId) return;
 
       const content = DEFAULT_BLOCK_CONTENT[type];
       const newBlock = createBlock(type, content);
 
       await addBlockMutation({
-        sectionId: selection.sectionId as Id<"sections">,
+        layoutId: selection.layoutId as Id<"layouts">,
         slotId: selection.slotId,
         block: {
           id: newBlock.id,
@@ -125,7 +125,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           selectedPageId={selectedPage?._id}
           selectedSlotId={selection.slotId}
           onSelectPage={setSelectedPageId}
-          onAddSection={handleAddSection}
+          onAddLayout={handleAddLayout}
           onAddBlock={handleAddBlock}
         />
 

@@ -24,6 +24,8 @@ import type * as documents_internal from "../documents/internal.js";
 import type * as documents_mutations from "../documents/mutations.js";
 import type * as documents_queries from "../documents/queries.js";
 import type * as http from "../http.js";
+import type * as layouts_mutations from "../layouts/mutations.js";
+import type * as layouts_queries from "../layouts/queries.js";
 import type * as lib_entityAuthClient from "../lib/entityAuthClient.js";
 import type * as members_actions from "../members/actions.js";
 import type * as members_internal from "../members/internal.js";
@@ -31,8 +33,6 @@ import type * as members_mutations from "../members/mutations.js";
 import type * as members_queries from "../members/queries.js";
 import type * as pages_mutations from "../pages/mutations.js";
 import type * as pages_queries from "../pages/queries.js";
-import type * as sections_mutations from "../sections/mutations.js";
-import type * as sections_queries from "../sections/queries.js";
 import type * as sites_mutations from "../sites/mutations.js";
 import type * as sites_queries from "../sites/queries.js";
 
@@ -59,6 +59,8 @@ declare const fullApi: ApiFromModules<{
   "documents/mutations": typeof documents_mutations;
   "documents/queries": typeof documents_queries;
   http: typeof http;
+  "layouts/mutations": typeof layouts_mutations;
+  "layouts/queries": typeof layouts_queries;
   "lib/entityAuthClient": typeof lib_entityAuthClient;
   "members/actions": typeof members_actions;
   "members/internal": typeof members_internal;
@@ -66,8 +68,6 @@ declare const fullApi: ApiFromModules<{
   "members/queries": typeof members_queries;
   "pages/mutations": typeof pages_mutations;
   "pages/queries": typeof pages_queries;
-  "sections/mutations": typeof sections_mutations;
-  "sections/queries": typeof sections_queries;
   "sites/mutations": typeof sites_mutations;
   "sites/queries": typeof sites_queries;
 }>;

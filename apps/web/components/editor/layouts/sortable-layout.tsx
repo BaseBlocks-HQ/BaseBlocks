@@ -2,11 +2,11 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { SectionRenderer, type SectionRendererProps } from "./section-renderer";
+import { LayoutRenderer, type LayoutRendererProps } from "./layout-renderer";
 
-interface SortableSectionProps extends SectionRendererProps {}
+interface SortableLayoutProps extends LayoutRendererProps {}
 
-export function SortableSection(props: SortableSectionProps) {
+export function SortableLayout(props: SortableLayoutProps) {
   const {
     attributes,
     listeners,
@@ -15,7 +15,7 @@ export function SortableSection(props: SortableSectionProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.section.id });
+  } = useSortable({ id: props.layout.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -28,7 +28,7 @@ export function SortableSection(props: SortableSectionProps) {
       style={style}
       className={isDragging ? "opacity-50 z-50" : ""}
     >
-      <SectionRenderer
+      <LayoutRenderer
         {...props}
         dragHandleRef={setActivatorNodeRef}
         dragHandleProps={{ ...attributes, ...listeners }}

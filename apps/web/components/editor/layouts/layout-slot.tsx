@@ -6,18 +6,18 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
   BlockContent,
-  SectionLayout,
-  SectionSlot as SectionSlotType,
+  LayoutType,
+  LayoutSlot as LayoutSlotType,
 } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-interface SectionSlotProps {
-  slot: SectionSlotType;
-  sectionId: string;
-  sectionType: SectionLayout;
+interface LayoutSlotProps {
+  slot: LayoutSlotType;
+  layoutId: string;
+  layoutType: LayoutType;
   isSelected: boolean;
   selectedBlockId: string | null;
   onSelect: () => void;
@@ -28,10 +28,10 @@ interface SectionSlotProps {
   onMoveBlock?: (toSlotId: string, blockId: string, toIndex: number) => void;
 }
 
-export function SectionSlot({
+export function LayoutSlot({
   slot,
-  sectionId,
-  sectionType,
+  layoutId,
+  layoutType,
   isSelected,
   selectedBlockId,
   onSelect,
@@ -40,7 +40,7 @@ export function SectionSlot({
   onUpdateBlock,
   onRemoveBlock,
   onMoveBlock,
-}: SectionSlotProps) {
+}: LayoutSlotProps) {
   const isEmpty = slot.blocks.length === 0;
   const blockIds = useMemo(() => slot.blocks.map((b) => b.id), [slot.blocks]);
 

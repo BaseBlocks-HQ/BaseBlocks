@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import { useEditorContext } from "./editor-context";
-import { SECTION_TYPES } from "@/types";
-import type { BlockType, PageListItem, SectionLayout } from "@/types";
+import { LAYOUT_TYPES } from "@/types";
+import type { BlockType, PageListItem, LayoutType } from "@/types";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -54,11 +54,11 @@ interface EditorSidebarProps {
   selectedPageId?: string;
   selectedSlotId?: string | null;
   onSelectPage: (pageId: string) => void;
-  onAddSection?: (type: SectionLayout) => void;
+  onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: BlockType) => void;
 }
 
-const SECTION_ICONS: Record<SectionLayout, React.ReactNode> = {
+const LAYOUT_ICONS: Record<LayoutType, React.ReactNode> = {
   single: <Square className="h-4 w-4" />,
   rows: <Rows2 className="h-4 w-4" />,
   columns: <Columns2 className="h-4 w-4" />,
@@ -110,7 +110,7 @@ export function EditorSidebar({
   selectedPageId,
   selectedSlotId,
   onSelectPage,
-  onAddSection,
+  onAddLayout,
   onAddBlock,
 }: EditorSidebarProps) {
   const t = useTranslations();
@@ -210,21 +210,21 @@ export function EditorSidebar({
               </div>
             ) : selectedPageId ? (
               <div className="p-3 space-y-4">
-                {/* Sections - 3 per row with labels below icon */}
+                {/* Layouts - 3 per row with labels below icon */}
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                    {t("editor.sidebar.sections")}
+                    {t("editor.sidebar.layouts")}
                   </p>
                   <div className="grid grid-cols-3 gap-1.5">
-                    {SECTION_TYPES.map((sectionType) => (
+                    {LAYOUT_TYPES.map((layoutType) => (
                       <Button
-                        key={sectionType.type}
+                        key={layoutType.type}
                         variant="outline"
                         className="h-auto w-full flex-col gap-1 py-2 px-1 overflow-hidden"
-                        onClick={() => onAddSection?.(sectionType.type)}
+                        onClick={() => onAddLayout?.(layoutType.type)}
                       >
-                        {SECTION_ICONS[sectionType.type]}
-                        <span className="text-[10px] w-full text-center truncate">{t(`editor.sections.${sectionType.type}`)}</span>
+                        {LAYOUT_ICONS[layoutType.type]}
+                        <span className="text-[10px] w-full text-center truncate">{t(`editor.layouts.${layoutType.type}`)}</span>
                       </Button>
                     ))}
                   </div>

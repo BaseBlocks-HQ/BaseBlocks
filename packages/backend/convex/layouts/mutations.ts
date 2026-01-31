@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
 
-const sectionTypes = v.union(
+const layoutTypes = v.union(
   v.literal("single"),
   v.literal("rows"),
   v.literal("columns"),
@@ -70,28 +70,28 @@ async function getCompanyIdFromPage(
   return { companyId: site.companyId, siteId: site._id };
 }
 
-// Helper to get companyId from sectionId
-async function getCompanyIdFromSection(
+// Helper to get companyId from layoutId
+async function getCompanyIdFromLayout(
   ctx: { db: any },
-  sectionId: string,
+  layoutId: string,
 ): Promise<{ companyId: string; pageId: string } | null> {
-  const section = await ctx.db.get(sectionId);
-  if (!section) return null;
+  const layout = await ctx.db.get(layoutId);
+  if (!layout) return null;
 
-  const page = await ctx.db.get(section.pageId);
+  const page = await ctx.db.get(layout.pageId);
   if (!page) return null;
 
   const site = await ctx.db.get(page.siteId);
   if (!site) return null;
 
-  return { companyId: site.companyId, pageId: section.pageId };
+  return { companyId: site.companyId, pageId: layout.pageId };
 }
 
-// Create a new section
+// Create a new layout
 export const create = mutation({
   args: {
     pageId: v.id("pages"),
-    type: sectionTypes,
+    type: layoutTypes,
     slots: v.array(slotSchema),
     settings: settingsSchema,
     order: v.optional(v.number()),
@@ -104,23 +104,23 @@ export const create = mutation({
     await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
 
     // Get max order if not specified
-    let sectionOrder = order;
-    if (sectionOrder === undefined) {
-      const existingSections = await ctx.db
-        .query("sections")
+    let layoutOrder = order;
+    if (layoutOrder === undefined) {
+      const existingLayouts = await ctx.db
+        .query("layouts")
         .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
         .collect();
-      sectionOrder =
-        existingSections.reduce((max: number, s: any) => Math.max(max, s.order), -1) + 1;
+      layoutOrder =
+        existingLayouts.reduce((max: number, s: any) => Math.max(max, s.order), -1) + 1;
     }
 
     const now = Date.now();
-    const sectionId = await ctx.db.insert("sections", {
+    const layoutId = await ctx.db.insert("layouts", {
       pageId,
       type,
       slots,
       settings,
-      order: sectionOrder,
+      order: layoutOrder,
       createdAt: now,
       updatedAt: now,
     });
@@ -128,68 +128,68 @@ export const create = mutation({
     // Update page updatedAt
     await ctx.db.patch(pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
-// Update section settings
+// Update layout settings
 export const updateSettings = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     settings: settingsSchema,
   },
-  handler: async (ctx, { sectionId, settings }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, settings }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
-      settings: { ...section.settings, ...settings },
+    await ctx.db.patch(layoutId, {
+      settings: { ...layout.settings, ...settings },
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
-// Update section slots (full replacement for atomic updates)
+// Update layout slots (full replacement for atomic updates)
 export const updateSlots = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     slots: v.array(slotSchema),
   },
-  handler: async (ctx, { sectionId, slots }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, slots }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
+    await ctx.db.patch(layoutId, {
       slots,
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
 // Add a block to a slot
 export const addBlockToSlot = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     slotId: v.string(),
     block: v.object({
       id: v.string(),
@@ -198,18 +198,18 @@ export const addBlockToSlot = mutation({
     }),
     index: v.optional(v.number()),
   },
-  handler: async (ctx, { sectionId, slotId, block, index }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, slotId, block, index }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     // Find slot and add block
-    const updatedSlots = section.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
       const newBlocks = [...slot.blocks];
@@ -222,36 +222,36 @@ export const addBlockToSlot = mutation({
     });
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
+    await ctx.db.patch(layoutId, {
       slots: updatedSlots,
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
 // Update a block in a slot
 export const updateBlockInSlot = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     slotId: v.string(),
     blockId: v.string(),
     content: v.any(),
   },
-  handler: async (ctx, { sectionId, slotId, blockId, content }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, slotId, blockId, content }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     // Find slot and update block
-    const updatedSlots = section.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
       const updatedBlocks = slot.blocks.map((b: any) =>
@@ -261,35 +261,35 @@ export const updateBlockInSlot = mutation({
     });
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
+    await ctx.db.patch(layoutId, {
       slots: updatedSlots,
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
 // Remove a block from a slot
 export const removeBlockFromSlot = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     slotId: v.string(),
     blockId: v.string(),
   },
-  handler: async (ctx, { sectionId, slotId, blockId }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, slotId, blockId }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     // Find slot and remove block
-    const updatedSlots = section.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
 
       return {
@@ -299,39 +299,39 @@ export const removeBlockFromSlot = mutation({
     });
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
+    await ctx.db.patch(layoutId, {
       slots: updatedSlots,
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
 // Move block within or between slots
 export const moveBlock = mutation({
   args: {
-    sectionId: v.id("sections"),
+    layoutId: v.id("layouts"),
     fromSlotId: v.string(),
     toSlotId: v.string(),
     blockId: v.string(),
     toIndex: v.number(),
   },
-  handler: async (ctx, { sectionId, fromSlotId, toSlotId, blockId, toIndex }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  handler: async (ctx, { layoutId, fromSlotId, toSlotId, blockId, toIndex }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
     // Find the block - use the same type as in slots
-    type SlotBlock = (typeof section.slots)[0]["blocks"][0];
+    type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
     let blockToMove: SlotBlock | undefined;
-    for (const slot of section.slots) {
+    for (const slot of layout.slots) {
       if (slot.id === fromSlotId) {
         blockToMove = slot.blocks.find((b) => b.id === blockId);
         break;
@@ -342,7 +342,7 @@ export const moveBlock = mutation({
 
     // Handle same slot reorder
     if (fromSlotId === toSlotId) {
-      const updatedSlots = section.slots.map((slot) => {
+      const updatedSlots = layout.slots.map((slot) => {
         if (slot.id !== fromSlotId) return slot;
         const filteredBlocks = slot.blocks.filter((b) => b.id !== blockId);
         filteredBlocks.splice(toIndex, 0, blockToMove!);
@@ -350,16 +350,16 @@ export const moveBlock = mutation({
       });
 
       const now = Date.now();
-      await ctx.db.patch(sectionId, {
+      await ctx.db.patch(layoutId, {
         slots: updatedSlots,
         updatedAt: now,
       });
-      await ctx.db.patch(section.pageId, { updatedAt: now });
-      return sectionId;
+      await ctx.db.patch(layout.pageId, { updatedAt: now });
+      return layoutId;
     }
 
     // Move between different slots
-    const updatedSlots = section.slots.map((slot) => {
+    const updatedSlots = layout.slots.map((slot) => {
       // Remove from source
       if (slot.id === fromSlotId) {
         return {
@@ -377,34 +377,34 @@ export const moveBlock = mutation({
     });
 
     const now = Date.now();
-    await ctx.db.patch(sectionId, {
+    await ctx.db.patch(layoutId, {
       slots: updatedSlots,
       updatedAt: now,
     });
-    await ctx.db.patch(section.pageId, { updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
 
-    return sectionId;
+    return layoutId;
   },
 });
 
-// Reorder sections on page
+// Reorder layouts on page
 export const reorder = mutation({
   args: {
     pageId: v.id("pages"),
-    sectionIds: v.array(v.id("sections")),
+    layoutIds: v.array(v.id("layouts")),
   },
-  handler: async (ctx, { pageId, sectionIds }) => {
+  handler: async (ctx, { pageId, layoutIds }) => {
     const pageInfo = await getCompanyIdFromPage(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
 
-    // Update order for each section
-    for (let i = 0; i < sectionIds.length; i++) {
-      const sectionId = sectionIds[i];
-      if (sectionId) {
-        await ctx.db.patch(sectionId, { order: i });
+    // Update order for each layout
+    for (let i = 0; i < layoutIds.length; i++) {
+      const layoutId = layoutIds[i];
+      if (layoutId) {
+        await ctx.db.patch(layoutId, { order: i });
       }
     }
 
@@ -412,20 +412,20 @@ export const reorder = mutation({
   },
 });
 
-// Delete section
+// Delete layout
 export const remove = mutation({
-  args: { sectionId: v.id("sections") },
-  handler: async (ctx, { sectionId }) => {
-    const section = await ctx.db.get(sectionId);
-    if (!section) throw new Error("Section not found");
+  args: { layoutId: v.id("layouts") },
+  handler: async (ctx, { layoutId }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
 
-    const sectionInfo = await getCompanyIdFromSection(ctx, sectionId);
-    if (!sectionInfo) throw new Error("Section not found");
+    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, sectionInfo.companyId as any);
+    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
-    await ctx.db.delete(sectionId);
-    await ctx.db.patch(section.pageId, { updatedAt: Date.now() });
+    await ctx.db.delete(layoutId);
+    await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
   },
 });

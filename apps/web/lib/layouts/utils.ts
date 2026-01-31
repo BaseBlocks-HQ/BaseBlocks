@@ -1,31 +1,31 @@
 import type {
   BlockContent,
   BlockType,
-  SectionBlockData,
-  SectionData,
-  SectionLayout,
-  SectionSettings,
-  SectionSlot,
+  LayoutBlockData,
+  LayoutData,
+  LayoutType,
+  LayoutSettings,
+  LayoutSlot,
 } from "@/types";
-import { DEFAULT_SECTION_SETTINGS } from "@/types";
+import { DEFAULT_LAYOUT_SETTINGS } from "@/types";
 /**
- * Section utility functions for creating and manipulating sections
+ * Layout utility functions for creating and manipulating layouts
  */
 import { nanoid } from "nanoid";
 
 /**
- * Generate a unique ID for sections, slots, or blocks
+ * Generate a unique ID for layouts, slots, or blocks
  */
 export function generateId(): string {
   return nanoid(10);
 }
 
 /**
- * Get the number of slots for a section based on its type and settings
+ * Get the number of slots for a layout based on its type and settings
  */
 export function getSlotCount(
-  type: SectionLayout,
-  settings: SectionSettings,
+  type: LayoutType,
+  settings: LayoutSettings,
 ): number {
   switch (type) {
     case "single":
@@ -39,16 +39,16 @@ export function getSlotCount(
     case "spacer":
       return 0; // Spacer has no slots
     case "vertical":
-      return 1; // Sidebar section (single slot)
+      return 1; // Sidebar layout (single slot)
     default:
       return 1;
   }
 }
 
 /**
- * Create empty slots for a section
+ * Create empty slots for a layout
  */
-export function createSlots(count: number): SectionSlot[] {
+export function createSlots(count: number): LayoutSlot[] {
   return Array.from({ length: count }, (_, i) => ({
     id: generateId(),
     position: i,
@@ -57,14 +57,14 @@ export function createSlots(count: number): SectionSlot[] {
 }
 
 /**
- * Create a new section with default settings
+ * Create a new layout with default settings
  */
-export function createSection(
-  type: SectionLayout,
-  settingsOverrides?: Partial<SectionSettings>,
-): Omit<SectionData, "order"> {
+export function createLayout(
+  type: LayoutType,
+  settingsOverrides?: Partial<LayoutSettings>,
+): Omit<LayoutData, "order"> {
   const settings = {
-    ...DEFAULT_SECTION_SETTINGS[type],
+    ...DEFAULT_LAYOUT_SETTINGS[type],
     ...settingsOverrides,
   };
   const slotCount = getSlotCount(type, settings);
@@ -83,7 +83,7 @@ export function createSection(
 export function createBlock(
   type: BlockType,
   content: BlockContent,
-): SectionBlockData {
+): LayoutBlockData {
   return {
     id: generateId(),
     type,
@@ -92,7 +92,7 @@ export function createBlock(
 }
 
 // Spacer height values in pixels and Tailwind classes
-export const SPACER_SECTION_HEIGHTS = {
+export const SPACER_LAYOUT_HEIGHTS = {
   small: { value: "h-8", pixels: "32px" },
   medium: { value: "h-16", pixels: "64px" },
   large: { value: "h-24", pixels: "96px" },
@@ -100,11 +100,11 @@ export const SPACER_SECTION_HEIGHTS = {
 } as const;
 
 /**
- * Get CSS grid template for section layout
+ * Get CSS grid template for layout
  */
-export function getSectionGridStyle(
-  type: SectionLayout,
-  settings: SectionSettings,
+export function getLayoutGridStyle(
+  type: LayoutType,
+  settings: LayoutSettings,
 ): React.CSSProperties {
   switch (type) {
     case "single":
@@ -128,7 +128,7 @@ export function getSectionGridStyle(
         gap: "1rem",
       };
     case "vertical":
-      return { display: "block" }; // Sidebar section - single column
+      return { display: "block" }; // Sidebar layout - single column
     case "spacer":
       return { display: "block" }; // Spacer is just a block element
     default:

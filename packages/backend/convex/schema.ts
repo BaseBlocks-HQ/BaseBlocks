@@ -58,7 +58,7 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
-  // Blocks within a page (content) - DEPRECATED: Use sections instead
+  // Blocks within a page (content) - DEPRECATED: Use layouts instead
   blocks: defineTable({
     pageId: v.id("pages"),
     type: v.union(
@@ -83,8 +83,8 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_page", ["pageId"]),
 
-  // Sections - layout containers for blocks
-  sections: defineTable({
+  // Layouts - layout containers for blocks (holds single, rows, columns, grid, spacer, vertical)
+  layouts: defineTable({
     pageId: v.id("pages"),
     type: v.union(
       v.literal("single"),
@@ -124,7 +124,7 @@ export default defineSchema({
         ),
       })
     ),
-    // Section settings - layout configuration only
+    // Layout settings - layout configuration only
     settings: v.object({
       rowCount: v.optional(v.number()),
       columnCount: v.optional(v.number()),
@@ -143,7 +143,7 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_page", ["pageId"]),
 
-  // Libraryries - organized file repositories
+  // Libraries - organized file repositories
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),

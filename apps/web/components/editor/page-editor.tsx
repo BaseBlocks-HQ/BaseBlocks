@@ -4,14 +4,14 @@ import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSaveStatus } from "@/hooks";
-import { createSection } from "@/lib/sections";
+import { createLayout } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
   BlockContent,
   BlockType,
-  SectionData,
-  SectionLayout,
-  SectionSettings,
+  LayoutData,
+  LayoutType,
+  LayoutSettings,
 } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
@@ -20,7 +20,7 @@ import { Plus } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useEditorContext } from "./editor-context";
 import { SaveIndicator } from "./save-indicator";
-import { SortableSection } from "./sections/sortable-section";
+import { SortableLayout } from "./layouts/sortable-layout";
 
 interface PageEditorProps {
   pageId: string;
@@ -28,7 +28,7 @@ interface PageEditorProps {
 }
 
 export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
-  const { selection, selectSection, selectSlot, selectBlock, clearSelection } =
+  const { selection, selectLayout, selectSlot, selectBlock, clearSelection } =
     useEditorContext();
   const { status, setStatus } = useSaveStatus();
 
@@ -36,34 +36,34 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
-  const sectionsData = useQuery(api.sections.queries.list, {
+  const layoutsData = useQuery(api.layouts.queries.list, {
     pageId: pageId as Id<"pages">,
   });
 
   // Mutations
-  const createSectionMutation = useMutation(api.sections.mutations.create);
-  const reorderSectionsMutation = useMutation(api.sections.mutations.reorder);
+  const createLayoutMutation = useMutation(api.layouts.mutations.create);
+  const reorderLayoutsMutation = useMutation(api.layouts.mutations.reorder);
   const updateBlockMutation = useMutation(
-    api.sections.mutations.updateBlockInSlot
+    api.layouts.mutations.updateBlockInSlot
   );
   const removeBlockMutation = useMutation(
-    api.sections.mutations.removeBlockFromSlot
+    api.layouts.mutations.removeBlockFromSlot
   );
-  const removeSectionMutation = useMutation(api.sections.mutations.remove);
-  const moveBlockMutation = useMutation(api.sections.mutations.moveBlock);
+  const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
+  const moveBlockMutation = useMutation(api.layouts.mutations.moveBlock);
   const updateSettingsMutation = useMutation(
-    api.sections.mutations.updateSettings
+    api.layouts.mutations.updateSettings
   );
 
-  // Convert sections from DB to SectionData format
-  type SectionDoc = Doc<"sections">;
-  type SlotDoc = SectionDoc["slots"][number];
+  // Convert layouts from DB to LayoutData format
+  type LayoutDoc = Doc<"layouts">;
+  type SlotDoc = LayoutDoc["slots"][number];
   type BlockDoc = SlotDoc["blocks"][number];
-  const sections: SectionData[] = useMemo(() => {
-    if (!sectionsData) return [];
-    return sectionsData.map((s: SectionDoc) => ({
+  const layouts: LayoutData[] = useMemo(() => {
+    if (!layoutsData) return [];
+    return layoutsData.map((s: LayoutDoc) => ({
       id: s._id,
-      type: s.type as SectionLayout,
+      type: s.type as LayoutType,
       order: s.order,
       slots: s.slots.map((slot: SlotDoc) => ({
         id: slot.id,
@@ -74,114 +74,114 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
           content: block.content as BlockContent,
         })),
       })),
-      settings: s.settings as SectionSettings,
+      settings: s.settings as LayoutSettings,
     }));
-  }, [sectionsData]);
+  }, [layoutsData]);
 
-  // Separate main sections from sidebar sections
-  const mainSections = useMemo(
-    () => sections.filter((s) => s.type !== "vertical"),
-    [sections]
+  // Separate main layouts from sidebar layouts
+  const mainLayouts = useMemo(
+    () => layouts.filter((s) => s.type !== "vertical"),
+    [layouts]
   );
-  const sidebarSections = useMemo(
-    () => sections.filter((s) => s.type === "vertical"),
-    [sections]
+  const sidebarLayouts = useMemo(
+    () => layouts.filter((s) => s.type === "vertical"),
+    [layouts]
   );
-  const hasSidebar = sidebarSections.length > 0;
+  const hasSidebar = sidebarLayouts.length > 0;
 
-  // Section IDs for DnD (main sections only for now)
-  const mainSectionIds = useMemo(
-    () => mainSections.map((s) => s.id),
-    [mainSections]
+  // Layout IDs for DnD (main layouts only for now)
+  const mainLayoutIds = useMemo(
+    () => mainLayouts.map((s) => s.id),
+    [mainLayouts]
   );
-  const sidebarSectionIds = useMemo(
-    () => sidebarSections.map((s) => s.id),
-    [sidebarSections]
+  const sidebarLayoutIds = useMemo(
+    () => sidebarLayouts.map((s) => s.id),
+    [sidebarLayouts]
   );
 
-  // Handle section drag end for main sections
-  const handleMainSectionDragEnd = useCallback(
+  // Handle layout drag end for main layouts
+  const handleMainLayoutDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const oldIndex = mainSectionIds.indexOf(String(active.id));
-      const newIndex = mainSectionIds.indexOf(String(over.id));
+      const oldIndex = mainLayoutIds.indexOf(String(active.id));
+      const newIndex = mainLayoutIds.indexOf(String(over.id));
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const newMainOrder = arrayMove(mainSectionIds, oldIndex, newIndex);
-      // Combine with sidebar sections (they come after main sections)
-      const newOrder = [...newMainOrder, ...sidebarSectionIds];
-      await reorderSectionsMutation({
+      const newMainOrder = arrayMove(mainLayoutIds, oldIndex, newIndex);
+      // Combine with sidebar layouts (they come after main layouts)
+      const newOrder = [...newMainOrder, ...sidebarLayoutIds];
+      await reorderLayoutsMutation({
         pageId: pageId as Id<"pages">,
-        sectionIds: newOrder as Id<"sections">[],
+        layoutIds: newOrder as Id<"layouts">[],
       });
     },
-    [mainSectionIds, sidebarSectionIds, pageId, reorderSectionsMutation]
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation]
   );
 
-  // Handle section drag end for sidebar sections
-  const handleSidebarSectionDragEnd = useCallback(
+  // Handle layout drag end for sidebar layouts
+  const handleSidebarLayoutDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const oldIndex = sidebarSectionIds.indexOf(String(active.id));
-      const newIndex = sidebarSectionIds.indexOf(String(over.id));
+      const oldIndex = sidebarLayoutIds.indexOf(String(active.id));
+      const newIndex = sidebarLayoutIds.indexOf(String(over.id));
       if (oldIndex === -1 || newIndex === -1) return;
 
-      const newSidebarOrder = arrayMove(sidebarSectionIds, oldIndex, newIndex);
-      // Combine with main sections (they come before sidebar sections)
-      const newOrder = [...mainSectionIds, ...newSidebarOrder];
-      await reorderSectionsMutation({
+      const newSidebarOrder = arrayMove(sidebarLayoutIds, oldIndex, newIndex);
+      // Combine with main layouts (they come before sidebar layouts)
+      const newOrder = [...mainLayoutIds, ...newSidebarOrder];
+      await reorderLayoutsMutation({
         pageId: pageId as Id<"pages">,
-        sectionIds: newOrder as Id<"sections">[],
+        layoutIds: newOrder as Id<"layouts">[],
       });
     },
-    [mainSectionIds, sidebarSectionIds, pageId, reorderSectionsMutation]
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation]
   );
 
   // Notify parent of slot selection changes
   const handleSelectSlot = useCallback(
-    (sectionId: string, slotId: string) => {
-      selectSlot(sectionId, slotId);
+    (layoutId: string, slotId: string) => {
+      selectSlot(layoutId, slotId);
       onSelectionChange?.(slotId);
     },
     [selectSlot, onSelectionChange]
   );
 
-  // Add a new section
-  const handleAddSection = useCallback(
-    async (type: SectionLayout) => {
-      const newSection = createSection(type);
-      const sectionId = await createSectionMutation({
+  // Add a new layout
+  const handleAddLayout = useCallback(
+    async (type: LayoutType) => {
+      const newLayout = createLayout(type);
+      const layoutId = await createLayoutMutation({
         pageId: pageId as Id<"pages">,
-        type: newSection.type,
-        slots: newSection.slots,
-        settings: newSection.settings,
+        type: newLayout.type,
+        slots: newLayout.slots,
+        settings: newLayout.settings,
       });
 
-      if (newSection.slots.length > 0) {
+      if (newLayout.slots.length > 0) {
         setTimeout(() => {
-          selectSlot(sectionId as string, newSection.slots[0]!.id);
-          onSelectionChange?.(newSection.slots[0]!.id);
+          selectSlot(layoutId as string, newLayout.slots[0]!.id);
+          onSelectionChange?.(newLayout.slots[0]!.id);
         }, 100);
       }
     },
-    [createSectionMutation, pageId, selectSlot, onSelectionChange]
+    [createLayoutMutation, pageId, selectSlot, onSelectionChange]
   );
 
   // Update block content
   const handleUpdateBlock = useCallback(
     async (
-      sectionId: string,
+      layoutId: string,
       slotId: string,
       blockId: string,
       content: BlockContent
     ) => {
       setStatus("saving");
       await updateBlockMutation({
-        sectionId: sectionId as Id<"sections">,
+        layoutId: layoutId as Id<"layouts">,
         slotId,
         blockId,
         content,
@@ -193,9 +193,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
 
   // Remove block
   const handleRemoveBlock = useCallback(
-    async (sectionId: string, slotId: string, blockId: string) => {
+    async (layoutId: string, slotId: string, blockId: string) => {
       await removeBlockMutation({
-        sectionId: sectionId as Id<"sections">,
+        layoutId: layoutId as Id<"layouts">,
         slotId,
         blockId,
       });
@@ -203,28 +203,28 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [removeBlockMutation]
   );
 
-  // Remove section
-  const handleRemoveSection = useCallback(
-    async (sectionId: string) => {
-      await removeSectionMutation({
-        sectionId: sectionId as Id<"sections">,
+  // Remove layout
+  const handleRemoveLayout = useCallback(
+    async (layoutId: string) => {
+      await removeLayoutMutation({
+        layoutId: layoutId as Id<"layouts">,
       });
       clearSelection();
     },
-    [removeSectionMutation, clearSelection]
+    [removeLayoutMutation, clearSelection]
   );
 
-  // Move block within section
+  // Move block within layout
   const handleMoveBlock = useCallback(
     async (
-      sectionId: string,
+      layoutId: string,
       fromSlotId: string,
       toSlotId: string,
       blockId: string,
       toIndex: number
     ) => {
       await moveBlockMutation({
-        sectionId: sectionId as Id<"sections">,
+        layoutId: layoutId as Id<"layouts">,
         fromSlotId,
         toSlotId,
         blockId,
@@ -234,12 +234,12 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [moveBlockMutation]
   );
 
-  // Update section settings (e.g., spacer height)
+  // Update layout settings (e.g., spacer height)
   const handleUpdateSettings = useCallback(
-    async (sectionId: string, settings: SectionSettings) => {
+    async (layoutId: string, settings: LayoutSettings) => {
       setStatus("saving");
       await updateSettingsMutation({
-        sectionId: sectionId as Id<"sections">,
+        layoutId: layoutId as Id<"layouts">,
         settings,
       });
       setStatus("saved");
@@ -248,45 +248,45 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   );
 
   // Handle click on editor background to deselect
-  // Sections/blocks call stopPropagation(), so this only fires for background clicks
+  // Layouts/blocks call stopPropagation(), so this only fires for background clicks
   const handleEditorClick = useCallback(() => {
     clearSelection();
     onSelectionChange?.(null);
   }, [clearSelection, onSelectionChange]);
 
-  // Render a section with all its props
-  const renderSection = (section: SectionData) => (
-    <SortableSection
-      key={section.id}
-      section={section}
-      isSelected={selection.sectionId === section.id}
+  // Render a layout with all its props
+  const renderLayout = (layout: LayoutData) => (
+    <SortableLayout
+      key={layout.id}
+      layout={layout}
+      isSelected={selection.layoutId === layout.id}
       selectedSlotId={
-        selection.sectionId === section.id ? selection.slotId : null
+        selection.layoutId === layout.id ? selection.slotId : null
       }
       selectedBlockId={
-        selection.sectionId === section.id ? selection.blockId : null
+        selection.layoutId === layout.id ? selection.blockId : null
       }
-      onSelectSection={() => selectSection(section.id)}
-      onSelectSlot={(slotId) => handleSelectSlot(section.id, slotId)}
+      onSelectLayout={() => selectLayout(layout.id)}
+      onSelectSlot={(slotId) => handleSelectSlot(layout.id, slotId)}
       onSelectBlock={(slotId, blockId) =>
-        selectBlock(section.id, slotId, blockId)
+        selectBlock(layout.id, slotId, blockId)
       }
-      onAddBlock={(slotId) => handleSelectSlot(section.id, slotId)}
+      onAddBlock={(slotId) => handleSelectSlot(layout.id, slotId)}
       onUpdateBlock={(slotId, blockId, content) =>
-        handleUpdateBlock(section.id, slotId, blockId, content)
+        handleUpdateBlock(layout.id, slotId, blockId, content)
       }
       onRemoveBlock={(slotId, blockId) =>
-        handleRemoveBlock(section.id, slotId, blockId)
+        handleRemoveBlock(layout.id, slotId, blockId)
       }
       onMoveBlock={(fromSlotId, toSlotId, blockId, toIndex) =>
-        handleMoveBlock(section.id, fromSlotId, toSlotId, blockId, toIndex)
+        handleMoveBlock(layout.id, fromSlotId, toSlotId, blockId, toIndex)
       }
-      onRemove={() => handleRemoveSection(section.id)}
-      onUpdateSettings={(settings) => handleUpdateSettings(section.id, settings)}
+      onRemove={() => handleRemoveLayout(layout.id)}
+      onUpdateSettings={(settings) => handleUpdateSettings(layout.id, settings)}
     />
   );
 
-  if (pageData === undefined || sectionsData === undefined) {
+  if (pageData === undefined || layoutsData === undefined) {
     return <Skeleton className="h-64 w-full" />;
   }
 
@@ -307,12 +307,12 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
           <div className="flex gap-6 pb-32">
             {/* Main content area */}
             <div className="flex-1 min-w-0 space-y-3 pl-10">
-              {mainSections.length > 0 ? (
+              {mainLayouts.length > 0 ? (
                 <DndProvider
-                  items={mainSectionIds}
-                  onDragEnd={handleMainSectionDragEnd}
+                  items={mainLayoutIds}
+                  onDragEnd={handleMainLayoutDragEnd}
                 >
-                  {mainSections.map((section) => renderSection(section))}
+                  {mainLayouts.map((layout) => renderLayout(layout))}
                 </DndProvider>
               ) : (
                 <div
@@ -320,13 +320,13 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-muted-foreground text-sm mb-3">
-                    Add a section to main content
+                    Add a layout to main content
                   </p>
                   <div className="flex justify-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAddSection("single")}
+                      onClick={() => handleAddLayout("single")}
                     >
                       <Plus className="h-3 w-3 mr-1.5" />
                       Single
@@ -334,7 +334,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAddSection("columns")}
+                      onClick={() => handleAddLayout("columns")}
                     >
                       <Plus className="h-3 w-3 mr-1.5" />
                       Columns
@@ -350,22 +350,22 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                 Sidebar
               </div>
               <DndProvider
-                items={sidebarSectionIds}
-                onDragEnd={handleSidebarSectionDragEnd}
+                items={sidebarLayoutIds}
+                onDragEnd={handleSidebarLayoutDragEnd}
               >
-                {sidebarSections.map((section) => renderSection(section))}
+                {sidebarLayouts.map((layout) => renderLayout(layout))}
               </DndProvider>
             </aside>
           </div>
         ) : (
           // Standard layout without sidebar
           <div className="space-y-3 pb-32 pl-10">
-            {sections.length > 0 ? (
+            {layouts.length > 0 ? (
               <DndProvider
-                items={mainSectionIds}
-                onDragEnd={handleMainSectionDragEnd}
+                items={mainLayoutIds}
+                onDragEnd={handleMainLayoutDragEnd}
               >
-                {sections.map((section) => renderSection(section))}
+                {layouts.map((layout) => renderLayout(layout))}
               </DndProvider>
             ) : (
               <div
@@ -373,13 +373,13 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                 onClick={(e) => e.stopPropagation()}
               >
                 <p className="text-muted-foreground text-sm mb-3">
-                  Add a section to get started
+                  Add a layout to get started
                 </p>
                 <div className="flex justify-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAddSection("single")}
+                    onClick={() => handleAddLayout("single")}
                   >
                     <Plus className="h-3 w-3 mr-1.5" />
                     Single
@@ -387,7 +387,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAddSection("columns")}
+                    onClick={() => handleAddLayout("columns")}
                   >
                     <Plus className="h-3 w-3 mr-1.5" />
                     Columns

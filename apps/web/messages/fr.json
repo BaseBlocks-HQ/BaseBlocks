@@ -97,13 +97,13 @@
 		"sidebar": {
 			"pagesTab": "Pages",
 			"componentsTab": "Composants",
-			"sections": "Sections",
+			"layouts": "Dispositions",
 			"blocks": "Blocs",
 			"selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
 			"selectPage": "Selectionnez une page pour ajouter des composants",
 			"viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification."
 		},
-		"sections": {
+		"layouts": {
 			"single": "Simple",
 			"rows": "Lignes",
 			"columns": "Colonnes",

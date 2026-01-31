@@ -243,17 +243,17 @@ export function LibraryEditor({
   // Render library selector when no library is selected
   if (!content.libraryId) {
     return (
-      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
-          <div className="text-center space-y-4">
-            <h3 className="text-lg font-medium">Library</h3>
-            <p className="text-sm text-muted-foreground">
-              Select an existing library or create a new one.
+      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 transition-colors hover:border-muted-foreground/50 hover:bg-muted/30 min-w-0 overflow-hidden">
+          <div className="text-center space-y-3">
+            <h3 className="text-base font-medium">Library</h3>
+            <p className="text-xs text-muted-foreground">
+              Select or create a library.
             </p>
 
             {libraries && libraries.length > 0 && (
-              <div className="w-full max-w-xs mx-auto">
+              <div className="w-full">
                 <Select onValueChange={handleSelectLibrary}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full text-sm">
                     <SelectValue placeholder="Select a library" />
                   </SelectTrigger>
                   <SelectContent>
@@ -267,9 +267,9 @@ export function LibraryEditor({
               </div>
             )}
 
-            <Separator className="my-4" />
+            <Separator className="my-3" />
 
-            <div className="flex flex-col gap-2 w-full max-w-xs mx-auto">
+            <div className="space-y-2 w-full">
               <input
                 type="text"
                 placeholder="New library name"
@@ -282,12 +282,12 @@ export function LibraryEditor({
               />
               <Button
                 size="sm"
-                className="w-full"
+                className="w-full h-8 text-xs"
                 onClick={handleCreateLibrary}
                 disabled={!newLibraryName.trim() || isCreatingLibrary}
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Create Library
+                <Plus className="h-3 w-3 mr-1" />
+                Create
               </Button>
             </div>
           </div>
@@ -301,9 +301,9 @@ export function LibraryEditor({
   return (
     <div className="w-full border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50 min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-b min-w-0">
-          <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-            <span className="font-medium truncate">
+        <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b min-w-0 gap-2">
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
+            <span className="text-sm font-medium truncate">
               {currentLibrary?.name || "Library"}
             </span>
             <Breadcrumbs
@@ -311,7 +311,7 @@ export function LibraryEditor({
               onNavigate={handleNavigate}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {/* Hidden file input */}
             <input
               ref={fileInputRef}
@@ -329,18 +329,19 @@ export function LibraryEditor({
             <Button
               variant="outline"
               size="sm"
+              className="h-7 px-2 text-xs"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading{uploadCount > 1 ? ` (${uploadCount})` : "..."}
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="hidden sm:inline ml-1">{uploadCount > 1 ? `(${uploadCount})` : "..."}</span>
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
+                  <Upload className="h-3 w-3" />
+                  <span className="hidden sm:inline ml-1">Upload</span>
                 </>
               )}
             </Button>
@@ -348,16 +349,16 @@ export function LibraryEditor({
             {/* Settings popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings2 className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Settings2 className="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-64">
-                <div className="space-y-4">
-                  <h4 className="font-medium text-sm">Display Settings</h4>
+              <PopoverContent align="end" className="w-56">
+                <div className="space-y-3">
+                  <h4 className="font-medium text-xs">Display Settings</h4>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="showFolderTree" className="text-sm">
-                      Show folder tree
+                    <Label htmlFor="showFolderTree" className="text-xs">
+                      Show folders
                     </Label>
                     <Switch
                       id="showFolderTree"
@@ -368,7 +369,7 @@ export function LibraryEditor({
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="allowDownloads" className="text-sm">
+                    <Label htmlFor="allowDownloads" className="text-xs">
                       Allow downloads
                     </Label>
                     <Switch
@@ -391,10 +392,10 @@ export function LibraryEditor({
           className="border-0 rounded-none cursor-default min-w-0 w-full"
           noClick
         >
-          <div className="flex h-[300px] min-w-0">
+          <div className="flex h-[200px] min-w-0">
             {/* Folder tree sidebar */}
             {content.showFolderTree !== false && (
-              <div className="w-40 min-w-24 border-r bg-muted/30 flex flex-col overflow-hidden">
+              <div className="w-28 min-w-20 border-r bg-muted/30 flex flex-col overflow-hidden">
                 <div className="flex-1 p-2 overflow-y-auto overflow-x-hidden">
                   {folders.length > 0 ? (
                     <FolderTree

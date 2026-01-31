@@ -1,27 +1,27 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 
-// Get all sections for a page
+// Get all layouts for a page
 export const list = query({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
-    const sections = await ctx.db
-      .query("sections")
+    const layouts = await ctx.db
+      .query("layouts")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     // Sort by order
-    sections.sort((a, b) => a.order - b.order);
+    layouts.sort((a, b) => a.order - b.order);
 
-    return sections;
+    return layouts;
   },
 });
 
-// Get single section
+// Get single layout
 export const get = query({
-  args: { sectionId: v.id("sections") },
-  handler: async (ctx, { sectionId }) => {
-    return await ctx.db.get(sectionId);
+  args: { layoutId: v.id("layouts") },
+  handler: async (ctx, { layoutId }) => {
+    return await ctx.db.get(layoutId);
   },
 });
 
@@ -38,15 +38,15 @@ export const getActiveLibraryIds = query({
 
     const libraryIds = new Set<string>();
 
-    // Scan all sections for library blocks
+    // Scan all layouts for library blocks
     for (const page of pages) {
-      const sections = await ctx.db
-        .query("sections")
+      const layouts = await ctx.db
+        .query("layouts")
         .withIndex("by_page", (q) => q.eq("pageId", page._id))
         .collect();
 
-      for (const section of sections) {
-        for (const slot of section.slots) {
+      for (const layout of layouts) {
+        for (const slot of layout.slots) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
               libraryIds.add(block.content.libraryId);
