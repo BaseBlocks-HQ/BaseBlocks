@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { SpacerContent } from "@/types/blocks";
+import type { BlockSpacerContent } from "@/types/elements";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { MoveVertical } from "lucide-react";
 import { useState } from "react";
-import type { BlockEditorBaseProps } from "../types";
 
 const SPACER_HEIGHTS = {
   small: "h-8",
@@ -14,7 +14,7 @@ const SPACER_HEIGHTS = {
   xlarge: "h-32",
 } as const;
 
-const SIZE_LABELS: Record<SpacerContent["height"], string> = {
+const SIZE_LABELS: Record<BlockSpacerContent["height"], string> = {
   small: "S",
   medium: "M",
   large: "L",
@@ -22,16 +22,15 @@ const SIZE_LABELS: Record<SpacerContent["height"], string> = {
 };
 
 export function SpacerEditor({
-  block,
+  content,
   isSelected,
   onUpdate,
-}: BlockEditorBaseProps) {
-  const content = block.content as SpacerContent;
-  const [height, setHeight] = useState<SpacerContent["height"]>(
+}: ElementEditorProps<"block-spacer">) {
+  const [height, setHeight] = useState<BlockSpacerContent["height"]>(
     content.height || "medium",
   );
 
-  const handleHeightChange = (newHeight: SpacerContent["height"]) => {
+  const handleHeightChange = (newHeight: BlockSpacerContent["height"]) => {
     setHeight(newHeight);
     onUpdate({ height: newHeight });
   };
@@ -51,7 +50,7 @@ export function SpacerEditor({
 
       {/* Height controls - always visible */}
       <div className="flex gap-1">
-        {(Object.keys(SPACER_HEIGHTS) as Array<SpacerContent["height"]>).map(
+        {(Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>).map(
           (size) => (
             <Button
               key={size}

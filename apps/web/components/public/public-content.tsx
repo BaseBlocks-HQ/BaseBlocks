@@ -1,12 +1,12 @@
 "use client";
 
-import { BlockRendererWrapper } from "@/components/blocks";
+import { ElementRendererWrapper } from "@/components/elements";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
-  BlockContent,
-  BlockType,
+  AnyContent,
+  ElementType,
   LayoutType,
   LayoutSettings,
   SpacerLayoutHeight,
@@ -91,12 +91,10 @@ export function PublicContent({ pageId }: PublicContentProps) {
                 key={block.id}
                 className={cn(index < slot.blocks.length - 1 && "mb-3")}
               >
-                <BlockRendererWrapper
-                  block={{
-                    _id: block.id,
-                    type: block.type as BlockType,
-                    content: block.content as BlockContent,
-                  }}
+                <ElementRendererWrapper
+                  id={block.id}
+                  type={block.type as ElementType}
+                  content={block.content as AnyContent}
                 />
               </div>
             ))}

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useEditorContext } from "@/components/editor";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useEntityAuth } from "@/lib/auth";
 import { entityStorageClient } from "@/lib/storage/client";
-import type { QuicklinkItem, QuicklinkType, QuicklinksContent } from "@/types";
+import type { QuicklinkItem, QuicklinkType, QuicklinksContent } from "@/types/elements";
 import {
   AppWindow,
   Check,
@@ -29,7 +30,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { BlockEditorBaseProps } from "../types";
 
 const MAX_LINKS = 4;
 
@@ -288,12 +288,12 @@ function QuicklinkEditForm({
 }
 
 export function QuicklinksEditor({
-  block,
+  id,
+  content,
   isSelected,
   onUpdate,
   onSaveStatusChange,
-}: BlockEditorBaseProps) {
-  const content = block.content as QuicklinksContent;
+}: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorContext();
   const { getToken, user } = useEntityAuth();
 
@@ -320,7 +320,7 @@ export function QuicklinksEditor({
     setEditingData(new Map());
     setIsAddingNew(false);
     setNewLinkData(null);
-  }, [block._id]);
+  }, [id]);
 
   // Also sync when content changes externally
   useEffect(() => {

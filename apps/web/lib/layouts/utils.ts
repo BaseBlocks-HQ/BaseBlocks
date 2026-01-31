@@ -1,6 +1,6 @@
 import type {
-  BlockContent,
-  BlockType,
+  AnyContent,
+  LayoutBlockType,
   LayoutBlockData,
   LayoutData,
   LayoutType,
@@ -81,8 +81,8 @@ export function createLayout(
  * Create a new block
  */
 export function createBlock(
-  type: BlockType,
-  content: BlockContent,
+  type: LayoutBlockType,
+  content: AnyContent,
 ): LayoutBlockData {
   return {
     id: generateId(),

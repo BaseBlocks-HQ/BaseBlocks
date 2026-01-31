@@ -3,8 +3,8 @@
 import { EditorSkeleton } from "@/components/skeletons";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createBlock, createLayout } from "@/lib/layouts";
-import { DEFAULT_BLOCK_CONTENT } from "@/types";
-import type { BlockType, LayoutType } from "@/types";
+import { getDefaultContent } from "@/components/elements";
+import type { LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -82,10 +82,14 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   // Add block from sidebar
   const handleAddBlock = useCallback(
-    async (type: BlockType) => {
+    async (type: LayoutBlockType) => {
       if (!selection.layoutId || !selection.slotId) return;
 
-      const content = DEFAULT_BLOCK_CONTENT[type];
+      const content = getDefaultContent(type);
+      if (!content) {
+        console.error(`No default content found for element type: ${type}`);
+        return;
+      }
       const newBlock = createBlock(type, content);
 
       await addBlockMutation({

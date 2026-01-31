@@ -1,8 +1,6 @@
-import type { ImageContent } from "@/types";
-import type { BlockRendererBaseProps } from "../types";
+import type { ElementRendererProps } from "@/components/elements/registry";
 
-export function ImageRenderer({ block }: BlockRendererBaseProps) {
-  const content = block.content as ImageContent;
+export function ImageRenderer({ content }: ElementRendererProps<"image">) {
   return (
     <figure className="my-6">
       <img

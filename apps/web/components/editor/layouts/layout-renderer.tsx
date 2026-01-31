@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
-import type { BlockContent, LayoutData, SpacerLayoutHeight } from "@/types";
+import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@/types";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import type { HTMLAttributes, Ref } from "react";
 import { LayoutSlot } from "./layout-slot";
@@ -20,7 +20,7 @@ export interface LayoutRendererProps {
   onUpdateBlock: (
     slotId: string,
     blockId: string,
-    content: BlockContent,
+    content: AnyContent,
   ) => void;
   onRemoveBlock: (slotId: string, blockId: string) => void;
   onMoveBlock?: (

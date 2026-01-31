@@ -1,8 +1,6 @@
-import type { HeadingContent } from "@/types";
-import type { BlockRendererBaseProps } from "../types";
+import type { ElementRendererProps } from "@/components/elements/registry";
 
-export function HeadingRenderer({ block }: BlockRendererBaseProps) {
-  const content = block.content as HeadingContent;
+export function HeadingRenderer({ content }: ElementRendererProps<"heading">) {
   const level = content.level || 2;
 
   switch (level) {

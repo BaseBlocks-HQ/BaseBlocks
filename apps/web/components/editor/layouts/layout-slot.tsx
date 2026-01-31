@@ -1,13 +1,14 @@
 "use client";
 
-import { BlockEditorWrapper } from "@/components/blocks";
+import { ElementEditorWrapper } from "@/components/elements";
 import { DndProvider, type DragEndEvent } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
-  BlockContent,
   LayoutType,
   LayoutSlot as LayoutSlotType,
+  AnyContent,
+  ElementType,
 } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -23,7 +24,7 @@ interface LayoutSlotProps {
   onSelect: () => void;
   onSelectBlock: (blockId: string) => void;
   onAddBlock: () => void;
-  onUpdateBlock: (blockId: string, content: BlockContent) => void;
+  onUpdateBlock: (blockId: string, content: AnyContent) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlock?: (toSlotId: string, blockId: string, toIndex: number) => void;
 }
@@ -135,11 +136,11 @@ interface SortableBlockProps {
   block: {
     id: string;
     type: string;
-    content: BlockContent;
+    content: AnyContent;
   };
   isSelected: boolean;
   onSelect: () => void;
-  onUpdate: (content: BlockContent) => void;
+  onUpdate: (content: AnyContent) => void;
   onRemove: () => void;
 }
 
@@ -205,14 +206,12 @@ function SortableBlock({
 
       {/* Block content - flex-1 to take remaining space */}
       <div className="flex-1 min-w-0">
-        <BlockEditorWrapper
-          block={{
-            _id: block.id,
-            type: block.type as any,
-            content: block.content,
-          }}
+        <ElementEditorWrapper
+          id={block.id}
+          type={block.type as ElementType}
+          content={block.content}
           isSelected={isSelected}
-          onUpdate={(content) => onUpdate(content as BlockContent)}
+          onUpdate={onUpdate}
           onRemove={onRemove}
         />
       </div>

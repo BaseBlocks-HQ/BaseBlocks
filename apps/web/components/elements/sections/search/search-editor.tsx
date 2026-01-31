@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditorContext } from "@/components/editor";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,18 +11,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import type { SearchContent } from "@/types";
+import type { SearchContent } from "@/types/elements";
 import { Settings2 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { SearchBox } from "../shared";
-import type { BlockEditorBaseProps } from "../types";
+import { SearchBox } from "./search-box";
 
 export function SearchEditor({
-  block,
+  id,
+  content,
   isSelected,
   onUpdate,
-}: BlockEditorBaseProps) {
-  const content = block.content as SearchContent;
+}: ElementEditorProps<"search">) {
   const { siteId } = useEditorContext();
 
   const [placeholder, setPlaceholder] = useState(

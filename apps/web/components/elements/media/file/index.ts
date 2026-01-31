@@ -7,10 +7,10 @@ import { FileText } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DEFAULT_MEDIA_CONTENT } from "@/types/elements";
 import { FilePreview } from "./file-preview";
+import { FileRenderer } from "./file-renderer";
 
-// Re-export existing renderer (no editor exists yet)
-export { FileRenderer } from "@/components/blocks/renderer/file-renderer";
-export { FilePreview } from "./file-preview";
+// Re-export components (no editor exists yet)
+export { FileRenderer, FilePreview };
 
 // Register the element
 registerElement({
@@ -20,6 +20,7 @@ registerElement({
   description: "Downloadable file attachment",
   icon: FileText,
   keywords: ["file", "download", "attachment", "document"],
+  renderer: FileRenderer,
   preview: FilePreview,
   defaultContent: DEFAULT_MEDIA_CONTENT.file,
 });

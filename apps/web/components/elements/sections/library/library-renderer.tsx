@@ -8,12 +8,12 @@ import {
   usePublicFolders,
   usePublicLibrary,
 } from "@/components/document-library";
+import type { ElementRendererProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { MiddleTruncate } from "@/components/ui/middle-truncate";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import type { LibraryContent } from "@/types";
 import type { Id } from "@repo/backend";
 import {
   ChevronRight,
@@ -24,17 +24,15 @@ import {
   Home,
 } from "lucide-react";
 import { useCallback, useState } from "react";
-import type { BlockRendererBaseProps } from "../types";
 
-interface LibraryRendererProps extends BlockRendererBaseProps {
+interface LibraryRendererProps extends ElementRendererProps<"library"> {
   accessToken?: string;
 }
 
 export function LibraryRenderer({
-  block,
+  content,
   accessToken,
 }: LibraryRendererProps) {
-  const content = block.content as LibraryContent;
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),

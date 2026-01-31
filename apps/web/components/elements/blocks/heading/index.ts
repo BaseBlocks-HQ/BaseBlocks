@@ -7,11 +7,11 @@ import { Heading } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { HeadingPreview } from "./heading-preview";
+import { HeadingEditor } from "./heading-editor";
+import { HeadingRenderer } from "./heading-renderer";
 
-// Re-export existing components
-export { HeadingEditor } from "@/components/blocks/editor/heading-editor";
-export { HeadingRenderer } from "@/components/blocks/renderer/heading-renderer";
-export { HeadingPreview } from "./heading-preview";
+// Re-export components
+export { HeadingEditor, HeadingRenderer, HeadingPreview };
 
 // Register the element
 registerElement({
@@ -21,6 +21,8 @@ registerElement({
   description: "A title or heading with adjustable size",
   icon: Heading,
   keywords: ["title", "h1", "h2", "h3", "h4", "h5", "header"],
+  editor: HeadingEditor,
+  renderer: HeadingRenderer,
   preview: HeadingPreview,
   defaultContent: DEFAULT_BLOCK_CONTENT.heading,
 });

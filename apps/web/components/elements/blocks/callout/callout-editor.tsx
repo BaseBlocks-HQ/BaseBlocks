@@ -1,17 +1,16 @@
 "use client";
 
 import { useDebounceCallback } from "@/hooks";
-import type { HeadingContent } from "@/types";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BlockEditorBaseProps } from "../types";
 
-export function HeadingEditor({
-  block,
+export function CalloutEditor({
+  id,
+  content,
   isSelected,
   onUpdate,
   onSaveStatusChange,
-}: BlockEditorBaseProps) {
-  const content = block.content as HeadingContent;
+}: ElementEditorProps<"callout">) {
   const [localText, setLocalText] = useState(content.text || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -42,7 +41,7 @@ export function HeadingEditor({
 
   useEffect(() => {
     setLocalText(content.text || "");
-  }, [block._id]);
+  }, [id]);
 
   useEffect(() => {
     autoResize();
@@ -56,13 +55,13 @@ export function HeadingEditor({
   };
 
   return (
-    <div className="rounded-md px-2 py-1 -mx-2 -my-1 transition-colors hover:bg-muted/50">
+    <div className="bg-muted border rounded-lg p-4 transition-colors hover:border-muted-foreground/50">
       <textarea
         ref={textareaRef}
         value={localText}
         onChange={handleChange}
-        className="w-full text-xl font-semibold border-none resize-none bg-transparent focus:outline-none overflow-hidden"
-        placeholder="Heading..."
+        className="w-full resize-none border-none bg-transparent focus:outline-none overflow-hidden"
+        placeholder="Callout text..."
         rows={1}
       />
     </div>

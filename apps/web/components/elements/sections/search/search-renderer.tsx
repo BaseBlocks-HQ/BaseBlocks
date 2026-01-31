@@ -1,12 +1,10 @@
 "use client";
 
+import type { ElementRendererProps } from "@/components/elements/registry";
 import { usePublicSiteContextOptional } from "@/components/public";
-import type { SearchContent } from "@/types";
-import { SearchBox } from "../shared";
-import type { BlockRendererBaseProps } from "../types";
+import { SearchBox } from "./search-box";
 
-export function SearchRenderer({ block }: BlockRendererBaseProps) {
-  const content = block.content as SearchContent;
+export function SearchRenderer({ content }: ElementRendererProps<"search">) {
   const publicSiteContext = usePublicSiteContextOptional();
   const siteId = publicSiteContext?.siteId;
 

@@ -1,5 +1,6 @@
 /**
  * Centralized type exports
+ * Unified Element System
  */
 
 // Convex document and ID types
@@ -24,43 +25,17 @@ export type {
   Id,
 } from "./convex";
 
-// Block types
-export type {
-  BlockType,
-  HeadingContent,
-  ParagraphContent,
-  ImageContent,
-  FileContent,
-  DividerContent,
-  CalloutContent,
-  CodeContent,
-  EmbedContent,
-  TableContent,
-  LibraryContent,
-  SearchContent,
-  QuicklinkType,
-  QuicklinkItem,
-  QuicklinksContent,
-  BlockContent,
-  TypedBlock,
-  BlockEditorProps,
-  BlockRendererProps,
-  SaveStatus,
-  SpacerContent,
-} from "./blocks";
-export { DEFAULT_BLOCK_CONTENT } from "./blocks";
-
 // Page types
 export type {
   PageListItem,
   PageWithChildren,
-  PageWithBlocks,
   SiteWithCompany,
 } from "./pages";
 
 // Layout types
 export type {
   LayoutType,
+  LayoutBlockType,
   LayoutBlockData,
   LayoutSlot,
   LayoutSettings,
@@ -75,8 +50,8 @@ export {
 } from "./layouts";
 
 // ============================================================
-// NEW UNIFIED ELEMENT SYSTEM
-// These exports are from the new category-based element system
+// UNIFIED ELEMENT SYSTEM
+// All element types, content interfaces, and defaults
 // ============================================================
 
 // Element categories
@@ -90,7 +65,7 @@ export {
   getSortedCategories,
 } from "./elements";
 
-// Element types (new unified types)
+// Element types (unified types)
 export type {
   ElementType,
   AllElementType,
@@ -98,25 +73,36 @@ export type {
   ContentFor,
   AnyContent,
   TypedElementData,
+  SaveStatus,
 } from "./elements";
 
-// New block types (content primitives only)
+// Block types (content primitives)
 export type {
-  BlockType as NewBlockType,
-  BlockContentUnion,
+  BlockType,
+  HeadingContent,
+  ParagraphContent,
+  CalloutContent,
+  CodeContent,
+  DividerContent,
   BlockSpacerContent,
+  BlockContentUnion,
 } from "./elements";
-export { DEFAULT_BLOCK_CONTENT as NEW_DEFAULT_BLOCK_CONTENT } from "./elements";
+export { DEFAULT_BLOCK_CONTENT } from "./elements";
 
-// Section types (moved from blocks: search, library, quicklinks)
+// Section types (search, library, quicklinks, hero)
 export type {
   SectionType,
   HeroContent,
+  SearchContent,
+  LibraryContent,
+  QuicklinkType,
+  QuicklinkItem,
+  QuicklinksContent,
   SectionContentUnion,
 } from "./elements";
 export { DEFAULT_SECTION_CONTENT } from "./elements";
 
-// Navigation types (future)
+// Navigation types
 export type {
   NavType,
   SidebarPagesContent,
@@ -126,9 +112,11 @@ export type {
 } from "./elements";
 export { DEFAULT_NAV_CONTENT } from "./elements";
 
-// Media types (moved from blocks: image, file)
+// Media types (image, file, video, etc.)
 export type {
   MediaType,
+  ImageContent,
+  FileContent,
   VideoContent,
   AudioContent,
   YouTubeEmbedContent,
@@ -137,7 +125,7 @@ export type {
 } from "./elements";
 export { DEFAULT_MEDIA_CONTENT } from "./elements";
 
-// Form types (future)
+// Form types
 export type {
   FormType,
   FormContent,

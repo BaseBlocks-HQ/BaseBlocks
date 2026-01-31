@@ -1,6 +1,6 @@
-import type { QuicklinkItem, QuicklinksContent } from "@/types";
+import type { ElementRendererProps } from "@/components/elements/registry";
+import type { QuicklinkItem } from "@/types/elements";
 import { AppWindow, ExternalLink } from "lucide-react";
-import type { BlockRendererBaseProps } from "../types";
 
 interface QuicklinkButtonProps {
   link: QuicklinkItem;
@@ -42,8 +42,7 @@ function QuicklinkButton({ link }: QuicklinkButtonProps) {
   );
 }
 
-export function QuicklinksRenderer({ block }: BlockRendererBaseProps) {
-  const content = block.content as QuicklinksContent;
+export function QuicklinksRenderer({ content }: ElementRendererProps<"quicklinks">) {
   const links = content.links || [];
 
   // Filter out links without URLs

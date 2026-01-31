@@ -7,11 +7,11 @@ import { Code } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { CodePreview } from "./code-preview";
+import { CodeEditor } from "./code-editor";
+import { CodeRenderer } from "./code-renderer";
 
-// Re-export existing components
-export { CodeEditor } from "@/components/blocks/editor/code-editor";
-export { CodeRenderer } from "@/components/blocks/renderer/code-renderer";
-export { CodePreview } from "./code-preview";
+// Re-export components
+export { CodeEditor, CodeRenderer, CodePreview };
 
 // Register the element
 registerElement({
@@ -21,6 +21,8 @@ registerElement({
   description: "Code snippet with syntax highlighting",
   icon: Code,
   keywords: ["code", "snippet", "programming", "syntax", "script"],
+  editor: CodeEditor,
+  renderer: CodeRenderer,
   preview: CodePreview,
   defaultContent: DEFAULT_BLOCK_CONTENT.code,
 });

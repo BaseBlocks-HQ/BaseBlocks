@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
-import type { FileContent } from "@/types";
+import type { ElementRendererProps } from "@/components/elements/registry";
 import { Download, FileText } from "lucide-react";
-import type { BlockRendererBaseProps } from "../types";
 
-export function FileRenderer({ block }: BlockRendererBaseProps) {
-  const content = block.content as FileContent;
+export function FileRenderer({ content }: ElementRendererProps<"file">) {
   return (
     <div className="my-4 p-4 border rounded-lg flex items-center justify-between">
       <div className="flex items-center gap-3">

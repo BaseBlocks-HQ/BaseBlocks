@@ -7,10 +7,10 @@ import { Image } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DEFAULT_MEDIA_CONTENT } from "@/types/elements";
 import { ImagePreview } from "./image-preview";
+import { ImageRenderer } from "./image-renderer";
 
-// Re-export existing renderer (no editor exists yet)
-export { ImageRenderer } from "@/components/blocks/renderer/image-renderer";
-export { ImagePreview } from "./image-preview";
+// Re-export components (no editor exists yet)
+export { ImageRenderer, ImagePreview };
 
 // Register the element
 registerElement({
@@ -20,6 +20,7 @@ registerElement({
   description: "Single image with caption",
   icon: Image,
   keywords: ["image", "picture", "photo", "graphic"],
+  renderer: ImageRenderer,
   preview: ImagePreview,
   defaultContent: DEFAULT_MEDIA_CONTENT.image,
 });

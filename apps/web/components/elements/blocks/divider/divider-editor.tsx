@@ -1,8 +1,8 @@
 "use client";
 
-import type { BlockEditorBaseProps } from "../types";
+import type { ElementEditorProps } from "@/components/elements/registry";
 
-export function DividerEditor(_props: BlockEditorBaseProps) {
+export function DividerEditor(_props: ElementEditorProps<"divider">) {
   return (
     <div className="relative py-4 group">
       <hr className="border-border transition-colors group-hover:border-muted-foreground/50" />

@@ -7,11 +7,11 @@ import { Minus } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { DividerPreview } from "./divider-preview";
+import { DividerEditor } from "./divider-editor";
+import { DividerRenderer } from "./divider-renderer";
 
-// Re-export existing components
-export { DividerEditor } from "@/components/blocks/editor/divider-editor";
-export { DividerRenderer } from "@/components/blocks/renderer/divider-renderer";
-export { DividerPreview } from "./divider-preview";
+// Re-export components
+export { DividerEditor, DividerRenderer, DividerPreview };
 
 // Register the element
 registerElement({
@@ -21,6 +21,8 @@ registerElement({
   description: "Horizontal line separator",
   icon: Minus,
   keywords: ["line", "separator", "hr", "horizontal"],
+  editor: DividerEditor,
+  renderer: DividerRenderer,
   preview: DividerPreview,
   defaultContent: DEFAULT_BLOCK_CONTENT.divider,
 });

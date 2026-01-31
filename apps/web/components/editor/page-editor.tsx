@@ -7,8 +7,8 @@ import { useSaveStatus } from "@/hooks";
 import { createLayout } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
-  BlockContent,
-  BlockType,
+  AnyContent,
+  LayoutBlockType,
   LayoutData,
   LayoutType,
   LayoutSettings,
@@ -70,8 +70,8 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         position: slot.position,
         blocks: slot.blocks.map((block: BlockDoc) => ({
           id: block.id,
-          type: block.type as BlockType,
-          content: block.content as BlockContent,
+          type: block.type as LayoutBlockType,
+          content: block.content as AnyContent,
         })),
       })),
       settings: s.settings as LayoutSettings,
@@ -177,7 +177,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       layoutId: string,
       slotId: string,
       blockId: string,
-      content: BlockContent
+      content: AnyContent
     ) => {
       setStatus("saving");
       await updateBlockMutation({

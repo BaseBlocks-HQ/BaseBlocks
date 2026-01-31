@@ -15,6 +15,7 @@ import {
   useFolderPath,
 } from "@/components/document-library";
 import { useEditorContext } from "@/components/editor";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -34,19 +35,18 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
-import type { LibraryContent } from "@/types";
+import type { LibraryContent } from "@/types/elements";
 import type { Id } from "@repo/backend";
 import { Loader2, Plus, Settings2, Upload } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { BlockEditorBaseProps } from "../types";
 
 export function LibraryEditor({
-  block,
+  id,
+  content,
   isSelected,
   onUpdate,
-}: BlockEditorBaseProps) {
-  const content = block.content as LibraryContent;
+}: ElementEditorProps<"library">) {
   const { siteId } = useEditorContext();
   const { openFile } = useMediaViewer();
 

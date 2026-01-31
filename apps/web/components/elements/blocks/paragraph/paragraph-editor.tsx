@@ -1,17 +1,16 @@
 "use client";
 
 import { useDebounceCallback } from "@/hooks";
-import type { ParagraphContent } from "@/types";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BlockEditorBaseProps } from "../types";
 
 export function ParagraphEditor({
-  block,
+  id,
+  content,
   isSelected,
   onUpdate,
   onSaveStatusChange,
-}: BlockEditorBaseProps) {
-  const content = block.content as ParagraphContent;
+}: ElementEditorProps<"paragraph">) {
   const [localText, setLocalText] = useState(content.text || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -42,7 +41,7 @@ export function ParagraphEditor({
 
   useEffect(() => {
     setLocalText(content.text || "");
-  }, [block._id]);
+  }, [id]);
 
   useEffect(() => {
     autoResize();

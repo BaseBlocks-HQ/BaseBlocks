@@ -2,7 +2,7 @@
  * Layout type definitions for the editor and renderer
  * Layouts are containers that hold blocks in organized slots (single, rows, columns, grid, spacer, vertical)
  */
-import type { BlockContent, BlockType } from "./blocks";
+import type { AnyContent } from "./elements";
 
 // Layout types (single, rows, columns, grid, spacer, vertical)
 export type LayoutType =
@@ -13,11 +13,26 @@ export type LayoutType =
   | "spacer" // Vertical spacer (no slots)
   | "vertical"; // Sidebar layout (rendered beside main content)
 
+// Block types allowed within layout slots
+// This is the intersection of backend schema types and registered frontend elements
+export type LayoutBlockType =
+  | "heading"
+  | "paragraph"
+  | "image"
+  | "file"
+  | "library"
+  | "search"
+  | "divider"
+  | "block-spacer"
+  | "callout"
+  | "code"
+  | "quicklinks";
+
 // Block data as stored within a layout slot
 export interface LayoutBlockData {
   id: string;
-  type: BlockType;
-  content: BlockContent;
+  type: LayoutBlockType;
+  content: AnyContent;
 }
 
 // A slot is a drop zone within a layout

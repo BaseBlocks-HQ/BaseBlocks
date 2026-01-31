@@ -1,8 +1,6 @@
-import type { TypedBlock } from "./blocks";
 /**
  * Page type definitions
  */
-import type { Page } from "./convex";
 
 // Page list item (for sidebar display)
 export interface PageListItem {
@@ -18,12 +16,6 @@ export interface PageListItem {
 // Page with children (for tree navigation)
 export interface PageWithChildren extends PageListItem {
   children: PageWithChildren[];
-}
-
-// Page with blocks (for editor)
-export interface PageWithBlocks {
-  page: Page;
-  blocks: TypedBlock[];
 }
 
 // Site with company (for editor context)
