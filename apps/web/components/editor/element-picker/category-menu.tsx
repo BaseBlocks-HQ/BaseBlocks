@@ -10,11 +10,13 @@ import {
   Layout,
   LayoutTemplate,
   Navigation,
+  Settings2,
   Square,
 } from "lucide-react";
 
 // Map category to icon
 const CATEGORY_ICONS: Record<ElementCategory, React.ReactNode> = {
+  site: <Settings2 className="h-5 w-5" />,
   layouts: <Layout className="h-5 w-5" />,
   blocks: <Square className="h-5 w-5" />,
   sections: <LayoutTemplate className="h-5 w-5" />,
@@ -76,6 +78,7 @@ export function CategoryMenu({
   const categories = getSortedCategories();
 
   // Categories that require a slot to be selected
+  // "site" and "layouts" do not require a slot
   const slotRequiredCategories: ElementCategory[] = [
     "blocks",
     "sections",

@@ -86,6 +86,11 @@ export const update = mutation({
         navigationStyle: v.optional(
           v.union(v.literal("sidebar"), v.literal("topnav")),
         ),
+        // Header visibility settings
+        showHeader: v.optional(v.boolean()),
+        showLogo: v.optional(v.boolean()),
+        showSiteName: v.optional(v.boolean()),
+        showHeaderSearch: v.optional(v.boolean()),
       }),
     ),
   },

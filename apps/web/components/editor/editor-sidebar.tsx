@@ -17,6 +17,7 @@ import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import type { LayoutBlockType, LayoutType, PageListItem } from "@/types";
 import type { ElementType } from "@/types/elements";
+import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -155,6 +156,7 @@ export function EditorSidebar({
               </div>
             ) : selectedPageId ? (
               <ElementPicker
+                siteId={site._id as Id<"sites">}
                 selectedSlotId={selectedSlotId}
                 onAddLayout={onAddLayout}
                 onAddBlock={(type: ElementType) =>

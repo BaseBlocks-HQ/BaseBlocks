@@ -12,6 +12,8 @@ import "@/components/elements/media";
 import "@/components/elements/forms";
 
 import { getElementsByCategory } from "@/components/elements/registry";
+import { SiteConfigPanel } from "@/components/elements/site";
+import type { Id } from "@repo/backend";
 import type {
   ElementCategory,
   ElementType,
@@ -19,6 +21,7 @@ import type {
 } from "@/types/elements";
 
 interface ElementPickerProps {
+  siteId?: Id<"sites">;
   selectedSlotId?: string | null;
   onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: ElementType) => void;
@@ -26,6 +29,7 @@ interface ElementPickerProps {
 
 // Categories with registered elements to show
 const ACTIVE_CATEGORIES: ElementCategory[] = [
+  "site",
   "layouts",
   "blocks",
   "sections",
@@ -37,6 +41,7 @@ const ACTIVE_CATEGORIES: ElementCategory[] = [
 const EMPTY_CATEGORIES: ElementCategory[] = ["navigation"];
 
 export function ElementPicker({
+  siteId,
   selectedSlotId,
   onAddLayout,
   onAddBlock,
@@ -56,6 +61,8 @@ export function ElementPicker({
   // Get category title
   const categoryTitle = useMemo(() => {
     switch (activeCategory) {
+      case "site":
+        return "Site Settings";
       case "layouts":
         return "Layouts";
       case "blocks":
@@ -126,8 +133,18 @@ export function ElementPicker({
         emptyCategoryIds={EMPTY_CATEGORIES}
       />
 
+      {/* Flyout panel with site config */}
+      {activeCategory === "site" && siteId && (
+        <div
+          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          onMouseEnter={() => handleMouseEnter(activeCategory)}
+        >
+          <SiteConfigPanel siteId={siteId} />
+        </div>
+      )}
+
       {/* Flyout panel with elements */}
-      {activeCategory && categoryElements.length > 0 && (
+      {activeCategory && activeCategory !== "site" && categoryElements.length > 0 && (
         <div
           className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}

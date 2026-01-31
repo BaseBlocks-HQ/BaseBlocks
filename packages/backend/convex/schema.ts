@@ -35,6 +35,11 @@ export default defineSchema({
       ogImage: v.optional(v.string()),
       headerType: v.union(v.literal("logo"), v.literal("text")),
       navigationStyle: v.union(v.literal("sidebar"), v.literal("topnav")),
+      // Header visibility settings
+      showHeader: v.optional(v.boolean()), // default: true
+      showLogo: v.optional(v.boolean()), // default: true
+      showSiteName: v.optional(v.boolean()), // default: true
+      showHeaderSearch: v.optional(v.boolean()), // default: false
     }),
   })
     .index("by_company", ["companyId"])

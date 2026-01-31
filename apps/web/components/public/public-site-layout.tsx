@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
 import { NavItem, PageBreadcrumbs } from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +17,14 @@ interface PublicSiteLayoutProps {
     name: string;
     slug: string;
     logoUrl?: string;
-    settings: { navigationStyle: string; headerType: string };
+    settings: {
+      navigationStyle: string;
+      headerType: string;
+      showHeader?: boolean;
+      showLogo?: boolean;
+      showSiteName?: boolean;
+      showHeaderSearch?: boolean;
+    };
   };
   company: {
     name: string;
@@ -54,40 +62,66 @@ export function PublicSiteLayout({
   // Build the current path string for navigation matching
   const currentPathString = pagePath.join("/");
 
+  // Settings with defaults
+  const showHeader = site.settings.showHeader !== false;
+  const showLogo = site.settings.showLogo !== false;
+  const showSiteName = site.settings.showSiteName !== false;
+  const showHeaderSearch = site.settings.showHeaderSearch === true;
+
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
       <div className="min-h-screen bg-background">
-        <header className="border-b">
-          <div className="container mx-auto flex h-14 items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              {/* Priority: site logo > company logo > auto-generated */}
-              {site.logoUrl ? (
-                <img
-                  src={site.logoUrl}
-                  alt={site.name}
-                  className="h-8 w-8 rounded-lg object-contain"
-                />
-              ) : company.logoUrl ? (
-                <img
-                  src={company.logoUrl}
-                  alt={company.name}
-                  className="h-8 w-8 rounded-lg object-contain"
-                />
-              ) : (
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
-                  style={{
-                    backgroundColor: company.settings.primaryColor || "#0066FF",
-                  }}
-                >
-                  {site.name[0]}
-                </div>
-              )}
-              <span className="font-semibold">{site.name}</span>
+        {showHeader && (
+          <header className="border-b">
+            <div className="container mx-auto flex h-14 items-center justify-between px-4">
+              <div className="flex items-center gap-2">
+                {/* Priority: site logo > company logo > auto-generated */}
+                {showLogo && (
+                  <>
+                    {site.logoUrl ? (
+                      <img
+                        src={site.logoUrl}
+                        alt={site.name}
+                        className="h-8 w-8 rounded-lg object-contain"
+                      />
+                    ) : company.logoUrl ? (
+                      <img
+                        src={company.logoUrl}
+                        alt={company.name}
+                        className="h-8 w-8 rounded-lg object-contain"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
+                        style={{
+                          backgroundColor:
+                            company.settings.primaryColor || "#0066FF",
+                        }}
+                      >
+                        {site.name[0]}
+                      </div>
+                    )}
+                  </>
+                )}
+                {showSiteName && (
+                  <span className="font-semibold">{site.name}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {showHeaderSearch && (
+                  <SearchBox
+                    siteId={site._id}
+                    usePublicQuery
+                    placeholder="Search..."
+                    maxResults={5}
+                    className="w-64"
+                  />
+                )}
+                <ModeToggle />
+              </div>
             </div>
-            <ModeToggle />
-          </div>
-        </header>
+          </header>
+        )}
 
         <div className="flex">
           {site.settings.navigationStyle === "sidebar" && (

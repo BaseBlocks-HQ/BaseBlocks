@@ -5,6 +5,7 @@
 
 // All supported element categories
 export type ElementCategory =
+  | "site"
   | "layouts"
   | "blocks"
   | "sections"
@@ -23,6 +24,13 @@ export interface CategoryInfo {
 
 // Category definitions with metadata
 export const CATEGORIES: CategoryInfo[] = [
+  {
+    category: "site",
+    label: "Site Settings",
+    description: "Configure site header and branding",
+    icon: "Settings2",
+    order: -1, // Appears before layouts
+  },
   {
     category: "layouts",
     label: "Layouts",
