@@ -14,6 +14,10 @@ interface MediaViewerContextValue {
   currentFile: MediaFile | null;
   /** Whether the viewer is open */
   isOpen: boolean;
+  /** Whether the viewer is in fullscreen mode */
+  isFullscreen: boolean;
+  /** Toggle fullscreen mode */
+  toggleFullscreen: () => void;
   /** Open the viewer with a file */
   openFile: (file: MediaFile) => void;
   /** Close the viewer */
@@ -54,19 +58,26 @@ export function MediaViewerProvider({ children }: MediaViewerProviderProps) {
   const [currentFile, setCurrentFile] = useState<MediaFile | null>(null);
   const [files, setFilesState] = useState<MediaFile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const isOpen = currentFile !== null;
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen((prev) => !prev);
+  }, []);
 
   const openFile = useCallback((file: MediaFile) => {
     setCurrentFile(file);
     setFilesState([file]);
     setCurrentIndex(0);
+    setIsFullscreen(false); // Default to side-by-side
   }, []);
 
   const closeFile = useCallback(() => {
     setCurrentFile(null);
     setFilesState([]);
     setCurrentIndex(0);
+    setIsFullscreen(false);
   }, []);
 
   const setFiles = useCallback(
@@ -106,6 +117,8 @@ export function MediaViewerProvider({ children }: MediaViewerProviderProps) {
       value={{
         currentFile,
         isOpen,
+        isFullscreen,
+        toggleFullscreen,
         openFile,
         closeFile,
         files,

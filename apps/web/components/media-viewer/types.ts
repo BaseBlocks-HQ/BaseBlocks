@@ -26,6 +26,8 @@ export interface MediaFile {
 export interface ViewerProps {
   file: MediaFile;
   onClose: () => void;
+  /** Callback to render viewer-specific controls in the unified toolbar */
+  renderControls?: (controls: React.ReactNode) => void;
 }
 
 /**

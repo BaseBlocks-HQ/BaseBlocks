@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import {
-  Maximize2,
   Pause,
   Play,
   SkipBack,
@@ -88,12 +87,6 @@ export function VideoViewer({ file }: ViewerProps) {
     if (!video) return;
     video.muted = !video.muted;
     setIsMuted(video.muted);
-  }, []);
-
-  const handleFullscreen = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.requestFullscreen?.();
   }, []);
 
   const skip = useCallback(
@@ -233,16 +226,6 @@ export function VideoViewer({ file }: ViewerProps) {
               className="w-24"
             />
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFullscreen}
-            className="text-white hover:bg-white/20"
-            title="Fullscreen"
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </div>

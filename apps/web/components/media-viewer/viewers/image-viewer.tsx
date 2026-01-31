@@ -11,7 +11,7 @@ const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.25;
 const WHEEL_ZOOM_SENSITIVITY = 0.002; // Lower = less sensitive
 
-export function ImageViewer({ file }: ViewerProps) {
+export function ImageViewer({ file, renderControls }: ViewerProps) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -103,81 +103,88 @@ export function ImageViewer({ file }: ViewerProps) {
     }
   }, [zoom, isFitToScreen]);
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="flex items-center justify-center gap-2 p-2 border-b bg-muted/30">
+  // Register controls with parent
+  useEffect(() => {
+    if (!renderControls) return;
+
+    renderControls(
+      <>
         <Button
           variant="ghost"
           size="icon"
+          className="h-7 w-7"
           onClick={handleZoomOut}
           disabled={zoom <= MIN_ZOOM}
           title="Zoom out"
         >
-          <ZoomOut className="h-4 w-4" />
+          <ZoomOut className="h-3.5 w-3.5" />
         </Button>
-        <span className="text-sm text-muted-foreground min-w-[4rem] text-center">
+        <span className="text-xs text-muted-foreground min-w-[3rem] text-center tabular-nums">
           {Math.round(zoom * 100)}%
         </span>
         <Button
           variant="ghost"
           size="icon"
+          className="h-7 w-7"
           onClick={handleZoomIn}
           disabled={zoom >= MAX_ZOOM}
           title="Zoom in"
         >
-          <ZoomIn className="h-4 w-4" />
+          <ZoomIn className="h-3.5 w-3.5" />
         </Button>
-        <div className="w-px h-6 bg-border mx-2" />
+        <div className="w-px h-4 bg-border mx-0.5" />
         <Button
           variant="ghost"
           size="icon"
+          className="h-7 w-7"
           onClick={handleRotate}
           title="Rotate"
         >
-          <RotateCw className="h-4 w-4" />
+          <RotateCw className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
+          className="h-7 w-7"
           onClick={handleFitToggle}
           title={isFitToScreen ? "Actual size" : "Fit to screen"}
         >
           {isFitToScreen ? (
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-3.5 w-3.5" />
           ) : (
-            <Minimize2 className="h-4 w-4" />
+            <Minimize2 className="h-3.5 w-3.5" />
           )}
         </Button>
-      </div>
+      </>
+    );
+  }, [renderControls, zoom, isFitToScreen, handleZoomIn, handleZoomOut, handleRotate, handleFitToggle]);
 
-      {/* Image container */}
-      <div
-        ref={containerRef}
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        "h-full overflow-hidden flex items-center justify-center bg-muted/20",
+        isDragging ? "cursor-grabbing" : "cursor-grab",
+      )}
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onDoubleClick={handleDoubleClick}
+    >
+      <img
+        src={file.url}
+        alt={file.filename}
         className={cn(
-          "flex-1 overflow-hidden flex items-center justify-center bg-muted/20",
-          isDragging ? "cursor-grabbing" : "cursor-grab",
+          "max-w-none select-none transition-transform duration-100",
+          isFitToScreen && "max-h-full max-w-full object-contain",
         )}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleDoubleClick}
-      >
-        <img
-          src={file.url}
-          alt={file.filename}
-          className={cn(
-            "max-w-none select-none transition-transform duration-100",
-            isFitToScreen && "max-h-full max-w-full object-contain",
-          )}
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-          }}
-          draggable={false}
-        />
-      </div>
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+        }}
+        draggable={false}
+      />
     </div>
   );
 }

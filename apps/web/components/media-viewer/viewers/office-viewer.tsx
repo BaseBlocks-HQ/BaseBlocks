@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ViewerProps } from "../types";
 
 /**
@@ -14,7 +14,7 @@ import type { ViewerProps } from "../types";
  * 2. Converting to PDF server-side
  * 3. Using a different viewer library
  */
-export function OfficeViewer({ file }: ViewerProps) {
+export function OfficeViewer({ file, renderControls }: ViewerProps) {
   const [useOnlineViewer, setUseOnlineViewer] = useState(true);
 
   // Microsoft Office Online viewer URL
@@ -24,32 +24,35 @@ export function OfficeViewer({ file }: ViewerProps) {
   // Google Docs viewer as fallback
   const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`;
 
+  // Register controls with parent
+  useEffect(() => {
+    if (!renderControls) return;
+
+    renderControls(
+      <>
+        <span className="text-xs text-muted-foreground">
+          {useOnlineViewer ? "Microsoft" : "Google"}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => setUseOnlineViewer(!useOnlineViewer)}
+          title="Switch viewer"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </Button>
+      </>
+    );
+  }, [renderControls, useOnlineViewer]);
+
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b bg-muted/30">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {useOnlineViewer ? "Microsoft Office Viewer" : "Google Docs Viewer"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setUseOnlineViewer(!useOnlineViewer)}
-          >
-            Switch viewer
-          </Button>
-        </div>
-      </div>
-
       {/* Viewer info banner */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b text-sm">
-        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border-b text-xs">
+        <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
         <span className="text-amber-800 dark:text-amber-200">
-          Online viewers require the document to be publicly accessible. If
-          preview fails, download the file instead.
+          Online viewers require the document to be publicly accessible. If preview fails, download instead.
         </span>
       </div>
 

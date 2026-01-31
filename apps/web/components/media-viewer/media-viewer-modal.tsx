@@ -12,10 +12,12 @@ import {
   FileText,
   FileVideo,
   Loader2,
+  Maximize2,
+  Minimize2,
   Music,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
@@ -50,6 +52,8 @@ export function MediaViewerModal() {
   const {
     currentFile,
     isOpen,
+    isFullscreen,
+    toggleFullscreen,
     closeFile,
     goToNext,
     goToPrevious,
@@ -59,6 +63,14 @@ export function MediaViewerModal() {
     currentIndex,
   } = useMediaViewer();
 
+  // State to hold viewer-specific controls
+  const [viewerControls, setViewerControls] = useState<ReactNode>(null);
+
+  // Reset viewer controls when file changes
+  useEffect(() => {
+    setViewerControls(null);
+  }, [currentFile?.url]);
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -66,7 +78,11 @@ export function MediaViewerModal() {
     function handleKeyDown(e: KeyboardEvent) {
       switch (e.key) {
         case "Escape":
-          closeFile();
+          if (isFullscreen) {
+            toggleFullscreen();
+          } else {
+            closeFile();
+          }
           break;
         case "ArrowRight":
           if (hasNext) goToNext();
@@ -79,11 +95,11 @@ export function MediaViewerModal() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, closeFile, goToNext, goToPrevious, hasNext, hasPrevious]);
+  }, [isOpen, isFullscreen, closeFile, toggleFullscreen, goToNext, goToPrevious, hasNext, hasPrevious]);
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open in fullscreen mode
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isFullscreen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -91,7 +107,7 @@ export function MediaViewerModal() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, isFullscreen]);
 
   const handleDownload = useCallback(() => {
     if (!currentFile) return;
@@ -117,6 +133,11 @@ export function MediaViewerModal() {
     }
   }, [currentFile, isOpeningExternal]);
 
+  // Callback for viewers to register their controls
+  const handleRenderControls = useCallback((controls: ReactNode) => {
+    setViewerControls(controls);
+  }, []);
+
   if (!isOpen || !currentFile) {
     return null;
   }
@@ -125,25 +146,54 @@ export function MediaViewerModal() {
   const ViewerComponent = viewer.component;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b bg-background/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+    <div
+      className={cn(
+        "flex flex-col bg-background border-l shadow-xl z-50",
+        isFullscreen
+          ? "fixed inset-0 border-l-0"
+          : "fixed top-0 right-0 bottom-0 w-[50vw] min-w-[400px] max-w-[800px]"
+      )}
+    >
+      {/* Unified Header/Toolbar */}
+      <header className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30 shrink-0">
+        {/* File info */}
+        <div className="flex items-center gap-2 min-w-0">
           {getFileTypeIcon(currentFile.contentType)}
           <div className="min-w-0">
-            <h2 className="font-medium truncate">{currentFile.filename}</h2>
-            <p className="text-xs text-muted-foreground">
-              {viewer.label}
-              {currentFile.size && ` • ${formatFileSize(currentFile.size)}`}
-              {files.length > 1 && ` • ${currentIndex + 1} of ${files.length}`}
-            </p>
+            <h2 className="text-sm font-medium truncate max-w-[200px]" title={currentFile.filename}>
+              {currentFile.filename}
+            </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* Separator */}
+        <div className="w-px h-5 bg-border" />
+
+        {/* Viewer-specific controls */}
+        {viewerControls && (
+          <>
+            <div className="flex items-center gap-1">
+              {viewerControls}
+            </div>
+            <div className="w-px h-5 bg-border" />
+          </>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* File metadata (compact) */}
+        <span className="text-xs text-muted-foreground hidden sm:block">
+          {currentFile.size && formatFileSize(currentFile.size)}
+          {files.length > 1 && ` • ${currentIndex + 1}/${files.length}`}
+        </span>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={handleOpenExternal}
             disabled={isOpeningExternal}
             title="Open in new tab"
@@ -157,19 +207,34 @@ export function MediaViewerModal() {
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={handleDownload}
             title="Download"
           >
             <Download className="h-4 w-4" />
           </Button>
-          <div className="w-px h-6 bg-border mx-2" />
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
+          <div className="w-px h-5 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={closeFile}
             title="Close (Esc)"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </header>
@@ -182,14 +247,14 @@ export function MediaViewerModal() {
             type="button"
             onClick={goToPrevious}
             className={cn(
-              "absolute left-4 top-1/2 -translate-y-1/2 z-10",
-              "w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg",
+              "absolute left-2 top-1/2 -translate-y-1/2 z-10",
+              "w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border shadow-md",
               "flex items-center justify-center",
               "hover:bg-background transition-colors",
             )}
             title="Previous (←)"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         )}
 
@@ -198,29 +263,33 @@ export function MediaViewerModal() {
             type="button"
             onClick={goToNext}
             className={cn(
-              "absolute right-4 top-1/2 -translate-y-1/2 z-10",
-              "w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border shadow-lg",
+              "absolute right-2 top-1/2 -translate-y-1/2 z-10",
+              "w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border shadow-md",
               "flex items-center justify-center",
               "hover:bg-background transition-colors",
             )}
             title="Next (→)"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
         {/* Viewer component */}
-        <ViewerComponent file={currentFile} onClose={closeFile} />
+        <ViewerComponent
+          file={currentFile}
+          onClose={closeFile}
+          renderControls={handleRenderControls}
+        />
       </main>
 
       {/* Gallery indicator (for multiple files) */}
       {files.length > 1 && (
-        <footer className="flex items-center justify-center gap-1.5 p-3 border-t bg-background/80 backdrop-blur-sm">
+        <footer className="flex items-center justify-center gap-1 py-2 border-t bg-muted/30 shrink-0">
           {files.map((_, index) => (
             <div
               key={index}
               className={cn(
-                "w-2 h-2 rounded-full transition-colors",
+                "w-1.5 h-1.5 rounded-full transition-colors",
                 index === currentIndex
                   ? "bg-primary"
                   : "bg-muted-foreground/30",

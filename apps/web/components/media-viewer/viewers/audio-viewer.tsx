@@ -102,17 +102,12 @@ export function AudioViewer({ file }: ViewerProps) {
       <audio ref={audioRef} src={file.url} />
 
       {/* Album art placeholder */}
-      <div className="w-48 h-48 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-8 shadow-lg">
-        <Music className="h-20 w-20 text-primary/50" />
+      <div className="w-40 h-40 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-8 shadow-lg">
+        <Music className="h-16 w-16 text-primary/50" />
       </div>
 
-      {/* Filename */}
-      <h3 className="text-lg font-medium text-center mb-6 max-w-md truncate">
-        {file.filename}
-      </h3>
-
       {/* Progress bar */}
-      <div className="w-full max-w-md mb-4">
+      <div className="w-full max-w-sm mb-4">
         <Slider
           value={[currentTime]}
           max={duration || 100}
@@ -180,7 +175,7 @@ export function AudioViewer({ file }: ViewerProps) {
           max={1}
           step={0.1}
           onValueChange={handleVolumeChange}
-          className="w-32"
+          className="w-28"
         />
       </div>
     </div>
