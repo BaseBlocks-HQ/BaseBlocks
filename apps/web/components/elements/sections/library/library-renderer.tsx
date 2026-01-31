@@ -43,7 +43,9 @@ export function LibraryRenderer({
   accessToken,
 }: LibraryRendererProps) {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const [isFolderSheetOpen, setIsFolderSheetOpen] = useState(false);
   const { openFile } = useMediaViewer();
 

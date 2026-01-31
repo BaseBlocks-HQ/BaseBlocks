@@ -1,9 +1,9 @@
 "use client";
 
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { BlockSpacerContent } from "@/types/elements";
-import type { ElementEditorProps } from "@/components/elements/registry";
 import { MoveVertical } from "lucide-react";
 
 // Use inline styles for proper responsiveness
@@ -49,22 +49,22 @@ export function SpacerEditor({
 
       {/* Height controls - responsive sizing */}
       <div className="flex gap-0.5 sm:gap-1">
-        {(Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>).map(
-          (size) => (
-            <Button
-              key={size}
-              variant={height === size ? "default" : "outline"}
-              size="sm"
-              className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleHeightChange(size);
-              }}
-            >
-              {SIZE_LABELS[size]}
-            </Button>
-          ),
-        )}
+        {(
+          Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
+        ).map((size) => (
+          <Button
+            key={size}
+            variant={height === size ? "default" : "outline"}
+            size="sm"
+            className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHeightChange(size);
+            }}
+          >
+            {SIZE_LABELS[size]}
+          </Button>
+        ))}
       </div>
     </div>
   );

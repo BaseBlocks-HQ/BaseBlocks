@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useEditorContext } from "@/components/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useEntityAuth } from "@/lib/auth";
 import { entityStorageClient } from "@/lib/storage/client";
-import type { QuicklinkItem, QuicklinkType, QuicklinksContent } from "@/types/elements";
+import { cn } from "@/lib/utils";
+import type { QuicklinkItem, QuicklinkType } from "@/types/elements";
 import {
   AppWindow,
   Check,
@@ -227,8 +227,14 @@ function QuicklinkEditForm({
                 <TooltipContent side="top" className="max-w-[200px] text-xs">
                   <p className="font-medium mb-1">App URL schemes:</p>
                   <p>
-                    Examples: <code className="bg-black text-white px-1 rounded">spotify://</code>,{" "}
-                    <code className="bg-black text-white px-1 rounded">slack://</code>
+                    Examples:{" "}
+                    <code className="bg-black text-white px-1 rounded">
+                      spotify://
+                    </code>
+                    ,{" "}
+                    <code className="bg-black text-white px-1 rounded">
+                      slack://
+                    </code>
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -243,11 +249,19 @@ function QuicklinkEditForm({
           size="sm"
           className="justify-start"
         >
-          <ToggleGroupItem value="website" aria-label="Website link" className="gap-1 text-xs px-2">
+          <ToggleGroupItem
+            value="website"
+            aria-label="Website link"
+            className="gap-1 text-xs px-2"
+          >
             <Globe className="w-3 h-3" />
             Web
           </ToggleGroupItem>
-          <ToggleGroupItem value="app" aria-label="Desktop app" className="gap-1 text-xs px-2">
+          <ToggleGroupItem
+            value="app"
+            aria-label="Desktop app"
+            className="gap-1 text-xs px-2"
+          >
             <AppWindow className="w-3 h-3" />
             App
           </ToggleGroupItem>
@@ -262,21 +276,35 @@ function QuicklinkEditForm({
         <Input
           value={link.url}
           onChange={(e) => onChange({ ...link, url: e.target.value })}
-          placeholder={linkType === "website" ? "https://example.com" : "appname://open"}
+          placeholder={
+            linkType === "website" ? "https://example.com" : "appname://open"
+          }
           className="h-8 text-sm"
         />
         {linkType === "app" && (
-          <p className="text-[10px] text-muted-foreground mt-1">App must be installed to open</p>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            App must be installed to open
+          </p>
         )}
       </div>
 
       {/* Action buttons */}
       <div className="flex justify-end gap-2 pt-2 border-t">
-        <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2 text-xs">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onCancel}
+          className="h-7 px-2 text-xs"
+        >
           <X className="w-3 h-3 mr-1" />
           Cancel
         </Button>
-        <Button size="sm" onClick={onSave} disabled={!canSave} className="h-7 px-2 text-xs">
+        <Button
+          size="sm"
+          onClick={onSave}
+          disabled={!canSave}
+          className="h-7 px-2 text-xs"
+        >
           <Check className="w-3 h-3 mr-1" />
           {isNew ? "Add" : "Save"}
         </Button>
@@ -294,7 +322,9 @@ export function QuicklinksEditor({
   const { siteId } = useEditorContext();
   const { getToken, user } = useEntityAuth();
 
-  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(content.links || []);
+  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(
+    content.links || [],
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<QuicklinkItem | null>(null);
   const [uploadingLinkId, setUploadingLinkId] = useState<string | null>(null);
@@ -372,7 +402,9 @@ export function QuicklinksEditor({
 
   const handleSaveEdit = async () => {
     if (!editingId || !editingData) return;
-    const newLinks = savedLinks.map((l) => (l.id === editingId ? editingData : l));
+    const newLinks = savedLinks.map((l) =>
+      l.id === editingId ? editingData : l,
+    );
     const success = await persistLinks(newLinks);
     if (success) {
       setSavedLinks(newLinks);
@@ -400,7 +432,11 @@ export function QuicklinksEditor({
     }
   };
 
-  const handleImageUpload = async (file: File, linkId: string, isNew: boolean) => {
+  const handleImageUpload = async (
+    file: File,
+    linkId: string,
+    isNew: boolean,
+  ) => {
     setUploadingLinkId(linkId);
     try {
       const token = await getToken();
@@ -460,7 +496,9 @@ export function QuicklinksEditor({
           onChange={setNewLinkData}
           onSave={handleSaveNew}
           onCancel={handleCancelNew}
-          onImageUpload={(file) => handleImageUpload(file, newLinkData.id, true)}
+          onImageUpload={(file) =>
+            handleImageUpload(file, newLinkData.id, true)
+          }
           isUploading={uploadingLinkId === newLinkData.id}
           isNew={true}
         />
@@ -483,10 +521,11 @@ export function QuicklinksEditor({
       {visibleCards.length > 0 ? (
         <div
           className={cn(
-            "grid gap-3 pt-2",
+            "grid gap-3 pt-3",
             visibleCards.length === 1 && "grid-cols-1",
             visibleCards.length === 2 && "grid-cols-2",
-            visibleCards.length >= 3 && "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+            visibleCards.length >= 3 &&
+              "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
           )}
         >
           {visibleCards.map((link) => (
@@ -503,7 +542,9 @@ export function QuicklinksEditor({
         <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
           <ExternalLink className="w-6 h-6 mx-auto text-muted-foreground/50 mb-2" />
           <p className="text-sm text-muted-foreground">No quick links yet</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Click "Add" to create your first link</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Click "Add" to create your first link
+          </p>
         </div>
       ) : null}
     </div>

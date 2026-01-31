@@ -45,7 +45,13 @@ import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { LibraryContent } from "@/types/elements";
 import type { Id } from "@repo/backend";
-import { FolderTree as FolderTreeIcon, Loader2, Plus, Settings2, Upload } from "lucide-react";
+import {
+  FolderTree as FolderTreeIcon,
+  Loader2,
+  Plus,
+  Settings2,
+  Upload,
+} from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -353,9 +359,7 @@ export function LibraryEditor({
                 <SheetHeader className="p-3 border-b">
                   <SheetTitle className="text-sm">Folders</SheetTitle>
                 </SheetHeader>
-                <div className="h-[calc(100vh-60px)]">
-                  {folderTreeContent}
-                </div>
+                <div className="h-[calc(100vh-60px)]">{folderTreeContent}</div>
               </SheetContent>
             </Sheet>
           )}

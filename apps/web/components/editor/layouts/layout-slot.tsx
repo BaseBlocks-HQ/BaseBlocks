@@ -1,14 +1,14 @@
 "use client";
 
-import { ElementEditorWrapper } from "@/components/elements";
 import { DndProvider, type DragEndEvent } from "@/components/dnd";
+import { ElementEditorWrapper } from "@/components/elements";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type {
-  LayoutType,
-  LayoutSlot as LayoutSlotType,
   AnyContent,
   ElementType,
+  LayoutSlot as LayoutSlotType,
+  LayoutType,
 } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
