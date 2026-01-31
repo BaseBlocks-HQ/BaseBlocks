@@ -86,8 +86,8 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 	return (
 		<>
 			<Card className="hover:border-primary/50 transition-colors">
-				<CardHeader>
-					<div className="flex items-start justify-between gap-3">
+				<CardHeader className="pb-3">
+					<div className="flex items-start gap-3">
 						{/* Logo */}
 						<div className="flex-shrink-0">
 							{site.logoUrl ? (
@@ -102,51 +102,55 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 								</div>
 							)}
 						</div>
-						{/* Title and description */}
+						{/* Title, description, and controls */}
 						<div className="flex-1 min-w-0">
-							<CardTitle className="text-lg truncate">{site.name}</CardTitle>
-							<CardDescription className="truncate">
+							<div className="flex items-start justify-between gap-2">
+								<div className="min-w-0 flex-1">
+									<CardTitle className="text-lg truncate">{site.name}</CardTitle>
+								</div>
+								<div className="flex items-center gap-1 flex-shrink-0">
+									<div
+										className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full ${
+											site.isPublished
+												? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+												: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+										}`}
+									>
+										{site.isPublished ? t("sites.published") : t("sites.draft")}
+									</div>
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button variant="ghost" size="icon" className="h-7 w-7">
+												<MoreVertical className="h-4 w-4" />
+												<span className="sr-only">{t("common.settings")}</span>
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end">
+											<DropdownMenuItem onClick={() => setEditOpen(true)}>
+												<Pencil className="h-4 w-4 mr-2" />
+												{t("common.edit")}
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												onClick={() => setDeleteOpen(true)}
+												className="text-destructive focus:text-destructive"
+											>
+												<Trash2 className="h-4 w-4 mr-2" />
+												{t("common.delete")}
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								</div>
+							</div>
+							<CardDescription className="truncate mt-0.5">
 								{site.description || t("sites.noDescription")}
 							</CardDescription>
 							{site.company && (
 								<div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-									<Building2 className="h-3 w-3" />
+									<Building2 className="h-3 w-3 flex-shrink-0" />
 									<span className="truncate">{site.company.name}</span>
 								</div>
 							)}
-						</div>
-						<div className="flex items-center gap-2">
-							<div
-								className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
-									site.isPublished
-										? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-										: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-								}`}
-							>
-								{site.isPublished ? t("sites.published") : t("sites.draft")}
-							</div>
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon" className="h-8 w-8">
-										<MoreVertical className="h-4 w-4" />
-										<span className="sr-only">{t("common.settings")}</span>
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end">
-									<DropdownMenuItem onClick={() => setEditOpen(true)}>
-										<Pencil className="h-4 w-4 mr-2" />
-										{t("common.edit")}
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										onClick={() => setDeleteOpen(true)}
-										className="text-destructive focus:text-destructive"
-									>
-										<Trash2 className="h-4 w-4 mr-2" />
-										{t("common.delete")}
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
 						</div>
 					</div>
 				</CardHeader>

@@ -77,7 +77,7 @@
 		"confirmDelete": "Etes-vous sur de vouloir supprimer ce site ? Cette action est irreversible.",
 		"deleteWarning": "Cette action est irreversible.",
 		"noDescription": "Aucune description",
-		"published": "Publie",
+		"published": "Publié",
 		"draft": "Brouillon"
 	},
 	"editor": {
@@ -186,8 +186,8 @@
 		"serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
 		"siteNotFound": "Site non trouvé",
 		"siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
-		"siteNotPublished": "Site non publie",
-		"siteNotPublishedDescription": "Ce site n'est pas encore publie."
+		"siteNotPublished": "Site non publié",
+		"siteNotPublishedDescription": "Ce site n'est pas encore publié."
 	},
 	"language": {
 		"select": "Choisir la langue",
