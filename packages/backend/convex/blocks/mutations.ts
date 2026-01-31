@@ -17,6 +17,7 @@ const blockTypes = v.union(
   v.literal("code"),
   v.literal("table"),
   v.literal("quicklinks"),
+  v.literal("form"),
 );
 
 // Create a new block

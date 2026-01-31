@@ -29,16 +29,7 @@ import type {
 
 import type { ImageContent, MediaType } from "./media";
 
-import type {
-  CheckboxContent,
-  FormContent,
-  FormType,
-  RadioContent,
-  SelectContent,
-  SubmitButtonContent,
-  TextInputContent,
-  TextareaContent,
-} from "./forms";
+import type { FormContent, FormType } from "./forms";
 
 import type { LayoutSettings, LayoutType } from "./layouts";
 
@@ -78,12 +69,6 @@ export type ContentTypeMap = {
 
   // Forms
   form: FormContent;
-  "text-input": TextInputContent;
-  textarea: TextareaContent;
-  select: SelectContent;
-  checkbox: CheckboxContent;
-  radio: RadioContent;
-  "submit-button": SubmitButtonContent;
 };
 
 // Layout settings map

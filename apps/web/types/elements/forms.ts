@@ -1,123 +1,181 @@
 /**
- * Form element types and content definitions
- * Form elements for building interactive forms
+ * Form Builder Types
+ * Schema-driven form builder with field registry pattern
  */
 
-// Form element types (stubs for future implementation)
-export type FormType =
-  | "form" // Form container
-  | "text-input" // Text input field
-  | "textarea" // Multi-line text input
-  | "select" // Dropdown select
-  | "checkbox" // Checkbox input
-  | "radio" // Radio button group
-  | "submit-button"; // Form submit button
+// =============================================================================
+// FIELD TYPES
+// =============================================================================
 
-// Form content interfaces
+export type FormFieldType =
+  | "short-text"
+  | "long-text"
+  | "email"
+  | "number"
+  | "select"
+  | "checkbox"
+  | "radio"
+  | "date";
 
-export interface FormContent {
-  action?: string;
-  method?: "GET" | "POST";
-  submitLabel?: string;
-  successMessage?: string;
+// =============================================================================
+// FIELD OPTION (for select, radio, checkbox-group)
+// =============================================================================
+
+export interface FieldOption {
+  id: string;
+  value: string;
+  label: string;
 }
 
-export interface TextInputContent {
+// =============================================================================
+// VALIDATION
+// =============================================================================
+
+export interface FieldValidation {
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: string;
+}
+
+// =============================================================================
+// FIELD DEFINITIONS
+// =============================================================================
+
+export interface BaseField {
+  id: string;
+  type: FormFieldType;
   label: string;
   name: string;
   placeholder?: string;
-  required?: boolean;
-  type?: "text" | "email" | "password" | "tel" | "url";
+  description?: string;
+  validation?: FieldValidation;
+  width?: "full" | "half";
 }
 
-export interface TextareaContent {
-  label: string;
-  name: string;
-  placeholder?: string;
-  required?: boolean;
+export interface ShortTextField extends BaseField {
+  type: "short-text";
+}
+
+export interface LongTextField extends BaseField {
+  type: "long-text";
   rows?: number;
 }
 
-export interface SelectContent {
-  label: string;
-  name: string;
-  options: Array<{
-    value: string;
-    label: string;
-  }>;
-  required?: boolean;
-  placeholder?: string;
+export interface EmailField extends BaseField {
+  type: "email";
 }
 
-export interface CheckboxContent {
-  label: string;
-  name: string;
-  checked?: boolean;
-  required?: boolean;
+export interface NumberField extends BaseField {
+  type: "number";
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
-export interface RadioContent {
-  label: string;
-  name: string;
-  options: Array<{
-    value: string;
-    label: string;
-  }>;
-  required?: boolean;
+export interface SelectField extends BaseField {
+  type: "select";
+  options: FieldOption[];
 }
 
-export interface SubmitButtonContent {
-  label: string;
-  variant?: "primary" | "secondary" | "outline";
+export interface CheckboxField extends BaseField {
+  type: "checkbox";
 }
 
-// Union of all form content types
-export type FormContentUnion =
-  | FormContent
-  | TextInputContent
-  | TextareaContent
-  | SelectContent
-  | CheckboxContent
-  | RadioContent
-  | SubmitButtonContent;
+export interface RadioField extends BaseField {
+  type: "radio";
+  options: FieldOption[];
+}
 
-// Default content for new form elements
-export const DEFAULT_FORM_CONTENT: Record<FormType, FormContentUnion> = {
-  form: {
-    method: "POST",
-    submitLabel: "Submit",
-    successMessage: "Form submitted successfully!",
-  },
-  "text-input": {
-    label: "Text Field",
-    name: "text_field",
-    placeholder: "Enter text...",
-    type: "text",
-  },
-  textarea: {
-    label: "Message",
-    name: "message",
-    placeholder: "Enter your message...",
-    rows: 4,
-  },
-  select: {
-    label: "Select Option",
-    name: "select_field",
-    options: [],
-    placeholder: "Choose an option...",
-  },
-  checkbox: {
-    label: "Checkbox",
-    name: "checkbox_field",
-    checked: false,
-  },
-  radio: {
-    label: "Radio Group",
-    name: "radio_field",
-    options: [],
-  },
-  "submit-button": {
-    label: "Submit",
-    variant: "primary",
-  },
+export interface DateField extends BaseField {
+  type: "date";
+}
+
+export type FormField =
+  | ShortTextField
+  | LongTextField
+  | EmailField
+  | NumberField
+  | SelectField
+  | CheckboxField
+  | RadioField
+  | DateField;
+
+// =============================================================================
+// FORM CONTENT (stored in element registry)
+// =============================================================================
+
+export interface FormContent {
+  fields: FormField[];
+  submitLabel: string;
+  successMessage: string;
+}
+
+// =============================================================================
+// FORM TYPE (for element registry)
+// =============================================================================
+
+export type FormType = "form";
+
+// =============================================================================
+// DEFAULTS
+// =============================================================================
+
+export const DEFAULT_FORM_CONTENT: FormContent = {
+  fields: [],
+  submitLabel: "Submit",
+  successMessage: "Thank you for your submission!",
 };
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+export function generateFieldId(): string {
+  return `field_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+}
+
+export function createField(type: FormFieldType): FormField {
+  const id = generateFieldId();
+  const base = {
+    id,
+    label: "",
+    name: id,
+    width: "full" as const,
+  };
+
+  switch (type) {
+    case "short-text":
+      return { ...base, type: "short-text", placeholder: "" };
+    case "long-text":
+      return { ...base, type: "long-text", placeholder: "", rows: 4 };
+    case "email":
+      return { ...base, type: "email", placeholder: "" };
+    case "number":
+      return { ...base, type: "number" };
+    case "select":
+      return { ...base, type: "select", options: [] };
+    case "checkbox":
+      return { ...base, type: "checkbox" };
+    case "radio":
+      return { ...base, type: "radio", options: [] };
+    case "date":
+      return { ...base, type: "date" };
+  }
+}
+
+export function getFieldTypeLabel(type: FormFieldType): string {
+  const labels: Record<FormFieldType, string> = {
+    "short-text": "Short Text",
+    "long-text": "Long Text",
+    "email": "Email",
+    "number": "Number",
+    "select": "Dropdown",
+    "checkbox": "Checkbox",
+    "radio": "Radio",
+    "date": "Date",
+  };
+  return labels[type];
+}

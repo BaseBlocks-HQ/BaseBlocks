@@ -75,6 +75,7 @@ export default defineSchema({
       v.literal("code"),
       v.literal("table"),
       v.literal("quicklinks"),
+      v.literal("form"),
     ),
     order: v.number(),
     content: v.any(), // Block-specific content
@@ -117,6 +118,7 @@ export default defineSchema({
               v.literal("code"),
               v.literal("table"),
               v.literal("quicklinks"),
+              v.literal("form"),
             ),
             content: v.any(),
           }),

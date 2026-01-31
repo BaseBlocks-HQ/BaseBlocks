@@ -9,6 +9,7 @@ import "@/components/elements/layouts";
 import "@/components/elements/blocks";
 import "@/components/elements/sections";
 import "@/components/elements/media";
+import "@/components/elements/forms";
 
 import { getElementsByCategory } from "@/components/elements/registry";
 import type {
@@ -29,10 +30,11 @@ const ACTIVE_CATEGORIES: ElementCategory[] = [
   "blocks",
   "sections",
   "media",
+  "forms",
 ];
 
 // Categories that are stubs (empty for now)
-const EMPTY_CATEGORIES: ElementCategory[] = ["navigation", "forms"];
+const EMPTY_CATEGORIES: ElementCategory[] = ["navigation"];
 
 export function ElementPicker({
   selectedSlotId,

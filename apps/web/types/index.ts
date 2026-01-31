@@ -118,13 +118,24 @@ export { DEFAULT_MEDIA_CONTENT } from "./elements";
 // Form types
 export type {
   FormType,
+  FormFieldType,
+  FormField,
   FormContent,
-  TextInputContent,
-  TextareaContent,
-  SelectContent,
-  CheckboxContent,
-  RadioContent,
-  SubmitButtonContent,
-  FormContentUnion,
+  FieldOption,
+  FieldValidation,
+  BaseField,
+  ShortTextField,
+  LongTextField,
+  EmailField,
+  NumberField,
+  SelectField,
+  CheckboxField,
+  RadioField,
+  DateField,
 } from "./elements";
-export { DEFAULT_FORM_CONTENT } from "./elements";
+export {
+  DEFAULT_FORM_CONTENT,
+  generateFieldId,
+  createField,
+  getFieldTypeLabel,
+} from "./elements";
