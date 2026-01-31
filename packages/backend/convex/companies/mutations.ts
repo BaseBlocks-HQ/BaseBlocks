@@ -32,15 +32,29 @@ export const create = mutation({
       throw new Error("Company already exists for this organization");
     }
 
+    const now = Date.now();
     const companyId = await ctx.db.insert("companies", {
       name,
       slug: slug.toLowerCase(),
       eaOrgId,
       createdBy: auth.userId,
-      createdAt: Date.now(),
+      createdAt: now,
       settings: {
         primaryColor: "#0066FF",
       },
+    });
+
+    // Create the creator as an admin member of this company
+    await ctx.db.insert("members", {
+      companyId,
+      eaUserId: auth.userId,
+      email: auth.email ?? "",
+      name: auth.username,
+      imageUrl: auth.imageUrl,
+      role: "admin",
+      eaRole: "owner",
+      joinedAt: now,
+      syncedAt: now,
     });
 
     return companyId;
