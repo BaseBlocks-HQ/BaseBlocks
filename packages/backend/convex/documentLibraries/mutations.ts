@@ -19,10 +19,23 @@ export const create = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Check for duplicate library name within site
+    const existingLibrary = await ctx.db
+      .query("documentLibraries")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .filter((q) => q.eq(q.field("name"), name.trim()))
+      .first();
+
+    if (existingLibrary) {
+      throw new Error(
+        `A library named "${name}" already exists. Please choose a different name.`
+      );
+    }
+
     const now = Date.now();
     const libraryId = await ctx.db.insert("documentLibraries", {
       siteId,
-      name,
+      name: name.trim(),
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -52,8 +65,23 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Check for duplicate library name if changing
+    if (name !== undefined && name.trim() !== library.name) {
+      const existingLibrary = await ctx.db
+        .query("documentLibraries")
+        .withIndex("by_site", (q) => q.eq("siteId", library.siteId))
+        .filter((q) => q.eq(q.field("name"), name.trim()))
+        .first();
+
+      if (existingLibrary && existingLibrary._id !== libraryId) {
+        throw new Error(
+          `A library named "${name}" already exists. Please choose a different name.`
+        );
+      }
+    }
+
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (name !== undefined) updates.name = name;
+    if (name !== undefined) updates.name = name.trim();
 
     await ctx.db.patch(libraryId, updates);
     return libraryId;

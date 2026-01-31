@@ -32,7 +32,7 @@ export const create = mutation({
       }
     }
 
-    // Get max order for siblings
+    // Get siblings and check for duplicate name
     const siblings = await ctx.db
       .query("documentFolders")
       .withIndex("by_parent", (q) =>
@@ -40,13 +40,22 @@ export const create = mutation({
       )
       .collect();
 
+    const duplicateFolder = siblings.find(
+      (f) => f.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (duplicateFolder) {
+      throw new Error(
+        `A folder named "${name}" already exists in this location. Please choose a different name.`
+      );
+    }
+
     const maxOrder = siblings.reduce((max, f) => Math.max(max, f.order), -1);
 
     const now = Date.now();
     const folderId = await ctx.db.insert("documentFolders", {
       libraryId,
       parentId,
-      name,
+      name: name.trim(),
       order: maxOrder + 1,
       createdBy: auth.userId,
       createdAt: now,
@@ -80,8 +89,27 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Check for duplicate name if renaming
+    if (name !== undefined && name.trim().toLowerCase() !== folder.name.toLowerCase()) {
+      const siblings = await ctx.db
+        .query("documentFolders")
+        .withIndex("by_parent", (q) =>
+          q.eq("libraryId", folder.libraryId).eq("parentId", folder.parentId),
+        )
+        .collect();
+
+      const duplicateFolder = siblings.find(
+        (f) => f._id !== folderId && f.name.toLowerCase() === name.trim().toLowerCase()
+      );
+      if (duplicateFolder) {
+        throw new Error(
+          `A folder named "${name}" already exists in this location. Please choose a different name.`
+        );
+      }
+    }
+
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (name !== undefined) updates.name = name;
+    if (name !== undefined) updates.name = name.trim();
 
     await ctx.db.patch(folderId, updates);
     return folderId;

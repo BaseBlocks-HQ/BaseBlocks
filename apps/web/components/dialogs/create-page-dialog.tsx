@@ -21,16 +21,26 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const createPage = useMutation(api.pages.mutations.create);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setSlug(generateSlug(value));
+    setError("");
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setError("");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
 
     try {
@@ -44,7 +54,8 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       setTitle("");
       setSlug("");
     } catch (err) {
-      console.error("Failed to create page:", err);
+      const message = err instanceof Error ? err.message : "Failed to create page";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +64,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   return (
     <FormDialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       title="Create New Page"
       description="Add a new page to your site"
       trigger={
@@ -83,11 +94,16 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
           id="pageSlug"
           placeholder="getting-started"
           value={slug}
-          onChange={(e) => setSlug(e.target.value.toLowerCase())}
+          onChange={(e) => {
+            setSlug(e.target.value.toLowerCase());
+            setError("");
+          }}
           required
           pattern={SLUG_PATTERN}
         />
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </FormDialog>
   );
 }

@@ -3,6 +3,7 @@
 import {
   type FileData,
   type FolderData,
+  DropZone,
   FileIcon,
   getFileTypeColor,
   useDocumentLibrary,
@@ -525,8 +526,14 @@ export function LibraryEditor({
 
   return (
     <>
-      <div ref={containerRef} className="border rounded-lg overflow-hidden">
-        <div className="flex h-48">
+      <DropZone
+        onFilesAccepted={handleFilesAccepted}
+        disabled={isUploading || !libraryId}
+        className="border-0 rounded-none"
+        noClick
+      >
+        <div ref={containerRef} className="border rounded-lg overflow-hidden">
+          <div className="flex h-48">
           {/* Sidebar - shown when container is wide enough */}
           {showSidebar && (
             <div className="flex flex-col w-40 border-r bg-muted/20 shrink-0 overflow-hidden">
@@ -638,6 +645,7 @@ export function LibraryEditor({
           </div>
         </div>
       </div>
+      </DropZone>
 
       {/* Rename dialog */}
       <Dialog open={!!renameDialog} onOpenChange={(o) => !o && setRenameDialog(null)}>

@@ -27,7 +27,9 @@ export const create = mutation({
       .first();
 
     if (existing) {
-      throw new Error("Page slug already exists");
+      throw new Error(
+        `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`
+      );
     }
 
     // Get max order for siblings
@@ -87,7 +89,9 @@ export const update = mutation({
         .first();
 
       if (existing) {
-        throw new Error("Page slug already exists");
+        throw new Error(
+          `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`
+        );
       }
     }
 

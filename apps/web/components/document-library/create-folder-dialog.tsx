@@ -30,6 +30,7 @@ export function CreateFolderDialog({
 }: CreateFolderDialogProps) {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [internalOpen, setInternalOpen] = useState(false);
 
   const isControlled = open !== undefined;
@@ -40,13 +41,15 @@ export function CreateFolderDialog({
     e.preventDefault();
     if (!name.trim() || isSubmitting) return;
 
+    setError("");
     setIsSubmitting(true);
     try {
       await onSubmit(name.trim());
       setName("");
       setIsOpen(false);
-    } catch (error) {
-      console.error("Failed to create folder:", error);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create folder";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -55,6 +58,7 @@ export function CreateFolderDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setName("");
+      setError("");
     }
     setIsOpen(newOpen);
   };
@@ -71,16 +75,20 @@ export function CreateFolderDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 space-y-2">
             <Label htmlFor="folder-name">Folder name</Label>
             <Input
               id="folder-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
               placeholder="My Folder"
               className="mt-1.5"
               autoFocus
             />
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>

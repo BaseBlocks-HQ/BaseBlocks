@@ -13,6 +13,7 @@ import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
 import { PageEditor } from "./page-editor";
+import { SiteHeaderPreview } from "./site-header-preview";
 
 interface SiteEditorProps {
   siteId: string;
@@ -142,6 +143,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           />
 
           <div className="flex-1 p-8 overflow-auto">
+            {/* Header preview - shows what the public site header will look like */}
+            <SiteHeaderPreview site={site} company={company} />
+
             {selectedPage ? (
               <PageEditor
                 pageId={selectedPage._id}

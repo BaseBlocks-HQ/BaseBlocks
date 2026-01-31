@@ -19,7 +19,9 @@ export const create = mutation({
       .first();
 
     if (existing) {
-      throw new Error("Slug is already taken");
+      throw new Error(
+        `The workspace URL "${slug}" is already taken. Please choose a different name.`
+      );
     }
 
     // Check if company already exists for this org
@@ -29,7 +31,9 @@ export const create = mutation({
       .first();
 
     if (existingOrg) {
-      throw new Error("Company already exists for this organization");
+      throw new Error(
+        "A workspace already exists for this organization. Please contact support if you need assistance."
+      );
     }
 
     const now = Date.now();

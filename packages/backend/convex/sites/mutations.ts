@@ -35,7 +35,9 @@ export const create = mutation({
       .first();
 
     if (existing) {
-      throw new Error("Site slug already exists");
+      throw new Error(
+        `A site with the URL "${slug}" already exists. Please choose a different name or URL slug.`
+      );
     }
 
     const now = Date.now();
@@ -194,7 +196,7 @@ export const remove = mutation({
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, site.companyId);
 
-    // Delete all pages
+    // Delete all pages and their blocks/layouts
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -210,17 +212,46 @@ export const remove = mutation({
       for (const block of blocks) {
         await ctx.db.delete(block._id);
       }
+
+      // Delete all layouts in page
+      const layouts = await ctx.db
+        .query("layouts")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+
+      for (const layout of layouts) {
+        await ctx.db.delete(layout._id);
+      }
+
       await ctx.db.delete(page._id);
     }
 
-    // Delete all documents
-    const documents = await ctx.db
-      .query("documents")
+    // Delete all document libraries and their contents
+    const libraries = await ctx.db
+      .query("documentLibraries")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    for (const doc of documents) {
-      await ctx.db.delete(doc._id);
+    for (const library of libraries) {
+      // Delete all folders in library
+      const folders = await ctx.db
+        .query("documentFolders")
+        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+        .collect();
+      for (const folder of folders) {
+        await ctx.db.delete(folder._id);
+      }
+
+      // Delete all documents in library
+      const docs = await ctx.db
+        .query("documents")
+        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+        .collect();
+      for (const doc of docs) {
+        await ctx.db.delete(doc._id);
+      }
+
+      await ctx.db.delete(library._id);
     }
 
     // Delete site

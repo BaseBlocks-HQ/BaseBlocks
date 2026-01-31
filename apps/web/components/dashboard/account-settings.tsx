@@ -27,6 +27,8 @@ import { useRouter } from "@/i18n/navigation";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@repo/backend";
 
 export function AccountSettings() {
   const t = useTranslations("settings");
@@ -38,6 +40,8 @@ export function AccountSettings() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const deleteMyAccountData = useMutation(api.members.mutations.deleteMyAccountData);
+
   const getInitials = (username?: string, email?: string) => {
     if (username) return username.slice(0, 2).toUpperCase();
     if (email) return email[0]?.toUpperCase() || "?";
@@ -48,6 +52,10 @@ export function AccountSettings() {
     setIsDeleting(true);
     setError(null);
     try {
+      // First, delete user data from Convex database
+      await deleteMyAccountData();
+
+      // Then, delete account from Entity Auth
       const result = await deleteAccount();
       if (result.ok) {
         setOpen(false);

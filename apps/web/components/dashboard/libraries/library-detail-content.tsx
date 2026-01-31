@@ -203,9 +203,18 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
             />
           </div>
 
+          {/* Drop Zone for uploads */}
+          <div className="px-4 pt-4">
+            <DropZone
+              onFilesAccepted={handleFilesAccepted}
+              disabled={isAnyUploading}
+              className="min-h-[80px]"
+            />
+          </div>
+
           {/* Upload Progress */}
           {Object.keys(uploadStates).length > 0 && (
-            <div className="px-4 py-2 border-b">
+            <div className="px-4 py-2">
               <UploadProgressList
                 uploads={uploadStates}
                 onDismiss={() => clearAllUploadStates()}
@@ -213,33 +222,17 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
             </div>
           )}
 
-          {/* Drop Zone with File List */}
-          <DropZone
-            onFilesAccepted={handleFilesAccepted}
-            disabled={isAnyUploading}
-            className="flex-1 m-4 min-h-0"
-            noClick
-          >
-            <div className="h-full overflow-auto p-4">
-              <FileList
-                files={files}
-                onDownload={() => {}}
-                onRename={async (fileId, newName) => {
-                  await renameFile(fileId as Id<"documents">, newName);
-                }}
-                onDelete={async (fileId) => {
-                  await removeFile(fileId as Id<"documents">);
-                }}
-              />
-            </div>
-          </DropZone>
-
-          {/* Upload Button */}
-          <div className="p-4 border-t">
-            <DropZone
-              onFilesAccepted={handleFilesAccepted}
-              disabled={isAnyUploading}
-              className="py-4"
+          {/* File List */}
+          <div className="flex-1 overflow-auto p-4">
+            <FileList
+              files={files}
+              onDownload={() => {}}
+              onRename={async (fileId, newName) => {
+                await renameFile(fileId as Id<"documents">, newName);
+              }}
+              onDelete={async (fileId) => {
+                await removeFile(fileId as Id<"documents">);
+              }}
             />
           </div>
         </div>

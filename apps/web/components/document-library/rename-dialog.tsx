@@ -30,30 +30,41 @@ export function RenameDialog({
 }: RenameDialogProps) {
   const [name, setName] = useState(currentName);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
       setName(currentName);
+      setError("");
     }
   }, [open, currentName]);
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setError("");
+    }
+    onOpenChange(newOpen);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || name === currentName || isSubmitting) return;
 
+    setError("");
     setIsSubmitting(true);
     try {
       await onSubmit(name.trim());
       onOpenChange(false);
-    } catch (error) {
-      console.error("Failed to rename:", error);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to rename ${type}`;
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -63,12 +74,15 @@ export function RenameDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 space-y-2">
             <Label htmlFor="rename-input">Name</Label>
             <Input
               id="rename-input"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
               className="mt-1.5"
               autoFocus
               onFocus={(e) => {
@@ -83,13 +97,14 @@ export function RenameDialog({
                 e.target.select();
               }}
             />
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
             >
               Cancel

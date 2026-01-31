@@ -24,6 +24,7 @@ export function RenamePageDialog({
   const [title, setTitle] = useState(page.title);
   const [slug, setSlug] = useState(page.slug);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const updatePage = useMutation(api.pages.mutations.update);
 
@@ -32,16 +33,26 @@ export function RenamePageDialog({
     if (open) {
       setTitle(page.title);
       setSlug(page.slug);
+      setError("");
     }
   }, [open, page.title, page.slug]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setSlug(generateSlug(value));
+    setError("");
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setError("");
+    }
+    onOpenChange(newOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
 
     try {
@@ -52,7 +63,8 @@ export function RenamePageDialog({
       });
       onOpenChange(false);
     } catch (err) {
-      console.error("Failed to rename page:", err);
+      const message = err instanceof Error ? err.message : "Failed to rename page";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +73,7 @@ export function RenamePageDialog({
   return (
     <FormDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="Rename Page"
       description="Update the title and URL slug for this page"
       onSubmit={handleSubmit}
@@ -84,11 +96,16 @@ export function RenamePageDialog({
         <Input
           id="renameSlug"
           value={slug}
-          onChange={(e) => setSlug(e.target.value.toLowerCase())}
+          onChange={(e) => {
+            setSlug(e.target.value.toLowerCase());
+            setError("");
+          }}
           required
           pattern={SLUG_PATTERN}
         />
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </FormDialog>
   );
 }

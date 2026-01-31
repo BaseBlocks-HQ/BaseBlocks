@@ -71,6 +71,30 @@ export const updateRole = mutation({
 });
 
 /**
+ * Delete the current user's account data from all companies
+ * Called when user deletes their account via Entity Auth
+ */
+export const deleteMyAccountData = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const auth = await getAuthContext(ctx);
+
+    // Find all member records for this user
+    const memberRecords = await ctx.db
+      .query("members")
+      .filter((q) => q.eq(q.field("eaUserId"), auth.userId))
+      .collect();
+
+    // Delete all member records
+    for (const member of memberRecords) {
+      await ctx.db.delete(member._id);
+    }
+
+    return { success: true, deletedMemberRecords: memberRecords.length };
+  },
+});
+
+/**
  * Ensure the company creator is added as an admin member
  * Called during company creation or when no members exist
  */
