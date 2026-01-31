@@ -20,13 +20,6 @@ import type {
   SectionType,
 } from "./sections";
 
-import type {
-  BreadcrumbsContent,
-  NavType,
-  SidebarPagesContent,
-  TopBarContent,
-} from "./navigation";
-
 import type { ImageContent, MediaType } from "./media";
 
 import type { FormContent, FormType } from "./forms";
@@ -34,12 +27,8 @@ import type { FormContent, FormType } from "./forms";
 import type { LayoutSettings, LayoutType } from "./layouts";
 
 // Union of all element types (excluding layouts which are containers)
-export type ElementType =
-  | BlockType
-  | SectionType
-  | NavType
-  | MediaType
-  | FormType;
+// Note: Navigation is configured at site-level, not as individual elements
+export type ElementType = BlockType | SectionType | MediaType | FormType;
 
 // Full element type including layouts
 export type AllElementType = LayoutType | ElementType;
@@ -58,11 +47,6 @@ export type ContentTypeMap = {
   search: SearchContent;
   library: LibraryContent;
   quicklinks: QuicklinksContent;
-
-  // Navigation
-  "sidebar-pages": SidebarPagesContent;
-  "top-bar": TopBarContent;
-  breadcrumbs: BreadcrumbsContent;
 
   // Media
   image: ImageContent;

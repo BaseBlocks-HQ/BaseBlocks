@@ -52,15 +52,18 @@ export type {
 } from "./sections";
 export { DEFAULT_SECTION_CONTENT } from "./sections";
 
-// Navigation types
+// Navigation types (site-level configuration, not content elements)
 export type {
-  NavType,
-  SidebarPagesContent,
-  TopBarContent,
-  BreadcrumbsContent,
-  NavContentUnion,
+  NavigationStyle,
+  NavigationItem,
+  NavigationConfig,
+  NavigationStyleInfo,
 } from "./navigation";
-export { DEFAULT_NAV_CONTENT } from "./navigation";
+export {
+  DEFAULT_NAVIGATION_CONFIG,
+  NAVIGATION_STYLES,
+  getNavigationStyleInfo,
+} from "./navigation";
 
 // Media types
 export type { MediaType, ImageContent, MediaContentUnion } from "./media";

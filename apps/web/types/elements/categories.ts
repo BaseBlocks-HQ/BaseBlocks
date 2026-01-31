@@ -23,55 +23,56 @@ export interface CategoryInfo {
 }
 
 // Category definitions with metadata
+// Order: Site Settings, Navigation, Layouts, Sections, Blocks, Media, Forms
 export const CATEGORIES: CategoryInfo[] = [
   {
     category: "site",
     label: "Site Settings",
     description: "Configure site header and branding",
     icon: "Settings2",
-    order: -1, // Appears before layouts
+    order: 0,
+  },
+  {
+    category: "navigation",
+    label: "Navigation",
+    description: "Site-wide navigation configuration",
+    icon: "Navigation",
+    order: 1,
   },
   {
     category: "layouts",
     label: "Layouts",
     description: "Container structures for organizing content",
     icon: "Layout",
-    order: 0,
-  },
-  {
-    category: "blocks",
-    label: "Blocks",
-    description: "Basic content building blocks",
-    icon: "Square",
-    order: 1,
+    order: 2,
   },
   {
     category: "sections",
     label: "Sections",
     description: "Complex pre-built page sections",
     icon: "LayoutTemplate",
-    order: 2,
+    order: 3,
   },
   {
-    category: "navigation",
-    label: "Navigation",
-    description: "Navigation and menu elements",
-    icon: "Navigation",
-    order: 3,
+    category: "blocks",
+    label: "Blocks",
+    description: "Basic content building blocks",
+    icon: "Square",
+    order: 4,
   },
   {
     category: "media",
     label: "Media",
     description: "Images, videos, and files",
     icon: "Image",
-    order: 4,
+    order: 5,
   },
   {
     category: "forms",
     label: "Forms",
     description: "Form inputs and controls",
     icon: "FormInput",
-    order: 5,
+    order: 6,
   },
 ];
 

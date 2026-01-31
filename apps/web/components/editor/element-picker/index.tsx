@@ -12,6 +12,7 @@ import "@/components/elements/media";
 import "@/components/elements/forms";
 
 import { getElementsByCategory } from "@/components/elements/registry";
+import { NavigationConfigPanel } from "@/components/elements/navigation";
 import { SiteConfigPanel } from "@/components/elements/site";
 import type { Id } from "@repo/backend";
 import type {
@@ -33,12 +34,16 @@ const ACTIVE_CATEGORIES: ElementCategory[] = [
   "layouts",
   "blocks",
   "sections",
+  "navigation",
   "media",
   "forms",
 ];
 
 // Categories that are stubs (empty for now)
-const EMPTY_CATEGORIES: ElementCategory[] = ["navigation"];
+const EMPTY_CATEGORIES: ElementCategory[] = [];
+
+// Categories that show config panels instead of element grids
+const CONFIG_PANEL_CATEGORIES: ElementCategory[] = ["site", "navigation"];
 
 export function ElementPicker({
   siteId,
@@ -47,7 +52,7 @@ export function ElementPicker({
   onAddBlock,
 }: ElementPickerProps) {
   const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
-    null,
+    null
   );
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,10 +74,10 @@ export function ElementPicker({
         return "Blocks";
       case "sections":
         return "Sections";
-      case "media":
-        return "Media";
       case "navigation":
         return "Navigation";
+      case "media":
+        return "Media";
       case "forms":
         return "Forms";
       default:
@@ -119,6 +124,10 @@ export function ElementPicker({
     };
   }, []);
 
+  // Check if current category shows a config panel
+  const showsConfigPanel =
+    activeCategory && CONFIG_PANEL_CATEGORIES.includes(activeCategory);
+
   return (
     <div
       ref={containerRef}
@@ -143,19 +152,31 @@ export function ElementPicker({
         </div>
       )}
 
-      {/* Flyout panel with elements */}
-      {activeCategory && activeCategory !== "site" && categoryElements.length > 0 && (
+      {/* Flyout panel with navigation config */}
+      {activeCategory === "navigation" && siteId && (
         <div
           className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <ElementGrid
-            title={categoryTitle}
-            entries={categoryElements}
-            onSelect={handleSelect}
-          />
+          <NavigationConfigPanel siteId={siteId} />
         </div>
       )}
+
+      {/* Flyout panel with elements */}
+      {activeCategory &&
+        !showsConfigPanel &&
+        categoryElements.length > 0 && (
+          <div
+            className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+            onMouseEnter={() => handleMouseEnter(activeCategory)}
+          >
+            <ElementGrid
+              title={categoryTitle}
+              entries={categoryElements}
+              onSelect={handleSelect}
+            />
+          </div>
+        )}
     </div>
   );
 }

@@ -84,7 +84,11 @@ export const update = mutation({
         ogImage: v.optional(v.string()),
         headerType: v.optional(v.union(v.literal("logo"), v.literal("text"))),
         navigationStyle: v.optional(
-          v.union(v.literal("sidebar"), v.literal("topnav")),
+          v.union(
+            v.literal("sidebar"),
+            v.literal("topnav"),
+            v.literal("subnav")
+          ),
         ),
         // Header visibility settings
         showHeader: v.optional(v.boolean()),

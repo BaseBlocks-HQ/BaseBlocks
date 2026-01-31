@@ -31,7 +31,7 @@ export interface SiteWithCompany {
       favicon?: string;
       ogImage?: string;
       headerType: "logo" | "text";
-      navigationStyle: "sidebar" | "topnav";
+      navigationStyle: "sidebar" | "topnav" | "subnav";
     };
   };
   company: {

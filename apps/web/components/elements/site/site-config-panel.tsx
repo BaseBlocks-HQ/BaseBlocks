@@ -63,7 +63,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         toast.error("Failed to update setting");
       }
     },
-    [siteId, site, updateSite],
+    [siteId, site, updateSite]
   );
 
   // Handle logo upload
@@ -89,7 +89,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         toast.error(uploadState.error);
       }
     },
-    [siteId, uploadImage, uploadState.error, updateSite],
+    [siteId, uploadImage, uploadState.error, updateSite]
   );
 
   // Handle name save
@@ -298,7 +298,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   onClick={() => setIsEditingName(true)}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-md border text-sm",
-                    "hover:bg-muted/50 transition-colors cursor-text",
+                    "hover:bg-muted/50 transition-colors cursor-text"
                   )}
                 >
                   {site.name}

@@ -2,9 +2,15 @@
 
 import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
-import { NavItem, PageBreadcrumbs } from "@/components/navigation";
+import {
+  NavItem,
+  PageBreadcrumbs,
+  SubNavBar,
+  TopNavMenu,
+} from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PageWithChildren } from "@/types";
+import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
@@ -18,7 +24,7 @@ interface PublicSiteLayoutProps {
     slug: string;
     logoUrl?: string;
     settings: {
-      navigationStyle: string;
+      navigationStyle: NavigationStyle;
       headerType: string;
       showHeader?: boolean;
       showLogo?: boolean;
@@ -53,7 +59,7 @@ export function PublicSiteLayout({
   // Get ancestors for breadcrumbs and auto-expanding navigation
   const ancestors = useQuery(
     api.pages.queries.getAncestors,
-    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip",
+    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip"
   );
 
   // Extract ancestor IDs for auto-expanding navigation
@@ -67,47 +73,44 @@ export function PublicSiteLayout({
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const navigationStyle = site.settings.navigationStyle;
+
+  // Determine if we should show sidebar
+  const showSidebar = navigationStyle === "sidebar";
+
+  // Determine if we should show navigation in header (topnav)
+  const showTopNav = navigationStyle === "topnav";
+
+  // Determine if we should show secondary nav bar (subnav)
+  const showSubNav = navigationStyle === "subnav";
 
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Main Header */}
         {showHeader && (
-          <header className="border-b">
-            <div className="container mx-auto flex h-14 items-center justify-between px-4">
+          <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container mx-auto flex h-14 items-center px-4">
+              {/* Left side: Logo and site name */}
               <div className="flex items-center gap-2">
-                {/* Priority: site logo > company logo > auto-generated */}
-                {showLogo && (
-                  <>
-                    {site.logoUrl ? (
-                      <img
-                        src={site.logoUrl}
-                        alt={site.name}
-                        className="h-8 w-8 rounded-lg object-contain"
-                      />
-                    ) : company.logoUrl ? (
-                      <img
-                        src={company.logoUrl}
-                        alt={company.name}
-                        className="h-8 w-8 rounded-lg object-contain"
-                      />
-                    ) : (
-                      <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
-                        style={{
-                          backgroundColor:
-                            company.settings.primaryColor || "#0066FF",
-                        }}
-                      >
-                        {site.name[0]}
-                      </div>
-                    )}
-                  </>
-                )}
+                {showLogo && <SiteLogo site={site} company={company} />}
                 {showSiteName && (
                   <span className="font-semibold">{site.name}</span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+
+              {/* Center: TopNav navigation (if topnav style) */}
+              {showTopNav && pages && (
+                <div className="flex-1 flex justify-center ml-8">
+                  <TopNavMenu
+                    pages={pages}
+                    currentPath={currentPathString}
+                  />
+                </div>
+              )}
+
+              {/* Right side: Search and mode toggle */}
+              <div className="flex items-center gap-3 ml-auto">
                 {showHeaderSearch && (
                   <SearchBox
                     siteId={site._id}
@@ -123,9 +126,20 @@ export function PublicSiteLayout({
           </header>
         )}
 
-        <div className="flex">
-          {site.settings.navigationStyle === "sidebar" && (
-            <aside className="w-64 border-r min-h-[calc(100vh-56px)] p-4">
+        {/* Secondary Navigation Bar (subnav style) */}
+        {showSubNav && pages && (
+          <SubNavBar
+            pages={pages}
+            currentPath={currentPathString}
+            className="sticky top-14 z-30"
+          />
+        )}
+
+        {/* Main content area */}
+        <div className="flex flex-1">
+          {/* Sidebar navigation */}
+          {showSidebar && (
+            <aside className="w-64 border-r min-h-[calc(100vh-56px)] p-4 sticky top-14 self-start">
               <nav className="space-y-1">
                 {pages === undefined ? (
                   <>
@@ -148,6 +162,7 @@ export function PublicSiteLayout({
             </aside>
           )}
 
+          {/* Page content */}
           <main className="flex-1 p-8">
             {currentPage === undefined ? (
               <div className="max-w-3xl mx-auto">
@@ -162,7 +177,7 @@ export function PublicSiteLayout({
               </div>
             ) : (
               <>
-                {/* Breadcrumb navigation */}
+                {/* Breadcrumb navigation - show for all nav styles */}
                 <PageBreadcrumbs
                   pageId={currentPage._id}
                   pageTitle={currentPage.title}
@@ -173,6 +188,7 @@ export function PublicSiteLayout({
           </main>
         </div>
 
+        {/* Footer */}
         <footer className="border-t mt-auto">
           <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
             Powered by BaseBlocks
@@ -180,5 +196,48 @@ export function PublicSiteLayout({
         </footer>
       </div>
     </PublicSiteProvider>
+  );
+}
+
+/**
+ * Site logo component with fallback logic
+ */
+function SiteLogo({
+  site,
+  company,
+}: {
+  site: { name: string; logoUrl?: string };
+  company: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
+}) {
+  // Priority: site logo > company logo > auto-generated
+  if (site.logoUrl) {
+    return (
+      <img
+        src={site.logoUrl}
+        alt={site.name}
+        className="h-8 w-8 rounded-lg object-contain"
+      />
+    );
+  }
+
+  if (company.logoUrl) {
+    return (
+      <img
+        src={company.logoUrl}
+        alt={company.name}
+        className="h-8 w-8 rounded-lg object-contain"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
+      style={{
+        backgroundColor: company.settings.primaryColor || "#0066FF",
+      }}
+    >
+      {site.name[0]}
+    </div>
   );
 }

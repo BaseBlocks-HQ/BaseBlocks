@@ -34,7 +34,11 @@ export default defineSchema({
       favicon: v.optional(v.string()),
       ogImage: v.optional(v.string()),
       headerType: v.union(v.literal("logo"), v.literal("text")),
-      navigationStyle: v.union(v.literal("sidebar"), v.literal("topnav")),
+      navigationStyle: v.union(
+        v.literal("sidebar"),
+        v.literal("topnav"),
+        v.literal("subnav")
+      ),
       // Header visibility settings
       showHeader: v.optional(v.boolean()), // default: true
       showLogo: v.optional(v.boolean()), // default: true

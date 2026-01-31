@@ -84,7 +84,6 @@ export function CategoryMenu({
     "sections",
     "media",
     "forms",
-    "navigation",
   ];
 
   return (
