@@ -5,8 +5,6 @@ import {
   CreateSubPageDialog,
   RenamePageDialog,
 } from "@/components/dialogs";
-import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
-import { DragHandle } from "@/components/dnd";
 import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +14,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
+import type { TreeProjection } from "@/lib/tree-utils";
+import {
+  applyMove,
+  flattenTree,
+  getDescendantIds,
+  hashPages,
+  isValidDrop,
+  INDENT_WIDTH,
+} from "@/lib/tree-utils";
 import type { PageListItem } from "@/types";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import {
-  ChevronDown,
-  ChevronRight,
   FilePlus,
   FileText,
   Home,
@@ -36,6 +38,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SortableTreeItem } from "./sortable-tree-item";
+import { TreeDndProvider } from "./tree-dnd-context";
 
 interface SortablePageTreeProps {
   pages: PageListItem[];
@@ -43,8 +47,6 @@ interface SortablePageTreeProps {
   selectedPageId?: string;
   siteId: string;
   defaultPageId?: string;
-  parentId?: string;
-  depth?: number;
   onSelect: (pageId: string) => void;
   isExpanded?: (pageId: string) => boolean;
   onToggleExpand?: (pageId: string) => void;
@@ -57,294 +59,169 @@ export function SortablePageTree({
   selectedPageId,
   siteId,
   defaultPageId,
-  parentId,
-  depth = 0,
   onSelect,
-  isExpanded,
+  isExpanded: isExpandedProp,
   onToggleExpand,
   onSetExpanded,
 }: SortablePageTreeProps) {
   const editorContext = useEditorContextOptional();
   const canEdit = editorContext?.canEdit ?? false;
-  const reorderPage = useMutation(api.pages.mutations.reorder);
+  const movePage = useMutation(api.pages.mutations.move);
 
-  // Optimistic state for page order
-  const [optimisticOrder, setOptimisticOrder] = useState<string[] | null>(null);
+  // Default isExpanded function if not provided
+  const isExpanded = isExpandedProp ?? (() => false);
 
-  // Track previous server order to detect real changes
-  const prevServerOrderRef = useRef<string>("");
+  // Mutation tracking for optimistic updates
+  const mutationIdRef = useRef(0);
+  const [pendingMutation, setPendingMutation] = useState<{
+    id: number;
+    pages: PageListItem[];
+  } | null>(null);
 
-  // Server-sorted pages
-  const serverSortedPages = useMemo(
-    () => [...pages].sort((a, b) => a.order - b.order),
-    [pages],
-  );
+  // Use optimistic pages if there's a pending mutation, otherwise server pages
+  const effectivePages = pendingMutation?.pages ?? allPages;
 
-  // Reset optimistic state when server data ACTUALLY changes
-  useEffect(() => {
-    const serverOrderKey = serverSortedPages
-      .map((p) => `${p._id}:${p.order}`)
-      .join(",");
-
-    if (serverOrderKey !== prevServerOrderRef.current) {
-      prevServerOrderRef.current = serverOrderKey;
-      setOptimisticOrder(null);
-    }
-  }, [serverSortedPages]);
+  // Flatten the tree for rendering
+  const flattenedItems = useMemo(() => {
+    return flattenTree(effectivePages, isExpanded);
+  }, [effectivePages, isExpanded]);
 
   // Create a map for quick page lookup
   const pageMap = useMemo(() => {
     const map = new Map<string, PageListItem>();
-    for (const page of serverSortedPages) {
+    for (const page of effectivePages) {
       map.set(page._id, page);
     }
     return map;
-  }, [serverSortedPages]);
+  }, [effectivePages]);
 
-  // Use optimistic order if available, otherwise server order
-  const pageIds = optimisticOrder ?? serverSortedPages.map((p) => p._id);
+  // Check for children per page
+  const hasChildrenMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const page of effectivePages) {
+      const children = effectivePages.filter((p) => p.parentId === page._id);
+      map.set(page._id, children.length > 0);
+    }
+    return map;
+  }, [effectivePages]);
 
-  // Get sorted pages based on current order
-  const sortedPages = useMemo(() => {
-    return pageIds
-      .map((id) => pageMap.get(id))
-      .filter((p): p is PageListItem => p !== undefined);
-  }, [pageIds, pageMap]);
+  // Clear pending state when server matches expected result
+  useEffect(() => {
+    if (!pendingMutation) return;
 
+    const serverHash = hashPages(allPages);
+    const expectedHash = hashPages(pendingMutation.pages);
+
+    if (serverHash === expectedHash) {
+      setPendingMutation(null);
+    }
+  }, [allPages, pendingMutation]);
+
+  // Handle drag end with optimistic updates
   const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
+    async (event: DragEndEvent, projection: TreeProjection | null) => {
+      const { active } = event;
 
-      if (!over || active.id === over.id) {
+      if (!projection || !isValidDrop(effectivePages, String(active.id), projection)) {
         return;
       }
 
-      const currentIds = pageIds;
-      const oldIndex = currentIds.findIndex((id) => id === active.id);
-      const newIndex = currentIds.findIndex((id) => id === over.id);
+      // Apply optimistic update
+      const newPages = applyMove(effectivePages, String(active.id), projection);
+      const mutationId = ++mutationIdRef.current;
+      setPendingMutation({ id: mutationId, pages: newPages });
 
-      if (oldIndex === -1 || newIndex === -1) {
-        return;
+      // Auto-expand parent if nesting into it
+      if (projection.position === "child" && projection.overId) {
+        onSetExpanded?.(projection.overId, true);
       }
 
-      // Update optimistic state immediately
-      const reorderedIds = arrayMove(currentIds, oldIndex, newIndex);
-      setOptimisticOrder(reorderedIds);
-
-      // Call reorder mutation with the full ordered list
-      await reorderPage({
-        siteId: siteId as Id<"sites">,
-        parentId: parentId as Id<"pages"> | undefined,
-        pageIds: reorderedIds as Id<"pages">[],
-      });
+      try {
+        await movePage({
+          pageId: active.id as Id<"pages">,
+          newParentId: projection.parentId as Id<"pages"> | undefined,
+          newOrder: projection.order,
+        });
+      } catch (error) {
+        // Rollback only if this mutation is still pending
+        if (pendingMutation?.id === mutationId) {
+          setPendingMutation(null);
+        }
+        console.error("Failed to move page:", error);
+      }
     },
-    [pageIds, reorderPage, parentId, siteId],
+    [effectivePages, movePage, onSetExpanded, pendingMutation?.id],
   );
 
-  // Render drag overlay for pages
-  const renderDragOverlay = (activeId: string | number) => {
-    const page = pageMap.get(String(activeId));
-    if (!page) return null;
+  // Collapse dragged item's children during drag
+  const handleDragStart = useCallback(
+    (event: { active: { id: UniqueIdentifier } }) => {
+      // Optionally collapse children of dragged item
+      const draggedId = String(event.active.id);
+      const descendants = getDescendantIds(effectivePages, draggedId);
+      // We could collapse here if needed, but for now we'll keep them expanded
+    },
+    [effectivePages],
+  );
 
-    const isDefault = defaultPageId === page._id;
 
-    return (
-      <div className="bg-sidebar border rounded-md shadow-lg px-3 py-2 flex items-center gap-2 opacity-95">
-        {isDefault ? (
-          <Home className="h-4 w-4 text-primary" />
-        ) : (
-          <FileText className="h-4 w-4" />
-        )}
-        <span className="text-sm truncate max-w-[150px]">{page.title}</span>
-        {isDefault && (
-          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
-            Default
-          </span>
-        )}
-      </div>
-    );
-  };
+  // Callback to check if an item has children
+  const hasChildren = useCallback(
+    (id: string) => hasChildrenMap.get(id) ?? false,
+    [hasChildrenMap],
+  );
 
-  if (pages.length === 0) {
+  // Callback for auto-expand during drag
+  const handleAutoExpand = useCallback(
+    (id: string) => {
+      onSetExpanded?.(id, true);
+    },
+    [onSetExpanded],
+  );
+
+  if (flattenedItems.length === 0) {
     return null;
   }
 
   return (
-    <DndProvider
-      items={pageIds}
+    <TreeDndProvider
+      items={flattenedItems}
+      pages={effectivePages}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      renderDragOverlay={renderDragOverlay}
+      isExpanded={isExpanded}
+      hasChildren={hasChildren}
+      onAutoExpand={handleAutoExpand}
     >
-      {sortedPages.map((page) => (
-        <SortablePageItem
-          key={page._id}
-          page={page}
-          allPages={allPages}
+      {flattenedItems.map((item) => (
+        <SortableTreeItem
+          key={item.id}
+          item={item}
+          allPages={effectivePages}
           selectedPageId={selectedPageId}
-          siteId={siteId}
           defaultPageId={defaultPageId}
-          depth={depth}
-          onSelect={onSelect}
-          isExpanded={isExpanded}
-          onToggleExpand={onToggleExpand}
-          onSetExpanded={onSetExpanded}
+          hasChildren={hasChildrenMap.get(item.id) ?? false}
+          isExpanded={isExpanded(item.id)}
           canEdit={canEdit}
+          onSelect={onSelect}
+          onToggleExpand={() => onToggleExpand?.(item.id)}
+          actionsMenu={
+            canEdit ? (
+              <PageActionsMenu
+                page={item.page}
+                siteId={siteId}
+                isDefault={defaultPageId === item.page._id}
+                onExpandParent={() => onSetExpanded?.(item.id, true)}
+              />
+            ) : null
+          }
         />
       ))}
-    </DndProvider>
+    </TreeDndProvider>
   );
 }
 
-interface SortablePageItemProps {
-  page: PageListItem;
-  allPages: PageListItem[];
-  selectedPageId?: string;
-  siteId: string;
-  defaultPageId?: string;
-  depth: number;
-  onSelect: (pageId: string) => void;
-  isExpanded?: (pageId: string) => boolean;
-  onToggleExpand?: (pageId: string) => void;
-  onSetExpanded?: (pageId: string, expanded: boolean) => void;
-  canEdit: boolean;
-}
-
-function SortablePageItem({
-  page,
-  allPages,
-  selectedPageId,
-  siteId,
-  defaultPageId,
-  depth,
-  onSelect,
-  isExpanded,
-  onToggleExpand,
-  onSetExpanded,
-  canEdit,
-}: SortablePageItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: page._id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const children = allPages.filter((p) => p.parentId === page._id);
-  const hasChildren = children.length > 0;
-  const isDefault = defaultPageId === page._id;
-  const expanded = isExpanded?.(page._id) ?? false;
-
-  const handleToggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleExpand?.(page._id);
-  };
-
-  const handleExpandParent = () => {
-    // Expand this page when a sub-page is created
-    onSetExpanded?.(page._id, true);
-  };
-
-  return (
-    <>
-      <SidebarMenuItem
-        ref={setNodeRef}
-        style={style}
-        className={cn(
-          "group/page relative",
-          isDragging && "opacity-50 ring-2 ring-primary rounded-md",
-        )}
-      >
-        <SidebarMenuButton
-          isActive={selectedPageId === page._id}
-          onClick={() => onSelect(page._id)}
-          className="w-full pr-8"
-          style={{ paddingLeft: `${(depth + 1) * 12 + 20}px` }}
-        >
-          {/* Drag handle - only show for users with edit permissions */}
-          {canEdit && (
-            <div
-              ref={setActivatorNodeRef}
-              {...attributes}
-              {...listeners}
-              className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/page:opacity-100 transition-opacity"
-              style={{ left: `${(depth + 1) * 12 - 4}px` }}
-            >
-              <DragHandle className="h-5 w-5" />
-            </div>
-          )}
-
-          {/* Expand/collapse toggle for pages with children */}
-          {hasChildren ? (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={handleToggleExpand}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleToggleExpand(e as unknown as React.MouseEvent);
-                }
-              }}
-              className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              {expanded ? (
-                <ChevronDown className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronRight className="h-3.5 w-3.5" />
-              )}
-            </span>
-          ) : (
-            <span className="w-4" />
-          )}
-
-          {isDefault ? (
-            <Home className="h-4 w-4 text-primary" />
-          ) : (
-            <FileText className="h-4 w-4" />
-          )}
-          <span className="truncate">{page.title}</span>
-          {isDefault && (
-            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">
-              Default
-            </span>
-          )}
-        </SidebarMenuButton>
-        <PageActionsMenu
-          page={page}
-          siteId={siteId}
-          isDefault={isDefault}
-          onExpandParent={handleExpandParent}
-        />
-      </SidebarMenuItem>
-
-      {/* Recursively render children when expanded */}
-      {hasChildren && expanded && (
-        <SortablePageTree
-          pages={children}
-          allPages={allPages}
-          selectedPageId={selectedPageId}
-          siteId={siteId}
-          defaultPageId={defaultPageId}
-          parentId={page._id}
-          depth={depth + 1}
-          onSelect={onSelect}
-          isExpanded={isExpanded}
-          onToggleExpand={onToggleExpand}
-          onSetExpanded={onSetExpanded}
-        />
-      )}
-    </>
-  );
-}
-
+// PageActionsMenu component (extracted for better organization)
 function PageActionsMenu({
   page,
   siteId,
@@ -356,20 +233,12 @@ function PageActionsMenu({
   isDefault: boolean;
   onExpandParent?: () => void;
 }) {
-  const editorContext = useEditorContextOptional();
-  const canEdit = editorContext?.canEdit ?? false;
-
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [subPageOpen, setSubPageOpen] = useState(false);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const removePage = useMutation(api.pages.mutations.remove);
-
-  // Don't render any actions if user can't edit
-  if (!canEdit) {
-    return null;
-  }
 
   const handleSetDefault = async () => {
     await setDefaultPage({

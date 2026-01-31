@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
 
@@ -158,6 +159,54 @@ async function deletePageRecursively(
 
   await ctx.db.delete(pageId);
 }
+
+// Move page to new parent and/or position
+export const move = mutation({
+  args: {
+    pageId: v.id("pages"),
+    newParentId: v.optional(v.id("pages")),
+    newOrder: v.number(),
+  },
+  handler: async (ctx, { pageId, newParentId, newOrder }) => {
+    // Get page and verify exists
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    // Verify new parent exists if specified
+    if (newParentId) {
+      const parent = await ctx.db.get(newParentId);
+      if (!parent || parent.siteId !== page.siteId) {
+        throw new Error("Target page not found");
+      }
+
+      // Prevent moving page into itself or its descendants
+      // Walk up the parent chain from newParentId to check for circular reference
+      let checkId: Id<"pages"> | undefined = newParentId;
+      while (checkId) {
+        if (checkId === pageId) {
+          throw new Error("Cannot move page into itself or its descendants");
+        }
+        const checkPage: Doc<"pages"> | null = await ctx.db.get(checkId);
+        checkId = checkPage?.parentId;
+      }
+    }
+
+    // Update the page with new parent and order
+    await ctx.db.patch(pageId, {
+      parentId: newParentId,
+      order: newOrder,
+      updatedAt: Date.now(),
+    });
+
+    return pageId;
+  },
+});
 
 // Delete page
 export const remove = mutation({
