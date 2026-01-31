@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
@@ -30,7 +29,6 @@ interface SiteCardProps {
 		_id: string;
 		name: string;
 		slug: string;
-		description?: string;
 		logoUrl?: string;
 		isPublished: boolean;
 		company?: {
@@ -102,7 +100,7 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 								</div>
 							)}
 						</div>
-						{/* Title, description, and controls */}
+						{/* Title and controls */}
 						<div className="flex-1 min-w-0">
 							<div className="flex items-start justify-between gap-2">
 								<div className="min-w-0 flex-1">
@@ -142,9 +140,6 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 									</DropdownMenu>
 								</div>
 							</div>
-							<CardDescription className="truncate mt-0.5">
-								{site.description || t("sites.noDescription")}
-							</CardDescription>
 							{site.company && (
 								<div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
 									<Building2 className="h-3 w-3 flex-shrink-0" />

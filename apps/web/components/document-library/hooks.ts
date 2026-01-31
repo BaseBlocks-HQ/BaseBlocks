@@ -22,13 +22,13 @@ export function useDocumentLibrary(siteId: Id<"sites">) {
     libraries: libraries as DocumentLibrary[] | undefined,
     isLoading: libraries === undefined,
 
-    create: async (name: string, description?: string, icon?: string) => {
-      return createLibrary({ siteId, name, description, icon });
+    create: async (name: string) => {
+      return createLibrary({ siteId, name });
     },
 
     update: async (
       libraryId: Id<"documentLibraries">,
-      updates: { name?: string; description?: string; icon?: string },
+      updates: { name?: string },
     ) => {
       return updateLibrary({ libraryId, ...updates });
     },

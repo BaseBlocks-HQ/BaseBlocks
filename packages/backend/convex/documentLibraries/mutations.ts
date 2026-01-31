@@ -2,15 +2,13 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthContext } from "../auth";
 
-// Create a new Libraryry
+// Create a new Library
 export const create = mutation({
   args: {
     siteId: v.id("sites"),
     name: v.string(),
-    description: v.optional(v.string()),
-    icon: v.optional(v.string()),
   },
-  handler: async (ctx, { siteId, name, description, icon }) => {
+  handler: async (ctx, { siteId, name }) => {
     const auth = await getAuthContext(ctx);
 
     const site = await ctx.db.get(siteId);
@@ -25,8 +23,6 @@ export const create = mutation({
     const libraryId = await ctx.db.insert("documentLibraries", {
       siteId,
       name,
-      description,
-      icon,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -36,15 +32,13 @@ export const create = mutation({
   },
 });
 
-// Update Libraryry
+// Update Library
 export const update = mutation({
   args: {
     libraryId: v.id("documentLibraries"),
     name: v.optional(v.string()),
-    description: v.optional(v.string()),
-    icon: v.optional(v.string()),
   },
-  handler: async (ctx, { libraryId, name, description, icon }) => {
+  handler: async (ctx, { libraryId, name }) => {
     const auth = await getAuthContext(ctx);
 
     const library = await ctx.db.get(libraryId);
@@ -60,8 +54,6 @@ export const update = mutation({
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
-    if (description !== undefined) updates.description = description;
-    if (icon !== undefined) updates.icon = icon;
 
     await ctx.db.patch(libraryId, updates);
     return libraryId;

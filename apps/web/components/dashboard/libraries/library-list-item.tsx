@@ -10,10 +10,6 @@ import {
 import { Link } from "@/i18n/navigation";
 import type { Id } from "@repo/backend";
 import {
-  Archive,
-  BookOpen,
-  FileText,
-  Folder,
   Library,
   MoreHorizontal,
   Pencil,
@@ -24,8 +20,6 @@ import { useTranslations } from "next-intl";
 export interface LibraryWithCount {
   _id: Id<"documentLibraries">;
   name: string;
-  description?: string;
-  icon?: string;
   siteId: Id<"sites">;
   documentCount: number;
 }
@@ -36,21 +30,12 @@ interface LibraryListItemProps {
   onDelete: (library: LibraryWithCount) => void;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  library: Library,
-  folder: Folder,
-  file: FileText,
-  book: BookOpen,
-  archive: Archive,
-};
-
 export function LibraryListItem({
   library,
   onEdit,
   onDelete,
 }: LibraryListItemProps) {
   const t = useTranslations();
-  const IconComponent = iconMap[library.icon || "library"] || Library;
 
   return (
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
@@ -59,7 +44,7 @@ export function LibraryListItem({
         className="flex items-center gap-3 flex-1 min-w-0"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <IconComponent className="h-5 w-5" />
+          <Library className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-medium truncate">{library.name}</h3>

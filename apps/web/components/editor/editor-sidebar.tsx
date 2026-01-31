@@ -16,25 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import { useEditorContext } from "./editor-context";
-import { LAYOUT_TYPES } from "@/types";
+import { ComponentsFlyout } from "./components-flyout";
 import type { BlockType, PageListItem, LayoutType } from "@/types";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Code,
-  Columns2,
-  FolderOpen,
-  Heading,
-  LayoutGrid,
-  Link2,
-  Minus,
-  MoveVertical,
-  PanelRight,
-  Rows2,
-  Search,
-  Square,
-  Text,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -57,51 +41,6 @@ interface EditorSidebarProps {
   onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: BlockType) => void;
 }
-
-const LAYOUT_ICONS: Record<LayoutType, React.ReactNode> = {
-  single: <Square className="h-4 w-4" />,
-  rows: <Rows2 className="h-4 w-4" />,
-  columns: <Columns2 className="h-4 w-4" />,
-  grid: <LayoutGrid className="h-4 w-4" />,
-  vertical: <PanelRight className="h-4 w-4" />,
-  spacer: <MoveVertical className="h-4 w-4" />,
-};
-
-const BLOCK_ITEMS: Array<{
-  type: BlockType;
-  label: string;
-  icon: React.ReactNode;
-}> = [
-  { type: "heading", label: "Heading", icon: <Heading className="h-4 w-4" /> },
-  { type: "paragraph", label: "Paragraph", icon: <Text className="h-4 w-4" /> },
-  {
-    type: "callout",
-    label: "Callout",
-    icon: <AlertTriangle className="h-4 w-4" />,
-  },
-  { type: "code", label: "Code", icon: <Code className="h-4 w-4" /> },
-  { type: "divider", label: "Divider", icon: <Minus className="h-4 w-4" /> },
-  {
-    type: "spacer",
-    label: "Spacer",
-    icon: <MoveVertical className="h-4 w-4" />,
-  },
-  {
-    type: "library",
-    label: "Library",
-    icon: <FolderOpen className="h-4 w-4" />,
-  },
-  {
-    type: "search",
-    label: "Search",
-    icon: <Search className="h-4 w-4" />,
-  },
-  {
-    type: "quicklinks",
-    label: "Quicklinks",
-    icon: <Link2 className="h-4 w-4" />,
-  },
-];
 
 export function EditorSidebar({
   site,
@@ -200,8 +139,8 @@ export function EditorSidebar({
           </SidebarContent>
         </TabsContent>
 
-        <TabsContent value="components" className="flex-1 mt-0 overflow-auto">
-          <SidebarContent>
+        <TabsContent value="components" className="flex-1 mt-0 overflow-visible">
+          <SidebarContent className="overflow-visible">
             {!canEdit ? (
               <div className="p-4">
                 <p className="text-sm text-muted-foreground">
@@ -209,53 +148,11 @@ export function EditorSidebar({
                 </p>
               </div>
             ) : selectedPageId ? (
-              <div className="p-3 space-y-4">
-                {/* Layouts - 3 per row with labels below icon */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                    {t("editor.sidebar.layouts")}
-                  </p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {LAYOUT_TYPES.map((layoutType) => (
-                      <Button
-                        key={layoutType.type}
-                        variant="outline"
-                        className="h-auto w-full flex-col gap-1 py-2 px-1 overflow-hidden"
-                        onClick={() => onAddLayout?.(layoutType.type)}
-                      >
-                        {LAYOUT_ICONS[layoutType.type]}
-                        <span className="text-[10px] w-full text-center truncate">{t(`editor.layouts.${layoutType.type}`)}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Blocks - 3 per row with labels below icon */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                    {t("editor.sidebar.blocks")}
-                  </p>
-                  {selectedSlotId ? (
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {BLOCK_ITEMS.map((item) => (
-                        <Button
-                          key={item.type}
-                          variant="outline"
-                          className="h-auto w-full flex-col gap-1 py-2 px-1 overflow-hidden"
-                          onClick={() => onAddBlock?.(item.type)}
-                        >
-                          {item.icon}
-                          <span className="text-[10px] w-full text-center truncate">{t(`blocks.${item.type}`)}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground px-1">
-                      {t("editor.sidebar.selectSlot")}
-                    </p>
-                  )}
-                </div>
-              </div>
+              <ComponentsFlyout
+                selectedSlotId={selectedSlotId}
+                onAddLayout={onAddLayout}
+                onAddBlock={onAddBlock}
+              />
             ) : (
               <div className="p-4">
                 <p className="text-sm text-muted-foreground">

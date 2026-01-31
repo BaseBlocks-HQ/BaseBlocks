@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useEntityAuth } from "@/lib/auth";
 import { entityStorageClient } from "@/lib/storage/client";
 import { api } from "@repo/backend";
@@ -19,7 +18,6 @@ interface EditSiteDialogProps {
 	site: {
 		_id: string;
 		name: string;
-		description?: string;
 		logoUrl?: string;
 	};
 }
@@ -30,7 +28,6 @@ export function EditSiteDialog({
 	site,
 }: EditSiteDialogProps) {
 	const [name, setName] = useState(site.name);
-	const [description, setDescription] = useState(site.description || "");
 	const [logoUrl, setLogoUrl] = useState(site.logoUrl || "");
 	const [logoPreview, setLogoPreview] = useState(site.logoUrl || "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,12 +43,11 @@ export function EditSiteDialog({
 	useEffect(() => {
 		if (open) {
 			setName(site.name);
-			setDescription(site.description || "");
 			setLogoUrl(site.logoUrl || "");
 			setLogoPreview(site.logoUrl || "");
 			setError("");
 		}
-	}, [open, site.name, site.description, site.logoUrl]);
+	}, [open, site.name, site.logoUrl]);
 
 	const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -117,7 +113,6 @@ export function EditSiteDialog({
 			await updateSite({
 				siteId: site._id as any,
 				name,
-				description: description || undefined,
 				logoUrl: logoUrl || undefined,
 			});
 			onOpenChange(false);
@@ -205,18 +200,6 @@ export function EditSiteDialog({
 					value={name}
 					onChange={(e) => setName(e.target.value)}
 					required
-				/>
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="editSiteDescription">
-					{t("dialogs.createSite.descriptionLabel")}
-				</Label>
-				<Textarea
-					id="editSiteDescription"
-					placeholder={t("dialogs.createSite.descriptionPlaceholder")}
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
 				/>
 			</div>
 

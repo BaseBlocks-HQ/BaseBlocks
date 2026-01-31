@@ -23,7 +23,6 @@ export default defineSchema({
     companyId: v.id("companies"),
     name: v.string(),
     slug: v.string(), // site slug within company
-    description: v.optional(v.string()),
     logoUrl: v.optional(v.string()), // Custom logo for the site
     defaultPageId: v.optional(v.id("pages")), // The page shown first when visiting
     isPublished: v.boolean(),
@@ -147,8 +146,6 @@ export default defineSchema({
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
-    description: v.optional(v.string()),
-    icon: v.optional(v.string()),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),

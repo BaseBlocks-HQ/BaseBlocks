@@ -10,11 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { api } from "@repo/backend";
 import type { Doc } from "@repo/backend";
 import { useMutation } from "convex/react";
-import { Library, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,14 +23,6 @@ interface CreateLibraryDialogProps {
   defaultSiteId?: string;
 }
 
-const LIBRARY_ICONS = [
-  { value: "library", label: "Library", icon: "Library" },
-  { value: "folder", label: "Folder", icon: "Folder" },
-  { value: "file", label: "File", icon: "FileText" },
-  { value: "book", label: "Book", icon: "BookOpen" },
-  { value: "archive", label: "Archive", icon: "Archive" },
-];
-
 export function CreateLibraryDialog({
   sites,
   defaultSiteId,
@@ -39,8 +30,6 @@ export function CreateLibraryDialog({
   const [open, setOpen] = useState(false);
   const [siteId, setSiteId] = useState(defaultSiteId || "");
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [icon, setIcon] = useState("library");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
@@ -49,8 +38,6 @@ export function CreateLibraryDialog({
 
   const resetForm = () => {
     setName("");
-    setDescription("");
-    setIcon("library");
     setSiteId(defaultSiteId || "");
     setError("");
   };
@@ -64,8 +51,6 @@ export function CreateLibraryDialog({
       await createLibrary({
         siteId: siteId as any,
         name,
-        description: description || undefined,
-        icon,
       });
       setOpen(false);
       resetForm();
@@ -121,37 +106,6 @@ export function CreateLibraryDialog({
           onChange={(e) => setName(e.target.value)}
           required
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="libraryDescription">
-          {t("libraries.descriptionLabel")}
-        </Label>
-        <Textarea
-          id="libraryDescription"
-          placeholder={t("libraries.descriptionPlaceholder")}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="libraryIcon">{t("libraries.iconLabel")}</Label>
-        <Select value={icon} onValueChange={setIcon}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LIBRARY_ICONS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                <div className="flex items-center gap-2">
-                  <Library className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

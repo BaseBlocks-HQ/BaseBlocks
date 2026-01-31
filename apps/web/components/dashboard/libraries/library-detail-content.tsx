@@ -233,8 +233,6 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
             ? {
                 _id: library._id,
                 name: library.name,
-                description: library.description,
-                icon: library.icon,
                 siteId: library.siteId,
                 documentCount: files.length,
               }

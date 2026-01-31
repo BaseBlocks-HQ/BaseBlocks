@@ -239,13 +239,13 @@ export const searchPublic = query({
 
     const activeLibraryIds = new Set<string>();
     for (const page of pages) {
-      const sections = await ctx.db
-        .query("sections")
+      const layouts = await ctx.db
+        .query("layouts")
         .withIndex("by_page", (q) => q.eq("pageId", page._id))
         .collect();
 
-      for (const section of sections) {
-        for (const slot of section.slots) {
+      for (const layout of layouts) {
+        for (const slot of layout.slots) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
               activeLibraryIds.add(block.content.libraryId);

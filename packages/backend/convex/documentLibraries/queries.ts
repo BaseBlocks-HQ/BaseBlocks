@@ -145,8 +145,6 @@ export const listAllWithCounts = query({
       _id: Id<"documentLibraries">;
       siteId: Id<"sites">;
       name: string;
-      description?: string;
-      icon?: string;
       documentCount: number;
     }> = [];
 
@@ -166,8 +164,6 @@ export const listAllWithCounts = query({
           _id: lib._id,
           siteId: lib.siteId,
           name: lib.name,
-          description: lib.description,
-          icon: lib.icon,
           documentCount: docs.length,
         });
       }

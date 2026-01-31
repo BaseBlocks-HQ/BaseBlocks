@@ -7,9 +7,8 @@ export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
-    description: v.optional(v.string()),
   },
-  handler: async (ctx, { name, slug, description }) => {
+  handler: async (ctx, { name, slug }) => {
     const auth = await getAuthContext(ctx);
     const eaOrgId = auth.eaOrgId;
 
@@ -44,7 +43,6 @@ export const create = mutation({
       companyId: company._id,
       name,
       slug: slug.toLowerCase(),
-      description,
       isPublished: false,
       createdBy: auth.userId,
       createdAt: now,
@@ -79,7 +77,6 @@ export const update = mutation({
   args: {
     siteId: v.id("sites"),
     name: v.optional(v.string()),
-    description: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
     settings: v.optional(
       v.object({
@@ -92,7 +89,7 @@ export const update = mutation({
       }),
     ),
   },
-  handler: async (ctx, { siteId, name, description, logoUrl, settings }) => {
+  handler: async (ctx, { siteId, name, logoUrl, settings }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
@@ -101,7 +98,6 @@ export const update = mutation({
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
-    if (description !== undefined) updates.description = description;
     if (logoUrl !== undefined) updates.logoUrl = logoUrl;
     if (settings !== undefined) {
       updates.settings = { ...site.settings, ...settings };

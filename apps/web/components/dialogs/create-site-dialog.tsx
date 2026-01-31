@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
@@ -16,7 +15,6 @@ export function CreateSiteDialog() {
 	const [open, setOpen] = useState(false);
 	const [name, setName] = useState("");
 	const [slug, setSlug] = useState("");
-	const [description, setDescription] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 	const t = useTranslations();
@@ -37,12 +35,10 @@ export function CreateSiteDialog() {
 			await createSite({
 				name,
 				slug,
-				description: description || undefined,
 			});
 			setOpen(false);
 			setName("");
 			setSlug("");
-			setDescription("");
 		} catch (err) {
 			setError(err instanceof Error ? err.message : t("common.error"));
 		} finally {
@@ -87,18 +83,6 @@ export function CreateSiteDialog() {
 					onChange={(e) => setSlug(e.target.value.toLowerCase())}
 					required
 					pattern={SLUG_PATTERN}
-				/>
-			</div>
-
-			<div className="space-y-2">
-				<Label htmlFor="siteDescription">
-					{t("dialogs.createSite.descriptionLabel")}
-				</Label>
-				<Textarea
-					id="siteDescription"
-					placeholder={t("dialogs.createSite.descriptionPlaceholder")}
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
 				/>
 			</div>
 
