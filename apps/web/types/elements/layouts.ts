@@ -1,0 +1,93 @@
+/**
+ * Layout element types and content definitions
+ * Layouts are container structures that hold other elements in organized slots
+ */
+
+// Layout element types
+export type LayoutType =
+  | "single" // Single column, full width
+  | "rows" // Vertical stack of N rows
+  | "columns" // Horizontal N columns
+  | "grid" // N×M grid
+  | "spacer" // Vertical spacer (no slots)
+  | "vertical"; // Sidebar layout (rendered beside main content)
+
+// Spacer height options
+export type SpacerLayoutHeight = "small" | "medium" | "large" | "xlarge";
+
+// Layout settings - configuration options per layout type
+export interface LayoutSettings {
+  // Configuration (depends on layout type)
+  rowCount?: number; // For "rows" layout (2-4)
+  columnCount?: number; // For "columns" layout (2-4)
+  gridColumns?: number; // For "grid" layout (2-4)
+  gridRows?: number; // For "grid" layout (2-4)
+  spacerHeight?: SpacerLayoutHeight; // For "spacer" layout
+}
+
+// Default slot counts per layout type
+export const LAYOUT_SLOT_COUNTS: Record<LayoutType, number | "dynamic"> = {
+  single: 1,
+  rows: "dynamic", // Based on rowCount setting
+  columns: "dynamic", // Based on columnCount setting
+  grid: "dynamic", // Based on gridColumns × gridRows
+  spacer: 0, // Spacer has no slots
+  vertical: 1, // Sidebar layout (single slot)
+};
+
+// Default settings per layout type
+export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> = {
+  single: {},
+  rows: { rowCount: 2 },
+  columns: { columnCount: 2 },
+  grid: { gridColumns: 2, gridRows: 2 },
+  spacer: { spacerHeight: "medium" },
+  vertical: {},
+};
+
+// Layout metadata for UI display (legacy support)
+export interface LayoutTypeInfo {
+  type: LayoutType;
+  label: string;
+  description: string;
+  icon: string; // Lucide icon name
+}
+
+export const LAYOUT_TYPES: LayoutTypeInfo[] = [
+  {
+    type: "single",
+    label: "Single",
+    description: "Full-width single column",
+    icon: "Square",
+  },
+  {
+    type: "rows",
+    label: "Rows",
+    description: "Vertical stack of rows",
+    icon: "Rows3",
+  },
+  {
+    type: "columns",
+    label: "Columns",
+    description: "Horizontal columns",
+    icon: "Columns3",
+  },
+  {
+    type: "grid",
+    label: "Grid",
+    description: "Grid layout",
+    icon: "LayoutGrid",
+  },
+  {
+    type: "vertical",
+    label: "Sidebar",
+    description: "Sidebar beside main content",
+    icon: "PanelRight",
+  },
+  {
+    type: "spacer",
+    label: "Spacer",
+    description: "Vertical spacing",
+    icon: "MoveVertical",
+  },
+];

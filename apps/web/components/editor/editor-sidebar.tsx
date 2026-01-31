@@ -16,8 +16,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import { useEditorContext } from "./editor-context";
-import { ComponentsFlyout } from "./components-flyout";
+import { ElementPicker } from "./element-picker";
 import type { BlockType, PageListItem, LayoutType } from "@/types";
+import type { ElementType } from "@/types/elements";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -148,10 +149,10 @@ export function EditorSidebar({
                 </p>
               </div>
             ) : selectedPageId ? (
-              <ComponentsFlyout
+              <ElementPicker
                 selectedSlotId={selectedSlotId}
                 onAddLayout={onAddLayout}
-                onAddBlock={onAddBlock}
+                onAddBlock={(type: ElementType) => onAddBlock?.(type as BlockType)}
               />
             ) : (
               <div className="p-4">
