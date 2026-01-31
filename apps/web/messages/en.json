@@ -1,306 +1,306 @@
 {
-	"common": {
-		"loading": "Loading...",
-		"error": "An error occurred",
-		"save": "Save",
-		"cancel": "Cancel",
-		"delete": "Delete",
-		"edit": "Edit",
-		"create": "Create",
-		"search": "Search",
-		"back": "Back",
-		"backToHome": "Back to home",
-		"next": "Next",
-		"previous": "Previous",
-		"confirm": "Confirm",
-		"close": "Close",
-		"settings": "Settings",
-		"logout": "Log out",
-		"login": "Log in",
-		"signIn": "Sign In",
-		"signUp": "Sign up",
-		"signOut": "Sign Out",
-		"getStarted": "Get Started",
-		"goToDashboard": "Go to Dashboard",
-		"redirecting": "Redirecting..."
-	},
-	"metadata": {
-		"title": "BaseBlocks - Build Internal Sites for Your Company",
-		"description": "Create and share internal documentation, resources, and knowledge bases with your team."
-	},
-	"landing": {
-		"heroTitle": "Build Internal Sites for Your Company",
-		"heroDescription": "Create and share internal documentation, resources, and knowledge bases with your team. Simple, secure, and beautifully designed."
-	},
-	"navigation": {
-		"dashboard": "Dashboard",
-		"sites": "Sites",
-		"settings": "Settings",
-		"help": "Help"
-	},
-	"auth": {
-		"loginTitle": "Welcome back",
-		"loginDescription": "Sign in to your account to continue",
-		"signUpTitle": "Create an account",
-		"signUpDescription": "Get started with BaseBlocks",
-		"forgotPassword": "Forgot password?",
-		"noAccount": "Don't have an account?",
-		"hasAccount": "Already have an account?",
-		"continueWith": "Or continue with",
-		"continueWithGoogle": "Continue with Google",
-		"continueWithMicrosoft": "Continue with Microsoft",
-		"signInFailed": "Sign in failed"
-	},
-	"dashboard": {
-		"title": "Dashboard",
-		"welcomeBack": "Welcome back",
-		"yourSites": "Your Sites",
-		"manageSites": "Manage your internal documentation and resources",
-		"recentSites": "Recent sites",
-		"createSite": "Create site",
-		"noSites": "No sites yet",
-		"noSitesDescription": "Create your first site to get started",
-		"createFirstSite": "Create your first site"
-	},
-	"sites": {
-		"title": "Sites",
-		"create": "Create site",
-		"edit": "Edit site",
-		"delete": "Delete site",
-		"settings": "Site settings",
-		"publish": "Publish",
-		"unpublish": "Unpublish",
-		"preview": "Preview",
-		"viewLive": "View Live",
-		"siteName": "Site name",
-		"siteDescription": "Site description",
-		"confirmDelete": "Are you sure you want to delete this site? This action cannot be undone.",
-		"deleteWarning": "This action cannot be undone.",
-		"noDescription": "No description",
-		"published": "Published",
-		"draft": "Draft"
-	},
-	"editor": {
-		"addBlock": "Add block",
-		"deleteBlock": "Delete block",
-		"moveUp": "Move up",
-		"moveDown": "Move down",
-		"duplicate": "Duplicate",
-		"saveChanges": "Save changes",
-		"unsavedChanges": "You have unsaved changes",
-		"saving": "Saving...",
-		"saved": "Saved",
-		"publish": "Publish",
-		"unpublish": "Unpublish",
-		"preview": "Preview",
-		"viewLive": "View Live",
-		"sidebar": {
-			"pagesTab": "Pages",
-			"componentsTab": "Components",
-			"layouts": "Layouts",
-			"blocks": "Blocks",
-			"selectSlot": "Select a slot to add blocks",
-			"selectPage": "Select a page to add components",
-			"viewOnly": "You have view-only access. Contact an admin to request edit permissions."
-		},
-		"layouts": {
-			"single": "Single",
-			"rows": "Rows",
-			"columns": "Columns",
-			"grid": "Grid",
-			"vertical": "Sidebar",
-			"spacer": "Spacer"
-		}
-	},
-	"onboarding": {
-		"title": "Let's get started",
-		"description": "Set up your workspace in a few simple steps",
-		"step1Title": "Create your workspace",
-		"step1Description": "Give your workspace a name",
-		"step2Title": "Invite your team",
-		"step2Description": "Add team members to collaborate",
-		"step3Title": "Create your first site",
-		"step3Description": "Start building your internal site",
-		"companyName": "Company name",
-		"companyNamePlaceholder": "My Company",
-		"createWorkspace": "Create workspace",
-		"creating": "Creating..."
-	},
-	"dialogs": {
-		"createSite": {
-			"title": "Create new site",
-			"description": "Add a new site to your workspace",
-			"nameLabel": "Name",
-			"namePlaceholder": "My site",
-			"descriptionLabel": "Description",
-			"descriptionPlaceholder": "A brief description of your site",
-			"creating": "Creating...",
-			"create": "Create site"
-		},
-		"createPage": {
-			"title": "Create new page",
-			"description": "Add a new page to your site",
-			"nameLabel": "Page name",
-			"namePlaceholder": "My page",
-			"creating": "Creating...",
-			"create": "Create page"
-		},
-		"createFolder": {
-			"title": "Create new folder",
-			"description": "Organize your files with folders",
-			"nameLabel": "Folder name",
-			"namePlaceholder": "My folder",
-			"creating": "Creating...",
-			"create": "Create folder"
-		},
-		"rename": {
-			"title": "Rename",
-			"nameLabel": "New name",
-			"renaming": "Renaming...",
-			"rename": "Rename"
-		},
-		"delete": {
-			"title": "Confirm deletion",
-			"description": "This action cannot be undone.",
-			"deleting": "Deleting...",
-			"delete": "Delete"
-		},
-		"editSite": {
-			"title": "Edit Site",
-			"description": "Update your site's name, description, and logo",
-			"logoLabel": "Site Logo",
-			"uploadLogo": "Upload Logo",
-			"uploading": "Uploading...",
-			"saving": "Saving...",
-			"logoHint": "Recommended: 128x128px, max 2MB",
-			"invalidImageType": "Please select an image file",
-			"logoTooLarge": "Logo must be less than 2MB"
-		}
-	},
-	"errors": {
-		"notFound": "Page not found",
-		"notFoundDescription": "The page you're looking for doesn't exist or has been moved.",
-		"unauthorized": "Unauthorized",
-		"unauthorizedDescription": "You don't have permission to access this page.",
-		"serverError": "Server error",
-		"serverErrorDescription": "Something went wrong. Please try again later.",
-		"siteNotFound": "Site not found",
-		"siteNotFoundDescription": "The site you're looking for doesn't exist.",
-		"siteNotPublished": "Site not published",
-		"siteNotPublishedDescription": "This site hasn't been published yet."
-	},
-	"language": {
-		"select": "Select language",
-		"current": "Current language"
-	},
-	"blocks": {
-		"heading": "Heading",
-		"paragraph": "Paragraph",
-		"image": "Image",
-		"file": "File",
-		"callout": "Callout",
-		"code": "Code",
-		"divider": "Divider",
-		"quicklinks": "Quick Links",
-		"search": "Search",
-		"library": "Library",
-		"spacer": "Spacer"
-	},
-	"libraries": {
-		"title": "Libraries",
-		"subtitle": "Manage your document libraries and files",
-		"create": "Create Library",
-		"createTitle": "Create New Library",
-		"createDescription": "Add a new document library to organize your files",
-		"editTitle": "Edit Library",
-		"editDescription": "Update your library settings",
-		"deleteTitle": "Delete Library",
-		"deleteDescription": "Are you sure you want to delete \"{name}\"? All documents and folders will be permanently deleted. This action cannot be undone.",
-		"siteLabel": "Site",
-		"selectSite": "Select a site",
-		"nameLabel": "Name",
-		"namePlaceholder": "My Library",
-		"descriptionLabel": "Description",
-		"descriptionPlaceholder": "A brief description of this library",
-		"iconLabel": "Icon",
-		"document": "document",
-		"documents": "documents",
-		"noLibraries": "No libraries yet",
-		"noLibrariesDescription": "Create your first library to start organizing documents",
-		"noSites": "No sites available",
-		"noSitesDescription": "Create a site first to add libraries",
-		"notFound": "Library not found",
-		"folders": "Folders",
-		"rootFolder": "All Files",
-		"searchPlaceholder": "Search documents...",
-		"noSearchResults": "No documents found",
-		"matchInContent": "Match in content",
-		"matchInFilename": "Match in filename"
-	},
-	"inbox": {
-		"title": "Invitations",
-		"description": "Pending invitations to join organizations",
-		"noInvitations": "No pending invitations",
-		"invitedToOrg": "Organization invitation",
-		"invitedYou": "invited you to join their organization",
-		"asRole": "as {role}",
-		"expires": "Expires {date}",
-		"accept": "Accept",
-		"decline": "Decline"
-	},
-	"team": {
-		"title": "Team Members",
-		"description": "Manage your organization's team members and their access roles",
-		"inviteMember": "Invite Member",
-		"memberCount": "{count} members",
-		"syncMembers": "Sync Members",
-		"syncing": "Syncing...",
-		"syncSuccess": "Members synced successfully",
-		"noMembers": "No team members yet",
-		"noMembersDescription": "Invite your first team member to collaborate",
-		"member": {
-			"name": "Name",
-			"email": "Email",
-			"role": "Role",
-			"joined": "Joined",
-			"actions": "Actions"
-		},
-		"roles": {
-			"admin": "Admin",
-			"viewer": "Viewer",
-			"owner": "Owner"
-		},
-		"roleDescriptions": {
-			"admin": "Full access to edit sites, pages, and manage team",
-			"viewer": "Read-only access to view sites and pages"
-		},
-		"invite": {
-			"title": "Invite Team Member",
-			"description": "Search for users by email or username to invite them to your organization",
-			"searchPlaceholder": "Search by email or username...",
-			"searching": "Searching...",
-			"noResults": "No users found",
-			"selectRole": "Select role",
-			"inviting": "Inviting...",
-			"invite": "Send Invitation",
-			"success": "Invitation sent successfully",
-			"alreadyMember": "User is already a member",
-			"userNotFound": "User not found. They must have an Entity Auth account first."
-		},
-		"actions": {
-			"changeRole": "Change Role",
-			"removeMember": "Remove Member",
-			"confirmRemove": "Are you sure you want to remove {name} from the team?",
-			"removing": "Removing...",
-			"cannotRemoveSelf": "You cannot remove yourself",
-			"cannotRemoveOwner": "Cannot remove the organization owner"
-		},
-		"pendingInvitations": {
-			"title": "Pending Invitations",
-			"noInvitations": "No pending invitations",
-			"expires": "Expires {date}",
-			"revoke": "Revoke",
-			"revoking": "Revoking..."
-		}
-	}
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "back": "Back",
+    "backToHome": "Back to home",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "close": "Close",
+    "settings": "Settings",
+    "logout": "Log out",
+    "login": "Log in",
+    "signIn": "Sign In",
+    "signUp": "Sign up",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started",
+    "goToDashboard": "Go to Dashboard",
+    "redirecting": "Redirecting..."
+  },
+  "metadata": {
+    "title": "BaseBlocks - Build Internal Sites for Your Company",
+    "description": "Create and share internal documentation, resources, and knowledge bases with your team."
+  },
+  "landing": {
+    "heroTitle": "Build Internal Sites for Your Company",
+    "heroDescription": "Create and share internal documentation, resources, and knowledge bases with your team. Simple, secure, and beautifully designed."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "sites": "Sites",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginDescription": "Sign in to your account to continue",
+    "signUpTitle": "Create an account",
+    "signUpDescription": "Get started with BaseBlocks",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "continueWith": "Or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithMicrosoft": "Continue with Microsoft",
+    "signInFailed": "Sign in failed"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcomeBack": "Welcome back",
+    "yourSites": "Your Sites",
+    "manageSites": "Manage your internal documentation and resources",
+    "recentSites": "Recent sites",
+    "createSite": "Create site",
+    "noSites": "No sites yet",
+    "noSitesDescription": "Create your first site to get started",
+    "createFirstSite": "Create your first site"
+  },
+  "sites": {
+    "title": "Sites",
+    "create": "Create site",
+    "edit": "Edit site",
+    "delete": "Delete site",
+    "settings": "Site settings",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "preview": "Preview",
+    "viewLive": "View Live",
+    "siteName": "Site name",
+    "siteDescription": "Site description",
+    "confirmDelete": "Are you sure you want to delete this site? This action cannot be undone.",
+    "deleteWarning": "This action cannot be undone.",
+    "noDescription": "No description",
+    "published": "Published",
+    "draft": "Draft"
+  },
+  "editor": {
+    "addBlock": "Add block",
+    "deleteBlock": "Delete block",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "duplicate": "Duplicate",
+    "saveChanges": "Save changes",
+    "unsavedChanges": "You have unsaved changes",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "preview": "Preview",
+    "viewLive": "View Live",
+    "sidebar": {
+      "pagesTab": "Pages",
+      "componentsTab": "Components",
+      "layouts": "Layouts",
+      "blocks": "Blocks",
+      "selectSlot": "Select a slot to add blocks",
+      "selectPage": "Select a page to add components",
+      "viewOnly": "You have view-only access. Contact an admin to request edit permissions."
+    },
+    "layouts": {
+      "single": "Single",
+      "rows": "Rows",
+      "columns": "Columns",
+      "grid": "Grid",
+      "vertical": "Sidebar",
+      "spacer": "Spacer"
+    }
+  },
+  "onboarding": {
+    "title": "Let's get started",
+    "description": "Set up your workspace in a few simple steps",
+    "step1Title": "Create your workspace",
+    "step1Description": "Give your workspace a name",
+    "step2Title": "Invite your team",
+    "step2Description": "Add team members to collaborate",
+    "step3Title": "Create your first site",
+    "step3Description": "Start building your internal site",
+    "companyName": "Company name",
+    "companyNamePlaceholder": "My Company",
+    "createWorkspace": "Create workspace",
+    "creating": "Creating..."
+  },
+  "dialogs": {
+    "createSite": {
+      "title": "Create new site",
+      "description": "Add a new site to your workspace",
+      "nameLabel": "Name",
+      "namePlaceholder": "My site",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "A brief description of your site",
+      "creating": "Creating...",
+      "create": "Create site"
+    },
+    "createPage": {
+      "title": "Create new page",
+      "description": "Add a new page to your site",
+      "nameLabel": "Page name",
+      "namePlaceholder": "My page",
+      "creating": "Creating...",
+      "create": "Create page"
+    },
+    "createFolder": {
+      "title": "Create new folder",
+      "description": "Organize your files with folders",
+      "nameLabel": "Folder name",
+      "namePlaceholder": "My folder",
+      "creating": "Creating...",
+      "create": "Create folder"
+    },
+    "rename": {
+      "title": "Rename",
+      "nameLabel": "New name",
+      "renaming": "Renaming...",
+      "rename": "Rename"
+    },
+    "delete": {
+      "title": "Confirm deletion",
+      "description": "This action cannot be undone.",
+      "deleting": "Deleting...",
+      "delete": "Delete"
+    },
+    "editSite": {
+      "title": "Edit Site",
+      "description": "Update your site's name, description, and logo",
+      "logoLabel": "Site Logo",
+      "uploadLogo": "Upload Logo",
+      "uploading": "Uploading...",
+      "saving": "Saving...",
+      "logoHint": "Recommended: 128x128px, max 2MB",
+      "invalidImageType": "Please select an image file",
+      "logoTooLarge": "Logo must be less than 2MB"
+    }
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "notFoundDescription": "The page you're looking for doesn't exist or has been moved.",
+    "unauthorized": "Unauthorized",
+    "unauthorizedDescription": "You don't have permission to access this page.",
+    "serverError": "Server error",
+    "serverErrorDescription": "Something went wrong. Please try again later.",
+    "siteNotFound": "Site not found",
+    "siteNotFoundDescription": "The site you're looking for doesn't exist.",
+    "siteNotPublished": "Site not published",
+    "siteNotPublishedDescription": "This site hasn't been published yet."
+  },
+  "language": {
+    "select": "Select language",
+    "current": "Current language"
+  },
+  "blocks": {
+    "heading": "Heading",
+    "paragraph": "Paragraph",
+    "image": "Image",
+    "file": "File",
+    "callout": "Callout",
+    "code": "Code",
+    "divider": "Divider",
+    "quicklinks": "Quick Links",
+    "search": "Search",
+    "library": "Library",
+    "spacer": "Spacer"
+  },
+  "libraries": {
+    "title": "Libraries",
+    "subtitle": "Manage your document libraries and files",
+    "create": "Create Library",
+    "createTitle": "Create New Library",
+    "createDescription": "Add a new document library to organize your files",
+    "editTitle": "Edit Library",
+    "editDescription": "Update your library settings",
+    "deleteTitle": "Delete Library",
+    "deleteDescription": "Are you sure you want to delete \"{name}\"? All documents and folders will be permanently deleted. This action cannot be undone.",
+    "siteLabel": "Site",
+    "selectSite": "Select a site",
+    "nameLabel": "Name",
+    "namePlaceholder": "My Library",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "A brief description of this library",
+    "iconLabel": "Icon",
+    "document": "document",
+    "documents": "documents",
+    "noLibraries": "No libraries yet",
+    "noLibrariesDescription": "Create your first library to start organizing documents",
+    "noSites": "No sites available",
+    "noSitesDescription": "Create a site first to add libraries",
+    "notFound": "Library not found",
+    "folders": "Folders",
+    "rootFolder": "All Files",
+    "searchPlaceholder": "Search documents...",
+    "noSearchResults": "No documents found",
+    "matchInContent": "Match in content",
+    "matchInFilename": "Match in filename"
+  },
+  "inbox": {
+    "title": "Invitations",
+    "description": "Pending invitations to join organizations",
+    "noInvitations": "No pending invitations",
+    "invitedToOrg": "Organization invitation",
+    "invitedYou": "invited you to join their organization",
+    "asRole": "as {role}",
+    "expires": "Expires {date}",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "team": {
+    "title": "Team Members",
+    "description": "Manage your organization's team members and their access roles",
+    "inviteMember": "Invite Member",
+    "memberCount": "{count} members",
+    "syncMembers": "Sync Members",
+    "syncing": "Syncing...",
+    "syncSuccess": "Members synced successfully",
+    "noMembers": "No team members yet",
+    "noMembersDescription": "Invite your first team member to collaborate",
+    "member": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "joined": "Joined",
+      "actions": "Actions"
+    },
+    "roles": {
+      "admin": "Admin",
+      "viewer": "Viewer",
+      "owner": "Owner"
+    },
+    "roleDescriptions": {
+      "admin": "Full access to edit sites, pages, and manage team",
+      "viewer": "Read-only access to view sites and pages"
+    },
+    "invite": {
+      "title": "Invite Team Member",
+      "description": "Search for users by email or username to invite them to your organization",
+      "searchPlaceholder": "Search by email or username...",
+      "searching": "Searching...",
+      "noResults": "No users found",
+      "selectRole": "Select role",
+      "inviting": "Inviting...",
+      "invite": "Send Invitation",
+      "success": "Invitation sent successfully",
+      "alreadyMember": "User is already a member",
+      "userNotFound": "User not found. They must have an Entity Auth account first."
+    },
+    "actions": {
+      "changeRole": "Change Role",
+      "removeMember": "Remove Member",
+      "confirmRemove": "Are you sure you want to remove {name} from the team?",
+      "removing": "Removing...",
+      "cannotRemoveSelf": "You cannot remove yourself",
+      "cannotRemoveOwner": "Cannot remove the organization owner"
+    },
+    "pendingInvitations": {
+      "title": "Pending Invitations",
+      "noInvitations": "No pending invitations",
+      "expires": "Expires {date}",
+      "revoke": "Revoke",
+      "revoking": "Revoking..."
+    }
+  }
 }

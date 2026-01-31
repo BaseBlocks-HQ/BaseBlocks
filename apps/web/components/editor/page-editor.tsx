@@ -10,8 +10,8 @@ import type {
   AnyContent,
   LayoutBlockType,
   LayoutData,
-  LayoutType,
   LayoutSettings,
+  LayoutType,
 } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
@@ -19,8 +19,8 @@ import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useEditorContext } from "./editor-context";
-import { SaveIndicator } from "./save-indicator";
 import { SortableLayout } from "./layouts/sortable-layout";
+import { SaveIndicator } from "./save-indicator";
 
 interface PageEditorProps {
   pageId: string;
@@ -44,15 +44,15 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const reorderLayoutsMutation = useMutation(api.layouts.mutations.reorder);
   const updateBlockMutation = useMutation(
-    api.layouts.mutations.updateBlockInSlot
+    api.layouts.mutations.updateBlockInSlot,
   );
   const removeBlockMutation = useMutation(
-    api.layouts.mutations.removeBlockFromSlot
+    api.layouts.mutations.removeBlockFromSlot,
   );
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
   const moveBlockMutation = useMutation(api.layouts.mutations.moveBlock);
   const updateSettingsMutation = useMutation(
-    api.layouts.mutations.updateSettings
+    api.layouts.mutations.updateSettings,
   );
 
   // Convert layouts from DB to LayoutData format
@@ -81,22 +81,22 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   // Separate main layouts from sidebar layouts
   const mainLayouts = useMemo(
     () => layouts.filter((s) => s.type !== "vertical"),
-    [layouts]
+    [layouts],
   );
   const sidebarLayouts = useMemo(
     () => layouts.filter((s) => s.type === "vertical"),
-    [layouts]
+    [layouts],
   );
   const hasSidebar = sidebarLayouts.length > 0;
 
   // Layout IDs for DnD (main layouts only for now)
   const mainLayoutIds = useMemo(
     () => mainLayouts.map((s) => s.id),
-    [mainLayouts]
+    [mainLayouts],
   );
   const sidebarLayoutIds = useMemo(
     () => sidebarLayouts.map((s) => s.id),
-    [sidebarLayouts]
+    [sidebarLayouts],
   );
 
   // Handle layout drag end for main layouts
@@ -117,7 +117,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         layoutIds: newOrder as Id<"layouts">[],
       });
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation]
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
   );
 
   // Handle layout drag end for sidebar layouts
@@ -138,7 +138,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         layoutIds: newOrder as Id<"layouts">[],
       });
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation]
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
   );
 
   // Notify parent of slot selection changes
@@ -147,7 +147,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       selectSlot(layoutId, slotId);
       onSelectionChange?.(slotId);
     },
-    [selectSlot, onSelectionChange]
+    [selectSlot, onSelectionChange],
   );
 
   // Add a new layout
@@ -168,7 +168,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         }, 100);
       }
     },
-    [createLayoutMutation, pageId, selectSlot, onSelectionChange]
+    [createLayoutMutation, pageId, selectSlot, onSelectionChange],
   );
 
   // Update block content
@@ -177,7 +177,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       layoutId: string,
       slotId: string,
       blockId: string,
-      content: AnyContent
+      content: AnyContent,
     ) => {
       setStatus("saving");
       await updateBlockMutation({
@@ -188,7 +188,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       });
       setStatus("saved");
     },
-    [updateBlockMutation, setStatus]
+    [updateBlockMutation, setStatus],
   );
 
   // Remove block
@@ -200,7 +200,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         blockId,
       });
     },
-    [removeBlockMutation]
+    [removeBlockMutation],
   );
 
   // Remove layout
@@ -211,7 +211,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       });
       clearSelection();
     },
-    [removeLayoutMutation, clearSelection]
+    [removeLayoutMutation, clearSelection],
   );
 
   // Move block within layout
@@ -221,7 +221,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       fromSlotId: string,
       toSlotId: string,
       blockId: string,
-      toIndex: number
+      toIndex: number,
     ) => {
       await moveBlockMutation({
         layoutId: layoutId as Id<"layouts">,
@@ -231,7 +231,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         toIndex,
       });
     },
-    [moveBlockMutation]
+    [moveBlockMutation],
   );
 
   // Update layout settings (e.g., spacer height)
@@ -244,7 +244,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       });
       setStatus("saved");
     },
-    [updateSettingsMutation, setStatus]
+    [updateSettingsMutation, setStatus],
   );
 
   // Handle click on editor background to deselect
@@ -296,7 +296,12 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
 
   return (
     <div className="min-h-full w-full" onClick={handleEditorClick}>
-      <div className={cn("mx-auto relative", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+      <div
+        className={cn(
+          "mx-auto relative",
+          hasSidebar ? "max-w-6xl" : "max-w-4xl",
+        )}
+      >
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">{pageData.title}</h1>
           <SaveIndicator status={status} />

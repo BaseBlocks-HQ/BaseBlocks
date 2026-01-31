@@ -43,7 +43,6 @@ export { DEFAULT_BLOCK_CONTENT } from "./blocks";
 // Section types
 export type {
   SectionType,
-  HeroContent,
   SearchContent,
   LibraryContent,
   QuicklinkType,
@@ -64,16 +63,7 @@ export type {
 export { DEFAULT_NAV_CONTENT } from "./navigation";
 
 // Media types
-export type {
-  MediaType,
-  ImageContent,
-  FileContent,
-  VideoContent,
-  AudioContent,
-  YouTubeEmbedContent,
-  GalleryContent,
-  MediaContentUnion,
-} from "./media";
+export type { MediaType, ImageContent, MediaContentUnion } from "./media";
 export { DEFAULT_MEDIA_CONTENT } from "./media";
 
 // Form types

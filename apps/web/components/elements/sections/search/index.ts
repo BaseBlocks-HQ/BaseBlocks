@@ -3,11 +3,11 @@
  * Document search functionality
  */
 
+import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
 import { Search } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
-import { SearchPreview } from "./search-preview";
 import { SearchEditor } from "./search-editor";
+import { SearchPreview } from "./search-preview";
 import { SearchRenderer } from "./search-renderer";
 
 // Re-export components

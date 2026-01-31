@@ -3,12 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { Doc } from "@repo/backend";
-import {
-  ArrowLeft,
-  Library,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Library, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface LibraryHeaderProps {
@@ -17,7 +12,11 @@ interface LibraryHeaderProps {
   onDelete: () => void;
 }
 
-export function LibraryHeader({ library, onEdit, onDelete }: LibraryHeaderProps) {
+export function LibraryHeader({
+  library,
+  onEdit,
+  onDelete,
+}: LibraryHeaderProps) {
   const t = useTranslations();
 
   return (

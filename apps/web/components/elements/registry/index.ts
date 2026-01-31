@@ -3,17 +3,16 @@
  * Single source of truth for all element types across categories
  */
 
-import type { ComponentType } from "react";
-import type { LucideIcon } from "lucide-react";
 import type {
+  AnyContent,
+  ContentFor,
   ElementCategory,
   ElementType,
   LayoutType,
-  ContentTypeMap,
-  ContentFor,
-  AnyContent,
   SaveStatus,
 } from "@/types/elements";
+import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 // Element editor props interface
 export interface ElementEditorProps<T extends ElementType = ElementType> {
@@ -75,7 +74,10 @@ class ElementRegistry {
 
   // Register an element
   register<T extends ElementType>(entry: ElementRegistryEntry<T>): void {
-    this.elements.set(entry.type, entry as unknown as ElementRegistryEntry<ElementType>);
+    this.elements.set(
+      entry.type,
+      entry as unknown as ElementRegistryEntry<ElementType>,
+    );
   }
 
   // Register a layout
@@ -109,13 +111,13 @@ class ElementRegistry {
       return Array.from(this.layouts.values());
     }
     return Array.from(this.elements.values()).filter(
-      (entry) => entry.category === category
+      (entry) => entry.category === category,
     );
   }
 
   // Get editor component for an element type
   getEditor<T extends ElementType>(
-    type: T
+    type: T,
   ): ComponentType<ElementEditorProps<T>> | undefined {
     const entry = this.elements.get(type);
     return entry?.editor as ComponentType<ElementEditorProps<T>> | undefined;
@@ -123,15 +125,17 @@ class ElementRegistry {
 
   // Get renderer component for an element type
   getRenderer<T extends ElementType>(
-    type: T
+    type: T,
   ): ComponentType<ElementRendererProps<T>> | undefined {
     const entry = this.elements.get(type);
-    return entry?.renderer as ComponentType<ElementRendererProps<T>> | undefined;
+    return entry?.renderer as
+      | ComponentType<ElementRendererProps<T>>
+      | undefined;
   }
 
   // Get preview component
   getPreview(
-    type: ElementType | LayoutType
+    type: ElementType | LayoutType,
   ): ComponentType<ElementPreviewProps> | undefined {
     const elementEntry = this.elements.get(type as ElementType);
     if (elementEntry) return elementEntry.preview;
@@ -220,7 +224,7 @@ const registry = new ElementRegistry();
 
 // Export singleton methods for convenience
 export const registerElement = <T extends ElementType>(
-  entry: ElementRegistryEntry<T>
+  entry: ElementRegistryEntry<T>,
 ) => registry.register(entry);
 
 export const registerLayout = (entry: LayoutRegistryEntry) =>

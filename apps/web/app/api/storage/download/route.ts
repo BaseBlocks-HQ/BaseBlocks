@@ -2,7 +2,7 @@
  * Proxy endpoint for file downloads from Entity Storage
  * This bypasses CORS issues by making the request server-side
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const ENTITY_STORAGE_SITE_URL =
   process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (!path) {
       return NextResponse.json(
         { error: "Missing path parameter" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,19 +25,20 @@ export async function GET(request: NextRequest) {
       `${ENTITY_STORAGE_SITE_URL}/fs/download?path=${encodeURIComponent(path)}`,
       {
         method: "GET",
-      }
+      },
     );
 
     if (!response.ok) {
       return NextResponse.json(
         { error: `Download failed: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     // Get the file data and headers
     const data = await response.arrayBuffer();
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    const contentType =
+      response.headers.get("content-type") || "application/octet-stream";
     const contentDisposition = response.headers.get("content-disposition");
 
     // Return the file with proper headers
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
     console.error("Storage download proxy error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Download failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

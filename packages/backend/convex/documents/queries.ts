@@ -1,7 +1,7 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContext } from "../auth";
-import type { Doc, Id } from "../_generated/dataModel";
 
 // ============================================================================
 // Helper Functions
@@ -14,7 +14,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 function extractSnippet(
   text: string | undefined,
   searchTerm: string,
-  contextLength = 80
+  contextLength = 80,
 ): { snippet: string; matchStart: number; matchEnd: number } | null {
   if (!text) return null;
 
@@ -26,7 +26,10 @@ function extractSnippet(
 
   // Calculate snippet boundaries
   const start = Math.max(0, matchIndex - contextLength);
-  const end = Math.min(text.length, matchIndex + searchTerm.length + contextLength);
+  const end = Math.min(
+    text.length,
+    matchIndex + searchTerm.length + contextLength,
+  );
 
   // Extract snippet and adjust match position
   let snippet = text.slice(start, end);
@@ -54,11 +57,12 @@ function extractSnippet(
 function formatSearchResult(
   doc: Doc<"documents">,
   matchType: "content" | "filename",
-  searchTerm: string
+  searchTerm: string,
 ) {
-  const snippetData = matchType === "content"
-    ? extractSnippet(doc.extractedText, searchTerm)
-    : null;
+  const snippetData =
+    matchType === "content"
+      ? extractSnippet(doc.extractedText, searchTerm)
+      : null;
 
   return {
     _id: doc._id,
@@ -84,13 +88,13 @@ async function performSearch(
   siteId: Id<"sites">,
   searchTerm: string,
   limit: number,
-  activeLibraryIds?: string[]
+  activeLibraryIds?: string[],
 ) {
   // 1. Search by content (full-text search)
   const contentResults = await ctx.db
     .query("documents")
     .withSearchIndex("search_content", (q: any) =>
-      q.search("extractedText", searchTerm).eq("siteId", siteId)
+      q.search("extractedText", searchTerm).eq("siteId", siteId),
     )
     .take(limit * 2); // Fetch more to account for filtering
 
@@ -98,7 +102,7 @@ async function performSearch(
   const filenameResults = await ctx.db
     .query("documents")
     .withSearchIndex("search_filename", (q: any) =>
-      q.search("filename", searchTerm).eq("siteId", siteId)
+      q.search("filename", searchTerm).eq("siteId", siteId),
     )
     .take(limit * 2);
 
@@ -203,7 +207,10 @@ export const searchPublic = query({
     accessToken: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { siteId, query: searchQuery, accessToken, limit = 20 }) => {
+  handler: async (
+    ctx,
+    { siteId, query: searchQuery, accessToken, limit = 20 },
+  ) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
@@ -256,7 +263,13 @@ export const searchPublic = query({
     }
 
     // Use shared search logic with active library filter
-    return performSearch(ctx, siteId, trimmed, limit, Array.from(activeLibraryIds));
+    return performSearch(
+      ctx,
+      siteId,
+      trimmed,
+      limit,
+      Array.from(activeLibraryIds),
+    );
   },
 });
 
@@ -496,7 +509,7 @@ export const listFailedExtraction = query({
     return await ctx.db
       .query("documents")
       .withIndex("by_extraction_status", (q) =>
-        q.eq("siteId", siteId).eq("extractionStatus", "failed")
+        q.eq("siteId", siteId).eq("extractionStatus", "failed"),
       )
       .take(limit);
   },
@@ -531,7 +544,7 @@ export const searchByLibrary = query({
     const contentResults = await ctx.db
       .query("documents")
       .withSearchIndex("search_content", (q: any) =>
-        q.search("extractedText", trimmed).eq("siteId", site._id)
+        q.search("extractedText", trimmed).eq("siteId", site._id),
       )
       .take(limit * 2);
 
@@ -539,7 +552,7 @@ export const searchByLibrary = query({
     const filenameResults = await ctx.db
       .query("documents")
       .withSearchIndex("search_filename", (q: any) =>
-        q.search("filename", trimmed).eq("siteId", site._id)
+        q.search("filename", trimmed).eq("siteId", site._id),
       )
       .take(limit * 2);
 

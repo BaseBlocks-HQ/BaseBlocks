@@ -16,7 +16,7 @@ import { api } from "@repo/backend";
 import { useAction } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ReceivedInvitation {
   id: string;
@@ -40,9 +40,15 @@ export function InvitationInbox() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const getInvitations = useAction(api.members.actions.getMyReceivedInvitations);
-  const acceptInvitation = useAction(api.members.actions.acceptReceivedInvitation);
-  const declineInvitation = useAction(api.members.actions.declineReceivedInvitation);
+  const getInvitations = useAction(
+    api.members.actions.getMyReceivedInvitations,
+  );
+  const acceptInvitation = useAction(
+    api.members.actions.acceptReceivedInvitation,
+  );
+  const declineInvitation = useAction(
+    api.members.actions.declineReceivedInvitation,
+  );
 
   const loadInvitations = useCallback(async () => {
     setIsLoading(true);
@@ -54,12 +60,13 @@ export function InvitationInbox() {
       const results = await getInvitations({ accessToken: token });
       setInvitations(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load invitations");
+      setError(
+        err instanceof Error ? err.message : "Failed to load invitations",
+      );
     } finally {
       setIsLoading(false);
     }
   }, [getToken, getInvitations]);
-
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     setProcessingId(invitation.id);
@@ -76,7 +83,9 @@ export function InvitationInbox() {
       });
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to accept invitation");
+      setError(
+        err instanceof Error ? err.message : "Failed to accept invitation",
+      );
     } finally {
       setProcessingId(null);
     }
@@ -91,7 +100,9 @@ export function InvitationInbox() {
       await declineInvitation({ invitationId, accessToken: token });
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to decline invitation");
+      setError(
+        err instanceof Error ? err.message : "Failed to decline invitation",
+      );
     } finally {
       setProcessingId(null);
     }
@@ -134,11 +145,11 @@ export function InvitationInbox() {
           <DialogTitle className="flex items-center gap-2">
             <Inbox className="h-5 w-5" />
             {t("title")}
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            {isLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
           </DialogTitle>
-          <DialogDescription>
-            {t("description")}
-          </DialogDescription>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -168,13 +179,18 @@ export function InvitationInbox() {
                     <AvatarImage src={invitation.inviterImageUrl} />
                   )}
                   <AvatarFallback>
-                    {getInitials(invitation.inviterUsername, invitation.inviterEmail)}
+                    {getInitials(
+                      invitation.inviterUsername,
+                      invitation.inviterEmail,
+                    )}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 space-y-2">
                   <div>
                     <p className="font-medium">
-                      {invitation.inviterUsername || invitation.inviterEmail || t("invitedToOrg")}
+                      {invitation.inviterUsername ||
+                        invitation.inviterEmail ||
+                        t("invitedToOrg")}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {t("invitedYou")}
@@ -185,7 +201,9 @@ export function InvitationInbox() {
                       {invitation.role}
                     </Badge>
                     <span>·</span>
-                    <span>{t("expires", { date: formatDate(invitation.expiresAt) })}</span>
+                    <span>
+                      {t("expires", { date: formatDate(invitation.expiresAt) })}
+                    </span>
                   </div>
                   <div className="flex gap-2 pt-1">
                     <Button

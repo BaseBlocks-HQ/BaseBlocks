@@ -42,11 +42,11 @@ export function TeamContent() {
   const company = useQuery(api.companies.queries.getMine);
   const members = useQuery(
     api.members.queries.list,
-    company ? { companyId: company._id } : "skip"
+    company ? { companyId: company._id } : "skip",
   );
   const myRole = useQuery(
     api.members.queries.getMyRole,
-    company ? { companyId: company._id } : "skip"
+    company ? { companyId: company._id } : "skip",
   );
 
   const syncMembers = useAction(api.members.actions.syncMembers);
@@ -171,7 +171,9 @@ export function TeamContent() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getRoleBadgeVariant(member.role, member.isOwner)}>
+                    <Badge
+                      variant={getRoleBadgeVariant(member.role, member.isOwner)}
+                    >
                       {member.isOwner
                         ? t("roles.owner")
                         : member.role === "admin"

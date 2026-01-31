@@ -3,11 +3,11 @@
  * Horizontal line separator
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { Minus } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { DividerPreview } from "./divider-preview";
 import { DividerEditor } from "./divider-editor";
+import { DividerPreview } from "./divider-preview";
 import { DividerRenderer } from "./divider-renderer";
 
 // Re-export components

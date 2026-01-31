@@ -3,9 +3,9 @@
  * Vertical spacing within content (renamed from "spacer" to avoid confusion with layout spacer)
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { MoveVertical } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { BlockSpacerPreview } from "./block-spacer-preview";
 import { SpacerEditor as BlockSpacerEditor } from "./spacer-editor";
 import { SpacerRenderer as BlockSpacerRenderer } from "./spacer-renderer";

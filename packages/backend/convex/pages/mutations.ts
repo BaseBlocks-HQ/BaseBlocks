@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext, requireAdminOrLegacy } from "../auth";
+import { requireAdminOrLegacy } from "../auth";
 
 // Create a new page
 export const create = mutation({

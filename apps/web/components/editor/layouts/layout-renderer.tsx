@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
+import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@/types";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
@@ -17,11 +17,7 @@ export interface LayoutRendererProps {
   onSelectSlot: (slotId: string) => void;
   onSelectBlock: (slotId: string, blockId: string) => void;
   onAddBlock: (slotId: string) => void;
-  onUpdateBlock: (
-    slotId: string,
-    blockId: string,
-    content: AnyContent,
-  ) => void;
+  onUpdateBlock: (slotId: string, blockId: string, content: AnyContent) => void;
   onRemoveBlock: (slotId: string, blockId: string) => void;
   onMoveBlock?: (
     fromSlotId: string,
@@ -120,45 +116,48 @@ export function LayoutRenderer({
         /* Spacer layout - renders as vertical space with height controls */
         <div
           className={cn(
-            "w-full border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center gap-3 transition-colors",
+            "w-full max-w-full box-border",
+            "border border-dashed border-muted-foreground/30 rounded-md",
+            "flex items-center justify-center gap-2 sm:gap-3",
+            "transition-colors",
             "hover:border-muted-foreground/50 hover:bg-muted/30",
-            SPACER_LAYOUT_HEIGHTS[spacerHeight].value,
           )}
+          style={{ height: `${SPACER_LAYOUT_HEIGHTS[spacerHeight]}px` }}
         >
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MoveVertical className="h-4 w-4" />
-            <span className="text-xs">Spacer</span>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="text-xs hidden sm:inline">Spacer</span>
           </div>
 
-          {/* Height controls - always visible */}
-          <div className="flex gap-1">
-            {(
-              Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]
-            ).map((size) => (
-              <Button
-                key={size}
-                variant={spacerHeight === size ? "default" : "outline"}
-                size="sm"
-                className="h-6 w-6 p-0 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSpacerHeightChange(size);
-                }}
-              >
-                {size === "small"
-                  ? "S"
-                  : size === "medium"
-                    ? "M"
-                    : size === "large"
-                      ? "L"
-                      : "XL"}
-              </Button>
-            ))}
+          {/* Height controls - responsive sizing */}
+          <div className="flex gap-0.5 sm:gap-1">
+            {(Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]).map(
+              (size) => (
+                <Button
+                  key={size}
+                  variant={spacerHeight === size ? "default" : "outline"}
+                  size="sm"
+                  className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSpacerHeightChange(size);
+                  }}
+                >
+                  {size === "small"
+                    ? "S"
+                    : size === "medium"
+                      ? "M"
+                      : size === "large"
+                        ? "L"
+                        : "XL"}
+                </Button>
+              ),
+            )}
           </div>
         </div>
       ) : (
         /* Regular layouts with slots */
-        <div style={gridStyle} className="min-h-[48px] p-1 overflow-hidden">
+        <div style={gridStyle} className="min-h-[48px] p-1">
           {layout.slots.map((slot) => (
             <LayoutSlot
               key={slot.id}

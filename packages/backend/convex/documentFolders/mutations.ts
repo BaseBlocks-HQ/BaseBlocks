@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
+import { mutation } from "../_generated/server";
 import { getAuthContext } from "../auth";
 
 // Create a new folder
@@ -125,7 +125,8 @@ export const move = mutation({
         if (checkId === folderId) {
           throw new Error("Cannot move folder into itself or its descendants");
         }
-        const checkFolder: Doc<"documentFolders"> | null = await ctx.db.get(checkId);
+        const checkFolder: Doc<"documentFolders"> | null =
+          await ctx.db.get(checkId);
         checkId = checkFolder?.parentId;
       }
     }
@@ -140,8 +141,7 @@ export const move = mutation({
         )
         .collect();
 
-      order =
-        siblings.reduce((max, f) => Math.max(max, f.order), -1) + 1;
+      order = siblings.reduce((max, f) => Math.max(max, f.order), -1) + 1;
     }
 
     await ctx.db.patch(folderId, {

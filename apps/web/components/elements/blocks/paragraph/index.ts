@@ -3,11 +3,11 @@
  * Plain text content
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { AlignLeft } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { ParagraphPreview } from "./paragraph-preview";
 import { ParagraphEditor } from "./paragraph-editor";
+import { ParagraphPreview } from "./paragraph-preview";
 import { ParagraphRenderer } from "./paragraph-renderer";
 
 // Re-export components

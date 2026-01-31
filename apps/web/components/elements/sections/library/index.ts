@@ -3,11 +3,11 @@
  * Document library with folder navigation
  */
 
+import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
 import { Library } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
-import { LibraryPreview } from "./library-preview";
 import { LibraryEditor } from "./library-editor";
+import { LibraryPreview } from "./library-preview";
 import { LibraryRenderer } from "./library-renderer";
 
 // Re-export components

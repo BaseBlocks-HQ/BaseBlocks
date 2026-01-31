@@ -42,7 +42,9 @@ function QuicklinkButton({ link }: QuicklinkButtonProps) {
   );
 }
 
-export function QuicklinksRenderer({ content }: ElementRendererProps<"quicklinks">) {
+export function QuicklinksRenderer({
+  content,
+}: ElementRendererProps<"quicklinks">) {
   const links = content.links || [];
 
   // Filter out links without URLs

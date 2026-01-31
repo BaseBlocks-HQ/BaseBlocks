@@ -89,10 +89,9 @@ export type {
 } from "./elements";
 export { DEFAULT_BLOCK_CONTENT } from "./elements";
 
-// Section types (search, library, quicklinks, hero)
+// Section types (search, library, quicklinks)
 export type {
   SectionType,
-  HeroContent,
   SearchContent,
   LibraryContent,
   QuicklinkType,
@@ -112,17 +111,8 @@ export type {
 } from "./elements";
 export { DEFAULT_NAV_CONTENT } from "./elements";
 
-// Media types (image, file, video, etc.)
-export type {
-  MediaType,
-  ImageContent,
-  FileContent,
-  VideoContent,
-  AudioContent,
-  YouTubeEmbedContent,
-  GalleryContent,
-  MediaContentUnion,
-} from "./elements";
+// Media types (image)
+export type { MediaType, ImageContent, MediaContentUnion } from "./elements";
 export { DEFAULT_MEDIA_CONTENT } from "./elements";
 
 // Form types

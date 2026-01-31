@@ -69,7 +69,7 @@ export const CATEGORIES: CategoryInfo[] = [
 
 // Helper to get category info
 export function getCategoryInfo(
-  category: ElementCategory
+  category: ElementCategory,
 ): CategoryInfo | undefined {
   return CATEGORIES.find((c) => c.category === category);
 }

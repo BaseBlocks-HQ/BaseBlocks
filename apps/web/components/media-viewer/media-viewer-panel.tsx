@@ -17,7 +17,7 @@ import {
   Music,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
@@ -95,7 +95,16 @@ export function MediaViewerPanel() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isFullscreen, closeFile, toggleFullscreen, goToNext, goToPrevious, hasNext, hasPrevious]);
+  }, [
+    isOpen,
+    isFullscreen,
+    closeFile,
+    toggleFullscreen,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+  ]);
 
   const handleDownload = useCallback(() => {
     if (!currentFile) return;
@@ -141,7 +150,10 @@ export function MediaViewerPanel() {
         <div className="flex items-center gap-2 min-w-0">
           {getFileTypeIcon(currentFile.contentType)}
           <div className="min-w-0">
-            <h2 className="text-sm font-medium truncate max-w-[180px]" title={currentFile.filename}>
+            <h2
+              className="text-sm font-medium truncate max-w-[180px]"
+              title={currentFile.filename}
+            >
               {currentFile.filename}
             </h2>
           </div>
@@ -153,9 +165,7 @@ export function MediaViewerPanel() {
         {/* Viewer-specific controls */}
         {viewerControls && (
           <>
-            <div className="flex items-center gap-1">
-              {viewerControls}
-            </div>
+            <div className="flex items-center gap-1">{viewerControls}</div>
             <div className="w-px h-5 bg-border" />
           </>
         )}

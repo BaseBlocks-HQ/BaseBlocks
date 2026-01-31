@@ -1,5 +1,5 @@
-import type { ElementPreviewProps } from "../../registry";
 import { cn } from "@/lib/utils";
+import type { ElementPreviewProps } from "../../registry";
 
 export function QuicklinksPreview({ className }: ElementPreviewProps) {
   return (

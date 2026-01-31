@@ -24,7 +24,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
     api.documents.queries.searchByLibrary,
     debouncedQuery.trim()
       ? { libraryId, query: debouncedQuery, limit: 10 }
-      : "skip"
+      : "skip",
   );
 
   const clearSearch = () => setSearchQuery("");
@@ -52,44 +52,51 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
       {/* Search Results Dropdown */}
       {debouncedQuery && searchResults && searchResults.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-80 overflow-auto">
-          {searchResults.map((result: {
-            _id: string;
-            cdnUrl: string | null;
-            contentType: string;
-            filename: string;
-            snippet: string | null;
-            matchType: "content" | "filename";
-          }) => (
-            <a
-              key={result._id}
-              href={result.cdnUrl || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-3 p-3 hover:bg-accent transition-colors border-b last:border-b-0"
-            >
-              <div
-                className={cn(
-                  "mt-0.5",
-                  getFileTypeColor(result.contentType || "")
-                )}
+          {searchResults.map(
+            (result: {
+              _id: string;
+              cdnUrl: string | null;
+              contentType: string;
+              filename: string;
+              snippet: string | null;
+              matchType: "content" | "filename";
+            }) => (
+              <a
+                key={result._id}
+                href={result.cdnUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-3 p-3 hover:bg-accent transition-colors border-b last:border-b-0"
               >
-                <FileIcon contentType={result.contentType || ""} className="h-4 w-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{result.filename}</p>
-                {result.snippet && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {result.snippet}
+                <div
+                  className={cn(
+                    "mt-0.5",
+                    getFileTypeColor(result.contentType || ""),
+                  )}
+                >
+                  <FileIcon
+                    contentType={result.contentType || ""}
+                    className="h-4 w-4"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">
+                    {result.filename}
                   </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  {result.matchType === "content"
-                    ? t("libraries.matchInContent")
-                    : t("libraries.matchInFilename")}
-                </p>
-              </div>
-            </a>
-          ))}
+                  {result.snippet && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                      {result.snippet}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {result.matchType === "content"
+                      ? t("libraries.matchInContent")
+                      : t("libraries.matchInFilename")}
+                  </p>
+                </div>
+              </a>
+            ),
+          )}
         </div>
       )}
 

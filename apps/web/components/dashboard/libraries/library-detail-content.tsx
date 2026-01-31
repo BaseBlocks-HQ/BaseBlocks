@@ -1,18 +1,6 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
   Breadcrumbs,
   CreateFolderButton,
   DropZone,
@@ -23,10 +11,21 @@ import {
   useFolderOperations,
   useFolderPath,
 } from "@/components/document-library";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/navigation";
 import { useFileUpload } from "@/lib/storage/hooks";
 import { api } from "@repo/backend";
-import type { Doc, Id } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -41,7 +40,8 @@ interface LibraryDetailContentProps {
 export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   const router = useRouter();
   const t = useTranslations();
-  const [selectedFolderId, setSelectedFolderId] = useState<Id<"documentFolders"> | null>(null);
+  const [selectedFolderId, setSelectedFolderId] =
+    useState<Id<"documentFolders"> | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,16 +50,26 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   const library = useQuery(api.documentLibraries.queries.get, { libraryId });
   const site = useQuery(
     api.sites.queries.get,
-    library ? { siteId: library.siteId } : "skip"
+    library ? { siteId: library.siteId } : "skip",
   );
 
   // Folder and file operations
-  const { folders, create: createFolder, rename: renameFolder, remove: removeFolder } = useFolderOperations(libraryId);
-  const { files, rename: renameFile, remove: removeFile } = useFileOperations(libraryId, selectedFolderId);
+  const {
+    folders,
+    create: createFolder,
+    rename: renameFolder,
+    remove: removeFolder,
+  } = useFolderOperations(libraryId);
+  const {
+    files,
+    rename: renameFile,
+    remove: removeFile,
+  } = useFileOperations(libraryId, selectedFolderId);
   const folderPath = useFolderPath(selectedFolderId);
 
   // File upload
-  const { uploadFiles, uploadStates, isAnyUploading, clearAllUploadStates } = useFileUpload();
+  const { uploadFiles, uploadStates, isAnyUploading, clearAllUploadStates } =
+    useFileUpload();
 
   // Delete mutation
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
@@ -149,7 +159,9 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
         {/* Folder Sidebar */}
         <div className="w-64 border-r flex flex-col min-h-0">
           <div className="p-3 border-b flex items-center justify-between">
-            <span className="text-sm font-medium">{t("libraries.folders")}</span>
+            <span className="text-sm font-medium">
+              {t("libraries.folders")}
+            </span>
             <CreateFolderButton
               onSubmit={async (name) => {
                 await createFolder(name, selectedFolderId ?? undefined);
@@ -160,9 +172,14 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
             <FolderTree
               folders={folders}
               selectedFolderId={selectedFolderId}
-              onSelectFolder={(folderId) => setSelectedFolderId(folderId as Id<"documentFolders"> | null)}
+              onSelectFolder={(folderId) =>
+                setSelectedFolderId(folderId as Id<"documentFolders"> | null)
+              }
               onCreateFolder={async (name, parentId) => {
-                await createFolder(name, parentId as Id<"documentFolders"> | undefined);
+                await createFolder(
+                  name,
+                  parentId as Id<"documentFolders"> | undefined,
+                );
               }}
               onRenameFolder={async (folderId, name) => {
                 await renameFolder(folderId as Id<"documentFolders">, name);
@@ -180,7 +197,9 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
           <div className="px-4 py-2 border-b">
             <Breadcrumbs
               items={breadcrumbItems}
-              onNavigate={(id) => setSelectedFolderId(id as Id<"documentFolders"> | null)}
+              onNavigate={(id) =>
+                setSelectedFolderId(id as Id<"documentFolders"> | null)
+              }
             />
           </div>
 

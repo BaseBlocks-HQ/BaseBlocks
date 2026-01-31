@@ -25,7 +25,7 @@ import { LibrarySettingsDialog } from "./library-settings-dialog";
 export function LibrariesPageContent() {
   const t = useTranslations();
   const [editingLibrary, setEditingLibrary] = useState<LibraryWithCount | null>(
-    null
+    null,
   );
   const [deletingLibrary, setDeletingLibrary] =
     useState<LibraryWithCount | null>(null);
@@ -37,7 +37,7 @@ export function LibrariesPageContent() {
   // Fetch libraries with counts for each site
   const siteLibraries = useQuery(
     api.documentLibraries.queries.listAllWithCounts,
-    sites ? {} : "skip"
+    sites ? {} : "skip",
   );
 
   const handleDelete = async () => {

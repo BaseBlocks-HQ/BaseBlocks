@@ -1,9 +1,9 @@
 "use client";
 
+import { getDefaultContent } from "@/components/elements";
 import { EditorSkeleton } from "@/components/skeletons";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createBlock, createLayout } from "@/lib/layouts";
-import { getDefaultContent } from "@/components/elements";
 import type { LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";

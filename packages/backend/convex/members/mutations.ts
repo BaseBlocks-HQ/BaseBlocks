@@ -1,8 +1,8 @@
+import { v } from "convex/values";
 /**
  * Member mutations - public mutations for clients
  */
 import { mutation } from "../_generated/server";
-import { v } from "convex/values";
 import { getAuthContext } from "../auth";
 
 /**
@@ -53,7 +53,9 @@ export const updateRole = mutation({
     if (memberToUpdate.eaUserId === auth.userId && role === "viewer") {
       const admins = await ctx.db
         .query("members")
-        .withIndex("by_company", (q) => q.eq("companyId", memberToUpdate.companyId))
+        .withIndex("by_company", (q) =>
+          q.eq("companyId", memberToUpdate.companyId),
+        )
         .filter((q) => q.eq(q.field("role"), "admin"))
         .collect();
 

@@ -1,16 +1,16 @@
 "use client";
 
+import { getSortedCategories } from "@/components/elements/registry/categories";
 import { cn } from "@/lib/utils";
 import type { ElementCategory } from "@/types/elements";
-import { getSortedCategories } from "@/components/elements/registry/categories";
 import {
+  ChevronRight,
+  FormInput,
+  Image,
   Layout,
-  Square,
   LayoutTemplate,
   Navigation,
-  Image,
-  FormInput,
-  ChevronRight,
+  Square,
 } from "lucide-react";
 
 // Map category to icon
@@ -47,7 +47,7 @@ function CategoryMenuItem({
         isActive && "bg-accent",
         disabled || isEmpty
           ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-accent cursor-pointer"
+          : "hover:bg-accent cursor-pointer",
       )}
       onMouseEnter={disabled || isEmpty ? undefined : onMouseEnter}
       disabled={disabled || isEmpty}

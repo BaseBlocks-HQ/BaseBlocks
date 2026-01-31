@@ -3,9 +3,9 @@
  * Single image with caption support
  */
 
+import { DEFAULT_MEDIA_CONTENT } from "@/types/elements";
 import { Image } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_MEDIA_CONTENT } from "@/types/elements";
 import { ImagePreview } from "./image-preview";
 import { ImageRenderer } from "./image-renderer";
 

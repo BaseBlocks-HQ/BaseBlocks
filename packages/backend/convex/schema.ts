@@ -91,7 +91,7 @@ export default defineSchema({
       v.literal("columns"),
       v.literal("grid"),
       v.literal("spacer"),
-      v.literal("vertical")
+      v.literal("vertical"),
     ),
     order: v.number(),
     // Slots contain the blocks - stored as embedded JSON for atomic updates
@@ -116,12 +116,12 @@ export default defineSchema({
               v.literal("callout"),
               v.literal("code"),
               v.literal("table"),
-              v.literal("quicklinks")
+              v.literal("quicklinks"),
             ),
             content: v.any(),
-          })
+          }),
         ),
-      })
+      }),
     ),
     // Layout settings - layout configuration only
     settings: v.object({
@@ -134,8 +134,8 @@ export default defineSchema({
           v.literal("small"),
           v.literal("medium"),
           v.literal("large"),
-          v.literal("xlarge")
-        )
+          v.literal("xlarge"),
+        ),
       ),
     }),
     createdAt: v.number(),
@@ -185,8 +185,8 @@ export default defineSchema({
         v.literal("processing"),
         v.literal("completed"),
         v.literal("failed"),
-        v.literal("unsupported")
-      )
+        v.literal("unsupported"),
+      ),
     ),
     extractionError: v.optional(v.string()),
     // Tracking

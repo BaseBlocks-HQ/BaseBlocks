@@ -1,11 +1,11 @@
 import type {
   AnyContent,
-  LayoutBlockType,
   LayoutBlockData,
+  LayoutBlockType,
   LayoutData,
-  LayoutType,
   LayoutSettings,
   LayoutSlot,
+  LayoutType,
 } from "@/types";
 import { DEFAULT_LAYOUT_SETTINGS } from "@/types";
 /**
@@ -91,12 +91,12 @@ export function createBlock(
   };
 }
 
-// Spacer height values in pixels and Tailwind classes
+// Spacer height values in pixels
 export const SPACER_LAYOUT_HEIGHTS = {
-  small: { value: "h-8", pixels: "32px" },
-  medium: { value: "h-16", pixels: "64px" },
-  large: { value: "h-24", pixels: "96px" },
-  xlarge: { value: "h-32", pixels: "128px" },
+  small: 32,
+  medium: 64,
+  large: 96,
+  xlarge: 128,
 } as const;
 
 /**

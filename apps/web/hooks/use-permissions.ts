@@ -29,10 +29,12 @@ interface PermissionsResult {
  * if (!canEdit) return <ViewOnlyBanner />;
  * ```
  */
-export function usePermissions({ companyId }: UsePermissionsOptions): PermissionsResult {
+export function usePermissions({
+  companyId,
+}: UsePermissionsOptions): PermissionsResult {
   const myRole = useQuery(
     api.members.queries.getMyRole,
-    companyId ? { companyId } : "skip"
+    companyId ? { companyId } : "skip",
   );
 
   const isLoading = myRole === undefined;
@@ -59,10 +61,7 @@ export function usePermissions({ companyId }: UsePermissionsOptions): Permission
 export function useSitePermissions(siteId?: Id<"sites">): PermissionsResult & {
   companyId?: Id<"companies">;
 } {
-  const site = useQuery(
-    api.sites.queries.get,
-    siteId ? { siteId } : "skip"
-  );
+  const site = useQuery(api.sites.queries.get, siteId ? { siteId } : "skip");
 
   const companyId = site?.companyId;
 

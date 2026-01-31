@@ -15,14 +15,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
-import { useEditorContext } from "./editor-context";
-import { ElementPicker } from "./element-picker";
-import type { LayoutBlockType, PageListItem, LayoutType } from "@/types";
+import type { LayoutBlockType, LayoutType, PageListItem } from "@/types";
 import type { ElementType } from "@/types/elements";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
+import { useEditorContext } from "./editor-context";
+import { ElementPicker } from "./element-picker";
 
 interface EditorSidebarProps {
   site: {
@@ -118,7 +118,9 @@ export function EditorSidebar({
           <SidebarContent>
             <SidebarGroup>
               <div className="flex items-center justify-between px-2">
-                <SidebarGroupLabel>{t("editor.sidebar.pagesTab")}</SidebarGroupLabel>
+                <SidebarGroupLabel>
+                  {t("editor.sidebar.pagesTab")}
+                </SidebarGroupLabel>
                 {canEdit && <CreatePageDialog siteId={site._id} />}
               </div>
               <SidebarGroupContent>
@@ -140,7 +142,10 @@ export function EditorSidebar({
           </SidebarContent>
         </TabsContent>
 
-        <TabsContent value="components" className="flex-1 mt-0 overflow-visible">
+        <TabsContent
+          value="components"
+          className="flex-1 mt-0 overflow-visible"
+        >
           <SidebarContent className="overflow-visible">
             {!canEdit ? (
               <div className="p-4">
@@ -152,7 +157,9 @@ export function EditorSidebar({
               <ElementPicker
                 selectedSlotId={selectedSlotId}
                 onAddLayout={onAddLayout}
-                onAddBlock={(type: ElementType) => onAddBlock?.(type as LayoutBlockType)}
+                onAddBlock={(type: ElementType) =>
+                  onAddBlock?.(type as LayoutBlockType)
+                }
               />
             ) : (
               <div className="p-4">

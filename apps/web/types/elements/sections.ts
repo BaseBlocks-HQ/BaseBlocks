@@ -1,25 +1,15 @@
 /**
  * Section element types and content definitions
- * Sections are complex pre-built page sections (hero, search, library, etc.)
+ * Sections are complex pre-built page sections (search, library, etc.)
  */
 
 // Section element types
 export type SectionType =
-  | "hero" // Hero section (new)
-  | "search" // Search functionality (moved from blocks)
-  | "library" // Document library (moved from blocks)
-  | "quicklinks"; // Quick links grid (moved from blocks)
+  | "search" // Search functionality
+  | "library" // Document library
+  | "quicklinks"; // Quick links grid
 
 // Section content interfaces
-
-export interface HeroContent {
-  title: string;
-  subtitle?: string;
-  backgroundUrl?: string;
-  ctaText?: string;
-  ctaUrl?: string;
-  alignment?: "left" | "center" | "right";
-}
 
 export interface SearchContent {
   placeholder?: string;
@@ -50,7 +40,6 @@ export interface QuicklinksContent {
 
 // Union of all section content types
 export type SectionContentUnion =
-  | HeroContent
   | SearchContent
   | LibraryContent
   | QuicklinksContent;
@@ -58,11 +47,6 @@ export type SectionContentUnion =
 // Default content for new sections
 export const DEFAULT_SECTION_CONTENT: Record<SectionType, SectionContentUnion> =
   {
-    hero: {
-      title: "Welcome",
-      subtitle: "Your subtitle here",
-      alignment: "center",
-    },
     search: {
       placeholder: "Search...",
       maxResults: 10,

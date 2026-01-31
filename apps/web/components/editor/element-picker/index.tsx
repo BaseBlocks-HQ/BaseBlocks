@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CategoryMenu } from "./category-menu";
 import { ElementGrid } from "./element-grid";
 
@@ -11,7 +11,11 @@ import "@/components/elements/sections";
 import "@/components/elements/media";
 
 import { getElementsByCategory } from "@/components/elements/registry";
-import type { ElementCategory, ElementType, LayoutType } from "@/types/elements";
+import type {
+  ElementCategory,
+  ElementType,
+  LayoutType,
+} from "@/types/elements";
 
 interface ElementPickerProps {
   selectedSlotId?: string | null;
@@ -35,8 +39,9 @@ export function ElementPicker({
   onAddLayout,
   onAddBlock,
 }: ElementPickerProps) {
-  const [activeCategory, setActiveCategory] =
-    useState<ElementCategory | null>(null);
+  const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
+    null,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,7 +86,14 @@ export function ElementPicker({
 
   const handleSelect = (type: ElementType | LayoutType) => {
     // Check if it's a layout type
-    const layoutTypes = ["single", "rows", "columns", "grid", "spacer", "vertical"];
+    const layoutTypes = [
+      "single",
+      "rows",
+      "columns",
+      "grid",
+      "spacer",
+      "vertical",
+    ];
     if (layoutTypes.includes(type)) {
       onAddLayout?.(type as LayoutType);
     } else {

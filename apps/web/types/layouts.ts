@@ -19,7 +19,6 @@ export type LayoutBlockType =
   | "heading"
   | "paragraph"
   | "image"
-  | "file"
   | "library"
   | "search"
   | "divider"
@@ -75,15 +74,14 @@ export const LAYOUT_SLOT_COUNTS: Record<LayoutType, number | "dynamic"> = {
 };
 
 // Default settings per layout type
-export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> =
-  {
-    single: {},
-    rows: { rowCount: 2 },
-    columns: { columnCount: 2 },
-    grid: { gridColumns: 2, gridRows: 2 },
-    spacer: { spacerHeight: "medium" },
-    vertical: {}, // Sidebar layout - no special settings
-  };
+export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> = {
+  single: {},
+  rows: { rowCount: 2 },
+  columns: { columnCount: 2 },
+  grid: { gridColumns: 2, gridRows: 2 },
+  spacer: { spacerHeight: "medium" },
+  vertical: {}, // Sidebar layout - no special settings
+};
 
 // Layout metadata for UI display
 export interface LayoutTypeInfo {

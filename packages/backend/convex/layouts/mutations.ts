@@ -8,7 +8,7 @@ const layoutTypes = v.union(
   v.literal("columns"),
   v.literal("grid"),
   v.literal("spacer"),
-  v.literal("vertical")
+  v.literal("vertical"),
 );
 
 const blockTypes = v.union(
@@ -25,7 +25,7 @@ const blockTypes = v.union(
   v.literal("callout"),
   v.literal("code"),
   v.literal("table"),
-  v.literal("quicklinks")
+  v.literal("quicklinks"),
 );
 
 const slotSchema = v.object({
@@ -36,7 +36,7 @@ const slotSchema = v.object({
       id: v.string(),
       type: blockTypes,
       content: v.any(),
-    })
+    }),
   ),
 });
 
@@ -51,8 +51,8 @@ const settingsSchema = v.object({
       v.literal("small"),
       v.literal("medium"),
       v.literal("large"),
-      v.literal("xlarge")
-    )
+      v.literal("xlarge"),
+    ),
   ),
 });
 
@@ -111,7 +111,10 @@ export const create = mutation({
         .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
         .collect();
       layoutOrder =
-        existingLayouts.reduce((max: number, s: any) => Math.max(max, s.order), -1) + 1;
+        existingLayouts.reduce(
+          (max: number, s: any) => Math.max(max, s.order),
+          -1,
+        ) + 1;
     }
 
     const now = Date.now();
@@ -255,7 +258,7 @@ export const updateBlockInSlot = mutation({
       if (slot.id !== slotId) return slot;
 
       const updatedBlocks = slot.blocks.map((b: any) =>
-        b.id === blockId ? { ...b, content } : b
+        b.id === blockId ? { ...b, content } : b,
       );
       return { ...slot, blocks: updatedBlocks };
     });
@@ -318,7 +321,10 @@ export const moveBlock = mutation({
     blockId: v.string(),
     toIndex: v.number(),
   },
-  handler: async (ctx, { layoutId, fromSlotId, toSlotId, blockId, toIndex }) => {
+  handler: async (
+    ctx,
+    { layoutId, fromSlotId, toSlotId, blockId, toIndex },
+  ) => {
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 

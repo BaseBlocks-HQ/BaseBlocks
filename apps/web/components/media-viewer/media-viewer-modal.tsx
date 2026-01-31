@@ -17,7 +17,7 @@ import {
   Music,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
@@ -95,7 +95,16 @@ export function MediaViewerModal() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isFullscreen, closeFile, toggleFullscreen, goToNext, goToPrevious, hasNext, hasPrevious]);
+  }, [
+    isOpen,
+    isFullscreen,
+    closeFile,
+    toggleFullscreen,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+  ]);
 
   // Prevent body scroll when modal is open in fullscreen mode
   useEffect(() => {
@@ -151,7 +160,7 @@ export function MediaViewerModal() {
         "flex flex-col bg-background border-l shadow-xl z-50",
         isFullscreen
           ? "fixed inset-0 border-l-0"
-          : "fixed top-0 right-0 bottom-0 w-[50vw] min-w-[400px] max-w-[800px]"
+          : "fixed top-0 right-0 bottom-0 w-[50vw] min-w-[400px] max-w-[800px]",
       )}
     >
       {/* Unified Header/Toolbar */}
@@ -160,7 +169,10 @@ export function MediaViewerModal() {
         <div className="flex items-center gap-2 min-w-0">
           {getFileTypeIcon(currentFile.contentType)}
           <div className="min-w-0">
-            <h2 className="text-sm font-medium truncate max-w-[200px]" title={currentFile.filename}>
+            <h2
+              className="text-sm font-medium truncate max-w-[200px]"
+              title={currentFile.filename}
+            >
               {currentFile.filename}
             </h2>
           </div>
@@ -172,9 +184,7 @@ export function MediaViewerModal() {
         {/* Viewer-specific controls */}
         {viewerControls && (
           <>
-            <div className="flex items-center gap-1">
-              {viewerControls}
-            </div>
+            <div className="flex items-center gap-1">{viewerControls}</div>
             <div className="w-px h-5 bg-border" />
           </>
         )}

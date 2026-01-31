@@ -42,7 +42,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
-      </>
+      </>,
     );
   }, [renderControls, useOnlineViewer]);
 
@@ -52,7 +52,8 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
       <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border-b text-xs">
         <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
         <span className="text-amber-800 dark:text-amber-200">
-          Online viewers require the document to be publicly accessible. If preview fails, download instead.
+          Online viewers require the document to be publicly accessible. If
+          preview fails, download instead.
         </span>
       </div>
 

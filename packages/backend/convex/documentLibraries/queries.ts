@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull } from "../auth";
+import { getAuthContext } from "../auth";
 
 // List all libraries for a site (authenticated)
 export const list = query({
@@ -199,7 +199,7 @@ export const listWithCounts = query({
           .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
           .collect();
         return { ...lib, documentCount: docs.length };
-      })
+      }),
     );
   },
 });

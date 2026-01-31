@@ -1,8 +1,8 @@
 "use client";
 
-import type { ComponentType } from "react";
-import type { LucideIcon } from "lucide-react";
 import type { ElementPreviewProps } from "@/components/elements/registry";
+import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 interface ElementCardProps {
   label: string;

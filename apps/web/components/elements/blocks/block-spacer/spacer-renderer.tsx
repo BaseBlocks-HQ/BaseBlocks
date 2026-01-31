@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/components/elements/registry";
+import { cn } from "@/lib/utils";
 
 const SPACER_HEIGHTS = {
   small: "h-8",
@@ -8,7 +8,9 @@ const SPACER_HEIGHTS = {
   xlarge: "h-32",
 } as const;
 
-export function SpacerRenderer({ content }: ElementRendererProps<"block-spacer">) {
+export function SpacerRenderer({
+  content,
+}: ElementRendererProps<"block-spacer">) {
   const height = content.height || "medium";
 
   return (

@@ -88,7 +88,7 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
         >
           <ZoomIn className="h-3.5 w-3.5" />
         </Button>
-      </>
+      </>,
     );
   }, [renderControls, scale, isLoading, error, handleZoomIn, handleZoomOut]);
 

@@ -1,12 +1,8 @@
 "use client";
 
-import { ElementCard } from "./element-card";
-import type {
-  AnyRegistryEntry,
-  ElementRegistryEntry,
-  LayoutRegistryEntry,
-} from "@/components/elements/registry";
+import type { AnyRegistryEntry } from "@/components/elements/registry";
 import type { ElementType, LayoutType } from "@/types/elements";
+import { ElementCard } from "./element-card";
 
 interface ElementGridProps {
   title: string;

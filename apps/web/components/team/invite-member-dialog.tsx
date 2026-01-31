@@ -25,7 +25,7 @@ import type { Id } from "@repo/backend";
 import { useAction } from "convex/react";
 import { Loader2, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface InviteMemberDialogProps {
   companyId: Id<"companies">;
@@ -253,7 +253,9 @@ export function InviteMemberDialog({ companyId }: InviteMemberDialogProps) {
                 <Label>{t("invite.selectRole")}</Label>
                 <Select
                   value={role}
-                  onValueChange={(value) => setRole(value as "admin" | "viewer")}
+                  onValueChange={(value) =>
+                    setRole(value as "admin" | "viewer")
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />

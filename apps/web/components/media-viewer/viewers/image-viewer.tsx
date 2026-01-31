@@ -155,9 +155,17 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
             <Minimize2 className="h-3.5 w-3.5" />
           )}
         </Button>
-      </>
+      </>,
     );
-  }, [renderControls, zoom, isFitToScreen, handleZoomIn, handleZoomOut, handleRotate, handleFitToggle]);
+  }, [
+    renderControls,
+    zoom,
+    isFitToScreen,
+    handleZoomIn,
+    handleZoomOut,
+    handleRotate,
+    handleFitToggle,
+  ]);
 
   return (
     <div

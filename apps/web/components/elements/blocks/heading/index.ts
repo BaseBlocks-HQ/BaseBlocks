@@ -3,11 +3,11 @@
  * Titles and headings with multiple levels
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { Heading } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { HeadingPreview } from "./heading-preview";
 import { HeadingEditor } from "./heading-editor";
+import { HeadingPreview } from "./heading-preview";
 import { HeadingRenderer } from "./heading-renderer";
 
 // Re-export components

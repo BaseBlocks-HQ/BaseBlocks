@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
 import { useCallback, useState } from "react";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { EmptyState } from "./empty-state";
@@ -64,7 +64,12 @@ export function FileList({
 
   return (
     <>
-      <div className={cn("h-full w-full overflow-y-auto overflow-x-hidden", className)}>
+      <div
+        className={cn(
+          "h-full w-full overflow-y-auto overflow-x-hidden",
+          className,
+        )}
+      >
         <div className="space-y-1 py-2 w-full min-w-0">
           {sortedFiles.map((file) => (
             <FileListItem

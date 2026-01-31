@@ -4,52 +4,43 @@
  */
 
 import type {
+  BlockSpacerContent,
   BlockType,
-  HeadingContent,
-  ParagraphContent,
   CalloutContent,
   CodeContent,
   DividerContent,
-  BlockSpacerContent,
+  HeadingContent,
+  ParagraphContent,
 } from "./blocks";
 
 import type {
-  SectionType,
-  HeroContent,
-  SearchContent,
   LibraryContent,
   QuicklinksContent,
+  SearchContent,
+  SectionType,
 } from "./sections";
 
 import type {
+  BreadcrumbsContent,
   NavType,
   SidebarPagesContent,
   TopBarContent,
-  BreadcrumbsContent,
 } from "./navigation";
 
-import type {
-  MediaType,
-  ImageContent,
-  FileContent,
-  VideoContent,
-  AudioContent,
-  YouTubeEmbedContent,
-  GalleryContent,
-} from "./media";
+import type { ImageContent, MediaType } from "./media";
 
 import type {
-  FormType,
+  CheckboxContent,
   FormContent,
+  FormType,
+  RadioContent,
+  SelectContent,
+  SubmitButtonContent,
   TextInputContent,
   TextareaContent,
-  SelectContent,
-  CheckboxContent,
-  RadioContent,
-  SubmitButtonContent,
 } from "./forms";
 
-import type { LayoutType, LayoutSettings } from "./layouts";
+import type { LayoutSettings, LayoutType } from "./layouts";
 
 // Union of all element types (excluding layouts which are containers)
 export type ElementType =
@@ -73,7 +64,6 @@ export type ContentTypeMap = {
   "block-spacer": BlockSpacerContent;
 
   // Sections
-  hero: HeroContent;
   search: SearchContent;
   library: LibraryContent;
   quicklinks: QuicklinksContent;
@@ -85,11 +75,6 @@ export type ContentTypeMap = {
 
   // Media
   image: ImageContent;
-  file: FileContent;
-  video: VideoContent;
-  audio: AudioContent;
-  "youtube-embed": YouTubeEmbedContent;
-  gallery: GalleryContent;
 
   // Forms
   form: FormContent;

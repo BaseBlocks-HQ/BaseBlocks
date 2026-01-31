@@ -49,8 +49,12 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   });
 
   // Get permissions for this site
-  const { canEdit, isAdmin, isViewer, isLoading: isPermissionsLoading } =
-    useSitePermissions(siteId);
+  const {
+    canEdit,
+    isAdmin,
+    isViewer,
+    isLoading: isPermissionsLoading,
+  } = useSitePermissions(siteId);
 
   const selectLayout = useCallback((layoutId: string | null) => {
     setSelection({

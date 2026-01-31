@@ -1,27 +1,25 @@
 "use node";
 
+import { v } from "convex/values";
+import { internal } from "../_generated/api";
 /**
  * Member sync actions
  *
  * Syncs members from Entity Auth to local cache
  */
-import { action, internalAction } from "../_generated/server";
-import { internal } from "../_generated/api";
-import { v } from "convex/values";
+import { action } from "../_generated/server";
 import { getActionAuthContext } from "../auth";
 import {
-  getOrgMembers,
-  searchUsers,
-  createInvitation,
-  getSentInvitations,
-  getReceivedInvitations,
   acceptInvitation,
+  createInvitation,
   declineInvitation,
-  revokeInvitation,
-  removeMember,
+  getOrgMembers,
+  getReceivedInvitations,
+  getSentInvitations,
   mapEARole,
-  type EAMember,
-  type EASearchResult,
+  removeMember,
+  revokeInvitation,
+  searchUsers,
 } from "../lib/entityAuthClient";
 
 /**
@@ -32,7 +30,10 @@ export const syncMembers = action({
     companyId: v.id("companies"),
     accessToken: v.string(),
   },
-  handler: async (ctx, { companyId, accessToken }): Promise<{ added: number; updated: number; removed: number }> => {
+  handler: async (
+    ctx,
+    { companyId, accessToken },
+  ): Promise<{ added: number; updated: number; removed: number }> => {
     const auth = await getActionAuthContext(ctx);
     if (!auth.eaOrgId) {
       throw new Error("No organization selected");
@@ -56,18 +57,21 @@ export const syncMembers = action({
 
     // Sync members to local cache
     // Convert null to undefined since Convex v.optional() doesn't accept null
-    const result = await ctx.runMutation(internal.members.internal.syncMembersFromEA, {
-      companyId,
-      eaMembers: eaMembers.map((m) => ({
-        eaUserId: m.id,
-        email: m.email ?? "",
-        name: m.username ?? undefined,
-        imageUrl: m.imageUrl ?? undefined,
-        role: mapEARole(m.role),
-        eaRole: m.role,
-        joinedAt: m.joinedAt,
-      })),
-    });
+    const result = await ctx.runMutation(
+      internal.members.internal.syncMembersFromEA,
+      {
+        companyId,
+        eaMembers: eaMembers.map((m) => ({
+          eaUserId: m.id,
+          email: m.email ?? "",
+          name: m.username ?? undefined,
+          imageUrl: m.imageUrl ?? undefined,
+          role: mapEARole(m.role),
+          eaRole: m.role,
+          joinedAt: m.joinedAt,
+        })),
+      },
+    );
 
     return result;
   },
@@ -125,10 +129,13 @@ export const inviteUser = action({
     }
 
     // Check if user is admin
-    const member = await ctx.runQuery(internal.members.internal.getMemberByUserId, {
-      companyId,
-      eaUserId: auth.userId,
-    });
+    const member = await ctx.runQuery(
+      internal.members.internal.getMemberByUserId,
+      {
+        companyId,
+        eaUserId: auth.userId,
+      },
+    );
 
     if (!member || member.role !== "admin") {
       throw new Error("Admin access required");
@@ -160,15 +167,20 @@ export const getPendingInvitations = action({
     companyId: v.id("companies"),
     accessToken: v.string(),
   },
-  handler: async (ctx, { companyId, accessToken }): Promise<Array<{
-    id: string;
-    inviteeUserId: string;
-    inviteeEmail: string | undefined;
-    inviteeUsername: string | undefined;
-    role: "admin" | "viewer";
-    expiresAt: string;
-    createdAt: string;
-  }>> => {
+  handler: async (
+    ctx,
+    { companyId, accessToken },
+  ): Promise<
+    Array<{
+      id: string;
+      inviteeUserId: string;
+      inviteeEmail: string | undefined;
+      inviteeUsername: string | undefined;
+      role: "admin" | "viewer";
+      expiresAt: string;
+      createdAt: string;
+    }>
+  > => {
     const auth = await getActionAuthContext(ctx);
     if (!auth.eaOrgId) {
       throw new Error("No organization selected");
@@ -192,7 +204,9 @@ export const getPendingInvitations = action({
 
     // Filter to only invitations for this org
     return invitations
-      .filter((inv) => inv.orgId === company.eaOrgId && inv.status === "pending")
+      .filter(
+        (inv) => inv.orgId === company.eaOrgId && inv.status === "pending",
+      )
       .map((inv) => ({
         id: inv.id,
         inviteeUserId: inv.inviteeUserId,
@@ -221,10 +235,13 @@ export const cancelInvitation = action({
     }
 
     // Verify admin access
-    const member = await ctx.runQuery(internal.members.internal.getMemberByUserId, {
-      companyId,
-      eaUserId: auth.userId,
-    });
+    const member = await ctx.runQuery(
+      internal.members.internal.getMemberByUserId,
+      {
+        companyId,
+        eaUserId: auth.userId,
+      },
+    );
 
     if (!member || member.role !== "admin") {
       throw new Error("Admin access required");
@@ -266,19 +283,25 @@ export const removeMemberFromOrg = action({
     }
 
     // Verify admin access
-    const currentMember = await ctx.runQuery(internal.members.internal.getMemberByUserId, {
-      companyId,
-      eaUserId: auth.userId,
-    });
+    const currentMember = await ctx.runQuery(
+      internal.members.internal.getMemberByUserId,
+      {
+        companyId,
+        eaUserId: auth.userId,
+      },
+    );
 
     if (!currentMember || currentMember.role !== "admin") {
       throw new Error("Admin access required");
     }
 
     // Get the member to remove
-    const memberToRemove = await ctx.runQuery(internal.members.internal.getMemberById, {
-      memberId,
-    });
+    const memberToRemove = await ctx.runQuery(
+      internal.members.internal.getMemberById,
+      {
+        memberId,
+      },
+    );
 
     if (!memberToRemove) {
       throw new Error("Member not found");
@@ -356,9 +379,12 @@ export const acceptReceivedInvitation = action({
     await acceptInvitation(invitationId, accessToken);
 
     // Find the company in our database by eaOrgId
-    const company = await ctx.runQuery(internal.members.internal.getCompanyByEaOrgId, {
-      eaOrgId: orgId,
-    });
+    const company = await ctx.runQuery(
+      internal.members.internal.getCompanyByEaOrgId,
+      {
+        eaOrgId: orgId,
+      },
+    );
 
     if (!company) {
       // Company not found - org exists in Entity Auth but not in our DB

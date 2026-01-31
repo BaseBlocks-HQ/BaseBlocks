@@ -2,7 +2,7 @@
  * Proxy endpoint for committing files to Entity Storage
  * This bypasses CORS issues by making the request server-side
  */
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const ENTITY_STORAGE_SITE_URL =
   process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader) {
       return NextResponse.json(
         { error: "Missing authorization header" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { error: data.error || `Commit failed: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     console.error("Storage commit proxy error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Commit failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

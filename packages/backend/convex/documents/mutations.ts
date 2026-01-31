@@ -62,7 +62,16 @@ export const createInLibrary = mutation({
   },
   handler: async (
     ctx,
-    { siteId, libraryId, folderId, blobId, cdnUrl, filename, contentType, size },
+    {
+      siteId,
+      libraryId,
+      folderId,
+      blobId,
+      cdnUrl,
+      filename,
+      contentType,
+      size,
+    },
   ) => {
     const companyId = await getCompanyIdFromSite(ctx, siteId);
     if (!companyId) throw new Error("Site not found");

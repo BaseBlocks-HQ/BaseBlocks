@@ -21,7 +21,7 @@ export function MediaViewerOverlay() {
         "fixed z-50 bg-background shadow-xl",
         isFullscreen
           ? "inset-0"
-          : "top-0 right-0 bottom-0 w-[45vw] min-w-[400px] max-w-[800px] border-l"
+          : "top-0 right-0 bottom-0 w-[45vw] min-w-[400px] max-w-[800px] border-l",
       )}
     >
       <MediaViewerPanel />

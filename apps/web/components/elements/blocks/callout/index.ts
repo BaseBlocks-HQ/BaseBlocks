@@ -3,11 +3,11 @@
  * Highlighted message box with variants
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { MessageSquare } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { CalloutPreview } from "./callout-preview";
 import { CalloutEditor } from "./callout-editor";
+import { CalloutPreview } from "./callout-preview";
 import { CalloutRenderer } from "./callout-renderer";
 
 // Re-export components

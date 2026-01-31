@@ -182,9 +182,7 @@ export function MemberActions({
               </SelectContent>
             </Select>
 
-            {error && (
-              <p className="text-sm text-destructive mt-2">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
           </div>
 
           <AlertDialogFooter>
@@ -208,13 +206,13 @@ export function MemberActions({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("actions.removeMember")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("actions.confirmRemove", { name: member.name || member.email })}
+              {t("actions.confirmRemove", {
+                name: member.name || member.email,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

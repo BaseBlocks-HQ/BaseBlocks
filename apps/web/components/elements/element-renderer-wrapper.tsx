@@ -1,4 +1,4 @@
-import type { ElementType, AnyContent } from "@/types/elements";
+import type { AnyContent, ElementType } from "@/types/elements";
 import { getElementRenderer } from "./registry";
 
 interface ElementRendererWrapperProps {

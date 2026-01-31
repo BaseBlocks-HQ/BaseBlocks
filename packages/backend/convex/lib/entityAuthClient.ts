@@ -4,8 +4,7 @@
  */
 
 const ENTITY_AUTH_URL =
-  process.env.ENTITY_AUTH_URL ||
-  "https://entityy-entity-auth.vercel.app";
+  process.env.ENTITY_AUTH_URL || "https://entityy-entity-auth.vercel.app";
 
 /**
  * Entity Auth OrgMember response shape (from social/types.ts)
@@ -111,10 +110,11 @@ export async function searchUsers(
 ): Promise<EASearchResult[]> {
   const endpoint = `/api/social/search?q=${encodeURIComponent(query)}&limit=${limit}`;
 
-  const response = await fetchWithAuth<{ results: EASearchResult[]; query: string; count: number }>(
-    endpoint,
-    accessToken,
-  );
+  const response = await fetchWithAuth<{
+    results: EASearchResult[];
+    query: string;
+    count: number;
+  }>(endpoint, accessToken);
 
   return response.results;
 }
@@ -236,4 +236,9 @@ export function mapEARole(eaRole: string): "admin" | "viewer" {
   return eaRole === "owner" || eaRole === "admin" ? "admin" : "viewer";
 }
 
-export type { EAMember, EASearchResult, EAInvitation, CreateInvitationResponse };
+export type {
+  EAMember,
+  EASearchResult,
+  EAInvitation,
+  CreateInvitationResponse,
+};

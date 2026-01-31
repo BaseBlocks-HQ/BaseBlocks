@@ -1,8 +1,8 @@
+import { v } from "convex/values";
 /**
  * Member queries - public queries for clients
  */
 import { query } from "../_generated/server";
-import { v } from "convex/values";
 import { getAuthContext, getAuthContextOrNull } from "../auth";
 
 /**

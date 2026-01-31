@@ -2,13 +2,13 @@
 
 import { ElementRendererWrapper } from "@/components/elements";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getLayoutGridStyle, SPACER_LAYOUT_HEIGHTS } from "@/lib/layouts";
+import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
   AnyContent,
   ElementType,
-  LayoutType,
   LayoutSettings,
+  LayoutType,
   SpacerLayoutHeight,
 } from "@/types";
 import { api } from "@repo/backend";
@@ -52,10 +52,10 @@ export function PublicContent({ pageId }: PublicContentProps) {
 
   // Separate main layouts from sidebar layouts
   const mainLayouts = layoutsData.filter(
-    (layout: LayoutDoc) => layout.type !== "vertical"
+    (layout: LayoutDoc) => layout.type !== "vertical",
   );
   const sidebarLayouts = layoutsData.filter(
-    (layout: LayoutDoc) => layout.type === "vertical"
+    (layout: LayoutDoc) => layout.type === "vertical",
   );
   const hasSidebar = sidebarLayouts.length > 0;
 
@@ -68,7 +68,8 @@ export function PublicContent({ pageId }: PublicContentProps) {
       return (
         <div
           key={layout._id}
-          className={cn("w-full", SPACER_LAYOUT_HEIGHTS[height].value)}
+          style={{ height: `${SPACER_LAYOUT_HEIGHTS[height]}px` }}
+          className="w-full"
           aria-hidden="true"
         />
       );
@@ -76,7 +77,7 @@ export function PublicContent({ pageId }: PublicContentProps) {
 
     const gridStyle = getLayoutGridStyle(
       layout.type as LayoutType,
-      layout.settings as LayoutSettings
+      layout.settings as LayoutSettings,
     );
 
     return (
@@ -118,9 +119,7 @@ export function PublicContent({ pageId }: PublicContentProps) {
 
           {/* Sidebar */}
           <aside className="w-72 flex-shrink-0 space-y-6">
-            {sidebarLayouts.map((layout: LayoutDoc) =>
-              renderLayout(layout)
-            )}
+            {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
           </aside>
         </div>
       ) : (

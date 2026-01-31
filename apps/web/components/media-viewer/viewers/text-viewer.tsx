@@ -139,9 +139,20 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
             <Copy className="h-3.5 w-3.5" />
           )}
         </Button>
-      </>
+      </>,
     );
-  }, [renderControls, isLoading, error, showSearch, searchTerm, wordWrap, copied, toggleSearch, toggleWordWrap, handleCopy]);
+  }, [
+    renderControls,
+    isLoading,
+    error,
+    showSearch,
+    searchTerm,
+    wordWrap,
+    copied,
+    toggleSearch,
+    toggleWordWrap,
+    handleCopy,
+  ]);
 
   if (isLoading) {
     return (

@@ -181,57 +181,63 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className="group/block flex items-start gap-1 mb-3 min-w-0"
+      className="group/block mb-3 min-w-0"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
-      {/* Inline drag handle - highlighted when selected */}
-      <div
-        ref={setActivatorNodeRef}
-        className={cn(
-          "flex-shrink-0 flex items-center justify-center h-6 w-5 mt-1 rounded",
-          "cursor-grab active:cursor-grabbing",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          isSelected
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent",
-        )}
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </div>
+      {/* Block with inline toolbar */}
+      <div className="flex gap-1 items-start">
+        {/* Block toolbar - inline, inside layout */}
+        <div
+          className={cn(
+            "flex flex-col gap-0.5 shrink-0",
+            "transition-opacity",
+            "opacity-0 group-hover/block:opacity-100",
+            isSelected && "opacity-100",
+          )}
+        >
+          <div
+            ref={setActivatorNodeRef}
+            className={cn(
+              "flex items-center justify-center h-6 w-6 rounded",
+              "cursor-grab active:cursor-grabbing",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isSelected
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+            )}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
 
-      {/* Block content - flex-1 to take remaining space */}
-      <div className="flex-1 min-w-0">
-        <ElementEditorWrapper
-          id={block.id}
-          type={block.type as ElementType}
-          content={block.content}
-          isSelected={isSelected}
-          onUpdate={onUpdate}
-          onRemove={onRemove}
-        />
+        {/* Block content */}
+        <div className="min-w-0 flex-1">
+          <ElementEditorWrapper
+            id={block.id}
+            type={block.type as ElementType}
+            content={block.content}
+            isSelected={isSelected}
+            onUpdate={onUpdate}
+            onRemove={onRemove}
+          />
+        </div>
       </div>
-
-      {/* Delete button - appears on hover */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          "flex-shrink-0 h-6 w-6 mt-1",
-          "text-muted-foreground/40 hover:text-destructive",
-          "opacity-0 group-hover/block:opacity-100 transition-opacity",
-        )}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }

@@ -3,11 +3,11 @@
  * Syntax-highlighted code snippets
  */
 
+import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
 import { Code } from "lucide-react";
 import { registerElement } from "../../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { CodePreview } from "./code-preview";
 import { CodeEditor } from "./code-editor";
+import { CodePreview } from "./code-preview";
 import { CodeRenderer } from "./code-renderer";
 
 // Re-export components

@@ -7,10 +7,8 @@
 import "./search";
 import "./library";
 import "./quicklinks";
-import "./hero";
 
 // Re-export all sections for direct access
 export * from "./search";
 export * from "./library";
 export * from "./quicklinks";
-export * from "./hero";

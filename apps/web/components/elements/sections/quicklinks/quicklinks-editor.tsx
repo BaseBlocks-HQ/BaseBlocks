@@ -37,28 +37,71 @@ function generateId() {
   return `ql-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Preview card - matches the published site renderer
-interface QuicklinkPreviewCardProps {
+// Preview card for a quicklink
+interface QuicklinkCardProps {
   link: QuicklinkItem;
-  onEdit: () => void;
+  isEditing: boolean;
+  onStartEdit: () => void;
   onRemove: () => void;
 }
 
-function QuicklinkPreviewCard({
+function QuicklinkCard({
   link,
-  onEdit,
+  isEditing,
+  onStartEdit,
   onRemove,
-}: QuicklinkPreviewCardProps) {
+}: QuicklinkCardProps) {
   const isApp = link.linkType === "app";
 
   return (
-    <div className="flex items-start gap-1 min-w-0">
-      <a
-        href={link.url}
-        {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-        className="group flex flex-col items-center gap-1.5 p-3 rounded-lg border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 min-w-[80px] max-w-[100px] flex-1"
+    <div className="group/card relative">
+      {/* Controls above card */}
+      <div
+        className={cn(
+          "absolute -top-6 right-0 flex gap-0.5",
+          "opacity-0 group-hover/card:opacity-100 transition-opacity",
+          isEditing && "opacity-100",
+        )}
       >
-        {/* Image or placeholder */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 text-muted-foreground hover:text-foreground bg-background/80 backdrop-blur-sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onStartEdit();
+          }}
+        >
+          <Settings2 className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 text-muted-foreground hover:text-destructive bg-background/80 backdrop-blur-sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRemove();
+          }}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Card */}
+      <a
+        href={link.url || "#"}
+        {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+        onClick={(e) => e.preventDefault()}
+        className={cn(
+          "flex flex-col items-center gap-1.5 p-3",
+          "rounded-lg border bg-card",
+          "hover:bg-accent hover:border-accent-foreground/20",
+          "transition-all duration-200",
+          "w-full",
+        )}
+      >
         <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
           {link.imageUrl ? (
             <img
@@ -72,32 +115,10 @@ function QuicklinkPreviewCard({
             <ExternalLink className="w-4 h-4 text-muted-foreground" />
           )}
         </div>
-
-        {/* Title */}
-        <span className="text-xs font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
+        <span className="text-xs font-medium text-center line-clamp-2 w-full">
           {link.title || "Untitled"}
         </span>
       </a>
-
-      {/* Edit/Remove buttons */}
-      <div className="flex flex-col gap-0.5">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5 text-muted-foreground hover:text-foreground"
-          onClick={onEdit}
-        >
-          <Settings2 className="h-3 w-3" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-5 w-5 text-muted-foreground hover:text-destructive"
-          onClick={onRemove}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      </div>
     </div>
   );
 }
@@ -150,9 +171,9 @@ function QuicklinkEditForm({
   const canSave = link.title.trim() && link.url.trim();
 
   return (
-    <div className="p-3 border rounded-lg bg-card space-y-3 min-w-0 overflow-hidden">
-      {/* Image upload - small and inline on top */}
-      <div className="flex items-center gap-3">
+    <div className="p-3 border rounded-lg bg-card space-y-3">
+      {/* Image upload + Title */}
+      <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           <input
             ref={fileInputRef}
@@ -180,19 +201,21 @@ function QuicklinkEditForm({
             )}
           </button>
         </div>
-        <div className="flex-1 min-w-0">
-          <Label className="text-xs text-muted-foreground">Title</Label>
-          <Input
-            value={link.title}
-            onChange={(e) => onChange({ ...link, title: e.target.value })}
-            placeholder="Link title"
-            className="h-8 text-sm"
-          />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div>
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={link.title}
+              onChange={(e) => onChange({ ...link, title: e.target.value })}
+              placeholder="Link title"
+              className="h-8 text-sm"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Link type toggle - stacked vertically */}
-      <div className="space-y-2">
+      {/* Link type toggle */}
+      <div className="space-y-1.5">
         <div className="flex items-center gap-1.5">
           <Label className="text-xs text-muted-foreground">Type</Label>
           {linkType === "app" && (
@@ -201,22 +224,11 @@ function QuicklinkEditForm({
                 <TooltipTrigger asChild>
                   <HelpCircle className="w-3 h-3 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  className="max-w-[200px] text-xs"
-                >
-                  <p className="font-medium mb-1">
-                    App URL schemes:
-                  </p>
+                <TooltipContent side="top" className="max-w-[200px] text-xs">
+                  <p className="font-medium mb-1">App URL schemes:</p>
                   <p>
-                    Examples:{" "}
-                    <code className="bg-black text-white px-1 rounded">
-                      spotify://
-                    </code>
-                    ,{" "}
-                    <code className="bg-black text-white px-1 rounded">
-                      slack://
-                    </code>
+                    Examples: <code className="bg-black text-white px-1 rounded">spotify://</code>,{" "}
+                    <code className="bg-black text-white px-1 rounded">slack://</code>
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -229,21 +241,13 @@ function QuicklinkEditForm({
           onValueChange={handleLinkTypeChange}
           variant="outline"
           size="sm"
-          className="justify-start flex-wrap"
+          className="justify-start"
         >
-          <ToggleGroupItem
-            value="website"
-            aria-label="Website link"
-            className="gap-1 text-xs px-2"
-          >
+          <ToggleGroupItem value="website" aria-label="Website link" className="gap-1 text-xs px-2">
             <Globe className="w-3 h-3" />
             Web
           </ToggleGroupItem>
-          <ToggleGroupItem
-            value="app"
-            aria-label="Desktop app"
-            className="gap-1 text-xs px-2"
-          >
+          <ToggleGroupItem value="app" aria-label="Desktop app" className="gap-1 text-xs px-2">
             <AppWindow className="w-3 h-3" />
             App
           </ToggleGroupItem>
@@ -251,24 +255,18 @@ function QuicklinkEditForm({
       </div>
 
       {/* URL field */}
-      <div className="min-w-0">
+      <div>
         <Label className="text-xs text-muted-foreground">
           {linkType === "website" ? "URL" : "App URL"}
         </Label>
         <Input
           value={link.url}
           onChange={(e) => onChange({ ...link, url: e.target.value })}
-          placeholder={
-            linkType === "website"
-              ? "https://example.com"
-              : "appname://open"
-          }
+          placeholder={linkType === "website" ? "https://example.com" : "appname://open"}
           className="h-8 text-sm"
         />
         {linkType === "app" && (
-          <p className="text-[10px] text-muted-foreground mt-1">
-            App must be installed to open
-          </p>
+          <p className="text-[10px] text-muted-foreground mt-1">App must be installed to open</p>
         )}
       </div>
 
@@ -290,39 +288,28 @@ function QuicklinkEditForm({
 export function QuicklinksEditor({
   id,
   content,
-  isSelected,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorContext();
   const { getToken, user } = useEntityAuth();
 
-  // Saved links from the database
-  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(
-    content.links || [],
-  );
-  // IDs of links currently being edited
-  const [editingIds, setEditingIds] = useState<Set<string>>(new Set());
-  // Local edits for links being edited (unsaved changes)
-  const [editingData, setEditingData] = useState<Map<string, QuicklinkItem>>(
-    new Map(),
-  );
-  // Track which link is uploading an image
+  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(content.links || []);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingData, setEditingData] = useState<QuicklinkItem | null>(null);
   const [uploadingLinkId, setUploadingLinkId] = useState<string | null>(null);
-  // Track if we're adding a new link
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newLinkData, setNewLinkData] = useState<QuicklinkItem | null>(null);
 
-  // Sync with database when block changes
+  // Sync with database
   useEffect(() => {
     setSavedLinks(content.links || []);
-    setEditingIds(new Set());
-    setEditingData(new Map());
+    setEditingId(null);
+    setEditingData(null);
     setIsAddingNew(false);
     setNewLinkData(null);
   }, [id]);
 
-  // Also sync when content changes externally
   useEffect(() => {
     setSavedLinks(content.links || []);
   }, [content.links]);
@@ -360,7 +347,6 @@ export function QuicklinksEditor({
 
   const handleSaveNew = async () => {
     if (!newLinkData) return;
-
     const newLinks = [...savedLinks, newLinkData];
     const success = await persistLinks(newLinks);
     if (success) {
@@ -379,44 +365,26 @@ export function QuicklinksEditor({
   const handleStartEdit = (linkId: string) => {
     const link = savedLinks.find((l) => l.id === linkId);
     if (link) {
-      setEditingIds((prev) => new Set(prev).add(linkId));
-      setEditingData((prev) => new Map(prev).set(linkId, { ...link }));
+      setEditingId(linkId);
+      setEditingData({ ...link });
     }
   };
 
-  const handleSaveEdit = async (linkId: string) => {
-    const editedLink = editingData.get(linkId);
-    if (!editedLink) return;
-
-    const newLinks = savedLinks.map((l) => (l.id === linkId ? editedLink : l));
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingData) return;
+    const newLinks = savedLinks.map((l) => (l.id === editingId ? editingData : l));
     const success = await persistLinks(newLinks);
     if (success) {
       setSavedLinks(newLinks);
-      setEditingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(linkId);
-        return next;
-      });
-      setEditingData((prev) => {
-        const next = new Map(prev);
-        next.delete(linkId);
-        return next;
-      });
+      setEditingId(null);
+      setEditingData(null);
       toast.success("Link updated");
     }
   };
 
-  const handleCancelEdit = (linkId: string) => {
-    setEditingIds((prev) => {
-      const next = new Set(prev);
-      next.delete(linkId);
-      return next;
-    });
-    setEditingData((prev) => {
-      const next = new Map(prev);
-      next.delete(linkId);
-      return next;
-    });
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingData(null);
   };
 
   const handleRemove = async (linkId: string) => {
@@ -424,28 +392,16 @@ export function QuicklinksEditor({
     const success = await persistLinks(newLinks);
     if (success) {
       setSavedLinks(newLinks);
-      // Also clean up any editing state
-      setEditingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(linkId);
-        return next;
-      });
-      setEditingData((prev) => {
-        const next = new Map(prev);
-        next.delete(linkId);
-        return next;
-      });
+      if (editingId === linkId) {
+        setEditingId(null);
+        setEditingData(null);
+      }
       toast.success("Link removed");
     }
   };
 
-  const handleImageUpload = async (
-    file: File,
-    linkId: string,
-    isNew: boolean,
-  ) => {
+  const handleImageUpload = async (file: File, linkId: string, isNew: boolean) => {
     setUploadingLinkId(linkId);
-
     try {
       const token = await getToken();
       if (!token) throw new Error("Not authenticated");
@@ -463,13 +419,8 @@ export function QuicklinksEditor({
 
       if (isNew && newLinkData) {
         setNewLinkData({ ...newLinkData, imageUrl: cdnUrl });
-      } else {
-        const currentData = editingData.get(linkId);
-        if (currentData) {
-          setEditingData((prev) =>
-            new Map(prev).set(linkId, { ...currentData, imageUrl: cdnUrl }),
-          );
-        }
+      } else if (editingData) {
+        setEditingData({ ...editingData, imageUrl: cdnUrl });
       }
       toast.success("Image uploaded");
     } catch (error) {
@@ -480,93 +431,81 @@ export function QuicklinksEditor({
     }
   };
 
-  const handleEditChange = (linkId: string, updatedLink: QuicklinkItem) => {
-    setEditingData((prev) => new Map(prev).set(linkId, updatedLink));
-  };
+  // Count cards that aren't being edited
+  const visibleCards = savedLinks.filter((l) => l.id !== editingId);
 
   return (
-    <div className="space-y-3 min-w-0 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="text-xs font-medium text-muted-foreground">
-            Links ({savedLinks.length}/{MAX_LINKS})
-          </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={handleAddClick}
-            disabled={savedLinks.length >= MAX_LINKS || isAddingNew}
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add
-          </Button>
+    <div className="w-full space-y-4">
+      {/* Header with add button */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          Links ({savedLinks.length}/{MAX_LINKS})
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={handleAddClick}
+          disabled={savedLinks.length >= MAX_LINKS || isAddingNew}
+        >
+          <Plus className="w-3 h-3 mr-1" />
+          Add
+        </Button>
+      </div>
+
+      {/* New link form */}
+      {isAddingNew && newLinkData && (
+        <QuicklinkEditForm
+          link={newLinkData}
+          onChange={setNewLinkData}
+          onSave={handleSaveNew}
+          onCancel={handleCancelNew}
+          onImageUpload={(file) => handleImageUpload(file, newLinkData.id, true)}
+          isUploading={uploadingLinkId === newLinkData.id}
+          isNew={true}
+        />
+      )}
+
+      {/* Edit form for existing link */}
+      {editingId && editingData && (
+        <QuicklinkEditForm
+          link={editingData}
+          onChange={setEditingData}
+          onSave={handleSaveEdit}
+          onCancel={handleCancelEdit}
+          onImageUpload={(file) => handleImageUpload(file, editingId, false)}
+          isUploading={uploadingLinkId === editingId}
+          isNew={false}
+        />
+      )}
+
+      {/* Cards grid - responsive */}
+      {visibleCards.length > 0 ? (
+        <div
+          className={cn(
+            "grid gap-3 pt-2",
+            visibleCards.length === 1 && "grid-cols-1",
+            visibleCards.length === 2 && "grid-cols-2",
+            visibleCards.length >= 3 && "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+          )}
+        >
+          {visibleCards.map((link) => (
+            <QuicklinkCard
+              key={link.id}
+              link={link}
+              isEditing={false}
+              onStartEdit={() => handleStartEdit(link.id)}
+              onRemove={() => handleRemove(link.id)}
+            />
+          ))}
         </div>
-
-        {/* New link form */}
-        {isAddingNew && newLinkData && (
-          <QuicklinkEditForm
-            link={newLinkData}
-            onChange={setNewLinkData}
-            onSave={handleSaveNew}
-            onCancel={handleCancelNew}
-            onImageUpload={(file) =>
-              handleImageUpload(file, newLinkData.id, true)
-            }
-            isUploading={uploadingLinkId === newLinkData.id}
-            isNew={true}
-          />
-        )}
-
-        {/* Links preview grid / edit forms */}
-        {savedLinks.length > 0 ? (
-          <div className="space-y-3">
-            {/* Preview cards for non-editing links */}
-            {savedLinks.some((l) => !editingIds.has(l.id)) && (
-              <div className="flex flex-wrap gap-3">
-                {savedLinks
-                  .filter((l) => !editingIds.has(l.id))
-                  .map((link) => (
-                    <QuicklinkPreviewCard
-                      key={link.id}
-                      link={link}
-                      onEdit={() => handleStartEdit(link.id)}
-                      onRemove={() => handleRemove(link.id)}
-                    />
-                  ))}
-              </div>
-            )}
-
-            {/* Edit forms for links being edited */}
-            {savedLinks
-              .filter((l) => editingIds.has(l.id))
-              .map((link) => {
-                const editData = editingData.get(link.id) || link;
-                return (
-                  <QuicklinkEditForm
-                    key={link.id}
-                    link={editData}
-                    onChange={(updated) => handleEditChange(link.id, updated)}
-                    onSave={() => handleSaveEdit(link.id)}
-                    onCancel={() => handleCancelEdit(link.id)}
-                    onImageUpload={(file) =>
-                      handleImageUpload(file, link.id, false)
-                    }
-                    isUploading={uploadingLinkId === link.id}
-                    isNew={false}
-                  />
-                );
-              })}
-          </div>
-        ) : !isAddingNew ? (
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
-            <ExternalLink className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-            <p className="text-sm text-muted-foreground">No quick links yet</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
-              Click "Add Link" to create your first quick link
-            </p>
-          </div>
-        ) : null}
+      ) : !isAddingNew && !editingId ? (
+        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center transition-colors hover:border-muted-foreground/50 hover:bg-muted/30">
+          <ExternalLink className="w-6 h-6 mx-auto text-muted-foreground/50 mb-2" />
+          <p className="text-sm text-muted-foreground">No quick links yet</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Click "Add" to create your first link</p>
+        </div>
+      ) : null}
     </div>
   );
 }

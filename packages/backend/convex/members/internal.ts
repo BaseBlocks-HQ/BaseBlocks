@@ -1,9 +1,9 @@
+import { v } from "convex/values";
 /**
  * Internal queries and mutations for members
  * These are called by actions and not exposed to clients
  */
-import { internalQuery, internalMutation } from "../_generated/server";
-import { v } from "convex/values";
+import { internalMutation, internalQuery } from "../_generated/server";
 
 /**
  * Get a company by ID
@@ -92,9 +92,7 @@ export const syncMembersFromEA = internalMutation({
           eaRole: eaMember.eaRole,
           // Only update role if EA role changed
           role:
-            existing.eaRole !== eaMember.eaRole
-              ? eaMember.role
-              : existing.role,
+            existing.eaRole !== eaMember.eaRole ? eaMember.role : existing.role,
           syncedAt: now,
         });
         updated++;
@@ -176,7 +174,10 @@ export const addMemberFromInvitation = internalMutation({
     role: v.union(v.literal("admin"), v.literal("viewer")),
     eaRole: v.string(),
   },
-  handler: async (ctx, { companyId, eaUserId, email, name, imageUrl, role, eaRole }) => {
+  handler: async (
+    ctx,
+    { companyId, eaUserId, email, name, imageUrl, role, eaRole },
+  ) => {
     const now = Date.now();
 
     // Check if member already exists

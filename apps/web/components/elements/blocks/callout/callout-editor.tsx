@@ -1,7 +1,7 @@
 "use client";
 
-import { useDebounceCallback } from "@/hooks";
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function CalloutEditor({

@@ -14,8 +14,6 @@ interface Props {
 export default function LibraryDetailPage({ params }: Props) {
   const { libraryId } = use(params);
   return (
-    <LibraryDetailContent
-      libraryId={libraryId as Id<"documentLibraries">}
-    />
+    <LibraryDetailContent libraryId={libraryId as Id<"documentLibraries">} />
   );
 }
