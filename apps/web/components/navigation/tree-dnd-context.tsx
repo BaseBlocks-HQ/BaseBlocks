@@ -79,7 +79,6 @@ export function TreeDndProvider({
   pages,
   onDragStart,
   onDragEnd,
-  renderDragOverlay,
   isExpanded,
   onAutoExpand,
   hasChildren,
@@ -135,17 +134,6 @@ export function TreeDndProvider({
     },
     [onAutoExpand, hasChildren, isExpanded],
   );
-
-  // Smooth drop animation
-  const dropAnimation: DropAnimation = {
-    sideEffects: defaultDropAnimationSideEffects({
-      styles: {
-        active: {
-          opacity: "0.5",
-        },
-      },
-    }),
-  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -293,12 +281,6 @@ export function TreeDndProvider({
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
           {children}
         </SortableContext>
-        <DragOverlay
-          dropAnimation={dropAnimation}
-          modifiers={[dragOverlayOffsetModifier]}
-        >
-          {activeId && renderDragOverlay ? renderDragOverlay(activeId) : null}
-        </DragOverlay>
       </DndContext>
     </TreeDndContext.Provider>
   );

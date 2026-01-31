@@ -24,7 +24,7 @@ import {
   INDENT_WIDTH,
 } from "@/lib/tree-utils";
 import type { PageListItem } from "@/types";
-import type { DragEndEvent } from "@dnd-kit/core";
+import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
