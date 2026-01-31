@@ -2,9 +2,16 @@
 
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { BlockSpacerContent } from "@/types/elements";
-import { MoveVertical } from "lucide-react";
+import { Check, ChevronDown, MoveVertical } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 // Use inline styles for proper responsiveness
 const SPACER_HEIGHTS: Record<BlockSpacerContent["height"], number> = {
@@ -21,11 +28,44 @@ const SIZE_LABELS: Record<BlockSpacerContent["height"], string> = {
   xlarge: "XL",
 };
 
+const SIZE_FULL_LABELS: Record<BlockSpacerContent["height"], string> = {
+  small: "Small",
+  medium: "Medium",
+  large: "Large",
+  xlarge: "Extra Large",
+};
+
+function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(ref.current);
+    setWidth(ref.current.offsetWidth);
+
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}
+
 export function SpacerEditor({
   content,
   onUpdate,
 }: ElementEditorProps<"block-spacer">) {
   const height = content.height || "medium";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = useContainerWidth(containerRef);
+
+  // Use dropdown when container is narrow (less than 200px)
+  const useDropdown = containerWidth > 0 && containerWidth < 200;
 
   const handleHeightChange = (newHeight: BlockSpacerContent["height"]) => {
     onUpdate({ height: newHeight });
@@ -33,6 +73,7 @@ export function SpacerEditor({
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "w-full max-w-full box-border",
         "border border-dashed border-muted-foreground/30 rounded-md",
@@ -44,28 +85,62 @@ export function SpacerEditor({
     >
       <div className="flex items-center gap-1.5 text-muted-foreground">
         <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-        <span className="text-xs hidden sm:inline">Spacer</span>
+        {!useDropdown && <span className="text-xs hidden sm:inline">Spacer</span>}
       </div>
 
-      {/* Height controls - responsive sizing */}
-      <div className="flex gap-0.5 sm:gap-1">
-        {(
-          Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
-        ).map((size) => (
-          <Button
-            key={size}
-            variant={height === size ? "default" : "outline"}
-            size="sm"
-            className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleHeightChange(size);
-            }}
-          >
-            {SIZE_LABELS[size]}
-          </Button>
-        ))}
-      </div>
+      {/* Height controls - dropdown for narrow containers, buttons for wide */}
+      {useDropdown ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {SIZE_LABELS[height]}
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            {(
+              Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
+            ).map((size) => (
+              <DropdownMenuItem
+                key={size}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHeightChange(size);
+                }}
+                className="gap-2"
+              >
+                <Check className={cn("h-3 w-3", height === size ? "opacity-100" : "opacity-0")} />
+                <span className="font-medium">{SIZE_LABELS[size]}</span>
+                <span className="text-muted-foreground">{SIZE_FULL_LABELS[size]}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className="flex gap-0.5 sm:gap-1">
+          {(
+            Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
+          ).map((size) => (
+            <Button
+              key={size}
+              variant={height === size ? "default" : "outline"}
+              size="sm"
+              className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleHeightChange(size);
+              }}
+            >
+              {SIZE_LABELS[size]}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

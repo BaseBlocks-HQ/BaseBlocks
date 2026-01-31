@@ -2,6 +2,7 @@
 
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
+import ContentEditable from "react-contenteditable";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function ParagraphEditor({
@@ -12,15 +13,7 @@ export function ParagraphEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"paragraph">) {
   const [localText, setLocalText] = useState(content.text || "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const autoResize = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, []);
+  const contentRef = useRef(content.text || "");
 
   const debouncedSave = useDebounceCallback(
     useCallback(
@@ -39,31 +32,38 @@ export function ParagraphEditor({
     500,
   );
 
+  // Sync content when id changes
   useEffect(() => {
     setLocalText(content.text || "");
-  }, [id]);
+    contentRef.current = content.text || "";
+  }, [id, content.text]);
 
-  useEffect(() => {
-    autoResize();
-  }, [localText, autoResize]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setLocalText(newText);
+  const handleChange = (e: { target: { value: string } }) => {
+    // Strip HTML tags for plain text, preserve line breaks
+    const plainText = e.target.value
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, "");
+    setLocalText(plainText);
+    // Clear ref completely when empty so :empty CSS works
+    contentRef.current = plainText.trim() ? plainText : "";
     onSaveStatusChange?.("pending");
-    debouncedSave(newText);
+    debouncedSave(plainText);
   };
 
+  const isEmpty = !localText.trim();
+
   return (
-    <div className="rounded-md px-2 py-1 -mx-2 -my-1 transition-colors hover:bg-muted/50">
-      <textarea
-        ref={textareaRef}
-        value={localText}
+    <div className="rounded-md px-2 py-2 transition-colors hover:bg-muted/50 relative">
+      <ContentEditable
+        html={contentRef.current}
         onChange={handleChange}
-        className="w-full resize-none border-none bg-transparent focus:outline-none overflow-hidden"
-        placeholder="Start writing..."
-        rows={1}
+        className="w-full outline-none whitespace-pre-wrap relative z-10"
       />
+      {isEmpty && (
+        <span className="absolute left-2 top-2 text-muted-foreground pointer-events-none">
+          Start writing...
+        </span>
+      )}
     </div>
   );
 }

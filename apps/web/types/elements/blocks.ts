@@ -49,7 +49,7 @@ export type BlockContentUnion =
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
-  heading: { text: "New Heading", level: 2 },
+  heading: { text: "", level: 2 },
   paragraph: { text: "" },
   callout: { text: "", variant: "info" },
   code: { text: "", language: "typescript" },

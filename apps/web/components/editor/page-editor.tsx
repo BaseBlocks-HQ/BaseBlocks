@@ -351,9 +351,6 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
 
             {/* Sidebar area */}
             <aside className="w-72 flex-shrink-0 border-l pl-6 space-y-3">
-              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                Sidebar
-              </div>
               <DndProvider
                 items={sidebarLayoutIds}
                 onDragEnd={handleSidebarLayoutDragEnd}

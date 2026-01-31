@@ -12,14 +12,12 @@ import type { ElementRendererProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
 import { Button } from "@/components/ui/button";
 import { MiddleTruncate } from "@/components/ui/middle-truncate";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { Id } from "@repo/backend";
@@ -29,10 +27,31 @@ import {
   Eye,
   Folder,
   FolderOpen,
-  FolderTree,
   Home,
+  Menu,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(ref.current);
+    setWidth(ref.current.offsetWidth);
+
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}
 
 interface LibraryRendererProps extends ElementRendererProps<"library"> {
   accessToken?: string;
@@ -42,11 +61,15 @@ export function LibraryRenderer({
   content,
   accessToken,
 }: LibraryRendererProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = useContainerWidth(containerRef);
+
+  const showSidebar = containerWidth >= 400;
+
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(),
-  );
-  const [isFolderSheetOpen, setIsFolderSheetOpen] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [folderMenuOpen, setFolderMenuOpen] = useState(false);
+  const [breadcrumbOpen, setBreadcrumbOpen] = useState(false);
   const { openFile } = useMediaViewer();
 
   const libraryId = content.libraryId
@@ -73,19 +96,15 @@ export function LibraryRenderer({
     });
   }, []);
 
-  const handleSelectFolder = useCallback((folderId: string | null) => {
+  const handleSelectFolder = useCallback((folderId: string | null, closeMenu = false) => {
     setSelectedFolderId(folderId);
     if (folderId) {
       setExpandedFolders((prev) => new Set(prev).add(folderId));
     }
-  }, []);
-
-  const handleSelectFolderMobile = useCallback((folderId: string | null) => {
-    setSelectedFolderId(folderId);
-    if (folderId) {
-      setExpandedFolders((prev) => new Set(prev).add(folderId));
+    if (closeMenu) {
+      setFolderMenuOpen(false);
     }
-    setIsFolderSheetOpen(false);
+    setBreadcrumbOpen(false);
   }, []);
 
   const handleDownload = useCallback((cdnUrl: string, filename: string) => {
@@ -113,13 +132,12 @@ export function LibraryRenderer({
 
   if (!libraryId || !library) {
     return (
-      <div className="border rounded-lg p-8 text-center text-muted-foreground">
+      <div ref={containerRef} className="border rounded-lg p-6 text-center text-muted-foreground text-sm">
         No library configured
       </div>
     );
   }
 
-  // Build folder tree structure
   const buildFolderTree = (parentId?: string) => {
     return folders
       .filter((f) => f.parentId === parentId)
@@ -130,14 +148,12 @@ export function LibraryRenderer({
     return folders.some((f) => f.parentId === folderId);
   };
 
-  // Render folder tree recursively
   const renderFolderTree = (
     parentId?: string,
     level = 0,
-    onSelect?: (id: string | null) => void,
+    closeOnSelect = false,
   ) => {
     const children = buildFolderTree(parentId);
-    const selectFn = onSelect || handleSelectFolder;
 
     return children.map((folder) => {
       const isExpanded = expandedFolders.has(folder._id);
@@ -148,13 +164,11 @@ export function LibraryRenderer({
         <div key={folder._id}>
           <div
             className={cn(
-              "flex items-center gap-1 py-1.5 px-2 rounded-md cursor-pointer transition-colors",
-              isSelected
-                ? "bg-accent text-accent-foreground"
-                : "hover:bg-muted/50",
+              "flex items-center gap-1 py-1 px-2 rounded cursor-pointer text-sm",
+              isSelected ? "bg-accent" : "hover:bg-muted/50",
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
-            onClick={() => selectFn(folder._id)}
+            onClick={() => handleSelectFolder(folder._id, closeOnSelect)}
           >
             <button
               type="button"
@@ -163,7 +177,7 @@ export function LibraryRenderer({
                 handleToggleExpand(folder._id);
               }}
               className={cn(
-                "flex-shrink-0 h-4 w-4 flex items-center justify-center",
+                "shrink-0 h-4 w-4 flex items-center justify-center",
                 !hasSubfolders && "invisible",
               )}
             >
@@ -175,13 +189,13 @@ export function LibraryRenderer({
               />
             </button>
             {isExpanded ? (
-              <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : (
-              <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
             )}
-            <span className="text-sm truncate">{folder.name}</span>
+            <span className="truncate flex-1 min-w-0">{folder.name}</span>
           </div>
-          {isExpanded && renderFolderTree(folder._id, level + 1, onSelect)}
+          {isExpanded && renderFolderTree(folder._id, level + 1, closeOnSelect)}
         </div>
       );
     });
@@ -201,147 +215,190 @@ export function LibraryRenderer({
 
   const showFolders = content.showFolderTree !== false;
 
-  // Folder tree content - shared between desktop and mobile
-  const folderTreeContent = (onSelect?: (id: string | null) => void) => (
-    <ScrollArea className="h-full">
-      <div className="py-2">{renderFolderTree(undefined, 0, onSelect)}</div>
-    </ScrollArea>
+  // Current location display text
+  const lastFolder = folderPath.length > 0 ? folderPath[folderPath.length - 1] : null;
+  const currentLocation = lastFolder?.name ?? library.name;
+
+  // Breadcrumb navigation popover content
+  const breadcrumbNavContent = (
+    <div className="py-1">
+      <button
+        type="button"
+        className={cn(
+          "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
+          !selectedFolderId && "bg-accent"
+        )}
+        onClick={() => handleSelectFolder(null)}
+      >
+        <Home className="h-3.5 w-3.5" />
+        <span className="truncate">{library.name}</span>
+      </button>
+      {folderPath.map((folder, index) => (
+        <button
+          key={folder._id}
+          type="button"
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
+            index === folderPath.length - 1 && "bg-accent"
+          )}
+          style={{ paddingLeft: `${(index + 1) * 12 + 12}px` }}
+          onClick={() => handleSelectFolder(folder._id)}
+        >
+          <Folder className="h-3.5 w-3.5" />
+          <span className="truncate">{folder.name}</span>
+        </button>
+      ))}
+    </div>
   );
 
-  // File list content
-  const fileListContent = (
-    <ScrollArea className="h-full">
-      {sortedFiles.length > 0 ? (
-        <div className="p-2 space-y-1">
-          {sortedFiles.map((file) => (
-            <div
-              key={file._id}
-              className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
-              onClick={() => handlePreview(file)}
-            >
-              <div
-                className={cn(
-                  "flex-shrink-0",
-                  getFileTypeColor(file.contentType),
-                )}
-              >
-                <FileIcon contentType={file.contentType} className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <MiddleTruncate
-                  text={file.filename}
-                  className="text-sm font-medium"
-                  endChars={12}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(file.size)}
-                </p>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePreview(file);
-                  }}
-                  title="Preview"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                {content.allowDownloads !== false && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(file.cdnUrl, file.filename);
-                    }}
-                    title="Download"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-          No files in this folder
-        </div>
-      )}
-    </ScrollArea>
+  // Sidebar header with breadcrumb
+  const sidebarHeader = (
+    <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30">
+      <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
+          >
+            <Home className="h-3 w-3 shrink-0" />
+            {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+            <span className="truncate">{currentLocation}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="bottom" align="start" className="w-48 p-0">
+          {breadcrumbNavContent}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
+  // Mobile folder menu content
+  const folderMenuContent = (
+    <div className="flex flex-col max-h-72 overflow-hidden">
+      {/* Breadcrumb nav in popover */}
+      <div className="border-b">
+        {breadcrumbNavContent}
+      </div>
+      {/* Folder list */}
+      <ScrollArea className="flex-1">
+        <div className="py-1">{renderFolderTree(undefined, 0, true)}</div>
+      </ScrollArea>
+    </div>
   );
 
   return (
-    <div className="w-full border rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 bg-muted/50 border-b">
-        <div className="flex items-center gap-2 text-sm overflow-hidden">
-          {/* Mobile folder button */}
-          {showFolders && (
-            <Sheet open={isFolderSheetOpen} onOpenChange={setIsFolderSheetOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0 md:hidden"
-                >
-                  <FolderTree className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <SheetHeader className="p-3 border-b">
-                  <SheetTitle className="text-sm">Folders</SheetTitle>
-                </SheetHeader>
-                <div className="h-[calc(100vh-60px)]">
-                  {folderTreeContent(handleSelectFolderMobile)}
-                </div>
-              </SheetContent>
-            </Sheet>
-          )}
-
-          <button
-            type="button"
-            onClick={() => handleSelectFolder(null)}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-          >
-            <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">{library.name}</span>
-          </button>
-          {folderPath.map((folder, index) => (
-            <div key={folder._id} className="flex items-center min-w-0">
-              <ChevronRight className="h-4 w-4 text-muted-foreground mx-1 flex-shrink-0" />
-              {index === folderPath.length - 1 ? (
-                <span className="font-medium truncate">{folder.name}</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleSelectFolder(folder._id)}
-                  className="text-muted-foreground hover:text-foreground transition-colors truncate"
-                >
-                  {folder.name}
-                </button>
-              )}
+    <div ref={containerRef} className="w-full border rounded-lg overflow-hidden">
+      <div className="flex h-52">
+        {/* Sidebar - shown when container is wide enough */}
+        {showFolders && showSidebar && (
+          <div className="flex flex-col w-36 border-r bg-muted/20 shrink-0 overflow-hidden">
+            {sidebarHeader}
+            <div className="flex-1 overflow-auto py-1">
+              {renderFolderTree(undefined, 0, false)}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex h-[250px]">
-        {/* Desktop folder sidebar */}
-        {showFolders && (
-          <div className="hidden md:block w-32 lg:w-40 border-r bg-muted/30 flex-shrink-0 overflow-hidden">
-            {folderTreeContent()}
           </div>
         )}
 
-        {/* File list */}
-        <div className="flex-1 min-w-0">{fileListContent}</div>
+        {/* File list area */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* Compact header for mobile */}
+          {showFolders && !showSidebar && (
+            <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
+              <Popover open={folderMenuOpen} onOpenChange={setFolderMenuOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                    <Menu className="h-3.5 w-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-56 p-0">
+                  {folderMenuContent}
+                </PopoverContent>
+              </Popover>
+
+              <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
+                  >
+                    <Home className="h-3 w-3 shrink-0" />
+                    {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+                    <span className="truncate">{currentLocation}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-48 p-0">
+                  {breadcrumbNavContent}
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
+          {/* File list */}
+          <ScrollArea className="flex-1 min-w-0">
+            {sortedFiles.length > 0 ? (
+              <div className="p-1.5 space-y-0.5">
+                {sortedFiles.map((file) => (
+                  <div
+                    key={file._id}
+                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer group"
+                    onClick={() => handlePreview(file)}
+                  >
+                    <div
+                      className={cn(
+                        "shrink-0",
+                        getFileTypeColor(file.contentType),
+                      )}
+                    >
+                      <FileIcon contentType={file.contentType} className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <MiddleTruncate
+                        text={file.filename}
+                        className="text-sm"
+                        endChars={10}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(file);
+                        }}
+                        title="Preview"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      {content.allowDownloads !== false && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(file.cdnUrl, file.filename);
+                          }}
+                          title="Download"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                No files in this folder
+              </div>
+            )}
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );

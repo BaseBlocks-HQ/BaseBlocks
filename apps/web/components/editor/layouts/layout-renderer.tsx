@@ -61,11 +61,7 @@ export function LayoutRenderer({
   return (
     <div
       className={cn(
-        "group/layout relative rounded-md transition-colors",
-        // Subtle left border for selection instead of ring (no layout shift)
-        isSelected
-          ? "border-l-2 border-l-primary bg-muted/30"
-          : "border-l-2 border-l-transparent hover:bg-muted/20",
+        "group/layout rounded-md transition-colors",
         isDragging && "ring-2 ring-primary/30",
       )}
       onClick={(e) => {
@@ -73,118 +69,123 @@ export function LayoutRenderer({
         onSelectLayout();
       }}
     >
-      {/* Layout toolbar - compact, left edge. Hidden when a block is selected (contextual controls) */}
-      <div
-        className={cn(
-          "absolute -left-8 top-1 flex flex-col gap-0.5",
-          "transition-opacity",
-          // Only show when hovering layout AND no block is selected
-          selectedBlockId
-            ? "opacity-0 pointer-events-none"
-            : "opacity-0 group-hover/layout:opacity-100",
-        )}
-      >
-        <div
-          ref={dragHandleRef}
-          role="button"
-          tabIndex={0}
-          className={cn(
-            "flex items-center justify-center h-6 w-6 rounded",
-            "text-muted-foreground hover:text-foreground hover:bg-accent",
-            "cursor-grab active:cursor-grabbing",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-          {...dragHandleProps}
-        >
-          <GripVertical className="h-3.5 w-3.5" />
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      {/* Layout content */}
-      {layout.type === "spacer" ? (
-        /* Spacer layout - renders as vertical space with height controls */
+      {/* Layout with inline toolbar - same pattern as blocks */}
+      <div className="flex gap-1 items-start">
+        {/* Layout toolbar - inline */}
         <div
           className={cn(
-            "w-full max-w-full box-border",
-            "border border-dashed border-muted-foreground/30 rounded-md",
-            "flex items-center justify-center gap-2 sm:gap-3",
-            "transition-colors",
-            "hover:border-muted-foreground/50 hover:bg-muted/30",
+            "flex flex-col gap-0.5 shrink-0",
+            "transition-opacity",
+            // Only show when hovering layout AND no block is selected
+            selectedBlockId
+              ? "opacity-0 pointer-events-none"
+              : "opacity-0 group-hover/layout:opacity-100",
+            isSelected && !selectedBlockId && "opacity-100",
           )}
-          style={{ height: `${SPACER_LAYOUT_HEIGHTS[spacerHeight]}px` }}
         >
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="text-xs hidden sm:inline">Spacer</span>
-          </div>
-
-          {/* Height controls - responsive sizing */}
-          <div className="flex gap-0.5 sm:gap-1">
-            {(Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]).map(
-              (size) => (
-                <Button
-                  key={size}
-                  variant={spacerHeight === size ? "default" : "outline"}
-                  size="sm"
-                  className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSpacerHeightChange(size);
-                  }}
-                >
-                  {size === "small"
-                    ? "S"
-                    : size === "medium"
-                      ? "M"
-                      : size === "large"
-                        ? "L"
-                        : "XL"}
-                </Button>
-              ),
+          <div
+            ref={dragHandleRef}
+            role="button"
+            tabIndex={0}
+            className={cn(
+              "flex items-center justify-center h-6 w-6 rounded",
+              "cursor-grab active:cursor-grabbing",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isSelected
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
+            {...dragHandleProps}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      ) : (
-        /* Regular layouts with slots */
-        <div style={gridStyle} className="min-h-[48px] p-1">
-          {layout.slots.map((slot) => (
-            <LayoutSlot
-              key={slot.id}
-              slot={slot}
-              layoutId={layout.id}
-              layoutType={layout.type}
-              isSelected={selectedSlotId === slot.id}
-              selectedBlockId={
-                selectedSlotId === slot.id ? selectedBlockId : null
-              }
-              onSelect={() => onSelectSlot(slot.id)}
-              onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
-              onAddBlock={() => onAddBlock(slot.id)}
-              onUpdateBlock={(blockId, content) =>
-                onUpdateBlock(slot.id, blockId, content)
-              }
-              onRemoveBlock={(blockId) => onRemoveBlock(slot.id, blockId)}
-              onMoveBlock={
-                onMoveBlock
-                  ? (toSlotId, blockId, toIndex) =>
-                      onMoveBlock(slot.id, toSlotId, blockId, toIndex)
-                  : undefined
-              }
-            />
-          ))}
+
+        {/* Layout content */}
+        <div className="min-w-0 flex-1 rounded-md transition-colors hover:bg-muted/20">
+          {layout.type === "spacer" ? (
+            /* Spacer layout - renders as vertical space with height controls */
+            <div
+              className={cn(
+                "w-full max-w-full box-border",
+                "border border-dashed border-muted-foreground/30 rounded-md",
+                "flex items-center justify-center gap-2 sm:gap-3",
+                "transition-colors",
+                "hover:border-muted-foreground/50 hover:bg-muted/30",
+              )}
+              style={{ height: `${SPACER_LAYOUT_HEIGHTS[spacerHeight]}px` }}
+            >
+              <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+
+              {/* Height controls - responsive sizing */}
+              <div className="flex gap-0.5 sm:gap-1">
+                {(Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]).map(
+                  (size) => (
+                    <Button
+                      key={size}
+                      variant={spacerHeight === size ? "default" : "outline"}
+                      size="sm"
+                      className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSpacerHeightChange(size);
+                      }}
+                    >
+                      {size === "small"
+                        ? "S"
+                        : size === "medium"
+                          ? "M"
+                          : size === "large"
+                            ? "L"
+                            : "XL"}
+                    </Button>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Regular layouts with slots */
+            <div style={gridStyle} className="min-h-[48px] p-1">
+              {layout.slots.map((slot) => (
+                <LayoutSlot
+                  key={slot.id}
+                  slot={slot}
+                  layoutId={layout.id}
+                  layoutType={layout.type}
+                  isSelected={selectedSlotId === slot.id}
+                  selectedBlockId={
+                    selectedSlotId === slot.id ? selectedBlockId : null
+                  }
+                  onSelect={() => onSelectSlot(slot.id)}
+                  onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
+                  onAddBlock={() => onAddBlock(slot.id)}
+                  onUpdateBlock={(blockId, content) =>
+                    onUpdateBlock(slot.id, blockId, content)
+                  }
+                  onRemoveBlock={(blockId) => onRemoveBlock(slot.id, blockId)}
+                  onMoveBlock={
+                    onMoveBlock
+                      ? (toSlotId, blockId, toIndex) =>
+                          onMoveBlock(slot.id, toSlotId, blockId, toIndex)
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
