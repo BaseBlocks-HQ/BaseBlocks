@@ -35,7 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { LibraryContent } from "@/types";
-import type { Id } from "@repo/backend";
+import type { Doc, Id } from "@repo/backend";
 import { Loader2, Plus, Settings2, Upload } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -257,7 +257,7 @@ export function LibraryEditor({
                     <SelectValue placeholder="Select a library" />
                   </SelectTrigger>
                   <SelectContent>
-                    {libraries.map((lib) => (
+                    {libraries.map((lib: Doc<"documentLibraries">) => (
                       <SelectItem key={lib._id} value={lib._id}>
                         {lib.name}
                       </SelectItem>
@@ -295,7 +295,9 @@ export function LibraryEditor({
   }
 
   // Get current library info
-  const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
+  const currentLibrary = libraries?.find(
+    (l: Doc<"documentLibraries">) => l._id === content.libraryId,
+  );
 
   return (
     <div className="w-full border rounded-lg overflow-hidden transition-colors hover:border-muted-foreground/50 min-w-0">
@@ -306,7 +308,10 @@ export function LibraryEditor({
               {currentLibrary?.name || "Library"}
             </span>
             <Breadcrumbs
-              items={folderPath.map((f) => ({ id: f._id, name: f.name }))}
+              items={folderPath.map((f: Doc<"documentFolders">) => ({
+                id: f._id,
+                name: f.name,
+              }))}
               onNavigate={handleNavigate}
             />
           </div>
