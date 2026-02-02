@@ -1,0 +1,8 @@
+/* Make BlockNote editor transparent to inherit app theme */
+.bn-container[data-subpage-editor][data-color-scheme] {
+  --bn-colors-editor-background: transparent;
+}
+
+.bn-container[data-subpage-editor] .bn-editor {
+  min-height: 300px;
+}

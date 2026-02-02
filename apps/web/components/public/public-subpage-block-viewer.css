@@ -1,0 +1,4 @@
+/* Make BlockNote viewer transparent to inherit app theme */
+.bn-container[data-public-viewer][data-color-scheme] {
+  --bn-colors-editor-background: transparent;
+}

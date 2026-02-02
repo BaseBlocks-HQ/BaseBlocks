@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { usePublicSubpageContext } from "./public-subpage-context";
+import { PublicSubpageBlockViewer } from "./public-subpage-block-viewer";
+import type { Block } from "@blocknote/core";
 
 export function PublicSubpagePanel() {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
@@ -28,13 +30,7 @@ export function PublicSubpagePanel() {
         {content.description && (
           <p className="text-muted-foreground mb-4">{content.description}</p>
         )}
-        {content.content ? (
-          <div className="prose prose-neutral dark:prose-invert max-w-none whitespace-pre-wrap">
-            {content.content}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">No content.</p>
-        )}
+        <PublicSubpageBlockViewer content={content.content as Block[] | undefined} />
       </div>
     </div>
   );

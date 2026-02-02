@@ -39,10 +39,13 @@ export interface BlockSpacerContent {
   height: "small" | "medium" | "large" | "xlarge";
 }
 
+// BlockNote block type - using unknown[] since BlockNote manages its own schema
+export type BlockNoteDocument = unknown[];
+
 export interface SubpageContent {
   title: string;
   description?: string;
-  content?: string; // TODO: Replace with block editor content later
+  content?: BlockNoteDocument;
 }
 
 // Union of all block content types
@@ -63,5 +66,5 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   code: { text: "", language: "typescript" },
   divider: {},
   "block-spacer": { height: "medium" },
-  subpage: { title: "", description: "", content: "" },
+  subpage: { title: "", description: "", content: undefined },
 };
