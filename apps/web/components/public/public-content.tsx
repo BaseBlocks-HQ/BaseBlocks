@@ -14,12 +14,18 @@ import type {
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useQuery } from "convex/react";
+import {
+  PublicSubpageProvider,
+  usePublicSubpageContext,
+} from "./public-subpage-context";
+import { PublicSubpagePanel } from "./public-subpage-panel";
 
 interface PublicContentProps {
   pageId: string;
 }
 
-export function PublicContent({ pageId }: PublicContentProps) {
+function PublicContentInner({ pageId }: PublicContentProps) {
+  const { viewingSubpage } = usePublicSubpageContext();
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
@@ -106,28 +112,45 @@ export function PublicContent({ pageId }: PublicContentProps) {
   };
 
   return (
-    <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
-      <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
+    <div className="flex flex-1 overflow-hidden">
+      <div className={`${viewingSubpage ? 'w-3/5' : 'w-full'} overflow-auto transition-all`}>
+        <article className={cn("mx-auto px-6 py-8", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+          <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
 
-      {hasSidebar ? (
-        // Layout with sidebar
-        <div className="flex gap-8">
-          {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-8">
-            {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-          </div>
+          {hasSidebar ? (
+            // Layout with sidebar
+            <div className="flex gap-8">
+              {/* Main content */}
+              <div className="flex-1 min-w-0 space-y-8">
+                {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+              </div>
 
-          {/* Sidebar */}
-          <aside className="w-72 flex-shrink-0 space-y-6">
-            {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-          </aside>
-        </div>
-      ) : (
-        // Standard layout without sidebar
-        <div className="space-y-8">
-          {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+              {/* Sidebar */}
+              <aside className="w-72 flex-shrink-0 space-y-6">
+                {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+              </aside>
+            </div>
+          ) : (
+            // Standard layout without sidebar
+            <div className="space-y-8">
+              {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+            </div>
+          )}
+        </article>
+      </div>
+      {viewingSubpage && (
+        <div className="w-2/5 border-l">
+          <PublicSubpagePanel />
         </div>
       )}
-    </article>
+    </div>
+  );
+}
+
+export function PublicContent({ pageId }: PublicContentProps) {
+  return (
+    <PublicSubpageProvider>
+      <PublicContentInner pageId={pageId} />
+    </PublicSubpageProvider>
   );
 }

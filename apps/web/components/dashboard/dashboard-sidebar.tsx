@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useEntityAuth } from "@/lib/auth";
-import { Home, Library, LogOut, Users } from "lucide-react";
+import { Folder, Home, LogOut, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface DashboardSidebarProps {
@@ -46,7 +46,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
     {
       title: t("libraries.title"),
       href: "/dashboard/libraries",
-      icon: Library,
+      icon: Folder,
       isActive: pathname.startsWith("/dashboard/libraries"),
     },
   ];

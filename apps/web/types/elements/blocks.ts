@@ -10,7 +10,8 @@ export type BlockType =
   | "callout"
   | "code"
   | "divider"
-  | "block-spacer"; // Renamed from "spacer" to avoid confusion with layout spacer
+  | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
+  | "subpage";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -38,6 +39,12 @@ export interface BlockSpacerContent {
   height: "small" | "medium" | "large" | "xlarge";
 }
 
+export interface SubpageContent {
+  title: string;
+  description?: string;
+  content?: string; // TODO: Replace with block editor content later
+}
+
 // Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
@@ -45,7 +52,8 @@ export type BlockContentUnion =
   | CalloutContent
   | CodeContent
   | DividerContent
-  | BlockSpacerContent;
+  | BlockSpacerContent
+  | SubpageContent;
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
@@ -55,4 +63,5 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   code: { text: "", language: "typescript" },
   divider: {},
   "block-spacer": { height: "medium" },
+  subpage: { title: "", description: "", content: "" },
 };

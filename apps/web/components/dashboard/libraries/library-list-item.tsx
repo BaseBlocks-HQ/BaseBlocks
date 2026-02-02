@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 import type { Id } from "@repo/backend";
-import { Library, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Folder, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface LibraryWithCount {
@@ -39,7 +39,7 @@ export function LibraryListItem({
         className="flex items-center gap-3 flex-1 min-w-0"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Library className="h-5 w-5" />
+          <Folder className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-medium truncate">{library.name}</h3>

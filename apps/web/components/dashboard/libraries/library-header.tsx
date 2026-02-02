@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { Doc } from "@repo/backend";
-import { ArrowLeft, Library, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Folder, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface LibraryHeaderProps {
@@ -31,7 +31,7 @@ export function LibraryHeader({
           </Button>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Library className="h-5 w-5" />
+              <Folder className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-xl font-bold">{library.name}</h1>

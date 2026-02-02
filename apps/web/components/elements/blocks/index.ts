@@ -10,6 +10,7 @@ import "./callout";
 import "./code";
 import "./divider";
 import "./block-spacer";
+import "./subpage";
 
 // Re-export all blocks for direct access
 export * from "./heading";
@@ -18,3 +19,4 @@ export * from "./callout";
 export * from "./code";
 export * from "./divider";
 export * from "./block-spacer";
+export * from "./subpage";

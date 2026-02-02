@@ -1,6 +1,6 @@
 "use client";
 
-import { Library } from "lucide-react";
+import { Folder } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LibraryListItem, type LibraryWithCount } from "./library-list-item";
 
@@ -17,7 +17,7 @@ export function LibraryList({ libraries, onEdit, onDelete }: LibraryListProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-          <Library className="h-8 w-8 text-muted-foreground" />
+          <Folder className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="font-medium text-lg mb-1">
           {t("libraries.noLibraries")}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSitePermissions } from "@/hooks";
+import type { SubpageContent } from "@/types/elements/blocks";
 import type { Id } from "@repo/backend";
 import {
   type ReactNode,
@@ -9,6 +10,13 @@ import {
   useContext,
   useState,
 } from "react";
+
+export interface EditingSubpage {
+  blockId: string;
+  layoutId: string;
+  slotId: string;
+  content: SubpageContent;
+}
 
 interface EditorSelection {
   layoutId: string | null;
@@ -27,6 +35,11 @@ interface EditorContextValue {
     blockId: string | null,
   ) => void;
   clearSelection: () => void;
+  // Subpage editing
+  editingSubpage: EditingSubpage | null;
+  openSubpageEditor: (subpage: EditingSubpage) => void;
+  closeSubpageEditor: () => void;
+  updateEditingSubpageContent: (content: SubpageContent) => void;
   // Permissions
   canEdit: boolean;
   isAdmin: boolean;
@@ -47,6 +60,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     slotId: null,
     blockId: null,
   });
+  const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
 
   // Get permissions for this site
   const {
@@ -91,6 +105,18 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     });
   }, []);
 
+  const openSubpageEditor = useCallback((subpage: EditingSubpage) => {
+    setEditingSubpage(subpage);
+  }, []);
+
+  const closeSubpageEditor = useCallback(() => {
+    setEditingSubpage(null);
+  }, []);
+
+  const updateEditingSubpageContent = useCallback((content: SubpageContent) => {
+    setEditingSubpage((prev) => prev ? { ...prev, content } : null);
+  }, []);
+
   return (
     <EditorContext.Provider
       value={{
@@ -100,6 +126,10 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         selectSlot,
         selectBlock,
         clearSelection,
+        editingSubpage,
+        openSubpageEditor,
+        closeSubpageEditor,
+        updateEditingSubpageContent,
         canEdit,
         isAdmin,
         isViewer,

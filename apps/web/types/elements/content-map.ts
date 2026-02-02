@@ -11,6 +11,7 @@ import type {
   DividerContent,
   HeadingContent,
   ParagraphContent,
+  SubpageContent,
 } from "./blocks";
 
 import type {
@@ -42,6 +43,7 @@ export type ContentTypeMap = {
   code: CodeContent;
   divider: DividerContent;
   "block-spacer": BlockSpacerContent;
+  subpage: SubpageContent;
 
   // Sections
   search: SearchContent;

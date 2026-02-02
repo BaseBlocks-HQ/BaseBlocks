@@ -14,6 +14,7 @@ import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
 import { PageEditor } from "./page-editor";
 import { SiteHeaderPreview } from "./site-header-preview";
+import { SubpageEditPanel } from "./subpage-edit-panel";
 
 interface SiteEditorProps {
   siteId: string;
@@ -23,7 +24,7 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot } = useEditorContext();
+  const { selection, selectSlot, editingSubpage } = useEditorContext();
 
   const siteData = useQuery(api.sites.queries.getWithCompany, {
     siteId: siteId as Id<"sites">,
@@ -142,18 +143,23 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <div className="flex-1 p-8 overflow-auto">
-            {/* Header preview - shows what the public site header will look like */}
-            <SiteHeaderPreview site={site} company={company} />
-
-            {selectedPage ? (
-              <PageEditor
-                pageId={selectedPage._id}
-                onSelectionChange={handleSlotSelectionChange}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Select a page to edit
+          <div className="flex-1 flex overflow-hidden">
+            <div className={`${editingSubpage ? 'w-3/5' : 'w-full'} p-8 overflow-auto transition-all`}>
+              <SiteHeaderPreview site={site} company={company} />
+              {selectedPage ? (
+                <PageEditor
+                  pageId={selectedPage._id}
+                  onSelectionChange={handleSlotSelectionChange}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Select a page to edit
+                </div>
+              )}
+            </div>
+            {editingSubpage && (
+              <div className="w-2/5 border-l">
+                <SubpageEditPanel />
               </div>
             )}
           </div>
