@@ -3,12 +3,13 @@
 import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
+  BreadcrumbBar,
   NavItem,
-  PageBreadcrumbs,
   SubNavBar,
   TopNavMenu,
 } from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
 import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
@@ -135,6 +136,18 @@ export function PublicSiteLayout({
           />
         )}
 
+        {/* Breadcrumb Bar - positioned below header/subnav */}
+        {currentPage && (
+          <BreadcrumbBar
+            pageId={currentPage._id}
+            pageTitle={currentPage.title}
+            className={cn(
+              "sticky z-20",
+              showSubNav ? "top-24" : "top-14"
+            )}
+          />
+        )}
+
         {/* Main content area */}
         <div className="flex flex-1">
           {/* Sidebar navigation */}
@@ -176,16 +189,7 @@ export function PublicSiteLayout({
                 <p className="text-muted-foreground">Page not found</p>
               </div>
             ) : (
-              <div className="flex flex-col flex-1">
-                {/* Breadcrumb navigation - show for all nav styles */}
-                <div className="px-8 pt-8">
-                  <PageBreadcrumbs
-                    pageId={currentPage._id}
-                    pageTitle={currentPage.title}
-                  />
-                </div>
-                <PublicContent pageId={currentPage._id} />
-              </div>
+              <PublicContent pageId={currentPage._id} />
             )}
           </main>
         </div>

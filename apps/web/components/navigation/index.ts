@@ -1,6 +1,7 @@
 /**
  * Navigation components barrel exports
  */
+export { BreadcrumbBar } from "./breadcrumb-bar";
 export { DropdownNavTree } from "./dropdown-nav-tree";
 export { HorizontalNavItem } from "./horizontal-nav-item";
 export { NavItem } from "./nav-item";
