@@ -16,20 +16,24 @@ export function PublicSubpagePanel() {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="font-semibold text-lg truncate">
-          {content.title || "Untitled"}
-        </h2>
-        <Button variant="ghost" size="icon" onClick={closeSubpage}>
+      <div className="flex items-center justify-between p-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-lg truncate">
+            {content.title || "Untitled"}
+          </h2>
+          {content.description && (
+            <p className="text-sm text-muted-foreground truncate">
+              {content.description}
+            </p>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" onClick={closeSubpage} className="shrink-0">
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
-        {content.description && (
-          <p className="text-muted-foreground mb-4">{content.description}</p>
-        )}
         <PublicSubpageBlockViewer content={content.content as Block[] | undefined} />
       </div>
     </div>

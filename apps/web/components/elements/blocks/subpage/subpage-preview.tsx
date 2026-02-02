@@ -9,10 +9,7 @@ export function SubpagePreview({ className }: ElementPreviewProps) {
         <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center shrink-0">
           <FileText className="h-3 w-3 text-primary" />
         </div>
-        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-          <div className="h-1.5 w-3/4 bg-foreground/20 rounded" />
-          <div className="h-1 w-1/2 bg-muted-foreground/20 rounded" />
-        </div>
+        <div className="flex-1 min-w-0" />
         <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
       </div>
     </div>

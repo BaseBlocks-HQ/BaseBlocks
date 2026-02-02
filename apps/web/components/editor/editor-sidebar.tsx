@@ -21,7 +21,7 @@ import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useEditorContext } from "./editor-context";
 import { ElementPicker } from "./element-picker";
 
@@ -55,11 +55,18 @@ export function EditorSidebar({
   onAddBlock,
 }: EditorSidebarProps) {
   const t = useTranslations();
-  const { canEdit } = useEditorContext();
+  const { canEdit, selection } = useEditorContext();
   const [activeTab, setActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
   );
+
+  // Auto-switch to components tab when a slot or block is selected
+  useEffect(() => {
+    if (selection.slotId || selection.blockId) {
+      setActiveTab("components");
+    }
+  }, [selection.slotId, selection.blockId]);
 
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);

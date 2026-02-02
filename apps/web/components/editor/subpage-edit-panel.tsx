@@ -73,10 +73,7 @@ export function SubpageEditPanel() {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="font-semibold text-lg truncate">
-          {localTitle || "Untitled sub-page"}
-        </h2>
+      <div className="flex items-center justify-end p-4">
         <Button variant="ghost" size="icon" onClick={closeSubpageEditor}>
           <X className="h-4 w-4" />
         </Button>

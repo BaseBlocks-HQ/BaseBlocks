@@ -113,7 +113,7 @@ export function ElementPicker({
     } else {
       onAddBlock?.(type as ElementType);
     }
-    setActiveCategory(null);
+    // Keep the panel open so users can add multiple blocks
   };
 
   useEffect(() => {
