@@ -368,7 +368,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
           </div>
         ) : (
           // Standard layout without sidebar
-          <div className="space-y-3 pb-32 pl-10">
+          <div className="space-y-3 pb-32">
             {layouts.length > 0 ? (
               <DndProvider
                 items={mainLayoutIds}

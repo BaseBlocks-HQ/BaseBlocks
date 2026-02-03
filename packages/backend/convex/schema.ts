@@ -57,6 +57,18 @@ export default defineSchema({
       showLogo: v.optional(v.boolean()), // default: true
       showSiteName: v.optional(v.boolean()), // default: true
       showHeaderSearch: v.optional(v.boolean()), // default: false
+      // Site customization
+      customization: v.optional(v.object({
+        accentColor: v.optional(v.string()), // Hex color
+        accentColorDark: v.optional(v.string()), // Optional dark mode variant
+        borderRadius: v.optional(v.union(
+          v.literal("none"),
+          v.literal("small"),
+          v.literal("medium"),
+          v.literal("large"),
+          v.literal("full"),
+        )),
+      })),
     }),
   })
     .index("by_company", ["companyId"])

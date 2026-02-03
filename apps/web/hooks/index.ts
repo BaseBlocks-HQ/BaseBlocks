@@ -16,3 +16,4 @@ export { useAuthRedirect } from "./use-auth-redirect";
 export { useLocalStorage } from "./use-local-storage";
 export { usePageExpandState } from "./use-page-expand-state";
 export { usePermissions, useSitePermissions } from "./use-permissions";
+export { useSiteCustomization, useCustomizationStyles } from "./use-site-customization";

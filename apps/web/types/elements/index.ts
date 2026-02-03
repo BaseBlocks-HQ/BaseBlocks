@@ -65,6 +65,21 @@ export {
   getNavigationStyleInfo,
 } from "./navigation";
 
+// Customization types (site-level styling)
+export type {
+  BorderRadiusPreset,
+  SiteCustomization,
+  RadiusPresetInfo,
+  ColorPreset,
+} from "./customization";
+export {
+  DEFAULT_CUSTOMIZATION,
+  BORDER_RADIUS_PRESETS,
+  COLOR_PRESETS,
+  getRadiusCssValue,
+  getDarkColorForPreset,
+} from "./customization";
+
 // Media types
 export type { MediaType, ImageContent, MediaContentUnion } from "./media";
 export { DEFAULT_MEDIA_CONTENT } from "./media";

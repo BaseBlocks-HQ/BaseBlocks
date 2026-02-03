@@ -204,18 +204,18 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className="group/block mb-3 min-w-0 relative"
+      className="group/block mb-3 min-w-0"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
-      {/* Block with absolutely positioned toolbar */}
-      <div>
-        {/* Block toolbar - absolutely positioned to not take content width */}
+      {/* Block with inline toolbar */}
+      <div className="flex gap-1 items-start">
+        {/* Block toolbar - inline, inside layout */}
         <div
           className={cn(
-            "absolute -left-7 top-0 flex flex-col gap-0.5 z-10",
+            "flex flex-col gap-0.5 shrink-0",
             "transition-opacity",
             "opacity-0 group-hover/block:opacity-100",
             isSelected && "opacity-100",
@@ -272,7 +272,7 @@ function SortableBlock({
         </div>
 
         {/* Block content */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
             <ElementEditorWrapper
               id={block.id}

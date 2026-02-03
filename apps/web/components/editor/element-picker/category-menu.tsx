@@ -3,6 +3,7 @@
 import { getSortedCategories } from "@/components/elements/registry/categories";
 import {
   BlocksIcon,
+  CustomizationIcon,
   FormsIcon,
   LayoutsIcon,
   MediaIcon,
@@ -17,12 +18,13 @@ import { ChevronRight } from "lucide-react";
 // Map category to icon
 const CATEGORY_ICONS: Record<ElementCategory, React.ReactNode> = {
   site: <SiteSettingsIcon className="h-5 w-5" />,
-  layouts: <LayoutsIcon className="h-5 w-5" />,
-  blocks: <BlocksIcon className="h-5 w-5" />,
-  sections: <SectionsIcon className="h-5 w-5" />,
   navigation: <NavIcon className="h-5 w-5" />,
+  layouts: <LayoutsIcon className="h-5 w-5" />,
+  sections: <SectionsIcon className="h-5 w-5" />,
+  blocks: <BlocksIcon className="h-5 w-5" />,
   media: <MediaIcon className="h-5 w-5" />,
   forms: <FormsIcon className="h-5 w-5" />,
+  customization: <CustomizationIcon className="h-5 w-5" />,
 };
 
 interface CategoryMenuItemProps {

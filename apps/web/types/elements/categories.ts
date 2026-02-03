@@ -6,12 +6,13 @@
 // All supported element categories
 export type ElementCategory =
   | "site"
+  | "navigation"
   | "layouts"
   | "blocks"
   | "sections"
-  | "navigation"
   | "media"
-  | "forms";
+  | "forms"
+  | "customization";
 
 // Category metadata for UI display
 export interface CategoryInfo {
@@ -23,7 +24,7 @@ export interface CategoryInfo {
 }
 
 // Category definitions with metadata
-// Order: Site Settings, Navigation, Layouts, Sections, Blocks, Media, Forms
+// Order: Site Settings, Navigation, Customization, Layouts, Sections, Blocks, Media, Forms
 export const CATEGORIES: CategoryInfo[] = [
   {
     category: "site",
@@ -51,28 +52,35 @@ export const CATEGORIES: CategoryInfo[] = [
     label: "Sections",
     description: "Complex pre-built page sections",
     icon: "LayoutTemplate",
-    order: 3,
+    order: 4,
   },
   {
     category: "blocks",
     label: "Blocks",
     description: "Basic content building blocks",
     icon: "Square",
-    order: 4,
+    order: 5,
   },
   {
     category: "media",
     label: "Media",
     description: "Images, videos, and files",
     icon: "Image",
-    order: 5,
+    order: 6,
   },
   {
     category: "forms",
     label: "Forms",
     description: "Form inputs and controls",
     icon: "FormInput",
-    order: 6,
+    order: 7,
+  },
+  {
+    category: "customization",
+    label: "Customization",
+    description: "Theme colors and styling options",
+    icon: "Palette",
+    order: 8,
   },
 ];
 

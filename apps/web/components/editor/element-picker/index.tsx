@@ -12,6 +12,7 @@ import "@/components/elements/media";
 import "@/components/elements/forms";
 
 import { getElementsByCategory } from "@/components/elements/registry";
+import { CustomizationConfigPanel } from "@/components/elements/customization";
 import { NavigationConfigPanel } from "@/components/elements/navigation";
 import { SiteConfigPanel } from "@/components/elements/site";
 import type { Id } from "@repo/backend";
@@ -31,19 +32,20 @@ interface ElementPickerProps {
 // Categories with registered elements to show
 const ACTIVE_CATEGORIES: ElementCategory[] = [
   "site",
-  "layouts",
-  "blocks",
-  "sections",
   "navigation",
+  "layouts",
+  "sections",
+  "blocks",
   "media",
   "forms",
+  "customization",
 ];
 
 // Categories that are stubs (empty for now)
 const EMPTY_CATEGORIES: ElementCategory[] = [];
 
 // Categories that show config panels instead of element grids
-const CONFIG_PANEL_CATEGORIES: ElementCategory[] = ["site", "navigation"];
+const CONFIG_PANEL_CATEGORIES: ElementCategory[] = ["site", "navigation", "customization"];
 
 export function ElementPicker({
   siteId,
@@ -76,6 +78,8 @@ export function ElementPicker({
         return "Sections";
       case "navigation":
         return "Navigation";
+      case "customization":
+        return "Customization";
       case "media":
         return "Media";
       case "forms":
@@ -92,7 +96,12 @@ export function ElementPicker({
     setActiveCategory(category);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    // Don't close if mouse moved to a Radix portal (dropdown menus, selects, etc.)
+    const relatedTarget = e.relatedTarget as HTMLElement | null;
+    if (relatedTarget?.closest("[data-radix-popper-content-wrapper]")) {
+      return;
+    }
     timeoutRef.current = setTimeout(() => {
       setActiveCategory(null);
     }, 150);
@@ -159,6 +168,16 @@ export function ElementPicker({
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <NavigationConfigPanel siteId={siteId} />
+        </div>
+      )}
+
+      {/* Flyout panel with customization config */}
+      {activeCategory === "customization" && siteId && (
+        <div
+          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          onMouseEnter={() => handleMouseEnter(activeCategory)}
+        >
+          <CustomizationConfigPanel siteId={siteId} />
         </div>
       )}
 

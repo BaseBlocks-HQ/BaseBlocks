@@ -175,7 +175,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
   if (viewingSubpage) {
     return (
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
+        <ResizablePanelGroup orientation="horizontal" className="h-full">
           {/* Main content area */}
           {!isFullscreen && (
             <>

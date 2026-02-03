@@ -7,3 +7,4 @@ export { NavIcon } from "./nav-icon";
 export { SectionsIcon } from "./sections-icon";
 export { MediaIcon } from "./media-icon";
 export { FormsIcon } from "./forms-icon";
+export { CustomizationIcon } from "./customization-icon";

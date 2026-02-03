@@ -9,8 +9,10 @@ import {
   TopNavMenu,
 } from "@/components/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomizationStyles } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
+import type { SiteCustomization } from "@/types/elements/customization";
 import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -31,6 +33,7 @@ interface PublicSiteLayoutProps {
       showLogo?: boolean;
       showSiteName?: boolean;
       showHeaderSearch?: boolean;
+      customization?: SiteCustomization;
     };
   };
   company: {
@@ -76,6 +79,10 @@ export function PublicSiteLayout({
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const navigationStyle = site.settings.navigationStyle;
 
+  // Get customization CSS variables
+  const customizationStyles = useCustomizationStyles(site.settings.customization);
+  const isCustomized = !!(site.settings.customization?.accentColor || site.settings.customization?.borderRadius);
+
   // Determine if we should show sidebar
   const showSidebar = navigationStyle === "sidebar";
 
@@ -87,7 +94,11 @@ export function PublicSiteLayout({
 
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div
+        className="h-screen bg-background flex flex-col overflow-hidden"
+        style={customizationStyles}
+        {...(isCustomized ? { "data-site-customized": "" } : {})}
+      >
         {/* Main Header */}
         {showHeader && (
           <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

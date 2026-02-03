@@ -121,3 +121,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Site customization dark mode overrides */
+/* These pick up custom dark mode colors when set via inline styles */
+[data-site-customized].dark,
+.dark [data-site-customized] {
+  --primary: var(--site-primary-dark, var(--primary));
+  --primary-foreground: var(--site-primary-foreground-dark, var(--primary-foreground));
+}
+
+/* Full border radius - only for buttons, inputs, badges - not cards */
+[data-site-customized] {
+  /* Buttons get pill shape when --radius-pill is set */
+  & button:not([data-slot]),
+  & [role="button"]:not([data-slot]),
+  & input,
+  & select,
+  & textarea,
+  & .badge {
+    border-radius: var(--radius-pill, var(--radius));
+  }
+}

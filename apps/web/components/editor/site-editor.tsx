@@ -10,6 +10,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { useSiteCustomization } from "@/hooks";
 import { createBlock, createLayout } from "@/lib/layouts";
 import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
@@ -65,6 +66,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const pages = useQuery(api.pages.queries.list, {
     siteId: siteId as Id<"sites">,
   });
+
+  // Get customization CSS variables for preview
+  const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId as Id<"sites">);
 
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
@@ -180,12 +184,16 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
             {showSubpagePanel ? (
-              <ResizablePanelGroup direction="horizontal" className="h-full">
+              <ResizablePanelGroup orientation="horizontal" className="h-full">
                 {/* Main content area */}
                 {!isFullscreen && (
                   <>
                     <ResizablePanel defaultSize={60} minSize={20}>
-                      <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8">
+                      <div
+                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8"
+                        style={customizationStyles}
+                        {...(isCustomized ? { "data-site-customized": "" } : {})}
+                      >
                         <SiteHeaderPreview site={site} company={company} />
                         {selectedPage ? (
                           <PageEditor
@@ -220,7 +228,11 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 </ResizablePanel>
               </ResizablePanelGroup>
             ) : (
-              <div className="h-full overflow-auto p-8">
+              <div
+                className="h-full overflow-auto p-8"
+                style={customizationStyles}
+                {...(isCustomized ? { "data-site-customized": "" } : {})}
+              >
                 <SiteHeaderPreview site={site} company={company} />
                 {selectedPage ? (
                   <PageEditor

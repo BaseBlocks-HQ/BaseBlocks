@@ -97,6 +97,18 @@ export const update = mutation({
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
         showHeaderSearch: v.optional(v.boolean()),
+        // Site customization
+        customization: v.optional(v.object({
+          accentColor: v.optional(v.string()),
+          accentColorDark: v.optional(v.string()),
+          borderRadius: v.optional(v.union(
+            v.literal("none"),
+            v.literal("small"),
+            v.literal("medium"),
+            v.literal("large"),
+            v.literal("full"),
+          )),
+        })),
       }),
     ),
   },
