@@ -30,7 +30,7 @@ export function SubpageEditor({
   return (
     <button
       type="button"
-      className="w-full flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors text-left"
       onClick={handleClick}
     >
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">

@@ -89,8 +89,8 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
   if (isSubmitted) {
     return (
       <div className="text-center py-8 space-y-4">
-        <div className="w-12 h-12 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+        <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+          <CheckCircle className="h-6 w-6 text-primary" />
         </div>
         <p className="text-lg font-medium">{content.successMessage}</p>
       </div>

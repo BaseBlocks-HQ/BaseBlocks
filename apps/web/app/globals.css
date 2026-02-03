@@ -130,14 +130,12 @@
   --primary-foreground: var(--site-primary-foreground-dark, var(--primary-foreground));
 }
 
-/* Full border radius - only for buttons, inputs, badges - not cards */
+/* Full border radius - pill shape for interactive elements, not cards/containers/textareas */
 [data-site-customized] {
-  /* Buttons get pill shape when --radius-pill is set */
-  & button:not([data-slot]),
-  & [role="button"]:not([data-slot]),
-  & input,
+  & button,
+  & [role="button"],
+  & input:not([type="hidden"]),
   & select,
-  & textarea,
   & .badge {
     border-radius: var(--radius-pill, var(--radius));
   }

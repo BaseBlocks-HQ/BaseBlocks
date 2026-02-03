@@ -17,6 +17,7 @@ import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
+import { useEffect } from "react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
 
@@ -82,6 +83,27 @@ export function PublicSiteLayout({
   // Get customization CSS variables
   const customizationStyles = useCustomizationStyles(site.settings.customization);
   const isCustomized = !!(site.settings.customization?.accentColor || site.settings.customization?.borderRadius);
+
+  // Apply CSS variables to document root so portals (dropdowns, popovers) also inherit them
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isCustomized) {
+      root.setAttribute("data-site-customized", "");
+      for (const [key, value] of Object.entries(customizationStyles)) {
+        if (key.startsWith("--")) {
+          root.style.setProperty(key, value as string);
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-site-customized");
+      for (const key of Object.keys(customizationStyles)) {
+        if (key.startsWith("--")) {
+          root.style.removeProperty(key);
+        }
+      }
+    };
+  }, [customizationStyles, isCustomized]);
 
   // Determine if we should show sidebar
   const showSidebar = navigationStyle === "sidebar";

@@ -1,8 +1,10 @@
 "use client";
 
 import { CreatePageDialog } from "@/components/dialogs";
-import { SortablePageTree } from "@/components/navigation";
+import { NavItem, SortablePageTree } from "@/components/navigation";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -13,17 +15,41 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePageExpandState } from "@/hooks";
+import { usePageExpandState, useSiteCustomization } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
-import type { LayoutBlockType, LayoutType, PageListItem } from "@/types";
+import type { LayoutBlockType, LayoutType, PageListItem, PageWithChildren } from "@/types";
 import type { ElementType } from "@/types/elements";
 import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useEditorContext } from "./editor-context";
 import { ElementPicker } from "./element-picker";
+
+function buildPageTree(pages: PageListItem[]): PageWithChildren[] {
+  const map = new Map<string, PageWithChildren>();
+  const roots: PageWithChildren[] = [];
+
+  for (const page of pages) {
+    map.set(page._id, { ...page, children: [] });
+  }
+
+  for (const page of pages) {
+    const node = map.get(page._id)!;
+    if (page.parentId && map.has(page.parentId)) {
+      map.get(page.parentId)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  for (const node of map.values()) {
+    node.children.sort((a, b) => a.order - b.order);
+  }
+
+  return roots.sort((a, b) => a.order - b.order);
+}
 
 interface EditorSidebarProps {
   site: {
@@ -55,11 +81,15 @@ export function EditorSidebar({
   onAddBlock,
 }: EditorSidebarProps) {
   const t = useTranslations();
-  const { canEdit, selection } = useEditorContext();
+  const { canEdit, selection, siteId } = useEditorContext();
   const [activeTab, setActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
   );
+
+  // Customization + page tree for preview tab
+  const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId);
+  const pageTree = useMemo(() => buildPageTree(pages), [pages]);
 
   // Auto-switch to components tab when a slot or block is selected
   useEffect(() => {
@@ -118,6 +148,9 @@ export function EditorSidebar({
             </TabsTrigger>
             <TabsTrigger value="components" className="flex-1">
               {t("editor.sidebar.componentsTab")}
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex-1">
+              {t("editor.sidebar.previewTab")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -178,6 +211,36 @@ export function EditorSidebar({
               </div>
             )}
           </SidebarContent>
+        </TabsContent>
+
+        <TabsContent value="preview" className="flex-1 mt-0 overflow-hidden">
+          <div
+            className="h-full flex flex-col"
+            style={customizationStyles}
+            {...(isCustomized ? { "data-site-customized": "" } : {})}
+          >
+            <div className="px-3 pt-2 pb-1">
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0"
+              >
+                Sidebar Preview
+              </Badge>
+            </div>
+            <ScrollArea className="flex-1">
+              <nav className="space-y-1 p-4">
+                {pageTree.map((page) => (
+                  <NavItem
+                    key={page._id}
+                    page={page}
+                    selectedPageId={selectedPageId}
+                    mode="preview"
+                    onSelect={handleSelectPage}
+                  />
+                ))}
+              </nav>
+            </ScrollArea>
+          </div>
         </TabsContent>
       </Tabs>
     </Sidebar>

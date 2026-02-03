@@ -55,7 +55,7 @@ export function CalloutEditor({
   };
 
   return (
-    <div className="bg-muted border rounded-lg p-4 transition-colors hover:border-muted-foreground/50">
+    <div className="bg-muted border border-primary/30 rounded-lg p-4 transition-colors hover:border-primary/50">
       <textarea
         ref={textareaRef}
         value={localText}

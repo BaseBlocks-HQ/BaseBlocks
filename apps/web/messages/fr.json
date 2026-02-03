@@ -101,7 +101,8 @@
       "blocks": "Blocs",
       "selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
       "selectPage": "Selectionnez une page pour ajouter des composants",
-      "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification."
+      "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification.",
+      "previewTab": "Apercu"
     },
     "layouts": {
       "single": "Simple",

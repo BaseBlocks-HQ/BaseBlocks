@@ -159,7 +159,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           <div
             className={cn(
               "flex items-center gap-1 py-1 px-2 rounded cursor-pointer text-sm",
-              isSelected ? "bg-accent" : "hover:bg-muted/50",
+              isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/50",
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={() => handleSelectFolder(folder._id, closeOnSelect)}
@@ -220,7 +220,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
         type="button"
         className={cn(
           "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-          !selectedFolderId && "bg-accent"
+          !selectedFolderId && "bg-primary/10 text-primary font-medium"
         )}
         onClick={() => handleSelectFolder(null)}
       >
@@ -233,7 +233,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           type="button"
           className={cn(
             "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-            index === folderPath.length - 1 && "bg-accent"
+            index === folderPath.length - 1 && "bg-primary/10 text-primary font-medium"
           )}
           style={{ paddingLeft: `${(index + 1) * 12 + 12}px` }}
           onClick={() => handleSelectFolder(folder._id)}
@@ -334,7 +334,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                 {sortedFiles.map((file) => (
                   <div
                     key={file._id}
-                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer group"
+                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
                     onClick={() => handlePreview(file)}
                   >
                     <div

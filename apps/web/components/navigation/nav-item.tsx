@@ -15,7 +15,7 @@ interface NavItemProps {
   currentSlug?: string;
   currentPath?: string;
   selectedPageId?: string;
-  mode: "editor" | "public";
+  mode: "editor" | "public" | "preview";
   depth?: number;
   isDefault?: boolean;
   ancestorIds?: string[];
@@ -49,7 +49,7 @@ export function NavItem({
       ? currentPath
         ? fullPath === currentPath
         : page.slug === currentSlug
-      : page._id === selectedPageId;
+      : page._id === selectedPageId; // works for both "editor" and "preview"
 
   // Determine if this page should be initially expanded
   // (if it's an ancestor of the current page)
@@ -103,6 +103,57 @@ export function NavItem({
             onSelect={onSelect}
           />
         ))}
+      </>
+    );
+  }
+
+  // Preview mode: public visual style, but uses onSelect + selectedPageId like editor
+  if (mode === "preview") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => onSelect?.(page._id)}
+          className={`w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors text-left ${
+            isActive
+              ? "bg-primary/10 text-primary font-medium"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+          style={{ paddingLeft: `${(depth + 1) * 12}px` }}
+        >
+          {hasChildren ? (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleToggleExpand}
+              className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </span>
+          ) : (
+            <span className="w-4" />
+          )}
+          <PagesIcon className="h-4 w-4" />
+          <span className="truncate">{page.title}</span>
+        </button>
+        {hasChildren && isExpanded && (
+          <>
+            {page.children.map((child) => (
+              <NavItem
+                key={child._id}
+                page={child}
+                selectedPageId={selectedPageId}
+                mode="preview"
+                depth={depth + 1}
+                onSelect={onSelect}
+              />
+            ))}
+          </>
+        )}
       </>
     );
   }

@@ -101,7 +101,8 @@
       "blocks": "Blocks",
       "selectSlot": "Select a slot to add blocks",
       "selectPage": "Select a page to add components",
-      "viewOnly": "You have view-only access. Contact an admin to request edit permissions."
+      "viewOnly": "You have view-only access. Contact an admin to request edit permissions.",
+      "previewTab": "Preview"
     },
     "layouts": {
       "single": "Single",

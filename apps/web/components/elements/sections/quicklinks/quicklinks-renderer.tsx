@@ -12,9 +12,9 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
     <a
       href={link.url}
       {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200"
+      className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
     >
-      <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+      <div className="w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
         {link.imageUrl ? (
           <img
             src={link.imageUrl}
@@ -22,12 +22,12 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
             className="w-full h-full object-cover"
           />
         ) : isApp ? (
-          <AppWindow className="w-5 h-5 text-muted-foreground" />
+          <AppWindow className="w-5 h-5 text-primary/70" />
         ) : (
-          <ExternalLink className="w-5 h-5 text-muted-foreground" />
+          <ExternalLink className="w-5 h-5 text-primary/70" />
         )}
       </div>
-      <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
+      <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-primary">
         {link.title || "Untitled"}
       </span>
     </a>
