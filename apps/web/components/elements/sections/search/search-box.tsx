@@ -175,9 +175,10 @@ export function SearchBox({
         filename: result.filename,
         contentType: result.contentType,
         size: result.size,
+        searchTerm: debouncedQuery,
       });
     },
-    [openFile],
+    [openFile, debouncedQuery],
   );
 
   return (

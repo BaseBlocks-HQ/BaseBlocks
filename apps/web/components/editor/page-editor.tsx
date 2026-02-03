@@ -120,8 +120,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
+      markContentModified();
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, markContentModified],
   );
 
   // Handle layout drag end for sidebar layouts
@@ -141,8 +142,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
+      markContentModified();
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, markContentModified],
   );
 
   // Notify parent of slot selection changes
@@ -164,6 +166,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         slots: newLayout.slots,
         settings: newLayout.settings,
       });
+      markContentModified();
 
       if (newLayout.slots.length > 0) {
         setTimeout(() => {
@@ -172,7 +175,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         }, 100);
       }
     },
-    [createLayoutMutation, pageId, selectSlot, onSelectionChange],
+    [createLayoutMutation, pageId, selectSlot, onSelectionChange, markContentModified],
   );
 
   // Update block content
@@ -214,8 +217,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         layoutId: layoutId as Id<"layouts">,
       });
       clearSelection();
+      markContentModified();
     },
-    [removeLayoutMutation, clearSelection],
+    [removeLayoutMutation, clearSelection, markContentModified],
   );
 
   // Move block within layout
@@ -234,8 +238,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         blockId,
         toIndex,
       });
+      markContentModified();
     },
-    [moveBlockMutation],
+    [moveBlockMutation, markContentModified],
   );
 
   // Update layout settings

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 export function TextViewer({ file, renderControls }: ViewerProps) {
@@ -16,6 +16,8 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   const [wordWrap, setWordWrap] = useState(true);
   const [searchTerm, setSearchTerm] = useState(file.searchTerm ?? "");
   const [showSearch, setShowSearch] = useState(!!file.searchTerm);
+  const firstMatchRef = useRef<HTMLElement | null>(null);
+  const hasScrolledToMatch = useRef(false);
 
   // Fetch text content
   useEffect(() => {
@@ -57,6 +59,10 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
 
   // Highlight search terms in content
   const highlightedContent = useMemo(() => {
+    // Reset scroll flag when search term changes
+    hasScrolledToMatch.current = false;
+    firstMatchRef.current = null;
+
     if (!content || !searchTerm.trim()) return content;
 
     const term = searchTerm.trim();
@@ -66,19 +72,42 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     );
     const parts = content.split(regex);
 
-    return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark
-          key={i}
-          className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded"
-        >
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
-    );
+    let isFirstMatch = true;
+    return parts.map((part, i) => {
+      if (regex.test(part)) {
+        const isFirst = isFirstMatch;
+        isFirstMatch = false;
+        return (
+          <mark
+            key={i}
+            ref={isFirst ? (el) => { firstMatchRef.current = el; } : undefined}
+            className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded"
+          >
+            {part}
+          </mark>
+        );
+      }
+      return part;
+    });
   }, [content, searchTerm]);
+
+  // Scroll to first match when content loads with a search term
+  useEffect(() => {
+    if (
+      firstMatchRef.current &&
+      !hasScrolledToMatch.current &&
+      file.searchTerm
+    ) {
+      // Small delay to ensure the content is rendered
+      requestAnimationFrame(() => {
+        firstMatchRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        hasScrolledToMatch.current = true;
+      });
+    }
+  }, [highlightedContent, file.searchTerm]);
 
   // Register controls with parent
   useEffect(() => {

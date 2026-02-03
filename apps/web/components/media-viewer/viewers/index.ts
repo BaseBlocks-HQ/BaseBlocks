@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Viewer components registry
  *
@@ -7,14 +9,20 @@
  * 3. Implement the canHandle function to match content types
  */
 
+import dynamic from "next/dynamic";
 import type { ViewerConfig } from "../types";
 import { AudioViewer } from "./audio-viewer";
 import { ImageViewer } from "./image-viewer";
 import { OfficeViewer } from "./office-viewer";
-import { PdfViewer } from "./pdf-viewer";
 import { TextViewer } from "./text-viewer";
 import { UnknownViewer } from "./unknown-viewer";
 import { VideoViewer } from "./video-viewer";
+
+// Dynamic import for PDF viewer to avoid SSR issues with pdfjs-dist
+const PdfViewer = dynamic(
+  () => import("./pdf-viewer").then((mod) => mod.PdfViewer),
+  { ssr: false },
+);
 
 /**
  * Registry of all available viewers
