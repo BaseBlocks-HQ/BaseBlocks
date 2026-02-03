@@ -115,7 +115,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
           src={useOnlineViewer ? officeViewerUrl : googleViewerUrl}
           className="w-full h-full border-0"
           title={file.filename}
-          sandbox="allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-forms"
         />
       </div>
     </div>
