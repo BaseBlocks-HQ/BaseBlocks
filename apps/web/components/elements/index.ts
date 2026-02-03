@@ -64,3 +64,7 @@ export * from "./media";
 // Element wrappers
 export { ElementEditorWrapper } from "./element-editor-wrapper";
 export { ElementRendererWrapper } from "./element-renderer-wrapper";
+
+// Layout context
+export { LayoutContextProvider, useLayoutContext } from "./layout-context";
+export type { LayoutContextValue } from "./layout-context";

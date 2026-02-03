@@ -40,6 +40,9 @@ export const updateExtraction = internalMutation({
     ctx,
     { documentId, status, extractedText, pageCount, wordCount, error },
   ) => {
+    const document = await ctx.db.get(documentId);
+    if (!document) return;
+
     const updates: Record<string, unknown> = {
       extractionStatus: status,
     };
@@ -61,6 +64,39 @@ export const updateExtraction = internalMutation({
     }
 
     await ctx.db.patch(documentId, updates);
+
+    // Update search index when extraction completes
+    if (status === "completed" && extractedText) {
+      // Check if already indexed
+      const existing = await ctx.db
+        .query("searchableContent")
+        .withIndex("by_source", (q) =>
+          q.eq("contentType", "document").eq("sourceId", documentId)
+        )
+        .first();
+
+      const indexData = {
+        siteId: document.siteId,
+        contentType: "document" as const,
+        sourceId: documentId,
+        title: document.filename,
+        extractedText,
+        metadata: {
+          filename: document.filename,
+          fileContentType: document.contentType,
+          size: document.size,
+          cdnUrl: document.cdnUrl,
+          libraryId: document.libraryId,
+        },
+        updatedAt: Date.now(),
+      };
+
+      if (existing) {
+        await ctx.db.patch(existing._id, indexData);
+      } else {
+        await ctx.db.insert("searchableContent", indexData);
+      }
+    }
   },
 });
 

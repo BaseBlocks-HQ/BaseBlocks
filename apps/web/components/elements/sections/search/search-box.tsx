@@ -1,14 +1,17 @@
 "use client";
 
 import { useMediaViewer } from "@/components/media-viewer";
+import { usePublicSubpageContextOptional } from "@/components/public/public-subpage-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
+import type { SubpageContent } from "@/types/elements/blocks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
+import { useConvex } from "convex/react";
 import {
   Download,
   Eye,
@@ -17,13 +20,15 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
+  NotebookText,
   Presentation,
   Search,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// File type icon mapping
-function getFileIcon(contentType: string) {
+// File type icon mapping for documents
+function getFileIcon(contentType: string | undefined) {
+  if (!contentType) return <File className="h-4 w-4 text-gray-500" />;
   if (contentType.includes("pdf")) {
     return <FileText className="h-4 w-4 text-red-500" />;
   }
@@ -81,18 +86,30 @@ function HighlightedSnippet({
   );
 }
 
+// Search result type from unified search
 interface SearchResultItem {
   _id: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  cdnUrl: string;
-  blobId?: string;
-  libraryId?: string;
-  matchType: "content" | "filename";
-  snippet?: string | null;
-  snippetMatchStart?: number | null;
-  snippetMatchEnd?: number | null;
+  contentType: "document" | "subpage";
+  sourceId: string;
+  title: string;
+  matchType: "title" | "content";
+  snippet: string | null;
+  snippetMatchStart: number | null;
+  snippetMatchEnd: number | null;
+  metadata: {
+    // Document metadata
+    filename?: string;
+    fileContentType?: string;
+    size?: number;
+    cdnUrl?: string;
+    libraryId?: string;
+    // Subpage metadata
+    pageId?: string;
+    layoutId?: string;
+    blockId?: string;
+    slotId?: string;
+    description?: string;
+  };
 }
 
 interface SearchBoxProps {
@@ -109,7 +126,7 @@ interface SearchBoxProps {
 
 export function SearchBox({
   siteId,
-  placeholder = "Search documents...",
+  placeholder = "Search...",
   maxResults = 10,
   showFileType = true,
   usePublicQuery = false,
@@ -118,9 +135,12 @@ export function SearchBox({
 }: SearchBoxProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [loadingSubpageId, setLoadingSubpageId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { openFile } = useMediaViewer();
+  const subpageContext = usePublicSubpageContextOptional();
+  const convex = useConvex();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -136,23 +156,24 @@ export function SearchBox({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Search query
   const shouldSearch = debouncedQuery.trim().length > 0 && !!siteId;
 
-  // Use authenticated query for editor, public query for published sites
-  const searchResults = useQuery(
-    usePublicQuery
-      ? api.documents.queries.searchPublic
-      : api.documents.queries.search,
-    shouldSearch
-      ? {
-          siteId,
-          query: debouncedQuery,
-          limit: maxResults,
-        }
-      : "skip",
+  // Search queries - always call both, use "skip" to disable the one we don't need
+  const authResults = useQuery(
+    api.search.queries.searchAll,
+    !usePublicQuery && shouldSearch
+      ? { siteId, query: debouncedQuery, limit: maxResults }
+      : "skip"
   ) as SearchResultItem[] | undefined;
 
+  const publicResults = useQuery(
+    api.search.queries.searchAllPublic,
+    usePublicQuery && shouldSearch
+      ? { siteId, query: debouncedQuery, limit: maxResults }
+      : "skip"
+  ) as SearchResultItem[] | undefined;
+
+  const searchResults = usePublicQuery ? publicResults : authResults;
   const isSearching = shouldSearch && searchResults === undefined;
   const hasResults = searchResults && searchResults.length > 0;
   const showDropdown = isFocused && debouncedQuery.trim().length > 0;
@@ -168,17 +189,64 @@ export function SearchBox({
     document.body.removeChild(link);
   }, []);
 
-  const handlePreview = useCallback(
+  const handleDocumentClick = useCallback(
     (result: SearchResultItem) => {
-      openFile({
-        url: toProxyDownloadUrl(result.cdnUrl),
-        filename: result.filename,
-        contentType: result.contentType,
-        size: result.size,
-        searchTerm: debouncedQuery,
-      });
+      if (result.metadata.cdnUrl) {
+        openFile({
+          url: toProxyDownloadUrl(result.metadata.cdnUrl),
+          filename: result.metadata.filename || result.title,
+          contentType: result.metadata.fileContentType || "application/octet-stream",
+          size: result.metadata.size || 0,
+          searchTerm: debouncedQuery,
+        });
+      }
+      setIsFocused(false);
     },
-    [openFile, debouncedQuery],
+    [openFile, debouncedQuery]
+  );
+
+  const handleSubpageClick = useCallback(
+    async (result: SearchResultItem) => {
+      if (!subpageContext || !result.metadata.layoutId || !result.metadata.slotId || !result.metadata.blockId) {
+        return;
+      }
+
+      setLoadingSubpageId(result._id);
+
+      try {
+        // Fetch the full subpage content
+        const query = usePublicQuery
+          ? api.search.queries.getSubpageContentPublic
+          : api.search.queries.getSubpageContent;
+
+        const content = await convex.query(query, {
+          layoutId: result.metadata.layoutId as Id<"layouts">,
+          slotId: result.metadata.slotId,
+          blockId: result.metadata.blockId,
+        });
+
+        if (content) {
+          subpageContext.openSubpage(content as SubpageContent);
+        }
+      } catch (error) {
+        console.error("Failed to fetch subpage content:", error);
+      } finally {
+        setLoadingSubpageId(null);
+        setIsFocused(false);
+      }
+    },
+    [subpageContext, convex, usePublicQuery]
+  );
+
+  const handleResultClick = useCallback(
+    (result: SearchResultItem) => {
+      if (result.contentType === "subpage") {
+        handleSubpageClick(result);
+      } else {
+        handleDocumentClick(result);
+      }
+    },
+    [handleDocumentClick, handleSubpageClick]
   );
 
   return (
@@ -198,7 +266,7 @@ export function SearchBox({
           <Loader2
             className={cn(
               "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground",
-              inputAddon ? "right-10" : "right-3",
+              inputAddon ? "right-10" : "right-3"
             )}
           />
         )}
@@ -215,72 +283,103 @@ export function SearchBox({
             </div>
           ) : hasResults && searchResults ? (
             <div className="divide-y">
-              {searchResults.map((result) => (
-                <div
-                  key={result._id}
-                  className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => handlePreview(result)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {showFileType && getFileIcon(result.contentType)}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-sm">
-                          {result.filename}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(result.size)}
-                          {result.matchType === "content" && (
-                            <span className="ml-2 text-primary">
-                              • Content match
-                            </span>
-                          )}
-                        </p>
+              {searchResults.map((result) => {
+                const isSubpage = result.contentType === "subpage";
+                const isLoading = loadingSubpageId === result._id;
+                const isContentMatch = result.matchType === "content";
+
+                return (
+                  <div
+                    key={result._id}
+                    className={cn(
+                      "p-3 hover:bg-muted/50 transition-colors cursor-pointer",
+                      isLoading && "opacity-50 pointer-events-none"
+                    )}
+                    onClick={() => handleResultClick(result)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {showFileType && (
+                          isSubpage ? (
+                            <NotebookText className="h-4 w-4 text-indigo-500" />
+                          ) : (
+                            getFileIcon(result.metadata.fileContentType)
+                          )
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate text-sm">{result.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {isSubpage ? (
+                              <>
+                                <span className="text-indigo-600 dark:text-indigo-400">Subpage</span>
+                                {result.metadata.description && (
+                                  <span className="ml-2">• {result.metadata.description}</span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {result.metadata.size && formatFileSize(result.metadata.size)}
+                                {isContentMatch && (
+                                  <span className="ml-2 text-primary">• Content match</span>
+                                )}
+                              </>
+                            )}
+                          </p>
+                        </div>
                       </div>
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : !isSubpage && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDocumentClick(result);
+                            }}
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {result.metadata.cdnUrl && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(
+                                  result.metadata.cdnUrl!,
+                                  result.metadata.filename || result.title
+                                );
+                              }}
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePreview(result);
-                        }}
-                        title="Preview"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(result.cdnUrl, result.filename);
-                        }}
-                        title="Download"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {/* Show snippet for content matches */}
+                    {isContentMatch && result.snippet && (
+                      <div className="mt-2 pl-7">
+                        <HighlightedSnippet
+                          snippet={result.snippet}
+                          matchStart={result.snippetMatchStart ?? -1}
+                          matchEnd={result.snippetMatchEnd ?? -1}
+                        />
+                      </div>
+                    )}
                   </div>
-                  {/* Show snippet for content matches */}
-                  {result.matchType === "content" && result.snippet && (
-                    <div className="mt-2 pl-7">
-                      <HighlightedSnippet
-                        snippet={result.snippet}
-                        matchStart={result.snippetMatchStart ?? -1}
-                        matchEnd={result.snippetMatchEnd ?? -1}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="p-4 text-center text-muted-foreground text-sm">
-              No documents found for "{debouncedQuery}"
+              No results found for "{debouncedQuery}"
             </div>
           )}
         </div>

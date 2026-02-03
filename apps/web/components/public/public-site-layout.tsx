@@ -176,7 +176,7 @@ export function PublicSiteLayout({
           )}
 
           {/* Page content */}
-          <main className="flex-1 flex flex-col min-h-[calc(100vh-56px)] overflow-hidden">
+          <main className="flex-1 flex flex-col min-h-0 overflow-auto">
             {currentPage === undefined ? (
               <div className="max-w-3xl mx-auto p-8">
                 <Skeleton className="h-10 w-64 mb-8" />
@@ -191,15 +191,15 @@ export function PublicSiteLayout({
             ) : (
               <PublicContent pageId={currentPage._id} />
             )}
+
+            {/* Footer - inside scrollable area */}
+            <footer className="border-t mt-auto flex-shrink-0">
+              <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
+                Powered by BaseBlocks
+              </div>
+            </footer>
           </main>
         </div>
-
-        {/* Footer */}
-        <footer className="border-t mt-auto">
-          <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
-            Powered by BaseBlocks
-          </div>
-        </footer>
       </div>
     </PublicSiteProvider>
   );

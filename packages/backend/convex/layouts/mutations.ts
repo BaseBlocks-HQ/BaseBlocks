@@ -1,6 +1,15 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
+import { extractBlockNoteText } from "../lib/extractBlockNoteText";
+import type { Id } from "../_generated/dataModel";
+
+// Subpage content type for indexing
+interface SubpageContent {
+  title?: string;
+  description?: string;
+  content?: unknown[];
+}
 
 const layoutTypes = v.union(
   v.literal("single"),
@@ -87,6 +96,71 @@ async function getCompanyIdFromLayout(
   if (!site) return null;
 
   return { companyId: site.companyId, pageId: layout.pageId };
+}
+
+// Helper to update search index for a subpage block
+async function updateSubpageSearchIndex(
+  ctx: { db: any },
+  siteId: Id<"sites">,
+  layoutId: Id<"layouts">,
+  slotId: string,
+  blockId: string,
+  content: SubpageContent | null,
+  pageId: Id<"pages">,
+) {
+  const sourceId = `${layoutId}:${slotId}:${blockId}`;
+
+  // Find existing index entry
+  const existing = await ctx.db
+    .query("searchableContent")
+    .withIndex("by_source", (q: any) =>
+      q.eq("contentType", "subpage").eq("sourceId", sourceId)
+    )
+    .first();
+
+  // If content is null, delete the index entry (block was removed)
+  if (!content) {
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return;
+  }
+
+  const extractedText = extractBlockNoteText(content.content);
+  const combinedText =
+    `${content.title || ""} ${content.description || ""} ${extractedText}`.trim();
+
+  // Skip indexing if no meaningful content
+  if (combinedText.length === 0) {
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return;
+  }
+
+  const indexData = {
+    siteId,
+    contentType: "subpage" as const,
+    sourceId,
+    title: content.title || "Untitled",
+    extractedText: combinedText,
+    metadata: {
+      pageId,
+      layoutId,
+      blockId,
+      slotId,
+      description: content.description,
+    },
+    updatedAt: Date.now(),
+  };
+
+  if (existing) {
+    // Update existing entry
+    await ctx.db.patch(existing._id, indexData);
+  } else {
+    // Create new entry
+    await ctx.db.insert("searchableContent", indexData);
+  }
 }
 
 // Create a new layout
@@ -255,6 +329,18 @@ export const updateBlockInSlot = mutation({
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
+    // Find the block to check its type
+    let blockType: string | null = null;
+    for (const slot of layout.slots) {
+      if (slot.id === slotId) {
+        const block = slot.blocks.find((b: any) => b.id === blockId);
+        if (block) {
+          blockType = block.type;
+        }
+        break;
+      }
+    }
+
     // Find slot and update block
     const updatedSlots = layout.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
@@ -271,6 +357,22 @@ export const updateBlockInSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+
+    // Update search index if this is a subpage block
+    if (blockType === "subpage") {
+      const page = await ctx.db.get(layout.pageId);
+      if (page) {
+        await updateSubpageSearchIndex(
+          ctx,
+          page.siteId,
+          layoutId,
+          slotId,
+          blockId,
+          content as SubpageContent,
+          layout.pageId,
+        );
+      }
+    }
 
     return layoutId;
   },
@@ -293,6 +395,18 @@ export const removeBlockFromSlot = mutation({
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
 
+    // Check if the block being removed is a subpage
+    let isSubpage = false;
+    for (const slot of layout.slots) {
+      if (slot.id === slotId) {
+        const block = slot.blocks.find((b: any) => b.id === blockId);
+        if (block?.type === "subpage") {
+          isSubpage = true;
+        }
+        break;
+      }
+    }
+
     // Find slot and remove block
     const updatedSlots = layout.slots.map((slot: any) => {
       if (slot.id !== slotId) return slot;
@@ -309,6 +423,22 @@ export const removeBlockFromSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+
+    // Remove search index entry if this was a subpage
+    if (isSubpage) {
+      const page = await ctx.db.get(layout.pageId);
+      if (page) {
+        await updateSubpageSearchIndex(
+          ctx,
+          page.siteId,
+          layoutId,
+          slotId,
+          blockId,
+          null, // null content means delete
+          layout.pageId,
+        );
+      }
+    }
 
     return layoutId;
   },

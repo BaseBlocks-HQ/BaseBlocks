@@ -1,7 +1,10 @@
 "use client";
 
 import { DndProvider, type DragEndEvent } from "@/components/dnd";
-import { ElementEditorWrapper } from "@/components/elements";
+import {
+  ElementEditorWrapper,
+  LayoutContextProvider,
+} from "@/components/elements";
 import {
   getElementConfigPanel,
   hasElementConfigPanel,
@@ -102,13 +105,15 @@ export function LayoutSlot({
         </button>
       ) : (
         // Slot with blocks
-        <div className="p-1.5">
+        <div className="p-1">
           <DndProvider items={blockIds} onDragEnd={handleBlockDragEnd}>
             {slot.blocks.map((block) => (
               <SortableBlock
                 key={block.id}
                 id={block.id}
                 block={block}
+                layoutType={layoutType}
+                layoutId={layoutId}
                 isSelected={selectedBlockId === block.id}
                 onSelect={() => onSelectBlock(block.id)}
                 onUpdate={(content) => onUpdateBlock(block.id, content)}
@@ -147,6 +152,8 @@ interface SortableBlockProps {
     type: string;
     content: AnyContent;
   };
+  layoutType: LayoutType;
+  layoutId: string;
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (content: AnyContent) => void;
@@ -156,6 +163,8 @@ interface SortableBlockProps {
 function SortableBlock({
   id,
   block,
+  layoutType,
+  layoutId,
   isSelected,
   onSelect,
   onUpdate,
@@ -195,18 +204,18 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className="group/block mb-3 min-w-0"
+      className="group/block mb-3 min-w-0 relative"
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
       }}
     >
-      {/* Block with inline toolbar */}
-      <div className="flex gap-1 items-start">
-        {/* Block toolbar - inline, inside layout */}
+      {/* Block with absolutely positioned toolbar */}
+      <div>
+        {/* Block toolbar - absolutely positioned to not take content width */}
         <div
           className={cn(
-            "flex flex-col gap-0.5 shrink-0",
+            "absolute -left-7 top-0 flex flex-col gap-0.5 z-10",
             "transition-opacity",
             "opacity-0 group-hover/block:opacity-100",
             isSelected && "opacity-100",
@@ -263,15 +272,17 @@ function SortableBlock({
         </div>
 
         {/* Block content */}
-        <div className="min-w-0 flex-1">
-          <ElementEditorWrapper
-            id={block.id}
-            type={block.type as ElementType}
-            content={block.content}
-            isSelected={isSelected}
-            onUpdate={onUpdate}
-            onRemove={onRemove}
-          />
+        <div className="min-w-0">
+          <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
+            <ElementEditorWrapper
+              id={block.id}
+              type={block.type as ElementType}
+              content={block.content}
+              isSelected={isSelected}
+              onUpdate={onUpdate}
+              onRemove={onRemove}
+            />
+          </LayoutContextProvider>
         </div>
       </div>
     </div>

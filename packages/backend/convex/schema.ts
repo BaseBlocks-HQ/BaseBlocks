@@ -283,6 +283,43 @@ export default defineSchema({
       filterFields: ["siteId"],
     }),
 
+  // Unified searchable content index (documents + subpages)
+  searchableContent: defineTable({
+    siteId: v.id("sites"),
+    contentType: v.union(v.literal("document"), v.literal("subpage")),
+    // Reference to source - for documents: document._id, for subpages: "layoutId:slotId:blockId"
+    sourceId: v.string(),
+    // Searchable fields
+    title: v.string(),
+    extractedText: v.string(),
+    // Metadata for display and navigation
+    metadata: v.object({
+      // For documents
+      filename: v.optional(v.string()),
+      fileContentType: v.optional(v.string()),
+      size: v.optional(v.number()),
+      cdnUrl: v.optional(v.string()),
+      libraryId: v.optional(v.string()),
+      // For subpages
+      pageId: v.optional(v.id("pages")),
+      layoutId: v.optional(v.id("layouts")),
+      blockId: v.optional(v.string()),
+      slotId: v.optional(v.string()),
+      description: v.optional(v.string()),
+    }),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_source", ["contentType", "sourceId"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["siteId", "contentType"],
+    })
+    .searchIndex("search_content", {
+      searchField: "extractedText",
+      filterFields: ["siteId", "contentType"],
+    }),
+
   // Team members (cached from Entity Auth)
   members: defineTable({
     companyId: v.id("companies"),

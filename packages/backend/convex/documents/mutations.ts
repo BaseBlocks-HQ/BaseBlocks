@@ -205,6 +205,18 @@ export const remove = mutation({
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, companyId as any);
 
+    // Remove from search index
+    const searchEntry = await ctx.db
+      .query("searchableContent")
+      .withIndex("by_source", (q: any) =>
+        q.eq("contentType", "document").eq("sourceId", documentId)
+      )
+      .first();
+
+    if (searchEntry) {
+      await ctx.db.delete(searchEntry._id);
+    }
+
     await ctx.db.delete(documentId);
   },
 });

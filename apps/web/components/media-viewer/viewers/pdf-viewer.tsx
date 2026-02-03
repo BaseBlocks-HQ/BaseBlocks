@@ -25,6 +25,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 export function PdfViewer({ file, renderControls }: ViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [scale, setScale] = useState(1);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(!!file.searchTerm);
@@ -35,6 +36,25 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const matchRefs = useRef<HTMLElement[]>([]);
   const hasScrolledToFirstMatch = useRef(false);
+
+  // Track container width for responsive PDF sizing
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      // Subtract padding (32px total = 16px each side)
+      const width = container.clientWidth - 32;
+      setContainerWidth(width > 0 ? width : null);
+    };
+
+    updateWidth();
+
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Track when a text layer finishes rendering
   const handleTextLayerSuccess = useCallback(() => {
@@ -285,7 +305,7 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
           <Page
             key={pageNumber}
             pageNumber={pageNumber}
-            scale={scale}
+            width={containerWidth ? containerWidth * scale : undefined}
             renderTextLayer={true}
             renderAnnotationLayer={true}
             customTextRenderer={textRenderer}

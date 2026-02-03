@@ -1,6 +1,9 @@
 "use client";
 
-import { ElementRendererWrapper } from "@/components/elements";
+import {
+  ElementRendererWrapper,
+  LayoutContextProvider,
+} from "@/components/elements";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -123,11 +126,16 @@ function PublicContentInner({ pageId }: PublicContentProps) {
                   index < slot.blocks.length - 1 && "mb-3"
                 )}
               >
-                <ElementRendererWrapper
-                  id={block.id}
-                  type={block.type as ElementType}
-                  content={block.content as AnyContent}
-                />
+                <LayoutContextProvider
+                  layoutType={layout.type as LayoutType}
+                  layoutId={layout._id}
+                >
+                  <ElementRendererWrapper
+                    id={block.id}
+                    type={block.type as ElementType}
+                    content={block.content as AnyContent}
+                  />
+                </LayoutContextProvider>
               </div>
             ))}
           </div>
@@ -163,9 +171,10 @@ function PublicContentInner({ pageId }: PublicContentProps) {
     </article>
   );
 
-  return (
-    <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-      {viewingSubpage ? (
+  // When viewing a subpage, use resizable panels with their own scroll
+  if (viewingSubpage) {
+    return (
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Main content area */}
           {!isFullscreen && (
@@ -188,13 +197,12 @@ function PublicContentInner({ pageId }: PublicContentProps) {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-      ) : (
-        <div className="h-full overflow-auto">
-          {renderMainContent()}
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // Normal view - no wrapper, parent handles scroll
+  return renderMainContent();
 }
 
 export function PublicContent({ pageId }: PublicContentProps) {

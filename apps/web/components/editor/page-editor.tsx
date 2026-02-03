@@ -316,9 +316,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
 
         {hasSidebar ? (
           // Layout with sidebar
-          <div className="flex gap-6 pb-32">
+          <div className="flex gap-8 pb-32">
             {/* Main content area */}
-            <div className="flex-1 min-w-0 space-y-3 pl-10">
+            <div className="flex-1 min-w-0 space-y-6">
               {mainLayouts.length > 0 ? (
                 <DndProvider
                   items={mainLayoutIds}
@@ -357,7 +357,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
             </div>
 
             {/* Sidebar area */}
-            <aside className="w-72 flex-shrink-0 border-l pl-6 space-y-3">
+            <aside className="w-72 flex-shrink-0 space-y-6">
               <DndProvider
                 items={sidebarLayoutIds}
                 onDragEnd={handleSidebarLayoutDragEnd}

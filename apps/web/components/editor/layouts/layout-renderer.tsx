@@ -69,12 +69,12 @@ export function LayoutRenderer({
         onSelectLayout();
       }}
     >
-      {/* Layout with inline toolbar - same pattern as blocks */}
-      <div className="flex gap-1 items-start">
-        {/* Layout toolbar - inline */}
+      {/* Layout with absolutely positioned toolbar */}
+      <div className="relative">
+        {/* Layout toolbar - absolutely positioned */}
         <div
           className={cn(
-            "flex flex-col gap-0.5 shrink-0",
+            "absolute -left-7 top-0 flex flex-col gap-0.5 z-10",
             "transition-opacity",
             // Only show when hovering layout AND no block is selected
             selectedBlockId
@@ -113,7 +113,7 @@ export function LayoutRenderer({
         </div>
 
         {/* Layout content */}
-        <div className="min-w-0 flex-1 rounded-md transition-colors hover:bg-muted/20">
+        <div className="min-w-0 rounded-md transition-colors hover:bg-muted/20">
           {layout.type === "spacer" ? (
             /* Spacer layout - renders as vertical space with height controls */
             <div
@@ -156,7 +156,7 @@ export function LayoutRenderer({
             </div>
           ) : (
             /* Regular layouts with slots */
-            <div style={gridStyle} className="min-h-[48px] p-1">
+            <div style={gridStyle} className="min-h-[48px] p-2">
               {layout.slots.map((slot) => (
                 <LayoutSlot
                   key={slot.id}

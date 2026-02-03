@@ -1,25 +1,19 @@
 import type { ElementRendererProps } from "@/components/elements/registry";
+import { useLayoutContext } from "@/components/elements/layout-context";
 import type { QuicklinkItem } from "@/types/elements";
 import { AppWindow, ExternalLink } from "lucide-react";
 
-interface QuicklinkButtonProps {
-  link: QuicklinkItem;
-}
-
-function QuicklinkButton({ link }: QuicklinkButtonProps) {
+function QuicklinkButton({ link }: { link: QuicklinkItem }) {
   if (!link.url) return null;
 
   const isApp = link.linkType === "app";
 
-  // For app links, we don't use target="_blank" since they open native apps
-  // For website links, we open in a new tab
   return (
     <a
       href={link.url}
       {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200 min-w-[140px] flex-1 max-w-[200px]"
+      className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all duration-200"
     >
-      {/* Image or placeholder */}
       <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
         {link.imageUrl ? (
           <img
@@ -33,8 +27,6 @@ function QuicklinkButton({ link }: QuicklinkButtonProps) {
           <ExternalLink className="w-5 h-5 text-muted-foreground" />
         )}
       </div>
-
-      {/* Title */}
       <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
         {link.title || "Untitled"}
       </span>
@@ -45,22 +37,30 @@ function QuicklinkButton({ link }: QuicklinkButtonProps) {
 export function QuicklinksRenderer({
   content,
 }: ElementRendererProps<"quicklinks">) {
-  const links = content.links || [];
+  const layoutContext = useLayoutContext();
+  const isSidebar = layoutContext?.isSidebar ?? false;
 
-  // Filter out links without URLs
-  const validLinks = links.filter((link) => link.url);
+  const validLinks = (content.links || []).filter((link) => link.url);
 
   if (validLinks.length === 0) {
     return null;
   }
 
+  // Sidebar: single column
+  // Main content: flex wrap, centered, max 5 per row
   return (
-    <div className="my-6">
-      <div className="flex flex-wrap gap-3 justify-start">
-        {validLinks.map((link) => (
-          <QuicklinkButton key={link.id} link={link} />
-        ))}
-      </div>
+    <div
+      className={
+        isSidebar
+          ? "flex flex-col gap-3 my-6"
+          : "flex flex-wrap justify-center gap-3 my-6"
+      }
+    >
+      {validLinks.map((link) => (
+        <div key={link.id} className={isSidebar ? "" : "w-[calc(20%-10px)]"}>
+          <QuicklinkButton link={link} />
+        </div>
+      ))}
     </div>
   );
 }

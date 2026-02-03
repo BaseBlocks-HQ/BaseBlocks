@@ -26,12 +26,15 @@ import type * as http from "../http.js";
 import type * as layouts_mutations from "../layouts/mutations.js";
 import type * as layouts_queries from "../layouts/queries.js";
 import type * as lib_entityAuthClient from "../lib/entityAuthClient.js";
+import type * as lib_extractBlockNoteText from "../lib/extractBlockNoteText.js";
 import type * as members_actions from "../members/actions.js";
 import type * as members_internal from "../members/internal.js";
 import type * as members_mutations from "../members/mutations.js";
 import type * as members_queries from "../members/queries.js";
+import type * as migrations from "../migrations.js";
 import type * as pages_mutations from "../pages/mutations.js";
 import type * as pages_queries from "../pages/queries.js";
+import type * as search_queries from "../search/queries.js";
 import type * as sharing_internal from "../sharing/internal.js";
 import type * as sharing_mutations from "../sharing/mutations.js";
 import type * as sharing_queries from "../sharing/queries.js";
@@ -63,12 +66,15 @@ declare const fullApi: ApiFromModules<{
   "layouts/mutations": typeof layouts_mutations;
   "layouts/queries": typeof layouts_queries;
   "lib/entityAuthClient": typeof lib_entityAuthClient;
+  "lib/extractBlockNoteText": typeof lib_extractBlockNoteText;
   "members/actions": typeof members_actions;
   "members/internal": typeof members_internal;
   "members/mutations": typeof members_mutations;
   "members/queries": typeof members_queries;
+  migrations: typeof migrations;
   "pages/mutations": typeof pages_mutations;
   "pages/queries": typeof pages_queries;
+  "search/queries": typeof search_queries;
   "sharing/internal": typeof sharing_internal;
   "sharing/mutations": typeof sharing_mutations;
   "sharing/queries": typeof sharing_queries;
@@ -102,4 +108,91 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  migrations: {
+    lib: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string },
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }
+      >;
+      cancelAll: FunctionReference<
+        "mutation",
+        "internal",
+        { sinceTs?: number },
+        Array<{
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }>
+      >;
+      clearAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number },
+        null
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; names?: Array<string> },
+        Array<{
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }>
+      >;
+      migrate: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          dryRun: boolean;
+          fnHandle: string;
+          name: string;
+          next?: Array<{ fnHandle: string; name: string }>;
+          oneBatchOnly?: boolean;
+        },
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }
+      >;
+    };
+  };
+};
