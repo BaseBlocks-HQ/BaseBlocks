@@ -23,3 +23,24 @@
   overflow-x: auto;
   max-width: 100%;
 }
+
+/* Search highlight styling */
+mark.search-highlight {
+  background-color: #fef08a;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  mark.search-highlight {
+    background-color: #854d0e;
+    color: #fef9c3;
+  }
+}
+
+/* Tailwind dark mode class support */
+.dark mark.search-highlight {
+  background-color: #854d0e;
+  color: #fef9c3;
+}

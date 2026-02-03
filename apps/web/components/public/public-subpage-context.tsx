@@ -11,11 +11,12 @@ import {
 
 export interface ViewingSubpage {
   content: SubpageContent;
+  searchTerm?: string;
 }
 
 interface PublicSubpageContextValue {
   viewingSubpage: ViewingSubpage | null;
-  openSubpage: (content: SubpageContent) => void;
+  openSubpage: (content: SubpageContent, searchTerm?: string) => void;
   closeSubpage: () => void;
 }
 
@@ -28,8 +29,8 @@ interface PublicSubpageProviderProps {
 export function PublicSubpageProvider({ children }: PublicSubpageProviderProps) {
   const [viewingSubpage, setViewingSubpage] = useState<ViewingSubpage | null>(null);
 
-  const openSubpage = useCallback((content: SubpageContent) => {
-    setViewingSubpage({ content });
+  const openSubpage = useCallback((content: SubpageContent, searchTerm?: string) => {
+    setViewingSubpage({ content, searchTerm });
   }, []);
 
   const closeSubpage = useCallback(() => {

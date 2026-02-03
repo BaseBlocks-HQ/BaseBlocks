@@ -1,6 +1,8 @@
 "use client";
 
 import { getDefaultContent } from "@/components/elements";
+import { PublicSubpageProvider, usePublicSubpageContext } from "@/components/public/public-subpage-context";
+import { PublicSubpagePanel } from "@/components/public/public-subpage-panel";
 import { EditorSkeleton } from "@/components/skeletons";
 import {
   ResizablePanelGroup,
@@ -31,22 +33,31 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const { selection, selectSlot, editingSubpage, closeSubpageEditor, markContentModified } =
     useEditorContext();
+  const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
   // Fullscreen state for subpage panel
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Determine if any subpage panel should be shown
+  const showSubpagePanel = editingSubpage || viewingSubpage;
+
   // ESC key to close subpage panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && editingSubpage) {
-        closeSubpageEditor();
-        setIsFullscreen(false);
+      if (e.key === "Escape") {
+        if (editingSubpage) {
+          closeSubpageEditor();
+          setIsFullscreen(false);
+        } else if (viewingSubpage) {
+          closeSubpage();
+          setIsFullscreen(false);
+        }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editingSubpage, closeSubpageEditor]);
+  }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
 
   const siteData = useQuery(api.sites.queries.getWithCompany, {
     siteId: siteId as Id<"sites">,
@@ -168,7 +179,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           />
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-            {editingSubpage ? (
+            {showSubpagePanel ? (
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {/* Main content area */}
                 {!isFullscreen && (
@@ -191,13 +202,20 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizableHandle withHandle />
                   </>
                 )}
-                {/* Subpage panel */}
+                {/* Subpage panel - editing takes priority over viewing */}
                 <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
                   <div className="h-full w-full min-w-0 overflow-hidden border-l">
-                    <SubpageEditPanel
-                      isFullscreen={isFullscreen}
-                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-                    />
+                    {editingSubpage ? (
+                      <SubpageEditPanel
+                        isFullscreen={isFullscreen}
+                        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                      />
+                    ) : (
+                      <PublicSubpagePanel
+                        isFullscreen={isFullscreen}
+                        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                      />
+                    )}
                   </div>
                 </ResizablePanel>
               </ResizablePanelGroup>
@@ -223,11 +241,13 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 }
 
-// Wrapper that provides EditorContext
+// Wrapper that provides EditorContext and PublicSubpageProvider
 export function SiteEditor({ siteId }: SiteEditorProps) {
   return (
     <EditorProvider siteId={siteId as Id<"sites">}>
-      <SiteEditorInner siteId={siteId} />
+      <PublicSubpageProvider>
+        <SiteEditorInner siteId={siteId} />
+      </PublicSubpageProvider>
     </EditorProvider>
   );
 }

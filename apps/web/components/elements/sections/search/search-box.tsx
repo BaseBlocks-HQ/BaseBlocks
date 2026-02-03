@@ -214,7 +214,6 @@ export function SearchBox({
       setLoadingSubpageId(result._id);
 
       try {
-        // Fetch the full subpage content
         const query = usePublicQuery
           ? api.search.queries.getSubpageContentPublic
           : api.search.queries.getSubpageContent;
@@ -226,7 +225,7 @@ export function SearchBox({
         });
 
         if (content) {
-          subpageContext.openSubpage(content as SubpageContent);
+          subpageContext.openSubpage(content as SubpageContent, debouncedQuery);
         }
       } catch (error) {
         console.error("Failed to fetch subpage content:", error);
@@ -235,7 +234,7 @@ export function SearchBox({
         setIsFocused(false);
       }
     },
-    [subpageContext, convex, usePublicQuery]
+    [subpageContext, convex, usePublicQuery, debouncedQuery]
   );
 
   const handleResultClick = useCallback(

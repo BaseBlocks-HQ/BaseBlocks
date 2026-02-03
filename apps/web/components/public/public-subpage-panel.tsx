@@ -55,7 +55,11 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6">
-        <PublicSubpageBlockViewer key={viewerKey} content={content.content as Block[] | undefined} />
+        <PublicSubpageBlockViewer
+          key={viewerKey}
+          content={content.content as Block[] | undefined}
+          searchTerm={viewingSubpage.searchTerm}
+        />
       </div>
     </div>
   );
