@@ -1,6 +1,11 @@
 "use client";
 
 import { ElementRendererWrapper } from "@/components/elements";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
@@ -14,6 +19,7 @@ import type {
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useQuery } from "convex/react";
+import { useState, useEffect } from "react";
 import {
   PublicSubpageProvider,
   usePublicSubpageContext,
@@ -25,13 +31,29 @@ interface PublicContentProps {
 }
 
 function PublicContentInner({ pageId }: PublicContentProps) {
-  const { viewingSubpage } = usePublicSubpageContext();
+  const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
   const layoutsData = useQuery(api.layouts.queries.listPublished, {
     pageId: pageId as Id<"pages">,
   });
+
+  // Fullscreen state for subpage panel
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // ESC key to close subpage panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && viewingSubpage) {
+        closeSubpage();
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [viewingSubpage, closeSubpage]);
 
   if (pageData === undefined || layoutsData === undefined) {
     return (
@@ -114,36 +136,61 @@ function PublicContentInner({ pageId }: PublicContentProps) {
     );
   };
 
+  // Main content renderer
+  const renderMainContent = () => (
+    <article className={cn("mx-auto px-6 py-8", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+      <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
+
+      {hasSidebar ? (
+        // Layout with sidebar
+        <div className="flex gap-8">
+          {/* Main content */}
+          <div className="flex-1 min-w-0 space-y-8">
+            {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="w-72 flex-shrink-0 space-y-6">
+            {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+          </aside>
+        </div>
+      ) : (
+        // Standard layout without sidebar
+        <div className="space-y-8">
+          {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+        </div>
+      )}
+    </article>
+  );
+
   return (
-    <div className="flex flex-1 overflow-hidden">
-      <div className={`${viewingSubpage ? 'w-3/5' : 'w-full'} min-w-0 overflow-auto transition-all`}>
-        <article className={cn("mx-auto px-6 py-8", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
-          <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
-
-          {hasSidebar ? (
-            // Layout with sidebar
-            <div className="flex gap-8">
-              {/* Main content */}
-              <div className="flex-1 min-w-0 space-y-8">
-                {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-              </div>
-
-              {/* Sidebar */}
-              <aside className="w-72 flex-shrink-0 space-y-6">
-                {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-              </aside>
-            </div>
-          ) : (
-            // Standard layout without sidebar
-            <div className="space-y-8">
-              {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-            </div>
+    <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+      {viewingSubpage ? (
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Main content area */}
+          {!isFullscreen && (
+            <>
+              <ResizablePanel defaultSize={60} minSize={20}>
+                <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
+                  {renderMainContent()}
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+            </>
           )}
-        </article>
-      </div>
-      {viewingSubpage && (
-        <div className="w-2/5 min-w-0 overflow-hidden border-l">
-          <PublicSubpagePanel />
+          {/* Subpage panel */}
+          <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
+            <div className="h-full w-full min-w-0 overflow-hidden border-l">
+              <PublicSubpagePanel
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        <div className="h-full overflow-auto">
+          {renderMainContent()}
         </div>
       )}
     </div>

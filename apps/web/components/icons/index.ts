@@ -1,0 +1,9 @@
+export { HomeIcon } from "./home-icon";
+export { PagesIcon } from "./pages-icon";
+export { SiteSettingsIcon } from "./site-settings-icon";
+export { LayoutsIcon } from "./layouts-icon";
+export { BlocksIcon } from "./blocks-icon";
+export { NavIcon } from "./nav-icon";
+export { SectionsIcon } from "./sections-icon";
+export { MediaIcon } from "./media-icon";
+export { FormsIcon } from "./forms-icon";

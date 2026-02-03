@@ -30,8 +30,6 @@ import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import {
   FilePlus,
-  FileText,
-  Home,
   MoreHorizontal,
   Pencil,
   Star,

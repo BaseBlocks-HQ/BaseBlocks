@@ -282,7 +282,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
 
   return (
     <div ref={containerRef} className="w-full border rounded-lg overflow-hidden">
-      <div className="flex h-52">
+      <div className="flex h-100">
         {/* Sidebar - shown when container is wide enough */}
         {showFolders && showSidebar && (
           <div className="flex flex-col w-36 border-r bg-muted/20 shrink-0 overflow-hidden">

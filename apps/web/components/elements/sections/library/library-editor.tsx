@@ -533,7 +533,7 @@ export function LibraryEditor({
         noClick
       >
         <div ref={containerRef} className="border rounded-lg overflow-hidden">
-          <div className="flex h-48">
+          <div className="flex h-100">
           {/* Sidebar - shown when container is wide enough */}
           {showSidebar && (
             <div className="flex flex-col w-40 border-r bg-muted/20 shrink-0 overflow-hidden">

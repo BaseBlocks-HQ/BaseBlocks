@@ -1,11 +1,12 @@
 "use client";
 
+import { HomeIcon, PagesIcon } from "@/components/icons";
 import { usePublicSiteContextOptional } from "@/components/public/public-site-context";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { usePageExpandState } from "@/hooks/use-page-expand-state";
 import { getPageLink } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
-import { ChevronDown, ChevronRight, FileText, Home } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -85,9 +86,9 @@ export function NavItem({
             style={{ paddingLeft: `${(depth + 1) * 12}px` }}
           >
             {isDefault ? (
-              <Home className="h-4 w-4 text-primary" />
+              <HomeIcon className="h-4 w-4 text-primary" />
             ) : (
-              <FileText className="h-4 w-4" />
+              <PagesIcon className="h-4 w-4" />
             )}
             <span className="truncate">{page.title}</span>
           </SidebarMenuButton>
@@ -141,7 +142,7 @@ export function NavItem({
         ) : (
           <span className="w-4" />
         )}
-        <FileText className="h-4 w-4" />
+        <PagesIcon className="h-4 w-4" />
         {page.title}
       </Link>
 

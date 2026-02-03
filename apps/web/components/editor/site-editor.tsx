@@ -2,13 +2,18 @@
 
 import { getDefaultContent } from "@/components/elements";
 import { EditorSkeleton } from "@/components/skeletons";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createBlock, createLayout } from "@/lib/layouts";
 import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
@@ -24,8 +29,24 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage, markContentModified } =
+  const { selection, selectSlot, editingSubpage, closeSubpageEditor, markContentModified } =
     useEditorContext();
+
+  // Fullscreen state for subpage panel
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // ESC key to close subpage panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && editingSubpage) {
+        closeSubpageEditor();
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [editingSubpage, closeSubpageEditor]);
 
   const siteData = useQuery(api.sites.queries.getWithCompany, {
     siteId: siteId as Id<"sites">,
@@ -125,7 +146,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full overflow-hidden">
         <EditorSidebar
           site={site}
           company={company}
@@ -137,7 +158,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           onAddBlock={handleAddBlock}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <EditorHeader
             companySlug={company.slug}
             siteId={site._id}
@@ -146,23 +167,53 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <div className="flex-1 flex overflow-hidden">
-            <div className={`${editingSubpage ? 'w-3/5' : 'w-full'} min-w-0 p-8 overflow-auto transition-all`}>
-              <SiteHeaderPreview site={site} company={company} />
-              {selectedPage ? (
-                <PageEditor
-                  pageId={selectedPage._id}
-                  onSelectionChange={handleSlotSelectionChange}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  Select a page to edit
-                </div>
-              )}
-            </div>
-            {editingSubpage && (
-              <div className="w-2/5 min-w-0 overflow-hidden border-l">
-                <SubpageEditPanel />
+          <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+            {editingSubpage ? (
+              <ResizablePanelGroup direction="horizontal" className="h-full">
+                {/* Main content area */}
+                {!isFullscreen && (
+                  <>
+                    <ResizablePanel defaultSize={60} minSize={20}>
+                      <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8">
+                        <SiteHeaderPreview site={site} company={company} />
+                        {selectedPage ? (
+                          <PageEditor
+                            pageId={selectedPage._id}
+                            onSelectionChange={handleSlotSelectionChange}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                            Select a page to edit
+                          </div>
+                        )}
+                      </div>
+                    </ResizablePanel>
+                    <ResizableHandle withHandle />
+                  </>
+                )}
+                {/* Subpage panel */}
+                <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
+                  <div className="h-full w-full min-w-0 overflow-hidden border-l">
+                    <SubpageEditPanel
+                      isFullscreen={isFullscreen}
+                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                    />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            ) : (
+              <div className="h-full overflow-auto p-8">
+                <SiteHeaderPreview site={site} company={company} />
+                {selectedPage ? (
+                  <PageEditor
+                    pageId={selectedPage._id}
+                    onSelectionChange={handleSlotSelectionChange}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Select a page to edit
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -1,28 +1,28 @@
 "use client";
 
 import { getSortedCategories } from "@/components/elements/registry/categories";
+import {
+  BlocksIcon,
+  FormsIcon,
+  LayoutsIcon,
+  MediaIcon,
+  NavIcon,
+  SectionsIcon,
+  SiteSettingsIcon,
+} from "@/components/icons";
 import { cn } from "@/lib/utils";
 import type { ElementCategory } from "@/types/elements";
-import {
-  ChevronRight,
-  FormInput,
-  Image,
-  Layout,
-  LayoutTemplate,
-  Navigation,
-  Settings2,
-  Square,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 // Map category to icon
 const CATEGORY_ICONS: Record<ElementCategory, React.ReactNode> = {
-  site: <Settings2 className="h-5 w-5" />,
-  layouts: <Layout className="h-5 w-5" />,
-  blocks: <Square className="h-5 w-5" />,
-  sections: <LayoutTemplate className="h-5 w-5" />,
-  navigation: <Navigation className="h-5 w-5" />,
-  media: <Image className="h-5 w-5" />,
-  forms: <FormInput className="h-5 w-5" />,
+  site: <SiteSettingsIcon className="h-5 w-5" />,
+  layouts: <LayoutsIcon className="h-5 w-5" />,
+  blocks: <BlocksIcon className="h-5 w-5" />,
+  sections: <SectionsIcon className="h-5 w-5" />,
+  navigation: <NavIcon className="h-5 w-5" />,
+  media: <MediaIcon className="h-5 w-5" />,
+  forms: <FormsIcon className="h-5 w-5" />,
 };
 
 interface CategoryMenuItemProps {

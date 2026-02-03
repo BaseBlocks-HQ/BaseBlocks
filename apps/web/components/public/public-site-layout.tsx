@@ -87,7 +87,7 @@ export function PublicSiteLayout({
 
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
         {/* Main Header */}
         {showHeader && (
           <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

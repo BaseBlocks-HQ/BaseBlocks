@@ -1,6 +1,7 @@
 "use client";
 
 import { DragHandle } from "@/components/dnd";
+import { HomeIcon, PagesIcon } from "@/components/icons";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import type { FlattenedPage } from "@/lib/tree-utils";
 import { INDENT_WIDTH, isValidDrop } from "@/lib/tree-utils";
@@ -8,12 +9,7 @@ import { cn } from "@/lib/utils";
 import type { PageListItem } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Home,
-} from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTreeDndContext } from "./tree-dnd-context";
 
@@ -164,9 +160,9 @@ export function SortableTreeItem({
         )}
 
         {isDefault ? (
-          <Home className="h-4 w-4 text-primary" />
+          <HomeIcon className="h-4 w-4 text-primary" />
         ) : (
-          <FileText className="h-4 w-4" />
+          <PagesIcon className="h-4 w-4" />
         )}
         <span className="truncate">{page.title}</span>
         {isDefault && (

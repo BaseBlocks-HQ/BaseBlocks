@@ -5,5 +5,21 @@
 
 /* Following BlockNote docs pattern for constrained containers */
 .bn-container[data-public-viewer] {
-  max-width: none;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Ensure content wraps properly */
+.bn-container[data-public-viewer] .bn-editor {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Ensure code blocks and pre elements don't overflow */
+.bn-container[data-public-viewer] pre,
+.bn-container[data-public-viewer] code {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-width: 100%;
 }

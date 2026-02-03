@@ -9,13 +9,18 @@ import type { AnyContent } from "@/types/elements";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
-import { X } from "lucide-react";
+import { X, Maximize2, Minimize2 } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useEditorContext } from "./editor-context";
 import { SubpageBlockEditor } from "./subpage-block-editor";
 import type { Block } from "@blocknote/core";
 
-export function SubpageEditPanel() {
+interface SubpageEditPanelProps {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}
+
+export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEditPanelProps) {
   const { editingSubpage, closeSubpageEditor, updateEditingSubpageContent, markContentModified } =
     useEditorContext();
   const updateBlockMutation = useMutation(api.layouts.mutations.updateBlockInSlot);
@@ -77,14 +82,19 @@ export function SubpageEditPanel() {
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-end p-4 shrink-0">
+      <div className="flex items-center justify-end p-4 shrink-0 gap-1 border-b">
+        {onToggleFullscreen && (
+          <Button variant="ghost" size="icon" onClick={onToggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
+        )}
         <Button variant="ghost" size="icon" onClick={closeSubpageEditor}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4 space-y-4 min-w-0">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="subpage-title">Title</Label>
           <Textarea

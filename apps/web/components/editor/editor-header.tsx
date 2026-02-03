@@ -47,7 +47,7 @@ export function EditorHeader({
 
   return (
     <>
-      <header className="border-b h-14 flex items-center justify-between px-4">
+      <header className="border-b h-14 shrink-0 flex items-center justify-between px-4 bg-background z-40">
         <div className="flex items-center gap-2">
           <SidebarTrigger />
           {!canEdit && (
