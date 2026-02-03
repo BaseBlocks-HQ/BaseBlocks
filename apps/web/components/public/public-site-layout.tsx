@@ -149,7 +149,7 @@ export function PublicSiteLayout({
         )}
 
         {/* Main content area */}
-        <div className="flex flex-1">
+        <div className="flex flex-1 overflow-hidden">
           {/* Sidebar navigation */}
           {showSidebar && (
             <aside className="w-64 border-r min-h-[calc(100vh-56px)] p-4 sticky top-14 self-start">
@@ -176,7 +176,7 @@ export function PublicSiteLayout({
           )}
 
           {/* Page content */}
-          <main className="flex-1 flex flex-col min-h-[calc(100vh-56px)]">
+          <main className="flex-1 flex flex-col min-h-[calc(100vh-56px)] overflow-hidden">
             {currentPage === undefined ? (
               <div className="max-w-3xl mx-auto p-8">
                 <Skeleton className="h-10 w-64 mb-8" />

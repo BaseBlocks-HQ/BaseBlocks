@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 
-// Get all layouts for a page
+// Get all layouts for a page (draft version - for editor)
 export const list = query({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
@@ -14,6 +14,27 @@ export const list = query({
     layouts.sort((a, b) => a.order - b.order);
 
     return layouts;
+  },
+});
+
+// Get all layouts for a page (published version - for public site)
+export const listPublished = query({
+  args: { pageId: v.id("pages") },
+  handler: async (ctx, { pageId }) => {
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .collect();
+
+    // Sort by order
+    layouts.sort((a, b) => a.order - b.order);
+
+    // Return with publishedSlots as slots (for public consumption)
+    // If not deployed yet, return empty slots
+    return layouts.map((layout) => ({
+      ...layout,
+      slots: layout.publishedSlots ?? [],
+    }));
   },
 });
 

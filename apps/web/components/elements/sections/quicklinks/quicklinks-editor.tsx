@@ -95,14 +95,14 @@ function QuicklinkCard({
         {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
         onClick={(e) => e.preventDefault()}
         className={cn(
-          "flex flex-col items-center gap-1.5 p-3",
-          "rounded-lg border bg-card",
+          "group flex flex-col items-center gap-2 p-4",
+          "rounded-xl border bg-card",
           "hover:bg-accent hover:border-accent-foreground/20",
           "transition-all duration-200",
-          "w-full",
+          "min-w-[140px] flex-1 max-w-[200px]",
         )}
       >
-        <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
           {link.imageUrl ? (
             <img
               src={link.imageUrl}
@@ -110,12 +110,12 @@ function QuicklinkCard({
               className="w-full h-full object-cover"
             />
           ) : isApp ? (
-            <AppWindow className="w-4 h-4 text-muted-foreground" />
+            <AppWindow className="w-5 h-5 text-muted-foreground" />
           ) : (
-            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            <ExternalLink className="w-5 h-5 text-muted-foreground" />
           )}
         </div>
-        <span className="text-xs font-medium text-center line-clamp-2 w-full">
+        <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-accent-foreground">
           {link.title || "Untitled"}
         </span>
       </a>
@@ -517,17 +517,9 @@ export function QuicklinksEditor({
         />
       )}
 
-      {/* Cards grid - responsive */}
+      {/* Cards flex layout */}
       {visibleCards.length > 0 ? (
-        <div
-          className={cn(
-            "grid gap-3 pt-3",
-            visibleCards.length === 1 && "grid-cols-1",
-            visibleCards.length === 2 && "grid-cols-2",
-            visibleCards.length >= 3 &&
-              "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-          )}
-        >
+        <div className="flex flex-wrap gap-3 justify-start pt-3">
           {visibleCards.map((link) => (
             <QuicklinkCard
               key={link.id}

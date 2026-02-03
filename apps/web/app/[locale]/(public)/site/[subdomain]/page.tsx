@@ -1,5 +1,6 @@
 "use client";
 
+import { AccessGate, SitePrivate } from "@/components/public";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
@@ -28,10 +29,37 @@ export default function SubdomainRootPage({ params }: Props) {
       return;
     }
 
+    // Check visibility before redirecting
+    const visibility = siteData.site.visibility ?? "public";
+    if (visibility === "private" || visibility === "password") {
+      // Don't redirect, we'll handle visibility in the render
+      return;
+    }
+
     // Redirect to the default page
     // getPageLink handles both subdomain and path-based routing
     router.replace(getPageLink(siteData.defaultPage.slug));
   }, [siteData, subdomain, router]);
+
+  // Handle visibility before showing loading state
+  if (siteData && siteData.site) {
+    const visibility = siteData.site.visibility ?? "public";
+
+    // Private sites require authentication
+    if (visibility === "private") {
+      return <SitePrivate siteName={siteData.site.name} />;
+    }
+
+    // Password-protected sites require access code verification
+    if (visibility === "password") {
+      // Once access is granted, redirect to default page
+      return (
+        <AccessGate siteId={siteData.site._id} siteName={siteData.site.name}>
+          <RedirectToDefaultPage defaultPageSlug={siteData.defaultPage?.slug} />
+        </AccessGate>
+      );
+    }
+  }
 
   // Show loading state while redirecting
   return (
@@ -56,6 +84,23 @@ export default function SubdomainRootPage({ params }: Props) {
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+// Helper component to redirect after access is granted
+function RedirectToDefaultPage({
+  defaultPageSlug,
+}: { defaultPageSlug?: string }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace(getPageLink(defaultPageSlug ?? "home"));
+  }, [defaultPageSlug, router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Skeleton className="h-8 w-48" />
     </div>
   );
 }

@@ -1,4 +1,9 @@
-/* Make BlockNote viewer transparent to inherit app theme */
+/* BlockNote viewer styling for public subpage panel */
 .bn-container[data-public-viewer][data-color-scheme] {
   --bn-colors-editor-background: transparent;
+}
+
+/* Following BlockNote docs pattern for constrained containers */
+.bn-container[data-public-viewer] {
+  max-width: none;
 }

@@ -3,7 +3,6 @@
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSaveStatus } from "@/hooks";
 import { createLayout } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
@@ -20,7 +19,6 @@ import { Plus } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useEditorContext } from "./editor-context";
 import { SortableLayout } from "./layouts/sortable-layout";
-import { SaveIndicator } from "./save-indicator";
 
 interface PageEditorProps {
   pageId: string;
@@ -28,9 +26,14 @@ interface PageEditorProps {
 }
 
 export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
-  const { selection, selectLayout, selectSlot, selectBlock, clearSelection } =
-    useEditorContext();
-  const { status, setStatus } = useSaveStatus();
+  const {
+    selection,
+    selectLayout,
+    selectSlot,
+    selectBlock,
+    clearSelection,
+    markContentModified,
+  } = useEditorContext();
 
   // Queries
   const pageData = useQuery(api.pages.queries.get, {
@@ -44,21 +47,22 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const reorderLayoutsMutation = useMutation(api.layouts.mutations.reorder);
   const updateBlockMutation = useMutation(
-    api.layouts.mutations.updateBlockInSlot,
+    api.layouts.mutations.updateBlockInSlot
   );
   const removeBlockMutation = useMutation(
-    api.layouts.mutations.removeBlockFromSlot,
+    api.layouts.mutations.removeBlockFromSlot
   );
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
   const moveBlockMutation = useMutation(api.layouts.mutations.moveBlock);
   const updateSettingsMutation = useMutation(
-    api.layouts.mutations.updateSettings,
+    api.layouts.mutations.updateSettings
   );
 
   // Convert layouts from DB to LayoutData format
   type LayoutDoc = Doc<"layouts">;
   type SlotDoc = LayoutDoc["slots"][number];
   type BlockDoc = SlotDoc["blocks"][number];
+
   const layouts: LayoutData[] = useMemo(() => {
     if (!layoutsData) return [];
     return layoutsData.map((s: LayoutDoc) => ({
@@ -177,18 +181,17 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       layoutId: string,
       slotId: string,
       blockId: string,
-      content: AnyContent,
+      content: AnyContent
     ) => {
-      setStatus("saving");
       await updateBlockMutation({
         layoutId: layoutId as Id<"layouts">,
         slotId,
         blockId,
         content,
       });
-      setStatus("saved");
+      markContentModified();
     },
-    [updateBlockMutation, setStatus],
+    [updateBlockMutation, markContentModified]
   );
 
   // Remove block
@@ -199,8 +202,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         slotId,
         blockId,
       });
+      markContentModified();
     },
-    [removeBlockMutation],
+    [removeBlockMutation, markContentModified]
   );
 
   // Remove layout
@@ -234,17 +238,16 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [moveBlockMutation],
   );
 
-  // Update layout settings (e.g., spacer height)
+  // Update layout settings
   const handleUpdateSettings = useCallback(
     async (layoutId: string, settings: LayoutSettings) => {
-      setStatus("saving");
       await updateSettingsMutation({
         layoutId: layoutId as Id<"layouts">,
         settings,
       });
-      setStatus("saved");
+      markContentModified();
     },
-    [updateSettingsMutation, setStatus],
+    [updateSettingsMutation, markContentModified]
   );
 
   // Handle click on editor background to deselect
@@ -304,7 +307,6 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       >
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">{pageData.title}</h1>
-          <SaveIndicator status={status} />
         </div>
 
         {hasSidebar ? (

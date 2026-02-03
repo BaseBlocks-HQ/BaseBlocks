@@ -30,6 +30,19 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Visibility settings for sharing
+    visibility: v.optional(
+      v.union(
+        v.literal("private"), // Only admins/members
+        v.literal("public"), // Anyone
+        v.literal("link-only"), // Unlisted - direct link only
+        v.literal("password") // Requires access code
+      )
+    ),
+    accessCodeRotationHours: v.optional(v.number()), // For auto-rotation (default: 24)
+    accessCodeSessionDays: v.optional(v.number()), // How long sessions last (default: 7)
+    // Deploy tracking
+    hasUndeployedChanges: v.optional(v.boolean()), // True if content modified since last deploy
     settings: v.object({
       favicon: v.optional(v.string()),
       ogImage: v.optional(v.string()),
@@ -48,6 +61,24 @@ export default defineSchema({
   })
     .index("by_company", ["companyId"])
     .index("by_slug", ["companyId", "slug"]),
+
+  // Access codes for password-protected sites
+  siteAccessCodes: defineTable({
+    siteId: v.id("sites"),
+    code: v.string(), // 6-char alphanumeric (e.g., "ABC123")
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_code", ["code"]),
+
+  // Sessions for visitors who have verified access codes
+  siteAccessSessions: defineTable({
+    siteId: v.id("sites"),
+    sessionToken: v.string(),
+    verifiedAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_site_token", ["siteId", "sessionToken"]),
 
   // Pages within a site
   pages: defineTable({
@@ -106,6 +137,7 @@ export default defineSchema({
     ),
     order: v.number(),
     // Slots contain the blocks - stored as embedded JSON for atomic updates
+    // This is the DRAFT version (what editor sees/edits)
     slots: v.array(
       v.object({
         id: v.string(),
@@ -136,6 +168,38 @@ export default defineSchema({
         ),
       }),
     ),
+    // Published slots - the LIVE version (what public site sees)
+    // This is populated when user clicks Deploy
+    publishedSlots: v.optional(v.array(
+      v.object({
+        id: v.string(),
+        position: v.number(),
+        blocks: v.array(
+          v.object({
+            id: v.string(),
+            type: v.union(
+              v.literal("heading"),
+              v.literal("paragraph"),
+              v.literal("image"),
+              v.literal("file"),
+              v.literal("document-list"),
+              v.literal("library"),
+              v.literal("search"),
+              v.literal("embed"),
+              v.literal("divider"),
+              v.literal("block-spacer"),
+              v.literal("callout"),
+              v.literal("code"),
+              v.literal("table"),
+              v.literal("quicklinks"),
+              v.literal("form"),
+              v.literal("subpage"),
+            ),
+            content: v.any(),
+          }),
+        ),
+      }),
+    )),
     // Layout settings - layout configuration only
     settings: v.object({
       rowCount: v.optional(v.number()),

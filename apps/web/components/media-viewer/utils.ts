@@ -56,6 +56,15 @@ function isOfficeDocument(contentType?: string): boolean {
 }
 
 /**
+ * Convert a relative URL to an absolute public URL
+ */
+function toAbsoluteUrl(url: string): string {
+  if (typeof window === "undefined") return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${window.location.origin}${url}`;
+}
+
+/**
  * Open a file in a new tab by creating a blob URL
  * This works around Content-Disposition: attachment headers
  */
@@ -65,8 +74,10 @@ export async function openInNewTab(
 ): Promise<void> {
   try {
     // For Office documents, open in Microsoft Office Online viewer
+    // Use absolute URL since Microsoft's viewer needs to access the file externally
     if (isOfficeDocument(contentType)) {
-      const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}`;
+      const absoluteUrl = toAbsoluteUrl(url);
+      const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absoluteUrl)}`;
       window.open(viewerUrl, "_blank");
       return;
     }

@@ -29,7 +29,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
-  const layoutsData = useQuery(api.layouts.queries.list, {
+  const layoutsData = useQuery(api.layouts.queries.listPublished, {
     pageId: pageId as Id<"pages">,
   });
 
@@ -91,12 +91,15 @@ function PublicContentInner({ pageId }: PublicContentProps) {
         {layout.slots.map((slot: SlotDoc) => (
           <div
             key={slot.id}
-            className="prose prose-neutral dark:prose-invert max-w-none"
+            className="min-w-0"
           >
             {slot.blocks.map((block: BlockDoc, index: number) => (
               <div
                 key={block.id}
-                className={cn(index < slot.blocks.length - 1 && "mb-3")}
+                className={cn(
+                  "prose prose-neutral dark:prose-invert max-w-none",
+                  index < slot.blocks.length - 1 && "mb-3"
+                )}
               >
                 <ElementRendererWrapper
                   id={block.id}
@@ -113,7 +116,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className={`${viewingSubpage ? 'w-3/5' : 'w-full'} overflow-auto transition-all`}>
+      <div className={`${viewingSubpage ? 'w-3/5' : 'w-full'} min-w-0 overflow-auto transition-all`}>
         <article className={cn("mx-auto px-6 py-8", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
           <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
 
@@ -139,7 +142,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
         </article>
       </div>
       {viewingSubpage && (
-        <div className="w-2/5 border-l">
+        <div className="w-2/5 min-w-0 overflow-hidden border-l">
           <PublicSubpagePanel />
         </div>
       )}

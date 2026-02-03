@@ -186,6 +186,67 @@ export const setDefaultPage = mutation({
   },
 });
 
+// Mark content as modified (for deploy tracking)
+export const markContentModified = mutation({
+  args: { siteId: v.id("sites") },
+  handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) throw new Error("Site not found");
+
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    // Only update if not already marked
+    if (!site.hasUndeployedChanges) {
+      await ctx.db.patch(siteId, {
+        hasUndeployedChanges: true,
+      });
+    }
+
+    return siteId;
+  },
+});
+
+// Deploy site - copies draft content (slots) to published content (publishedSlots)
+export const deploy = mutation({
+  args: { siteId: v.id("sites") },
+  handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) throw new Error("Site not found");
+
+    // Require admin access for write operations
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    // Get all pages for this site
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    // For each page, get all layouts and copy slots → publishedSlots
+    for (const page of pages) {
+      const layouts = await ctx.db
+        .query("layouts")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+
+      for (const layout of layouts) {
+        await ctx.db.patch(layout._id, {
+          publishedSlots: layout.slots,
+        });
+      }
+    }
+
+    // Clear the undeployed changes flag
+    await ctx.db.patch(siteId, {
+      hasUndeployedChanges: false,
+      updatedAt: Date.now(),
+    });
+
+    return siteId;
+  },
+});
+
 // Delete site
 export const remove = mutation({
   args: { siteId: v.id("sites") },

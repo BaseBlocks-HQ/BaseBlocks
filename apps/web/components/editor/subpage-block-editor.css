@@ -1,6 +1,11 @@
-/* Make BlockNote editor transparent to inherit app theme */
+/* BlockNote editor styling for subpage panel */
 .bn-container[data-subpage-editor][data-color-scheme] {
   --bn-colors-editor-background: transparent;
+}
+
+/* Following BlockNote docs pattern for constrained containers */
+.bn-container[data-subpage-editor] {
+  max-width: none;
 }
 
 .bn-container[data-subpage-editor] .bn-editor {

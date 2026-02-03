@@ -4,7 +4,7 @@ import { getDefaultContent } from "@/components/elements";
 import { EditorSkeleton } from "@/components/skeletons";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createBlock, createLayout } from "@/lib/layouts";
-import type { LayoutBlockType, LayoutType } from "@/types";
+import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -24,7 +24,8 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage } = useEditorContext();
+  const { selection, selectSlot, editingSubpage, markContentModified } =
+    useEditorContext();
 
   const siteData = useQuery(api.sites.queries.getWithCompany, {
     siteId: siteId as Id<"sites">,
@@ -100,11 +101,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         block: {
           id: newBlock.id,
           type: newBlock.type,
-          content: newBlock.content,
+          content: newBlock.content as AnyContent,
         },
       });
+      markContentModified();
     },
-    [selection, addBlockMutation],
+    [selection, addBlockMutation, markContentModified]
   );
 
   if (siteData === undefined || pages === undefined) {
@@ -135,16 +137,17 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           onAddBlock={handleAddBlock}
         />
 
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col overflow-hidden">
           <EditorHeader
             companySlug={company.slug}
+            siteId={site._id}
             sitePublished={site.isPublished}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
           />
 
           <div className="flex-1 flex overflow-hidden">
-            <div className={`${editingSubpage ? 'w-3/5' : 'w-full'} p-8 overflow-auto transition-all`}>
+            <div className={`${editingSubpage ? 'w-3/5' : 'w-full'} min-w-0 p-8 overflow-auto transition-all`}>
               <SiteHeaderPreview site={site} company={company} />
               {selectedPage ? (
                 <PageEditor
@@ -158,7 +161,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
               )}
             </div>
             {editingSubpage && (
-              <div className="w-2/5 border-l">
+              <div className="w-2/5 min-w-0 overflow-hidden border-l">
                 <SubpageEditPanel />
               </div>
             )}

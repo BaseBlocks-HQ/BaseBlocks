@@ -2,7 +2,9 @@
 
 import { useSitePermissions } from "@/hooks";
 import type { SubpageContent } from "@/types/elements/blocks";
+import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { useMutation, useQuery } from "convex/react";
 import {
   type ReactNode,
   createContext,
@@ -45,6 +47,10 @@ interface EditorContextValue {
   isAdmin: boolean;
   isViewer: boolean;
   isPermissionsLoading: boolean;
+  // Deploy tracking - tracks if content was modified since last deploy
+  hasUndeployedChanges: boolean;
+  markContentModified: () => void;
+  markAsDeployed: () => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -62,6 +68,14 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   });
   const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
 
+  // Query the site to get hasUndeployedChanges from database
+  const site = useQuery(api.sites.queries.get, { siteId });
+  const hasUndeployedChanges = site?.hasUndeployedChanges ?? false;
+
+  // Mutations for deploy tracking
+  const markContentModifiedMutation = useMutation(api.sites.mutations.markContentModified);
+  const deployMutation = useMutation(api.sites.mutations.deploy);
+
   // Get permissions for this site
   const {
     canEdit,
@@ -69,6 +83,16 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     isViewer,
     isLoading: isPermissionsLoading,
   } = useSitePermissions(siteId);
+
+  // Mark content as modified (called after any save operation)
+  const markContentModified = useCallback(() => {
+    markContentModifiedMutation({ siteId });
+  }, [markContentModifiedMutation, siteId]);
+
+  // Deploy site - copies draft content to published content
+  const markAsDeployed = useCallback(async () => {
+    await deployMutation({ siteId });
+  }, [deployMutation, siteId]);
 
   const selectLayout = useCallback((layoutId: string | null) => {
     setSelection({
@@ -134,6 +158,9 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         isAdmin,
         isViewer,
         isPermissionsLoading,
+        hasUndeployedChanges,
+        markContentModified,
+        markAsDeployed,
       }}
     >
       {children}
