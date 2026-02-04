@@ -337,7 +337,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           {hasContent ? (
             <ScrollArea className="flex-1 min-w-0">
               <div className="p-1.5 space-y-0.5">
-                {currentSubfolders.map((folder) => (
+                {sortedFiles.length === 0 && currentSubfolders.map((folder) => (
                   <div
                     key={folder._id}
                     className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
