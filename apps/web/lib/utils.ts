@@ -27,7 +27,7 @@ export function getSiteUrl(companySlug: string, pagePath?: string): string {
 
   if (typeof window !== "undefined" && isVercelAppDomain()) {
     // Path-based routing for vercel.app
-    return `/s/${companySlug}${path}`;
+    return `${window.location.origin}/s/${companySlug}${path}`;
   }
 
   // Subdomain-based routing for custom domains
