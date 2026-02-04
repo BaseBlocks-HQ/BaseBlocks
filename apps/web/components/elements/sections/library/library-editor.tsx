@@ -63,28 +63,32 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
+function useContainerWidth() {
   const [width, setWidth] = useState(0);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
-  useEffect(() => {
-    if (!ref.current) return;
+  const containerRef = useCallback((node: HTMLElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setWidth(entry.contentRect.width);
-      }
-    });
+    if (node) {
+      setWidth(node.offsetWidth);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setWidth(entry.contentRect.width);
+        }
+      });
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
 
-    observer.observe(ref.current);
-    setWidth(ref.current.offsetWidth);
-
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return width;
+  return [containerRef, width] as const;
 }
 
 function FolderItem({
@@ -219,8 +223,7 @@ export function LibraryEditor({
 }: ElementEditorProps<"library">) {
   const { siteId } = useEditorContext();
   const { openFile } = useMediaViewer();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const containerWidth = useContainerWidth(containerRef);
+  const [containerRef, containerWidth] = useContainerWidth();
 
   const showFolderTree = content.showFolderTree !== false;
   const showSidebar = containerWidth >= 400 && showFolderTree;

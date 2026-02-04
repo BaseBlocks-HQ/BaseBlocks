@@ -30,32 +30,35 @@ import {
   Home,
   Menu,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
-function useContainerWidth(ref: React.RefObject<HTMLElement | null>) {
+function useContainerWidth() {
   const [width, setWidth] = useState(0);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
-  useEffect(() => {
-    if (!ref.current) return;
+  const containerRef = useCallback((node: HTMLElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setWidth(entry.contentRect.width);
-      }
-    });
+    if (node) {
+      setWidth(node.offsetWidth);
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setWidth(entry.contentRect.width);
+        }
+      });
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
 
-    observer.observe(ref.current);
-    setWidth(ref.current.offsetWidth);
-
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return width;
+  return [containerRef, width] as const;
 }
 
 export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const containerWidth = useContainerWidth(containerRef);
+  const [containerRef, containerWidth] = useContainerWidth();
 
   const showSidebar = containerWidth >= 400;
 
@@ -207,6 +210,9 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     a.filename.localeCompare(b.filename),
   );
 
+  const currentSubfolders = buildFolderTree(selectedFolderId ?? undefined);
+  const hasContent = sortedFiles.length > 0 || currentSubfolders.length > 0;
+
   const showFolders = content.showFolderTree !== false;
 
   // Current location display text
@@ -328,9 +334,20 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           )}
 
           {/* File list */}
-          <ScrollArea className="flex-1 min-w-0">
-            {sortedFiles.length > 0 ? (
+          {hasContent ? (
+            <ScrollArea className="flex-1 min-w-0">
               <div className="p-1.5 space-y-0.5">
+                {currentSubfolders.map((folder) => (
+                  <div
+                    key={folder._id}
+                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
+                    onClick={() => handleSelectFolder(folder._id)}
+                  >
+                    <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm truncate flex-1 min-w-0">{folder.name}</span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                  </div>
+                ))}
                 {sortedFiles.map((file) => (
                   <div
                     key={file._id}
@@ -386,12 +403,14 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                No files in this folder
-              </div>
-            )}
-          </ScrollArea>
+            </ScrollArea>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
+              <FolderOpen className="h-10 w-10 mb-3 opacity-30" strokeWidth={1.5} />
+              <p className="text-sm font-medium">No files yet</p>
+              <p className="text-xs opacity-60 mt-0.5">This folder is empty</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
