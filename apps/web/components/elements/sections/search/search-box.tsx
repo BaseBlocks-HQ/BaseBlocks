@@ -207,7 +207,21 @@ export function SearchBox({
 
   const handleSubpageClick = useCallback(
     async (result: SearchResultItem) => {
+      console.log("[SearchBox] handleSubpageClick called", {
+        hasSubpageContext: !!subpageContext,
+        layoutId: result.metadata.layoutId,
+        slotId: result.metadata.slotId,
+        blockId: result.metadata.blockId,
+        usePublicQuery,
+      });
+
       if (!subpageContext || !result.metadata.layoutId || !result.metadata.slotId || !result.metadata.blockId) {
+        console.warn("[SearchBox] Early return - missing:", {
+          subpageContext: !subpageContext,
+          layoutId: !result.metadata.layoutId,
+          slotId: !result.metadata.slotId,
+          blockId: !result.metadata.blockId,
+        });
         return;
       }
 
@@ -218,17 +232,23 @@ export function SearchBox({
           ? api.search.queries.getSubpageContentPublic
           : api.search.queries.getSubpageContent;
 
+        console.log("[SearchBox] Fetching subpage content...");
         const content = await convex.query(query, {
           layoutId: result.metadata.layoutId as Id<"layouts">,
           slotId: result.metadata.slotId,
           blockId: result.metadata.blockId,
         });
 
+        console.log("[SearchBox] Content received:", { hasContent: !!content, contentKeys: content ? Object.keys(content) : null });
+
         if (content) {
+          console.log("[SearchBox] Opening subpage via context");
           subpageContext.openSubpage(content as SubpageContent, debouncedQuery);
+        } else {
+          console.warn("[SearchBox] Content was null/undefined - subpage won't open");
         }
       } catch (error) {
-        console.error("Failed to fetch subpage content:", error);
+        console.error("[SearchBox] Failed to fetch subpage content:", error);
       } finally {
         setLoadingSubpageId(null);
         setIsFocused(false);
