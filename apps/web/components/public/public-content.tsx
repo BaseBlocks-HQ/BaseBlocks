@@ -24,7 +24,6 @@ import type { Doc, Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { useState, useEffect } from "react";
 import {
-  PublicSubpageProvider,
   usePublicSubpageContext,
 } from "./public-subpage-context";
 import { PublicSubpagePanel } from "./public-subpage-panel";
@@ -208,9 +207,5 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 }
 
 export function PublicContent({ pageId }: PublicContentProps) {
-  return (
-    <PublicSubpageProvider>
-      <PublicContentInner pageId={pageId} />
-    </PublicSubpageProvider>
-  );
+  return <PublicContentInner pageId={pageId} />;
 }

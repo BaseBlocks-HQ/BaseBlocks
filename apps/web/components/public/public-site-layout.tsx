@@ -20,6 +20,7 @@ import { useQuery } from "convex/react";
 import { useEffect } from "react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
+import { PublicSubpageProvider } from "./public-subpage-context";
 
 interface PublicSiteLayoutProps {
   site: {
@@ -116,6 +117,7 @@ export function PublicSiteLayout({
 
   return (
     <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
+      <PublicSubpageProvider>
       <div
         className="h-screen bg-background flex flex-col overflow-hidden"
         style={customizationStyles}
@@ -234,6 +236,7 @@ export function PublicSiteLayout({
           </main>
         </div>
       </div>
+      </PublicSubpageProvider>
     </PublicSiteProvider>
   );
 }
