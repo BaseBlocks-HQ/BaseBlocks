@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy, getOptionalAuthContext } from "../auth";
 
@@ -122,7 +122,7 @@ export const verifyAccessCode = mutation({
 
     // Check if site requires password
     if (site.visibility !== "password") {
-      throw new Error("Site does not require password access");
+      throw new ConvexError("Site does not require password access");
     }
 
     const now = Date.now();
@@ -134,16 +134,16 @@ export const verifyAccessCode = mutation({
       .first();
 
     if (!accessCode) {
-      throw new Error("Invalid access code");
+      throw new ConvexError("Invalid access code");
     }
 
     // Check if code matches and is not expired
     if (accessCode.code !== code.toUpperCase()) {
-      throw new Error("Invalid access code");
+      throw new ConvexError("Invalid access code");
     }
 
     if (accessCode.expiresAt < now) {
-      throw new Error("Access code has expired");
+      throw new ConvexError("Access code has expired");
     }
 
     // Generate session token

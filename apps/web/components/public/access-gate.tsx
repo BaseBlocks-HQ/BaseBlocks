@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import type { Id } from "@repo/backend";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import { Lock, AlertCircle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -90,7 +91,9 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
         setHasAccess(true);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Invalid or expired access code"
+          err instanceof ConvexError
+            ? (err.data as string)
+            : "Invalid or expired access code"
         );
         setCode("");
         inputRef.current?.focus();
