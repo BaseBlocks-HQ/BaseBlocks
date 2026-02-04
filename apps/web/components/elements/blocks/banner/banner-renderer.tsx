@@ -108,7 +108,12 @@ export function BannerRenderer({ content }: ElementRendererProps<"banner">) {
   const plugins = content.settings.autoCycle ? [autoplayRef.current] : [];
 
   return (
-    <div className="w-full relative rounded-xl overflow-hidden">
+    <div
+      className="w-full relative overflow-hidden"
+      style={{
+        borderRadius: "var(--radius-pill, var(--radius-xl))",
+      }}
+    >
       <Carousel
         opts={{ loop: true }}
         plugins={plugins}
