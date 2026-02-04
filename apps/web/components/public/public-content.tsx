@@ -146,29 +146,31 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
   // Main content renderer
   const renderMainContent = () => (
-    <article className={cn("mx-auto px-6 py-8", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
-      <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
+    <div className="p-8">
+      <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+        <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
 
-      {hasSidebar ? (
-        // Layout with sidebar
-        <div className="flex gap-8">
-          {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-8">
+        {hasSidebar ? (
+          // Layout with sidebar
+          <div className="flex gap-8">
+            {/* Main content */}
+            <div className="flex-1 min-w-0 space-y-8">
+              {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+            </div>
+
+            {/* Sidebar */}
+            <aside className="w-72 flex-shrink-0 space-y-6">
+              {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
+            </aside>
+          </div>
+        ) : (
+          // Standard layout without sidebar
+          <div className="space-y-8">
             {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
           </div>
-
-          {/* Sidebar */}
-          <aside className="w-72 flex-shrink-0 space-y-6">
-            {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-          </aside>
-        </div>
-      ) : (
-        // Standard layout without sidebar
-        <div className="space-y-8">
-          {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-        </div>
-      )}
-    </article>
+        )}
+      </article>
+    </div>
   );
 
   // When viewing a subpage, use resizable panels with their own scroll
