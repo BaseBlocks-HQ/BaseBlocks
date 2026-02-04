@@ -129,6 +129,7 @@ export default defineSchema({
       v.literal("quicklinks"),
       v.literal("form"),
       v.literal("subpage"),
+      v.literal("banner"),
     ),
     order: v.number(),
     content: v.any(), // Block-specific content
@@ -174,6 +175,7 @@ export default defineSchema({
               v.literal("quicklinks"),
               v.literal("form"),
               v.literal("subpage"),
+              v.literal("banner"),
             ),
             content: v.any(),
           }),
@@ -206,6 +208,7 @@ export default defineSchema({
               v.literal("quicklinks"),
               v.literal("form"),
               v.literal("subpage"),
+              v.literal("banner"),
             ),
             content: v.any(),
           }),

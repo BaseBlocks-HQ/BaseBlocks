@@ -57,7 +57,7 @@ export function ParagraphEditor({
       <ContentEditable
         html={contentRef.current}
         onChange={handleChange}
-        className="w-full outline-none whitespace-pre-wrap relative z-10"
+        className="w-full outline-none whitespace-pre-wrap"
       />
       {isEmpty && (
         <span className="absolute left-2 top-2 text-muted-foreground pointer-events-none">

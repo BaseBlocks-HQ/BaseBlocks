@@ -37,6 +37,7 @@ const blockTypes = v.union(
   v.literal("quicklinks"),
   v.literal("form"),
   v.literal("subpage"),
+  v.literal("banner"),
 );
 
 const slotSchema = v.object({

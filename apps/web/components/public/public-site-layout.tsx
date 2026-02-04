@@ -1,5 +1,6 @@
 "use client";
 
+import { BannerRenderer } from "@/components/elements/blocks/banner/banner-renderer";
 import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -12,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
+import type { BannerContent } from "@/types/elements";
 import type { SiteCustomization } from "@/types/elements/customization";
 import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
@@ -73,6 +75,30 @@ export function PublicSiteLayout({
 
   // Build the current path string for navigation matching
   const currentPathString = pagePath.join("/");
+
+  // Fetch site-wide banners
+  const siteWideBanners = useQuery(api.banners.queries.getSiteWideBanners, {
+    siteId: site._id,
+  });
+
+  // Fetch page-specific banners
+  const pageSpecificBanners = useQuery(
+    api.banners.queries.getBannersForPage,
+    currentPage?._id
+      ? { siteId: site._id, pageId: currentPage._id as Id<"pages"> }
+      : "skip",
+  );
+
+  // Combine banners, deduplicating by block id
+  const allBanners = (() => {
+    const combined = [...(siteWideBanners ?? []), ...(pageSpecificBanners ?? [])];
+    const seen = new Set<string>();
+    return combined.filter((b) => {
+      if (seen.has(b.id)) return false;
+      seen.add(b.id);
+      return true;
+    });
+  })();
 
   // Settings with defaults
   const showHeader = site.settings.showHeader !== false;
@@ -181,6 +207,20 @@ export function PublicSiteLayout({
               showSubNav ? "top-24" : "top-14"
             )}
           />
+        )}
+
+        {/* Site-wide and page-specific banners */}
+        {allBanners.length > 0 && (
+          <div className="w-full z-10 flex-shrink-0">
+            {allBanners.map((banner) => (
+              <BannerRenderer
+                key={banner.id}
+                id={banner.id}
+                type="banner"
+                content={banner.content as BannerContent}
+              />
+            ))}
+          </div>
         )}
 
         {/* Main content area */}

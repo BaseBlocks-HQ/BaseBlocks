@@ -10,6 +10,7 @@
 
 import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as auth from "../auth.js";
+import type * as banners_queries from "../banners/queries.js";
 import type * as blocks_mutations from "../blocks/mutations.js";
 import type * as blocks_queries from "../blocks/queries.js";
 import type * as companies_mutations from "../companies/mutations.js";
@@ -50,6 +51,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "actions/extractDocument": typeof actions_extractDocument;
   auth: typeof auth;
+  "banners/queries": typeof banners_queries;
   "blocks/mutations": typeof blocks_mutations;
   "blocks/queries": typeof blocks_queries;
   "companies/mutations": typeof companies_mutations;

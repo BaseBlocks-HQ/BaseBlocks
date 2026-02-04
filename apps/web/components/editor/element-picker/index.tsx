@@ -98,8 +98,11 @@ export function ElementPicker({
 
   const handleMouseLeave = (e: React.MouseEvent) => {
     // Don't close if mouse moved to a Radix portal (dropdown menus, selects, etc.)
-    const relatedTarget = e.relatedTarget as HTMLElement | null;
-    if (relatedTarget?.closest("[data-radix-popper-content-wrapper]")) {
+    const relatedTarget = e.relatedTarget;
+    if (
+      relatedTarget instanceof HTMLElement &&
+      relatedTarget.closest("[data-radix-popper-content-wrapper]")
+    ) {
       return;
     }
     timeoutRef.current = setTimeout(() => {

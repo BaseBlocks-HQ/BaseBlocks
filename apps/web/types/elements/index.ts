@@ -36,9 +36,14 @@ export type {
   CodeContent,
   DividerContent,
   BlockSpacerContent,
+  SubpageContent,
+  BannerAlert,
+  BannerImportancePreset,
+  BannerSettings,
+  BannerContent,
   BlockContentUnion,
 } from "./blocks";
-export { DEFAULT_BLOCK_CONTENT } from "./blocks";
+export { DEFAULT_BLOCK_CONTENT, DEFAULT_IMPORTANCE_PRESETS } from "./blocks";
 
 // Section types
 export type {

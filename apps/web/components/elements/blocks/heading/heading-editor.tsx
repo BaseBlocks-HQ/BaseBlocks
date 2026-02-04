@@ -63,7 +63,7 @@ export function HeadingEditor({
         html={contentRef.current}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        className="w-full text-xl font-semibold leading-tight outline-none relative z-10"
+        className="w-full text-xl font-semibold leading-tight outline-none"
       />
       {isEmpty && (
         <span className="absolute left-2 top-2 text-xl font-semibold leading-tight text-muted-foreground pointer-events-none">

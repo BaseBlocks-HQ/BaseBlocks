@@ -11,7 +11,8 @@ export type BlockType =
   | "code"
   | "divider"
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
-  | "subpage";
+  | "subpage"
+  | "banner";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -48,6 +49,40 @@ export interface SubpageContent {
   content?: BlockNoteDocument;
 }
 
+export interface BannerAlert {
+  id: string;
+  title: string;
+  description: string;
+  importance: string; // references preset id
+}
+
+export interface BannerImportancePreset {
+  id: string;
+  name: string;
+  color: string; // bg hex color
+  foreground: string; // text hex color
+}
+
+export interface BannerSettings {
+  dismissible: boolean;
+  autoCycle: boolean;
+  cycleIntervalMs: number;
+  scope: "this-page" | "site-wide" | "specific-pages";
+  targetPageIds: string[];
+}
+
+export interface BannerContent {
+  alerts: BannerAlert[];
+  importancePresets: BannerImportancePreset[];
+  settings: BannerSettings;
+}
+
+export const DEFAULT_IMPORTANCE_PRESETS: BannerImportancePreset[] = [
+  { id: "critical", name: "Critical", color: "#DC2626", foreground: "#FFFFFF" },
+  { id: "warning", name: "Warning", color: "#D97706", foreground: "#FFFFFF" },
+  { id: "info", name: "Info", color: "#2563EB", foreground: "#FFFFFF" },
+];
+
 // Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
@@ -56,7 +91,8 @@ export type BlockContentUnion =
   | CodeContent
   | DividerContent
   | BlockSpacerContent
-  | SubpageContent;
+  | SubpageContent
+  | BannerContent;
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
@@ -67,4 +103,15 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   divider: {},
   "block-spacer": { height: "medium" },
   subpage: { title: "", description: "", content: undefined },
+  banner: {
+    alerts: [],
+    importancePresets: DEFAULT_IMPORTANCE_PRESETS,
+    settings: {
+      dismissible: true,
+      autoCycle: true,
+      cycleIntervalMs: 5000,
+      scope: "this-page",
+      targetPageIds: [],
+    },
+  } as BannerContent,
 };

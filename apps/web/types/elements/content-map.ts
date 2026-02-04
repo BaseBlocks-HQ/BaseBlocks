@@ -4,6 +4,7 @@
  */
 
 import type {
+  BannerContent,
   BlockSpacerContent,
   BlockType,
   CalloutContent,
@@ -44,6 +45,7 @@ export type ContentTypeMap = {
   divider: DividerContent;
   "block-spacer": BlockSpacerContent;
   subpage: SubpageContent;
+  banner: BannerContent;
 
   // Sections
   search: SearchContent;
