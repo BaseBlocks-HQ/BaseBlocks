@@ -55,9 +55,10 @@ export function NavItem({
   // (if it's an ancestor of the current page)
   const shouldAutoExpand = ancestorIds.includes(page._id);
 
-  // Get site context for public mode expand state persistence
+  // Get site context for public mode expand state persistence and page links
   const publicSiteContext = usePublicSiteContextOptional();
   const siteId = publicSiteContext?.siteId ?? "public";
+  const siteSlug = publicSiteContext?.siteSlug ?? "";
 
   // Use persisted expand state (works for both editor and public mode)
   const { isExpanded: isExpandedFromStorage, toggleExpand, setExpanded } = usePageExpandState(siteId);
@@ -162,7 +163,7 @@ export function NavItem({
   return (
     <>
       <Link
-        href={getPageLink(fullPath)}
+        href={getPageLink(siteSlug, fullPath)}
         className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
           isActive
             ? "bg-primary/10 text-primary font-medium"

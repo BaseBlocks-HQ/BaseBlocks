@@ -142,7 +142,7 @@ export function PublicSiteLayout({
   const showSubNav = navigationStyle === "subnav";
 
   return (
-    <PublicSiteProvider siteId={site._id} companySlug={company.slug}>
+    <PublicSiteProvider siteId={site._id} siteSlug={site.slug} companySlug={company.slug}>
       <PublicSubpageProvider>
       <div
         className="h-screen bg-background flex flex-col overflow-hidden"

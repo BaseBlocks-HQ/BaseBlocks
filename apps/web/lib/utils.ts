@@ -19,11 +19,15 @@ export function isVercelAppDomain(): boolean {
 
 /**
  * Generate the URL for a published site
- * - On vercel.app: uses path-based routing (e.g., /s/company/page)
- * - On custom domain: uses subdomain-based routing (e.g., company.baseblocks.dev/page)
+ * - On vercel.app: uses path-based routing (e.g., /s/company/site-slug/page)
+ * - On custom domain: uses subdomain-based routing (e.g., company.baseblocks.dev/site-slug/page)
  */
-export function getSiteUrl(companySlug: string, pagePath?: string): string {
-  const path = pagePath ? `/${pagePath}` : "/";
+export function getSiteUrl(
+  companySlug: string,
+  siteSlug: string,
+  pagePath?: string,
+): string {
+  const path = pagePath ? `/${siteSlug}/${pagePath}` : `/${siteSlug}`;
 
   if (typeof window !== "undefined" && isVercelAppDomain()) {
     // Path-based routing for vercel.app
@@ -56,13 +60,13 @@ export function getPathBasedSubdomain(): string | null {
 
 /**
  * Generate an internal page link within a published site
- * - If in path-based context: /s/company/page-slug
- * - If in subdomain context: /page-slug
+ * - If in path-based context: /s/company/site-slug/page-slug
+ * - If in subdomain context: /site-slug/page-slug
  */
-export function getPageLink(pageSlug: string): string {
+export function getPageLink(siteSlug: string, pageSlug: string): string {
   const pathSubdomain = getPathBasedSubdomain();
   if (pathSubdomain) {
-    return `/s/${pathSubdomain}/${pageSlug}`;
+    return `/s/${pathSubdomain}/${siteSlug}/${pageSlug}`;
   }
-  return `/${pageSlug}`;
+  return `/${siteSlug}/${pageSlug}`;
 }

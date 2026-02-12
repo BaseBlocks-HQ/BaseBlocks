@@ -144,8 +144,9 @@ export const getWithCompany = query({
 export const getWithDefaultPage = query({
   args: {
     companySlug: v.string(),
+    siteSlug: v.optional(v.string()),
   },
-  handler: async (ctx, { companySlug }) => {
+  handler: async (ctx, { companySlug, siteSlug }) => {
     // Find company
     const company = await ctx.db
       .query("companies")
@@ -154,12 +155,22 @@ export const getWithDefaultPage = query({
 
     if (!company) return null;
 
-    // Get the first published site for this company
-    const site = await ctx.db
-      .query("sites")
-      .withIndex("by_company", (q) => q.eq("companyId", company._id))
-      .filter((q) => q.eq(q.field("isPublished"), true))
-      .first();
+    // Get the specific site by slug, or fall back to first published site
+    let site;
+    if (siteSlug) {
+      site = await ctx.db
+        .query("sites")
+        .withIndex("by_slug", (q) =>
+          q.eq("companyId", company._id).eq("slug", siteSlug),
+        )
+        .first();
+    } else {
+      site = await ctx.db
+        .query("sites")
+        .withIndex("by_company", (q) => q.eq("companyId", company._id))
+        .filter((q) => q.eq(q.field("isPublished"), true))
+        .first();
+    }
 
     if (!site) return null;
 

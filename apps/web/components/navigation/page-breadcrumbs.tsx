@@ -8,6 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -22,6 +23,7 @@ interface PageBreadcrumbsProps {
 }
 
 export function PageBreadcrumbs({ pageId, pageTitle }: PageBreadcrumbsProps) {
+  const { siteSlug } = usePublicSiteContext();
   const ancestors = useQuery(api.pages.queries.getAncestors, { pageId });
 
   // Build path strings for each ancestor
@@ -62,7 +64,7 @@ export function PageBreadcrumbs({ pageId, pageTitle }: PageBreadcrumbsProps) {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link
-              href={getPageLink("home")}
+              href={getPageLink(siteSlug, "home")}
               className="flex items-center gap-1"
             >
               <Home className="h-3.5 w-3.5" />
@@ -77,7 +79,7 @@ export function PageBreadcrumbs({ pageId, pageTitle }: PageBreadcrumbsProps) {
           <Fragment key={item._id}>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href={getPageLink(item.path)}>{item.title}</Link>
+                <Link href={getPageLink(siteSlug, item.path)}>{item.title}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

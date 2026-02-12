@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { api } from "@repo/backend";
@@ -20,6 +21,7 @@ interface BreadcrumbBarProps {
  * Styled to match the SubNavBar aesthetic
  */
 export function BreadcrumbBar({ pageId, pageTitle, className }: BreadcrumbBarProps) {
+  const { siteSlug } = usePublicSiteContext();
   const ancestors = useQuery(api.pages.queries.getAncestors, { pageId });
 
   // Build path strings for each ancestor
@@ -66,7 +68,7 @@ export function BreadcrumbBar({ pageId, pageTitle, className }: BreadcrumbBarPro
             {/* Home link */}
             <li>
               <Link
-                href={getPageLink("home")}
+                href={getPageLink(siteSlug, "home")}
                 className="flex items-center hover:text-foreground transition-colors"
               >
                 <Home className="h-3.5 w-3.5" />
@@ -82,7 +84,7 @@ export function BreadcrumbBar({ pageId, pageTitle, className }: BreadcrumbBarPro
               <Fragment key={item._id}>
                 <li>
                   <Link
-                    href={getPageLink(item.path)}
+                    href={getPageLink(siteSlug, item.path)}
                     className="hover:text-foreground transition-colors"
                   >
                     {item.title}

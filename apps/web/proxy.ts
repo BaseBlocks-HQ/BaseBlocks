@@ -13,17 +13,12 @@ function isVercelAppDomain(hostname: string): boolean {
 }
 
 function extractSubdomain(request: NextRequest): string | null {
-  const url = request.url;
   const host = request.headers.get("host") || "";
   const hostParts = host.split(":");
   const hostname = hostParts[0] || "";
 
-  // Local development environment
-  if (url.includes("localhost") || url.includes("127.0.0.1")) {
-    const fullUrlMatch = url.match(/http:\/\/([^.]+)\.localhost/);
-    if (fullUrlMatch?.[1]) {
-      return fullUrlMatch[1];
-    }
+  // Local development environment - use host header (request.url may use 0.0.0.0 in Next.js 16)
+  if (hostname.includes("localhost") || hostname.includes("127.0.0.1")) {
     if (hostname.includes(".localhost")) {
       const subdomain = hostname.split(".")[0];
       return subdomain || null;
@@ -51,18 +46,13 @@ function extractSubdomain(request: NextRequest): string | null {
     return hostname.replace(`.${rootDomainFormatted}`, "");
   }
 
-  // Check for custom domain (not a subdomain of root domain)
-  // This would be something like docs.acme.com
+  // Check for custom domain
   if (
     !hostname.endsWith(`.${rootDomainFormatted}`) &&
     hostname !== rootDomainFormatted &&
     hostname !== `www.${rootDomainFormatted}` &&
-    !hostname.includes("localhost") &&
     !hostname.endsWith(".vercel.app")
   ) {
-    // This is a custom domain - we need to look it up
-    // For now, return the full hostname as the "subdomain" identifier
-    // The app will need to look up the company by custom domain
     return `custom:${hostname}`;
   }
 
@@ -105,6 +95,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Debug logging for subdomain routing
+  console.log(`[proxy] url=${request.url} host=${host} hostname=${hostname} pathname=${pathname}`);
+
   // Handle path-based routing for vercel.app domains (/s/[subdomain]/...)
   // This is a fallback since wildcard subdomains don't work on vercel.app
   if (isVercelAppDomain(hostname)) {
@@ -121,6 +114,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const subdomain = extractSubdomain(request);
+  console.log(`[proxy] extracted subdomain=${subdomain}`);
 
   // No subdomain = main app (landing, dashboard, auth)
   // Run the intl middleware for locale detection/routing
@@ -153,6 +147,7 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathSuffix = pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale;
   url.pathname = `/${routing.defaultLocale}/site/${subdomain}${pathSuffix}`;
+  console.log(`[proxy] rewriting to ${url.pathname}`);
   return NextResponse.rewrite(url);
 }
 

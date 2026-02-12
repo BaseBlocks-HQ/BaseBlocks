@@ -42,6 +42,7 @@ interface ShareDialogProps {
   onOpenChange: (open: boolean) => void;
   siteId: Id<"sites">;
   companySlug: string;
+  siteSlug: string;
 }
 
 const ROTATION_OPTIONS = [
@@ -62,6 +63,7 @@ export function ShareDialog({
   onOpenChange,
   siteId,
   companySlug,
+  siteSlug,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -79,7 +81,7 @@ export function ShareDialog({
     api.sharing.mutations.generateNewAccessCode
   );
 
-  const siteUrl = getSiteUrl(companySlug);
+  const siteUrl = getSiteUrl(companySlug, siteSlug);
   const visibility = settings?.visibility ?? "public";
 
   const handleVisibilityChange = useCallback(

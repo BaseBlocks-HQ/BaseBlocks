@@ -9,6 +9,7 @@ import type {
   BlockType,
   CalloutContent,
   CodeContent,
+  DirectoryContent,
   DividerContent,
   HeadingContent,
   ParagraphContent,
@@ -46,6 +47,7 @@ export type ContentTypeMap = {
   "block-spacer": BlockSpacerContent;
   subpage: SubpageContent;
   banner: BannerContent;
+  directory: DirectoryContent;
 
   // Sections
   search: SearchContent;

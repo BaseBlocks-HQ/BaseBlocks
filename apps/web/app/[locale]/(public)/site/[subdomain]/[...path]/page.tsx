@@ -22,11 +22,13 @@ type Props = {
  */
 export default function PublicSitePage({ params }: Props) {
   const { subdomain, path } = use(params);
-  // Pass the full path array for nested page support
-  const pagePath = path.length > 0 ? path : ["home"];
+  // path[0] is the site slug, path[1:] is the page path
+  const siteSlug = path[0] || "";
+  const pagePath = path.length > 1 ? path.slice(1) : ["home"];
 
   const site = useQuery(api.sites.queries.getBySlug, {
     companySlug: subdomain,
+    siteSlug,
   });
   const company = useQuery(api.companies.queries.getBySlug, {
     slug: subdomain,

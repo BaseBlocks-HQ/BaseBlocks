@@ -54,7 +54,7 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
   const effectiveCompanySlug = site.company?.slug ?? companySlug ?? "";
 
   // Link to the site root - the root page will redirect to the default page
-  const siteUrl = getSiteUrl(effectiveCompanySlug);
+  const siteUrl = getSiteUrl(effectiveCompanySlug, site.slug);
 
   // Preview handler that works on localhost (subdomain) and production
   const handlePreview = useCallback(() => {
@@ -66,13 +66,13 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
     if (isLocalhost) {
       const port = window.location.port || "3000";
       window.open(
-        `http://${effectiveCompanySlug}.localhost:${port}/`,
+        `http://${effectiveCompanySlug}.localhost:${port}/${site.slug}`,
         "_blank",
       );
     } else {
-      window.open(getSiteUrl(effectiveCompanySlug), "_blank");
+      window.open(getSiteUrl(effectiveCompanySlug, site.slug), "_blank");
     }
-  }, [effectiveCompanySlug]);
+  }, [effectiveCompanySlug, site.slug]);
 
   const handleDelete = async () => {
     setIsDeleting(true);

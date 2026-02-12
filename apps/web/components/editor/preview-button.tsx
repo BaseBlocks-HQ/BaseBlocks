@@ -6,9 +6,10 @@ import { Eye } from "lucide-react";
 
 interface PreviewButtonProps {
   companySlug: string;
+  siteSlug: string;
 }
 
-export function PreviewButton({ companySlug }: PreviewButtonProps) {
+export function PreviewButton({ companySlug, siteSlug }: PreviewButtonProps) {
   const handlePreview = () => {
     const isLocalhost =
       window.location.hostname === "localhost" ||
@@ -17,9 +18,12 @@ export function PreviewButton({ companySlug }: PreviewButtonProps) {
 
     if (isLocalhost) {
       const port = window.location.port || "3000";
-      window.open(`http://${companySlug}.localhost:${port}/`, "_blank");
+      window.open(
+        `http://${companySlug}.localhost:${port}/${siteSlug}`,
+        "_blank",
+      );
     } else {
-      window.open(getSiteUrl(companySlug), "_blank");
+      window.open(getSiteUrl(companySlug, siteSlug), "_blank");
     }
   };
 

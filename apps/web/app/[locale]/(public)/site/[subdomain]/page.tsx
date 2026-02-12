@@ -24,8 +24,6 @@ export default function SubdomainRootPage({ params }: Props) {
     if (siteData === undefined) return; // Still loading
 
     if (!siteData || !siteData.defaultPage) {
-      // No site or no pages - redirect to home as fallback
-      router.replace(getPageLink("home"));
       return;
     }
 
@@ -36,9 +34,10 @@ export default function SubdomainRootPage({ params }: Props) {
       return;
     }
 
-    // Redirect to the default page
-    // getPageLink handles both subdomain and path-based routing
-    router.replace(getPageLink(siteData.defaultPage.slug));
+    // Redirect to the default page, including the site slug in the URL
+    router.replace(
+      getPageLink(siteData.site.slug, siteData.defaultPage.slug),
+    );
   }, [siteData, subdomain, router]);
 
   // Handle visibility before showing loading state
@@ -55,7 +54,10 @@ export default function SubdomainRootPage({ params }: Props) {
       // Once access is granted, redirect to default page
       return (
         <AccessGate siteId={siteData.site._id} siteName={siteData.site.name}>
-          <RedirectToDefaultPage defaultPageSlug={siteData.defaultPage?.slug} />
+          <RedirectToDefaultPage
+            siteSlug={siteData.site.slug}
+            defaultPageSlug={siteData.defaultPage?.slug}
+          />
         </AccessGate>
       );
     }
@@ -90,13 +92,14 @@ export default function SubdomainRootPage({ params }: Props) {
 
 // Helper component to redirect after access is granted
 function RedirectToDefaultPage({
+  siteSlug,
   defaultPageSlug,
-}: { defaultPageSlug?: string }) {
+}: { siteSlug: string; defaultPageSlug?: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(getPageLink(defaultPageSlug ?? "home"));
-  }, [defaultPageSlug, router]);
+    router.replace(getPageLink(siteSlug, defaultPageSlug ?? "home"));
+  }, [siteSlug, defaultPageSlug, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

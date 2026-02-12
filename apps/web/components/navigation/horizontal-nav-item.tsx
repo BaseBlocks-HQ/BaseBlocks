@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
@@ -25,6 +26,7 @@ export function HorizontalNavItem({
   currentPath,
   variant,
 }: HorizontalNavItemProps) {
+  const { siteSlug } = usePublicSiteContext();
   const hasChildren = page.children && page.children.length > 0;
   const fullPath = page.slug;
   const isActive = currentPath === fullPath;
@@ -86,7 +88,7 @@ export function HorizontalNavItem({
   // Simple link for items without children
   if (!hasChildren) {
     return (
-      <Link href={getPageLink(fullPath)} className={triggerStyles}>
+      <Link href={getPageLink(siteSlug, fullPath)} className={triggerStyles}>
         {page.title}
       </Link>
     );
@@ -100,7 +102,7 @@ export function HorizontalNavItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link href={getPageLink(fullPath)} className={triggerStyles}>
+      <Link href={getPageLink(siteSlug, fullPath)} className={triggerStyles}>
         {page.title}
         <ChevronDown
           className={cn(

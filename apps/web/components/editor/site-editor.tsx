@@ -176,6 +176,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <EditorHeader
             companySlug={company.slug}
+            siteSlug={site.slug}
             siteId={site._id}
             sitePublished={site.isPublished}
             onPublish={handlePublish}

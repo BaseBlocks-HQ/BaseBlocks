@@ -12,7 +12,8 @@ export type BlockType =
   | "divider"
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
   | "subpage"
-  | "banner";
+  | "banner"
+  | "directory";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -83,6 +84,29 @@ export const DEFAULT_IMPORTANCE_PRESETS: BannerImportancePreset[] = [
   { id: "info", name: "Info", color: "#2563EB", foreground: "#FFFFFF" },
 ];
 
+// Directory block types
+export interface DirectoryColumn {
+  id: string;
+  header: string;
+}
+
+export interface DirectoryRow {
+  id: string;
+  cells: Record<string, string>; // columnId → cell value
+}
+
+export interface DirectorySettings {
+  copyMode: "none" | "cell" | "row";
+  pageSize: number;
+  showSearch: boolean;
+}
+
+export interface DirectoryContent {
+  columns: DirectoryColumn[];
+  rows: DirectoryRow[];
+  settings: DirectorySettings;
+}
+
 // Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
@@ -92,7 +116,8 @@ export type BlockContentUnion =
   | DividerContent
   | BlockSpacerContent
   | SubpageContent
-  | BannerContent;
+  | BannerContent
+  | DirectoryContent;
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
@@ -114,4 +139,13 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
       targetPageIds: [],
     },
   } as BannerContent,
+  directory: {
+    columns: [],
+    rows: [],
+    settings: {
+      copyMode: "none",
+      pageSize: 10,
+      showSearch: true,
+    },
+  } as DirectoryContent,
 };

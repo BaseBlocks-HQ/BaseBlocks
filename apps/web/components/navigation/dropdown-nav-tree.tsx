@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
@@ -45,6 +46,7 @@ function DropdownNavItem({
   pagePath,
   depth,
 }: DropdownNavItemProps) {
+  const { siteSlug } = usePublicSiteContext();
   const hasChildren = page.children && page.children.length > 0;
   const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
   const isActive = currentPath === fullPath;
@@ -85,7 +87,7 @@ function DropdownNavItem({
         )}
 
         <Link
-          href={getPageLink(fullPath)}
+          href={getPageLink(siteSlug, fullPath)}
           className="flex-1 flex items-center gap-2"
         >
           <FileText className="h-4 w-4 shrink-0" />

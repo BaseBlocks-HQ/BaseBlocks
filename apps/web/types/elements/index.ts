@@ -41,6 +41,10 @@ export type {
   BannerImportancePreset,
   BannerSettings,
   BannerContent,
+  DirectoryColumn,
+  DirectoryRow,
+  DirectorySettings,
+  DirectoryContent,
   BlockContentUnion,
 } from "./blocks";
 export { DEFAULT_BLOCK_CONTENT, DEFAULT_IMPORTANCE_PRESETS } from "./blocks";

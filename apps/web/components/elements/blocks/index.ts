@@ -12,6 +12,7 @@ import "./divider";
 import "./block-spacer";
 import "./subpage";
 import "./banner";
+import "./directory";
 
 // Re-export all blocks for direct access
 export * from "./heading";
@@ -22,3 +23,4 @@ export * from "./divider";
 export * from "./block-spacer";
 export * from "./subpage";
 export * from "./banner";
+export * from "./directory";

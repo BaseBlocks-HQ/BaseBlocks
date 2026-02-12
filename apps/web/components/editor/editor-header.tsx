@@ -20,6 +20,7 @@ import { ShareDialog } from "./share-dialog";
 
 interface EditorHeaderProps {
   companySlug: string;
+  siteSlug: string;
   siteId: Id<"sites">;
   sitePublished: boolean;
   onPublish: () => void;
@@ -28,6 +29,7 @@ interface EditorHeaderProps {
 
 export function EditorHeader({
   companySlug,
+  siteSlug,
   siteId,
   sitePublished,
   onPublish,
@@ -63,7 +65,7 @@ export function EditorHeader({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <PreviewButton companySlug={companySlug} />
+          <PreviewButton companySlug={companySlug} siteSlug={siteSlug} />
           {canEdit && (
             <>
               {/* Share button */}
@@ -92,7 +94,7 @@ export function EditorHeader({
                   )}
                   <Button variant="outline" size="sm" asChild>
                     <a
-                      href={getSiteUrl(companySlug)}
+                      href={getSiteUrl(companySlug, siteSlug)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -112,7 +114,7 @@ export function EditorHeader({
           {!canEdit && sitePublished && (
             <Button variant="outline" size="sm" asChild>
               <a
-                href={getSiteUrl(companySlug)}
+                href={getSiteUrl(companySlug, siteSlug)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -130,6 +132,7 @@ export function EditorHeader({
         onOpenChange={setShareDialogOpen}
         siteId={siteId}
         companySlug={companySlug}
+        siteSlug={siteSlug}
       />
     </>
   );
