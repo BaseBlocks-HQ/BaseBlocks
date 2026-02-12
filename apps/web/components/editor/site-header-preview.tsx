@@ -37,7 +37,7 @@ export function SiteHeaderPreview({ site, company }: SiteHeaderPreviewProps) {
   }
 
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-6 z-10">
       {/* Preview label */}
       <Badge
         variant="secondary"

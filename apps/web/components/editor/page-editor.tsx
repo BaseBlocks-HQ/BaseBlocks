@@ -513,7 +513,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="group/tab relative gap-1"
+                    className="group/tab relative gap-1 px-4"
                   >
                     {editingTabId === tab.id ? (
                       <Input

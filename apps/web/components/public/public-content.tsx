@@ -182,7 +182,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
             >
               <TabsList>
                 {pageTabs.map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id}>
+                  <TabsTrigger key={tab.id} value={tab.id} className="px-4">
                     {tab.label}
                   </TabsTrigger>
                 ))}
