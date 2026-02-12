@@ -101,6 +101,11 @@ export default defineSchema({
     icon: v.optional(v.string()),
     order: v.number(),
     isPublished: v.boolean(),
+    // Page-level tabs: each tab gets its own set of layouts
+    pageTabs: v.optional(v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+    }))),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -141,6 +146,7 @@ export default defineSchema({
   // Layouts - layout containers for blocks (holds single, rows, columns, grid, spacer, vertical)
   layouts: defineTable({
     pageId: v.id("pages"),
+    tabId: v.optional(v.string()), // Which page tab this layout belongs to (null = default/no tabs)
     type: v.union(
       v.literal("single"),
       v.literal("rows"),
@@ -235,7 +241,8 @@ export default defineSchema({
     }),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_page", ["pageId"]),
+  }).index("by_page", ["pageId"])
+    .index("by_page_tab", ["pageId", "tabId"]),
 
   // Libraries - organized file repositories
   documentLibraries: defineTable({

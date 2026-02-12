@@ -10,6 +10,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
@@ -43,6 +44,24 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
   // Fullscreen state for subpage panel
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Page-level tabs
+  const pageTabs = pageData?.pageTabs ?? [];
+  const hasTabs = pageTabs.length > 0;
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+
+  // Auto-select first tab
+  useEffect(() => {
+    if (hasTabs) {
+      const tabExists = pageTabs.some((t) => t.id === activeTabId);
+      if (!activeTabId || !tabExists) {
+        const firstTab = pageTabs[0];
+        if (firstTab) setActiveTabId(firstTab.id);
+      }
+    } else {
+      setActiveTabId(null);
+    }
+  }, [pageTabs, hasTabs, activeTabId]);
 
   // ESC key to close subpage panel
   useEffect(() => {
@@ -80,11 +99,16 @@ function PublicContentInner({ pageId }: PublicContentProps) {
   type SlotDoc = LayoutDoc["slots"][number];
   type BlockDoc = SlotDoc["blocks"][number];
 
+  // Filter layouts by active tab (if tabs exist)
+  const filteredLayouts = hasTabs
+    ? layoutsData.filter((layout: LayoutDoc) => layout.tabId === activeTabId)
+    : layoutsData;
+
   // Separate main layouts from sidebar layouts
-  const mainLayouts = layoutsData.filter(
+  const mainLayouts = filteredLayouts.filter(
     (layout: LayoutDoc) => layout.type !== "vertical",
   );
-  const sidebarLayouts = layoutsData.filter(
+  const sidebarLayouts = filteredLayouts.filter(
     (layout: LayoutDoc) => layout.type === "vertical",
   );
   const hasSidebar = sidebarLayouts.length > 0;
@@ -148,6 +172,24 @@ function PublicContentInner({ pageId }: PublicContentProps) {
     <div className="p-8">
       <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
         <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
+
+        {/* Page-level tab bar */}
+        {hasTabs && (
+          <div className="mb-8 flex justify-center">
+            <Tabs
+              value={activeTabId ?? undefined}
+              onValueChange={setActiveTabId}
+            >
+              <TabsList>
+                {pageTabs.map((tab) => (
+                  <TabsTrigger key={tab.id} value={tab.id}>
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
 
         {hasSidebar ? (
           // Layout with sidebar

@@ -2,8 +2,10 @@
 
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createLayout } from "@/lib/layouts";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createLayout, generateId } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
   AnyContent,
@@ -15,8 +17,8 @@ import type {
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { Plus } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEditorContext } from "./editor-context";
 import { SortableLayout } from "./layouts/sortable-layout";
 
@@ -33,7 +35,14 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     selectBlock,
     clearSelection,
     markContentModified,
+    activeTabId,
+    setActiveTabId,
   } = useEditorContext();
+
+  // Tab rename state
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const tabInputRef = useRef<HTMLInputElement>(null);
 
   // Queries
   const pageData = useQuery(api.pages.queries.get, {
@@ -57,18 +66,45 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   const updateSettingsMutation = useMutation(
     api.layouts.mutations.updateSettings
   );
+  const updatePageTabsMutation = useMutation(
+    api.pages.mutations.updatePageTabs
+  );
+  const disablePageTabsMutation = useMutation(
+    api.pages.mutations.disablePageTabs
+  );
+
+  // Page tabs
+  const pageTabs = useMemo(
+    () => pageData?.pageTabs ?? [],
+    [pageData],
+  );
+  const hasTabs = pageTabs.length > 0;
+
+  // Auto-select first tab when tabs change
+  useEffect(() => {
+    if (hasTabs) {
+      const tabExists = pageTabs.some((t) => t.id === activeTabId);
+      if (!activeTabId || !tabExists) {
+        const firstTab = pageTabs[0];
+        if (firstTab) setActiveTabId(firstTab.id);
+      }
+    } else {
+      setActiveTabId(null);
+    }
+  }, [pageTabs, hasTabs, activeTabId, setActiveTabId]);
 
   // Convert layouts from DB to LayoutData format
   type LayoutDoc = Doc<"layouts">;
   type SlotDoc = LayoutDoc["slots"][number];
   type BlockDoc = SlotDoc["blocks"][number];
 
-  const layouts: LayoutData[] = useMemo(() => {
+  const allLayouts: LayoutData[] = useMemo(() => {
     if (!layoutsData) return [];
     return layoutsData.map((s: LayoutDoc) => ({
       id: s._id,
       type: s.type as LayoutType,
       order: s.order,
+      tabId: s.tabId,
       slots: s.slots.map((slot: SlotDoc) => ({
         id: slot.id,
         position: slot.position,
@@ -81,6 +117,12 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       settings: s.settings as LayoutSettings,
     }));
   }, [layoutsData]);
+
+  // Filter layouts by active tab
+  const layouts = useMemo(() => {
+    if (!hasTabs) return allLayouts;
+    return allLayouts.filter((l) => l.tabId === activeTabId);
+  }, [allLayouts, hasTabs, activeTabId]);
 
   // Separate main layouts from sidebar layouts
   const mainLayouts = useMemo(
@@ -156,7 +198,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [selectSlot, onSelectionChange],
   );
 
-  // Add a new layout
+  // Add a new layout (scoped to active tab)
   const handleAddLayout = useCallback(
     async (type: LayoutType) => {
       const newLayout = createLayout(type);
@@ -165,6 +207,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         type: newLayout.type,
         slots: newLayout.slots,
         settings: newLayout.settings,
+        tabId: activeTabId ?? undefined,
       });
       markContentModified();
 
@@ -175,7 +218,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         }, 100);
       }
     },
-    [createLayoutMutation, pageId, selectSlot, onSelectionChange, markContentModified],
+    [createLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange, markContentModified],
   );
 
   // Update block content
@@ -255,6 +298,59 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     [updateSettingsMutation, markContentModified]
   );
 
+  // === Page tab management ===
+  const handleDisableTabs = useCallback(async () => {
+    await disablePageTabsMutation({
+      pageId: pageId as Id<"pages">,
+    });
+    setActiveTabId(null);
+    markContentModified();
+  }, [pageId, disablePageTabsMutation, markContentModified]);
+
+  const handleAddTab = useCallback(async () => {
+    const newTab = { id: generateId(), label: `Tab ${pageTabs.length + 1}` };
+    await updatePageTabsMutation({
+      pageId: pageId as Id<"pages">,
+      pageTabs: [...pageTabs, newTab],
+    });
+    setActiveTabId(newTab.id);
+    markContentModified();
+  }, [pageId, pageTabs, updatePageTabsMutation, markContentModified]);
+
+  const handleRemoveTab = useCallback(async (tabId: string) => {
+    if (pageTabs.length <= 2) return;
+    const newTabs = pageTabs.filter((t) => t.id !== tabId);
+    await updatePageTabsMutation({
+      pageId: pageId as Id<"pages">,
+      pageTabs: newTabs,
+    });
+    if (activeTabId === tabId) {
+      setActiveTabId(newTabs[0]?.id ?? null);
+    }
+    markContentModified();
+  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation, markContentModified]);
+
+  const handleStartRenameTab = useCallback((tab: { id: string; label: string }) => {
+    setEditingTabId(tab.id);
+    setEditingLabel(tab.label);
+    setTimeout(() => tabInputRef.current?.select(), 0);
+  }, []);
+
+  const handleFinishRenameTab = useCallback(async () => {
+    if (!editingTabId) return;
+    const newTabs = pageTabs.map((t) =>
+      t.id === editingTabId
+        ? { ...t, label: editingLabel.trim() || t.label }
+        : t,
+    );
+    await updatePageTabsMutation({
+      pageId: pageId as Id<"pages">,
+      pageTabs: newTabs,
+    });
+    setEditingTabId(null);
+    markContentModified();
+  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation, markContentModified]);
+
   // Handle click on editor background to deselect
   // Layouts/blocks call stopPropagation(), so this only fires for background clicks
   const handleEditorClick = useCallback(() => {
@@ -294,6 +390,81 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     />
   );
 
+  // Empty state placeholder
+  const renderEmptyState = () => (
+    <div
+      className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p className="text-muted-foreground text-sm mb-3">
+        {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
+      </p>
+      <div className="flex justify-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleAddLayout("single")}
+        >
+          <Plus className="h-3 w-3 mr-1.5" />
+          Single
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleAddLayout("columns")}
+        >
+          <Plus className="h-3 w-3 mr-1.5" />
+          Columns
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Render the layouts content area (shared between sidebar/no-sidebar modes)
+  const renderLayoutsContent = () => {
+    if (hasSidebar) {
+      return (
+        <div className="flex gap-8 pb-32">
+          <div className="flex-1 min-w-0 space-y-6">
+            {mainLayouts.length > 0 ? (
+              <DndProvider
+                items={mainLayoutIds}
+                onDragEnd={handleMainLayoutDragEnd}
+              >
+                {mainLayouts.map((layout) => renderLayout(layout))}
+              </DndProvider>
+            ) : (
+              renderEmptyState()
+            )}
+          </div>
+          <aside className="w-72 flex-shrink-0 space-y-6">
+            <DndProvider
+              items={sidebarLayoutIds}
+              onDragEnd={handleSidebarLayoutDragEnd}
+            >
+              {sidebarLayouts.map((layout) => renderLayout(layout))}
+            </DndProvider>
+          </aside>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 pb-32">
+        {layouts.length > 0 ? (
+          <DndProvider
+            items={mainLayoutIds}
+            onDragEnd={handleMainLayoutDragEnd}
+          >
+            {layouts.map((layout) => renderLayout(layout))}
+          </DndProvider>
+        ) : (
+          renderEmptyState()
+        )}
+      </div>
+    );
+  };
+
   if (pageData === undefined || layoutsData === undefined) {
     return <Skeleton className="h-64 w-full" />;
   }
@@ -310,102 +481,99 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
           hasSidebar ? "max-w-6xl" : "max-w-4xl",
         )}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{pageData.title}</h1>
-        </div>
+        <h1 className="text-2xl font-semibold mb-6">{pageData.title}</h1>
 
-        {hasSidebar ? (
-          // Layout with sidebar
-          <div className="flex gap-8 pb-32">
-            {/* Main content area */}
-            <div className="flex-1 min-w-0 space-y-6">
-              {mainLayouts.length > 0 ? (
-                <DndProvider
-                  items={mainLayoutIds}
-                  onDragEnd={handleMainLayoutDragEnd}
-                >
-                  {mainLayouts.map((layout) => renderLayout(layout))}
-                </DndProvider>
-              ) : (
-                <div
-                  className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <p className="text-muted-foreground text-sm mb-3">
-                    Add a layout to main content
-                  </p>
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddLayout("single")}
-                    >
-                      <Plus className="h-3 w-3 mr-1.5" />
-                      Single
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddLayout("columns")}
-                    >
-                      <Plus className="h-3 w-3 mr-1.5" />
-                      Columns
-                    </Button>
-                  </div>
-                </div>
-              )}
+        {/* Page-level tab bar */}
+        {hasTabs && (
+          <div
+            className="group/tabbar mb-6 flex items-center justify-center gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Delete tabs control - follows layout controls pattern */}
+            <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                onClick={handleDisableTabs}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
 
-            {/* Sidebar area */}
-            <aside className="w-72 flex-shrink-0 space-y-6">
-              <DndProvider
-                items={sidebarLayoutIds}
-                onDragEnd={handleSidebarLayoutDragEnd}
-              >
-                {sidebarLayouts.map((layout) => renderLayout(layout))}
-              </DndProvider>
-            </aside>
-          </div>
-        ) : (
-          // Standard layout without sidebar
-          <div className="space-y-3 pb-32">
-            {layouts.length > 0 ? (
-              <DndProvider
-                items={mainLayoutIds}
-                onDragEnd={handleMainLayoutDragEnd}
-              >
-                {layouts.map((layout) => renderLayout(layout))}
-              </DndProvider>
-            ) : (
-              <div
-                className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="text-muted-foreground text-sm mb-3">
-                  Add a layout to get started
-                </p>
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddLayout("single")}
+            <Tabs
+              value={activeTabId ?? undefined}
+              onValueChange={(value) => {
+                setActiveTabId(value);
+                clearSelection();
+              }}
+            >
+              <TabsList>
+                {pageTabs.map((tab, index) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="group/tab relative gap-1"
                   >
-                    <Plus className="h-3 w-3 mr-1.5" />
-                    Single
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddLayout("columns")}
-                  >
-                    <Plus className="h-3 w-3 mr-1.5" />
-                    Columns
-                  </Button>
-                </div>
-              </div>
-            )}
+                    {editingTabId === tab.id ? (
+                      <Input
+                        ref={tabInputRef}
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onBlur={handleFinishRenameTab}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleFinishRenameTab();
+                          if (e.key === "Escape") setEditingTabId(null);
+                        }}
+                        className="h-5 w-20 px-1 py-0 text-sm border-none shadow-none focus-visible:ring-1"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span className="select-none">
+                        {tab.label}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartRenameTab(tab);
+                        }}
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                      </button>
+                      {index >= 2 && (
+                        <button
+                          type="button"
+                          className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveTab(tab.id);
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={handleAddTab}
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
           </div>
         )}
+
+        {renderLayoutsContent()}
       </div>
     </div>
   );

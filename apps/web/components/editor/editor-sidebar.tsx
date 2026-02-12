@@ -68,6 +68,7 @@ interface EditorSidebarProps {
   onSelectPage: (pageId: string) => void;
   onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: LayoutBlockType) => void;
+  onEnableTabs?: () => void;
 }
 
 export function EditorSidebar({
@@ -79,6 +80,7 @@ export function EditorSidebar({
   onSelectPage,
   onAddLayout,
   onAddBlock,
+  onEnableTabs,
 }: EditorSidebarProps) {
   const t = useTranslations();
   const { canEdit, selection, siteId } = useEditorContext();
@@ -202,6 +204,7 @@ export function EditorSidebar({
                 onAddBlock={(type: ElementType) =>
                   onAddBlock?.(type as LayoutBlockType)
                 }
+                onEnableTabs={onEnableTabs}
               />
             ) : (
               <div className="p-4">

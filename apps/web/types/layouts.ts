@@ -61,6 +61,13 @@ export interface LayoutData {
   slots: LayoutSlot[];
   settings: LayoutSettings;
   order: number; // Position on page
+  tabId?: string; // Which page tab this layout belongs to
+}
+
+// Page tab definition
+export interface PageTab {
+  id: string;
+  label: string;
 }
 
 // Default slot counts per layout type

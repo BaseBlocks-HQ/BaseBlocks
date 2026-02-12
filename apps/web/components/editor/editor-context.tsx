@@ -51,6 +51,9 @@ interface EditorContextValue {
   hasUndeployedChanges: boolean;
   markContentModified: () => void;
   markAsDeployed: () => void;
+  // Page-level tabs
+  activeTabId: string | null;
+  setActiveTabId: (tabId: string | null) => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -67,6 +70,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     blockId: null,
   });
   const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
   // Query the site to get hasUndeployedChanges from database
   const site = useQuery(api.sites.queries.get, { siteId });
@@ -161,6 +165,8 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         hasUndeployedChanges,
         markContentModified,
         markAsDeployed,
+        activeTabId,
+        setActiveTabId,
       }}
     >
       {children}

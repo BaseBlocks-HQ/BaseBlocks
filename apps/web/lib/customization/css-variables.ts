@@ -26,8 +26,9 @@ function getBaseRadiusValue(preset: string): string {
     case "large":
       return "0.75rem";
     case "full":
-      // For "full", use large radius for cards, but buttons/inputs get pill via CSS
-      return "0.75rem";
+      // For "full", use a noticeably larger radius than "large" so containers
+      // (e.g. TabsList) get a pill-like shape while cards stay reasonable
+      return "1.5rem";
     default:
       return "0.5rem";
   }

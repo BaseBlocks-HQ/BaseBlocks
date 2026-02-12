@@ -21,12 +21,15 @@ import type {
   ElementType,
   LayoutType,
 } from "@/types/elements";
+import { PanelTop } from "lucide-react";
+import { ElementCard } from "./element-card";
 
 interface ElementPickerProps {
   siteId?: Id<"sites">;
   selectedSlotId?: string | null;
   onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: ElementType) => void;
+  onEnableTabs?: () => void;
 }
 
 // Categories with registered elements to show
@@ -52,6 +55,7 @@ export function ElementPicker({
   selectedSlotId,
   onAddLayout,
   onAddBlock,
+  onEnableTabs,
 }: ElementPickerProps) {
   const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
     null
@@ -197,6 +201,18 @@ export function ElementPicker({
               entries={categoryElements}
               onSelect={handleSelect}
             />
+            {/* Extra Tabs card in layouts flyout */}
+            {activeCategory === "layouts" && onEnableTabs && (
+              <div className="px-4 pb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <ElementCard
+                    label="Tabs"
+                    icon={PanelTop}
+                    onClick={onEnableTabs}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
     </div>

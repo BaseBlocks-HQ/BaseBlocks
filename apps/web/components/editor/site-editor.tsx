@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/resizable";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSiteCustomization } from "@/hooks";
-import { createBlock, createLayout } from "@/lib/layouts";
+import { createBlock, createLayout, generateId } from "@/lib/layouts";
 import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
@@ -32,7 +32,7 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage, closeSubpageEditor, markContentModified } =
+  const { selection, selectSlot, editingSubpage, closeSubpageEditor, markContentModified, activeTabId } =
     useEditorContext();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
@@ -74,6 +74,8 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
 
+  const enablePageTabsMutation = useMutation(api.pages.mutations.enablePageTabs);
+
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
 
@@ -106,6 +108,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         type: newLayout.type,
         slots: newLayout.slots,
         settings: newLayout.settings,
+        tabId: activeTabId ?? undefined,
       });
 
       // Select the first slot of the new layout
@@ -116,7 +119,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         }, 100);
       }
     },
-    [selectedPage, createLayoutMutation, selectSlot],
+    [selectedPage, createLayoutMutation, selectSlot, activeTabId],
   );
 
   // Add block from sidebar
@@ -145,6 +148,19 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     [selection, addBlockMutation, markContentModified]
   );
 
+  // Enable page-level tabs
+  const handleEnableTabs = useCallback(async () => {
+    if (!selectedPage) return;
+    await enablePageTabsMutation({
+      pageId: selectedPage._id as Id<"pages">,
+      tabs: [
+        { id: generateId(), label: "Tab 1" },
+        { id: generateId(), label: "Tab 2" },
+      ],
+    });
+    markContentModified();
+  }, [selectedPage, enablePageTabsMutation, markContentModified]);
+
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
   }
@@ -171,6 +187,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           onSelectPage={setSelectedPageId}
           onAddLayout={handleAddLayout}
           onAddBlock={handleAddBlock}
+          onEnableTabs={handleEnableTabs}
         />
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">

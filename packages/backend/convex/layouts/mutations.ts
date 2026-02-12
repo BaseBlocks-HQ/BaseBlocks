@@ -173,23 +173,27 @@ export const create = mutation({
     slots: v.array(slotSchema),
     settings: settingsSchema,
     order: v.optional(v.number()),
+    tabId: v.optional(v.string()),
   },
-  handler: async (ctx, { pageId, type, slots, settings, order }) => {
+  handler: async (ctx, { pageId, type, slots, settings, order, tabId }) => {
     const pageInfo = await getCompanyIdFromPage(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
     await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
 
-    // Get max order if not specified
+    // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
     if (layoutOrder === undefined) {
       const existingLayouts = await ctx.db
         .query("layouts")
         .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
         .collect();
+      const tabLayouts = existingLayouts.filter(
+        (l: any) => l.tabId === tabId
+      );
       layoutOrder =
-        existingLayouts.reduce(
+        tabLayouts.reduce(
           (max: number, s: any) => Math.max(max, s.order),
           -1,
         ) + 1;
@@ -198,6 +202,7 @@ export const create = mutation({
     const now = Date.now();
     const layoutId = await ctx.db.insert("layouts", {
       pageId,
+      tabId,
       type,
       slots,
       settings,

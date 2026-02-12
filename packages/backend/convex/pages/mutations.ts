@@ -212,6 +212,117 @@ export const move = mutation({
   },
 });
 
+// Update page tabs configuration
+export const updatePageTabs = mutation({
+  args: {
+    pageId: v.id("pages"),
+    pageTabs: v.optional(v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+    }))),
+  },
+  handler: async (ctx, { pageId, pageTabs }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    await ctx.db.patch(pageId, {
+      pageTabs,
+      updatedAt: Date.now(),
+    });
+
+    return pageId;
+  },
+});
+
+// Enable page tabs - creates tabs and assigns all existing layouts to Tab 1
+export const enablePageTabs = mutation({
+  args: {
+    pageId: v.id("pages"),
+    tabs: v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+    })),
+  },
+  handler: async (ctx, { pageId, tabs }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    // Skip if tabs already enabled
+    if (page.pageTabs && page.pageTabs.length > 0) {
+      return pageId;
+    }
+
+    // Get all existing layouts for this page
+    const existingLayouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .collect();
+
+    const now = Date.now();
+    const firstTabId = tabs[0]?.id;
+
+    // Assign all existing layouts to the first tab
+    if (firstTabId) {
+      for (const layout of existingLayouts) {
+        await ctx.db.patch(layout._id, { tabId: firstTabId, updatedAt: now });
+      }
+    }
+
+    // Set pageTabs on the page
+    await ctx.db.patch(pageId, {
+      pageTabs: tabs,
+      updatedAt: now,
+    });
+
+    return pageId;
+  },
+});
+
+// Disable page tabs - removes pageTabs and clears tabId from all layouts
+export const disablePageTabs = mutation({
+  args: {
+    pageId: v.id("pages"),
+  },
+  handler: async (ctx, { pageId }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireAdminOrLegacy(ctx, site.companyId);
+
+    // Clear tabId from all layouts
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .collect();
+
+    const now = Date.now();
+    for (const layout of layouts) {
+      await ctx.db.patch(layout._id, { tabId: undefined, updatedAt: now });
+    }
+
+    // Remove pageTabs from page
+    await ctx.db.patch(pageId, {
+      pageTabs: undefined,
+      updatedAt: now,
+    });
+
+    return pageId;
+  },
+});
+
 // Delete page
 export const remove = mutation({
   args: { pageId: v.id("pages") },
