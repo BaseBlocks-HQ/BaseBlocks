@@ -534,27 +534,41 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                       </span>
                     )}
                     <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground"
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartRenameTab(tab);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            handleStartRenameTab(tab);
+                          }
+                        }}
                       >
                         <Pencil className="h-2.5 w-2.5" />
-                      </button>
+                      </span>
                       {index >= 2 && (
-                        <button
-                          type="button"
-                          className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive"
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveTab(tab.id);
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.stopPropagation();
+                              handleRemoveTab(tab.id);
+                            }
+                          }}
                         >
                           <X className="h-3 w-3" />
-                        </button>
+                        </span>
                       )}
                     </div>
                   </TabsTrigger>

@@ -39,6 +39,7 @@ const blockTypes = v.union(
   v.literal("subpage"),
   v.literal("banner"),
   v.literal("directory"),
+  v.literal("flowchart"),
 );
 
 const slotSchema = v.object({

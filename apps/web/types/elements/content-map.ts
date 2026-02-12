@@ -11,6 +11,7 @@ import type {
   CodeContent,
   DirectoryContent,
   DividerContent,
+  FlowchartContent,
   HeadingContent,
   ParagraphContent,
   SubpageContent,
@@ -48,6 +49,7 @@ export type ContentTypeMap = {
   subpage: SubpageContent;
   banner: BannerContent;
   directory: DirectoryContent;
+  flowchart: FlowchartContent;
 
   // Sections
   search: SearchContent;

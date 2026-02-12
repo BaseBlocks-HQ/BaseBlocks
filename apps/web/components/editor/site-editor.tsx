@@ -230,7 +230,11 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 )}
                 {/* Subpage panel - editing takes priority over viewing */}
                 <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
-                  <div className="h-full w-full min-w-0 overflow-hidden border-l">
+                  <div
+                    className="h-full w-full min-w-0 overflow-hidden border-l"
+                    style={customizationStyles}
+                    {...(isCustomized ? { "data-site-customized": "" } : {})}
+                  >
                     {editingSubpage ? (
                       <SubpageEditPanel
                         isFullscreen={isFullscreen}

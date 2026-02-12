@@ -13,7 +13,8 @@ export type BlockType =
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
   | "subpage"
   | "banner"
-  | "directory";
+  | "directory"
+  | "flowchart";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -48,6 +49,8 @@ export interface SubpageContent {
   title: string;
   description?: string;
   content?: BlockNoteDocument;
+  mermaidCode?: string;
+  diagrams?: FlowchartDiagram[];
 }
 
 export interface BannerAlert {
@@ -107,6 +110,17 @@ export interface DirectoryContent {
   settings: DirectorySettings;
 }
 
+export interface FlowchartDiagram {
+  id: string;
+  label: string;
+  mermaidCode: string;
+}
+
+export interface FlowchartContent {
+  mermaidCode: string;
+  diagrams?: FlowchartDiagram[];
+}
+
 // Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
@@ -117,7 +131,8 @@ export type BlockContentUnion =
   | BlockSpacerContent
   | SubpageContent
   | BannerContent
-  | DirectoryContent;
+  | DirectoryContent
+  | FlowchartContent;
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
@@ -148,4 +163,5 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
       showSearch: true,
     },
   } as DirectoryContent,
+  flowchart: { mermaidCode: "" } as FlowchartContent,
 };

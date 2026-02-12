@@ -1,6 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DiagramViewer } from "@/components/elements/blocks/flowchart/diagram-viewer";
+import type { FlowchartDiagram } from "@/types/elements/blocks";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { usePublicSubpageContext } from "./public-subpage-context";
 import { PublicSubpageBlockViewer } from "./public-subpage-block-viewer";
@@ -12,20 +15,34 @@ interface PublicSubpagePanelProps {
   onToggleFullscreen?: () => void;
 }
 
+function getDiagrams(content: { mermaidCode?: string; diagrams?: FlowchartDiagram[] }): FlowchartDiagram[] {
+  if (content.diagrams && content.diagrams.length > 0) {
+    return content.diagrams;
+  }
+  if (content.mermaidCode?.trim()) {
+    return [{ id: "default", label: "Diagram", mermaidCode: content.mermaidCode }];
+  }
+  return [];
+}
+
 export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicSubpagePanelProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
-  // Generate a stable key for the viewer to force remount when content changes
   const viewerKey = useMemo(() => {
     if (!viewingSubpage) return "";
     const { content } = viewingSubpage;
-    // Use title and content length as a simple key
     return `${content.title || ""}-${Array.isArray(content.content) ? content.content.length : 0}-${Date.now()}`;
   }, [viewingSubpage]);
+
+  const diagrams = useMemo(
+    () => (viewingSubpage ? getDiagrams(viewingSubpage.content) : []),
+    [viewingSubpage],
+  );
 
   if (!viewingSubpage) return null;
 
   const { content } = viewingSubpage;
+  const hasDiagrams = diagrams.length > 0;
 
   return (
     <div className="h-full min-w-0 flex flex-col bg-background overflow-hidden">
@@ -54,13 +71,36 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6">
-        <PublicSubpageBlockViewer
-          key={viewerKey}
-          content={content.content as Block[] | undefined}
-          searchTerm={viewingSubpage.searchTerm}
-        />
-      </div>
+      {hasDiagrams ? (
+        <Tabs defaultValue="content" className="flex-1 min-h-0 flex flex-col">
+          <TabsList className="shrink-0 mx-6 mt-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="diagram">
+              Diagram{diagrams.length > 1 ? "s" : ""}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6">
+            <PublicSubpageBlockViewer
+              key={viewerKey}
+              content={content.content as Block[] | undefined}
+              searchTerm={viewingSubpage.searchTerm}
+            />
+          </TabsContent>
+
+          <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+            <DiagramViewer diagrams={diagrams} contained />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6">
+          <PublicSubpageBlockViewer
+            key={viewerKey}
+            content={content.content as Block[] | undefined}
+            searchTerm={viewingSubpage.searchTerm}
+          />
+        </div>
+      )}
     </div>
   );
 }
