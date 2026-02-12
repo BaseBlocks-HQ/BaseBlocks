@@ -9,6 +9,9 @@ import { internal } from "../_generated/api";
  * Updates the document record with extracted text and metadata.
  */
 import { action, internalAction } from "../_generated/server";
+import { isExtractable } from "../lib/extractable";
+
+export { isExtractable };
 
 // Entity Storage configuration
 const ENTITY_STORAGE_URL =
@@ -17,38 +20,12 @@ const ENTITY_STORAGE_URL =
 // Type for extraction API response
 interface ExtractionApiResponse {
   success: boolean;
-  text?: string;
-  pageCount?: number;
-  wordCount?: number;
-  charCount?: number;
-  parseTimeMs?: number;
+  text?: string | null;
+  pageCount?: number | null;
+  wordCount?: number | null;
+  charCount?: number | null;
+  parseTimeMs?: number | null;
   error?: string;
-}
-
-// Content types that support extraction
-const EXTRACTABLE_TYPES = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-  "application/vnd.oasis.opendocument.text",
-  "application/vnd.oasis.opendocument.presentation",
-  "application/vnd.oasis.opendocument.spreadsheet",
-  "application/rtf",
-  "text/plain",
-  "text/markdown",
-  "text/html",
-]);
-
-/**
- * Check if a content type supports text extraction
- */
-export function isExtractable(contentType: string): boolean {
-  const normalized = contentType.split(";")[0]?.trim().toLowerCase();
-  return normalized ? EXTRACTABLE_TYPES.has(normalized) : false;
 }
 
 /**
@@ -118,12 +95,13 @@ export const extractAndUpdate = internalAction({
       }
 
       // Update document with extracted text
+      // Convert null to undefined since Convex validators don't accept null for optional fields
       await ctx.runMutation(internal.documents.internal.updateExtraction, {
         documentId,
         status: "completed",
-        extractedText: result.text,
-        pageCount: result.pageCount,
-        wordCount: result.wordCount,
+        extractedText: result.text ?? undefined,
+        pageCount: result.pageCount ?? undefined,
+        wordCount: result.wordCount ?? undefined,
       });
 
       return {

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
+import { isExtractable } from "../lib/extractable";
 
 // Helper to get companyId from siteId
 async function getCompanyIdFromSite(
@@ -32,6 +33,7 @@ export const create = mutation({
     // Require admin access for write operations
     const { auth } = await requireAdminOrLegacy(ctx, companyId as any);
 
+    const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
       blobId,
@@ -39,9 +41,25 @@ export const create = mutation({
       filename,
       contentType,
       size,
-      extractionStatus: "pending",
+      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
+    });
+
+    // Index in searchableContent so it's always findable by filename
+    await ctx.db.insert("searchableContent", {
+      siteId,
+      contentType: "document",
+      sourceId: documentId,
+      title: filename,
+      extractedText: filename,
+      metadata: {
+        filename,
+        fileContentType: contentType,
+        size,
+        cdnUrl,
+      },
+      updatedAt: Date.now(),
     });
 
     return documentId;
@@ -93,6 +111,7 @@ export const createInLibrary = mutation({
       }
     }
 
+    const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
       libraryId,
@@ -102,9 +121,26 @@ export const createInLibrary = mutation({
       filename,
       contentType,
       size,
-      extractionStatus: "pending",
+      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
+    });
+
+    // Index in searchableContent so it's always findable by filename
+    await ctx.db.insert("searchableContent", {
+      siteId,
+      contentType: "document",
+      sourceId: documentId,
+      title: filename,
+      extractedText: filename,
+      metadata: {
+        filename,
+        fileContentType: contentType,
+        size,
+        cdnUrl,
+        libraryId,
+      },
+      updatedAt: Date.now(),
     });
 
     return documentId;

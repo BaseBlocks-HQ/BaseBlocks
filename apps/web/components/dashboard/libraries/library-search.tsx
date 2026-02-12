@@ -8,7 +8,7 @@ import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useDebounce } from "use-debounce";
 
 interface LibrarySearchProps {
@@ -20,12 +20,47 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
-  const searchResults = useQuery(
+  // Server full-text search
+  const serverResults = useQuery(
     api.documents.queries.searchByLibrary,
     debouncedQuery.trim()
       ? { libraryId, query: debouncedQuery, limit: 10 }
       : "skip",
   );
+
+  // Preload all documents in library for client-side fuzzy matching
+  const allDocs = useQuery(api.documents.queries.listByLibrary, { libraryId });
+
+  // Merge server results with client-side substring matches on filenames
+  const searchResults = useMemo(() => {
+    if (!debouncedQuery.trim()) return undefined;
+    if (serverResults === undefined) return undefined;
+
+    const serverIds = new Set(serverResults.map((r) => r._id));
+    const lower = debouncedQuery.trim().toLowerCase();
+    const remaining = 10 - serverResults.length;
+
+    if (remaining <= 0 || !allDocs) return serverResults;
+
+    const fuzzyMatches = allDocs
+      .filter((doc) => !serverIds.has(doc._id) && doc.filename.toLowerCase().includes(lower))
+      .slice(0, remaining)
+      .map((doc) => ({
+        _id: doc._id,
+        filename: doc.filename,
+        contentType: doc.contentType,
+        size: doc.size,
+        cdnUrl: doc.cdnUrl,
+        blobId: doc.blobId,
+        libraryId: doc.libraryId,
+        matchType: "filename" as const,
+        snippet: null,
+        snippetMatchStart: null,
+        snippetMatchEnd: null,
+      }));
+
+    return [...serverResults, ...fuzzyMatches];
+  }, [serverResults, allDocs, debouncedQuery]);
 
   const clearSearch = () => setSearchQuery("");
 

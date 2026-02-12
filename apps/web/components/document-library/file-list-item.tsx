@@ -9,13 +9,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MiddleTruncate } from "@/components/ui/middle-truncate";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
+  AlertTriangle,
+  CheckCircle2,
   Download,
   Eye,
   FolderInput,
+  Loader2,
   MoreHorizontal,
   Pencil,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
@@ -28,6 +37,8 @@ export interface FileData {
   size: number;
   cdnUrl: string;
   createdAt: number;
+  extractionStatus?: string;
+  extractionError?: string;
 }
 
 interface FileListItemProps {
@@ -37,6 +48,7 @@ interface FileListItemProps {
   onRename: (file: FileData) => void;
   onDelete: (file: FileData) => void;
   onMove?: (file: FileData) => void;
+  onRetryExtraction?: (file: FileData) => Promise<void>;
   isReadOnly?: boolean;
   className?: string;
 }
@@ -48,10 +60,23 @@ export function FileListItem({
   onRename,
   onDelete,
   onMove,
+  onRetryExtraction,
   isReadOnly = false,
   className,
 }: FileListItemProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onRetryExtraction || isRetrying) return;
+    setIsRetrying(true);
+    try {
+      await onRetryExtraction(file);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
@@ -91,13 +116,34 @@ export function FileListItem({
 
       {/* File info */}
       <div className="flex-1 min-w-0">
-        <MiddleTruncate
-          text={file.filename}
-          className="text-sm font-medium"
-          endChars={12}
-        />
+        <div className="flex items-center gap-1.5">
+          <MiddleTruncate
+            text={file.filename}
+            className="text-sm font-medium"
+            endChars={12}
+          />
+          {file.extractionStatus === "failed" && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {file.extractionError || "Text extraction failed"}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {file.extractionStatus === "processing" && (
+            <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin flex-shrink-0" />
+          )}
+          {file.extractionStatus === "completed" && (
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           {formatFileSize(file.size)} • {formatDate(file.createdAt)}
+          {file.extractionStatus === "failed" && (
+            <span className="text-destructive ml-1">• Extraction failed</span>
+          )}
         </p>
       </div>
 
@@ -170,6 +216,19 @@ export function FileListItem({
                 <FolderInput className="h-4 w-4 mr-2" />
                 Move to folder
               </DropdownMenuItem>
+            )}
+            {onRetryExtraction && file.extractionStatus === "failed" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleRetry} disabled={isRetrying}>
+                  {isRetrying ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Retry extraction
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem

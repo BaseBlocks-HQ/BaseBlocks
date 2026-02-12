@@ -24,7 +24,7 @@ import {
   Presentation,
   Search,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // File type icon mapping for documents
 function getFileIcon(contentType: string | undefined) {
@@ -124,6 +124,43 @@ interface SearchBoxProps {
   className?: string;
 }
 
+/**
+ * Client-side substring matching on preloaded titles.
+ * Returns results that match but weren't found by server full-text search.
+ */
+function fuzzyMatchTitles(
+  titles: { _id: string; contentType: "document" | "subpage"; sourceId: string; title: string; metadata: SearchResultItem["metadata"] }[] | undefined,
+  query: string,
+  serverResultIds: Set<string>,
+  limit: number,
+): SearchResultItem[] {
+  if (!titles || !query) return [];
+  const lower = query.toLowerCase();
+  const results: SearchResultItem[] = [];
+
+  for (const item of titles) {
+    if (serverResultIds.has(item._id)) continue;
+    if (results.length >= limit) break;
+
+    const titleLower = item.title.toLowerCase();
+    if (titleLower.includes(lower)) {
+      results.push({
+        _id: item._id,
+        contentType: item.contentType,
+        sourceId: item.sourceId,
+        title: item.title,
+        matchType: "title",
+        snippet: null,
+        snippetMatchStart: null,
+        snippetMatchEnd: null,
+        metadata: item.metadata,
+      });
+    }
+  }
+
+  return results;
+}
+
 export function SearchBox({
   siteId,
   placeholder = "Search...",
@@ -158,7 +195,13 @@ export function SearchBox({
 
   const shouldSearch = debouncedQuery.trim().length > 0 && !!siteId;
 
-  // Search queries - always call both, use "skip" to disable the one we don't need
+  // Preload all titles for client-side fuzzy matching (lightweight, cached by Convex)
+  const allTitles = useQuery(
+    usePublicQuery ? api.search.queries.listTitlesPublic : api.search.queries.listTitles,
+    siteId ? { siteId } : "skip"
+  );
+
+  // Server full-text search queries
   const authResults = useQuery(
     api.search.queries.searchAll,
     !usePublicQuery && shouldSearch
@@ -173,7 +216,22 @@ export function SearchBox({
       : "skip"
   ) as SearchResultItem[] | undefined;
 
-  const searchResults = usePublicQuery ? publicResults : authResults;
+  const serverResults = usePublicQuery ? publicResults : authResults;
+
+  // Merge server full-text results with client-side fuzzy title matches
+  const searchResults = useMemo(() => {
+    if (!shouldSearch) return undefined;
+    if (serverResults === undefined) return undefined;
+
+    const serverIds = new Set(serverResults.map((r) => r._id));
+    const remaining = maxResults - serverResults.length;
+
+    if (remaining <= 0) return serverResults;
+
+    const fuzzyResults = fuzzyMatchTitles(allTitles, debouncedQuery.trim(), serverIds, remaining);
+    return [...serverResults, ...fuzzyResults];
+  }, [serverResults, allTitles, debouncedQuery, shouldSearch, maxResults]);
+
   const isSearching = shouldSearch && searchResults === undefined;
   const hasResults = searchResults && searchResults.length > 0;
   const showDropdown = isFocused && debouncedQuery.trim().length > 0;

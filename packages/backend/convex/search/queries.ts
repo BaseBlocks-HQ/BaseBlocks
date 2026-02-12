@@ -251,6 +251,98 @@ export const searchAllPublic = query({
 });
 
 /**
+ * List all searchable content titles for a site (lightweight, for client-side fuzzy matching)
+ * Returns only id, title, contentType, sourceId, and metadata - no extractedText
+ */
+export const listTitles = query({
+  args: {
+    siteId: v.id("sites"),
+  },
+  handler: async (ctx, { siteId }) => {
+    const auth = await getAuthContext(ctx);
+
+    const site = await ctx.db.get(siteId);
+    if (!site) return [];
+
+    const company = await ctx.db.get(site.companyId);
+    if (!company || company.eaOrgId !== auth.eaOrgId) {
+      throw new Error("Unauthorized");
+    }
+
+    const all = await ctx.db
+      .query("searchableContent")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    return all.map((doc) => ({
+      _id: doc._id,
+      contentType: doc.contentType,
+      sourceId: doc.sourceId,
+      title: doc.title,
+      metadata: doc.metadata,
+    }));
+  },
+});
+
+/**
+ * List all searchable content titles for a published site (public)
+ */
+export const listTitlesPublic = query({
+  args: {
+    siteId: v.id("sites"),
+  },
+  handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site || !site.isPublished) return [];
+
+    // Get active library IDs
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    const activeLibraryIds = new Set<string>();
+    for (const page of pages) {
+      const layouts = await ctx.db
+        .query("layouts")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+
+      for (const layout of layouts) {
+        const slotsToCheck = layout.publishedSlots || layout.slots;
+        for (const slot of slotsToCheck) {
+          for (const block of slot.blocks) {
+            if (block.type === "library" && block.content?.libraryId) {
+              activeLibraryIds.add(block.content.libraryId);
+            }
+          }
+        }
+      }
+    }
+
+    const all = await ctx.db
+      .query("searchableContent")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    return all
+      .filter((doc) => {
+        if (doc.contentType === "document") {
+          return doc.metadata.libraryId && activeLibraryIds.has(doc.metadata.libraryId);
+        }
+        return true; // subpages always included
+      })
+      .map((doc) => ({
+        _id: doc._id,
+        contentType: doc.contentType,
+        sourceId: doc.sourceId,
+        title: doc.title,
+        metadata: doc.metadata,
+      }));
+  },
+});
+
+/**
  * Get subpage content by its location (for opening from search results)
  */
 export const getSubpageContent = query({

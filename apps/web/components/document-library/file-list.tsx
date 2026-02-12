@@ -15,6 +15,7 @@ interface FileListProps {
   onRename: (fileId: string, newName: string) => Promise<void>;
   onDelete: (fileId: string) => Promise<void>;
   onMove?: (fileId: string, folderId: string | null) => Promise<void>;
+  onRetryExtraction?: (file: FileData) => Promise<void>;
   isReadOnly?: boolean;
   className?: string;
 }
@@ -26,6 +27,7 @@ export function FileList({
   onRename,
   onDelete,
   onMove,
+  onRetryExtraction,
   isReadOnly = false,
   className,
 }: FileListProps) {
@@ -79,6 +81,7 @@ export function FileList({
               onPreview={onPreview}
               onRename={handleRename}
               onDelete={handleDelete}
+              onRetryExtraction={onRetryExtraction}
               isReadOnly={isReadOnly}
             />
           ))}

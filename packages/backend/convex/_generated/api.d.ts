@@ -28,6 +28,7 @@ import type * as layouts_mutations from "../layouts/mutations.js";
 import type * as layouts_queries from "../layouts/queries.js";
 import type * as lib_entityAuthClient from "../lib/entityAuthClient.js";
 import type * as lib_extractBlockNoteText from "../lib/extractBlockNoteText.js";
+import type * as lib_extractable from "../lib/extractable.js";
 import type * as members_actions from "../members/actions.js";
 import type * as members_internal from "../members/internal.js";
 import type * as members_mutations from "../members/mutations.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "layouts/queries": typeof layouts_queries;
   "lib/entityAuthClient": typeof lib_entityAuthClient;
   "lib/extractBlockNoteText": typeof lib_extractBlockNoteText;
+  "lib/extractable": typeof lib_extractable;
   "members/actions": typeof members_actions;
   "members/internal": typeof members_internal;
   "members/mutations": typeof members_mutations;
