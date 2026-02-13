@@ -9,6 +9,7 @@ import type {
   BlockType,
   CalloutContent,
   CodeContent,
+  DecisionTreeContent,
   DirectoryContent,
   DividerContent,
   FlowchartContent,
@@ -50,6 +51,7 @@ export type ContentTypeMap = {
   banner: BannerContent;
   directory: DirectoryContent;
   flowchart: FlowchartContent;
+  "decision-tree": DecisionTreeContent;
 
   // Sections
   search: SearchContent;

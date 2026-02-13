@@ -47,6 +47,10 @@ export type {
   DirectoryContent,
   FlowchartDiagram,
   FlowchartContent,
+  DecisionTreeBlockType,
+  DecisionTreeContentBlock,
+  DecisionTreeNode,
+  DecisionTreeContent,
   BlockContentUnion,
 } from "./blocks";
 export { DEFAULT_BLOCK_CONTENT, DEFAULT_IMPORTANCE_PRESETS } from "./blocks";

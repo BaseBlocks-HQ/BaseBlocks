@@ -14,7 +14,8 @@ export type BlockType =
   | "subpage"
   | "banner"
   | "directory"
-  | "flowchart";
+  | "flowchart"
+  | "decision-tree";
 
 // Block content interfaces
 export interface HeadingContent {
@@ -121,6 +122,31 @@ export interface FlowchartContent {
   diagrams?: FlowchartDiagram[];
 }
 
+// Decision tree block types
+// Allowed block types inside decision tree nodes (subset of BaseBlocks block types)
+export type DecisionTreeBlockType = "heading" | "paragraph" | "callout" | "code" | "divider";
+
+export interface DecisionTreeContentBlock {
+  id: string;
+  type: DecisionTreeBlockType;
+  // Uses the same content shapes as BaseBlocks blocks (HeadingContent, ParagraphContent, etc.)
+  // biome-ignore lint/suspicious/noExplicitAny: Content varies by block type, matching BaseBlocks layout pattern
+  content: any;
+  order: number;
+}
+
+export interface DecisionTreeNode {
+  id: string;
+  parentId: string | null;
+  name: string;
+  order: number;
+  contentBlocks: DecisionTreeContentBlock[];
+}
+
+export interface DecisionTreeContent {
+  nodes: DecisionTreeNode[];
+}
+
 // Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
@@ -132,7 +158,8 @@ export type BlockContentUnion =
   | SubpageContent
   | BannerContent
   | DirectoryContent
-  | FlowchartContent;
+  | FlowchartContent
+  | DecisionTreeContent;
 
 // Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
@@ -164,4 +191,5 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
     },
   } as DirectoryContent,
   flowchart: { mermaidCode: "" } as FlowchartContent,
+  "decision-tree": { nodes: [] } as DecisionTreeContent,
 };

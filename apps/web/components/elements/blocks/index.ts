@@ -14,6 +14,7 @@ import "./subpage";
 import "./banner";
 import "./directory";
 import "./flowchart";
+import "./decision-tree";
 
 // Re-export all blocks for direct access
 export * from "./heading";
@@ -26,3 +27,4 @@ export * from "./subpage";
 export * from "./banner";
 export * from "./directory";
 export * from "./flowchart";
+export * from "./decision-tree";

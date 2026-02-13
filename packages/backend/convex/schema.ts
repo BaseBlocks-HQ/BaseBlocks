@@ -137,6 +137,7 @@ export default defineSchema({
       v.literal("banner"),
       v.literal("directory"),
       v.literal("flowchart"),
+      v.literal("decision-tree"),
     ),
     order: v.number(),
     content: v.any(), // Block-specific content
@@ -186,6 +187,7 @@ export default defineSchema({
               v.literal("banner"),
               v.literal("directory"),
               v.literal("flowchart"),
+              v.literal("decision-tree"),
             ),
             content: v.any(),
           }),
@@ -221,6 +223,7 @@ export default defineSchema({
               v.literal("banner"),
               v.literal("directory"),
               v.literal("flowchart"),
+              v.literal("decision-tree"),
             ),
             content: v.any(),
           }),

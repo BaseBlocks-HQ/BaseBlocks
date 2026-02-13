@@ -40,6 +40,7 @@ const blockTypes = v.union(
   v.literal("banner"),
   v.literal("directory"),
   v.literal("flowchart"),
+  v.literal("decision-tree"),
 );
 
 const slotSchema = v.object({
