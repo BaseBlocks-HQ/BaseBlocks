@@ -5,7 +5,8 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { getSiteUrl } from "@/lib/utils";
+import { cn, getSiteUrl } from "@/lib/utils";
+import type { SiteCustomization } from "@/types/elements/customization";
 import type { Id } from "@repo/backend";
 import {
   Eye,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useCustomizationStyles } from "@/hooks";
 import { useEditorContext } from "./editor-context";
 import { PreviewButton } from "./preview-button";
 import { ShareDialog } from "./share-dialog";
@@ -37,6 +39,7 @@ interface EditorHeaderProps {
       showLogo?: boolean;
       showSiteName?: boolean;
       showHeaderSearch?: boolean;
+      customization?: SiteCustomization;
     };
   };
   company: {
@@ -73,11 +76,24 @@ export function EditorHeader({
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const headerColor = site.settings.customization?.headerColor;
+  const customizationStyles = useCustomizationStyles(site.settings.customization);
 
   // Preview mode: show the site header as users will see it
   if (isHeaderPreview && showHeader) {
     return (
-      <header className="border-b h-14 shrink-0 flex items-center px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40">
+      <header
+        className={cn(
+          "border-b h-14 shrink-0 flex items-center px-4 z-40",
+          !headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        )}
+        style={headerColor ? {
+          ...customizationStyles,
+          backgroundColor: "var(--site-header-bg)",
+          color: "var(--site-header-fg)",
+        } : customizationStyles}
+        {...(headerColor ? { "data-site-customized": "" } : {})}
+      >
         <Button
           variant="ghost"
           size="sm"

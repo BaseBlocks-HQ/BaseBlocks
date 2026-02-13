@@ -17,10 +17,11 @@ import type { PageWithChildren } from "@/types";
 import type { BannerContent } from "@/types/elements";
 import type { SiteCustomization } from "@/types/elements/customization";
 import type { NavigationStyle } from "@/types/elements/navigation";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
 import { PublicSubpageProvider } from "./public-subpage-context";
@@ -133,6 +134,9 @@ export function PublicSiteLayout({
     };
   }, [customizationStyles, isCustomized]);
 
+  // Sidebar collapse state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   // Determine if we should show sidebar
   const showSidebar = navigationStyle === "sidebar";
 
@@ -244,26 +248,45 @@ export function PublicSiteLayout({
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar navigation */}
           {showSidebar && (
-            <aside className="w-64 border-r min-h-[calc(100vh-56px)] p-4 sticky top-14 self-start">
-              <nav className="space-y-1">
-                {pages === undefined ? (
-                  <>
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-full" />
-                  </>
+            <aside
+              className={cn(
+                "border-r min-h-[calc(100vh-56px)] sticky top-14 self-start transition-[width] duration-200 overflow-hidden flex flex-col",
+                sidebarCollapsed ? "w-10" : "w-64"
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="flex items-center justify-center h-10 w-10 shrink-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors self-end"
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
                 ) : (
-                  pages.map((page: PageWithChildren) => (
-                    <NavItem
-                      key={page._id}
-                      page={page}
-                      currentPath={currentPathString}
-                      mode="public"
-                      ancestorIds={ancestorIds}
-                    />
-                  ))
+                  <PanelLeftClose className="h-4 w-4" />
                 )}
-              </nav>
+              </button>
+              {!sidebarCollapsed && (
+                <nav className="space-y-1 p-4 pt-0">
+                  {pages === undefined ? (
+                    <>
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </>
+                  ) : (
+                    pages.map((page: PageWithChildren) => (
+                      <NavItem
+                        key={page._id}
+                        page={page}
+                        currentPath={currentPathString}
+                        mode="public"
+                        ancestorIds={ancestorIds}
+                      />
+                    ))
+                  )}
+                </nav>
+              )}
             </aside>
           )}
 
