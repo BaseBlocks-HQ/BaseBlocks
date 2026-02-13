@@ -34,6 +34,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirectURI: appUrl ? `${appUrl}/api/auth/callback/google` : undefined,
       },
     },
     plugins: [
