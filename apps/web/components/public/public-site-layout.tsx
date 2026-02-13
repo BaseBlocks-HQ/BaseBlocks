@@ -180,7 +180,7 @@ export function PublicSiteLayout({
         <>
           <header
             className={cn(
-              "relative border-b shrink-0 z-40",
+              "relative shrink-0 z-40",
               !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
             )}
             style={site.settings.customization?.headerColor ? {
