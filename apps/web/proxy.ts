@@ -95,9 +95,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Debug logging for subdomain routing
-  console.log(`[proxy] url=${request.url} host=${host} hostname=${hostname} pathname=${pathname}`);
-
   // Handle path-based routing for vercel.app domains (/s/[subdomain]/...)
   // This is a fallback since wildcard subdomains don't work on vercel.app
   if (isVercelAppDomain(hostname)) {
@@ -114,7 +111,6 @@ export async function proxy(request: NextRequest) {
   }
 
   const subdomain = extractSubdomain(request);
-  console.log(`[proxy] extracted subdomain=${subdomain}`);
 
   // No subdomain = main app (landing, dashboard, auth)
   // Run the intl middleware for locale detection/routing
@@ -147,7 +143,6 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathSuffix = pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale;
   url.pathname = `/${routing.defaultLocale}/site/${subdomain}${pathSuffix}`;
-  console.log(`[proxy] rewriting to ${url.pathname}`);
   return NextResponse.rewrite(url);
 }
 

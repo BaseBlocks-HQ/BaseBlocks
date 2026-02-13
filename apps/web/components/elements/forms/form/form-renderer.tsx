@@ -78,7 +78,6 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
     try {
       // Simulate form submission
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Form submitted:", values);
       setIsSubmitted(true);
       toast.success("Form submitted successfully");
     } catch (error) {
