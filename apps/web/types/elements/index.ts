@@ -51,6 +51,7 @@ export type {
   DecisionTreeBlockType,
   DecisionTreeContentBlock,
   DecisionTreeNode,
+  DecisionTree,
   DecisionTreeContent,
   BlockContentUnion,
 } from "./blocks";

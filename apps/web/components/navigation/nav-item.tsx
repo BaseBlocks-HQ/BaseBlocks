@@ -21,6 +21,7 @@ interface NavItemProps {
   ancestorIds?: string[];
   pagePath?: string;
   onSelect?: (pageId: string) => void;
+  defaultExpanded?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export function NavItem({
   ancestorIds = [],
   pagePath,
   onSelect,
+  defaultExpanded,
 }: NavItemProps) {
   const hasChildren = page.children && page.children.length > 0;
 
@@ -65,11 +67,12 @@ export function NavItem({
   const isExpanded = isExpandedFromStorage(page._id);
 
   // Auto-expand when ancestorIds change (e.g., navigation to a nested page)
+  // Also expand pages with children when defaultExpanded is enabled
   useEffect(() => {
-    if (shouldAutoExpand && !isExpanded) {
+    if ((shouldAutoExpand || (defaultExpanded && hasChildren)) && !isExpanded) {
       setExpanded(page._id, true);
     }
-  }, [shouldAutoExpand, isExpanded, setExpanded, page._id]);
+  }, [shouldAutoExpand, defaultExpanded, hasChildren, isExpanded, setExpanded, page._id]);
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -151,6 +154,7 @@ export function NavItem({
                 mode="preview"
                 depth={depth + 1}
                 onSelect={onSelect}
+                defaultExpanded={defaultExpanded}
               />
             ))}
           </>
@@ -211,6 +215,7 @@ export function NavItem({
               depth={depth + 1}
               ancestorIds={ancestorIds}
               pagePath={fullPath}
+              defaultExpanded={defaultExpanded}
             />
           ))}
         </>

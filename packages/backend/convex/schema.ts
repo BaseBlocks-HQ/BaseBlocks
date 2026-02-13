@@ -67,6 +67,7 @@ export default defineSchema({
       showLogo: v.optional(v.boolean()), // default: true
       showSiteName: v.optional(v.boolean()), // default: true
       showHeaderSearch: v.optional(v.boolean()), // default: false
+      sidebarDefaultExpanded: v.optional(v.boolean()), // default: false
       // Site customization
       customization: v.optional(v.object({
         accentColor: v.optional(v.string()), // Hex color

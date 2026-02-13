@@ -98,6 +98,7 @@ export const update = mutation({
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
         showHeaderSearch: v.optional(v.boolean()),
+        sidebarDefaultExpanded: v.optional(v.boolean()),
         // Site customization
         customization: v.optional(v.object({
           accentColor: v.optional(v.string()),

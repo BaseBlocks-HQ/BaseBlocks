@@ -47,6 +47,7 @@ interface PublicSiteLayoutProps {
       showLogo?: boolean;
       showSiteName?: boolean;
       showHeaderSearch?: boolean;
+      sidebarDefaultExpanded?: boolean;
       customization?: SiteCustomization;
     };
   };
@@ -136,6 +137,7 @@ export function PublicSiteLayout({
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
   const navigationStyle = site.settings.navigationStyle;
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
@@ -345,6 +347,7 @@ export function PublicSiteLayout({
                           currentPath={currentPathString}
                           mode="public"
                           ancestorIds={ancestorIds}
+                          defaultExpanded={sidebarDefaultExpanded}
                         />
                       ))
                     )}

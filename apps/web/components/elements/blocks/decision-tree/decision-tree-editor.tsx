@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Check, Pencil, Plus, X } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,6 +14,7 @@ import {
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
 import type {
+  DecisionTree,
   DecisionTreeBlockType,
   DecisionTreeContent,
   DecisionTreeNode,
@@ -23,20 +25,35 @@ import { useTreeNavigation } from "./editor/use-tree-navigation";
 import { NodeList } from "./editor/node-list";
 import { NodeDetail } from "./editor/node-detail";
 
+function generateTreeId() {
+  return Math.random().toString(36).slice(2, 9);
+}
+
+function normalizeTrees(content: DecisionTreeContent): DecisionTree[] {
+  if (content.trees && content.trees.length > 0) return content.trees;
+  return [{ id: generateTreeId(), label: "Tree 1", nodes: content.nodes || [] }];
+}
+
 export function DecisionTreeEditor({
   id,
   content,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
-  const [localContent, setLocalContent] =
-    useState<DecisionTreeContent>(content);
+  const [trees, setTrees] = useState<DecisionTree[]>(() => normalizeTrees(content));
+  const [activeTreeId, setActiveTreeId] = useState<string>(() => normalizeTrees(content)[0]!.id);
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [editingLabelValue, setEditingLabelValue] = useState("");
+  const labelInputRef = useRef<HTMLInputElement>(null);
+
   const {
     path,
     currentParentId,
     navigateInto,
     navigateToIndex,
   } = useTreeNavigation();
+
+  const activeTree = trees.find((t) => t.id === activeTreeId) ?? trees[0]!;
 
   const debouncedSave = useDebounceCallback(
     useCallback(
@@ -58,29 +75,114 @@ export function DecisionTreeEditor({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset local state only when block id changes
   useEffect(() => {
-    setLocalContent(content);
+    const normalized = normalizeTrees(content);
+    setTrees(normalized);
+    if (!normalized.find((t) => t.id === activeTreeId)) {
+      setActiveTreeId(normalized[0]!.id);
+    }
   }, [id]);
 
-  const updateContent = useCallback(
-    (newContent: DecisionTreeContent) => {
-      setLocalContent(newContent);
+  useEffect(() => {
+    if (editingLabelId && labelInputRef.current) {
+      labelInputRef.current.focus();
+      labelInputRef.current.select();
+    }
+  }, [editingLabelId]);
+
+  // Sync active tab when trees change externally
+  useEffect(() => {
+    if (trees.length > 0 && !trees.find((t) => t.id === activeTreeId)) {
+      setActiveTreeId(trees[0]!.id);
+    }
+  }, [trees, activeTreeId]);
+
+  const saveContent = useCallback(
+    (updatedTrees: DecisionTree[]) => {
+      const newContent: DecisionTreeContent = {
+        nodes: updatedTrees[0]?.nodes ?? [],
+        trees: updatedTrees,
+      };
       onSaveStatusChange?.("pending");
       debouncedSave(newContent);
     },
     [debouncedSave, onSaveStatusChange],
   );
 
-  // --- Node operations ---
+  const updateTrees = useCallback(
+    (updatedTrees: DecisionTree[]) => {
+      setTrees(updatedTrees);
+      saveContent(updatedTrees);
+    },
+    [saveContent],
+  );
+
+  const updateActiveTreeNodes = useCallback(
+    (newNodes: DecisionTreeNode[]) => {
+      const updatedTrees = trees.map((t) =>
+        t.id === activeTreeId ? { ...t, nodes: newNodes } : t,
+      );
+      updateTrees(updatedTrees);
+    },
+    [trees, activeTreeId, updateTrees],
+  );
+
+  // --- Tree tab operations ---
+
+  const addTree = useCallback(() => {
+    const newTree: DecisionTree = {
+      id: generateTreeId(),
+      label: `Tree ${trees.length + 1}`,
+      nodes: [],
+    };
+    setActiveTreeId(newTree.id);
+    navigateToIndex(0);
+    updateTrees([...trees, newTree]);
+  }, [trees, updateTrees, navigateToIndex]);
+
+  const removeTree = useCallback(
+    (treeId: string) => {
+      if (trees.length <= 1) return;
+      const idx = trees.findIndex((t) => t.id === treeId);
+      const updated = trees.filter((t) => t.id !== treeId);
+      if (activeTreeId === treeId) {
+        setActiveTreeId(updated[Math.min(idx, updated.length - 1)]!.id);
+        navigateToIndex(0);
+      }
+      updateTrees(updated);
+    },
+    [trees, activeTreeId, updateTrees, navigateToIndex],
+  );
+
+  const startEditLabel = (treeId: string) => {
+    const tree = trees.find((t) => t.id === treeId);
+    if (!tree) return;
+    setEditingLabelId(treeId);
+    setEditingLabelValue(tree.label);
+  };
+
+  const commitEditLabel = () => {
+    if (!editingLabelId) return;
+    const label = editingLabelValue.trim() || "Untitled";
+    updateTrees(
+      trees.map((t) => (t.id === editingLabelId ? { ...t, label } : t)),
+    );
+    setEditingLabelId(null);
+  };
+
+  const switchTree = (treeId: string) => {
+    if (treeId !== activeTreeId) {
+      setActiveTreeId(treeId);
+      navigateToIndex(0);
+    }
+  };
+
+  // --- Node operations (operate on active tree's nodes) ---
 
   const handleAddNode = useCallback(
     (parentId: string | null, name: string) => {
-      const siblings = localContent.nodes.filter(
-        (n) => n.parentId === parentId,
-      );
-      const maxOrder = siblings.reduce(
-        (max, n) => Math.max(max, n.order),
-        -1,
-      );
+      const nodes = activeTree.nodes;
+      const siblings = nodes.filter((n) => n.parentId === parentId);
+      const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
       const newNode: DecisionTreeNode = {
         id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         parentId,
@@ -88,136 +190,100 @@ export function DecisionTreeEditor({
         order: maxOrder + 1,
         contentBlocks: [],
       };
-      updateContent({
-        ...localContent,
-        nodes: [...localContent.nodes, newNode],
-      });
+      updateActiveTreeNodes([...nodes, newNode]);
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleUpdateNode = useCallback(
     (nodeId: string, name: string) => {
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.map((n) =>
-          n.id === nodeId ? { ...n, name } : n,
-        ),
-      });
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, name } : n)),
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleRemoveNode = useCallback(
     (nodeId: string) => {
-      // Recursively collect all descendant IDs
+      const nodes = activeTree.nodes;
       const idsToRemove = new Set<string>();
-      const collect = (id: string) => {
-        idsToRemove.add(id);
-        for (const child of localContent.nodes.filter(
-          (n) => n.parentId === id,
-        )) {
+      const collect = (nid: string) => {
+        idsToRemove.add(nid);
+        for (const child of nodes.filter((n) => n.parentId === nid)) {
           collect(child.id);
         }
       };
       collect(nodeId);
-
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.filter((n) => !idsToRemove.has(n.id)),
-      });
+      updateActiveTreeNodes(nodes.filter((n) => !idsToRemove.has(n.id)));
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleReorderNodes = useCallback(
     (parentId: string | null, orderedIds: string[]) => {
-      const updatedNodes = localContent.nodes.map((n) => {
-        const idx = orderedIds.indexOf(n.id);
-        if (idx !== -1) {
-          return { ...n, order: idx };
-        }
-        return n;
-      });
-      updateContent({ ...localContent, nodes: updatedNodes });
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) => {
+          const idx = orderedIds.indexOf(n.id);
+          return idx !== -1 ? { ...n, order: idx } : n;
+        }),
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   // --- Content block operations ---
 
   const handleAddContentBlock = useCallback(
     (nodeId: string, type: DecisionTreeBlockType) => {
-      const node = localContent.nodes.find((n) => n.id === nodeId);
+      const node = activeTree.nodes.find((n) => n.id === nodeId);
       if (!node) return;
-
-      const maxOrder = node.contentBlocks.reduce(
-        (max, b) => Math.max(max, b.order),
-        -1,
-      );
-
+      const maxOrder = node.contentBlocks.reduce((max, b) => Math.max(max, b.order), -1);
       const newBlock: DecisionTreeContentBlock = {
         id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         type,
         content: DEFAULT_BLOCK_CONTENT[type],
         order: maxOrder + 1,
       };
-
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.map((n) =>
-          n.id === nodeId
-            ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] }
-            : n,
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) =>
+          n.id === nodeId ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] } : n,
         ),
-      });
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleUpdateContentBlock = useCallback(
     (nodeId: string, block: DecisionTreeContentBlock) => {
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.map((n) =>
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) =>
           n.id === nodeId
-            ? {
-                ...n,
-                contentBlocks: n.contentBlocks.map((b) =>
-                  b.id === block.id ? block : b,
-                ),
-              }
+            ? { ...n, contentBlocks: n.contentBlocks.map((b) => (b.id === block.id ? block : b)) }
             : n,
         ),
-      });
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleRemoveContentBlock = useCallback(
     (nodeId: string, blockId: string) => {
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.map((n) =>
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) =>
           n.id === nodeId
-            ? {
-                ...n,
-                contentBlocks: n.contentBlocks.filter(
-                  (b) => b.id !== blockId,
-                ),
-              }
+            ? { ...n, contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId) }
             : n,
         ),
-      });
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleReorderContentBlocks = useCallback(
     (nodeId: string, orderedIds: string[]) => {
-      updateContent({
-        ...localContent,
-        nodes: localContent.nodes.map((n) =>
+      updateActiveTreeNodes(
+        activeTree.nodes.map((n) =>
           n.id === nodeId
             ? {
                 ...n,
@@ -228,9 +294,9 @@ export function DecisionTreeEditor({
               }
             : n,
         ),
-      });
+      );
     },
-    [localContent, updateContent],
+    [activeTree, updateActiveTreeNodes],
   );
 
   const handleUpdateNodeName = useCallback(
@@ -240,16 +306,97 @@ export function DecisionTreeEditor({
     [handleUpdateNode],
   );
 
-  // Get the node name for breadcrumb display
   const getNodeName = (nodeId: string) =>
-    localContent.nodes.find((n) => n.id === nodeId)?.name ?? "...";
+    activeTree.nodes.find((n) => n.id === nodeId)?.name ?? "...";
 
   const currentNode = currentParentId
-    ? localContent.nodes.find((n) => n.id === currentParentId) ?? null
+    ? activeTree.nodes.find((n) => n.id === currentParentId) ?? null
     : null;
 
   return (
     <div className="flex flex-col border rounded-lg overflow-hidden" style={{ height: "500px" }}>
+      {/* Tree Tabs */}
+      <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto border-b bg-muted/30">
+        {trees.map((tree) => (
+          <div
+            key={tree.id}
+            className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
+              tree.id === activeTreeId
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            }`}
+            onClick={() => switchTree(tree.id)}
+          >
+            {editingLabelId === tree.id ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  commitEditLabel();
+                }}
+                className="flex items-center gap-1"
+              >
+                <input
+                  ref={labelInputRef}
+                  value={editingLabelValue}
+                  onChange={(e) => setEditingLabelValue(e.target.value)}
+                  onBlur={commitEditLabel}
+                  className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  type="submit"
+                  className="p-0.5 rounded hover:bg-white/20"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Check className="h-2.5 w-2.5" />
+                </button>
+              </form>
+            ) : (
+              <>
+                <span
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    startEditLabel(tree.id);
+                  }}
+                >
+                  {tree.label}
+                </span>
+                <button
+                  type="button"
+                  className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEditLabel(tree.id);
+                  }}
+                >
+                  <Pencil className="h-2.5 w-2.5" />
+                </button>
+                {trees.length > 1 && (
+                  <button
+                    type="button"
+                    className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTree(tree.id);
+                    }}
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addTree}
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="Add tree"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
       {/* Breadcrumb Navigation */}
       <div className="flex items-center border-b px-4 py-2 bg-primary/5">
         <Breadcrumb>
@@ -292,7 +439,7 @@ export function DecisionTreeEditor({
         {/* Left: Node List */}
         <div className="w-[40%] border-r overflow-hidden">
           <NodeList
-            nodes={localContent.nodes}
+            nodes={activeTree.nodes}
             parentId={currentParentId}
             onNavigateInto={navigateInto}
             onAddNode={handleAddNode}

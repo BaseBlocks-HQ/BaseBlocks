@@ -148,8 +148,15 @@ export interface DecisionTreeNode {
   contentBlocks: DecisionTreeContentBlock[];
 }
 
+export interface DecisionTree {
+  id: string;
+  label: string;
+  nodes: DecisionTreeNode[];
+}
+
 export interface DecisionTreeContent {
   nodes: DecisionTreeNode[];
+  trees?: DecisionTree[];
 }
 
 // Union of all block content types
