@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { requireAdminOrLegacy, getOptionalAuthContext, checkIsMember } from "../auth";
+import { requireAdmin, getAuthContextOrNull, checkIsMember } from "../auth";
 
 // Get current access code (admin only)
 export const getAccessCode = query({
@@ -12,7 +12,7 @@ export const getAccessCode = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     const accessCode = await ctx.db
       .query("siteAccessCodes")
@@ -42,7 +42,7 @@ export const getSettings = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     return {
       visibility: site.visibility ?? "public",
@@ -101,7 +101,7 @@ export const checkSiteAccess = query({
 
     // For private sites, check if user is authenticated and a member
     if (visibility === "private") {
-      const auth = await getOptionalAuthContext(ctx);
+      const auth = await getAuthContextOrNull(ctx);
       if (!auth) {
         return { hasAccess: false, reason: "Authentication required" };
       }

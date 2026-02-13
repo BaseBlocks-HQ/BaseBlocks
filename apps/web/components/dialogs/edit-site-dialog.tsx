@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
@@ -36,7 +36,8 @@ export function EditSiteDialog({
   const t = useTranslations();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { getToken, user } = useEntityAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const updateSite = useMutation(api.sites.mutations.update);
 
   // Reset form when dialog opens with new site data
@@ -69,11 +70,6 @@ export function EditSiteDialog({
     setIsUploadingLogo(true);
 
     try {
-      const token = await getToken();
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
-
       if (!user?.id) {
         throw new Error("User not found");
       }
@@ -81,10 +77,11 @@ export function EditSiteDialog({
       // Generate a path for the logo
       const timestamp = Date.now();
       const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const path = `/${process.env.NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID || "baseblocks-232733"}/logos/${site._id}/${timestamp}_${sanitizedFilename}`;
+      const path = `/logos/${site._id}/${timestamp}_${sanitizedFilename}`;
 
       // Upload to Entity Storage
-      const { cdnUrl } = await entityStorageClient.upload(file, path, token);
+      // TODO: Update token handling after storage migration
+      const { cdnUrl } = await entityStorageClient.upload(file, path, "");
 
       setLogoUrl(cdnUrl);
       setLogoPreview(cdnUrl);

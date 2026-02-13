@@ -2,7 +2,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useQuery } from "convex/react";
 import {
   Table,
   TableBody,
@@ -11,33 +13,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEntityAuth } from "@/lib/auth";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { useAction, useQuery } from "convex/react";
-import { RefreshCw, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { MemberActions } from "./member-actions";
 
 interface MemberListItem {
   _id: Id<"members">;
-  eaUserId: string;
+  userId?: string;
   email: string;
   name?: string;
   imageUrl?: string;
   role: "admin" | "viewer";
-  eaRole: string;
   joinedAt: number;
-  isOwner: boolean;
 }
 
 export function TeamContent() {
   const t = useTranslations("team");
-  const { getToken } = useEntityAuth();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   const company = useQuery(api.companies.queries.getMine);
   const members = useQuery(
@@ -48,36 +40,6 @@ export function TeamContent() {
     api.members.queries.getMyRole,
     company ? { companyId: company._id } : "skip",
   );
-
-  const syncMembers = useAction(api.members.actions.syncMembers);
-
-  // Auto-sync members on mount if empty
-  useEffect(() => {
-    if (company && members && members.length === 0) {
-      handleSync();
-    }
-  }, [company?._id, members?.length]);
-
-  const handleSync = async () => {
-    if (!company || isSyncing) return;
-
-    setIsSyncing(true);
-    setSyncError(null);
-
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
-
-      await syncMembers({
-        companyId: company._id,
-        accessToken: token,
-      });
-    } catch (err) {
-      setSyncError(err instanceof Error ? err.message : "Sync failed");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {
@@ -102,8 +64,7 @@ export function TeamContent() {
     return "?";
   };
 
-  const getRoleBadgeVariant = (role: string, isOwner: boolean) => {
-    if (isOwner) return "default";
+  const getRoleBadgeVariant = (role: string) => {
     if (role === "admin") return "secondary";
     return "outline";
   };
@@ -122,26 +83,9 @@ export function TeamContent() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSync}
-            disabled={isSyncing}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`}
-            />
-            {isSyncing ? t("syncing") : t("syncMembers")}
-          </Button>
           {isAdmin && <InviteMemberDialog companyId={company._id} />}
         </div>
       </div>
-
-      {syncError && (
-        <div className="text-sm text-destructive bg-destructive/10 px-4 py-2 rounded-md">
-          {syncError}
-        </div>
-      )}
 
       {members && members.length > 0 ? (
         <div className="rounded-md border">
@@ -172,13 +116,11 @@ export function TeamContent() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={getRoleBadgeVariant(member.role, member.isOwner)}
+                      variant={getRoleBadgeVariant(member.role)}
                     >
-                      {member.isOwner
-                        ? t("roles.owner")
-                        : member.role === "admin"
-                          ? t("roles.admin")
-                          : t("roles.viewer")}
+                      {member.role === "admin"
+                        ? t("roles.admin")
+                        : t("roles.viewer")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">

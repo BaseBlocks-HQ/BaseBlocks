@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireAdmin } from "../auth";
 
 const blockTypes = v.union(
   v.literal("heading"),
@@ -30,8 +30,6 @@ export const create = mutation({
     order: v.optional(v.number()),
   },
   handler: async (ctx, { pageId, type, content, order }) => {
-    const auth = await getAuthContext(ctx);
-
     // Verify access to page
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
@@ -39,10 +37,7 @@ export const create = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Get max order if not specified
     let blockOrder = order;
@@ -80,8 +75,6 @@ export const update = mutation({
     type: v.optional(blockTypes),
   },
   handler: async (ctx, { blockId, content, type }) => {
-    const auth = await getAuthContext(ctx);
-
     const block = await ctx.db.get(blockId);
     if (!block) throw new Error("Block not found");
 
@@ -91,10 +84,7 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     const now = Date.now();
     const updates: Record<string, unknown> = { updatedAt: now };
@@ -115,18 +105,13 @@ export const reorder = mutation({
     blockIds: v.array(v.id("blocks")),
   },
   handler: async (ctx, { pageId, blockIds }) => {
-    const auth = await getAuthContext(ctx);
-
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Update order for each block
     for (let i = 0; i < blockIds.length; i++) {
@@ -144,8 +129,6 @@ export const reorder = mutation({
 export const remove = mutation({
   args: { blockId: v.id("blocks") },
   handler: async (ctx, { blockId }) => {
-    const auth = await getAuthContext(ctx);
-
     const block = await ctx.db.get(blockId);
     if (!block) throw new Error("Block not found");
 
@@ -155,10 +138,7 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     await ctx.db.delete(blockId);
     await ctx.db.patch(block.pageId, { updatedAt: Date.now() });

@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link, usePathname } from "@/i18n/navigation";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { Folder, Home, LogOut, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -27,7 +27,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { logout } = useEntityAuth();
+  const handleLogout = () => authClient.signOut();
   const t = useTranslations();
 
   const navItems = [
@@ -102,7 +102,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={logout}
+                onClick={handleLogout}
                 title={t("common.signOut")}
               >
                 <LogOut className="h-4 w-4" />

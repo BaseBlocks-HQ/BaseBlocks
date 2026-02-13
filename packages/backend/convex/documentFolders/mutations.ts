@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireAdmin } from "../auth";
 
 // Create a new folder
 export const create = mutation({
@@ -11,18 +11,13 @@ export const create = mutation({
     name: v.string(),
   },
   handler: async (ctx, { libraryId, parentId, name }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) throw new Error("Library not found");
 
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    const { auth } = await requireAdmin(ctx, site.companyId);
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -73,8 +68,6 @@ export const update = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { folderId, name }) => {
-    const auth = await getAuthContext(ctx);
-
     const folder = await ctx.db.get(folderId);
     if (!folder) throw new Error("Folder not found");
 
@@ -84,10 +77,7 @@ export const update = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Check for duplicate name if renaming
     if (name !== undefined && name.trim().toLowerCase() !== folder.name.toLowerCase()) {
@@ -124,8 +114,6 @@ export const move = mutation({
     newOrder: v.optional(v.number()),
   },
   handler: async (ctx, { folderId, newParentId, newOrder }) => {
-    const auth = await getAuthContext(ctx);
-
     const folder = await ctx.db.get(folderId);
     if (!folder) throw new Error("Folder not found");
 
@@ -135,10 +123,7 @@ export const move = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -220,8 +205,6 @@ async function deleteFolderRecursively(
 export const remove = mutation({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {
-    const auth = await getAuthContext(ctx);
-
     const folder = await ctx.db.get(folderId);
     if (!folder) throw new Error("Folder not found");
 
@@ -231,10 +214,7 @@ export const remove = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

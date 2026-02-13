@@ -11,30 +11,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const { startSSO, isLoading: authLoading } = useEntityAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations();
 
-  const [loadingProvider, setLoadingProvider] = useState<
-    "google" | "microsoft" | null
-  >(null);
-
-  const handleSSO = async (provider: "google" | "microsoft") => {
+  const handleGoogleSignIn = async () => {
     setError(null);
-    setLoadingProvider(provider);
     setIsLoading(true);
     try {
-      await startSSO(provider);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("auth.signInFailed"));
       setIsLoading(false);
-      setLoadingProvider(null);
     }
   };
 
@@ -63,8 +59,8 @@ export default function LoginPage() {
           <Button
             variant="outline"
             className="w-full h-12"
-            onClick={() => handleSSO("google")}
-            disabled={isLoading || authLoading}
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
           >
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -84,25 +80,9 @@ export default function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            {loadingProvider === "google"
+            {isLoading
               ? t("common.redirecting")
               : t("auth.continueWithGoogle")}
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full h-12"
-            onClick={() => handleSSO("microsoft")}
-            disabled={isLoading || authLoading}
-          >
-            <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-              <path d="M11.4 24H0V12.6h11.4V24z" fill="#00A4EF" />
-              <path d="M24 24H12.6V12.6H24V24z" fill="#FFB900" />
-              <path d="M11.4 11.4H0V0h11.4v11.4z" fill="#F25022" />
-              <path d="M24 11.4H12.6V0H24v11.4z" fill="#7FBA00" />
-            </svg>
-            {loadingProvider === "microsoft"
-              ? t("common.redirecting")
-              : t("auth.continueWithMicrosoft")}
           </Button>
         </CardContent>
         <CardFooter>

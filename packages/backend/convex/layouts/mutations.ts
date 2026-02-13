@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdminOrLegacy } from "../auth";
+import { requireAdmin } from "../auth";
 import { extractBlockNoteText } from "../lib/extractBlockNoteText";
 import { markSiteModified } from "../lib/markModified";
 import type { Id } from "../_generated/dataModel";
@@ -183,7 +183,7 @@ export const create = mutation({
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
+    await requireAdmin(ctx, pageInfo.companyId as any);
 
     // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
@@ -236,7 +236,7 @@ export const updateSettings = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -264,7 +264,7 @@ export const updateSlots = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -298,7 +298,7 @@ export const addBlockToSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     // Find slot and add block
     const updatedSlots = layout.slots.map((slot: any) => {
@@ -341,7 +341,7 @@ export const updateBlockInSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     // Find the block to check its type
     let blockType: string | null = null;
@@ -408,7 +408,7 @@ export const removeBlockFromSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     // Check if the block being removed is a subpage
     let isSubpage = false;
@@ -480,7 +480,7 @@ export const moveBlock = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     // Find the block - use the same type as in slots
     type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
@@ -554,7 +554,7 @@ export const reorder = mutation({
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, pageInfo.companyId as any);
+    await requireAdmin(ctx, pageInfo.companyId as any);
 
     // Update order for each layout
     for (let i = 0; i < layoutIds.length; i++) {
@@ -580,7 +580,7 @@ export const remove = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.companyId as any);
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });

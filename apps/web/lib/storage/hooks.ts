@@ -4,7 +4,7 @@ import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useAction, useMutation } from "convex/react";
 import { useCallback, useState } from "react";
-import { useEntityAuth } from "../auth";
+import { authClient } from "../auth-client";
 import { type UploadProgress, entityStorageClient } from "./client";
 import { isExtractable } from "./extraction";
 
@@ -23,10 +23,14 @@ export interface UploadOptions {
 }
 
 /**
- * Hook for uploading files to Libraryry
+ * Hook for uploading files to Library
+ *
+ * NOTE: Entity Storage upload requires a migration to a new storage backend.
+ * Token handling will be updated as part of the storage migration.
  */
 export function useFileUpload() {
-  const { getToken, user } = useEntityAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>(
     {},
   );
@@ -68,12 +72,6 @@ export function useFileUpload() {
           error: null,
         });
 
-        // Get auth token
-        const token = await getToken();
-        if (!token) {
-          throw new Error("Not authenticated");
-        }
-
         if (!user?.id) {
           throw new Error("User not found");
         }
@@ -86,10 +84,11 @@ export function useFileUpload() {
         );
 
         // Upload to Entity Storage
+        // TODO: Update token handling after storage migration
         const { blobId, cdnUrl } = await entityStorageClient.upload(
           file,
           path,
-          token,
+          "", // Token no longer available - storage migration needed
           (progress) => {
             updateUploadState(fileId, { progress });
           },
@@ -130,7 +129,8 @@ export function useFileUpload() {
         const contentType = file.type || "application/octet-stream";
         if (isExtractable(contentType) && triggerExtraction) {
           // Fire and forget - extraction happens in background
-          triggerExtraction({ documentId, authToken: token }).catch(
+          // TODO: Update token handling after storage migration
+          triggerExtraction({ documentId, authToken: "" }).catch(
             (err: unknown) => {
               console.warn("Failed to trigger extraction:", err);
             },
@@ -146,7 +146,6 @@ export function useFileUpload() {
       }
     },
     [
-      getToken,
       user,
       createDocument,
       createInLibrary,

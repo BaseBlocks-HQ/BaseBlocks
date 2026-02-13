@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { QuicklinkItem, QuicklinkType } from "@/types/elements";
@@ -282,7 +282,8 @@ export function QuicklinksEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorContext();
-  const { getToken, user } = useEntityAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const layoutContext = useLayoutContext();
   const isSidebar = layoutContext?.isSidebar ?? false;
 
@@ -330,8 +331,6 @@ export function QuicklinksEditor({
   ) => {
     setUploadingLinkId(linkId);
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
       if (!user?.id) throw new Error("User not found");
 
       const timestamp = Date.now();
@@ -342,7 +341,8 @@ export function QuicklinksEditor({
         `quicklink_${timestamp}_${sanitizedFilename}`,
       );
 
-      const { cdnUrl } = await entityStorageClient.upload(file, path, token);
+      // TODO: Update token handling after storage migration
+      const { cdnUrl } = await entityStorageClient.upload(file, path, "");
 
       if (isNew && newLinkData) {
         setNewLinkData({ ...newLinkData, imageUrl: cdnUrl });

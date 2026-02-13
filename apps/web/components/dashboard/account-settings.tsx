@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "@/i18n/navigation";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -34,7 +34,8 @@ import { api } from "@repo/backend";
 export function AccountSettings() {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const { user, deleteAccount } = useEntityAuth();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
@@ -43,8 +44,8 @@ export function AccountSettings() {
 
   const deleteMyAccountData = useMutation(api.members.mutations.deleteMyAccountData);
 
-  const getInitials = (username?: string, email?: string) => {
-    if (username) return username.slice(0, 2).toUpperCase();
+  const getInitials = (name?: string, email?: string) => {
+    if (name) return name.slice(0, 2).toUpperCase();
     if (email) return email[0]?.toUpperCase() || "?";
     return "?";
   };
@@ -56,12 +57,10 @@ export function AccountSettings() {
       // First, delete user data from Convex database
       await deleteMyAccountData();
 
-      // Then, delete account from Entity Auth
-      const result = await deleteAccount();
-      if (result.ok) {
-        setOpen(false);
-        router.push("/login");
-      }
+      // Sign out after deleting data
+      await authClient.signOut();
+      setOpen(false);
+      router.push("/login");
     } catch (err) {
       const message = err instanceof Error ? err.message : t("deleteAccountError");
       setError(message);
@@ -92,14 +91,14 @@ export function AccountSettings() {
           {/* User Profile Section */}
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              {user?.imageUrl && <AvatarImage src={user.imageUrl} />}
+              {user?.image && <AvatarImage src={user.image} />}
               <AvatarFallback className="text-lg">
-                {getInitials(user?.username, user?.email)}
+                {getInitials(user?.name, user?.email)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg truncate">
-                {user?.username || t("anonymous")}
+                {user?.name || t("anonymous")}
               </p>
               {user?.email && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

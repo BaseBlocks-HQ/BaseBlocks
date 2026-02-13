@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireAdmin } from "../auth";
 
 // Create a new Library
 export const create = mutation({
@@ -9,15 +9,10 @@ export const create = mutation({
     name: v.string(),
   },
   handler: async (ctx, { siteId, name }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    const { auth } = await requireAdmin(ctx, site.companyId);
 
     // Check for duplicate library name within site
     const existingLibrary = await ctx.db
@@ -52,18 +47,13 @@ export const update = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { libraryId, name }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) throw new Error("Library not found");
 
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -92,18 +82,13 @@ export const update = mutation({
 export const remove = mutation({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) throw new Error("Library not found");
 
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, site.companyId);
 
     // Delete all documents in the library
     const documents = await ctx.db

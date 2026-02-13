@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/navigation";
-import { useEntityAuth } from "@/lib/auth";
 import { useFileUpload } from "@/lib/storage/hooks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -76,7 +75,6 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   // Extraction retry
-  const { getToken } = useEntityAuth();
   const retryExtraction = useAction(api.actions.extractDocument.retryExtraction);
 
   const handleFilesAccepted = async (acceptedFiles: File[]) => {
@@ -239,11 +237,10 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
                 await removeFile(fileId as Id<"documents">);
               }}
               onRetryExtraction={async (file) => {
-                const token = await getToken();
-                if (!token) return;
+                // TODO: Update token handling after storage migration
                 await retryExtraction({
                   documentId: file._id as Id<"documents">,
-                  authToken: token,
+                  authToken: "",
                 });
               }}
             />

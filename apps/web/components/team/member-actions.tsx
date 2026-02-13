@@ -25,22 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { useAction, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { Loader2, MoreHorizontal, Shield, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface Member {
   _id: Id<"members">;
-  eaUserId: string;
+  userId?: string;
   email: string;
   name?: string;
   role: "admin" | "viewer";
-  eaRole: string;
-  isOwner: boolean;
 }
 
 interface MemberActionsProps {
@@ -55,7 +53,7 @@ export function MemberActions({
   isCurrentUserAdmin,
 }: MemberActionsProps) {
   const t = useTranslations("team");
-  const { getToken, user } = useEntityAuth();
+  const { data: session } = authClient.useSession();
 
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -64,24 +62,20 @@ export function MemberActions({
   const [newRole, setNewRole] = useState<"admin" | "viewer">(member.role);
   const [error, setError] = useState<string | null>(null);
 
-  const removeMemberAction = useAction(api.members.actions.removeMemberFromOrg);
+  const removeMember = useMutation(api.members.mutations.removeMember);
   const updateRoleMutation = useMutation(api.members.mutations.updateRole);
 
-  const isCurrentUser = user?.id === member.eaUserId;
-  const canModify = isCurrentUserAdmin && !member.isOwner && !isCurrentUser;
+  const isCurrentUser = session?.user?.id === member.userId;
+  const canModify = isCurrentUserAdmin && !isCurrentUser;
 
   const handleRemove = async () => {
     setIsRemoving(true);
     setError(null);
 
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
-
-      await removeMemberAction({
+      await removeMember({
         companyId,
         memberId: member._id,
-        accessToken: token,
       });
 
       setShowRemoveDialog(false);

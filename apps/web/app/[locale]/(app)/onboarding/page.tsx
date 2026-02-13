@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "@/i18n/navigation";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { isVercelAppDomain } from "@/lib/utils";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@repo/backend";
@@ -22,7 +22,7 @@ import { useState } from "react";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useEntityAuth();
+  const { data: session } = authClient.useSession();
   const [companyName, setCompanyName] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,15 +42,25 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
 
     try {
-      // Use org ID if available, otherwise fallback to user ID
-      const eaOrgId = user?.organizationId || user?.id;
-      if (!eaOrgId) {
+      if (!session?.user) {
         throw new Error("Not authenticated");
       }
+
+      // Create Better Auth organization
+      const orgResult = await authClient.organization.create({
+        name: companyName,
+        slug,
+      });
+
+      if (!orgResult.data?.id) {
+        throw new Error("Failed to create organization");
+      }
+
+      // Create company in Convex with the BA organization ID
       await createCompany({
         name: companyName,
         slug,
-        eaOrgId,
+        organizationId: orgResult.data.id,
       });
 
       router.push("/dashboard");

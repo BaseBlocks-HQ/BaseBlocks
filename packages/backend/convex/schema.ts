@@ -2,9 +2,10 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // Companies/Organizations (synced from Entity Auth)
+  // Companies/Organizations
   companies: defineTable({
-    eaOrgId: v.string(), // Entity Auth org ID
+    eaOrgId: v.optional(v.string()), // Legacy Entity Auth org ID
+    organizationId: v.optional(v.string()), // Better Auth organization ID
     name: v.string(),
     slug: v.string(), // subdomain: acme.baseblocks.dev
     logoUrl: v.optional(v.string()),
@@ -16,7 +17,8 @@ export default defineSchema({
     }),
   })
     .index("by_slug", ["slug"])
-    .index("by_eaOrgId", ["eaOrgId"]),
+    .index("by_eaOrgId", ["eaOrgId"])
+    .index("by_organizationId", ["organizationId"]),
 
   // Sites (a company can have multiple sites)
   sites: defineTable({
@@ -429,19 +431,20 @@ export default defineSchema({
     .index("by_deployment", ["deploymentId"])
     .index("by_deployment_type", ["deploymentId", "chunkType"]),
 
-  // Team members (cached from Entity Auth)
+  // Team members
   members: defineTable({
     companyId: v.id("companies"),
-    eaUserId: v.string(), // Entity Auth user ID
+    userId: v.optional(v.string()), // Better Auth user ID (optional during migration)
+    eaUserId: v.optional(v.string()), // Legacy Entity Auth user ID
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("viewer")),
-    eaRole: v.string(), // Original EA role (owner/admin/member)
+    eaRole: v.optional(v.string()), // Legacy EA role
+    syncedAt: v.optional(v.number()), // Legacy sync timestamp
     joinedAt: v.number(),
-    syncedAt: v.number(),
   })
     .index("by_company", ["companyId"])
-    .index("by_company_user", ["companyId", "eaUserId"])
-    .index("by_ea_user", ["eaUserId"]),
+    .index("by_company_user", ["companyId", "userId"])
+    .index("by_user", ["userId"]),
 });

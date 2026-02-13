@@ -1,21 +1,16 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { getAuthContext, requireMember } from "../auth";
 
 // List all libraries for a site (authenticated)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return await ctx.db
       .query("documentLibraries")
@@ -28,18 +23,13 @@ export const list = query({
 export const get = query({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return library;
   },
@@ -82,15 +72,16 @@ export const listAllWithCounts = query({
   args: {},
   handler: async (ctx) => {
     const auth = await getAuthContext(ctx);
-    if (!auth.eaOrgId) return [];
-    const eaOrgId = auth.eaOrgId;
 
-    // Get all sites for this company
-    const company = await ctx.db
-      .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
+    // Find company via membership
+    const membership = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
       .first();
 
+    if (!membership) return [];
+
+    const company = await ctx.db.get(membership.companyId);
     if (!company) return [];
 
     const sites = await ctx.db
@@ -135,15 +126,10 @@ export const listAllWithCounts = query({
 export const listWithCounts = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const libraries = await ctx.db
       .query("documentLibraries")

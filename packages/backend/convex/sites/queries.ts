@@ -1,48 +1,35 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getOptionalAuthContext } from "../auth";
+import { getAuthContext, getAuthContextOrNull } from "../auth";
 
 // List sites for all companies the user is a member of
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const auth = await getOptionalAuthContext(ctx);
+    const auth = await getAuthContextOrNull(ctx);
     if (!auth) return [];
 
     // Get all memberships for this user
     const memberships = await ctx.db
       .query("members")
-      .withIndex("by_ea_user", (q) => q.eq("eaUserId", auth.userId))
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
       .collect();
 
-    // Also check for legacy access via eaOrgId (user's own company)
-    let ownCompany = null;
-    const eaOrgId = auth.eaOrgId;
-    if (eaOrgId) {
-      ownCompany = await ctx.db
-        .query("companies")
-        .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
-        .first();
-    }
+    if (memberships.length === 0) return [];
 
-    // Collect all company IDs (from memberships + own company)
-    const companyIds = new Set(memberships.map((m) => m.companyId));
-    if (ownCompany) {
-      companyIds.add(ownCompany._id);
-    }
-
-    if (companyIds.size === 0) return [];
+    // Collect all company IDs from memberships
+    const companyIds = memberships.map((m) => m.companyId);
 
     // Fetch all companies
     const companies = await Promise.all(
-      Array.from(companyIds).map((id) => ctx.db.get(id)),
+      companyIds.map((id) => ctx.db.get(id)),
     );
     const companyMap = new Map(
       companies.filter(Boolean).map((c) => [c!._id, c!]),
     );
 
     // Fetch sites for all companies
-    const sitesPromises = Array.from(companyIds).map((companyId) =>
+    const sitesPromises = companyIds.map((companyId) =>
       ctx.db
         .query("sites")
         .withIndex("by_company", (q) => q.eq("companyId", companyId))
@@ -136,16 +123,15 @@ export const getWithCompany = query({
     const company = await ctx.db.get(site.companyId);
     if (!company) return null;
 
-    // Verify access - check eaOrgId OR membership
-    const hasOrgAccess = company.eaOrgId === auth.eaOrgId;
+    // Verify access via membership
     const membership = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", company._id).eq("eaUserId", auth.userId),
+        q.eq("companyId", company._id).eq("userId", auth.userId),
       )
       .first();
 
-    if (!hasOrgAccess && !membership) {
+    if (!membership) {
       throw new Error("Unauthorized");
     }
 

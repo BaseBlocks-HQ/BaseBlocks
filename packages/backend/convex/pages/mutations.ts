@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { requireAdminOrLegacy } from "../auth";
+import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
 
 // Create a new page
@@ -19,7 +19,7 @@ export const create = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    const { auth } = await requireAdminOrLegacy(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.companyId);
 
     // Check slug uniqueness
     const existing = await ctx.db
@@ -80,7 +80,7 @@ export const update = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Check slug uniqueness if changing
     if (slug && slug !== page.slug) {
@@ -123,7 +123,7 @@ export const reorder = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Update order for each page based on its position in the array
     const now = Date.now();
@@ -187,7 +187,7 @@ export const move = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -237,7 +237,7 @@ export const updatePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     await ctx.db.patch(pageId, {
       pageTabs,
@@ -266,7 +266,7 @@ export const enablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Skip if tabs already enabled
     if (page.pageTabs && page.pageTabs.length > 0) {
@@ -313,7 +313,7 @@ export const disablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Clear tabId from all layouts
     const layouts = await ctx.db
@@ -349,7 +349,7 @@ export const remove = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
+    await requireAdmin(ctx, site.companyId);
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,23 +11,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEntityAuth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { api } from "@repo/backend";
-import { useAction } from "convex/react";
+import { useMutation } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 interface ReceivedInvitation {
   id: string;
-  orgId: string;
-  role: "admin" | "viewer";
-  eaRole: string; // Original EA role (admin/member)
-  expiresAt: number;
-  createdAt: number;
-  inviterEmail: string | null;
-  inviterUsername: string | null;
-  inviterImageUrl: string | null;
+  organizationId: string;
+  organizationName?: string;
+  role: string;
+  expiresAt: Date;
+  inviterEmail?: string;
 }
 
 interface InvitationInboxProps {
@@ -36,7 +33,6 @@ interface InvitationInboxProps {
 
 export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const t = useTranslations("inbox");
-  const { getToken } = useEntityAuth();
 
   const [open, setOpen] = useState(false);
   const [invitations, setInvitations] = useState<ReceivedInvitation[]>([]);
@@ -44,25 +40,26 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const getInvitations = useAction(
-    api.members.actions.getMyReceivedInvitations,
-  );
-  const acceptInvitation = useAction(
-    api.members.actions.acceptReceivedInvitation,
-  );
-  const declineInvitation = useAction(
-    api.members.actions.declineReceivedInvitation,
-  );
+  const syncMember = useMutation(api.members.mutations.syncMemberFromInvitation);
 
   const loadInvitations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const token = await getToken();
-      if (!token) return;
-
-      const results = await getInvitations({ accessToken: token });
-      setInvitations(results);
+      const result = await authClient.organization.listUserInvitations();
+      if (result.data) {
+        const pending = result.data.filter((inv: any) => inv.status === "pending");
+        setInvitations(
+          pending.map((inv: any) => ({
+            id: inv.id,
+            organizationId: inv.organizationId,
+            organizationName: inv.organizationName,
+            role: inv.role || "viewer",
+            expiresAt: new Date(inv.expiresAt),
+            inviterEmail: inv.inviterEmail,
+          })),
+        );
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load invitations",
@@ -70,20 +67,19 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [getToken, getInvitations]);
+  }, []);
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     setProcessingId(invitation.id);
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
-
-      await acceptInvitation({
+      // Accept in Better Auth
+      await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
-        accessToken: token,
-        orgId: invitation.orgId,
+      });
+      // Sync to Convex members table
+      await syncMember({
+        organizationId: invitation.organizationId,
         role: invitation.role,
-        eaRole: invitation.eaRole,
       });
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
     } catch (err) {
@@ -98,10 +94,9 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const handleDecline = async (invitationId: string) => {
     setProcessingId(invitationId);
     try {
-      const token = await getToken();
-      if (!token) throw new Error("Not authenticated");
-
-      await declineInvitation({ invitationId, accessToken: token });
+      await authClient.organization.rejectInvitation({
+        invitationId,
+      });
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
     } catch (err) {
       setError(
@@ -112,17 +107,16 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString();
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString();
   };
 
-  const getInitials = (username?: string | null, email?: string | null) => {
-    if (username) return username.slice(0, 2).toUpperCase();
+  const getInitials = (email?: string | null) => {
     if (email) return email[0]?.toUpperCase() || "?";
     return "?";
   };
 
-  // Load invitations on mount and poll every 30 seconds for badge
+  // Load invitations on mount and poll every 30 seconds
   useEffect(() => {
     loadInvitations();
     const interval = setInterval(loadInvitations, 30000);
@@ -194,20 +188,14 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
                 className="flex items-start gap-3 p-4 rounded-lg border bg-card"
               >
                 <Avatar className="h-10 w-10">
-                  {invitation.inviterImageUrl && (
-                    <AvatarImage src={invitation.inviterImageUrl} />
-                  )}
                   <AvatarFallback>
-                    {getInitials(
-                      invitation.inviterUsername,
-                      invitation.inviterEmail,
-                    )}
+                    {getInitials(invitation.inviterEmail)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 space-y-2">
                   <div>
                     <p className="font-medium">
-                      {invitation.inviterUsername ||
+                      {invitation.organizationName ||
                         invitation.inviterEmail ||
                         t("invitedToOrg")}
                     </p>
@@ -217,7 +205,7 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="secondary" className="text-xs">
-                      {invitation.role}
+                      {invitation.role === "member" ? "viewer" : invitation.role}
                     </Badge>
                     <span>·</span>
                     <span>

@@ -1,23 +1,18 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireMember } from "../auth";
 
 // List all folders in a library (flat list)
 export const listByLibrary = query({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -35,18 +30,13 @@ export const listByParent = query({
     parentId: v.optional(v.id("documentFolders")),
   },
   handler: async (ctx, { libraryId, parentId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -63,8 +53,6 @@ export const listByParent = query({
 export const get = query({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {
-    const auth = await getAuthContext(ctx);
-
     const folder = await ctx.db.get(folderId);
     if (!folder) return null;
 
@@ -74,10 +62,7 @@ export const get = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return folder;
   },
@@ -87,8 +72,6 @@ export const get = query({
 export const getPath = query({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {
-    const auth = await getAuthContext(ctx);
-
     const folder = await ctx.db.get(folderId);
     if (!folder) return [];
 
@@ -98,10 +81,7 @@ export const getPath = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     // Build path from folder to root
     const path: Array<{ _id: string; name: string }> = [];

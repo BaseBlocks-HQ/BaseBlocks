@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireMember } from "../auth";
 
 // ============================================================================
 // Helper Functions
@@ -147,15 +147,10 @@ async function performSearch(
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return await ctx.db
       .query("documents")
@@ -180,16 +175,10 @@ export const search = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { siteId, query: searchQuery, limit = 20 }) => {
-    // Verify authentication and authorization
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -271,18 +260,13 @@ export const listPublic = query({
 export const listByLibrary = query({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return await ctx.db
       .query("documents")
@@ -298,18 +282,13 @@ export const listByFolder = query({
     folderId: v.optional(v.id("documentFolders")),
   },
   handler: async (ctx, { libraryId, folderId }) => {
-    const auth = await getAuthContext(ctx);
-
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return await ctx.db
       .query("documents")
@@ -365,15 +344,10 @@ export const listByFolderPublic = query({
 export const getExtractionStats = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     // Get all documents for the site
     const allDocs = await ctx.db
@@ -409,15 +383,10 @@ export const listFailedExtraction = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { siteId, limit = 50 }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     return await ctx.db
       .query("documents")
@@ -436,19 +405,13 @@ export const searchByLibrary = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { libraryId, query: searchQuery, limit = 20 }) => {
-    const auth = await getAuthContext(ctx);
-
-    // Verify authorization
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];

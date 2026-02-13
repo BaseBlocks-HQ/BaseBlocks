@@ -1,9 +1,6 @@
 import { v } from "convex/values";
-/**
- * Member queries - public queries for clients
- */
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull } from "../auth";
+import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
 
 /**
  * List all members for a company
@@ -13,13 +10,7 @@ export const list = query({
     companyId: v.id("companies"),
   },
   handler: async (ctx, { companyId }) => {
-    const auth = await getAuthContext(ctx);
-
-    // Get company and verify access
-    const company = await ctx.db.get(companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, companyId);
 
     const members = await ctx.db
       .query("members")
@@ -28,14 +19,12 @@ export const list = query({
 
     return members.map((m) => ({
       _id: m._id,
-      eaUserId: m.eaUserId,
+      userId: m.userId,
       email: m.email,
       name: m.name,
       imageUrl: m.imageUrl,
       role: m.role,
-      eaRole: m.eaRole,
       joinedAt: m.joinedAt,
-      isOwner: m.eaRole === "owner",
     }));
   },
 });
@@ -56,7 +45,7 @@ export const getMyRole = query({
     const member = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", auth.userId),
+        q.eq("companyId", companyId).eq("userId", auth.userId),
       )
       .first();
 
@@ -66,8 +55,6 @@ export const getMyRole = query({
 
     return {
       role: member.role,
-      eaRole: member.eaRole,
-      isOwner: member.eaRole === "owner",
     };
   },
 });
@@ -88,7 +75,7 @@ export const isAdmin = query({
     const member = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", auth.userId),
+        q.eq("companyId", companyId).eq("userId", auth.userId),
       )
       .first();
 
@@ -112,7 +99,7 @@ export const isMember = query({
     const member = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", auth.userId),
+        q.eq("companyId", companyId).eq("userId", auth.userId),
       )
       .first();
 
@@ -128,13 +115,7 @@ export const count = query({
     companyId: v.id("companies"),
   },
   handler: async (ctx, { companyId }) => {
-    const auth = await getAuthContext(ctx);
-
-    // Get company and verify access
-    const company = await ctx.db.get(companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, companyId);
 
     const members = await ctx.db
       .query("members")

@@ -5,7 +5,7 @@ import type {
 } from "convex/server";
 import { ConvexError } from "convex/values";
 import type { DataModel, Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
 type ActionAuthCtx = GenericActionCtx<DataModel>;
@@ -13,60 +13,27 @@ type ActionAuthCtx = GenericActionCtx<DataModel>;
 export type ServerAuthContext = {
   userId: string;
   email?: string;
-  username?: string;
-  imageUrl?: string;
-  eaOrgId: string | null;
-};
-
-type ParsedIdentity = {
-  sub: string;
-  oid: string | null;
-  email?: string;
-  username?: string;
+  name?: string;
   imageUrl?: string;
 };
 
-async function parseIdentity(ctx: AuthCtx): Promise<ParsedIdentity | null> {
+async function parseIdentity(ctx: AuthCtx): Promise<ServerAuthContext | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
 
-  const id = identity as unknown as {
-    subject?: string;
-    sub?: string;
-    oid?: string | null;
-    email?: string;
-    username?: string;
-    name?: string;
-    imageUrl?: string;
-    pictureUrl?: string;
-  };
-
   return {
-    sub: String(id.sub || id.subject || ""),
-    oid: id.oid ?? null,
-    email: id.email,
-    username: id.username || id.name,
-    imageUrl: id.imageUrl || id.pictureUrl,
+    userId: identity.subject,
+    email: identity.email ?? undefined,
+    name: identity.name ?? undefined,
+    imageUrl: identity.pictureUrl ?? undefined,
   };
 }
 
 export async function getAuthContextOrNull(
   ctx: AuthCtx,
 ): Promise<ServerAuthContext | null> {
-  const parsed = await parseIdentity(ctx);
-  if (!parsed) return null;
-
-  return {
-    userId: parsed.sub,
-    email: parsed.email,
-    username: parsed.username,
-    imageUrl: parsed.imageUrl,
-    eaOrgId: parsed.oid,
-  };
+  return parseIdentity(ctx);
 }
-
-// Alias for backwards compatibility
-export const getOptionalAuthContext = getAuthContextOrNull;
 
 async function requireAuthContext(ctx: AuthCtx): Promise<ServerAuthContext> {
   const auth = await getAuthContextOrNull(ctx);
@@ -80,51 +47,23 @@ export const getServerAuthContext = (
   ctx: AuthCtx,
 ): Promise<ServerAuthContext> => requireAuthContext(ctx);
 
-// Alias for backwards compatibility
 export const getAuthContext = getServerAuthContext;
-
-async function parseIdentityFromAction(
-  ctx: ActionAuthCtx,
-): Promise<ParsedIdentity | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
-
-  const id = identity as unknown as {
-    subject?: string;
-    sub?: string;
-    oid?: string | null;
-    email?: string;
-    username?: string;
-    name?: string;
-    imageUrl?: string;
-    pictureUrl?: string;
-  };
-
-  return {
-    sub: String(id.sub || id.subject || ""),
-    oid: id.oid ?? null,
-    email: id.email,
-    username: id.username || id.name,
-    imageUrl: id.imageUrl || id.pictureUrl,
-  };
-}
 
 export async function getActionAuthContextOrNull(
   ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext | null> {
-  const parsed = await parseIdentityFromAction(ctx);
-  if (!parsed) return null;
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) return null;
 
   return {
-    userId: parsed.sub,
-    email: parsed.email,
-    username: parsed.username,
-    imageUrl: parsed.imageUrl,
-    eaOrgId: parsed.oid,
+    userId: identity.subject,
+    email: identity.email ?? undefined,
+    name: identity.name ?? undefined,
+    imageUrl: identity.pictureUrl ?? undefined,
   };
 }
 
-async function requireActionAuthContext(
+export async function getActionAuthContext(
   ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext> {
   const auth = await getActionAuthContextOrNull(ctx);
@@ -133,10 +72,6 @@ async function requireActionAuthContext(
   }
   return auth;
 }
-
-export const getActionAuthContext = (
-  ctx: ActionAuthCtx,
-): Promise<ServerAuthContext> => requireActionAuthContext(ctx);
 
 // Query to get the current user's auth context (for client-side use)
 export const getFullAuthContext = query({
@@ -149,35 +84,25 @@ export const getFullAuthContext = query({
         isAuthenticated: false,
         hasOrganization: false,
         user: null,
-        eaOrgId: null,
       };
     }
 
+    // Check if user has a company (member of any org)
+    const member = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+      .first();
+
     return {
       isAuthenticated: true,
-      hasOrganization: Boolean(auth.eaOrgId),
+      hasOrganization: !!member,
       user: {
         id: auth.userId,
         email: auth.email,
-        username: auth.username,
+        name: auth.name,
         imageUrl: auth.imageUrl,
       },
-      eaOrgId: auth.eaOrgId,
     };
-  },
-});
-
-// Bootstrap mutation to verify auth state
-export const bootstrap = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-
-    if (!auth) {
-      throw new ConvexError("Not authenticated");
-    }
-
-    return { ok: true, userId: auth.userId };
   },
 });
 
@@ -186,8 +111,7 @@ export const bootstrap = mutation({
 type MemberInfo = {
   _id: Id<"members">;
   role: "admin" | "viewer";
-  eaRole: string;
-  eaUserId: string;
+  userId: string;
 };
 
 type AuthWithMember = {
@@ -195,9 +119,6 @@ type AuthWithMember = {
   member: MemberInfo;
 };
 
-/**
- * Get member from members table
- */
 async function getMemberByUserId(
   ctx: AuthCtx,
   companyId: Id<"companies">,
@@ -206,7 +127,7 @@ async function getMemberByUserId(
   const member = await ctx.db
     .query("members")
     .withIndex("by_company_user", (q) =>
-      q.eq("companyId", companyId).eq("eaUserId", userId),
+      q.eq("companyId", companyId).eq("userId", userId),
     )
     .first();
 
@@ -215,15 +136,10 @@ async function getMemberByUserId(
   return {
     _id: member._id,
     role: member.role,
-    eaRole: member.eaRole,
-    eaUserId: member.eaUserId,
+    userId: member.userId!,
   };
 }
 
-/**
- * Require user to be an admin of the company
- * Throws if not authenticated or not an admin
- */
 export async function requireAdmin(
   ctx: AuthCtx,
   companyId: Id<"companies">,
@@ -242,10 +158,6 @@ export async function requireAdmin(
   return { auth, member };
 }
 
-/**
- * Require user to be a member of the company (admin or viewer)
- * Throws if not authenticated or not a member
- */
 export async function requireMember(
   ctx: AuthCtx,
   companyId: Id<"companies">,
@@ -260,9 +172,6 @@ export async function requireMember(
   return { auth, member };
 }
 
-/**
- * Check if user is an admin (returns boolean, doesn't throw)
- */
 export async function checkIsAdmin(
   ctx: AuthCtx,
   companyId: Id<"companies">,
@@ -274,9 +183,6 @@ export async function checkIsAdmin(
   return member?.role === "admin";
 }
 
-/**
- * Check if user is a member (returns boolean, doesn't throw)
- */
 export async function checkIsMember(
   ctx: AuthCtx,
   companyId: Id<"companies">,
@@ -286,57 +192,4 @@ export async function checkIsMember(
 
   const member = await getMemberByUserId(ctx, companyId, auth.userId);
   return !!member;
-}
-
-/**
- * Require org access via eaOrgId (legacy check) OR member table
- * This is a transitional helper during migration to member-based auth
- */
-export async function requireOrgAccessOrMember(
-  ctx: AuthCtx,
-  companyId: Id<"companies">,
-): Promise<{ auth: ServerAuthContext; isMember: boolean }> {
-  const auth = await requireAuthContext(ctx);
-
-  // First check the members table
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
-  if (member) {
-    return { auth, isMember: true };
-  }
-
-  // Fallback to eaOrgId check (legacy)
-  const company = await ctx.db.get(companyId);
-  if (company && company.eaOrgId === auth.eaOrgId) {
-    return { auth, isMember: false };
-  }
-
-  throw new ConvexError("Not authorized to access this organization");
-}
-
-/**
- * Require admin access via member table OR legacy eaOrgId (for writes)
- * This is a transitional helper during migration
- */
-export async function requireAdminOrLegacy(
-  ctx: AuthCtx,
-  companyId: Id<"companies">,
-): Promise<{ auth: ServerAuthContext; isAdmin: boolean }> {
-  const auth = await requireAuthContext(ctx);
-
-  // First check the members table
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
-  if (member) {
-    if (member.role !== "admin") {
-      throw new ConvexError("Admin access required");
-    }
-    return { auth, isAdmin: true };
-  }
-
-  // Fallback to eaOrgId check (legacy - treat as admin for backwards compat)
-  const company = await ctx.db.get(companyId);
-  if (company && company.eaOrgId === auth.eaOrgId) {
-    return { auth, isAdmin: true };
-  }
-
-  throw new ConvexError("Not authorized to access this organization");
 }

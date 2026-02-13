@@ -1,10 +1,6 @@
+import { getAuthConfigProvider } from "@convex-dev/better-auth/auth-config";
+import type { AuthConfig } from "convex/server";
+
 export default {
-  providers: [
-    {
-      domain:
-        process.env.ENTITY_AUTH_ISSUER_URL ||
-        "https://entityy-entity-auth.vercel.app",
-      applicationID: "convex",
-    },
-  ],
-};
+  providers: [getAuthConfigProvider()],
+} satisfies AuthConfig;

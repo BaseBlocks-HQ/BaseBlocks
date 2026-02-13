@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { getAuthContext, requireAdminOrLegacy } from "../auth";
+import { getAuthContext, requireAdmin } from "../auth";
 
 /**
  * Deploy site - copies ALL draft fields to published fields for sites, pages, and layouts.
@@ -16,7 +16,7 @@ export const deploy = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdminOrLegacy(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.companyId);
     const now = Date.now();
 
     // Mark current active deployment as superseded
@@ -175,7 +175,7 @@ export const rollback = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdminOrLegacy(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.companyId);
 
     // Verify target deployment belongs to this site
     const targetDeployment = await ctx.db.get(targetDeploymentId);

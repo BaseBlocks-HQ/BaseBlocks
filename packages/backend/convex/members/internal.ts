@@ -1,8 +1,4 @@
 import { v } from "convex/values";
-/**
- * Internal queries and mutations for members
- * These are called by actions and not exposed to clients
- */
 import { internalMutation, internalQuery } from "../_generated/server";
 
 /**
@@ -21,13 +17,13 @@ export const getCompany = internalQuery({
 export const getMemberByUserId = internalQuery({
   args: {
     companyId: v.id("companies"),
-    eaUserId: v.string(),
+    userId: v.string(),
   },
-  handler: async (ctx, { companyId, eaUserId }) => {
+  handler: async (ctx, { companyId, userId }) => {
     return await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", eaUserId),
+        q.eq("companyId", companyId).eq("userId", userId),
       )
       .first();
   },
@@ -40,88 +36,6 @@ export const getMemberById = internalQuery({
   args: { memberId: v.id("members") },
   handler: async (ctx, { memberId }) => {
     return await ctx.db.get(memberId);
-  },
-});
-
-/**
- * Sync members from Entity Auth data
- */
-export const syncMembersFromEA = internalMutation({
-  args: {
-    companyId: v.id("companies"),
-    eaMembers: v.array(
-      v.object({
-        eaUserId: v.string(),
-        email: v.string(),
-        name: v.optional(v.string()),
-        imageUrl: v.optional(v.string()),
-        role: v.union(v.literal("admin"), v.literal("viewer")),
-        eaRole: v.string(),
-        joinedAt: v.number(),
-      }),
-    ),
-  },
-  handler: async (ctx, { companyId, eaMembers }) => {
-    const now = Date.now();
-
-    // Get existing members
-    const existingMembers = await ctx.db
-      .query("members")
-      .withIndex("by_company", (q) => q.eq("companyId", companyId))
-      .collect();
-
-    const existingByUserId = new Map(
-      existingMembers.map((m) => [m.eaUserId, m]),
-    );
-    const eaUserIds = new Set(eaMembers.map((m) => m.eaUserId));
-
-    let added = 0;
-    let updated = 0;
-    let removed = 0;
-
-    // Upsert members from EA
-    for (const eaMember of eaMembers) {
-      const existing = existingByUserId.get(eaMember.eaUserId);
-
-      if (existing) {
-        // Update existing member (preserve role unless eaRole changed)
-        await ctx.db.patch(existing._id, {
-          email: eaMember.email,
-          name: eaMember.name,
-          imageUrl: eaMember.imageUrl,
-          eaRole: eaMember.eaRole,
-          // Only update role if EA role changed
-          role:
-            existing.eaRole !== eaMember.eaRole ? eaMember.role : existing.role,
-          syncedAt: now,
-        });
-        updated++;
-      } else {
-        // Insert new member
-        await ctx.db.insert("members", {
-          companyId,
-          eaUserId: eaMember.eaUserId,
-          email: eaMember.email,
-          name: eaMember.name,
-          imageUrl: eaMember.imageUrl,
-          role: eaMember.role,
-          eaRole: eaMember.eaRole,
-          joinedAt: eaMember.joinedAt,
-          syncedAt: now,
-        });
-        added++;
-      }
-    }
-
-    // Remove members no longer in EA
-    for (const existing of existingMembers) {
-      if (!eaUserIds.has(existing.eaUserId)) {
-        await ctx.db.delete(existing._id);
-        removed++;
-      }
-    }
-
-    return { added, updated, removed };
   },
 });
 
@@ -149,14 +63,16 @@ export const updateMemberRole = internalMutation({
 });
 
 /**
- * Get company by Entity Auth org ID
+ * Get company by organization ID (Better Auth)
  */
-export const getCompanyByEaOrgId = internalQuery({
-  args: { eaOrgId: v.string() },
-  handler: async (ctx, { eaOrgId }) => {
+export const getCompanyByOrganizationId = internalQuery({
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) => {
     return await ctx.db
       .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
+      .withIndex("by_organizationId", (q) =>
+        q.eq("organizationId", organizationId),
+      )
       .first();
   },
 });
@@ -167,16 +83,15 @@ export const getCompanyByEaOrgId = internalQuery({
 export const addMemberFromInvitation = internalMutation({
   args: {
     companyId: v.id("companies"),
-    eaUserId: v.string(),
+    userId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("viewer")),
-    eaRole: v.string(),
   },
   handler: async (
     ctx,
-    { companyId, eaUserId, email, name, imageUrl, role, eaRole },
+    { companyId, userId, email, name, imageUrl, role },
   ) => {
     const now = Date.now();
 
@@ -184,34 +99,28 @@ export const addMemberFromInvitation = internalMutation({
     const existing = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", eaUserId),
+        q.eq("companyId", companyId).eq("userId", userId),
       )
       .first();
 
     if (existing) {
-      // Update existing member
       await ctx.db.patch(existing._id, {
         email,
         name,
         imageUrl,
         role,
-        eaRole,
-        syncedAt: now,
       });
       return { memberId: existing._id, action: "updated" as const };
     }
 
-    // Insert new member
     const memberId = await ctx.db.insert("members", {
       companyId,
-      eaUserId,
+      userId,
       email,
       name,
       imageUrl,
       role,
-      eaRole,
       joinedAt: now,
-      syncedAt: now,
     });
 
     return { memberId, action: "created" as const };

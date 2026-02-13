@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { requireMember } from "../auth";
 
 // ============================================================================
 // Helper Functions
@@ -89,15 +89,10 @@ export const searchAll = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { siteId, query: searchQuery, contentTypes, limit = 20 }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -259,15 +254,10 @@ export const listTitles = query({
     siteId: v.id("sites"),
   },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireMember(ctx, site.companyId);
 
     const all = await ctx.db
       .query("searchableContent")

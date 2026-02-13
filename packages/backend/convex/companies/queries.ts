@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getOptionalAuthContext } from "../auth";
+import { getAuthContextOrNull } from "../auth";
 
 // Get company by slug (for multi-tenant routing)
 export const getBySlug = query({
@@ -13,32 +13,22 @@ export const getBySlug = query({
   },
 });
 
-// Get company by Entity Auth org ID
-export const getByEaOrgId = query({
-  args: { eaOrgId: v.string() },
-  handler: async (ctx, { eaOrgId }) => {
-    return await ctx.db
-      .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
-      .first();
-  },
-});
-
-// Get current user's company (based on their active org or userId)
+// Get current user's company (based on membership)
 export const getMine = query({
   args: {},
   handler: async (ctx) => {
-    const auth = await getOptionalAuthContext(ctx);
+    const auth = await getAuthContextOrNull(ctx);
     if (!auth) return null;
 
-    // Try org ID first, then fallback to user ID
-    const eaOrgId = auth.eaOrgId || auth.userId;
-    if (!eaOrgId) return null;
-
-    return await ctx.db
-      .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
+    // Find any company where the user is a member
+    const member = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
       .first();
+
+    if (!member) return null;
+
+    return await ctx.db.get(member.companyId);
   },
 });
 

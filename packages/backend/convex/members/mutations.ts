@@ -1,13 +1,9 @@
 import { v } from "convex/values";
-/**
- * Member mutations - public mutations for clients
- */
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { getAuthContext, requireAdmin } from "../auth";
 
 /**
  * Update a member's role (admin only)
- * Note: This only updates the local BaseBlocks role, not the Entity Auth role
  */
 export const updateRole = mutation({
   args: {
@@ -15,42 +11,16 @@ export const updateRole = mutation({
     role: v.union(v.literal("admin"), v.literal("viewer")),
   },
   handler: async (ctx, { memberId, role }) => {
-    const auth = await getAuthContext(ctx);
-    if (!auth.eaOrgId) {
-      throw new Error("No organization selected");
-    }
-
-    // Get the member to update
     const memberToUpdate = await ctx.db.get(memberId);
     if (!memberToUpdate) {
       throw new Error("Member not found");
     }
 
-    // Get the company
-    const company = await ctx.db.get(memberToUpdate.companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
-
-    // Verify current user is admin
-    const currentMember = await ctx.db
-      .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", memberToUpdate.companyId).eq("eaUserId", auth.userId),
-      )
-      .first();
-
-    if (!currentMember || currentMember.role !== "admin") {
-      throw new Error("Admin access required");
-    }
-
-    // Cannot change the owner's role
-    if (memberToUpdate.eaRole === "owner") {
-      throw new Error("Cannot change the organization owner's role");
-    }
+    await requireAdmin(ctx, memberToUpdate.companyId);
 
     // Cannot demote yourself if you're the last admin
-    if (memberToUpdate.eaUserId === auth.userId && role === "viewer") {
+    const auth = await getAuthContext(ctx);
+    if (memberToUpdate.userId === auth.userId && role === "viewer") {
       const admins = await ctx.db
         .query("members")
         .withIndex("by_company", (q) =>
@@ -65,27 +35,23 @@ export const updateRole = mutation({
     }
 
     await ctx.db.patch(memberId, { role });
-
     return { success: true };
   },
 });
 
 /**
  * Delete the current user's account data from all companies
- * Called when user deletes their account via Entity Auth
  */
 export const deleteMyAccountData = mutation({
   args: {},
   handler: async (ctx) => {
     const auth = await getAuthContext(ctx);
 
-    // Find all member records for this user
     const memberRecords = await ctx.db
       .query("members")
-      .filter((q) => q.eq(q.field("eaUserId"), auth.userId))
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
       .collect();
 
-    // Delete all member records
     for (const member of memberRecords) {
       await ctx.db.delete(member._id);
     }
@@ -96,7 +62,6 @@ export const deleteMyAccountData = mutation({
 
 /**
  * Ensure the company creator is added as an admin member
- * Called during company creation or when no members exist
  */
 export const ensureCreatorMember = mutation({
   args: {
@@ -104,21 +69,17 @@ export const ensureCreatorMember = mutation({
   },
   handler: async (ctx, { companyId }) => {
     const auth = await getAuthContext(ctx);
-    if (!auth.eaOrgId) {
-      throw new Error("No organization selected");
-    }
 
-    // Get the company
     const company = await ctx.db.get(companyId);
-    if (!company || company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
+    if (!company) {
+      throw new Error("Company not found");
     }
 
     // Check if user is already a member
     const existingMember = await ctx.db
       .query("members")
       .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("eaUserId", auth.userId),
+        q.eq("companyId", companyId).eq("userId", auth.userId),
       )
       .first();
 
@@ -126,20 +87,164 @@ export const ensureCreatorMember = mutation({
       return { memberId: existingMember._id, alreadyExists: true };
     }
 
-    // Add as admin member (company creator)
     const now = Date.now();
     const memberId = await ctx.db.insert("members", {
       companyId,
-      eaUserId: auth.userId,
+      userId: auth.userId,
       email: auth.email || "",
-      name: auth.username,
+      name: auth.name,
       imageUrl: auth.imageUrl,
       role: "admin",
-      eaRole: "owner", // Company creator is the owner
       joinedAt: now,
-      syncedAt: now,
     });
 
     return { memberId, alreadyExists: false };
+  },
+});
+
+/**
+ * Migrate member records after Better Auth login.
+ * 1. Links legacy member records (matched by email) to the BA userId.
+ * 2. Returns companies the user is admin of that still need a BA organization.
+ */
+export const migrateAfterLogin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const auth = await getAuthContext(ctx);
+    if (!auth.email) return { updated: 0, unmigratedCompanies: [] };
+
+    // Check if member records already linked to this BA user
+    const existingMembers = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+      .collect();
+
+    let updated = 0;
+
+    if (existingMembers.length === 0) {
+      // First BA login - find legacy member records by email
+      // Old EA sync stored email in the name field for some records
+      const allMembers = await ctx.db.query("members").collect();
+      const myMembers = allMembers.filter(
+        (m) =>
+          (m.email && m.email === auth.email) ||
+          (m.name && m.name === auth.email),
+      );
+
+      for (const member of myMembers) {
+        await ctx.db.patch(member._id, {
+          userId: auth.userId,
+          email: auth.email,
+          name: auth.name || member.name,
+          imageUrl: auth.imageUrl || member.imageUrl,
+        });
+        updated++;
+      }
+    }
+
+    // Find companies where user is admin that need a BA organization
+    const myMembers = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+      .collect();
+
+    const unmigratedCompanies: { _id: string; name: string; slug: string }[] =
+      [];
+    for (const member of myMembers) {
+      if (member.role === "admin") {
+        const company = await ctx.db.get(member.companyId);
+        if (company && !company.organizationId) {
+          unmigratedCompanies.push({
+            _id: company._id,
+            name: company.name,
+            slug: company.slug,
+          });
+        }
+      }
+    }
+
+    return { updated, unmigratedCompanies };
+  },
+});
+
+/**
+ * Sync a member record after accepting a Better Auth invitation.
+ * Maps BA roles to Convex roles ("member" → "viewer", "admin" → "admin").
+ */
+export const syncMemberFromInvitation = mutation({
+  args: {
+    organizationId: v.string(),
+    role: v.string(),
+  },
+  handler: async (ctx, { organizationId, role }) => {
+    const auth = await getAuthContext(ctx);
+
+    // Find the Convex company linked to this BA organization
+    const company = await ctx.db
+      .query("companies")
+      .withIndex("by_organizationId", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .first();
+
+    if (!company) {
+      throw new Error("Company not found for this organization");
+    }
+
+    // Check if already a member
+    const existing = await ctx.db
+      .query("members")
+      .withIndex("by_company_user", (q) =>
+        q.eq("companyId", company._id).eq("userId", auth.userId),
+      )
+      .first();
+
+    if (existing) {
+      return { memberId: existing._id, alreadyExists: true };
+    }
+
+    // Map BA role to Convex role
+    const convexRole: "admin" | "viewer" = role === "admin" ? "admin" : "viewer";
+
+    const memberId = await ctx.db.insert("members", {
+      companyId: company._id,
+      userId: auth.userId,
+      email: auth.email || "",
+      name: auth.name,
+      imageUrl: auth.imageUrl,
+      role: convexRole,
+      joinedAt: Date.now(),
+    });
+
+    return { memberId, alreadyExists: false };
+  },
+});
+
+/**
+ * Remove a member from the organization (admin only)
+ */
+export const removeMember = mutation({
+  args: {
+    companyId: v.id("companies"),
+    memberId: v.id("members"),
+  },
+  handler: async (ctx, { companyId, memberId }) => {
+    const { auth } = await requireAdmin(ctx, companyId);
+
+    const memberToRemove = await ctx.db.get(memberId);
+    if (!memberToRemove) {
+      throw new Error("Member not found");
+    }
+
+    if (memberToRemove.companyId !== companyId) {
+      throw new Error("Member does not belong to this company");
+    }
+
+    if (memberToRemove.userId === auth.userId) {
+      throw new Error("Cannot remove yourself from the organization");
+    }
+
+    await ctx.db.delete(memberId);
+    return { success: true };
   },
 });

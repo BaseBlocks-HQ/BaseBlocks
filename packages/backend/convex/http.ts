@@ -1,8 +1,14 @@
 import { httpRouter } from "convex/server";
+import { authComponent, createAuth } from "./betterAuthSetup";
 
 const http = httpRouter();
 
-// Add HTTP routes here as needed
-// For example, webhooks for external services
+authComponent.registerRoutes(http, createAuth, {
+  cors: {
+    allowedOrigins: [
+      process.env.APP_URL!,
+    ],
+  },
+});
 
 export default http;

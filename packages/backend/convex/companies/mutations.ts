@@ -1,15 +1,15 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthContext } from "../auth";
+import { getAuthContext, requireAdmin } from "../auth";
 
 // Create a new company (during onboarding)
 export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
-    eaOrgId: v.string(),
+    organizationId: v.optional(v.string()),
   },
-  handler: async (ctx, { name, slug, eaOrgId }) => {
+  handler: async (ctx, { name, slug, organizationId }) => {
     const auth = await getAuthContext(ctx);
 
     // Check slug availability
@@ -24,23 +24,11 @@ export const create = mutation({
       );
     }
 
-    // Check if company already exists for this org
-    const existingOrg = await ctx.db
-      .query("companies")
-      .withIndex("by_eaOrgId", (q) => q.eq("eaOrgId", eaOrgId))
-      .first();
-
-    if (existingOrg) {
-      throw new Error(
-        "A workspace already exists for this organization. Please contact support if you need assistance."
-      );
-    }
-
     const now = Date.now();
     const companyId = await ctx.db.insert("companies", {
       name,
       slug: slug.toLowerCase(),
-      eaOrgId,
+      organizationId,
       createdBy: auth.userId,
       createdAt: now,
       settings: {
@@ -51,17 +39,37 @@ export const create = mutation({
     // Create the creator as an admin member of this company
     await ctx.db.insert("members", {
       companyId,
-      eaUserId: auth.userId,
+      userId: auth.userId,
       email: auth.email ?? "",
-      name: auth.username,
+      name: auth.name,
       imageUrl: auth.imageUrl,
       role: "admin",
-      eaRole: "owner",
       joinedAt: now,
-      syncedAt: now,
     });
 
     return companyId;
+  },
+});
+
+// Link a legacy company to a Better Auth organization (migration)
+export const linkOrganization = mutation({
+  args: {
+    companyId: v.id("companies"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, { companyId, organizationId }) => {
+    await requireAdmin(ctx, companyId);
+
+    const company = await ctx.db.get(companyId);
+    if (!company) {
+      throw new Error("Company not found");
+    }
+    if (company.organizationId) {
+      return { success: true, alreadyLinked: true };
+    }
+
+    await ctx.db.patch(companyId, { organizationId });
+    return { success: true, alreadyLinked: false };
   },
 });
 
@@ -75,16 +83,11 @@ export const updateSettings = mutation({
     }),
   },
   handler: async (ctx, { companyId, settings }) => {
-    const auth = await getAuthContext(ctx);
-    const company = await ctx.db.get(companyId);
+    await requireAdmin(ctx, companyId);
 
+    const company = await ctx.db.get(companyId);
     if (!company) {
       throw new Error("Company not found");
-    }
-
-    // Verify user has access (same org)
-    if (company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
     }
 
     await ctx.db.patch(companyId, {
@@ -103,16 +106,7 @@ export const updateProfile = mutation({
     logoUrl: v.optional(v.string()),
   },
   handler: async (ctx, { companyId, name, logoUrl }) => {
-    const auth = await getAuthContext(ctx);
-    const company = await ctx.db.get(companyId);
-
-    if (!company) {
-      throw new Error("Company not found");
-    }
-
-    if (company.eaOrgId !== auth.eaOrgId) {
-      throw new Error("Unauthorized");
-    }
+    await requireAdmin(ctx, companyId);
 
     const updates: Record<string, string> = {};
     if (name !== undefined) updates.name = name;
