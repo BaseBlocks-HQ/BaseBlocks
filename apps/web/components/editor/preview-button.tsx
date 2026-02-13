@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getSiteUrl } from "@/lib/utils";
 import { Eye } from "lucide-react";
 
@@ -28,9 +29,13 @@ export function PreviewButton({ companySlug, siteSlug }: PreviewButtonProps) {
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handlePreview}>
-      <Eye className="h-4 w-4 mr-1.5" />
-      Preview
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="ghost" size="icon-sm" onClick={handlePreview}>
+          <Eye />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Preview</TooltipContent>
+    </Tooltip>
   );
 }

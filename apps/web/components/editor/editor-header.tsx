@@ -4,13 +4,29 @@ import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn, getSiteUrl } from "@/lib/utils";
 import type { SiteCustomization } from "@/types/elements/customization";
 import type { Id } from "@repo/backend";
 import {
+  Check,
+  ChevronDown,
   Eye,
   EyeOff,
+  ExternalLink,
   Globe,
   History,
   PanelTop,
@@ -135,6 +151,7 @@ export function EditorHeader({
   return (
     <>
       <header className="border-b h-14 shrink-0 flex items-center justify-between px-4 bg-background z-40">
+        {/* Left section */}
         <div className="flex items-center gap-2">
           <SidebarTrigger />
           {!canEdit && (
@@ -155,33 +172,69 @@ export function EditorHeader({
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Right section */}
+        <div className="flex items-center gap-1">
+          {/* Icon button group: Preview, View Live, Share, History */}
           <PreviewButton companySlug={companySlug} siteSlug={siteSlug} />
+
+          {sitePublished && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon-sm" asChild>
+                  <a
+                    href={getSiteUrl(companySlug, siteSlug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink />
+                  </a>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("editor.viewLive")}</TooltipContent>
+            </Tooltip>
+          )}
+
           {canEdit && (
             <>
-              {/* Share button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShareDialogOpen(true)}
-              >
-                <Share2 className="h-4 w-4 mr-1.5" />
-                Share
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShareDialogOpen(true)}
+                  >
+                    <Share2 />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Share</TooltipContent>
+              </Tooltip>
 
-              {/* Deployment history button */}
               {sitePublished && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setHistoryOpen(true)}
-                  className="gap-1.5"
-                >
-                  <History className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      <History />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Deployment History</TooltipContent>
+                </Tooltip>
               )}
+            </>
+          )}
 
-              {/* Deploy button */}
+          {/* Separator between icon group and primary CTA */}
+          {canEdit && (
+            <Separator orientation="vertical" className="mx-1.5 h-5" />
+          )}
+
+          {/* Primary CTA */}
+          {canEdit && (
+            <>
               {hasUndeployedChanges ? (
                 <Button
                   size="sm"
@@ -192,43 +245,60 @@ export function EditorHeader({
                   Deploy Changes
                 </Button>
               ) : sitePublished ? (
-                <>
-                  {onUnpublish && (
-                    <Button variant="outline" size="sm" onClick={onUnpublish}>
-                      <EyeOff className="h-4 w-4 mr-1.5" />
-                      {t("editor.unpublish")}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      Published
+                      <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
-                  )}
-                  <Button variant="outline" size="sm" asChild>
-                    <a
-                      href={getSiteUrl(companySlug, siteSlug)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Globe className="h-4 w-4 mr-1.5" />
-                      {t("editor.viewLive")}
-                    </a>
-                  </Button>
-                </>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={getSiteUrl(companySlug, siteSlug)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Globe />
+                        {t("editor.viewLive")}
+                      </a>
+                    </DropdownMenuItem>
+                    {onUnpublish && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={onUnpublish} variant="destructive">
+                          <EyeOff />
+                          {t("editor.unpublish")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Button size="sm" onClick={onPublish}>
-                  <Globe className="h-4 w-4 mr-1.5" />
+                  <Globe className="h-4 w-4" />
                   {t("editor.publish")}
                 </Button>
               )}
             </>
           )}
+
+          {/* View-only: just show View Live if published */}
           {!canEdit && sitePublished && (
-            <Button variant="outline" size="sm" asChild>
-              <a
-                href={getSiteUrl(companySlug, siteSlug)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Globe className="h-4 w-4 mr-1.5" />
-                {t("editor.viewLive")}
-              </a>
-            </Button>
+            <>
+              <Separator orientation="vertical" className="mx-1.5 h-5" />
+              <Button variant="outline" size="sm" asChild>
+                <a
+                  href={getSiteUrl(companySlug, siteSlug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Globe className="h-4 w-4" />
+                  {t("editor.viewLive")}
+                </a>
+              </Button>
+            </>
           )}
         </div>
       </header>
