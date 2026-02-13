@@ -48,8 +48,8 @@ export default function LandingPage() {
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             {t("landing.heroTitle")}
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground">
-            {t("landing.heroDescription")}
+          <p className="mt-4 text-lg text-muted-foreground sm:text-xl">
+            {t("landing.heroSubtitle")}
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
             {isAuthenticated ? (

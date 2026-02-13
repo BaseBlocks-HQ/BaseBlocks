@@ -25,12 +25,11 @@
     "redirecting": "Redirecting..."
   },
   "metadata": {
-    "title": "BaseBlocks - Build Internal Sites for Your Company",
-    "description": "Create and share internal documentation, resources, and knowledge bases with your team."
+    "title": "BaseBlocks - Idea to site in minutes"
   },
   "landing": {
-    "heroTitle": "Build Internal Sites for Your Company",
-    "heroDescription": "Create and share internal documentation, resources, and knowledge bases with your team. Simple, secure, and beautifully designed."
+    "heroTitle": "Idea to site in minutes.",
+    "heroSubtitle": "Build it. Ship it. Share it."
   },
   "navigation": {
     "dashboard": "Dashboard",

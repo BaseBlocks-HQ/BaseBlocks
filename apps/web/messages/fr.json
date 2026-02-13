@@ -25,12 +25,11 @@
     "redirecting": "Redirection..."
   },
   "metadata": {
-    "title": "BaseBlocks - Creez des sites internes pour votre entreprise",
-    "description": "Creez et partagez de la documentation interne, des ressources et des bases de connaissances avec votre equipe."
+    "title": "BaseBlocks - De l'idée au site en minutes"
   },
   "landing": {
-    "heroTitle": "Creez des sites internes pour votre entreprise",
-    "heroDescription": "Creez et partagez de la documentation interne, des ressources et des bases de connaissances avec votre equipe. Simple, securise et magnifiquement concu."
+    "heroTitle": "De l'idée au site en minutes.",
+    "heroSubtitle": "Créez. Publiez. Partagez."
   },
   "navigation": {
     "dashboard": "Tableau de bord",
