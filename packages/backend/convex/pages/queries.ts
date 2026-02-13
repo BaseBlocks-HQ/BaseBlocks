@@ -280,12 +280,47 @@ export const getByPathPublished = query({
 
     const deployedPages = allPages.filter((p) => p.isDeployed);
 
-    // Empty path defaults to "home"
+    // Empty path: resolve via site's defaultPageId, then fall back to first root page
     if (path.length === 0) {
-      const homePage = deployedPages.find(
-        (p) => (p.publishedSlug ?? p.slug) === "home" && !(p.publishedParentId ?? p.parentId),
-      );
-      return homePage ?? null;
+      const site = await ctx.db.get(siteId);
+      // Prefer draft defaultPageId (user's current setting) over published (stale from last deploy)
+      const resolvedDefaultPageId = site?.defaultPageId ?? site?.publishedDefaultPageId;
+
+      // Try the configured default page first
+      if (resolvedDefaultPageId) {
+        const defaultPage = deployedPages.find((p) => p._id === resolvedDefaultPageId);
+        if (defaultPage) {
+          return {
+            ...defaultPage,
+            title: defaultPage.publishedTitle ?? defaultPage.title,
+            slug: defaultPage.publishedSlug ?? defaultPage.slug,
+            icon: defaultPage.publishedIcon ?? defaultPage.icon,
+            order: defaultPage.publishedOrder ?? defaultPage.order,
+            parentId: defaultPage.publishedParentId ?? defaultPage.parentId,
+            pageTabs: defaultPage.publishedPageTabs ?? defaultPage.pageTabs,
+          };
+        }
+      }
+
+      // Fallback: first deployed root page by order
+      const rootPages = deployedPages
+        .filter((p) => !(p.publishedParentId ?? p.parentId))
+        .sort((a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order));
+
+      const firstPage = rootPages[0];
+      if (firstPage) {
+        return {
+          ...firstPage,
+          title: firstPage.publishedTitle ?? firstPage.title,
+          slug: firstPage.publishedSlug ?? firstPage.slug,
+          icon: firstPage.publishedIcon ?? firstPage.icon,
+          order: firstPage.publishedOrder ?? firstPage.order,
+          parentId: firstPage.publishedParentId ?? firstPage.parentId,
+          pageTabs: firstPage.publishedPageTabs ?? firstPage.pageTabs,
+        };
+      }
+
+      return null;
     }
 
     // Walk the path from root to leaf using published fields

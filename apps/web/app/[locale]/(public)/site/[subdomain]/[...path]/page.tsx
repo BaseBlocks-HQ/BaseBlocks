@@ -24,7 +24,8 @@ export default function PublicSitePage({ params }: Props) {
   const { subdomain, path } = use(params);
   // path[0] is the site slug, path[1:] is the page path
   const siteSlug = path[0] || "";
-  const pagePath = path.length > 1 ? path.slice(1) : ["home"];
+  // Empty array = "show the default page", backend resolves via defaultPageId
+  const pagePath = path.length > 1 ? path.slice(1) : [];
 
   const site = useQuery(api.sites.queries.getBySlug, {
     companySlug: subdomain,

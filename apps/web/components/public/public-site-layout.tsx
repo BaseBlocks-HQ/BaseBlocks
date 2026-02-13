@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
-import { cn } from "@/lib/utils";
+import { cn, getPageLink } from "@/lib/utils";
 import type { PageWithChildren } from "@/types";
 import type { BannerContent } from "@/types/elements";
 import type { SiteCustomization } from "@/types/elements/customization";
@@ -28,7 +28,8 @@ import type { NavigationStyle } from "@/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
 import { PublicSubpageProvider } from "./public-subpage-context";
@@ -85,7 +86,26 @@ export function PublicSiteLayout({
   const ancestorIds = ancestors?.map((a) => a._id) ?? [];
 
   // Build the current path string for navigation matching
-  const currentPathString = pagePath.join("/");
+  // When pagePath is empty (default page), use the resolved page's slug for nav matching
+  const currentPathString = pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
+
+  // Redirect to default/first page if current page is not found but pages exist
+  const router = useRouter();
+  const hasRedirected = useRef(false);
+  useEffect(() => {
+    if (
+      currentPage === null &&
+      pages &&
+      pages.length > 0 &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      const firstPage = pages[0];
+      if (firstPage) {
+        router.replace(getPageLink(site.slug, firstPage.slug));
+      }
+    }
+  }, [currentPage, pages, site.slug, router]);
 
   // Fetch site-wide banners
   const siteWideBanners = useQuery(api.banners.queries.getSiteWideBanners, {
