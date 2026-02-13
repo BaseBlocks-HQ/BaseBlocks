@@ -33,7 +33,7 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage, closeSubpageEditor, activeTabId } =
+  const { selection, selectSlot, editingSubpage, closeSubpageEditor, activeTabId, pushCommand, isUndoRedoExecuting, currentPageId } =
     useEditorContext();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
@@ -112,6 +112,8 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
+  const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
+  const removeBlockMutation = useMutation(api.layouts.mutations.removeBlockFromSlot);
 
   const enablePageTabsMutation = useMutation(api.pages.mutations.enablePageTabs);
 
@@ -154,6 +156,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       if (!selectedPage) return;
 
       const newLayout = createLayout(type);
+      const pageIdStr = selectedPage._id as string;
       const layoutId = await createLayoutMutation({
         pageId: selectedPage._id as Id<"pages">,
         type: newLayout.type,
@@ -169,8 +172,31 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           setSelectedSlotId(newLayout.slots[0]!.id);
         }, 100);
       }
+
+      if (!isUndoRedoExecuting) {
+        const layoutIdRef = { value: layoutId as string };
+        pushCommand({
+          description: `Add ${type} layout`,
+          pageId: pageIdStr,
+          undo: async () => {
+            await removeLayoutMutation({
+              layoutId: layoutIdRef.value as Id<"layouts">,
+            });
+          },
+          redo: async () => {
+            const newId = await createLayoutMutation({
+              pageId: selectedPage._id as Id<"pages">,
+              type: newLayout.type,
+              slots: newLayout.slots,
+              settings: newLayout.settings,
+              tabId: activeTabId ?? undefined,
+            });
+            layoutIdRef.value = newId as string;
+          },
+        });
+      }
     },
-    [selectedPage, createLayoutMutation, selectSlot, activeTabId],
+    [selectedPage, createLayoutMutation, removeLayoutMutation, selectSlot, activeTabId, pushCommand, isUndoRedoExecuting],
   );
 
   // Add block from sidebar
@@ -184,18 +210,45 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         return;
       }
       const newBlock = createBlock(type, content);
+      const layoutId = selection.layoutId;
+      const slotId = selection.slotId;
 
       await addBlockMutation({
-        layoutId: selection.layoutId as Id<"layouts">,
-        slotId: selection.slotId,
+        layoutId: layoutId as Id<"layouts">,
+        slotId,
         block: {
           id: newBlock.id,
           type: newBlock.type,
           content: newBlock.content as AnyContent,
         },
       });
+
+      if (!isUndoRedoExecuting && currentPageId) {
+        pushCommand({
+          description: `Add ${type} block`,
+          pageId: currentPageId,
+          undo: async () => {
+            await removeBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              blockId: newBlock.id,
+            });
+          },
+          redo: async () => {
+            await addBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              block: {
+                id: newBlock.id,
+                type: newBlock.type,
+                content: newBlock.content as AnyContent,
+              },
+            });
+          },
+        });
+      }
     },
-    [selection, addBlockMutation]
+    [selection, addBlockMutation, removeBlockMutation, pushCommand, isUndoRedoExecuting, currentPageId]
   );
 
   // Enable page-level tabs

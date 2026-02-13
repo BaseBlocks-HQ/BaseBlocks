@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
@@ -32,6 +33,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSite = useMutation(api.sites.mutations.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorCtx = useEditorContextOptional();
 
   // Local state for editing
   const [localName, setLocalName] = useState("");
@@ -51,6 +53,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSettings = useCallback(
     async (settingKey: string, value: boolean) => {
       if (!site) return;
+      const oldValue = (site.settings as Record<string, unknown>)[settingKey];
       try {
         await updateSite({
           siteId,
@@ -58,12 +61,29 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
             [settingKey]: value,
           },
         });
+        if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+          editorCtx.pushCommand({
+            description: `Toggle ${settingKey}`,
+            undo: async () => {
+              await updateSite({
+                siteId,
+                settings: { [settingKey]: oldValue as boolean },
+              });
+            },
+            redo: async () => {
+              await updateSite({
+                siteId,
+                settings: { [settingKey]: value },
+              });
+            },
+          });
+        }
       } catch (error) {
         console.error("Failed to update setting:", error);
         toast.error("Failed to update setting");
       }
     },
-    [siteId, site, updateSite]
+    [siteId, site, updateSite, editorCtx]
   );
 
   // Handle logo upload
@@ -77,6 +97,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         return;
       }
 
+      const oldLogoUrl = site?.logoUrl;
       const result = await uploadImage(file, siteId);
 
       if (result) {
@@ -85,11 +106,30 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           logoUrl: result.url,
         });
         toast.success("Logo uploaded");
+
+        if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+          const newLogoUrl = result.url;
+          editorCtx.pushCommand({
+            description: "Change logo",
+            undo: async () => {
+              await updateSite({
+                siteId,
+                logoUrl: oldLogoUrl ?? "",
+              });
+            },
+            redo: async () => {
+              await updateSite({
+                siteId,
+                logoUrl: newLogoUrl,
+              });
+            },
+          });
+        }
       } else if (uploadState.error) {
         toast.error(uploadState.error);
       }
     },
-    [siteId, uploadImage, uploadState.error, updateSite]
+    [siteId, site, uploadImage, uploadState.error, updateSite, editorCtx]
   );
 
   // Handle name save
@@ -99,18 +139,32 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       return;
     }
 
+    const oldName = site.name;
+    const newName = localName;
     try {
       await updateSite({
         siteId,
-        name: localName,
+        name: newName,
       });
       setIsEditingName(false);
       toast.success("Site name updated");
+
+      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+        editorCtx.pushCommand({
+          description: "Rename site",
+          undo: async () => {
+            await updateSite({ siteId, name: oldName });
+          },
+          redo: async () => {
+            await updateSite({ siteId, name: newName });
+          },
+        });
+      }
     } catch (error) {
       console.error("Failed to update name:", error);
       toast.error("Failed to update name");
     }
-  }, [siteId, localName, site, updateSite]);
+  }, [siteId, localName, site, updateSite, editorCtx]);
 
   if (!site) {
     return (

@@ -36,7 +36,16 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     clearSelection,
     activeTabId,
     setActiveTabId,
+    pushCommand,
+    isUndoRedoExecuting,
+    setCurrentPageId,
   } = useEditorContext();
+
+  // Set current page ID on context for keyboard shortcuts
+  useEffect(() => {
+    setCurrentPageId(pageId);
+    return () => setCurrentPageId(null);
+  }, [pageId, setCurrentPageId]);
 
   // Tab rename state
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
@@ -71,6 +80,30 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   const disablePageTabsMutation = useMutation(
     api.pages.mutations.disablePageTabs
   );
+  const enablePageTabsMutation = useMutation(
+    api.pages.mutations.enablePageTabs
+  );
+  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
+
+  // Track last known block content for undo
+  const lastKnownContentRef = useRef<Map<string, AnyContent>>(new Map());
+
+  // Seed content ref from query data
+  useEffect(() => {
+    if (!layoutsData) return;
+    const map = new Map<string, AnyContent>();
+    for (const layout of layoutsData) {
+      for (const slot of layout.slots) {
+        for (const block of slot.blocks) {
+          map.set(
+            `${layout._id}:${slot.id}:${block.id}`,
+            structuredClone(block.content) as AnyContent,
+          );
+        }
+      }
+    }
+    lastKnownContentRef.current = map;
+  }, [layoutsData]);
 
   // Page tabs
   const pageTabs = useMemo(
@@ -154,16 +187,35 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       const newIndex = mainLayoutIds.indexOf(String(over.id));
       if (oldIndex === -1 || newIndex === -1) return;
 
+      const oldMainOrder = [...mainLayoutIds];
       const newMainOrder = arrayMove(mainLayoutIds, oldIndex, newIndex);
-      // Combine with sidebar layouts (they come after main layouts)
       const newOrder = [...newMainOrder, ...sidebarLayoutIds];
       await reorderLayoutsMutation({
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
 
+      if (!isUndoRedoExecuting) {
+        const oldOrder = [...oldMainOrder, ...sidebarLayoutIds];
+        pushCommand({
+          description: "Reorder layouts",
+          pageId,
+          undo: async () => {
+            await reorderLayoutsMutation({
+              pageId: pageId as Id<"pages">,
+              layoutIds: oldOrder as Id<"layouts">[],
+            });
+          },
+          redo: async () => {
+            await reorderLayoutsMutation({
+              pageId: pageId as Id<"pages">,
+              layoutIds: newOrder as Id<"layouts">[],
+            });
+          },
+        });
+      }
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, pushCommand, isUndoRedoExecuting],
   );
 
   // Handle layout drag end for sidebar layouts
@@ -176,16 +228,35 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       const newIndex = sidebarLayoutIds.indexOf(String(over.id));
       if (oldIndex === -1 || newIndex === -1) return;
 
+      const oldSidebarOrder = [...sidebarLayoutIds];
       const newSidebarOrder = arrayMove(sidebarLayoutIds, oldIndex, newIndex);
-      // Combine with main layouts (they come before sidebar layouts)
       const newOrder = [...mainLayoutIds, ...newSidebarOrder];
       await reorderLayoutsMutation({
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
 
+      if (!isUndoRedoExecuting) {
+        const oldOrder = [...mainLayoutIds, ...oldSidebarOrder];
+        pushCommand({
+          description: "Reorder sidebar layouts",
+          pageId,
+          undo: async () => {
+            await reorderLayoutsMutation({
+              pageId: pageId as Id<"pages">,
+              layoutIds: oldOrder as Id<"layouts">[],
+            });
+          },
+          redo: async () => {
+            await reorderLayoutsMutation({
+              pageId: pageId as Id<"pages">,
+              layoutIds: newOrder as Id<"layouts">[],
+            });
+          },
+        });
+      }
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, pushCommand, isUndoRedoExecuting],
   );
 
   // Notify parent of slot selection changes
@@ -209,15 +280,38 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         tabId: activeTabId ?? undefined,
       });
 
-
       if (newLayout.slots.length > 0) {
         setTimeout(() => {
           selectSlot(layoutId as string, newLayout.slots[0]!.id);
           onSelectionChange?.(newLayout.slots[0]!.id);
         }, 100);
       }
+
+      if (!isUndoRedoExecuting) {
+        const layoutIdRef = { value: layoutId as string };
+        pushCommand({
+          description: `Add ${type} layout`,
+          pageId,
+          undo: async () => {
+            await removeLayoutMutation({
+              layoutId: layoutIdRef.value as Id<"layouts">,
+            });
+            clearSelection();
+          },
+          redo: async () => {
+            const newId = await createLayoutMutation({
+              pageId: pageId as Id<"pages">,
+              type: newLayout.type,
+              slots: newLayout.slots,
+              settings: newLayout.settings,
+              tabId: activeTabId ?? undefined,
+            });
+            layoutIdRef.value = newId as string;
+          },
+        });
+      }
     },
-    [createLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange],
+    [createLayoutMutation, removeLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange, pushCommand, clearSelection, isUndoRedoExecuting],
   );
 
   // Update block content
@@ -228,6 +322,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       blockId: string,
       content: AnyContent
     ) => {
+      const key = `${layoutId}:${slotId}:${blockId}`;
+      const previousContent = lastKnownContentRef.current.get(key);
+
       await updateBlockMutation({
         layoutId: layoutId as Id<"layouts">,
         slotId,
@@ -235,33 +332,129 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         content,
       });
 
+      // Update ref to new content
+      lastKnownContentRef.current.set(key, structuredClone(content));
+
+      if (!isUndoRedoExecuting && previousContent) {
+        const oldContent = structuredClone(previousContent);
+        const newContent = structuredClone(content);
+        pushCommand({
+          description: "Update block content",
+          pageId,
+          undo: async () => {
+            await updateBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              blockId,
+              content: oldContent,
+            });
+            lastKnownContentRef.current.set(key, structuredClone(oldContent));
+          },
+          redo: async () => {
+            await updateBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              blockId,
+              content: newContent,
+            });
+            lastKnownContentRef.current.set(key, structuredClone(newContent));
+          },
+        });
+      }
     },
-    [updateBlockMutation]
+    [updateBlockMutation, pushCommand, pageId, isUndoRedoExecuting]
   );
 
   // Remove block
   const handleRemoveBlock = useCallback(
     async (layoutId: string, slotId: string, blockId: string) => {
+      // Snapshot the block before removing
+      const layout = allLayouts.find((l) => l.id === layoutId);
+      const slot = layout?.slots.find((s) => s.id === slotId);
+      const blockIndex = slot?.blocks.findIndex((b) => b.id === blockId) ?? -1;
+      const block = slot?.blocks[blockIndex];
+
       await removeBlockMutation({
         layoutId: layoutId as Id<"layouts">,
         slotId,
         blockId,
       });
 
+      if (!isUndoRedoExecuting && block) {
+        const snapshot = structuredClone(block);
+        pushCommand({
+          description: "Remove block",
+          pageId,
+          undo: async () => {
+            await addBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              block: {
+                id: snapshot.id,
+                type: snapshot.type,
+                content: snapshot.content,
+              },
+              index: blockIndex >= 0 ? blockIndex : undefined,
+            });
+          },
+          redo: async () => {
+            await removeBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              slotId,
+              blockId: snapshot.id,
+            });
+          },
+        });
+      }
     },
-    [removeBlockMutation]
+    [removeBlockMutation, addBlockMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting]
   );
 
   // Remove layout
   const handleRemoveLayout = useCallback(
     async (layoutId: string) => {
+      // Snapshot layout before removing
+      const layout = allLayouts.find((l) => l.id === layoutId);
+
       await removeLayoutMutation({
         layoutId: layoutId as Id<"layouts">,
       });
       clearSelection();
 
+      if (!isUndoRedoExecuting && layout) {
+        const snapshot = structuredClone(layout);
+        const layoutIdRef = { value: layoutId };
+        pushCommand({
+          description: "Remove layout",
+          pageId,
+          undo: async () => {
+            const newId = await createLayoutMutation({
+              pageId: pageId as Id<"pages">,
+              type: snapshot.type,
+              slots: snapshot.slots.map((s) => ({
+                id: s.id,
+                position: s.position,
+                blocks: s.blocks.map((b) => ({
+                  id: b.id,
+                  type: b.type,
+                  content: b.content,
+                })),
+              })),
+              settings: snapshot.settings,
+              tabId: snapshot.tabId ?? undefined,
+            });
+            layoutIdRef.value = newId as string;
+          },
+          redo: async () => {
+            await removeLayoutMutation({
+              layoutId: layoutIdRef.value as Id<"layouts">,
+            });
+            clearSelection();
+          },
+        });
+      }
     },
-    [removeLayoutMutation, clearSelection],
+    [removeLayoutMutation, createLayoutMutation, clearSelection, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Move block within layout
@@ -273,6 +466,11 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       blockId: string,
       toIndex: number,
     ) => {
+      // Capture the original index before the move
+      const layout = allLayouts.find((l) => l.id === layoutId);
+      const fromSlot = layout?.slots.find((s) => s.id === fromSlotId);
+      const originalIndex = fromSlot?.blocks.findIndex((b) => b.id === blockId) ?? 0;
+
       await moveBlockMutation({
         layoutId: layoutId as Id<"layouts">,
         fromSlotId,
@@ -281,44 +479,134 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         toIndex,
       });
 
+      if (!isUndoRedoExecuting) {
+        pushCommand({
+          description: "Move block",
+          pageId,
+          undo: async () => {
+            await moveBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              fromSlotId: toSlotId,
+              toSlotId: fromSlotId,
+              blockId,
+              toIndex: originalIndex,
+            });
+          },
+          redo: async () => {
+            await moveBlockMutation({
+              layoutId: layoutId as Id<"layouts">,
+              fromSlotId,
+              toSlotId,
+              blockId,
+              toIndex,
+            });
+          },
+        });
+      }
     },
-    [moveBlockMutation],
+    [moveBlockMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Update layout settings
   const handleUpdateSettings = useCallback(
     async (layoutId: string, settings: LayoutSettings) => {
+      const layout = allLayouts.find((l) => l.id === layoutId);
+      const oldSettings = layout ? structuredClone(layout.settings) : null;
+
       await updateSettingsMutation({
         layoutId: layoutId as Id<"layouts">,
         settings,
       });
 
+      if (!isUndoRedoExecuting && oldSettings) {
+        const newSettings = structuredClone(settings);
+        pushCommand({
+          description: "Update layout settings",
+          pageId,
+          undo: async () => {
+            await updateSettingsMutation({
+              layoutId: layoutId as Id<"layouts">,
+              settings: oldSettings,
+            });
+          },
+          redo: async () => {
+            await updateSettingsMutation({
+              layoutId: layoutId as Id<"layouts">,
+              settings: newSettings,
+            });
+          },
+        });
+      }
     },
-    [updateSettingsMutation]
+    [updateSettingsMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting]
   );
 
   // === Page tab management ===
   const handleDisableTabs = useCallback(async () => {
+    const oldTabs = structuredClone(pageTabs);
+
     await disablePageTabsMutation({
       pageId: pageId as Id<"pages">,
     });
     setActiveTabId(null);
 
-  }, [pageId, disablePageTabsMutation]);
+    if (!isUndoRedoExecuting && oldTabs.length > 0) {
+      pushCommand({
+        description: "Disable page tabs",
+        pageId,
+        undo: async () => {
+          await enablePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            tabs: oldTabs,
+          });
+        },
+        redo: async () => {
+          await disablePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+          });
+          setActiveTabId(null);
+        },
+      });
+    }
+  }, [pageId, pageTabs, disablePageTabsMutation, enablePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
 
   const handleAddTab = useCallback(async () => {
+    const oldTabs = structuredClone(pageTabs);
     const newTab = { id: generateId(), label: `Tab ${pageTabs.length + 1}` };
+    const newTabs = [...pageTabs, newTab];
+
     await updatePageTabsMutation({
       pageId: pageId as Id<"pages">,
-      pageTabs: [...pageTabs, newTab],
+      pageTabs: newTabs,
     });
     setActiveTabId(newTab.id);
 
-  }, [pageId, pageTabs, updatePageTabsMutation]);
+    if (!isUndoRedoExecuting) {
+      pushCommand({
+        description: "Add tab",
+        pageId,
+        undo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: oldTabs,
+          });
+        },
+        redo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: newTabs,
+          });
+          setActiveTabId(newTab.id);
+        },
+      });
+    }
+  }, [pageId, pageTabs, updatePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
 
   const handleRemoveTab = useCallback(async (tabId: string) => {
     if (pageTabs.length <= 2) return;
+    const oldTabs = structuredClone(pageTabs);
     const newTabs = pageTabs.filter((t) => t.id !== tabId);
+
     await updatePageTabsMutation({
       pageId: pageId as Id<"pages">,
       pageTabs: newTabs,
@@ -327,7 +615,25 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       setActiveTabId(newTabs[0]?.id ?? null);
     }
 
-  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation]);
+    if (!isUndoRedoExecuting) {
+      pushCommand({
+        description: "Remove tab",
+        pageId,
+        undo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: oldTabs,
+          });
+        },
+        redo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: newTabs,
+          });
+        },
+      });
+    }
+  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
 
   const handleStartRenameTab = useCallback((tab: { id: string; label: string }) => {
     setEditingTabId(tab.id);
@@ -337,6 +643,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
 
   const handleFinishRenameTab = useCallback(async () => {
     if (!editingTabId) return;
+    const oldTabs = structuredClone(pageTabs);
     const newTabs = pageTabs.map((t) =>
       t.id === editingTabId
         ? { ...t, label: editingLabel.trim() || t.label }
@@ -348,7 +655,25 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     });
     setEditingTabId(null);
 
-  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation]);
+    if (!isUndoRedoExecuting) {
+      pushCommand({
+        description: "Rename tab",
+        pageId,
+        undo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: oldTabs,
+          });
+        },
+        redo: async () => {
+          await updatePageTabsMutation({
+            pageId: pageId as Id<"pages">,
+            pageTabs: newTabs,
+          });
+        },
+      });
+    }
+  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation, pushCommand, isUndoRedoExecuting]);
 
   // Handle click on editor background to deselect
   // Layouts/blocks call stopPropagation(), so this only fires for background clicks

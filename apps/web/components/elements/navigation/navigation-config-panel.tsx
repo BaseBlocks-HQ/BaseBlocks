@@ -12,6 +12,7 @@ import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 
 interface NavigationConfigPanelProps {
   siteId: Id<"sites">;
@@ -97,10 +98,12 @@ const NAV_STYLE_PREVIEWS: Record<NavigationStyle, React.FC> = {
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
+  const editorCtx = useEditorContextOptional();
 
   const updateNavigationStyle = useCallback(
     async (style: NavigationStyle) => {
       if (!site) return;
+      const oldStyle = (site.settings.navigationStyle || "sidebar") as NavigationStyle;
       try {
         await updateSite({
           siteId,
@@ -109,12 +112,30 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           },
         });
         toast.success("Navigation style updated");
+
+        if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+          editorCtx.pushCommand({
+            description: "Change navigation style",
+            undo: async () => {
+              await updateSite({
+                siteId,
+                settings: { navigationStyle: oldStyle },
+              });
+            },
+            redo: async () => {
+              await updateSite({
+                siteId,
+                settings: { navigationStyle: style },
+              });
+            },
+          });
+        }
       } catch (error) {
         console.error("Failed to update navigation style:", error);
         toast.error("Failed to update navigation style");
       }
     },
-    [siteId, site, updateSite]
+    [siteId, site, updateSite, editorCtx]
   );
 
   if (!site) {

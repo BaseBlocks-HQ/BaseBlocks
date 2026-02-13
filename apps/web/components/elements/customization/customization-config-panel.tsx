@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import {
   type BorderRadiusPreset,
   type SiteCustomization,
@@ -26,6 +27,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
   const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
+  const editorCtx = useEditorContextOptional();
 
   // Get current customization from site settings (may be undefined)
   const customization = site?.settings?.customization as SiteCustomization | undefined;
@@ -35,14 +37,35 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
     async (newCustomization: SiteCustomization) => {
       if (!site) return;
 
+      const oldCustomization = customization ? structuredClone(customization) : {};
+      const newCopy = structuredClone(newCustomization);
+
       setIsSaving(true);
       try {
         await updateSite({
           siteId,
           settings: {
-            customization: newCustomization,
+            customization: newCopy,
           },
         });
+
+        if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+          editorCtx.pushCommand({
+            description: "Update customization",
+            undo: async () => {
+              await updateSite({
+                siteId,
+                settings: { customization: oldCustomization },
+              });
+            },
+            redo: async () => {
+              await updateSite({
+                siteId,
+                settings: { customization: newCopy },
+              });
+            },
+          });
+        }
       } catch (error) {
         console.error("Failed to update customization:", error);
         toast.error("Failed to update customization");
@@ -50,7 +73,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         setIsSaving(false);
       }
     },
-    [siteId, site, updateSite]
+    [siteId, site, customization, updateSite, editorCtx]
   );
 
   // Handle color change for a specific field

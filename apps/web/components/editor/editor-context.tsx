@@ -1,6 +1,8 @@
 "use client";
 
 import { useSitePermissions } from "@/hooks";
+import type { UndoCommand } from "@/lib/undo";
+import { useUndoKeyboardShortcuts, useUndoManager } from "@/lib/undo";
 import type { SubpageContent } from "@/types/elements/blocks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -54,6 +56,15 @@ interface EditorContextValue {
   // Page-level tabs
   activeTabId: string | null;
   setActiveTabId: (tabId: string | null) => void;
+  // Undo/Redo
+  currentPageId: string | null;
+  setCurrentPageId: (pageId: string | null) => void;
+  pushCommand: (cmd: Omit<UndoCommand, "id" | "timestamp">) => void;
+  undo: (pageId?: string) => Promise<void>;
+  redo: (pageId?: string) => Promise<void>;
+  canUndo: (pageId?: string) => boolean;
+  canRedo: (pageId?: string) => boolean;
+  isUndoRedoExecuting: boolean;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -71,6 +82,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   });
   const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [currentPageId, setCurrentPageId] = useState<string | null>(null);
 
   // Query the site to derive hasUndeployedChanges from timestamps
   const site = useQuery(api.sites.queries.get, { siteId });
@@ -88,6 +100,26 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     isViewer,
     isLoading: isPermissionsLoading,
   } = useSitePermissions(siteId);
+
+  // Undo/Redo manager
+  const {
+    pushCommand,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    isExecuting: isUndoRedoExecuting,
+  } = useUndoManager();
+
+  // Keyboard shortcuts for undo/redo
+  useUndoKeyboardShortcuts({
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    canEdit,
+    currentPageId,
+  });
 
   // Deploy site - calls the new deployments module
   const deploySite = useCallback(async (notes?: string) => {
@@ -168,6 +200,14 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         deploySite,
         activeTabId,
         setActiveTabId,
+        currentPageId,
+        setCurrentPageId,
+        pushCommand,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        isUndoRedoExecuting,
       }}
     >
       {children}

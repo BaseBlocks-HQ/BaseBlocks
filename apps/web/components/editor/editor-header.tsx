@@ -30,8 +30,10 @@ import {
   Globe,
   History,
   PanelTop,
+  Redo2,
   Rocket,
   Share2,
+  Undo2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -83,6 +85,12 @@ export function EditorHeader({
     canEdit,
     hasUndeployedChanges,
     deploySite,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    isUndoRedoExecuting,
+    currentPageId,
   } = useEditorContext();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
@@ -154,6 +162,54 @@ export function EditorHeader({
         {/* Left section */}
         <div className="flex items-center gap-2">
           <SidebarTrigger />
+          {canEdit && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={
+                      isUndoRedoExecuting ||
+                      (!canUndo(currentPageId ?? undefined) && !canUndo())
+                    }
+                    onClick={() => {
+                      if (currentPageId && canUndo(currentPageId)) {
+                        undo(currentPageId);
+                      } else {
+                        undo();
+                      }
+                    }}
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Undo (Cmd+Z)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={
+                      isUndoRedoExecuting ||
+                      (!canRedo(currentPageId ?? undefined) && !canRedo())
+                    }
+                    onClick={() => {
+                      if (currentPageId && canRedo(currentPageId)) {
+                        redo(currentPageId);
+                      } else {
+                        redo();
+                      }
+                    }}
+                  >
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Redo (Cmd+Shift+Z)</TooltipContent>
+              </Tooltip>
+            </>
+          )}
           {!canEdit && (
             <Badge variant="secondary" className="gap-1">
               <Eye className="h-3 w-3" />
