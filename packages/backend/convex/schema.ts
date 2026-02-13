@@ -4,7 +4,6 @@ import { v } from "convex/values";
 export default defineSchema({
   // Companies/Organizations
   companies: defineTable({
-    eaOrgId: v.optional(v.string()), // Legacy Entity Auth org ID
     organizationId: v.optional(v.string()), // Better Auth organization ID
     name: v.string(),
     slug: v.string(), // subdomain: acme.baseblocks.dev
@@ -17,7 +16,6 @@ export default defineSchema({
     }),
   })
     .index("by_slug", ["slug"])
-    .index("by_eaOrgId", ["eaOrgId"])
     .index("by_organizationId", ["organizationId"]),
 
   // Sites (a company can have multiple sites)
@@ -434,14 +432,11 @@ export default defineSchema({
   // Team members
   members: defineTable({
     companyId: v.id("companies"),
-    userId: v.optional(v.string()), // Better Auth user ID (optional during migration)
-    eaUserId: v.optional(v.string()), // Legacy Entity Auth user ID
+    userId: v.string(), // Better Auth user ID
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("viewer")),
-    eaRole: v.optional(v.string()), // Legacy EA role
-    syncedAt: v.optional(v.number()), // Legacy sync timestamp
     joinedAt: v.number(),
   })
     .index("by_company", ["companyId"])

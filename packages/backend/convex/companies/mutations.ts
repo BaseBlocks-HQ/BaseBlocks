@@ -51,28 +51,6 @@ export const create = mutation({
   },
 });
 
-// Link a legacy company to a Better Auth organization (migration)
-export const linkOrganization = mutation({
-  args: {
-    companyId: v.id("companies"),
-    organizationId: v.string(),
-  },
-  handler: async (ctx, { companyId, organizationId }) => {
-    await requireAdmin(ctx, companyId);
-
-    const company = await ctx.db.get(companyId);
-    if (!company) {
-      throw new Error("Company not found");
-    }
-    if (company.organizationId) {
-      return { success: true, alreadyLinked: true };
-    }
-
-    await ctx.db.patch(companyId, { organizationId });
-    return { success: true, alreadyLinked: false };
-  },
-});
-
 // Update company settings
 export const updateSettings = mutation({
   args: {
