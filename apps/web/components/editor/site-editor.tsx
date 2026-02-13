@@ -16,7 +16,8 @@ import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { PortalContainerProvider } from "@/contexts/portal-container-context";
 import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
@@ -68,6 +69,44 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   // Get customization CSS variables for preview
   const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId as Id<"sites">);
+
+  // Create a portal container for Radix portals within the editor content area.
+  // This div lives at document.body level (no layout impact) but carries the
+  // customization CSS variables so portaled elements inherit the right styles.
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | undefined>(undefined);
+  const portalContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = document.createElement("div");
+    el.id = "editor-portal-container";
+    document.body.appendChild(el);
+    portalContainerRef.current = el;
+    setPortalContainer(el);
+
+    return () => {
+      document.body.removeChild(el);
+      portalContainerRef.current = null;
+    };
+  }, []);
+
+  // Sync customization styles and data attribute onto the portal container
+  useEffect(() => {
+    const el = portalContainerRef.current;
+    if (!el) return;
+
+    // Apply CSS variables
+    for (const [key, value] of Object.entries(customizationStyles)) {
+      if (typeof value === "string") {
+        el.style.setProperty(key, value);
+      }
+    }
+
+    if (isCustomized) {
+      el.setAttribute("data-site-customized", "");
+    } else {
+      el.removeAttribute("data-site-customized");
+    }
+  }, [customizationStyles, isCustomized]);
 
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
@@ -208,64 +247,70 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 {!isFullscreen && (
                   <>
                     <ResizablePanel defaultSize={60} minSize={20}>
-                      <div
-                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8"
-                        style={customizationStyles}
-                        {...(isCustomized ? { "data-site-customized": "" } : {})}
-                      >
-                        {selectedPage ? (
-                          <PageEditor
-                            pageId={selectedPage._id}
-                            onSelectionChange={handleSlotSelectionChange}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
-                            Select a page to edit
-                          </div>
-                        )}
-                      </div>
+                      <PortalContainerProvider value={portalContainer}>
+                        <div
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8"
+                          style={customizationStyles}
+                          {...(isCustomized ? { "data-site-customized": "" } : {})}
+                        >
+                          {selectedPage ? (
+                            <PageEditor
+                              pageId={selectedPage._id}
+                              onSelectionChange={handleSlotSelectionChange}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">
+                              Select a page to edit
+                            </div>
+                          )}
+                        </div>
+                      </PortalContainerProvider>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                   </>
                 )}
                 {/* Subpage panel - editing takes priority over viewing */}
                 <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
-                  <div
-                    className="h-full w-full min-w-0 overflow-hidden border-l"
-                    style={customizationStyles}
-                    {...(isCustomized ? { "data-site-customized": "" } : {})}
-                  >
-                    {editingSubpage ? (
-                      <SubpageEditPanel
-                        isFullscreen={isFullscreen}
-                        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-                      />
-                    ) : (
-                      <PublicSubpagePanel
-                        isFullscreen={isFullscreen}
-                        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-                      />
-                    )}
-                  </div>
+                  <PortalContainerProvider value={portalContainer}>
+                    <div
+                      className="h-full w-full min-w-0 overflow-hidden border-l"
+                      style={customizationStyles}
+                      {...(isCustomized ? { "data-site-customized": "" } : {})}
+                    >
+                      {editingSubpage ? (
+                        <SubpageEditPanel
+                          isFullscreen={isFullscreen}
+                          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                        />
+                      ) : (
+                        <PublicSubpagePanel
+                          isFullscreen={isFullscreen}
+                          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                        />
+                      )}
+                    </div>
+                  </PortalContainerProvider>
                 </ResizablePanel>
               </ResizablePanelGroup>
             ) : (
-              <div
-                className="h-full overflow-auto p-8"
-                style={customizationStyles}
-                {...(isCustomized ? { "data-site-customized": "" } : {})}
-              >
-                {selectedPage ? (
-                  <PageEditor
-                    pageId={selectedPage._id}
-                    onSelectionChange={handleSlotSelectionChange}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Select a page to edit
-                  </div>
-                )}
-              </div>
+              <PortalContainerProvider value={portalContainer}>
+                <div
+                  className="h-full overflow-auto p-8"
+                  style={customizationStyles}
+                  {...(isCustomized ? { "data-site-customized": "" } : {})}
+                >
+                  {selectedPage ? (
+                    <PageEditor
+                      pageId={selectedPage._id}
+                      onSelectionChange={handleSlotSelectionChange}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      Select a page to edit
+                    </div>
+                  )}
+                </div>
+              </PortalContainerProvider>
             )}
           </div>
         </main>
