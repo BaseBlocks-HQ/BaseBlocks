@@ -10,6 +10,13 @@ import {
   TopNavMenu,
 } from "@/components/navigation";
 import { ContentSkeleton } from "@/components/skeletons";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
 import { cn } from "@/lib/utils";
@@ -17,11 +24,10 @@ import type { PageWithChildren } from "@/types";
 import type { BannerContent } from "@/types/elements";
 import type { SiteCustomization } from "@/types/elements/customization";
 import type { NavigationStyle } from "@/types/elements/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { PublicContent } from "./public-content";
 import { PublicSiteProvider } from "./public-site-context";
 import { PublicSubpageProvider } from "./public-subpage-context";
@@ -134,9 +140,6 @@ export function PublicSiteLayout({
     };
   }, [customizationStyles, isCustomized]);
 
-  // Sidebar collapse state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   // Determine if we should show sidebar
   const showSidebar = navigationStyle === "sidebar";
 
@@ -146,173 +149,184 @@ export function PublicSiteLayout({
   // Determine if we should show secondary nav bar (subnav)
   const showSubNav = navigationStyle === "subnav";
 
+  const mainContent = (
+    <>
+      {/* Main Header */}
+      {showHeader && (
+        <>
+          <header
+            className={cn(
+              "border-b shrink-0 z-40",
+              !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+            )}
+            style={site.settings.customization?.headerColor ? {
+              backgroundColor: "var(--site-header-bg)",
+              color: "var(--site-header-fg)",
+            } : undefined}
+          >
+            <div className="flex h-14 items-center px-4">
+              {/* Left side: Sidebar trigger, Logo and site name */}
+              <div className="flex items-center gap-2">
+                {showSidebar && <SidebarTrigger />}
+                {showLogo && <SiteLogo site={site} company={company} />}
+                {showSiteName && (
+                  <span className="font-semibold">{site.name}</span>
+                )}
+              </div>
+
+              {/* Center: TopNav navigation (if topnav style) */}
+              {showTopNav && pages && (
+                <div className="flex-1 flex justify-center ml-8">
+                  <TopNavMenu
+                    pages={pages}
+                    currentPath={currentPathString}
+                  />
+                </div>
+              )}
+
+              {/* Right side: Search and mode toggle */}
+              <div className="flex items-center gap-3 ml-auto">
+                {showHeaderSearch && (
+                  <SearchBox
+                    siteId={site._id}
+                    usePublicQuery
+                    placeholder="Search..."
+                    maxResults={5}
+                    className="w-64"
+                  />
+                )}
+                <ModeToggle />
+              </div>
+            </div>
+          </header>
+
+          {/* Gradient stripe below header */}
+          {site.settings.customization?.showHeaderGradient && (
+            <GradientStripe customization={site.settings.customization} />
+          )}
+        </>
+      )}
+
+      {/* Secondary Navigation Bar (subnav style) */}
+      {showSubNav && pages && (
+        <SubNavBar
+          pages={pages}
+          currentPath={currentPathString}
+          className="sticky top-14 z-30"
+        />
+      )}
+
+      {/* Breadcrumb Bar - positioned below header/subnav */}
+      {currentPage && (
+        <BreadcrumbBar
+          pageId={currentPage._id}
+          pageTitle={currentPage.title}
+          className={cn(
+            "sticky z-20",
+            showSubNav ? "top-24" : "top-14"
+          )}
+        />
+      )}
+
+      {/* Site-wide and page-specific banners */}
+      {allBanners.length > 0 && (
+        <div className="w-full z-10 flex-shrink-0">
+          {allBanners.map((banner) => (
+            <BannerRenderer
+              key={banner.id}
+              id={banner.id}
+              type="banner"
+              content={banner.content as BannerContent}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Page content */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-auto">
+        {currentPage === undefined ? (
+          <div className="p-8">
+            <ContentSkeleton />
+          </div>
+        ) : currentPage === null ? (
+          <div className="max-w-3xl mx-auto text-center py-12 p-8">
+            <p className="text-muted-foreground">Page not found</p>
+          </div>
+        ) : (
+          <PublicContent pageId={currentPage._id} />
+        )}
+
+        {/* Footer - inside scrollable area */}
+        <footer className="border-t mt-auto flex-shrink-0">
+          <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
+            Powered by BaseBlocks
+          </div>
+        </footer>
+      </div>
+    </>
+  );
+
   return (
     <PublicSiteProvider siteId={site._id} siteSlug={site.slug} companySlug={company.slug}>
       <PublicSubpageProvider>
-      <div
-        className="h-screen bg-background flex flex-col overflow-hidden"
-        style={customizationStyles}
-        {...(isCustomized ? { "data-site-customized": "" } : {})}
-      >
-        {/* Main Header */}
-        {showHeader && (
-          <>
-            <header
-              className={cn(
-                "border-b sticky top-0 z-40",
-                !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-              )}
-              style={site.settings.customization?.headerColor ? {
-                backgroundColor: "var(--site-header-bg)",
-                color: "var(--site-header-fg)",
-              } : undefined}
+        {showSidebar ? (
+          <SidebarProvider>
+            <div
+              className="h-screen bg-background flex overflow-hidden w-full"
+              style={customizationStyles}
+              {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
-              <div className="container mx-auto flex h-14 items-center px-4">
-                {/* Left side: Logo and site name */}
-                <div className="flex items-center gap-2">
-                  {showLogo && <SiteLogo site={site} company={company} />}
-                  {showSiteName && (
-                    <span className="font-semibold">{site.name}</span>
+              <Sidebar>
+                <SidebarHeader
+                  className={cn(
+                    "border-b h-14 px-4 flex items-center justify-center !p-0",
+                    !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
                   )}
-                </div>
-
-                {/* Center: TopNav navigation (if topnav style) */}
-                {showTopNav && pages && (
-                  <div className="flex-1 flex justify-center ml-8">
-                    <TopNavMenu
-                      pages={pages}
-                      currentPath={currentPathString}
-                    />
-                  </div>
+                  style={site.settings.customization?.headerColor ? {
+                    backgroundColor: "var(--site-header-bg)",
+                    color: "var(--site-header-fg)",
+                  } : undefined}
+                />
+                {site.settings.customization?.showHeaderGradient && (
+                  <GradientStripe customization={site.settings.customization} />
                 )}
+                <SidebarContent className="p-4">
+                  <nav className="space-y-1">
+                    {pages === undefined ? (
+                      <>
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                      </>
+                    ) : (
+                      pages.map((page: PageWithChildren) => (
+                        <NavItem
+                          key={page._id}
+                          page={page}
+                          currentPath={currentPathString}
+                          mode="public"
+                          ancestorIds={ancestorIds}
+                        />
+                      ))
+                    )}
+                  </nav>
+                </SidebarContent>
+              </Sidebar>
 
-                {/* Right side: Search and mode toggle */}
-                <div className="flex items-center gap-3 ml-auto">
-                  {showHeaderSearch && (
-                    <SearchBox
-                      siteId={site._id}
-                      usePublicQuery
-                      placeholder="Search..."
-                      maxResults={5}
-                      className="w-64"
-                    />
-                  )}
-                  <ModeToggle />
-                </div>
-              </div>
-            </header>
-
-            {/* Gradient stripe below header */}
-            {site.settings.customization?.showHeaderGradient && (
-              <GradientStripe customization={site.settings.customization} />
-            )}
-          </>
-        )}
-
-        {/* Secondary Navigation Bar (subnav style) */}
-        {showSubNav && pages && (
-          <SubNavBar
-            pages={pages}
-            currentPath={currentPathString}
-            className="sticky top-14 z-30"
-          />
-        )}
-
-        {/* Breadcrumb Bar - positioned below header/subnav */}
-        {currentPage && (
-          <BreadcrumbBar
-            pageId={currentPage._id}
-            pageTitle={currentPage.title}
-            className={cn(
-              "sticky z-20",
-              showSubNav ? "top-24" : "top-14"
-            )}
-          />
-        )}
-
-        {/* Site-wide and page-specific banners */}
-        {allBanners.length > 0 && (
-          <div className="w-full z-10 flex-shrink-0">
-            {allBanners.map((banner) => (
-              <BannerRenderer
-                key={banner.id}
-                id={banner.id}
-                type="banner"
-                content={banner.content as BannerContent}
-              />
-            ))}
+              <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {mainContent}
+              </main>
+            </div>
+          </SidebarProvider>
+        ) : (
+          <div
+            className="h-screen bg-background flex flex-col overflow-hidden"
+            style={customizationStyles}
+            {...(isCustomized ? { "data-site-customized": "" } : {})}
+          >
+            {mainContent}
           </div>
         )}
-
-        {/* Main content area */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar navigation */}
-          {showSidebar && (
-            <aside
-              className={cn(
-                "border-r min-h-[calc(100vh-56px)] sticky top-14 self-start transition-[width] duration-200 overflow-hidden flex flex-col",
-                sidebarCollapsed ? "w-10" : "w-64"
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="flex items-center justify-center h-10 w-10 shrink-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors self-end"
-                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              >
-                {sidebarCollapsed ? (
-                  <PanelLeftOpen className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </button>
-              {!sidebarCollapsed && (
-                <nav className="space-y-1 p-4 pt-0">
-                  {pages === undefined ? (
-                    <>
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-full" />
-                    </>
-                  ) : (
-                    pages.map((page: PageWithChildren) => (
-                      <NavItem
-                        key={page._id}
-                        page={page}
-                        currentPath={currentPathString}
-                        mode="public"
-                        ancestorIds={ancestorIds}
-                      />
-                    ))
-                  )}
-                </nav>
-              )}
-            </aside>
-          )}
-
-          {/* Page content */}
-          <main className="flex-1 flex flex-col min-h-0 overflow-auto">
-            {currentPage === undefined ? (
-              <div className="p-8">
-                <ContentSkeleton />
-              </div>
-            ) : currentPage === null ? (
-              <div className="max-w-3xl mx-auto text-center py-12 p-8">
-                <p className="text-muted-foreground">Page not found</p>
-              </div>
-            ) : (
-              <PublicContent pageId={currentPage._id} />
-            )}
-
-            {/* Footer - inside scrollable area */}
-            <footer className="border-t mt-auto flex-shrink-0">
-              <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
-                Powered by BaseBlocks
-              </div>
-            </footer>
-          </main>
-        </div>
-      </div>
       </PublicSubpageProvider>
     </PublicSiteProvider>
   );
