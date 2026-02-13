@@ -89,9 +89,12 @@ export const DEFAULT_IMPORTANCE_PRESETS: BannerImportancePreset[] = [
 ];
 
 // Directory block types
+export type DirectoryColumnType = "text" | "email" | "phone" | "url";
+
 export interface DirectoryColumn {
   id: string;
   header: string;
+  type?: DirectoryColumnType;
 }
 
 export interface DirectoryRow {

@@ -41,6 +41,7 @@ export type {
   BannerImportancePreset,
   BannerSettings,
   BannerContent,
+  DirectoryColumnType,
   DirectoryColumn,
   DirectoryRow,
   DirectorySettings,

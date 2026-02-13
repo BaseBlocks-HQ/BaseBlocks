@@ -4,13 +4,6 @@ import type { ElementRendererProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -19,14 +12,88 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { DirectoryColumnType } from "@/types/elements";
 import {
   Check,
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
+  ExternalLink,
+  Mail,
+  Phone,
   Search,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+
+function formatPhoneNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11 && digits[0] === "1") {
+    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  // Return as-is if it doesn't match a standard pattern
+  return raw;
+}
+
+function getPhoneHref(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  return `tel:+${digits.length === 10 ? `1${digits}` : digits}`;
+}
+
+function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function CellContent({
+  value,
+  columnType,
+}: {
+  value: string;
+  columnType?: DirectoryColumnType;
+}) {
+  if (!value) return null;
+
+  switch (columnType) {
+    case "email":
+      return (
+        <a
+          href={`mailto:${value}`}
+          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+        >
+          <Mail className="h-3.5 w-3.5 shrink-0 opacity-60" />
+          {value}
+        </a>
+      );
+    case "phone":
+      return (
+        <a
+          href={getPhoneHref(value)}
+          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+        >
+          <Phone className="h-3.5 w-3.5 shrink-0 opacity-60" />
+          {formatPhoneNumber(value)}
+        </a>
+      );
+    case "url":
+      return (
+        <a
+          href={normalizeUrl(value)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+        >
+          {value.replace(/^https?:\/\/(www\.)?/i, "")}
+          <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
+        </a>
+      );
+    default:
+      return <>{value}</>;
+  }
+}
 
 export function DirectoryRenderer({
   content,
@@ -136,7 +203,10 @@ export function DirectoryRenderer({
                           settings.copyMode === "cell" && "group relative",
                         )}
                       >
-                        {cellValue}
+                        <CellContent
+                          value={cellValue}
+                          columnType={col.type}
+                        />
                         {settings.copyMode === "cell" && cellValue && (
                           <button
                             type="button"
