@@ -1,8 +1,9 @@
 /**
  * Proxy endpoint for file uploads to Entity Storage
- * This bypasses CORS issues by making the request server-side
+ * Authenticates via Better Auth session cookie, then forwards JWT to Entity Storage
  */
 import { type NextRequest, NextResponse } from "next/server";
+import { getToken } from "@/lib/auth-server";
 
 const ENTITY_STORAGE_SITE_URL =
   process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
@@ -10,10 +11,10 @@ const ENTITY_STORAGE_SITE_URL =
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader) {
+    const token = await getToken();
+    if (!token) {
       return NextResponse.json(
-        { error: "Missing authorization header" },
+        { error: "Not authenticated" },
         { status: 401 },
       );
     }
@@ -22,11 +23,10 @@ export async function POST(request: NextRequest) {
       request.headers.get("content-type") || "application/octet-stream";
     const body = await request.arrayBuffer();
 
-    // Forward the request to Entity Storage
     const response = await fetch(`${ENTITY_STORAGE_SITE_URL}/fs/upload`, {
       method: "POST",
       headers: {
-        Authorization: authHeader,
+        Authorization: `Bearer ${token}`,
         "Content-Type": contentType,
         "Content-Length": body.byteLength.toString(),
       },

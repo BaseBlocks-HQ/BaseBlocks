@@ -31,12 +31,11 @@ export class EntityStorageClient {
   /**
    * Upload a file to Entity Storage
    * Returns blobId and CDN URL for the file
-   * Uses same-origin proxy to avoid CORS issues
+   * Uses same-origin proxy which handles auth via session cookie
    */
   async upload(
     file: File,
     path: string,
-    accessToken: string,
     onProgress?: (progress: UploadProgress) => void,
   ): Promise<UploadResult> {
     return new Promise((resolve, reject) => {
@@ -63,7 +62,6 @@ export class EntityStorageClient {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
               },
               body: JSON.stringify({ blobId, path }),
             });
@@ -114,9 +112,9 @@ export class EntityStorageClient {
         reject(new Error("Upload cancelled"));
       });
 
-      // Use same-origin proxy to avoid CORS issues with corporate firewalls
+      // Use same-origin proxy - auth handled server-side via session cookie
       xhr.open("POST", "/api/storage/upload");
-      xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+      xhr.withCredentials = true;
       xhr.setRequestHeader(
         "Content-Type",
         file.type || "application/octet-stream",

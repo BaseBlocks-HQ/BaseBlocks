@@ -83,12 +83,10 @@ export function useFileUpload() {
           file.name,
         );
 
-        // Upload to Entity Storage
-        // TODO: Update token handling after storage migration
+        // Upload to Entity Storage (proxy handles auth via session cookie)
         const { blobId, cdnUrl } = await entityStorageClient.upload(
           file,
           path,
-          "", // Token no longer available - storage migration needed
           (progress) => {
             updateUploadState(fileId, { progress });
           },
@@ -128,8 +126,6 @@ export function useFileUpload() {
         // Trigger text extraction for supported file types (non-blocking)
         const contentType = file.type || "application/octet-stream";
         if (isExtractable(contentType) && triggerExtraction) {
-          // Fire and forget - extraction happens in background
-          // TODO: Update token handling after storage migration
           triggerExtraction({ documentId, authToken: "" }).catch(
             (err: unknown) => {
               console.warn("Failed to trigger extraction:", err);
