@@ -1,5 +1,7 @@
 "use client";
 
+import { SearchBox } from "@/components/elements/sections/search/search-box";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -9,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  PanelTop,
   Rocket,
   Share2,
 } from "lucide-react";
@@ -25,6 +28,22 @@ interface EditorHeaderProps {
   sitePublished: boolean;
   onPublish: () => void;
   onUnpublish?: () => void;
+  site: {
+    _id: Id<"sites">;
+    name: string;
+    logoUrl?: string;
+    settings: {
+      showHeader?: boolean;
+      showLogo?: boolean;
+      showSiteName?: boolean;
+      showHeaderSearch?: boolean;
+    };
+  };
+  company: {
+    name: string;
+    logoUrl?: string;
+    settings: { primaryColor?: string };
+  };
 }
 
 export function EditorHeader({
@@ -34,6 +53,8 @@ export function EditorHeader({
   sitePublished,
   onPublish,
   onUnpublish,
+  site,
+  company,
 }: EditorHeaderProps) {
   const t = useTranslations();
   const {
@@ -42,11 +63,57 @@ export function EditorHeader({
     markAsDeployed,
   } = useEditorContext();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isHeaderPreview, setIsHeaderPreview] = useState(false);
 
   const handleDeploy = () => {
     markAsDeployed();
   };
 
+  const showHeader = site.settings.showHeader !== false;
+  const showLogo = site.settings.showLogo !== false;
+  const showSiteName = site.settings.showSiteName !== false;
+  const showHeaderSearch = site.settings.showHeaderSearch === true;
+
+  // Preview mode: show the site header as users will see it
+  if (isHeaderPreview && showHeader) {
+    return (
+      <header className="border-b h-14 shrink-0 flex items-center px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsHeaderPreview(false)}
+          className="mr-3 gap-1.5"
+        >
+          <PanelTop className="h-4 w-4" />
+          Exit Preview
+        </Button>
+
+        <div className="h-5 w-px bg-border mr-3" />
+
+        <div className="flex items-center gap-2">
+          {showLogo && <SiteLogo site={site} company={company} />}
+          {showSiteName && (
+            <span className="font-semibold">{site.name}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 ml-auto">
+          {showHeaderSearch && (
+            <SearchBox
+              siteId={site._id}
+              usePublicQuery={false}
+              placeholder="Search..."
+              maxResults={5}
+              className="w-64"
+            />
+          )}
+          <ModeToggle />
+        </div>
+      </header>
+    );
+  }
+
+  // Editor mode: normal editor controls
   return (
     <>
       <header className="border-b h-14 shrink-0 flex items-center justify-between px-4 bg-background z-40">
@@ -58,10 +125,16 @@ export function EditorHeader({
               View Only
             </Badge>
           )}
-          {hasUndeployedChanges && canEdit && (
-            <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 bg-amber-50">
-              Undeployed changes
-            </Badge>
+          {canEdit && showHeader && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsHeaderPreview(true)}
+              className="gap-1.5"
+            >
+              <PanelTop className="h-4 w-4" />
+              Header Preview
+            </Button>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -80,9 +153,13 @@ export function EditorHeader({
 
               {/* Deploy button */}
               {hasUndeployedChanges ? (
-                <Button size="sm" onClick={handleDeploy}>
-                  <Rocket className="h-4 w-4 mr-1.5" />
-                  Deploy
+                <Button
+                  size="sm"
+                  onClick={handleDeploy}
+                  className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+                >
+                  <Rocket className="h-4 w-4" />
+                  Deploy Changes
                 </Button>
               ) : sitePublished ? (
                 <>
@@ -135,5 +212,44 @@ export function EditorHeader({
         siteSlug={siteSlug}
       />
     </>
+  );
+}
+
+function SiteLogo({
+  site,
+  company,
+}: {
+  site: { name: string; logoUrl?: string };
+  company: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
+}) {
+  if (site.logoUrl) {
+    return (
+      <img
+        src={site.logoUrl}
+        alt={site.name}
+        className="h-8 w-8 rounded-lg object-contain"
+      />
+    );
+  }
+
+  if (company.logoUrl) {
+    return (
+      <img
+        src={company.logoUrl}
+        alt={company.name}
+        className="h-8 w-8 rounded-lg object-contain"
+      />
+    );
+  }
+
+  return (
+    <div
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
+      style={{
+        backgroundColor: company.settings.primaryColor || "#0066FF",
+      }}
+    >
+      {site.name[0]}
+    </div>
   );
 }

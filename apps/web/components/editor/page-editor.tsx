@@ -3,7 +3,7 @@
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ContentSkeleton } from "@/components/skeletons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createLayout, generateId } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
@@ -466,7 +466,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
   };
 
   if (pageData === undefined || layoutsData === undefined) {
-    return <Skeleton className="h-64 w-full" />;
+    return <ContentSkeleton />;
   }
 
   if (!pageData) {

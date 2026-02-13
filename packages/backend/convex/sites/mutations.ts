@@ -105,6 +105,8 @@ export const update = mutation({
           headerColorDark: v.optional(v.string()),
           secondaryColor: v.optional(v.string()),
           secondaryColorDark: v.optional(v.string()),
+          tertiaryColor: v.optional(v.string()),
+          tertiaryColorDark: v.optional(v.string()),
           showHeaderGradient: v.optional(v.boolean()),
           borderRadius: v.optional(v.union(
             v.literal("none"),

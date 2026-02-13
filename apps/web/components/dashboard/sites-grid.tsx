@@ -1,8 +1,8 @@
 "use client";
 
 import { CreateSiteDialog } from "@/components/dialogs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SiteCardSkeleton } from "@/components/skeletons";
+import { Card, CardContent } from "@/components/ui/card";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SiteCard } from "./site-card";
@@ -33,12 +33,7 @@ export function SitesGrid({ sites, companySlug }: SitesGridProps) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-          </Card>
+          <SiteCardSkeleton key={i} />
         ))}
       </div>
     );

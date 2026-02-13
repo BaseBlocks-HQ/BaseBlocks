@@ -9,6 +9,7 @@ import {
   SubNavBar,
   TopNavMenu,
 } from "@/components/navigation";
+import { ContentSkeleton } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
 import { cn } from "@/lib/utils";
@@ -269,11 +270,8 @@ export function PublicSiteLayout({
           {/* Page content */}
           <main className="flex-1 flex flex-col min-h-0 overflow-auto">
             {currentPage === undefined ? (
-              <div className="max-w-3xl mx-auto p-8">
-                <Skeleton className="h-10 w-64 mb-8" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-3/4" />
+              <div className="p-8">
+                <ContentSkeleton />
               </div>
             ) : currentPage === null ? (
               <div className="max-w-3xl mx-auto text-center py-12 p-8">
@@ -345,11 +343,13 @@ function SiteLogo({
  */
 function GradientStripe({ customization }: { customization: SiteCustomization }) {
   const primaryColor = customization.accentColor || "#0066FF";
-  const secondaryColor = customization.secondaryColor;
 
-  const gradientColors = [primaryColor, secondaryColor].filter(Boolean);
-  const gradient = gradientColors.length >= 2
-    ? `linear-gradient(to right, ${gradientColors.join(", ")})`
+  // Gradient order: primary → tertiary → secondary
+  const gradientStops = [primaryColor];
+  if (customization.tertiaryColor) gradientStops.push(customization.tertiaryColor);
+  if (customization.secondaryColor) gradientStops.push(customization.secondaryColor);
+  const gradient = gradientStops.length >= 2
+    ? `linear-gradient(to right, ${gradientStops.join(", ")})`
     : primaryColor;
 
   return (

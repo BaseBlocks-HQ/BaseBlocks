@@ -9,7 +9,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ContentSkeleton } from "@/components/skeletons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
@@ -78,11 +78,8 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
   if (pageData === undefined || layoutsData === undefined) {
     return (
-      <div className="max-w-3xl mx-auto">
-        <Skeleton className="h-10 w-64 mb-8" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-3/4" />
+      <div className="p-8">
+        <ContentSkeleton />
       </div>
     );
   }

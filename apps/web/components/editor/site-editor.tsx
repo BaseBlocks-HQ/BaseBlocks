@@ -21,7 +21,6 @@ import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
 import { PageEditor } from "./page-editor";
-import { SiteHeaderPreview } from "./site-header-preview";
 import { SubpageEditPanel } from "./subpage-edit-panel";
 
 interface SiteEditorProps {
@@ -219,6 +218,8 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             sitePublished={site.isPublished}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
+            site={site}
+            company={company}
           />
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
@@ -233,7 +234,6 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                         style={customizationStyles}
                         {...(isCustomized ? { "data-site-customized": "" } : {})}
                       >
-                        <SiteHeaderPreview site={site} company={company} />
                         {selectedPage ? (
                           <PageEditor
                             pageId={selectedPage._id}
@@ -276,7 +276,6 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 style={customizationStyles}
                 {...(isCustomized ? { "data-site-customized": "" } : {})}
               >
-                <SiteHeaderPreview site={site} company={company} />
                 {selectedPage ? (
                   <PageEditor
                     pageId={selectedPage._id}

@@ -95,9 +95,14 @@ export function generateCustomizationStyles(
     styles["--site-accent-fg-dark"] = darkSecondary;
   }
 
-  // Gradient (uses primary + secondary + accent or available colors)
-  if (customization.accentColor && customization.secondaryColor) {
-    styles["--site-gradient"] = `linear-gradient(to right, ${customization.accentColor}, ${customization.secondaryColor})`;
+  // Gradient: primary → tertiary → secondary
+  if (customization.accentColor) {
+    const gradientStops = [customization.accentColor];
+    if (customization.tertiaryColor) gradientStops.push(customization.tertiaryColor);
+    if (customization.secondaryColor) gradientStops.push(customization.secondaryColor);
+    if (gradientStops.length >= 2) {
+      styles["--site-gradient"] = `linear-gradient(to right, ${gradientStops.join(", ")})`;
+    }
   }
 
   // Only set border radius if explicitly provided

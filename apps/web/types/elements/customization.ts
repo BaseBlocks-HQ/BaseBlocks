@@ -14,6 +14,8 @@ export interface SiteCustomization {
   headerColorDark?: string;    // Header dark mode variant
   secondaryColor?: string;     // Accent/gradient secondary color
   secondaryColorDark?: string; // Secondary dark mode variant
+  tertiaryColor?: string;      // Third gradient color
+  tertiaryColorDark?: string;  // Third dark mode variant
   showHeaderGradient?: boolean; // Gradient stripe under header
   borderRadius?: BorderRadiusPreset;
 }

@@ -1,34 +1,64 @@
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+function SiteCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-5 w-12 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-20 mt-2" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 flex-1 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-8 w-24" />
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar skeleton */}
+      <div className="w-64 border-r p-4 space-y-4">
+        <Skeleton className="h-8 w-32 mb-6" />
+        <div className="space-y-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-3 px-2 py-2">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ))}
         </div>
-      </header>
-      <main className="container mx-auto px-4 py-8">
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-7 w-32 mb-2" />
+            <Skeleton className="h-4 w-56" />
           </div>
-          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-9 w-28 rounded-md" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-48" />
-              </CardHeader>
-            </Card>
+            <SiteCardSkeleton key={i} />
           ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
+
+export { SiteCardSkeleton };

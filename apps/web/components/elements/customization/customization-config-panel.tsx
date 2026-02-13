@@ -55,7 +55,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
 
   // Handle color change for a specific field
   const handleColorChange = useCallback(
-    (field: "accentColor" | "headerColor" | "secondaryColor") =>
+    (field: "accentColor" | "headerColor" | "secondaryColor" | "tertiaryColor") =>
       async (color: string | undefined) => {
         if (!site) return;
 
@@ -156,13 +156,23 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         />
       </div>
 
-      {/* Accent Color */}
+      {/* Secondary Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.secondaryColor}
           onChange={handleColorChange("secondaryColor")}
-          label="Accent Color"
-          description="Gradient secondary and decorative elements"
+          label="Secondary Color"
+          description="Gradient end color and decorative elements"
+        />
+      </div>
+
+      {/* Tertiary Color */}
+      <div className="border-t pt-4">
+        <AccentColorPicker
+          value={customization?.tertiaryColor}
+          onChange={handleColorChange("tertiaryColor")}
+          label="Tertiary Color"
+          description="Middle gradient color"
         />
       </div>
 

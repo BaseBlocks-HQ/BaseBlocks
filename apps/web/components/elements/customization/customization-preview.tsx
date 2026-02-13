@@ -19,12 +19,15 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
   const primaryColor = customization?.accentColor || "#0066FF";
   const headerColor = customization?.headerColor;
   const secondaryColor = customization?.secondaryColor;
+  const tertiaryColor = customization?.tertiaryColor;
   const showGradient = customization?.showHeaderGradient;
 
-  // Build gradient string from available colors
-  const gradientColors = [primaryColor, secondaryColor].filter(Boolean);
-  const gradientStyle = gradientColors.length >= 2
-    ? `linear-gradient(to right, ${gradientColors.join(", ")})`
+  // Build gradient: primary → tertiary → secondary
+  const gradientStops = [primaryColor];
+  if (tertiaryColor) gradientStops.push(tertiaryColor);
+  if (secondaryColor) gradientStops.push(secondaryColor);
+  const gradientStyle = gradientStops.length >= 2
+    ? `linear-gradient(to right, ${gradientStops.join(", ")})`
     : primaryColor;
 
   return (
