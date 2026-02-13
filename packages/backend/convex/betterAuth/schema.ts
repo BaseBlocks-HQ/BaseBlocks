@@ -38,6 +38,7 @@ export const tables = {
     updatedAt: v.number(),
   })
     .index("accountId", ["accountId"])
+    .index("accountId_providerId", ["accountId", "providerId"])
     .index("userId", ["userId"]),
   verification: defineTable({
     identifier: v.string(),
@@ -46,7 +47,8 @@ export const tables = {
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("identifier", ["identifier"]),
+    .index("identifier", ["identifier"])
+    .index("expiresAt", ["expiresAt"]),
   jwks: defineTable({
     publicKey: v.string(),
     privateKey: v.string(),
