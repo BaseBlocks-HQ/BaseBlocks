@@ -341,8 +341,7 @@ export function QuicklinksEditor({
         `quicklink_${timestamp}_${sanitizedFilename}`,
       );
 
-      // TODO: Update token handling after storage migration
-      const { cdnUrl } = await entityStorageClient.upload(file, path, "");
+      const { cdnUrl } = await entityStorageClient.upload(file, path);
 
       if (isNew && newLinkData) {
         setNewLinkData({ ...newLinkData, imageUrl: cdnUrl });

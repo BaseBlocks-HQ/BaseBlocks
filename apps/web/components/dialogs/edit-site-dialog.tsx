@@ -79,9 +79,8 @@ export function EditSiteDialog({
       const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const path = `/logos/${site._id}/${timestamp}_${sanitizedFilename}`;
 
-      // Upload to Entity Storage
-      // TODO: Update token handling after storage migration
-      const { cdnUrl } = await entityStorageClient.upload(file, path, "");
+      // Upload to Entity Storage (proxy handles auth via session cookie)
+      const { cdnUrl } = await entityStorageClient.upload(file, path);
 
       setLogoUrl(cdnUrl);
       setLogoPreview(cdnUrl);
