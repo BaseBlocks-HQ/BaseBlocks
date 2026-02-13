@@ -7,8 +7,9 @@ import { organization } from "better-auth/plugins";
 import authConfig from "./auth.config";
 import authSchema from "./betterAuth/schema";
 
-const siteUrl = process.env.SITE_URL!; // Convex site URL (where auth routes live)
-const appUrl = process.env.APP_URL!; // Frontend URL (for CORS/crossDomain)
+const siteUrl = process.env.SITE_URL ?? ""; // Convex site URL (where auth routes live)
+const appUrls = (process.env.APP_URL ?? "").split(",").map((u) => u.trim()).filter(Boolean); // Frontend URL(s)
+const appUrl = appUrls[0] ?? ""; // Primary frontend URL (for crossDomain)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- monorepo type resolution workaround
 export const authComponent = createClient<DataModel, any>(
@@ -24,7 +25,7 @@ export const authComponent = createClient<DataModel, any>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: siteUrl,
-    trustedOrigins: [appUrl],
+    trustedOrigins: appUrls,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
