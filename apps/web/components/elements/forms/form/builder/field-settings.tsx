@@ -7,7 +7,6 @@
 
 import { useFormBuilder } from "./form-builder-context";
 import { getFieldSettings, getFieldEntry } from "./field-registry";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Trash2, X } from "lucide-react";
 
@@ -55,8 +54,8 @@ export function FieldSettingsPanel() {
   const Icon = entry?.icon;
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-3 border-b flex items-center justify-between">
+    <div className="h-full min-h-0 flex flex-col">
+      <div className="p-3 border-b flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
           <h3 className="text-sm font-medium">{entry?.label || "Settings"}</h3>
@@ -71,16 +70,16 @@ export function FieldSettingsPanel() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-3">
           <Settings
             field={selectedField}
             onChange={(updated) => updateField(selectedField.id, updated)}
           />
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="p-3 border-t">
+      <div className="p-3 border-t flex-shrink-0">
         <Button
           variant="destructive"
           size="sm"

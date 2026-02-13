@@ -8,7 +8,6 @@
 import { useFormBuilder } from "./form-builder-context";
 import { getAllFields } from "./field-registry";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { FormFieldType } from "@/types/elements";
 
 // Import fields to register them
@@ -23,11 +22,11 @@ export function FieldPicker() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-3 border-b">
+    <div className="h-full min-h-0 flex flex-col">
+      <div className="p-3 border-b flex-shrink-0">
         <h3 className="text-sm font-medium">Add Field</h3>
       </div>
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-2 space-y-1">
           {fields.map((entry) => {
             const Icon = entry.icon;
@@ -44,7 +43,7 @@ export function FieldPicker() {
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

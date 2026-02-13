@@ -17,7 +17,6 @@ import { FieldSettingsPanel } from "./builder/field-settings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function FormEditor({
   id,
@@ -63,20 +62,20 @@ export function FormEditor({
       onUpdate={handleUpdate}
     >
       <div className="border rounded-lg bg-background overflow-hidden">
-        <div className="flex h-[500px]">
+        <div className="flex h-[500px] min-h-0">
           {/* Left: Field Picker */}
-          <div className="w-48 border-r bg-muted/30 flex-shrink-0">
+          <div className="w-48 border-r bg-muted/30 flex-shrink-0 min-h-0 flex flex-col overflow-hidden">
             <FieldPicker />
           </div>
 
           {/* Center: Canvas */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             <BuilderCanvas />
           </div>
 
           {/* Right: Settings */}
-          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
-            <Tabs defaultValue="field" className="h-full flex flex-col">
+          <div className="w-64 border-l bg-muted/30 flex-shrink-0 min-h-0 flex flex-col overflow-hidden">
+            <Tabs defaultValue="field" className="h-full flex flex-col min-h-0">
               <TabsList className="w-full rounded-none border-b h-10 bg-transparent p-0">
                 <TabsTrigger
                   value="field"
@@ -91,11 +90,11 @@ export function FormEditor({
                   Form
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="field" className="flex-1 m-0 overflow-hidden">
+              <TabsContent value="field" className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col">
                 <FieldSettingsPanel />
               </TabsContent>
-              <TabsContent value="form" className="flex-1 m-0 overflow-hidden">
-                <ScrollArea className="h-full">
+              <TabsContent value="form" className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0 overflow-y-auto">
                   <div className="p-3 space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs">Submit Button Label</Label>
@@ -118,7 +117,7 @@ export function FormEditor({
                       />
                     </div>
                   </div>
-                </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
