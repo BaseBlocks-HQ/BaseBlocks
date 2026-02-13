@@ -12,6 +12,8 @@ import {
 } from "@/types/elements/customization";
 import { getDarkColorForPreset } from "@/types/elements/customization";
 import { lightenColor } from "@/lib/customization";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { AccentColorPicker } from "./accent-color-picker";
 import { BorderRadiusPicker } from "./border-radius-picker";
 import { CustomizationPreview } from "./customization-preview";
@@ -28,34 +30,13 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
   // Get current customization from site settings (may be undefined)
   const customization = site?.settings?.customization as SiteCustomization | undefined;
 
-  // Handle accent color change (undefined means clear)
-  const handleAccentColorChange = useCallback(
-    async (color: string | undefined) => {
+  // Generic save helper
+  const saveCustomization = useCallback(
+    async (newCustomization: SiteCustomization) => {
       if (!site) return;
 
       setIsSaving(true);
       try {
-        let newCustomization: SiteCustomization;
-
-        if (color) {
-          // Setting a new color
-          const darkColor = getDarkColorForPreset(color) || lightenColor(color, 0.2);
-          newCustomization = {
-            ...customization,
-            accentColor: color,
-            accentColorDark: darkColor,
-          };
-        } else {
-          // Clearing the color - create new object without color fields
-          newCustomization = {
-            borderRadius: customization?.borderRadius,
-          };
-          // Remove undefined values
-          if (!newCustomization.borderRadius) {
-            delete newCustomization.borderRadius;
-          }
-        }
-
         await updateSite({
           siteId,
           settings: {
@@ -69,51 +50,64 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         setIsSaving(false);
       }
     },
-    [siteId, site, customization, updateSite]
+    [siteId, site, updateSite]
   );
 
-  // Handle border radius change (undefined means clear)
+  // Handle color change for a specific field
+  const handleColorChange = useCallback(
+    (field: "accentColor" | "headerColor" | "secondaryColor") =>
+      async (color: string | undefined) => {
+        if (!site) return;
+
+        const darkField = `${field}Dark` as const;
+        const newCustomization = { ...customization };
+
+        if (color) {
+          const darkColor = getDarkColorForPreset(color) || lightenColor(color, 0.2);
+          (newCustomization as Record<string, unknown>)[field] = color;
+          (newCustomization as Record<string, unknown>)[darkField] = darkColor;
+        } else {
+          delete (newCustomization as Record<string, unknown>)[field];
+          delete (newCustomization as Record<string, unknown>)[darkField];
+        }
+
+        await saveCustomization(newCustomization);
+      },
+    [site, customization, saveCustomization]
+  );
+
+  // Handle border radius change
   const handleBorderRadiusChange = useCallback(
     async (radius: BorderRadiusPreset | undefined) => {
       if (!site) return;
 
-      setIsSaving(true);
-      try {
-        let newCustomization: SiteCustomization;
-
-        if (radius) {
-          // Setting a new radius
-          newCustomization = {
-            ...customization,
-            borderRadius: radius,
-          };
-        } else {
-          // Clearing the radius - create new object without radius field
-          newCustomization = {
-            accentColor: customization?.accentColor,
-            accentColorDark: customization?.accentColorDark,
-          };
-          // Remove undefined values
-          if (!newCustomization.accentColor) {
-            delete newCustomization.accentColor;
-            delete newCustomization.accentColorDark;
-          }
-        }
-
-        await updateSite({
-          siteId,
-          settings: {
-            customization: newCustomization,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to update customization:", error);
-        toast.error("Failed to update customization");
-      } finally {
-        setIsSaving(false);
+      const newCustomization = { ...customization };
+      if (radius) {
+        newCustomization.borderRadius = radius;
+      } else {
+        delete newCustomization.borderRadius;
       }
+
+      await saveCustomization(newCustomization);
     },
-    [siteId, site, customization, updateSite]
+    [site, customization, saveCustomization]
+  );
+
+  // Handle gradient toggle
+  const handleGradientToggle = useCallback(
+    async (checked: boolean) => {
+      if (!site) return;
+
+      const newCustomization = { ...customization };
+      if (checked) {
+        newCustomization.showHeaderGradient = true;
+      } else {
+        delete newCustomization.showHeaderGradient;
+      }
+
+      await saveCustomization(newCustomization);
+    },
+    [site, customization, saveCustomization]
   );
 
   if (!site) {
@@ -123,9 +117,6 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
       </div>
     );
   }
-
-  // Check if any customization is applied
-  const hasAnyCustomization = !!(customization?.accentColor || customization?.borderRadius);
 
   return (
     <div className="p-4 space-y-6">
@@ -142,12 +133,53 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         )}
       </div>
 
-      {/* Accent Color */}
+      {/* Live Preview (always visible when any customization is set) */}
+      <CustomizationPreview customization={customization} />
+
+      {/* Primary Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.accentColor}
-          onChange={handleAccentColorChange}
+          onChange={handleColorChange("accentColor")}
+          label="Primary Color"
+          description="Buttons, links, and focus states"
         />
+      </div>
+
+      {/* Header Color */}
+      <div className="border-t pt-4">
+        <AccentColorPicker
+          value={customization?.headerColor}
+          onChange={handleColorChange("headerColor")}
+          label="Header Color"
+          description="Header background and navigation bar"
+        />
+      </div>
+
+      {/* Accent Color */}
+      <div className="border-t pt-4">
+        <AccentColorPicker
+          value={customization?.secondaryColor}
+          onChange={handleColorChange("secondaryColor")}
+          label="Accent Color"
+          description="Gradient secondary and decorative elements"
+        />
+      </div>
+
+      {/* Header Gradient Toggle */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">Header Gradient</Label>
+            <p className="text-xs text-muted-foreground">
+              Show a gradient stripe below the header
+            </p>
+          </div>
+          <Switch
+            checked={customization?.showHeaderGradient ?? false}
+            onCheckedChange={handleGradientToggle}
+          />
+        </div>
       </div>
 
       {/* Border Radius */}
@@ -157,13 +189,6 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
           onChange={handleBorderRadiusChange}
         />
       </div>
-
-      {/* Preview - only show if any customization is set */}
-      {hasAnyCustomization && (
-        <div className="border-t pt-4">
-          <CustomizationPreview customization={customization} />
-        </div>
-      )}
     </div>
   );
 }

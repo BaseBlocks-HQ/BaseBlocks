@@ -70,6 +70,27 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Get customization CSS variables for preview
   const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId as Id<"sites">);
 
+  // Apply CSS variables to document root so portaled elements (dropdowns, menus) inherit them
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isCustomized) {
+      root.setAttribute("data-site-customized", "");
+      for (const [key, value] of Object.entries(customizationStyles)) {
+        if (key.startsWith("--")) {
+          root.style.setProperty(key, value as string);
+        }
+      }
+    }
+    return () => {
+      root.removeAttribute("data-site-customized");
+      for (const key of Object.keys(customizationStyles)) {
+        if (key.startsWith("--")) {
+          root.style.removeProperty(key);
+        }
+      }
+    };
+  }, [customizationStyles, isCustomized]);
+
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);

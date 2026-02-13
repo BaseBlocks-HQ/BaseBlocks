@@ -8,7 +8,7 @@ import type { SiteCustomization } from "@/types/elements/customization";
 import {
   getDarkColorForPreset,
 } from "@/types/elements/customization";
-import { getForegroundColor, lightenColor } from "./color-utils";
+import { getForegroundColor, lightenColor, tintColor, darkTintColor } from "./color-utils";
 
 /**
  * Get the base radius value for a preset
@@ -67,6 +67,39 @@ export function generateCustomizationStyles(
     styles["--site-primary-foreground-dark"] = darkForeground;
   }
 
+  // Header color
+  if (customization.headerColor) {
+    styles["--site-header-bg"] = customization.headerColor;
+    styles["--site-header-fg"] = getForegroundColor(customization.headerColor);
+
+    const darkHeader = customization.headerColorDark ||
+      getDarkColorForPreset(customization.headerColor) ||
+      lightenColor(customization.headerColor, 0.2);
+    styles["--site-header-bg-dark"] = darkHeader;
+    styles["--site-header-fg-dark"] = getForegroundColor(darkHeader);
+  }
+
+  // Secondary/accent color — sets staging vars; CSS rules map them to --accent
+  if (customization.secondaryColor) {
+    styles["--site-accent"] = customization.secondaryColor;
+    // Light mode staging vars (CSS will map these to --accent / --accent-foreground)
+    styles["--site-accent-light-bg"] = tintColor(customization.secondaryColor, 0.88);
+    styles["--site-accent-light-fg"] = customization.secondaryColor;
+
+    const darkSecondary = customization.secondaryColorDark ||
+      getDarkColorForPreset(customization.secondaryColor) ||
+      lightenColor(customization.secondaryColor, 0.2);
+    styles["--site-accent-dark"] = darkSecondary;
+    // Dark mode staging vars
+    styles["--site-accent-bg-dark"] = darkTintColor(darkSecondary, 0.80);
+    styles["--site-accent-fg-dark"] = darkSecondary;
+  }
+
+  // Gradient (uses primary + secondary + accent or available colors)
+  if (customization.accentColor && customization.secondaryColor) {
+    styles["--site-gradient"] = `linear-gradient(to right, ${customization.accentColor}, ${customization.secondaryColor})`;
+  }
+
   // Only set border radius if explicitly provided
   if (customization.borderRadius) {
     const radiusValue = getBaseRadiusValue(customization.borderRadius);
@@ -95,5 +128,5 @@ export function generateCustomizationStyles(
  */
 export function hasCustomization(customization?: SiteCustomization): boolean {
   if (!customization) return false;
-  return !!(customization.accentColor || customization.borderRadius);
+  return !!(customization.accentColor || customization.headerColor || customization.secondaryColor || customization.borderRadius);
 }

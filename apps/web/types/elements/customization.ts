@@ -8,13 +8,18 @@ export type BorderRadiusPreset = "none" | "small" | "medium" | "large" | "full";
 
 // Site customization settings stored in database
 export interface SiteCustomization {
-  accentColor?: string;        // Hex color (e.g., "#0066FF")
+  accentColor?: string;        // Hex color (e.g., "#0066FF") — primary buttons, links, focus
   accentColorDark?: string;    // Optional dark mode variant
+  headerColor?: string;        // Header background color
+  headerColorDark?: string;    // Header dark mode variant
+  secondaryColor?: string;     // Accent/gradient secondary color
+  secondaryColorDark?: string; // Secondary dark mode variant
+  showHeaderGradient?: boolean; // Gradient stripe under header
   borderRadius?: BorderRadiusPreset;
 }
 
 // Default customization values
-export const DEFAULT_CUSTOMIZATION: Required<SiteCustomization> = {
+export const DEFAULT_CUSTOMIZATION: Required<Pick<SiteCustomization, 'accentColor' | 'accentColorDark' | 'borderRadius'>> = {
   accentColor: "#0066FF",      // Blue
   accentColorDark: "#3B82F6",  // Lighter blue for dark mode
   borderRadius: "medium",
@@ -45,6 +50,8 @@ export interface ColorPreset {
 
 // Color presets for quick selection
 export const COLOR_PRESETS: ColorPreset[] = [
+  { value: "#022364", label: "Navy", darkValue: "#1E4D8C" },
+  { value: "#D20567", label: "Magenta", darkValue: "#E84A93" },
   { value: "#0066FF", label: "Blue", darkValue: "#3B82F6" },
   { value: "#8B5CF6", label: "Purple", darkValue: "#A78BFA" },
   { value: "#EC4899", label: "Pink", darkValue: "#F472B6" },

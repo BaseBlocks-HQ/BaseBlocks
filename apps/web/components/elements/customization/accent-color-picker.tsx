@@ -19,9 +19,11 @@ import { useState, useEffect } from "react";
 interface AccentColorPickerProps {
   value: string | undefined;
   onChange: (color: string | undefined) => void;
+  label?: string;
+  description?: string;
 }
 
-export function AccentColorPicker({ value, onChange }: AccentColorPickerProps) {
+export function AccentColorPicker({ value, onChange, label = "Accent Color", description }: AccentColorPickerProps) {
   const [customColor, setCustomColor] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -73,7 +75,7 @@ export function AccentColorPicker({ value, onChange }: AccentColorPickerProps) {
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium">Accent Color</Label>
+      <Label className="text-sm font-medium">{label}</Label>
 
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
@@ -175,9 +177,11 @@ export function AccentColorPicker({ value, onChange }: AccentColorPickerProps) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        {value ? "Applied to buttons, links, and focus states" : "Using theme default colors"}
-      </p>
+      {description && (
+        <p className="text-xs text-muted-foreground">
+          {description}
+        </p>
+      )}
     </div>
   );
 }

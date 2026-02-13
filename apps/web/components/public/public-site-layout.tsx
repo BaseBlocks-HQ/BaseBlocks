@@ -109,7 +109,7 @@ export function PublicSiteLayout({
 
   // Get customization CSS variables
   const customizationStyles = useCustomizationStyles(site.settings.customization);
-  const isCustomized = !!(site.settings.customization?.accentColor || site.settings.customization?.borderRadius);
+  const isCustomized = !!(site.settings.customization?.accentColor || site.settings.customization?.headerColor || site.settings.customization?.secondaryColor || site.settings.customization?.borderRadius);
 
   // Apply CSS variables to document root so portals (dropdowns, popovers) also inherit them
   useEffect(() => {
@@ -151,41 +151,57 @@ export function PublicSiteLayout({
       >
         {/* Main Header */}
         {showHeader && (
-          <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-14 items-center px-4">
-              {/* Left side: Logo and site name */}
-              <div className="flex items-center gap-2">
-                {showLogo && <SiteLogo site={site} company={company} />}
-                {showSiteName && (
-                  <span className="font-semibold">{site.name}</span>
-                )}
-              </div>
-
-              {/* Center: TopNav navigation (if topnav style) */}
-              {showTopNav && pages && (
-                <div className="flex-1 flex justify-center ml-8">
-                  <TopNavMenu
-                    pages={pages}
-                    currentPath={currentPathString}
-                  />
-                </div>
+          <>
+            <header
+              className={cn(
+                "border-b sticky top-0 z-40",
+                !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
               )}
+              style={site.settings.customization?.headerColor ? {
+                backgroundColor: "var(--site-header-bg)",
+                color: "var(--site-header-fg)",
+              } : undefined}
+            >
+              <div className="container mx-auto flex h-14 items-center px-4">
+                {/* Left side: Logo and site name */}
+                <div className="flex items-center gap-2">
+                  {showLogo && <SiteLogo site={site} company={company} />}
+                  {showSiteName && (
+                    <span className="font-semibold">{site.name}</span>
+                  )}
+                </div>
 
-              {/* Right side: Search and mode toggle */}
-              <div className="flex items-center gap-3 ml-auto">
-                {showHeaderSearch && (
-                  <SearchBox
-                    siteId={site._id}
-                    usePublicQuery
-                    placeholder="Search..."
-                    maxResults={5}
-                    className="w-64"
-                  />
+                {/* Center: TopNav navigation (if topnav style) */}
+                {showTopNav && pages && (
+                  <div className="flex-1 flex justify-center ml-8">
+                    <TopNavMenu
+                      pages={pages}
+                      currentPath={currentPathString}
+                    />
+                  </div>
                 )}
-                <ModeToggle />
+
+                {/* Right side: Search and mode toggle */}
+                <div className="flex items-center gap-3 ml-auto">
+                  {showHeaderSearch && (
+                    <SearchBox
+                      siteId={site._id}
+                      usePublicQuery
+                      placeholder="Search..."
+                      maxResults={5}
+                      className="w-64"
+                    />
+                  )}
+                  <ModeToggle />
+                </div>
               </div>
-            </div>
-          </header>
+            </header>
+
+            {/* Gradient stripe below header */}
+            {site.settings.customization?.showHeaderGradient && (
+              <GradientStripe customization={site.settings.customization} />
+            )}
+          </>
         )}
 
         {/* Secondary Navigation Bar (subnav style) */}
@@ -321,5 +337,25 @@ function SiteLogo({
     >
       {site.name[0]}
     </div>
+  );
+}
+
+/**
+ * Gradient stripe rendered below the header
+ */
+function GradientStripe({ customization }: { customization: SiteCustomization }) {
+  const primaryColor = customization.accentColor || "#0066FF";
+  const secondaryColor = customization.secondaryColor;
+
+  const gradientColors = [primaryColor, secondaryColor].filter(Boolean);
+  const gradient = gradientColors.length >= 2
+    ? `linear-gradient(to right, ${gradientColors.join(", ")})`
+    : primaryColor;
+
+  return (
+    <div
+      className="h-1 w-full flex-shrink-0"
+      style={{ background: gradient }}
+    />
   );
 }

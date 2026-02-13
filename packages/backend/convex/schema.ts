@@ -61,6 +61,11 @@ export default defineSchema({
       customization: v.optional(v.object({
         accentColor: v.optional(v.string()), // Hex color
         accentColorDark: v.optional(v.string()), // Optional dark mode variant
+        headerColor: v.optional(v.string()), // Header background color
+        headerColorDark: v.optional(v.string()), // Header dark mode variant
+        secondaryColor: v.optional(v.string()), // Accent/gradient secondary color
+        secondaryColorDark: v.optional(v.string()), // Secondary dark mode variant
+        showHeaderGradient: v.optional(v.boolean()), // Gradient stripe under header
         borderRadius: v.optional(v.union(
           v.literal("none"),
           v.literal("small"),

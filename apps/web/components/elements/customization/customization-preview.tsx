@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useCustomizationStyles } from "@/hooks";
 import type { SiteCustomization } from "@/types/elements/customization";
 import { hasCustomization } from "@/lib/customization";
@@ -17,43 +16,130 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
     return null;
   }
 
+  const primaryColor = customization?.accentColor || "#0066FF";
+  const headerColor = customization?.headerColor;
+  const secondaryColor = customization?.secondaryColor;
+  const showGradient = customization?.showHeaderGradient;
+
+  // Build gradient string from available colors
+  const gradientColors = [primaryColor, secondaryColor].filter(Boolean);
+  const gradientStyle = gradientColors.length >= 2
+    ? `linear-gradient(to right, ${gradientColors.join(", ")})`
+    : primaryColor;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <p className="text-xs text-muted-foreground font-medium">Preview</p>
 
-      {/* Preview container with scoped customization */}
+      {/* Mini-mockup preview */}
       <div
-        className="p-4 rounded-lg border bg-card space-y-3"
+        className="rounded-lg border overflow-hidden bg-card"
         style={cssVariables}
         data-site-customized
       >
-        {/* Button preview */}
-        <div className="flex gap-2">
-          <Button size="sm">Primary</Button>
-          <Button size="sm" variant="outline">
-            Outline
-          </Button>
-          <Button size="sm" variant="secondary">
-            Secondary
-          </Button>
+        {/* Header mockup */}
+        <div
+          className="px-3 py-2 flex items-center gap-2 border-b"
+          style={{
+            backgroundColor: headerColor || undefined,
+            color: headerColor ? "var(--site-header-fg)" : undefined,
+          }}
+        >
+          {/* Logo dot */}
+          <div
+            className="w-5 h-5 rounded-md flex-shrink-0"
+            style={{ backgroundColor: primaryColor }}
+          />
+          {/* Site name placeholder */}
+          <div
+            className="h-2.5 rounded-full w-16"
+            style={{
+              backgroundColor: headerColor
+                ? "currentColor"
+                : undefined,
+              opacity: headerColor ? 0.7 : undefined,
+            }}
+          >
+            {!headerColor && (
+              <div className="h-full rounded-full bg-foreground/60" />
+            )}
+          </div>
+          {/* Nav items placeholder */}
+          <div className="flex gap-1.5 ml-auto">
+            <div
+              className="h-2 rounded-full w-8"
+              style={{
+                backgroundColor: headerColor ? "currentColor" : undefined,
+                opacity: headerColor ? 0.4 : undefined,
+              }}
+            >
+              {!headerColor && (
+                <div className="h-full rounded-full bg-foreground/30" />
+              )}
+            </div>
+            <div
+              className="h-2 rounded-full w-8"
+              style={{
+                backgroundColor: headerColor ? "currentColor" : undefined,
+                opacity: headerColor ? 0.4 : undefined,
+              }}
+            >
+              {!headerColor && (
+                <div className="h-full rounded-full bg-foreground/30" />
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Card preview */}
-        <div className="p-3 rounded-md border bg-background">
-          <p className="text-sm font-medium">Sample Card</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            This shows how content cards will look with your customization.
-          </p>
-        </div>
+        {/* Gradient stripe (below header) */}
+        {showGradient && (
+          <div
+            className="h-1.5"
+            style={{ background: gradientStyle }}
+          />
+        )}
 
-        {/* Link preview */}
-        <p className="text-sm">
-          Here is a{" "}
-          <span className="text-primary underline cursor-pointer">
-            sample link
-          </span>{" "}
-          in text.
-        </p>
+        {/* Content area mockup */}
+        <div className="p-3 space-y-2">
+          {/* Content lines */}
+          <div className="flex gap-2">
+            <div className="h-2 rounded-full bg-foreground/15 flex-1" />
+            <div className="h-2 rounded-full bg-foreground/10 w-8" />
+          </div>
+          <div className="h-2 rounded-full bg-foreground/10 w-3/4" />
+
+          {/* Primary-colored elements */}
+          <div className="flex gap-2 pt-1">
+            <div
+              className="h-5 rounded-md px-3 flex items-center"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <span className="text-[8px] font-medium" style={{ color: "var(--primary-foreground, #fff)" }}>
+                Button
+              </span>
+            </div>
+            {secondaryColor && (
+              <div
+                className="h-5 rounded-md px-3 flex items-center border"
+                style={{ borderColor: secondaryColor }}
+              >
+                <span className="text-[8px] font-medium" style={{ color: secondaryColor }}>
+                  Accent
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Link text */}
+          <div className="flex items-center gap-1">
+            <div className="h-2 rounded-full bg-foreground/10 w-12" />
+            <div
+              className="h-2 rounded-full w-10"
+              style={{ backgroundColor: primaryColor, opacity: 0.6 }}
+            />
+            <div className="h-2 rounded-full bg-foreground/10 w-16" />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -122,12 +122,25 @@
   }
 }
 
+/* Site customization: map staging vars to shadcn --accent (light mode) */
+/* Staging vars are set via inline styles; CSS rules do the final mapping */
+/* so portaled elements (dropdowns, menus) inherit correctly */
+[data-site-customized] {
+  --accent: var(--site-accent-light-bg, oklch(0.97 0 0));
+  --accent-foreground: var(--site-accent-light-fg, oklch(0.205 0 0));
+}
+
 /* Site customization dark mode overrides */
-/* These pick up custom dark mode colors when set via inline styles */
+/* Fallback values are the .dark theme defaults to avoid circular var() references */
 [data-site-customized].dark,
 .dark [data-site-customized] {
-  --primary: var(--site-primary-dark, var(--primary));
-  --primary-foreground: var(--site-primary-foreground-dark, var(--primary-foreground));
+  --primary: var(--site-primary-dark, oklch(0.922 0 0));
+  --primary-foreground: var(--site-primary-foreground-dark, oklch(0.205 0 0));
+  --site-header-bg: var(--site-header-bg-dark);
+  --site-header-fg: var(--site-header-fg-dark);
+  --site-accent: var(--site-accent-dark);
+  --accent: var(--site-accent-bg-dark, oklch(0.269 0 0));
+  --accent-foreground: var(--site-accent-fg-dark, oklch(0.985 0 0));
 }
 
 /* Full border radius - pill shape for interactive elements, not cards/containers/textareas */

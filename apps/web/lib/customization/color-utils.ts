@@ -68,6 +68,42 @@ export function lightenColor(hex: string, amount: number = 0.2): string {
 }
 
 /**
+ * Create a very light tint of a color (for hover backgrounds).
+ * Mixes the color with white. amount=0.9 means 90% white, 10% color.
+ */
+export function tintColor(hex: string, amount: number = 0.9): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+
+  const tint = (value: number) =>
+    Math.min(255, Math.round(value + (255 - value) * amount));
+
+  const r = tint(rgb.r).toString(16).padStart(2, "0");
+  const g = tint(rgb.g).toString(16).padStart(2, "0");
+  const b = tint(rgb.b).toString(16).padStart(2, "0");
+
+  return `#${r}${g}${b}`;
+}
+
+/**
+ * Create a dark-mode tint (subtle dark tint for hover backgrounds in dark mode).
+ * Darkens toward black. amount=0.85 means 85% black, 15% color.
+ */
+export function darkTintColor(hex: string, amount: number = 0.85): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+
+  const darken = (value: number) =>
+    Math.max(0, Math.round(value * (1 - amount)));
+
+  const r = darken(rgb.r).toString(16).padStart(2, "0");
+  const g = darken(rgb.g).toString(16).padStart(2, "0");
+  const b = darken(rgb.b).toString(16).padStart(2, "0");
+
+  return `#${r}${g}${b}`;
+}
+
+/**
  * Validate hex color format
  */
 export function isValidHex(hex: string): boolean {
