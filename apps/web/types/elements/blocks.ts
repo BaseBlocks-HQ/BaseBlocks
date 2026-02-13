@@ -123,6 +123,8 @@ export interface FlowchartDiagram {
 export interface FlowchartContent {
   mermaidCode: string;
   diagrams?: FlowchartDiagram[];
+  /** beautiful-mermaid theme preset key (e.g. "tokyo-night", "dracula"). Unset = auto light/dark. */
+  theme?: string;
 }
 
 // Decision tree block types

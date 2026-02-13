@@ -7,9 +7,10 @@ import { MermaidDiagram } from "./mermaid-diagram";
 interface DiagramViewerProps {
   diagrams: FlowchartDiagram[];
   contained?: boolean;
+  theme?: string;
 }
 
-export function DiagramViewer({ diagrams, contained }: DiagramViewerProps) {
+export function DiagramViewer({ diagrams, contained, theme }: DiagramViewerProps) {
   const [activeId, setActiveId] = useState<string>(diagrams[0]?.id ?? "");
 
   if (diagrams.length === 0) return null;
@@ -37,7 +38,7 @@ export function DiagramViewer({ diagrams, contained }: DiagramViewerProps) {
           ))}
         </div>
       )}
-      <MermaidDiagram code={active.mermaidCode} contained={contained} />
+      <MermaidDiagram code={active.mermaidCode} contained={contained} theme={theme} />
     </div>
   );
 }

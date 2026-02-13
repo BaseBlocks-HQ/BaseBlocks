@@ -2,8 +2,17 @@
 
 import type { FlowchartDiagram } from "@/types/elements/blocks";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Plus, X, Pencil, Check } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, X, Pencil, Check, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { THEMES } from "beautiful-mermaid";
 import { MermaidDiagram } from "./mermaid-diagram";
 
 const PLACEHOLDER = `graph TD
@@ -15,12 +24,26 @@ function generateId() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+const THEME_ENTRIES = Object.entries(THEMES);
+
+/** Human-readable label for a theme key */
+function themeLabel(key: string) {
+  return key
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 interface DiagramEditorProps {
   diagrams: FlowchartDiagram[];
   onChange: (diagrams: FlowchartDiagram[]) => void;
   /** Allow removing all diagrams (shows empty state with "Add Diagram" button). Default false — keeps at least one. */
   allowEmpty?: boolean;
   contained?: boolean;
+  /** Current theme preset key */
+  theme?: string;
+  /** Called when user picks a theme */
+  onThemeChange?: (theme: string | undefined) => void;
 }
 
 export function DiagramEditor({
@@ -28,6 +51,8 @@ export function DiagramEditor({
   onChange,
   allowEmpty = false,
   contained = true,
+  theme,
+  onThemeChange,
 }: DiagramEditorProps) {
   const [activeTabId, setActiveTabId] = useState<string>(diagrams[0]?.id ?? "");
   const [codeVisible, setCodeVisible] = useState(true);
@@ -193,7 +218,7 @@ export function DiagramEditor({
       {/* Preview */}
       <div className="min-h-[80px]">
         {activeDiagram?.mermaidCode?.trim() ? (
-          <MermaidDiagram code={activeDiagram.mermaidCode} contained={contained} />
+          <MermaidDiagram code={activeDiagram.mermaidCode} contained={contained} theme={theme} />
         ) : (
           <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
             Write mermaid code below to see a preview
@@ -201,20 +226,68 @@ export function DiagramEditor({
         )}
       </div>
 
-      {/* Code editor */}
+      {/* Code editor + theme */}
       <div className="border-t">
-        <button
-          type="button"
-          onClick={() => setCodeVisible(!codeVisible)}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
-        >
-          {codeVisible ? (
-            <ChevronDown className="h-3 w-3" />
-          ) : (
-            <ChevronRight className="h-3 w-3" />
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setCodeVisible(!codeVisible)}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {codeVisible ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+            Mermaid Code
+          </button>
+
+          {onThemeChange && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 mr-3 text-xs rounded-md transition-colors ${
+                    theme
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {theme && THEMES[theme] ? (
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${THEMES[theme].bg} 50%, ${THEMES[theme].accent ?? THEMES[theme].fg} 50%)` }}
+                    />
+                  ) : (
+                    <Palette className="h-3 w-3" />
+                  )}
+                  {theme ? themeLabel(theme) : "Theme"}
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuRadioGroup
+                  value={theme ?? ""}
+                  onValueChange={(v) => onThemeChange(v || undefined)}
+                >
+                  <DropdownMenuRadioItem value="">
+                    Auto (light/dark)
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuSeparator />
+                  {THEME_ENTRIES.map(([key, colors]) => (
+                    <DropdownMenuRadioItem key={key} value={key} className="gap-2">
+                      <span
+                        className="inline-block h-3 w-3 rounded-full border border-black/10 shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${colors.bg} 50%, ${colors.accent ?? colors.fg} 50%)` }}
+                      />
+                      {themeLabel(key)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          Mermaid Code
-        </button>
+        </div>
 
         {codeVisible && (
           <div className="px-4 pb-4">

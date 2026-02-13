@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { renderMermaid } from "beautiful-mermaid";
+import { renderMermaid, THEMES } from "beautiful-mermaid";
 import { useTheme } from "next-themes";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 
@@ -9,13 +9,15 @@ interface MermaidDiagramProps {
   code: string;
   /** When true, the diagram stays within its parent container instead of stretching edge-to-edge */
   contained?: boolean;
+  /** beautiful-mermaid theme preset key. Unset = auto light/dark. */
+  theme?: string;
 }
 
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 20;
-const ZOOM_FACTOR = 0.1;
+const ZOOM_FACTOR = 0.04;
 
-export function MermaidDiagram({ code, contained }: MermaidDiagramProps) {
+export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -117,10 +119,16 @@ export function MermaidDiagram({ code, contained }: MermaidDiagramProps) {
     setError(null);
 
     const isDark = resolvedTheme === "dark";
+    const preset = theme ? THEMES[theme] : undefined;
 
     renderMermaid(code, {
-      bg: isDark ? "#09090b" : "#ffffff",
-      fg: isDark ? "#fafafa" : "#18181b",
+      bg: preset?.bg ?? (isDark ? "#09090b" : "#ffffff"),
+      fg: preset?.fg ?? (isDark ? "#fafafa" : "#18181b"),
+      line: preset?.line,
+      accent: preset?.accent,
+      muted: preset?.muted,
+      surface: preset?.surface,
+      border: preset?.border,
       transparent: true,
       nodeSpacing: 60,
       layerSpacing: 80,
@@ -144,7 +152,7 @@ export function MermaidDiagram({ code, contained }: MermaidDiagramProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, resolvedTheme]);
+  }, [code, resolvedTheme, theme]);
 
   useEffect(() => {
     if (!svg) return;
@@ -287,8 +295,9 @@ export function MermaidDiagram({ code, contained }: MermaidDiagramProps) {
       {/* Canvas */}
       <div
         ref={containerRef}
-        className={`overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none bg-muted/30 dark:bg-muted/20`}
+        className={`overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none ${theme ? "" : "bg-muted/30 dark:bg-muted/20"}`}
         style={{
+          ...(theme && THEMES[theme] ? { backgroundColor: THEMES[theme].bg } : {}),
           backgroundImage:
             "radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px)",
           backgroundSize: "24px 24px",

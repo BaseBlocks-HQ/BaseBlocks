@@ -121,6 +121,8 @@ interface SearchBoxProps {
   usePublicQuery?: boolean;
   /** Additional content to render in the input area (e.g., settings button) */
   inputAddon?: React.ReactNode;
+  /** Adapt colors to blend with a custom-colored header */
+  headerMode?: boolean;
   className?: string;
 }
 
@@ -168,6 +170,7 @@ export function SearchBox({
   showFileType = true,
   usePublicQuery = false,
   inputAddon,
+  headerMode = false,
   className,
 }: SearchBoxProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -309,20 +312,33 @@ export function SearchBox({
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Search input */}
-      <div className="relative rounded-md transition-all hover:ring-2 hover:ring-muted-foreground/40">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <div className={cn(
+        "relative rounded-md transition-all",
+        headerMode
+          ? "hover:ring-2 hover:ring-current/20"
+          : "hover:ring-2 hover:ring-muted-foreground/40"
+      )}>
+        <Search className={cn(
+          "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
+          headerMode ? "text-current opacity-50" : "text-muted-foreground"
+        )} />
         <Input
           type="text"
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
-          className={cn("pl-10", inputAddon ? "pr-10" : "")}
+          className={cn(
+            "pl-10",
+            inputAddon ? "pr-10" : "",
+            headerMode && "border-current/20 bg-current/[0.08] text-current placeholder:text-current/50 dark:bg-current/[0.08] focus-visible:ring-current/25 focus-visible:border-current/30"
+          )}
         />
         {isSearching && (
           <Loader2
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
+              headerMode ? "text-current opacity-50" : "text-muted-foreground",
               inputAddon ? "right-10" : "right-3"
             )}
           />

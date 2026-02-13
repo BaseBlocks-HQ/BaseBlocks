@@ -98,13 +98,13 @@ export function EditorHeader({
           variant="ghost"
           size="sm"
           onClick={() => setIsHeaderPreview(false)}
-          className="mr-3 gap-1.5"
+          className={cn("mr-3 gap-1.5", headerColor && "text-current hover:bg-current/10")}
         >
           <PanelTop className="h-4 w-4" />
           Exit Preview
         </Button>
 
-        <div className="h-5 w-px bg-border mr-3" />
+        <div className={cn("h-5 w-px mr-3", headerColor ? "bg-current/20" : "bg-border")} />
 
         <div className="flex items-center gap-2">
           {showLogo && <SiteLogo site={site} company={company} />}
@@ -121,9 +121,10 @@ export function EditorHeader({
               placeholder="Search..."
               maxResults={5}
               className="w-64"
+              headerMode={!!headerColor}
             />
           )}
-          <ModeToggle />
+          <ModeToggle className={headerColor ? "text-current hover:bg-current/10" : undefined} />
         </div>
       </header>
     );

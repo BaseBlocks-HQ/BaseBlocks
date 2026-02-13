@@ -115,6 +115,7 @@ export function PublicSiteLayout({
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const navigationStyle = site.settings.navigationStyle;
+  const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   // Get customization CSS variables
   const customizationStyles = useCustomizationStyles(site.settings.customization);
@@ -157,7 +158,7 @@ export function PublicSiteLayout({
         <>
           <header
             className={cn(
-              "border-b shrink-0 z-40",
+              "relative border-b shrink-0 z-40",
               !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
             )}
             style={site.settings.customization?.headerColor ? {
@@ -197,9 +198,10 @@ export function PublicSiteLayout({
                     placeholder="Search..."
                     maxResults={5}
                     className="w-64"
+                    headerMode={hasCustomHeaderColor}
                   />
                 )}
-                <ModeToggle />
+                <ModeToggle className={hasCustomHeaderColor ? "text-current hover:bg-current/10" : undefined} />
               </div>
             </div>
           </header>
@@ -208,7 +210,9 @@ export function PublicSiteLayout({
 
       {/* Gradient stripe below header (non-sidebar mode only, sidebar mode renders it full-width at container level) */}
       {!showSidebar && site.settings.customization?.showHeaderGradient && showHeader && (
-        <GradientStripe customization={site.settings.customization} />
+        <div className="relative z-30">
+          <GradientStripe customization={site.settings.customization} />
+        </div>
       )}
 
       {/* Secondary Navigation Bar (subnav style) */}
@@ -277,7 +281,7 @@ export function PublicSiteLayout({
           <SidebarProvider>
             {/* Full-width gradient stripe (fixed position so it spans sidebar + main) */}
             {site.settings.customization?.showHeaderGradient && showHeader && (
-              <div className="fixed top-14 left-0 right-0 z-50">
+              <div className="fixed top-14 left-0 right-0 z-30">
                 <GradientStripe customization={site.settings.customization} />
               </div>
             )}

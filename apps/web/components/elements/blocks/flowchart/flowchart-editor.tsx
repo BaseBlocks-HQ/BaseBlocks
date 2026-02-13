@@ -3,7 +3,7 @@
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
 import type { FlowchartContent, FlowchartDiagram } from "@/types/elements/blocks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
@@ -23,15 +23,18 @@ export function FlowchartEditor({
   const [diagrams, setDiagrams] = useState<FlowchartDiagram[]>(() =>
     normalizeDiagrams(content),
   );
+  const [theme, setTheme] = useState<string | undefined>(content.theme);
+  const themeRef = useRef(content.theme);
 
   const debouncedSave = useDebounceCallback(
     useCallback(
-      async (updatedDiagrams: FlowchartDiagram[]) => {
+      async (updatedDiagrams: FlowchartDiagram[], updatedTheme?: string) => {
         onSaveStatusChange?.("saving");
         try {
           await onUpdate({
             mermaidCode: updatedDiagrams[0]?.mermaidCode ?? "",
             diagrams: updatedDiagrams,
+            theme: updatedTheme,
           });
           onSaveStatusChange?.("saved");
         } catch (error) {
@@ -47,17 +50,32 @@ export function FlowchartEditor({
 
   useEffect(() => {
     setDiagrams(normalizeDiagrams(content));
+    setTheme(content.theme);
+    themeRef.current = content.theme;
   }, [id]);
 
   const handleChange = (updated: FlowchartDiagram[]) => {
     setDiagrams(updated);
     onSaveStatusChange?.("pending");
-    debouncedSave(updated);
+    debouncedSave(updated, themeRef.current);
+  };
+
+  const handleThemeChange = (newTheme: string | undefined) => {
+    setTheme(newTheme);
+    themeRef.current = newTheme;
+    onSaveStatusChange?.("pending");
+    debouncedSave(diagrams, newTheme);
   };
 
   return (
     <div className="rounded-lg border bg-card transition-all hover:ring-2 hover:ring-ring/20">
-      <DiagramEditor diagrams={diagrams} onChange={handleChange} contained />
+      <DiagramEditor
+        diagrams={diagrams}
+        onChange={handleChange}
+        contained
+        theme={theme}
+        onThemeChange={handleThemeChange}
+      />
     </div>
   );
 }
