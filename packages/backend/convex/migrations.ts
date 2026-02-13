@@ -155,6 +155,79 @@ export const indexAllDocuments = migrations.define({
   },
 });
 
+// Migration 5: Bootstrap published fields on sites
+// Copies current draft state to published fields for all published sites
+export const bootstrapSitePublishedFields = migrations.define({
+  table: "sites",
+  batchSize: 10,
+  migrateOne: async (ctx, site) => {
+    // Only bootstrap if not already done and site is published
+    if (site.publishedName) return; // Already bootstrapped
+    if (!site.isPublished) return; // Not published, skip
+
+    await ctx.db.patch(site._id, {
+      publishedName: site.name,
+      publishedLogoUrl: site.logoUrl,
+      publishedDefaultPageId: site.defaultPageId,
+      publishedSettings: site.settings,
+      contentModifiedAt: site.updatedAt,
+      lastDeployedAt: site.updatedAt,
+      deploymentVersion: 0, // Pre-migration state
+    });
+  },
+});
+
+// Migration 6: Bootstrap published fields on pages
+export const bootstrapPagePublishedFields = migrations.define({
+  table: "pages",
+  batchSize: 50,
+  migrateOne: async (ctx, page) => {
+    // Only bootstrap if not already done
+    if (page.isDeployed !== undefined) return;
+
+    // Check if the page's site is published
+    const site = await ctx.db.get(page.siteId);
+    if (!site || !site.isPublished) return;
+
+    await ctx.db.patch(page._id, {
+      publishedTitle: page.title,
+      publishedSlug: page.slug,
+      publishedIcon: page.icon,
+      publishedOrder: page.order,
+      publishedParentId: page.parentId,
+      publishedPageTabs: page.pageTabs,
+      isDeployed: true,
+    });
+  },
+});
+
+// Migration 7: Bootstrap published fields on layouts
+export const bootstrapLayoutPublishedFields = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    // Only bootstrap if not already done
+    if (layout.isDeployed !== undefined) return;
+
+    // Check if the layout's site is published
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) return;
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site || !site.isPublished) return;
+
+    // If publishedSlots already exists (from old deploy), also set the other fields
+    await ctx.db.patch(layout._id, {
+      publishedType: layout.type,
+      publishedOrder: layout.order,
+      publishedSettings: layout.settings,
+      publishedTabId: layout.tabId,
+      publishedSlots: layout.publishedSlots ?? layout.slots,
+      isDeployed: true,
+    });
+  },
+});
+
 // Runner for all migrations - run in order
 export const runAll = migrations.runner([
   internal.migrations.indexSubpages,
@@ -167,8 +240,18 @@ export const runSearchFixes = migrations.runner([
   internal.migrations.indexAllDocuments,
 ]);
 
+// Runner for deployment bootstrap migrations
+export const runDeploymentBootstrap = migrations.runner([
+  internal.migrations.bootstrapSitePublishedFields,
+  internal.migrations.bootstrapPagePublishedFields,
+  internal.migrations.bootstrapLayoutPublishedFields,
+]);
+
 // Individual runners for testing
 export const runSubpages = migrations.runner([internal.migrations.indexSubpages]);
 export const runDocuments = migrations.runner([internal.migrations.indexDocuments]);
 export const runFixPending = migrations.runner([internal.migrations.fixPendingNonExtractable]);
 export const runIndexAll = migrations.runner([internal.migrations.indexAllDocuments]);
+export const runBootstrapSites = migrations.runner([internal.migrations.bootstrapSitePublishedFields]);
+export const runBootstrapPages = migrations.runner([internal.migrations.bootstrapPagePublishedFields]);
+export const runBootstrapLayouts = migrations.runner([internal.migrations.bootstrapLayoutPublishedFields]);

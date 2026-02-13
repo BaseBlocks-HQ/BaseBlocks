@@ -33,7 +33,7 @@ function normalizeDiagrams(content: SubpageContent): FlowchartDiagram[] {
 }
 
 export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEditPanelProps) {
-  const { editingSubpage, closeSubpageEditor, updateEditingSubpageContent, markContentModified } =
+  const { editingSubpage, closeSubpageEditor, updateEditingSubpageContent } =
     useEditorContext();
   const updateBlockMutation = useMutation(api.layouts.mutations.updateBlockInSlot);
   const { status: saveStatus, markPending, markSaving, markSaved, markError } = useSaveStatus();
@@ -95,7 +95,6 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
           blockId: subpage.blockId,
           content: content as AnyContent,
         });
-        markContentModified();
         updateEditingSubpageContent(content);
         markSaved();
       } catch (err) {
@@ -103,7 +102,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
         markError();
       }
     },
-    [updateBlockMutation, markContentModified, updateEditingSubpageContent, markSaving, markSaved, markError],
+    [updateBlockMutation, updateEditingSubpageContent, markSaving, markSaved, markError],
   );
 
   const { debouncedCallback: debouncedSave, flush } = useDebounceCallbackWithFlush(

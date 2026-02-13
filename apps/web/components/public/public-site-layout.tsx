@@ -63,12 +63,14 @@ export function PublicSiteLayout({
   company,
   pagePath,
 }: PublicSiteLayoutProps) {
-  const pages = useQuery(api.pages.queries.getTree, {
+  const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
     siteId: site._id,
   });
+  // Cast to PageWithChildren - published pages don't need isPublished for navigation
+  const pages = pagesRaw as PageWithChildren[] | undefined;
 
-  // Use path-based lookup for nested pages
-  const currentPage = useQuery(api.pages.queries.getByPath, {
+  // Use path-based lookup for nested pages (published version)
+  const currentPage = useQuery(api.pages.queries.getByPathPublished, {
     siteId: site._id,
     path: pagePath,
   });

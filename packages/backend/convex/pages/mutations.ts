@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
+import { markSiteModified } from "../lib/markModified";
 
 // Create a new page
 export const create = mutation({
@@ -56,6 +57,8 @@ export const create = mutation({
       updatedAt: now,
     });
 
+    await markSiteModified(ctx, siteId);
+
     return pageId;
   },
 });
@@ -102,6 +105,8 @@ export const update = mutation({
     if (isPublished !== undefined) updates.isPublished = isPublished;
 
     await ctx.db.patch(pageId, updates);
+    await markSiteModified(ctx, page.siteId);
+
     return pageId;
   },
 });
@@ -128,6 +133,8 @@ export const reorder = mutation({
         await ctx.db.patch(pageId, { order: i, updatedAt: now });
       }
     }
+
+    await markSiteModified(ctx, siteId);
 
     return pageIds;
   },
@@ -208,6 +215,8 @@ export const move = mutation({
       updatedAt: Date.now(),
     });
 
+    await markSiteModified(ctx, page.siteId);
+
     return pageId;
   },
 });
@@ -234,6 +243,8 @@ export const updatePageTabs = mutation({
       pageTabs,
       updatedAt: Date.now(),
     });
+
+    await markSiteModified(ctx, page.siteId);
 
     return pageId;
   },
@@ -284,6 +295,8 @@ export const enablePageTabs = mutation({
       updatedAt: now,
     });
 
+    await markSiteModified(ctx, page.siteId);
+
     return pageId;
   },
 });
@@ -318,6 +331,8 @@ export const disablePageTabs = mutation({
       pageTabs: undefined,
       updatedAt: now,
     });
+
+    await markSiteModified(ctx, page.siteId);
 
     return pageId;
   },
@@ -384,6 +399,8 @@ export const remove = mutation({
 
     // Delete the page and all its descendants
     await deletePageRecursively(ctx, pageId, page.siteId);
+
+    await markSiteModified(ctx, page.siteId);
 
     return { success: true };
   },

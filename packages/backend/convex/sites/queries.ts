@@ -78,6 +78,7 @@ export const get = query({
 });
 
 // Get site by company slug and site slug (for public viewing)
+// Returns published field projections for public consumption
 export const getBySlug = query({
   args: {
     companySlug: v.string(),
@@ -93,21 +94,33 @@ export const getBySlug = query({
     if (!company) return null;
 
     // If no site slug, get the default/first site
+    let site;
     if (!siteSlug) {
-      return await ctx.db
+      site = await ctx.db
         .query("sites")
         .withIndex("by_company", (q) => q.eq("companyId", company._id))
         .filter((q) => q.eq(q.field("isPublished"), true))
         .first();
+    } else {
+      // Get specific site
+      site = await ctx.db
+        .query("sites")
+        .withIndex("by_slug", (q) =>
+          q.eq("companyId", company._id).eq("slug", siteSlug),
+        )
+        .first();
     }
 
-    // Get specific site
-    return await ctx.db
-      .query("sites")
-      .withIndex("by_slug", (q) =>
-        q.eq("companyId", company._id).eq("slug", siteSlug),
-      )
-      .first();
+    if (!site) return null;
+
+    // Return with published fields projected (fall back to draft for migration compat)
+    return {
+      ...site,
+      name: site.publishedName ?? site.name,
+      logoUrl: site.publishedLogoUrl ?? site.logoUrl,
+      defaultPageId: site.publishedDefaultPageId ?? site.defaultPageId,
+      settings: site.publishedSettings ?? site.settings,
+    };
   },
 });
 
@@ -141,6 +154,7 @@ export const getWithCompany = query({
 });
 
 // Get site with default page info (for public viewing)
+// Returns published field projections for public consumption
 export const getWithDefaultPage = query({
   args: {
     companySlug: v.string(),
@@ -174,22 +188,39 @@ export const getWithDefaultPage = query({
 
     if (!site) return null;
 
+    // Use published defaultPageId (fall back to draft for migration compat)
+    const publishedDefaultPageId = site.publishedDefaultPageId ?? site.defaultPageId;
+
     // Get the default page
     let defaultPage = null;
-    if (site.defaultPageId) {
-      defaultPage = await ctx.db.get(site.defaultPageId);
+    if (publishedDefaultPageId) {
+      defaultPage = await ctx.db.get(publishedDefaultPageId);
     }
 
-    // If no default page set, get the first page by order
+    // If no default page set, get the first deployed page by published order
     if (!defaultPage) {
-      defaultPage = await ctx.db
+      const pages = await ctx.db
         .query("pages")
         .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .first();
+        .collect();
+      const deployedPages = pages.filter((p) => p.isDeployed);
+      deployedPages.sort(
+        (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+      );
+      defaultPage = deployedPages[0] ?? null;
     }
 
+    // Project published fields onto the returned site
+    const publishedSite = {
+      ...site,
+      name: site.publishedName ?? site.name,
+      logoUrl: site.publishedLogoUrl ?? site.logoUrl,
+      defaultPageId: publishedDefaultPageId,
+      settings: site.publishedSettings ?? site.settings,
+    };
+
     return {
-      site,
+      site: publishedSite,
       company,
       defaultPage,
     };

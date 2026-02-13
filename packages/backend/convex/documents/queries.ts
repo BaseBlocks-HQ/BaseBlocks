@@ -228,7 +228,9 @@ export const searchPublic = query({
         .collect();
 
       for (const layout of layouts) {
-        for (const slot of layout.slots) {
+        // ONLY use publishedSlots for public content - never fall back to draft
+        const slotsToScan = layout.publishedSlots ?? [];
+        for (const slot of slotsToScan) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
               activeLibraryIds.add(block.content.libraryId);

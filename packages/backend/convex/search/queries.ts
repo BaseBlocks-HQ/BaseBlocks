@@ -181,8 +181,8 @@ export const searchAllPublic = query({
         .collect();
 
       for (const layout of layouts) {
-        // Check publishedSlots for active libraries (public content)
-        const slotsToCheck = layout.publishedSlots || layout.slots;
+        // ONLY use publishedSlots for public content - never fall back to draft
+        const slotsToCheck = layout.publishedSlots ?? [];
         for (const slot of slotsToCheck) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
@@ -309,7 +309,8 @@ export const listTitlesPublic = query({
         .collect();
 
       for (const layout of layouts) {
-        const slotsToCheck = layout.publishedSlots || layout.slots;
+        // ONLY use publishedSlots - never fall back to draft
+        const slotsToCheck = layout.publishedSlots ?? [];
         for (const slot of slotsToCheck) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
@@ -394,8 +395,8 @@ export const getSubpageContentPublic = query({
     const site = await ctx.db.get(page.siteId);
     if (!site || !site.isPublished) return null;
 
-    // Find the block in published slots (or fall back to regular slots)
-    const slotsToCheck = layout.publishedSlots || layout.slots;
+    // ONLY use publishedSlots for public content - never fall back to draft
+    const slotsToCheck = layout.publishedSlots ?? [];
     for (const slot of slotsToCheck) {
       if (slot.id === slotId) {
         for (const block of slot.blocks) {

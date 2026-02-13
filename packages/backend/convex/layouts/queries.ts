@@ -26,13 +26,21 @@ export const listPublished = query({
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
-    // Sort by order
-    layouts.sort((a, b) => a.order - b.order);
+    // Filter to only deployed layouts and use published fields
+    const deployedLayouts = layouts.filter((l) => l.isDeployed);
 
-    // Return with publishedSlots as slots (for public consumption)
-    // If not deployed yet, return empty slots
-    return layouts.map((layout) => ({
+    // Sort by published order (fall back to draft order for backwards compat)
+    deployedLayouts.sort(
+      (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+    );
+
+    // Return with published fields substituted
+    return deployedLayouts.map((layout) => ({
       ...layout,
+      type: layout.publishedType ?? layout.type,
+      order: layout.publishedOrder ?? layout.order,
+      settings: layout.publishedSettings ?? layout.settings,
+      tabId: layout.publishedTabId ?? layout.tabId,
       slots: layout.publishedSlots ?? [],
     }));
   },
@@ -67,7 +75,9 @@ export const getActiveLibraryIds = query({
         .collect();
 
       for (const layout of layouts) {
-        for (const slot of layout.slots) {
+        // Use publishedSlots for public library scanning
+        const slotsToScan = layout.publishedSlots ?? [];
+        for (const slot of slotsToScan) {
           for (const block of slot.blocks) {
             if (block.type === "library" && block.content?.libraryId) {
               libraryIds.add(block.content.libraryId);

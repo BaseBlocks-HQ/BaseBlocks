@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdminOrLegacy } from "../auth";
+import { markSiteModified } from "../lib/markModified";
 
 // Create a new site
 export const create = mutation({
@@ -134,25 +135,147 @@ export const update = mutation({
     }
 
     await ctx.db.patch(siteId, updates);
+    await markSiteModified(ctx, siteId);
+
     return siteId;
   },
 });
 
-// Publish site
+// Publish site (auto-deploys on first publish)
 export const publish = mutation({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
+    const { auth } = await requireAdminOrLegacy(ctx, site.companyId);
+    const now = Date.now();
 
     await ctx.db.patch(siteId, {
       isPublished: true,
-      publishedAt: Date.now(),
-      updatedAt: Date.now(),
+      publishedAt: now,
+      updatedAt: now,
     });
+
+    // Auto-deploy on first publish (if never deployed before)
+    if (!site.lastDeployedAt) {
+      const pages = await ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect();
+
+      const newVersion = 1;
+
+      // Create deployment record
+      const deploymentId = await ctx.db.insert("deployments", {
+        siteId,
+        version: newVersion,
+        deployedBy: auth.userId,
+        deployedAt: now,
+        notes: "Initial publish",
+        summary: {
+          pagesDeployed: pages.length,
+          layoutsDeployed: 0,
+          settingsChanged: true,
+        },
+        status: "active",
+      });
+
+      // Copy draft → published for site
+      await ctx.db.patch(siteId, {
+        publishedName: site.name,
+        publishedLogoUrl: site.logoUrl,
+        publishedDefaultPageId: site.defaultPageId,
+        publishedSettings: site.settings,
+        lastDeployedAt: now,
+        lastDeployedBy: auth.userId,
+        deploymentVersion: newVersion,
+      });
+
+      // Snapshot and copy for pages + layouts
+      let totalLayouts = 0;
+
+      await ctx.db.insert("deploymentSnapshots", {
+        deploymentId,
+        siteId,
+        chunkType: "site-settings",
+        data: {
+          name: site.name,
+          logoUrl: site.logoUrl,
+          defaultPageId: site.defaultPageId,
+          settings: site.settings,
+        },
+      });
+
+      const pageTreeData = pages.map((p) => ({
+        _id: p._id,
+        title: p.title,
+        slug: p.slug,
+        icon: p.icon,
+        order: p.order,
+        parentId: p.parentId,
+        pageTabs: p.pageTabs,
+      }));
+
+      await ctx.db.insert("deploymentSnapshots", {
+        deploymentId,
+        siteId,
+        chunkType: "page-tree",
+        data: pageTreeData,
+      });
+
+      for (const page of pages) {
+        await ctx.db.patch(page._id, {
+          publishedTitle: page.title,
+          publishedSlug: page.slug,
+          publishedIcon: page.icon,
+          publishedOrder: page.order,
+          publishedParentId: page.parentId,
+          publishedPageTabs: page.pageTabs,
+          isDeployed: true,
+        });
+
+        const layouts = await ctx.db
+          .query("layouts")
+          .withIndex("by_page", (q) => q.eq("pageId", page._id))
+          .collect();
+
+        await ctx.db.insert("deploymentSnapshots", {
+          deploymentId,
+          siteId,
+          chunkType: "page-layouts",
+          pageId: page._id,
+          data: layouts.map((l) => ({
+            _id: l._id,
+            type: l.type,
+            order: l.order,
+            tabId: l.tabId,
+            slots: l.slots,
+            settings: l.settings,
+          })),
+        });
+
+        for (const layout of layouts) {
+          await ctx.db.patch(layout._id, {
+            publishedSlots: layout.slots,
+            publishedType: layout.type,
+            publishedOrder: layout.order,
+            publishedSettings: layout.settings,
+            publishedTabId: layout.tabId,
+            isDeployed: true,
+          });
+          totalLayouts++;
+        }
+      }
+
+      await ctx.db.patch(deploymentId, {
+        summary: {
+          pagesDeployed: pages.length,
+          layoutsDeployed: totalLayouts,
+          settingsChanged: true,
+        },
+      });
+    }
 
     return siteId;
   },
@@ -200,67 +323,7 @@ export const setDefaultPage = mutation({
       defaultPageId: pageId,
       updatedAt: Date.now(),
     });
-
-    return siteId;
-  },
-});
-
-// Mark content as modified (for deploy tracking)
-export const markContentModified = mutation({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
-
-    // Only update if not already marked
-    if (!site.hasUndeployedChanges) {
-      await ctx.db.patch(siteId, {
-        hasUndeployedChanges: true,
-      });
-    }
-
-    return siteId;
-  },
-});
-
-// Deploy site - copies draft content (slots) to published content (publishedSlots)
-export const deploy = mutation({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    // Require admin access for write operations
-    await requireAdminOrLegacy(ctx, site.companyId);
-
-    // Get all pages for this site
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    // For each page, get all layouts and copy slots → publishedSlots
-    for (const page of pages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const layout of layouts) {
-        await ctx.db.patch(layout._id, {
-          publishedSlots: layout.slots,
-        });
-      }
-    }
-
-    // Clear the undeployed changes flag
-    await ctx.db.patch(siteId, {
-      hasUndeployedChanges: false,
-      updatedAt: Date.now(),
-    });
+    await markSiteModified(ctx, siteId);
 
     return siteId;
   },

@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  History,
   PanelTop,
   Rocket,
   Share2,
@@ -22,6 +23,8 @@ import { useCustomizationStyles } from "@/hooks";
 import { useEditorContext } from "./editor-context";
 import { PreviewButton } from "./preview-button";
 import { ShareDialog } from "./share-dialog";
+import { DeployDialog } from "./deploy-dialog";
+import { DeploymentHistoryPanel } from "./deployment-history-panel";
 
 interface EditorHeaderProps {
   companySlug: string;
@@ -63,14 +66,12 @@ export function EditorHeader({
   const {
     canEdit,
     hasUndeployedChanges,
-    markAsDeployed,
+    deploySite,
   } = useEditorContext();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [deployDialogOpen, setDeployDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [isHeaderPreview, setIsHeaderPreview] = useState(false);
-
-  const handleDeploy = () => {
-    markAsDeployed();
-  };
 
   const showHeader = site.settings.showHeader !== false;
   const showLogo = site.settings.showLogo !== false;
@@ -168,11 +169,23 @@ export function EditorHeader({
                 Share
               </Button>
 
+              {/* Deployment history button */}
+              {sitePublished && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setHistoryOpen(true)}
+                  className="gap-1.5"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              )}
+
               {/* Deploy button */}
               {hasUndeployedChanges ? (
                 <Button
                   size="sm"
-                  onClick={handleDeploy}
+                  onClick={() => setDeployDialogOpen(true)}
                   className="gap-1.5 bg-amber-600 hover:bg-amber-700"
                 >
                   <Rocket className="h-4 w-4" />
@@ -227,6 +240,20 @@ export function EditorHeader({
         siteId={siteId}
         companySlug={companySlug}
         siteSlug={siteSlug}
+      />
+
+      {/* Deploy Dialog */}
+      <DeployDialog
+        open={deployDialogOpen}
+        onOpenChange={setDeployDialogOpen}
+        onDeploy={deploySite}
+      />
+
+      {/* Deployment History Panel */}
+      <DeploymentHistoryPanel
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        siteId={siteId}
       />
     </>
   );

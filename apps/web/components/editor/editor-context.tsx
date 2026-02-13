@@ -48,10 +48,9 @@ interface EditorContextValue {
   isAdmin: boolean;
   isViewer: boolean;
   isPermissionsLoading: boolean;
-  // Deploy tracking - tracks if content was modified since last deploy
+  // Deploy tracking - derived from timestamps
   hasUndeployedChanges: boolean;
-  markContentModified: () => void;
-  markAsDeployed: () => void;
+  deploySite: (notes?: string) => Promise<void>;
   // Page-level tabs
   activeTabId: string | null;
   setActiveTabId: (tabId: string | null) => void;
@@ -73,13 +72,14 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
-  // Query the site to get hasUndeployedChanges from database
+  // Query the site to derive hasUndeployedChanges from timestamps
   const site = useQuery(api.sites.queries.get, { siteId });
-  const hasUndeployedChanges = site?.hasUndeployedChanges ?? false;
+  const hasUndeployedChanges = site
+    ? (site.contentModifiedAt ?? 0) > (site.lastDeployedAt ?? 0)
+    : false;
 
-  // Mutations for deploy tracking
-  const markContentModifiedMutation = useMutation(api.sites.mutations.markContentModified);
-  const deployMutation = useMutation(api.sites.mutations.deploy);
+  // New deploy mutation
+  const deployMutation = useMutation(api.deployments.mutations.deploy);
 
   // Get permissions for this site
   const {
@@ -89,16 +89,11 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     isLoading: isPermissionsLoading,
   } = useSitePermissions(siteId);
 
-  // Mark content as modified (called after any save operation)
-  const markContentModified = useCallback(() => {
-    markContentModifiedMutation({ siteId });
-  }, [markContentModifiedMutation, siteId]);
-
-  // Deploy site - copies draft content to published content
-  const markAsDeployed = useCallback(async () => {
+  // Deploy site - calls the new deployments module
+  const deploySite = useCallback(async (notes?: string) => {
     try {
-      await deployMutation({ siteId });
-      toast.success("Changes deployed");
+      await deployMutation({ siteId, notes });
+      toast.success("Changes deployed successfully");
     } catch (error) {
       console.error("Failed to deploy changes:", error);
       toast.error("Failed to deploy changes");
@@ -170,8 +165,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         isViewer,
         isPermissionsLoading,
         hasUndeployedChanges,
-        markContentModified,
-        markAsDeployed,
+        deploySite,
         activeTabId,
         setActiveTabId,
       }}

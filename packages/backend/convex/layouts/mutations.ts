@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdminOrLegacy } from "../auth";
 import { extractBlockNoteText } from "../lib/extractBlockNoteText";
+import { markSiteModified } from "../lib/markModified";
 import type { Id } from "../_generated/dataModel";
 
 // Subpage content type for indexing
@@ -89,7 +90,7 @@ async function getCompanyIdFromPage(
 async function getCompanyIdFromLayout(
   ctx: { db: any },
   layoutId: string,
-): Promise<{ companyId: string; pageId: string } | null> {
+): Promise<{ companyId: string; pageId: string; siteId: string } | null> {
   const layout = await ctx.db.get(layoutId);
   if (!layout) return null;
 
@@ -99,7 +100,7 @@ async function getCompanyIdFromLayout(
   const site = await ctx.db.get(page.siteId);
   if (!site) return null;
 
-  return { companyId: site.companyId, pageId: layout.pageId };
+  return { companyId: site.companyId, pageId: layout.pageId, siteId: site._id };
 }
 
 // Helper to update search index for a subpage block
@@ -213,8 +214,9 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    // Update page updatedAt
+    // Update page updatedAt and mark site modified
     await ctx.db.patch(pageId, { updatedAt: now });
+    await markSiteModified(ctx, pageInfo.siteId as Id<"sites">);
 
     return layoutId;
   },
@@ -242,6 +244,7 @@ export const updateSettings = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     return layoutId;
   },
@@ -269,6 +272,7 @@ export const updateSlots = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     return layoutId;
   },
@@ -315,6 +319,7 @@ export const addBlockToSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     return layoutId;
   },
@@ -366,6 +371,7 @@ export const updateBlockInSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     // Update search index if this is a subpage block
     if (blockType === "subpage") {
@@ -432,6 +438,7 @@ export const removeBlockFromSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     // Remove search index entry if this was a subpage
     if (isSubpage) {
@@ -502,6 +509,7 @@ export const moveBlock = mutation({
         updatedAt: now,
       });
       await ctx.db.patch(layout.pageId, { updatedAt: now });
+      await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
       return layoutId;
     }
 
@@ -529,6 +537,7 @@ export const moveBlock = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
     return layoutId;
   },
@@ -556,6 +565,7 @@ export const reorder = mutation({
     }
 
     await ctx.db.patch(pageId, { updatedAt: Date.now() });
+    await markSiteModified(ctx, pageInfo.siteId as Id<"sites">);
   },
 });
 
@@ -574,5 +584,6 @@ export const remove = mutation({
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
   },
 });

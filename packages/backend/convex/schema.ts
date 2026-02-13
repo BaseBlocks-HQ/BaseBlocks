@@ -41,8 +41,18 @@ export default defineSchema({
     ),
     accessCodeRotationHours: v.optional(v.number()), // For auto-rotation (default: 24)
     accessCodeSessionDays: v.optional(v.number()), // How long sessions last (default: 7)
-    // Deploy tracking
-    hasUndeployedChanges: v.optional(v.boolean()), // True if content modified since last deploy
+    // Deploy tracking (legacy field kept for migration compatibility)
+    hasUndeployedChanges: v.optional(v.boolean()),
+    // New deployment tracking
+    contentModifiedAt: v.optional(v.number()), // Auto-set by backend mutations
+    lastDeployedAt: v.optional(v.number()),
+    lastDeployedBy: v.optional(v.string()),
+    deploymentVersion: v.optional(v.number()),
+    // Published copies of settings (populated on deploy)
+    publishedName: v.optional(v.string()),
+    publishedLogoUrl: v.optional(v.string()),
+    publishedDefaultPageId: v.optional(v.id("pages")),
+    publishedSettings: v.optional(v.any()),
     settings: v.object({
       favicon: v.optional(v.string()),
       ogImage: v.optional(v.string()),
@@ -116,6 +126,17 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    // Published copies (populated on deploy)
+    publishedTitle: v.optional(v.string()),
+    publishedSlug: v.optional(v.string()),
+    publishedIcon: v.optional(v.string()),
+    publishedOrder: v.optional(v.number()),
+    publishedParentId: v.optional(v.id("pages")),
+    publishedPageTabs: v.optional(v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+    }))),
+    isDeployed: v.optional(v.boolean()),
   })
     .index("by_site", ["siteId"])
     .index("by_parent", ["siteId", "parentId"])
@@ -252,6 +273,19 @@ export default defineSchema({
         ),
       ),
     }),
+    // Published copies of layout structure (populated on deploy)
+    publishedType: v.optional(v.union(
+      v.literal("single"),
+      v.literal("rows"),
+      v.literal("columns"),
+      v.literal("grid"),
+      v.literal("spacer"),
+      v.literal("vertical"),
+    )),
+    publishedOrder: v.optional(v.number()),
+    publishedSettings: v.optional(v.any()),
+    publishedTabId: v.optional(v.string()),
+    isDeployed: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_page", ["pageId"])
@@ -357,6 +391,43 @@ export default defineSchema({
       searchField: "extractedText",
       filterFields: ["siteId", "contentType"],
     }),
+
+  // Deployment history
+  deployments: defineTable({
+    siteId: v.id("sites"),
+    version: v.number(),
+    deployedBy: v.string(),
+    deployedAt: v.number(),
+    notes: v.optional(v.string()),
+    summary: v.object({
+      pagesDeployed: v.number(),
+      layoutsDeployed: v.number(),
+      settingsChanged: v.boolean(),
+    }),
+    status: v.union(
+      v.literal("active"),
+      v.literal("superseded"),
+      v.literal("rolled-back"),
+    ),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_version", ["siteId", "version"])
+    .index("by_site_status", ["siteId", "status"]),
+
+  // Deployment snapshots (chunked for 1MB limit)
+  deploymentSnapshots: defineTable({
+    deploymentId: v.id("deployments"),
+    siteId: v.id("sites"),
+    chunkType: v.union(
+      v.literal("site-settings"),
+      v.literal("page-tree"),
+      v.literal("page-layouts"),
+    ),
+    pageId: v.optional(v.id("pages")),
+    data: v.any(),
+  })
+    .index("by_deployment", ["deploymentId"])
+    .index("by_deployment_type", ["deploymentId", "chunkType"]),
 
   // Team members (cached from Entity Auth)
   members: defineTable({

@@ -34,7 +34,6 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     selectSlot,
     selectBlock,
     clearSelection,
-    markContentModified,
     activeTabId,
     setActiveTabId,
   } = useEditorContext();
@@ -162,9 +161,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
-      markContentModified();
+
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, markContentModified],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
   );
 
   // Handle layout drag end for sidebar layouts
@@ -184,9 +183,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         pageId: pageId as Id<"pages">,
         layoutIds: newOrder as Id<"layouts">[],
       });
-      markContentModified();
+
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, markContentModified],
+    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation],
   );
 
   // Notify parent of slot selection changes
@@ -209,7 +208,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         settings: newLayout.settings,
         tabId: activeTabId ?? undefined,
       });
-      markContentModified();
+
 
       if (newLayout.slots.length > 0) {
         setTimeout(() => {
@@ -218,7 +217,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         }, 100);
       }
     },
-    [createLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange, markContentModified],
+    [createLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange],
   );
 
   // Update block content
@@ -235,9 +234,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         blockId,
         content,
       });
-      markContentModified();
+
     },
-    [updateBlockMutation, markContentModified]
+    [updateBlockMutation]
   );
 
   // Remove block
@@ -248,9 +247,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         slotId,
         blockId,
       });
-      markContentModified();
+
     },
-    [removeBlockMutation, markContentModified]
+    [removeBlockMutation]
   );
 
   // Remove layout
@@ -260,9 +259,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         layoutId: layoutId as Id<"layouts">,
       });
       clearSelection();
-      markContentModified();
+
     },
-    [removeLayoutMutation, clearSelection, markContentModified],
+    [removeLayoutMutation, clearSelection],
   );
 
   // Move block within layout
@@ -281,9 +280,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         blockId,
         toIndex,
       });
-      markContentModified();
+
     },
-    [moveBlockMutation, markContentModified],
+    [moveBlockMutation],
   );
 
   // Update layout settings
@@ -293,9 +292,9 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
         layoutId: layoutId as Id<"layouts">,
         settings,
       });
-      markContentModified();
+
     },
-    [updateSettingsMutation, markContentModified]
+    [updateSettingsMutation]
   );
 
   // === Page tab management ===
@@ -304,8 +303,8 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       pageId: pageId as Id<"pages">,
     });
     setActiveTabId(null);
-    markContentModified();
-  }, [pageId, disablePageTabsMutation, markContentModified]);
+
+  }, [pageId, disablePageTabsMutation]);
 
   const handleAddTab = useCallback(async () => {
     const newTab = { id: generateId(), label: `Tab ${pageTabs.length + 1}` };
@@ -314,8 +313,8 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       pageTabs: [...pageTabs, newTab],
     });
     setActiveTabId(newTab.id);
-    markContentModified();
-  }, [pageId, pageTabs, updatePageTabsMutation, markContentModified]);
+
+  }, [pageId, pageTabs, updatePageTabsMutation]);
 
   const handleRemoveTab = useCallback(async (tabId: string) => {
     if (pageTabs.length <= 2) return;
@@ -327,8 +326,8 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     if (activeTabId === tabId) {
       setActiveTabId(newTabs[0]?.id ?? null);
     }
-    markContentModified();
-  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation, markContentModified]);
+
+  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation]);
 
   const handleStartRenameTab = useCallback((tab: { id: string; label: string }) => {
     setEditingTabId(tab.id);
@@ -348,8 +347,8 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
       pageTabs: newTabs,
     });
     setEditingTabId(null);
-    markContentModified();
-  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation, markContentModified]);
+
+  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation]);
 
   // Handle click on editor background to deselect
   // Layouts/blocks call stopPropagation(), so this only fires for background clicks

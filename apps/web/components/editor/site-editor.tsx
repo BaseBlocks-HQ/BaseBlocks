@@ -33,7 +33,7 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage, closeSubpageEditor, markContentModified, activeTabId } =
+  const { selection, selectSlot, editingSubpage, closeSubpageEditor, activeTabId } =
     useEditorContext();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
@@ -194,9 +194,8 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           content: newBlock.content as AnyContent,
         },
       });
-      markContentModified();
     },
-    [selection, addBlockMutation, markContentModified]
+    [selection, addBlockMutation]
   );
 
   // Enable page-level tabs
@@ -209,8 +208,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         { id: generateId(), label: "Tab 2" },
       ],
     });
-    markContentModified();
-  }, [selectedPage, enablePageTabsMutation, markContentModified]);
+  }, [selectedPage, enablePageTabsMutation]);
 
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
