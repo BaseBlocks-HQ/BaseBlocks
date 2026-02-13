@@ -16,6 +16,7 @@ import {
   SidebarHeader,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
@@ -165,14 +166,17 @@ export function PublicSiteLayout({
             } : undefined}
           >
             <div className="flex h-14 items-center px-4">
-              {/* Left side: Sidebar trigger, Logo and site name */}
-              <div className="flex items-center gap-2">
-                {showSidebar && <SidebarTrigger />}
-                {showLogo && <SiteLogo site={site} company={company} />}
-                {showSiteName && (
-                  <span className="font-semibold">{site.name}</span>
-                )}
-              </div>
+              {/* Left side: collapsed sidebar trigger, or logo+name in non-sidebar mode */}
+              {showSidebar ? (
+                <CollapsedSidebarTrigger />
+              ) : (
+                <div className="flex items-center gap-2">
+                  {showLogo && <SiteLogo site={site} company={company} />}
+                  {showSiteName && (
+                    <span className="font-semibold">{site.name}</span>
+                  )}
+                </div>
+              )}
 
               {/* Center: TopNav navigation (if topnav style) */}
               {showTopNav && pages && (
@@ -199,12 +203,12 @@ export function PublicSiteLayout({
               </div>
             </div>
           </header>
-
-          {/* Gradient stripe below header */}
-          {site.settings.customization?.showHeaderGradient && (
-            <GradientStripe customization={site.settings.customization} />
-          )}
         </>
+      )}
+
+      {/* Gradient stripe below header (non-sidebar mode only, sidebar mode renders it full-width at container level) */}
+      {!showSidebar && site.settings.customization?.showHeaderGradient && showHeader && (
+        <GradientStripe customization={site.settings.customization} />
       )}
 
       {/* Secondary Navigation Bar (subnav style) */}
@@ -271,26 +275,35 @@ export function PublicSiteLayout({
       <PublicSubpageProvider>
         {showSidebar ? (
           <SidebarProvider>
+            {/* Full-width gradient stripe (fixed position so it spans sidebar + main) */}
+            {site.settings.customization?.showHeaderGradient && showHeader && (
+              <div className="fixed top-14 left-0 right-0 z-50">
+                <GradientStripe customization={site.settings.customization} />
+              </div>
+            )}
             <div
               className="h-screen bg-background flex overflow-hidden w-full"
               style={customizationStyles}
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
-              <Sidebar>
+              <Sidebar className="!border-r-0">
                 <SidebarHeader
                   className={cn(
-                    "border-b h-14 px-4 flex items-center justify-center !p-0",
+                    "h-14 px-4 flex flex-row items-center gap-2",
                     !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
                   )}
                   style={site.settings.customization?.headerColor ? {
                     backgroundColor: "var(--site-header-bg)",
                     color: "var(--site-header-fg)",
                   } : undefined}
-                />
-                {site.settings.customization?.showHeaderGradient && (
-                  <GradientStripe customization={site.settings.customization} />
-                )}
-                <SidebarContent className="p-4">
+                >
+                  {showLogo && <SiteLogo site={site} company={company} />}
+                  {showSiteName && (
+                    <span className="font-semibold truncate">{site.name}</span>
+                  )}
+                  <SidebarTrigger className="ml-auto" />
+                </SidebarHeader>
+                <SidebarContent className="p-4 border-r border-t">
                   <nav className="space-y-1">
                     {pages === undefined ? (
                       <>
@@ -330,6 +343,15 @@ export function PublicSiteLayout({
       </PublicSubpageProvider>
     </PublicSiteProvider>
   );
+}
+
+/**
+ * Sidebar trigger that only renders when the sidebar is collapsed
+ */
+function CollapsedSidebarTrigger() {
+  const { open } = useSidebar();
+  if (open) return null;
+  return <SidebarTrigger />;
 }
 
 /**
