@@ -9,6 +9,7 @@ import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { FormDialog } from "./form-dialog";
 
 interface CreatePageDialogProps {
@@ -53,9 +54,11 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       setOpen(false);
       setTitle("");
       setSlug("");
+      toast.success("Page created");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create page";
       setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

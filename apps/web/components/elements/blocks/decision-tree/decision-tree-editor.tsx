@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -44,7 +45,9 @@ export function DecisionTreeEditor({
         try {
           await onUpdate(newContent);
           onSaveStatusChange?.("saved");
-        } catch {
+        } catch (error) {
+          console.error("Failed to save:", error);
+          toast.error("Failed to save changes");
           onSaveStatusChange?.("idle");
         }
       },

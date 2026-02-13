@@ -36,6 +36,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { csvToDirectoryContent, parseCSV } from "./csv-utils";
 
 const COLUMN_TYPE_OPTIONS: {
@@ -75,6 +76,7 @@ export function DirectoryEditor({
           onSaveStatusChange?.("saved");
         } catch (error) {
           console.error("Failed to save directory:", error);
+          toast.error("Failed to save directory");
           onSaveStatusChange?.("idle");
         }
       },

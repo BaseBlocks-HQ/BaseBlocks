@@ -137,4 +137,4 @@ export type {
 } from "./content-map";
 
 // Save status (shared across all elements)
-export type SaveStatus = "idle" | "pending" | "saving" | "saved";
+export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";

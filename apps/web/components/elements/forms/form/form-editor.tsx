@@ -8,6 +8,7 @@
 import type { ElementEditorProps } from "@/components/elements/registry";
 import type { FormContent } from "@/types/elements";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { useDebounceCallback } from "@/hooks";
 import { FormBuilderProvider } from "./builder/form-builder-context";
 import { FieldPicker } from "./builder/field-picker";
@@ -36,6 +37,7 @@ export function FormEditor({
           onSaveStatusChange?.("saved");
         } catch (error) {
           console.error("Failed to save form:", error);
+          toast.error("Failed to save form");
           onSaveStatusChange?.("idle");
         }
       },

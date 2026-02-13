@@ -24,6 +24,7 @@ import {
   Search,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 function formatPhoneNumber(raw: string): string {
   const digits = raw.replace(/\D/g, "");
@@ -133,8 +134,9 @@ export function DirectoryRenderer({
         await navigator.clipboard.writeText(text);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 1500);
+        toast.success("Copied to clipboard");
       } catch {
-        // Fallback for environments where clipboard API isn't available
+        toast.error("Failed to copy to clipboard");
       }
     },
     [],

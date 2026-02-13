@@ -81,10 +81,14 @@ export function useDebounceCallbackWithFlush<T extends AnyFunction>(
     callbackRef.current = callback;
   }, [callback]);
 
+  // Flush on unmount instead of cancelling — ensures pending saves are never lost
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
+      if (timeoutRef.current && pendingArgsRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+        callbackRef.current(...pendingArgsRef.current);
+        pendingArgsRef.current = null;
       }
     };
   }, []);

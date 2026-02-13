@@ -4,6 +4,7 @@ import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
 import type { FlowchartContent, FlowchartDiagram } from "@/types/elements/blocks";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
 function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
@@ -35,6 +36,7 @@ export function FlowchartEditor({
           onSaveStatusChange?.("saved");
         } catch (error) {
           console.error("Failed to save:", error);
+          toast.error("Failed to save changes");
           onSaveStatusChange?.("idle");
         }
       },

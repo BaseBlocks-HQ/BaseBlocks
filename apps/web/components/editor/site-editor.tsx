@@ -17,6 +17,7 @@ import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { PortalContainerProvider } from "@/contexts/portal-container-context";
 import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
@@ -118,11 +119,23 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
 
   const handlePublish = async () => {
-    await publishSite({ siteId: siteId as Id<"sites"> });
+    try {
+      await publishSite({ siteId: siteId as Id<"sites"> });
+      toast.success("Site published");
+    } catch (error) {
+      console.error("Failed to publish site:", error);
+      toast.error("Failed to publish site");
+    }
   };
 
   const handleUnpublish = async () => {
-    await unpublishSite({ siteId: siteId as Id<"sites"> });
+    try {
+      await unpublishSite({ siteId: siteId as Id<"sites"> });
+      toast.success("Site unpublished");
+    } catch (error) {
+      console.error("Failed to unpublish site:", error);
+      toast.error("Failed to unpublish site");
+    }
   };
 
   // Handle slot selection change from PageEditor

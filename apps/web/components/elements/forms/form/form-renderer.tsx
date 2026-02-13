@@ -11,6 +11,7 @@ import { useState, useCallback } from "react";
 import { getFieldRenderer } from "./builder/field-registry";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 // Import fields to register them
 import "./fields";
@@ -79,8 +80,10 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Form submitted:", values);
       setIsSubmitted(true);
+      toast.success("Form submitted successfully");
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("Failed to submit form");
     } finally {
       setIsSubmitting(false);
     }

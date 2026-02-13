@@ -253,6 +253,13 @@ function SortableBlock({
                 align="start"
                 className="w-64"
                 onClick={(e) => e.stopPropagation()}
+                onPointerDownOutside={(e) => {
+                  // Prevent popover close when interacting with portaled Select dropdown
+                  const target = e.target as HTMLElement;
+                  if (target.closest('[data-slot="select-content"]')) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 <ConfigPanel content={block.content} onUpdate={onUpdate} />
               </PopoverContent>

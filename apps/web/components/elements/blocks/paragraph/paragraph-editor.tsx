@@ -4,6 +4,7 @@ import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
 import ContentEditable from "react-contenteditable";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function ParagraphEditor({
   id,
@@ -24,6 +25,7 @@ export function ParagraphEditor({
           onSaveStatusChange?.("saved");
         } catch (error) {
           console.error("Failed to save:", error);
+          toast.error("Failed to save changes");
           onSaveStatusChange?.("idle");
         }
       },

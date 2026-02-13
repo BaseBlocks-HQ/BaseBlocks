@@ -12,6 +12,7 @@ import {
   useContext,
   useState,
 } from "react";
+import { toast } from "sonner";
 
 export interface EditingSubpage {
   blockId: string;
@@ -95,7 +96,13 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
 
   // Deploy site - copies draft content to published content
   const markAsDeployed = useCallback(async () => {
-    await deployMutation({ siteId });
+    try {
+      await deployMutation({ siteId });
+      toast.success("Changes deployed");
+    } catch (error) {
+      console.error("Failed to deploy changes:", error);
+      toast.error("Failed to deploy changes");
+    }
   }, [deployMutation, siteId]);
 
   const selectLayout = useCallback((layoutId: string | null) => {

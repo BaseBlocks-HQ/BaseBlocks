@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { ViewerProps } from "../types";
 
 export function TextViewer({ file, renderControls }: ViewerProps) {
@@ -41,9 +42,14 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
 
   const handleCopy = useCallback(async () => {
     if (!content) return;
-    await navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
   }, [content]);
 
   const toggleSearch = useCallback(() => {

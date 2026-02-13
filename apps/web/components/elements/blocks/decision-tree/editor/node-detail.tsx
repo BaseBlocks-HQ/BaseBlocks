@@ -242,7 +242,18 @@ function SortableBlock({
                   <Settings2 className="h-3.5 w-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent side="left" align="start" className="w-64">
+              <PopoverContent
+                side="left"
+                align="start"
+                className="w-64"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDownOutside={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('[data-slot="select-content"]')) {
+                    e.preventDefault();
+                  }
+                }}
+              >
                 <ConfigPanel
                   content={block.content as AnyContent}
                   onUpdate={onUpdate}

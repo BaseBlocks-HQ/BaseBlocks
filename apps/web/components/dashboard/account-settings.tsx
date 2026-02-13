@@ -27,6 +27,7 @@ import { useRouter } from "@/i18n/navigation";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useMutation } from "convex/react";
 import { api } from "@repo/backend";
 
@@ -62,9 +63,9 @@ export function AccountSettings() {
         router.push("/login");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("deleteAccountError")
-      );
+      const message = err instanceof Error ? err.message : t("deleteAccountError");
+      setError(message);
+      toast.error(message);
     } finally {
       setIsDeleting(false);
     }

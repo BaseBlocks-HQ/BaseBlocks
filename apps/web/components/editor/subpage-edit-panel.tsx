@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DiagramEditor, generateDiagramId } from "@/components/elements/blocks/flowchart/diagram-editor";
-import { useDebounceCallback } from "@/hooks";
+import { useDebounceCallbackWithFlush, useSaveStatus } from "@/hooks";
 import type { SubpageContent, BlockNoteDocument, FlowchartDiagram } from "@/types/elements/blocks";
 import type { AnyContent } from "@/types/elements";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
-import { X, Maximize2, Minimize2 } from "lucide-react";
+import { X, Maximize2, Minimize2, Loader2, Check, AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useEditorContext } from "./editor-context";
 import { SubpageBlockEditor } from "./subpage-block-editor";
@@ -36,6 +36,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
   const { editingSubpage, closeSubpageEditor, updateEditingSubpageContent, markContentModified } =
     useEditorContext();
   const updateBlockMutation = useMutation(api.layouts.mutations.updateBlockInSlot);
+  const { status: saveStatus, markPending, markSaving, markSaved, markError } = useSaveStatus();
 
   const [localTitle, setLocalTitle] = useState(editingSubpage?.content.title || "");
   const [localDescription, setLocalDescription] = useState(editingSubpage?.content.description || "");
@@ -45,6 +46,16 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
   const localContentRef = useRef<BlockNoteDocument | undefined>(editingSubpage?.content.content);
   const diagramsRef = useRef(diagrams);
   diagramsRef.current = diagrams;
+
+  // Refs to always have the latest values — fixes stale closure bug in buildContent
+  const localTitleRef = useRef(localTitle);
+  localTitleRef.current = localTitle;
+  const localDescriptionRef = useRef(localDescription);
+  localDescriptionRef.current = localDescription;
+
+  // Ref for editingSubpage so the save callback always has the latest value
+  const editingSubpageRef = useRef(editingSubpage);
+  editingSubpageRef.current = editingSubpage;
 
   useEffect(() => {
     if (editingSubpage) {
@@ -56,59 +67,89 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
     }
   }, [editingSubpage?.blockId]);
 
+  // Build the full content object from refs — always reads latest values
   const buildContent = useCallback(
     (overrides?: Partial<SubpageContent>): SubpageContent => {
       const d = overrides?.diagrams ?? diagramsRef.current;
       return {
-        title: localTitle,
-        description: localDescription,
+        title: localTitleRef.current,
+        description: localDescriptionRef.current,
         content: localContentRef.current,
         mermaidCode: d[0]?.mermaidCode ?? "",
         diagrams: d.length > 0 ? d : undefined,
         ...overrides,
       };
     },
-    [localTitle, localDescription],
+    [], // No deps — reads everything from refs
   );
 
-  const debouncedSave = useDebounceCallback(
-    useCallback(
-      async (content: SubpageContent) => {
-        if (!editingSubpage) return;
+  const saveToDb = useCallback(
+    async (content: SubpageContent) => {
+      const subpage = editingSubpageRef.current;
+      if (!subpage) return;
+      markSaving();
+      try {
         await updateBlockMutation({
-          layoutId: editingSubpage.layoutId as Id<"layouts">,
-          slotId: editingSubpage.slotId,
-          blockId: editingSubpage.blockId,
+          layoutId: subpage.layoutId as Id<"layouts">,
+          slotId: subpage.slotId,
+          blockId: subpage.blockId,
           content: content as AnyContent,
         });
         markContentModified();
         updateEditingSubpageContent(content);
-      },
-      [editingSubpage, updateBlockMutation, markContentModified, updateEditingSubpageContent],
-    ),
+        markSaved();
+      } catch (err) {
+        console.error("Failed to save subpage content:", err);
+        markError();
+      }
+    },
+    [updateBlockMutation, markContentModified, updateEditingSubpageContent, markSaving, markSaved, markError],
+  );
+
+  const { debouncedCallback: debouncedSave, flush } = useDebounceCallbackWithFlush(
+    saveToDb,
     500,
   );
+
+  // Flush pending saves on beforeunload (tab close / refresh)
+  useEffect(() => {
+    const handleBeforeUnload = () => flush();
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [flush]);
+
+  const handleClose = useCallback(() => {
+    // Flush any pending save BEFORE clearing state
+    flush();
+    closeSubpageEditor();
+  }, [flush, closeSubpageEditor]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newTitle = e.target.value;
     setLocalTitle(newTitle);
+    localTitleRef.current = newTitle;
+    markPending();
     debouncedSave(buildContent({ title: newTitle }));
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newDescription = e.target.value;
     setLocalDescription(newDescription);
+    localDescriptionRef.current = newDescription;
+    markPending();
     debouncedSave(buildContent({ description: newDescription }));
   };
 
   const handleContentChange = (blocks: Block[]) => {
     localContentRef.current = blocks as BlockNoteDocument;
+    markPending();
     debouncedSave(buildContent({ content: blocks as BlockNoteDocument }));
   };
 
   const handleDiagramsChange = (updated: FlowchartDiagram[]) => {
     setDiagrams(updated);
     diagramsRef.current = updated;
+    markPending();
     debouncedSave(
       buildContent({ diagrams: updated, mermaidCode: updated[0]?.mermaidCode ?? "" }),
     );
@@ -119,15 +160,18 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-end p-4 shrink-0 gap-1 border-b">
-        {onToggleFullscreen && (
-          <Button variant="ghost" size="icon" onClick={onToggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      <div className="flex items-center justify-between p-4 shrink-0 gap-1 border-b">
+        <SaveStatusIndicator status={saveStatus} />
+        <div className="flex items-center gap-1">
+          {onToggleFullscreen && (
+            <Button variant="ghost" size="icon" onClick={onToggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={handleClose}>
+            <X className="h-4 w-4" />
           </Button>
-        )}
-        <Button variant="ghost" size="icon" onClick={closeSubpageEditor}>
-          <X className="h-4 w-4" />
-        </Button>
+        </div>
       </div>
 
       {/* Title & Description */}
@@ -180,6 +224,39 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
           />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function SaveStatusIndicator({ status }: { status: string }) {
+  if (status === "idle") return <div className="w-4" />;
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {status === "pending" && (
+        <>
+          <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+          <span>Unsaved</span>
+        </>
+      )}
+      {status === "saving" && (
+        <>
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Saving...</span>
+        </>
+      )}
+      {status === "saved" && (
+        <>
+          <Check className="h-3 w-3 text-green-500" />
+          <span className="text-green-600 dark:text-green-400">Saved</span>
+        </>
+      )}
+      {status === "error" && (
+        <>
+          <AlertCircle className="h-3 w-3 text-destructive" />
+          <span className="text-destructive">Save failed</span>
+        </>
+      )}
     </div>
   );
 }

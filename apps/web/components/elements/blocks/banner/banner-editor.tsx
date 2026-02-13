@@ -15,6 +15,7 @@ import { useDebounceCallback } from "@/hooks";
 import type { BannerAlert, BannerContent } from "@/types/elements";
 import { GripVertical, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function BannerEditor({
   id,
@@ -34,6 +35,7 @@ export function BannerEditor({
           onSaveStatusChange?.("saved");
         } catch (error) {
           console.error("Failed to save banner:", error);
+          toast.error("Failed to save changes");
           onSaveStatusChange?.("idle");
         }
       },

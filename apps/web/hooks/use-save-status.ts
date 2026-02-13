@@ -32,6 +32,7 @@ export function useSaveStatus(options: UseSaveStatusOptions = {}) {
   const markPending = useCallback(() => setStatus("pending"), []);
   const markSaving = useCallback(() => setStatus("saving"), []);
   const markSaved = useCallback(() => setStatus("saved"), []);
+  const markError = useCallback(() => setStatus("error"), []);
   const markIdle = useCallback(() => setStatus("idle"), []);
 
   return {
@@ -40,6 +41,7 @@ export function useSaveStatus(options: UseSaveStatusOptions = {}) {
     markPending,
     markSaving,
     markSaved,
+    markError,
     markIdle,
   };
 }
