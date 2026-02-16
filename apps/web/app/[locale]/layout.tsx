@@ -30,6 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: t("title"),
+    icons: {
+      icon: [{ url: "/baseblocks-favicon.ico" }],
+      shortcut: [{ url: "/baseblocks-favicon.ico" }],
+      apple: [{ url: "/baseblocks-favicon.ico" }],
+    },
   };
 }
 

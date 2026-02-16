@@ -23,6 +23,7 @@ interface PublicSiteSettings {
 interface PublicSiteDoc {
   _id: Id<"sites">;
   name: string;
+  updatedAt?: number;
   settings?: PublicSiteSettings;
 }
 
@@ -45,6 +46,33 @@ function parseKeywords(value: string | undefined): string[] {
     .split(",")
     .map((keyword) => keyword.trim())
     .filter(Boolean);
+}
+
+function toPublicAssetUrl(rawUrl: string | undefined): string | undefined {
+  const trimmed = asOptional(rawUrl);
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith("/api/storage/download")) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const path = parsed.searchParams.get("path");
+    if (path) {
+      return `/api/storage/download?path=${encodeURIComponent(path)}`;
+    }
+  } catch {
+    // Keep non-URL strings as-is (they might already be root-relative paths).
+  }
+
+  return trimmed;
+}
+
+function withVersion(url: string | undefined, version: number | undefined): string | undefined {
+  if (!url || !version) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${version}`;
 }
 
 async function resolveMetadataBase(companySlug: string): Promise<URL> {
@@ -111,8 +139,9 @@ export async function buildPublicSiteMetadata({
     pageTitle && pageTitle !== siteTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
   const description = asOptional(settings.siteDescription);
   const keywords = parseKeywords(settings.siteKeywords);
-  const ogImage = asOptional(settings.ogImage);
-  const favicon = asOptional(settings.favicon);
+  const version = site.updatedAt;
+  const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
+  const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
 
   return {
     metadataBase: await resolveMetadataBase(companySlug),
