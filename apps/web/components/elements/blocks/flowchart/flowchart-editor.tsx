@@ -115,6 +115,7 @@ export function FlowchartEditor({
         diagrams={diagrams}
         onChange={handleChange}
         contained
+        tabsMode={tabsMode}
         theme={theme}
         onThemeChange={handleThemeChange}
       />

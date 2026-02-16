@@ -280,6 +280,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
             onChange={handleDiagramsChange}
             allowEmpty
             contained
+            tabsMode={diagramTabsMode}
             theme={diagramTheme}
             onThemeChange={handleDiagramThemeChange}
           />

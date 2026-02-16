@@ -342,87 +342,154 @@ export function DecisionTreeEditor({
     <div className="flex flex-col border rounded-lg overflow-hidden" style={{ height: "500px" }}>
       {/* Tree Tabs */}
       <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30">
-        <div className="flex items-center gap-1 overflow-x-auto min-w-0">
-          {trees.map((tree) => (
-            <div
-              key={tree.id}
-              className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
-                tree.id === activeTreeId
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-              onClick={() => switchTree(tree.id)}
-            >
-              {editingLabelId === tree.id ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    commitEditLabel();
-                  }}
-                  className="flex items-center gap-1"
+        {tabsMode === "dropdown" ? (
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {editingLabelId === activeTree.id ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  commitEditLabel();
+                }}
+                className="flex items-center gap-1 min-w-0 flex-1"
+              >
+                <input
+                  ref={labelInputRef}
+                  value={editingLabelValue}
+                  onChange={(e) => setEditingLabelValue(e.target.value)}
+                  onBlur={commitEditLabel}
+                  className="h-8 flex-1 rounded-md border bg-background px-2 text-xs"
+                />
+                <button
+                  type="submit"
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
-                  <input
-                    ref={labelInputRef}
-                    value={editingLabelValue}
-                    onChange={(e) => setEditingLabelValue(e.target.value)}
-                    onBlur={commitEditLabel}
-                    className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <button
-                    type="submit"
-                    className="p-0.5 rounded hover:bg-white/20"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Check className="h-2.5 w-2.5" />
-                  </button>
-                </form>
-              ) : (
-                <>
-                  <span
-                    className="max-w-[9rem] truncate"
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      startEditLabel(tree.id);
+                  <Check className="h-3 w-3" />
+                </button>
+              </form>
+            ) : (
+              <Select value={activeTreeId} onValueChange={switchTree}>
+                <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {trees.map((tree) => (
+                    <SelectItem key={tree.id} value={tree.id}>
+                      {tree.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <button
+              type="button"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              onClick={() => startEditLabel(activeTree.id)}
+              title="Rename tree"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            {trees.length > 1 && (
+              <button
+                type="button"
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                onClick={() => removeTree(activeTree.id)}
+                title="Remove tree"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={addTree}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              title="Add tree"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1">
+            {trees.map((tree) => (
+              <div
+                key={tree.id}
+                className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
+                  tree.id === activeTreeId
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+                onClick={() => switchTree(tree.id)}
+              >
+                {editingLabelId === tree.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      commitEditLabel();
                     }}
+                    className="flex items-center gap-1"
                   >
-                    {tree.label}
-                  </span>
-                  <button
-                    type="button"
-                    className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditLabel(tree.id);
-                    }}
-                  >
-                    <Pencil className="h-2.5 w-2.5" />
-                  </button>
-                  {trees.length > 1 && (
+                    <input
+                      ref={labelInputRef}
+                      value={editingLabelValue}
+                      onChange={(e) => setEditingLabelValue(e.target.value)}
+                      onBlur={commitEditLabel}
+                      className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      type="submit"
+                      className="p-0.5 rounded hover:bg-white/20"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Check className="h-2.5 w-2.5" />
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <span
+                      className="max-w-[9rem] truncate"
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        startEditLabel(tree.id);
+                      }}
+                    >
+                      {tree.label}
+                    </span>
                     <button
                       type="button"
                       className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeTree(tree.id);
+                        startEditLabel(tree.id);
                       }}
                     >
-                      <X className="h-2.5 w-2.5" />
+                      <Pencil className="h-2.5 w-2.5" />
                     </button>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addTree}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-            title="Add tree"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
+                    {trees.length > 1 && (
+                      <button
+                        type="button"
+                        className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTree(tree.id);
+                        }}
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addTree}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              title="Add tree"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <Select
           value={tabsMode}
           onValueChange={(value) =>

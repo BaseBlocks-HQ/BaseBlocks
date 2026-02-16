@@ -520,7 +520,10 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       </div>
 
       <Dialog open={metadataDialogOpen} onOpenChange={setMetadataDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent
+          className="max-w-2xl"
+          onInteractOutside={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>SEO & Metadata</DialogTitle>
             <DialogDescription>

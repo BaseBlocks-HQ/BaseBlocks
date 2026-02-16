@@ -80,33 +80,12 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
     tick();
   }, [applyTransform, tick]);
 
-  // Stretch wrapper to fill the nearest scrollable ancestor (the <main> element)
-  // Skip when contained (e.g. inside the editor)
+  // Always keep the diagram constrained to its parent container width.
   useEffect(() => {
-    if (contained || isFullscreen) return;
-
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
-
-    const scrollParent =
-      wrapper.closest("main") ??
-      wrapper.closest("[class*='overflow']") as HTMLElement | null;
-    if (!scrollParent) return;
-
-    const update = () => {
-      const parentRect = scrollParent.getBoundingClientRect();
-      const wrapperParentRect =
-        wrapper.parentElement?.getBoundingClientRect() ?? parentRect;
-
-      const offsetLeft = wrapperParentRect.left - parentRect.left;
-      wrapper.style.marginLeft = `${-offsetLeft}px`;
-      wrapper.style.width = `${scrollParent.clientWidth}px`;
-    };
-
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(scrollParent);
-    return () => ro.disconnect();
+    wrapper.style.marginLeft = "";
+    wrapper.style.width = "";
   }, [svg, contained, isFullscreen]);
 
   useEffect(() => {
@@ -261,7 +240,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
   const emptyCanvas = (msg: string) => (
     <div
       ref={wrapperRef}
-      className="relative"
+      className="relative w-full max-w-full min-w-0"
     >
       <div className={`flex items-center justify-center ${canvasHeight} text-muted-foreground text-sm border-y border-border bg-muted/30 dark:bg-muted/20`}>
         {msg}
@@ -286,7 +265,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
     <div
       ref={wrapperRef}
       className={cn(
-        "relative group/diagram",
+        "relative group/diagram w-full max-w-full min-w-0",
         isFullscreen &&
           "fixed inset-4 z-[80] rounded-xl border bg-background shadow-2xl",
       )}
