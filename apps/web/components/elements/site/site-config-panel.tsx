@@ -519,12 +519,21 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         </p>
       </div>
 
-      <Dialog open={metadataDialogOpen} onOpenChange={setMetadataDialogOpen}>
+      <Dialog
+        open={metadataDialogOpen}
+        onOpenChange={(open) => {
+          // Keep this dialog explicit-close only to avoid native file picker focus
+          // transitions dismissing it unexpectedly.
+          if (open) setMetadataDialogOpen(true);
+        }}
+      >
         <DialogContent
           className="max-w-2xl"
+          showCloseButton={false}
           onInteractOutside={(event) => event.preventDefault()}
           onPointerDownOutside={(event) => event.preventDefault()}
           onFocusOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle>SEO & Metadata</DialogTitle>
