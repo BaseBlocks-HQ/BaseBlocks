@@ -53,7 +53,7 @@ const COLUMN_TYPE_OPTIONS: {
 const COLUMN_TYPE_PLACEHOLDERS: Record<DirectoryColumnType, string> = {
   text: "...",
   email: "email@example.com",
-  phone: "(555) 123-4567",
+  phone: "+33 1 23 45 67 89",
   url: "example.com",
 };
 

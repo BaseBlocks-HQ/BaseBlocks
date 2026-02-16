@@ -8,6 +8,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import type { Block } from "@blocknote/core";
 import { useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 
 interface PublicSubpageBlockViewerProps {
   content?: Block[];
@@ -101,6 +102,8 @@ function removeHighlights(element: Element): void {
 export function PublicSubpageBlockViewer({ content, searchTerm }: PublicSubpageBlockViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const hasAppliedRef = useRef(false);
+  const { resolvedTheme } = useTheme();
+  const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
 
   const editor = useCreateBlockNote({
     initialContent: content && content.length > 0 ? content : undefined,
@@ -152,6 +155,7 @@ export function PublicSubpageBlockViewer({ content, searchTerm }: PublicSubpageB
       <BlockNoteView
         editor={editor}
         editable={false}
+        theme={blockNoteTheme}
         data-public-viewer
       />
     </div>

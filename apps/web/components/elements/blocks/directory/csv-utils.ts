@@ -4,22 +4,79 @@ import type {
   DirectorySettings,
 } from "@/types/elements";
 
+function countDelimiterOutsideQuotes(line: string, delimiter: string): number {
+  let inQuotes = false;
+  let count = 0;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (!inQuotes && char === delimiter) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function detectDelimiter(text: string): "," | ";" | "\t" {
+  const candidates = [",", ";", "\t"] as const;
+  const sampleLines = text
+    .split(/\r\n|\n|\r/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if (sampleLines.length === 0) return ",";
+
+  let bestDelimiter: "," | ";" | "\t" = ",";
+  let bestScore = -1;
+
+  for (const candidate of candidates) {
+    const delimiterCounts = sampleLines.map((line) =>
+      countDelimiterOutsideQuotes(line, candidate),
+    );
+    const totalCount = delimiterCounts.reduce((sum, count) => sum + count, 0);
+    const linesWithDelimiter = delimiterCounts.filter((count) => count > 0).length;
+    const score = totalCount + linesWithDelimiter * 0.5;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestDelimiter = candidate;
+    }
+  }
+
+  return bestScore > 0 ? bestDelimiter : ",";
+}
+
 /**
  * Parse a CSV string into headers and rows.
- * Handles quoted fields (values containing commas, newlines, or escaped quotes).
+ * Auto-detects delimiter (comma/semicolon/tab) and handles quoted fields.
  */
 export function parseCSV(text: string): {
   headers: string[];
   rows: string[][];
 } {
+  const normalizedText = text.replace(/^\uFEFF/, "");
+  const delimiter = detectDelimiter(normalizedText);
   const results: string[][] = [];
   let current = "";
   let inQuotes = false;
   let row: string[] = [];
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+  for (let i = 0; i < normalizedText.length; i++) {
+    const char = normalizedText[i];
+    const next = normalizedText[i + 1];
 
     if (inQuotes) {
       if (char === '"' && next === '"') {
@@ -34,17 +91,17 @@ export function parseCSV(text: string): {
     } else {
       if (char === '"') {
         inQuotes = true;
-      } else if (char === ",") {
+      } else if (char === delimiter) {
         row.push(current.trim());
         current = "";
-      } else if (char === "\n" || (char === "\r" && next === "\n")) {
+      } else if (char === "\n" || char === "\r") {
         row.push(current.trim());
         if (row.length > 1 || row[0] !== "") {
           results.push(row);
         }
         row = [];
         current = "";
-        if (char === "\r") i++; // skip \n in \r\n
+        if (char === "\r" && next === "\n") i++; // skip \n in \r\n
       } else {
         current += char;
       }

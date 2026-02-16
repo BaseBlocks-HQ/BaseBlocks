@@ -67,6 +67,7 @@ export default defineSchema({
       showLogo: v.optional(v.boolean()), // default: true
       showSiteName: v.optional(v.boolean()), // default: true
       showHeaderSearch: v.optional(v.boolean()), // default: false
+      showBreadcrumbs: v.optional(v.boolean()), // default: true (or hidden for sidebar when unset)
       sidebarDefaultExpanded: v.optional(v.boolean()), // default: false
       // Site customization
       customization: v.optional(v.object({

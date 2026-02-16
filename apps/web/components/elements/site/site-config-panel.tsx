@@ -16,6 +16,7 @@ import {
   EyeOff,
   ImageIcon,
   Loader2,
+  Route,
   Search,
   Type,
   Upload,
@@ -179,6 +180,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const showBreadcrumbs =
+    site.settings.showBreadcrumbs ?? site.settings.navigationStyle !== "sidebar";
 
   return (
     <div className="p-4 space-y-6">
@@ -386,6 +389,28 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           </p>
         </div>
       )}
+
+      {/* Breadcrumb Settings */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Route className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="show-breadcrumbs" className="text-sm font-medium">
+              Show Breadcrumbs
+            </Label>
+          </div>
+          <Switch
+            id="show-breadcrumbs"
+            checked={showBreadcrumbs}
+            onCheckedChange={(checked) =>
+              updateSettings("showBreadcrumbs", checked)
+            }
+          />
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Display the current page path below navigation
+        </p>
+      </div>
     </div>
   );
 }

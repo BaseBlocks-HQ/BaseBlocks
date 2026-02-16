@@ -7,6 +7,7 @@ import "./subpage-block-editor.css";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import type { Block } from "@blocknote/core";
+import { useTheme } from "next-themes";
 
 interface SubpageBlockEditorProps {
   initialContent?: Block[];
@@ -19,6 +20,9 @@ export function SubpageBlockEditor({
   onChange,
   editable = true,
 }: SubpageBlockEditorProps) {
+  const { resolvedTheme } = useTheme();
+  const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
+
   const editor = useCreateBlockNote({
     initialContent: initialContent && initialContent.length > 0
       ? initialContent
@@ -29,6 +33,7 @@ export function SubpageBlockEditor({
     <BlockNoteView
       editor={editor}
       editable={editable}
+      theme={blockNoteTheme}
       onChange={() => {
         onChange?.(editor.document);
       }}

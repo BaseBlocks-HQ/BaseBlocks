@@ -348,7 +348,7 @@ export function SearchBox({
 
       {/* Floating dropdown results */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background text-foreground border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
           {isSearching ? (
             <div className="p-4 text-center text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -380,7 +380,7 @@ export function SearchBox({
                           )
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate text-sm">{result.title}</p>
+                          <p className="font-medium truncate text-sm text-foreground">{result.title}</p>
                           <p className="text-xs text-muted-foreground">
                             {isSubpage ? (
                               <>

@@ -47,6 +47,7 @@ interface PublicSiteLayoutProps {
       showLogo?: boolean;
       showSiteName?: boolean;
       showHeaderSearch?: boolean;
+      showBreadcrumbs?: boolean;
       sidebarDefaultExpanded?: boolean;
       customization?: SiteCustomization;
     };
@@ -139,6 +140,7 @@ export function PublicSiteLayout({
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
   const navigationStyle = site.settings.navigationStyle;
+  const showBreadcrumbs = site.settings.showBreadcrumbs ?? navigationStyle !== "sidebar";
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   // Get customization CSS variables
@@ -249,7 +251,7 @@ export function PublicSiteLayout({
       )}
 
       {/* Breadcrumb Bar - positioned below header/subnav */}
-      {currentPage && (
+      {showBreadcrumbs && currentPage && (
         <BreadcrumbBar
           pageId={currentPage._id}
           pageTitle={currentPage.title}
