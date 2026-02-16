@@ -2,15 +2,28 @@
 
 import type { FlowchartDiagram } from "@/types/elements/blocks";
 import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MermaidDiagram } from "./mermaid-diagram";
 
 interface DiagramViewerProps {
   diagrams: FlowchartDiagram[];
   contained?: boolean;
   theme?: string;
+  tabsMode?: "row" | "dropdown";
 }
 
-export function DiagramViewer({ diagrams, contained, theme }: DiagramViewerProps) {
+export function DiagramViewer({
+  diagrams,
+  contained,
+  theme,
+  tabsMode = "row",
+}: DiagramViewerProps) {
   const [activeId, setActiveId] = useState<string>(diagrams[0]?.id ?? "");
 
   if (diagrams.length === 0) return null;
@@ -19,24 +32,41 @@ export function DiagramViewer({ diagrams, contained, theme }: DiagramViewerProps
   const showTabs = diagrams.length > 1;
 
   return (
-    <div>
+    <div className="space-y-2">
       {showTabs && (
-        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
-          {diagrams.map((diagram) => (
-            <button
-              key={diagram.id}
-              type="button"
-              onClick={() => setActiveId(diagram.id)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                diagram.id === active.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              {diagram.label}
-            </button>
-          ))}
-        </div>
+        tabsMode === "dropdown" ? (
+          <div className="px-1">
+            <Select value={active.id} onValueChange={setActiveId}>
+              <SelectTrigger className="h-9 w-full sm:w-[260px]">
+                <SelectValue placeholder="Select diagram" />
+              </SelectTrigger>
+              <SelectContent>
+                {diagrams.map((diagram) => (
+                  <SelectItem key={diagram.id} value={diagram.id}>
+                    {diagram.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 px-1 py-1 overflow-x-auto">
+            {diagrams.map((diagram) => (
+              <button
+                key={diagram.id}
+                type="button"
+                onClick={() => setActiveId(diagram.id)}
+                className={`max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  diagram.id === active.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+              >
+                {diagram.label}
+              </button>
+            ))}
+          </div>
+        )
       )}
       <MermaidDiagram code={active.mermaidCode} contained={contained} theme={theme} />
     </div>

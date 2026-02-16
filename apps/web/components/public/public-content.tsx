@@ -166,7 +166,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
   // Main content renderer
   const renderMainContent = () => (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
         <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
 
@@ -190,14 +190,14 @@ function PublicContentInner({ pageId }: PublicContentProps) {
 
         {hasSidebar ? (
           // Layout with sidebar
-          <div className="flex gap-8">
+          <div className="flex flex-col lg:flex-row gap-8">
             {/* Main content */}
             <div className="flex-1 min-w-0 space-y-8">
               {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
             </div>
 
             {/* Sidebar */}
-            <aside className="w-72 flex-shrink-0 space-y-6">
+            <aside className="w-full lg:w-72 flex-shrink-0 space-y-6">
               {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
             </aside>
           </div>
@@ -219,7 +219,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
           {/* Main content area */}
           {!isFullscreen && (
             <>
-              <ResizablePanel defaultSize={60} minSize={20}>
+              <ResizablePanel defaultSize={58} minSize={30}>
                 <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
                   {renderMainContent()}
                 </div>
@@ -228,7 +228,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
             </>
           )}
           {/* Subpage panel */}
-          <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
+          <ResizablePanel defaultSize={isFullscreen ? 100 : 42} minSize={30}>
             <div className="h-full w-full min-w-0 overflow-hidden border-l">
               <PublicSubpagePanel
                 isFullscreen={isFullscreen}

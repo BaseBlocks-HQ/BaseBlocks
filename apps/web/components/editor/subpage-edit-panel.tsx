@@ -2,11 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DiagramEditor, generateDiagramId } from "@/components/elements/blocks/flowchart/diagram-editor";
 import { useDebounceCallbackWithFlush, useSaveStatus } from "@/hooks";
-import type { SubpageContent, BlockNoteDocument, FlowchartDiagram } from "@/types/elements/blocks";
+import type {
+  BlockNoteDocument,
+  FlowchartDiagram,
+  SubpageContent,
+  TabsDisplayMode,
+} from "@/types/elements/blocks";
 import type { AnyContent } from "@/types/elements";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -43,9 +55,23 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
   const [diagrams, setDiagrams] = useState<FlowchartDiagram[]>(() =>
     editingSubpage ? normalizeDiagrams(editingSubpage.content) : [],
   );
+  const [diagramTheme, setDiagramTheme] = useState<string | undefined>(
+    editingSubpage?.content.diagramTheme,
+  );
+  const [diagramTabsMode, setDiagramTabsMode] = useState<TabsDisplayMode>(
+    editingSubpage?.content.diagramTabsMode ?? "row",
+  );
   const localContentRef = useRef<BlockNoteDocument | undefined>(editingSubpage?.content.content);
   const diagramsRef = useRef(diagrams);
   diagramsRef.current = diagrams;
+  const diagramThemeRef = useRef<string | undefined>(
+    editingSubpage?.content.diagramTheme,
+  );
+  diagramThemeRef.current = diagramTheme;
+  const diagramTabsModeRef = useRef<TabsDisplayMode>(
+    editingSubpage?.content.diagramTabsMode ?? "row",
+  );
+  diagramTabsModeRef.current = diagramTabsMode;
 
   // Refs to always have the latest values — fixes stale closure bug in buildContent
   const localTitleRef = useRef(localTitle);
@@ -63,6 +89,8 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
       setLocalDescription(editingSubpage.content.description || "");
       const normalized = normalizeDiagrams(editingSubpage.content);
       setDiagrams(normalized);
+      setDiagramTheme(editingSubpage.content.diagramTheme);
+      setDiagramTabsMode(editingSubpage.content.diagramTabsMode ?? "row");
       localContentRef.current = editingSubpage.content.content;
     }
   }, [editingSubpage?.blockId]);
@@ -77,6 +105,8 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
         content: localContentRef.current,
         mermaidCode: d[0]?.mermaidCode ?? "",
         diagrams: d.length > 0 ? d : undefined,
+        diagramTheme: diagramThemeRef.current,
+        diagramTabsMode: diagramTabsModeRef.current,
         ...overrides,
       };
     },
@@ -154,6 +184,20 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
     );
   };
 
+  const handleDiagramThemeChange = (newTheme: string | undefined) => {
+    setDiagramTheme(newTheme);
+    diagramThemeRef.current = newTheme;
+    markPending();
+    debouncedSave(buildContent({ diagramTheme: newTheme }));
+  };
+
+  const handleDiagramTabsModeChange = (mode: TabsDisplayMode) => {
+    setDiagramTabsMode(mode);
+    diagramTabsModeRef.current = mode;
+    markPending();
+    debouncedSave(buildContent({ diagramTabsMode: mode }));
+  };
+
   if (!editingSubpage) return null;
 
   return (
@@ -199,7 +243,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
 
       {/* Tabbed Content / Diagrams */}
       <Tabs defaultValue="content" className="flex-1 min-h-0 flex flex-col px-4 pt-4 pb-4">
-        <TabsList className="shrink-0">
+        <TabsList className="shrink-0 w-fit max-w-full overflow-x-auto">
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="diagram">
             Diagram{diagrams.length > 1 ? "s" : ""}
@@ -214,12 +258,30 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
           />
         </TabsContent>
 
-        <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3">
+          <div className="flex items-center justify-end">
+            <Select
+              value={diagramTabsMode}
+              onValueChange={(value) =>
+                handleDiagramTabsModeChange(value as TabsDisplayMode)
+              }
+            >
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="row">Tabs: Horizontal Row</SelectItem>
+                <SelectItem value="dropdown">Tabs: Dropdown</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <DiagramEditor
             diagrams={diagrams}
             onChange={handleDiagramsChange}
             allowEmpty
             contained
+            theme={diagramTheme}
+            onThemeChange={handleDiagramThemeChange}
           />
         </TabsContent>
       </Tabs>

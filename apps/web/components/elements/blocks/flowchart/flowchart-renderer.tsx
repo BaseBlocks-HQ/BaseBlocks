@@ -17,5 +17,11 @@ export function FlowchartRenderer({ content }: ElementRendererProps<"flowchart">
 
   if (diagrams.length === 0) return null;
 
-  return <DiagramViewer diagrams={diagrams} theme={content.theme} />;
+  return (
+    <DiagramViewer
+      diagrams={diagrams}
+      theme={content.theme}
+      tabsMode={content.tabsMode}
+    />
+  );
 }

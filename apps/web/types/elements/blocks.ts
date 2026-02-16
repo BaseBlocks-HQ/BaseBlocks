@@ -52,6 +52,10 @@ export interface SubpageContent {
   content?: BlockNoteDocument;
   mermaidCode?: string;
   diagrams?: FlowchartDiagram[];
+  /** beautiful-mermaid theme preset key (e.g. "tokyo-night", "dracula"). */
+  diagramTheme?: string;
+  /** How to display diagram tabs when multiple diagrams exist. */
+  diagramTabsMode?: TabsDisplayMode;
 }
 
 export interface BannerAlert {
@@ -120,11 +124,15 @@ export interface FlowchartDiagram {
   mermaidCode: string;
 }
 
+export type TabsDisplayMode = "row" | "dropdown";
+
 export interface FlowchartContent {
   mermaidCode: string;
   diagrams?: FlowchartDiagram[];
   /** beautiful-mermaid theme preset key (e.g. "tokyo-night", "dracula"). Unset = auto light/dark. */
   theme?: string;
+  /** How to display diagram tabs when multiple diagrams exist. */
+  tabsMode?: TabsDisplayMode;
 }
 
 // Decision tree block types
@@ -157,6 +165,8 @@ export interface DecisionTree {
 export interface DecisionTreeContent {
   nodes: DecisionTreeNode[];
   trees?: DecisionTree[];
+  /** How to display tree tabs when multiple trees exist. */
+  tabsMode?: TabsDisplayMode;
 }
 
 // Union of all block content types
@@ -181,7 +191,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   code: { text: "", language: "typescript" },
   divider: {},
   "block-spacer": { height: "medium" },
-  subpage: { title: "", description: "", content: undefined },
+  subpage: { title: "", description: "", content: undefined, diagramTabsMode: "row" },
   banner: {
     alerts: [],
     importancePresets: DEFAULT_IMPORTANCE_PRESETS,
@@ -202,6 +212,6 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
       showSearch: true,
     },
   } as DirectoryContent,
-  flowchart: { mermaidCode: "" } as FlowchartContent,
-  "decision-tree": { nodes: [] } as DecisionTreeContent,
+  flowchart: { mermaidCode: "", tabsMode: "row" } as FlowchartContent,
+  "decision-tree": { nodes: [], tabsMode: "row" } as DecisionTreeContent,
 };

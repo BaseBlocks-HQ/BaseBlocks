@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ElementRendererProps } from "@/components/elements/registry";
 import type { DecisionTree, DecisionTreeNode } from "@/types/elements";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
@@ -23,6 +30,7 @@ export function DecisionTreeRenderer({
   const activeTree = trees.find((t) => t.id === activeTreeId) ?? trees[0]!;
   const nodes = activeTree.nodes;
   const showTabs = trees.length > 1;
+  const tabsMode = content.tabsMode ?? "row";
 
   const {
     path,
@@ -69,30 +77,49 @@ export function DecisionTreeRenderer({
     }
   };
 
+  const treeSelector = showTabs ? (
+    tabsMode === "dropdown" ? (
+      <div className="px-3 py-2">
+        <Select value={activeTree.id} onValueChange={switchTree}>
+          <SelectTrigger className="h-9 w-full sm:w-[260px]">
+            <SelectValue placeholder="Select tree" />
+          </SelectTrigger>
+          <SelectContent>
+            {trees.map((tree) => (
+              <SelectItem key={tree.id} value={tree.id}>
+                {tree.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    ) : (
+      <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
+        {trees.map((tree) => (
+          <button
+            key={tree.id}
+            type="button"
+            onClick={() => switchTree(tree.id)}
+            className={`max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              tree.id === activeTree.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            }`}
+          >
+            {tree.label}
+          </button>
+        ))}
+      </div>
+    )
+  ) : null;
+
   // Initial state: show centered option list
   const isInitialState = path.length === 0 && selectedNodeId === null;
 
   if (isInitialState) {
     return (
       <div>
-        {showTabs && (
-          <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
-            {trees.map((tree) => (
-              <button
-                key={tree.id}
-                type="button"
-                onClick={() => switchTree(tree.id)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  tree.id === activeTree.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                {tree.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {treeSelector}
         <div className="flex items-center justify-center py-8">
           <div className="w-full max-w-lg">
             <OptionList
@@ -108,24 +135,7 @@ export function DecisionTreeRenderer({
 
   return (
     <div>
-      {showTabs && (
-        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
-          {trees.map((tree) => (
-            <button
-              key={tree.id}
-              type="button"
-              onClick={() => switchTree(tree.id)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                tree.id === activeTree.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
-            >
-              {tree.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {treeSelector}
 
       {/* Navigation Bar */}
       <div className="flex items-center gap-3 px-4 py-3 rounded-t-lg bg-primary text-primary-foreground">
@@ -173,9 +183,9 @@ export function DecisionTreeRenderer({
 
       {/* Content Area */}
       {hasDetailContent ? (
-        <div className="flex border rounded-b-lg min-h-[300px]">
+        <div className="flex flex-col lg:flex-row border rounded-b-lg min-h-[300px]">
           {/* Left: Options */}
-          <div className="w-[35%] border-r overflow-y-auto">
+          <div className="w-full lg:w-[35%] border-b lg:border-b-0 lg:border-r overflow-y-auto">
             {rootNodes.length > 0 ? (
               <OptionList
                 nodes={rootNodes}
@@ -195,7 +205,7 @@ export function DecisionTreeRenderer({
           </div>
 
           {/* Right: Detail */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-hidden">
             {detailNode && <DetailPanel node={detailNode} />}
           </div>
         </div>

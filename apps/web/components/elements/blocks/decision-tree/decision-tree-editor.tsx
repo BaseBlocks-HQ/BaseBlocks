@@ -11,8 +11,20 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import type {
   DecisionTree,
   DecisionTreeBlockType,
@@ -44,6 +56,10 @@ export function DecisionTreeEditor({
   const [activeTreeId, setActiveTreeId] = useState<string>(() => normalizeTrees(content)[0]!.id);
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
+  const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
+    content.tabsMode ?? "row",
+  );
+  const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
   const labelInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -77,6 +93,8 @@ export function DecisionTreeEditor({
   useEffect(() => {
     const normalized = normalizeTrees(content);
     setTrees(normalized);
+    setTabsMode(content.tabsMode ?? "row");
+    tabsModeRef.current = content.tabsMode ?? "row";
     if (!normalized.find((t) => t.id === activeTreeId)) {
       setActiveTreeId(normalized[0]!.id);
     }
@@ -101,6 +119,7 @@ export function DecisionTreeEditor({
       const newContent: DecisionTreeContent = {
         nodes: updatedTrees[0]?.nodes ?? [],
         trees: updatedTrees,
+        tabsMode: tabsModeRef.current,
       };
       onSaveStatusChange?.("pending");
       debouncedSave(newContent);
@@ -174,6 +193,12 @@ export function DecisionTreeEditor({
       setActiveTreeId(treeId);
       navigateToIndex(0);
     }
+  };
+
+  const handleTabsModeChange = (mode: "row" | "dropdown") => {
+    setTabsMode(mode);
+    tabsModeRef.current = mode;
+    saveContent(trees);
   };
 
   // --- Node operations (operate on active tree's nodes) ---
@@ -316,85 +341,102 @@ export function DecisionTreeEditor({
   return (
     <div className="flex flex-col border rounded-lg overflow-hidden" style={{ height: "500px" }}>
       {/* Tree Tabs */}
-      <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto border-b bg-muted/30">
-        {trees.map((tree) => (
-          <div
-            key={tree.id}
-            className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
-              tree.id === activeTreeId
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-            onClick={() => switchTree(tree.id)}
-          >
-            {editingLabelId === tree.id ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  commitEditLabel();
-                }}
-                className="flex items-center gap-1"
-              >
-                <input
-                  ref={labelInputRef}
-                  value={editingLabelValue}
-                  onChange={(e) => setEditingLabelValue(e.target.value)}
-                  onBlur={commitEditLabel}
-                  className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  type="submit"
-                  className="p-0.5 rounded hover:bg-white/20"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Check className="h-2.5 w-2.5" />
-                </button>
-              </form>
-            ) : (
-              <>
-                <span
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    startEditLabel(tree.id);
+      <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30">
+        <div className="flex items-center gap-1 overflow-x-auto min-w-0">
+          {trees.map((tree) => (
+            <div
+              key={tree.id}
+              className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
+                tree.id === activeTreeId
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              }`}
+              onClick={() => switchTree(tree.id)}
+            >
+              {editingLabelId === tree.id ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    commitEditLabel();
                   }}
+                  className="flex items-center gap-1"
                 >
-                  {tree.label}
-                </span>
-                <button
-                  type="button"
-                  className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEditLabel(tree.id);
-                  }}
-                >
-                  <Pencil className="h-2.5 w-2.5" />
-                </button>
-                {trees.length > 1 && (
+                  <input
+                    ref={labelInputRef}
+                    value={editingLabelValue}
+                    onChange={(e) => setEditingLabelValue(e.target.value)}
+                    onBlur={commitEditLabel}
+                    className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    type="submit"
+                    className="p-0.5 rounded hover:bg-white/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Check className="h-2.5 w-2.5" />
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <span
+                    className="max-w-[9rem] truncate"
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      startEditLabel(tree.id);
+                    }}
+                  >
+                    {tree.label}
+                  </span>
                   <button
                     type="button"
                     className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeTree(tree.id);
+                      startEditLabel(tree.id);
                     }}
                   >
-                    <X className="h-2.5 w-2.5" />
+                    <Pencil className="h-2.5 w-2.5" />
                   </button>
-                )}
-              </>
-            )}
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addTree}
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Add tree"
+                  {trees.length > 1 && (
+                    <button
+                      type="button"
+                      className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTree(tree.id);
+                      }}
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addTree}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+            title="Add tree"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <Select
+          value={tabsMode}
+          onValueChange={(value) =>
+            handleTabsModeChange(value as "row" | "dropdown")
+          }
         >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
+          <SelectTrigger className="h-8 w-[160px] text-xs shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="row">Horizontal Row</SelectItem>
+            <SelectItem value="dropdown">Dropdown</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Breadcrumb Navigation */}
@@ -435,39 +477,45 @@ export function DecisionTreeEditor({
       </div>
 
       {/* Split Panel */}
-      <div className="flex flex-1 min-h-0">
-        {/* Left: Node List */}
-        <div className="w-[40%] border-r overflow-hidden">
-          <NodeList
-            nodes={activeTree.nodes}
-            parentId={currentParentId}
-            onNavigateInto={navigateInto}
-            onAddNode={handleAddNode}
-            onUpdateNode={handleUpdateNode}
-            onRemoveNode={handleRemoveNode}
-            onReorderNodes={handleReorderNodes}
-          />
-        </div>
-
-        {/* Right: Node Detail */}
-        <div className="flex-1 overflow-hidden">
-          {currentNode ? (
-            <NodeDetail
-              node={currentNode}
-              onUpdateNodeName={handleUpdateNodeName}
-              onUpdateContentBlock={handleUpdateContentBlock}
-              onAddContentBlock={handleAddContentBlock}
-              onRemoveContentBlock={handleRemoveContentBlock}
-              onReorderContentBlocks={handleReorderContentBlocks}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="text-sm">
-                Navigate into an option to edit its content
-              </p>
+      <div className="flex-1 min-h-0">
+        <ResizablePanelGroup orientation="horizontal" className="h-full">
+          {/* Left: Node List */}
+          <ResizablePanel defaultSize={40} minSize={25}>
+            <div className="h-full min-w-0 border-r overflow-hidden">
+              <NodeList
+                nodes={activeTree.nodes}
+                parentId={currentParentId}
+                onNavigateInto={navigateInto}
+                onAddNode={handleAddNode}
+                onUpdateNode={handleUpdateNode}
+                onRemoveNode={handleRemoveNode}
+                onReorderNodes={handleReorderNodes}
+              />
             </div>
-          )}
-        </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          {/* Right: Node Detail */}
+          <ResizablePanel defaultSize={60} minSize={35}>
+            <div className="h-full min-w-0 overflow-hidden">
+              {currentNode ? (
+                <NodeDetail
+                  node={currentNode}
+                  onUpdateNodeName={handleUpdateNodeName}
+                  onUpdateContentBlock={handleUpdateContentBlock}
+                  onAddContentBlock={handleAddContentBlock}
+                  onRemoveContentBlock={handleRemoveContentBlock}
+                  onReorderContentBlocks={handleReorderContentBlocks}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p className="text-sm">
+                    Navigate into an option to edit its content
+                  </p>
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

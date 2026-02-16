@@ -47,6 +47,7 @@ export type {
   DirectorySettings,
   DirectoryContent,
   FlowchartDiagram,
+  TabsDisplayMode,
   FlowchartContent,
   DecisionTreeBlockType,
   DecisionTreeContentBlock,

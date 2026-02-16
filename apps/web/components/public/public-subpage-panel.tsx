@@ -73,7 +73,7 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
       {/* Content */}
       {hasDiagrams ? (
         <Tabs defaultValue="content" className="flex-1 min-h-0 flex flex-col">
-          <TabsList className="shrink-0 mx-6 mt-4">
+          <TabsList className="shrink-0 mx-6 mt-4 w-fit max-w-[calc(100%-3rem)] overflow-x-auto">
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="diagram">
               Diagram{diagrams.length > 1 ? "s" : ""}
@@ -88,8 +88,13 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
             />
           </TabsContent>
 
-          <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-            <DiagramViewer diagrams={diagrams} contained />
+          <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+            <DiagramViewer
+              diagrams={diagrams}
+              contained
+              theme={content.diagramTheme}
+              tabsMode={content.diagramTabsMode}
+            />
           </TabsContent>
         </Tabs>
       ) : (

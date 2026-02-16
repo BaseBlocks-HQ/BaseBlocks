@@ -2,9 +2,18 @@
 
 import { DropZone } from "@/components/document-library/drop-zone";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
@@ -14,6 +23,9 @@ import { useMutation, useQuery } from "convex/react";
 import {
   Eye,
   EyeOff,
+  FileText,
+  Globe,
+  Image,
   ImageIcon,
   Loader2,
   Route,
@@ -34,11 +46,19 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSite = useMutation(api.sites.mutations.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+  const ogImageInputRef = useRef<HTMLInputElement>(null);
   const editorCtx = useEditorContextOptional();
 
   // Local state for editing
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
+  const [localSiteTitle, setLocalSiteTitle] = useState("");
+  const [localSiteDescription, setLocalSiteDescription] = useState("");
+  const [localSiteKeywords, setLocalSiteKeywords] = useState("");
+  const [localFavicon, setLocalFavicon] = useState("");
+  const [localOgImage, setLocalOgImage] = useState("");
 
   // Sync local name with site data
   useEffect(() => {
@@ -46,6 +66,16 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       setLocalName(site.name);
     }
   }, [site?.name]);
+
+  // Sync metadata settings with site data
+  useEffect(() => {
+    if (!site) return;
+    setLocalSiteTitle(site.settings.siteTitle ?? "");
+    setLocalSiteDescription(site.settings.siteDescription ?? "");
+    setLocalSiteKeywords(site.settings.siteKeywords ?? "");
+    setLocalFavicon(site.settings.favicon ?? "");
+    setLocalOgImage(site.settings.ogImage ?? "");
+  }, [site]);
 
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
@@ -166,6 +196,63 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       toast.error("Failed to update name");
     }
   }, [siteId, localName, site, updateSite, editorCtx]);
+
+  const toOptionalSetting = (value: string): string | undefined => {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+
+  const handleMetadataImageUpload = useCallback(
+    async (field: "favicon" | "ogImage", file?: File) => {
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      const result = await uploadImage(file, siteId);
+      if (!result) {
+        if (uploadState.error) toast.error(uploadState.error);
+        return;
+      }
+
+      if (field === "favicon") {
+        setLocalFavicon(result.url);
+      } else {
+        setLocalOgImage(result.url);
+      }
+      toast.success(field === "favicon" ? "Favicon uploaded" : "OG image uploaded");
+    },
+    [siteId, uploadImage, uploadState.error],
+  );
+
+  const handleSaveMetadataSettings = useCallback(async () => {
+    try {
+      await updateSite({
+        siteId,
+        settings: {
+          favicon: toOptionalSetting(localFavicon),
+          ogImage: toOptionalSetting(localOgImage),
+          siteTitle: toOptionalSetting(localSiteTitle),
+          siteDescription: toOptionalSetting(localSiteDescription),
+          siteKeywords: toOptionalSetting(localSiteKeywords),
+        },
+      });
+      setMetadataDialogOpen(false);
+      toast.success("Metadata settings updated");
+    } catch (error) {
+      console.error("Failed to update metadata settings:", error);
+      toast.error("Failed to update metadata settings");
+    }
+  }, [
+    localFavicon,
+    localOgImage,
+    localSiteDescription,
+    localSiteKeywords,
+    localSiteTitle,
+    siteId,
+    updateSite,
+  ]);
 
   if (!site) {
     return (
@@ -390,6 +477,26 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         </div>
       )}
 
+      {/* SEO & Metadata */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-medium">SEO & Metadata</Label>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMetadataDialogOpen(true)}
+          >
+            Configure
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Set favicon, title, description, and social sharing metadata
+        </p>
+      </div>
+
       {/* Breadcrumb Settings */}
       <div className="space-y-3 border-t pt-4">
         <div className="flex items-center justify-between">
@@ -411,6 +518,159 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           Display the current page path below navigation
         </p>
       </div>
+
+      <Dialog open={metadataDialogOpen} onOpenChange={setMetadataDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>SEO & Metadata</DialogTitle>
+            <DialogDescription>
+              These values are used on your published site.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="site-meta-title" className="text-sm">
+                Site Title
+              </Label>
+              <Input
+                id="site-meta-title"
+                value={localSiteTitle}
+                onChange={(e) => setLocalSiteTitle(e.target.value)}
+                placeholder={site.name}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="site-meta-description" className="text-sm">
+                Description
+              </Label>
+              <Textarea
+                id="site-meta-description"
+                value={localSiteDescription}
+                onChange={(e) => setLocalSiteDescription(e.target.value)}
+                placeholder="Short summary for search engines and social cards"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="site-meta-keywords" className="text-sm">
+                Keywords
+              </Label>
+              <Input
+                id="site-meta-keywords"
+                value={localSiteKeywords}
+                onChange={(e) => setLocalSiteKeywords(e.target.value)}
+                placeholder="knowledge base, support, docs"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2 rounded-lg border p-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                  Favicon
+                </div>
+                {localFavicon ? (
+                  <img
+                    src={toProxyDownloadUrl(localFavicon)}
+                    alt="Favicon preview"
+                    className="h-12 w-12 rounded border bg-muted object-contain"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded border bg-muted flex items-center justify-center text-muted-foreground">
+                    <ImageIcon className="h-4 w-4" />
+                  </div>
+                )}
+                <input
+                  ref={faviconInputRef}
+                  type="file"
+                  accept=".ico,.png,.jpg,.jpeg,.webp,.svg,image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    void handleMetadataImageUpload("favicon", file);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => faviconInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-3 w-3 mr-1" />
+                      Upload
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="space-y-2 rounded-lg border p-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Open Graph Image
+                </div>
+                {localOgImage ? (
+                  <img
+                    src={toProxyDownloadUrl(localOgImage)}
+                    alt="Open Graph preview"
+                    className="h-20 w-full rounded border bg-muted object-cover"
+                  />
+                ) : (
+                  <div className="h-20 w-full rounded border bg-muted flex items-center justify-center text-muted-foreground">
+                    No image
+                  </div>
+                )}
+                <input
+                  ref={ogImageInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.webp,.svg,image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    void handleMetadataImageUpload("ogImage", file);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => ogImageInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-3 w-3 mr-1" />
+                      Upload
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMetadataDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveMetadataSettings}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { renderMermaid, THEMES } from "beautiful-mermaid";
 import { useTheme } from "next-themes";
-import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { LocateFixed, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MermaidDiagramProps {
   code: string;
@@ -21,6 +22,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { resolvedTheme } = useTheme();
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
   // Stretch wrapper to fill the nearest scrollable ancestor (the <main> element)
   // Skip when contained (e.g. inside the editor)
   useEffect(() => {
-    if (contained) return;
+    if (contained || isFullscreen) return;
 
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -105,7 +107,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
     const ro = new ResizeObserver(update);
     ro.observe(scrollParent);
     return () => ro.disconnect();
-  }, [svg, contained]);
+  }, [svg, contained, isFullscreen]);
 
   useEffect(() => {
     if (!code.trim()) {
@@ -158,6 +160,22 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
     if (!svg) return;
     requestAnimationFrame(fitToView);
   }, [svg, fitToView]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    requestAnimationFrame(fitToView);
+  }, [isFullscreen, fitToView]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isFullscreen]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -234,7 +252,11 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
     [applyTransform, tick],
   );
 
-  const canvasHeight = contained ? "h-[300px]" : "h-[75vh]";
+  const canvasHeight = isFullscreen
+    ? "h-[calc(100vh-4rem)]"
+    : contained
+      ? "h-[260px] md:h-[320px]"
+      : "h-[75vh]";
 
   const emptyCanvas = (msg: string) => (
     <div
@@ -261,9 +283,16 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
   if (!svg) return null;
 
   return (
-    <div ref={wrapperRef} className="relative group/diagram">
+    <div
+      ref={wrapperRef}
+      className={cn(
+        "relative group/diagram",
+        isFullscreen &&
+          "fixed inset-4 z-[80] rounded-xl border bg-background shadow-2xl",
+      )}
+    >
       {/* Zoom controls */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 opacity-0 group-hover/diagram:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm p-1">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm p-1 opacity-100 md:opacity-0 md:group-hover/diagram:opacity-100 transition-opacity">
         <button
           type="button"
           onClick={() => zoomBy(1.4)}
@@ -286,9 +315,22 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
           type="button"
           onClick={fitToView}
           className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-          title="Fit to view"
+          title="Reset view"
         >
-          <Maximize className="h-4 w-4" />
+          <LocateFixed className="h-4 w-4" />
+        </button>
+        <div className="w-px h-4 bg-border mx-0.5" />
+        <button
+          type="button"
+          onClick={() => setIsFullscreen((prev) => !prev)}
+          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          title={isFullscreen ? "Exit fullscreen" : "Open fullscreen"}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
         </button>
       </div>
 

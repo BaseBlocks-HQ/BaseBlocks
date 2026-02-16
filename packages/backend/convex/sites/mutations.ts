@@ -85,6 +85,9 @@ export const update = mutation({
       v.object({
         favicon: v.optional(v.string()),
         ogImage: v.optional(v.string()),
+        siteTitle: v.optional(v.string()),
+        siteDescription: v.optional(v.string()),
+        siteKeywords: v.optional(v.string()),
         headerType: v.optional(v.union(v.literal("logo"), v.literal("text"))),
         navigationStyle: v.optional(
           v.union(

@@ -310,10 +310,10 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 {/* Main content area */}
                 {!isFullscreen && (
                   <>
-                    <ResizablePanel defaultSize={60} minSize={20}>
+                    <ResizablePanel defaultSize={58} minSize={30}>
                       <PortalContainerProvider value={portalContainer}>
                         <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-8"
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-8"
                           style={customizationStyles}
                           {...(isCustomized ? { "data-site-customized": "" } : {})}
                         >
@@ -334,7 +334,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                   </>
                 )}
                 {/* Subpage panel - editing takes priority over viewing */}
-                <ResizablePanel defaultSize={isFullscreen ? 100 : 40} minSize={20}>
+                <ResizablePanel defaultSize={isFullscreen ? 100 : 42} minSize={30}>
                   <PortalContainerProvider value={portalContainer}>
                     <div
                       className="h-full w-full min-w-0 overflow-hidden border-l"
@@ -359,7 +359,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-auto p-8"
+                  className="h-full overflow-auto p-4 md:p-8"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >

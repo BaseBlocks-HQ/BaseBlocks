@@ -46,7 +46,7 @@ export function OptionList({
             )}
             onClick={() => onSelect(node)}
           >
-            <span className="font-medium">{node.name}</span>
+            <span className="font-medium min-w-0 truncate">{node.name}</span>
             {hasChildren && (
               <ChevronRight
                 className={cn(

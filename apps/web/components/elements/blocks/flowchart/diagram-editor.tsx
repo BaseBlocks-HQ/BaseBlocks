@@ -134,7 +134,7 @@ export function DiagramEditor({
   return (
     <div className="space-y-0">
       {/* Tabs bar — always visible */}
-      <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto">
+      <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto min-w-0">
         {diagrams.map((diagram) => (
           <div
             key={diagram.id}
@@ -172,6 +172,7 @@ export function DiagramEditor({
             ) : (
               <>
                 <span
+                  className="max-w-[10rem] truncate"
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     startEditLabel(diagram.id);
@@ -216,7 +217,7 @@ export function DiagramEditor({
       </div>
 
       {/* Preview */}
-      <div className="min-h-[80px]">
+      <div className="min-h-[80px] border-t">
         {activeDiagram?.mermaidCode?.trim() ? (
           <MermaidDiagram code={activeDiagram.mermaidCode} contained={contained} theme={theme} />
         ) : (
