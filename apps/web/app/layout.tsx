@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 
@@ -10,6 +11,14 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
 });
+
+export const metadata: Metadata = {
+  icons: {
+    icon: [{ url: "/favicon.ico" }],
+    shortcut: [{ url: "/favicon.ico" }],
+    apple: [{ url: "/favicon.ico" }],
+  },
+};
 
 // Root layout - Next.js 16 requires html/body tags here
 export default function RootLayout({ children }: { children: ReactNode }) {

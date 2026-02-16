@@ -558,12 +558,11 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>SEO & Metadata</DialogTitle>
             <DialogDescription>
-              Configure how your published site appears in browser tabs, search
-              results, and social shares.
+              Configure metadata for your published site.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-6">
+          <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="site-meta-title" className="text-sm">
@@ -575,9 +574,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   onChange={(e) => setLocalSiteTitle(e.target.value)}
                   placeholder={site.name}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Shown in browser tabs and search results.
-                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -590,9 +586,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   onChange={(e) => setLocalSiteKeywords(e.target.value)}
                   placeholder="knowledge base, support, docs"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Comma-separated list.
-                </p>
               </div>
             </div>
 
@@ -607,21 +600,13 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 placeholder="Short summary for search engines and social cards"
                 rows={3}
               />
-              <p className="text-xs text-muted-foreground">
-                Keep it concise and descriptive.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Image className="h-4 w-4 text-muted-foreground" />
-                    Favicon
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Small icon used in browser tabs and bookmarks.
-                  </p>
+              <div className="space-y-3 rounded-xl border p-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                  Favicon
                 </div>
                 {localFavicon ? (
                   <div className="h-16 w-16 rounded-lg border bg-background p-2">
@@ -647,47 +632,44 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     e.target.value = "";
                   }}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    faviconInputRef.current?.click();
-                  }}
-                  disabled={isMetadataUploading || isSavingMetadata}
-                >
-                  {isFaviconUploading ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                      {uploadProgress}%
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-3 w-3 mr-1" />
-                      {localFavicon ? "Replace" : "Upload"}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLocalFavicon("")}
-                  disabled={!localFavicon || isMetadataUploading || isSavingMetadata}
-                >
-                  Remove
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      faviconInputRef.current?.click();
+                    }}
+                    disabled={isMetadataUploading || isSavingMetadata}
+                  >
+                    {isFaviconUploading ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        {uploadProgress}%
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-3 w-3 mr-1" />
+                        {localFavicon ? "Replace" : "Upload"}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocalFavicon("")}
+                    disabled={!localFavicon || isMetadataUploading || isSavingMetadata}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
 
-              <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    Open Graph Image
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Preview image for social platforms.
-                  </p>
+              <div className="space-y-3 rounded-xl border p-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Open Graph Image
                 </div>
                 {localOgImage ? (
                   <img
@@ -711,36 +693,38 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     e.target.value = "";
                   }}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    ogImageInputRef.current?.click();
-                  }}
-                  disabled={isMetadataUploading || isSavingMetadata}
-                >
-                  {isOgImageUploading ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                      {uploadProgress}%
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-3 w-3 mr-1" />
-                      {localOgImage ? "Replace" : "Upload"}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLocalOgImage("")}
-                  disabled={!localOgImage || isMetadataUploading || isSavingMetadata}
-                >
-                  Remove
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      ogImageInputRef.current?.click();
+                    }}
+                    disabled={isMetadataUploading || isSavingMetadata}
+                  >
+                    {isOgImageUploading ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        {uploadProgress}%
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-3 w-3 mr-1" />
+                        {localOgImage ? "Replace" : "Upload"}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLocalOgImage("")}
+                    disabled={!localOgImage || isMetadataUploading || isSavingMetadata}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
