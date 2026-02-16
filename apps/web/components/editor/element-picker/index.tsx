@@ -101,11 +101,22 @@ export function ElementPicker({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
+    // Keep config panels stable; they contain interactive controls and dialogs
+    // rendered in portals (e.g. file pickers / modal overlays).
+    if (
+      activeCategory &&
+      CONFIG_PANEL_CATEGORIES.includes(activeCategory)
+    ) {
+      return;
+    }
+
     // Don't close if mouse moved to a Radix portal (dropdown menus, selects, etc.)
     const relatedTarget = e.relatedTarget;
     if (
       relatedTarget instanceof HTMLElement &&
-      relatedTarget.closest("[data-radix-popper-content-wrapper]")
+      (relatedTarget.closest("[data-radix-popper-content-wrapper]") ||
+        relatedTarget.closest("[data-slot='dialog-content']") ||
+        relatedTarget.closest("[data-slot='dialog-overlay']"))
     ) {
       return;
     }
