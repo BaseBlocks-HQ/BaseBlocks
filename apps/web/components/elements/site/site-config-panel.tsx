@@ -59,6 +59,10 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const [localSiteKeywords, setLocalSiteKeywords] = useState("");
   const [localFavicon, setLocalFavicon] = useState("");
   const [localOgImage, setLocalOgImage] = useState("");
+  const [metadataUploadingField, setMetadataUploadingField] = useState<
+    "favicon" | "ogImage" | null
+  >(null);
+  const [isSavingMetadata, setIsSavingMetadata] = useState(false);
 
   // Sync local name with site data
   useEffect(() => {
@@ -79,6 +83,11 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
+  const isFaviconUploading =
+    metadataUploadingField === "favicon" && isUploading;
+  const isOgImageUploading =
+    metadataUploadingField === "ogImage" && isUploading;
+  const isMetadataUploading = metadataUploadingField !== null && isUploading;
 
   // Helper to update settings
   const updateSettings = useCallback(
@@ -209,24 +218,33 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         toast.error("Please select an image file");
         return;
       }
+      setMetadataUploadingField(field);
+      try {
+        const result = await uploadImage(file, siteId);
+        if (!result) {
+          if (uploadState.error) {
+            toast.error(uploadState.error);
+          } else {
+            toast.error("Upload failed");
+          }
+          return;
+        }
 
-      const result = await uploadImage(file, siteId);
-      if (!result) {
-        if (uploadState.error) toast.error(uploadState.error);
-        return;
+        if (field === "favicon") {
+          setLocalFavicon(result.url);
+        } else {
+          setLocalOgImage(result.url);
+        }
+        toast.success(field === "favicon" ? "Favicon uploaded" : "OG image uploaded");
+      } finally {
+        setMetadataUploadingField((current) => (current === field ? null : current));
       }
-
-      if (field === "favicon") {
-        setLocalFavicon(result.url);
-      } else {
-        setLocalOgImage(result.url);
-      }
-      toast.success(field === "favicon" ? "Favicon uploaded" : "OG image uploaded");
     },
     [siteId, uploadImage, uploadState.error],
   );
 
   const handleSaveMetadataSettings = useCallback(async () => {
+    setIsSavingMetadata(true);
     try {
       await updateSite({
         siteId,
@@ -243,6 +261,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     } catch (error) {
       console.error("Failed to update metadata settings:", error);
       toast.error("Failed to update metadata settings");
+    } finally {
+      setIsSavingMetadata(false);
     }
   }, [
     localFavicon,
@@ -528,31 +548,52 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         }}
       >
         <DialogContent
-          className="max-w-2xl"
+          className="max-w-3xl p-0 gap-0"
           showCloseButton={false}
           onInteractOutside={(event) => event.preventDefault()}
           onPointerDownOutside={(event) => event.preventDefault()}
           onFocusOutside={(event) => event.preventDefault()}
           onEscapeKeyDown={(event) => event.preventDefault()}
         >
-          <DialogHeader>
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>SEO & Metadata</DialogTitle>
             <DialogDescription>
-              These values are used on your published site.
+              Configure how your published site appears in browser tabs, search
+              results, and social shares.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="site-meta-title" className="text-sm">
-                Site Title
-              </Label>
-              <Input
-                id="site-meta-title"
-                value={localSiteTitle}
-                onChange={(e) => setLocalSiteTitle(e.target.value)}
-                placeholder={site.name}
-              />
+          <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="site-meta-title" className="text-sm">
+                  Site Title
+                </Label>
+                <Input
+                  id="site-meta-title"
+                  value={localSiteTitle}
+                  onChange={(e) => setLocalSiteTitle(e.target.value)}
+                  placeholder={site.name}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Shown in browser tabs and search results.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="site-meta-keywords" className="text-sm">
+                  Keywords
+                </Label>
+                <Input
+                  id="site-meta-keywords"
+                  value={localSiteKeywords}
+                  onChange={(e) => setLocalSiteKeywords(e.target.value)}
+                  placeholder="knowledge base, support, docs"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Comma-separated list.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -566,34 +607,32 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 placeholder="Short summary for search engines and social cards"
                 rows={3}
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="site-meta-keywords" className="text-sm">
-                Keywords
-              </Label>
-              <Input
-                id="site-meta-keywords"
-                value={localSiteKeywords}
-                onChange={(e) => setLocalSiteKeywords(e.target.value)}
-                placeholder="knowledge base, support, docs"
-              />
+              <p className="text-xs text-muted-foreground">
+                Keep it concise and descriptive.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2 rounded-lg border p-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Image className="h-4 w-4 text-muted-foreground" />
-                  Favicon
+              <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Image className="h-4 w-4 text-muted-foreground" />
+                    Favicon
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Small icon used in browser tabs and bookmarks.
+                  </p>
                 </div>
                 {localFavicon ? (
-                  <img
-                    src={toProxyDownloadUrl(localFavicon)}
-                    alt="Favicon preview"
-                    className="h-12 w-12 rounded border bg-muted object-contain"
-                  />
+                  <div className="h-16 w-16 rounded-lg border bg-background p-2">
+                    <img
+                      src={toProxyDownloadUrl(localFavicon)}
+                      alt="Favicon preview"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
                 ) : (
-                  <div className="h-12 w-12 rounded border bg-muted flex items-center justify-center text-muted-foreground">
+                  <div className="h-16 w-16 rounded-lg border bg-background flex items-center justify-center text-muted-foreground">
                     <ImageIcon className="h-4 w-4" />
                   </div>
                 )}
@@ -616,9 +655,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     event.stopPropagation();
                     faviconInputRef.current?.click();
                   }}
-                  disabled={isUploading}
+                  disabled={isMetadataUploading || isSavingMetadata}
                 >
-                  {isUploading ? (
+                  {isFaviconUploading ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin mr-1" />
                       {uploadProgress}%
@@ -626,16 +665,29 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   ) : (
                     <>
                       <Upload className="h-3 w-3 mr-1" />
-                      Upload
+                      {localFavicon ? "Replace" : "Upload"}
                     </>
                   )}
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocalFavicon("")}
+                  disabled={!localFavicon || isMetadataUploading || isSavingMetadata}
+                >
+                  Remove
+                </Button>
               </div>
 
-              <div className="space-y-2 rounded-lg border p-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  Open Graph Image
+              <div className="space-y-3 rounded-xl border bg-muted/10 p-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Open Graph Image
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Preview image for social platforms.
+                  </p>
                 </div>
                 {localOgImage ? (
                   <img
@@ -667,9 +719,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     event.stopPropagation();
                     ogImageInputRef.current?.click();
                   }}
-                  disabled={isUploading}
+                  disabled={isMetadataUploading || isSavingMetadata}
                 >
-                  {isUploading ? (
+                  {isOgImageUploading ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin mr-1" />
                       {uploadProgress}%
@@ -677,19 +729,43 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   ) : (
                     <>
                       <Upload className="h-3 w-3 mr-1" />
-                      Upload
+                      {localOgImage ? "Replace" : "Upload"}
                     </>
                   )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocalOgImage("")}
+                  disabled={!localOgImage || isMetadataUploading || isSavingMetadata}
+                >
+                  Remove
                 </Button>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMetadataDialogOpen(false)}>
+          <DialogFooter className="px-6 py-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setMetadataDialogOpen(false)}
+              disabled={isSavingMetadata || isMetadataUploading}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveMetadataSettings}>Save</Button>
+            <Button
+              onClick={handleSaveMetadataSettings}
+              disabled={isSavingMetadata || isMetadataUploading}
+            >
+              {isSavingMetadata ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  Saving
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
