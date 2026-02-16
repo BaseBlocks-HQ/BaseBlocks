@@ -258,7 +258,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
           />
         </TabsContent>
 
-        <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3">
+        <TabsContent value="diagram" className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden space-y-3">
           <div className="flex items-center justify-end">
             <Select
               value={diagramTabsMode}

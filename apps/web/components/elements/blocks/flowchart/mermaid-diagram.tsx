@@ -316,7 +316,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
       {/* Canvas */}
       <div
         ref={containerRef}
-        className={`overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none ${theme ? "" : "bg-muted/30 dark:bg-muted/20"}`}
+        className={`relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none ${theme ? "" : "bg-muted/30 dark:bg-muted/20"}`}
         style={{
           ...(theme && THEMES[theme] ? { backgroundColor: THEMES[theme].bg } : {}),
           backgroundImage:
@@ -329,7 +329,7 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
       >
         <div
           ref={contentRef}
-          className="origin-top-left"
+          className="absolute left-0 top-0 origin-top-left"
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>

@@ -88,7 +88,7 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
             />
           </TabsContent>
 
-          <TabsContent value="diagram" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+          <TabsContent value="diagram" className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-6">
             <DiagramViewer
               diagrams={diagrams}
               contained

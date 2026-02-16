@@ -523,6 +523,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         <DialogContent
           className="max-w-2xl"
           onInteractOutside={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onFocusOutside={(event) => event.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle>SEO & Metadata</DialogTitle>
@@ -600,7 +602,11 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => faviconInputRef.current?.click()}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    faviconInputRef.current?.click();
+                  }}
                   disabled={isUploading}
                 >
                   {isUploading ? (
@@ -647,7 +653,11 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => ogImageInputRef.current?.click()}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    ogImageInputRef.current?.click();
+                  }}
                   disabled={isUploading}
                 >
                   {isUploading ? (

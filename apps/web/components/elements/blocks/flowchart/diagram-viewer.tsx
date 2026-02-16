@@ -32,10 +32,10 @@ export function DiagramViewer({
   const showTabs = diagrams.length > 1;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full min-w-0 max-w-full">
       {showTabs && (
         tabsMode === "dropdown" ? (
-          <div className="px-1">
+          <div className="px-1 min-w-0">
             <Select value={active.id} onValueChange={setActiveId}>
               <SelectTrigger className="h-9 w-full sm:w-[260px]">
                 <SelectValue placeholder="Select diagram" />
@@ -50,7 +50,7 @@ export function DiagramViewer({
             </Select>
           </div>
         ) : (
-          <div className="flex items-center gap-1 px-1 py-1 overflow-x-auto">
+          <div className="flex items-center gap-1 px-1 py-1 overflow-x-auto min-w-0">
             {diagrams.map((diagram) => (
               <button
                 key={diagram.id}

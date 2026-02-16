@@ -298,7 +298,7 @@ export function DiagramEditor({
       </div>
 
       {/* Preview */}
-      <div className="min-h-[80px] border-t">
+      <div className="min-h-[80px] border-t min-w-0 overflow-hidden">
         {activeDiagram?.mermaidCode?.trim() ? (
           <MermaidDiagram code={activeDiagram.mermaidCode} contained={contained} theme={theme} />
         ) : (
