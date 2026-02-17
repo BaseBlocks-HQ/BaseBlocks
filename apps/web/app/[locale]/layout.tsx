@@ -30,11 +30,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: t("title"),
-    icons: {
-      icon: [{ url: "/favicon.ico" }],
-      shortcut: [{ url: "/favicon.ico" }],
-      apple: [{ url: "/favicon.ico" }],
-    },
   };
 }
 

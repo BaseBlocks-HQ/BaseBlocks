@@ -143,18 +143,11 @@ export async function buildPublicSiteMetadata({
   const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
   const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
 
-  return {
+  const metadata: Metadata = {
     metadataBase: await resolveMetadataBase(companySlug),
     title,
     description,
     keywords: keywords.length > 0 ? keywords : undefined,
-    icons: favicon
-      ? {
-          icon: [{ url: favicon }],
-          shortcut: [{ url: favicon }],
-          apple: [{ url: favicon }],
-        }
-      : undefined,
     openGraph: {
       type: "website",
       title,
@@ -169,4 +162,16 @@ export async function buildPublicSiteMetadata({
       images: ogImage ? [ogImage] : undefined,
     },
   };
+
+  // Only set icons when a tenant favicon exists — omitting the key entirely
+  // lets Next.js inherit the parent layout's default BaseBlocks favicon.
+  if (favicon) {
+    metadata.icons = {
+      icon: [{ url: favicon }],
+      shortcut: [{ url: favicon }],
+      apple: [{ url: favicon }],
+    };
+  }
+
+  return metadata;
 }
