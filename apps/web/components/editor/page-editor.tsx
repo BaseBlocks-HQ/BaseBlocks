@@ -39,6 +39,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
     pushCommand,
     isUndoRedoExecuting,
     setCurrentPageId,
+    showControls,
   } = useEditorContext();
 
   // Set current page ID on context for keyboard shortcuts
@@ -814,16 +815,18 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Delete tabs control - follows layout controls pattern */}
-            <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                onClick={handleDisableTabs}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            {showControls && (
+              <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                  onClick={handleDisableTabs}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
 
             <Tabs
               value={activeTabId ?? undefined}
@@ -857,7 +860,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                         {tab.label}
                       </span>
                     )}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
+                    {showControls && <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
                       <span
                         role="button"
                         tabIndex={0}
@@ -894,7 +897,7 @@ export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
                           <X className="h-3 w-3" />
                         </span>
                       )}
-                    </div>
+                    </div>}
                   </TabsTrigger>
                 ))}
               </TabsList>

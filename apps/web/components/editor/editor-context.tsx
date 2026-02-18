@@ -65,6 +65,9 @@ interface EditorContextValue {
   canUndo: (pageId?: string) => boolean;
   canRedo: (pageId?: string) => boolean;
   isUndoRedoExecuting: boolean;
+  // Editor controls visibility
+  showControls: boolean;
+  toggleControls: () => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -83,6 +86,11 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
+  const [showControls, setShowControls] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem("editor:showControls");
+    return stored === null ? true : stored === "true";
+  });
 
   // Query the site to derive hasUndeployedChanges from timestamps
   const site = useQuery(api.sites.queries.get, { siteId });
@@ -208,6 +216,13 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         canUndo,
         canRedo,
         isUndoRedoExecuting,
+        showControls,
+        toggleControls: () =>
+          setShowControls((p) => {
+            const next = !p;
+            localStorage.setItem("editor:showControls", String(next));
+            return next;
+          }),
       }}
     >
       {children}

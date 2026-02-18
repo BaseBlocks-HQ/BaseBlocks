@@ -22,6 +22,7 @@ import type {
   LayoutSlot as LayoutSlotType,
   LayoutType,
 } from "@/types";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
@@ -171,6 +172,8 @@ function SortableBlock({
   onRemove,
 }: SortableBlockProps) {
   const [configOpen, setConfigOpen] = useState(false);
+  const editorCtx = useEditorContextOptional();
+  const showControls = editorCtx?.showControls ?? true;
   const {
     attributes,
     listeners,
@@ -213,70 +216,72 @@ function SortableBlock({
       {/* Block with inline toolbar */}
       <div className="flex gap-1 items-start">
         {/* Block toolbar - inline, inside layout */}
-        <div
-          className={cn(
-            "flex flex-col gap-0.5 shrink-0",
-            "transition-opacity",
-            "opacity-0 group-hover/block:opacity-100",
-            isSelected && "opacity-100",
-          )}
-        >
+        {showControls && (
           <div
-            ref={setActivatorNodeRef}
             className={cn(
-              "flex items-center justify-center h-6 w-6 rounded",
-              "cursor-grab active:cursor-grabbing",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isSelected
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              "flex flex-col gap-0.5 shrink-0",
+              "transition-opacity",
+              "opacity-0 group-hover/block:opacity-100",
+              isSelected && "opacity-100",
             )}
-            {...attributes}
-            {...listeners}
           >
-            <GripVertical className="h-3.5 w-3.5" />
-          </div>
-          {hasConfig && ConfigPanel && (
-            <Popover open={configOpen} onOpenChange={setConfigOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            <div
+              ref={setActivatorNodeRef}
+              className={cn(
+                "flex items-center justify-center h-6 w-6 rounded",
+                "cursor-grab active:cursor-grabbing",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isSelected
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
+            {hasConfig && ConfigPanel && (
+              <Popover open={configOpen} onOpenChange={setConfigOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="left"
+                  align="start"
+                  className="w-64"
                   onClick={(e) => e.stopPropagation()}
+                  onPointerDownOutside={(e) => {
+                    // Prevent popover close when interacting with portaled Select dropdown
+                    const target = e.target as HTMLElement;
+                    if (target.closest('[data-slot="select-content"]')) {
+                      e.preventDefault();
+                    }
+                  }}
                 >
-                  <Settings2 className="h-3.5 w-3.5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="left"
-                align="start"
-                className="w-64"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDownOutside={(e) => {
-                  // Prevent popover close when interacting with portaled Select dropdown
-                  const target = e.target as HTMLElement;
-                  if (target.closest('[data-slot="select-content"]')) {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <ConfigPanel content={block.content} onUpdate={onUpdate} />
-              </PopoverContent>
-            </Popover>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+                  <ConfigPanel content={block.content} onUpdate={onUpdate} />
+                </PopoverContent>
+              </Popover>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
 
         {/* Block content */}
         <div className="min-w-0 flex-1">

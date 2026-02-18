@@ -28,6 +28,7 @@ import {
   EyeOff,
   ExternalLink,
   Globe,
+  GripVertical,
   History,
   MoreHorizontal,
   PanelTop,
@@ -91,6 +92,8 @@ export function EditorHeader({
     canRedo,
     isUndoRedoExecuting,
     currentPageId,
+    showControls,
+    toggleControls,
   } = useEditorContext();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
@@ -215,6 +218,20 @@ export function EditorHeader({
               <Eye className="h-3 w-3" />
               View Only
             </Badge>
+          )}
+          {canEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={showControls ? "secondary" : "ghost"}
+                  size="icon-sm"
+                  onClick={toggleControls}
+                >
+                  <GripVertical className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{showControls ? "Hide controls" : "Show controls"}</TooltipContent>
+            </Tooltip>
           )}
           {canEdit && showHeader && (
             <Tooltip>

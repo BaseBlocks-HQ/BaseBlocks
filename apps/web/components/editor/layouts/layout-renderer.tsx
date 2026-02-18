@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@/types";
@@ -51,6 +52,8 @@ export function LayoutRenderer({
   dragHandleProps,
   isDragging,
 }: LayoutRendererProps) {
+  const editorCtx = useEditorContextOptional();
+  const showControls = editorCtx?.showControls ?? true;
   const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
   const spacerHeight = layout.settings.spacerHeight ?? "medium";
 
@@ -72,45 +75,46 @@ export function LayoutRenderer({
       {/* Layout with inline toolbar */}
       <div className="flex gap-1 items-start">
         {/* Layout toolbar - inline */}
-        <div
-          className={cn(
-            "flex flex-col gap-0.5 shrink-0",
-            "transition-opacity",
-            // Only show when hovering layout AND no block is selected
-            selectedBlockId
-              ? "opacity-0 pointer-events-none"
-              : "opacity-0 group-hover/layout:opacity-100",
-            isSelected && !selectedBlockId && "opacity-100",
-          )}
-        >
+        {showControls && (
           <div
-            ref={dragHandleRef}
-            role="button"
-            tabIndex={0}
             className={cn(
-              "flex items-center justify-center h-6 w-6 rounded",
-              "cursor-grab active:cursor-grabbing",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isSelected
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              "flex flex-col gap-0.5 shrink-0",
+              "transition-opacity",
+              selectedBlockId
+                ? "opacity-0 pointer-events-none"
+                : "opacity-0 group-hover/layout:opacity-100",
+              isSelected && !selectedBlockId && "opacity-100",
             )}
-            {...dragHandleProps}
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <div
+              ref={dragHandleRef}
+              role="button"
+              tabIndex={0}
+              className={cn(
+                "flex items-center justify-center h-6 w-6 rounded",
+                "cursor-grab active:cursor-grabbing",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                isSelected
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        )}
 
         {/* Layout content */}
         <div className="min-w-0 flex-1 rounded-md transition-colors hover:bg-muted/20">
