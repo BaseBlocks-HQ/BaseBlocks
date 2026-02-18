@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, GitFork, MousePointerClick, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,10 +13,14 @@ import {
 import type { ElementRendererProps } from "@/components/elements/registry";
 import type { DecisionTree, DecisionTreeNode } from "@/types/elements";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { OptionList } from "./viewer/option-list";
 import { DetailPanel } from "./viewer/detail-panel";
+import { cn } from "@/lib/utils";
 
-function normalizeTrees(content: { nodes: DecisionTreeNode[]; trees?: DecisionTree[] }): DecisionTree[] {
+function normalizeTrees(
+  content: { nodes: DecisionTreeNode[]; trees?: DecisionTree[] },
+): DecisionTree[] {
   if (content.trees && content.trees.length > 0) return content.trees;
   return [{ id: "legacy", label: "Tree 1", nodes: content.nodes || [] }];
 }
@@ -24,6 +28,7 @@ function normalizeTrees(content: { nodes: DecisionTreeNode[]; trees?: DecisionTr
 export function DecisionTreeRenderer({
   content,
 }: ElementRendererProps<"decision-tree">) {
+  const isMobile = useIsMobile();
   const trees = useMemo(() => normalizeTrees(content), [content]);
   const [activeTreeId, setActiveTreeId] = useState<string>(trees[0]!.id);
 
@@ -53,7 +58,7 @@ export function DecisionTreeRenderer({
   const activeNodeId = path.length > 0 ? path[path.length - 1] : null;
   const detailNodeId = selectedNodeId ?? activeNodeId;
   const detailNode = detailNodeId
-    ? nodes.find((n) => n.id === detailNodeId) ?? null
+    ? (nodes.find((n) => n.id === detailNodeId) ?? null)
     : null;
   const hasDetailContent =
     detailNode && detailNode.contentBlocks.length > 0;
@@ -77,9 +82,25 @@ export function DecisionTreeRenderer({
     }
   };
 
+  const handleStartOver = () => {
+    navigateToIndex(0);
+    selectNode(null);
+  };
+
+  const isInitialState = path.length === 0 && selectedNodeId === null;
+  const showMobileDetail =
+    isMobile && selectedNodeId && detailNode && hasDetailContent;
+
+  // --- Shared sub-components ---
+
   const treeSelector = showTabs ? (
-    tabsMode === "dropdown" ? (
-      <div className="px-3 py-2">
+    <div
+      className={cn(
+        "border-b",
+        tabsMode === "dropdown" ? "px-3 py-2" : "px-3 py-2",
+      )}
+    >
+      {tabsMode === "dropdown" ? (
         <Select value={activeTree.id} onValueChange={switchTree}>
           <SelectTrigger className="h-9 w-full sm:w-[260px]">
             <SelectValue placeholder="Select tree" />
@@ -92,144 +113,227 @@ export function DecisionTreeRenderer({
             ))}
           </SelectContent>
         </Select>
-      </div>
-    ) : (
-      <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto">
-        {trees.map((tree) => (
-          <button
-            key={tree.id}
-            type="button"
-            onClick={() => switchTree(tree.id)}
-            className={`max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-              tree.id === activeTree.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            {tree.label}
-          </button>
-        ))}
-      </div>
-    )
+      ) : (
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {trees.map((tree) => (
+            <button
+              key={tree.id}
+              type="button"
+              onClick={() => switchTree(tree.id)}
+              className={cn(
+                "max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors shrink-0",
+                tree.id === activeTree.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
+            >
+              {tree.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   ) : null;
 
-  // Initial state: show centered option list
-  const isInitialState = path.length === 0 && selectedNodeId === null;
+  const breadcrumb = (
+    <div className="flex items-center gap-1 text-sm text-muted-foreground overflow-x-auto min-w-0">
+      <button
+        type="button"
+        className="hover:text-foreground transition-colors shrink-0"
+        onClick={() => navigateToIndex(0)}
+      >
+        Start
+      </button>
+      {path.map((nodeId, index) => (
+        <span key={nodeId} className="contents">
+          <ChevronRight className="size-3 shrink-0 text-muted-foreground/40" />
+          {index === path.length - 1 ? (
+            <span className="font-medium text-foreground truncate">
+              {getNodeName(nodeId)}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="hover:text-foreground transition-colors truncate"
+              onClick={() => navigateToIndex(index + 1)}
+            >
+              {getNodeName(nodeId)}
+            </button>
+          )}
+        </span>
+      ))}
+    </div>
+  );
 
-  if (isInitialState) {
+  const navigationBar = path.length > 0 ? (
+    <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7 shrink-0"
+        onClick={navigateBack}
+      >
+        <ChevronLeft className="size-4" />
+      </Button>
+      {breadcrumb}
+    </div>
+  ) : null;
+
+  const endOfPath = (
+    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
+      <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <CheckCircle2 className="size-5 text-primary" />
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-medium">End of path</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          No more options available
+        </p>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleStartOver}
+        className="mt-1"
+      >
+        <RotateCcw className="size-3.5 mr-1.5" />
+        Start over
+      </Button>
+    </div>
+  );
+
+  // === MOBILE LAYOUT ===
+  if (isMobile) {
+    // Mobile: detail view (leaf selected with content)
+    if (showMobileDetail) {
+      return (
+        <div className="border rounded-lg overflow-hidden">
+          {treeSelector}
+          <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 shrink-0"
+              onClick={() => selectNode(null)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-sm font-medium truncate">
+              {detailNode.name}
+            </span>
+          </div>
+          <DetailPanel node={detailNode} />
+        </div>
+      );
+    }
+
+    // Mobile: options view
     return (
-      <div>
+      <div className="border rounded-lg overflow-hidden">
         {treeSelector}
-        <div className="flex items-center justify-center py-8">
-          <div className="w-full max-w-lg">
+        {navigationBar}
+        <div className="p-3">
+          {rootNodes.length > 0 ? (
             <OptionList
               nodes={rootNodes}
               allNodes={nodes}
               onSelect={handleSelect}
+              selectedNodeId={selectedNodeId}
             />
+          ) : isInitialState ? (
+            <EmptyTree />
+          ) : (
+            endOfPath
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // === DESKTOP LAYOUT ===
+
+  // Desktop: initial state — centered option list
+  if (isInitialState) {
+    return (
+      <div className="border rounded-lg overflow-hidden">
+        {treeSelector}
+        <div className="flex items-center justify-center py-8">
+          <div className="w-full max-w-lg px-4">
+            {rootNodes.length > 0 ? (
+              <OptionList
+                nodes={rootNodes}
+                allNodes={nodes}
+                onSelect={handleSelect}
+              />
+            ) : (
+              <EmptyTree />
+            )}
           </div>
         </div>
       </div>
     );
   }
 
+  // Desktop: navigated state — split view
   return (
-    <div>
+    <div className="border rounded-lg overflow-hidden">
       {treeSelector}
+      {navigationBar}
+      <div className="flex min-h-[300px]">
+        {/* Left: Options sidebar */}
+        <div className="w-[280px] shrink-0 border-r overflow-y-auto">
+          {rootNodes.length > 0 ? (
+            <OptionList
+              nodes={rootNodes}
+              allNodes={nodes}
+              onSelect={handleSelect}
+              selectedNodeId={selectedNodeId}
+              compact
+            />
+          ) : (
+            endOfPath
+          )}
+        </div>
 
-      {/* Navigation Bar */}
-      <div className="flex items-center gap-3 px-4 py-3 rounded-t-lg bg-primary text-primary-foreground">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={navigateBack}
-          className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="min-w-0">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-sm overflow-x-auto text-primary-foreground/50">
-            <button
-              type="button"
-              className="hover:opacity-80 transition-opacity shrink-0"
-              onClick={() => navigateToIndex(0)}
-            >
-              Root
-            </button>
-            {path.map((nodeId, index) => (
-              <span key={nodeId} className="contents">
-                <span className="shrink-0 text-primary-foreground/25">
-                  /
-                </span>
-                {index === path.length - 1 ? (
-                  <span className="font-medium truncate text-primary-foreground">
-                    {getNodeName(nodeId)}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className="hover:opacity-80 transition-opacity truncate"
-                    onClick={() => navigateToIndex(index + 1)}
-                  >
-                    {getNodeName(nodeId)}
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
+        {/* Right: Detail content */}
+        <div className="flex-1 min-w-0 overflow-y-auto">
+          {hasDetailContent && detailNode ? (
+            <DetailPanel node={detailNode} />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
+              <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
+                <MousePointerClick className="size-5 text-muted-foreground" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Select an option
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  Choose from the list to view details
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Content Area */}
-      {hasDetailContent ? (
-        <div className="flex flex-col lg:flex-row border rounded-b-lg min-h-[300px]">
-          {/* Left: Options */}
-          <div className="w-full lg:w-[35%] border-b lg:border-b-0 lg:border-r overflow-y-auto">
-            {rootNodes.length > 0 ? (
-              <OptionList
-                nodes={rootNodes}
-                allNodes={nodes}
-                onSelect={handleSelect}
-                selectedNodeId={selectedNodeId}
-                compact
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full gap-2 py-8">
-                <CheckCircle2 className="size-5 text-primary" />
-                <p className="text-muted-foreground text-sm px-4 text-center">
-                  End of path
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Detail */}
-          <div className="flex-1 min-w-0 overflow-hidden">
-            {detailNode && <DetailPanel node={detailNode} />}
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center border rounded-b-lg min-h-[200px]">
-          <div className="w-full max-w-lg px-6 py-6">
-            {rootNodes.length > 0 ? (
-              <OptionList
-                nodes={rootNodes}
-                allNodes={nodes}
-                onSelect={handleSelect}
-                selectedNodeId={selectedNodeId}
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-12">
-                <CheckCircle2 className="size-5 text-primary" />
-                <p className="text-muted-foreground text-sm text-center">
-                  End of path
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+function EmptyTree() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
+      <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center">
+        <GitFork className="size-6 text-muted-foreground" />
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-medium text-muted-foreground">
+          No options configured
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1">
+          This decision tree doesn&apos;t have any options yet
+        </p>
+      </div>
     </div>
   );
 }

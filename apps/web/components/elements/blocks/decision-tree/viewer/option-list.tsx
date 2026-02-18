@@ -21,14 +21,17 @@ export function OptionList({
 }: OptionListProps) {
   if (nodes.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground text-sm">No options available</p>
+      <div className="flex flex-col items-center justify-center gap-2 py-12 px-4">
+        <p className="text-sm font-medium text-muted-foreground">No options available</p>
+        <p className="text-xs text-muted-foreground/70">
+          There are no choices at this level
+        </p>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-2", compact ? "p-3" : "p-0")}>
+    <div className={cn(compact ? "p-2.5 space-y-1" : "space-y-2")}>
       {nodes.map((node) => {
         const hasChildren = allNodes.some((n) => n.parentId === node.id);
         const isSelected = selectedNodeId === node.id;
@@ -38,19 +41,25 @@ export function OptionList({
             key={node.id}
             type="button"
             className={cn(
-              "group w-full flex items-center justify-between rounded-xl border px-5 py-4 text-left transition-all duration-200",
-              "hover:shadow-md active:scale-[0.98]",
+              "group w-full flex items-center justify-between text-left transition-all duration-150",
+              "active:scale-[0.98]",
+              compact
+                ? "rounded-lg border px-3.5 py-2.5 text-sm"
+                : "rounded-xl border px-5 py-4",
               isSelected
-                ? "bg-primary text-primary-foreground border-primary shadow-lg"
-                : "border-border hover:border-primary/30 hover:shadow-primary/5",
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "border-border hover:border-primary/30 hover:bg-accent/50",
             )}
             onClick={() => onSelect(node)}
           >
-            <span className="font-medium min-w-0 truncate">{node.name}</span>
+            <span className={cn("font-medium min-w-0 truncate", compact && "text-sm")}>
+              {node.name}
+            </span>
             {hasChildren && (
               <ChevronRight
                 className={cn(
-                  "size-5 shrink-0 transition-colors",
+                  "shrink-0 transition-colors",
+                  compact ? "size-4 ml-2" : "size-5 ml-3",
                   isSelected
                     ? "text-primary-foreground/70"
                     : "text-muted-foreground group-hover:text-primary",

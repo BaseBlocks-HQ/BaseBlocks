@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   ChevronRight,
+  GitFork,
   Pencil,
   Trash2,
   Plus,
@@ -186,11 +187,14 @@ export function NodeList({
           </DndProvider>
 
           {childNodes.length === 0 && !isAdding && (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <p className="text-muted-foreground text-sm text-center">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 px-4">
+              <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
+                <GitFork className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm text-center font-medium">
                 No options yet
               </p>
-              <p className="text-muted-foreground text-xs text-center mt-1">
+              <p className="text-muted-foreground/70 text-xs text-center">
                 Add options for users to navigate through
               </p>
             </div>

@@ -4,7 +4,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["*.localhost"],
+  allowedDevOrigins: ["*.localhost", "*.tail2c844a.ts.net"],
   serverExternalPackages: ["pdfjs-dist"],
 };
 

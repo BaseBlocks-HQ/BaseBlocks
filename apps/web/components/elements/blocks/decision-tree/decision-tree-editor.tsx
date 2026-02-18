@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Check, Pencil, Plus, X } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  GitFork,
+  MousePointerClick,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -43,7 +54,9 @@ function generateTreeId() {
 
 function normalizeTrees(content: DecisionTreeContent): DecisionTree[] {
   if (content.trees && content.trees.length > 0) return content.trees;
-  return [{ id: generateTreeId(), label: "Tree 1", nodes: content.nodes || [] }];
+  return [
+    { id: generateTreeId(), label: "Tree 1", nodes: content.nodes || [] },
+  ];
 }
 
 export function DecisionTreeEditor({
@@ -52,8 +65,13 @@ export function DecisionTreeEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
-  const [trees, setTrees] = useState<DecisionTree[]>(() => normalizeTrees(content));
-  const [activeTreeId, setActiveTreeId] = useState<string>(() => normalizeTrees(content)[0]!.id);
+  const isMobile = useIsMobile();
+  const [trees, setTrees] = useState<DecisionTree[]>(() =>
+    normalizeTrees(content),
+  );
+  const [activeTreeId, setActiveTreeId] = useState<string>(
+    () => normalizeTrees(content)[0]!.id,
+  );
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
   const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
@@ -62,12 +80,8 @@ export function DecisionTreeEditor({
   const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
   const labelInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    path,
-    currentParentId,
-    navigateInto,
-    navigateToIndex,
-  } = useTreeNavigation();
+  const { path, currentParentId, navigateInto, navigateToIndex } =
+    useTreeNavigation();
 
   const activeTree = trees.find((t) => t.id === activeTreeId) ?? trees[0]!;
 
@@ -207,7 +221,10 @@ export function DecisionTreeEditor({
     (parentId: string | null, name: string) => {
       const nodes = activeTree.nodes;
       const siblings = nodes.filter((n) => n.parentId === parentId);
-      const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
+      const maxOrder = siblings.reduce(
+        (max, n) => Math.max(max, n.order),
+        -1,
+      );
       const newNode: DecisionTreeNode = {
         id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         parentId,
@@ -263,7 +280,10 @@ export function DecisionTreeEditor({
     (nodeId: string, type: DecisionTreeBlockType) => {
       const node = activeTree.nodes.find((n) => n.id === nodeId);
       if (!node) return;
-      const maxOrder = node.contentBlocks.reduce((max, b) => Math.max(max, b.order), -1);
+      const maxOrder = node.contentBlocks.reduce(
+        (max, b) => Math.max(max, b.order),
+        -1,
+      );
       const newBlock: DecisionTreeContentBlock = {
         id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         type,
@@ -272,7 +292,9 @@ export function DecisionTreeEditor({
       };
       updateActiveTreeNodes(
         activeTree.nodes.map((n) =>
-          n.id === nodeId ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] } : n,
+          n.id === nodeId
+            ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] }
+            : n,
         ),
       );
     },
@@ -284,7 +306,12 @@ export function DecisionTreeEditor({
       updateActiveTreeNodes(
         activeTree.nodes.map((n) =>
           n.id === nodeId
-            ? { ...n, contentBlocks: n.contentBlocks.map((b) => (b.id === block.id ? block : b)) }
+            ? {
+                ...n,
+                contentBlocks: n.contentBlocks.map((b) =>
+                  b.id === block.id ? block : b,
+                ),
+              }
             : n,
         ),
       );
@@ -297,7 +324,12 @@ export function DecisionTreeEditor({
       updateActiveTreeNodes(
         activeTree.nodes.map((n) =>
           n.id === nodeId
-            ? { ...n, contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId) }
+            ? {
+                ...n,
+                contentBlocks: n.contentBlocks.filter(
+                  (b) => b.id !== blockId,
+                ),
+              }
             : n,
         ),
       );
@@ -335,161 +367,162 @@ export function DecisionTreeEditor({
     activeTree.nodes.find((n) => n.id === nodeId)?.name ?? "...";
 
   const currentNode = currentParentId
-    ? activeTree.nodes.find((n) => n.id === currentParentId) ?? null
+    ? (activeTree.nodes.find((n) => n.id === currentParentId) ?? null)
     : null;
 
-  return (
-    <div className="flex flex-col border rounded-lg overflow-hidden" style={{ height: "500px" }}>
-      {/* Tree Tabs */}
-      <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30">
-        {tabsMode === "dropdown" ? (
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {editingLabelId === activeTree.id ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  commitEditLabel();
-                }}
-                className="flex items-center gap-1 min-w-0 flex-1"
-              >
-                <input
-                  ref={labelInputRef}
-                  value={editingLabelValue}
-                  onChange={(e) => setEditingLabelValue(e.target.value)}
-                  onBlur={commitEditLabel}
-                  className="h-8 flex-1 rounded-md border bg-background px-2 text-xs"
-                />
-                <button
-                  type="submit"
-                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <Check className="h-3 w-3" />
-                </button>
-              </form>
-            ) : (
-              <Select value={activeTreeId} onValueChange={switchTree}>
-                <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {trees.map((tree) => (
-                    <SelectItem key={tree.id} value={tree.id}>
-                      {tree.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <button
-              type="button"
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-              onClick={() => startEditLabel(activeTree.id)}
-              title="Rename tree"
+  // --- Shared UI pieces ---
+
+  const treeTabs = (
+    <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30">
+      {tabsMode === "dropdown" ? (
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {editingLabelId === activeTree.id ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                commitEditLabel();
+              }}
+              className="flex items-center gap-1 min-w-0 flex-1"
             >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
-            {trees.length > 1 && (
+              <input
+                ref={labelInputRef}
+                value={editingLabelValue}
+                onChange={(e) => setEditingLabelValue(e.target.value)}
+                onBlur={commitEditLabel}
+                className="h-8 flex-1 rounded-md border bg-background px-2 text-xs"
+              />
               <button
-                type="button"
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                onClick={() => removeTree(activeTree.id)}
-                title="Remove tree"
+                type="submit"
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
               >
-                <X className="h-3.5 w-3.5" />
+                <Check className="h-3 w-3" />
               </button>
-            )}
+            </form>
+          ) : (
+            <Select value={activeTreeId} onValueChange={switchTree}>
+              <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {trees.map((tree) => (
+                  <SelectItem key={tree.id} value={tree.id}>
+                    {tree.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <button
+            type="button"
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+            onClick={() => startEditLabel(activeTree.id)}
+            title="Rename tree"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          {trees.length > 1 && (
             <button
               type="button"
-              onClick={addTree}
               className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-              title="Add tree"
+              onClick={() => removeTree(activeTree.id)}
+              title="Remove tree"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <X className="h-3.5 w-3.5" />
             </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1">
-            {trees.map((tree) => (
-              <div
-                key={tree.id}
-                className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
-                  tree.id === activeTreeId
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-                onClick={() => switchTree(tree.id)}
-              >
-                {editingLabelId === tree.id ? (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      commitEditLabel();
-                    }}
-                    className="flex items-center gap-1"
+          )}
+          <button
+            type="button"
+            onClick={addTree}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+            title="Add tree"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1">
+          {trees.map((tree) => (
+            <div
+              key={tree.id}
+              className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors shrink-0 ${
+                tree.id === activeTreeId
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              }`}
+              onClick={() => switchTree(tree.id)}
+            >
+              {editingLabelId === tree.id ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    commitEditLabel();
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <input
+                    ref={labelInputRef}
+                    value={editingLabelValue}
+                    onChange={(e) => setEditingLabelValue(e.target.value)}
+                    onBlur={commitEditLabel}
+                    className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    type="submit"
+                    className="p-0.5 rounded hover:bg-white/20"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <input
-                      ref={labelInputRef}
-                      value={editingLabelValue}
-                      onChange={(e) => setEditingLabelValue(e.target.value)}
-                      onBlur={commitEditLabel}
-                      className="bg-transparent border-none outline-none w-20 text-xs text-inherit"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <button
-                      type="submit"
-                      className="p-0.5 rounded hover:bg-white/20"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Check className="h-2.5 w-2.5" />
-                    </button>
-                  </form>
-                ) : (
-                  <>
-                    <span
-                      className="max-w-[9rem] truncate"
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        startEditLabel(tree.id);
-                      }}
-                    >
-                      {tree.label}
-                    </span>
+                    <Check className="h-2.5 w-2.5" />
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <span
+                    className="max-w-[9rem] truncate"
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      startEditLabel(tree.id);
+                    }}
+                  >
+                    {tree.label}
+                  </span>
+                  <button
+                    type="button"
+                    className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditLabel(tree.id);
+                    }}
+                  >
+                    <Pencil className="h-2.5 w-2.5" />
+                  </button>
+                  {trees.length > 1 && (
                     <button
                       type="button"
                       className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
                       onClick={(e) => {
                         e.stopPropagation();
-                        startEditLabel(tree.id);
+                        removeTree(tree.id);
                       }}
                     >
-                      <Pencil className="h-2.5 w-2.5" />
+                      <X className="h-2.5 w-2.5" />
                     </button>
-                    {trees.length > 1 && (
-                      <button
-                        type="button"
-                        className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeTree(tree.id);
-                        }}
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addTree}
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-              title="Add tree"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addTree}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+            title="Add tree"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      {!isMobile && (
         <Select
           value={tabsMode}
           onValueChange={(value) =>
@@ -504,44 +537,129 @@ export function DecisionTreeEditor({
             <SelectItem value="dropdown">Dropdown</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      )}
+    </div>
+  );
 
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center border-b px-4 py-2 bg-primary/5">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              {path.length > 0 ? (
-                <BreadcrumbLink
-                  className="cursor-pointer"
-                  onClick={() => navigateToIndex(0)}
-                >
-                  Root
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage>Root</BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-            {path.map((nodeId, index) => (
-              <span key={nodeId} className="contents">
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  {index === path.length - 1 ? (
-                    <BreadcrumbPage>{getNodeName(nodeId)}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      className="cursor-pointer"
-                      onClick={() => navigateToIndex(index + 1)}
-                    >
-                      {getNodeName(nodeId)}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </span>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
+  const breadcrumbNav = (
+    <div className="flex items-center gap-1.5 border-b px-3 py-2 bg-muted/20">
+      {path.length > 0 && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-6 shrink-0"
+          onClick={() => navigateToIndex(path.length - 1)}
+        >
+          <ChevronLeft className="size-3.5" />
+        </Button>
+      )}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            {path.length > 0 ? (
+              <BreadcrumbLink
+                className="cursor-pointer text-xs"
+                onClick={() => navigateToIndex(0)}
+              >
+                Root
+              </BreadcrumbLink>
+            ) : (
+              <BreadcrumbPage className="text-xs">Root</BreadcrumbPage>
+            )}
+          </BreadcrumbItem>
+          {path.map((nodeId, index) => (
+            <span key={nodeId} className="contents">
+              <BreadcrumbSeparator>
+                <ChevronRight className="size-3" />
+              </BreadcrumbSeparator>
+              <BreadcrumbItem>
+                {index === path.length - 1 ? (
+                  <BreadcrumbPage className="text-xs truncate max-w-[120px]">
+                    {getNodeName(nodeId)}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    className="cursor-pointer text-xs truncate max-w-[120px]"
+                    onClick={() => navigateToIndex(index + 1)}
+                  >
+                    {getNodeName(nodeId)}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </span>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
+  );
+
+  const nodeListPanel = (
+    <NodeList
+      nodes={activeTree.nodes}
+      parentId={currentParentId}
+      onNavigateInto={navigateInto}
+      onAddNode={handleAddNode}
+      onUpdateNode={handleUpdateNode}
+      onRemoveNode={handleRemoveNode}
+      onReorderNodes={handleReorderNodes}
+    />
+  );
+
+  const nodeDetailPanel = currentNode ? (
+    <NodeDetail
+      node={currentNode}
+      onUpdateNodeName={handleUpdateNodeName}
+      onUpdateContentBlock={handleUpdateContentBlock}
+      onAddContentBlock={handleAddContentBlock}
+      onRemoveContentBlock={handleRemoveContentBlock}
+      onReorderContentBlocks={handleReorderContentBlocks}
+    />
+  ) : (
+    <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
+      <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
+        <MousePointerClick className="size-5 text-muted-foreground" />
       </div>
+      <div className="text-center">
+        <p className="text-sm font-medium text-muted-foreground">
+          Navigate into an option
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1">
+          Select an option to edit its content
+        </p>
+      </div>
+    </div>
+  );
+
+  // === MOBILE LAYOUT ===
+  if (isMobile) {
+    return (
+      <div className="flex flex-col border rounded-lg overflow-hidden">
+        {treeTabs}
+        {breadcrumbNav}
+
+        <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
+          {/* Node list (options at current level) */}
+          <div className="border-b">
+            {nodeListPanel}
+          </div>
+
+          {/* Node detail (content of the node we navigated into) */}
+          {currentNode && (
+            <div>{nodeDetailPanel}</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // === DESKTOP LAYOUT ===
+  return (
+    <div
+      className="flex flex-col border rounded-lg overflow-hidden"
+      style={{ height: "500px" }}
+    >
+      {treeTabs}
+      {breadcrumbNav}
 
       {/* Split Panel */}
       <div className="flex-1 min-h-0">
@@ -549,37 +667,14 @@ export function DecisionTreeEditor({
           {/* Left: Node List */}
           <ResizablePanel defaultSize={40} minSize={25}>
             <div className="h-full min-w-0 border-r overflow-hidden">
-              <NodeList
-                nodes={activeTree.nodes}
-                parentId={currentParentId}
-                onNavigateInto={navigateInto}
-                onAddNode={handleAddNode}
-                onUpdateNode={handleUpdateNode}
-                onRemoveNode={handleRemoveNode}
-                onReorderNodes={handleReorderNodes}
-              />
+              {nodeListPanel}
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           {/* Right: Node Detail */}
           <ResizablePanel defaultSize={60} minSize={35}>
             <div className="h-full min-w-0 overflow-hidden">
-              {currentNode ? (
-                <NodeDetail
-                  node={currentNode}
-                  onUpdateNodeName={handleUpdateNodeName}
-                  onUpdateContentBlock={handleUpdateContentBlock}
-                  onAddContentBlock={handleAddContentBlock}
-                  onRemoveContentBlock={handleRemoveContentBlock}
-                  onReorderContentBlocks={handleReorderContentBlocks}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <p className="text-sm">
-                    Navigate into an option to edit its content
-                  </p>
-                </div>
-              )}
+              {nodeDetailPanel}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
