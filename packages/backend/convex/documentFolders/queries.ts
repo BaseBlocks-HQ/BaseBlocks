@@ -12,7 +12,7 @@ export const listByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -36,7 +36,7 @@ export const listByParent = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -62,7 +62,7 @@ export const get = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return folder;
   },
@@ -81,7 +81,7 @@ export const getPath = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     // Build path from folder to root
     const path: Array<{ _id: string; name: string }> = [];

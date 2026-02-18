@@ -87,7 +87,7 @@ export const getFullAuthContext = query({
       };
     }
 
-    // Check if user has a company (member of any org)
+    // Check if user has a team (member of any org)
     const member = await ctx.db
       .query("members")
       .withIndex("by_user", (q) => q.eq("userId", auth.userId))
@@ -121,13 +121,13 @@ type AuthWithMember = {
 
 async function getMemberByUserId(
   ctx: AuthCtx,
-  companyId: Id<"companies">,
+  teamId: Id<"teams">,
   userId: string,
 ): Promise<MemberInfo | null> {
   const member = await ctx.db
     .query("members")
-    .withIndex("by_company_user", (q) =>
-      q.eq("companyId", companyId).eq("userId", userId),
+    .withIndex("by_team_user", (q) =>
+      q.eq("teamId", teamId).eq("userId", userId),
     )
     .first();
 
@@ -142,10 +142,10 @@ async function getMemberByUserId(
 
 export async function requireAdmin(
   ctx: AuthCtx,
-  companyId: Id<"companies">,
+  teamId: Id<"teams">,
 ): Promise<AuthWithMember> {
   const auth = await requireAuthContext(ctx);
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  const member = await getMemberByUserId(ctx, teamId, auth.userId);
 
   if (!member) {
     throw new ConvexError("Not a member of this organization");
@@ -160,10 +160,10 @@ export async function requireAdmin(
 
 export async function requireMember(
   ctx: AuthCtx,
-  companyId: Id<"companies">,
+  teamId: Id<"teams">,
 ): Promise<AuthWithMember> {
   const auth = await requireAuthContext(ctx);
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  const member = await getMemberByUserId(ctx, teamId, auth.userId);
 
   if (!member) {
     throw new ConvexError("Not a member of this organization");
@@ -174,22 +174,22 @@ export async function requireMember(
 
 export async function checkIsAdmin(
   ctx: AuthCtx,
-  companyId: Id<"companies">,
+  teamId: Id<"teams">,
 ): Promise<boolean> {
   const auth = await getAuthContextOrNull(ctx);
   if (!auth) return false;
 
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  const member = await getMemberByUserId(ctx, teamId, auth.userId);
   return member?.role === "admin";
 }
 
 export async function checkIsMember(
   ctx: AuthCtx,
-  companyId: Id<"companies">,
+  teamId: Id<"teams">,
 ): Promise<boolean> {
   const auth = await getAuthContextOrNull(ctx);
   if (!auth) return false;
 
-  const member = await getMemberByUserId(ctx, companyId, auth.userId);
+  const member = await getMemberByUserId(ctx, teamId, auth.userId);
   return !!member;
 }

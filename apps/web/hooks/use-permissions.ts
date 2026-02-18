@@ -5,7 +5,7 @@ import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 
 interface UsePermissionsOptions {
-  companyId?: Id<"companies">;
+  teamId?: Id<"teams">;
 }
 
 interface PermissionsResult {
@@ -19,22 +19,22 @@ interface PermissionsResult {
 }
 
 /**
- * Hook to check user permissions for a company
+ * Hook to check user permissions for a team
  *
  * Usage:
  * ```tsx
- * const { canEdit, isAdmin, isLoading } = usePermissions({ companyId });
+ * const { canEdit, isAdmin, isLoading } = usePermissions({ teamId });
  *
  * if (isLoading) return <Spinner />;
  * if (!canEdit) return <ViewOnlyBanner />;
  * ```
  */
 export function usePermissions({
-  companyId,
+  teamId,
 }: UsePermissionsOptions): PermissionsResult {
   const myRole = useQuery(
     api.members.queries.getMyRole,
-    companyId ? { companyId } : "skip",
+    teamId ? { teamId } : "skip",
   );
 
   const isLoading = myRole === undefined;
@@ -56,20 +56,20 @@ export function usePermissions({
 
 /**
  * Hook to get permissions for a site
- * Automatically fetches the company from the site
+ * Automatically fetches the team from the site
  */
 export function useSitePermissions(siteId?: Id<"sites">): PermissionsResult & {
-  companyId?: Id<"companies">;
+  teamId?: Id<"teams">;
 } {
   const site = useQuery(api.sites.queries.get, siteId ? { siteId } : "skip");
 
-  const companyId = site?.companyId;
+  const teamId = site?.teamId;
 
-  const permissions = usePermissions({ companyId });
+  const permissions = usePermissions({ teamId });
 
   return {
     ...permissions,
-    companyId,
+    teamId,
     isLoading: permissions.isLoading || site === undefined,
   };
 }

@@ -16,17 +16,17 @@ interface SitesGridProps {
         description?: string;
         logoUrl?: string;
         isPublished: boolean;
-        company?: {
+        team?: {
           _id: string;
           name: string;
           slug: string;
         } | null;
       }>
     | undefined;
-  companySlug?: string; // Optional fallback for sites without company info
+  teamSlug?: string; // Optional fallback for sites without team info
 }
 
-export function SitesGrid({ sites, companySlug }: SitesGridProps) {
+export function SitesGrid({ sites, teamSlug }: SitesGridProps) {
   const t = useTranslations("dashboard");
 
   if (sites === undefined) {
@@ -57,7 +57,7 @@ export function SitesGrid({ sites, companySlug }: SitesGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {sites.map((site) => (
-        <SiteCard key={site._id} site={site} companySlug={companySlug} />
+        <SiteCard key={site._id} site={site} teamSlug={teamSlug} />
       ))}
     </div>
   );

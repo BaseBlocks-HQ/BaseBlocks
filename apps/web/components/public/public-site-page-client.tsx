@@ -28,18 +28,18 @@ export function PublicSitePageClient({ params }: Props) {
   const pagePath = path.length > 1 ? path.slice(1) : [];
 
   const site = useQuery(api.sites.queries.getBySlug, {
-    companySlug: subdomain,
+    teamSlug: subdomain,
     siteSlug,
   });
-  const company = useQuery(api.companies.queries.getBySlug, {
+  const team = useQuery(api.teams.queries.getBySlug, {
     slug: subdomain,
   });
 
-  if (site === undefined || company === undefined) {
+  if (site === undefined || team === undefined) {
     return <PublicSiteSkeleton />;
   }
 
-  if (!site || !company) {
+  if (!site || !team) {
     return <SiteNotFound subdomain={subdomain} />;
   }
 
@@ -55,10 +55,10 @@ export function PublicSitePageClient({ params }: Props) {
   if (visibility === "password") {
     return (
       <AccessGate siteId={site._id} siteName={site.name}>
-        <PublicSiteLayout site={site} company={company} pagePath={pagePath} />
+        <PublicSiteLayout site={site} team={team} pagePath={pagePath} />
       </AccessGate>
     );
   }
 
-  return <PublicSiteLayout site={site} company={company} pagePath={pagePath} />;
+  return <PublicSiteLayout site={site} team={team} pagePath={pagePath} />;
 }

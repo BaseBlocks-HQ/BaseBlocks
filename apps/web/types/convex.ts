@@ -5,7 +5,7 @@
 import type { Doc, Id } from "@repo/backend";
 
 // Document types
-export type Company = Doc<"companies">;
+export type Team = Doc<"teams">;
 export type Site = Doc<"sites">;
 export type Page = Doc<"pages">;
 export type Block = Doc<"blocks">;
@@ -13,7 +13,7 @@ export type Layout = Doc<"layouts">;
 export type Document = Doc<"documents">;
 
 // ID types
-export type CompanyId = Id<"companies">;
+export type TeamId = Id<"teams">;
 export type SiteId = Id<"sites">;
 export type PageId = Id<"pages">;
 export type BlockId = Id<"blocks">;

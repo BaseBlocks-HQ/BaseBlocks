@@ -21,7 +21,7 @@ const ENTITY_STORAGE_SITE_URL =
 
 let defaultFaviconCache: ArrayBuffer | null = null;
 
-function extractCompanySlug(host: string): string | null {
+function extractTeamSlug(host: string): string | null {
   const hostname = host.split(":")[0] || "";
 
   // Local dev: tenant.localhost
@@ -90,9 +90,9 @@ async function getDefaultFavicon(): Promise<NextResponse> {
 
 export async function GET(request: Request) {
   const host = request.headers.get("host") || "";
-  const companySlug = extractCompanySlug(host);
+  const teamSlug = extractTeamSlug(host);
 
-  if (!companySlug) {
+  if (!teamSlug) {
     return getDefaultFavicon();
   }
 
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
   try {
     const client = new ConvexHttpClient(convexUrl);
     const site = await client.query(api.sites.queries.getBySlug, {
-      companySlug,
+      teamSlug,
     });
 
     const favicon = (site?.settings as Record<string, unknown> | undefined)

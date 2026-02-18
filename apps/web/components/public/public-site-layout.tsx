@@ -52,7 +52,7 @@ interface PublicSiteLayoutProps {
       customization?: SiteCustomization;
     };
   };
-  company: {
+  team: {
     name: string;
     slug: string;
     logoUrl?: string;
@@ -63,7 +63,7 @@ interface PublicSiteLayoutProps {
 
 export function PublicSiteLayout({
   site,
-  company,
+  team,
   pagePath,
 }: PublicSiteLayoutProps) {
   const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
@@ -198,7 +198,7 @@ export function PublicSiteLayout({
                 <CollapsedSidebarTrigger />
               ) : (
                 <div className="flex items-center gap-2">
-                  {showLogo && <SiteLogo site={site} company={company} />}
+                  {showLogo && <SiteLogo site={site} team={team} />}
                   {showSiteName && (
                     <span className="font-semibold">{site.name}</span>
                   )}
@@ -301,7 +301,7 @@ export function PublicSiteLayout({
   );
 
   return (
-    <PublicSiteProvider siteId={site._id} siteSlug={site.slug} companySlug={company.slug}>
+    <PublicSiteProvider siteId={site._id} siteSlug={site.slug} teamSlug={team.slug}>
       <PublicSubpageProvider>
         {showSidebar ? (
           <SidebarProvider>
@@ -327,7 +327,7 @@ export function PublicSiteLayout({
                     color: "var(--site-header-fg)",
                   } : undefined}
                 >
-                  {showLogo && <SiteLogo site={site} company={company} />}
+                  {showLogo && <SiteLogo site={site} team={team} />}
                   {showSiteName && (
                     <span className="font-semibold truncate">{site.name}</span>
                   )}
@@ -390,12 +390,12 @@ function CollapsedSidebarTrigger() {
  */
 function SiteLogo({
   site,
-  company,
+  team,
 }: {
   site: { name: string; logoUrl?: string };
-  company: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
+  team: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
 }) {
-  // Priority: site logo > company logo > auto-generated
+  // Priority: site logo > team logo > auto-generated
   if (site.logoUrl) {
     return (
       <img
@@ -406,11 +406,11 @@ function SiteLogo({
     );
   }
 
-  if (company.logoUrl) {
+  if (team.logoUrl) {
     return (
       <img
-        src={company.logoUrl}
-        alt={company.name}
+        src={team.logoUrl}
+        alt={team.name}
         className="h-8 w-8 rounded-lg object-contain"
       />
     );
@@ -420,7 +420,7 @@ function SiteLogo({
     <div
       className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
       style={{
-        backgroundColor: company.settings.primaryColor || "#0066FF",
+        backgroundColor: team.settings.primaryColor || "#0066FF",
       }}
     >
       {site.name[0]}

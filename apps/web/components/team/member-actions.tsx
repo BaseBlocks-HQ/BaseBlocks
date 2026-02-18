@@ -43,13 +43,13 @@ interface Member {
 
 interface MemberActionsProps {
   member: Member;
-  companyId: Id<"companies">;
+  teamId: Id<"teams">;
   isCurrentUserAdmin: boolean;
 }
 
 export function MemberActions({
   member,
-  companyId,
+  teamId,
   isCurrentUserAdmin,
 }: MemberActionsProps) {
   const t = useTranslations("team");
@@ -74,7 +74,7 @@ export function MemberActions({
 
     try {
       await removeMember({
-        companyId,
+        teamId,
         memberId: member._id,
       });
 

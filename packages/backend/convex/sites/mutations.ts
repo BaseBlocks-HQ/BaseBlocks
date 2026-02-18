@@ -12,26 +12,26 @@ export const create = mutation({
   handler: async (ctx, { name, slug }) => {
     const auth = await getAuthContext(ctx);
 
-    // Get user's company via membership
+    // Get user's team via membership
     const membership = await ctx.db
       .query("members")
       .withIndex("by_user", (q) => q.eq("userId", auth.userId))
       .first();
 
     if (!membership) {
-      throw new Error("Company not found. Please complete onboarding first.");
+      throw new Error("Team not found. Please complete onboarding first.");
     }
 
-    const company = await ctx.db.get(membership.companyId);
-    if (!company) {
-      throw new Error("Company not found. Please complete onboarding first.");
+    const team = await ctx.db.get(membership.teamId);
+    if (!team) {
+      throw new Error("Team not found. Please complete onboarding first.");
     }
 
-    // Check slug uniqueness within company
+    // Check slug uniqueness within team
     const existing = await ctx.db
       .query("sites")
       .withIndex("by_slug", (q) =>
-        q.eq("companyId", company._id).eq("slug", slug.toLowerCase()),
+        q.eq("teamId", team._id).eq("slug", slug.toLowerCase()),
       )
       .first();
 
@@ -43,7 +43,7 @@ export const create = mutation({
 
     const now = Date.now();
     const siteId = await ctx.db.insert("sites", {
-      companyId: company._id,
+      teamId: team._id,
       name,
       slug: slug.toLowerCase(),
       isPublished: false,
@@ -130,7 +130,7 @@ export const update = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
@@ -153,7 +153,7 @@ export const publish = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.teamId);
     const now = Date.now();
 
     await ctx.db.patch(siteId, {
@@ -186,7 +186,7 @@ export const publish = mutation({
         status: "active",
       });
 
-      // Copy draft → published for site
+      // Copy draft -> published for site
       await ctx.db.patch(siteId, {
         publishedName: site.name,
         publishedLogoUrl: site.logoUrl,
@@ -294,7 +294,7 @@ export const unpublish = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     await ctx.db.patch(siteId, {
       isPublished: false,
@@ -316,7 +316,7 @@ export const setDefaultPage = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Verify the page belongs to this site
     const page = await ctx.db.get(pageId);
@@ -342,7 +342,7 @@ export const remove = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Delete all pages and their blocks/layouts
     const pages = await ctx.db

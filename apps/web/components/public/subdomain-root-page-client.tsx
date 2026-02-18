@@ -18,7 +18,7 @@ export function SubdomainRootPageClient({ params }: Props) {
   const router = useRouter();
 
   const siteData = useQuery(api.sites.queries.getWithDefaultPage, {
-    companySlug: subdomain,
+    teamSlug: subdomain,
   });
 
   useEffect(() => {

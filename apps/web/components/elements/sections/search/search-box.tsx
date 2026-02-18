@@ -1,17 +1,14 @@
 "use client";
 
 import { useMediaViewer } from "@/components/media-viewer";
-import { usePublicSubpageContextOptional } from "@/components/public/public-subpage-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import type { SubpageContent } from "@/types/elements/blocks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
-import { useQuery, useMutation } from "convex/react";
-import { useConvex } from "convex/react";
+import { useQuery } from "convex/react";
 import {
   Download,
   Eye,
@@ -20,7 +17,6 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
-  NotebookText,
   Presentation,
   Search,
 } from "lucide-react";
@@ -103,12 +99,6 @@ interface SearchResultItem {
     size?: number;
     cdnUrl?: string;
     libraryId?: string;
-    // Subpage metadata
-    pageId?: string;
-    layoutId?: string;
-    blockId?: string;
-    slotId?: string;
-    description?: string;
   };
 }
 
@@ -175,12 +165,9 @@ export function SearchBox({
 }: SearchBoxProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [loadingSubpageId, setLoadingSubpageId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { openFile } = useMediaViewer();
-  const subpageContext = usePublicSubpageContextOptional();
-  const convex = useConvex();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -266,49 +253,6 @@ export function SearchBox({
     [openFile, debouncedQuery]
   );
 
-  const handleSubpageClick = useCallback(
-    async (result: SearchResultItem) => {
-      if (!subpageContext || !result.metadata.layoutId || !result.metadata.slotId || !result.metadata.blockId) {
-        return;
-      }
-
-      setLoadingSubpageId(result._id);
-
-      try {
-        const query = usePublicQuery
-          ? api.search.queries.getSubpageContentPublic
-          : api.search.queries.getSubpageContent;
-
-        const content = await convex.query(query, {
-          layoutId: result.metadata.layoutId as Id<"layouts">,
-          slotId: result.metadata.slotId,
-          blockId: result.metadata.blockId,
-        });
-
-        if (content) {
-          subpageContext.openSubpage(content as SubpageContent, debouncedQuery);
-        }
-      } catch (error) {
-        console.error("Failed to fetch subpage content:", error);
-      } finally {
-        setLoadingSubpageId(null);
-        setIsFocused(false);
-      }
-    },
-    [subpageContext, convex, usePublicQuery, debouncedQuery]
-  );
-
-  const handleResultClick = useCallback(
-    (result: SearchResultItem) => {
-      if (result.contentType === "subpage") {
-        handleSubpageClick(result);
-      } else {
-        handleDocumentClick(result);
-      }
-    },
-    [handleDocumentClick, handleSubpageClick]
-  );
-
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Search input */}
@@ -357,84 +301,58 @@ export function SearchBox({
           ) : hasResults && searchResults ? (
             <div className="divide-y">
               {searchResults.map((result) => {
-                const isSubpage = result.contentType === "subpage";
-                const isLoading = loadingSubpageId === result._id;
                 const isContentMatch = result.matchType === "content";
 
                 return (
                   <div
                     key={result._id}
-                    className={cn(
-                      "p-3 hover:bg-muted/50 transition-colors cursor-pointer",
-                      isLoading && "opacity-50 pointer-events-none"
-                    )}
-                    onClick={() => handleResultClick(result)}
+                    className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleDocumentClick(result)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {showFileType && (
-                          isSubpage ? (
-                            <NotebookText className="h-4 w-4 text-indigo-500" />
-                          ) : (
-                            getFileIcon(result.metadata.fileContentType)
-                          )
-                        )}
+                        {showFileType && getFileIcon(result.metadata.fileContentType)}
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate text-sm text-foreground">{result.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {isSubpage ? (
-                              <>
-                                <span className="text-indigo-600 dark:text-indigo-400">Subpage</span>
-                                {result.metadata.description && (
-                                  <span className="ml-2">• {result.metadata.description}</span>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                {result.metadata.size && formatFileSize(result.metadata.size)}
-                                {isContentMatch && (
-                                  <span className="ml-2 text-primary">• Content match</span>
-                                )}
-                              </>
+                            {result.metadata.size && formatFileSize(result.metadata.size)}
+                            {isContentMatch && (
+                              <span className="ml-2 text-primary">• Content match</span>
                             )}
                           </p>
                         </div>
                       </div>
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : !isSubpage && (
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDocumentClick(result);
+                          }}
+                          title="Preview"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {result.metadata.cdnUrl && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDocumentClick(result);
+                              handleDownload(
+                                result.metadata.cdnUrl!,
+                                result.metadata.filename || result.title
+                              );
                             }}
-                            title="Preview"
+                            title="Download"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
-                          {result.metadata.cdnUrl && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownload(
-                                  result.metadata.cdnUrl!,
-                                  result.metadata.filename || result.title
-                                );
-                              }}
-                              title="Download"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                     {/* Show snippet for content matches */}
                     {isContentMatch && result.snippet && (

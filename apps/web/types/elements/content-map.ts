@@ -15,6 +15,7 @@ import type {
   FlowchartContent,
   HeadingContent,
   ParagraphContent,
+  RichTextContent,
   SubpageContent,
 } from "./blocks";
 
@@ -47,6 +48,7 @@ export type ContentTypeMap = {
   code: CodeContent;
   divider: DividerContent;
   "block-spacer": BlockSpacerContent;
+  richtext: RichTextContent;
   subpage: SubpageContent;
   banner: BannerContent;
   directory: DirectoryContent;

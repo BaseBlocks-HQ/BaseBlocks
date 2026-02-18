@@ -5,13 +5,13 @@
 
 // Convex document and ID types
 export type {
-  Company,
+  Team,
   Site,
   Page,
   Block,
   Layout,
   Document,
-  CompanyId,
+  TeamId,
   SiteId,
   PageId,
   BlockId,
@@ -25,7 +25,7 @@ export type {
 export type {
   PageListItem,
   PageWithChildren,
-  SiteWithCompany,
+  SiteWithTeam,
 } from "./pages";
 
 // Layout types

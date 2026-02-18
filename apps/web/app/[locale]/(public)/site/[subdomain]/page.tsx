@@ -8,7 +8,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { subdomain } = await params;
-  return buildPublicSiteMetadata({ companySlug: subdomain });
+  return buildPublicSiteMetadata({ teamSlug: subdomain });
 }
 
 export default function SubdomainRootPage({ params }: Props) {

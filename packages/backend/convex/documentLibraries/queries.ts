@@ -10,7 +10,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return await ctx.db
       .query("documentLibraries")
@@ -29,7 +29,7 @@ export const get = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return library;
   },
@@ -73,7 +73,7 @@ export const listAllWithCounts = query({
   handler: async (ctx) => {
     const auth = await getAuthContext(ctx);
 
-    // Find company via membership
+    // Find team via membership
     const membership = await ctx.db
       .query("members")
       .withIndex("by_user", (q) => q.eq("userId", auth.userId))
@@ -81,12 +81,12 @@ export const listAllWithCounts = query({
 
     if (!membership) return [];
 
-    const company = await ctx.db.get(membership.companyId);
-    if (!company) return [];
+    const team = await ctx.db.get(membership.teamId);
+    if (!team) return [];
 
     const sites = await ctx.db
       .query("sites")
-      .withIndex("by_company", (q) => q.eq("companyId", company._id))
+      .withIndex("by_team", (q) => q.eq("teamId", team._id))
       .collect();
 
     // Get all libraries for all sites
@@ -129,7 +129,7 @@ export const listWithCounts = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const libraries = await ctx.db
       .query("documentLibraries")

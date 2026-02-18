@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 
-// Create a new company (during onboarding)
+// Create a new team (during onboarding)
 export const create = mutation({
   args: {
     name: v.string(),
@@ -14,7 +14,7 @@ export const create = mutation({
 
     // Check slug availability
     const existing = await ctx.db
-      .query("companies")
+      .query("teams")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
 
@@ -25,7 +25,7 @@ export const create = mutation({
     }
 
     const now = Date.now();
-    const companyId = await ctx.db.insert("companies", {
+    const teamId = await ctx.db.insert("teams", {
       name,
       slug: slug.toLowerCase(),
       organizationId,
@@ -36,9 +36,9 @@ export const create = mutation({
       },
     });
 
-    // Create the creator as an admin member of this company
+    // Create the creator as an admin member of this team
     await ctx.db.insert("members", {
-      companyId,
+      teamId,
       userId: auth.userId,
       email: auth.email ?? "",
       name: auth.name,
@@ -47,50 +47,50 @@ export const create = mutation({
       joinedAt: now,
     });
 
-    return companyId;
+    return teamId;
   },
 });
 
-// Update company settings
+// Update team settings
 export const updateSettings = mutation({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     settings: v.object({
       primaryColor: v.optional(v.string()),
       customDomain: v.optional(v.string()),
     }),
   },
-  handler: async (ctx, { companyId, settings }) => {
-    await requireAdmin(ctx, companyId);
+  handler: async (ctx, { teamId, settings }) => {
+    await requireAdmin(ctx, teamId);
 
-    const company = await ctx.db.get(companyId);
-    if (!company) {
-      throw new Error("Company not found");
+    const team = await ctx.db.get(teamId);
+    if (!team) {
+      throw new Error("Team not found");
     }
 
-    await ctx.db.patch(companyId, {
-      settings: { ...company.settings, ...settings },
+    await ctx.db.patch(teamId, {
+      settings: { ...team.settings, ...settings },
     });
 
-    return companyId;
+    return teamId;
   },
 });
 
-// Update company profile
+// Update team profile
 export const updateProfile = mutation({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     name: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
   },
-  handler: async (ctx, { companyId, name, logoUrl }) => {
-    await requireAdmin(ctx, companyId);
+  handler: async (ctx, { teamId, name, logoUrl }) => {
+    await requireAdmin(ctx, teamId);
 
     const updates: Record<string, string> = {};
     if (name !== undefined) updates.name = name;
     if (logoUrl !== undefined) updates.logoUrl = logoUrl;
 
-    await ctx.db.patch(companyId, updates);
-    return companyId;
+    await ctx.db.patch(teamId, updates);
+    return teamId;
   },
 });

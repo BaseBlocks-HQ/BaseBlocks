@@ -255,3 +255,199 @@ export const runIndexAll = migrations.runner([internal.migrations.indexAllDocume
 export const runBootstrapSites = migrations.runner([internal.migrations.bootstrapSitePublishedFields]);
 export const runBootstrapPages = migrations.runner([internal.migrations.bootstrapPagePublishedFields]);
 export const runBootstrapLayouts = migrations.runner([internal.migrations.bootstrapLayoutPublishedFields]);
+
+// ============================================================
+// Migration 8: Convert subpage blocks to reference real child pages
+// ============================================================
+
+// Old subpage block content shape (pre-migration)
+interface OldSubpageContent {
+  title?: string;
+  description?: string;
+  content?: unknown[];
+  mermaidCode?: string;
+  diagrams?: Array<{ id: string; label: string; mermaidCode: string }>;
+  diagramTheme?: string;
+  diagramTabsMode?: string;
+}
+
+function titleToSlug(title: string): string {
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "subpage"
+  );
+}
+
+export const migrateSubpagesToPages = migrations.define({
+  table: "layouts",
+  batchSize: 10,
+  migrateOne: async (ctx, layout) => {
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) return;
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) return;
+
+    const processSlots = async (slots: typeof layout.slots) => {
+      let changed = false;
+      const updatedSlots = [];
+
+      for (const slot of slots) {
+        const updatedBlocks = [];
+        for (const block of slot.blocks) {
+          if (
+            block.type === "subpage" &&
+            block.content &&
+            !(block.content as any).pageId
+          ) {
+            const content = block.content as OldSubpageContent;
+            const title = content.title || "Untitled";
+            const baseSlug = titleToSlug(title);
+
+            // Ensure unique slug
+            let slug = baseSlug;
+            let counter = 1;
+            while (true) {
+              const existing = await ctx.db
+                .query("pages")
+                .withIndex("by_slug", (q) =>
+                  q.eq("siteId", page.siteId).eq("slug", slug),
+                )
+                .first();
+              if (!existing) break;
+              slug = `${baseSlug}-${counter}`;
+              counter++;
+            }
+
+            // Get sibling count for ordering
+            const siblings = await ctx.db
+              .query("pages")
+              .withIndex("by_parent", (q) =>
+                q.eq("siteId", page.siteId).eq("parentId", layout.pageId),
+              )
+              .collect();
+            const maxOrder = siblings.reduce(
+              (max, p) => Math.max(max, p.order),
+              -1,
+            );
+
+            const now = Date.now();
+            const childPageId = await ctx.db.insert("pages", {
+              siteId: page.siteId,
+              title,
+              slug,
+              parentId: layout.pageId,
+              order: maxOrder + 1,
+              isPublished: false,
+              createdBy: page.createdBy,
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            // Build blocks for the child page's layout
+            const childBlocks: Array<{
+              id: string;
+              type: "paragraph" | "flowchart";
+              content: any;
+            }> = [];
+
+            const extractedText = extractBlockNoteText(content.content);
+            if (extractedText) {
+              childBlocks.push({
+                id: `migrated-para-${block.id}`,
+                type: "paragraph",
+                content: { text: extractedText },
+              });
+            }
+
+            if (
+              (content.diagrams && content.diagrams.length > 0) ||
+              content.mermaidCode
+            ) {
+              childBlocks.push({
+                id: `migrated-flow-${block.id}`,
+                type: "flowchart",
+                content: {
+                  mermaidCode:
+                    content.mermaidCode ||
+                    content.diagrams?.[0]?.mermaidCode ||
+                    "",
+                  diagrams: content.diagrams,
+                  theme: content.diagramTheme,
+                  tabsMode: content.diagramTabsMode || "row",
+                },
+              });
+            }
+
+            await ctx.db.insert("layouts", {
+              pageId: childPageId,
+              type: "single",
+              slots: [
+                {
+                  id: `migrated-slot-${block.id}`,
+                  position: 0,
+                  blocks: childBlocks,
+                },
+              ],
+              settings: {},
+              order: 0,
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            updatedBlocks.push({
+              ...block,
+              content: { pageId: childPageId },
+            });
+            changed = true;
+          } else {
+            updatedBlocks.push(block);
+          }
+        }
+        updatedSlots.push({ ...slot, blocks: updatedBlocks });
+      }
+
+      return { updatedSlots, changed };
+    };
+
+    const draftResult = await processSlots(layout.slots);
+    const updates: Record<string, any> = {};
+
+    if (draftResult.changed) {
+      updates.slots = draftResult.updatedSlots;
+    }
+
+    if (layout.publishedSlots) {
+      const pubResult = await processSlots(layout.publishedSlots);
+      if (pubResult.changed) {
+        updates.publishedSlots = pubResult.updatedSlots;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updates.updatedAt = Date.now();
+      await ctx.db.patch(layout._id, updates);
+    }
+  },
+});
+
+// Migration 9: Clean up subpage search entries (no longer needed)
+export const cleanupSubpageSearchEntries = migrations.define({
+  table: "searchableContent",
+  batchSize: 50,
+  migrateOne: async (ctx, entry) => {
+    if (entry.contentType === "subpage") {
+      await ctx.db.delete(entry._id);
+    }
+  },
+});
+
+export const runMigrateSubpages = migrations.runner([
+  internal.migrations.migrateSubpagesToPages,
+]);
+export const runCleanupSubpageSearch = migrations.runner([
+  internal.migrations.cleanupSubpageSearchEntries,
+]);
+

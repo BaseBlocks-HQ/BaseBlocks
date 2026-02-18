@@ -1,16 +1,8 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
-import { extractBlockNoteText } from "../lib/extractBlockNoteText";
 import { markSiteModified } from "../lib/markModified";
 import type { Id } from "../_generated/dataModel";
-
-// Subpage content type for indexing
-interface SubpageContent {
-  title?: string;
-  description?: string;
-  content?: unknown[];
-}
 
 const layoutTypes = v.union(
   v.literal("single"),
@@ -37,6 +29,7 @@ const blockTypes = v.union(
   v.literal("table"),
   v.literal("quicklinks"),
   v.literal("form"),
+  v.literal("richtext"),
   v.literal("subpage"),
   v.literal("banner"),
   v.literal("directory"),
@@ -72,25 +65,25 @@ const settingsSchema = v.object({
   ),
 });
 
-// Helper to get companyId from pageId
-async function getCompanyIdFromPage(
+// Helper to get teamId from pageId
+async function getTeamIdFromPage(
   ctx: { db: any },
   pageId: string,
-): Promise<{ companyId: string; siteId: string } | null> {
+): Promise<{ teamId: string; siteId: string } | null> {
   const page = await ctx.db.get(pageId);
   if (!page) return null;
 
   const site = await ctx.db.get(page.siteId);
   if (!site) return null;
 
-  return { companyId: site.companyId, siteId: site._id };
+  return { teamId: site.teamId, siteId: site._id };
 }
 
-// Helper to get companyId from layoutId
-async function getCompanyIdFromLayout(
+// Helper to get teamId from layoutId
+async function getTeamIdFromLayout(
   ctx: { db: any },
   layoutId: string,
-): Promise<{ companyId: string; pageId: string; siteId: string } | null> {
+): Promise<{ teamId: string; pageId: string; siteId: string } | null> {
   const layout = await ctx.db.get(layoutId);
   if (!layout) return null;
 
@@ -100,72 +93,7 @@ async function getCompanyIdFromLayout(
   const site = await ctx.db.get(page.siteId);
   if (!site) return null;
 
-  return { companyId: site.companyId, pageId: layout.pageId, siteId: site._id };
-}
-
-// Helper to update search index for a subpage block
-async function updateSubpageSearchIndex(
-  ctx: { db: any },
-  siteId: Id<"sites">,
-  layoutId: Id<"layouts">,
-  slotId: string,
-  blockId: string,
-  content: SubpageContent | null,
-  pageId: Id<"pages">,
-) {
-  const sourceId = `${layoutId}:${slotId}:${blockId}`;
-
-  // Find existing index entry
-  const existing = await ctx.db
-    .query("searchableContent")
-    .withIndex("by_source", (q: any) =>
-      q.eq("contentType", "subpage").eq("sourceId", sourceId)
-    )
-    .first();
-
-  // If content is null, delete the index entry (block was removed)
-  if (!content) {
-    if (existing) {
-      await ctx.db.delete(existing._id);
-    }
-    return;
-  }
-
-  const extractedText = extractBlockNoteText(content.content);
-  const combinedText =
-    `${content.title || ""} ${content.description || ""} ${extractedText}`.trim();
-
-  // Skip indexing if no meaningful content
-  if (combinedText.length === 0) {
-    if (existing) {
-      await ctx.db.delete(existing._id);
-    }
-    return;
-  }
-
-  const indexData = {
-    siteId,
-    contentType: "subpage" as const,
-    sourceId,
-    title: content.title || "Untitled",
-    extractedText: combinedText,
-    metadata: {
-      pageId,
-      layoutId,
-      blockId,
-      slotId,
-      description: content.description,
-    },
-    updatedAt: Date.now(),
-  };
-
-  if (existing) {
-    // Update existing entry
-    await ctx.db.patch(existing._id, indexData);
-  } else {
-    // Create new entry
-    await ctx.db.insert("searchableContent", indexData);
-  }
+  return { teamId: site.teamId, pageId: layout.pageId, siteId: site._id };
 }
 
 // Create a new layout
@@ -179,11 +107,11 @@ export const create = mutation({
     tabId: v.optional(v.string()),
   },
   handler: async (ctx, { pageId, type, slots, settings, order, tabId }) => {
-    const pageInfo = await getCompanyIdFromPage(ctx, pageId);
+    const pageInfo = await getTeamIdFromPage(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.companyId as any);
+    await requireAdmin(ctx, pageInfo.teamId as any);
 
     // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
@@ -232,11 +160,11 @@ export const updateSettings = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -260,11 +188,11 @@ export const updateSlots = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -294,11 +222,11 @@ export const addBlockToSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     // Find slot and add block
     const updatedSlots = layout.slots.map((slot: any) => {
@@ -337,23 +265,11 @@ export const updateBlockInSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
-
-    // Find the block to check its type
-    let blockType: string | null = null;
-    for (const slot of layout.slots) {
-      if (slot.id === slotId) {
-        const block = slot.blocks.find((b: any) => b.id === blockId);
-        if (block) {
-          blockType = block.type;
-        }
-        break;
-      }
-    }
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     // Find slot and update block
     const updatedSlots = layout.slots.map((slot: any) => {
@@ -373,22 +289,6 @@ export const updateBlockInSlot = mutation({
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
 
-    // Update search index if this is a subpage block
-    if (blockType === "subpage") {
-      const page = await ctx.db.get(layout.pageId);
-      if (page) {
-        await updateSubpageSearchIndex(
-          ctx,
-          page.siteId,
-          layoutId,
-          slotId,
-          blockId,
-          content as SubpageContent,
-          layout.pageId,
-        );
-      }
-    }
-
     return layoutId;
   },
 });
@@ -404,23 +304,11 @@ export const removeBlockFromSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
-
-    // Check if the block being removed is a subpage
-    let isSubpage = false;
-    for (const slot of layout.slots) {
-      if (slot.id === slotId) {
-        const block = slot.blocks.find((b: any) => b.id === blockId);
-        if (block?.type === "subpage") {
-          isSubpage = true;
-        }
-        break;
-      }
-    }
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     // Find slot and remove block
     const updatedSlots = layout.slots.map((slot: any) => {
@@ -439,22 +327,6 @@ export const removeBlockFromSlot = mutation({
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
-
-    // Remove search index entry if this was a subpage
-    if (isSubpage) {
-      const page = await ctx.db.get(layout.pageId);
-      if (page) {
-        await updateSubpageSearchIndex(
-          ctx,
-          page.siteId,
-          layoutId,
-          slotId,
-          blockId,
-          null, // null content means delete
-          layout.pageId,
-        );
-      }
-    }
 
     return layoutId;
   },
@@ -476,11 +348,11 @@ export const moveBlock = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     // Find the block - use the same type as in slots
     type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
@@ -550,11 +422,11 @@ export const reorder = mutation({
     layoutIds: v.array(v.id("layouts")),
   },
   handler: async (ctx, { pageId, layoutIds }) => {
-    const pageInfo = await getCompanyIdFromPage(ctx, pageId);
+    const pageInfo = await getTeamIdFromPage(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.companyId as any);
+    await requireAdmin(ctx, pageInfo.teamId as any);
 
     // Update order for each layout
     for (let i = 0; i < layoutIds.length; i++) {
@@ -576,14 +448,112 @@ export const remove = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getCompanyIdFromLayout(ctx, layoutId);
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.companyId as any);
+    await requireAdmin(ctx, layoutInfo.teamId as any);
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
     await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+  },
+});
+
+// Atomically create a child page + default layout + subpage block in one mutation
+export const addSubpageBlock = mutation({
+  args: {
+    layoutId: v.id("layouts"),
+    slotId: v.string(),
+    blockId: v.string(),
+    title: v.string(),
+    slug: v.string(),
+    index: v.optional(v.number()),
+  },
+  handler: async (ctx, { layoutId, slotId, blockId, title, slug, index }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) throw new Error("Layout not found");
+
+    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    if (!layoutInfo) throw new Error("Layout not found");
+
+    const { auth } = await requireAdmin(ctx, layoutInfo.teamId as any);
+
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) throw new Error("Page not found");
+
+    // Check slug uniqueness
+    const existingSlug = await ctx.db
+      .query("pages")
+      .withIndex("by_slug", (q: any) =>
+        q.eq("siteId", page.siteId).eq("slug", slug.toLowerCase()),
+      )
+      .first();
+    if (existingSlug) {
+      throw new Error(
+        `A page with the URL "${slug}" already exists. Please choose a different title.`,
+      );
+    }
+
+    const now = Date.now();
+
+    // 1. Create child page
+    const siblings = await ctx.db
+      .query("pages")
+      .withIndex("by_parent", (q: any) =>
+        q.eq("siteId", page.siteId).eq("parentId", layout.pageId),
+      )
+      .collect();
+    const maxOrder = siblings.reduce(
+      (max: number, p: any) => Math.max(max, p.order),
+      -1,
+    );
+
+    const childPageId = await ctx.db.insert("pages", {
+      siteId: page.siteId,
+      title,
+      slug: slug.toLowerCase(),
+      parentId: layout.pageId,
+      order: maxOrder + 1,
+      isPublished: false,
+      createdBy: auth.userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // 2. Create default layout on child page
+    await ctx.db.insert("layouts", {
+      pageId: childPageId,
+      type: "single",
+      slots: [{ id: "default-slot", position: 0, blocks: [] }],
+      settings: {},
+      order: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // 3. Add subpage block to the specified slot
+    const block = {
+      id: blockId,
+      type: "subpage" as const,
+      content: { pageId: childPageId },
+    };
+
+    const updatedSlots = layout.slots.map((s: any) => {
+      if (s.id !== slotId) return s;
+      const newBlocks = [...s.blocks];
+      if (index !== undefined && index >= 0 && index <= newBlocks.length) {
+        newBlocks.splice(index, 0, block);
+      } else {
+        newBlocks.push(block);
+      }
+      return { ...s, blocks: newBlocks };
+    });
+
+    await ctx.db.patch(layoutId, { slots: updatedSlots, updatedAt: now });
+    await ctx.db.patch(layout.pageId, { updatedAt: now });
+    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+
+    return { childPageId };
   },
 });

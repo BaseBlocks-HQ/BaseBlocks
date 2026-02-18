@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthContext, getAuthContextOrNull } from "../auth";
 
-// List sites for all companies the user is a member of
+// List sites for all teams the user is a member of
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -17,36 +17,36 @@ export const list = query({
 
     if (memberships.length === 0) return [];
 
-    // Collect all company IDs from memberships
-    const companyIds = memberships.map((m) => m.companyId);
+    // Collect all team IDs from memberships
+    const teamIds = memberships.map((m) => m.teamId);
 
-    // Fetch all companies
-    const companies = await Promise.all(
-      companyIds.map((id) => ctx.db.get(id)),
+    // Fetch all teams
+    const teams = await Promise.all(
+      teamIds.map((id) => ctx.db.get(id)),
     );
-    const companyMap = new Map(
-      companies.filter(Boolean).map((c) => [c!._id, c!]),
+    const teamMap = new Map(
+      teams.filter(Boolean).map((t) => [t!._id, t!]),
     );
 
-    // Fetch sites for all companies
-    const sitesPromises = companyIds.map((companyId) =>
+    // Fetch sites for all teams
+    const sitesPromises = teamIds.map((teamId) =>
       ctx.db
         .query("sites")
-        .withIndex("by_company", (q) => q.eq("companyId", companyId))
+        .withIndex("by_team", (q) => q.eq("teamId", teamId))
         .collect(),
     );
     const sitesArrays = await Promise.all(sitesPromises);
 
-    // Flatten and add company info
+    // Flatten and add team info
     const sites = sitesArrays.flat().map((site) => {
-      const company = companyMap.get(site.companyId);
+      const team = teamMap.get(site.teamId);
       return {
         ...site,
-        company: company
+        team: team
           ? {
-              _id: company._id,
-              name: company.name,
-              slug: company.slug,
+              _id: team._id,
+              name: team.name,
+              slug: team.slug,
             }
           : null,
       };
@@ -64,28 +64,28 @@ export const get = query({
   },
 });
 
-// Get site by company slug and site slug (for public viewing)
+// Get site by team slug and site slug (for public viewing)
 // Returns published field projections for public consumption
 export const getBySlug = query({
   args: {
-    companySlug: v.string(),
+    teamSlug: v.string(),
     siteSlug: v.optional(v.string()),
   },
-  handler: async (ctx, { companySlug, siteSlug }) => {
-    // Find company
-    const company = await ctx.db
-      .query("companies")
-      .withIndex("by_slug", (q) => q.eq("slug", companySlug))
+  handler: async (ctx, { teamSlug, siteSlug }) => {
+    // Find team
+    const team = await ctx.db
+      .query("teams")
+      .withIndex("by_slug", (q) => q.eq("slug", teamSlug))
       .first();
 
-    if (!company) return null;
+    if (!team) return null;
 
     // If no site slug, get the default/first site
     let site;
     if (!siteSlug) {
       site = await ctx.db
         .query("sites")
-        .withIndex("by_company", (q) => q.eq("companyId", company._id))
+        .withIndex("by_team", (q) => q.eq("teamId", team._id))
         .filter((q) => q.eq(q.field("isPublished"), true))
         .first();
     } else {
@@ -93,7 +93,7 @@ export const getBySlug = query({
       site = await ctx.db
         .query("sites")
         .withIndex("by_slug", (q) =>
-          q.eq("companyId", company._id).eq("slug", siteSlug),
+          q.eq("teamId", team._id).eq("slug", siteSlug),
         )
         .first();
     }
@@ -111,8 +111,8 @@ export const getBySlug = query({
   },
 });
 
-// Get site with company info (for dashboard)
-export const getWithCompany = query({
+// Get site with team info (for dashboard)
+export const getWithTeam = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
     const auth = await getAuthContext(ctx);
@@ -120,14 +120,14 @@ export const getWithCompany = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    const company = await ctx.db.get(site.companyId);
-    if (!company) return null;
+    const team = await ctx.db.get(site.teamId);
+    if (!team) return null;
 
     // Verify access via membership
     const membership = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", company._id).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", team._id).eq("userId", auth.userId),
       )
       .first();
 
@@ -135,7 +135,7 @@ export const getWithCompany = query({
       throw new Error("Unauthorized");
     }
 
-    return { site, company };
+    return { site, team };
   },
 });
 
@@ -143,17 +143,17 @@ export const getWithCompany = query({
 // Returns published field projections for public consumption
 export const getWithDefaultPage = query({
   args: {
-    companySlug: v.string(),
+    teamSlug: v.string(),
     siteSlug: v.optional(v.string()),
   },
-  handler: async (ctx, { companySlug, siteSlug }) => {
-    // Find company
-    const company = await ctx.db
-      .query("companies")
-      .withIndex("by_slug", (q) => q.eq("slug", companySlug))
+  handler: async (ctx, { teamSlug, siteSlug }) => {
+    // Find team
+    const team = await ctx.db
+      .query("teams")
+      .withIndex("by_slug", (q) => q.eq("slug", teamSlug))
       .first();
 
-    if (!company) return null;
+    if (!team) return null;
 
     // Get the specific site by slug, or fall back to first published site
     let site;
@@ -161,13 +161,13 @@ export const getWithDefaultPage = query({
       site = await ctx.db
         .query("sites")
         .withIndex("by_slug", (q) =>
-          q.eq("companyId", company._id).eq("slug", siteSlug),
+          q.eq("teamId", team._id).eq("slug", siteSlug),
         )
         .first();
     } else {
       site = await ctx.db
         .query("sites")
-        .withIndex("by_company", (q) => q.eq("companyId", company._id))
+        .withIndex("by_team", (q) => q.eq("teamId", team._id))
         .filter((q) => q.eq(q.field("isPublished"), true))
         .first();
     }
@@ -207,7 +207,7 @@ export const getWithDefaultPage = query({
 
     return {
       site: publishedSite,
-      company,
+      team,
       defaultPage,
     };
   },

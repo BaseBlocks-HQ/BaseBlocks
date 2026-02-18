@@ -150,7 +150,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return await ctx.db
       .query("documents")
@@ -178,7 +178,7 @@ export const search = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -266,7 +266,7 @@ export const listByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return await ctx.db
       .query("documents")
@@ -288,7 +288,7 @@ export const listByFolder = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return await ctx.db
       .query("documents")
@@ -347,7 +347,7 @@ export const getExtractionStats = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     // Get all documents for the site
     const allDocs = await ctx.db
@@ -386,7 +386,7 @@ export const listFailedExtraction = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     return await ctx.db
       .query("documents")
@@ -411,7 +411,7 @@ export const searchByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];

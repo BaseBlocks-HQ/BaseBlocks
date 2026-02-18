@@ -16,15 +16,15 @@ export const updateRole = mutation({
       throw new Error("Member not found");
     }
 
-    await requireAdmin(ctx, memberToUpdate.companyId);
+    await requireAdmin(ctx, memberToUpdate.teamId);
 
     // Cannot demote yourself if you're the last admin
     const auth = await getAuthContext(ctx);
     if (memberToUpdate.userId === auth.userId && role === "viewer") {
       const admins = await ctx.db
         .query("members")
-        .withIndex("by_company", (q) =>
-          q.eq("companyId", memberToUpdate.companyId),
+        .withIndex("by_team", (q) =>
+          q.eq("teamId", memberToUpdate.teamId),
         )
         .filter((q) => q.eq(q.field("role"), "admin"))
         .collect();
@@ -40,7 +40,7 @@ export const updateRole = mutation({
 });
 
 /**
- * Delete the current user's account data from all companies
+ * Delete the current user's account data from all teams
  */
 export const deleteMyAccountData = mutation({
   args: {},
@@ -61,25 +61,25 @@ export const deleteMyAccountData = mutation({
 });
 
 /**
- * Ensure the company creator is added as an admin member
+ * Ensure the team creator is added as an admin member
  */
 export const ensureCreatorMember = mutation({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
+  handler: async (ctx, { teamId }) => {
     const auth = await getAuthContext(ctx);
 
-    const company = await ctx.db.get(companyId);
-    if (!company) {
-      throw new Error("Company not found");
+    const team = await ctx.db.get(teamId);
+    if (!team) {
+      throw new Error("Team not found");
     }
 
     // Check if user is already a member
     const existingMember = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", auth.userId),
       )
       .first();
 
@@ -89,7 +89,7 @@ export const ensureCreatorMember = mutation({
 
     const now = Date.now();
     const memberId = await ctx.db.insert("members", {
-      companyId,
+      teamId,
       userId: auth.userId,
       email: auth.email || "",
       name: auth.name,
@@ -114,23 +114,23 @@ export const syncMemberFromInvitation = mutation({
   handler: async (ctx, { organizationId, role }) => {
     const auth = await getAuthContext(ctx);
 
-    // Find the Convex company linked to this BA organization
-    const company = await ctx.db
-      .query("companies")
+    // Find the Convex team linked to this BA organization
+    const team = await ctx.db
+      .query("teams")
       .withIndex("by_organizationId", (q) =>
         q.eq("organizationId", organizationId),
       )
       .first();
 
-    if (!company) {
-      throw new Error("Company not found for this organization");
+    if (!team) {
+      throw new Error("Team not found for this organization");
     }
 
     // Check if already a member
     const existing = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", company._id).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", team._id).eq("userId", auth.userId),
       )
       .first();
 
@@ -142,7 +142,7 @@ export const syncMemberFromInvitation = mutation({
     const convexRole: "admin" | "viewer" = role === "admin" ? "admin" : "viewer";
 
     const memberId = await ctx.db.insert("members", {
-      companyId: company._id,
+      teamId: team._id,
       userId: auth.userId,
       email: auth.email || "",
       name: auth.name,
@@ -160,19 +160,19 @@ export const syncMemberFromInvitation = mutation({
  */
 export const removeMember = mutation({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     memberId: v.id("members"),
   },
-  handler: async (ctx, { companyId, memberId }) => {
-    const { auth } = await requireAdmin(ctx, companyId);
+  handler: async (ctx, { teamId, memberId }) => {
+    const { auth } = await requireAdmin(ctx, teamId);
 
     const memberToRemove = await ctx.db.get(memberId);
     if (!memberToRemove) {
       throw new Error("Member not found");
     }
 
-    if (memberToRemove.companyId !== companyId) {
-      throw new Error("Member does not belong to this company");
+    if (memberToRemove.teamId !== teamId) {
+      throw new Error("Member does not belong to this team");
     }
 
     if (memberToRemove.userId === auth.userId) {

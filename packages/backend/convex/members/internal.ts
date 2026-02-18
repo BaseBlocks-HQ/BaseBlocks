@@ -2,28 +2,28 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 /**
- * Get a company by ID
+ * Get a team by ID
  */
-export const getCompany = internalQuery({
-  args: { companyId: v.id("companies") },
-  handler: async (ctx, { companyId }) => {
-    return await ctx.db.get(companyId);
+export const getTeam = internalQuery({
+  args: { teamId: v.id("teams") },
+  handler: async (ctx, { teamId }) => {
+    return await ctx.db.get(teamId);
   },
 });
 
 /**
- * Get a member by company and user ID
+ * Get a member by team and user ID
  */
 export const getMemberByUserId = internalQuery({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     userId: v.string(),
   },
-  handler: async (ctx, { companyId, userId }) => {
+  handler: async (ctx, { teamId, userId }) => {
     return await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", userId),
       )
       .first();
   },
@@ -63,13 +63,13 @@ export const updateMemberRole = internalMutation({
 });
 
 /**
- * Get company by organization ID (Better Auth)
+ * Get team by organization ID (Better Auth)
  */
-export const getCompanyByOrganizationId = internalQuery({
+export const getTeamByOrganizationId = internalQuery({
   args: { organizationId: v.string() },
   handler: async (ctx, { organizationId }) => {
     return await ctx.db
-      .query("companies")
+      .query("teams")
       .withIndex("by_organizationId", (q) =>
         q.eq("organizationId", organizationId),
       )
@@ -82,7 +82,7 @@ export const getCompanyByOrganizationId = internalQuery({
  */
 export const addMemberFromInvitation = internalMutation({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     userId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
@@ -91,15 +91,15 @@ export const addMemberFromInvitation = internalMutation({
   },
   handler: async (
     ctx,
-    { companyId, userId, email, name, imageUrl, role },
+    { teamId, userId, email, name, imageUrl, role },
   ) => {
     const now = Date.now();
 
     // Check if member already exists
     const existing = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", userId),
       )
       .first();
 
@@ -114,7 +114,7 @@ export const addMemberFromInvitation = internalMutation({
     }
 
     const memberId = await ctx.db.insert("members", {
-      companyId,
+      teamId,
       userId,
       email,
       name,

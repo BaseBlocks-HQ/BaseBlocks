@@ -3,18 +3,18 @@ import { query } from "../_generated/server";
 import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
 
 /**
- * List all members for a company
+ * List all members for a team
  */
 export const list = query({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
-    await requireMember(ctx, companyId);
+  handler: async (ctx, { teamId }) => {
+    await requireMember(ctx, teamId);
 
     const members = await ctx.db
       .query("members")
-      .withIndex("by_company", (q) => q.eq("companyId", companyId))
+      .withIndex("by_team", (q) => q.eq("teamId", teamId))
       .collect();
 
     return members.map((m) => ({
@@ -30,13 +30,13 @@ export const list = query({
 });
 
 /**
- * Get current user's role for a company
+ * Get current user's role for a team
  */
 export const getMyRole = query({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
+  handler: async (ctx, { teamId }) => {
     const auth = await getAuthContextOrNull(ctx);
     if (!auth) {
       return null;
@@ -44,8 +44,8 @@ export const getMyRole = query({
 
     const member = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", auth.userId),
       )
       .first();
 
@@ -60,13 +60,13 @@ export const getMyRole = query({
 });
 
 /**
- * Check if current user is admin for a company
+ * Check if current user is admin for a team
  */
 export const isAdmin = query({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
+  handler: async (ctx, { teamId }) => {
     const auth = await getAuthContextOrNull(ctx);
     if (!auth) {
       return false;
@@ -74,8 +74,8 @@ export const isAdmin = query({
 
     const member = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", auth.userId),
       )
       .first();
 
@@ -84,13 +84,13 @@ export const isAdmin = query({
 });
 
 /**
- * Check if current user is a member (admin or viewer) for a company
+ * Check if current user is a member (admin or viewer) for a team
  */
 export const isMember = query({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
+  handler: async (ctx, { teamId }) => {
     const auth = await getAuthContextOrNull(ctx);
     if (!auth) {
       return false;
@@ -98,8 +98,8 @@ export const isMember = query({
 
     const member = await ctx.db
       .query("members")
-      .withIndex("by_company_user", (q) =>
-        q.eq("companyId", companyId).eq("userId", auth.userId),
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", teamId).eq("userId", auth.userId),
       )
       .first();
 
@@ -108,18 +108,18 @@ export const isMember = query({
 });
 
 /**
- * Get member count for a company
+ * Get member count for a team
  */
 export const count = query({
   args: {
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { companyId }) => {
-    await requireMember(ctx, companyId);
+  handler: async (ctx, { teamId }) => {
+    await requireMember(ctx, teamId);
 
     const members = await ctx.db
       .query("members")
-      .withIndex("by_company", (q) => q.eq("companyId", companyId))
+      .withIndex("by_team", (q) => q.eq("teamId", teamId))
       .collect();
 
     return members.length;

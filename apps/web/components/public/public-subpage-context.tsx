@@ -1,6 +1,5 @@
 "use client";
 
-import type { SubpageContent } from "@/types/elements/blocks";
 import {
   type ReactNode,
   createContext,
@@ -10,13 +9,12 @@ import {
 } from "react";
 
 export interface ViewingSubpage {
-  content: SubpageContent;
-  searchTerm?: string;
+  pageId: string;
 }
 
 interface PublicSubpageContextValue {
   viewingSubpage: ViewingSubpage | null;
-  openSubpage: (content: SubpageContent, searchTerm?: string) => void;
+  openSubpage: (pageId: string) => void;
   closeSubpage: () => void;
 }
 
@@ -29,8 +27,8 @@ interface PublicSubpageProviderProps {
 export function PublicSubpageProvider({ children }: PublicSubpageProviderProps) {
   const [viewingSubpage, setViewingSubpage] = useState<ViewingSubpage | null>(null);
 
-  const openSubpage = useCallback((content: SubpageContent, searchTerm?: string) => {
-    setViewingSubpage({ content, searchTerm });
+  const openSubpage = useCallback((pageId: string) => {
+    setViewingSubpage({ pageId });
   }, []);
 
   const closeSubpage = useCallback(() => {

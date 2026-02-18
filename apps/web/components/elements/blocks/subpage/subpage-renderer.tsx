@@ -2,18 +2,25 @@
 
 import { usePublicSubpageContextOptional } from "@/components/public/public-subpage-context";
 import type { ElementRendererProps } from "@/components/elements/registry";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 
 export function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
   const subpageContext = usePublicSubpageContextOptional();
+  const page = useQuery(
+    api.pages.queries.get,
+    content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
+  );
 
-  if (!content.title) {
+  if (!content.pageId || !page) {
     return null;
   }
 
   const handleClick = () => {
     if (subpageContext) {
-      subpageContext.openSubpage(content);
+      subpageContext.openSubpage(content.pageId);
     }
   };
 
@@ -27,12 +34,7 @@ export function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
         <FileText className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium truncate">{content.title}</h3>
-        {content.description && (
-          <p className="text-sm text-muted-foreground truncate">
-            {content.description}
-          </p>
-        )}
+        <h3 className="font-medium truncate">{page.title}</h3>
       </div>
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </button>

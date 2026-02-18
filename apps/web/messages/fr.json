@@ -121,8 +121,8 @@
     "step2Description": "Ajoutez des membres pour collaborer",
     "step3Title": "Creez votre premier site",
     "step3Description": "Commencez a construire votre site interne",
-    "companyName": "Nom de l'entreprise",
-    "companyNamePlaceholder": "Mon entreprise",
+    "teamName": "Nom de l'equipe",
+    "teamNamePlaceholder": "Mon equipe",
     "createWorkspace": "Creer l'espace de travail",
     "creating": "Creation en cours..."
   },

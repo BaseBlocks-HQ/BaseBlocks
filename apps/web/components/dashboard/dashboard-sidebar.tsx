@@ -22,10 +22,10 @@ import { Folder, Home, LogOut, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface DashboardSidebarProps {
-  companyName: string;
+  teamName: string;
 }
 
-export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
+export function DashboardSidebar({ teamName }: DashboardSidebarProps) {
   const pathname = usePathname();
   const handleLogout = () => authClient.signOut();
   const t = useTranslations();
@@ -61,7 +61,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
           <div className="flex flex-col">
             <span className="text-sm font-semibold">BaseBlocks</span>
             <span className="text-xs text-muted-foreground truncate max-w-[140px]">
-              {companyName}
+              {teamName}
             </span>
           </div>
         </Link>

@@ -31,10 +31,13 @@ import { PublicSubpagePanel } from "./public-subpage-panel";
 
 interface PublicContentProps {
   pageId: string;
+  /** When true, subpage panel rendering is disabled to prevent infinite recursion */
+  nested?: boolean;
 }
 
-function PublicContentInner({ pageId }: PublicContentProps) {
+function PublicContentInner({ pageId, nested }: PublicContentProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
+  const showSubpagePanel = !nested && !!viewingSubpage;
   const pageData = useQuery(api.pages.queries.get, {
     pageId: pageId as Id<"pages">,
   });
@@ -212,7 +215,7 @@ function PublicContentInner({ pageId }: PublicContentProps) {
   );
 
   // When viewing a subpage, use resizable panels with their own scroll
-  if (viewingSubpage) {
+  if (showSubpagePanel) {
     return (
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
@@ -245,6 +248,6 @@ function PublicContentInner({ pageId }: PublicContentProps) {
   return renderMainContent();
 }
 
-export function PublicContent({ pageId }: PublicContentProps) {
-  return <PublicContentInner pageId={pageId} />;
+export function PublicContent({ pageId, nested }: PublicContentProps) {
+  return <PublicContentInner pageId={pageId} nested={nested} />;
 }

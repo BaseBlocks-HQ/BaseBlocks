@@ -16,7 +16,7 @@ export const deploy = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.teamId);
     const now = Date.now();
 
     // Mark current active deployment as superseded
@@ -177,7 +177,7 @@ export const rollback = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.teamId);
 
     // Verify target deployment belongs to this site
     const targetDeployment = await ctx.db.get(targetDeploymentId);

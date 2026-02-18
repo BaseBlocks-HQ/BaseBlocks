@@ -2,8 +2,8 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // Companies/Organizations
-  companies: defineTable({
+  // Teams
+  teams: defineTable({
     organizationId: v.optional(v.string()), // Better Auth organization ID
     name: v.string(),
     slug: v.string(), // subdomain: acme.baseblocks.dev
@@ -18,11 +18,11 @@ export default defineSchema({
     .index("by_slug", ["slug"])
     .index("by_organizationId", ["organizationId"]),
 
-  // Sites (a company can have multiple sites)
+  // Sites (a team can have multiple sites)
   sites: defineTable({
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     name: v.string(),
-    slug: v.string(), // site slug within company
+    slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()), // Custom logo for the site
     defaultPageId: v.optional(v.id("pages")), // The page shown first when visiting
     isPublished: v.boolean(),
@@ -93,8 +93,8 @@ export default defineSchema({
       })),
     }),
   })
-    .index("by_company", ["companyId"])
-    .index("by_slug", ["companyId", "slug"]),
+    .index("by_team", ["teamId"])
+    .index("by_slug", ["teamId", "slug"]),
 
   // Access codes for password-protected sites
   siteAccessCodes: defineTable({
@@ -216,6 +216,7 @@ export default defineSchema({
               v.literal("table"),
               v.literal("quicklinks"),
               v.literal("form"),
+              v.literal("richtext"),
               v.literal("subpage"),
               v.literal("banner"),
               v.literal("directory"),
@@ -252,6 +253,7 @@ export default defineSchema({
               v.literal("table"),
               v.literal("quicklinks"),
               v.literal("form"),
+              v.literal("richtext"),
               v.literal("subpage"),
               v.literal("banner"),
               v.literal("directory"),
@@ -436,7 +438,7 @@ export default defineSchema({
 
   // Team members
   members: defineTable({
-    companyId: v.id("companies"),
+    teamId: v.id("teams"),
     userId: v.string(), // Better Auth user ID
     email: v.string(),
     name: v.optional(v.string()),
@@ -444,7 +446,7 @@ export default defineSchema({
     role: v.union(v.literal("admin"), v.literal("viewer")),
     joinedAt: v.number(),
   })
-    .index("by_company", ["companyId"])
-    .index("by_company_user", ["companyId", "userId"])
+    .index("by_team", ["teamId"])
+    .index("by_team_user", ["teamId", "userId"])
     .index("by_user", ["userId"]),
 });

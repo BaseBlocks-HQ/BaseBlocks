@@ -33,16 +33,16 @@ interface SiteCardProps {
     slug: string;
     logoUrl?: string;
     isPublished: boolean;
-    company?: {
+    team?: {
       _id: string;
       name: string;
       slug: string;
     } | null;
   };
-  companySlug?: string; // Optional now, will use site.company.slug if available
+  teamSlug?: string; // Optional now, will use site.team.slug if available
 }
 
-export function SiteCard({ site, companySlug }: SiteCardProps) {
+export function SiteCard({ site, teamSlug }: SiteCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -50,11 +50,11 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
 
   const deleteSite = useMutation(api.sites.mutations.remove);
 
-  // Use company slug from site object if available, fallback to prop
-  const effectiveCompanySlug = site.company?.slug ?? companySlug ?? "";
+  // Use team slug from site object if available, fallback to prop
+  const effectiveTeamSlug = site.team?.slug ?? teamSlug ?? "";
 
   // Link to the site root - the root page will redirect to the default page
-  const siteUrl = getSiteUrl(effectiveCompanySlug, site.slug);
+  const siteUrl = getSiteUrl(effectiveTeamSlug, site.slug);
 
   // Preview handler that works on localhost (subdomain) and production
   const handlePreview = useCallback(() => {
@@ -66,13 +66,13 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
     if (isLocalhost) {
       const port = window.location.port || "3000";
       window.open(
-        `http://${effectiveCompanySlug}.localhost:${port}/${site.slug}`,
+        `http://${effectiveTeamSlug}.localhost:${port}/${site.slug}`,
         "_blank",
       );
     } else {
-      window.open(getSiteUrl(effectiveCompanySlug, site.slug), "_blank");
+      window.open(getSiteUrl(effectiveTeamSlug, site.slug), "_blank");
     }
-  }, [effectiveCompanySlug, site.slug]);
+  }, [effectiveTeamSlug, site.slug]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -147,10 +147,10 @@ export function SiteCard({ site, companySlug }: SiteCardProps) {
                   </DropdownMenu>
                 </div>
               </div>
-              {site.company && (
+              {site.team && (
                 <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                   <Building2 className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">{site.company.name}</span>
+                  <span className="truncate">{site.team.name}</span>
                 </div>
               )}
             </div>

@@ -31,14 +31,14 @@ interface MemberListItem {
 export function TeamContent() {
   const t = useTranslations("team");
 
-  const company = useQuery(api.companies.queries.getMine);
+  const team = useQuery(api.teams.queries.getMine);
   const members = useQuery(
     api.members.queries.list,
-    company ? { companyId: company._id } : "skip",
+    team ? { teamId: team._id } : "skip",
   );
   const myRole = useQuery(
     api.members.queries.getMyRole,
-    company ? { companyId: company._id } : "skip",
+    team ? { teamId: team._id } : "skip",
   );
 
   const formatDate = (timestamp: number) => {
@@ -71,7 +71,7 @@ export function TeamContent() {
 
   const isAdmin = myRole?.role === "admin";
 
-  if (!company) {
+  if (!team) {
     return null;
   }
 
@@ -83,7 +83,7 @@ export function TeamContent() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && <InviteMemberDialog companyId={company._id} />}
+          {isAdmin && <InviteMemberDialog teamId={team._id} />}
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export function TeamContent() {
                     <TableCell>
                       <MemberActions
                         member={member}
-                        companyId={company._id}
+                        teamId={team._id}
                         isCurrentUserAdmin={isAdmin}
                       />
                     </TableCell>
@@ -147,7 +147,7 @@ export function TeamContent() {
           <p className="text-muted-foreground mt-1 mb-4">
             {t("noMembersDescription")}
           </p>
-          {isAdmin && <InviteMemberDialog companyId={company._id} />}
+          {isAdmin && <InviteMemberDialog teamId={team._id} />}
         </div>
       )}
     </main>

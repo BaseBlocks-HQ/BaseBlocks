@@ -46,7 +46,7 @@ import { DeployDialog } from "./deploy-dialog";
 import { DeploymentHistoryPanel } from "./deployment-history-panel";
 
 interface EditorHeaderProps {
-  companySlug: string;
+  teamSlug: string;
   siteSlug: string;
   siteId: Id<"sites">;
   sitePublished: boolean;
@@ -64,7 +64,7 @@ interface EditorHeaderProps {
       customization?: SiteCustomization;
     };
   };
-  company: {
+  team: {
     name: string;
     logoUrl?: string;
     settings: { primaryColor?: string };
@@ -72,14 +72,14 @@ interface EditorHeaderProps {
 }
 
 export function EditorHeader({
-  companySlug,
+  teamSlug,
   siteSlug,
   siteId,
   sitePublished,
   onPublish,
   onUnpublish,
   site,
-  company,
+  team,
 }: EditorHeaderProps) {
   const t = useTranslations();
   const {
@@ -135,7 +135,7 @@ export function EditorHeader({
         <div className={cn("h-5 w-px mr-3", headerColor ? "bg-current/20" : "bg-border")} />
 
         <div className="flex items-center gap-2">
-          {showLogo && <SiteLogo site={site} company={company} />}
+          {showLogo && <SiteLogo site={site} team={team} />}
           {showSiteName && (
             <span className="font-semibold">{site.name}</span>
           )}
@@ -267,8 +267,8 @@ export function EditorHeader({
                       window.location.hostname === "127.0.0.1" ||
                       window.location.hostname.endsWith(".localhost");
                     const url = isLocalhost
-                      ? `http://${companySlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
-                      : getSiteUrl(companySlug, siteSlug);
+                      ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
+                      : getSiteUrl(teamSlug, siteSlug);
                     window.open(url, "_blank");
                   }}
                 >
@@ -278,7 +278,7 @@ export function EditorHeader({
                 {sitePublished && (
                   <DropdownMenuItem asChild>
                     <a
-                      href={getSiteUrl(companySlug, siteSlug)}
+                      href={getSiteUrl(teamSlug, siteSlug)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -317,8 +317,8 @@ export function EditorHeader({
                         window.location.hostname === "127.0.0.1" ||
                         window.location.hostname.endsWith(".localhost");
                       const url = isLocalhost
-                        ? `http://${companySlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
-                        : getSiteUrl(companySlug, siteSlug);
+                        ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
+                        : getSiteUrl(teamSlug, siteSlug);
                       window.open(url, "_blank");
                     }}
                   >
@@ -338,7 +338,7 @@ export function EditorHeader({
                       asChild
                     >
                       <a
-                        href={getSiteUrl(companySlug, siteSlug)}
+                        href={getSiteUrl(teamSlug, siteSlug)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -431,7 +431,7 @@ export function EditorHeader({
               <Separator orientation="vertical" className="mx-1.5 h-5" />
               <Button variant="outline" size="sm" asChild>
                 <a
-                  href={getSiteUrl(companySlug, siteSlug)}
+                  href={getSiteUrl(teamSlug, siteSlug)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -449,7 +449,7 @@ export function EditorHeader({
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
         siteId={siteId}
-        companySlug={companySlug}
+        teamSlug={teamSlug}
         siteSlug={siteSlug}
       />
 
@@ -472,10 +472,10 @@ export function EditorHeader({
 
 function SiteLogo({
   site,
-  company,
+  team,
 }: {
   site: { name: string; logoUrl?: string };
-  company: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
+  team: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
 }) {
   if (site.logoUrl) {
     return (
@@ -487,11 +487,11 @@ function SiteLogo({
     );
   }
 
-  if (company.logoUrl) {
+  if (team.logoUrl) {
     return (
       <img
-        src={company.logoUrl}
-        alt={company.name}
+        src={team.logoUrl}
+        alt={team.name}
         className="h-8 w-8 rounded-lg object-contain"
       />
     );
@@ -501,7 +501,7 @@ function SiteLogo({
     <div
       className="flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold"
       style={{
-        backgroundColor: company.settings.primaryColor || "#0066FF",
+        backgroundColor: team.settings.primaryColor || "#0066FF",
       }}
     >
       {site.name[0]}

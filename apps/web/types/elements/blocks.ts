@@ -11,6 +11,7 @@ export type BlockType =
   | "code"
   | "divider"
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
+  | "richtext"
   | "subpage"
   | "banner"
   | "directory"
@@ -46,16 +47,12 @@ export interface BlockSpacerContent {
 // BlockNote block type - using unknown[] since BlockNote manages its own schema
 export type BlockNoteDocument = unknown[];
 
+export interface RichTextContent {
+  document: unknown[];
+}
+
 export interface SubpageContent {
-  title: string;
-  description?: string;
-  content?: BlockNoteDocument;
-  mermaidCode?: string;
-  diagrams?: FlowchartDiagram[];
-  /** beautiful-mermaid theme preset key (e.g. "tokyo-night", "dracula"). */
-  diagramTheme?: string;
-  /** How to display diagram tabs when multiple diagrams exist. */
-  diagramTabsMode?: TabsDisplayMode;
+  pageId: string;
 }
 
 export interface BannerAlert {
@@ -177,6 +174,7 @@ export type BlockContentUnion =
   | CodeContent
   | DividerContent
   | BlockSpacerContent
+  | RichTextContent
   | SubpageContent
   | BannerContent
   | DirectoryContent
@@ -191,7 +189,8 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   code: { text: "", language: "typescript" },
   divider: {},
   "block-spacer": { height: "medium" },
-  subpage: { title: "", description: "", content: undefined, diagramTabsMode: "row" },
+  richtext: { document: [] } as RichTextContent,
+  subpage: { pageId: "" },
   banner: {
     alerts: [],
     importancePresets: DEFAULT_IMPORTANCE_PRESETS,

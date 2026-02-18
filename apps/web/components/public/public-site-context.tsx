@@ -6,7 +6,7 @@ import { type ReactNode, createContext, useContext } from "react";
 interface PublicSiteContextValue {
   siteId: Id<"sites">;
   siteSlug: string;
-  companySlug: string;
+  teamSlug: string;
 }
 
 const PublicSiteContext = createContext<PublicSiteContextValue | null>(null);
@@ -15,15 +15,15 @@ export function PublicSiteProvider({
   children,
   siteId,
   siteSlug,
-  companySlug,
+  teamSlug,
 }: {
   children: ReactNode;
   siteId: Id<"sites">;
   siteSlug: string;
-  companySlug: string;
+  teamSlug: string;
 }) {
   return (
-    <PublicSiteContext.Provider value={{ siteId, siteSlug, companySlug }}>
+    <PublicSiteContext.Provider value={{ siteId, siteSlug, teamSlug }}>
       {children}
     </PublicSiteContext.Provider>
   );

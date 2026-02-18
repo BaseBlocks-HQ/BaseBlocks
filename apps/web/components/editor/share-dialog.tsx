@@ -41,7 +41,7 @@ interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   siteId: Id<"sites">;
-  companySlug: string;
+  teamSlug: string;
   siteSlug: string;
 }
 
@@ -62,7 +62,7 @@ export function ShareDialog({
   open,
   onOpenChange,
   siteId,
-  companySlug,
+  teamSlug,
   siteSlug,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
@@ -81,7 +81,7 @@ export function ShareDialog({
     api.sharing.mutations.generateNewAccessCode
   );
 
-  const siteUrl = getSiteUrl(companySlug, siteSlug);
+  const siteUrl = getSiteUrl(teamSlug, siteSlug);
   const visibility = settings?.visibility ?? "public";
 
   const handleVisibilityChange = useCallback(

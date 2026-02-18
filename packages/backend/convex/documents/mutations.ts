@@ -3,14 +3,14 @@ import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { isExtractable } from "../lib/extractable";
 
-// Helper to get companyId from siteId
-async function getCompanyIdFromSite(
+// Helper to get teamId from siteId
+async function getTeamIdFromSite(
   ctx: { db: any },
   siteId: string,
 ): Promise<string | null> {
   const site = await ctx.db.get(siteId);
   if (!site) return null;
-  return site.companyId;
+  return site.teamId;
 }
 
 // Create document record (after upload to Entity Storage)
@@ -27,11 +27,11 @@ export const create = mutation({
     ctx,
     { siteId, blobId, cdnUrl, filename, contentType, size },
   ) => {
-    const companyId = await getCompanyIdFromSite(ctx, siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    const { auth } = await requireAdmin(ctx, companyId as any);
+    const { auth } = await requireAdmin(ctx, teamId as any);
 
     const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
@@ -91,11 +91,11 @@ export const createInLibrary = mutation({
       size,
     },
   ) => {
-    const companyId = await getCompanyIdFromSite(ctx, siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    const { auth } = await requireAdmin(ctx, companyId as any);
+    const { auth } = await requireAdmin(ctx, teamId as any);
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -157,11 +157,11 @@ export const move = mutation({
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, document.siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, companyId as any);
+    await requireAdmin(ctx, teamId as any);
 
     // Verify document is in a library
     if (!document.libraryId) {
@@ -191,11 +191,11 @@ export const rename = mutation({
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, document.siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, companyId as any);
+    await requireAdmin(ctx, teamId as any);
 
     await ctx.db.patch(documentId, { filename });
     return documentId;
@@ -213,11 +213,11 @@ export const updateMetadata = mutation({
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, document.siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, companyId as any);
+    await requireAdmin(ctx, teamId as any);
 
     const updates: Record<string, unknown> = {};
     if (extractedText !== undefined) updates.extractedText = extractedText;
@@ -235,11 +235,11 @@ export const remove = mutation({
     const document = await ctx.db.get(documentId);
     if (!document) throw new Error("Document not found");
 
-    const companyId = await getCompanyIdFromSite(ctx, document.siteId);
-    if (!companyId) throw new Error("Site not found");
+    const teamId = await getTeamIdFromSite(ctx, document.siteId);
+    if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, companyId as any);
+    await requireAdmin(ctx, teamId as any);
 
     // Remove from search index
     const searchEntry = await ctx.db

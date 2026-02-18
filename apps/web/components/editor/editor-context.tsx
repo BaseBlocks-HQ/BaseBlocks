@@ -3,7 +3,6 @@
 import { useSitePermissions } from "@/hooks";
 import type { UndoCommand } from "@/lib/undo";
 import { useUndoKeyboardShortcuts, useUndoManager } from "@/lib/undo";
-import type { SubpageContent } from "@/types/elements/blocks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -17,10 +16,7 @@ import {
 import { toast } from "sonner";
 
 export interface EditingSubpage {
-  blockId: string;
-  layoutId: string;
-  slotId: string;
-  content: SubpageContent;
+  pageId: string;
 }
 
 interface EditorSelection {
@@ -40,11 +36,10 @@ interface EditorContextValue {
     blockId: string | null,
   ) => void;
   clearSelection: () => void;
-  // Subpage editing
+  // Subpage editing (side-by-side panel)
   editingSubpage: EditingSubpage | null;
   openSubpageEditor: (subpage: EditingSubpage) => void;
   closeSubpageEditor: () => void;
-  updateEditingSubpageContent: (content: SubpageContent) => void;
   // Permissions
   canEdit: boolean;
   isAdmin: boolean;
@@ -183,10 +178,6 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     setEditingSubpage(null);
   }, []);
 
-  const updateEditingSubpageContent = useCallback((content: SubpageContent) => {
-    setEditingSubpage((prev) => prev ? { ...prev, content } : null);
-  }, []);
-
   return (
     <EditorContext.Provider
       value={{
@@ -199,7 +190,6 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
         editingSubpage,
         openSubpageEditor,
         closeSubpageEditor,
-        updateEditingSubpageContent,
         canEdit,
         isAdmin,
         isViewer,

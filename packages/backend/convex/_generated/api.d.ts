@@ -14,8 +14,6 @@ import type * as banners_queries from "../banners/queries.js";
 import type * as betterAuthSetup from "../betterAuthSetup.js";
 import type * as blocks_mutations from "../blocks/mutations.js";
 import type * as blocks_queries from "../blocks/queries.js";
-import type * as companies_mutations from "../companies/mutations.js";
-import type * as companies_queries from "../companies/queries.js";
 import type * as crons from "../crons.js";
 import type * as deployments_mutations from "../deployments/mutations.js";
 import type * as deployments_queries from "../deployments/queries.js";
@@ -44,6 +42,8 @@ import type * as sharing_mutations from "../sharing/mutations.js";
 import type * as sharing_queries from "../sharing/queries.js";
 import type * as sites_mutations from "../sites/mutations.js";
 import type * as sites_queries from "../sites/queries.js";
+import type * as teams_mutations from "../teams/mutations.js";
+import type * as teams_queries from "../teams/queries.js";
 
 import type {
   ApiFromModules,
@@ -58,8 +58,6 @@ declare const fullApi: ApiFromModules<{
   betterAuthSetup: typeof betterAuthSetup;
   "blocks/mutations": typeof blocks_mutations;
   "blocks/queries": typeof blocks_queries;
-  "companies/mutations": typeof companies_mutations;
-  "companies/queries": typeof companies_queries;
   crons: typeof crons;
   "deployments/mutations": typeof deployments_mutations;
   "deployments/queries": typeof deployments_queries;
@@ -88,6 +86,8 @@ declare const fullApi: ApiFromModules<{
   "sharing/queries": typeof sharing_queries;
   "sites/mutations": typeof sites_mutations;
   "sites/queries": typeof sites_queries;
+  "teams/mutations": typeof teams_mutations;
+  "teams/queries": typeof teams_queries;
 }>;
 
 /**

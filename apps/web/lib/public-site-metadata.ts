@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 interface PublicSiteMetadataParams {
-  companySlug: string;
+  teamSlug: string;
   siteSlug?: string;
   pagePath?: string[];
 }
@@ -75,7 +75,7 @@ function withVersion(url: string | undefined, version: number | undefined): stri
   return `${url}${separator}v=${version}`;
 }
 
-async function resolveMetadataBase(companySlug: string): Promise<URL> {
+async function resolveMetadataBase(teamSlug: string): Promise<URL> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
@@ -85,7 +85,7 @@ async function resolveMetadataBase(companySlug: string): Promise<URL> {
   }
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-  return new URL(`https://${companySlug}.${rootDomain}`);
+  return new URL(`https://${teamSlug}.${rootDomain}`);
 }
 
 function getConvexClient(): ConvexHttpClient | null {
@@ -95,7 +95,7 @@ function getConvexClient(): ConvexHttpClient | null {
 }
 
 export async function buildPublicSiteMetadata({
-  companySlug,
+  teamSlug,
   siteSlug,
   pagePath = [],
 }: PublicSiteMetadataParams): Promise<Metadata> {
@@ -108,7 +108,7 @@ export async function buildPublicSiteMetadata({
   try {
     if (siteSlug) {
       site = (await client.query(api.sites.queries.getBySlug, {
-        companySlug,
+        teamSlug,
         siteSlug,
       })) as PublicSiteDoc | null;
 
@@ -121,7 +121,7 @@ export async function buildPublicSiteMetadata({
       }
     } else {
       const siteData = (await client.query(api.sites.queries.getWithDefaultPage, {
-        companySlug,
+        teamSlug,
       })) as PublicSiteWithDefaultPageDoc | null;
       site = siteData?.site ?? null;
       pageTitle = siteData?.defaultPage?.title;
@@ -144,7 +144,7 @@ export async function buildPublicSiteMetadata({
   const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
 
   const metadata: Metadata = {
-    metadataBase: await resolveMetadataBase(companySlug),
+    metadataBase: await resolveMetadataBase(teamSlug),
     title,
     description,
     keywords: keywords.length > 0 ? keywords : undefined,

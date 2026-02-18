@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pagePath = path.length > 1 ? path.slice(1) : [];
 
   return buildPublicSiteMetadata({
-    companySlug: subdomain,
+    teamSlug: subdomain,
     siteSlug,
     pagePath,
   });

@@ -34,14 +34,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const loading = authLoading || sessionPending || hasOtt;
 
-  const company = useQuery(api.companies.queries.getMine);
+  const team = useQuery(api.teams.queries.getMine);
 
-  // Redirect to onboarding if no company
+  // Redirect to onboarding if no team
   useEffect(() => {
-    if (!loading && isAuthenticated && company === null) {
+    if (!loading && isAuthenticated && team === null) {
       router.push("/onboarding");
     }
-  }, [loading, isAuthenticated, company, router]);
+  }, [loading, isAuthenticated, team, router]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -50,17 +50,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [loading, isAuthenticated, router]);
 
-  if (loading || company === undefined) {
+  if (loading || team === undefined) {
     return <DashboardSkeleton />;
   }
 
-  if (!isAuthenticated || !company) {
+  if (!isAuthenticated || !team) {
     return null;
   }
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <DashboardSidebar companyName={company.name} />
+      <DashboardSidebar teamName={team.name} />
       <SidebarInset>
         <header className="flex md:hidden items-center h-12 px-4 border-b">
           <SidebarTrigger />

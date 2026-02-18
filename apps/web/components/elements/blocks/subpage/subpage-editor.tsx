@@ -1,31 +1,34 @@
 "use client";
 
-import {
-  useEditorContext,
-  useEditorContextOptional,
-} from "@/components/editor/editor-context";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 
 export function SubpageEditor({
-  id,
   content,
 }: ElementEditorProps<"subpage">) {
   const editorContext = useEditorContextOptional();
+  const page = useQuery(
+    api.pages.queries.get,
+    content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
+  );
 
   const handleClick = () => {
-    if (!editorContext) return;
-
-    const { selection, openSubpageEditor } = editorContext;
-    if (!selection.layoutId || !selection.slotId) return;
-
-    openSubpageEditor({
-      blockId: id,
-      layoutId: selection.layoutId,
-      slotId: selection.slotId,
-      content,
-    });
+    if (!editorContext || !content.pageId) return;
+    editorContext.openSubpageEditor({ pageId: content.pageId });
   };
+
+  if (!content.pageId) {
+    return (
+      <div className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30 text-muted-foreground">
+        <FileText className="h-5 w-5 shrink-0" />
+        <span className="text-sm">Sub-page not configured</span>
+      </div>
+    );
+  }
 
   return (
     <button
@@ -38,18 +41,11 @@ export function SubpageEditor({
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="font-medium truncate">
-          {content.title || "Untitled sub-page"}
+          {page?.title ?? "Loading..."}
         </h3>
-        {content.description && (
-          <p className="text-sm text-muted-foreground truncate">
-            {content.description}
-          </p>
-        )}
-        {!content.title && !content.description && (
-          <p className="text-sm text-muted-foreground">
-            Click to edit
-          </p>
-        )}
+        <p className="text-sm text-muted-foreground">
+          Click to edit sub-page
+        </p>
       </div>
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </button>

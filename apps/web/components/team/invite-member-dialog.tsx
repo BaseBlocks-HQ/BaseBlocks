@@ -27,7 +27,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface InviteMemberDialogProps {
-  companyId: Id<"companies">;
+  teamId: Id<"teams">;
 }
 
 export function InviteMemberDialog({}: InviteMemberDialogProps) {
@@ -40,7 +40,7 @@ export function InviteMemberDialog({}: InviteMemberDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const company = useQuery(api.companies.queries.getMine);
+  const team = useQuery(api.teams.queries.getMine);
 
   const handleInvite = async () => {
     if (!email.trim()) return;
@@ -49,12 +49,12 @@ export function InviteMemberDialog({}: InviteMemberDialogProps) {
     setError(null);
 
     try {
-      if (!company?.organizationId) {
-        throw new Error("Company is not linked to an organization");
+      if (!team?.organizationId) {
+        throw new Error("Team is not linked to an organization");
       }
 
       await authClient.organization.inviteMember({
-        organizationId: company.organizationId,
+        organizationId: team.organizationId,
         email: email.trim(),
         role,
       });

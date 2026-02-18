@@ -12,7 +12,7 @@ export const getAccessCode = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     const accessCode = await ctx.db
       .query("siteAccessCodes")
@@ -42,7 +42,7 @@ export const getSettings = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     return {
       visibility: site.visibility ?? "public",
@@ -106,7 +106,7 @@ export const checkSiteAccess = query({
         return { hasAccess: false, reason: "Authentication required" };
       }
 
-      const isMember = await checkIsMember(ctx, site.companyId);
+      const isMember = await checkIsMember(ctx, site.teamId);
       if (!isMember) {
         return { hasAccess: false, reason: "Not a member of this organization" };
       }

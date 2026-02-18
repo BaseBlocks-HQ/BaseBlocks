@@ -19,11 +19,11 @@ export function isVercelAppDomain(): boolean {
 
 /**
  * Generate the URL for a published site
- * - On vercel.app: uses path-based routing (e.g., /s/company/site-slug/page)
- * - On custom domain: uses subdomain-based routing (e.g., company.baseblocks.dev/site-slug/page)
+ * - On vercel.app: uses path-based routing (e.g., /s/team/site-slug/page)
+ * - On custom domain: uses subdomain-based routing (e.g., team.baseblocks.dev/site-slug/page)
  */
 export function getSiteUrl(
-  companySlug: string,
+  teamSlug: string,
   siteSlug: string,
   pagePath?: string,
 ): string {
@@ -31,21 +31,21 @@ export function getSiteUrl(
 
   if (typeof window !== "undefined" && isVercelAppDomain()) {
     // Path-based routing for vercel.app
-    return `${window.location.origin}/s/${companySlug}${path}`;
+    return `${window.location.origin}/s/${teamSlug}${path}`;
   }
 
   // Subdomain-based routing for custom domains
-  return `https://${companySlug}.${ROOT_DOMAIN}${path}`;
+  return `https://${teamSlug}.${ROOT_DOMAIN}${path}`;
 }
 
 /**
- * Get the display domain for a company (for showing to users)
+ * Get the display domain for a team (for showing to users)
  */
-export function getDisplayDomain(companySlug: string): string {
+export function getDisplayDomain(teamSlug: string): string {
   if (typeof window !== "undefined" && isVercelAppDomain()) {
-    return `${window.location.host}/s/${companySlug}`;
+    return `${window.location.host}/s/${teamSlug}`;
   }
-  return `${companySlug}.${ROOT_DOMAIN}`;
+  return `${teamSlug}.${ROOT_DOMAIN}`;
 }
 
 /**
@@ -60,7 +60,7 @@ export function getPathBasedSubdomain(): string | null {
 
 /**
  * Generate an internal page link within a published site
- * - If in path-based context: /s/company/site-slug/page-slug
+ * - If in path-based context: /s/team/site-slug/page-slug
  * - If in subdomain context: /site-slug/page-slug
  */
 export function getPageLink(siteSlug: string, pageSlug: string): string {

@@ -23,16 +23,16 @@ import { useState } from "react";
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
-  const [companyName, setCompanyName] = useState("");
+  const [teamName, setTeamName] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
 
-  const createCompany = useMutation(api.companies.mutations.create);
+  const createTeam = useMutation(api.teams.mutations.create);
 
-  const handleCompanyNameChange = (value: string) => {
-    setCompanyName(value);
+  const handleTeamNameChange = (value: string) => {
+    setTeamName(value);
     setSlug(generateSlug(value));
   };
 
@@ -48,7 +48,7 @@ export default function OnboardingPage() {
 
       // Create Better Auth organization
       const orgResult = await authClient.organization.create({
-        name: companyName,
+        name: teamName,
         slug,
       });
 
@@ -56,9 +56,9 @@ export default function OnboardingPage() {
         throw new Error("Failed to create organization");
       }
 
-      // Create company in Convex with the BA organization ID
-      await createCompany({
-        name: companyName,
+      // Create team in Convex with the BA organization ID
+      await createTeam({
+        name: teamName,
         slug,
         organizationId: orgResult.data.id,
       });
@@ -84,12 +84,12 @@ export default function OnboardingPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="companyName">{t("onboarding.companyName")}</Label>
+              <Label htmlFor="teamName">{t("onboarding.teamName")}</Label>
               <Input
-                id="companyName"
-                placeholder={t("onboarding.companyNamePlaceholder")}
-                value={companyName}
-                onChange={(e) => handleCompanyNameChange(e.target.value)}
+                id="teamName"
+                placeholder={t("onboarding.teamNamePlaceholder")}
+                value={teamName}
+                onChange={(e) => handleTeamNameChange(e.target.value)}
                 required
               />
             </div>

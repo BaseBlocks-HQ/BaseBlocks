@@ -92,7 +92,7 @@ export const searchAll = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -257,7 +257,7 @@ export const listTitles = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.companyId);
+    await requireMember(ctx, site.teamId);
 
     const all = await ctx.db
       .query("searchableContent")
@@ -333,74 +333,3 @@ export const listTitlesPublic = query({
   },
 });
 
-/**
- * Get subpage content by its location (for opening from search results)
- */
-export const getSubpageContent = query({
-  args: {
-    layoutId: v.id("layouts"),
-    slotId: v.string(),
-    blockId: v.string(),
-  },
-  handler: async (ctx, { layoutId, slotId, blockId }) => {
-    const layout = await ctx.db.get(layoutId);
-    if (!layout) return null;
-
-    // Find the block in slots
-    for (const slot of layout.slots) {
-      if (slot.id === slotId) {
-        for (const block of slot.blocks) {
-          if (block.id === blockId && block.type === "subpage") {
-            return block.content as {
-              title?: string;
-              description?: string;
-              content?: unknown[];
-            } | null;
-          }
-        }
-      }
-    }
-
-    return null;
-  },
-});
-
-/**
- * Get subpage content from published slots (for public site)
- */
-export const getSubpageContentPublic = query({
-  args: {
-    layoutId: v.id("layouts"),
-    slotId: v.string(),
-    blockId: v.string(),
-  },
-  handler: async (ctx, { layoutId, slotId, blockId }) => {
-    const layout = await ctx.db.get(layoutId);
-    if (!layout) return null;
-
-    // Check site is published
-    const page = await ctx.db.get(layout.pageId);
-    if (!page) return null;
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site || !site.isPublished) return null;
-
-    // ONLY use publishedSlots for public content - never fall back to draft
-    const slotsToCheck = layout.publishedSlots ?? [];
-    for (const slot of slotsToCheck) {
-      if (slot.id === slotId) {
-        for (const block of slot.blocks) {
-          if (block.id === blockId && block.type === "subpage") {
-            return block.content as {
-              title?: string;
-              description?: string;
-              content?: unknown[];
-            } | null;
-          }
-        }
-      }
-    }
-
-    return null;
-  },
-});

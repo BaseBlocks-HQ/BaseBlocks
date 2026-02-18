@@ -12,7 +12,7 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.teamId);
 
     // Check for duplicate library name within site
     const existingLibrary = await ctx.db
@@ -53,7 +53,7 @@ export const update = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -88,7 +88,7 @@ export const remove = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Delete all documents in the library
     const documents = await ctx.db

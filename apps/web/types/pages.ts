@@ -18,8 +18,8 @@ export interface PageWithChildren extends PageListItem {
   children: PageWithChildren[];
 }
 
-// Site with company (for editor context)
-export interface SiteWithCompany {
+// Site with team (for editor context)
+export interface SiteWithTeam {
   site: {
     _id: string;
     name: string;
@@ -34,7 +34,7 @@ export interface SiteWithCompany {
       navigationStyle: "sidebar" | "topnav" | "subnav";
     };
   };
-  company: {
+  team: {
     _id: string;
     name: string;
     slug: string;

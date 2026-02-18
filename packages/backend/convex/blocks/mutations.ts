@@ -37,7 +37,7 @@ export const create = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Get max order if not specified
     let blockOrder = order;
@@ -84,7 +84,7 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     const now = Date.now();
     const updates: Record<string, unknown> = { updatedAt: now };
@@ -111,7 +111,7 @@ export const reorder = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Update order for each block
     for (let i = 0; i < blockIds.length; i++) {
@@ -138,7 +138,7 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     await ctx.db.delete(blockId);
     await ctx.db.patch(block.pageId, { updatedAt: Date.now() });

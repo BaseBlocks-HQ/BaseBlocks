@@ -59,7 +59,7 @@ interface EditorSidebarProps {
     isPublished: boolean;
     defaultPageId?: string;
   };
-  company: {
+  team: {
     slug: string;
   };
   pages: PageListItem[];
@@ -73,7 +73,7 @@ interface EditorSidebarProps {
 
 export function EditorSidebar({
   site,
-  company,
+  team,
   pages,
   selectedPageId,
   selectedSlotId,
@@ -132,7 +132,7 @@ export function EditorSidebar({
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold truncate">{site.name}</h2>
             <p className="text-xs text-muted-foreground truncate">
-              {getDisplayDomain(company.slug)}
+              {getDisplayDomain(team.slug)}
             </p>
           </div>
         </div>

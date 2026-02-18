@@ -12,7 +12,7 @@ import {
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSiteCustomization } from "@/hooks";
 import { createBlock, createLayout, generateId } from "@/lib/layouts";
-import type { AnyContent, LayoutBlockType, LayoutType } from "@/types";
+import type { AnyContent, ElementType, LayoutBlockType, LayoutType } from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -61,7 +61,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
 
-  const siteData = useQuery(api.sites.queries.getWithCompany, {
+  const siteData = useQuery(api.sites.queries.getWithTeam, {
     siteId: siteId as Id<"sites">,
   });
   const pages = useQuery(api.pages.queries.list, {
@@ -112,6 +112,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
+  const addSubpageBlockMutation = useMutation(api.layouts.mutations.addSubpageBlock);
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
   const removeBlockMutation = useMutation(api.layouts.mutations.removeBlockFromSlot);
 
@@ -201,15 +202,37 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   // Add block from sidebar
   const handleAddBlock = useCallback(
-    async (type: LayoutBlockType) => {
+    async (type: ElementType) => {
       if (!selection.layoutId || !selection.slotId) return;
+
+      // Special case: subpage blocks create a real child page atomically
+      if (type === "subpage") {
+        const blockId = generateId();
+        const title = "New Sub-page";
+        const slug = `sub-page-${blockId.slice(0, 8)}`;
+
+        try {
+          await addSubpageBlockMutation({
+            layoutId: selection.layoutId as Id<"layouts">,
+            slotId: selection.slotId,
+            blockId,
+            title,
+            slug,
+          });
+          // Block is added to the current page's content — no navigation
+        } catch (error) {
+          console.error("Failed to add subpage block:", error);
+          toast.error("Failed to create sub-page");
+        }
+        return;
+      }
 
       const content = getDefaultContent(type);
       if (!content) {
         console.error(`No default content found for element type: ${type}`);
         return;
       }
-      const newBlock = createBlock(type, content);
+      const newBlock = createBlock(type as LayoutBlockType, content);
       const layoutId = selection.layoutId;
       const slotId = selection.slotId;
 
@@ -248,7 +271,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         });
       }
     },
-    [selection, addBlockMutation, removeBlockMutation, pushCommand, isUndoRedoExecuting, currentPageId]
+    [selection, addBlockMutation, addSubpageBlockMutation, removeBlockMutation, pushCommand, isUndoRedoExecuting, currentPageId]
   );
 
   // Enable page-level tabs
@@ -275,14 +298,14 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     );
   }
 
-  const { site, company } = siteData;
+  const { site, team } = siteData;
 
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
         <EditorSidebar
           site={site}
-          company={company}
+          team={team}
           pages={pages}
           selectedPageId={selectedPage?._id}
           selectedSlotId={selection.slotId}
@@ -294,14 +317,14 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <EditorHeader
-            companySlug={company.slug}
+            teamSlug={team.slug}
             siteSlug={site.slug}
             siteId={site._id}
             sitePublished={site.isPublished}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
             site={site}
-            company={company}
+            team={team}
           />
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">

@@ -17,7 +17,7 @@ export const create = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.companyId);
+    const { auth } = await requireAdmin(ctx, site.teamId);
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -77,7 +77,7 @@ export const update = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Check for duplicate name if renaming
     if (name !== undefined && name.trim().toLowerCase() !== folder.name.toLowerCase()) {
@@ -123,7 +123,7 @@ export const move = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -214,7 +214,7 @@ export const remove = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.companyId);
+    await requireAdmin(ctx, site.teamId);
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

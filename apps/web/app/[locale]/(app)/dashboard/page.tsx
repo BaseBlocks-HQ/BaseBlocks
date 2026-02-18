@@ -3,7 +3,7 @@
 import { DashboardContent } from "@/components/dashboard";
 
 /**
- * Dashboard page - displays all sites for the current company
+ * Dashboard page - displays all sites for the current team
  * All logic is encapsulated in DashboardContent component
  */
 export default function DashboardPage() {
