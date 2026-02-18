@@ -217,15 +217,18 @@ export function EditorHeader({
             </Badge>
           )}
           {canEdit && showHeader && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsHeaderPreview(true)}
-              className="gap-1.5"
-            >
-              <PanelTop className="h-4 w-4" />
-              Header Preview
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setIsHeaderPreview(true)}
+                >
+                  <PanelTop className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Header Preview</TooltipContent>
+            </Tooltip>
           )}
         </div>
 
@@ -298,14 +301,14 @@ export function EditorHeader({
                   className="gap-1.5 bg-amber-600 hover:bg-amber-700"
                 >
                   <Rocket className="h-4 w-4" />
-                  Deploy Changes
+                  <span className="hidden sm:inline">Deploy Changes</span>
                 </Button>
               ) : sitePublished ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-1.5">
                       <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      Published
+                      <span className="hidden sm:inline">Published</span>
                       <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -332,9 +335,9 @@ export function EditorHeader({
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button size="sm" onClick={onPublish}>
+                <Button size="sm" onClick={onPublish} className="gap-1.5">
                   <Globe className="h-4 w-4" />
-                  {t("editor.publish")}
+                  <span className="hidden sm:inline">{t("editor.publish")}</span>
                 </Button>
               )}
             </>
