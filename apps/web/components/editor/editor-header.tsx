@@ -251,11 +251,11 @@ export function EditorHeader({
 
         {/* Right section */}
         <div className="flex items-center gap-1">
-          {/* Secondary actions grouped in overflow dropdown */}
+          {/* Mobile-only: overflow dropdown for secondary actions */}
           {canEdit && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm">
+                <Button variant="ghost" size="icon-sm" className="md:hidden">
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
@@ -302,6 +302,87 @@ export function EditorHeader({
             </DropdownMenu>
           )}
 
+          {/* Desktop: inline secondary actions */}
+          {canEdit && (
+            <div className="hidden md:flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const isLocalhost =
+                        window.location.hostname === "localhost" ||
+                        window.location.hostname === "127.0.0.1" ||
+                        window.location.hostname.endsWith(".localhost");
+                      const url = isLocalhost
+                        ? `http://${companySlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
+                        : getSiteUrl(companySlug, siteSlug);
+                      window.open(url, "_blank");
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                    Preview
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Open site preview in new tab</TooltipContent>
+              </Tooltip>
+              {sitePublished && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5"
+                      asChild
+                    >
+                      <a
+                        href={getSiteUrl(companySlug, siteSlug)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {t("editor.viewLive")}
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View published site</TooltipContent>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setShareDialogOpen(true)}
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Share site</TooltipContent>
+              </Tooltip>
+              {sitePublished && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      <History className="h-4 w-4" />
+                      History
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Deployment History</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
           <Separator orientation="vertical" className="mx-1.5 h-5" />
 
           {/* Primary CTA */}
@@ -314,7 +395,8 @@ export function EditorHeader({
                   className="gap-1.5 bg-amber-600 hover:bg-amber-700"
                 >
                   <Rocket className="h-4 w-4" />
-                  Deploy
+                  <span className="hidden md:inline">Deploy Changes</span>
+                  <span className="md:hidden">Deploy</span>
                 </Button>
               ) : sitePublished ? (
                 <DropdownMenu>
