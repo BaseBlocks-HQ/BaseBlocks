@@ -29,6 +29,7 @@ import {
   ExternalLink,
   Globe,
   History,
+  MoreHorizontal,
   PanelTop,
   Redo2,
   Rocket,
@@ -39,7 +40,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useCustomizationStyles } from "@/hooks";
 import { useEditorContext } from "./editor-context";
-import { PreviewButton } from "./preview-button";
 import { ShareDialog } from "./share-dialog";
 import { DeployDialog } from "./deploy-dialog";
 import { DeploymentHistoryPanel } from "./deployment-history-panel";
@@ -234,62 +234,58 @@ export function EditorHeader({
 
         {/* Right section */}
         <div className="flex items-center gap-1">
-          {/* Icon button group: Preview, View Live, Share, History */}
-          <PreviewButton companySlug={companySlug} siteSlug={siteSlug} />
-
-          {sitePublished && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon-sm" asChild>
-                  <a
-                    href={getSiteUrl(companySlug, siteSlug)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink />
-                  </a>
+          {/* Secondary actions grouped in overflow dropdown */}
+          {canEdit && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <MoreHorizontal />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t("editor.viewLive")}</TooltipContent>
-            </Tooltip>
-          )}
-
-          {canEdit && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setShareDialogOpen(true)}
-                  >
-                    <Share2 />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Share</TooltipContent>
-              </Tooltip>
-
-              {sitePublished && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setHistoryOpen(true)}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    const isLocalhost =
+                      window.location.hostname === "localhost" ||
+                      window.location.hostname === "127.0.0.1" ||
+                      window.location.hostname.endsWith(".localhost");
+                    const url = isLocalhost
+                      ? `http://${companySlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
+                      : getSiteUrl(companySlug, siteSlug);
+                    window.open(url, "_blank");
+                  }}
+                >
+                  <Eye />
+                  Preview
+                </DropdownMenuItem>
+                {sitePublished && (
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={getSiteUrl(companySlug, siteSlug)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      <History />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Deployment History</TooltipContent>
-                </Tooltip>
-              )}
-            </>
+                      <ExternalLink />
+                      {t("editor.viewLive")}
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                  <Share2 />
+                  Share
+                </DropdownMenuItem>
+                {sitePublished && (
+                  <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                    <History />
+                    Deployment History
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
-          {/* Separator between icon group and primary CTA */}
-          {canEdit && (
-            <Separator orientation="vertical" className="mx-1.5 h-5" />
-          )}
+          <Separator orientation="vertical" className="mx-1.5 h-5" />
 
           {/* Primary CTA */}
           {canEdit && (
@@ -301,43 +297,30 @@ export function EditorHeader({
                   className="gap-1.5 bg-amber-600 hover:bg-amber-700"
                 >
                   <Rocket className="h-4 w-4" />
-                  <span className="hidden sm:inline">Deploy Changes</span>
+                  Deploy
                 </Button>
               ) : sitePublished ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-1.5">
                       <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="hidden sm:inline">Published</span>
+                      Published
                       <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <a
-                        href={getSiteUrl(companySlug, siteSlug)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Globe />
-                        {t("editor.viewLive")}
-                      </a>
-                    </DropdownMenuItem>
                     {onUnpublish && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={onUnpublish} variant="destructive">
-                          <EyeOff />
-                          {t("editor.unpublish")}
-                        </DropdownMenuItem>
-                      </>
+                      <DropdownMenuItem onClick={onUnpublish} variant="destructive">
+                        <EyeOff />
+                        {t("editor.unpublish")}
+                      </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button size="sm" onClick={onPublish} className="gap-1.5">
+                <Button size="sm" onClick={onPublish}>
                   <Globe className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t("editor.publish")}</span>
+                  {t("editor.publish")}
                 </Button>
               )}
             </>
