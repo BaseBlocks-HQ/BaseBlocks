@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardSkeleton } from "@/components/skeletons";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@repo/backend";
@@ -62,6 +62,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider defaultOpen={true}>
       <DashboardSidebar companyName={company.name} />
       <SidebarInset>
+        <header className="flex md:hidden items-center h-12 px-4 border-b">
+          <SidebarTrigger />
+        </header>
         <div className="flex flex-col flex-1 min-h-svh">{children}</div>
       </SidebarInset>
     </SidebarProvider>

@@ -52,7 +52,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   ];
 
   return (
-    <Sidebar collapsible="none" className="min-h-svh">
+    <Sidebar collapsible="offcanvas" className="min-h-svh">
       <SidebarHeader className="border-b">
         <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
