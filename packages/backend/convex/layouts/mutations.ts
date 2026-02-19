@@ -516,6 +516,7 @@ export const addSubpageBlock = mutation({
       parentId: layout.pageId,
       order: maxOrder + 1,
       isPublished: false,
+      isSubpageContent: true,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,

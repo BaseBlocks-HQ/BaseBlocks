@@ -341,6 +341,7 @@ export const migrateSubpagesToPages = migrations.define({
               parentId: layout.pageId,
               order: maxOrder + 1,
               isPublished: false,
+              isSubpageContent: true,
               createdBy: page.createdBy,
               createdAt: now,
               updatedAt: now,

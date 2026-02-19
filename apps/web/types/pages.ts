@@ -11,6 +11,7 @@ export interface PageListItem {
   parentId?: string;
   order: number;
   isPublished: boolean;
+  isSubpageContent?: boolean;
 }
 
 // Page with children (for tree navigation)

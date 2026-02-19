@@ -201,8 +201,8 @@ export const getTreePublished = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    // Filter to only deployed pages
-    const deployedPages = allPages.filter((p) => p.isDeployed);
+    // Filter to only deployed pages, excluding subpage block content (accessed via side panel)
+    const deployedPages = allPages.filter((p) => p.isDeployed && !p.isSubpageContent);
 
     // Build tree using published fields (fall back to draft for migration compat)
     type PageNode = {

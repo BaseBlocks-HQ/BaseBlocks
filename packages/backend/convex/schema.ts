@@ -123,6 +123,8 @@ export default defineSchema({
     icon: v.optional(v.string()),
     order: v.number(),
     isPublished: v.boolean(),
+    // True for pages created as subpage block content (hidden from sidebar nav)
+    isSubpageContent: v.optional(v.boolean()),
     // Page-level tabs: each tab gets its own set of layouts
     pageTabs: v.optional(v.array(v.object({
       id: v.string(),

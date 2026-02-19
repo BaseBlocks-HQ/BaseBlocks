@@ -89,9 +89,15 @@ export function EditorSidebar({
     site._id,
   );
 
+  // Filter out pages created as subpage block content — they're accessed via the subpage block's side panel
+  const navPages = pages.filter((p) => !p.isSubpageContent);
+  const rootPages = navPages
+    .filter((p) => !p.parentId)
+    .sort((a, b) => a.order - b.order);
+
   // Customization + page tree for preview tab
   const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId);
-  const pageTree = useMemo(() => buildPageTree(pages), [pages]);
+  const pageTree = useMemo(() => buildPageTree(navPages), [navPages]);
 
   // Auto-switch to components tab when a slot or block is selected
   useEffect(() => {
@@ -103,10 +109,6 @@ export function EditorSidebar({
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);
   };
-
-  const rootPages = pages
-    .filter((p) => !p.parentId)
-    .sort((a, b) => a.order - b.order);
 
   return (
     <Sidebar>
@@ -170,7 +172,7 @@ export function EditorSidebar({
                 <SidebarMenu>
                   <SortablePageTree
                     pages={rootPages}
-                    allPages={pages}
+                    allPages={navPages}
                     selectedPageId={selectedPageId}
                     siteId={site._id}
                     defaultPageId={site.defaultPageId}
