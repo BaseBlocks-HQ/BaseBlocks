@@ -1,6 +1,6 @@
 import { Migrations } from "@convex-dev/migrations";
 import { components, internal } from "./_generated/api.js";
-import type { DataModel } from "./_generated/dataModel.js";
+import type { DataModel, Id } from "./_generated/dataModel.js";
 import { extractBlockNoteText } from "./lib/extractBlockNoteText.js";
 import { isExtractable } from "./lib/extractable.js";
 
@@ -464,9 +464,10 @@ export const flagSubpageContentPages = migrations.define({
     for (const slot of slotsToCheck) {
       for (const block of slot.blocks) {
         if (block.type === "subpage" && block.content?.pageId) {
-          const page = await ctx.db.get(block.content.pageId);
+          const pageId = block.content.pageId as Id<"pages">;
+          const page = await ctx.db.get(pageId);
           if (page && !page.isSubpageContent) {
-            await ctx.db.patch(page._id, { isSubpageContent: true });
+            await ctx.db.patch(pageId, { isSubpageContent: true });
           }
         }
       }
