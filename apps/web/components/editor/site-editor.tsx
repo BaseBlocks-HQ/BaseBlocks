@@ -154,16 +154,21 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Add layout from sidebar
   const handleAddLayout = useCallback(
     async (type: LayoutType) => {
-      if (!selectedPage) return;
+      // When editing a subpage, add the layout to the subpage instead of the parent page
+      const targetPageId = editingSubpage
+        ? (editingSubpage.pageId as Id<"pages">)
+        : selectedPage?._id;
+
+      if (!targetPageId) return;
 
       const newLayout = createLayout(type);
-      const pageIdStr = selectedPage._id as string;
+      const pageIdStr = targetPageId as string;
       const layoutId = await createLayoutMutation({
-        pageId: selectedPage._id as Id<"pages">,
+        pageId: targetPageId as Id<"pages">,
         type: newLayout.type,
         slots: newLayout.slots,
         settings: newLayout.settings,
-        tabId: activeTabId ?? undefined,
+        tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
       });
 
       // Select the first slot of the new layout
@@ -186,18 +191,18 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           },
           redo: async () => {
             const newId = await createLayoutMutation({
-              pageId: selectedPage._id as Id<"pages">,
+              pageId: targetPageId as Id<"pages">,
               type: newLayout.type,
               slots: newLayout.slots,
               settings: newLayout.settings,
-              tabId: activeTabId ?? undefined,
+              tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
             });
             layoutIdRef.value = newId as string;
           },
         });
       }
     },
-    [selectedPage, createLayoutMutation, removeLayoutMutation, selectSlot, activeTabId, pushCommand, isUndoRedoExecuting],
+    [selectedPage, editingSubpage, createLayoutMutation, removeLayoutMutation, selectSlot, activeTabId, pushCommand, isUndoRedoExecuting],
   );
 
   // Add block from sidebar
@@ -276,15 +281,19 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   // Enable page-level tabs
   const handleEnableTabs = useCallback(async () => {
-    if (!selectedPage) return;
+    const targetPageId = editingSubpage
+      ? (editingSubpage.pageId as Id<"pages">)
+      : selectedPage?._id;
+
+    if (!targetPageId) return;
     await enablePageTabsMutation({
-      pageId: selectedPage._id as Id<"pages">,
+      pageId: targetPageId as Id<"pages">,
       tabs: [
         { id: generateId(), label: "Tab 1" },
         { id: generateId(), label: "Tab 2" },
       ],
     });
-  }, [selectedPage, enablePageTabsMutation]);
+  }, [selectedPage, editingSubpage, enablePageTabsMutation]);
 
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
