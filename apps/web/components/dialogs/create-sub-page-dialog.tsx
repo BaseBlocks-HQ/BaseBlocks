@@ -55,7 +55,8 @@ export function CreateSubPageDialog({
       setSlug("");
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create sub-page";
+      const message =
+        err instanceof Error ? err.message : "Failed to create sub-page";
       setError(message);
     } finally {
       setIsSubmitting(false);

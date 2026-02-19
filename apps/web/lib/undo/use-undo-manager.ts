@@ -64,9 +64,7 @@ export function useUndoManager() {
     async (pageId?: string) => {
       if (isExecuting) return;
 
-      const stack = pageId
-        ? getPageStack(pageId)
-        : siteStackRef.current;
+      const stack = pageId ? getPageStack(pageId) : siteStackRef.current;
       const command = stack.undoStack.pop();
       if (!command) return;
 
@@ -91,9 +89,7 @@ export function useUndoManager() {
     async (pageId?: string) => {
       if (isExecuting) return;
 
-      const stack = pageId
-        ? getPageStack(pageId)
-        : siteStackRef.current;
+      const stack = pageId ? getPageStack(pageId) : siteStackRef.current;
       const command = stack.redoStack.pop();
       if (!command) return;
 
@@ -115,9 +111,7 @@ export function useUndoManager() {
 
   const canUndo = useCallback(
     (pageId?: string): boolean => {
-      const stack = pageId
-        ? getPageStack(pageId)
-        : siteStackRef.current;
+      const stack = pageId ? getPageStack(pageId) : siteStackRef.current;
       return stack.undoStack.length > 0;
     },
     [getPageStack],
@@ -125,9 +119,7 @@ export function useUndoManager() {
 
   const canRedo = useCallback(
     (pageId?: string): boolean => {
-      const stack = pageId
-        ? getPageStack(pageId)
-        : siteStackRef.current;
+      const stack = pageId ? getPageStack(pageId) : siteStackRef.current;
       return stack.redoStack.length > 0;
     },
     [getPageStack],

@@ -7,12 +7,7 @@
 
 import type { FormContent, FormField, FormFieldType } from "@/types/elements";
 import { createField } from "@/types/elements";
-import {
-  createContext,
-  useContext,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { type ReactNode, createContext, useCallback, useContext } from "react";
 
 // =============================================================================
 // CONTEXT TYPE
@@ -72,17 +67,17 @@ export function FormBuilderProvider({
       onUpdate({ ...form, fields });
       onSelectField(newField.id);
     },
-    [form, onUpdate, onSelectField]
+    [form, onUpdate, onSelectField],
   );
 
   const updateField = useCallback(
     (id: string, updates: Partial<FormField>) => {
       const fields = form.fields.map((f) =>
-        f.id === id ? { ...f, ...updates } : f
+        f.id === id ? { ...f, ...updates } : f,
       ) as FormField[];
       onUpdate({ ...form, fields });
     },
-    [form, onUpdate]
+    [form, onUpdate],
   );
 
   const removeField = useCallback(
@@ -93,7 +88,7 @@ export function FormBuilderProvider({
         onSelectField(null);
       }
     },
-    [form, onUpdate, selectedFieldId, onSelectField]
+    [form, onUpdate, selectedFieldId, onSelectField],
   );
 
   const moveField = useCallback(
@@ -104,7 +99,7 @@ export function FormBuilderProvider({
       fields.splice(toIndex, 0, removed);
       onUpdate({ ...form, fields });
     },
-    [form, onUpdate]
+    [form, onUpdate],
   );
 
   const duplicateField = useCallback(
@@ -125,14 +120,14 @@ export function FormBuilderProvider({
       onUpdate({ ...form, fields });
       onSelectField(duplicate.id);
     },
-    [form, onUpdate, onSelectField]
+    [form, onUpdate, onSelectField],
   );
 
   const updateFormSettings = useCallback(
     (updates: Partial<Omit<FormContent, "fields">>) => {
       onUpdate({ ...form, ...updates });
     },
-    [form, onUpdate]
+    [form, onUpdate],
   );
 
   return (

@@ -1,17 +1,17 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { CheckboxField } from "@/types/elements";
+import { CheckSquare } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CheckSquare } from "lucide-react";
 
 function CheckboxEditor({ field }: FieldEditorProps) {
   const f = field as CheckboxField;
@@ -21,7 +21,9 @@ function CheckboxEditor({ field }: FieldEditorProps) {
       <div className="space-y-1">
         <Label className="text-sm font-medium">
           {f.label || "Checkbox"}
-          {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+          {f.validation?.required && (
+            <span className="text-destructive ml-1">*</span>
+          )}
         </Label>
         {f.description && (
           <p className="text-xs text-muted-foreground">{f.description}</p>
@@ -31,7 +33,12 @@ function CheckboxEditor({ field }: FieldEditorProps) {
   );
 }
 
-function CheckboxRenderer({ field, value, onChange, error }: FieldRendererProps) {
+function CheckboxRenderer({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldRendererProps) {
   const f = field as CheckboxField;
   return (
     <div className="space-y-2">
@@ -45,7 +52,9 @@ function CheckboxRenderer({ field, value, onChange, error }: FieldRendererProps)
         <div className="space-y-1">
           <Label htmlFor={f.id} className="text-sm font-medium cursor-pointer">
             {f.label}
-            {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+            {f.validation?.required && (
+              <span className="text-destructive ml-1">*</span>
+            )}
           </Label>
           {f.description && (
             <p className="text-xs text-muted-foreground">{f.description}</p>
@@ -59,7 +68,8 @@ function CheckboxRenderer({ field, value, onChange, error }: FieldRendererProps)
 
 function CheckboxSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as CheckboxField;
-  const update = (updates: Partial<CheckboxField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<CheckboxField>) =>
+    onChange({ ...f, ...updates });
 
   return (
     <div className="space-y-4">

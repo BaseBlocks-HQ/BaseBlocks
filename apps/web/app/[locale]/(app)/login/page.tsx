@@ -80,9 +80,7 @@ export default function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            {isLoading
-              ? t("common.redirecting")
-              : t("auth.continueWithGoogle")}
+            {isLoading ? t("common.redirecting") : t("auth.continueWithGoogle")}
           </Button>
         </CardContent>
         <CardFooter>

@@ -23,7 +23,7 @@ export const create = mutation({
 
     if (existingLibrary) {
       throw new Error(
-        `A library named "${name}" already exists. Please choose a different name.`
+        `A library named "${name}" already exists. Please choose a different name.`,
       );
     }
 
@@ -65,7 +65,7 @@ export const update = mutation({
 
       if (existingLibrary && existingLibrary._id !== libraryId) {
         throw new Error(
-          `A library named "${name}" already exists. Please choose a different name.`
+          `A library named "${name}" already exists. Please choose a different name.`,
         );
       }
     }

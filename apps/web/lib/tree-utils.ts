@@ -183,7 +183,11 @@ export function getProjection(
     // Going up in the tree - find the appropriate ancestor
     // Walk up from overItem to find the parent at the right depth
     let currentItem = overItem;
-    for (let i = overIndex - 1; i >= 0 && currentItem.depth > clampedDepth; i--) {
+    for (
+      let i = overIndex - 1;
+      i >= 0 && currentItem.depth > clampedDepth;
+      i--
+    ) {
       const item = items[i];
       if (item && item.depth < currentItem.depth) {
         currentItem = item;
@@ -229,13 +233,16 @@ function calculateNewOrder(
   const overIndex = siblings.findIndex((s) => s._id === overId);
   if (overIndex === -1) {
     // Not found among siblings, add at end
-    return siblings.length > 0 ? Math.max(...siblings.map((s) => s.order)) + 1 : 0;
+    return siblings.length > 0
+      ? Math.max(...siblings.map((s) => s.order)) + 1
+      : 0;
   }
 
   if (position === "before") {
     // Place before the over item
     const overOrder = siblings[overIndex]?.order ?? 0;
-    const prevOrder = overIndex > 0 ? (siblings[overIndex - 1]?.order ?? -1) : -1;
+    const prevOrder =
+      overIndex > 0 ? (siblings[overIndex - 1]?.order ?? -1) : -1;
     return (prevOrder + overOrder) / 2;
   }
 
@@ -267,7 +274,10 @@ export function wouldCreateCircle(
 /**
  * Get all descendant IDs of a page (recursively).
  */
-export function getDescendantIds(pages: PageListItem[], pageId: string): string[] {
+export function getDescendantIds(
+  pages: PageListItem[],
+  pageId: string,
+): string[] {
   const result: string[] = [];
   const children = pages.filter((p) => p.parentId === pageId);
 

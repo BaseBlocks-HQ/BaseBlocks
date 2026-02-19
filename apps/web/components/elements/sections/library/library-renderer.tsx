@@ -63,7 +63,9 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const showSidebar = containerWidth >= 400;
 
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
   const [folderMenuOpen, setFolderMenuOpen] = useState(false);
   const [breadcrumbOpen, setBreadcrumbOpen] = useState(false);
   const { openFile } = useMediaViewer();
@@ -92,16 +94,19 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     });
   }, []);
 
-  const handleSelectFolder = useCallback((folderId: string | null, closeMenu = false) => {
-    setSelectedFolderId(folderId);
-    if (folderId) {
-      setExpandedFolders((prev) => new Set(prev).add(folderId));
-    }
-    if (closeMenu) {
-      setFolderMenuOpen(false);
-    }
-    setBreadcrumbOpen(false);
-  }, []);
+  const handleSelectFolder = useCallback(
+    (folderId: string | null, closeMenu = false) => {
+      setSelectedFolderId(folderId);
+      if (folderId) {
+        setExpandedFolders((prev) => new Set(prev).add(folderId));
+      }
+      if (closeMenu) {
+        setFolderMenuOpen(false);
+      }
+      setBreadcrumbOpen(false);
+    },
+    [],
+  );
 
   const handleDownload = useCallback((cdnUrl: string, filename: string) => {
     const link = document.createElement("a");
@@ -129,7 +134,10 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
 
   if (!libraryId || !library) {
     return (
-      <div ref={containerRef} className="border rounded-lg p-6 text-center text-muted-foreground text-sm">
+      <div
+        ref={containerRef}
+        className="border rounded-lg p-6 text-center text-muted-foreground text-sm"
+      >
         No library configured
       </div>
     );
@@ -162,7 +170,9 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           <div
             className={cn(
               "flex items-center gap-1 py-1 px-2 rounded cursor-pointer text-sm",
-              isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/50",
+              isSelected
+                ? "bg-primary/10 text-primary font-medium"
+                : "hover:bg-muted/50",
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={() => handleSelectFolder(folder._id, closeOnSelect)}
@@ -216,7 +226,8 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const showFolders = content.showFolderTree !== false;
 
   // Current location display text
-  const lastFolder = folderPath.length > 0 ? folderPath[folderPath.length - 1] : null;
+  const lastFolder =
+    folderPath.length > 0 ? folderPath[folderPath.length - 1] : null;
   const currentLocation = lastFolder?.name ?? library.name;
 
   // Breadcrumb navigation popover content
@@ -226,7 +237,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
         type="button"
         className={cn(
           "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-          !selectedFolderId && "bg-primary/10 text-primary font-medium"
+          !selectedFolderId && "bg-primary/10 text-primary font-medium",
         )}
         onClick={() => handleSelectFolder(null)}
       >
@@ -239,7 +250,8 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           type="button"
           className={cn(
             "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-            index === folderPath.length - 1 && "bg-primary/10 text-primary font-medium"
+            index === folderPath.length - 1 &&
+              "bg-primary/10 text-primary font-medium",
           )}
           style={{ paddingLeft: `${(index + 1) * 12 + 12}px` }}
           onClick={() => handleSelectFolder(folder._id)}
@@ -261,7 +273,9 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
           >
             <Home className="h-3 w-3 shrink-0" />
-            {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+            {folderPath.length > 0 && (
+              <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
+            )}
             <span className="truncate">{currentLocation}</span>
           </button>
         </PopoverTrigger>
@@ -276,9 +290,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const folderMenuContent = (
     <div className="flex flex-col max-h-72 overflow-hidden">
       {/* Breadcrumb nav in popover */}
-      <div className="border-b">
-        {breadcrumbNavContent}
-      </div>
+      <div className="border-b">{breadcrumbNavContent}</div>
       {/* Folder list */}
       <ScrollArea className="flex-1">
         <div className="py-1">{renderFolderTree(undefined, 0, true)}</div>
@@ -287,7 +299,10 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   );
 
   return (
-    <div ref={containerRef} className="w-full border rounded-lg overflow-hidden">
+    <div
+      ref={containerRef}
+      className="w-full border rounded-lg overflow-hidden"
+    >
       <div className="flex h-100">
         {/* Sidebar - shown when container is wide enough */}
         {showFolders && showSidebar && (
@@ -306,11 +321,19 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
             <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
               <Popover open={folderMenuOpen} onOpenChange={setFolderMenuOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                  >
                     <Menu className="h-3.5 w-3.5" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-56 p-0">
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-56 p-0"
+                >
                   {folderMenuContent}
                 </PopoverContent>
               </Popover>
@@ -322,11 +345,17 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
                   >
                     <Home className="h-3 w-3 shrink-0" />
-                    {folderPath.length > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />}
+                    {folderPath.length > 0 && (
+                      <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
+                    )}
                     <span className="truncate">{currentLocation}</span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-48 p-0">
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-48 p-0"
+                >
                   {breadcrumbNavContent}
                 </PopoverContent>
               </Popover>
@@ -337,17 +366,20 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
           {hasContent ? (
             <ScrollArea className="flex-1 min-w-0">
               <div className="p-1.5 space-y-0.5">
-                {sortedFiles.length === 0 && currentSubfolders.map((folder) => (
-                  <div
-                    key={folder._id}
-                    className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
-                    onClick={() => handleSelectFolder(folder._id)}
-                  >
-                    <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="text-sm truncate flex-1 min-w-0">{folder.name}</span>
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100" />
-                  </div>
-                ))}
+                {sortedFiles.length === 0 &&
+                  currentSubfolders.map((folder) => (
+                    <div
+                      key={folder._id}
+                      className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
+                      onClick={() => handleSelectFolder(folder._id)}
+                    >
+                      <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="text-sm truncate flex-1 min-w-0">
+                        {folder.name}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                    </div>
+                  ))}
                 {sortedFiles.map((file) => (
                   <div
                     key={file._id}
@@ -360,7 +392,10 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                         getFileTypeColor(file.contentType),
                       )}
                     >
-                      <FileIcon contentType={file.contentType} className="h-4 w-4" />
+                      <FileIcon
+                        contentType={file.contentType}
+                        className="h-4 w-4"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <MiddleTruncate
@@ -406,7 +441,10 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
             </ScrollArea>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-              <FolderOpen className="h-10 w-10 mb-3 opacity-30" strokeWidth={1.5} />
+              <FolderOpen
+                className="h-10 w-10 mb-3 opacity-30"
+                strokeWidth={1.5}
+              />
               <p className="text-sm font-medium">No files yet</p>
               <p className="text-xs opacity-60 mt-0.5">This folder is empty</p>
             </div>

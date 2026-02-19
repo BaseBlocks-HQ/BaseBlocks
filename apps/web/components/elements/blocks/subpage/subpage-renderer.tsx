@@ -1,7 +1,7 @@
 "use client";
 
-import { usePublicSubpageContextOptional } from "@/components/public/public-subpage-context";
 import type { ElementRendererProps } from "@/components/elements/registry";
+import { usePublicSubpageContextOptional } from "@/components/public/public-subpage-context";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";

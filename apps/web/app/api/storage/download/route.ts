@@ -52,7 +52,10 @@ export async function GET(request: NextRequest) {
     // Cache images (favicons, OG images) for 1 hour, revalidate in background.
     // The `v=` query param from metadata busts stale entries on update.
     if (contentType.startsWith("image/")) {
-      headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      headers.set(
+        "Cache-Control",
+        "public, max-age=3600, stale-while-revalidate=86400",
+      );
     }
 
     return new NextResponse(data, {

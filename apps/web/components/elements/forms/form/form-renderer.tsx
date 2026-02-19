@@ -6,12 +6,11 @@
  */
 
 import type { ElementRendererProps } from "@/components/elements/registry";
-import type { FormContent } from "@/types/elements";
-import { useState, useCallback } from "react";
-import { getFieldRenderer } from "./builder/field-registry";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { getFieldRenderer } from "./builder/field-registry";
 
 // Import fields to register them
 import "./fields";
@@ -51,13 +50,15 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
 
       if (field.validation?.minLength && typeof value === "string") {
         if (value.length < field.validation.minLength) {
-          newErrors[field.name] = `Must be at least ${field.validation.minLength} characters`;
+          newErrors[field.name] =
+            `Must be at least ${field.validation.minLength} characters`;
         }
       }
 
       if (field.validation?.maxLength && typeof value === "string") {
         if (value.length > field.validation.maxLength) {
-          newErrors[field.name] = `Must be no more than ${field.validation.maxLength} characters`;
+          newErrors[field.name] =
+            `Must be no more than ${field.validation.maxLength} characters`;
         }
       }
     }
@@ -123,7 +124,11 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
         );
       })}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full sm:w-auto"
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

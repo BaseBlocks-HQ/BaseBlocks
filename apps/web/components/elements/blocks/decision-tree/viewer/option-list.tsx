@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DecisionTreeNode } from "@/types/elements";
+import { ChevronRight } from "lucide-react";
 
 interface OptionListProps {
   nodes: DecisionTreeNode[];
@@ -22,7 +22,9 @@ export function OptionList({
   if (nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-12 px-4">
-        <p className="text-sm font-medium text-muted-foreground">No options available</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          No options available
+        </p>
         <p className="text-xs text-muted-foreground/70">
           There are no choices at this level
         </p>
@@ -52,7 +54,12 @@ export function OptionList({
             )}
             onClick={() => onSelect(node)}
           >
-            <span className={cn("font-medium min-w-0 truncate", compact && "text-sm")}>
+            <span
+              className={cn(
+                "font-medium min-w-0 truncate",
+                compact && "text-sm",
+              )}
+            >
               {node.name}
             </span>
             {hasChildren && (

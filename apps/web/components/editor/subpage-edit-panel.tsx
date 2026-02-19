@@ -6,7 +6,7 @@ import { useDebounceCallback } from "@/hooks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { X, Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useEditorContext } from "./editor-context";
@@ -17,11 +17,16 @@ interface SubpageEditPanelProps {
   onToggleFullscreen?: () => void;
 }
 
-export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEditPanelProps) {
+export function SubpageEditPanel({
+  isFullscreen,
+  onToggleFullscreen,
+}: SubpageEditPanelProps) {
   const { editingSubpage, closeSubpageEditor } = useEditorContext();
   const page = useQuery(
     api.pages.queries.get,
-    editingSubpage?.pageId ? { pageId: editingSubpage.pageId as Id<"pages"> } : "skip",
+    editingSubpage?.pageId
+      ? { pageId: editingSubpage.pageId as Id<"pages"> }
+      : "skip",
   );
   const updatePage = useMutation(api.pages.mutations.update);
 
@@ -72,11 +77,26 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
         />
         <div className="flex items-center gap-1 shrink-0">
           {onToggleFullscreen && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onToggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={onToggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={closeSubpageEditor}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={closeSubpageEditor}
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>

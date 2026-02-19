@@ -47,7 +47,9 @@ function detectDelimiter(text: string): "," | ";" | "\t" {
       countDelimiterOutsideQuotes(line, candidate),
     );
     const totalCount = delimiterCounts.reduce((sum, count) => sum + count, 0);
-    const linesWithDelimiter = delimiterCounts.filter((count) => count > 0).length;
+    const linesWithDelimiter = delimiterCounts.filter(
+      (count) => count > 0,
+    ).length;
     const score = totalCount + linesWithDelimiter * 0.5;
 
     if (score > bestScore) {

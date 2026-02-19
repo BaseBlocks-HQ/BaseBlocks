@@ -1,7 +1,11 @@
 "use client";
 
 import { DashboardSkeleton } from "@/components/skeletons";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@repo/backend";
@@ -21,7 +25,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Detect cross-domain OTT exchange in progress (check URL on client only)
   const [hasOtt, setHasOtt] = useState(false);
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.search.includes("ott=")) {
+    if (
+      typeof window !== "undefined" &&
+      window.location.search.includes("ott=")
+    ) {
       setHasOtt(true);
     }
   }, []);

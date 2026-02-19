@@ -1,5 +1,6 @@
 "use client";
 
+import { usePublicSiteContext } from "@/components/public/public-site-context";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
@@ -79,7 +79,9 @@ export function PageBreadcrumbs({ pageId, pageTitle }: PageBreadcrumbsProps) {
           <Fragment key={item._id}>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href={getPageLink(siteSlug, item.path)}>{item.title}</Link>
+                <Link href={getPageLink(siteSlug, item.path)}>
+                  {item.title}
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

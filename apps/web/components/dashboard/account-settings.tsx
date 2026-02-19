@@ -1,15 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,15 +11,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
+import { api } from "@repo/backend";
+import { useMutation } from "convex/react";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMutation } from "convex/react";
-import { api } from "@repo/backend";
 
 export function AccountSettings() {
   const t = useTranslations("settings");
@@ -42,7 +42,9 @@ export function AccountSettings() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deleteMyAccountData = useMutation(api.members.mutations.deleteMyAccountData);
+  const deleteMyAccountData = useMutation(
+    api.members.mutations.deleteMyAccountData,
+  );
 
   const getInitials = (name?: string, email?: string) => {
     if (name) return name.slice(0, 2).toUpperCase();
@@ -62,7 +64,8 @@ export function AccountSettings() {
       setOpen(false);
       router.push("/login");
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("deleteAccountError");
+      const message =
+        err instanceof Error ? err.message : t("deleteAccountError");
       setError(message);
       toast.error(message);
     } finally {

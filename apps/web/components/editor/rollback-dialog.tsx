@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 
@@ -48,7 +48,8 @@ export function RollbackDialog({
             Rollback to v{targetVersion}
           </DialogTitle>
           <DialogDescription>
-            This will restore the live site to the state it was in at version {targetVersion}.
+            This will restore the live site to the state it was in at version{" "}
+            {targetVersion}.
             {targetNotes && (
               <span className="block mt-1 text-foreground/70">
                 &ldquo;{targetNotes}&rdquo;
@@ -62,7 +63,8 @@ export function RollbackDialog({
             This will change what visitors see on the live site.
           </p>
           <p className="mt-1 text-amber-700 dark:text-amber-300">
-            Your draft content will not be affected &mdash; only the published version will change.
+            Your draft content will not be affected &mdash; only the published
+            version will change.
           </p>
         </div>
 

@@ -21,12 +21,8 @@ export const list = query({
     const teamIds = memberships.map((m) => m.teamId);
 
     // Fetch all teams
-    const teams = await Promise.all(
-      teamIds.map((id) => ctx.db.get(id)),
-    );
-    const teamMap = new Map(
-      teams.filter(Boolean).map((t) => [t!._id, t!]),
-    );
+    const teams = await Promise.all(teamIds.map((id) => ctx.db.get(id)));
+    const teamMap = new Map(teams.filter(Boolean).map((t) => [t!._id, t!]));
 
     // Fetch sites for all teams
     const sitesPromises = teamIds.map((teamId) =>
@@ -175,7 +171,8 @@ export const getWithDefaultPage = query({
     if (!site) return null;
 
     // Use published defaultPageId (fall back to draft for migration compat)
-    const publishedDefaultPageId = site.publishedDefaultPageId ?? site.defaultPageId;
+    const publishedDefaultPageId =
+      site.publishedDefaultPageId ?? site.defaultPageId;
 
     // Get the default page
     let defaultPage = null;

@@ -71,7 +71,7 @@ export const updateExtraction = internalMutation({
       const existing = await ctx.db
         .query("searchableContent")
         .withIndex("by_source", (q) =>
-          q.eq("contentType", "document").eq("sourceId", documentId)
+          q.eq("contentType", "document").eq("sourceId", documentId),
         )
         .first();
 

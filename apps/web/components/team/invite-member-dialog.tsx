@@ -114,9 +114,7 @@ export function InviteMemberDialog({}: InviteMemberDialogProps) {
             <Label>{t("invite.selectRole")}</Label>
             <Select
               value={role}
-              onValueChange={(value) =>
-                setRole(value as "admin" | "member")
-              }
+              onValueChange={(value) => setRole(value as "admin" | "member")}
             >
               <SelectTrigger>
                 <SelectValue />

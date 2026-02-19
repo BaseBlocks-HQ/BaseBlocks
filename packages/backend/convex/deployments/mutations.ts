@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { getAuthContext, requireAdmin } from "../auth";
+import { requireAdmin } from "../auth";
 
 /**
  * Deploy site - copies ALL draft fields to published fields for sites, pages, and layouts.
@@ -210,9 +210,7 @@ export const rollback = mutation({
     const siteSettingsSnapshot = snapshots.find(
       (s) => s.chunkType === "site-settings",
     );
-    const pageTreeSnapshot = snapshots.find(
-      (s) => s.chunkType === "page-tree",
-    );
+    const pageTreeSnapshot = snapshots.find((s) => s.chunkType === "page-tree");
     const pageLayoutSnapshots = snapshots.filter(
       (s) => s.chunkType === "page-layouts",
     );
@@ -230,9 +228,7 @@ export const rollback = mutation({
       version: newVersion,
       deployedBy: auth.userId,
       deployedAt: now,
-      notes:
-        notes ||
-        `Rollback to v${targetDeployment.version}`,
+      notes: notes || `Rollback to v${targetDeployment.version}`,
       summary: targetDeployment.summary,
       status: "active",
     });

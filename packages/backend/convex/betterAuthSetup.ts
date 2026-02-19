@@ -1,14 +1,17 @@
+import { type GenericCtx, createClient } from "@convex-dev/better-auth";
+import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
+import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
+import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
-import { betterAuth, type BetterAuthOptions } from "better-auth/minimal";
-import { organization } from "better-auth/plugins";
 import authConfig from "./auth.config";
 import authSchema from "./betterAuth/schema";
 
 const siteUrl = process.env.SITE_URL ?? ""; // Convex site URL (where auth routes live)
-const appUrls = (process.env.APP_URL ?? "").split(",").map((u) => u.trim()).filter(Boolean); // Frontend URL(s)
+const appUrls = (process.env.APP_URL ?? "")
+  .split(",")
+  .map((u) => u.trim())
+  .filter(Boolean); // Frontend URL(s)
 const appUrl = appUrls[0] ?? ""; // Primary frontend URL (for crossDomain)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- monorepo type resolution workaround

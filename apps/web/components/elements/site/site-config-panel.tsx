@@ -1,6 +1,7 @@
 "use client";
 
 import { DropZone } from "@/components/document-library/drop-zone";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +36,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
@@ -123,7 +123,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         toast.error("Failed to update setting");
       }
     },
-    [siteId, site, updateSite, editorCtx]
+    [siteId, site, updateSite, editorCtx],
   );
 
   // Handle logo upload
@@ -169,7 +169,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         toast.error(uploadState.error);
       }
     },
-    [siteId, site, uploadImage, uploadState.error, updateSite, editorCtx]
+    [siteId, site, uploadImage, uploadState.error, updateSite, editorCtx],
   );
 
   // Handle name save
@@ -235,9 +235,13 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         } else {
           setLocalOgImage(result.url);
         }
-        toast.success(field === "favicon" ? "Favicon uploaded" : "OG image uploaded");
+        toast.success(
+          field === "favicon" ? "Favicon uploaded" : "OG image uploaded",
+        );
       } finally {
-        setMetadataUploadingField((current) => (current === field ? null : current));
+        setMetadataUploadingField((current) =>
+          current === field ? null : current,
+        );
       }
     },
     [siteId, uploadImage, uploadState.error],
@@ -288,7 +292,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const showBreadcrumbs =
-    site.settings.showBreadcrumbs ?? site.settings.navigationStyle !== "sidebar";
+    site.settings.showBreadcrumbs ??
+    site.settings.navigationStyle !== "sidebar";
 
   return (
     <div className="p-4 space-y-6">
@@ -386,7 +391,14 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 <DropZone
                   onFilesAccepted={handleLogoUpload}
                   accept={{
-                    "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
+                    "image/*": [
+                      ".jpg",
+                      ".jpeg",
+                      ".png",
+                      ".gif",
+                      ".webp",
+                      ".svg",
+                    ],
                   }}
                   maxSize={5 * 1024 * 1024}
                   className="py-4"
@@ -462,7 +474,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                   onClick={() => setIsEditingName(true)}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-md border text-sm",
-                    "hover:bg-muted/50 transition-colors cursor-text"
+                    "hover:bg-muted/50 transition-colors cursor-text",
                   )}
                 >
                   {site.name}
@@ -479,7 +491,10 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="show-header-search" className="text-sm font-medium">
+              <Label
+                htmlFor="show-header-search"
+                className="text-sm font-medium"
+              >
                 Search in Header
               </Label>
             </div>
@@ -659,7 +674,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => setLocalFavicon("")}
-                    disabled={!localFavicon || isMetadataUploading || isSavingMetadata}
+                    disabled={
+                      !localFavicon || isMetadataUploading || isSavingMetadata
+                    }
                   >
                     Remove
                   </Button>
@@ -720,7 +737,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => setLocalOgImage("")}
-                    disabled={!localOgImage || isMetadataUploading || isSavingMetadata}
+                    disabled={
+                      !localOgImage || isMetadataUploading || isSavingMetadata
+                    }
                   >
                     Remove
                   </Button>

@@ -1,16 +1,16 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { ShortTextField } from "@/types/elements";
+import { Type } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Type } from "lucide-react";
 
 // =============================================================================
 // EDITOR (Builder Canvas Preview)
@@ -22,7 +22,9 @@ function ShortTextEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Short Text"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Input
         placeholder={f.placeholder || "Enter text..."}
@@ -40,13 +42,20 @@ function ShortTextEditor({ field }: FieldEditorProps) {
 // RENDERER (Published Form)
 // =============================================================================
 
-function ShortTextRenderer({ field, value, onChange, error }: FieldRendererProps) {
+function ShortTextRenderer({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldRendererProps) {
   const f = field as ShortTextField;
   return (
     <div className="space-y-2">
       <Label htmlFor={f.id} className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Input
         id={f.id}

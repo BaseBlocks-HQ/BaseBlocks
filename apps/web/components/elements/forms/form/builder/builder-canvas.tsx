@@ -5,12 +5,12 @@
  * Main area where form fields are displayed and arranged
  */
 
-import { useFormBuilder } from "./form-builder-context";
-import { getFieldEditor } from "./field-registry";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Trash2, Copy, Plus } from "lucide-react";
-import type { FormField, FormFieldType } from "@/types/elements";
+import { cn } from "@/lib/utils";
+import type { FormField } from "@/types/elements";
+import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { getFieldEditor } from "./field-registry";
+import { useFormBuilder } from "./form-builder-context";
 
 // Import fields to register them
 import "../fields";
@@ -23,7 +23,8 @@ interface FieldItemProps {
 }
 
 function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
-  const { updateField, removeField, duplicateField, moveField, form } = useFormBuilder();
+  const { updateField, removeField, duplicateField, moveField, form } =
+    useFormBuilder();
   const Editor = getFieldEditor(field.type);
 
   const handleMoveUp = (e: React.MouseEvent) => {
@@ -56,7 +57,7 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
         "group relative border rounded-lg transition-all cursor-pointer",
         isSelected
           ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-          : "border-border hover:border-muted-foreground/50"
+          : "border-border hover:border-muted-foreground/50",
       )}
       onClick={onSelect}
     >
@@ -64,7 +65,7 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
       <div
         className={cn(
           "absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity",
-          isSelected && "opacity-100"
+          isSelected && "opacity-100",
         )}
       >
         <Button
@@ -79,14 +80,17 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
 
       {/* Field content */}
       <div className="p-4">
-        <Editor field={field} onChange={(updated) => updateField(field.id, updated)} />
+        <Editor
+          field={field}
+          onChange={(updated) => updateField(field.id, updated)}
+        />
       </div>
 
       {/* Quick actions */}
       <div
         className={cn(
           "absolute -right-10 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity",
-          isSelected && "opacity-100"
+          isSelected && "opacity-100",
         )}
       >
         <Button
@@ -132,10 +136,7 @@ export function BuilderCanvas() {
               Add fields from the sidebar or click below to get started
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => addField("short-text")}
-          >
+          <Button variant="outline" onClick={() => addField("short-text")}>
             <Plus className="h-4 w-4 mr-2" />
             Add first field
           </Button>

@@ -20,7 +20,11 @@ interface BreadcrumbBarProps {
  * Slim breadcrumb navigation bar that sits below the header/subnav
  * Styled to match the SubNavBar aesthetic
  */
-export function BreadcrumbBar({ pageId, pageTitle, className }: BreadcrumbBarProps) {
+export function BreadcrumbBar({
+  pageId,
+  pageTitle,
+  className,
+}: BreadcrumbBarProps) {
   const { siteSlug } = usePublicSiteContext();
   const ancestors = useQuery(api.pages.queries.getAncestors, { pageId });
 
@@ -56,12 +60,7 @@ export function BreadcrumbBar({ pageId, pageTitle, className }: BreadcrumbBarPro
   }
 
   return (
-    <nav
-      className={cn(
-        "border-b bg-muted/30",
-        className
-      )}
-    >
+    <nav className={cn("border-b bg-muted/30", className)}>
       <div className="container mx-auto px-4">
         <div className="flex h-8 items-center">
           <ol className="flex items-center gap-1 text-sm text-muted-foreground">

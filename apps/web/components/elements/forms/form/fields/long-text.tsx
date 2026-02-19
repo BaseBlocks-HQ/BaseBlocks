@@ -1,17 +1,17 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import type { LongTextField } from "@/types/elements";
+import { AlignLeft } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { AlignLeft } from "lucide-react";
 
 function LongTextEditor({ field }: FieldEditorProps) {
   const f = field as LongTextField;
@@ -19,7 +19,9 @@ function LongTextEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Long Text"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Textarea
         placeholder={f.placeholder || "Enter text..."}
@@ -34,13 +36,20 @@ function LongTextEditor({ field }: FieldEditorProps) {
   );
 }
 
-function LongTextRenderer({ field, value, onChange, error }: FieldRendererProps) {
+function LongTextRenderer({
+  field,
+  value,
+  onChange,
+  error,
+}: FieldRendererProps) {
   const f = field as LongTextField;
   return (
     <div className="space-y-2">
       <Label htmlFor={f.id} className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Textarea
         id={f.id}
@@ -64,7 +73,8 @@ function LongTextRenderer({ field, value, onChange, error }: FieldRendererProps)
 
 function LongTextSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as LongTextField;
-  const update = (updates: Partial<LongTextField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<LongTextField>) =>
+    onChange({ ...f, ...updates });
 
   return (
     <div className="space-y-4">
@@ -104,7 +114,9 @@ function LongTextSettings({ field, onChange }: FieldSettingsProps) {
           min={2}
           max={20}
           value={f.rows || 4}
-          onChange={(e) => update({ rows: parseInt(e.target.value) || 4 })}
+          onChange={(e) =>
+            update({ rows: Number.parseInt(e.target.value) || 4 })
+          }
         />
       </div>
       <div className="flex items-center justify-between">

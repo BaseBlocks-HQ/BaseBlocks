@@ -1,16 +1,8 @@
 "use client";
 
-import type { SelectField, FieldOption } from "@/types/elements";
-import type {
-  FieldEditorProps,
-  FieldRendererProps,
-  FieldSettingsProps,
-} from "../builder/field-registry";
-import { registerField } from "../builder/field-registry";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,7 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, Plus, Trash2, GripVertical } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import type { FieldOption, SelectField } from "@/types/elements";
+import { ChevronDown, GripVertical, Plus, Trash2 } from "lucide-react";
+import type {
+  FieldEditorProps,
+  FieldRendererProps,
+  FieldSettingsProps,
+} from "../builder/field-registry";
+import { registerField } from "../builder/field-registry";
 
 function SelectEditor({ field }: FieldEditorProps) {
   const f = field as SelectField;
@@ -26,7 +26,9 @@ function SelectEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Dropdown"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <div className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
         <span>{f.placeholder || "Select an option..."}</span>
@@ -45,7 +47,9 @@ function SelectRenderer({ field, value, onChange, error }: FieldRendererProps) {
     <div className="space-y-2">
       <Label htmlFor={f.id} className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Select value={(value as string) || ""} onValueChange={onChange}>
         <SelectTrigger className={error ? "border-destructive" : ""}>
@@ -69,7 +73,8 @@ function SelectRenderer({ field, value, onChange, error }: FieldRendererProps) {
 
 function SelectSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as SelectField;
-  const update = (updates: Partial<SelectField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<SelectField>) =>
+    onChange({ ...f, ...updates });
 
   const addOption = () => {
     const newOption: FieldOption = {
@@ -83,7 +88,7 @@ function SelectSettings({ field, onChange }: FieldSettingsProps) {
   const updateOption = (id: string, updates: Partial<FieldOption>) => {
     update({
       options: f.options.map((opt) =>
-        opt.id === id ? { ...opt, ...updates } : opt
+        opt.id === id ? { ...opt, ...updates } : opt,
       ),
     });
   };
@@ -127,7 +132,12 @@ function SelectSettings({ field, onChange }: FieldSettingsProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Options</Label>
-          <Button variant="ghost" size="sm" onClick={addOption} className="h-7 px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={addOption}
+            className="h-7 px-2"
+          >
             <Plus className="h-3 w-3 mr-1" /> Add
           </Button>
         </div>
@@ -138,7 +148,12 @@ function SelectSettings({ field, onChange }: FieldSettingsProps) {
               <Input
                 className="h-8 text-sm flex-1"
                 value={opt.label}
-                onChange={(e) => updateOption(opt.id, { label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                onChange={(e) =>
+                  updateOption(opt.id, {
+                    label: e.target.value,
+                    value: e.target.value.toLowerCase().replace(/\s+/g, "_"),
+                  })
+                }
                 placeholder="Option label"
               />
               <Button

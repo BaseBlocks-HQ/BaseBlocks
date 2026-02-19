@@ -7,9 +7,7 @@ import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 
-export function SubpageEditor({
-  content,
-}: ElementEditorProps<"subpage">) {
+export function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   const editorContext = useEditorContextOptional();
   const page = useQuery(
     api.pages.queries.get,
@@ -41,12 +39,8 @@ export function SubpageEditor({
         <FileText className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium truncate">
-          {page?.title ?? "Loading..."}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Click to edit sub-page
-        </p>
+        <h3 className="font-medium truncate">{page?.title ?? "Loading..."}</h3>
+        <p className="text-sm text-muted-foreground">Click to edit sub-page</p>
       </div>
       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
     </button>

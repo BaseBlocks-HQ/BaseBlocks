@@ -4,12 +4,12 @@ import {
   ElementRendererWrapper,
   LayoutContextProvider,
 } from "@/components/elements";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
 import { ContentSkeleton } from "@/components/skeletons";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
@@ -23,10 +23,8 @@ import type {
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useQuery } from "convex/react";
-import { useState, useEffect } from "react";
-import {
-  usePublicSubpageContext,
-} from "./public-subpage-context";
+import { useEffect, useState } from "react";
+import { usePublicSubpageContext } from "./public-subpage-context";
 import { PublicSubpagePanel } from "./public-subpage-panel";
 
 interface PublicContentProps {
@@ -137,16 +135,13 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
     return (
       <div key={layout._id} style={gridStyle}>
         {layout.slots.map((slot: SlotDoc) => (
-          <div
-            key={slot.id}
-            className="min-w-0"
-          >
+          <div key={slot.id} className="min-w-0">
             {slot.blocks.map((block: BlockDoc, index: number) => (
               <div
                 key={block.id}
                 className={cn(
                   "prose prose-neutral dark:prose-invert max-w-none",
-                  index < slot.blocks.length - 1 && "mb-3"
+                  index < slot.blocks.length - 1 && "mb-3",
                 )}
               >
                 <LayoutContextProvider
@@ -170,7 +165,9 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
   // Main content renderer
   const renderMainContent = () => (
     <div className="p-4 md:p-8">
-      <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+      <article
+        className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
+      >
         <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
 
         {/* Page-level tab bar */}

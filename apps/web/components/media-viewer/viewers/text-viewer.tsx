@@ -86,7 +86,13 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
         return (
           <mark
             key={i}
-            ref={isFirst ? (el) => { firstMatchRef.current = el; } : undefined}
+            ref={
+              isFirst
+                ? (el) => {
+                    firstMatchRef.current = el;
+                  }
+                : undefined
+            }
             className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded"
           >
             {part}

@@ -134,7 +134,12 @@ export interface FlowchartContent {
 
 // Decision tree block types
 // Allowed block types inside decision tree nodes (subset of BaseBlocks block types)
-export type DecisionTreeBlockType = "heading" | "paragraph" | "callout" | "code" | "divider";
+export type DecisionTreeBlockType =
+  | "heading"
+  | "paragraph"
+  | "callout"
+  | "code"
+  | "divider";
 
 export interface DecisionTreeContentBlock {
   id: string;

@@ -1,7 +1,5 @@
 "use client";
 
-import type { FlowchartDiagram } from "@/types/elements/blocks";
-import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -9,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { FlowchartDiagram } from "@/types/elements/blocks";
+import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 
 interface DiagramViewerProps {
@@ -33,8 +33,8 @@ export function DiagramViewer({
 
   return (
     <div className="space-y-2 w-full min-w-0 max-w-full">
-      {showTabs && (
-        tabsMode === "dropdown" ? (
+      {showTabs &&
+        (tabsMode === "dropdown" ? (
           <div className="px-1 min-w-0">
             <Select value={active.id} onValueChange={setActiveId}>
               <SelectTrigger className="h-9 w-full sm:w-[260px]">
@@ -66,9 +66,12 @@ export function DiagramViewer({
               </button>
             ))}
           </div>
-        )
-      )}
-      <MermaidDiagram code={active.mermaidCode} contained={contained} theme={theme} />
+        ))}
+      <MermaidDiagram
+        code={active.mermaidCode}
+        contained={contained}
+        theme={theme}
+      />
     </div>
   );
 }

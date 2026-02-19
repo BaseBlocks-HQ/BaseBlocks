@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Rocket } from "lucide-react";
 import { useState } from "react";
 
@@ -20,7 +20,11 @@ interface DeployDialogProps {
   onDeploy: (notes?: string) => Promise<void>;
 }
 
-export function DeployDialog({ open, onOpenChange, onDeploy }: DeployDialogProps) {
+export function DeployDialog({
+  open,
+  onOpenChange,
+  onDeploy,
+}: DeployDialogProps) {
   const [notes, setNotes] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
 
@@ -44,7 +48,8 @@ export function DeployDialog({ open, onOpenChange, onDeploy }: DeployDialogProps
             Deploy Changes
           </DialogTitle>
           <DialogDescription>
-            This will publish all draft changes to the live site. Pages, layouts, blocks, navigation, and site settings will all be updated.
+            This will publish all draft changes to the live site. Pages,
+            layouts, blocks, navigation, and site settings will all be updated.
           </DialogDescription>
         </DialogHeader>
 

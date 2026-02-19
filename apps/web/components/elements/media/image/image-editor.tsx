@@ -10,8 +10,8 @@ import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { ImageIcon, Loader2, Pencil, Trash2, Upload } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
 import { Resizable } from "re-resizable";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Custom handle component for resize corners
@@ -19,10 +19,14 @@ const ResizeHandle = ({ position }: { position: string }) => (
   <div
     className={cn(
       "absolute w-3 h-3 bg-primary border-2 border-background rounded-sm opacity-0 group-hover:opacity-100 transition-opacity",
-      position === "topLeft" && "top-0 left-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize",
-      position === "topRight" && "top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize",
-      position === "bottomLeft" && "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize",
-      position === "bottomRight" && "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize",
+      position === "topLeft" &&
+        "top-0 left-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize",
+      position === "topRight" &&
+        "top-0 right-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize",
+      position === "bottomLeft" &&
+        "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize",
+      position === "bottomRight" &&
+        "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize",
     )}
   />
 );
@@ -84,7 +88,14 @@ export function ImageEditor({
         onSaveStatusChange?.("idle");
       }
     },
-    [siteId, uploadImage, uploadState.error, onUpdate, content, onSaveStatusChange],
+    [
+      siteId,
+      uploadImage,
+      uploadState.error,
+      onUpdate,
+      content,
+      onSaveStatusChange,
+    ],
   );
 
   const handleRemoveImage = useCallback(async () => {
@@ -188,7 +199,10 @@ export function ImageEditor({
 
   // Has image - show preview with resize and edit controls
   return (
-    <div ref={containerRef} className="rounded-md transition-colors group/editor relative">
+    <div
+      ref={containerRef}
+      className="rounded-md transition-colors group/editor relative"
+    >
       <figure className="relative">
         {/* Resizable Image Container */}
         <Resizable

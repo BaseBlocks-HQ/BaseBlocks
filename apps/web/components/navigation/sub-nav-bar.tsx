@@ -1,7 +1,7 @@
 "use client";
 
-import type { PageWithChildren } from "@/types";
 import { cn } from "@/lib/utils";
+import type { PageWithChildren } from "@/types";
 import { HorizontalNavItem } from "./horizontal-nav-item";
 
 interface SubNavBarProps {
@@ -18,7 +18,7 @@ export function SubNavBar({ pages, currentPath, className }: SubNavBarProps) {
     <nav
       className={cn(
         "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        className
+        className,
       )}
     >
       <div className="container mx-auto px-4">

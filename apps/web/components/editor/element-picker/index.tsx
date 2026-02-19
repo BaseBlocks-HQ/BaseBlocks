@@ -11,16 +11,16 @@ import "@/components/elements/sections";
 import "@/components/elements/media";
 import "@/components/elements/forms";
 
-import { getElementsByCategory } from "@/components/elements/registry";
 import { CustomizationConfigPanel } from "@/components/elements/customization";
 import { NavigationConfigPanel } from "@/components/elements/navigation";
+import { getElementsByCategory } from "@/components/elements/registry";
 import { SiteConfigPanel } from "@/components/elements/site";
-import type { Id } from "@repo/backend";
 import type {
   ElementCategory,
   ElementType,
   LayoutType,
 } from "@/types/elements";
+import type { Id } from "@repo/backend";
 import { PanelTop } from "lucide-react";
 import { ElementCard } from "./element-card";
 
@@ -48,7 +48,11 @@ const ACTIVE_CATEGORIES: ElementCategory[] = [
 const EMPTY_CATEGORIES: ElementCategory[] = [];
 
 // Categories that show config panels instead of element grids
-const CONFIG_PANEL_CATEGORIES: ElementCategory[] = ["site", "navigation", "customization"];
+const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
+  "site",
+  "navigation",
+  "customization",
+];
 
 export function ElementPicker({
   siteId,
@@ -58,7 +62,7 @@ export function ElementPicker({
   onEnableTabs,
 }: ElementPickerProps) {
   const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
-    null
+    null,
   );
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -113,7 +117,10 @@ export function ElementPicker({
     }
 
     // Config panels get a longer timeout since they have interactive controls
-    const delay = activeCategory && CONFIG_PANEL_CATEGORIES.includes(activeCategory) ? 400 : 150;
+    const delay =
+      activeCategory && CONFIG_PANEL_CATEGORIES.includes(activeCategory)
+        ? 400
+        : 150;
     timeoutRef.current = setTimeout(() => {
       setActiveCategory(null);
     }, delay);
@@ -194,32 +201,30 @@ export function ElementPicker({
       )}
 
       {/* Flyout panel with elements */}
-      {activeCategory &&
-        !showsConfigPanel &&
-        categoryElements.length > 0 && (
-          <div
-            className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
-            onMouseEnter={() => handleMouseEnter(activeCategory)}
-          >
-            <ElementGrid
-              title={categoryTitle}
-              entries={categoryElements}
-              onSelect={handleSelect}
-            />
-            {/* Extra Tabs card in layouts flyout */}
-            {activeCategory === "layouts" && onEnableTabs && (
-              <div className="px-4 pb-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <ElementCard
-                    label="Tabs"
-                    icon={PanelTop}
-                    onClick={onEnableTabs}
-                  />
-                </div>
+      {activeCategory && !showsConfigPanel && categoryElements.length > 0 && (
+        <div
+          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          onMouseEnter={() => handleMouseEnter(activeCategory)}
+        >
+          <ElementGrid
+            title={categoryTitle}
+            entries={categoryElements}
+            onSelect={handleSelect}
+          />
+          {/* Extra Tabs card in layouts flyout */}
+          {activeCategory === "layouts" && onEnableTabs && (
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <ElementCard
+                  label="Tabs"
+                  icon={PanelTop}
+                  onClick={onEnableTabs}
+                />
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

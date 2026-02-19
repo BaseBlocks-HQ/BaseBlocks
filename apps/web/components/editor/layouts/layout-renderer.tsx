@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { Button } from "@/components/ui/button";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@/types";
@@ -134,28 +134,28 @@ export function LayoutRenderer({
 
               {/* Height controls - responsive sizing */}
               <div className="flex gap-0.5 sm:gap-1">
-                {(Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]).map(
-                  (size) => (
-                    <Button
-                      key={size}
-                      variant={spacerHeight === size ? "default" : "outline"}
-                      size="sm"
-                      className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSpacerHeightChange(size);
-                      }}
-                    >
-                      {size === "small"
-                        ? "S"
-                        : size === "medium"
-                          ? "M"
-                          : size === "large"
-                            ? "L"
-                            : "XL"}
-                    </Button>
-                  ),
-                )}
+                {(
+                  Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]
+                ).map((size) => (
+                  <Button
+                    key={size}
+                    variant={spacerHeight === size ? "default" : "outline"}
+                    size="sm"
+                    className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSpacerHeightChange(size);
+                    }}
+                  >
+                    {size === "small"
+                      ? "S"
+                      : size === "medium"
+                        ? "M"
+                        : size === "large"
+                          ? "L"
+                          : "XL"}
+                  </Button>
+                ))}
               </div>
             </div>
           ) : (

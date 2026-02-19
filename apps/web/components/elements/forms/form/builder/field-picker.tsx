@@ -5,10 +5,10 @@
  * Sidebar component to add new fields to the form
  */
 
-import { useFormBuilder } from "./form-builder-context";
-import { getAllFields } from "./field-registry";
 import { Button } from "@/components/ui/button";
 import type { FormFieldType } from "@/types/elements";
+import { getAllFields } from "./field-registry";
+import { useFormBuilder } from "./form-builder-context";
 
 // Import fields to register them
 import "../fields";

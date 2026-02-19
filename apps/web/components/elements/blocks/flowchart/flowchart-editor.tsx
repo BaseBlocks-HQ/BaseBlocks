@@ -9,7 +9,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebounceCallback } from "@/hooks";
-import type { FlowchartContent, FlowchartDiagram } from "@/types/elements/blocks";
+import type {
+  FlowchartContent,
+  FlowchartDiagram,
+} from "@/types/elements/blocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
@@ -18,7 +21,13 @@ function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
   if (content.diagrams && content.diagrams.length > 0) {
     return content.diagrams;
   }
-  return [{ id: generateDiagramId(), label: "Diagram 1", mermaidCode: content.mermaidCode || "" }];
+  return [
+    {
+      id: generateDiagramId(),
+      label: "Diagram 1",
+      mermaidCode: content.mermaidCode || "",
+    },
+  ];
 }
 
 export function FlowchartEditor({
@@ -95,7 +104,9 @@ export function FlowchartEditor({
   return (
     <div className="rounded-lg border bg-card transition-all hover:ring-2 hover:ring-ring/20">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <p className="text-xs font-medium text-muted-foreground">Diagram Tabs</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Diagram Tabs
+        </p>
         <Select
           value={tabsMode}
           onValueChange={(value) =>

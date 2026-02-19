@@ -17,7 +17,10 @@ export function EditorSkeleton() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex items-center gap-2 px-2 py-1.5">
               <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-4" style={{ width: `${60 + (i % 3) * 20}%` }} />
+              <Skeleton
+                className="h-4"
+                style={{ width: `${60 + (i % 3) * 20}%` }}
+              />
             </div>
           ))}
         </div>

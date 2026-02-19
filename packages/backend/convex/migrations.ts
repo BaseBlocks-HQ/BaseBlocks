@@ -33,7 +33,7 @@ export const indexSubpages = migrations.define({
           const existing = await ctx.db
             .query("searchableContent")
             .withIndex("by_source", (q) =>
-              q.eq("contentType", "subpage").eq("sourceId", sourceId)
+              q.eq("contentType", "subpage").eq("sourceId", sourceId),
             )
             .first();
 
@@ -79,7 +79,7 @@ export const indexDocuments = migrations.define({
     const existing = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q) =>
-        q.eq("contentType", "document").eq("sourceId", doc._id)
+        q.eq("contentType", "document").eq("sourceId", doc._id),
       )
       .first();
 
@@ -128,7 +128,7 @@ export const indexAllDocuments = migrations.define({
     const existing = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q) =>
-        q.eq("contentType", "document").eq("sourceId", doc._id)
+        q.eq("contentType", "document").eq("sourceId", doc._id),
       )
       .first();
 
@@ -248,13 +248,27 @@ export const runDeploymentBootstrap = migrations.runner([
 ]);
 
 // Individual runners for testing
-export const runSubpages = migrations.runner([internal.migrations.indexSubpages]);
-export const runDocuments = migrations.runner([internal.migrations.indexDocuments]);
-export const runFixPending = migrations.runner([internal.migrations.fixPendingNonExtractable]);
-export const runIndexAll = migrations.runner([internal.migrations.indexAllDocuments]);
-export const runBootstrapSites = migrations.runner([internal.migrations.bootstrapSitePublishedFields]);
-export const runBootstrapPages = migrations.runner([internal.migrations.bootstrapPagePublishedFields]);
-export const runBootstrapLayouts = migrations.runner([internal.migrations.bootstrapLayoutPublishedFields]);
+export const runSubpages = migrations.runner([
+  internal.migrations.indexSubpages,
+]);
+export const runDocuments = migrations.runner([
+  internal.migrations.indexDocuments,
+]);
+export const runFixPending = migrations.runner([
+  internal.migrations.fixPendingNonExtractable,
+]);
+export const runIndexAll = migrations.runner([
+  internal.migrations.indexAllDocuments,
+]);
+export const runBootstrapSites = migrations.runner([
+  internal.migrations.bootstrapSitePublishedFields,
+]);
+export const runBootstrapPages = migrations.runner([
+  internal.migrations.bootstrapPagePublishedFields,
+]);
+export const runBootstrapLayouts = migrations.runner([
+  internal.migrations.bootstrapLayoutPublishedFields,
+]);
 
 // ============================================================
 // Migration 8: Convert subpage blocks to reference real child pages
@@ -457,10 +471,7 @@ export const flagSubpageContentPages = migrations.define({
   table: "layouts",
   batchSize: 20,
   migrateOne: async (ctx, layout) => {
-    const slotsToCheck = [
-      ...layout.slots,
-      ...(layout.publishedSlots ?? []),
-    ];
+    const slotsToCheck = [...layout.slots, ...(layout.publishedSlots ?? [])];
     for (const slot of slotsToCheck) {
       for (const block of slot.blocks) {
         if (block.type === "subpage" && block.content?.pageId) {
@@ -477,4 +488,3 @@ export const flagSubpageContentPages = migrations.define({
 export const runFlagSubpageContent = migrations.runner([
   internal.migrations.flagSubpageContentPages,
 ]);
-

@@ -8,7 +8,6 @@ import type { Doc, Id } from "@repo/backend";
 export type Team = Doc<"teams">;
 export type Site = Doc<"sites">;
 export type Page = Doc<"pages">;
-export type Block = Doc<"blocks">;
 export type Layout = Doc<"layouts">;
 export type Document = Doc<"documents">;
 
@@ -16,7 +15,6 @@ export type Document = Doc<"documents">;
 export type TeamId = Id<"teams">;
 export type SiteId = Id<"sites">;
 export type PageId = Id<"pages">;
-export type BlockId = Id<"blocks">;
 export type LayoutId = Id<"layouts">;
 export type DocumentId = Id<"documents">;
 

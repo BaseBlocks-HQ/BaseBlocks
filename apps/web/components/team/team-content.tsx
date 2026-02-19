@@ -2,9 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { useQuery } from "convex/react";
 import {
   Table,
   TableBody,
@@ -13,6 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import { useQuery } from "convex/react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { InviteMemberDialog } from "./invite-member-dialog";
@@ -115,9 +115,7 @@ export function TeamContent() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={getRoleBadgeVariant(member.role)}
-                    >
+                    <Badge variant={getRoleBadgeVariant(member.role)}>
                       {member.role === "admin"
                         ? t("roles.admin")
                         : t("roles.viewer")}

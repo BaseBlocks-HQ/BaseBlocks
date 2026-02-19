@@ -69,7 +69,10 @@ function toPublicAssetUrl(rawUrl: string | undefined): string | undefined {
   return trimmed;
 }
 
-function withVersion(url: string | undefined, version: number | undefined): string | undefined {
+function withVersion(
+  url: string | undefined,
+  version: number | undefined,
+): string | undefined {
   if (!url || !version) return url;
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}v=${version}`;
@@ -77,7 +80,8 @@ function withVersion(url: string | undefined, version: number | undefined): stri
 
 async function resolveMetadataBase(teamSlug: string): Promise<URL> {
   const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const host =
+    requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
   const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
 
   if (host) {
@@ -120,9 +124,12 @@ export async function buildPublicSiteMetadata({
         pageTitle = page?.title;
       }
     } else {
-      const siteData = (await client.query(api.sites.queries.getWithDefaultPage, {
-        teamSlug,
-      })) as PublicSiteWithDefaultPageDoc | null;
+      const siteData = (await client.query(
+        api.sites.queries.getWithDefaultPage,
+        {
+          teamSlug,
+        },
+      )) as PublicSiteWithDefaultPageDoc | null;
       site = siteData?.site ?? null;
       pageTitle = siteData?.defaultPage?.title;
     }
@@ -136,7 +143,9 @@ export async function buildPublicSiteMetadata({
   const settings = (site.settings ?? {}) as PublicSiteSettings;
   const siteTitle = asOptional(settings.siteTitle) ?? site.name;
   const title =
-    pageTitle && pageTitle !== siteTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
+    pageTitle && pageTitle !== siteTitle
+      ? `${pageTitle} | ${siteTitle}`
+      : siteTitle;
   const description = asOptional(settings.siteDescription);
   const keywords = parseKeywords(settings.siteKeywords);
   const version = site.updatedAt;

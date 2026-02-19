@@ -267,10 +267,7 @@ export function DirectoryEditor({
                         <Select
                           value={colType}
                           onValueChange={(v) =>
-                            updateColumnType(
-                              col.id,
-                              v as DirectoryColumnType,
-                            )
+                            updateColumnType(col.id, v as DirectoryColumnType)
                           }
                         >
                           <SelectTrigger className="h-7 w-[90px] text-xs shrink-0">
@@ -278,10 +275,7 @@ export function DirectoryEditor({
                           </SelectTrigger>
                           <SelectContent>
                             {COLUMN_TYPE_OPTIONS.map((opt) => (
-                              <SelectItem
-                                key={opt.value}
-                                value={opt.value}
-                              >
+                              <SelectItem key={opt.value} value={opt.value}>
                                 <span className="flex items-center gap-1.5">
                                   <opt.icon className="h-3 w-3" />
                                   {opt.label}
@@ -335,9 +329,7 @@ export function DirectoryEditor({
                       onChange={(e) =>
                         updateCell(row.id, col.id, e.target.value)
                       }
-                      placeholder={
-                        COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]
-                      }
+                      placeholder={COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]}
                       type={col.type === "email" ? "email" : "text"}
                       className="h-8 text-sm border-transparent bg-transparent shadow-none focus-visible:border-input focus-visible:bg-background"
                     />

@@ -20,7 +20,7 @@ export const create = mutation({
 
     if (existing) {
       throw new Error(
-        `The workspace URL "${slug}" is already taken. Please choose a different name.`
+        `The workspace URL "${slug}" is already taken. Please choose a different name.`,
       );
     }
 

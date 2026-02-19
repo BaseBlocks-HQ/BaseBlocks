@@ -1,18 +1,18 @@
 "use client";
 
-import type { RadioField, FieldOption } from "@/types/elements";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import type { FieldOption, RadioField } from "@/types/elements";
+import { Circle, GripVertical, Plus, Trash2 } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Circle, Plus, Trash2, GripVertical } from "lucide-react";
 
 function RadioEditor({ field }: FieldEditorProps) {
   const f = field as RadioField;
@@ -20,7 +20,9 @@ function RadioEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Radio Group"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <div className="space-y-2">
         {f.options.length > 0 ? (
@@ -47,7 +49,9 @@ function RadioRenderer({ field, value, onChange, error }: FieldRendererProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <RadioGroup
         value={(value as string) || ""}
@@ -57,7 +61,10 @@ function RadioRenderer({ field, value, onChange, error }: FieldRendererProps) {
         {f.options.map((opt) => (
           <div key={opt.id} className="flex items-center gap-2">
             <RadioGroupItem value={opt.value} id={`${f.id}-${opt.id}`} />
-            <Label htmlFor={`${f.id}-${opt.id}`} className="text-sm cursor-pointer">
+            <Label
+              htmlFor={`${f.id}-${opt.id}`}
+              className="text-sm cursor-pointer"
+            >
               {opt.label}
             </Label>
           </div>
@@ -73,7 +80,8 @@ function RadioRenderer({ field, value, onChange, error }: FieldRendererProps) {
 
 function RadioSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as RadioField;
-  const update = (updates: Partial<RadioField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<RadioField>) =>
+    onChange({ ...f, ...updates });
 
   const addOption = () => {
     const newOption: FieldOption = {
@@ -87,7 +95,7 @@ function RadioSettings({ field, onChange }: FieldSettingsProps) {
   const updateOption = (id: string, updates: Partial<FieldOption>) => {
     update({
       options: f.options.map((opt) =>
-        opt.id === id ? { ...opt, ...updates } : opt
+        opt.id === id ? { ...opt, ...updates } : opt,
       ),
     });
   };
@@ -124,7 +132,12 @@ function RadioSettings({ field, onChange }: FieldSettingsProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Options</Label>
-          <Button variant="ghost" size="sm" onClick={addOption} className="h-7 px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={addOption}
+            className="h-7 px-2"
+          >
             <Plus className="h-3 w-3 mr-1" /> Add
           </Button>
         </div>
@@ -135,7 +148,12 @@ function RadioSettings({ field, onChange }: FieldSettingsProps) {
               <Input
                 className="h-8 text-sm flex-1"
                 value={opt.label}
-                onChange={(e) => updateOption(opt.id, { label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                onChange={(e) =>
+                  updateOption(opt.id, {
+                    label: e.target.value,
+                    value: e.target.value.toLowerCase().replace(/\s+/g, "_"),
+                  })
+                }
                 placeholder="Option label"
               />
               <Button

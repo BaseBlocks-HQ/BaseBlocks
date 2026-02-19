@@ -4,7 +4,9 @@ import type { ElementRendererProps } from "@/components/elements/registry";
 import type { FlowchartDiagram } from "@/types/elements/blocks";
 import { DiagramViewer } from "./diagram-viewer";
 
-export function FlowchartRenderer({ content }: ElementRendererProps<"flowchart">) {
+export function FlowchartRenderer({
+  content,
+}: ElementRendererProps<"flowchart">) {
   const diagrams = getDiagrams();
 
   function getDiagrams(): FlowchartDiagram[] {
@@ -12,7 +14,9 @@ export function FlowchartRenderer({ content }: ElementRendererProps<"flowchart">
       return content.diagrams;
     }
     if (!content.mermaidCode) return [];
-    return [{ id: "default", label: "Diagram", mermaidCode: content.mermaidCode }];
+    return [
+      { id: "default", label: "Diagram", mermaidCode: content.mermaidCode },
+    ];
   }
 
   if (diagrams.length === 0) return null;

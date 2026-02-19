@@ -4,12 +4,12 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import { useTheme } from "next-themes";
 import { useCallback, useRef } from "react";
-import { useDebounceCallback } from "@/hooks";
 import { toast } from "sonner";
 
 export function RichTextEditor({

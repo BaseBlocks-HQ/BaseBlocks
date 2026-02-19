@@ -53,7 +53,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
 
     if (isLocalhost) {
       renderControls(
-        <span className="text-xs text-muted-foreground">Local preview</span>
+        <span className="text-xs text-muted-foreground">Local preview</span>,
       );
       return;
     }
@@ -72,7 +72,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
-      </>
+      </>,
     );
   }, [renderControls, useOnlineViewer, isLocalhost]);
 

@@ -1,40 +1,40 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { DndProvider, type DragEndEvent } from "@/components/dnd/dnd-provider";
-import { arrayMove } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useDebounceCallback } from "@/hooks";
 import { ElementEditorWrapper } from "@/components/elements/element-editor-wrapper";
 import {
   getElement,
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/components/elements/registry";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useDebounceCallback } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type {
-  DecisionTreeNode,
-  DecisionTreeContentBlock,
-  DecisionTreeBlockType,
   AnyContent,
+  DecisionTreeBlockType,
+  DecisionTreeContentBlock,
+  DecisionTreeNode,
   ElementType,
 } from "@/types/elements";
+import { arrayMove } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 // Block types allowed inside decision tree nodes
 const ALLOWED_BLOCK_TYPES: DecisionTreeBlockType[] = [
@@ -99,9 +99,7 @@ export function NodeDetail({
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b space-y-3">
-        <h3 className="text-sm font-medium text-primary">
-          Detail Panel
-        </h3>
+        <h3 className="text-sm font-medium text-primary">Detail Panel</h3>
         <div>
           <Label htmlFor="node-name" className="text-xs text-muted-foreground">
             Option Name
@@ -209,11 +207,7 @@ function SortableBlock({
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="group/block mb-3 min-w-0"
-    >
+    <div ref={setNodeRef} style={style} className="group/block mb-3 min-w-0">
       <div className="flex gap-1 items-start">
         {/* Toolbar: drag handle, config, trash */}
         <div

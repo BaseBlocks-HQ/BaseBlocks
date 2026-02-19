@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CheckCircle2, ChevronLeft, ChevronRight, GitFork, MousePointerClick, RotateCcw } from "lucide-react";
+import type { ElementRendererProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,17 +9,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ElementRendererProps } from "@/components/elements/registry";
-import type { DecisionTree, DecisionTreeNode } from "@/types/elements";
-import { useTreeNavigation } from "./editor/use-tree-navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { OptionList } from "./viewer/option-list";
-import { DetailPanel } from "./viewer/detail-panel";
 import { cn } from "@/lib/utils";
+import type { DecisionTree, DecisionTreeNode } from "@/types/elements";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  GitFork,
+  MousePointerClick,
+  RotateCcw,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useTreeNavigation } from "./editor/use-tree-navigation";
+import { DetailPanel } from "./viewer/detail-panel";
+import { OptionList } from "./viewer/option-list";
 
-function normalizeTrees(
-  content: { nodes: DecisionTreeNode[]; trees?: DecisionTree[] },
-): DecisionTree[] {
+function normalizeTrees(content: {
+  nodes: DecisionTreeNode[];
+  trees?: DecisionTree[];
+}): DecisionTree[] {
   if (content.trees && content.trees.length > 0) return content.trees;
   return [{ id: "legacy", label: "Tree 1", nodes: content.nodes || [] }];
 }
@@ -60,8 +68,7 @@ export function DecisionTreeRenderer({
   const detailNode = detailNodeId
     ? (nodes.find((n) => n.id === detailNodeId) ?? null)
     : null;
-  const hasDetailContent =
-    detailNode && detailNode.contentBlocks.length > 0;
+  const hasDetailContent = detailNode && detailNode.contentBlocks.length > 0;
 
   const handleSelect = (node: DecisionTreeNode) => {
     const hasChildren = nodes.some((n) => n.parentId === node.id);
@@ -165,19 +172,20 @@ export function DecisionTreeRenderer({
     </div>
   );
 
-  const navigationBar = path.length > 0 ? (
-    <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-7 shrink-0"
-        onClick={navigateBack}
-      >
-        <ChevronLeft className="size-4" />
-      </Button>
-      {breadcrumb}
-    </div>
-  ) : null;
+  const navigationBar =
+    path.length > 0 ? (
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0"
+          onClick={navigateBack}
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+        {breadcrumb}
+      </div>
+    ) : null;
 
   const endOfPath = (
     <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">

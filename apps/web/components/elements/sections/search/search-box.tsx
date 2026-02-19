@@ -121,7 +121,15 @@ interface SearchBoxProps {
  * Returns results that match but weren't found by server full-text search.
  */
 function fuzzyMatchTitles(
-  titles: { _id: string; contentType: "document" | "subpage"; sourceId: string; title: string; metadata: SearchResultItem["metadata"] }[] | undefined,
+  titles:
+    | {
+        _id: string;
+        contentType: "document" | "subpage";
+        sourceId: string;
+        title: string;
+        metadata: SearchResultItem["metadata"];
+      }[]
+    | undefined,
   query: string,
   serverResultIds: Set<string>,
   limit: number,
@@ -187,8 +195,10 @@ export function SearchBox({
 
   // Preload all titles for client-side fuzzy matching (lightweight, cached by Convex)
   const allTitles = useQuery(
-    usePublicQuery ? api.search.queries.listTitlesPublic : api.search.queries.listTitles,
-    siteId ? { siteId } : "skip"
+    usePublicQuery
+      ? api.search.queries.listTitlesPublic
+      : api.search.queries.listTitles,
+    siteId ? { siteId } : "skip",
   );
 
   // Server full-text search queries
@@ -196,14 +206,14 @@ export function SearchBox({
     api.search.queries.searchAll,
     !usePublicQuery && shouldSearch
       ? { siteId, query: debouncedQuery, limit: maxResults }
-      : "skip"
+      : "skip",
   ) as SearchResultItem[] | undefined;
 
   const publicResults = useQuery(
     api.search.queries.searchAllPublic,
     usePublicQuery && shouldSearch
       ? { siteId, query: debouncedQuery, limit: maxResults }
-      : "skip"
+      : "skip",
   ) as SearchResultItem[] | undefined;
 
   const serverResults = usePublicQuery ? publicResults : authResults;
@@ -218,7 +228,12 @@ export function SearchBox({
 
     if (remaining <= 0) return serverResults;
 
-    const fuzzyResults = fuzzyMatchTitles(allTitles, debouncedQuery.trim(), serverIds, remaining);
+    const fuzzyResults = fuzzyMatchTitles(
+      allTitles,
+      debouncedQuery.trim(),
+      serverIds,
+      remaining,
+    );
     return [...serverResults, ...fuzzyResults];
   }, [serverResults, allTitles, debouncedQuery, shouldSearch, maxResults]);
 
@@ -243,29 +258,34 @@ export function SearchBox({
         openFile({
           url: toProxyDownloadUrl(result.metadata.cdnUrl),
           filename: result.metadata.filename || result.title,
-          contentType: result.metadata.fileContentType || "application/octet-stream",
+          contentType:
+            result.metadata.fileContentType || "application/octet-stream",
           size: result.metadata.size || 0,
           searchTerm: debouncedQuery,
         });
       }
       setIsFocused(false);
     },
-    [openFile, debouncedQuery]
+    [openFile, debouncedQuery],
   );
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Search input */}
-      <div className={cn(
-        "relative rounded-md transition-all",
-        headerMode
-          ? "hover:ring-2 hover:ring-current/20"
-          : "hover:ring-2 hover:ring-muted-foreground/40"
-      )}>
-        <Search className={cn(
-          "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
-          headerMode ? "text-current opacity-50" : "text-muted-foreground"
-        )} />
+      <div
+        className={cn(
+          "relative rounded-md transition-all",
+          headerMode
+            ? "hover:ring-2 hover:ring-current/20"
+            : "hover:ring-2 hover:ring-muted-foreground/40",
+        )}
+      >
+        <Search
+          className={cn(
+            "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
+            headerMode ? "text-current opacity-50" : "text-muted-foreground",
+          )}
+        />
         <Input
           type="text"
           placeholder={placeholder}
@@ -275,7 +295,8 @@ export function SearchBox({
           className={cn(
             "pl-10",
             inputAddon ? "pr-10" : "",
-            headerMode && "border-current/20 bg-current/[0.08] text-current placeholder:text-current/50 dark:bg-current/[0.08] focus-visible:ring-current/25 focus-visible:border-current/30"
+            headerMode &&
+              "border-current/20 bg-current/[0.08] text-current placeholder:text-current/50 dark:bg-current/[0.08] focus-visible:ring-current/25 focus-visible:border-current/30",
           )}
         />
         {isSearching && (
@@ -283,7 +304,7 @@ export function SearchBox({
             className={cn(
               "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
               headerMode ? "text-current opacity-50" : "text-muted-foreground",
-              inputAddon ? "right-10" : "right-3"
+              inputAddon ? "right-10" : "right-3",
             )}
           />
         )}
@@ -311,13 +332,19 @@ export function SearchBox({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {showFileType && getFileIcon(result.metadata.fileContentType)}
+                        {showFileType &&
+                          getFileIcon(result.metadata.fileContentType)}
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate text-sm text-foreground">{result.title}</p>
+                          <p className="font-medium truncate text-sm text-foreground">
+                            {result.title}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {result.metadata.size && formatFileSize(result.metadata.size)}
+                            {result.metadata.size &&
+                              formatFileSize(result.metadata.size)}
                             {isContentMatch && (
-                              <span className="ml-2 text-primary">• Content match</span>
+                              <span className="ml-2 text-primary">
+                                • Content match
+                              </span>
                             )}
                           </p>
                         </div>
@@ -344,7 +371,7 @@ export function SearchBox({
                               e.stopPropagation();
                               handleDownload(
                                 result.metadata.cdnUrl!,
-                                result.metadata.filename || result.title
+                                result.metadata.filename || result.title,
                               );
                             }}
                             title="Download"

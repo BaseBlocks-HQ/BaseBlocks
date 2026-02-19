@@ -56,7 +56,8 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       setSlug("");
       toast.success("Page created");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create page";
+      const message =
+        err instanceof Error ? err.message : "Failed to create page";
       setError(message);
       toast.error(message);
     } finally {

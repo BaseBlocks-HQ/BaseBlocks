@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 /**
  * Dynamic favicon handler for multi-tenant subdomains.
  *
@@ -9,8 +11,6 @@
 import { api } from "@repo/backend";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 
 export const dynamic = "force-dynamic";
 
@@ -127,14 +127,12 @@ export async function GET(request: Request) {
     }
 
     const data = await response.arrayBuffer();
-    const contentType =
-      response.headers.get("content-type") || "image/x-icon";
+    const contentType = response.headers.get("content-type") || "image/x-icon";
 
     return new NextResponse(data, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control":
-          "public, max-age=3600, stale-while-revalidate=86400",
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       },
     });
   } catch (error) {

@@ -75,10 +75,10 @@ export function ShareDialog({
   // Mutations
   const updateVisibility = useMutation(api.sharing.mutations.updateVisibility);
   const updateAccessSettings = useMutation(
-    api.sharing.mutations.updateAccessSettings
+    api.sharing.mutations.updateAccessSettings,
   );
   const generateNewCode = useMutation(
-    api.sharing.mutations.generateNewAccessCode
+    api.sharing.mutations.generateNewAccessCode,
   );
 
   const siteUrl = getSiteUrl(teamSlug, siteSlug);
@@ -93,7 +93,7 @@ export function ShareDialog({
         toast.error("Failed to update visibility");
       }
     },
-    [siteId, updateVisibility]
+    [siteId, updateVisibility],
   );
 
   const handleRotationChange = useCallback(
@@ -108,7 +108,7 @@ export function ShareDialog({
         toast.error("Failed to update rotation interval");
       }
     },
-    [siteId, updateAccessSettings]
+    [siteId, updateAccessSettings],
   );
 
   const handleSessionChange = useCallback(
@@ -123,7 +123,7 @@ export function ShareDialog({
         toast.error("Failed to update session duration");
       }
     },
-    [siteId, updateAccessSettings]
+    [siteId, updateAccessSettings],
   );
 
   const handleRegenerateCode = useCallback(async () => {

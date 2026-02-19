@@ -40,7 +40,9 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const syncMember = useMutation(api.members.mutations.syncMemberFromInvitation);
+  const syncMember = useMutation(
+    api.members.mutations.syncMemberFromInvitation,
+  );
 
   const loadInvitations = useCallback(async () => {
     setIsLoading(true);
@@ -48,7 +50,9 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     try {
       const result = await authClient.organization.listUserInvitations();
       if (result.data) {
-        const pending = result.data.filter((inv: any) => inv.status === "pending");
+        const pending = result.data.filter(
+          (inv: any) => inv.status === "pending",
+        );
         setInvitations(
           pending.map((inv: any) => ({
             id: inv.id,
@@ -127,7 +131,10 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {fullWidth ? (
-          <Button variant="ghost" className="w-full justify-start gap-2 h-8 px-2 relative">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 h-8 px-2 relative"
+          >
             <Inbox className="h-4 w-4" />
             <span>{t("title")}</span>
             {invitations.length > 0 && (
@@ -205,7 +212,9 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="secondary" className="text-xs">
-                      {invitation.role === "member" ? "viewer" : invitation.role}
+                      {invitation.role === "member"
+                        ? "viewer"
+                        : invitation.role}
                     </Badge>
                     <span>·</span>
                     <span>

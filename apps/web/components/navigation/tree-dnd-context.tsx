@@ -1,7 +1,7 @@
 "use client";
 
 import type { FlattenedPage, TreeProjection } from "@/lib/tree-utils";
-import { getProjection, INDENT_WIDTH } from "@/lib/tree-utils";
+import { INDENT_WIDTH, getProjection } from "@/lib/tree-utils";
 import type { PageListItem } from "@/types";
 import {
   DndContext,
@@ -87,7 +87,9 @@ export function TreeDndProvider({
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [offsetX, setOffsetX] = useState(0);
   const [projection, setProjection] = useState<TreeProjection | null>(null);
-  const [nestTargetId, setNestTargetId] = useState<UniqueIdentifier | null>(null);
+  const [nestTargetId, setNestTargetId] = useState<UniqueIdentifier | null>(
+    null,
+  );
 
   // Auto-expand timer ref
   const expandTimerRef = useRef<NodeJS.Timeout | null>(null);

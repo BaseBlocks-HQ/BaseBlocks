@@ -170,12 +170,12 @@ export function getFieldTypeLabel(type: FormFieldType): string {
   const labels: Record<FormFieldType, string> = {
     "short-text": "Short Text",
     "long-text": "Long Text",
-    "email": "Email",
-    "number": "Number",
-    "select": "Dropdown",
-    "checkbox": "Checkbox",
-    "radio": "Radio",
-    "date": "Date",
+    email: "Email",
+    number: "Number",
+    select: "Dropdown",
+    checkbox: "Checkbox",
+    radio: "Radio",
+    date: "Date",
   };
   return labels[type];
 }

@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { renderMermaid, THEMES } from "beautiful-mermaid";
-import { useTheme } from "next-themes";
-import { LocateFixed, Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { THEMES, renderMermaid } from "beautiful-mermaid";
+import {
+  LocateFixed,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MermaidDiagramProps {
   code: string;
@@ -18,7 +24,11 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 20;
 const ZOOM_FACTOR = 0.04;
 
-export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) {
+export function MermaidDiagram({
+  code,
+  contained,
+  theme,
+}: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,7 +135,9 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
       .catch((err) => {
         if (!cancelled) {
           setSvg(null);
-          setError(err instanceof Error ? err.message : "Invalid diagram syntax");
+          setError(
+            err instanceof Error ? err.message : "Invalid diagram syntax",
+          );
           setLoading(false);
         }
       });
@@ -238,11 +250,10 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
       : "h-[75vh]";
 
   const emptyCanvas = (msg: string) => (
-    <div
-      ref={wrapperRef}
-      className="relative w-full max-w-full min-w-0"
-    >
-      <div className={`flex items-center justify-center ${canvasHeight} text-muted-foreground text-sm border-y border-border bg-muted/30 dark:bg-muted/20`}>
+    <div ref={wrapperRef} className="relative w-full max-w-full min-w-0">
+      <div
+        className={`flex items-center justify-center ${canvasHeight} text-muted-foreground text-sm border-y border-border bg-muted/30 dark:bg-muted/20`}
+      >
         {msg}
       </div>
     </div>
@@ -318,7 +329,9 @@ export function MermaidDiagram({ code, contained, theme }: MermaidDiagramProps) 
         ref={containerRef}
         className={`relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none ${theme ? "" : "bg-muted/30 dark:bg-muted/20"}`}
         style={{
-          ...(theme && THEMES[theme] ? { backgroundColor: THEMES[theme].bg } : {}),
+          ...(theme && THEMES[theme]
+            ? { backgroundColor: THEMES[theme].bg }
+            : {}),
           backgroundImage:
             "radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px)",
           backgroundSize: "24px 24px",

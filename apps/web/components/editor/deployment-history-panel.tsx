@@ -1,14 +1,14 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -73,11 +73,26 @@ export function DeploymentHistoryPanel({
   const statusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-green-600 hover:bg-green-700 text-xs">Active</Badge>;
+        return (
+          <Badge className="bg-green-600 hover:bg-green-700 text-xs">
+            Active
+          </Badge>
+        );
       case "superseded":
-        return <Badge variant="secondary" className="text-xs">Superseded</Badge>;
+        return (
+          <Badge variant="secondary" className="text-xs">
+            Superseded
+          </Badge>
+        );
       case "rolled-back":
-        return <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Rolled back</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-xs text-amber-600 border-amber-300"
+          >
+            Rolled back
+          </Badge>
+        );
       default:
         return null;
     }
@@ -98,7 +113,10 @@ export function DeploymentHistoryPanel({
             {deployments === undefined ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 rounded-lg bg-muted animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-20 rounded-lg bg-muted animate-pulse"
+                  />
                 ))}
               </div>
             ) : deployments.length === 0 ? (
@@ -128,7 +146,8 @@ export function DeploymentHistoryPanel({
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>
-                        {deployment.summary.pagesDeployed} pages, {deployment.summary.layoutsDeployed} layouts
+                        {deployment.summary.pagesDeployed} pages,{" "}
+                        {deployment.summary.layoutsDeployed} layouts
                       </span>
                       <span>{formatDate(deployment.deployedAt)}</span>
                     </div>

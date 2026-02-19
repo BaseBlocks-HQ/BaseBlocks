@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
 import type { LayoutType } from "@/types";
+import { type ReactNode, createContext, useContext } from "react";
 
 export interface LayoutContextValue {
   layoutType: LayoutType;

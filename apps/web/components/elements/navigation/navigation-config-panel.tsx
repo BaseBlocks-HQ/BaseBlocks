@@ -1,5 +1,7 @@
 "use client";
 
+import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   NAVIGATION_STYLES,
@@ -8,12 +10,10 @@ import {
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { Switch } from "@/components/ui/switch";
 import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
 
 interface NavigationConfigPanelProps {
   siteId: Id<"sites">;
@@ -104,7 +104,8 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const updateNavigationStyle = useCallback(
     async (style: NavigationStyle) => {
       if (!site) return;
-      const oldStyle = (site.settings.navigationStyle || "sidebar") as NavigationStyle;
+      const oldStyle = (site.settings.navigationStyle ||
+        "sidebar") as NavigationStyle;
       try {
         await updateSite({
           siteId,
@@ -136,19 +137,24 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
         toast.error("Failed to update navigation style");
       }
     },
-    [siteId, site, updateSite, editorCtx]
+    [siteId, site, updateSite, editorCtx],
   );
 
   const updateSidebarDefaultExpanded = useCallback(
     async (expanded: boolean) => {
       if (!site) return;
-      const oldValue = !!(site.settings as Record<string, unknown>).sidebarDefaultExpanded;
+      const oldValue = !!(site.settings as Record<string, unknown>)
+        .sidebarDefaultExpanded;
       try {
         await updateSite({
           siteId,
           settings: { sidebarDefaultExpanded: expanded },
         });
-        toast.success(expanded ? "Sidebar pages will be expanded by default" : "Sidebar pages will be collapsed by default");
+        toast.success(
+          expanded
+            ? "Sidebar pages will be expanded by default"
+            : "Sidebar pages will be collapsed by default",
+        );
 
         if (editorCtx && !editorCtx.isUndoRedoExecuting) {
           editorCtx.pushCommand({
@@ -172,7 +178,7 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
         toast.error("Failed to update setting");
       }
     },
-    [siteId, site, updateSite, editorCtx]
+    [siteId, site, updateSite, editorCtx],
   );
 
   if (!site) {
@@ -203,7 +209,7 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
                 "group flex flex-col rounded-lg border bg-card overflow-hidden transition-all cursor-pointer",
                 isSelected
                   ? "border-primary shadow-md"
-                  : "hover:border-primary/50 hover:shadow-md"
+                  : "hover:border-primary/50 hover:shadow-md",
               )}
             >
               <div className="aspect-[4/3] bg-muted/30 border-b flex items-center justify-center p-3 relative">
@@ -229,10 +235,15 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           <label className="flex items-center justify-between gap-3 cursor-pointer">
             <div>
               <p className="text-sm font-medium">Expand all pages by default</p>
-              <p className="text-xs text-muted-foreground">Show subpages expanded in the sidebar navigation</p>
+              <p className="text-xs text-muted-foreground">
+                Show subpages expanded in the sidebar navigation
+              </p>
             </div>
             <Switch
-              checked={!!(site.settings as Record<string, unknown>).sidebarDefaultExpanded}
+              checked={
+                !!(site.settings as Record<string, unknown>)
+                  .sidebarDefaultExpanded
+              }
               onCheckedChange={updateSidebarDefaultExpanded}
             />
           </label>

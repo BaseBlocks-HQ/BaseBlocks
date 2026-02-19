@@ -1,24 +1,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, Minimize2 } from "lucide-react";
-import { usePublicSubpageContext } from "./public-subpage-context";
-import { PublicContent } from "./public-content";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
+import { Maximize2, Minimize2, X } from "lucide-react";
+import { PublicContent } from "./public-content";
+import { usePublicSubpageContext } from "./public-subpage-context";
 
 interface PublicSubpagePanelProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
 
-export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicSubpagePanelProps) {
+export function PublicSubpagePanel({
+  isFullscreen,
+  onToggleFullscreen,
+}: PublicSubpagePanelProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
   const page = useQuery(
     api.pages.queries.get,
-    viewingSubpage?.pageId ? { pageId: viewingSubpage.pageId as Id<"pages"> } : "skip",
+    viewingSubpage?.pageId
+      ? { pageId: viewingSubpage.pageId as Id<"pages"> }
+      : "skip",
   );
 
   if (!viewingSubpage) return null;
@@ -34,8 +39,17 @@ export function PublicSubpagePanel({ isFullscreen, onToggleFullscreen }: PublicS
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {onToggleFullscreen && (
-            <Button variant="ghost" size="icon" onClick={onToggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </Button>
           )}
           <Button variant="ghost" size="icon" onClick={closeSubpage}>

@@ -1,7 +1,7 @@
 "use client";
 
-import { ContentBlockRenderer } from "./content-block-renderer";
 import type { DecisionTreeNode } from "@/types/elements";
+import { ContentBlockRenderer } from "./content-block-renderer";
 
 interface DetailPanelProps {
   node: DecisionTreeNode;

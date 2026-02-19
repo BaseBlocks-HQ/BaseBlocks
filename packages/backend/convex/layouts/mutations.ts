@@ -1,8 +1,8 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
-import type { Id } from "../_generated/dataModel";
 
 const layoutTypes = v.union(
   v.literal("single"),
@@ -120,14 +120,10 @@ export const create = mutation({
         .query("layouts")
         .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
         .collect();
-      const tabLayouts = existingLayouts.filter(
-        (l: any) => l.tabId === tabId
-      );
+      const tabLayouts = existingLayouts.filter((l: any) => l.tabId === tabId);
       layoutOrder =
-        tabLayouts.reduce(
-          (max: number, s: any) => Math.max(max, s.order),
-          -1,
-        ) + 1;
+        tabLayouts.reduce((max: number, s: any) => Math.max(max, s.order), -1) +
+        1;
     }
 
     const now = Date.now();

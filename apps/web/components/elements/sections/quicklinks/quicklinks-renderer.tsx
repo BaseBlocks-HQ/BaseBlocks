@@ -1,5 +1,5 @@
-import type { ElementRendererProps } from "@/components/elements/registry";
 import { useLayoutContext } from "@/components/elements/layout-context";
+import type { ElementRendererProps } from "@/components/elements/registry";
 import type { QuicklinkItem } from "@/types/elements";
 import { AppWindow, ExternalLink } from "lucide-react";
 

@@ -7,8 +7,8 @@ import { DEFAULT_FORM_CONTENT } from "@/types/elements";
 import { FileText } from "lucide-react";
 import { registerElement } from "../../registry";
 import { FormEditor } from "./form-editor";
-import { FormRenderer } from "./form-renderer";
 import { FormPreview } from "./form-preview";
+import { FormRenderer } from "./form-renderer";
 
 // Register the element
 registerElement({

@@ -1,7 +1,7 @@
 "use client";
 
-import type { PageWithChildren } from "@/types";
 import { cn } from "@/lib/utils";
+import type { PageWithChildren } from "@/types";
 import { HorizontalNavItem } from "./horizontal-nav-item";
 
 interface TopNavMenuProps {

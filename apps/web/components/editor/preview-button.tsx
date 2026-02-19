@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getSiteUrl } from "@/lib/utils";
 import { Eye } from "lucide-react";
 
@@ -19,10 +23,7 @@ export function PreviewButton({ teamSlug, siteSlug }: PreviewButtonProps) {
 
     if (isLocalhost) {
       const port = window.location.port || "3000";
-      window.open(
-        `http://${teamSlug}.localhost:${port}/${siteSlug}`,
-        "_blank",
-      );
+      window.open(`http://${teamSlug}.localhost:${port}/${siteSlug}`, "_blank");
     } else {
       window.open(getSiteUrl(teamSlug, siteSlug), "_blank");
     }

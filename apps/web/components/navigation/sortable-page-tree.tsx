@@ -21,20 +21,13 @@ import {
   getDescendantIds,
   hashPages,
   isValidDrop,
-  INDENT_WIDTH,
 } from "@/lib/tree-utils";
 import type { PageListItem } from "@/types";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
-import {
-  FilePlus,
-  MoreHorizontal,
-  Pencil,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { FilePlus, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SortableTreeItem } from "./sortable-tree-item";
 import { TreeDndProvider } from "./tree-dnd-context";
@@ -120,7 +113,10 @@ export function SortablePageTree({
     async (event: DragEndEvent, projection: TreeProjection | null) => {
       const { active } = event;
 
-      if (!projection || !isValidDrop(effectivePages, String(active.id), projection)) {
+      if (
+        !projection ||
+        !isValidDrop(effectivePages, String(active.id), projection)
+      ) {
         return;
       }
 
@@ -161,7 +157,6 @@ export function SortablePageTree({
     },
     [effectivePages],
   );
-
 
   // Callback to check if an item has children
   const hasChildren = useCallback(

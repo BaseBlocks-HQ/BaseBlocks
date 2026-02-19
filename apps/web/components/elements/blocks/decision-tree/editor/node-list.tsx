@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import {
+  DndProvider,
+  type DragEndEvent,
+  arrayMove,
+} from "@/components/dnd/dnd-provider";
+import { SortableItem } from "@/components/dnd/sortable-item";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { DecisionTreeNode } from "@/types/elements";
+import {
+  Check,
   ChevronRight,
   GitFork,
   Pencil,
-  Trash2,
   Plus,
-  Check,
+  Trash2,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DndProvider,
-  arrayMove,
-  type DragEndEvent,
-} from "@/components/dnd/dnd-provider";
-import { SortableItem } from "@/components/dnd/sortable-item";
-import type { DecisionTreeNode } from "@/types/elements";
+import { useState } from "react";
 
 interface NodeListProps {
   nodes: DecisionTreeNode[];

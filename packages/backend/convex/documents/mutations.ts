@@ -245,7 +245,7 @@ export const remove = mutation({
     const searchEntry = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q: any) =>
-        q.eq("contentType", "document").eq("sourceId", documentId)
+        q.eq("contentType", "document").eq("sourceId", documentId),
       )
       .first();
 

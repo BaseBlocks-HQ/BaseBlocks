@@ -18,15 +18,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCustomizationStyles } from "@/hooks";
 import { cn, getSiteUrl } from "@/lib/utils";
 import type { SiteCustomization } from "@/types/elements/customization";
 import type { Id } from "@repo/backend";
 import {
   Check,
   ChevronDown,
+  ExternalLink,
   Eye,
   EyeOff,
-  ExternalLink,
   Globe,
   GripVertical,
   History,
@@ -39,11 +40,10 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useCustomizationStyles } from "@/hooks";
-import { useEditorContext } from "./editor-context";
-import { ShareDialog } from "./share-dialog";
 import { DeployDialog } from "./deploy-dialog";
 import { DeploymentHistoryPanel } from "./deployment-history-panel";
+import { useEditorContext } from "./editor-context";
+import { ShareDialog } from "./share-dialog";
 
 interface EditorHeaderProps {
   teamSlug: string;
@@ -105,7 +105,9 @@ export function EditorHeader({
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const headerColor = site.settings.customization?.headerColor;
-  const customizationStyles = useCustomizationStyles(site.settings.customization);
+  const customizationStyles = useCustomizationStyles(
+    site.settings.customization,
+  );
 
   // Preview mode: show the site header as users will see it
   if (isHeaderPreview && showHeader) {
@@ -113,32 +115,43 @@ export function EditorHeader({
       <header
         className={cn(
           "border-b h-14 shrink-0 flex items-center px-4 z-40",
-          !headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+          !headerColor &&
+            "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         )}
-        style={headerColor ? {
-          ...customizationStyles,
-          backgroundColor: "var(--site-header-bg)",
-          color: "var(--site-header-fg)",
-        } : customizationStyles}
+        style={
+          headerColor
+            ? {
+                ...customizationStyles,
+                backgroundColor: "var(--site-header-bg)",
+                color: "var(--site-header-fg)",
+              }
+            : customizationStyles
+        }
         {...(headerColor ? { "data-site-customized": "" } : {})}
       >
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsHeaderPreview(false)}
-          className={cn("mr-3 gap-1.5", headerColor && "text-current hover:bg-current/10")}
+          className={cn(
+            "mr-3 gap-1.5",
+            headerColor && "text-current hover:bg-current/10",
+          )}
         >
           <PanelTop className="h-4 w-4" />
           Exit Preview
         </Button>
 
-        <div className={cn("h-5 w-px mr-3", headerColor ? "bg-current/20" : "bg-border")} />
+        <div
+          className={cn(
+            "h-5 w-px mr-3",
+            headerColor ? "bg-current/20" : "bg-border",
+          )}
+        />
 
         <div className="flex items-center gap-2">
           {showLogo && <SiteLogo site={site} team={team} />}
-          {showSiteName && (
-            <span className="font-semibold">{site.name}</span>
-          )}
+          {showSiteName && <span className="font-semibold">{site.name}</span>}
         </div>
 
         <div className="flex items-center gap-3 ml-auto">
@@ -152,7 +165,11 @@ export function EditorHeader({
               headerMode={!!headerColor}
             />
           )}
-          <ModeToggle className={headerColor ? "text-current hover:bg-current/10" : undefined} />
+          <ModeToggle
+            className={
+              headerColor ? "text-current hover:bg-current/10" : undefined
+            }
+          />
         </div>
       </header>
     );
@@ -230,7 +247,9 @@ export function EditorHeader({
                   <GripVertical className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{showControls ? "Hide controls" : "Show controls"}</TooltipContent>
+              <TooltipContent>
+                {showControls ? "Hide controls" : "Show controls"}
+              </TooltipContent>
             </Tooltip>
           )}
           {canEdit && showHeader && (
@@ -409,7 +428,10 @@ export function EditorHeader({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {onUnpublish && (
-                      <DropdownMenuItem onClick={onUnpublish} variant="destructive">
+                      <DropdownMenuItem
+                        onClick={onUnpublish}
+                        variant="destructive"
+                      >
                         <EyeOff />
                         {t("editor.unpublish")}
                       </DropdownMenuItem>

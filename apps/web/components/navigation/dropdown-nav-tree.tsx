@@ -66,7 +66,7 @@ function DropdownNavItem({
           "flex items-center gap-1 py-1.5 rounded-md text-sm transition-colors",
           isActive
             ? "bg-primary/10 text-primary font-medium"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px`, paddingRight: "8px" }}
       >

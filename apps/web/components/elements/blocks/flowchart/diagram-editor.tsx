@@ -1,16 +1,13 @@
 "use client";
 
-import type { FlowchartDiagram, TabsDisplayMode } from "@/types/elements/blocks";
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Plus, X, Pencil, Check, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -19,7 +16,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type {
+  FlowchartDiagram,
+  TabsDisplayMode,
+} from "@/types/elements/blocks";
 import { THEMES } from "beautiful-mermaid";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Palette,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 
 const PLACEHOLDER = `graph TD
@@ -83,11 +94,14 @@ export function DiagramEditor({
     }
   }, [editingLabelId]);
 
-  const activeDiagram = diagrams.find((d) => d.id === activeTabId) ?? diagrams[0];
+  const activeDiagram =
+    diagrams.find((d) => d.id === activeTabId) ?? diagrams[0];
 
   const updateCode = (code: string) => {
     onChange(
-      diagrams.map((d) => (d.id === activeTabId ? { ...d, mermaidCode: code } : d)),
+      diagrams.map((d) =>
+        d.id === activeTabId ? { ...d, mermaidCode: code } : d,
+      ),
     );
   };
 
@@ -300,7 +314,11 @@ export function DiagramEditor({
       {/* Preview */}
       <div className="min-h-[80px] border-t min-w-0 overflow-hidden">
         {activeDiagram?.mermaidCode?.trim() ? (
-          <MermaidDiagram code={activeDiagram.mermaidCode} contained={contained} theme={theme} />
+          <MermaidDiagram
+            code={activeDiagram.mermaidCode}
+            contained={contained}
+            theme={theme}
+          />
         ) : (
           <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
             Write mermaid code below to see a preview
@@ -338,7 +356,9 @@ export function DiagramEditor({
                   {theme && THEMES[theme] ? (
                     <span
                       className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${THEMES[theme].bg} 50%, ${THEMES[theme].accent ?? THEMES[theme].fg} 50%)` }}
+                      style={{
+                        background: `linear-gradient(135deg, ${THEMES[theme].bg} 50%, ${THEMES[theme].accent ?? THEMES[theme].fg} 50%)`,
+                      }}
                     />
                   ) : (
                     <Palette className="h-3 w-3" />
@@ -357,10 +377,16 @@ export function DiagramEditor({
                   </DropdownMenuRadioItem>
                   <DropdownMenuSeparator />
                   {THEME_ENTRIES.map(([key, colors]) => (
-                    <DropdownMenuRadioItem key={key} value={key} className="gap-2">
+                    <DropdownMenuRadioItem
+                      key={key}
+                      value={key}
+                      className="gap-2"
+                    >
                       <span
                         className="inline-block h-3 w-3 rounded-full border border-black/10 shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${colors.bg} 50%, ${colors.accent ?? colors.fg} 50%)` }}
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.bg} 50%, ${colors.accent ?? colors.fg} 50%)`,
+                        }}
                       />
                       {themeLabel(key)}
                     </DropdownMenuRadioItem>

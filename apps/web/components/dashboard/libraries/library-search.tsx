@@ -43,7 +43,10 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
     if (remaining <= 0 || !allDocs) return serverResults;
 
     const fuzzyMatches = allDocs
-      .filter((doc) => !serverIds.has(doc._id) && doc.filename.toLowerCase().includes(lower))
+      .filter(
+        (doc) =>
+          !serverIds.has(doc._id) && doc.filename.toLowerCase().includes(lower),
+      )
       .slice(0, remaining)
       .map((doc) => ({
         _id: doc._id,

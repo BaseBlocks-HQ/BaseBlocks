@@ -3,9 +3,9 @@
  * Manages field type definitions for the form builder
  */
 
-import type { FormFieldType, FormField } from "@/types/elements";
-import type { ComponentType } from "react";
+import type { FormField, FormFieldType } from "@/types/elements";
 import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
 
 // =============================================================================
 // FIELD COMPONENT PROPS
@@ -67,11 +67,15 @@ class FormFieldRegistry {
     return this.fields.get(type)?.Editor;
   }
 
-  getRenderer(type: FormFieldType): ComponentType<FieldRendererProps> | undefined {
+  getRenderer(
+    type: FormFieldType,
+  ): ComponentType<FieldRendererProps> | undefined {
     return this.fields.get(type)?.Renderer;
   }
 
-  getSettings(type: FormFieldType): ComponentType<FieldSettingsProps> | undefined {
+  getSettings(
+    type: FormFieldType,
+  ): ComponentType<FieldSettingsProps> | undefined {
     return this.fields.get(type)?.Settings;
   }
 }
@@ -80,9 +84,13 @@ class FormFieldRegistry {
 export const fieldRegistry = new FormFieldRegistry();
 
 // Convenience exports
-export const registerField = (entry: FieldRegistryEntry) => fieldRegistry.register(entry);
+export const registerField = (entry: FieldRegistryEntry) =>
+  fieldRegistry.register(entry);
 export const getFieldEntry = (type: FormFieldType) => fieldRegistry.get(type);
 export const getAllFields = () => fieldRegistry.getAll();
-export const getFieldEditor = (type: FormFieldType) => fieldRegistry.getEditor(type);
-export const getFieldRenderer = (type: FormFieldType) => fieldRegistry.getRenderer(type);
-export const getFieldSettings = (type: FormFieldType) => fieldRegistry.getSettings(type);
+export const getFieldEditor = (type: FormFieldType) =>
+  fieldRegistry.getEditor(type);
+export const getFieldRenderer = (type: FormFieldType) =>
+  fieldRegistry.getRenderer(type);
+export const getFieldSettings = (type: FormFieldType) =>
+  fieldRegistry.getSettings(type);

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
+import { getAuthContextOrNull, requireMember } from "../auth";
 
 /**
  * List all members for a team

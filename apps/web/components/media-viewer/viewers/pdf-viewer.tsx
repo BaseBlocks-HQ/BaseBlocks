@@ -131,11 +131,9 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
 
       let newMatch: number;
       if (direction === "next") {
-        newMatch =
-          currentMatch >= totalMatches ? 1 : currentMatch + 1;
+        newMatch = currentMatch >= totalMatches ? 1 : currentMatch + 1;
       } else {
-        newMatch =
-          currentMatch <= 1 ? totalMatches : currentMatch - 1;
+        newMatch = currentMatch <= 1 ? totalMatches : currentMatch - 1;
       }
 
       const matchElement = matchRefs.current[newMatch - 1];

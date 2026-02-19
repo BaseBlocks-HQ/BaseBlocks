@@ -1,14 +1,16 @@
 "use client";
 
 import { useCustomizationStyles } from "@/hooks";
-import type { SiteCustomization } from "@/types/elements/customization";
 import { hasCustomization } from "@/lib/customization";
+import type { SiteCustomization } from "@/types/elements/customization";
 
 interface CustomizationPreviewProps {
   customization: SiteCustomization | undefined;
 }
 
-export function CustomizationPreview({ customization }: CustomizationPreviewProps) {
+export function CustomizationPreview({
+  customization,
+}: CustomizationPreviewProps) {
   const cssVariables = useCustomizationStyles(customization);
 
   // Don't render if no customization is set
@@ -26,9 +28,10 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
   const gradientStops = [primaryColor];
   if (tertiaryColor) gradientStops.push(tertiaryColor);
   if (secondaryColor) gradientStops.push(secondaryColor);
-  const gradientStyle = gradientStops.length >= 2
-    ? `linear-gradient(to right, ${gradientStops.join(", ")})`
-    : primaryColor;
+  const gradientStyle =
+    gradientStops.length >= 2
+      ? `linear-gradient(to right, ${gradientStops.join(", ")})`
+      : primaryColor;
 
   return (
     <div className="space-y-2">
@@ -57,9 +60,7 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
           <div
             className="h-2.5 rounded-full w-16"
             style={{
-              backgroundColor: headerColor
-                ? "currentColor"
-                : undefined,
+              backgroundColor: headerColor ? "currentColor" : undefined,
               opacity: headerColor ? 0.7 : undefined,
             }}
           >
@@ -96,10 +97,7 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
 
         {/* Gradient stripe (below header) */}
         {showGradient && (
-          <div
-            className="h-1.5"
-            style={{ background: gradientStyle }}
-          />
+          <div className="h-1.5" style={{ background: gradientStyle }} />
         )}
 
         {/* Content area mockup */}
@@ -117,7 +115,10 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
               className="h-5 rounded-md px-3 flex items-center"
               style={{ backgroundColor: primaryColor }}
             >
-              <span className="text-[8px] font-medium" style={{ color: "var(--primary-foreground, #fff)" }}>
+              <span
+                className="text-[8px] font-medium"
+                style={{ color: "var(--primary-foreground, #fff)" }}
+              >
                 Button
               </span>
             </div>
@@ -126,7 +127,10 @@ export function CustomizationPreview({ customization }: CustomizationPreviewProp
                 className="h-5 rounded-md px-3 flex items-center border"
                 style={{ borderColor: secondaryColor }}
               >
-                <span className="text-[8px] font-medium" style={{ color: secondaryColor }}>
+                <span
+                  className="text-[8px] font-medium"
+                  style={{ color: secondaryColor }}
+                >
                   Accent
                 </span>
               </div>

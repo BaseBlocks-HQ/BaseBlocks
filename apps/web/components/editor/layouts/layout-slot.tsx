@@ -1,6 +1,7 @@
 "use client";
 
 import { DndProvider, type DragEndEvent } from "@/components/dnd";
+import { useEditorContextOptional } from "@/components/editor/editor-context";
 import {
   ElementEditorWrapper,
   LayoutContextProvider,
@@ -22,7 +23,6 @@ import type {
   LayoutSlot as LayoutSlotType,
   LayoutType,
 } from "@/types";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";

@@ -63,7 +63,8 @@ export function RenamePageDialog({
       });
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to rename page";
+      const message =
+        err instanceof Error ? err.message : "Failed to rename page";
       setError(message);
     } finally {
       setIsSubmitting(false);

@@ -63,7 +63,11 @@ export function NavItem({
   const siteSlug = publicSiteContext?.siteSlug ?? "";
 
   // Use persisted expand state (works for both editor and public mode)
-  const { isExpanded: isExpandedFromStorage, toggleExpand, setExpanded } = usePageExpandState(siteId);
+  const {
+    isExpanded: isExpandedFromStorage,
+    toggleExpand,
+    setExpanded,
+  } = usePageExpandState(siteId);
   const isExpanded = isExpandedFromStorage(page._id);
 
   // Auto-expand when ancestorIds change (e.g., navigation to a nested page)
@@ -72,7 +76,14 @@ export function NavItem({
     if ((shouldAutoExpand || (defaultExpanded && hasChildren)) && !isExpanded) {
       setExpanded(page._id, true);
     }
-  }, [shouldAutoExpand, defaultExpanded, hasChildren, isExpanded, setExpanded, page._id]);
+  }, [
+    shouldAutoExpand,
+    defaultExpanded,
+    hasChildren,
+    isExpanded,
+    setExpanded,
+    page._id,
+  ]);
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();

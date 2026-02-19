@@ -18,14 +18,20 @@ interface PublicSubpageContextValue {
   closeSubpage: () => void;
 }
 
-const PublicSubpageContext = createContext<PublicSubpageContextValue | null>(null);
+const PublicSubpageContext = createContext<PublicSubpageContextValue | null>(
+  null,
+);
 
 interface PublicSubpageProviderProps {
   children: ReactNode;
 }
 
-export function PublicSubpageProvider({ children }: PublicSubpageProviderProps) {
-  const [viewingSubpage, setViewingSubpage] = useState<ViewingSubpage | null>(null);
+export function PublicSubpageProvider({
+  children,
+}: PublicSubpageProviderProps) {
+  const [viewingSubpage, setViewingSubpage] = useState<ViewingSubpage | null>(
+    null,
+  );
 
   const openSubpage = useCallback((pageId: string) => {
     setViewingSubpage({ pageId });
@@ -51,7 +57,9 @@ export function PublicSubpageProvider({ children }: PublicSubpageProviderProps) 
 export function usePublicSubpageContext() {
   const context = useContext(PublicSubpageContext);
   if (!context) {
-    throw new Error("usePublicSubpageContext must be used within a PublicSubpageProvider");
+    throw new Error(
+      "usePublicSubpageContext must be used within a PublicSubpageProvider",
+    );
   }
   return context;
 }

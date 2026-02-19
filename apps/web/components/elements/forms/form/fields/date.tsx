@@ -1,16 +1,16 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { DateField } from "@/types/elements";
+import { Calendar } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
 
 function DateEditor({ field }: FieldEditorProps) {
   const f = field as DateField;
@@ -18,7 +18,9 @@ function DateEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Date"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <div className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
         <span>{f.placeholder || "Select a date..."}</span>
@@ -37,7 +39,9 @@ function DateRenderer({ field, value, onChange, error }: FieldRendererProps) {
     <div className="space-y-2">
       <Label htmlFor={f.id} className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Input
         id={f.id}
@@ -58,7 +62,8 @@ function DateRenderer({ field, value, onChange, error }: FieldRendererProps) {
 
 function DateSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as DateField;
-  const update = (updates: Partial<DateField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<DateField>) =>
+    onChange({ ...f, ...updates });
 
   return (
     <div className="space-y-4">

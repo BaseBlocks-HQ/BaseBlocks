@@ -78,7 +78,9 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     slotId: null,
     blockId: null,
   });
-  const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(null);
+  const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(
+    null,
+  );
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(() => {
@@ -125,15 +127,18 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   });
 
   // Deploy site - calls the new deployments module
-  const deploySite = useCallback(async (notes?: string) => {
-    try {
-      await deployMutation({ siteId, notes });
-      toast.success("Changes deployed successfully");
-    } catch (error) {
-      console.error("Failed to deploy changes:", error);
-      toast.error("Failed to deploy changes");
-    }
-  }, [deployMutation, siteId]);
+  const deploySite = useCallback(
+    async (notes?: string) => {
+      try {
+        await deployMutation({ siteId, notes });
+        toast.success("Changes deployed successfully");
+      } catch (error) {
+        console.error("Failed to deploy changes:", error);
+        toast.error("Failed to deploy changes");
+      }
+    },
+    [deployMutation, siteId],
+  );
 
   const selectLayout = useCallback((layoutId: string | null) => {
     setSelection({

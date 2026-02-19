@@ -1,8 +1,8 @@
 "use client";
 
 import { useEditorContext } from "@/components/editor";
-import type { ElementEditorProps } from "@/components/elements/registry";
 import { useLayoutContext } from "@/components/elements/layout-context";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

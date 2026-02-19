@@ -10,11 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { isValidHex } from "@/lib/customization";
+import { cn } from "@/lib/utils";
 import { COLOR_PRESETS } from "@/types/elements/customization";
 import { Check, ChevronDown, Pipette } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface AccentColorPickerProps {
   value: string | undefined;
@@ -23,7 +23,12 @@ interface AccentColorPickerProps {
   description?: string;
 }
 
-export function AccentColorPicker({ value, onChange, label = "Accent Color", description }: AccentColorPickerProps) {
+export function AccentColorPicker({
+  value,
+  onChange,
+  label = "Accent Color",
+  description,
+}: AccentColorPickerProps) {
   const [customColor, setCustomColor] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -83,7 +88,7 @@ export function AccentColorPicker({ value, onChange, label = "Accent Color", des
             type="button"
             className={cn(
               "w-full flex items-center justify-between h-9 px-3 rounded-md border text-sm",
-              "bg-background hover:bg-accent transition-colors"
+              "bg-background hover:bg-accent transition-colors",
             )}
           >
             <div className="flex items-center gap-2">
@@ -116,7 +121,8 @@ export function AccentColorPicker({ value, onChange, label = "Accent Color", des
 
           {/* Color presets */}
           {COLOR_PRESETS.map((preset) => {
-            const isSelected = value?.toLowerCase() === preset.value.toLowerCase();
+            const isSelected =
+              value?.toLowerCase() === preset.value.toLowerCase();
             return (
               <DropdownMenuItem
                 key={preset.value}
@@ -148,7 +154,9 @@ export function AccentColorPicker({ value, onChange, label = "Accent Color", des
           <div
             className="w-8 h-8 rounded-md border flex-shrink-0"
             style={{
-              backgroundColor: isValidHex(customColor) ? customColor : "#cccccc",
+              backgroundColor: isValidHex(customColor)
+                ? customColor
+                : "#cccccc",
             }}
           />
           <Input
@@ -158,7 +166,7 @@ export function AccentColorPicker({ value, onChange, label = "Accent Color", des
             placeholder="#0066FF"
             className={cn(
               "font-mono text-sm h-8",
-              customColor && !isValidHex(customColor) && "border-destructive"
+              customColor && !isValidHex(customColor) && "border-destructive",
             )}
           />
           <Button
@@ -178,9 +186,7 @@ export function AccentColorPicker({ value, onChange, label = "Accent Color", des
       )}
 
       {description && (
-        <p className="text-xs text-muted-foreground">
-          {description}
-        </p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       )}
     </div>
   );

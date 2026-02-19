@@ -2,8 +2,8 @@
 
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
-import ContentEditable from "react-contenteditable";
 import { useCallback, useEffect, useRef, useState } from "react";
+import ContentEditable from "react-contenteditable";
 import { toast } from "sonner";
 
 export function HeadingEditor({

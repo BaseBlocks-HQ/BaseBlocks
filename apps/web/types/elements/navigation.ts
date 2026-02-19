@@ -84,7 +84,7 @@ export const NAVIGATION_STYLES: NavigationStyleInfo[] = [
  * Get navigation style info
  */
 export function getNavigationStyleInfo(
-  style: NavigationStyle
+  style: NavigationStyle,
 ): NavigationStyleInfo | undefined {
   return NAVIGATION_STYLES.find((s) => s.style === style);
 }

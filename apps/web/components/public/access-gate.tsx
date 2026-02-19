@@ -7,7 +7,7 @@ import type { Id } from "@repo/backend";
 import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
-import { Lock, AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Lock } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SESSION_COOKIE_NAME = "bb_access_session";
@@ -93,7 +93,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
         setError(
           err instanceof ConvexError
             ? (err.data as string)
-            : "Invalid or expired access code"
+            : "Invalid or expired access code",
         );
         setCode("");
         inputRef.current?.focus();
@@ -101,7 +101,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
         setIsVerifying(false);
       }
     },
-    [siteId, code, verifyAccessCode]
+    [siteId, code, verifyAccessCode],
   );
 
   const handleCodeChange = useCallback(
@@ -112,7 +112,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
         setError(null);
       }
     },
-    []
+    [],
   );
 
   // Show loading state while checking session

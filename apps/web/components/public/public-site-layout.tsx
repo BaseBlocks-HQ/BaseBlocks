@@ -81,7 +81,7 @@ export function PublicSiteLayout({
   // Get ancestors for breadcrumbs and auto-expanding navigation
   const ancestors = useQuery(
     api.pages.queries.getAncestors,
-    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip"
+    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip",
   );
 
   // Extract ancestor IDs for auto-expanding navigation
@@ -89,7 +89,8 @@ export function PublicSiteLayout({
 
   // Build the current path string for navigation matching
   // When pagePath is empty (default page), use the resolved page's slug for nav matching
-  const currentPathString = pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
+  const currentPathString =
+    pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
 
   // Redirect to default/first page if current page is not found but pages exist
   const router = useRouter();
@@ -124,7 +125,10 @@ export function PublicSiteLayout({
 
   // Combine banners, deduplicating by block id
   const allBanners = (() => {
-    const combined = [...(siteWideBanners ?? []), ...(pageSpecificBanners ?? [])];
+    const combined = [
+      ...(siteWideBanners ?? []),
+      ...(pageSpecificBanners ?? []),
+    ];
     const seen = new Set<string>();
     return combined.filter((b) => {
       if (seen.has(b.id)) return false;
@@ -140,12 +144,20 @@ export function PublicSiteLayout({
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
   const navigationStyle = site.settings.navigationStyle;
-  const showBreadcrumbs = site.settings.showBreadcrumbs ?? navigationStyle !== "sidebar";
+  const showBreadcrumbs =
+    site.settings.showBreadcrumbs ?? navigationStyle !== "sidebar";
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   // Get customization CSS variables
-  const customizationStyles = useCustomizationStyles(site.settings.customization);
-  const isCustomized = !!(site.settings.customization?.accentColor || site.settings.customization?.headerColor || site.settings.customization?.secondaryColor || site.settings.customization?.borderRadius);
+  const customizationStyles = useCustomizationStyles(
+    site.settings.customization,
+  );
+  const isCustomized = !!(
+    site.settings.customization?.accentColor ||
+    site.settings.customization?.headerColor ||
+    site.settings.customization?.secondaryColor ||
+    site.settings.customization?.borderRadius
+  );
 
   // Apply CSS variables to document root so portals (dropdowns, popovers) also inherit them
   useEffect(() => {
@@ -185,12 +197,17 @@ export function PublicSiteLayout({
           <header
             className={cn(
               "relative shrink-0 z-40",
-              !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+              !site.settings.customization?.headerColor &&
+                "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
             )}
-            style={site.settings.customization?.headerColor ? {
-              backgroundColor: "var(--site-header-bg)",
-              color: "var(--site-header-fg)",
-            } : undefined}
+            style={
+              site.settings.customization?.headerColor
+                ? {
+                    backgroundColor: "var(--site-header-bg)",
+                    color: "var(--site-header-fg)",
+                  }
+                : undefined
+            }
           >
             <div className="flex h-14 items-center px-4">
               {/* Left side: collapsed sidebar trigger, or logo+name in non-sidebar mode */}
@@ -208,10 +225,7 @@ export function PublicSiteLayout({
               {/* Center: TopNav navigation (if topnav style) */}
               {showTopNav && pages && (
                 <div className="flex-1 flex justify-center ml-8">
-                  <TopNavMenu
-                    pages={pages}
-                    currentPath={currentPathString}
-                  />
+                  <TopNavMenu pages={pages} currentPath={currentPathString} />
                 </div>
               )}
 
@@ -227,7 +241,13 @@ export function PublicSiteLayout({
                     headerMode={hasCustomHeaderColor}
                   />
                 )}
-                <ModeToggle className={hasCustomHeaderColor ? "text-current hover:bg-current/10" : undefined} />
+                <ModeToggle
+                  className={
+                    hasCustomHeaderColor
+                      ? "text-current hover:bg-current/10"
+                      : undefined
+                  }
+                />
               </div>
             </div>
           </header>
@@ -235,11 +255,13 @@ export function PublicSiteLayout({
       )}
 
       {/* Gradient stripe below header (non-sidebar mode only, sidebar mode renders it full-width at container level) */}
-      {!showSidebar && site.settings.customization?.showHeaderGradient && showHeader && (
-        <div className="relative z-30">
-          <GradientStripe customization={site.settings.customization} />
-        </div>
-      )}
+      {!showSidebar &&
+        site.settings.customization?.showHeaderGradient &&
+        showHeader && (
+          <div className="relative z-30">
+            <GradientStripe customization={site.settings.customization} />
+          </div>
+        )}
 
       {/* Secondary Navigation Bar (subnav style) */}
       {showSubNav && pages && (
@@ -255,10 +277,7 @@ export function PublicSiteLayout({
         <BreadcrumbBar
           pageId={currentPage._id}
           pageTitle={currentPage.title}
-          className={cn(
-            "sticky z-20",
-            showSubNav ? "top-24" : "top-14"
-          )}
+          className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
         />
       )}
 
@@ -301,7 +320,11 @@ export function PublicSiteLayout({
   );
 
   return (
-    <PublicSiteProvider siteId={site._id} siteSlug={site.slug} teamSlug={team.slug}>
+    <PublicSiteProvider
+      siteId={site._id}
+      siteSlug={site.slug}
+      teamSlug={team.slug}
+    >
       <PublicSubpageProvider>
         {showSidebar ? (
           <SidebarProvider>
@@ -320,12 +343,17 @@ export function PublicSiteLayout({
                 <SidebarHeader
                   className={cn(
                     "h-14 px-4 flex flex-row items-center gap-2",
-                    !site.settings.customization?.headerColor && "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+                    !site.settings.customization?.headerColor &&
+                      "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
                   )}
-                  style={site.settings.customization?.headerColor ? {
-                    backgroundColor: "var(--site-header-bg)",
-                    color: "var(--site-header-fg)",
-                  } : undefined}
+                  style={
+                    site.settings.customization?.headerColor
+                      ? {
+                          backgroundColor: "var(--site-header-bg)",
+                          color: "var(--site-header-fg)",
+                        }
+                      : undefined
+                  }
                 >
                   {showLogo && <SiteLogo site={site} team={team} />}
                   {showSiteName && (
@@ -431,16 +459,21 @@ function SiteLogo({
 /**
  * Gradient stripe rendered below the header
  */
-function GradientStripe({ customization }: { customization: SiteCustomization }) {
+function GradientStripe({
+  customization,
+}: { customization: SiteCustomization }) {
   const primaryColor = customization.accentColor || "#0066FF";
 
   // Gradient order: primary → tertiary → secondary
   const gradientStops = [primaryColor];
-  if (customization.tertiaryColor) gradientStops.push(customization.tertiaryColor);
-  if (customization.secondaryColor) gradientStops.push(customization.secondaryColor);
-  const gradient = gradientStops.length >= 2
-    ? `linear-gradient(to right, ${gradientStops.join(", ")})`
-    : primaryColor;
+  if (customization.tertiaryColor)
+    gradientStops.push(customization.tertiaryColor);
+  if (customization.secondaryColor)
+    gradientStops.push(customization.secondaryColor);
+  const gradient =
+    gradientStops.length >= 2
+      ? `linear-gradient(to right, ${gradientStops.join(", ")})`
+      : primaryColor;
 
   return (
     <div

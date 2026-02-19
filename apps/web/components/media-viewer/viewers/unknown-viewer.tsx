@@ -47,7 +47,8 @@ export function UnknownViewer({ file }: ViewerProps) {
 
       <p className="text-sm text-muted-foreground max-w-md mb-8">
         This file type cannot be previewed in the browser.
-        {file.allowDownload !== false && " Download it to view with a compatible application."}
+        {file.allowDownload !== false &&
+          " Download it to view with a compatible application."}
       </p>
 
       <div className="flex items-center gap-3">

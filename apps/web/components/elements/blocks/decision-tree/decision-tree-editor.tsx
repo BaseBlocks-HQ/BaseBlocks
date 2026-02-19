@@ -1,18 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  GitFork,
-  MousePointerClick,
-  Pencil,
-  Plus,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { ElementEditorProps } from "@/components/elements/registry";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,6 +9,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   Select,
   SelectContent,
@@ -28,25 +22,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ElementEditorProps } from "@/components/elements/registry";
 import { useDebounceCallback } from "@/hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import type {
   DecisionTree,
   DecisionTreeBlockType,
   DecisionTreeContent,
-  DecisionTreeNode,
   DecisionTreeContentBlock,
+  DecisionTreeNode,
 } from "@/types/elements";
 import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
-import { useTreeNavigation } from "./editor/use-tree-navigation";
-import { NodeList } from "./editor/node-list";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  MousePointerClick,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { NodeDetail } from "./editor/node-detail";
+import { NodeList } from "./editor/node-list";
+import { useTreeNavigation } from "./editor/use-tree-navigation";
 
 function generateTreeId() {
   return Math.random().toString(36).slice(2, 9);
@@ -221,10 +220,7 @@ export function DecisionTreeEditor({
     (parentId: string | null, name: string) => {
       const nodes = activeTree.nodes;
       const siblings = nodes.filter((n) => n.parentId === parentId);
-      const maxOrder = siblings.reduce(
-        (max, n) => Math.max(max, n.order),
-        -1,
-      );
+      const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
       const newNode: DecisionTreeNode = {
         id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         parentId,
@@ -326,9 +322,7 @@ export function DecisionTreeEditor({
           n.id === nodeId
             ? {
                 ...n,
-                contentBlocks: n.contentBlocks.filter(
-                  (b) => b.id !== blockId,
-                ),
+                contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId),
               }
             : n,
         ),
@@ -639,14 +633,10 @@ export function DecisionTreeEditor({
 
         <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
           {/* Node list (options at current level) */}
-          <div className="border-b">
-            {nodeListPanel}
-          </div>
+          <div className="border-b">{nodeListPanel}</div>
 
           {/* Node detail (content of the node we navigated into) */}
-          {currentNode && (
-            <div>{nodeDetailPanel}</div>
-          )}
+          {currentNode && <div>{nodeDetailPanel}</div>}
         </div>
       </div>
     );

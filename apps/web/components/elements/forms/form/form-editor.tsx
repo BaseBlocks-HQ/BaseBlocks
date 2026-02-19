@@ -6,17 +6,17 @@
  */
 
 import type { ElementEditorProps } from "@/components/elements/registry";
-import type { FormContent } from "@/types/elements";
-import { useState, useCallback } from "react";
-import { toast } from "sonner";
-import { useDebounceCallback } from "@/hooks";
-import { FormBuilderProvider } from "./builder/form-builder-context";
-import { FieldPicker } from "./builder/field-picker";
-import { BuilderCanvas } from "./builder/builder-canvas";
-import { FieldSettingsPanel } from "./builder/field-settings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDebounceCallback } from "@/hooks";
+import type { FormContent } from "@/types/elements";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { BuilderCanvas } from "./builder/builder-canvas";
+import { FieldPicker } from "./builder/field-picker";
+import { FieldSettingsPanel } from "./builder/field-settings";
+import { FormBuilderProvider } from "./builder/form-builder-context";
 
 export function FormEditor({
   id,
@@ -40,9 +40,9 @@ export function FormEditor({
           onSaveStatusChange?.("idle");
         }
       },
-      [onUpdate, onSaveStatusChange]
+      [onUpdate, onSaveStatusChange],
     ),
-    500
+    500,
   );
 
   const handleUpdate = useCallback(
@@ -51,7 +51,7 @@ export function FormEditor({
       onSaveStatusChange?.("pending");
       debouncedSave(newContent);
     },
-    [debouncedSave, onSaveStatusChange]
+    [debouncedSave, onSaveStatusChange],
   );
 
   return (
@@ -90,10 +90,16 @@ export function FormEditor({
                   Form
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="field" className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col">
+              <TabsContent
+                value="field"
+                className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col"
+              >
                 <FieldSettingsPanel />
               </TabsContent>
-              <TabsContent value="form" className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col">
+              <TabsContent
+                value="form"
+                className="flex-1 min-h-0 m-0 overflow-hidden flex flex-col"
+              >
                 <div className="flex-1 min-h-0 overflow-y-auto">
                   <div className="p-3 space-y-4">
                     <div className="space-y-2">
@@ -101,7 +107,10 @@ export function FormEditor({
                       <Input
                         value={localContent.submitLabel}
                         onChange={(e) =>
-                          handleUpdate({ ...localContent, submitLabel: e.target.value })
+                          handleUpdate({
+                            ...localContent,
+                            submitLabel: e.target.value,
+                          })
                         }
                         placeholder="Submit"
                       />
@@ -111,7 +120,10 @@ export function FormEditor({
                       <Input
                         value={localContent.successMessage}
                         onChange={(e) =>
-                          handleUpdate({ ...localContent, successMessage: e.target.value })
+                          handleUpdate({
+                            ...localContent,
+                            successMessage: e.target.value,
+                          })
                         }
                         placeholder="Thank you!"
                       />

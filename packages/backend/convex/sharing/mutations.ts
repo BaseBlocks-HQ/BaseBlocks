@@ -1,13 +1,13 @@
-import { v, ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdmin, getAuthContextOrNull } from "../auth";
+import { requireAdmin } from "../auth";
 
 // Visibility types
 const visibilityValidator = v.union(
   v.literal("private"),
   v.literal("public"),
   v.literal("link-only"),
-  v.literal("password")
+  v.literal("password"),
 );
 
 // Generate a random 6-character alphanumeric code
@@ -168,7 +168,10 @@ export const updateAccessSettings = mutation({
     accessCodeRotationHours: v.optional(v.number()),
     accessCodeSessionDays: v.optional(v.number()),
   },
-  handler: async (ctx, { siteId, accessCodeRotationHours, accessCodeSessionDays }) => {
+  handler: async (
+    ctx,
+    { siteId, accessCodeRotationHours, accessCodeSessionDays },
+  ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 

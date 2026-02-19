@@ -11,11 +11,7 @@ import { DecisionTreePreview } from "./decision-tree-preview";
 import { DecisionTreeRenderer } from "./decision-tree-renderer";
 
 // Re-export components
-export {
-  DecisionTreeEditor,
-  DecisionTreeRenderer,
-  DecisionTreePreview,
-};
+export { DecisionTreeEditor, DecisionTreeRenderer, DecisionTreePreview };
 
 // Register the element
 registerElement({

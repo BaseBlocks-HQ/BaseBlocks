@@ -1,20 +1,20 @@
 "use client";
 
+import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { lightenColor } from "@/lib/customization";
+import type {
+  BorderRadiusPreset,
+  SiteCustomization,
+} from "@/types/elements/customization";
+import { getDarkColorForPreset } from "@/types/elements/customization";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
-import {
-  type BorderRadiusPreset,
-  type SiteCustomization,
-} from "@/types/elements/customization";
-import { getDarkColorForPreset } from "@/types/elements/customization";
-import { lightenColor } from "@/lib/customization";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { AccentColorPicker } from "./accent-color-picker";
 import { BorderRadiusPicker } from "./border-radius-picker";
 import { CustomizationPreview } from "./customization-preview";
@@ -23,21 +23,27 @@ interface CustomizationConfigPanelProps {
   siteId: Id<"sites">;
 }
 
-export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelProps) {
+export function CustomizationConfigPanel({
+  siteId,
+}: CustomizationConfigPanelProps) {
   const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
   const editorCtx = useEditorContextOptional();
 
   // Get current customization from site settings (may be undefined)
-  const customization = site?.settings?.customization as SiteCustomization | undefined;
+  const customization = site?.settings?.customization as
+    | SiteCustomization
+    | undefined;
 
   // Generic save helper
   const saveCustomization = useCallback(
     async (newCustomization: SiteCustomization) => {
       if (!site) return;
 
-      const oldCustomization = customization ? structuredClone(customization) : {};
+      const oldCustomization = customization
+        ? structuredClone(customization)
+        : {};
       const newCopy = structuredClone(newCustomization);
 
       setIsSaving(true);
@@ -73,12 +79,14 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         setIsSaving(false);
       }
     },
-    [siteId, site, customization, updateSite, editorCtx]
+    [siteId, site, customization, updateSite, editorCtx],
   );
 
   // Handle color change for a specific field
   const handleColorChange = useCallback(
-    (field: "accentColor" | "headerColor" | "secondaryColor" | "tertiaryColor") =>
+    (
+      field: "accentColor" | "headerColor" | "secondaryColor" | "tertiaryColor",
+    ) =>
       async (color: string | undefined) => {
         if (!site) return;
 
@@ -86,7 +94,8 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
         const newCustomization = { ...customization };
 
         if (color) {
-          const darkColor = getDarkColorForPreset(color) || lightenColor(color, 0.2);
+          const darkColor =
+            getDarkColorForPreset(color) || lightenColor(color, 0.2);
           (newCustomization as Record<string, unknown>)[field] = color;
           (newCustomization as Record<string, unknown>)[darkField] = darkColor;
         } else {
@@ -96,7 +105,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
 
         await saveCustomization(newCustomization);
       },
-    [site, customization, saveCustomization]
+    [site, customization, saveCustomization],
   );
 
   // Handle border radius change
@@ -113,7 +122,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
 
       await saveCustomization(newCustomization);
     },
-    [site, customization, saveCustomization]
+    [site, customization, saveCustomization],
   );
 
   // Handle gradient toggle
@@ -130,7 +139,7 @@ export function CustomizationConfigPanel({ siteId }: CustomizationConfigPanelPro
 
       await saveCustomization(newCustomization);
     },
-    [site, customization, saveCustomization]
+    [site, customization, saveCustomization],
   );
 
   if (!site) {

@@ -75,7 +75,9 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   // Extraction retry
-  const retryExtraction = useAction(api.actions.extractDocument.retryExtraction);
+  const retryExtraction = useAction(
+    api.actions.extractDocument.retryExtraction,
+  );
 
   const handleFilesAccepted = async (acceptedFiles: File[]) => {
     if (!library || !site) return;

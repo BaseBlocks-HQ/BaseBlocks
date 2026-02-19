@@ -1,24 +1,32 @@
 "use client";
 
 import { getDefaultContent } from "@/components/elements";
-import { PublicSubpageProvider, usePublicSubpageContext } from "@/components/public/public-subpage-context";
+import {
+  PublicSubpageProvider,
+  usePublicSubpageContext,
+} from "@/components/public/public-subpage-context";
 import { PublicSubpagePanel } from "@/components/public/public-subpage-panel";
 import { EditorSkeleton } from "@/components/skeletons";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
   ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { PortalContainerProvider } from "@/contexts/portal-container-context";
 import { useSiteCustomization } from "@/hooks";
 import { createBlock, createLayout, generateId } from "@/lib/layouts";
-import type { AnyContent, ElementType, LayoutBlockType, LayoutType } from "@/types";
+import type {
+  AnyContent,
+  ElementType,
+  LayoutBlockType,
+  LayoutType,
+} from "@/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PortalContainerProvider } from "@/contexts/portal-container-context";
 import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
@@ -33,8 +41,16 @@ interface SiteEditorProps {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, selectSlot, editingSubpage, closeSubpageEditor, activeTabId, pushCommand, isUndoRedoExecuting, currentPageId } =
-    useEditorContext();
+  const {
+    selection,
+    selectSlot,
+    editingSubpage,
+    closeSubpageEditor,
+    activeTabId,
+    pushCommand,
+    isUndoRedoExecuting,
+    currentPageId,
+  } = useEditorContext();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
   // Fullscreen state for subpage panel
@@ -69,12 +85,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   });
 
   // Get customization CSS variables for preview
-  const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId as Id<"sites">);
+  const { cssVariables: customizationStyles, isCustomized } =
+    useSiteCustomization(siteId as Id<"sites">);
 
   // Create a portal container for Radix portals within the editor content area.
   // This div lives at document.body level (no layout impact) but carries the
   // customization CSS variables so portaled elements inherit the right styles.
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | undefined>(undefined);
+  const [portalContainer, setPortalContainer] = useState<
+    HTMLElement | undefined
+  >(undefined);
   const portalContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -112,11 +131,17 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Mutations for layouts
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
-  const addSubpageBlockMutation = useMutation(api.layouts.mutations.addSubpageBlock);
+  const addSubpageBlockMutation = useMutation(
+    api.layouts.mutations.addSubpageBlock,
+  );
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
-  const removeBlockMutation = useMutation(api.layouts.mutations.removeBlockFromSlot);
+  const removeBlockMutation = useMutation(
+    api.layouts.mutations.removeBlockFromSlot,
+  );
 
-  const enablePageTabsMutation = useMutation(api.pages.mutations.enablePageTabs);
+  const enablePageTabsMutation = useMutation(
+    api.pages.mutations.enablePageTabs,
+  );
 
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
@@ -202,7 +227,16 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         });
       }
     },
-    [selectedPage, editingSubpage, createLayoutMutation, removeLayoutMutation, selectSlot, activeTabId, pushCommand, isUndoRedoExecuting],
+    [
+      selectedPage,
+      editingSubpage,
+      createLayoutMutation,
+      removeLayoutMutation,
+      selectSlot,
+      activeTabId,
+      pushCommand,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Add block from sidebar
@@ -276,7 +310,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         });
       }
     },
-    [selection, addBlockMutation, addSubpageBlockMutation, removeBlockMutation, pushCommand, isUndoRedoExecuting, currentPageId]
+    [
+      selection,
+      addBlockMutation,
+      addSubpageBlockMutation,
+      removeBlockMutation,
+      pushCommand,
+      isUndoRedoExecuting,
+      currentPageId,
+    ],
   );
 
   // Enable page-level tabs
@@ -347,7 +389,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                         <div
                           className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-8"
                           style={customizationStyles}
-                          {...(isCustomized ? { "data-site-customized": "" } : {})}
+                          {...(isCustomized
+                            ? { "data-site-customized": "" }
+                            : {})}
                         >
                           {selectedPage ? (
                             <PageEditor
@@ -366,7 +410,10 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                   </>
                 )}
                 {/* Subpage panel - editing takes priority over viewing */}
-                <ResizablePanel defaultSize={isFullscreen ? 100 : 42} minSize={30}>
+                <ResizablePanel
+                  defaultSize={isFullscreen ? 100 : 42}
+                  minSize={30}
+                >
                   <PortalContainerProvider value={portalContainer}>
                     <div
                       className="h-full w-full min-w-0 overflow-hidden border-l"
@@ -376,12 +423,16 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                       {editingSubpage ? (
                         <SubpageEditPanel
                           isFullscreen={isFullscreen}
-                          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                          onToggleFullscreen={() =>
+                            setIsFullscreen(!isFullscreen)
+                          }
                         />
                       ) : (
                         <PublicSubpagePanel
                           isFullscreen={isFullscreen}
-                          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                          onToggleFullscreen={() =>
+                            setIsFullscreen(!isFullscreen)
+                          }
                         />
                       )}
                     </div>

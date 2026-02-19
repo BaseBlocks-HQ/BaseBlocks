@@ -5,16 +5,17 @@
  * Right sidebar to configure the selected field
  */
 
-import { useFormBuilder } from "./form-builder-context";
-import { getFieldSettings, getFieldEntry } from "./field-registry";
 import { Button } from "@/components/ui/button";
 import { Trash2, X } from "lucide-react";
+import { getFieldEntry, getFieldSettings } from "./field-registry";
+import { useFormBuilder } from "./form-builder-context";
 
 // Import fields to register them
 import "../fields";
 
 export function FieldSettingsPanel() {
-  const { form, selectedFieldId, selectField, updateField, removeField } = useFormBuilder();
+  const { form, selectedFieldId, selectField, updateField, removeField } =
+    useFormBuilder();
 
   const selectedField = form.fields.find((f) => f.id === selectedFieldId);
 

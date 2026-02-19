@@ -1,9 +1,9 @@
 "use client";
 
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
+import { ContentSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ContentSkeleton } from "@/components/skeletons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createLayout, generateId } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,11 @@ interface PageEditorProps {
   nested?: boolean;
 }
 
-export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProps) {
+export function PageEditor({
+  pageId,
+  onSelectionChange,
+  nested,
+}: PageEditorProps) {
   const {
     selection,
     selectLayout,
@@ -73,24 +77,24 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const reorderLayoutsMutation = useMutation(api.layouts.mutations.reorder);
   const updateBlockMutation = useMutation(
-    api.layouts.mutations.updateBlockInSlot
+    api.layouts.mutations.updateBlockInSlot,
   );
   const removeBlockMutation = useMutation(
-    api.layouts.mutations.removeBlockFromSlot
+    api.layouts.mutations.removeBlockFromSlot,
   );
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
   const moveBlockMutation = useMutation(api.layouts.mutations.moveBlock);
   const updateSettingsMutation = useMutation(
-    api.layouts.mutations.updateSettings
+    api.layouts.mutations.updateSettings,
   );
   const updatePageTabsMutation = useMutation(
-    api.pages.mutations.updatePageTabs
+    api.pages.mutations.updatePageTabs,
   );
   const disablePageTabsMutation = useMutation(
-    api.pages.mutations.disablePageTabs
+    api.pages.mutations.disablePageTabs,
   );
   const enablePageTabsMutation = useMutation(
-    api.pages.mutations.enablePageTabs
+    api.pages.mutations.enablePageTabs,
   );
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
 
@@ -115,10 +119,7 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
   }, [layoutsData]);
 
   // Page tabs
-  const pageTabs = useMemo(
-    () => pageData?.pageTabs ?? [],
-    [pageData],
-  );
+  const pageTabs = useMemo(() => pageData?.pageTabs ?? [], [pageData]);
   const hasTabs = pageTabs.length > 0;
 
   // Auto-select first tab when tabs change
@@ -224,7 +225,14 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, pushCommand, isUndoRedoExecuting],
+    [
+      mainLayoutIds,
+      sidebarLayoutIds,
+      pageId,
+      reorderLayoutsMutation,
+      pushCommand,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Handle layout drag end for sidebar layouts
@@ -265,7 +273,14 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [mainLayoutIds, sidebarLayoutIds, pageId, reorderLayoutsMutation, pushCommand, isUndoRedoExecuting],
+    [
+      mainLayoutIds,
+      sidebarLayoutIds,
+      pageId,
+      reorderLayoutsMutation,
+      pushCommand,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Notify parent of slot selection changes
@@ -320,7 +335,17 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [createLayoutMutation, removeLayoutMutation, pageId, activeTabId, selectSlot, onSelectionChange, pushCommand, clearSelection, isUndoRedoExecuting],
+    [
+      createLayoutMutation,
+      removeLayoutMutation,
+      pageId,
+      activeTabId,
+      selectSlot,
+      onSelectionChange,
+      pushCommand,
+      clearSelection,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Update block content
@@ -329,7 +354,7 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
       layoutId: string,
       slotId: string,
       blockId: string,
-      content: AnyContent
+      content: AnyContent,
     ) => {
       const key = `${layoutId}:${slotId}:${blockId}`;
       const previousContent = lastKnownContentRef.current.get(key);
@@ -371,7 +396,7 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [updateBlockMutation, pushCommand, pageId, isUndoRedoExecuting]
+    [updateBlockMutation, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Remove block
@@ -416,7 +441,14 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [removeBlockMutation, addBlockMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting]
+    [
+      removeBlockMutation,
+      addBlockMutation,
+      allLayouts,
+      pushCommand,
+      pageId,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Remove layout
@@ -463,7 +495,15 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [removeLayoutMutation, createLayoutMutation, clearSelection, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
+    [
+      removeLayoutMutation,
+      createLayoutMutation,
+      clearSelection,
+      allLayouts,
+      pushCommand,
+      pageId,
+      isUndoRedoExecuting,
+    ],
   );
 
   // Move block within layout
@@ -478,7 +518,8 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
       // Capture the original index before the move
       const layout = allLayouts.find((l) => l.id === layoutId);
       const fromSlot = layout?.slots.find((s) => s.id === fromSlotId);
-      const originalIndex = fromSlot?.blocks.findIndex((b) => b.id === blockId) ?? 0;
+      const originalIndex =
+        fromSlot?.blocks.findIndex((b) => b.id === blockId) ?? 0;
 
       await moveBlockMutation({
         layoutId: layoutId as Id<"layouts">,
@@ -547,7 +588,13 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         });
       }
     },
-    [updateSettingsMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting]
+    [
+      updateSettingsMutation,
+      allLayouts,
+      pushCommand,
+      pageId,
+      isUndoRedoExecuting,
+    ],
   );
 
   // === Page tab management ===
@@ -577,7 +624,15 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         },
       });
     }
-  }, [pageId, pageTabs, disablePageTabsMutation, enablePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
+  }, [
+    pageId,
+    pageTabs,
+    disablePageTabsMutation,
+    enablePageTabsMutation,
+    pushCommand,
+    isUndoRedoExecuting,
+    setActiveTabId,
+  ]);
 
   const handleAddTab = useCallback(async () => {
     const oldTabs = structuredClone(pageTabs);
@@ -609,46 +664,67 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         },
       });
     }
-  }, [pageId, pageTabs, updatePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
+  }, [
+    pageId,
+    pageTabs,
+    updatePageTabsMutation,
+    pushCommand,
+    isUndoRedoExecuting,
+    setActiveTabId,
+  ]);
 
-  const handleRemoveTab = useCallback(async (tabId: string) => {
-    if (pageTabs.length <= 2) return;
-    const oldTabs = structuredClone(pageTabs);
-    const newTabs = pageTabs.filter((t) => t.id !== tabId);
+  const handleRemoveTab = useCallback(
+    async (tabId: string) => {
+      if (pageTabs.length <= 2) return;
+      const oldTabs = structuredClone(pageTabs);
+      const newTabs = pageTabs.filter((t) => t.id !== tabId);
 
-    await updatePageTabsMutation({
-      pageId: pageId as Id<"pages">,
-      pageTabs: newTabs,
-    });
-    if (activeTabId === tabId) {
-      setActiveTabId(newTabs[0]?.id ?? null);
-    }
-
-    if (!isUndoRedoExecuting) {
-      pushCommand({
-        description: "Remove tab",
-        pageId,
-        undo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
-            pageTabs: oldTabs,
-          });
-        },
-        redo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
-            pageTabs: newTabs,
-          });
-        },
+      await updatePageTabsMutation({
+        pageId: pageId as Id<"pages">,
+        pageTabs: newTabs,
       });
-    }
-  }, [pageId, pageTabs, activeTabId, updatePageTabsMutation, pushCommand, isUndoRedoExecuting, setActiveTabId]);
+      if (activeTabId === tabId) {
+        setActiveTabId(newTabs[0]?.id ?? null);
+      }
 
-  const handleStartRenameTab = useCallback((tab: { id: string; label: string }) => {
-    setEditingTabId(tab.id);
-    setEditingLabel(tab.label);
-    setTimeout(() => tabInputRef.current?.select(), 0);
-  }, []);
+      if (!isUndoRedoExecuting) {
+        pushCommand({
+          description: "Remove tab",
+          pageId,
+          undo: async () => {
+            await updatePageTabsMutation({
+              pageId: pageId as Id<"pages">,
+              pageTabs: oldTabs,
+            });
+          },
+          redo: async () => {
+            await updatePageTabsMutation({
+              pageId: pageId as Id<"pages">,
+              pageTabs: newTabs,
+            });
+          },
+        });
+      }
+    },
+    [
+      pageId,
+      pageTabs,
+      activeTabId,
+      updatePageTabsMutation,
+      pushCommand,
+      isUndoRedoExecuting,
+      setActiveTabId,
+    ],
+  );
+
+  const handleStartRenameTab = useCallback(
+    (tab: { id: string; label: string }) => {
+      setEditingTabId(tab.id);
+      setEditingLabel(tab.label);
+      setTimeout(() => tabInputRef.current?.select(), 0);
+    },
+    [],
+  );
 
   const handleFinishRenameTab = useCallback(async () => {
     if (!editingTabId) return;
@@ -682,7 +758,15 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
         },
       });
     }
-  }, [editingTabId, editingLabel, pageTabs, pageId, updatePageTabsMutation, pushCommand, isUndoRedoExecuting]);
+  }, [
+    editingTabId,
+    editingLabel,
+    pageTabs,
+    pageId,
+    updatePageTabsMutation,
+    pushCommand,
+    isUndoRedoExecuting,
+  ]);
 
   // Handle click on editor background to deselect
   // Layouts/blocks call stopPropagation(), so this only fires for background clicks
@@ -814,7 +898,9 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
           hasSidebar ? "max-w-6xl" : "max-w-4xl",
         )}
       >
-        {!nested && <h1 className="text-2xl font-semibold mb-6">{pageData.title}</h1>}
+        {!nested && (
+          <h1 className="text-2xl font-semibold mb-6">{pageData.title}</h1>
+        )}
 
         {/* Page-level tab bar */}
         {hasTabs && (
@@ -864,48 +950,48 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
-                      <span className="select-none">
-                        {tab.label}
-                      </span>
+                      <span className="select-none">{tab.label}</span>
                     )}
-                    {showControls && <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartRenameTab(tab);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                            handleStartRenameTab(tab);
-                          }
-                        }}
-                      >
-                        <Pencil className="h-2.5 w-2.5" />
-                      </span>
-                      {index >= 2 && (
+                    {showControls && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
                         <span
                           role="button"
                           tabIndex={0}
-                          className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
+                          className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleRemoveTab(tab.id);
+                            handleStartRenameTab(tab);
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.stopPropagation();
-                              handleRemoveTab(tab.id);
+                              handleStartRenameTab(tab);
                             }
                           }}
                         >
-                          <X className="h-3 w-3" />
+                          <Pencil className="h-2.5 w-2.5" />
                         </span>
-                      )}
-                    </div>}
+                        {index >= 2 && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveTab(tab.id);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.stopPropagation();
+                                handleRemoveTab(tab.id);
+                              }
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>

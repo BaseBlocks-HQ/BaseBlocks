@@ -56,7 +56,8 @@ export function RenameDialog({
       await onSubmit(name.trim());
       onOpenChange(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : `Failed to rename ${type}`;
+      const message =
+        err instanceof Error ? err.message : `Failed to rename ${type}`;
       setError(message);
     } finally {
       setIsSubmitting(false);

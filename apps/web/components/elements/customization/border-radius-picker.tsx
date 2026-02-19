@@ -20,7 +20,10 @@ interface BorderRadiusPickerProps {
   onChange: (radius: BorderRadiusPreset | undefined) => void;
 }
 
-export function BorderRadiusPicker({ value, onChange }: BorderRadiusPickerProps) {
+export function BorderRadiusPicker({
+  value,
+  onChange,
+}: BorderRadiusPickerProps) {
   const selectedPreset = value
     ? BORDER_RADIUS_PRESETS.find((p) => p.value === value)
     : null;
@@ -46,7 +49,7 @@ export function BorderRadiusPicker({ value, onChange }: BorderRadiusPickerProps)
             type="button"
             className={cn(
               "w-full flex items-center justify-between h-9 px-3 rounded-md border text-sm",
-              "bg-background hover:bg-accent transition-colors"
+              "bg-background hover:bg-accent transition-colors",
             )}
           >
             <div className="flex items-center gap-2">

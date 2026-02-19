@@ -9,8 +9,7 @@ export const tables = {
     image: v.optional(v.union(v.null(), v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index("email", ["email"]),
+  }).index("email", ["email"]),
   session: defineTable({
     expiresAt: v.number(),
     token: v.string(),
@@ -62,8 +61,7 @@ export const tables = {
     logo: v.optional(v.union(v.null(), v.string())),
     createdAt: v.number(),
     metadata: v.optional(v.union(v.null(), v.string())),
-  })
-    .index("slug", ["slug"]),
+  }).index("slug", ["slug"]),
   member: defineTable({
     organizationId: v.string(),
     userId: v.string(),

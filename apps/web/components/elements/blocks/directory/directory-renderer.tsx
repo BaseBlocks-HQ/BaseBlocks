@@ -112,7 +112,10 @@ export function DirectoryRenderer({
     );
   }, [rows, columns, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / settings.pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRows.length / settings.pageSize),
+  );
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * settings.pageSize;
   const paginatedRows = filteredRows.slice(
@@ -126,19 +129,16 @@ export function DirectoryRenderer({
     setCurrentPage(1);
   }, []);
 
-  const copyToClipboard = useCallback(
-    async (text: string, id: string) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 1500);
-        toast.success("Copied to clipboard");
-      } catch {
-        toast.error("Failed to copy to clipboard");
-      }
-    },
-    [],
-  );
+  const copyToClipboard = useCallback(async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
+  }, []);
 
   const copyRow = useCallback(
     (rowId: string) => {
@@ -203,10 +203,7 @@ export function DirectoryRenderer({
                           settings.copyMode === "cell" && "group relative",
                         )}
                       >
-                        <CellContent
-                          value={cellValue}
-                          columnType={col.type}
-                        />
+                        <CellContent value={cellValue} columnType={col.type} />
                         {settings.copyMode === "cell" && cellValue && (
                           <button
                             type="button"

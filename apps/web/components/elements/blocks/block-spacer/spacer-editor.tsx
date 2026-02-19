@@ -85,7 +85,9 @@ export function SpacerEditor({
     >
       <div className="flex items-center gap-1.5 text-muted-foreground">
         <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-        {!useDropdown && <span className="text-xs hidden sm:inline">Spacer</span>}
+        {!useDropdown && (
+          <span className="text-xs hidden sm:inline">Spacer</span>
+        )}
       </div>
 
       {/* Height controls - dropdown for narrow containers, buttons for wide */}
@@ -114,9 +116,16 @@ export function SpacerEditor({
                 }}
                 className="gap-2"
               >
-                <Check className={cn("h-3 w-3", height === size ? "opacity-100" : "opacity-0")} />
+                <Check
+                  className={cn(
+                    "h-3 w-3",
+                    height === size ? "opacity-100" : "opacity-0",
+                  )}
+                />
                 <span className="font-medium">{SIZE_LABELS[size]}</span>
-                <span className="text-muted-foreground">{SIZE_FULL_LABELS[size]}</span>
+                <span className="text-muted-foreground">
+                  {SIZE_FULL_LABELS[size]}
+                </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

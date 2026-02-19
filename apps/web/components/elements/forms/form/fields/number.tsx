@@ -1,16 +1,16 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import type { NumberField } from "@/types/elements";
+import { Hash } from "lucide-react";
 import type {
   FieldEditorProps,
   FieldRendererProps,
   FieldSettingsProps,
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Hash } from "lucide-react";
 
 function NumberEditor({ field }: FieldEditorProps) {
   const f = field as NumberField;
@@ -18,7 +18,9 @@ function NumberEditor({ field }: FieldEditorProps) {
     <div className="space-y-2">
       <Label className="text-sm font-medium">
         {f.label || "Number"}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Input
         type="number"
@@ -39,7 +41,9 @@ function NumberRenderer({ field, value, onChange, error }: FieldRendererProps) {
     <div className="space-y-2">
       <Label htmlFor={f.id} className="text-sm font-medium">
         {f.label}
-        {f.validation?.required && <span className="text-destructive ml-1">*</span>}
+        {f.validation?.required && (
+          <span className="text-destructive ml-1">*</span>
+        )}
       </Label>
       <Input
         id={f.id}
@@ -47,7 +51,9 @@ function NumberRenderer({ field, value, onChange, error }: FieldRendererProps) {
         type="number"
         placeholder={f.placeholder}
         value={(value as number) ?? ""}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+        onChange={(e) =>
+          onChange(e.target.value ? Number(e.target.value) : undefined)
+        }
         required={f.validation?.required}
         min={f.min ?? f.validation?.min}
         max={f.max ?? f.validation?.max}
@@ -64,7 +70,8 @@ function NumberRenderer({ field, value, onChange, error }: FieldRendererProps) {
 
 function NumberSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as NumberField;
-  const update = (updates: Partial<NumberField>) => onChange({ ...f, ...updates });
+  const update = (updates: Partial<NumberField>) =>
+    onChange({ ...f, ...updates });
 
   return (
     <div className="space-y-4">
@@ -103,7 +110,11 @@ function NumberSettings({ field, onChange }: FieldSettingsProps) {
           <Input
             type="number"
             value={f.min ?? ""}
-            onChange={(e) => update({ min: e.target.value ? Number(e.target.value) : undefined })}
+            onChange={(e) =>
+              update({
+                min: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
           />
         </div>
         <div className="space-y-2">
@@ -111,7 +122,11 @@ function NumberSettings({ field, onChange }: FieldSettingsProps) {
           <Input
             type="number"
             value={f.max ?? ""}
-            onChange={(e) => update({ max: e.target.value ? Number(e.target.value) : undefined })}
+            onChange={(e) =>
+              update({
+                max: e.target.value ? Number(e.target.value) : undefined,
+              })
+            }
           />
         </div>
       </div>

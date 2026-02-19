@@ -18,7 +18,11 @@ function extractSubdomain(request: NextRequest): string | null {
   const hostname = hostParts[0] || "";
 
   // Local development environment - use host header (request.url may use 0.0.0.0 in Next.js 16)
-  if (hostname.includes("localhost") || hostname.includes("127.0.0.1") || hostname.endsWith(".ts.net")) {
+  if (
+    hostname.includes("localhost") ||
+    hostname.includes("127.0.0.1") ||
+    hostname.endsWith(".ts.net")
+  ) {
     if (hostname.includes(".localhost")) {
       const subdomain = hostname.split(".")[0];
       return subdomain || null;

@@ -17,7 +17,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageExpandState, useSiteCustomization } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
-import type { LayoutBlockType, LayoutType, PageListItem, PageWithChildren } from "@/types";
+import type {
+  LayoutBlockType,
+  LayoutType,
+  PageListItem,
+  PageWithChildren,
+} from "@/types";
 import type { ElementType } from "@/types/elements";
 import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
@@ -96,7 +101,8 @@ export function EditorSidebar({
     .sort((a, b) => a.order - b.order);
 
   // Customization + page tree for preview tab
-  const { cssVariables: customizationStyles, isCustomized } = useSiteCustomization(siteId);
+  const { cssVariables: customizationStyles, isCustomized } =
+    useSiteCustomization(siteId);
   const pageTree = useMemo(() => buildPageTree(navPages), [navPages]);
 
   // Auto-switch to components tab when a slot or block is selected
@@ -225,10 +231,7 @@ export function EditorSidebar({
             {...(isCustomized ? { "data-site-customized": "" } : {})}
           >
             <div className="px-3 pt-2 pb-1">
-              <Badge
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0"
-              >
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                 Sidebar Preview
               </Badge>
             </div>
