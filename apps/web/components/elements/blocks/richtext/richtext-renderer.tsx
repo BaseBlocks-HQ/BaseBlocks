@@ -23,7 +23,7 @@ export function RichTextRenderer({
   });
 
   return (
-    <div className="[&_.bn-container]:!border-none [&_.bn-editor]:!px-0">
+    <div className="[&_.bn-container]:!border-none [&_.bn-editor]:!px-0 [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent">
       <BlockNoteView
         editor={editor}
         editable={false}

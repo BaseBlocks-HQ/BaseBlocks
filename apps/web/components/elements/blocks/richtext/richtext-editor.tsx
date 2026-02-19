@@ -49,7 +49,7 @@ export function RichTextEditor({
   );
 
   return (
-    <div className="rounded-md transition-colors hover:bg-muted/50 [&_.bn-container]:!border-none [&_.bn-editor]:!px-0">
+    <div className="rounded-md transition-colors hover:bg-muted/50 [&_.bn-container]:!border-none [&_.bn-editor]:!pr-0 [&_.bn-editor]:!pl-12 [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent">
       <BlockNoteView
         editor={editor}
         theme={blockNoteTheme}

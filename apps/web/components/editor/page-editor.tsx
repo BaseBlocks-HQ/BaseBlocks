@@ -814,7 +814,7 @@ export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProp
           hasSidebar ? "max-w-6xl" : "max-w-4xl",
         )}
       >
-        <h1 className="text-2xl font-semibold mb-6">{pageData.title}</h1>
+        {!nested && <h1 className="text-2xl font-semibold mb-6">{pageData.title}</h1>}
 
         {/* Page-level tab bar */}
         {hasTabs && (

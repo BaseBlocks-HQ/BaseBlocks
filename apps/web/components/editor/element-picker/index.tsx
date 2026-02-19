@@ -101,15 +101,6 @@ export function ElementPicker({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    // Keep config panels stable; they contain interactive controls and dialogs
-    // rendered in portals (e.g. file pickers / modal overlays).
-    if (
-      activeCategory &&
-      CONFIG_PANEL_CATEGORIES.includes(activeCategory)
-    ) {
-      return;
-    }
-
     // Don't close if mouse moved to a Radix portal (dropdown menus, selects, etc.)
     const relatedTarget = e.relatedTarget;
     if (
@@ -120,9 +111,12 @@ export function ElementPicker({
     ) {
       return;
     }
+
+    // Config panels get a longer timeout since they have interactive controls
+    const delay = activeCategory && CONFIG_PANEL_CATEGORIES.includes(activeCategory) ? 400 : 150;
     timeoutRef.current = setTimeout(() => {
       setActiveCategory(null);
-    }, 150);
+    }, delay);
   };
 
   const handleSelect = (type: ElementType | LayoutType) => {
