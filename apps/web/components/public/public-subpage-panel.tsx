@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";

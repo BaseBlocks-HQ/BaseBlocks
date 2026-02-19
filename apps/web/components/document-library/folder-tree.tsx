@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@repo/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useCallback, useMemo, useState } from "react";
 import { CreateFolderDialog } from "./create-folder-dialog";

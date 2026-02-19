@@ -1,14 +1,14 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@repo/ui/badge";
+import { Button } from "@repo/ui/button";
+import { ScrollArea } from "@repo/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@repo/ui/sheet";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";

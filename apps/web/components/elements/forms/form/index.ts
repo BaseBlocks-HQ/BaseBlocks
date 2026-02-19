@@ -3,7 +3,7 @@
  * Interactive form builder with drag-and-drop fields
  */
 
-import { DEFAULT_FORM_CONTENT } from "@/types/elements";
+import { DEFAULT_FORM_CONTENT } from "@repo/types/elements";
 import { FileText } from "lucide-react";
 import { registerElement } from "../../registry";
 import { FormEditor } from "./form-editor";

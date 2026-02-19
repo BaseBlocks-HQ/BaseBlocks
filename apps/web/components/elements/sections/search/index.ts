@@ -3,7 +3,7 @@
  * Document search functionality
  */
 
-import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
+import { DEFAULT_SECTION_CONTENT } from "@repo/types/elements";
 import { Search } from "lucide-react";
 import { registerElement } from "../../registry";
 import { SearchConfigPanel } from "./search-config";

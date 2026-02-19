@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { Download, ExternalLink, FileQuestion } from "lucide-react";
 import type { ViewerProps } from "../types";
 import { getFileExtension } from "../types";

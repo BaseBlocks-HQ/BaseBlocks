@@ -3,7 +3,7 @@
  * Grid of linked cards with images
  */
 
-import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
+import { DEFAULT_SECTION_CONTENT } from "@repo/types/elements";
 import { LayoutGrid } from "lucide-react";
 import { registerElement } from "../../registry";
 import { QuicklinksEditor } from "./quicklinks-editor";

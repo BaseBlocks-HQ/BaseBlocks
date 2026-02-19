@@ -3,7 +3,7 @@
  * Configurable data table with columns, rows, and inline cell data
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { TableIcon } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DirectoryConfigPanel } from "./directory-config";

@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@repo/ui/tooltip";
 import { getSiteUrl } from "@/lib/utils";
 import { Eye } from "lucide-react";
 

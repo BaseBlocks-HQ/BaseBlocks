@@ -3,7 +3,7 @@
 import { usePublicSiteContext } from "@/components/public/public-site-context";
 import { getPageLink } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { PageWithChildren } from "@/types";
+import type { PageWithChildren } from "@repo/types";
 import { ChevronDown, ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";

@@ -9,8 +9,8 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@repo/ui/resizable";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
@@ -19,7 +19,7 @@ import type {
   LayoutSettings,
   LayoutType,
   SpacerLayoutHeight,
-} from "@/types";
+} from "@repo/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useQuery } from "convex/react";

@@ -3,7 +3,7 @@
  * Announcement banner with alerts, importance presets, and carousel cycling
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { Megaphone } from "lucide-react";
 import { registerElement } from "../../registry";
 import { BannerConfigPanel } from "./banner-config";

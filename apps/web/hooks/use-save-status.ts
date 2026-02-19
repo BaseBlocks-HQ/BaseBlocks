@@ -1,4 +1,4 @@
-import type { SaveStatus } from "@/types";
+import type { SaveStatus } from "@repo/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseSaveStatusOptions {

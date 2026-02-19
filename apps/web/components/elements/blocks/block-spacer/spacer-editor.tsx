@@ -1,15 +1,15 @@
 "use client";
 
 import type { ElementEditorProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { BlockSpacerContent } from "@/types/elements";
+import type { BlockSpacerContent } from "@repo/types/elements";
 import { Check, ChevronDown, MoveVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 

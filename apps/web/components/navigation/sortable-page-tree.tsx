@@ -6,14 +6,14 @@ import {
   RenamePageDialog,
 } from "@/components/dialogs";
 import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui/dropdown-menu";
 import type { TreeProjection } from "@/lib/tree-utils";
 import {
   applyMove,
@@ -22,7 +22,7 @@ import {
   hashPages,
   isValidDrop,
 } from "@/lib/tree-utils";
-import type { PageListItem } from "@/types";
+import type { PageListItem } from "@repo/types";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";

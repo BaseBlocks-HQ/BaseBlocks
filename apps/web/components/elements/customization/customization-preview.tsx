@@ -2,7 +2,7 @@
 
 import { useCustomizationStyles } from "@/hooks";
 import { hasCustomization } from "@/lib/customization";
-import type { SiteCustomization } from "@/types/elements/customization";
+import type { SiteCustomization } from "@repo/types/elements/customization";
 
 interface CustomizationPreviewProps {
   customization: SiteCustomization | undefined;

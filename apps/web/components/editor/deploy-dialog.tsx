@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@repo/ui/dialog";
+import { Label } from "@repo/ui/label";
+import { Textarea } from "@repo/ui/textarea";
 import { Rocket } from "lucide-react";
 import { useState } from "react";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
 import { useDebounceCallback } from "@/hooks";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";

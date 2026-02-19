@@ -1,7 +1,7 @@
 "use client";
 
 import { ElementRendererWrapper } from "@/components/elements/element-renderer-wrapper";
-import type { AnyContent, DecisionTreeContentBlock } from "@/types/elements";
+import type { AnyContent, DecisionTreeContentBlock } from "@repo/types/elements";
 
 export function ContentBlockRenderer({
   blocks,

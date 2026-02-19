@@ -19,7 +19,7 @@ import type {
   ElementCategory,
   ElementType,
   LayoutType,
-} from "@/types/elements";
+} from "@repo/types/elements";
 import type { Id } from "@repo/backend";
 import { PanelTop } from "lucide-react";
 import { ElementCard } from "./element-card";

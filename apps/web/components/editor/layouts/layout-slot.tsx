@@ -10,19 +10,19 @@ import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@repo/ui/popover";
 import { cn } from "@/lib/utils";
 import type {
   AnyContent,
   ElementType,
   LayoutSlot as LayoutSlotType,
   LayoutType,
-} from "@/types";
+} from "@repo/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";

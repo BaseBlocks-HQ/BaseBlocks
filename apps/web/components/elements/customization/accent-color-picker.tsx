@@ -1,18 +1,18 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@repo/ui/dropdown-menu";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { isValidHex } from "@/lib/customization";
 import { cn } from "@/lib/utils";
-import { COLOR_PRESETS } from "@/types/elements/customization";
+import { COLOR_PRESETS } from "@repo/types/elements/customization";
 import { Check, ChevronDown, Pipette } from "lucide-react";
 import { useEffect, useState } from "react";
 

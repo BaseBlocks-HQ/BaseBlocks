@@ -1,7 +1,7 @@
 "use client";
 
-import type { SaveStatus } from "@/types";
-import type { AnyContent, ElementType } from "@/types/elements";
+import type { SaveStatus } from "@repo/types";
+import type { AnyContent, ElementType } from "@repo/types/elements";
 import { getElementEditor } from "./registry";
 
 interface ElementEditorWrapperProps {

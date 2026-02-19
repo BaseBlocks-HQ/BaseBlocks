@@ -3,12 +3,12 @@
  * Provides utilities for working with element categories
  */
 
-import type { ElementCategory } from "@/types/elements";
+import type { ElementCategory } from "@repo/types/elements";
 import {
   CATEGORIES,
   getCategoryInfo as getInfo,
   getSortedCategories as getSorted,
-} from "@/types/elements";
+} from "@repo/types/elements";
 
 // Re-export category utilities for convenience
 export const getCategoryInfo = getInfo;

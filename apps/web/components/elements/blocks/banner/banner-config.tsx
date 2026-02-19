@@ -1,14 +1,14 @@
 "use client";
 
 import type { ElementConfigPanelProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import type { BannerContent, BannerImportancePreset } from "@/types/elements";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
+import { Separator } from "@repo/ui/separator";
+import { Slider } from "@repo/ui/slider";
+import { Switch } from "@repo/ui/switch";
+import type { BannerContent, BannerImportancePreset } from "@repo/types/elements";
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 

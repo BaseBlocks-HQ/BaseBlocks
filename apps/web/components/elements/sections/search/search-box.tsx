@@ -1,8 +1,8 @@
 "use client";
 
 import { useMediaViewer } from "@/components/media-viewer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";

@@ -1,16 +1,16 @@
 "use client";
 
 import { ConfirmDialog, RenamePageDialog } from "@/components/dialogs";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import type { PageListItem } from "@/types";
+} from "@repo/ui/dropdown-menu";
+import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
+import type { PageListItem } from "@repo/types";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";

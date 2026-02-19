@@ -1,19 +1,19 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MiddleTruncate } from "@/components/ui/middle-truncate";
+} from "@repo/ui/dropdown-menu";
+import { MiddleTruncate } from "@repo/ui/middle-truncate";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@repo/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   AlertTriangle,

@@ -1,9 +1,9 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import type { NumberField } from "@/types/elements";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/switch";
+import type { NumberField } from "@repo/types/elements";
 import { Hash } from "lucide-react";
 import type {
   FieldEditorProps,

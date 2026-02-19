@@ -14,35 +14,35 @@ import {
 import { useEditorContext } from "@/components/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@repo/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { MiddleTruncate } from "@/components/ui/middle-truncate";
+} from "@repo/ui/dropdown-menu";
+import { Input } from "@repo/ui/input";
+import { MiddleTruncate } from "@repo/ui/middle-truncate";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@repo/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui/select";
 import { useFileUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";

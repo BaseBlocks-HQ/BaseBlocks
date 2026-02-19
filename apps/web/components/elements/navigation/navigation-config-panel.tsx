@@ -1,12 +1,12 @@
 "use client";
 
 import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@repo/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   NAVIGATION_STYLES,
   type NavigationStyle,
-} from "@/types/elements/navigation";
+} from "@repo/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";

@@ -3,7 +3,7 @@
  * Single image with caption support
  */
 
-import { DEFAULT_MEDIA_CONTENT } from "@/types/elements";
+import { DEFAULT_MEDIA_CONTENT } from "@repo/types/elements";
 import { Image } from "lucide-react";
 import { registerElement } from "../../registry";
 import { ImageEditor } from "./image-editor";

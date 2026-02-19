@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 import type { Id } from "@repo/backend";
 import { Folder, MoreHorizontal, Pencil, Trash2 } from "lucide-react";

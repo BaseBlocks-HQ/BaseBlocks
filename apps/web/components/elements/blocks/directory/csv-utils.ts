@@ -2,7 +2,7 @@ import type {
   DirectoryColumn,
   DirectoryContent,
   DirectorySettings,
-} from "@/types/elements";
+} from "@repo/types/elements";
 
 function countDelimiterOutsideQuotes(line: string, delimiter: string): number {
   let inQuotes = false;

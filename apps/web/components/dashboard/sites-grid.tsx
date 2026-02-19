@@ -2,7 +2,7 @@
 
 import { CreateSiteDialog } from "@/components/dialogs";
 import { SiteCardSkeleton } from "@/components/skeletons";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@repo/ui/card";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SiteCard } from "./site-card";

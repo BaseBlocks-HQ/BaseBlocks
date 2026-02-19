@@ -1,8 +1,8 @@
 "use client";
 
 import type { ElementRendererProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
 import {
   Table,
   TableBody,
@@ -10,9 +10,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@repo/ui/table";
 import { cn } from "@/lib/utils";
-import type { DirectoryColumnType } from "@/types/elements";
+import type { DirectoryColumnType } from "@repo/types/elements";
 import {
   Check,
   ChevronLeft,

@@ -2,9 +2,9 @@
 
 import { CreatePageDialog } from "@/components/dialogs";
 import { NavItem, SortablePageTree } from "@/components/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@repo/ui/badge";
+import { Button } from "@repo/ui/button";
+import { ScrollArea } from "@repo/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -13,8 +13,8 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-} from "@/components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@repo/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { usePageExpandState, useSiteCustomization } from "@/hooks";
 import { getDisplayDomain } from "@/lib/utils";
 import type {
@@ -22,8 +22,8 @@ import type {
   LayoutType,
   PageListItem,
   PageWithChildren,
-} from "@/types";
-import type { ElementType } from "@/types/elements";
+} from "@repo/types";
+import type { ElementType } from "@repo/types/elements";
 import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -3,7 +3,7 @@
  * Full rich text editor powered by BlockNote
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { TextCursorInput } from "lucide-react";
 import { registerElement } from "../../registry";
 import { RichTextEditor } from "./richtext-editor";

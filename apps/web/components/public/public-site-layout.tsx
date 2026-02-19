@@ -17,14 +17,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@repo/ui/sidebar";
+import { Skeleton } from "@repo/ui/skeleton";
 import { useCustomizationStyles } from "@/hooks";
 import { cn, getPageLink } from "@/lib/utils";
-import type { PageWithChildren } from "@/types";
-import type { BannerContent } from "@/types/elements";
-import type { SiteCustomization } from "@/types/elements/customization";
-import type { NavigationStyle } from "@/types/elements/navigation";
+import type { PageWithChildren } from "@repo/types";
+import type { BannerContent } from "@repo/types/elements";
+import type { SiteCustomization } from "@repo/types/elements/customization";
+import type { NavigationStyle } from "@repo/types/elements/navigation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";

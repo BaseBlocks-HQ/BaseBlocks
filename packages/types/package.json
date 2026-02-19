@@ -1,0 +1,18 @@
+{
+  "name": "@repo/types",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./elements": "./src/elements/index.ts",
+    "./elements/*": "./src/elements/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/backend": "*",
+    "@repo/config-typescript": "*",
+    "typescript": "5.9.2"
+  }
+}

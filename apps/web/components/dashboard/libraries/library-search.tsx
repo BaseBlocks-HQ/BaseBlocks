@@ -1,7 +1,7 @@
 "use client";
 
 import { FileIcon, getFileTypeColor } from "@/components/document-library";
-import { Input } from "@/components/ui/input";
+import { Input } from "@repo/ui/input";
 import { cn } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";

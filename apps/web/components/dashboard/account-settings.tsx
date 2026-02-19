@@ -10,9 +10,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+} from "@repo/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar";
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+} from "@repo/ui/dialog";
+import { Separator } from "@repo/ui/separator";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@repo/backend";

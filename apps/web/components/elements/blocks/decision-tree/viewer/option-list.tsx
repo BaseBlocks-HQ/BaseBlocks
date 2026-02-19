@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { DecisionTreeNode } from "@/types/elements";
+import type { DecisionTreeNode } from "@repo/types/elements";
 import { ChevronRight } from "lucide-react";
 
 interface OptionListProps {

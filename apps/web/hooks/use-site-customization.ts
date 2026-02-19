@@ -2,7 +2,7 @@ import {
   generateCustomizationStyles,
   hasCustomization,
 } from "@/lib/customization";
-import type { SiteCustomization } from "@/types/elements/customization";
+import type { SiteCustomization } from "@repo/types/elements/customization";
 import type { Id } from "@repo/backend";
 import { api } from "@repo/backend";
 import { useQuery } from "convex/react";

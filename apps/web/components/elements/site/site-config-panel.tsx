@@ -2,7 +2,7 @@
 
 import { DropZone } from "@/components/document-library/drop-zone";
 import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+} from "@repo/ui/dialog";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/switch";
+import { Textarea } from "@repo/ui/textarea";
 import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";

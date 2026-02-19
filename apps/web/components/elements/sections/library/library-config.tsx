@@ -1,8 +1,8 @@
 "use client";
 
 import type { ElementConfigPanelProps } from "@/components/elements/registry";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/switch";
 
 export function LibraryConfigPanel({
   content,

@@ -8,7 +8,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@repo/ui/breadcrumb";
 import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";

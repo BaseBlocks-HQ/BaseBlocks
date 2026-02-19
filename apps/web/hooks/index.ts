@@ -7,7 +7,7 @@ export {
   useDebounceCallback,
   useDebounceCallbackWithFlush,
 } from "./use-debounce";
-export { useIsMobile } from "./use-mobile";
+export { useIsMobile } from "@repo/ui/hooks/use-mobile";
 
 // New hooks
 export { useSaveStatus } from "./use-save-status";

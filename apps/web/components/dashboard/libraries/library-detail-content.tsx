@@ -20,8 +20,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@repo/ui/alert-dialog";
+import { Skeleton } from "@repo/ui/skeleton";
 import { useRouter } from "@/i18n/navigation";
 import { useFileUpload } from "@/lib/storage/hooks";
 import { api } from "@repo/backend";

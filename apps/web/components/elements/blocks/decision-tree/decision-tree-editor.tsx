@@ -8,30 +8,30 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
+} from "@repo/ui/breadcrumb";
+import { Button } from "@repo/ui/button";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
+} from "@repo/ui/resizable";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui/select";
 import { useDebounceCallback } from "@/hooks";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@repo/ui/hooks/use-mobile";
 import type {
   DecisionTree,
   DecisionTreeBlockType,
   DecisionTreeContent,
   DecisionTreeContentBlock,
   DecisionTreeNode,
-} from "@/types/elements";
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+} from "@repo/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import {
   Check,
   ChevronLeft,

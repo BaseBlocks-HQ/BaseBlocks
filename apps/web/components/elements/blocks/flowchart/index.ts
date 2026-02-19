@@ -3,7 +3,7 @@
  * Mermaid diagram rendering with live preview
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { Workflow } from "lucide-react";
 import { registerElement } from "../../registry";
 import { FlowchartEditor } from "./flowchart-editor";

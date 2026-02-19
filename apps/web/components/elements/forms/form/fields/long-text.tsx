@@ -1,10 +1,10 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import type { LongTextField } from "@/types/elements";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/switch";
+import { Textarea } from "@repo/ui/textarea";
+import type { LongTextField } from "@repo/types/elements";
 import { AlignLeft } from "lucide-react";
 import type {
   FieldEditorProps,

@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@repo/ui/alert-dialog";
+import { Skeleton } from "@repo/ui/skeleton";
 import { api } from "@repo/backend";
 import type { Doc } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";

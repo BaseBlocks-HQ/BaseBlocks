@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@repo/ui/button";
+import { Progress } from "@repo/ui/progress";
 import type { UploadState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Check, Loader2, X } from "lucide-react";

@@ -14,10 +14,10 @@ export type {
   NavigationItem,
   NavigationConfig,
   NavigationStyleInfo,
-} from "@/types/elements/navigation";
+} from "@repo/types/elements/navigation";
 
 export {
   DEFAULT_NAVIGATION_CONFIG,
   NAVIGATION_STYLES,
   getNavigationStyleInfo,
-} from "@/types/elements/navigation";
+} from "@repo/types/elements/navigation";

@@ -6,13 +6,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
+} from "@repo/ui/dropdown-menu";
+import { Label } from "@repo/ui/label";
 import { cn } from "@/lib/utils";
 import {
   BORDER_RADIUS_PRESETS,
   type BorderRadiusPreset,
-} from "@/types/elements/customization";
+} from "@repo/types/elements/customization";
 import { Check, ChevronDown } from "lucide-react";
 
 interface BorderRadiusPickerProps {

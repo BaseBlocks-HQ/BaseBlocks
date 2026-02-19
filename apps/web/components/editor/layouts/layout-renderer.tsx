@@ -1,10 +1,10 @@
 "use client";
 
 import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
-import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@/types";
+import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@repo/types";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import type { HTMLAttributes, Ref } from "react";
 import { LayoutSlot } from "./layout-slot";

@@ -10,14 +10,14 @@ import {
 } from "@/components/document-library";
 import type { ElementRendererProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
-import { Button } from "@/components/ui/button";
-import { MiddleTruncate } from "@/components/ui/middle-truncate";
+import { Button } from "@repo/ui/button";
+import { MiddleTruncate } from "@repo/ui/middle-truncate";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@repo/ui/popover";
+import { ScrollArea } from "@repo/ui/scroll-area";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { Id } from "@repo/backend";

@@ -3,11 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./*": "./src/*.tsx"
+    "./*": "./src/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./contexts/*": "./src/contexts/*.tsx"
   },
   "scripts": {
     "lint": "biome check --write .",
-    "generate:component": "turbo gen react-component",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
@@ -18,7 +20,47 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@radix-ui/react-accordion": "*",
+    "@radix-ui/react-alert-dialog": "*",
+    "@radix-ui/react-aspect-ratio": "*",
+    "@radix-ui/react-avatar": "*",
+    "@radix-ui/react-checkbox": "*",
+    "@radix-ui/react-collapsible": "*",
+    "@radix-ui/react-context-menu": "*",
+    "@radix-ui/react-dialog": "*",
+    "@radix-ui/react-dropdown-menu": "*",
+    "@radix-ui/react-hover-card": "*",
+    "@radix-ui/react-label": "*",
+    "@radix-ui/react-menubar": "*",
+    "@radix-ui/react-navigation-menu": "*",
+    "@radix-ui/react-popover": "*",
+    "@radix-ui/react-progress": "*",
+    "@radix-ui/react-radio-group": "*",
+    "@radix-ui/react-scroll-area": "*",
+    "@radix-ui/react-select": "*",
+    "@radix-ui/react-separator": "*",
+    "@radix-ui/react-slider": "*",
+    "@radix-ui/react-slot": "*",
+    "@radix-ui/react-switch": "*",
+    "@radix-ui/react-tabs": "*",
+    "@radix-ui/react-toggle": "*",
+    "@radix-ui/react-toggle-group": "*",
+    "@radix-ui/react-tooltip": "*",
+    "class-variance-authority": "*",
+    "clsx": "*",
+    "cmdk": "*",
+    "embla-carousel-react": "*",
+    "input-otp": "*",
+    "lucide-react": "*",
+    "next-themes": "*",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-day-picker": "*",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "*",
+    "react-resizable-panels": "*",
+    "recharts": "*",
+    "sonner": "*",
+    "tailwind-merge": "*",
+    "vaul": "*"
   }
 }

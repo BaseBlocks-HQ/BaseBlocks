@@ -7,20 +7,20 @@ import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@repo/ui/dropdown-menu";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@repo/ui/popover";
 import { useDebounceCallback } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type {
@@ -29,7 +29,7 @@ import type {
   DecisionTreeContentBlock,
   DecisionTreeNode,
   ElementType,
-} from "@/types/elements";
+} from "@repo/types/elements";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

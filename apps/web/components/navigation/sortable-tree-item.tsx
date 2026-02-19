@@ -2,11 +2,11 @@
 
 import { DragHandle } from "@/components/dnd";
 import { HomeIcon, PagesIcon } from "@/components/icons";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
 import type { FlattenedPage } from "@/lib/tree-utils";
 import { INDENT_WIDTH, isValidDrop } from "@/lib/tree-utils";
 import { cn } from "@/lib/utils";
-import type { PageListItem } from "@/types";
+import type { PageListItem } from "@repo/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronRight } from "lucide-react";

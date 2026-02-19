@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ViewerProps } from "../types";

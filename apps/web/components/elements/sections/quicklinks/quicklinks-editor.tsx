@@ -3,20 +3,20 @@
 import { useEditorContext } from "@/components/editor";
 import { useLayoutContext } from "@/components/elements/layout-context";
 import type { ElementEditorProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@repo/ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@repo/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import type { QuicklinkItem, QuicklinkType } from "@/types/elements";
+import type { QuicklinkItem, QuicklinkType } from "@repo/types/elements";
 import {
   AppWindow,
   Check,

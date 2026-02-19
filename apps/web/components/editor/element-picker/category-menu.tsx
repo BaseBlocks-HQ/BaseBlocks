@@ -12,7 +12,7 @@ import {
   SiteSettingsIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import type { ElementCategory } from "@/types/elements";
+import type { ElementCategory } from "@repo/types/elements";
 import { ChevronRight } from "lucide-react";
 
 // Map category to icon

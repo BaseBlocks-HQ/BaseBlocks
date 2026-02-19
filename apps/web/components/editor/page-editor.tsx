@@ -2,9 +2,9 @@
 
 import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
 import { ContentSkeleton } from "@/components/skeletons";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { createLayout, generateId } from "@/lib/layouts";
 import { cn } from "@/lib/utils";
 import type {
@@ -13,7 +13,7 @@ import type {
   LayoutData,
   LayoutSettings,
   LayoutType,
-} from "@/types";
+} from "@repo/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";

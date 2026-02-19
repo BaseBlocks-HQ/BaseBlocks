@@ -1,17 +1,17 @@
 "use client";
 
 import type { ElementRendererProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useIsMobile } from "@/hooks/use-mobile";
+} from "@repo/ui/select";
+import { useIsMobile } from "@repo/ui/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import type { DecisionTree, DecisionTreeNode } from "@/types/elements";
+import type { DecisionTree, DecisionTreeNode } from "@repo/types/elements";
 import {
   CheckCircle2,
   ChevronLeft,

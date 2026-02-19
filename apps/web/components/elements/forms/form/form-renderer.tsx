@@ -6,7 +6,7 @@
  */
 
 import type { ElementRendererProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";

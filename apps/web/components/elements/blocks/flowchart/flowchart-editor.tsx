@@ -7,12 +7,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui/select";
 import { useDebounceCallback } from "@/hooks";
 import type {
   FlowchartContent,
   FlowchartDiagram,
-} from "@/types/elements/blocks";
+} from "@repo/types/elements/blocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";

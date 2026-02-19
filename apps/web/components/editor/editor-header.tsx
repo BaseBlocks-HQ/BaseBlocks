@@ -2,25 +2,25 @@
 
 import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+} from "@repo/ui/dropdown-menu";
+import { Separator } from "@repo/ui/separator";
+import { SidebarTrigger } from "@repo/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@repo/ui/tooltip";
 import { useCustomizationStyles } from "@/hooks";
 import { cn, getSiteUrl } from "@/lib/utils";
-import type { SiteCustomization } from "@/types/elements/customization";
+import type { SiteCustomization } from "@repo/types/elements/customization";
 import type { Id } from "@repo/backend";
 import {
   Check,

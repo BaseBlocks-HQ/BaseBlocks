@@ -3,7 +3,7 @@
  * Document library with folder navigation
  */
 
-import { DEFAULT_SECTION_CONTENT } from "@/types/elements";
+import { DEFAULT_SECTION_CONTENT } from "@repo/types/elements";
 import { Library } from "lucide-react";
 import { registerElement } from "../../registry";
 import { LibraryConfigPanel } from "./library-config";

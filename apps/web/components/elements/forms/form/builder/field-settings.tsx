@@ -5,7 +5,7 @@
  * Right sidebar to configure the selected field
  */
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { Trash2, X } from "lucide-react";
 import { getFieldEntry, getFieldSettings } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";

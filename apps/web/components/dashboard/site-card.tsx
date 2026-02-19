@@ -2,15 +2,15 @@
 
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { EditSiteDialog } from "@/components/dialogs/edit-site-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@repo/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
 import { getSiteUrl } from "@/lib/utils";
 import { api } from "@repo/backend";

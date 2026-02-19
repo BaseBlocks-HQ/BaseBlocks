@@ -1,7 +1,7 @@
 "use client";
 
 import type { ElementRendererProps } from "@/components/elements/registry";
-import type { FlowchartDiagram } from "@/types/elements/blocks";
+import type { FlowchartDiagram } from "@repo/types/elements/blocks";
 import { DiagramViewer } from "./diagram-viewer";
 
 export function FlowchartRenderer({

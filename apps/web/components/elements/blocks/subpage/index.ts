@@ -3,7 +3,7 @@
  * Creates a linked sub-page that opens in a side panel
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { FileText } from "lucide-react";
 import { registerElement } from "../../registry";
 import { SubpageEditor } from "./subpage-editor";

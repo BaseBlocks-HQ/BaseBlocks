@@ -3,8 +3,8 @@
  * Generates inline styles that scope customization to content areas
  */
 
-import type { SiteCustomization } from "@/types/elements/customization";
-import { getDarkColorForPreset } from "@/types/elements/customization";
+import type { SiteCustomization } from "@repo/types/elements/customization";
+import { getDarkColorForPreset } from "@repo/types/elements/customization";
 import type { CSSProperties } from "react";
 import {
   darkTintColor,

@@ -2,10 +2,10 @@
 
 import { HomeIcon, PagesIcon } from "@/components/icons";
 import { usePublicSiteContextOptional } from "@/components/public/public-site-context";
-import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
 import { usePageExpandState } from "@/hooks/use-page-expand-state";
 import { getPageLink } from "@/lib/utils";
-import type { PageWithChildren } from "@/types";
+import type { PageWithChildren } from "@repo/types";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";

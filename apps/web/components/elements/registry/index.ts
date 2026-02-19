@@ -10,7 +10,7 @@ import type {
   ElementType,
   LayoutType,
   SaveStatus,
-} from "@/types/elements";
+} from "@repo/types/elements";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 

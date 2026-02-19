@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,16 +8,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+} from "@repo/ui/dialog";
+import { Label } from "@repo/ui/label";
+import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui/select";
 import { getSiteUrl } from "@/lib/utils";
 import type { Id } from "@repo/backend";
 import { api } from "@repo/backend";

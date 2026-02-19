@@ -3,7 +3,7 @@
  * Manages field type definitions for the form builder
  */
 
-import type { FormField, FormFieldType } from "@/types/elements";
+import type { FormField, FormFieldType } from "@repo/types/elements";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 

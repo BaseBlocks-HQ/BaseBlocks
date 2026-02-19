@@ -11,9 +11,9 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { PortalContainerProvider } from "@/contexts/portal-container-context";
+} from "@repo/ui/resizable";
+import { SidebarProvider } from "@repo/ui/sidebar";
+import { PortalContainerProvider } from "@repo/ui/contexts/portal-container-context";
 import { useSiteCustomization } from "@/hooks";
 import { createBlock, createLayout, generateId } from "@/lib/layouts";
 import type {
@@ -21,7 +21,7 @@ import type {
   ElementType,
   LayoutBlockType,
   LayoutType,
-} from "@/types";
+} from "@repo/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";

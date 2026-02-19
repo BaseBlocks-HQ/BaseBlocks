@@ -2,7 +2,7 @@
 
 import type { FlattenedPage, TreeProjection } from "@/lib/tree-utils";
 import { INDENT_WIDTH, getProjection } from "@/lib/tree-utils";
-import type { PageListItem } from "@/types";
+import type { PageListItem } from "@repo/types";
 import {
   DndContext,
   type DragEndEvent,

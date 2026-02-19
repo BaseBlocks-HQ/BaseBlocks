@@ -6,8 +6,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import type { FlowchartDiagram } from "@/types/elements/blocks";
+} from "@repo/ui/select";
+import type { FlowchartDiagram } from "@repo/types/elements/blocks";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 

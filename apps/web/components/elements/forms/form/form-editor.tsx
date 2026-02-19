@@ -6,11 +6,11 @@
  */
 
 import type { ElementEditorProps } from "@/components/elements/registry";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { useDebounceCallback } from "@/hooks";
-import type { FormContent } from "@/types/elements";
+import type { FormContent } from "@repo/types/elements";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { BuilderCanvas } from "./builder/builder-canvas";

@@ -3,9 +3,9 @@
 import { DropZone } from "@/components/document-library/drop-zone";
 import { useEditorContext } from "@/components/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";

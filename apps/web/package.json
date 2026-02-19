@@ -46,6 +46,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@repo/backend": "workspace:*",
+    "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
     "beautiful-mermaid": "^0.1.3",
     "better-auth": "^1.4.18",

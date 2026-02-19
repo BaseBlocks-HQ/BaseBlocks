@@ -6,9 +6,9 @@ import {
   arrayMove,
 } from "@/components/dnd/dnd-provider";
 import { SortableItem } from "@/components/dnd/sortable-item";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import type { DecisionTreeNode } from "@/types/elements";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import type { DecisionTreeNode } from "@repo/types/elements";
 import {
   Check,
   ChevronRight,

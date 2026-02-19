@@ -3,7 +3,7 @@
  * Highlighted message box with variants
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { MessageSquare } from "lucide-react";
 import { registerElement } from "../../registry";
 import { CalloutEditor } from "./callout-editor";

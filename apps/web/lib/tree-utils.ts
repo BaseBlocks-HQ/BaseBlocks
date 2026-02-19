@@ -2,7 +2,7 @@
  * Tree utilities for flattening hierarchical data and calculating drop projections
  */
 
-import type { PageListItem } from "@/types";
+import type { PageListItem } from "@repo/types";
 
 /**
  * A flattened page with depth information for rendering

@@ -3,7 +3,7 @@
  * Interactive hierarchical decision tree with navigable options and rich content
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import { GitFork } from "lucide-react";
 import { registerElement } from "../../registry";
 import { DecisionTreeEditor } from "./decision-tree-editor";
