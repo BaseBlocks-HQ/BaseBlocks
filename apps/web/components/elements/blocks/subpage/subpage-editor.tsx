@@ -16,7 +16,8 @@ export function SubpageEditor({
     content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
   );
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!editorContext || !content.pageId) return;
     editorContext.openSubpageEditor({ pageId: content.pageId });
   };

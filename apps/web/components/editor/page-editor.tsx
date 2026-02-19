@@ -25,28 +25,36 @@ import { SortableLayout } from "./layouts/sortable-layout";
 interface PageEditorProps {
   pageId: string;
   onSelectionChange?: (slotId: string | null) => void;
+  /** When true, uses local state instead of shared context for tabs/currentPageId (used in subpage panel) */
+  nested?: boolean;
 }
 
-export function PageEditor({ pageId, onSelectionChange }: PageEditorProps) {
+export function PageEditor({ pageId, onSelectionChange, nested }: PageEditorProps) {
   const {
     selection,
     selectLayout,
     selectSlot,
     selectBlock,
     clearSelection,
-    activeTabId,
-    setActiveTabId,
+    activeTabId: contextActiveTabId,
+    setActiveTabId: contextSetActiveTabId,
     pushCommand,
     isUndoRedoExecuting,
     setCurrentPageId,
     showControls,
   } = useEditorContext();
 
-  // Set current page ID on context for keyboard shortcuts
+  // Nested editors use local tab state to avoid fighting with the parent
+  const [localActiveTabId, setLocalActiveTabId] = useState<string | null>(null);
+  const activeTabId = nested ? localActiveTabId : contextActiveTabId;
+  const setActiveTabId = nested ? setLocalActiveTabId : contextSetActiveTabId;
+
+  // Set current page ID on context for keyboard shortcuts (skip for nested)
   useEffect(() => {
+    if (nested) return;
     setCurrentPageId(pageId);
     return () => setCurrentPageId(null);
-  }, [pageId, setCurrentPageId]);
+  }, [pageId, setCurrentPageId, nested]);
 
   // Tab rename state
   const [editingTabId, setEditingTabId] = useState<string | null>(null);

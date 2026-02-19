@@ -452,3 +452,28 @@ export const runCleanupSubpageSearch = migrations.runner([
   internal.migrations.cleanupSubpageSearchEntries,
 ]);
 
+// Migration 10: Flag pages referenced by subpage blocks as isSubpageContent
+export const flagSubpageContentPages = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    const slotsToCheck = [
+      ...layout.slots,
+      ...(layout.publishedSlots ?? []),
+    ];
+    for (const slot of slotsToCheck) {
+      for (const block of slot.blocks) {
+        if (block.type === "subpage" && block.content?.pageId) {
+          const page = await ctx.db.get(block.content.pageId);
+          if (page && !page.isSubpageContent) {
+            await ctx.db.patch(page._id, { isSubpageContent: true });
+          }
+        }
+      }
+    }
+  },
+});
+export const runFlagSubpageContent = migrations.runner([
+  internal.migrations.flagSubpageContentPages,
+]);
+

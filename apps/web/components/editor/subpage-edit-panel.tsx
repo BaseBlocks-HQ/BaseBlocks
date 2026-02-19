@@ -84,7 +84,7 @@ export function SubpageEditPanel({ isFullscreen, onToggleFullscreen }: SubpageEd
 
       {/* Full page editor for the subpage */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-        <PageEditor pageId={editingSubpage.pageId} />
+        <PageEditor pageId={editingSubpage.pageId} nested />
       </div>
     </div>
   );
