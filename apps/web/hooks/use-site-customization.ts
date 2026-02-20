@@ -1,13 +1,13 @@
-import { useMemo } from "react";
-import type { CSSProperties } from "react";
-import type { Id } from "@repo/backend";
-import { useQuery } from "convex/react";
-import { api } from "@repo/backend";
 import {
   generateCustomizationStyles,
   hasCustomization,
 } from "@/lib/customization";
-import type { SiteCustomization } from "@/types/elements/customization";
+import type { Id } from "@baseblocks/backend";
+import { api } from "@baseblocks/backend";
+import type { SiteCustomization } from "@baseblocks/types/elements/customization";
+import { useQuery } from "convex/react";
+import { useMemo } from "react";
+import type { CSSProperties } from "react";
 
 interface UseSiteCustomizationResult {
   /** CSS properties to apply to content wrapper */
@@ -25,14 +25,13 @@ interface UseSiteCustomizationResult {
  * Use this in content wrappers to scope customization to site content
  */
 export function useSiteCustomization(
-  siteId: Id<"sites"> | undefined
+  siteId: Id<"sites"> | undefined,
 ): UseSiteCustomizationResult {
-  const site = useQuery(
-    api.sites.queries.get,
-    siteId ? { siteId } : "skip"
-  );
+  const site = useQuery(api.sites.queries.get, siteId ? { siteId } : "skip");
 
-  const customization = site?.settings?.customization as SiteCustomization | undefined;
+  const customization = site?.settings?.customization as
+    | SiteCustomization
+    | undefined;
 
   const cssVariables = useMemo(() => {
     return generateCustomizationStyles(customization);
@@ -52,7 +51,7 @@ export function useSiteCustomization(
  * Hook variant that accepts customization directly (for preview purposes)
  */
 export function useCustomizationStyles(
-  customization: SiteCustomization | undefined
+  customization: SiteCustomization | undefined,
 ): CSSProperties {
   return useMemo(() => {
     return generateCustomizationStyles(customization);

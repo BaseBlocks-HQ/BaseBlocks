@@ -5,14 +5,16 @@
 /**
  * Parse hex color to RGB values
  */
-export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+export function hexToRgb(
+  hex: string,
+): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
 
   return {
-    r: parseInt(result[1]!, 16),
-    g: parseInt(result[2]!, 16),
-    b: parseInt(result[3]!, 16),
+    r: Number.parseInt(result[1]!, 16),
+    g: Number.parseInt(result[2]!, 16),
+    b: Number.parseInt(result[3]!, 16),
   };
 }
 
@@ -53,7 +55,7 @@ export function getForegroundColor(hex: string): string {
 /**
  * Lighten a hex color for dark mode variant
  */
-export function lightenColor(hex: string, amount: number = 0.2): string {
+export function lightenColor(hex: string, amount = 0.2): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;
 
@@ -71,7 +73,7 @@ export function lightenColor(hex: string, amount: number = 0.2): string {
  * Create a very light tint of a color (for hover backgrounds).
  * Mixes the color with white. amount=0.9 means 90% white, 10% color.
  */
-export function tintColor(hex: string, amount: number = 0.9): string {
+export function tintColor(hex: string, amount = 0.9): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;
 
@@ -89,7 +91,7 @@ export function tintColor(hex: string, amount: number = 0.9): string {
  * Create a dark-mode tint (subtle dark tint for hover backgrounds in dark mode).
  * Darkens toward black. amount=0.85 means 85% black, 15% color.
  */
-export function darkTintColor(hex: string, amount: number = 0.85): string {
+export function darkTintColor(hex: string, amount = 0.85): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;
 

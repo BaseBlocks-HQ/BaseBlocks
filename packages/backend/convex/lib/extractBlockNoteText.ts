@@ -41,9 +41,5 @@ export function extractBlockNoteText(blocks: unknown[] | undefined): string {
     return text;
   };
 
-  return blocks
-    .map(extractText)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return blocks.map(extractText).join(" ").replace(/\s+/g, " ").trim();
 }

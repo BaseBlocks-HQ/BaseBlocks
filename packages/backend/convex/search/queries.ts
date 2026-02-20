@@ -13,7 +13,7 @@ import { requireMember } from "../auth";
 function extractSnippet(
   text: string | undefined,
   searchTerm: string,
-  contextLength = 80
+  contextLength = 80,
 ): { snippet: string; matchStart: number; matchEnd: number } | null {
   if (!text) return null;
 
@@ -26,7 +26,7 @@ function extractSnippet(
   const start = Math.max(0, matchIndex - contextLength);
   const end = Math.min(
     text.length,
-    matchIndex + searchTerm.length + contextLength
+    matchIndex + searchTerm.length + contextLength,
   );
 
   let snippet = text.slice(start, end);
@@ -53,7 +53,7 @@ function extractSnippet(
 function formatSearchResult(
   doc: Doc<"searchableContent">,
   matchType: "title" | "content",
-  searchTerm: string
+  searchTerm: string,
 ) {
   const snippetData =
     matchType === "content"
@@ -85,10 +85,15 @@ export const searchAll = query({
   args: {
     siteId: v.id("sites"),
     query: v.string(),
-    contentTypes: v.optional(v.array(v.union(v.literal("document"), v.literal("subpage")))),
+    contentTypes: v.optional(
+      v.array(v.union(v.literal("document"), v.literal("subpage"))),
+    ),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { siteId, query: searchQuery, contentTypes, limit = 20 }) => {
+  handler: async (
+    ctx,
+    { siteId, query: searchQuery, contentTypes, limit = 20 },
+  ) => {
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
@@ -101,7 +106,7 @@ export const searchAll = query({
     const titleResults = await ctx.db
       .query("searchableContent")
       .withSearchIndex("search_title", (q: any) =>
-        q.search("title", trimmed).eq("siteId", siteId)
+        q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -109,7 +114,7 @@ export const searchAll = query({
     const contentResults = await ctx.db
       .query("searchableContent")
       .withSearchIndex("search_content", (q: any) =>
-        q.search("extractedText", trimmed).eq("siteId", siteId)
+        q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -151,10 +156,15 @@ export const searchAllPublic = query({
   args: {
     siteId: v.id("sites"),
     query: v.string(),
-    contentTypes: v.optional(v.array(v.union(v.literal("document"), v.literal("subpage")))),
+    contentTypes: v.optional(
+      v.array(v.union(v.literal("document"), v.literal("subpage"))),
+    ),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { siteId, query: searchQuery, contentTypes, limit = 20 }) => {
+  handler: async (
+    ctx,
+    { siteId, query: searchQuery, contentTypes, limit = 20 },
+  ) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
@@ -192,7 +202,7 @@ export const searchAllPublic = query({
     const titleResults = await ctx.db
       .query("searchableContent")
       .withSearchIndex("search_title", (q: any) =>
-        q.search("title", trimmed).eq("siteId", siteId)
+        q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -200,7 +210,7 @@ export const searchAllPublic = query({
     const contentResults = await ctx.db
       .query("searchableContent")
       .withSearchIndex("search_content", (q: any) =>
-        q.search("extractedText", trimmed).eq("siteId", siteId)
+        q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -210,7 +220,11 @@ export const searchAllPublic = query({
 
     const shouldInclude = (doc: Doc<"searchableContent">) => {
       // Filter by content type if specified
-      if (contentTypes && contentTypes.length > 0 && !contentTypes.includes(doc.contentType)) {
+      if (
+        contentTypes &&
+        contentTypes.length > 0 &&
+        !contentTypes.includes(doc.contentType)
+      ) {
         return false;
       }
 
@@ -319,7 +333,10 @@ export const listTitlesPublic = query({
     return all
       .filter((doc) => {
         if (doc.contentType === "document") {
-          return doc.metadata.libraryId && activeLibraryIds.has(doc.metadata.libraryId);
+          return (
+            doc.metadata.libraryId &&
+            activeLibraryIds.has(doc.metadata.libraryId)
+          );
         }
         return true; // subpages always included
       })
@@ -332,4 +349,3 @@ export const listTitlesPublic = query({
       }));
   },
 });
-

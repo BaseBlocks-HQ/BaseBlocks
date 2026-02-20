@@ -1,10 +1,10 @@
 "use client";
 
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { useAction, useMutation } from "convex/react";
 import { useCallback, useState } from "react";
-import { authClient } from "../auth-client";
+import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 import { isExtractable } from "./extraction";
 

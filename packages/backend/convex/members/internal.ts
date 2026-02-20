@@ -89,10 +89,7 @@ export const addMemberFromInvitation = internalMutation({
     imageUrl: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("viewer")),
   },
-  handler: async (
-    ctx,
-    { teamId, userId, email, name, imageUrl, role },
-  ) => {
+  handler: async (ctx, { teamId, userId, email, name, imageUrl, role }) => {
     const now = Date.now();
 
     // Check if member already exists

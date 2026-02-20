@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { requireAdmin, getAuthContextOrNull, checkIsMember } from "../auth";
+import { checkIsMember, getAuthContextOrNull, requireAdmin } from "../auth";
 
 // Get current access code (admin only)
 export const getAccessCode = query({
@@ -64,7 +64,7 @@ export const validateSession = query({
     const session = await ctx.db
       .query("siteAccessSessions")
       .withIndex("by_site_token", (q) =>
-        q.eq("siteId", siteId).eq("sessionToken", sessionToken)
+        q.eq("siteId", siteId).eq("sessionToken", sessionToken),
       )
       .first();
 
@@ -108,7 +108,10 @@ export const checkSiteAccess = query({
 
       const isMember = await checkIsMember(ctx, site.teamId);
       if (!isMember) {
-        return { hasAccess: false, reason: "Not a member of this organization" };
+        return {
+          hasAccess: false,
+          reason: "Not a member of this organization",
+        };
       }
 
       return { hasAccess: true };
@@ -124,7 +127,7 @@ export const checkSiteAccess = query({
       const session = await ctx.db
         .query("siteAccessSessions")
         .withIndex("by_site_token", (q) =>
-          q.eq("siteId", siteId).eq("sessionToken", sessionToken)
+          q.eq("siteId", siteId).eq("sessionToken", sessionToken),
         )
         .first();
 

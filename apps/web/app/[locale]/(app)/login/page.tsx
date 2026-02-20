@@ -1,7 +1,9 @@
 "use client";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth/client";
+import { Button } from "@baseblocks/ui/button";
 import {
   Card,
   CardContent,
@@ -9,9 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
+} from "@baseblocks/ui/card";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -80,9 +80,7 @@ export default function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            {isLoading
-              ? t("common.redirecting")
-              : t("auth.continueWithGoogle")}
+            {isLoading ? t("common.redirecting") : t("auth.continueWithGoogle")}
           </Button>
         </CardContent>
         <CardFooter>

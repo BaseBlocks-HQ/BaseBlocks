@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@baseblocks/ui/skeleton";
 
 export function ContentSkeleton() {
   return (

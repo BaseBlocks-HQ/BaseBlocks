@@ -1,8 +1,8 @@
 "use client";
 
-import type { Id } from "@repo/backend";
+import type { Id } from "@baseblocks/backend";
 import { useCallback, useState } from "react";
-import { authClient } from "../auth-client";
+import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 
 export interface ImageUploadState {
@@ -61,7 +61,11 @@ export function useImageUpload() {
         }
 
         // Generate storage path for images
-        const path = entityStorageClient.generatePath(siteId, user.id, file.name);
+        const path = entityStorageClient.generatePath(
+          siteId,
+          user.id,
+          file.name,
+        );
 
         // Upload to Entity Storage (proxy handles auth via session cookie)
         const { cdnUrl } = await entityStorageClient.upload(

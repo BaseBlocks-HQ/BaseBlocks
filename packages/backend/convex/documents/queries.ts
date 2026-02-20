@@ -159,11 +159,18 @@ export const list = query({
   },
 });
 
-// Get single document
+// Get single document (authenticated)
 export const get = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
-    return await ctx.db.get(documentId);
+    const doc = await ctx.db.get(documentId);
+    if (!doc) return null;
+
+    const site = await ctx.db.get(doc.siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
+    return doc;
   },
 });
 

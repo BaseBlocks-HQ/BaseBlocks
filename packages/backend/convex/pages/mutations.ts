@@ -29,7 +29,7 @@ export const create = mutation({
 
     if (existing) {
       throw new Error(
-        `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`
+        `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`,
       );
     }
 
@@ -93,7 +93,7 @@ export const update = mutation({
 
       if (existing) {
         throw new Error(
-          `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`
+          `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`,
         );
       }
     }
@@ -146,14 +146,14 @@ async function deletePageRecursively(
   pageId: string,
   siteId: string,
 ) {
-  // Delete all blocks
-  const blocks = await ctx.db
-    .query("blocks")
+  // Delete all layouts for this page
+  const layouts = await ctx.db
+    .query("layouts")
     .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
     .collect();
 
-  for (const block of blocks) {
-    await ctx.db.delete(block._id);
+  for (const layout of layouts) {
+    await ctx.db.delete(layout._id);
   }
 
   // Recursively delete child pages
@@ -225,10 +225,14 @@ export const move = mutation({
 export const updatePageTabs = mutation({
   args: {
     pageId: v.id("pages"),
-    pageTabs: v.optional(v.array(v.object({
-      id: v.string(),
-      label: v.string(),
-    }))),
+    pageTabs: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, { pageId, pageTabs }) => {
     const page = await ctx.db.get(pageId);
@@ -254,10 +258,12 @@ export const updatePageTabs = mutation({
 export const enablePageTabs = mutation({
   args: {
     pageId: v.id("pages"),
-    tabs: v.array(v.object({
-      id: v.string(),
-      label: v.string(),
-    })),
+    tabs: v.array(
+      v.object({
+        id: v.string(),
+        label: v.string(),
+      }),
+    ),
   },
   handler: async (ctx, { pageId, tabs }) => {
     const page = await ctx.db.get(pageId);

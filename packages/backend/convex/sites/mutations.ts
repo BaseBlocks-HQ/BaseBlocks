@@ -37,7 +37,7 @@ export const create = mutation({
 
     if (existing) {
       throw new Error(
-        `A site with the URL "${slug}" already exists. Please choose a different name or URL slug.`
+        `A site with the URL "${slug}" already exists. Please choose a different name or URL slug.`,
       );
     }
 
@@ -93,7 +93,7 @@ export const update = mutation({
           v.union(
             v.literal("sidebar"),
             v.literal("topnav"),
-            v.literal("subnav")
+            v.literal("subnav"),
           ),
         ),
         // Header visibility settings
@@ -104,24 +104,28 @@ export const update = mutation({
         showBreadcrumbs: v.optional(v.boolean()),
         sidebarDefaultExpanded: v.optional(v.boolean()),
         // Site customization
-        customization: v.optional(v.object({
-          accentColor: v.optional(v.string()),
-          accentColorDark: v.optional(v.string()),
-          headerColor: v.optional(v.string()),
-          headerColorDark: v.optional(v.string()),
-          secondaryColor: v.optional(v.string()),
-          secondaryColorDark: v.optional(v.string()),
-          tertiaryColor: v.optional(v.string()),
-          tertiaryColorDark: v.optional(v.string()),
-          showHeaderGradient: v.optional(v.boolean()),
-          borderRadius: v.optional(v.union(
-            v.literal("none"),
-            v.literal("small"),
-            v.literal("medium"),
-            v.literal("large"),
-            v.literal("full"),
-          )),
-        })),
+        customization: v.optional(
+          v.object({
+            accentColor: v.optional(v.string()),
+            accentColorDark: v.optional(v.string()),
+            headerColor: v.optional(v.string()),
+            headerColorDark: v.optional(v.string()),
+            secondaryColor: v.optional(v.string()),
+            secondaryColorDark: v.optional(v.string()),
+            tertiaryColor: v.optional(v.string()),
+            tertiaryColorDark: v.optional(v.string()),
+            showHeaderGradient: v.optional(v.boolean()),
+            borderRadius: v.optional(
+              v.union(
+                v.literal("none"),
+                v.literal("small"),
+                v.literal("medium"),
+                v.literal("large"),
+                v.literal("full"),
+              ),
+            ),
+          }),
+        ),
       }),
     ),
   },
@@ -344,23 +348,13 @@ export const remove = mutation({
     // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
-    // Delete all pages and their blocks/layouts
+    // Delete all pages and their layouts
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
     for (const page of pages) {
-      // Delete all blocks in page
-      const blocks = await ctx.db
-        .query("blocks")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const block of blocks) {
-        await ctx.db.delete(block._id);
-      }
-
       // Delete all layouts in page
       const layouts = await ctx.db
         .query("layouts")

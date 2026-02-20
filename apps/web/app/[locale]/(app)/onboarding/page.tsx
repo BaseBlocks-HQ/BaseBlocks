@@ -1,21 +1,21 @@
 "use client";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth/client";
+import { isVercelAppDomain } from "@/lib/url";
+import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { api } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
-import { isVercelAppDomain } from "@/lib/utils";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
-import { api } from "@repo/backend";
+} from "@baseblocks/ui/card";
+import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

@@ -1,0 +1,40 @@
+{
+  "name": "@baseblocks/editor",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./dnd": "./src/dnd/index.ts",
+    "./dnd/*": "./src/dnd/*.tsx",
+    "./layouts": "./src/layouts/index.ts",
+    "./undo": "./src/undo/index.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./contexts/*": "./src/contexts/*.tsx"
+  },
+  "scripts": {
+    "lint": "biome check --write .",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@baseblocks/tsconfig": "workspace:*",
+    "@types/node": "^22.15.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "@baseblocks/types": "workspace:*",
+    "@baseblocks/ui": "workspace:*",
+    "lucide-react": "^0.563.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sonner": "^2.0.7"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "nanoid": "^5.1.6"
+  }
+}

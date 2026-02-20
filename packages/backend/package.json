@@ -1,8 +1,9 @@
 {
-  "name": "@repo/backend",
+  "name": "@baseblocks/backend",
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "sideEffects": false,
   "main": "./index.ts",
   "types": "./index.ts",
   "exports": {
@@ -18,6 +19,7 @@
     "lint": "biome check --write ."
   },
   "devDependencies": {
+    "@baseblocks/tsconfig": "workspace:*",
     "@types/bun": "latest"
   },
   "peerDependencies": {

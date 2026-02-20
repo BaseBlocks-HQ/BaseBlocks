@@ -23,9 +23,7 @@ export const updateRole = mutation({
     if (memberToUpdate.userId === auth.userId && role === "viewer") {
       const admins = await ctx.db
         .query("members")
-        .withIndex("by_team", (q) =>
-          q.eq("teamId", memberToUpdate.teamId),
-        )
+        .withIndex("by_team", (q) => q.eq("teamId", memberToUpdate.teamId))
         .filter((q) => q.eq(q.field("role"), "admin"))
         .collect();
 
@@ -139,7 +137,8 @@ export const syncMemberFromInvitation = mutation({
     }
 
     // Map BA role to Convex role
-    const convexRole: "admin" | "viewer" = role === "admin" ? "admin" : "viewer";
+    const convexRole: "admin" | "viewer" =
+      role === "admin" ? "admin" : "viewer";
 
     const memberId = await ctx.db.insert("members", {
       teamId: team._id,

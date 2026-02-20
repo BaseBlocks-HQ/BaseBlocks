@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@baseblocks/ui/alert-dialog";
 import type { ReactNode } from "react";
 
 interface ConfirmDialogProps {

@@ -1,4 +1,4 @@
-import type { SaveStatus } from "@/types";
+import type { SaveStatus } from "@baseblocks/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseSaveStatusOptions {

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull } from "../auth";
+import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
 
 // List sites for all teams the user is a member of
 export const list = query({
@@ -21,12 +21,8 @@ export const list = query({
     const teamIds = memberships.map((m) => m.teamId);
 
     // Fetch all teams
-    const teams = await Promise.all(
-      teamIds.map((id) => ctx.db.get(id)),
-    );
-    const teamMap = new Map(
-      teams.filter(Boolean).map((t) => [t!._id, t!]),
-    );
+    const teams = await Promise.all(teamIds.map((id) => ctx.db.get(id)));
+    const teamMap = new Map(teams.filter(Boolean).map((t) => [t!._id, t!]));
 
     // Fetch sites for all teams
     const sitesPromises = teamIds.map((teamId) =>
@@ -56,11 +52,15 @@ export const list = query({
   },
 });
 
-// Get site by ID
+// Get site by ID (authenticated — editor/dashboard only)
 export const get = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    return await ctx.db.get(siteId);
+    const site = await ctx.db.get(siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
+    return site;
   },
 });
 
@@ -175,7 +175,8 @@ export const getWithDefaultPage = query({
     if (!site) return null;
 
     // Use published defaultPageId (fall back to draft for migration compat)
-    const publishedDefaultPageId = site.publishedDefaultPageId ?? site.defaultPageId;
+    const publishedDefaultPageId =
+      site.publishedDefaultPageId ?? site.defaultPageId;
 
     // Get the default page
     let defaultPage = null;

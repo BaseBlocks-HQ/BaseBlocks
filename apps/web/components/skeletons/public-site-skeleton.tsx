@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@baseblocks/ui/skeleton";
 
 export function PublicSiteSkeleton() {
   return (
@@ -20,9 +20,15 @@ export function PublicSiteSkeleton() {
         <aside className="w-64 border-r p-4">
           <nav className="space-y-1">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center gap-2 px-2 py-2 rounded-md">
+              <div
+                key={i}
+                className="flex items-center gap-2 px-2 py-2 rounded-md"
+              >
                 <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-4" style={{ width: `${50 + (i % 3) * 20}%` }} />
+                <Skeleton
+                  className="h-4"
+                  style={{ width: `${50 + (i % 3) * 20}%` }}
+                />
               </div>
             ))}
           </nav>

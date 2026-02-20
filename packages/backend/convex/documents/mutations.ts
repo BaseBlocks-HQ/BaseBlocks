@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { isExtractable } from "../lib/extractable";
+import { markSiteModified } from "../lib/markModified";
 
 // Helper to get teamId from siteId
 async function getTeamIdFromSite(
@@ -62,6 +63,7 @@ export const create = mutation({
       updatedAt: Date.now(),
     });
 
+    await markSiteModified(ctx, siteId);
     return documentId;
   },
 });
@@ -143,6 +145,7 @@ export const createInLibrary = mutation({
       updatedAt: Date.now(),
     });
 
+    await markSiteModified(ctx, siteId);
     return documentId;
   },
 });
@@ -245,7 +248,7 @@ export const remove = mutation({
     const searchEntry = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q: any) =>
-        q.eq("contentType", "document").eq("sourceId", documentId)
+        q.eq("contentType", "document").eq("sourceId", documentId),
       )
       .first();
 
@@ -254,5 +257,6 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(documentId);
+    await markSiteModified(ctx, document.siteId);
   },
 });

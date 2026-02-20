@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { requireMember } from "../auth";
 
 /**
- * List deployment history for a site (most recent first)
+ * List deployment history for a site (most recent first, authenticated)
  */
 export const list = query({
   args: {
@@ -10,6 +11,11 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { siteId, limit = 20 }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) return [];
+
+    await requireMember(ctx, site.teamId);
+
     const deployments = await ctx.db
       .query("deployments")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -23,13 +29,18 @@ export const list = query({
 });
 
 /**
- * Get current active deployment for a site
+ * Get current active deployment for a site (authenticated)
  */
 export const getCurrent = query({
   args: {
     siteId: v.id("sites"),
   },
   handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
+
     return await ctx.db
       .query("deployments")
       .withIndex("by_site_status", (q) =>
@@ -40,7 +51,7 @@ export const getCurrent = query({
 });
 
 /**
- * Get deployment with its snapshot details (for rollback preview)
+ * Get deployment with its snapshot details (for rollback preview, authenticated)
  */
 export const getWithSnapshot = query({
   args: {
@@ -49,6 +60,11 @@ export const getWithSnapshot = query({
   handler: async (ctx, { deploymentId }) => {
     const deployment = await ctx.db.get(deploymentId);
     if (!deployment) return null;
+
+    const site = await ctx.db.get(deployment.siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
 
     const snapshots = await ctx.db
       .query("deploymentSnapshots")

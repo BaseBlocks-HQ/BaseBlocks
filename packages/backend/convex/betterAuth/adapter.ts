@@ -1,6 +1,6 @@
 import { createApi } from "@convex-dev/better-auth";
-import schema from "./schema";
 import { createAuthOptions } from "../betterAuthSetup";
+import schema from "./schema";
 
 export const {
   create,

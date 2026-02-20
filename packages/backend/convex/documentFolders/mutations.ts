@@ -36,11 +36,11 @@ export const create = mutation({
       .collect();
 
     const duplicateFolder = siblings.find(
-      (f) => f.name.toLowerCase() === name.trim().toLowerCase()
+      (f) => f.name.toLowerCase() === name.trim().toLowerCase(),
     );
     if (duplicateFolder) {
       throw new Error(
-        `A folder named "${name}" already exists in this location. Please choose a different name.`
+        `A folder named "${name}" already exists in this location. Please choose a different name.`,
       );
     }
 
@@ -80,7 +80,10 @@ export const update = mutation({
     await requireAdmin(ctx, site.teamId);
 
     // Check for duplicate name if renaming
-    if (name !== undefined && name.trim().toLowerCase() !== folder.name.toLowerCase()) {
+    if (
+      name !== undefined &&
+      name.trim().toLowerCase() !== folder.name.toLowerCase()
+    ) {
       const siblings = await ctx.db
         .query("documentFolders")
         .withIndex("by_parent", (q) =>
@@ -89,11 +92,13 @@ export const update = mutation({
         .collect();
 
       const duplicateFolder = siblings.find(
-        (f) => f._id !== folderId && f.name.toLowerCase() === name.trim().toLowerCase()
+        (f) =>
+          f._id !== folderId &&
+          f.name.toLowerCase() === name.trim().toLowerCase(),
       );
       if (duplicateFolder) {
         throw new Error(
-          `A folder named "${name}" already exists in this location. Please choose a different name.`
+          `A folder named "${name}" already exists in this location. Please choose a different name.`,
         );
       }
     }

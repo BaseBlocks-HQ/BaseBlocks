@@ -1,4 +1,4 @@
-import type { PageListItem } from "@/types";
+import type { PageListItem } from "@baseblocks/types";
 import { useCallback, useState } from "react";
 
 interface UsePageSelectionOptions {

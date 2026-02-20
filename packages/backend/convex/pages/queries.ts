@@ -1,11 +1,17 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../auth";
 
-// List pages for a site
+// List pages for a site (authenticated — editor only)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) return [];
+
+    await requireMember(ctx, site.teamId);
+
     return await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -202,7 +208,9 @@ export const getTreePublished = query({
       .collect();
 
     // Filter to only deployed pages, excluding subpage block content (accessed via side panel)
-    const deployedPages = allPages.filter((p) => p.isDeployed && !p.isSubpageContent);
+    const deployedPages = allPages.filter(
+      (p) => p.isDeployed && !p.isSubpageContent,
+    );
 
     // Build tree using published fields (fall back to draft for migration compat)
     type PageNode = {
@@ -284,11 +292,14 @@ export const getByPathPublished = query({
     if (path.length === 0) {
       const site = await ctx.db.get(siteId);
       // Prefer draft defaultPageId (user's current setting) over published (stale from last deploy)
-      const resolvedDefaultPageId = site?.defaultPageId ?? site?.publishedDefaultPageId;
+      const resolvedDefaultPageId =
+        site?.defaultPageId ?? site?.publishedDefaultPageId;
 
       // Try the configured default page first
       if (resolvedDefaultPageId) {
-        const defaultPage = deployedPages.find((p) => p._id === resolvedDefaultPageId);
+        const defaultPage = deployedPages.find(
+          (p) => p._id === resolvedDefaultPageId,
+        );
         if (defaultPage) {
           return {
             ...defaultPage,
@@ -305,7 +316,10 @@ export const getByPathPublished = query({
       // Fallback: first deployed root page by order
       const rootPages = deployedPages
         .filter((p) => !(p.publishedParentId ?? p.parentId))
-        .sort((a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order));
+        .sort(
+          (a, b) =>
+            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+        );
 
       const firstPage = rootPages[0];
       if (firstPage) {

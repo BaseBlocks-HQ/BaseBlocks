@@ -1,7 +1,7 @@
 "use client";
 
-import { LibraryDetailContent } from "@/components/dashboard/libraries";
-import type { Id } from "@repo/backend";
+import { LibraryDetailContent } from "@/modules/dashboard/libraries";
+import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 
 interface Props {

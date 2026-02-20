@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 /**
  * Dynamic favicon handler for multi-tenant subdomains.
  *
@@ -6,18 +8,14 @@
  * custom favicon from Convex storage if one is configured, and falls back
  * to the default BaseBlocks favicon otherwise.
  */
-import { api } from "@repo/backend";
+import { api } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 
 export const dynamic = "force-dynamic";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-const ENTITY_STORAGE_SITE_URL =
-  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
-  "https://rightful-cat-553.convex.site";
+const ENTITY_STORAGE_SITE_URL = process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL;
 
 let defaultFaviconCache: ArrayBuffer | null = null;
 
@@ -127,14 +125,12 @@ export async function GET(request: Request) {
     }
 
     const data = await response.arrayBuffer();
-    const contentType =
-      response.headers.get("content-type") || "image/x-icon";
+    const contentType = response.headers.get("content-type") || "image/x-icon";
 
     return new NextResponse(data, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control":
-          "public, max-age=3600, stale-while-revalidate=86400",
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       },
     });
   } catch (error) {
