@@ -1,58 +1,13 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
-// ---------------------------------------------------------------------------
-// Shared validators (defined once, reused across tables)
-// ---------------------------------------------------------------------------
-
-/** All block types supported in layout slots */
-const blockType = v.union(
-  v.literal("heading"),
-  v.literal("paragraph"),
-  v.literal("image"),
-  v.literal("file"),
-  v.literal("document-list"),
-  v.literal("library"),
-  v.literal("search"),
-  v.literal("embed"),
-  v.literal("divider"),
-  v.literal("block-spacer"),
-  v.literal("callout"),
-  v.literal("code"),
-  v.literal("table"),
-  v.literal("quicklinks"),
-  v.literal("form"),
-  v.literal("richtext"),
-  v.literal("subpage"),
-  v.literal("banner"),
-  v.literal("directory"),
-  v.literal("flowchart"),
-  v.literal("decision-tree"),
-);
-
-/** A single block within a slot */
-const slotBlock = v.object({
-  id: v.string(),
-  type: blockType,
-  content: v.any(),
-});
-
-/** A slot within a layout (contains positioned blocks) */
-const layoutSlot = v.object({
-  id: v.string(),
-  position: v.number(),
-  blocks: v.array(slotBlock),
-});
-
-/** All layout container types */
-const layoutType = v.union(
-  v.literal("single"),
-  v.literal("rows"),
-  v.literal("columns"),
-  v.literal("grid"),
-  v.literal("spacer"),
-  v.literal("vertical"),
-);
+import {
+  blockType,
+  layoutSettings,
+  layoutSlot,
+  layoutType,
+  siteSettings,
+  slotBlock,
+} from "./lib/validators";
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -107,48 +62,8 @@ export default defineSchema({
     publishedName: v.optional(v.string()),
     publishedLogoUrl: v.optional(v.string()),
     publishedDefaultPageId: v.optional(v.id("pages")),
-    publishedSettings: v.optional(v.any()),
-    settings: v.object({
-      favicon: v.optional(v.string()),
-      ogImage: v.optional(v.string()),
-      siteTitle: v.optional(v.string()),
-      siteDescription: v.optional(v.string()),
-      siteKeywords: v.optional(v.string()),
-      headerType: v.union(v.literal("logo"), v.literal("text")),
-      navigationStyle: v.union(
-        v.literal("sidebar"),
-        v.literal("topnav"),
-        v.literal("subnav"),
-      ),
-      showHeader: v.optional(v.boolean()),
-      showLogo: v.optional(v.boolean()),
-      showSiteName: v.optional(v.boolean()),
-      showHeaderSearch: v.optional(v.boolean()),
-      showBreadcrumbs: v.optional(v.boolean()),
-      sidebarDefaultExpanded: v.optional(v.boolean()),
-      customization: v.optional(
-        v.object({
-          accentColor: v.optional(v.string()),
-          accentColorDark: v.optional(v.string()),
-          headerColor: v.optional(v.string()),
-          headerColorDark: v.optional(v.string()),
-          secondaryColor: v.optional(v.string()),
-          secondaryColorDark: v.optional(v.string()),
-          tertiaryColor: v.optional(v.string()),
-          tertiaryColorDark: v.optional(v.string()),
-          showHeaderGradient: v.optional(v.boolean()),
-          borderRadius: v.optional(
-            v.union(
-              v.literal("none"),
-              v.literal("small"),
-              v.literal("medium"),
-              v.literal("large"),
-              v.literal("full"),
-            ),
-          ),
-        }),
-      ),
-    }),
+    publishedSettings: v.optional(siteSettings),
+    settings: siteSettings,
   })
     .index("by_team", ["teamId"])
     .index("by_slug", ["teamId", "slug"]),
@@ -223,24 +138,11 @@ export default defineSchema({
     // Published slots (what public site sees, populated on deploy)
     publishedSlots: v.optional(v.array(layoutSlot)),
     // Layout settings
-    settings: v.object({
-      rowCount: v.optional(v.number()),
-      columnCount: v.optional(v.number()),
-      gridColumns: v.optional(v.number()),
-      gridRows: v.optional(v.number()),
-      spacerHeight: v.optional(
-        v.union(
-          v.literal("small"),
-          v.literal("medium"),
-          v.literal("large"),
-          v.literal("xlarge"),
-        ),
-      ),
-    }),
+    settings: layoutSettings,
     // Published copies of layout structure (populated on deploy)
     publishedType: v.optional(layoutType),
     publishedOrder: v.optional(v.number()),
-    publishedSettings: v.optional(v.any()),
+    publishedSettings: v.optional(layoutSettings),
     publishedTabId: v.optional(v.string()),
     isDeployed: v.optional(v.boolean()),
     createdAt: v.number(),
@@ -365,6 +267,9 @@ export default defineSchema({
     .index("by_site_status", ["siteId", "status"]),
 
   // Deployment snapshots (chunked for 1MB limit)
+  // data is polymorphic by chunkType: site-settings stores settings object,
+  // page-tree stores page array, page-layouts stores layout array.
+  // Typed at the query/mutation layer, not at schema level.
   deploymentSnapshots: defineTable({
     deploymentId: v.id("deployments"),
     siteId: v.id("sites"),

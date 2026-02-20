@@ -2,68 +2,15 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import {
+  blockContent,
+  blockType,
+  layoutSettings,
+  layoutSlot,
+  layoutType,
+  slotBlock,
+} from "../lib/validators";
 import { markSiteModified } from "../lib/markModified";
-
-const layoutTypes = v.union(
-  v.literal("single"),
-  v.literal("rows"),
-  v.literal("columns"),
-  v.literal("grid"),
-  v.literal("spacer"),
-  v.literal("vertical"),
-);
-
-const blockTypes = v.union(
-  v.literal("heading"),
-  v.literal("paragraph"),
-  v.literal("image"),
-  v.literal("file"),
-  v.literal("document-list"),
-  v.literal("library"),
-  v.literal("search"),
-  v.literal("embed"),
-  v.literal("divider"),
-  v.literal("block-spacer"),
-  v.literal("callout"),
-  v.literal("code"),
-  v.literal("table"),
-  v.literal("quicklinks"),
-  v.literal("form"),
-  v.literal("richtext"),
-  v.literal("subpage"),
-  v.literal("banner"),
-  v.literal("directory"),
-  v.literal("flowchart"),
-  v.literal("decision-tree"),
-);
-
-const slotSchema = v.object({
-  id: v.string(),
-  position: v.number(),
-  blocks: v.array(
-    v.object({
-      id: v.string(),
-      type: blockTypes,
-      content: v.any(),
-    }),
-  ),
-});
-
-// Settings schema - layout configuration only
-const settingsSchema = v.object({
-  rowCount: v.optional(v.number()),
-  columnCount: v.optional(v.number()),
-  gridColumns: v.optional(v.number()),
-  gridRows: v.optional(v.number()),
-  spacerHeight: v.optional(
-    v.union(
-      v.literal("small"),
-      v.literal("medium"),
-      v.literal("large"),
-      v.literal("xlarge"),
-    ),
-  ),
-});
 
 // Helper to get teamId from pageId
 async function getTeamIdFromPage(
@@ -100,9 +47,9 @@ async function getTeamIdFromLayout(
 export const create = mutation({
   args: {
     pageId: v.id("pages"),
-    type: layoutTypes,
-    slots: v.array(slotSchema),
-    settings: settingsSchema,
+    type: layoutType,
+    slots: v.array(layoutSlot),
+    settings: layoutSettings,
     order: v.optional(v.number()),
     tabId: v.optional(v.string()),
   },
@@ -150,7 +97,7 @@ export const create = mutation({
 export const updateSettings = mutation({
   args: {
     layoutId: v.id("layouts"),
-    settings: settingsSchema,
+    settings: layoutSettings,
   },
   handler: async (ctx, { layoutId, settings }) => {
     const layout = await ctx.db.get(layoutId);
@@ -178,7 +125,7 @@ export const updateSettings = mutation({
 export const updateSlots = mutation({
   args: {
     layoutId: v.id("layouts"),
-    slots: v.array(slotSchema),
+    slots: v.array(layoutSlot),
   },
   handler: async (ctx, { layoutId, slots }) => {
     const layout = await ctx.db.get(layoutId);
@@ -207,11 +154,7 @@ export const addBlockToSlot = mutation({
   args: {
     layoutId: v.id("layouts"),
     slotId: v.string(),
-    block: v.object({
-      id: v.string(),
-      type: blockTypes,
-      content: v.any(),
-    }),
+    block: slotBlock,
     index: v.optional(v.number()),
   },
   handler: async (ctx, { layoutId, slotId, block, index }) => {
@@ -255,7 +198,7 @@ export const updateBlockInSlot = mutation({
     layoutId: v.id("layouts"),
     slotId: v.string(),
     blockId: v.string(),
-    content: v.any(),
+    content: blockContent,
   },
   handler: async (ctx, { layoutId, slotId, blockId, content }) => {
     const layout = await ctx.db.get(layoutId);

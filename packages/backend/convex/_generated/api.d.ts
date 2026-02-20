@@ -28,6 +28,7 @@ import type * as layouts_queries from "../layouts/queries.js";
 import type * as lib_extractBlockNoteText from "../lib/extractBlockNoteText.js";
 import type * as lib_extractable from "../lib/extractable.js";
 import type * as lib_markModified from "../lib/markModified.js";
+import type * as lib_validators from "../lib/validators.js";
 import type * as members_internal from "../members/internal.js";
 import type * as members_mutations from "../members/mutations.js";
 import type * as members_queries from "../members/queries.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "lib/extractBlockNoteText": typeof lib_extractBlockNoteText;
   "lib/extractable": typeof lib_extractable;
   "lib/markModified": typeof lib_markModified;
+  "lib/validators": typeof lib_validators;
   "members/internal": typeof members_internal;
   "members/mutations": typeof members_mutations;
   "members/queries": typeof members_queries;
