@@ -1,51 +1,46 @@
 "use client";
 
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
-import { useMutation, useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useEditorContext } from "../contexts/editor-context";
-import { PageEditor } from "./page-editor";
+import { useEditorMutations } from "../contexts/editor-mutations";
 
 interface SubpageEditPanelProps {
+  pageTitle?: string;
+  renderPageEditor: (pageId: string) => ReactNode;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
 
 export function SubpageEditPanel({
+  pageTitle,
+  renderPageEditor,
   isFullscreen,
   onToggleFullscreen,
 }: SubpageEditPanelProps) {
   const { editingSubpage, closeSubpageEditor } = useEditorContext();
-  const page = useQuery(
-    api.pages.queries.get,
-    editingSubpage?.pageId
-      ? { pageId: editingSubpage.pageId as Id<"pages"> }
-      : "skip",
-  );
-  const updatePage = useMutation(api.pages.mutations.update);
+  const { pages: pageMutations } = useEditorMutations();
 
   const [title, setTitle] = useState("");
 
   // Sync title from server
   useEffect(() => {
-    if (page?.title) {
-      setTitle(page.title);
+    if (pageTitle) {
+      setTitle(pageTitle);
     }
-  }, [page?.title]);
+  }, [pageTitle]);
 
   const debouncedSave = useDebounceCallback(
     useCallback(
       async (newTitle: string) => {
         if (!editingSubpage?.pageId || !newTitle.trim()) return;
         try {
-          await updatePage({
-            pageId: editingSubpage.pageId as Id<"pages">,
+          await pageMutations.update({
+            pageId: editingSubpage.pageId,
             title: newTitle.trim(),
           });
         } catch (error) {
@@ -53,7 +48,7 @@ export function SubpageEditPanel({
           toast.error("Failed to rename sub-page");
         }
       },
-      [editingSubpage?.pageId, updatePage],
+      [editingSubpage?.pageId, pageMutations],
     ),
     500,
   );
@@ -104,7 +99,7 @@ export function SubpageEditPanel({
 
       {/* Full page editor for the subpage */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-        <PageEditor pageId={editingSubpage.pageId} nested />
+        {renderPageEditor(editingSubpage.pageId)}
       </div>
     </div>
   );

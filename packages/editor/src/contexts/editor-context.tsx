@@ -1,8 +1,5 @@
 "use client";
 
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import { useMutation, useQuery } from "convex/react";
 import {
   type ReactNode,
   createContext,
@@ -11,9 +8,10 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import { usePermissions } from "../hooks/use-permissions";
+import type { EditorPermissions, SiteData } from "../types";
 import type { UndoCommand } from "../undo";
 import { useUndoKeyboardShortcuts, useUndoManager } from "../undo";
+import { useEditorMutations } from "./editor-mutations";
 
 export interface EditingSubpage {
   pageId: string;
@@ -26,7 +24,7 @@ interface EditorSelection {
 }
 
 interface EditorContextValue {
-  siteId: Id<"sites">;
+  siteId: string;
   selection: EditorSelection;
   selectLayout: (layoutId: string | null) => void;
   selectSlot: (layoutId: string, slotId: string | null) => void;
@@ -68,11 +66,18 @@ interface EditorContextValue {
 const EditorContext = createContext<EditorContextValue | null>(null);
 
 interface EditorProviderProps {
-  siteId: Id<"sites">;
+  siteId: string;
+  site?: SiteData;
+  permissions: EditorPermissions;
   children: ReactNode;
 }
 
-export function EditorProvider({ siteId, children }: EditorProviderProps) {
+export function EditorProvider({
+  siteId,
+  site,
+  permissions,
+  children,
+}: EditorProviderProps) {
   const [selection, setSelection] = useState<EditorSelection>({
     layoutId: null,
     slotId: null,
@@ -89,23 +94,20 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     return stored === null ? true : stored === "true";
   });
 
-  // Query the site to derive hasUndeployedChanges and teamId for permissions
-  const site = useQuery(api.sites.queries.get, { siteId });
+  // Derive hasUndeployedChanges from site data
   const hasUndeployedChanges = site
     ? (site.contentModifiedAt ?? 0) > (site.lastDeployedAt ?? 0)
     : false;
 
-  // New deploy mutation
-  const deployMutation = useMutation(api.deployments.mutations.deploy);
+  // Get deploy from mutations context
+  const { deployments } = useEditorMutations();
 
-  // Get permissions using teamId from the site query directly
-  // (avoids the duplicate site query that useSitePermissions would make)
   const {
     canEdit,
     isAdmin,
     isViewer,
     isLoading: isPermissionsLoading,
-  } = usePermissions({ teamId: site?.teamId });
+  } = permissions;
 
   // Undo/Redo manager
   const {
@@ -127,18 +129,18 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     currentPageId,
   });
 
-  // Deploy site - calls the new deployments module
+  // Deploy site
   const deploySite = useCallback(
     async (notes?: string) => {
       try {
-        await deployMutation({ siteId, notes });
+        await deployments.deploy({ siteId, notes });
         toast.success("Changes deployed successfully");
       } catch (error) {
         console.error("Failed to deploy changes:", error);
         toast.error("Failed to deploy changes");
       }
     },
-    [deployMutation, siteId],
+    [deployments, siteId],
   );
 
   const selectLayout = useCallback((layoutId: string | null) => {

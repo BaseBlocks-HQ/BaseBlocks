@@ -14,8 +14,6 @@ function ContentSkeleton() {
     </div>
   );
 }
-import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
 import type {
   AnyContent,
   LayoutBlockType,
@@ -27,15 +25,18 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
-import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEditorContext } from "../contexts/editor-context";
+import { useEditorMutations } from "../contexts/editor-mutations";
 import { createLayout, generateId } from "../layouts";
+import type { LayoutDoc, PageData } from "../types";
 import { SortableLayout } from "./layouts/sortable-layout";
 
 interface PageEditorProps {
   pageId: string;
+  pageData?: PageData;
+  layouts?: LayoutDoc[];
   onSelectionChange?: (slotId: string | null) => void;
   /** When true, uses local state instead of shared context for tabs/currentPageId (used in subpage panel) */
   nested?: boolean;
@@ -43,6 +44,8 @@ interface PageEditorProps {
 
 export function PageEditor({
   pageId,
+  pageData,
+  layouts: layoutsData,
   onSelectionChange,
   nested,
 }: PageEditorProps) {
@@ -60,6 +63,9 @@ export function PageEditor({
     showControls,
   } = useEditorContext();
 
+  const { layouts: layoutMutations, pages: pageMutations } =
+    useEditorMutations();
+
   // Nested editors use local tab state to avoid fighting with the parent
   const [localActiveTabId, setLocalActiveTabId] = useState<string | null>(null);
   const activeTabId = nested ? localActiveTabId : contextActiveTabId;
@@ -76,39 +82,6 @@ export function PageEditor({
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const tabInputRef = useRef<HTMLInputElement>(null);
-
-  // Queries
-  const pageData = useQuery(api.pages.queries.get, {
-    pageId: pageId as Id<"pages">,
-  });
-  const layoutsData = useQuery(api.layouts.queries.list, {
-    pageId: pageId as Id<"pages">,
-  });
-
-  // Mutations
-  const createLayoutMutation = useMutation(api.layouts.mutations.create);
-  const reorderLayoutsMutation = useMutation(api.layouts.mutations.reorder);
-  const updateBlockMutation = useMutation(
-    api.layouts.mutations.updateBlockInSlot,
-  );
-  const removeBlockMutation = useMutation(
-    api.layouts.mutations.removeBlockFromSlot,
-  );
-  const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
-  const moveBlockMutation = useMutation(api.layouts.mutations.moveBlock);
-  const updateSettingsMutation = useMutation(
-    api.layouts.mutations.updateSettings,
-  );
-  const updatePageTabsMutation = useMutation(
-    api.pages.mutations.updatePageTabs,
-  );
-  const disablePageTabsMutation = useMutation(
-    api.pages.mutations.disablePageTabs,
-  );
-  const enablePageTabsMutation = useMutation(
-    api.pages.mutations.enablePageTabs,
-  );
-  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
 
   // Track last known block content for undo
   const lastKnownContentRef = useRef<Map<string, AnyContent>>(new Map());
@@ -147,22 +120,18 @@ export function PageEditor({
     }
   }, [pageTabs, hasTabs, activeTabId, setActiveTabId]);
 
-  // Convert layouts from DB to LayoutData format
-  type LayoutDoc = Doc<"layouts">;
-  type SlotDoc = LayoutDoc["slots"][number];
-  type BlockDoc = SlotDoc["blocks"][number];
-
+  // Convert layouts from doc format to LayoutData format
   const allLayouts: LayoutData[] = useMemo(() => {
     if (!layoutsData) return [];
-    return layoutsData.map((s: LayoutDoc) => ({
+    return layoutsData.map((s) => ({
       id: s._id,
       type: s.type as LayoutType,
       order: s.order,
       tabId: s.tabId,
-      slots: s.slots.map((slot: SlotDoc) => ({
+      slots: s.slots.map((slot) => ({
         id: slot.id,
         position: slot.position,
-        blocks: slot.blocks.map((block: BlockDoc) => ({
+        blocks: slot.blocks.map((block) => ({
           id: block.id,
           type: block.type as LayoutBlockType,
           content: block.content as AnyContent,
@@ -212,9 +181,9 @@ export function PageEditor({
       const oldMainOrder = [...mainLayoutIds];
       const newMainOrder = arrayMove(mainLayoutIds, oldIndex, newIndex);
       const newOrder = [...newMainOrder, ...sidebarLayoutIds];
-      await reorderLayoutsMutation({
-        pageId: pageId as Id<"pages">,
-        layoutIds: newOrder as Id<"layouts">[],
+      await layoutMutations.reorder({
+        pageId,
+        layoutIds: newOrder,
       });
 
       if (!isUndoRedoExecuting) {
@@ -223,15 +192,15 @@ export function PageEditor({
           description: "Reorder layouts",
           pageId,
           undo: async () => {
-            await reorderLayoutsMutation({
-              pageId: pageId as Id<"pages">,
-              layoutIds: oldOrder as Id<"layouts">[],
+            await layoutMutations.reorder({
+              pageId,
+              layoutIds: oldOrder,
             });
           },
           redo: async () => {
-            await reorderLayoutsMutation({
-              pageId: pageId as Id<"pages">,
-              layoutIds: newOrder as Id<"layouts">[],
+            await layoutMutations.reorder({
+              pageId,
+              layoutIds: newOrder,
             });
           },
         });
@@ -241,7 +210,7 @@ export function PageEditor({
       mainLayoutIds,
       sidebarLayoutIds,
       pageId,
-      reorderLayoutsMutation,
+      layoutMutations,
       pushCommand,
       isUndoRedoExecuting,
     ],
@@ -260,9 +229,9 @@ export function PageEditor({
       const oldSidebarOrder = [...sidebarLayoutIds];
       const newSidebarOrder = arrayMove(sidebarLayoutIds, oldIndex, newIndex);
       const newOrder = [...mainLayoutIds, ...newSidebarOrder];
-      await reorderLayoutsMutation({
-        pageId: pageId as Id<"pages">,
-        layoutIds: newOrder as Id<"layouts">[],
+      await layoutMutations.reorder({
+        pageId,
+        layoutIds: newOrder,
       });
 
       if (!isUndoRedoExecuting) {
@@ -271,15 +240,15 @@ export function PageEditor({
           description: "Reorder sidebar layouts",
           pageId,
           undo: async () => {
-            await reorderLayoutsMutation({
-              pageId: pageId as Id<"pages">,
-              layoutIds: oldOrder as Id<"layouts">[],
+            await layoutMutations.reorder({
+              pageId,
+              layoutIds: oldOrder,
             });
           },
           redo: async () => {
-            await reorderLayoutsMutation({
-              pageId: pageId as Id<"pages">,
-              layoutIds: newOrder as Id<"layouts">[],
+            await layoutMutations.reorder({
+              pageId,
+              layoutIds: newOrder,
             });
           },
         });
@@ -289,7 +258,7 @@ export function PageEditor({
       mainLayoutIds,
       sidebarLayoutIds,
       pageId,
-      reorderLayoutsMutation,
+      layoutMutations,
       pushCommand,
       isUndoRedoExecuting,
     ],
@@ -308,8 +277,8 @@ export function PageEditor({
   const handleAddLayout = useCallback(
     async (type: LayoutType) => {
       const newLayout = createLayout(type);
-      const layoutId = await createLayoutMutation({
-        pageId: pageId as Id<"pages">,
+      const layoutId = await layoutMutations.create({
+        pageId,
         type: newLayout.type,
         slots: newLayout.slots,
         settings: newLayout.settings,
@@ -318,38 +287,37 @@ export function PageEditor({
 
       if (newLayout.slots.length > 0) {
         setTimeout(() => {
-          selectSlot(layoutId as string, newLayout.slots[0]!.id);
+          selectSlot(layoutId, newLayout.slots[0]!.id);
           onSelectionChange?.(newLayout.slots[0]!.id);
         }, 100);
       }
 
       if (!isUndoRedoExecuting) {
-        const layoutIdRef = { value: layoutId as string };
+        const layoutIdRef = { value: layoutId };
         pushCommand({
           description: `Add ${type} layout`,
           pageId,
           undo: async () => {
-            await removeLayoutMutation({
-              layoutId: layoutIdRef.value as Id<"layouts">,
+            await layoutMutations.remove({
+              layoutId: layoutIdRef.value,
             });
             clearSelection();
           },
           redo: async () => {
-            const newId = await createLayoutMutation({
-              pageId: pageId as Id<"pages">,
+            const newId = await layoutMutations.create({
+              pageId,
               type: newLayout.type,
               slots: newLayout.slots,
               settings: newLayout.settings,
               tabId: activeTabId ?? undefined,
             });
-            layoutIdRef.value = newId as string;
+            layoutIdRef.value = newId;
           },
         });
       }
     },
     [
-      createLayoutMutation,
-      removeLayoutMutation,
+      layoutMutations,
       pageId,
       activeTabId,
       selectSlot,
@@ -371,8 +339,8 @@ export function PageEditor({
       const key = `${layoutId}:${slotId}:${blockId}`;
       const previousContent = lastKnownContentRef.current.get(key);
 
-      await updateBlockMutation({
-        layoutId: layoutId as Id<"layouts">,
+      await layoutMutations.updateBlockInSlot({
+        layoutId,
         slotId,
         blockId,
         content,
@@ -388,8 +356,8 @@ export function PageEditor({
           description: "Update block content",
           pageId,
           undo: async () => {
-            await updateBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.updateBlockInSlot({
+              layoutId,
               slotId,
               blockId,
               content: oldContent,
@@ -397,8 +365,8 @@ export function PageEditor({
             lastKnownContentRef.current.set(key, structuredClone(oldContent));
           },
           redo: async () => {
-            await updateBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.updateBlockInSlot({
+              layoutId,
               slotId,
               blockId,
               content: newContent,
@@ -408,7 +376,7 @@ export function PageEditor({
         });
       }
     },
-    [updateBlockMutation, pushCommand, pageId, isUndoRedoExecuting],
+    [layoutMutations, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Remove block
@@ -420,8 +388,8 @@ export function PageEditor({
       const blockIndex = slot?.blocks.findIndex((b) => b.id === blockId) ?? -1;
       const block = slot?.blocks[blockIndex];
 
-      await removeBlockMutation({
-        layoutId: layoutId as Id<"layouts">,
+      await layoutMutations.removeBlockFromSlot({
+        layoutId,
         slotId,
         blockId,
       });
@@ -432,8 +400,8 @@ export function PageEditor({
           description: "Remove block",
           pageId,
           undo: async () => {
-            await addBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.addBlockToSlot({
+              layoutId,
               slotId,
               block: {
                 id: snapshot.id,
@@ -444,8 +412,8 @@ export function PageEditor({
             });
           },
           redo: async () => {
-            await removeBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.removeBlockFromSlot({
+              layoutId,
               slotId,
               blockId: snapshot.id,
             });
@@ -453,14 +421,7 @@ export function PageEditor({
         });
       }
     },
-    [
-      removeBlockMutation,
-      addBlockMutation,
-      allLayouts,
-      pushCommand,
-      pageId,
-      isUndoRedoExecuting,
-    ],
+    [layoutMutations, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Remove layout
@@ -469,8 +430,8 @@ export function PageEditor({
       // Snapshot layout before removing
       const layout = allLayouts.find((l) => l.id === layoutId);
 
-      await removeLayoutMutation({
-        layoutId: layoutId as Id<"layouts">,
+      await layoutMutations.remove({
+        layoutId,
       });
       clearSelection();
 
@@ -481,8 +442,8 @@ export function PageEditor({
           description: "Remove layout",
           pageId,
           undo: async () => {
-            const newId = await createLayoutMutation({
-              pageId: pageId as Id<"pages">,
+            const newId = await layoutMutations.create({
+              pageId,
               type: snapshot.type,
               slots: snapshot.slots.map((s) => ({
                 id: s.id,
@@ -496,11 +457,11 @@ export function PageEditor({
               settings: snapshot.settings,
               tabId: snapshot.tabId ?? undefined,
             });
-            layoutIdRef.value = newId as string;
+            layoutIdRef.value = newId;
           },
           redo: async () => {
-            await removeLayoutMutation({
-              layoutId: layoutIdRef.value as Id<"layouts">,
+            await layoutMutations.remove({
+              layoutId: layoutIdRef.value,
             });
             clearSelection();
           },
@@ -508,8 +469,7 @@ export function PageEditor({
       }
     },
     [
-      removeLayoutMutation,
-      createLayoutMutation,
+      layoutMutations,
       clearSelection,
       allLayouts,
       pushCommand,
@@ -533,8 +493,8 @@ export function PageEditor({
       const originalIndex =
         fromSlot?.blocks.findIndex((b) => b.id === blockId) ?? 0;
 
-      await moveBlockMutation({
-        layoutId: layoutId as Id<"layouts">,
+      await layoutMutations.moveBlock({
+        layoutId,
         fromSlotId,
         toSlotId,
         blockId,
@@ -546,8 +506,8 @@ export function PageEditor({
           description: "Move block",
           pageId,
           undo: async () => {
-            await moveBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.moveBlock({
+              layoutId,
               fromSlotId: toSlotId,
               toSlotId: fromSlotId,
               blockId,
@@ -555,8 +515,8 @@ export function PageEditor({
             });
           },
           redo: async () => {
-            await moveBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.moveBlock({
+              layoutId,
               fromSlotId,
               toSlotId,
               blockId,
@@ -566,7 +526,7 @@ export function PageEditor({
         });
       }
     },
-    [moveBlockMutation, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
+    [layoutMutations, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // Update layout settings
@@ -575,8 +535,8 @@ export function PageEditor({
       const layout = allLayouts.find((l) => l.id === layoutId);
       const oldSettings = layout ? structuredClone(layout.settings) : null;
 
-      await updateSettingsMutation({
-        layoutId: layoutId as Id<"layouts">,
+      await layoutMutations.updateSettings({
+        layoutId,
         settings,
       });
 
@@ -586,35 +546,29 @@ export function PageEditor({
           description: "Update layout settings",
           pageId,
           undo: async () => {
-            await updateSettingsMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.updateSettings({
+              layoutId,
               settings: oldSettings,
             });
           },
           redo: async () => {
-            await updateSettingsMutation({
-              layoutId: layoutId as Id<"layouts">,
+            await layoutMutations.updateSettings({
+              layoutId,
               settings: newSettings,
             });
           },
         });
       }
     },
-    [
-      updateSettingsMutation,
-      allLayouts,
-      pushCommand,
-      pageId,
-      isUndoRedoExecuting,
-    ],
+    [layoutMutations, allLayouts, pushCommand, pageId, isUndoRedoExecuting],
   );
 
   // === Page tab management ===
   const handleDisableTabs = useCallback(async () => {
     const oldTabs = structuredClone(pageTabs);
 
-    await disablePageTabsMutation({
-      pageId: pageId as Id<"pages">,
+    await pageMutations.disablePageTabs({
+      pageId,
     });
     setActiveTabId(null);
 
@@ -623,14 +577,14 @@ export function PageEditor({
         description: "Disable page tabs",
         pageId,
         undo: async () => {
-          await enablePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.enablePageTabs({
+            pageId,
             tabs: oldTabs,
           });
         },
         redo: async () => {
-          await disablePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.disablePageTabs({
+            pageId,
           });
           setActiveTabId(null);
         },
@@ -639,8 +593,7 @@ export function PageEditor({
   }, [
     pageId,
     pageTabs,
-    disablePageTabsMutation,
-    enablePageTabsMutation,
+    pageMutations,
     pushCommand,
     isUndoRedoExecuting,
     setActiveTabId,
@@ -651,8 +604,8 @@ export function PageEditor({
     const newTab = { id: generateId(), label: `Tab ${pageTabs.length + 1}` };
     const newTabs = [...pageTabs, newTab];
 
-    await updatePageTabsMutation({
-      pageId: pageId as Id<"pages">,
+    await pageMutations.updatePageTabs({
+      pageId,
       pageTabs: newTabs,
     });
     setActiveTabId(newTab.id);
@@ -662,14 +615,14 @@ export function PageEditor({
         description: "Add tab",
         pageId,
         undo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.updatePageTabs({
+            pageId,
             pageTabs: oldTabs,
           });
         },
         redo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.updatePageTabs({
+            pageId,
             pageTabs: newTabs,
           });
           setActiveTabId(newTab.id);
@@ -679,7 +632,7 @@ export function PageEditor({
   }, [
     pageId,
     pageTabs,
-    updatePageTabsMutation,
+    pageMutations,
     pushCommand,
     isUndoRedoExecuting,
     setActiveTabId,
@@ -691,8 +644,8 @@ export function PageEditor({
       const oldTabs = structuredClone(pageTabs);
       const newTabs = pageTabs.filter((t) => t.id !== tabId);
 
-      await updatePageTabsMutation({
-        pageId: pageId as Id<"pages">,
+      await pageMutations.updatePageTabs({
+        pageId,
         pageTabs: newTabs,
       });
       if (activeTabId === tabId) {
@@ -704,14 +657,14 @@ export function PageEditor({
           description: "Remove tab",
           pageId,
           undo: async () => {
-            await updatePageTabsMutation({
-              pageId: pageId as Id<"pages">,
+            await pageMutations.updatePageTabs({
+              pageId,
               pageTabs: oldTabs,
             });
           },
           redo: async () => {
-            await updatePageTabsMutation({
-              pageId: pageId as Id<"pages">,
+            await pageMutations.updatePageTabs({
+              pageId,
               pageTabs: newTabs,
             });
           },
@@ -722,7 +675,7 @@ export function PageEditor({
       pageId,
       pageTabs,
       activeTabId,
-      updatePageTabsMutation,
+      pageMutations,
       pushCommand,
       isUndoRedoExecuting,
       setActiveTabId,
@@ -746,8 +699,8 @@ export function PageEditor({
         ? { ...t, label: editingLabel.trim() || t.label }
         : t,
     );
-    await updatePageTabsMutation({
-      pageId: pageId as Id<"pages">,
+    await pageMutations.updatePageTabs({
+      pageId,
       pageTabs: newTabs,
     });
     setEditingTabId(null);
@@ -757,14 +710,14 @@ export function PageEditor({
         description: "Rename tab",
         pageId,
         undo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.updatePageTabs({
+            pageId,
             pageTabs: oldTabs,
           });
         },
         redo: async () => {
-          await updatePageTabsMutation({
-            pageId: pageId as Id<"pages">,
+          await pageMutations.updatePageTabs({
+            pageId,
             pageTabs: newTabs,
           });
         },
@@ -775,7 +728,7 @@ export function PageEditor({
     editingLabel,
     pageTabs,
     pageId,
-    updatePageTabsMutation,
+    pageMutations,
     pushCommand,
     isUndoRedoExecuting,
   ]);

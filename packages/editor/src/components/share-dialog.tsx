@@ -1,7 +1,5 @@
 "use client";
 
-import type { Id } from "@baseblocks/backend";
-import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -20,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useMutation, useQuery } from "convex/react";
 import {
   Check,
   Copy,
@@ -33,16 +30,20 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useEditorMutations } from "../contexts/editor-mutations";
+import type { AccessCodeData, SharingSettings } from "../types";
 
 type Visibility = "private" | "public" | "link-only" | "password";
 
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  siteId: Id<"sites">;
+  siteId: string;
   teamSlug: string;
   siteSlug: string;
   siteUrl: string;
+  settings?: SharingSettings;
+  accessCode?: AccessCodeData | null;
 }
 
 const ROTATION_OPTIONS = [
@@ -62,43 +63,33 @@ export function ShareDialog({
   open,
   onOpenChange,
   siteId,
-  teamSlug,
-  siteSlug,
   siteUrl,
+  settings,
+  accessCode,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  // Queries
-  const settings = useQuery(api.sharing.queries.getSettings, { siteId });
-  const accessCode = useQuery(api.sharing.queries.getAccessCode, { siteId });
+  const { sharing } = useEditorMutations();
 
-  // Mutations
-  const updateVisibility = useMutation(api.sharing.mutations.updateVisibility);
-  const updateAccessSettings = useMutation(
-    api.sharing.mutations.updateAccessSettings,
-  );
-  const generateNewCode = useMutation(
-    api.sharing.mutations.generateNewAccessCode,
-  );
   const visibility = settings?.visibility ?? "public";
 
   const handleVisibilityChange = useCallback(
     async (value: Visibility) => {
       try {
-        await updateVisibility({ siteId, visibility: value });
+        await sharing.updateVisibility({ siteId, visibility: value });
         toast.success("Visibility updated");
       } catch {
         toast.error("Failed to update visibility");
       }
     },
-    [siteId, updateVisibility],
+    [siteId, sharing],
   );
 
   const handleRotationChange = useCallback(
     async (value: string) => {
       try {
-        await updateAccessSettings({
+        await sharing.updateAccessSettings({
           siteId,
           accessCodeRotationHours: Number.parseInt(value),
         });
@@ -107,13 +98,13 @@ export function ShareDialog({
         toast.error("Failed to update rotation interval");
       }
     },
-    [siteId, updateAccessSettings],
+    [siteId, sharing],
   );
 
   const handleSessionChange = useCallback(
     async (value: string) => {
       try {
-        await updateAccessSettings({
+        await sharing.updateAccessSettings({
           siteId,
           accessCodeSessionDays: Number.parseInt(value),
         });
@@ -122,17 +113,17 @@ export function ShareDialog({
         toast.error("Failed to update session duration");
       }
     },
-    [siteId, updateAccessSettings],
+    [siteId, sharing],
   );
 
   const handleRegenerateCode = useCallback(async () => {
     try {
-      await generateNewCode({ siteId });
+      await sharing.generateNewAccessCode({ siteId });
       toast.success("Access code regenerated");
     } catch {
       toast.error("Failed to regenerate access code");
     }
-  }, [siteId, generateNewCode]);
+  }, [siteId, sharing]);
 
   const copyLink = useCallback(() => {
     navigator.clipboard.writeText(siteUrl);

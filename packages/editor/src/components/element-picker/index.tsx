@@ -1,6 +1,5 @@
 "use client";
 
-import type { Id } from "@baseblocks/backend";
 import type {
   ElementCategory,
   ElementType,
@@ -14,7 +13,7 @@ import { ElementCard } from "./element-card";
 import { ElementGrid } from "./element-grid";
 
 interface ElementPickerProps {
-  siteId?: Id<"sites">;
+  siteId?: string;
   selectedSlotId?: string | null;
   onAddLayout?: (type: LayoutType) => void;
   onAddBlock?: (type: ElementType) => void;

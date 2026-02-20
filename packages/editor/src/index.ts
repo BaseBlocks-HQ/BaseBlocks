@@ -15,6 +15,11 @@ export type {
   LayoutContextProviderProps,
   ElementRegistryEntry,
 } from "./contexts/elements-bridge";
+export {
+  EditorMutationsProvider,
+  useEditorMutations,
+} from "./contexts/editor-mutations";
+export type { EditorMutations } from "./contexts/editor-mutations";
 
 // Components
 export { PageEditor } from "./components/page-editor";
@@ -27,5 +32,16 @@ export { ShareDialog } from "./components/share-dialog";
 export { RollbackDialog } from "./components/rollback-dialog";
 export { ElementPicker } from "./components/element-picker";
 
-// Hooks
-export { usePermissions, useSitePermissions } from "./hooks/use-permissions";
+// Types
+export type {
+  SiteData,
+  PageData,
+  PageTab,
+  LayoutDoc,
+  LayoutSlotDoc,
+  LayoutBlockDoc,
+  SharingSettings,
+  AccessCodeData,
+  DeploymentData,
+  EditorPermissions,
+} from "./types";

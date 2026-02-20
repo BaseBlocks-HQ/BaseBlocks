@@ -1,7 +1,5 @@
 "use client";
 
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
@@ -11,31 +9,30 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@baseblocks/ui/sheet";
-import { useMutation, useQuery } from "convex/react";
 import { History, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useEditorMutations } from "../contexts/editor-mutations";
+import type { DeploymentData } from "../types";
 import { RollbackDialog } from "./rollback-dialog";
 
 interface DeploymentHistoryPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  siteId: Id<"sites">;
+  siteId: string;
+  deployments?: DeploymentData[];
 }
 
 export function DeploymentHistoryPanel({
   open,
   onOpenChange,
   siteId,
+  deployments,
 }: DeploymentHistoryPanelProps) {
-  const deployments = useQuery(
-    api.deployments.queries.list,
-    open ? { siteId, limit: 50 } : "skip",
-  );
-  const rollbackMutation = useMutation(api.deployments.mutations.rollback);
+  const { deployments: deploymentMutations } = useEditorMutations();
 
   const [rollbackTarget, setRollbackTarget] = useState<{
-    id: Id<"deployments">;
+    id: string;
     version: number;
     notes?: string;
   } | null>(null);
@@ -43,7 +40,7 @@ export function DeploymentHistoryPanel({
   const handleRollback = async () => {
     if (!rollbackTarget) return;
     try {
-      await rollbackMutation({
+      await deploymentMutations.rollback({
         siteId,
         targetDeploymentId: rollbackTarget.id,
       });
@@ -128,7 +125,7 @@ export function DeploymentHistoryPanel({
               <div className="space-y-2">
                 {deployments.map((deployment) => (
                   <div
-                    key={deployment._id}
+                    key={deployment.id}
                     className="rounded-lg border p-3 space-y-2"
                   >
                     <div className="flex items-center justify-between">
@@ -159,7 +156,7 @@ export function DeploymentHistoryPanel({
                         className="w-full gap-1.5 text-xs"
                         onClick={() =>
                           setRollbackTarget({
-                            id: deployment._id,
+                            id: deployment.id,
                             version: deployment.version,
                             notes: deployment.notes,
                           })

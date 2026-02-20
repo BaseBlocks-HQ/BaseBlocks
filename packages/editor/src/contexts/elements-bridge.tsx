@@ -1,6 +1,5 @@
 "use client";
 
-import type { Id } from "@baseblocks/backend";
 import type {
   AnyContent,
   ElementType,
@@ -59,9 +58,9 @@ export interface EditorElementsBridge {
   getElementsByCategory: (category: string) => ElementRegistryEntry[];
   categoryIcons: Record<string, ReactNode>;
   panels: {
-    customization: ComponentType<{ siteId: Id<"sites"> }>;
-    navigation: ComponentType<{ siteId: Id<"sites"> }>;
-    site: ComponentType<{ siteId: Id<"sites"> }>;
+    customization: ComponentType<{ siteId: string }>;
+    navigation: ComponentType<{ siteId: string }>;
+    site: ComponentType<{ siteId: string }>;
   };
 }
 
