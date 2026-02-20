@@ -488,3 +488,17 @@ export const flagSubpageContentPages = migrations.define({
 export const runFlagSubpageContent = migrations.runner([
   internal.migrations.flagSubpageContentPages,
 ]);
+
+// Migration 11: Remove deprecated hasUndeployedChanges field from all sites
+export const removeHasUndeployedChanges = migrations.define({
+  table: "sites",
+  batchSize: 50,
+  migrateOne: async (ctx, site) => {
+    if ((site as any).hasUndeployedChanges !== undefined) {
+      await ctx.db.patch(site._id, { hasUndeployedChanges: undefined } as any);
+    }
+  },
+});
+export const runRemoveHasUndeployedChanges = migrations.runner([
+  internal.migrations.removeHasUndeployedChanges,
+]);
