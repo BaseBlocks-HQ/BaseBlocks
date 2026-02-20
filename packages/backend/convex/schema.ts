@@ -99,6 +99,7 @@ export default defineSchema({
     accessCodeRotationHours: v.optional(v.number()),
     accessCodeSessionDays: v.optional(v.number()),
     // Deployment tracking
+    hasUndeployedChanges: v.optional(v.boolean()), // deprecated, kept for data compat
     contentModifiedAt: v.optional(v.number()),
     lastDeployedAt: v.optional(v.number()),
     lastDeployedBy: v.optional(v.string()),
