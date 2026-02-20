@@ -1,7 +1,12 @@
 "use client";
 
-import type { Id } from "@repo/backend";
-import type { AnyContent, ElementType, LayoutType, SaveStatus } from "@repo/types";
+import type { Id } from "@baseblocks/backend";
+import type {
+  AnyContent,
+  ElementType,
+  LayoutType,
+  SaveStatus,
+} from "@baseblocks/types";
 import type { LucideIcon } from "lucide-react";
 import {
   type ComponentType,

@@ -1,6 +1,8 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
+import type { Id } from "@baseblocks/backend";
+import { api } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,18 +10,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/dialog";
-import { Label } from "@repo/ui/label";
-import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
+} from "@baseblocks/ui/dialog";
+import { Label } from "@baseblocks/ui/label";
+import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/select";
-import type { Id } from "@repo/backend";
-import { api } from "@repo/backend";
+} from "@baseblocks/ui/select";
 import { useMutation, useQuery } from "convex/react";
 import {
   Check,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
+import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/dialog";
+} from "@baseblocks/ui/dialog";
 import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 

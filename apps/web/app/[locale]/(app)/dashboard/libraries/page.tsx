@@ -1,6 +1,6 @@
 "use client";
 
-import { LibrariesPageContent } from "@/components/dashboard/libraries";
+import { LibrariesPageContent } from "@/features/dashboard/libraries";
 
 /**
  * Libraries page - displays all document libraries grouped by site

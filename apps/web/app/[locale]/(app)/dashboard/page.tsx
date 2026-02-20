@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardContent } from "@/components/dashboard";
+import { DashboardContent } from "@/features/dashboard";
 
 /**
  * Dashboard page - displays all sites for the current team

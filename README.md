@@ -59,10 +59,25 @@ This starts the Next.js app on `http://localhost:3001` and the Convex backend.
 baseblocks/
 ├── apps/
 │   └── web/                 # Next.js frontend (app router)
+│       ├── app/             # Route definitions (thin layer)
+│       ├── features/        # Feature modules (domain-organized)
+│       │   ├── dashboard/   # Team dashboard
+│       │   ├── documents/   # Document library
+│       │   ├── editor/      # Site editor integration
+│       │   ├── elements/    # Block & layout system
+│       │   ├── media-viewer/# File viewer
+│       │   ├── public-site/ # Published site rendering
+│       │   └── team/        # Team management
+│       ├── components/      # Shared UI (dialogs, icons, skeletons)
+│       ├── hooks/           # App-level hooks
+│       └── lib/             # Utilities (URL helpers, validation, storage)
 ├── packages/
 │   ├── backend/             # Convex backend (schema, queries, mutations)
-│   ├── ui/                  # Shared UI component library
-│   └── config-typescript/   # Shared TypeScript configurations
+│   ├── editor/              # Page editor engine (drag-and-drop, layouts, blocks)
+│   ├── types/               # Shared TypeScript type definitions
+│   ├── ui/                  # Shared UI component library (shadcn/ui + Radix)
+│   ├── tsconfig/            # Shared TypeScript configurations
+│   └── tailwind-config/     # Shared Tailwind CSS and PostCSS config
 ├── turbo.json               # Turborepo task configuration
 ├── biome.jsonc              # Linting and formatting rules
 └── package.json             # Workspace root

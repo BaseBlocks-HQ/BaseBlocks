@@ -1,5 +1,5 @@
 {
-  "name": "@repo/types",
+  "name": "@baseblocks/types",
   "version": "0.0.0",
   "private": true,
   "exports": {
@@ -11,8 +11,9 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/backend": "*",
-    "@repo/config-typescript": "*",
+    "@baseblocks/backend": "workspace:*",
+    "@baseblocks/tsconfig": "workspace:*",
+    "@types/node": "^22.15.3",
     "typescript": "5.9.2"
   }
 }

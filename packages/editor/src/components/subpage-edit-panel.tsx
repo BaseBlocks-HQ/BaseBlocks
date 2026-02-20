@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { useDebounceCallback } from "@repo/ui/hooks/use-debounce";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
+import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
+import { Input } from "@baseblocks/ui/input";
 import { useMutation, useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";

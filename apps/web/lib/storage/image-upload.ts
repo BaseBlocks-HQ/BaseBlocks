@@ -1,6 +1,6 @@
 "use client";
 
-import type { Id } from "@repo/backend";
+import type { Id } from "@baseblocks/backend";
 import { useCallback, useState } from "react";
 import { authClient } from "../auth-client";
 import { type UploadProgress, entityStorageClient } from "./client";

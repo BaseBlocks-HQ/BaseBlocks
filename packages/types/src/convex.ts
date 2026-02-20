@@ -2,7 +2,7 @@
  * Re-export Convex types for use throughout the application
  * Single source of truth - types sync automatically with schema changes
  */
-import type { Doc, Id } from "@repo/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 
 // Document types
 export type Team = Doc<"teams">;

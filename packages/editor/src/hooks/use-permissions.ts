@@ -1,7 +1,7 @@
 "use client";
 
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 
 interface UsePermissionsOptions {

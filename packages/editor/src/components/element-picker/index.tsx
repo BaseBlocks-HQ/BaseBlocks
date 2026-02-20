@@ -1,11 +1,11 @@
 "use client";
 
-import type { Id } from "@repo/backend";
+import type { Id } from "@baseblocks/backend";
 import type {
   ElementCategory,
   ElementType,
   LayoutType,
-} from "@repo/types/elements";
+} from "@baseblocks/types/elements";
 import { PanelTop } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditorElements } from "../../contexts/elements-bridge";

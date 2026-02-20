@@ -1,7 +1,7 @@
 import "server-only";
 
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import type { Metadata } from "next";
 import { headers } from "next/headers";

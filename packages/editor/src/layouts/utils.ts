@@ -6,8 +6,8 @@ import type {
   LayoutSettings,
   LayoutSlot,
   LayoutType,
-} from "@repo/types";
-import { DEFAULT_LAYOUT_SETTINGS } from "@repo/types";
+} from "@baseblocks/types";
+import { DEFAULT_LAYOUT_SETTINGS } from "@baseblocks/types";
 /**
  * Layout utility functions for creating and manipulating layouts
  */

@@ -1,10 +1,7 @@
 "use client";
 
-import { usePermissions } from "../hooks/use-permissions";
-import type { UndoCommand } from "../undo";
-import { useUndoKeyboardShortcuts, useUndoManager } from "../undo";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { useMutation, useQuery } from "convex/react";
 import {
   type ReactNode,
@@ -14,6 +11,9 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { usePermissions } from "../hooks/use-permissions";
+import type { UndoCommand } from "../undo";
+import { useUndoKeyboardShortcuts, useUndoManager } from "../undo";
 
 export interface EditingSubpage {
   pageId: string;

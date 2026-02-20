@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/config-typescript/base.json",
+  "extends": "@baseblocks/tsconfig/base.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",

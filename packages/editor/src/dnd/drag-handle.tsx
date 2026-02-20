@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical } from "lucide-react";
 import { type HTMLAttributes, forwardRef } from "react";
 

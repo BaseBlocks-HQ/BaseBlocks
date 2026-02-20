@@ -1,25 +1,25 @@
 "use client";
 
-import { DndProvider, type DragEndEvent } from "../../dnd";
-import { useEditorContextOptional } from "../../contexts/editor-context";
-import { useEditorElements } from "../../contexts/elements-bridge";
-import { Button } from "@repo/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/popover";
-import { cn } from "@repo/ui/lib/utils";
 import type {
   AnyContent,
   ElementType,
   LayoutSlot as LayoutSlotType,
   LayoutType,
-} from "@repo/types";
+} from "@baseblocks/types";
+import { Button } from "@baseblocks/ui/button";
+import { cn } from "@baseblocks/ui/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@baseblocks/ui/popover";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useEditorContextOptional } from "../../contexts/editor-context";
+import { useEditorElements } from "../../contexts/elements-bridge";
+import { DndProvider, type DragEndEvent } from "../../dnd";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -279,7 +279,10 @@ function SortableBlock({
 
         {/* Block content */}
         <div className="min-w-0 flex-1">
-          <bridge.LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
+          <bridge.LayoutContextProvider
+            layoutType={layoutType}
+            layoutId={layoutId}
+          >
             <bridge.ElementWrapper
               id={block.id}
               type={block.type as ElementType}

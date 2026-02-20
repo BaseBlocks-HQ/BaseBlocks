@@ -3,7 +3,7 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@repo/ui/button";
+import { Button } from "@baseblocks/ui/button";
 import { useConvexAuth } from "convex/react";
 import { useTranslations } from "next-intl";
 

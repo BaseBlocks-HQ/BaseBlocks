@@ -1,4 +1,4 @@
-@import "@repo/config-tailwind/theme.css";
+@import "@baseblocks/tailwind-config/theme.css";
 
 :root {
   --radius: 0.625rem;

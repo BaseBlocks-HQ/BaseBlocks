@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@repo/ui/lib/utils";
-import type { ElementCategory } from "@repo/types/elements";
-import { getSortedCategories } from "@repo/types/elements";
+import type { ElementCategory } from "@baseblocks/types/elements";
+import { getSortedCategories } from "@baseblocks/types/elements";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { useEditorElements } from "../../contexts/elements-bridge";
 

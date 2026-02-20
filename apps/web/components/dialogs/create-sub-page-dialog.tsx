@@ -1,9 +1,9 @@
 "use client";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
+import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { FormDialog } from "./form-dialog";

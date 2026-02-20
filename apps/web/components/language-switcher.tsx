@@ -2,13 +2,13 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { type Locale, routing } from "@/i18n/routing";
-import { Button } from "@repo/ui/button";
+import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
+} from "@baseblocks/ui/dropdown-menu";
 import { Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 

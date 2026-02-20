@@ -3,13 +3,13 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@repo/ui/button";
+import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
+} from "@baseblocks/ui/dropdown-menu";
 
 export function ModeToggle({ className }: { className?: string }) {
   const { setTheme } = useTheme();

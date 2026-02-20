@@ -42,7 +42,9 @@
         "noNonNullAssertion": "off"
       },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "warn",
+        "noConsole": "warn",
+        "noConsoleLog": "warn"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",

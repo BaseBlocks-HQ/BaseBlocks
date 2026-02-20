@@ -48,14 +48,38 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 baseblocks/
 ├── apps/
 │   └── web/                 # Next.js frontend
+│       ├── app/             # Route definitions (thin layer)
+│       ├── features/        # Feature modules (domain-organized)
+│       ├── components/      # Shared UI (dialogs, icons, skeletons)
+│       ├── hooks/           # App-level hooks
+│       └── lib/             # Utilities
 ├── packages/
 │   ├── backend/             # Convex backend (schema, queries, mutations)
-│   ├── ui/                  # Shared UI components
-│   └── config-typescript/   # Shared TypeScript configs
+│   ├── editor/              # Page editor engine (drag-and-drop, layouts, blocks)
+│   ├── types/               # Shared TypeScript type definitions
+│   ├── ui/                  # Shared UI components (shadcn/ui + Radix)
+│   ├── tsconfig/            # Shared TypeScript configurations
+│   └── tailwind-config/     # Shared Tailwind CSS and PostCSS config
 ├── turbo.json               # Turborepo task config
 ├── biome.jsonc              # Linting and formatting
 └── package.json             # Workspace root
 ```
+
+### Frontend Organization
+
+The `apps/web/` app follows a **feature-based** architecture:
+
+- **`features/`** — Domain modules, each self-contained with its own components and hooks:
+  - `dashboard/` — Team dashboard, site cards, library management
+  - `documents/` — Document library (upload, folders, file viewer)
+  - `editor/` — Site editor integration (bridges to `@baseblocks/editor`)
+  - `elements/` — Block & layout system (blocks, sections, forms, customization)
+  - `media-viewer/` — File viewer (PDF, image, video, audio, text)
+  - `public-site/` — Published site rendering, access control
+  - `team/` — Team management, invitations
+- **`components/`** — Truly shared, non-feature UI (dialogs, icons, skeletons, nav)
+- **`hooks/`** — App-level hooks only. For cross-package hooks, import directly from the source package.
+- **`lib/`** — Utilities split by concern (`url.ts`, `tree-utils.ts`, `storage/`, `validation/`)
 
 ## Development Workflow
 
@@ -82,7 +106,7 @@ baseblocks/
 - **Biome** for linting and formatting — run `bun run lint` to auto-fix.
 - **Component files** should stay under 300 lines. If a component grows larger, split it.
 - **Naming**: kebab-case for files, PascalCase for components, camelCase for functions/variables.
-- **Imports**: Use `@/` alias for `apps/web` internal imports. Use `@repo/*` for cross-package imports.
+- **Imports**: Use `@/` alias for `apps/web` internal imports. Use `@baseblocks/*` for cross-package imports. Import hooks directly from their source package (e.g., `@baseblocks/ui/hooks/use-debounce`), not through barrel re-exports.
 
 ## PR Guidelines
 

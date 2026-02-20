@@ -1,12 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  blockType,
   layoutSettings,
   layoutSlot,
   layoutType,
   siteSettings,
-  slotBlock,
 } from "./lib/validators";
 
 // ---------------------------------------------------------------------------

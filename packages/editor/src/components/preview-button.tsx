@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
+import { Button } from "@baseblocks/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@repo/ui/tooltip";
+} from "@baseblocks/ui/tooltip";
 import { Eye } from "lucide-react";
 
 interface PreviewButtonProps {

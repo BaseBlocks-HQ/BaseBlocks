@@ -2,9 +2,9 @@ import {
   generateCustomizationStyles,
   hasCustomization,
 } from "@/lib/customization";
-import type { Id } from "@repo/backend";
-import { api } from "@repo/backend";
-import type { SiteCustomization } from "@repo/types/elements/customization";
+import type { Id } from "@baseblocks/backend";
+import { api } from "@baseblocks/backend";
+import type { SiteCustomization } from "@baseblocks/types/elements/customization";
 import { useQuery } from "convex/react";
 import { useMemo } from "react";
 import type { CSSProperties } from "react";

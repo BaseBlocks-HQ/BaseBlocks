@@ -1,4 +1,4 @@
-import { PublicSitePageClient } from "@/components/public/public-site-page-client";
+import { PublicSitePageClient } from "@/features/public-site/public-site-page-client";
 import { buildPublicSiteMetadata } from "@/lib/public-site-metadata";
 import type { Metadata } from "next";
 

@@ -8,7 +8,7 @@ import { join } from "node:path";
  * custom favicon from Convex storage if one is configured, and falls back
  * to the default BaseBlocks favicon otherwise.
  */
-import { api } from "@repo/backend";
+import { api } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 

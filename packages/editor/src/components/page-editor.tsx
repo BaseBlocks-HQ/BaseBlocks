@@ -14,24 +14,24 @@ function ContentSkeleton() {
     </div>
   );
 }
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { createLayout, generateId } from "../layouts";
-import { cn } from "@repo/ui/lib/utils";
+import { api } from "@baseblocks/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 import type {
   AnyContent,
   LayoutBlockType,
   LayoutData,
   LayoutSettings,
   LayoutType,
-} from "@repo/types";
-import { api } from "@repo/backend";
-import type { Doc, Id } from "@repo/backend";
+} from "@baseblocks/types";
+import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEditorContext } from "../contexts/editor-context";
+import { createLayout, generateId } from "../layouts";
 import { SortableLayout } from "./layouts/sortable-layout";
 
 interface PageEditorProps {

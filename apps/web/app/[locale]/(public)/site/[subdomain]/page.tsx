@@ -1,4 +1,4 @@
-import { SubdomainRootPageClient } from "@/components/public/subdomain-root-page-client";
+import { SubdomainRootPageClient } from "@/features/public-site/subdomain-root-page-client";
 import { buildPublicSiteMetadata } from "@/lib/public-site-metadata";
 import type { Metadata } from "next";
 

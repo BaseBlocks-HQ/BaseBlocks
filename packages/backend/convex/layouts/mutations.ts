@@ -2,15 +2,14 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import { markSiteModified } from "../lib/markModified";
 import {
   blockContent,
-  blockType,
   layoutSettings,
   layoutSlot,
   layoutType,
   slotBlock,
 } from "../lib/validators";
-import { markSiteModified } from "../lib/markModified";
 
 // Helper to get teamId from pageId
 async function getTeamIdFromPage(

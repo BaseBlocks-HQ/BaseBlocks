@@ -11,8 +11,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "turbo": "^2.7.6",
-    "typescript": "5.9.2",
-    "ultracite": "^7.0.0"
+    "typescript": "5.9.2"
   },
   "resolutions": {
     "react": "^19.2.0",

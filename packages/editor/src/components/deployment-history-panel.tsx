@@ -1,16 +1,16 @@
 "use client";
 
-import { Badge } from "@repo/ui/badge";
-import { Button } from "@repo/ui/button";
-import { ScrollArea } from "@repo/ui/scroll-area";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
+import { Badge } from "@baseblocks/ui/badge";
+import { Button } from "@baseblocks/ui/button";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@repo/ui/sheet";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+} from "@baseblocks/ui/sheet";
 import { useMutation, useQuery } from "convex/react";
 import { History, RotateCcw } from "lucide-react";
 import { useState } from "react";
