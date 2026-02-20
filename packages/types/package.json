@@ -2,16 +2,17 @@
   "name": "@baseblocks/types",
   "version": "0.0.0",
   "private": true,
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
     "./elements": "./src/elements/index.ts",
     "./elements/*": "./src/elements/*.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "biome check --write ."
   },
   "devDependencies": {
-    "@baseblocks/backend": "workspace:*",
     "@baseblocks/tsconfig": "workspace:*",
     "@types/node": "^22.15.3",
     "typescript": "5.9.2"

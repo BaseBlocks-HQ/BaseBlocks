@@ -1,11 +1,17 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { requireMember } from "../auth";
 
-// List pages for a site
+// List pages for a site (authenticated — editor only)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) return [];
+
+    await requireMember(ctx, site.teamId);
+
     return await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

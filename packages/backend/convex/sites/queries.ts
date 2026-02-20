@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull } from "../auth";
+import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
 
 // List sites for all teams the user is a member of
 export const list = query({
@@ -52,11 +52,15 @@ export const list = query({
   },
 });
 
-// Get site by ID
+// Get site by ID (authenticated — editor/dashboard only)
 export const get = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    return await ctx.db.get(siteId);
+    const site = await ctx.db.get(siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
+    return site;
   },
 });
 

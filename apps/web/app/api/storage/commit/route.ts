@@ -1,13 +1,11 @@
-import { getToken } from "@/lib/auth-server";
+import { getToken } from "@/lib/auth/server";
 /**
  * Proxy endpoint for committing files to Entity Storage
  * Authenticates via Better Auth session cookie, then forwards JWT to Entity Storage
  */
 import { type NextRequest, NextResponse } from "next/server";
 
-const ENTITY_STORAGE_SITE_URL =
-  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
-  "https://rightful-cat-553.convex.site";
+const ENTITY_STORAGE_SITE_URL = process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL;
 
 export async function POST(request: NextRequest) {
   try {

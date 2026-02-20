@@ -1,9 +1,6 @@
-import {
-  MediaViewerModal,
-  MediaViewerProvider,
-} from "@/features/media-viewer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { type Locale, routing } from "@/i18n/routing";
+import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";

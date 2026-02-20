@@ -1,10 +1,19 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { requireMember } from "../auth";
 
-// Get all layouts for a page (draft version - for editor)
+// Get all layouts for a page (draft version - for editor, authenticated)
 export const list = query({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) return [];
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) return [];
+
+    await requireMember(ctx, site.teamId);
+
     const layouts = await ctx.db
       .query("layouts")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
@@ -46,11 +55,21 @@ export const listPublished = query({
   },
 });
 
-// Get single layout
+// Get single layout (authenticated)
 export const get = query({
   args: { layoutId: v.id("layouts") },
   handler: async (ctx, { layoutId }) => {
-    return await ctx.db.get(layoutId);
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) return null;
+
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) return null;
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) return null;
+
+    await requireMember(ctx, site.teamId);
+    return layout;
   },
 });
 

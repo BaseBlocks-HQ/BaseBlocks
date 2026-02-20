@@ -2,7 +2,7 @@
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Link } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { Button } from "@baseblocks/ui/button";
 import {
   Card,

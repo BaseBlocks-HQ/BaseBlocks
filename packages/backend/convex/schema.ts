@@ -74,7 +74,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_code", ["code"]),
+    .index("by_code", ["code"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   // Sessions for visitors who have verified access codes
   siteAccessSessions: defineTable({
@@ -82,7 +83,9 @@ export default defineSchema({
     sessionToken: v.string(),
     verifiedAt: v.number(),
     expiresAt: v.number(),
-  }).index("by_site_token", ["siteId", "sessionToken"]),
+  })
+    .index("by_site_token", ["siteId", "sessionToken"])
+    .index("by_expiresAt", ["expiresAt"]),
 
   // Pages within a site
   pages: defineTable({

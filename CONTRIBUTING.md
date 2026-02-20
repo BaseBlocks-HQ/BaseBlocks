@@ -47,39 +47,50 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 ```
 baseblocks/
 ├── apps/
-│   └── web/                 # Next.js frontend
-│       ├── app/             # Route definitions (thin layer)
-│       ├── features/        # Feature modules (domain-organized)
-│       ├── components/      # Shared UI (dialogs, icons, skeletons)
-│       ├── hooks/           # App-level hooks
-│       └── lib/             # Utilities
+│   └── web/                   # Next.js frontend
+│       ├── app/               # Route definitions (thin layer)
+│       ├── modules/           # Domain modules (self-contained features)
+│       ├── components/        # Shared UI only (dialogs, skeletons)
+│       ├── hooks/             # App-level hooks (direct imports, no barrels)
+│       └── lib/               # Utilities by concern (auth/, convex/, storage/)
 ├── packages/
-│   ├── backend/             # Convex backend (schema, queries, mutations)
-│   ├── editor/              # Page editor engine (drag-and-drop, layouts, blocks)
-│   ├── types/               # Shared TypeScript type definitions
-│   ├── ui/                  # Shared UI components (shadcn/ui + Radix)
-│   ├── tsconfig/            # Shared TypeScript configurations
-│   └── tailwind-config/     # Shared Tailwind CSS and PostCSS config
-├── turbo.json               # Turborepo task config
-├── biome.jsonc              # Linting and formatting
-└── package.json             # Workspace root
+│   ├── backend/               # Convex backend (schema, queries, mutations)
+│   ├── editor/                # Page editor engine (drag-and-drop, layouts, undo)
+│   ├── types/                 # Shared type definitions (zero dependencies)
+│   └── ui/                    # UI component library (shadcn/ui + Radix)
+├── tooling/
+│   ├── tsconfig/              # Shared TypeScript configurations
+│   └── tailwind/              # Shared Tailwind CSS and PostCSS config
+├── turbo.json                 # Turborepo task config
+├── biome.jsonc                # Linting, formatting, and architectural boundaries
+└── package.json               # Workspace root
 ```
 
 ### Frontend Organization
 
-The `apps/web/` app follows a **feature-based** architecture:
+The `apps/web/` app follows a **module-based** architecture:
 
-- **`features/`** — Domain modules, each self-contained with its own components and hooks:
+- **`modules/`** — Domain modules, each self-contained with its own components, hooks, and dialogs:
   - `dashboard/` — Team dashboard, site cards, library management
   - `documents/` — Document library (upload, folders, file viewer)
-  - `editor/` — Site editor integration (bridges to `@baseblocks/editor`)
-  - `elements/` — Block & layout system (blocks, sections, forms, customization)
+  - `editor/` — Site editor shell (bridges to `@baseblocks/editor`)
+  - `elements/` — Block, layout, and section system (registry, editors, renderers, previews)
   - `media-viewer/` — File viewer (PDF, image, video, audio, text)
+  - `navigation/` — Page tree, breadcrumbs, sortable nav menus
   - `public-site/` — Published site rendering, access control
   - `team/` — Team management, invitations
-- **`components/`** — Truly shared, non-feature UI (dialogs, icons, skeletons, nav)
-- **`hooks/`** — App-level hooks only. For cross-package hooks, import directly from the source package.
-- **`lib/`** — Utilities split by concern (`url.ts`, `tree-utils.ts`, `storage/`, `validation/`)
+- **`components/`** — Truly shared, non-feature UI only (dialogs, skeletons, site-logo)
+- **`hooks/`** — App-level hooks only. Import directly from source files, not through barrels.
+- **`lib/`** — Utilities organized by concern (`auth/`, `convex/`, `storage/`, `url.ts`, `tree.ts`)
+
+### Architectural Boundaries
+
+Biome enforces import boundaries at lint time:
+
+- `packages/types` must remain standalone (no backend, UI, or React imports)
+- `packages/ui` must not import from backend or editor
+- `lib/` must not import from `modules/` (lib is a lower layer)
+- `components/` must not import from `modules/` (shared components are a lower layer)
 
 ## Development Workflow
 

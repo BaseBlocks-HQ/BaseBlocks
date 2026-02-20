@@ -1,6 +1,6 @@
 "use client";
 
-import { TeamContent } from "@/features/team";
+import { TeamContent } from "@/modules/team";
 
 export default function TeamPage() {
   return <TeamContent />;

@@ -14,8 +14,7 @@ import { isExtractable } from "../lib/extractable";
 export { isExtractable };
 
 // Entity Storage configuration
-const ENTITY_STORAGE_URL =
-  process.env.ENTITY_STORAGE_URL || "https://gregarious-koala-319.convex.site";
+const ENTITY_STORAGE_URL = process.env.ENTITY_STORAGE_URL;
 
 // Type for extraction API response
 interface ExtractionApiResponse {

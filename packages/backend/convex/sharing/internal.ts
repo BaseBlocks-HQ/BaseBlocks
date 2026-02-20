@@ -1,14 +1,5 @@
 import { internalMutation } from "../_generated/server";
-
-// Generate a random 6-character alphanumeric code
-function generateAccessCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Avoiding ambiguous chars: 0, O, I, 1
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+import { generateAccessCode } from "./crypto";
 
 // Rotate expired access codes
 export const rotateExpiredCodes = internalMutation({
@@ -16,9 +7,11 @@ export const rotateExpiredCodes = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
 
-    // Get all expired access codes
-    const allCodes = await ctx.db.query("siteAccessCodes").collect();
-    const expiredCodes = allCodes.filter((c) => c.expiresAt < now);
+    // Use index to only fetch expired codes (avoids full table scan)
+    const expiredCodes = await ctx.db
+      .query("siteAccessCodes")
+      .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+      .collect();
 
     let rotatedCount = 0;
 
@@ -58,9 +51,11 @@ export const cleanupExpiredSessions = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
 
-    // Get all sessions and filter expired ones
-    const allSessions = await ctx.db.query("siteAccessSessions").collect();
-    const expiredSessions = allSessions.filter((s) => s.expiresAt < now);
+    // Use index to only fetch expired sessions (avoids full table scan)
+    const expiredSessions = await ctx.db
+      .query("siteAccessSessions")
+      .withIndex("by_expiresAt", (q) => q.lt("expiresAt", now))
+      .collect();
 
     for (const session of expiredSessions) {
       await ctx.db.delete(session._id);

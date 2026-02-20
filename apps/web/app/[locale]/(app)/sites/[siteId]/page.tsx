@@ -6,7 +6,7 @@ import { use } from "react";
 
 const SiteEditor = dynamic(
   () =>
-    import("@/features/editor/site-editor").then((m) => ({
+    import("@/modules/editor/site-editor").then((m) => ({
       default: m.SiteEditor,
     })),
   { loading: () => <EditorSkeleton />, ssr: false },

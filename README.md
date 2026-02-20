@@ -58,29 +58,31 @@ This starts the Next.js app on `http://localhost:3001` and the Convex backend.
 ```
 baseblocks/
 ├── apps/
-│   └── web/                 # Next.js frontend (app router)
-│       ├── app/             # Route definitions (thin layer)
-│       ├── features/        # Feature modules (domain-organized)
-│       │   ├── dashboard/   # Team dashboard
-│       │   ├── documents/   # Document library
-│       │   ├── editor/      # Site editor integration
-│       │   ├── elements/    # Block & layout system
-│       │   ├── media-viewer/# File viewer
-│       │   ├── public-site/ # Published site rendering
-│       │   └── team/        # Team management
-│       ├── components/      # Shared UI (dialogs, icons, skeletons)
-│       ├── hooks/           # App-level hooks
-│       └── lib/             # Utilities (URL helpers, validation, storage)
+│   └── web/                   # Next.js frontend (app router)
+│       ├── app/               # Route definitions (thin layer)
+│       ├── modules/           # Domain modules (self-contained features)
+│       │   ├── dashboard/     # Team dashboard, site cards, libraries
+│       │   ├── documents/     # Document library (upload, folders, viewer)
+│       │   ├── editor/        # Site editor shell (bridges to @baseblocks/editor)
+│       │   ├── elements/      # Block, layout, and section system
+│       │   ├── media-viewer/  # File viewer (PDF, image, video, audio)
+│       │   ├── navigation/    # Page tree, breadcrumbs, nav menus
+│       │   ├── public-site/   # Published site rendering, access control
+│       │   └── team/          # Team management, invitations
+│       ├── components/        # Shared UI only (dialogs, skeletons)
+│       ├── hooks/             # App-level hooks (direct imports, no barrels)
+│       └── lib/               # Utilities by concern (auth/, convex/, storage/)
 ├── packages/
-│   ├── backend/             # Convex backend (schema, queries, mutations)
-│   ├── editor/              # Page editor engine (drag-and-drop, layouts, blocks)
-│   ├── types/               # Shared TypeScript type definitions
-│   ├── ui/                  # Shared UI component library (shadcn/ui + Radix)
-│   ├── tsconfig/            # Shared TypeScript configurations
-│   └── tailwind-config/     # Shared Tailwind CSS and PostCSS config
-├── turbo.json               # Turborepo task configuration
-├── biome.jsonc              # Linting and formatting rules
-└── package.json             # Workspace root
+│   ├── backend/               # Convex backend (schema, queries, mutations)
+│   ├── editor/                # Page editor engine (drag-and-drop, layouts, undo)
+│   ├── types/                 # Shared type definitions (zero dependencies)
+│   └── ui/                    # UI component library (shadcn/ui + Radix)
+├── tooling/
+│   ├── tsconfig/              # Shared TypeScript configurations
+│   └── tailwind/              # Shared Tailwind CSS and PostCSS config
+├── turbo.json                 # Turborepo task configuration
+├── biome.jsonc                # Linting, formatting, and architectural boundaries
+└── package.json               # Workspace root
 ```
 
 ## Scripts

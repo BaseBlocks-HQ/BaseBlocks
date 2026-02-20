@@ -3,27 +3,10 @@
  * Unified Element System
  */
 
-// Convex document and ID types
-export type {
-  Team,
-  Site,
-  Page,
-  Layout,
-  Document,
-  TeamId,
-  SiteId,
-  PageId,
-  LayoutId,
-  DocumentId,
-  Doc,
-  Id,
-} from "./convex";
-
 // Page types
 export type {
   PageListItem,
   PageWithChildren,
-  SiteWithTeam,
 } from "./pages";
 
 // Layout types

@@ -10,26 +10,7 @@ const visibilityValidator = v.union(
   v.literal("password"),
 );
 
-// Generate a random 6-character alphanumeric code
-function generateAccessCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Avoiding ambiguous chars: 0, O, I, 1
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
-// Generate a secure session token
-function generateSessionToken(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let token = "";
-  for (let i = 0; i < 32; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
+import { generateAccessCode, generateSessionToken } from "./crypto";
 
 // Update site visibility
 export const updateVisibility = mutation({
@@ -188,24 +169,5 @@ export const updateAccessSettings = mutation({
 
     await ctx.db.patch(siteId, updates);
     return siteId;
-  },
-});
-
-// Clean up expired sessions (can be called by cron)
-export const cleanupExpiredSessions = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-
-    // Get all sessions and filter expired ones
-    // Note: In production, you'd want to use a more efficient query with an index on expiresAt
-    const allSessions = await ctx.db.query("siteAccessSessions").collect();
-    const expiredSessions = allSessions.filter((s) => s.expiresAt < now);
-
-    for (const session of expiredSessions) {
-      await ctx.db.delete(session._id);
-    }
-
-    return { deleted: expiredSessions.length };
   },
 });

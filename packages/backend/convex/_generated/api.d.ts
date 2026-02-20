@@ -36,6 +36,7 @@ import type * as migrations from "../migrations.js";
 import type * as pages_mutations from "../pages/mutations.js";
 import type * as pages_queries from "../pages/queries.js";
 import type * as search_queries from "../search/queries.js";
+import type * as sharing_crypto from "../sharing/crypto.js";
 import type * as sharing_internal from "../sharing/internal.js";
 import type * as sharing_mutations from "../sharing/mutations.js";
 import type * as sharing_queries from "../sharing/queries.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "pages/mutations": typeof pages_mutations;
   "pages/queries": typeof pages_queries;
   "search/queries": typeof search_queries;
+  "sharing/crypto": typeof sharing_crypto;
   "sharing/internal": typeof sharing_internal;
   "sharing/mutations": typeof sharing_mutations;
   "sharing/queries": typeof sharing_queries;

@@ -2,7 +2,7 @@
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/client";
 import { isVercelAppDomain } from "@/lib/url";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";

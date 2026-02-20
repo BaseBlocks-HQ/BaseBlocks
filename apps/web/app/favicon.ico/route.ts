@@ -15,9 +15,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-const ENTITY_STORAGE_SITE_URL =
-  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
-  "https://rightful-cat-553.convex.site";
+const ENTITY_STORAGE_SITE_URL = process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL;
 
 let defaultFaviconCache: ArrayBuffer | null = null;
 

@@ -1,5 +1,5 @@
-import { PublicSitePageClient } from "@/features/public-site/public-site-page-client";
-import { buildPublicSiteMetadata } from "@/lib/public-site-metadata";
+import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { PublicSitePageClient } from "@/modules/public-site/public-site-page-client";
 import type { Metadata } from "next";
 
 type Props = {

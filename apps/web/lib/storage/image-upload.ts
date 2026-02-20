@@ -2,7 +2,7 @@
 
 import type { Id } from "@baseblocks/backend";
 import { useCallback, useState } from "react";
-import { authClient } from "../auth-client";
+import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 
 export interface ImageUploadState {

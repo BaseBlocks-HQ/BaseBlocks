@@ -1,6 +1,6 @@
 "use client";
 
-import { LibraryDetailContent } from "@/features/dashboard/libraries";
+import { LibraryDetailContent } from "@/modules/dashboard/libraries";
 import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 

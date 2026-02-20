@@ -173,11 +173,9 @@ export class EntityStorageClient {
 
 // Environment configuration
 const ENTITY_STORAGE_SITE_URL =
-  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ||
-  "https://gregarious-koala-319.convex.site";
+  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ?? "";
 const WORKSPACE_TENANT_ID =
-  process.env.NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID ||
-  "baseblocks-232733";
+  process.env.NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID ?? "";
 
 // Singleton client instance
 export const entityStorageClient = new EntityStorageClient(

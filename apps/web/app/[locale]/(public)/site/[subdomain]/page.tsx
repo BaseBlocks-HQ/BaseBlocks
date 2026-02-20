@@ -1,5 +1,5 @@
-import { SubdomainRootPageClient } from "@/features/public-site/subdomain-root-page-client";
-import { buildPublicSiteMetadata } from "@/lib/public-site-metadata";
+import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { SubdomainRootPageClient } from "@/modules/public-site/subdomain-root-page-client";
 import type { Metadata } from "next";
 
 type Props = {
