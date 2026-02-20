@@ -44,15 +44,13 @@
         "zod": "^4.3.6",
       },
       "devDependencies": {
+        "@repo/config-tailwind": "workspace:*",
         "@repo/config-typescript": "*",
-        "@tailwindcss/postcss": "^4.1.18",
         "@types/node": "^22.15.3",
         "@types/react": "19.2.2",
         "@types/react-dom": "19.2.2",
         "nanoid": "^5.1.6",
         "postcss": "^8.5.6",
-        "tailwindcss": "^4.1.18",
-        "tw-animate-css": "^1.4.0",
         "typescript": "5.9.2",
       },
     },
@@ -71,6 +69,15 @@
       },
       "peerDependencies": {
         "typescript": "^5",
+      },
+    },
+    "packages/config-tailwind": {
+      "name": "@repo/config-tailwind",
+      "version": "0.0.0",
+      "dependencies": {
+        "@tailwindcss/postcss": "^4.1.18",
+        "tailwindcss": "^4.1.18",
+        "tw-animate-css": "^1.4.0",
       },
     },
     "packages/config-typescript": {
@@ -571,6 +578,8 @@
     "@remirror/core-constants": ["@remirror/core-constants@3.0.0", "", {}, "sha512-42aWfPrimMfDKDi4YegyS7x+/0tlzaqwPQCULLanv3DMIlu96KTJR0fM5isWX2UViOqlGnX6YFgqWepcX+XMNg=="],
 
     "@repo/backend": ["@repo/backend@workspace:packages/backend"],
+
+    "@repo/config-tailwind": ["@repo/config-tailwind@workspace:packages/config-tailwind"],
 
     "@repo/config-typescript": ["@repo/config-typescript@workspace:packages/config-typescript"],
 
