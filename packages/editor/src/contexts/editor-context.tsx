@@ -1,8 +1,8 @@
 "use client";
 
-import { useSitePermissions } from "@/hooks";
-import type { UndoCommand } from "@/lib/undo";
-import { useUndoKeyboardShortcuts, useUndoManager } from "@/lib/undo";
+import { usePermissions } from "../hooks/use-permissions";
+import type { UndoCommand } from "../undo";
+import { useUndoKeyboardShortcuts, useUndoManager } from "../undo";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -89,7 +89,7 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
     return stored === null ? true : stored === "true";
   });
 
-  // Query the site to derive hasUndeployedChanges from timestamps
+  // Query the site to derive hasUndeployedChanges and teamId for permissions
   const site = useQuery(api.sites.queries.get, { siteId });
   const hasUndeployedChanges = site
     ? (site.contentModifiedAt ?? 0) > (site.lastDeployedAt ?? 0)
@@ -98,13 +98,14 @@ export function EditorProvider({ siteId, children }: EditorProviderProps) {
   // New deploy mutation
   const deployMutation = useMutation(api.deployments.mutations.deploy);
 
-  // Get permissions for this site
+  // Get permissions using teamId from the site query directly
+  // (avoids the duplicate site query that useSitePermissions would make)
   const {
     canEdit,
     isAdmin,
     isViewer,
     isLoading: isPermissionsLoading,
-  } = useSitePermissions(siteId);
+  } = usePermissions({ teamId: site?.teamId });
 
   // Undo/Redo manager
   const {

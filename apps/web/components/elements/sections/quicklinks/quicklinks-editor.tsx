@@ -1,8 +1,12 @@
 "use client";
 
-import { useEditorContext } from "@/components/editor";
+import { useEditorContext } from "@repo/editor";
 import { useLayoutContext } from "@/components/elements/layout-context";
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { authClient } from "@/lib/auth-client";
+import { entityStorageClient } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
+import type { QuicklinkItem, QuicklinkType } from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
@@ -13,10 +17,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/tooltip";
-import { authClient } from "@/lib/auth-client";
-import { entityStorageClient } from "@/lib/storage/client";
-import { cn } from "@/lib/utils";
-import type { QuicklinkItem, QuicklinkType } from "@repo/types/elements";
 import {
   AppWindow,
   Check,

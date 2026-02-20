@@ -11,9 +11,13 @@ import {
   useFolderOperations,
   useFolderPath,
 } from "@/components/document-library";
-import { useEditorContext } from "@/components/editor";
+import { useEditorContext } from "@repo/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { useMediaViewer } from "@/components/media-viewer";
+import { useFileUpload } from "@/lib/storage";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
+import type { Id } from "@repo/backend";
 import { Button } from "@repo/ui/button";
 import {
   Dialog,
@@ -31,11 +35,7 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { Input } from "@repo/ui/input";
 import { MiddleTruncate } from "@repo/ui/middle-truncate";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
 import {
   Select,
   SelectContent,
@@ -43,10 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { useFileUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
-import { cn } from "@/lib/utils";
-import type { Id } from "@repo/backend";
 import {
   ChevronRight,
   Eye,

@@ -4,6 +4,8 @@ import { AccountSettings } from "@/components/dashboard/account-settings";
 import { InvitationInbox } from "@/components/dashboard/invitation-inbox";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Link, usePathname } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@repo/ui/button";
 import {
   Sidebar,
@@ -16,8 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/sidebar";
-import { Link, usePathname } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
 import { Folder, Home, LogOut, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 

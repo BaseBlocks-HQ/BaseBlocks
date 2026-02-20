@@ -2,8 +2,8 @@
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Button } from "@repo/ui/button";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@repo/ui/button";
 import { useConvexAuth } from "convex/react";
 import { useTranslations } from "next-intl";
 

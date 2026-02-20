@@ -1,6 +1,7 @@
 "use client";
 
 import type { ElementConfigPanelProps } from "@/components/elements/registry";
+import type { DirectoryContent } from "@repo/types/elements";
 import { Label } from "@repo/ui/label";
 import { RadioGroup, RadioGroupItem } from "@repo/ui/radio-group";
 import {
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from "@repo/ui/select";
 import { Switch } from "@repo/ui/switch";
-import type { DirectoryContent } from "@repo/types/elements";
 import { useCallback } from "react";
 
 export function DirectoryConfigPanel({

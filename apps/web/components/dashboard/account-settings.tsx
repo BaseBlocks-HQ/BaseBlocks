@@ -1,5 +1,8 @@
 "use client";
 
+import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
+import { api } from "@repo/backend";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,9 +25,6 @@ import {
   DialogTrigger,
 } from "@repo/ui/dialog";
 import { Separator } from "@repo/ui/separator";
-import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
-import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

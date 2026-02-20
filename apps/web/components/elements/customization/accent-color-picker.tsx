@@ -1,5 +1,8 @@
 "use client";
 
+import { isValidHex } from "@/lib/customization";
+import { cn } from "@/lib/utils";
+import { COLOR_PRESETS } from "@repo/types/elements/customization";
 import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
@@ -10,9 +13,6 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { isValidHex } from "@/lib/customization";
-import { cn } from "@/lib/utils";
-import { COLOR_PRESETS } from "@repo/types/elements/customization";
 import { Check, ChevronDown, Pipette } from "lucide-react";
 import { useEffect, useState } from "react";
 

@@ -1,6 +1,8 @@
 "use client";
 
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
+import type { BannerAlert, BannerContent } from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import {
@@ -11,8 +13,6 @@ import {
   SelectValue,
 } from "@repo/ui/select";
 import { Textarea } from "@repo/ui/textarea";
-import { useDebounceCallback } from "@/hooks";
-import type { BannerAlert, BannerContent } from "@repo/types/elements";
 import { GripVertical, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

@@ -1,6 +1,29 @@
 "use client";
 
-import { getDefaultContent } from "@/components/elements";
+// Direct imports — avoid the @/components/elements barrel which triggers
+// eager registration of ALL element modules (100+ files).
+import { ElementEditorWrapper } from "@/components/elements/element-editor-wrapper";
+import { LayoutContextProvider } from "@/components/elements/layout-context";
+import {
+  getDefaultContent,
+  getElementConfigPanel,
+  getElementsByCategory,
+  hasElementConfigPanel,
+} from "@/components/elements/registry";
+import { CustomizationConfigPanel } from "@/components/elements/customization";
+import { NavigationConfigPanel } from "@/components/elements/navigation";
+import { SiteConfigPanel } from "@/components/elements/site";
+import {
+  BlocksIcon,
+  CustomizationIcon,
+  FormsIcon,
+  LayoutsIcon,
+  MediaIcon,
+  NavIcon,
+  SectionsIcon,
+  SiteSettingsIcon,
+} from "@/components/icons";
+
 import {
   PublicSubpageProvider,
   usePublicSubpageContext,
@@ -15,26 +38,59 @@ import {
 import { SidebarProvider } from "@repo/ui/sidebar";
 import { PortalContainerProvider } from "@repo/ui/contexts/portal-container-context";
 import { useSiteCustomization } from "@/hooks";
-import { createBlock, createLayout, generateId } from "@/lib/layouts";
+import { createBlock, createLayout, generateId } from "@repo/editor/layouts";
 import type {
   AnyContent,
+  ElementCategory,
   ElementType,
   LayoutBlockType,
   LayoutType,
 } from "@repo/types";
 import { api } from "@repo/backend";
 import type { Doc, Id } from "@repo/backend";
+import {
+  EditorProvider,
+  EditorElementsBridgeProvider,
+  PageEditor,
+  SubpageEditPanel,
+  useEditorContext,
+  type EditorElementsBridge,
+} from "@repo/editor";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { EditorProvider, useEditorContext } from "./editor-context";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
-import { PageEditor } from "./page-editor";
-import { SubpageEditPanel } from "./subpage-edit-panel";
 
 interface SiteEditorProps {
   siteId: string;
+}
+
+/**
+ * Lazily loads element registration modules via dynamic import().
+ * In dev mode this defers compilation of 100+ element files until after
+ * the editor shell is already visible, cutting initial load from ~48s to ~2s.
+ */
+function useElementsLoader() {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      import("@/components/elements/layouts"),
+      import("@/components/elements/blocks"),
+      import("@/components/elements/sections"),
+      import("@/components/elements/media"),
+      import("@/components/elements/forms"),
+    ]).then(() => {
+      if (!cancelled) setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return loaded;
 }
 
 // Inner component that has access to EditorContext
@@ -466,13 +522,53 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 }
 
-// Wrapper that provides EditorContext and PublicSubpageProvider
+// Category icon mapping (passed to editor via bridge)
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  site: <SiteSettingsIcon className="h-5 w-5" />,
+  navigation: <NavIcon className="h-5 w-5" />,
+  layouts: <LayoutsIcon className="h-5 w-5" />,
+  sections: <SectionsIcon className="h-5 w-5" />,
+  blocks: <BlocksIcon className="h-5 w-5" />,
+  media: <MediaIcon className="h-5 w-5" />,
+  forms: <FormsIcon className="h-5 w-5" />,
+  customization: <CustomizationIcon className="h-5 w-5" />,
+};
+
+// Wrapper that provides EditorContext, elements bridge, and PublicSubpageProvider
 export function SiteEditor({ siteId }: SiteEditorProps) {
+  const elementsLoaded = useElementsLoader();
+
+  const elementsBridge = useMemo<EditorElementsBridge>(
+    () => ({
+      ElementWrapper: ElementEditorWrapper,
+      LayoutContextProvider,
+      getConfigPanel: (type: string) =>
+        getElementConfigPanel(type as ElementType) ?? null,
+      hasConfigPanel: (type: string) =>
+        hasElementConfigPanel(type as ElementType),
+      getElementsByCategory: (category: string) =>
+        getElementsByCategory(category as ElementCategory),
+      categoryIcons: CATEGORY_ICONS,
+      panels: {
+        customization: CustomizationConfigPanel,
+        navigation: NavigationConfigPanel,
+        site: SiteConfigPanel,
+      },
+    }),
+    [],
+  );
+
+  if (!elementsLoaded) {
+    return <EditorSkeleton />;
+  }
+
   return (
     <EditorProvider siteId={siteId as Id<"sites">}>
-      <PublicSubpageProvider>
-        <SiteEditorInner siteId={siteId} />
-      </PublicSubpageProvider>
+      <EditorElementsBridgeProvider bridge={elementsBridge}>
+        <PublicSubpageProvider>
+          <SiteEditorInner siteId={siteId} />
+        </PublicSubpageProvider>
+      </EditorElementsBridgeProvider>
     </EditorProvider>
   );
 }

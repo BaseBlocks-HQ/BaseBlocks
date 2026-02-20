@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
 import { Link } from "@/i18n/navigation";
 import { getDisplayDomain } from "@/lib/utils";
+import { Button } from "@repo/ui/button";
 import { useTranslations } from "next-intl";
 
 interface SiteNotFoundProps {

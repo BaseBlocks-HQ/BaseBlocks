@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+  FlowchartDiagram,
+  TabsDisplayMode,
+} from "@repo/types/elements/blocks";
 import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
@@ -16,10 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import type {
-  FlowchartDiagram,
-  TabsDisplayMode,
-} from "@repo/types/elements/blocks";
 import { THEMES } from "beautiful-mermaid";
 import {
   Check,

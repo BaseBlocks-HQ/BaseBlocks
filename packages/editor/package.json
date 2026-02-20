@@ -1,0 +1,39 @@
+{
+  "name": "@repo/editor",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./dnd": "./src/dnd/index.ts",
+    "./dnd/*": "./src/dnd/*.tsx",
+    "./layouts": "./src/layouts/index.ts",
+    "./undo": "./src/undo/index.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./contexts/*": "./src/contexts/*.tsx"
+  },
+  "scripts": {
+    "lint": "biome check --write .",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/config-typescript": "*",
+    "@types/node": "^22.15.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "*",
+    "@dnd-kit/sortable": "*",
+    "@dnd-kit/utilities": "*",
+    "@repo/backend": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "convex": "*",
+    "lucide-react": "*",
+    "nanoid": "*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sonner": "*"
+  }
+}

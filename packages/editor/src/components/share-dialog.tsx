@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { getSiteUrl } from "@/lib/utils";
 import type { Id } from "@repo/backend";
 import { api } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
@@ -43,6 +42,7 @@ interface ShareDialogProps {
   siteId: Id<"sites">;
   teamSlug: string;
   siteSlug: string;
+  siteUrl: string;
 }
 
 const ROTATION_OPTIONS = [
@@ -64,6 +64,7 @@ export function ShareDialog({
   siteId,
   teamSlug,
   siteSlug,
+  siteUrl,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -80,8 +81,6 @@ export function ShareDialog({
   const generateNewCode = useMutation(
     api.sharing.mutations.generateNewAccessCode,
   );
-
-  const siteUrl = getSiteUrl(teamSlug, siteSlug);
   const visibility = settings?.visibility ?? "public";
 
   const handleVisibilityChange = useCallback(

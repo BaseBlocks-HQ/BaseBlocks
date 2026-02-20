@@ -1,10 +1,10 @@
 "use client";
 
 import { FileIcon, getFileTypeColor } from "@/components/document-library";
-import { Input } from "@repo/ui/input";
 import { cn } from "@/lib/utils";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { Input } from "@repo/ui/input";
 import { useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";

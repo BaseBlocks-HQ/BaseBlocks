@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { useEditorContextOptional } from "@repo/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";

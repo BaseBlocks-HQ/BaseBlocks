@@ -1,15 +1,15 @@
 "use client";
 
 import type { ElementRendererProps } from "@/components/elements/registry";
+import { useBannerDismissals } from "@/hooks/use-banner-dismissals";
+import { cn } from "@/lib/utils";
+import type { BannerAlert } from "@repo/types/elements";
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@repo/ui/carousel";
-import { useBannerDismissals } from "@/hooks/use-banner-dismissals";
-import { cn } from "@/lib/utils";
-import type { BannerAlert } from "@repo/types/elements";
 import Autoplay from "embla-carousel-autoplay";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

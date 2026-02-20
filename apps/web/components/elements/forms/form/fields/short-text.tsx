@@ -1,9 +1,9 @@
 "use client";
 
+import type { ShortTextField } from "@repo/types/elements";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Switch } from "@repo/ui/switch";
-import type { ShortTextField } from "@repo/types/elements";
 import { Type } from "lucide-react";
 import type {
   FieldEditorProps,

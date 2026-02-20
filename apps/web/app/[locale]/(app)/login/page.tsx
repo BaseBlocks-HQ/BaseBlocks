@@ -1,6 +1,8 @@
 "use client";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { Link } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@repo/ui/button";
 import {
   Card,
@@ -10,8 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/card";
-import { Link } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 

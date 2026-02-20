@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useState } from "react";

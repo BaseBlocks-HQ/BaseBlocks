@@ -6,15 +6,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/tooltip";
-import { getSiteUrl } from "@/lib/utils";
 import { Eye } from "lucide-react";
 
 interface PreviewButtonProps {
   teamSlug: string;
   siteSlug: string;
+  siteUrl: string;
 }
 
-export function PreviewButton({ teamSlug, siteSlug }: PreviewButtonProps) {
+export function PreviewButton({
+  teamSlug,
+  siteSlug,
+  siteUrl,
+}: PreviewButtonProps) {
   const handlePreview = () => {
     const isLocalhost =
       window.location.hostname === "localhost" ||
@@ -25,7 +29,7 @@ export function PreviewButton({ teamSlug, siteSlug }: PreviewButtonProps) {
       const port = window.location.port || "3000";
       window.open(`http://${teamSlug}.localhost:${port}/${siteSlug}`, "_blank");
     } else {
-      window.open(getSiteUrl(teamSlug, siteSlug), "_blank");
+      window.open(siteUrl, "_blank");
     }
   };
 

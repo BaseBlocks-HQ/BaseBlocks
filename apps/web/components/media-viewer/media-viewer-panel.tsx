@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
 import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/button";
 import {
   ChevronLeft,
   ChevronRight,

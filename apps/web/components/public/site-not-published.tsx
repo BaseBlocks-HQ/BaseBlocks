@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
 import { Link } from "@/i18n/navigation";
+import { Button } from "@repo/ui/button";
 import { useTranslations } from "next-intl";
 
 export function SiteNotPublished() {

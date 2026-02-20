@@ -3,8 +3,8 @@ import {
   MediaViewerProvider,
 } from "@/components/media-viewer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@repo/ui/sonner";
 import { type Locale, routing } from "@/i18n/routing";
+import { Toaster } from "@repo/ui/sonner";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import {

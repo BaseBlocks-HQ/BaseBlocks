@@ -2,14 +2,14 @@
 
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
-import { useDebounceCallback } from "@/hooks";
+import { useDebounceCallback } from "@repo/ui/hooks/use-debounce";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useEditorContext } from "./editor-context";
+import { useEditorContext } from "../contexts/editor-context";
 import { PageEditor } from "./page-editor";
 
 interface SubpageEditPanelProps {

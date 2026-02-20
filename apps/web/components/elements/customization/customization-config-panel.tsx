@@ -1,16 +1,16 @@
 "use client";
 
-import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Label } from "@repo/ui/label";
-import { Switch } from "@repo/ui/switch";
+import { useEditorContextOptional } from "@repo/editor";
 import { lightenColor } from "@/lib/customization";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import type {
   BorderRadiusPreset,
   SiteCustomization,
 } from "@repo/types/elements/customization";
 import { getDarkColorForPreset } from "@repo/types/elements/customization";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { Label } from "@repo/ui/label";
+import { Switch } from "@repo/ui/switch";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";

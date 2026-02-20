@@ -1,13 +1,12 @@
 "use client";
 
-import type { AnyRegistryEntry } from "@/components/elements/registry";
-import type { ElementType, LayoutType } from "@repo/types/elements";
+import type { ElementRegistryEntry } from "../../contexts/elements-bridge";
 import { ElementCard } from "./element-card";
 
 interface ElementGridProps {
   title: string;
-  entries: AnyRegistryEntry[];
-  onSelect: (type: ElementType | LayoutType) => void;
+  entries: ElementRegistryEntry[];
+  onSelect: (type: string) => void;
 }
 
 export function ElementGrid({ title, entries, onSelect }: ElementGridProps) {

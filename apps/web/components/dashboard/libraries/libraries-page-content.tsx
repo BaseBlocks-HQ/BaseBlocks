@@ -1,5 +1,7 @@
 "use client";
 
+import { api } from "@repo/backend";
+import type { Doc } from "@repo/backend";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +13,6 @@ import {
   AlertDialogTitle,
 } from "@repo/ui/alert-dialog";
 import { Skeleton } from "@repo/ui/skeleton";
-import { api } from "@repo/backend";
-import type { Doc } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";

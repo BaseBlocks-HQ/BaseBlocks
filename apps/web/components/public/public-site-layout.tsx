@@ -10,6 +10,14 @@ import {
   TopNavMenu,
 } from "@/components/navigation";
 import { ContentSkeleton } from "@/components/skeletons";
+import { useCustomizationStyles } from "@/hooks";
+import { cn, getPageLink } from "@/lib/utils";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import type { PageWithChildren } from "@repo/types";
+import type { BannerContent } from "@repo/types/elements";
+import type { SiteCustomization } from "@repo/types/elements/customization";
+import type { NavigationStyle } from "@repo/types/elements/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -19,14 +27,6 @@ import {
   useSidebar,
 } from "@repo/ui/sidebar";
 import { Skeleton } from "@repo/ui/skeleton";
-import { useCustomizationStyles } from "@/hooks";
-import { cn, getPageLink } from "@/lib/utils";
-import type { PageWithChildren } from "@repo/types";
-import type { BannerContent } from "@repo/types/elements";
-import type { SiteCustomization } from "@repo/types/elements/customization";
-import type { NavigationStyle } from "@repo/types/elements/navigation";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";

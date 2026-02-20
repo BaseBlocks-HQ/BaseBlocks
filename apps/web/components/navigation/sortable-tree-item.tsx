@@ -1,14 +1,14 @@
 "use client";
 
-import { DragHandle } from "@/components/dnd";
+import { DragHandle } from "@repo/editor/dnd";
 import { HomeIcon, PagesIcon } from "@/components/icons";
-import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
 import type { FlattenedPage } from "@/lib/tree-utils";
 import { INDENT_WIDTH, isValidDrop } from "@/lib/tree-utils";
 import { cn } from "@/lib/utils";
-import type { PageListItem } from "@repo/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { PageListItem } from "@repo/types";
+import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTreeDndContext } from "./tree-dnd-context";

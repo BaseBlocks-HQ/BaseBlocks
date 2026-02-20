@@ -1,6 +1,15 @@
 "use client";
 
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
+import type {
+  DecisionTree,
+  DecisionTreeBlockType,
+  DecisionTreeContent,
+  DecisionTreeContentBlock,
+  DecisionTreeNode,
+} from "@repo/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,6 +19,7 @@ import {
   BreadcrumbSeparator,
 } from "@repo/ui/breadcrumb";
 import { Button } from "@repo/ui/button";
+import { useIsMobile } from "@repo/ui/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -22,16 +32,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { useDebounceCallback } from "@/hooks";
-import { useIsMobile } from "@repo/ui/hooks/use-mobile";
-import type {
-  DecisionTree,
-  DecisionTreeBlockType,
-  DecisionTreeContent,
-  DecisionTreeContentBlock,
-  DecisionTreeNode,
-} from "@repo/types/elements";
-import { DEFAULT_BLOCK_CONTENT } from "@repo/types/elements";
 import {
   Check,
   ChevronLeft,

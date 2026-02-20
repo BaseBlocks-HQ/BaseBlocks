@@ -1,10 +1,10 @@
 "use client";
 
+import type { CheckboxField } from "@repo/types/elements";
 import { Checkbox } from "@repo/ui/checkbox";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Switch } from "@repo/ui/switch";
-import type { CheckboxField } from "@repo/types/elements";
 import { CheckSquare } from "lucide-react";
 import type {
   FieldEditorProps,

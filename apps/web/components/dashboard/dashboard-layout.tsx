@@ -1,14 +1,14 @@
 "use client";
 
 import { DashboardSkeleton } from "@/components/skeletons";
+import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
+import { api } from "@repo/backend";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@repo/ui/sidebar";
-import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
-import { api } from "@repo/backend";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { DashboardSidebar } from "./dashboard-sidebar";

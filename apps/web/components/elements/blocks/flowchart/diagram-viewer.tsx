@@ -1,5 +1,6 @@
 "use client";
 
+import type { FlowchartDiagram } from "@repo/types/elements/blocks";
 import {
   Select,
   SelectContent,
@@ -7,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import type { FlowchartDiagram } from "@repo/types/elements/blocks";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 

@@ -1,14 +1,14 @@
 "use client";
 
-import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Switch } from "@repo/ui/switch";
+import { useEditorContextOptional } from "@repo/editor";
 import { cn } from "@/lib/utils";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import {
   NAVIGATION_STYLES,
   type NavigationStyle,
 } from "@repo/types/elements/navigation";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
+import { Switch } from "@repo/ui/switch";
 import { useMutation, useQuery } from "convex/react";
 import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";

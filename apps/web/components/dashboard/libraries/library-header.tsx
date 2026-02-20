@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { Doc } from "@repo/backend";
+import { Button } from "@repo/ui/button";
 import { ArrowLeft, Folder, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

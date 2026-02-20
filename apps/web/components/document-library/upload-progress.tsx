@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
-import { Progress } from "@repo/ui/progress";
 import type { UploadState } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/button";
+import { Progress } from "@repo/ui/progress";
 import { AlertCircle, Check, Loader2, X } from "lucide-react";
 
 interface UploadProgressProps {

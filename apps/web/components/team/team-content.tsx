@@ -1,5 +1,7 @@
 "use client";
 
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar";
 import { Badge } from "@repo/ui/badge";
 import {
@@ -10,8 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/table";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";

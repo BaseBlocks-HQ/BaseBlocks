@@ -2,9 +2,9 @@
 
 import { AccessGate, SitePrivate } from "@/components/public";
 import { PublicSiteSkeleton } from "@/components/skeletons";
-import { Skeleton } from "@repo/ui/skeleton";
 import { getPageLink } from "@/lib/utils";
 import { api } from "@repo/backend";
+import { Skeleton } from "@repo/ui/skeleton";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect } from "react";

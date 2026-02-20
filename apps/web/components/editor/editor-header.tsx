@@ -2,6 +2,10 @@
 
 import { SearchBox } from "@/components/elements/sections/search/search-box";
 import { ModeToggle } from "@/components/mode-toggle";
+import { useCustomizationStyles } from "@/hooks";
+import { cn, getSiteUrl } from "@/lib/utils";
+import type { Id } from "@repo/backend";
+import type { SiteCustomization } from "@repo/types/elements/customization";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import {
@@ -13,15 +17,7 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { Separator } from "@repo/ui/separator";
 import { SidebarTrigger } from "@repo/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/tooltip";
-import { useCustomizationStyles } from "@/hooks";
-import { cn, getSiteUrl } from "@/lib/utils";
-import type { SiteCustomization } from "@repo/types/elements/customization";
-import type { Id } from "@repo/backend";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
 import {
   Check,
   ChevronDown,
@@ -40,10 +36,12 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { DeployDialog } from "./deploy-dialog";
-import { DeploymentHistoryPanel } from "./deployment-history-panel";
-import { useEditorContext } from "./editor-context";
-import { ShareDialog } from "./share-dialog";
+import {
+  DeployDialog,
+  DeploymentHistoryPanel,
+  ShareDialog,
+  useEditorContext,
+} from "@repo/editor";
 
 interface EditorHeaderProps {
   teamSlug: string;
@@ -473,6 +471,7 @@ export function EditorHeader({
         siteId={siteId}
         teamSlug={teamSlug}
         siteSlug={siteSlug}
+        siteUrl={getSiteUrl(teamSlug, siteSlug)}
       />
 
       {/* Deploy Dialog */}

@@ -1,9 +1,9 @@
 "use client";
 
+import type { EmailField } from "@repo/types/elements";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Switch } from "@repo/ui/switch";
-import type { EmailField } from "@repo/types/elements";
 import { Mail } from "lucide-react";
 import type {
   FieldEditorProps,

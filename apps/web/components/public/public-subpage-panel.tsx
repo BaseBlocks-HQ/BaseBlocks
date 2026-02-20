@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { Button } from "@repo/ui/button";
 import { useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { PublicContent } from "./public-content";

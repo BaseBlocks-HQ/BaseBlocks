@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContext } from "@/components/editor";
+import { useEditorContext } from "@repo/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
 import { SearchBox } from "./search-box";
 

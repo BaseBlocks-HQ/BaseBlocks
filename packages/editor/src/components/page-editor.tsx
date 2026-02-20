@@ -1,12 +1,24 @@
 "use client";
 
-import { DndProvider, type DragEndEvent, arrayMove } from "@/components/dnd";
-import { ContentSkeleton } from "@/components/skeletons";
+import { DndProvider, type DragEndEvent, arrayMove } from "../dnd";
+// Inline loading placeholder (no dependency on app-level skeletons)
+function ContentSkeleton() {
+  return (
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="animate-pulse space-y-4 w-full max-w-2xl">
+        <div className="h-8 bg-muted rounded w-1/3" />
+        <div className="h-4 bg-muted rounded w-full" />
+        <div className="h-4 bg-muted rounded w-2/3" />
+        <div className="h-32 bg-muted rounded w-full" />
+      </div>
+    </div>
+  );
+}
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { createLayout, generateId } from "@/lib/layouts";
-import { cn } from "@/lib/utils";
+import { createLayout, generateId } from "../layouts";
+import { cn } from "@repo/ui/lib/utils";
 import type {
   AnyContent,
   LayoutBlockType,
@@ -19,7 +31,7 @@ import type { Doc, Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useEditorContext } from "./editor-context";
+import { useEditorContext } from "../contexts/editor-context";
 import { SortableLayout } from "./layouts/sortable-layout";
 
 interface PageEditorProps {

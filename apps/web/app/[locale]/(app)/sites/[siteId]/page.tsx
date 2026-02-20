@@ -1,7 +1,16 @@
 "use client";
 
-import { SiteEditor } from "@/components/editor";
+import { EditorSkeleton } from "@/components/skeletons";
+import dynamic from "next/dynamic";
 import { use } from "react";
+
+const SiteEditor = dynamic(
+  () =>
+    import("@/components/editor/site-editor").then((m) => ({
+      default: m.SiteEditor,
+    })),
+  { loading: () => <EditorSkeleton />, ssr: false },
+);
 
 type Props = {
   params: Promise<{ siteId: string }>;

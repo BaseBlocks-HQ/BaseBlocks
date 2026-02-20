@@ -5,15 +5,7 @@ import {
   CreateSubPageDialog,
   RenamePageDialog,
 } from "@/components/dialogs";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
-import { Button } from "@repo/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@repo/ui/dropdown-menu";
+import { useEditorContextOptional } from "@repo/editor";
 import type { TreeProjection } from "@/lib/tree-utils";
 import {
   applyMove,
@@ -22,10 +14,18 @@ import {
   hashPages,
   isValidDrop,
 } from "@/lib/tree-utils";
-import type { PageListItem } from "@repo/types";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import type { PageListItem } from "@repo/types";
+import { Button } from "@repo/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/ui/dropdown-menu";
 import { useMutation } from "convex/react";
 import { FilePlus, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

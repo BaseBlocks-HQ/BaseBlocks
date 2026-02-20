@@ -4,11 +4,11 @@ import {
   DndProvider,
   type DragEndEvent,
   arrayMove,
-} from "@/components/dnd/dnd-provider";
-import { SortableItem } from "@/components/dnd/sortable-item";
+} from "@repo/editor/dnd/dnd-provider";
+import { SortableItem } from "@repo/editor/dnd/sortable-item";
+import type { DecisionTreeNode } from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
-import type { DecisionTreeNode } from "@repo/types/elements";
 import {
   Check,
   ChevronRight,

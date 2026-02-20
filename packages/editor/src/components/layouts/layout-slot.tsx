@@ -1,22 +1,15 @@
 "use client";
 
-import { DndProvider, type DragEndEvent } from "@/components/dnd";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
-import {
-  ElementEditorWrapper,
-  LayoutContextProvider,
-} from "@/components/elements";
-import {
-  getElementConfigPanel,
-  hasElementConfigPanel,
-} from "@/components/elements/registry";
+import { DndProvider, type DragEndEvent } from "../../dnd";
+import { useEditorContextOptional } from "../../contexts/editor-context";
+import { useEditorElements } from "../../contexts/elements-bridge";
 import { Button } from "@repo/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@repo/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 import type {
   AnyContent,
   ElementType,
@@ -189,9 +182,10 @@ function SortableBlock({
     transition,
   };
 
+  const bridge = useEditorElements();
   const blockType = block.type as ElementType;
-  const hasConfig = hasElementConfigPanel(blockType);
-  const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
+  const hasConfig = bridge.hasConfigPanel(blockType);
+  const ConfigPanel = hasConfig ? bridge.getConfigPanel(blockType) : null;
 
   if (isDragging) {
     return (
@@ -285,8 +279,8 @@ function SortableBlock({
 
         {/* Block content */}
         <div className="min-w-0 flex-1">
-          <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
-            <ElementEditorWrapper
+          <bridge.LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
+            <bridge.ElementWrapper
               id={block.id}
               type={block.type as ElementType}
               content={block.content}
@@ -294,7 +288,7 @@ function SortableBlock({
               onUpdate={onUpdate}
               onRemove={onRemove}
             />
-          </LayoutContextProvider>
+          </bridge.LayoutContextProvider>
         </div>
       </div>
     </div>

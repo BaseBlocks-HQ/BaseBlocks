@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { api } from "@repo/backend";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { useMutation } from "convex/react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { useEditorContextOptional } from "../../contexts/editor-context";
 import { Button } from "@repo/ui/button";
-import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
-import { cn } from "@/lib/utils";
+import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "../../layouts";
+import { cn } from "@repo/ui/lib/utils";
 import type { AnyContent, LayoutData, SpacerLayoutHeight } from "@repo/types";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import type { HTMLAttributes, Ref } from "react";

@@ -2,7 +2,6 @@
 
 import type { FlattenedPage, TreeProjection } from "@/lib/tree-utils";
 import { INDENT_WIDTH, getProjection } from "@/lib/tree-utils";
-import type { PageListItem } from "@repo/types";
 import {
   DndContext,
   type DragEndEvent,
@@ -20,6 +19,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import type { PageListItem } from "@repo/types";
 import {
   type ReactNode,
   createContext,

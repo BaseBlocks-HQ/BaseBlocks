@@ -18,11 +18,9 @@
         "@blocknote/mantine": "^0.46.2",
         "@blocknote/react": "^0.46.2",
         "@convex-dev/better-auth": "^0.10.10",
-        "@dnd-kit/core": "^6.3.1",
-        "@dnd-kit/sortable": "^10.0.0",
-        "@dnd-kit/utilities": "^3.2.2",
         "@hookform/resolvers": "^5.2.2",
         "@repo/backend": "workspace:*",
+        "@repo/editor": "workspace:*",
         "@repo/types": "workspace:*",
         "@repo/ui": "workspace:*",
         "beautiful-mermaid": "^0.1.3",
@@ -83,6 +81,31 @@
     "packages/config-typescript": {
       "name": "@repo/config-typescript",
       "version": "0.0.0",
+    },
+    "packages/editor": {
+      "name": "@repo/editor",
+      "version": "0.0.0",
+      "dependencies": {
+        "@dnd-kit/core": "*",
+        "@dnd-kit/sortable": "*",
+        "@dnd-kit/utilities": "*",
+        "@repo/backend": "workspace:*",
+        "@repo/types": "workspace:*",
+        "@repo/ui": "workspace:*",
+        "convex": "*",
+        "lucide-react": "*",
+        "nanoid": "*",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "sonner": "*",
+      },
+      "devDependencies": {
+        "@repo/config-typescript": "*",
+        "@types/node": "^22.15.3",
+        "@types/react": "19.2.2",
+        "@types/react-dom": "19.2.2",
+        "typescript": "5.9.2",
+      },
     },
     "packages/types": {
       "name": "@repo/types",
@@ -582,6 +605,8 @@
     "@repo/config-tailwind": ["@repo/config-tailwind@workspace:packages/config-tailwind"],
 
     "@repo/config-typescript": ["@repo/config-typescript@workspace:packages/config-typescript"],
+
+    "@repo/editor": ["@repo/editor@workspace:packages/editor"],
 
     "@repo/types": ["@repo/types@workspace:packages/types"],
 

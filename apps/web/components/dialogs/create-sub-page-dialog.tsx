@@ -1,9 +1,9 @@
 "use client";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@repo/backend";
 import type { Id } from "@repo/backend";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { FormDialog } from "./form-dialog";

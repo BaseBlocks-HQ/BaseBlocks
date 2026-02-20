@@ -1,6 +1,9 @@
 "use client";
 
 import { ConfirmDialog, RenamePageDialog } from "@/components/dialogs";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
+import type { PageListItem } from "@repo/types";
 import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
@@ -10,9 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@repo/ui/sidebar";
-import type { PageListItem } from "@repo/types";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import {
   FileText,

@@ -1,7 +1,12 @@
 "use client";
 
 import { DropZone } from "@/components/document-library/drop-zone";
-import { useEditorContextOptional } from "@/components/editor/editor-context";
+import { useEditorContextOptional } from "@repo/editor";
+import { useImageUpload } from "@/lib/storage";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import { Button } from "@repo/ui/button";
 import {
   Dialog,
@@ -15,11 +20,6 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Switch } from "@repo/ui/switch";
 import { Textarea } from "@repo/ui/textarea";
-import { useImageUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
-import { cn } from "@/lib/utils";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useMutation, useQuery } from "convex/react";
 import {
   Eye,

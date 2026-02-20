@@ -5,9 +5,9 @@
  * Main area where form fields are displayed and arranged
  */
 
-import { Button } from "@repo/ui/button";
 import { cn } from "@/lib/utils";
 import type { FormField } from "@repo/types/elements";
+import { Button } from "@repo/ui/button";
 import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
 import { getFieldEditor } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";

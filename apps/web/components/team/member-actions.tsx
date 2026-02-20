@@ -1,5 +1,8 @@
 "use client";
 
+import { authClient } from "@/lib/auth-client";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { authClient } from "@/lib/auth-client";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { Loader2, MoreHorizontal, Shield, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";

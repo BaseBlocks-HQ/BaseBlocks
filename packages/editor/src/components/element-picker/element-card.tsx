@@ -1,13 +1,12 @@
 "use client";
 
-import type { ElementPreviewProps } from "@/components/elements/registry";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
 interface ElementCardProps {
   label: string;
   icon: LucideIcon;
-  preview?: ComponentType<ElementPreviewProps>;
+  preview?: ComponentType<{ className?: string }>;
   onClick: () => void;
 }
 

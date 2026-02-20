@@ -1,9 +1,9 @@
 "use client";
 
+import type { DateField } from "@repo/types/elements";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Switch } from "@repo/ui/switch";
-import type { DateField } from "@repo/types/elements";
 import { Calendar } from "lucide-react";
 import type {
   FieldEditorProps,

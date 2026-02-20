@@ -2,6 +2,16 @@
 
 import { CreatePageDialog } from "@/components/dialogs";
 import { NavItem, SortablePageTree } from "@/components/navigation";
+import { usePageExpandState, useSiteCustomization } from "@/hooks";
+import { getDisplayDomain } from "@/lib/utils";
+import type { Id } from "@repo/backend";
+import type {
+  LayoutBlockType,
+  LayoutType,
+  PageListItem,
+  PageWithChildren,
+} from "@repo/types";
+import type { ElementType } from "@repo/types/elements";
 import { Badge } from "@repo/ui/badge";
 import { Button } from "@repo/ui/button";
 import { ScrollArea } from "@repo/ui/scroll-area";
@@ -15,22 +25,11 @@ import {
   SidebarMenu,
 } from "@repo/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { usePageExpandState, useSiteCustomization } from "@/hooks";
-import { getDisplayDomain } from "@/lib/utils";
-import type {
-  LayoutBlockType,
-  LayoutType,
-  PageListItem,
-  PageWithChildren,
-} from "@repo/types";
-import type { ElementType } from "@repo/types/elements";
-import type { Id } from "@repo/backend";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useEditorContext } from "./editor-context";
-import { ElementPicker } from "./element-picker";
+import { useEditorContext, ElementPicker } from "@repo/editor";
 
 function buildPageTree(pages: PageListItem[]): PageWithChildren[] {
   const map = new Map<string, PageWithChildren>();

@@ -1,12 +1,24 @@
 "use client";
 
-import { DndProvider, type DragEndEvent } from "@/components/dnd/dnd-provider";
+import { DndProvider, type DragEndEvent } from "@repo/editor/dnd/dnd-provider";
 import { ElementEditorWrapper } from "@/components/elements/element-editor-wrapper";
 import {
   getElement,
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
+import { cn } from "@/lib/utils";
+import { arrayMove } from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type {
+  AnyContent,
+  DecisionTreeBlockType,
+  DecisionTreeContentBlock,
+  DecisionTreeNode,
+  ElementType,
+} from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
@@ -16,23 +28,7 @@ import {
 } from "@repo/ui/dropdown-menu";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/popover";
-import { useDebounceCallback } from "@/hooks";
-import { cn } from "@/lib/utils";
-import type {
-  AnyContent,
-  DecisionTreeBlockType,
-  DecisionTreeContentBlock,
-  DecisionTreeNode,
-  ElementType,
-} from "@repo/types/elements";
-import { arrayMove } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 

@@ -1,6 +1,13 @@
 "use client";
 
 import type { ElementEditorProps } from "@/components/elements/registry";
+import { useDebounceCallback } from "@/hooks";
+import type {
+  DirectoryColumn,
+  DirectoryColumnType,
+  DirectoryContent,
+  DirectoryRow,
+} from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import {
@@ -18,13 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/table";
-import { useDebounceCallback } from "@/hooks";
-import type {
-  DirectoryColumn,
-  DirectoryColumnType,
-  DirectoryContent,
-  DirectoryRow,
-} from "@repo/types/elements";
 import {
   Globe,
   Mail,

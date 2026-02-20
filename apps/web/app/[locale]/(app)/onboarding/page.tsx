@@ -1,6 +1,11 @@
 "use client";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth-client";
+import { isVercelAppDomain } from "@/lib/utils";
+import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { api } from "@repo/backend";
 import { Button } from "@repo/ui/button";
 import {
   Card,
@@ -11,11 +16,6 @@ import {
 } from "@repo/ui/card";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth-client";
-import { isVercelAppDomain } from "@/lib/utils";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
-import { api } from "@repo/backend";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

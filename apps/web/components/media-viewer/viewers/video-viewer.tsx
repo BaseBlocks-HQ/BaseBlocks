@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui/button";
 import { Slider } from "@repo/ui/slider";
-import { cn } from "@/lib/utils";
 import {
   Pause,
   Play,

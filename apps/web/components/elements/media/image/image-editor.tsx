@@ -1,14 +1,14 @@
 "use client";
 
 import { DropZone } from "@/components/document-library/drop-zone";
-import { useEditorContext } from "@/components/editor";
+import { useEditorContext } from "@repo/editor";
 import type { ElementEditorProps } from "@/components/elements/registry";
-import { Button } from "@repo/ui/button";
-import { Input } from "@repo/ui/input";
-import { Label } from "@repo/ui/label";
 import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
 import { ImageIcon, Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { Resizable } from "re-resizable";
 import { useCallback, useRef, useState } from "react";

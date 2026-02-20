@@ -1,28 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CategoryMenu } from "./category-menu";
-import { ElementGrid } from "./element-grid";
-
-// Import elements to trigger registration (side effects)
-import "@/components/elements/layouts";
-import "@/components/elements/blocks";
-import "@/components/elements/sections";
-import "@/components/elements/media";
-import "@/components/elements/forms";
-
-import { CustomizationConfigPanel } from "@/components/elements/customization";
-import { NavigationConfigPanel } from "@/components/elements/navigation";
-import { getElementsByCategory } from "@/components/elements/registry";
-import { SiteConfigPanel } from "@/components/elements/site";
+import type { Id } from "@repo/backend";
 import type {
   ElementCategory,
   ElementType,
   LayoutType,
 } from "@repo/types/elements";
-import type { Id } from "@repo/backend";
 import { PanelTop } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useEditorElements } from "../../contexts/elements-bridge";
+import { CategoryMenu } from "./category-menu";
 import { ElementCard } from "./element-card";
+import { ElementGrid } from "./element-grid";
 
 interface ElementPickerProps {
   siteId?: Id<"sites">;
@@ -31,18 +20,6 @@ interface ElementPickerProps {
   onAddBlock?: (type: ElementType) => void;
   onEnableTabs?: () => void;
 }
-
-// Categories with registered elements to show
-const ACTIVE_CATEGORIES: ElementCategory[] = [
-  "site",
-  "navigation",
-  "layouts",
-  "sections",
-  "blocks",
-  "media",
-  "forms",
-  "customization",
-];
 
 // Categories that are stubs (empty for now)
 const EMPTY_CATEGORIES: ElementCategory[] = [];
@@ -61,6 +38,7 @@ export function ElementPicker({
   onAddBlock,
   onEnableTabs,
 }: ElementPickerProps) {
+  const bridge = useEditorElements();
   const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
     null,
   );
@@ -70,8 +48,8 @@ export function ElementPicker({
   // Get elements for the active category
   const categoryElements = useMemo(() => {
     if (!activeCategory) return [];
-    return getElementsByCategory(activeCategory);
-  }, [activeCategory]);
+    return bridge.getElementsByCategory(activeCategory);
+  }, [activeCategory, bridge]);
 
   // Get category title
   const categoryTitle = useMemo(() => {
@@ -126,7 +104,7 @@ export function ElementPicker({
     }, delay);
   };
 
-  const handleSelect = (type: ElementType | LayoutType) => {
+  const handleSelect = (type: string) => {
     // Check if it's a layout type
     const layoutTypes = [
       "single",
@@ -176,7 +154,7 @@ export function ElementPicker({
           className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <SiteConfigPanel siteId={siteId} />
+          <bridge.panels.site siteId={siteId} />
         </div>
       )}
 
@@ -186,7 +164,7 @@ export function ElementPicker({
           className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <NavigationConfigPanel siteId={siteId} />
+          <bridge.panels.navigation siteId={siteId} />
         </div>
       )}
 
@@ -196,7 +174,7 @@ export function ElementPicker({
           className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <CustomizationConfigPanel siteId={siteId} />
+          <bridge.panels.customization siteId={siteId} />
         </div>
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui/button";
 import {
   DropdownMenu,
@@ -9,12 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/dropdown-menu";
 import { MiddleTruncate } from "@repo/ui/middle-truncate";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@repo/ui/tooltip";
 import {
   AlertTriangle,
   CheckCircle2,

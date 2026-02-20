@@ -9,6 +9,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@source "../../apps/web";
+@source "../../packages/ui";
+@source "../../packages/editor";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

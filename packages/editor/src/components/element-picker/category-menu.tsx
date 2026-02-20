@@ -1,31 +1,10 @@
 "use client";
 
-import { getSortedCategories } from "@/components/elements/registry/categories";
-import {
-  BlocksIcon,
-  CustomizationIcon,
-  FormsIcon,
-  LayoutsIcon,
-  MediaIcon,
-  NavIcon,
-  SectionsIcon,
-  SiteSettingsIcon,
-} from "@/components/icons";
-import { cn } from "@/lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 import type { ElementCategory } from "@repo/types/elements";
+import { getSortedCategories } from "@repo/types/elements";
 import { ChevronRight } from "lucide-react";
-
-// Map category to icon
-const CATEGORY_ICONS: Record<ElementCategory, React.ReactNode> = {
-  site: <SiteSettingsIcon className="h-5 w-5" />,
-  navigation: <NavIcon className="h-5 w-5" />,
-  layouts: <LayoutsIcon className="h-5 w-5" />,
-  sections: <SectionsIcon className="h-5 w-5" />,
-  blocks: <BlocksIcon className="h-5 w-5" />,
-  media: <MediaIcon className="h-5 w-5" />,
-  forms: <FormsIcon className="h-5 w-5" />,
-  customization: <CustomizationIcon className="h-5 w-5" />,
-};
+import { useEditorElements } from "../../contexts/elements-bridge";
 
 interface CategoryMenuItemProps {
   icon: React.ReactNode;
@@ -77,6 +56,7 @@ export function CategoryMenu({
   selectedSlotId,
   emptyCategoryIds = [],
 }: CategoryMenuProps) {
+  const bridge = useEditorElements();
   const categories = getSortedCategories();
 
   // Categories that require a slot to be selected
@@ -98,7 +78,7 @@ export function CategoryMenu({
         return (
           <CategoryMenuItem
             key={cat.category}
-            icon={CATEGORY_ICONS[cat.category]}
+            icon={bridge.categoryIcons[cat.category]}
             label={cat.label}
             isActive={activeCategory === cat.category}
             onMouseEnter={() => onCategoryHover(cat.category)}

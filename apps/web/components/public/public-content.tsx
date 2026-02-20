@@ -1,18 +1,18 @@
 "use client";
 
-import {
-  ElementRendererWrapper,
-  LayoutContextProvider,
-} from "@/components/elements";
+import { ElementRendererWrapper } from "@/components/elements/element-renderer-wrapper";
+import { LayoutContextProvider } from "@/components/elements/layout-context";
+// Register all element renderers for public display
+import "@/components/elements/layouts";
+import "@/components/elements/blocks";
+import "@/components/elements/sections";
+import "@/components/elements/media";
+import "@/components/elements/forms";
 import { ContentSkeleton } from "@/components/skeletons";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@repo/ui/resizable";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@/lib/layouts";
+import { SPACER_LAYOUT_HEIGHTS, getLayoutGridStyle } from "@repo/editor/layouts";
 import { cn } from "@/lib/utils";
+import { api } from "@repo/backend";
+import type { Doc, Id } from "@repo/backend";
 import type {
   AnyContent,
   ElementType,
@@ -20,8 +20,12 @@ import type {
   LayoutType,
   SpacerLayoutHeight,
 } from "@repo/types";
-import { api } from "@repo/backend";
-import type { Doc, Id } from "@repo/backend";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@repo/ui/resizable";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { usePublicSubpageContext } from "./public-subpage-context";

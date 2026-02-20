@@ -1,5 +1,8 @@
 "use client";
 
+import { authClient } from "@/lib/auth-client";
+import { api } from "@repo/backend";
+import type { Id } from "@repo/backend";
 import { Button } from "@repo/ui/button";
 import {
   Dialog,
@@ -18,9 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/select";
-import { authClient } from "@/lib/auth-client";
-import { api } from "@repo/backend";
-import type { Id } from "@repo/backend";
 import { useQuery } from "convex/react";
 import { Loader2, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";

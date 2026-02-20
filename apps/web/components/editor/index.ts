@@ -1,14 +1,21 @@
 /**
  * Editor components barrel exports
+ *
+ * Core editor engine re-exported from @repo/editor.
+ * App-shell components (sidebar, header, site-editor) stay local.
  */
-export { SiteEditor } from "./site-editor";
-export { PageEditor } from "./page-editor";
-export { EditorSidebar } from "./editor-sidebar";
-export { EditorHeader } from "./editor-header";
-export { SaveIndicator } from "./save-indicator";
-export { PreviewButton } from "./preview-button";
+
+// Re-export from @repo/editor for backward compat
 export {
   EditorProvider,
   useEditorContext,
   useEditorContextOptional,
-} from "./editor-context";
+  PageEditor,
+  SaveIndicator,
+  PreviewButton,
+} from "@repo/editor";
+
+// Local app-shell components
+export { SiteEditor } from "./site-editor";
+export { EditorSidebar } from "./editor-sidebar";
+export { EditorHeader } from "./editor-header";

@@ -1,5 +1,6 @@
 "use client";
 
+import type { FieldOption, SelectField } from "@repo/types/elements";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
@@ -11,7 +12,6 @@ import {
   SelectValue,
 } from "@repo/ui/select";
 import { Switch } from "@repo/ui/switch";
-import type { FieldOption, SelectField } from "@repo/types/elements";
 import { ChevronDown, GripVertical, Plus, Trash2 } from "lucide-react";
 import type {
   FieldEditorProps,

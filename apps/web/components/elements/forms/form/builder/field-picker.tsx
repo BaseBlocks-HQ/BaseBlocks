@@ -5,8 +5,8 @@
  * Sidebar component to add new fields to the form
  */
 
-import { Button } from "@repo/ui/button";
 import type { FormFieldType } from "@repo/types/elements";
+import { Button } from "@repo/ui/button";
 import { getAllFields } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
