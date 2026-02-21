@@ -5,7 +5,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ViewerProps } from "../types";
 
@@ -40,7 +40,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
       });
   }, [file.url]);
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
@@ -50,18 +50,20 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     } catch {
       toast.error("Failed to copy to clipboard");
     }
-  };
+  }, [content]);
 
-  const toggleSearch = () => {
-    setShowSearch((prev) => !prev);
-    if (showSearch) {
-      setSearchTerm("");
-    }
-  };
+  const toggleSearch = useCallback(() => {
+    setShowSearch((prev) => {
+      if (prev) {
+        setSearchTerm("");
+      }
+      return !prev;
+    });
+  }, []);
 
-  const toggleWordWrap = () => {
+  const toggleWordWrap = useCallback(() => {
     setWordWrap((prev) => !prev);
-  };
+  }, []);
 
   // Highlight search terms in content
   const highlightedContent = (() => {
@@ -122,7 +124,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
         hasScrolledToMatch.current = true;
       });
     }
-  }, [highlightedContent, file.searchTerm]);
+  }, [file.searchTerm]);
 
   // Register controls with parent
   useEffect(() => {
@@ -193,6 +195,9 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     searchTerm,
     wordWrap,
     copied,
+    toggleSearch,
+    toggleWordWrap,
+    handleCopy,
   ]);
 
   if (isLoading) {

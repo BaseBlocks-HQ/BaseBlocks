@@ -1,6 +1,6 @@
 import { Migrations } from "@convex-dev/migrations";
 import { components, internal } from "./_generated/api.js";
-import type { DataModel, Id } from "./_generated/dataModel.js";
+import type { DataModel, Doc, Id } from "./_generated/dataModel.js";
 import { extractBlockNoteText } from "./lib/extractBlockNoteText.js";
 import { isExtractable } from "./lib/extractable.js";
 
@@ -314,7 +314,7 @@ export const migrateSubpagesToPages = migrations.define({
           if (
             block.type === "subpage" &&
             block.content &&
-            !(block.content as any).pageId
+            (block.content as { pageId?: unknown }).pageId === undefined
           ) {
             const content = block.content as OldSubpageContent;
             const title = content.title || "Untitled";
@@ -365,7 +365,7 @@ export const migrateSubpagesToPages = migrations.define({
             const childBlocks: Array<{
               id: string;
               type: "paragraph" | "flowchart";
-              content: any;
+              content: unknown;
             }> = [];
 
             const extractedText = extractBlockNoteText(content.content);
@@ -428,7 +428,7 @@ export const migrateSubpagesToPages = migrations.define({
     };
 
     const draftResult = await processSlots(layout.slots);
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     if (draftResult.changed) {
       updates.slots = draftResult.updatedSlots;
@@ -494,8 +494,13 @@ export const removeHasUndeployedChanges = migrations.define({
   table: "sites",
   batchSize: 50,
   migrateOne: async (ctx, site) => {
-    if ((site as any).hasUndeployedChanges !== undefined) {
-      await ctx.db.patch(site._id, { hasUndeployedChanges: undefined } as any);
+    if (
+      (site as { hasUndeployedChanges?: unknown }).hasUndeployedChanges !==
+      undefined
+    ) {
+      await ctx.db.patch(site._id, {
+        hasUndeployedChanges: undefined,
+      } as unknown as Partial<Doc<"sites">>);
     }
   },
 });
@@ -556,7 +561,7 @@ export const normalizeDecisionTreeContent = migrations.define({
     };
 
     const draftResult = processSlots(layout.slots);
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     if (draftResult.changed) {
       updates.slots = draftResult.updatedSlots;

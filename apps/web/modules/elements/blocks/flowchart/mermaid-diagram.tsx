@@ -10,7 +10,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MermaidDiagramProps {
   code: string;
@@ -44,16 +44,16 @@ export function MermaidDiagram({
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
-  const applyTransform = () => {
+  const applyTransform = useCallback(() => {
     if (!contentRef.current) return;
     const { x, y } = translateRef.current;
     const s = scaleRef.current;
     contentRef.current.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
-  };
+  }, []);
 
-  const tick = () => setRenderTick((n) => n + 1);
+  const tick = useCallback(() => setRenderTick((n) => n + 1), []);
 
-  const fitToView = () => {
+  const fitToView = useCallback(() => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
@@ -88,7 +88,7 @@ export function MermaidDiagram({
     translateRef.current = { x: tx, y: ty };
     applyTransform();
     tick();
-  };
+  }, [applyTransform, tick]);
 
   // Always keep the diagram constrained to its parent container width.
   useEffect(() => {
@@ -96,7 +96,7 @@ export function MermaidDiagram({
     if (!wrapper) return;
     wrapper.style.marginLeft = "";
     wrapper.style.width = "";
-  }, [svg, contained, isFullscreen]);
+  }, []);
 
   useEffect(() => {
     if (!code.trim()) {

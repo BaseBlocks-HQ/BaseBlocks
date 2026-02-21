@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 
@@ -249,7 +249,7 @@ export const rollback = mutation({
       name: string;
       logoUrl?: string;
       defaultPageId?: Id<"pages">;
-      settings: any;
+      settings: Doc<"sites">["settings"];
     };
 
     await ctx.db.patch(siteId, {
@@ -323,11 +323,11 @@ export const rollback = mutation({
     for (const layoutSnapshot of pageLayoutSnapshots) {
       const layoutsData = JSON.parse(layoutSnapshot.data as string) as Array<{
         _id: Id<"layouts">;
-        type: string;
+        type: Doc<"layouts">["type"];
         order: number;
         tabId?: string;
-        slots: any;
-        settings: any;
+        slots: Doc<"layouts">["slots"];
+        settings: Doc<"layouts">["settings"];
       }>;
 
       for (const layoutData of layoutsData) {
@@ -335,7 +335,7 @@ export const rollback = mutation({
         if (layout) {
           await ctx.db.patch(layoutData._id, {
             publishedSlots: layoutData.slots,
-            publishedType: layoutData.type as any,
+            publishedType: layoutData.type,
             publishedOrder: layoutData.order,
             publishedSettings: layoutData.settings,
             publishedTabId: layoutData.tabId,

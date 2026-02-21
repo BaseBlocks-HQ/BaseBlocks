@@ -43,7 +43,7 @@ interface SortablePageTreeProps {
 }
 
 export function SortablePageTree({
-  pages,
+  pages: _pages,
   allPages,
   selectedPageId,
   siteId,

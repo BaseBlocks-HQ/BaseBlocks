@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import { mutation } from "../_generated/server";
+import { type MutationCtx, mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
 
@@ -118,7 +118,7 @@ export const reorder = mutation({
     parentId: v.optional(v.id("pages")),
     pageIds: v.array(v.id("pages")),
   },
-  handler: async (ctx, { siteId, parentId, pageIds }) => {
+  handler: async (ctx, { siteId, parentId: _parentId, pageIds }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
@@ -142,14 +142,14 @@ export const reorder = mutation({
 
 // Helper to recursively delete a page and its children
 async function deletePageRecursively(
-  ctx: { db: any },
-  pageId: string,
-  siteId: string,
+  ctx: Pick<MutationCtx, "db">,
+  pageId: Id<"pages">,
+  siteId: Id<"sites">,
 ) {
   // Delete all layouts for this page
   const layouts = await ctx.db
     .query("layouts")
-    .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .collect();
 
   for (const layout of layouts) {
@@ -159,7 +159,7 @@ async function deletePageRecursively(
   // Recursively delete child pages
   const children = await ctx.db
     .query("pages")
-    .withIndex("by_parent", (q: any) =>
+    .withIndex("by_parent", (q) =>
       q.eq("siteId", siteId).eq("parentId", pageId),
     )
     .collect();
@@ -282,7 +282,7 @@ export const enablePageTabs = mutation({
     // Get all existing layouts for this page
     const existingLayouts = await ctx.db
       .query("layouts")
-      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();
@@ -324,7 +324,7 @@ export const disablePageTabs = mutation({
     // Clear tabId from all layouts
     const layouts = await ctx.db
       .query("layouts")
-      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();

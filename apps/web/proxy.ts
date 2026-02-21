@@ -73,12 +73,6 @@ function extractSubdomainFromPath(
   return null;
 }
 
-// Check if pathname already has a locale prefix
-function hasLocalePrefix(pathname: string): boolean {
-  const localePattern = new RegExp(`^/(${routing.locales.join("|")})(/|$)`);
-  return localePattern.test(pathname);
-}
-
 // Remove locale prefix from pathname if present
 function removeLocalePrefix(pathname: string): string {
   const localePattern = new RegExp(`^/(${routing.locales.join("|")})`);

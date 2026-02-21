@@ -19,6 +19,7 @@ type FormValues = Record<string, unknown>;
 type FormErrors = Record<string, string>;
 
 export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
+  void id;
   const [values, setValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

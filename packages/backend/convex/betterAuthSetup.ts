@@ -14,12 +14,11 @@ const appUrls = (process.env.APP_URL ?? "")
   .filter(Boolean); // Frontend URL(s)
 const appUrl = appUrls[0] ?? ""; // Primary frontend URL (for crossDomain)
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- monorepo type resolution workaround
-export const authComponent = createClient<DataModel, any>(
+export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
   {
     local: {
-      schema: authSchema,
+      schema: authSchema as never,
     },
     verbose: false,
   },

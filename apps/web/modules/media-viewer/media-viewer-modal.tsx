@@ -68,8 +68,9 @@ export function MediaViewerModal() {
 
   // Reset viewer controls when file changes
   useEffect(() => {
+    if (!currentFile) return;
     setViewerControls(null);
-  }, [currentFile?.url]);
+  }, [currentFile]);
 
   // Handle keyboard navigation
   useEffect(() => {

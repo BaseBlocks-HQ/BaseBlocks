@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import { mutation } from "../_generated/server";
+import { type MutationCtx, mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 
 // Create a new folder
@@ -174,14 +174,14 @@ export const move = mutation({
 
 // Helper to recursively delete folder and contents
 async function deleteFolderRecursively(
-  ctx: { db: any },
-  folderId: string,
-  libraryId: string,
+  ctx: Pick<MutationCtx, "db">,
+  folderId: Id<"documentFolders">,
+  libraryId: Id<"documentLibraries">,
 ) {
   // Delete all documents in this folder
   const documents = await ctx.db
     .query("documents")
-    .withIndex("by_folder", (q: any) =>
+    .withIndex("by_folder", (q) =>
       q.eq("libraryId", libraryId).eq("folderId", folderId),
     )
     .collect();
@@ -193,7 +193,7 @@ async function deleteFolderRecursively(
   // Recursively delete child folders
   const children = await ctx.db
     .query("documentFolders")
-    .withIndex("by_parent", (q: any) =>
+    .withIndex("by_parent", (q) =>
       q.eq("libraryId", libraryId).eq("parentId", folderId),
     )
     .collect();

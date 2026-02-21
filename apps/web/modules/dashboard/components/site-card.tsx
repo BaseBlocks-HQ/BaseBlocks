@@ -4,6 +4,7 @@ import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
 import { getSiteUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@baseblocks/ui/card";
 import {
@@ -77,7 +78,7 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deleteSite({ siteId: site._id as any });
+      await deleteSite({ siteId: site._id as Id<"sites"> });
       setDeleteOpen(false);
     } catch (_err) {
     } finally {

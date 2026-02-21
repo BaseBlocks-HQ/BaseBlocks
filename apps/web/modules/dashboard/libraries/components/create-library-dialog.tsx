@@ -2,7 +2,7 @@
 
 import { FormDialog } from "@/components/dialogs/form-dialog";
 import { api } from "@baseblocks/backend";
-import type { Doc } from "@baseblocks/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -48,8 +48,11 @@ export function CreateLibraryDialog({
     setIsSubmitting(true);
 
     try {
+      if (!siteId) {
+        throw new Error("Site is required");
+      }
       await createLibrary({
-        siteId: siteId as any,
+        siteId: siteId as Id<"sites">,
         name,
       });
       setOpen(false);

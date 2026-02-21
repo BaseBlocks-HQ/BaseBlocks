@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { type QueryCtx, query } from "../_generated/server";
 import { requireMember } from "../auth";
 
 // ============================================================================
@@ -84,7 +84,7 @@ function formatSearchResult(
  * @param activeLibraryIds - If provided, only return documents from these libraries (for public search filtering)
  */
 async function performSearch(
-  ctx: { db: { query: (table: "documents") => any } },
+  ctx: Pick<QueryCtx, "db">,
   siteId: Id<"sites">,
   searchTerm: string,
   limit: number,
@@ -93,7 +93,7 @@ async function performSearch(
   // 1. Search by content (full-text search)
   const contentResults = await ctx.db
     .query("documents")
-    .withSearchIndex("search_content", (q: any) =>
+    .withSearchIndex("search_content", (q) =>
       q.search("extractedText", searchTerm).eq("siteId", siteId),
     )
     .take(limit * 2); // Fetch more to account for filtering
@@ -101,7 +101,7 @@ async function performSearch(
   // 2. Search by filename (using search index for better performance)
   const filenameResults = await ctx.db
     .query("documents")
-    .withSearchIndex("search_filename", (q: any) =>
+    .withSearchIndex("search_filename", (q) =>
       q.search("filename", searchTerm).eq("siteId", siteId),
     )
     .take(limit * 2);
@@ -426,7 +426,7 @@ export const searchByLibrary = query({
     // Search by content
     const contentResults = await ctx.db
       .query("documents")
-      .withSearchIndex("search_content", (q: any) =>
+      .withSearchIndex("search_content", (q) =>
         q.search("extractedText", trimmed).eq("siteId", site._id),
       )
       .take(limit * 2);
@@ -434,7 +434,7 @@ export const searchByLibrary = query({
     // Search by filename
     const filenameResults = await ctx.db
       .query("documents")
-      .withSearchIndex("search_filename", (q: any) =>
+      .withSearchIndex("search_filename", (q) =>
         q.search("filename", trimmed).eq("siteId", site._id),
       )
       .take(limit * 2);

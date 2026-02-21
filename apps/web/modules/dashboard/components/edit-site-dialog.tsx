@@ -4,6 +4,7 @@ import { FormDialog } from "@/components/dialogs/form-dialog";
 import { authClient } from "@/lib/auth/client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -107,7 +108,7 @@ export function EditSiteDialog({
 
     try {
       await updateSite({
-        siteId: site._id as any,
+        siteId: site._id as Id<"sites">,
         name,
         logoUrl: logoUrl || undefined,
       });

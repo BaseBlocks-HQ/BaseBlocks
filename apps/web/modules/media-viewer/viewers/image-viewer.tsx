@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import { Maximize2, Minimize2, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 const MIN_ZOOM = 0.1;
@@ -22,27 +22,28 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
 
   // Reset state when file changes
   useEffect(() => {
+    if (!file.url) return;
     setZoom(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
     setIsFitToScreen(true);
   }, [file.url]);
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     setZoom((prev) => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
     setIsFitToScreen(false);
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setZoom((prev) => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
     setIsFitToScreen(false);
-  };
+  }, []);
 
-  const handleRotate = () => {
+  const handleRotate = useCallback(() => {
     setRotation((prev) => (prev + 90) % 360);
-  };
+  }, []);
 
-  const handleFitToggle = () => {
+  const handleFitToggle = useCallback(() => {
     if (isFitToScreen) {
       setZoom(1);
       setIsFitToScreen(false);
@@ -51,7 +52,7 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
       setPosition({ x: 0, y: 0 });
       setIsFitToScreen(true);
     }
-  };
+  }, [isFitToScreen]);
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -151,7 +152,15 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
         </Button>
       </>,
     );
-  }, [renderControls, zoom, isFitToScreen]);
+  }, [
+    renderControls,
+    zoom,
+    isFitToScreen,
+    handleZoomOut,
+    handleZoomIn,
+    handleRotate,
+    handleFitToggle,
+  ]);
 
   return (
     <div

@@ -72,7 +72,7 @@ export function NodeDetail({
 
   useEffect(() => {
     setLocalName(node.name);
-  }, [node.id, node.name]);
+  }, [node.name]);
 
   const debouncedSaveName = useDebounceCallback((name: string) => {
     onUpdateNodeName(node.id, name);

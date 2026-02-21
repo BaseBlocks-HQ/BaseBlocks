@@ -14,7 +14,6 @@ import type {
 import { registerElement } from "../framework/registry";
 
 function ParagraphEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
@@ -26,7 +25,7 @@ function ParagraphEditor({
   useEffect(() => {
     setLocalText(content.text || "");
     contentRef.current = content.text || "";
-  }, [id, content.text]);
+  }, [content.text]);
 
   const handleChange = (e: { target: { value: string } }) => {
     const plainText = e.target.value

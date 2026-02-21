@@ -30,7 +30,6 @@ function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
 }
 
 export function FlowchartEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
@@ -53,7 +52,7 @@ export function FlowchartEditor({
     setTabsMode(content.tabsMode ?? "row");
     themeRef.current = content.theme;
     tabsModeRef.current = content.tabsMode ?? "row";
-  }, [id]);
+  }, [content]);
 
   const buildContent = (
     d: FlowchartDiagram[],

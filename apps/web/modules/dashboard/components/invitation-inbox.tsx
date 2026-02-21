@@ -27,6 +27,16 @@ interface ReceivedInvitation {
   inviterEmail?: string;
 }
 
+interface AuthInvitation {
+  id: string;
+  organizationId: string;
+  organizationName?: string;
+  role?: string;
+  expiresAt: string | number | Date;
+  inviterEmail?: string;
+  status: string;
+}
+
 interface InvitationInboxProps {
   fullWidth?: boolean;
 }
@@ -50,11 +60,11 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     try {
       const result = await authClient.organization.listUserInvitations();
       if (result.data) {
-        const pending = result.data.filter(
-          (inv: any) => inv.status === "pending",
+        const pending = (result.data as AuthInvitation[]).filter(
+          (inv) => inv.status === "pending",
         );
         setInvitations(
-          pending.map((inv: any) => ({
+          pending.map((inv) => ({
             id: inv.id,
             organizationId: inv.organizationId,
             organizationName: inv.organizationName,

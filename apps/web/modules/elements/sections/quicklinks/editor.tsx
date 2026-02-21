@@ -276,7 +276,6 @@ function QuicklinkEditForm({
 }
 
 export function QuicklinksEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
@@ -302,10 +301,6 @@ export function QuicklinksEditor({
     setEditingData(null);
     setIsAddingNew(false);
     setNewLinkData(null);
-  }, [id]);
-
-  useEffect(() => {
-    setSavedLinks(content.links || []);
   }, [content.links]);
 
   const persistLinks = async (links: QuicklinkItem[]) => {

@@ -13,7 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -89,7 +89,7 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
         hasScrolledToFirstMatch.current = true;
       }
     }
-  }, [searchInput, renderedTextLayers, numPages, file.searchTerm]);
+  }, [searchInput, renderedTextLayers, file.searchTerm]);
 
   // Custom text renderer for highlighting
   const textRenderer = ({ str }: { str: string; itemIndex: number }) => {
@@ -105,49 +105,55 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
     );
   };
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 0.25, 3));
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setScale((prev) => Math.max(prev - 0.25, 0.5));
-  };
+  }, []);
 
-  const toggleSearch = () => {
+  const toggleSearch = useCallback(() => {
     setShowSearch((prev) => {
       if (prev) {
         setSearchInput("");
       }
       return !prev;
     });
-  };
+  }, []);
 
-  const jumpToMatch = (direction: "next" | "prev") => {
-    if (matchRefs.current.length === 0) return;
+  const jumpToMatch = useCallback(
+    (direction: "next" | "prev") => {
+      if (matchRefs.current.length === 0) return;
 
-    let newMatch: number;
-    if (direction === "next") {
-      newMatch = currentMatch >= totalMatches ? 1 : currentMatch + 1;
-    } else {
-      newMatch = currentMatch <= 1 ? totalMatches : currentMatch - 1;
-    }
-
-    const matchElement = matchRefs.current[newMatch - 1];
-    if (matchElement) {
-      matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      setCurrentMatch(newMatch);
-    }
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        jumpToMatch("prev");
+      let newMatch: number;
+      if (direction === "next") {
+        newMatch = currentMatch >= totalMatches ? 1 : currentMatch + 1;
       } else {
-        jumpToMatch("next");
+        newMatch = currentMatch <= 1 ? totalMatches : currentMatch - 1;
       }
-    }
-  };
+
+      const matchElement = matchRefs.current[newMatch - 1];
+      if (matchElement) {
+        matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        setCurrentMatch(newMatch);
+      }
+    },
+    [currentMatch, totalMatches],
+  );
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        if (e.shiftKey) {
+          jumpToMatch("prev");
+        } else {
+          jumpToMatch("next");
+        }
+      }
+    },
+    [jumpToMatch],
+  );
 
   // Register controls with parent
   useEffect(() => {
@@ -246,6 +252,11 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
     searchInput,
     currentMatch,
     totalMatches,
+    toggleSearch,
+    handleSearchKeyDown,
+    jumpToMatch,
+    handleZoomOut,
+    handleZoomIn,
   ]);
 
   // Generate page numbers array

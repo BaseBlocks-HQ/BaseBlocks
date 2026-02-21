@@ -105,7 +105,7 @@ export const searchAll = query({
     // Search by title
     const titleResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_title", (q: any) =>
+      .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -113,7 +113,7 @@ export const searchAll = query({
     // Search by content
     const contentResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_content", (q: any) =>
+      .withSearchIndex("search_content", (q) =>
         q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -201,7 +201,7 @@ export const searchAllPublic = query({
     // Search by title
     const titleResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_title", (q: any) =>
+      .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -209,7 +209,7 @@ export const searchAllPublic = query({
     // Search by content
     const contentResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_content", (q: any) =>
+      .withSearchIndex("search_content", (q) =>
         q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);

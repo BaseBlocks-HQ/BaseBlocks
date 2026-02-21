@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { mutation } from "../_generated/server";
+import { type MutationCtx, mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
 import {
@@ -13,9 +13,9 @@ import {
 
 // Helper to get teamId from pageId
 async function getTeamIdFromPage(
-  ctx: { db: any },
-  pageId: string,
-): Promise<{ teamId: string; siteId: string } | null> {
+  ctx: Pick<MutationCtx, "db">,
+  pageId: Id<"pages">,
+): Promise<{ teamId: Id<"teams">; siteId: Id<"sites"> } | null> {
   const page = await ctx.db.get(pageId);
   if (!page) return null;
 
@@ -27,9 +27,13 @@ async function getTeamIdFromPage(
 
 // Helper to get teamId from layoutId
 async function getTeamIdFromLayout(
-  ctx: { db: any },
-  layoutId: string,
-): Promise<{ teamId: string; pageId: string; siteId: string } | null> {
+  ctx: Pick<MutationCtx, "db">,
+  layoutId: Id<"layouts">,
+): Promise<{
+  teamId: Id<"teams">;
+  pageId: Id<"pages">;
+  siteId: Id<"sites">;
+} | null> {
   const layout = await ctx.db.get(layoutId);
   if (!layout) return null;
 
@@ -57,19 +61,18 @@ export const create = mutation({
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.teamId as any);
+    await requireAdmin(ctx, pageInfo.teamId);
 
     // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
     if (layoutOrder === undefined) {
       const existingLayouts = await ctx.db
         .query("layouts")
-        .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+        .withIndex("by_page", (q) => q.eq("pageId", pageId))
         .collect();
-      const tabLayouts = existingLayouts.filter((l: any) => l.tabId === tabId);
+      const tabLayouts = existingLayouts.filter((l) => l.tabId === tabId);
       layoutOrder =
-        tabLayouts.reduce((max: number, s: any) => Math.max(max, s.order), -1) +
-        1;
+        tabLayouts.reduce((max: number, s) => Math.max(max, s.order), -1) + 1;
     }
 
     const now = Date.now();
@@ -106,7 +109,7 @@ export const updateSettings = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -134,7 +137,7 @@ export const updateSlots = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -164,10 +167,10 @@ export const addBlockToSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     // Find slot and add block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
       const newBlocks = [...slot.blocks];
@@ -207,13 +210,13 @@ export const updateBlockInSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     // Find slot and update block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
-      const updatedBlocks = slot.blocks.map((b: any) =>
+      const updatedBlocks = slot.blocks.map((b) =>
         b.id === blockId ? { ...b, content } : b,
       );
       return { ...slot, blocks: updatedBlocks };
@@ -246,15 +249,15 @@ export const removeBlockFromSlot = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     // Find slot and remove block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
       return {
         ...slot,
-        blocks: slot.blocks.filter((b: any) => b.id !== blockId),
+        blocks: slot.blocks.filter((b) => b.id !== blockId),
       };
     });
 
@@ -290,7 +293,7 @@ export const moveBlock = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     // Find the block - use the same type as in slots
     type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
@@ -364,7 +367,7 @@ export const reorder = mutation({
     if (!pageInfo) throw new Error("Page not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.teamId as any);
+    await requireAdmin(ctx, pageInfo.teamId);
 
     // Update order for each layout
     for (let i = 0; i < layoutIds.length; i++) {
@@ -390,7 +393,7 @@ export const remove = mutation({
     if (!layoutInfo) throw new Error("Layout not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
@@ -415,7 +418,7 @@ export const addSubpageBlock = mutation({
     const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    const { auth } = await requireAdmin(ctx, layoutInfo.teamId as any);
+    const { auth } = await requireAdmin(ctx, layoutInfo.teamId);
 
     const page = await ctx.db.get(layout.pageId);
     if (!page) throw new Error("Page not found");
@@ -423,7 +426,7 @@ export const addSubpageBlock = mutation({
     // Check slug uniqueness
     const existingSlug = await ctx.db
       .query("pages")
-      .withIndex("by_slug", (q: any) =>
+      .withIndex("by_slug", (q) =>
         q.eq("siteId", page.siteId).eq("slug", slug.toLowerCase()),
       )
       .first();
@@ -438,12 +441,12 @@ export const addSubpageBlock = mutation({
     // 1. Create child page
     const siblings = await ctx.db
       .query("pages")
-      .withIndex("by_parent", (q: any) =>
+      .withIndex("by_parent", (q) =>
         q.eq("siteId", page.siteId).eq("parentId", layout.pageId),
       )
       .collect();
     const maxOrder = siblings.reduce(
-      (max: number, p: any) => Math.max(max, p.order),
+      (max: number, p) => Math.max(max, p.order),
       -1,
     );
 
@@ -478,7 +481,7 @@ export const addSubpageBlock = mutation({
       content: { pageId: childPageId },
     };
 
-    const updatedSlots = layout.slots.map((s: any) => {
+    const updatedSlots = layout.slots.map((s) => {
       if (s.id !== slotId) return s;
       const newBlocks = [...s.blocks];
       if (index !== undefined && index >= 0 && index <= newBlocks.length) {

@@ -1,14 +1,15 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { type MutationCtx, mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 
 // Helper to get teamId from siteId
 async function getTeamIdFromSite(
-  ctx: { db: any },
-  siteId: string,
-): Promise<string | null> {
+  ctx: Pick<MutationCtx, "db">,
+  siteId: Id<"sites">,
+): Promise<Id<"teams"> | null> {
   const site = await ctx.db.get(siteId);
   if (!site) return null;
   return site.teamId;
@@ -32,7 +33,7 @@ export const create = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    const { auth } = await requireAdmin(ctx, teamId as any);
+    const { auth } = await requireAdmin(ctx, teamId);
 
     const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
@@ -97,7 +98,7 @@ export const createInLibrary = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    const { auth } = await requireAdmin(ctx, teamId as any);
+    const { auth } = await requireAdmin(ctx, teamId);
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -164,7 +165,7 @@ export const move = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, teamId as any);
+    await requireAdmin(ctx, teamId);
 
     // Verify document is in a library
     if (!document.libraryId) {
@@ -198,7 +199,7 @@ export const rename = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, teamId as any);
+    await requireAdmin(ctx, teamId);
 
     await ctx.db.patch(documentId, { filename });
     return documentId;
@@ -220,7 +221,7 @@ export const updateMetadata = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, teamId as any);
+    await requireAdmin(ctx, teamId);
 
     const updates: Record<string, unknown> = {};
     if (extractedText !== undefined) updates.extractedText = extractedText;
@@ -242,12 +243,12 @@ export const remove = mutation({
     if (!teamId) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, teamId as any);
+    await requireAdmin(ctx, teamId);
 
     // Remove from search index
     const searchEntry = await ctx.db
       .query("searchableContent")
-      .withIndex("by_source", (q: any) =>
+      .withIndex("by_source", (q) =>
         q.eq("contentType", "document").eq("sourceId", documentId),
       )
       .first();

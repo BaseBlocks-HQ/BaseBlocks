@@ -23,6 +23,7 @@ export function FormEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"form">) {
+  void id;
   const [localContent, setLocalContent] = useState<FormContent>(content);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
