@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementConfigPanelProps } from "@/modules/elements/registry";
+import type { ElementConfigPanelProps } from "@/modules/elements/framework/registry";
 import type {
   BannerContent,
   BannerImportancePreset,
@@ -13,7 +13,7 @@ import { Separator } from "@baseblocks/ui/separator";
 import { Slider } from "@baseblocks/ui/slider";
 import { Switch } from "@baseblocks/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 export function BannerConfigPanel({
   content,
@@ -21,19 +21,13 @@ export function BannerConfigPanel({
 }: ElementConfigPanelProps<"banner">) {
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
 
-  const update = useCallback(
-    (partial: Partial<BannerContent>) => {
-      onUpdate({ ...content, ...partial });
-    },
-    [content, onUpdate],
-  );
+  const update = (partial: Partial<BannerContent>) => {
+    onUpdate({ ...content, ...partial });
+  };
 
-  const updateSettings = useCallback(
-    (partial: Partial<BannerContent["settings"]>) => {
-      update({ settings: { ...content.settings, ...partial } });
-    },
-    [content.settings, update],
-  );
+  const updateSettings = (partial: Partial<BannerContent["settings"]>) => {
+    update({ settings: { ...content.settings, ...partial } });
+  };
 
   const addPreset = () => {
     const newPreset: BannerImportancePreset = {

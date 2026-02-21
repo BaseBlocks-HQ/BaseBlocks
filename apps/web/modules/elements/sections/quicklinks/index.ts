@@ -5,7 +5,7 @@
 
 import { DEFAULT_SECTION_CONTENT } from "@baseblocks/types/elements";
 import { LayoutGrid } from "lucide-react";
-import { registerElement } from "../../registry";
+import { registerElement } from "../../framework/registry";
 import { QuicklinksEditor } from "./editor";
 import { QuicklinksPreview } from "./preview";
 import { QuicklinksRenderer } from "./renderer";

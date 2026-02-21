@@ -217,5 +217,9 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
     },
   } as DirectoryContent,
   flowchart: { mermaidCode: "", tabsMode: "row" } as FlowchartContent,
-  "decision-tree": { nodes: [], tabsMode: "row" } as DecisionTreeContent,
+  "decision-tree": {
+    nodes: [],
+    trees: [{ id: "default", label: "Tree 1", nodes: [] }],
+    tabsMode: "row",
+  } as DecisionTreeContent,
 };

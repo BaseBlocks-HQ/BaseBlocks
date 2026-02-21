@@ -1,8 +1,8 @@
 "use client";
 
-import { useBannerDismissals } from "@/hooks/use-banner-dismissals";
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import { useBannerDismissals } from "@/modules/elements/blocks/banner/use-banner-dismissals";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { BannerAlert } from "@baseblocks/types/elements";
 import {
   Carousel,
@@ -12,7 +12,7 @@ import {
 } from "@baseblocks/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function BannerRenderer({ content }: ElementRendererProps<"banner">) {
   const { isDismissed, dismiss } = useBannerDismissals();
@@ -25,12 +25,8 @@ export function BannerRenderer({ content }: ElementRendererProps<"banner">) {
     }),
   );
 
-  const visibleAlerts = useMemo(
-    () =>
-      content.alerts.filter(
-        (alert) => !content.settings.dismissible || !isDismissed(alert.id),
-      ),
-    [content.alerts, content.settings.dismissible, isDismissed],
+  const visibleAlerts = content.alerts.filter(
+    (alert) => !content.settings.dismissible || !isDismissed(alert.id),
   );
 
   useEffect(() => {
@@ -43,22 +39,16 @@ export function BannerRenderer({ content }: ElementRendererProps<"banner">) {
     };
   }, [api]);
 
-  const handleDismiss = useCallback(
-    (alert: BannerAlert) => {
-      dismiss(alert.id);
-    },
-    [dismiss],
-  );
+  const handleDismiss = (alert: BannerAlert) => {
+    dismiss(alert.id);
+  };
 
-  const getPreset = useCallback(
-    (alert: BannerAlert) => {
-      return (
-        content.importancePresets.find((p) => p.id === alert.importance) ??
-        content.importancePresets[0]
-      );
-    },
-    [content.importancePresets],
-  );
+  const getPreset = (alert: BannerAlert) => {
+    return (
+      content.importancePresets.find((p) => p.id === alert.importance) ??
+      content.importancePresets[0]
+    );
+  };
 
   // Don't render if no alerts exist or all are dismissed
   if (!content.alerts || content.alerts.length === 0) return null;

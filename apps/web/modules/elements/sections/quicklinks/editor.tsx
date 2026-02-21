@@ -3,9 +3,9 @@
 import { authClient } from "@/lib/auth/client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import { useLayoutContext } from "@/modules/elements/layout-context";
-import type { ElementEditorProps } from "@/modules/elements/registry";
-import { useEditorContext } from "@baseblocks/editor";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import { useLayoutContext } from "@/modules/elements/framework/layout-context";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import type { QuicklinkItem, QuicklinkType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -29,7 +29,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 function generateId() {
@@ -308,21 +308,18 @@ export function QuicklinksEditor({
     setSavedLinks(content.links || []);
   }, [content.links]);
 
-  const persistLinks = useCallback(
-    async (links: QuicklinkItem[]) => {
-      onSaveStatusChange?.("saving");
-      try {
-        await onUpdate({ links });
-        onSaveStatusChange?.("saved");
-        return true;
-      } catch {
-        onSaveStatusChange?.("idle");
-        toast.error("Failed to save");
-        return false;
-      }
-    },
-    [onUpdate, onSaveStatusChange],
-  );
+  const persistLinks = async (links: QuicklinkItem[]) => {
+    onSaveStatusChange?.("saving");
+    try {
+      await onUpdate({ links });
+      onSaveStatusChange?.("saved");
+      return true;
+    } catch {
+      onSaveStatusChange?.("idle");
+      toast.error("Failed to save");
+      return false;
+    }
+  };
 
   const handleImageUpload = async (
     file: File,

@@ -2,7 +2,7 @@
 
 import { Button } from "@baseblocks/ui/button";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ViewerProps } from "../types";
 
 /**
@@ -19,7 +19,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
   const [useOnlineViewer, setUseOnlineViewer] = useState(true);
 
   // Check if running on localhost (online viewers won't work)
-  const isLocalhost = useMemo(() => {
+  const isLocalhost = (() => {
     if (typeof window === "undefined") return false;
     const hostname = window.location.hostname;
     return (
@@ -28,10 +28,10 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
       hostname.startsWith("192.168.") ||
       hostname.startsWith("10.")
     );
-  }, []);
+  })();
 
   // Convert relative URL to absolute public URL for external viewers
-  const publicUrl = useMemo(() => {
+  const publicUrl = (() => {
     if (typeof window === "undefined") return file.url;
     // If already absolute, use as-is
     if (file.url.startsWith("http://") || file.url.startsWith("https://")) {
@@ -39,7 +39,7 @@ export function OfficeViewer({ file, renderControls }: ViewerProps) {
     }
     // Convert relative URL to absolute
     return `${window.location.origin}${file.url}`;
-  }, [file.url]);
+  })();
 
   // Microsoft Office Online viewer URL
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(publicUrl)}`;

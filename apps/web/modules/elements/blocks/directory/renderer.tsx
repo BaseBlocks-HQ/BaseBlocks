@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { DirectoryColumnType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -23,7 +23,7 @@ import {
   Phone,
   Search,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 function formatPhoneNumber(raw: string): string {
@@ -102,7 +102,7 @@ export function DirectoryRenderer({
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const filteredRows = useMemo(() => {
+  const filteredRows = (() => {
     if (!searchQuery.trim()) return rows;
     const query = searchQuery.toLowerCase();
     return rows.filter((row) =>
@@ -110,7 +110,7 @@ export function DirectoryRenderer({
         (row.cells[col.id] ?? "").toLowerCase().includes(query),
       ),
     );
-  }, [rows, columns, searchQuery]);
+  })();
 
   const totalPages = Math.max(
     1,
@@ -124,12 +124,12 @@ export function DirectoryRenderer({
   );
 
   // Reset to page 1 when search changes
-  const handleSearch = useCallback((value: string) => {
+  const handleSearch = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
-  }, []);
+  };
 
-  const copyToClipboard = useCallback(async (text: string, id: string) => {
+  const copyToClipboard = async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(id);
@@ -138,17 +138,14 @@ export function DirectoryRenderer({
     } catch {
       toast.error("Failed to copy to clipboard");
     }
-  }, []);
+  };
 
-  const copyRow = useCallback(
-    (rowId: string) => {
-      const row = rows.find((r) => r.id === rowId);
-      if (!row) return;
-      const text = columns.map((col) => row.cells[col.id] ?? "").join("\t");
-      copyToClipboard(text, `row-${rowId}`);
-    },
-    [rows, columns, copyToClipboard],
-  );
+  const copyRow = (rowId: string) => {
+    const row = rows.find((r) => r.id === rowId);
+    if (!row) return;
+    const text = columns.map((col) => row.cells[col.id] ?? "").join("\t");
+    copyToClipboard(text, `row-${rowId}`);
+  };
 
   if (columns.length === 0) return null;
 

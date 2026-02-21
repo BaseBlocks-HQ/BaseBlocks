@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig = {
   allowedDevOrigins: ["*.localhost"],
   serverExternalPackages: ["pdfjs-dist"],
+  reactCompiler: true,
 };
 
 export default withNextIntl(nextConfig);

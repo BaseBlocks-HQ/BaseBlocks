@@ -3,10 +3,10 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { SiteLogo } from "@/components/site-logo";
 import { ContentSkeleton } from "@/components/skeletons";
-import { useCustomizationStyles } from "@/hooks/use-site-customization";
 import { getPageLink } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import { BannerRenderer } from "@/modules/elements/blocks/banner/renderer";
+import { useCustomizationStyles } from "@/modules/elements/panels/customization/use-site-customization";
 import { SearchBox } from "@/modules/elements/sections/search/search-box";
 import {
   BreadcrumbBar,
@@ -195,65 +195,63 @@ export function PublicSiteLayout({
     <>
       {/* Main Header */}
       {showHeader && (
-        <>
-          <header
-            className={cn(
-              "relative shrink-0 z-40",
-              !site.settings.customization?.headerColor &&
-                "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-            )}
-            style={
-              site.settings.customization?.headerColor
-                ? {
-                    backgroundColor: "var(--site-header-bg)",
-                    color: "var(--site-header-fg)",
-                  }
-                : undefined
-            }
-          >
-            <div className="flex h-14 items-center px-4">
-              {/* Left side: collapsed sidebar trigger, or logo+name in non-sidebar mode */}
-              {showSidebar ? (
-                <CollapsedSidebarTrigger />
-              ) : (
-                <div className="flex items-center gap-2">
-                  {showLogo && <SiteLogo site={site} team={team} />}
-                  {showSiteName && (
-                    <span className="font-semibold">{site.name}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Center: TopNav navigation (if topnav style) */}
-              {showTopNav && pages && (
-                <div className="flex-1 flex justify-center ml-8">
-                  <TopNavMenu pages={pages} currentPath={currentPathString} />
-                </div>
-              )}
-
-              {/* Right side: Search and mode toggle */}
-              <div className="flex items-center gap-3 ml-auto">
-                {showHeaderSearch && (
-                  <SearchBox
-                    siteId={site._id}
-                    usePublicQuery
-                    placeholder="Search..."
-                    maxResults={5}
-                    className="w-64"
-                    headerMode={hasCustomHeaderColor}
-                  />
+        <header
+          className={cn(
+            "relative shrink-0 z-40",
+            !site.settings.customization?.headerColor &&
+              "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          )}
+          style={
+            site.settings.customization?.headerColor
+              ? {
+                  backgroundColor: "var(--site-header-bg)",
+                  color: "var(--site-header-fg)",
+                }
+              : undefined
+          }
+        >
+          <div className="flex h-14 items-center px-4">
+            {/* Left side: collapsed sidebar trigger, or logo+name in non-sidebar mode */}
+            {showSidebar ? (
+              <CollapsedSidebarTrigger />
+            ) : (
+              <div className="flex items-center gap-2">
+                {showLogo && <SiteLogo site={site} team={team} />}
+                {showSiteName && (
+                  <span className="font-semibold">{site.name}</span>
                 )}
-                <ModeToggle
-                  className={
-                    hasCustomHeaderColor
-                      ? "text-current hover:bg-current/10"
-                      : undefined
-                  }
-                />
               </div>
+            )}
+
+            {/* Center: TopNav navigation (if topnav style) */}
+            {showTopNav && pages && (
+              <div className="flex-1 flex justify-center ml-8">
+                <TopNavMenu pages={pages} currentPath={currentPathString} />
+              </div>
+            )}
+
+            {/* Right side: Search and mode toggle */}
+            <div className="flex items-center gap-3 ml-auto">
+              {showHeaderSearch && (
+                <SearchBox
+                  siteId={site._id}
+                  usePublicQuery
+                  placeholder="Search..."
+                  maxResults={5}
+                  className="w-64"
+                  headerMode={hasCustomHeaderColor}
+                />
+              )}
+              <ModeToggle
+                className={
+                  hasCustomHeaderColor
+                    ? "text-current hover:bg-current/10"
+                    : undefined
+                }
+              />
             </div>
-          </header>
-        </>
+          </div>
+        </header>
       )}
 
       {/* Gradient stripe below header (non-sidebar mode only, sidebar mode renders it full-width at container level) */}

@@ -92,8 +92,7 @@ export async function openInNewTab(
         revokeBlobUrl(blobUrl);
       }, 60000); // Revoke after 1 minute
     }
-  } catch (error) {
-    console.error("Failed to open in new tab:", error);
+  } catch (_error) {
     // Fallback to direct URL (will trigger download but at least it's something)
     window.open(url, "_blank");
   }

@@ -6,7 +6,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import type { ElementPreviewProps } from "@/modules/elements/registry";
+import type { ElementPreviewProps } from "@/modules/elements/framework/registry";
 
 export function FormPreview({ className }: ElementPreviewProps) {
   return (

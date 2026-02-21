@@ -1,17 +1,17 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
 import { cn } from "@/lib/utils";
-import type {
-  ElementEditorProps,
-  ElementPreviewProps,
-  ElementRendererProps,
-} from "../registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Heading } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ContentEditable from "react-contenteditable";
-import { registerElement } from "../registry";
+import type {
+  ElementEditorProps,
+  ElementPreviewProps,
+  ElementRendererProps,
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 function HeadingEditor({
   id,

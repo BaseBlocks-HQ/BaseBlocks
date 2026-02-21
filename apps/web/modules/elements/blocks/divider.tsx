@@ -1,14 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { Minus } from "lucide-react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
   ElementRendererProps,
-} from "../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { Minus } from "lucide-react";
-import { registerElement } from "../registry";
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 function DividerEditor(_props: ElementEditorProps<"divider">) {
   return (

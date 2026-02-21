@@ -1,8 +1,8 @@
 "use client";
 
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import type { Id } from "@baseblocks/backend";
-import { useEditorContext } from "@baseblocks/editor";
 import { SearchBox } from "./search-box";
 
 export function SearchEditor({ content }: ElementEditorProps<"search">) {

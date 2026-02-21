@@ -1,11 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type {
-  ElementEditorProps,
-  ElementPreviewProps,
-  ElementRendererProps,
-} from "../registry";
 import type { BlockSpacerContent } from "@baseblocks/types/elements";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
@@ -17,7 +12,12 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Check, ChevronDown, MoveVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { registerElement } from "../registry";
+import type {
+  ElementEditorProps,
+  ElementPreviewProps,
+  ElementRendererProps,
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 const SPACER_HEIGHTS: Record<BlockSpacerContent["height"], number> = {
   small: 32,
@@ -166,7 +166,10 @@ const RENDERER_HEIGHTS = {
 function SpacerRenderer({ content }: ElementRendererProps<"block-spacer">) {
   const height = content.height || "medium";
   return (
-    <div className={cn("w-full", RENDERER_HEIGHTS[height])} aria-hidden="true" />
+    <div
+      className={cn("w-full", RENDERER_HEIGHTS[height])}
+      aria-hidden="true"
+    />
   );
 }
 

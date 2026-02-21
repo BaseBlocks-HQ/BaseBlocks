@@ -8,7 +8,7 @@ import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { AlertCircle, Loader2, Lock } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SESSION_COOKIE_NAME = "bb_access_session";
 
@@ -73,47 +73,41 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
     }
   }, [hasAccess]);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsVerifying(true);
+
+    try {
+      const result = await verifyAccessCode({
+        siteId,
+        code: code.toUpperCase(),
+      });
+
+      // Store session token in cookie
+      setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
+
+      setHasAccess(true);
+    } catch (err) {
+      setError(
+        err instanceof ConvexError
+          ? (err.data as string)
+          : "Invalid or expired access code",
+      );
+      setCode("");
+      inputRef.current?.focus();
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (value.length <= 6) {
+      setCode(value);
       setError(null);
-      setIsVerifying(true);
-
-      try {
-        const result = await verifyAccessCode({
-          siteId,
-          code: code.toUpperCase(),
-        });
-
-        // Store session token in cookie
-        setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
-
-        setHasAccess(true);
-      } catch (err) {
-        setError(
-          err instanceof ConvexError
-            ? (err.data as string)
-            : "Invalid or expired access code",
-        );
-        setCode("");
-        inputRef.current?.focus();
-      } finally {
-        setIsVerifying(false);
-      }
-    },
-    [siteId, code, verifyAccessCode],
-  );
-
-  const handleCodeChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-      if (value.length <= 6) {
-        setCode(value);
-        setError(null);
-      }
-    },
-    [],
-  );
+    }
+  };
 
   // Show loading state while checking session
   if (hasAccess === null) {

@@ -1,11 +1,12 @@
 "use client";
 
-import { usePageExpandState } from "@/hooks/use-page-expand-state";
-import { useSiteCustomization } from "@/hooks/use-site-customization";
 import { getDisplayDomain } from "@/lib/url";
+import { ElementPicker } from "@/modules/editor/components/element-picker";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import { NavItem, SortablePageTree } from "@/modules/navigation";
+import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
 import type { Id } from "@baseblocks/backend";
-import { ElementPicker, useEditorContext } from "@baseblocks/editor";
 import type {
   LayoutBlockType,
   LayoutType,
@@ -29,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
 
 function buildPageTree(pages: PageListItem[]): PageWithChildren[] {
@@ -103,7 +104,7 @@ export function EditorSidebar({
   // Customization + page tree for preview tab
   const { cssVariables: customizationStyles, isCustomized } =
     useSiteCustomization(siteId as Id<"sites">);
-  const pageTree = useMemo(() => buildPageTree(navPages), [navPages]);
+  const pageTree = buildPageTree(navPages);
 
   // Auto-switch to components tab when a slot or block is selected
   useEffect(() => {

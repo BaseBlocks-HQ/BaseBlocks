@@ -5,7 +5,7 @@
 
 import { DEFAULT_SECTION_CONTENT } from "@baseblocks/types/elements";
 import { Library } from "lucide-react";
-import { registerElement } from "../../registry";
+import { registerElement } from "../../framework/registry";
 import { LibraryConfigPanel } from "./config";
 import { LibraryEditor } from "./editor";
 import { LibraryPreview } from "./preview";

@@ -17,7 +17,7 @@ import {
   Music,
   X,
 } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
@@ -118,7 +118,7 @@ export function MediaViewerModal() {
     };
   }, [isOpen, isFullscreen]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = () => {
     if (!currentFile) return;
     const link = document.createElement("a");
     link.href = currentFile.url;
@@ -128,11 +128,11 @@ export function MediaViewerModal() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [currentFile]);
+  };
 
   const [isOpeningExternal, setIsOpeningExternal] = useState(false);
 
-  const handleOpenExternal = useCallback(async () => {
+  const handleOpenExternal = async () => {
     if (!currentFile || isOpeningExternal) return;
     setIsOpeningExternal(true);
     try {
@@ -140,12 +140,12 @@ export function MediaViewerModal() {
     } finally {
       setIsOpeningExternal(false);
     }
-  }, [currentFile, isOpeningExternal]);
+  };
 
   // Callback for viewers to register their controls
-  const handleRenderControls = useCallback((controls: ReactNode) => {
+  const handleRenderControls = (controls: ReactNode) => {
     setViewerControls(controls);
-  }, []);
+  };
 
   if (!isOpen || !currentFile) {
     return null;

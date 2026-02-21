@@ -5,13 +5,13 @@
  * Main component for building forms in the editor
  */
 
-import { useAutoSave } from "@/hooks/use-auto-save";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type { FormContent } from "@baseblocks/types/elements";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { BuilderCanvas } from "./builder/builder-canvas";
 import { FieldPicker } from "./builder/field-picker";
 import { FieldSettingsPanel } from "./builder/field-settings";
@@ -27,14 +27,11 @@ export function FormEditor({
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
-  const handleUpdate = useCallback(
-    (newContent: FormContent) => {
-      setLocalContent(newContent);
-      onSaveStatusChange?.("pending");
-      save(newContent);
-    },
-    [save, onSaveStatusChange],
-  );
+  const handleUpdate = (newContent: FormContent) => {
+    setLocalContent(newContent);
+    onSaveStatusChange?.("pending");
+    save(newContent);
+  };
 
   return (
     <FormBuilderProvider

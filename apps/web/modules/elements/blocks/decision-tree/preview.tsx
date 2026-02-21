@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { ElementPreviewProps } from "../../registry";
+import type { ElementPreviewProps } from "../../framework/registry";
 
 export function DecisionTreePreview({ className }: ElementPreviewProps) {
   return (

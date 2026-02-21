@@ -5,10 +5,10 @@
  * Renders the form for end users (published view)
  */
 
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { Button } from "@baseblocks/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { getFieldRenderer } from "./builder/field-registry";
 
@@ -24,9 +24,8 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleFieldChange = useCallback((fieldName: string, value: unknown) => {
+  const handleFieldChange = (fieldName: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [fieldName]: value }));
-    // Clear error when user starts typing
     setErrors((prev) => {
       if (prev[fieldName]) {
         const { [fieldName]: _, ...rest } = prev;
@@ -34,9 +33,9 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
       }
       return prev;
     });
-  }, []);
+  };
 
-  const validate = useCallback((): boolean => {
+  const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
     for (const field of content.fields) {
@@ -65,7 +64,7 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [content.fields, values]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,8 +80,7 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsSubmitted(true);
       toast.success("Form submitted successfully");
-    } catch (error) {
-      console.error("Form submission error:", error);
+    } catch (_error) {
       toast.error("Failed to submit form");
     } finally {
       setIsSubmitting(false);

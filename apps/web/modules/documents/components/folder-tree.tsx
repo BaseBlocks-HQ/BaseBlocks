@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { CreateFolderDialog } from "./create-folder-dialog";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { type FolderData, FolderTreeItem } from "./folder-tree-item";
@@ -38,7 +38,7 @@ export function FolderTree({
   const [deleteFolderId, setDeleteFolderId] = useState<string | null>(null);
 
   // Build folder tree structure
-  const folderTree = useMemo(() => {
+  const folderTree = (() => {
     const childrenMap = new Map<string | undefined, FolderData[]>();
 
     for (const folder of folders) {
@@ -54,17 +54,14 @@ export function FolderTree({
     }
 
     return childrenMap;
-  }, [folders]);
+  })();
 
   // Check if folder has children
-  const hasChildren = useCallback(
-    (folderId: string) => {
-      return (folderTree.get(folderId)?.length || 0) > 0;
-    },
-    [folderTree],
-  );
+  const hasChildren = (folderId: string) => {
+    return (folderTree.get(folderId)?.length || 0) > 0;
+  };
 
-  const handleToggleExpand = useCallback((folderId: string) => {
+  const handleToggleExpand = (folderId: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
       if (next.has(folderId)) {
@@ -74,67 +71,51 @@ export function FolderTree({
       }
       return next;
     });
-  }, []);
+  };
 
-  const handleCreateSubfolder = useCallback((parentId: string) => {
+  const handleCreateSubfolder = (parentId: string) => {
     setCreateParentId(parentId);
     setCreateDialogOpen(true);
     // Expand parent folder
     setExpandedFolders((prev) => new Set(prev).add(parentId));
-  }, []);
+  };
 
-  const handleRename = useCallback((folderId: string) => {
+  const handleRename = (folderId: string) => {
     setRenameFolderId(folderId);
     setRenameDialogOpen(true);
-  }, []);
+  };
 
-  const handleDelete = useCallback((folderId: string) => {
+  const handleDelete = (folderId: string) => {
     setDeleteFolderId(folderId);
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
   // Get folder by ID
-  const getFolderById = useCallback(
-    (id: string) => folders.find((f) => f._id === id),
-    [folders],
-  );
+  const getFolderById = (id: string) => folders.find((f) => f._id === id);
 
   // Render folder tree recursively
-  const renderFolders = useCallback(
-    (parentId?: string, level = 0): React.ReactNode => {
-      const children = folderTree.get(parentId) || [];
+  const renderFolders = (parentId?: string, level = 0): React.ReactNode => {
+    const children = folderTree.get(parentId) || [];
 
-      return children.map((folder) => (
-        <FolderTreeItem
-          key={folder._id}
-          folder={folder}
-          level={level}
-          isSelected={selectedFolderId === folder._id}
-          isExpanded={expandedFolders.has(folder._id)}
-          hasChildren={hasChildren(folder._id)}
-          onSelect={(id) => onSelectFolder(id)}
-          onToggleExpand={handleToggleExpand}
-          onRename={handleRename}
-          onDelete={handleDelete}
-          onCreateSubfolder={handleCreateSubfolder}
-        >
-          {expandedFolders.has(folder._id) &&
-            renderFolders(folder._id, level + 1)}
-        </FolderTreeItem>
-      ));
-    },
-    [
-      folderTree,
-      selectedFolderId,
-      expandedFolders,
-      hasChildren,
-      onSelectFolder,
-      handleToggleExpand,
-      handleRename,
-      handleDelete,
-      handleCreateSubfolder,
-    ],
-  );
+    return children.map((folder) => (
+      <FolderTreeItem
+        key={folder._id}
+        folder={folder}
+        level={level}
+        isSelected={selectedFolderId === folder._id}
+        isExpanded={expandedFolders.has(folder._id)}
+        hasChildren={hasChildren(folder._id)}
+        onSelect={(id) => onSelectFolder(id)}
+        onToggleExpand={handleToggleExpand}
+        onRename={handleRename}
+        onDelete={handleDelete}
+        onCreateSubfolder={handleCreateSubfolder}
+      >
+        {expandedFolders.has(folder._id) &&
+          renderFolders(folder._id, level + 1)}
+      </FolderTreeItem>
+    ));
+  };
 
   const renamingFolder = renameFolderId ? getFolderById(renameFolderId) : null;
   const deletingFolder = deleteFolderId ? getFolderById(deleteFolderId) : null;

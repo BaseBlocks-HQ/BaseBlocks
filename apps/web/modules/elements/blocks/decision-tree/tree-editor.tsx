@@ -1,7 +1,7 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type {
   DecisionTree,
   DecisionTreeBlockType,
@@ -41,20 +41,13 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
 
 function generateTreeId() {
   return Math.random().toString(36).slice(2, 9);
-}
-
-function normalizeTrees(content: DecisionTreeContent): DecisionTree[] {
-  if (content.trees && content.trees.length > 0) return content.trees;
-  return [
-    { id: generateTreeId(), label: "Tree 1", nodes: content.nodes || [] },
-  ];
 }
 
 export function DecisionTreeEditor({
@@ -64,11 +57,9 @@ export function DecisionTreeEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
   const isMobile = useIsMobile();
-  const [trees, setTrees] = useState<DecisionTree[]>(() =>
-    normalizeTrees(content),
-  );
+  const [trees, setTrees] = useState<DecisionTree[]>(() => content.trees ?? []);
   const [activeTreeId, setActiveTreeId] = useState<string>(
-    () => normalizeTrees(content)[0]!.id,
+    () => (content.trees ?? [])[0]?.id ?? "",
   );
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [editingLabelValue, setEditingLabelValue] = useState("");
@@ -86,12 +77,12 @@ export function DecisionTreeEditor({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset local state only when block id changes
   useEffect(() => {
-    const normalized = normalizeTrees(content);
-    setTrees(normalized);
+    const trees = content.trees ?? [];
+    setTrees(trees);
     setTabsMode(content.tabsMode ?? "row");
     tabsModeRef.current = content.tabsMode ?? "row";
-    if (!normalized.find((t) => t.id === activeTreeId)) {
-      setActiveTreeId(normalized[0]!.id);
+    if (!trees.find((t) => t.id === activeTreeId)) {
+      setActiveTreeId(trees[0]?.id ?? "");
     }
   }, [id]);
 
@@ -109,40 +100,31 @@ export function DecisionTreeEditor({
     }
   }, [trees, activeTreeId]);
 
-  const saveContent = useCallback(
-    (updatedTrees: DecisionTree[]) => {
-      const newContent: DecisionTreeContent = {
-        nodes: updatedTrees[0]?.nodes ?? [],
-        trees: updatedTrees,
-        tabsMode: tabsModeRef.current,
-      };
-      onSaveStatusChange?.("pending");
-      debouncedSave(newContent);
-    },
-    [debouncedSave, onSaveStatusChange],
-  );
+  const saveContent = (updatedTrees: DecisionTree[]) => {
+    const newContent: DecisionTreeContent = {
+      nodes: updatedTrees[0]?.nodes ?? [],
+      trees: updatedTrees,
+      tabsMode: tabsModeRef.current,
+    };
+    onSaveStatusChange?.("pending");
+    debouncedSave(newContent);
+  };
 
-  const updateTrees = useCallback(
-    (updatedTrees: DecisionTree[]) => {
-      setTrees(updatedTrees);
-      saveContent(updatedTrees);
-    },
-    [saveContent],
-  );
+  const updateTrees = (updatedTrees: DecisionTree[]) => {
+    setTrees(updatedTrees);
+    saveContent(updatedTrees);
+  };
 
-  const updateActiveTreeNodes = useCallback(
-    (newNodes: DecisionTreeNode[]) => {
-      const updatedTrees = trees.map((t) =>
-        t.id === activeTreeId ? { ...t, nodes: newNodes } : t,
-      );
-      updateTrees(updatedTrees);
-    },
-    [trees, activeTreeId, updateTrees],
-  );
+  const updateActiveTreeNodes = (newNodes: DecisionTreeNode[]) => {
+    const updatedTrees = trees.map((t) =>
+      t.id === activeTreeId ? { ...t, nodes: newNodes } : t,
+    );
+    updateTrees(updatedTrees);
+  };
 
   // --- Tree tab operations ---
 
-  const addTree = useCallback(() => {
+  const addTree = () => {
     const newTree: DecisionTree = {
       id: generateTreeId(),
       label: `Tree ${trees.length + 1}`,
@@ -151,21 +133,18 @@ export function DecisionTreeEditor({
     setActiveTreeId(newTree.id);
     navigateToIndex(0);
     updateTrees([...trees, newTree]);
-  }, [trees, updateTrees, navigateToIndex]);
+  };
 
-  const removeTree = useCallback(
-    (treeId: string) => {
-      if (trees.length <= 1) return;
-      const idx = trees.findIndex((t) => t.id === treeId);
-      const updated = trees.filter((t) => t.id !== treeId);
-      if (activeTreeId === treeId) {
-        setActiveTreeId(updated[Math.min(idx, updated.length - 1)]!.id);
-        navigateToIndex(0);
-      }
-      updateTrees(updated);
-    },
-    [trees, activeTreeId, updateTrees, navigateToIndex],
-  );
+  const removeTree = (treeId: string) => {
+    if (trees.length <= 1) return;
+    const idx = trees.findIndex((t) => t.id === treeId);
+    const updated = trees.filter((t) => t.id !== treeId);
+    if (activeTreeId === treeId) {
+      setActiveTreeId(updated[Math.min(idx, updated.length - 1)]!.id);
+      navigateToIndex(0);
+    }
+    updateTrees(updated);
+  };
 
   const startEditLabel = (treeId: string) => {
     const tree = trees.find((t) => t.id === treeId);
@@ -198,146 +177,128 @@ export function DecisionTreeEditor({
 
   // --- Node operations (operate on active tree's nodes) ---
 
-  const handleAddNode = useCallback(
-    (parentId: string | null, name: string) => {
-      const nodes = activeTree.nodes;
-      const siblings = nodes.filter((n) => n.parentId === parentId);
-      const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
-      const newNode: DecisionTreeNode = {
-        id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        parentId,
-        name,
-        order: maxOrder + 1,
-        contentBlocks: [],
-      };
-      updateActiveTreeNodes([...nodes, newNode]);
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleAddNode = (parentId: string | null, name: string) => {
+    const nodes = activeTree.nodes;
+    const siblings = nodes.filter((n) => n.parentId === parentId);
+    const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
+    const newNode: DecisionTreeNode = {
+      id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      parentId,
+      name,
+      order: maxOrder + 1,
+      contentBlocks: [],
+    };
+    updateActiveTreeNodes([...nodes, newNode]);
+  };
 
-  const handleUpdateNode = useCallback(
-    (nodeId: string, name: string) => {
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, name } : n)),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleUpdateNode = (nodeId: string, name: string) => {
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, name } : n)),
+    );
+  };
 
-  const handleRemoveNode = useCallback(
-    (nodeId: string) => {
-      const nodes = activeTree.nodes;
-      const idsToRemove = new Set<string>();
-      const collect = (nid: string) => {
-        idsToRemove.add(nid);
-        for (const child of nodes.filter((n) => n.parentId === nid)) {
-          collect(child.id);
-        }
-      };
-      collect(nodeId);
-      updateActiveTreeNodes(nodes.filter((n) => !idsToRemove.has(n.id)));
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleRemoveNode = (nodeId: string) => {
+    const nodes = activeTree.nodes;
+    const idsToRemove = new Set<string>();
+    const collect = (nid: string) => {
+      idsToRemove.add(nid);
+      for (const child of nodes.filter((n) => n.parentId === nid)) {
+        collect(child.id);
+      }
+    };
+    collect(nodeId);
+    updateActiveTreeNodes(nodes.filter((n) => !idsToRemove.has(n.id)));
+  };
 
-  const handleReorderNodes = useCallback(
-    (parentId: string | null, orderedIds: string[]) => {
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) => {
-          const idx = orderedIds.indexOf(n.id);
-          return idx !== -1 ? { ...n, order: idx } : n;
-        }),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleReorderNodes = (
+    _parentId: string | null,
+    orderedIds: string[],
+  ) => {
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) => {
+        const idx = orderedIds.indexOf(n.id);
+        return idx !== -1 ? { ...n, order: idx } : n;
+      }),
+    );
+  };
 
   // --- Content block operations ---
 
-  const handleAddContentBlock = useCallback(
-    (nodeId: string, type: DecisionTreeBlockType) => {
-      const node = activeTree.nodes.find((n) => n.id === nodeId);
-      if (!node) return;
-      const maxOrder = node.contentBlocks.reduce(
-        (max, b) => Math.max(max, b.order),
-        -1,
-      );
-      const newBlock: DecisionTreeContentBlock = {
-        id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        type,
-        content: DEFAULT_BLOCK_CONTENT[type],
-        order: maxOrder + 1,
-      };
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) =>
-          n.id === nodeId
-            ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] }
-            : n,
-        ),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleAddContentBlock = (
+    nodeId: string,
+    type: DecisionTreeBlockType,
+  ) => {
+    const node = activeTree.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    const maxOrder = node.contentBlocks.reduce(
+      (max, b) => Math.max(max, b.order),
+      -1,
+    );
+    const newBlock: DecisionTreeContentBlock = {
+      id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type,
+      content: DEFAULT_BLOCK_CONTENT[type],
+      order: maxOrder + 1,
+    };
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] }
+          : n,
+      ),
+    );
+  };
 
-  const handleUpdateContentBlock = useCallback(
-    (nodeId: string, block: DecisionTreeContentBlock) => {
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                contentBlocks: n.contentBlocks.map((b) =>
-                  b.id === block.id ? block : b,
-                ),
-              }
-            : n,
-        ),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleUpdateContentBlock = (
+    nodeId: string,
+    block: DecisionTreeContentBlock,
+  ) => {
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              contentBlocks: n.contentBlocks.map((b) =>
+                b.id === block.id ? block : b,
+              ),
+            }
+          : n,
+      ),
+    );
+  };
 
-  const handleRemoveContentBlock = useCallback(
-    (nodeId: string, blockId: string) => {
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId),
-              }
-            : n,
-        ),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleRemoveContentBlock = (nodeId: string, blockId: string) => {
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId),
+            }
+          : n,
+      ),
+    );
+  };
 
-  const handleReorderContentBlocks = useCallback(
-    (nodeId: string, orderedIds: string[]) => {
-      updateActiveTreeNodes(
-        activeTree.nodes.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                contentBlocks: n.contentBlocks.map((b) => {
-                  const idx = orderedIds.indexOf(b.id);
-                  return idx !== -1 ? { ...b, order: idx } : b;
-                }),
-              }
-            : n,
-        ),
-      );
-    },
-    [activeTree, updateActiveTreeNodes],
-  );
+  const handleReorderContentBlocks = (nodeId: string, orderedIds: string[]) => {
+    updateActiveTreeNodes(
+      activeTree.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              contentBlocks: n.contentBlocks.map((b) => {
+                const idx = orderedIds.indexOf(b.id);
+                return idx !== -1 ? { ...b, order: idx } : b;
+              }),
+            }
+          : n,
+      ),
+    );
+  };
 
-  const handleUpdateNodeName = useCallback(
-    (nodeId: string, name: string) => {
-      handleUpdateNode(nodeId, name);
-    },
-    [handleUpdateNode],
-  );
+  const handleUpdateNodeName = (nodeId: string, name: string) => {
+    handleUpdateNode(nodeId, name);
+  };
 
   const getNodeName = (nodeId: string) =>
     activeTree.nodes.find((n) => n.id === nodeId)?.name ?? "...";

@@ -5,7 +5,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ViewerProps } from "../types";
 
@@ -40,7 +40,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
       });
   }, [file.url]);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     if (!content) return;
     try {
       await navigator.clipboard.writeText(content);
@@ -50,21 +50,21 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     } catch {
       toast.error("Failed to copy to clipboard");
     }
-  }, [content]);
+  };
 
-  const toggleSearch = useCallback(() => {
+  const toggleSearch = () => {
     setShowSearch((prev) => !prev);
     if (showSearch) {
       setSearchTerm("");
     }
-  }, [showSearch]);
+  };
 
-  const toggleWordWrap = useCallback(() => {
+  const toggleWordWrap = () => {
     setWordWrap((prev) => !prev);
-  }, []);
+  };
 
   // Highlight search terms in content
-  const highlightedContent = useMemo(() => {
+  const highlightedContent = (() => {
     // Reset scroll flag when search term changes
     hasScrolledToMatch.current = false;
     firstMatchRef.current = null;
@@ -101,7 +101,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
       }
       return part;
     });
-  }, [content, searchTerm]);
+  })();
 
   // Scroll to first match when content loads with a search term
   useEffect(() => {
@@ -190,9 +190,6 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     searchTerm,
     wordWrap,
     copied,
-    toggleSearch,
-    toggleWordWrap,
-    handleCopy,
   ]);
 
   if (isLoading) {

@@ -1,12 +1,17 @@
 /**
- * Navigation components barrel exports
+ * Navigation module barrel exports
  */
-export { BreadcrumbBar } from "./breadcrumb-bar";
-export { DropdownNavTree } from "./dropdown-nav-tree";
-export { HorizontalNavItem } from "./horizontal-nav-item";
-export { NavItem } from "./nav-item";
-export { PageBreadcrumbs } from "./page-breadcrumbs";
-export { PageTreeItem } from "./page-tree";
-export { SortablePageTree } from "./sortable-page-tree";
-export { SubNavBar } from "./sub-nav-bar";
-export { TopNavMenu } from "./top-nav-menu";
+
+// Components
+export { BreadcrumbBar } from "./components/breadcrumb-bar";
+export { DropdownNavTree } from "./components/dropdown-nav-tree";
+export { HorizontalNavItem } from "./components/horizontal-nav-item";
+export { NavItem } from "./components/nav-item";
+export { PageBreadcrumbs } from "./components/page-breadcrumbs";
+export { PageTreeItem } from "./components/page-tree";
+export { SortablePageTree } from "./components/sortable-page-tree";
+export { SubNavBar } from "./components/sub-nav-bar";
+export { TopNavMenu } from "./components/top-nav-menu";
+
+// Hooks
+export { usePageExpandState } from "./hooks/use-page-expand-state";

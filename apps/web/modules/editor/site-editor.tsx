@@ -1,31 +1,16 @@
 "use client";
 
-import { CustomizationConfigPanel } from "@/modules/elements/customization";
-// Direct imports — avoid the @/modules/elements barrel which triggers
-// eager registration of ALL element modules (100+ files).
-import { ElementEditorWrapper } from "@/modules/elements/element-editor-wrapper";
-import {
-  BlocksIcon,
-  CustomizationIcon,
-  FormsIcon,
-  LayoutsIcon,
-  MediaIcon,
-  NavIcon,
-  SectionsIcon,
-  SiteSettingsIcon,
-} from "@/modules/elements/icons";
-import { LayoutContextProvider } from "@/modules/elements/layout-context";
-import { NavigationConfigPanel } from "@/modules/elements/navigation";
-import {
-  getDefaultContent,
-  getElementConfigPanel,
-  getElementsByCategory,
-  hasElementConfigPanel,
-} from "@/modules/elements/registry";
-import { SiteConfigPanel } from "@/modules/elements/site";
-
 import { EditorSkeleton } from "@/components/skeletons";
-import { useSiteCustomization } from "@/hooks/use-site-customization";
+import { useMemberRole, usePages, useSite, useSiteWithTeam } from "@/lib/data";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import { EditorProvider } from "@/modules/editor/contexts/editor-context";
+import {
+  createBlock,
+  createLayout,
+  generateId,
+} from "@/modules/editor/layouts";
+import { getDefaultContent } from "@/modules/elements/framework/registry";
+import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import {
   PublicSubpageProvider,
   usePublicSubpageContext,
@@ -33,25 +18,8 @@ import {
 import { PublicSubpagePanel } from "@/modules/public-site/public-subpage-panel";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
-import {
-  type EditorElementsBridge,
-  EditorElementsBridgeProvider,
-  type EditorMutations,
-  EditorMutationsProvider,
-  EditorProvider,
-  PageEditor,
-  SubpageEditPanel,
-  useEditorContext,
-} from "@baseblocks/editor";
-import type { LayoutDoc, PageData } from "@baseblocks/editor";
-import {
-  createBlock,
-  createLayout,
-  generateId,
-} from "@baseblocks/editor/layouts";
 import type {
   AnyContent,
-  ElementCategory,
   ElementType,
   LayoutBlockType,
   LayoutType,
@@ -63,11 +31,16 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { SidebarProvider } from "@baseblocks/ui/sidebar";
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation } from "convex/react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  ConnectedPageEditor,
+  ConnectedSubpageEditPanel,
+} from "./components/connected-editors";
 import { EditorHeader } from "./editor-header";
 import { EditorSidebar } from "./editor-sidebar";
+import { ConvexEditorMutationsProvider } from "./mutations-bridge";
 
 interface SiteEditorProps {
   siteId: string;
@@ -98,275 +71,6 @@ function useElementsLoader() {
   }, []);
 
   return loaded;
-}
-
-/**
- * Bridges all Convex mutations into the backend-agnostic EditorMutations interface.
- */
-function ConvexEditorMutationsProvider({
-  children,
-}: { children: React.ReactNode }) {
-  // Layout mutations
-  const createLayoutMut = useMutation(api.layouts.mutations.create);
-  const removeLayoutMut = useMutation(api.layouts.mutations.remove);
-  const reorderLayoutsMut = useMutation(api.layouts.mutations.reorder);
-  const updateBlockMut = useMutation(api.layouts.mutations.updateBlockInSlot);
-  const removeBlockMut = useMutation(api.layouts.mutations.removeBlockFromSlot);
-  const addBlockMut = useMutation(api.layouts.mutations.addBlockToSlot);
-  const moveBlockMut = useMutation(api.layouts.mutations.moveBlock);
-  const updateSettingsMut = useMutation(api.layouts.mutations.updateSettings);
-
-  // Page mutations
-  const updatePageTabsMut = useMutation(api.pages.mutations.updatePageTabs);
-  const disablePageTabsMut = useMutation(api.pages.mutations.disablePageTabs);
-  const enablePageTabsMut = useMutation(api.pages.mutations.enablePageTabs);
-  const updatePageMut = useMutation(api.pages.mutations.update);
-
-  // Deployment mutations
-  const deployMut = useMutation(api.deployments.mutations.deploy);
-  const rollbackMut = useMutation(api.deployments.mutations.rollback);
-
-  // Sharing mutations
-  const updateVisibilityMut = useMutation(
-    api.sharing.mutations.updateVisibility,
-  );
-  const updateAccessSettingsMut = useMutation(
-    api.sharing.mutations.updateAccessSettings,
-  );
-  const generateNewCodeMut = useMutation(
-    api.sharing.mutations.generateNewAccessCode,
-  );
-
-  const mutations = useMemo<EditorMutations>(
-    () => ({
-      layouts: {
-        create: async (args) => {
-          const id = await createLayoutMut({
-            pageId: args.pageId as Id<"pages">,
-            type: args.type as LayoutType,
-            slots: args.slots as Parameters<typeof createLayoutMut>[0]["slots"],
-            settings: args.settings,
-            tabId: args.tabId,
-          });
-          return id as string;
-        },
-        remove: async (args) => {
-          await removeLayoutMut({
-            layoutId: args.layoutId as Id<"layouts">,
-          });
-        },
-        reorder: async (args) => {
-          await reorderLayoutsMut({
-            pageId: args.pageId as Id<"pages">,
-            layoutIds: args.layoutIds as Id<"layouts">[],
-          });
-        },
-        updateBlockInSlot: async (args) => {
-          await updateBlockMut({
-            layoutId: args.layoutId as Id<"layouts">,
-            slotId: args.slotId,
-            blockId: args.blockId,
-            content: args.content,
-          });
-        },
-        removeBlockFromSlot: async (args) => {
-          await removeBlockMut({
-            layoutId: args.layoutId as Id<"layouts">,
-            slotId: args.slotId,
-            blockId: args.blockId,
-          });
-        },
-        addBlockToSlot: async (args) => {
-          await addBlockMut({
-            layoutId: args.layoutId as Id<"layouts">,
-            slotId: args.slotId,
-            block: args.block as Parameters<typeof addBlockMut>[0]["block"],
-            index: args.index,
-          });
-        },
-        moveBlock: async (args) => {
-          await moveBlockMut({
-            layoutId: args.layoutId as Id<"layouts">,
-            fromSlotId: args.fromSlotId,
-            toSlotId: args.toSlotId,
-            blockId: args.blockId,
-            toIndex: args.toIndex,
-          });
-        },
-        updateSettings: async (args) => {
-          await updateSettingsMut({
-            layoutId: args.layoutId as Id<"layouts">,
-            settings: args.settings,
-          });
-        },
-      },
-      pages: {
-        updatePageTabs: async (args) => {
-          await updatePageTabsMut({
-            pageId: args.pageId as Id<"pages">,
-            pageTabs: args.pageTabs,
-          });
-        },
-        disablePageTabs: async (args) => {
-          await disablePageTabsMut({
-            pageId: args.pageId as Id<"pages">,
-          });
-        },
-        enablePageTabs: async (args) => {
-          await enablePageTabsMut({
-            pageId: args.pageId as Id<"pages">,
-            tabs: args.tabs,
-          });
-        },
-        update: async (args) => {
-          await updatePageMut({
-            pageId: args.pageId as Id<"pages">,
-            title: args.title,
-          });
-        },
-      },
-      deployments: {
-        deploy: async (args) => {
-          await deployMut({
-            siteId: args.siteId as Id<"sites">,
-            notes: args.notes,
-          });
-        },
-        rollback: async (args) => {
-          await rollbackMut({
-            siteId: args.siteId as Id<"sites">,
-            targetDeploymentId: args.targetDeploymentId as Id<"deployments">,
-          });
-        },
-      },
-      sharing: {
-        updateVisibility: async (args) => {
-          await updateVisibilityMut({
-            siteId: args.siteId as Id<"sites">,
-            visibility: args.visibility as Parameters<
-              typeof updateVisibilityMut
-            >[0]["visibility"],
-          });
-        },
-        updateAccessSettings: async (args) => {
-          await updateAccessSettingsMut({
-            siteId: args.siteId as Id<"sites">,
-            accessCodeRotationHours: args.accessCodeRotationHours,
-            accessCodeSessionDays: args.accessCodeSessionDays,
-          });
-        },
-        generateNewAccessCode: async (args) => {
-          await generateNewCodeMut({
-            siteId: args.siteId as Id<"sites">,
-          });
-        },
-      },
-    }),
-    [
-      createLayoutMut,
-      removeLayoutMut,
-      reorderLayoutsMut,
-      updateBlockMut,
-      removeBlockMut,
-      addBlockMut,
-      moveBlockMut,
-      updateSettingsMut,
-      updatePageTabsMut,
-      disablePageTabsMut,
-      enablePageTabsMut,
-      updatePageMut,
-      deployMut,
-      rollbackMut,
-      updateVisibilityMut,
-      updateAccessSettingsMut,
-      generateNewCodeMut,
-    ],
-  );
-
-  return (
-    <EditorMutationsProvider mutations={mutations}>
-      {children}
-    </EditorMutationsProvider>
-  );
-}
-
-/** Fetches page + layouts data from Convex and renders PageEditor */
-function ConnectedPageEditor({
-  pageId,
-  onSelectionChange,
-  nested,
-}: {
-  pageId: string;
-  onSelectionChange?: (slotId: string | null) => void;
-  nested?: boolean;
-}) {
-  const rawPage = useQuery(api.pages.queries.get, {
-    pageId: pageId as Id<"pages">,
-  });
-  const rawLayouts = useQuery(api.layouts.queries.list, {
-    pageId: pageId as Id<"pages">,
-  });
-
-  const pageData: PageData | undefined = rawPage
-    ? { title: rawPage.title, pageTabs: rawPage.pageTabs ?? [] }
-    : rawPage === null
-      ? undefined
-      : undefined;
-
-  const layouts: LayoutDoc[] | undefined = rawLayouts?.map((l) => ({
-    _id: l._id as string,
-    type: l.type as LayoutType,
-    order: l.order,
-    tabId: l.tabId,
-    slots: l.slots.map((s) => ({
-      id: s.id,
-      position: s.position,
-      blocks: s.blocks.map((b) => ({
-        id: b.id,
-        type: b.type,
-        content: b.content,
-      })),
-    })),
-    settings: l.settings,
-  }));
-
-  return (
-    <PageEditor
-      pageId={pageId}
-      pageData={rawPage === undefined ? undefined : (pageData ?? undefined)}
-      layouts={layouts}
-      onSelectionChange={onSelectionChange}
-      nested={nested}
-    />
-  );
-}
-
-/** Fetches subpage title from Convex and renders SubpageEditPanel */
-function ConnectedSubpageEditPanel({
-  isFullscreen,
-  onToggleFullscreen,
-}: {
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-}) {
-  const { editingSubpage } = useEditorContext();
-  const page = useQuery(
-    api.pages.queries.get,
-    editingSubpage?.pageId
-      ? { pageId: editingSubpage.pageId as Id<"pages"> }
-      : "skip",
-  );
-
-  return (
-    <SubpageEditPanel
-      pageTitle={page?.title}
-      renderPageEditor={(pageId) => (
-        <ConnectedPageEditor pageId={pageId} nested />
-      )}
-      isFullscreen={isFullscreen}
-      onToggleFullscreen={onToggleFullscreen}
-    />
-  );
 }
 
 // Inner component that has access to EditorContext
@@ -409,12 +113,8 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
 
-  const siteData = useQuery(api.sites.queries.getWithTeam, {
-    siteId: siteId as Id<"sites">,
-  });
-  const pages = useQuery(api.pages.queries.list, {
-    siteId: siteId as Id<"sites">,
-  });
+  const siteData = useSiteWithTeam(siteId);
+  const pages = usePages(siteId);
 
   // Get customization CSS variables for preview
   const { cssVariables: customizationStyles, isCustomized } =
@@ -483,8 +183,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     try {
       await publishSite({ siteId: siteId as Id<"sites"> });
       toast.success("Site published");
-    } catch (error) {
-      console.error("Failed to publish site:", error);
+    } catch (_error) {
       toast.error("Failed to publish site");
     }
   };
@@ -493,16 +192,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     try {
       await unpublishSite({ siteId: siteId as Id<"sites"> });
       toast.success("Site unpublished");
-    } catch (error) {
-      console.error("Failed to unpublish site:", error);
+    } catch (_error) {
       toast.error("Failed to unpublish site");
     }
   };
 
   // Handle slot selection change from PageEditor
-  const handleSlotSelectionChange = useCallback((slotId: string | null) => {
+  const handleSlotSelectionChange = (slotId: string | null) => {
     setSelectedSlotId(slotId);
-  }, []);
+  };
 
   // Get the currently selected page
   const selectedPage = selectedPageId
@@ -510,152 +208,127 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     : pages?.[0];
 
   // Add layout from sidebar
-  const handleAddLayout = useCallback(
-    async (type: LayoutType) => {
-      // When editing a subpage, add the layout to the subpage instead of the parent page
-      const targetPageId = editingSubpage
-        ? (editingSubpage.pageId as Id<"pages">)
-        : selectedPage?._id;
+  const handleAddLayout = async (type: LayoutType) => {
+    // When editing a subpage, add the layout to the subpage instead of the parent page
+    const targetPageId = editingSubpage
+      ? (editingSubpage.pageId as Id<"pages">)
+      : selectedPage?._id;
 
-      if (!targetPageId) return;
+    if (!targetPageId) return;
 
-      const newLayout = createLayout(type);
-      const pageIdStr = targetPageId as string;
-      const layoutId = await createLayoutMutation({
-        pageId: targetPageId as Id<"pages">,
-        type: newLayout.type,
-        slots: newLayout.slots,
-        settings: newLayout.settings,
-        tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
-      });
+    const newLayout = createLayout(type);
+    const pageIdStr = targetPageId as string;
+    const layoutId = await createLayoutMutation({
+      pageId: targetPageId as Id<"pages">,
+      type: newLayout.type,
+      slots: newLayout.slots,
+      settings: newLayout.settings,
+      tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
+    });
 
-      // Select the first slot of the new layout
-      if (newLayout.slots.length > 0) {
-        setTimeout(() => {
-          selectSlot(layoutId as string, newLayout.slots[0]!.id);
-          setSelectedSlotId(newLayout.slots[0]!.id);
-        }, 100);
-      }
+    // Select the first slot of the new layout
+    if (newLayout.slots.length > 0) {
+      setTimeout(() => {
+        selectSlot(layoutId as string, newLayout.slots[0]!.id);
+        setSelectedSlotId(newLayout.slots[0]!.id);
+      }, 100);
+    }
 
-      if (!isUndoRedoExecuting) {
-        const layoutIdRef = { value: layoutId as string };
-        pushCommand({
-          description: `Add ${type} layout`,
-          pageId: pageIdStr,
-          undo: async () => {
-            await removeLayoutMutation({
-              layoutId: layoutIdRef.value as Id<"layouts">,
-            });
-          },
-          redo: async () => {
-            const newId = await createLayoutMutation({
-              pageId: targetPageId as Id<"pages">,
-              type: newLayout.type,
-              slots: newLayout.slots,
-              settings: newLayout.settings,
-              tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
-            });
-            layoutIdRef.value = newId as string;
-          },
-        });
-      }
-    },
-    [
-      selectedPage,
-      editingSubpage,
-      createLayoutMutation,
-      removeLayoutMutation,
-      selectSlot,
-      activeTabId,
-      pushCommand,
-      isUndoRedoExecuting,
-    ],
-  );
-
-  // Add block from sidebar
-  const handleAddBlock = useCallback(
-    async (type: ElementType) => {
-      if (!selection.layoutId || !selection.slotId) return;
-
-      // Special case: subpage blocks create a real child page atomically
-      if (type === "subpage") {
-        const blockId = generateId();
-        const title = "New Sub-page";
-        const slug = `sub-page-${blockId.slice(0, 8)}`;
-
-        try {
-          await addSubpageBlockMutation({
-            layoutId: selection.layoutId as Id<"layouts">,
-            slotId: selection.slotId,
-            blockId,
-            title,
-            slug,
+    if (!isUndoRedoExecuting) {
+      const layoutIdRef = { value: layoutId as string };
+      pushCommand({
+        description: `Add ${type} layout`,
+        pageId: pageIdStr,
+        undo: async () => {
+          await removeLayoutMutation({
+            layoutId: layoutIdRef.value as Id<"layouts">,
           });
-          // Block is added to the current page's content — no navigation
-        } catch (error) {
-          console.error("Failed to add subpage block:", error);
-          toast.error("Failed to create sub-page");
-        }
-        return;
-      }
-
-      const content = getDefaultContent(type);
-      if (!content) {
-        console.error(`No default content found for element type: ${type}`);
-        return;
-      }
-      const newBlock = createBlock(type as LayoutBlockType, content);
-      const layoutId = selection.layoutId;
-      const slotId = selection.slotId;
-
-      await addBlockMutation({
-        layoutId: layoutId as Id<"layouts">,
-        slotId,
-        block: {
-          id: newBlock.id,
-          type: newBlock.type,
-          content: newBlock.content as AnyContent,
+        },
+        redo: async () => {
+          const newId = await createLayoutMutation({
+            pageId: targetPageId as Id<"pages">,
+            type: newLayout.type,
+            slots: newLayout.slots,
+            settings: newLayout.settings,
+            tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
+          });
+          layoutIdRef.value = newId as string;
         },
       });
+    }
+  };
 
-      if (!isUndoRedoExecuting && currentPageId) {
-        pushCommand({
-          description: `Add ${type} block`,
-          pageId: currentPageId,
-          undo: async () => {
-            await removeBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
-              slotId,
-              blockId: newBlock.id,
-            });
-          },
-          redo: async () => {
-            await addBlockMutation({
-              layoutId: layoutId as Id<"layouts">,
-              slotId,
-              block: {
-                id: newBlock.id,
-                type: newBlock.type,
-                content: newBlock.content as AnyContent,
-              },
-            });
-          },
+  // Add block from sidebar
+  const handleAddBlock = async (type: ElementType) => {
+    if (!selection.layoutId || !selection.slotId) return;
+
+    // Special case: subpage blocks create a real child page atomically
+    if (type === "subpage") {
+      const blockId = generateId();
+      const title = "New Sub-page";
+      const slug = `sub-page-${blockId.slice(0, 8)}`;
+
+      try {
+        await addSubpageBlockMutation({
+          layoutId: selection.layoutId as Id<"layouts">,
+          slotId: selection.slotId,
+          blockId,
+          title,
+          slug,
         });
+        // Block is added to the current page's content — no navigation
+      } catch (_error) {
+        toast.error("Failed to create sub-page");
       }
-    },
-    [
-      selection,
-      addBlockMutation,
-      addSubpageBlockMutation,
-      removeBlockMutation,
-      pushCommand,
-      isUndoRedoExecuting,
-      currentPageId,
-    ],
-  );
+      return;
+    }
+
+    const content = getDefaultContent(type);
+    if (!content) {
+      return;
+    }
+    const newBlock = createBlock(type as LayoutBlockType, content);
+    const layoutId = selection.layoutId;
+    const slotId = selection.slotId;
+
+    await addBlockMutation({
+      layoutId: layoutId as Id<"layouts">,
+      slotId,
+      block: {
+        id: newBlock.id,
+        type: newBlock.type,
+        content: newBlock.content as AnyContent,
+      },
+    });
+
+    if (!isUndoRedoExecuting && currentPageId) {
+      pushCommand({
+        description: `Add ${type} block`,
+        pageId: currentPageId,
+        undo: async () => {
+          await removeBlockMutation({
+            layoutId: layoutId as Id<"layouts">,
+            slotId,
+            blockId: newBlock.id,
+          });
+        },
+        redo: async () => {
+          await addBlockMutation({
+            layoutId: layoutId as Id<"layouts">,
+            slotId,
+            block: {
+              id: newBlock.id,
+              type: newBlock.type,
+              content: newBlock.content as AnyContent,
+            },
+          });
+        },
+      });
+    }
+  };
 
   // Enable page-level tabs
-  const handleEnableTabs = useCallback(async () => {
+  const handleEnableTabs = async () => {
     const targetPageId = editingSubpage
       ? (editingSubpage.pageId as Id<"pages">)
       : selectedPage?._id;
@@ -668,7 +341,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         { id: generateId(), label: "Tab 2" },
       ],
     });
-  }, [selectedPage, editingSubpage, enablePageTabsMutation]);
+  };
 
   if (siteData === undefined || pages === undefined) {
     return <EditorSkeleton />;
@@ -799,81 +472,30 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 }
 
-// Category icon mapping (passed to editor via bridge)
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  site: <SiteSettingsIcon className="h-5 w-5" />,
-  navigation: <NavIcon className="h-5 w-5" />,
-  layouts: <LayoutsIcon className="h-5 w-5" />,
-  sections: <SectionsIcon className="h-5 w-5" />,
-  blocks: <BlocksIcon className="h-5 w-5" />,
-  media: <MediaIcon className="h-5 w-5" />,
-  forms: <FormsIcon className="h-5 w-5" />,
-  customization: <CustomizationIcon className="h-5 w-5" />,
-};
-
-// Wrapper that provides EditorContext, elements bridge, mutations, and PublicSubpageProvider
+// Wrapper that provides EditorContext, mutations, and PublicSubpageProvider
 export function SiteEditor({ siteId }: SiteEditorProps) {
   const elementsLoaded = useElementsLoader();
 
   // Fetch site data for EditorProvider props
-  const site = useQuery(api.sites.queries.get, {
-    siteId: siteId as Id<"sites">,
-  });
+  const site = useSite(siteId);
 
   // Fetch user role for permissions
-  const myRole = useQuery(
-    api.members.queries.getMyRole,
-    site?.teamId ? { teamId: site.teamId } : "skip",
-  );
+  const myRole = useMemberRole(site?.teamId);
 
-  const siteData = useMemo(
-    () =>
-      site
-        ? {
-            teamId: site.teamId as string,
-            contentModifiedAt: site.contentModifiedAt,
-            lastDeployedAt: site.lastDeployedAt,
-          }
-        : undefined,
-    [site],
-  );
+  const siteData = site
+    ? {
+        teamId: site.teamId as string,
+        contentModifiedAt: site.contentModifiedAt,
+        lastDeployedAt: site.lastDeployedAt,
+      }
+    : undefined;
 
-  const permissions = useMemo(
-    () => ({
-      canEdit: myRole?.role === "admin",
-      isAdmin: myRole?.role === "admin",
-      isViewer: myRole?.role === "viewer",
-      isLoading: myRole === undefined || site === undefined,
-    }),
-    [myRole, site],
-  );
-
-  const elementsBridge = useMemo<EditorElementsBridge>(
-    () => ({
-      ElementWrapper: ElementEditorWrapper,
-      LayoutContextProvider,
-      getConfigPanel: (type: string) =>
-        getElementConfigPanel(type as ElementType) ?? null,
-      hasConfigPanel: (type: string) =>
-        hasElementConfigPanel(type as ElementType),
-      getElementsByCategory: (category: string) =>
-        getElementsByCategory(category as ElementCategory),
-      categoryIcons: CATEGORY_ICONS,
-      panels: {
-        customization:
-          CustomizationConfigPanel as unknown as React.ComponentType<{
-            siteId: string;
-          }>,
-        navigation: NavigationConfigPanel as unknown as React.ComponentType<{
-          siteId: string;
-        }>,
-        site: SiteConfigPanel as unknown as React.ComponentType<{
-          siteId: string;
-        }>,
-      },
-    }),
-    [],
-  );
+  const permissions = {
+    canEdit: myRole?.role === "admin",
+    isAdmin: myRole?.role === "admin",
+    isViewer: myRole?.role === "viewer",
+    isLoading: myRole === undefined || site === undefined,
+  };
 
   if (!elementsLoaded) {
     return <EditorSkeleton />;
@@ -882,11 +504,9 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
   return (
     <ConvexEditorMutationsProvider>
       <EditorProvider siteId={siteId} site={siteData} permissions={permissions}>
-        <EditorElementsBridgeProvider bridge={elementsBridge}>
-          <PublicSubpageProvider>
-            <SiteEditorInner siteId={siteId} />
-          </PublicSubpageProvider>
-        </EditorElementsBridgeProvider>
+        <PublicSubpageProvider>
+          <SiteEditorInner siteId={siteId} />
+        </PublicSubpageProvider>
       </EditorProvider>
     </ConvexEditorMutationsProvider>
   );

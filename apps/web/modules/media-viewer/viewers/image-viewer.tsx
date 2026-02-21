@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import { Maximize2, Minimize2, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 const MIN_ZOOM = 0.1;
@@ -28,21 +28,21 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
     setIsFitToScreen(true);
   }, [file.url]);
 
-  const handleZoomIn = useCallback(() => {
+  const handleZoomIn = () => {
     setZoom((prev) => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
     setIsFitToScreen(false);
-  }, []);
+  };
 
-  const handleZoomOut = useCallback(() => {
+  const handleZoomOut = () => {
     setZoom((prev) => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
     setIsFitToScreen(false);
-  }, []);
+  };
 
-  const handleRotate = useCallback(() => {
+  const handleRotate = () => {
     setRotation((prev) => (prev + 90) % 360);
-  }, []);
+  };
 
-  const handleFitToggle = useCallback(() => {
+  const handleFitToggle = () => {
     if (isFitToScreen) {
       setZoom(1);
       setIsFitToScreen(false);
@@ -51,9 +51,9 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
       setPosition({ x: 0, y: 0 });
       setIsFitToScreen(true);
     }
-  }, [isFitToScreen]);
+  };
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     // Use smooth proportional zooming with low sensitivity for touchpads
     const delta = -e.deltaY * WHEEL_ZOOM_SENSITIVITY;
@@ -62,37 +62,31 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
       return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
     });
     setIsFitToScreen(false);
-  }, []);
+  };
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0) return;
-      setIsDragging(true);
-      dragStartRef.current = {
-        x: e.clientX - position.x,
-        y: e.clientY - position.y,
-      };
-    },
-    [position],
-  );
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    };
+  };
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging) return;
-      setPosition({
-        x: e.clientX - dragStartRef.current.x,
-        y: e.clientY - dragStartRef.current.y,
-      });
-    },
-    [isDragging],
-  );
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y,
+    });
+  };
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-  }, []);
+  };
 
   // Double-click to reset or zoom
-  const handleDoubleClick = useCallback(() => {
+  const handleDoubleClick = () => {
     if (zoom === 1 && isFitToScreen) {
       setZoom(2);
       setIsFitToScreen(false);
@@ -101,7 +95,7 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
       setPosition({ x: 0, y: 0 });
       setIsFitToScreen(true);
     }
-  }, [zoom, isFitToScreen]);
+  };
 
   // Register controls with parent
   useEffect(() => {
@@ -157,15 +151,7 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
         </Button>
       </>,
     );
-  }, [
-    renderControls,
-    zoom,
-    isFitToScreen,
-    handleZoomIn,
-    handleZoomOut,
-    handleRotate,
-    handleFitToggle,
-  ]);
+  }, [renderControls, zoom, isFitToScreen]);
 
   return (
     <div

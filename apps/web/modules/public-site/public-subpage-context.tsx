@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+import { type ReactNode, createContext, useContext, useState } from "react";
 
 export interface ViewingSubpage {
   pageId: string;
@@ -33,13 +27,13 @@ export function PublicSubpageProvider({
     null,
   );
 
-  const openSubpage = useCallback((pageId: string) => {
+  const openSubpage = (pageId: string) => {
     setViewingSubpage({ pageId });
-  }, []);
+  };
 
-  const closeSubpage = useCallback(() => {
+  const closeSubpage = () => {
     setViewingSubpage(null);
-  }, []);
+  };
 
   return (
     <PublicSubpageContext.Provider

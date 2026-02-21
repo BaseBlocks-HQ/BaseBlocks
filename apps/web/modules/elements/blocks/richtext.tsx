@@ -3,13 +3,8 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
 import { cn } from "@/lib/utils";
-import type {
-  ElementEditorProps,
-  ElementPreviewProps,
-  ElementRendererProps,
-} from "../registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
@@ -17,7 +12,12 @@ import { useCreateBlockNote } from "@blocknote/react";
 import { TextCursorInput } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRef } from "react";
-import { registerElement } from "../registry";
+import type {
+  ElementEditorProps,
+  ElementPreviewProps,
+  ElementRendererProps,
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 function RichTextEditor({
   content,

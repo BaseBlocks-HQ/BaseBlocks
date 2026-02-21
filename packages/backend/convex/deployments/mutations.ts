@@ -235,18 +235,12 @@ export const rollback = mutation({
 
     // Copy snapshots to the new deployment (for future rollback-of-rollback)
     for (const snapshot of snapshots) {
-      // Ensure page-layouts data is stringified to avoid nesting limit
-      const data =
-        snapshot.chunkType === "page-layouts" &&
-        typeof snapshot.data !== "string"
-          ? JSON.stringify(snapshot.data)
-          : snapshot.data;
       await ctx.db.insert("deploymentSnapshots", {
         deploymentId: rollbackDeploymentId,
         siteId: snapshot.siteId,
         chunkType: snapshot.chunkType,
         pageId: snapshot.pageId,
-        data,
+        data: snapshot.data,
       });
     }
 
@@ -327,12 +321,7 @@ export const rollback = mutation({
 
     // Restore from page-layouts snapshots
     for (const layoutSnapshot of pageLayoutSnapshots) {
-      // Parse stringified data (or use directly for legacy snapshots)
-      const layoutsData = (
-        typeof layoutSnapshot.data === "string"
-          ? JSON.parse(layoutSnapshot.data)
-          : layoutSnapshot.data
-      ) as Array<{
+      const layoutsData = JSON.parse(layoutSnapshot.data as string) as Array<{
         _id: Id<"layouts">;
         type: string;
         order: number;

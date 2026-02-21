@@ -5,7 +5,7 @@
 
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Workflow } from "lucide-react";
-import { registerElement } from "../../registry";
+import { registerElement } from "../../framework/registry";
 import { FlowchartEditor } from "./editor";
 import { FlowchartPreview } from "./preview";
 import { FlowchartRenderer } from "./renderer";

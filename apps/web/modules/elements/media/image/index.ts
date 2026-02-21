@@ -5,7 +5,7 @@
 
 import { DEFAULT_MEDIA_CONTENT } from "@baseblocks/types/elements";
 import { Image } from "lucide-react";
-import { registerElement } from "../../registry";
+import { registerElement } from "../../framework/registry";
 import { ImageEditor } from "./editor";
 import { ImagePreview } from "./preview";
 import { ImageRenderer } from "./renderer";

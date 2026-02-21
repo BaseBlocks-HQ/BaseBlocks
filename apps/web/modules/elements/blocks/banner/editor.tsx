@@ -1,7 +1,7 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type { BannerAlert, BannerContent } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -14,7 +14,7 @@ import {
 } from "@baseblocks/ui/select";
 import { Textarea } from "@baseblocks/ui/textarea";
 import { GripVertical, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export function BannerEditor({
   id,
@@ -31,14 +31,11 @@ export function BannerEditor({
     setLocalContent(content);
   }, [id]);
 
-  const updateContent = useCallback(
-    (newContent: BannerContent) => {
-      setLocalContent(newContent);
-      onSaveStatusChange?.("pending");
-      save(newContent);
-    },
-    [save, onSaveStatusChange],
-  );
+  const updateContent = (newContent: BannerContent) => {
+    setLocalContent(newContent);
+    onSaveStatusChange?.("pending");
+    save(newContent);
+  };
 
   const addAlert = () => {
     const newAlert: BannerAlert = {

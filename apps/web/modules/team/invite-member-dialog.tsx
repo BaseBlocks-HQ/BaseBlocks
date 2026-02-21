@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth/client";
-import { api } from "@baseblocks/backend";
+import { useTeam } from "@/lib/data";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useQuery } from "convex/react";
 import { Loader2, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -40,7 +39,7 @@ export function InviteMemberDialog({}: InviteMemberDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const team = useQuery(api.teams.queries.getMine);
+  const team = useTeam();
 
   const handleInvite = async () => {
     if (!email.trim()) return;

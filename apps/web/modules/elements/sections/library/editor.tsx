@@ -6,18 +6,16 @@ import { cn } from "@/lib/utils";
 import {
   DropZone,
   type FileData,
-  FileIcon,
   type FolderData,
-  getFileTypeColor,
   useDocumentLibrary,
   useFileOperations,
   useFolderOperations,
   useFolderPath,
 } from "@/modules/documents";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useMediaViewer } from "@/modules/media-viewer";
 import type { Id } from "@baseblocks/backend";
-import { useEditorContext } from "@baseblocks/editor";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -26,15 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@baseblocks/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
-import { MiddleTruncate } from "@baseblocks/ui/middle-truncate";
 import {
   Popover,
   PopoverContent,
@@ -49,176 +39,20 @@ import {
 } from "@baseblocks/ui/select";
 import {
   ChevronRight,
-  Eye,
   File,
   Folder,
-  FolderOpen,
   FolderPlus,
   Home,
   Loader2,
   Menu,
-  MoreHorizontal,
-  Pencil,
   Plus,
-  Trash2,
   Upload,
 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-
-function useContainerWidth() {
-  const [width, setWidth] = useState(0);
-  const observerRef = useRef<ResizeObserver | null>(null);
-
-  const containerRef = useCallback((node: HTMLElement | null) => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
-    if (node) {
-      setWidth(node.offsetWidth);
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          setWidth(entry.contentRect.width);
-        }
-      });
-      observer.observe(node);
-      observerRef.current = observer;
-    }
-  }, []);
-
-  return [containerRef, width] as const;
-}
-
-function FolderItem({
-  folder,
-  level,
-  isSelected,
-  isExpanded,
-  hasChildren,
-  onSelect,
-  onToggle,
-  onRename,
-  onDelete,
-  children,
-}: {
-  folder: FolderData;
-  level: number;
-  isSelected: boolean;
-  isExpanded: boolean;
-  hasChildren: boolean;
-  onSelect: () => void;
-  onToggle: () => void;
-  onRename: () => void;
-  onDelete: () => void;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div
-        className={cn(
-          "group flex items-center gap-1 px-2 py-1 text-sm rounded cursor-pointer",
-          isSelected ? "bg-accent" : "hover:bg-muted/50",
-        )}
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onClick={onSelect}
-      >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-          className={cn("p-0.5 shrink-0", !hasChildren && "invisible")}
-        >
-          <ChevronRight
-            className={cn(
-              "h-3 w-3 transition-transform",
-              isExpanded && "rotate-90",
-            )}
-          />
-        </button>
-        {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-        ) : (
-          <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
-        )}
-        <span className="truncate flex-1 min-w-0">{folder.name}</span>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 opacity-0 group-hover:opacity-100 shrink-0"
-            >
-              <MoreHorizontal className="h-3 w-3" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onRename}>
-              <Pencil className="h-3 w-3 mr-2" /> Rename
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive">
-              <Trash2 className="h-3 w-3 mr-2" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      {isExpanded && children}
-    </div>
-  );
-}
-
-function FileItem({
-  file,
-  onPreview,
-  onRename,
-  onDelete,
-}: {
-  file: FileData;
-  onPreview: () => void;
-  onRename: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div
-      className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-pointer"
-      onClick={onPreview}
-    >
-      <div className={cn("shrink-0", getFileTypeColor(file.contentType))}>
-        <FileIcon contentType={file.contentType} className="h-4 w-4" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <MiddleTruncate text={file.filename} className="text-sm" endChars={8} />
-      </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            className="p-1 opacity-0 group-hover:opacity-100 shrink-0"
-          >
-            <MoreHorizontal className="h-3 w-3" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onPreview}>
-            <Eye className="h-3 w-3 mr-2" /> Preview
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRename}>
-            <Pencil className="h-3 w-3 mr-2" /> Rename
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} className="text-destructive">
-            <Trash2 className="h-3 w-3 mr-2" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-}
+import { FileItem } from "./components/file-item";
+import { FolderItem } from "./components/folder-item";
+import { useContainerWidth } from "./hooks/use-container-width";
 
 export function LibraryEditor({
   content,
@@ -281,7 +115,7 @@ export function LibraryEditor({
   const isUploading = Object.values(uploadStates).some((s) => s.isUploading);
   const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
-  const folderTree = useMemo(() => {
+  const folderTree = (() => {
     const map = new Map<string | undefined, FolderData[]>();
     for (const f of folders) {
       const key = f.parentId || undefined;
@@ -291,7 +125,7 @@ export function LibraryEditor({
     }
     for (const arr of map.values()) arr.sort((a, b) => a.order - b.order);
     return map;
-  }, [folders]);
+  })();
 
   const hasChildren = (id: string) => (folderTree.get(id)?.length || 0) > 0;
 
@@ -310,19 +144,16 @@ export function LibraryEditor({
     setBreadcrumbOpen(false);
   };
 
-  const handleFilesAccepted = useCallback(
-    async (acceptedFiles: File[]) => {
-      if (!libraryId) return;
-      await uploadFiles(acceptedFiles, {
-        siteId: siteId as Id<"sites">,
-        libraryId,
-        folderId: folderId ?? undefined,
-        onSuccess: () => toast.success("Uploaded"),
-        onError: (e) => toast.error(e.message),
-      });
-    },
-    [siteId, libraryId, folderId, uploadFiles],
-  );
+  const handleFilesAccepted = async (acceptedFiles: File[]) => {
+    if (!libraryId) return;
+    await uploadFiles(acceptedFiles, {
+      siteId: siteId as Id<"sites">,
+      libraryId,
+      folderId: folderId ?? undefined,
+      onSuccess: () => toast.success("Uploaded"),
+      onError: (e) => toast.error(e.message),
+    });
+  };
 
   const handlePreview = (file: FileData) => {
     openFile({

@@ -11,7 +11,7 @@ import type {
   FormFieldType,
 } from "@baseblocks/types/elements";
 import { createField } from "@baseblocks/types/elements";
-import { type ReactNode, createContext, useCallback, useContext } from "react";
+import { type ReactNode, createContext, useContext } from "react";
 
 // =============================================================================
 // CONTEXT TYPE
@@ -57,82 +57,66 @@ export function FormBuilderProvider({
   onSelectField,
   onUpdate,
 }: FormBuilderProviderProps) {
-  const addField = useCallback(
-    (type: FormFieldType, index?: number) => {
-      const newField = createField(type);
-      const fields = [...form.fields];
+  const addField = (type: FormFieldType, index?: number) => {
+    const newField = createField(type);
+    const fields = [...form.fields];
 
-      if (index !== undefined) {
-        fields.splice(index, 0, newField);
-      } else {
-        fields.push(newField);
-      }
+    if (index !== undefined) {
+      fields.splice(index, 0, newField);
+    } else {
+      fields.push(newField);
+    }
 
-      onUpdate({ ...form, fields });
-      onSelectField(newField.id);
-    },
-    [form, onUpdate, onSelectField],
-  );
+    onUpdate({ ...form, fields });
+    onSelectField(newField.id);
+  };
 
-  const updateField = useCallback(
-    (id: string, updates: Partial<FormField>) => {
-      const fields = form.fields.map((f) =>
-        f.id === id ? { ...f, ...updates } : f,
-      ) as FormField[];
-      onUpdate({ ...form, fields });
-    },
-    [form, onUpdate],
-  );
+  const updateField = (id: string, updates: Partial<FormField>) => {
+    const fields = form.fields.map((f) =>
+      f.id === id ? { ...f, ...updates } : f,
+    ) as FormField[];
+    onUpdate({ ...form, fields });
+  };
 
-  const removeField = useCallback(
-    (id: string) => {
-      const fields = form.fields.filter((f) => f.id !== id);
-      onUpdate({ ...form, fields });
-      if (selectedFieldId === id) {
-        onSelectField(null);
-      }
-    },
-    [form, onUpdate, selectedFieldId, onSelectField],
-  );
+  const removeField = (id: string) => {
+    const fields = form.fields.filter((f) => f.id !== id);
+    onUpdate({ ...form, fields });
+    if (selectedFieldId === id) {
+      onSelectField(null);
+    }
+  };
 
-  const moveField = useCallback(
-    (fromIndex: number, toIndex: number) => {
-      const fields = [...form.fields];
-      const removed = fields.splice(fromIndex, 1)[0];
-      if (!removed) return;
-      fields.splice(toIndex, 0, removed);
-      onUpdate({ ...form, fields });
-    },
-    [form, onUpdate],
-  );
+  const moveField = (fromIndex: number, toIndex: number) => {
+    const fields = [...form.fields];
+    const removed = fields.splice(fromIndex, 1)[0];
+    if (!removed) return;
+    fields.splice(toIndex, 0, removed);
+    onUpdate({ ...form, fields });
+  };
 
-  const duplicateField = useCallback(
-    (id: string) => {
-      const original = form.fields.find((f) => f.id === id);
-      if (!original) return;
+  const duplicateField = (id: string) => {
+    const original = form.fields.find((f) => f.id === id);
+    if (!original) return;
 
-      const fieldIndex = form.fields.findIndex((f) => f.id === id);
-      const duplicate: FormField = {
-        ...original,
-        id: `field_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
-        name: `${original.name}_copy`,
-        label: original.label ? `${original.label} (copy)` : "",
-      } as FormField;
+    const fieldIndex = form.fields.findIndex((f) => f.id === id);
+    const duplicate: FormField = {
+      ...original,
+      id: `field_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+      name: `${original.name}_copy`,
+      label: original.label ? `${original.label} (copy)` : "",
+    } as FormField;
 
-      const fields = [...form.fields];
-      fields.splice(fieldIndex + 1, 0, duplicate);
-      onUpdate({ ...form, fields });
-      onSelectField(duplicate.id);
-    },
-    [form, onUpdate, onSelectField],
-  );
+    const fields = [...form.fields];
+    fields.splice(fieldIndex + 1, 0, duplicate);
+    onUpdate({ ...form, fields });
+    onSelectField(duplicate.id);
+  };
 
-  const updateFormSettings = useCallback(
-    (updates: Partial<Omit<FormContent, "fields">>) => {
-      onUpdate({ ...form, ...updates });
-    },
-    [form, onUpdate],
-  );
+  const updateFormSettings = (
+    updates: Partial<Omit<FormContent, "fields">>,
+  ) => {
+    onUpdate({ ...form, ...updates });
+  };
 
   return (
     <FormBuilderContext.Provider

@@ -1,6 +1,6 @@
 "use client";
 
-import { ElementRendererWrapper } from "@/modules/elements/element-renderer-wrapper";
+import { ElementRendererWrapper } from "@/modules/elements/framework/renderer-wrapper";
 import type {
   AnyContent,
   DecisionTreeContentBlock,

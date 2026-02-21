@@ -16,7 +16,7 @@ import {
 import { useMutation } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ReceivedInvitation {
   id: string;
@@ -44,7 +44,7 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     api.members.mutations.syncMemberFromInvitation,
   );
 
-  const loadInvitations = useCallback(async () => {
+  const loadInvitations = async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -71,7 +71,7 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     setProcessingId(invitation.id);
@@ -121,11 +121,12 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   };
 
   // Load invitations on mount and poll every 30 seconds
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only + interval
   useEffect(() => {
     loadInvitations();
     const interval = setInterval(loadInvitations, 30000);
     return () => clearInterval(interval);
-  }, [loadInvitations]);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

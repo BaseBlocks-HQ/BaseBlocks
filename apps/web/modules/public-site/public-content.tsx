@@ -1,7 +1,7 @@
 "use client";
 
-import { ElementRendererWrapper } from "@/modules/elements/element-renderer-wrapper";
-import { LayoutContextProvider } from "@/modules/elements/layout-context";
+import { LayoutContextProvider } from "@/modules/elements/framework/layout-context";
+import { ElementRendererWrapper } from "@/modules/elements/framework/renderer-wrapper";
 // Register all element renderers for public display
 import "@/modules/elements/layouts";
 import "@/modules/elements/blocks";
@@ -9,13 +9,13 @@ import "@/modules/elements/sections";
 import "@/modules/elements/media";
 import "@/modules/elements/forms";
 import { ContentSkeleton } from "@/components/skeletons";
+import { usePage, usePublishedLayouts } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
-} from "@baseblocks/editor/layouts";
+} from "@/modules/editor/layouts";
+import type { Doc } from "@baseblocks/backend";
 import type {
   AnyContent,
   ElementType,
@@ -29,7 +29,6 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
-import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { usePublicSubpageContext } from "./public-subpage-context";
 import { PublicSubpagePanel } from "./public-subpage-panel";
@@ -43,12 +42,8 @@ interface PublicContentProps {
 function PublicContentInner({ pageId, nested }: PublicContentProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
   const showSubpagePanel = !nested && !!viewingSubpage;
-  const pageData = useQuery(api.pages.queries.get, {
-    pageId: pageId as Id<"pages">,
-  });
-  const layoutsData = useQuery(api.layouts.queries.listPublished, {
-    pageId: pageId as Id<"pages">,
-  });
+  const pageData = usePage(pageId);
+  const layoutsData = usePublishedLayouts(pageId);
 
   // Fullscreen state for subpage panel
   const [isFullscreen, setIsFullscreen] = useState(false);

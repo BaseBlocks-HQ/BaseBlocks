@@ -11,7 +11,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -53,7 +53,7 @@ export function AudioViewer({ file }: ViewerProps) {
     };
   }, []);
 
-  const togglePlay = useCallback(() => {
+  const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
@@ -61,41 +61,38 @@ export function AudioViewer({ file }: ViewerProps) {
     } else {
       audio.pause();
     }
-  }, []);
+  };
 
-  const handleSeek = useCallback((value: number[]) => {
+  const handleSeek = (value: number[]) => {
     const audio = audioRef.current;
     if (!audio || !value[0]) return;
     audio.currentTime = value[0];
     setCurrentTime(value[0]);
-  }, []);
+  };
 
-  const handleVolumeChange = useCallback((value: number[]) => {
+  const handleVolumeChange = (value: number[]) => {
     const audio = audioRef.current;
     if (!audio || value[0] === undefined) return;
     audio.volume = value[0];
     setVolume(value[0]);
     setIsMuted(value[0] === 0);
-  }, []);
+  };
 
-  const toggleMute = useCallback(() => {
+  const toggleMute = () => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.muted = !audio.muted;
     setIsMuted(audio.muted);
-  }, []);
+  };
 
-  const skip = useCallback(
-    (seconds: number) => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      audio.currentTime = Math.max(
-        0,
-        Math.min(duration, audio.currentTime + seconds),
-      );
-    },
-    [duration],
-  );
+  const skip = (seconds: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(
+      0,
+      Math.min(duration, audio.currentTime + seconds),
+    );
+  };
 
   return (
     <div className="flex flex-col h-full items-center justify-center p-8 bg-gradient-to-b from-muted/50 to-muted">

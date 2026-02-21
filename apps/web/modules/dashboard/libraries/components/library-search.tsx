@@ -8,7 +8,7 @@ import { Input } from "@baseblocks/ui/input";
 import { useQuery } from "convex/react";
 import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "use-debounce";
 
 interface LibrarySearchProps {
@@ -32,7 +32,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
   const allDocs = useQuery(api.documents.queries.listByLibrary, { libraryId });
 
   // Merge server results with client-side substring matches on filenames
-  const searchResults = useMemo(() => {
+  const searchResults = (() => {
     if (!debouncedQuery.trim()) return undefined;
     if (serverResults === undefined) return undefined;
 
@@ -63,7 +63,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
       }));
 
     return [...serverResults, ...fuzzyMatches];
-  }, [serverResults, allDocs, debouncedQuery]);
+  })();
 
   const clearSearch = () => setSearchQuery("");
 

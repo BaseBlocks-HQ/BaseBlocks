@@ -9,7 +9,7 @@ import {
   layoutSlot,
   layoutType,
   slotBlock,
-} from "../lib/validators";
+} from "./validators";
 
 // Helper to get teamId from pageId
 async function getTeamIdFromPage(

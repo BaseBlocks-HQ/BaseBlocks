@@ -1,19 +1,19 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
+import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { useQuery } from "convex/react";
+import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
   ElementRendererProps,
-} from "../registry";
-import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import { useEditorContextOptional } from "@baseblocks/editor";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { useQuery } from "convex/react";
-import { ChevronRight, FileText } from "lucide-react";
-import { registerElement } from "../registry";
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   const editorContext = useEditorContextOptional();

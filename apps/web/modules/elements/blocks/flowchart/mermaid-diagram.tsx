@@ -10,7 +10,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface MermaidDiagramProps {
   code: string;
@@ -40,20 +40,20 @@ export function MermaidDiagram({
   const contentRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(1);
   const translateRef = useRef({ x: 0, y: 0 });
-  const [renderTick, setRenderTick] = useState(0);
+  const [_renderTick, setRenderTick] = useState(0);
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
-  const applyTransform = useCallback(() => {
+  const applyTransform = () => {
     if (!contentRef.current) return;
     const { x, y } = translateRef.current;
     const s = scaleRef.current;
     contentRef.current.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
-  }, []);
+  };
 
-  const tick = useCallback(() => setRenderTick((n) => n + 1), []);
+  const tick = () => setRenderTick((n) => n + 1);
 
-  const fitToView = useCallback(() => {
+  const fitToView = () => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) return;
@@ -88,7 +88,7 @@ export function MermaidDiagram({
     translateRef.current = { x: tx, y: ty };
     applyTransform();
     tick();
-  }, [applyTransform, tick]);
+  };
 
   // Always keep the diagram constrained to its parent container width.
   useEffect(() => {
@@ -198,50 +198,44 @@ export function MermaidDiagram({
     return () => container.removeEventListener("wheel", onWheel);
   }, [svg, applyTransform, tick]);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
     containerRef.current?.setPointerCapture(e.pointerId);
-  }, []);
+  };
 
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!dragging.current) return;
-      const dx = e.clientX - lastPos.current.x;
-      const dy = e.clientY - lastPos.current.y;
-      lastPos.current = { x: e.clientX, y: e.clientY };
-      translateRef.current = {
-        x: translateRef.current.x + dx,
-        y: translateRef.current.y + dy,
-      };
-      applyTransform();
-    },
-    [applyTransform],
-  );
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+    translateRef.current = {
+      x: translateRef.current.x + dx,
+      y: translateRef.current.y + dy,
+    };
+    applyTransform();
+  };
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = () => {
     dragging.current = false;
-  }, []);
+  };
 
-  const zoomBy = useCallback(
-    (factor: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-      const cx = container.clientWidth / 2;
-      const cy = container.clientHeight / 2;
-      const prev = scaleRef.current;
-      const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev * factor));
-      const ratio = next / prev;
-      translateRef.current = {
-        x: cx - ratio * (cx - translateRef.current.x),
-        y: cy - ratio * (cy - translateRef.current.y),
-      };
-      scaleRef.current = next;
-      applyTransform();
-      tick();
-    },
-    [applyTransform, tick],
-  );
+  const zoomBy = (factor: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cx = container.clientWidth / 2;
+    const cy = container.clientHeight / 2;
+    const prev = scaleRef.current;
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev * factor));
+    const ratio = next / prev;
+    translateRef.current = {
+      x: cx - ratio * (cx - translateRef.current.x),
+      y: cy - ratio * (cy - translateRef.current.y),
+    };
+    scaleRef.current = next;
+    applyTransform();
+    tick();
+  };
 
   const canvasHeight = isFullscreen
     ? "h-[calc(100vh-4rem)]"

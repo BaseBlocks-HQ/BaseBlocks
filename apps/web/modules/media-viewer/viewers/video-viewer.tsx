@@ -11,7 +11,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -57,7 +57,7 @@ export function VideoViewer({ file }: ViewerProps) {
     };
   }, []);
 
-  const togglePlay = useCallback(() => {
+  const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
@@ -65,43 +65,40 @@ export function VideoViewer({ file }: ViewerProps) {
     } else {
       video.pause();
     }
-  }, []);
+  };
 
-  const handleSeek = useCallback((value: number[]) => {
+  const handleSeek = (value: number[]) => {
     const video = videoRef.current;
     if (!video || !value[0]) return;
     video.currentTime = value[0];
     setCurrentTime(value[0]);
-  }, []);
+  };
 
-  const handleVolumeChange = useCallback((value: number[]) => {
+  const handleVolumeChange = (value: number[]) => {
     const video = videoRef.current;
     if (!video || value[0] === undefined) return;
     video.volume = value[0];
     setVolume(value[0]);
     setIsMuted(value[0] === 0);
-  }, []);
+  };
 
-  const toggleMute = useCallback(() => {
+  const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
     setIsMuted(video.muted);
-  }, []);
+  };
 
-  const skip = useCallback(
-    (seconds: number) => {
-      const video = videoRef.current;
-      if (!video) return;
-      video.currentTime = Math.max(
-        0,
-        Math.min(duration, video.currentTime + seconds),
-      );
-    },
-    [duration],
-  );
+  const skip = (seconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.max(
+      0,
+      Math.min(duration, video.currentTime + seconds),
+    );
+  };
 
-  const handleMouseMove = useCallback(() => {
+  const handleMouseMove = () => {
     setShowControls(true);
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
@@ -111,7 +108,7 @@ export function VideoViewer({ file }: ViewerProps) {
         setShowControls(false);
       }, 3000);
     }
-  }, [isPlaying]);
+  };
 
   return (
     <div

@@ -133,8 +133,7 @@ export async function buildPublicSiteMetadata({
       site = siteData?.site ?? null;
       pageTitle = siteData?.defaultPage?.title;
     }
-  } catch (error) {
-    console.error("Failed to build public site metadata:", error);
+  } catch (_error) {
     return {};
   }
 

@@ -31,7 +31,7 @@ export function SubdomainRootPageClient({ params }: Props) {
     router.replace(getPageLink(siteData.site.slug, siteData.defaultPage.slug));
   }, [siteData, router]);
 
-  if (siteData && siteData.site) {
+  if (siteData?.site) {
     const visibility = siteData.site.visibility ?? "public";
 
     if (visibility === "private") {

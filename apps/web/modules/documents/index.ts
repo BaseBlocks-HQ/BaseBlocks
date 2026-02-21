@@ -3,8 +3,14 @@ export { FileIcon, getFileTypeColor } from "./components/file-icon";
 export { EmptyState } from "./components/empty-state";
 export { Breadcrumbs, type BreadcrumbItem } from "./components/breadcrumbs";
 export { DropZone, InlineDropZone } from "./components/drop-zone";
-export { UploadProgress, UploadProgressList } from "./components/upload-progress";
-export { CreateFolderDialog, CreateFolderButton } from "./components/create-folder-dialog";
+export {
+  UploadProgress,
+  UploadProgressList,
+} from "./components/upload-progress";
+export {
+  CreateFolderDialog,
+  CreateFolderButton,
+} from "./components/create-folder-dialog";
 export { RenameDialog } from "./components/rename-dialog";
 export { DeleteConfirmDialog } from "./components/delete-confirm-dialog";
 export { FolderTreeItem, type FolderData } from "./components/folder-tree-item";

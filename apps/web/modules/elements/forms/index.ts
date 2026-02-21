@@ -4,7 +4,7 @@
 
 import { DEFAULT_FORM_CONTENT } from "@baseblocks/types/elements";
 import { FileText } from "lucide-react";
-import { registerElement } from "../registry";
+import { registerElement } from "../framework/registry";
 import { FormEditor } from "./editor";
 import { FormPreview } from "./preview";
 import { FormRenderer } from "./renderer";

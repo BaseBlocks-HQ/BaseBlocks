@@ -10,7 +10,7 @@ import {
   usePublicFolders,
   usePublicLibrary,
 } from "@/modules/documents";
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { useMediaViewer } from "@/modules/media-viewer";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -30,13 +30,13 @@ import {
   Home,
   Menu,
 } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 function useContainerWidth() {
   const [width, setWidth] = useState(0);
   const observerRef = useRef<ResizeObserver | null>(null);
 
-  const containerRef = useCallback((node: HTMLElement | null) => {
+  const containerRef = (node: HTMLElement | null) => {
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
@@ -52,7 +52,7 @@ function useContainerWidth() {
       observer.observe(node);
       observerRef.current = observer;
     }
-  }, []);
+  };
 
   return [containerRef, width] as const;
 }
@@ -82,7 +82,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const files = usePublicFiles(libraryId, folderId);
   const folderPath = usePublicFolderPath(folderId);
 
-  const handleToggleExpand = useCallback((folderId: string) => {
+  const handleToggleExpand = (folderId: string) => {
     setExpandedFolders((prev) => {
       const next = new Set(prev);
       if (next.has(folderId)) {
@@ -92,23 +92,20 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
       }
       return next;
     });
-  }, []);
+  };
 
-  const handleSelectFolder = useCallback(
-    (folderId: string | null, closeMenu = false) => {
-      setSelectedFolderId(folderId);
-      if (folderId) {
-        setExpandedFolders((prev) => new Set(prev).add(folderId));
-      }
-      if (closeMenu) {
-        setFolderMenuOpen(false);
-      }
-      setBreadcrumbOpen(false);
-    },
-    [],
-  );
+  const handleSelectFolder = (folderId: string | null, closeMenu = false) => {
+    setSelectedFolderId(folderId);
+    if (folderId) {
+      setExpandedFolders((prev) => new Set(prev).add(folderId));
+    }
+    if (closeMenu) {
+      setFolderMenuOpen(false);
+    }
+    setBreadcrumbOpen(false);
+  };
 
-  const handleDownload = useCallback((cdnUrl: string, filename: string) => {
+  const handleDownload = (cdnUrl: string, filename: string) => {
     const link = document.createElement("a");
     link.href = toProxyDownloadUrl(cdnUrl);
     link.download = filename;
@@ -117,20 +114,17 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, []);
+  };
 
-  const handlePreview = useCallback(
-    (file: (typeof files)[number]) => {
-      openFile({
-        url: toProxyDownloadUrl(file.cdnUrl),
-        filename: file.filename,
-        contentType: file.contentType,
-        size: file.size,
-        allowDownload: content.allowDownloads !== false,
-      });
-    },
-    [openFile, content.allowDownloads],
-  );
+  const handlePreview = (file: (typeof files)[number]) => {
+    openFile({
+      url: toProxyDownloadUrl(file.cdnUrl),
+      filename: file.filename,
+      contentType: file.contentType,
+      size: file.size,
+      allowDownload: content.allowDownloads !== false,
+    });
+  };
 
   if (!libraryId || !library) {
     return (
@@ -213,7 +207,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+    return `${Number.parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
   };
 
   const sortedFiles = [...files].sort((a, b) =>

@@ -5,10 +5,10 @@
 
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { GitFork } from "lucide-react";
-import { registerElement } from "../../registry";
-import { DecisionTreeEditor } from "./tree-editor";
+import { registerElement } from "../../framework/registry";
 import { DecisionTreePreview } from "./preview";
 import { DecisionTreeRenderer } from "./renderer";
+import { DecisionTreeEditor } from "./tree-editor";
 
 // Re-export components
 export { DecisionTreeEditor, DecisionTreeRenderer, DecisionTreePreview };

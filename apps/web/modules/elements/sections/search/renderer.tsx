@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { usePublicSiteContextOptional } from "@/modules/public-site";
 import { SearchBox } from "./search-box";
 

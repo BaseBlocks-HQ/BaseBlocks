@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error("Storage download proxy error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Download failed" },
       { status: 500 },

@@ -2,7 +2,7 @@
 
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { EmptyState } from "./empty-state";
 import { type FileData, FileListItem } from "./file-list-item";
@@ -26,7 +26,6 @@ export function FileList({
   onPreview,
   onRename,
   onDelete,
-  onMove,
   onRetryExtraction,
   isReadOnly = false,
   className,
@@ -36,24 +35,21 @@ export function FileList({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteFile, setDeleteFile] = useState<FileData | null>(null);
 
-  const handleRename = useCallback((file: FileData) => {
+  const handleRename = (file: FileData) => {
     setRenameFile(file);
     setRenameDialogOpen(true);
-  }, []);
+  };
 
-  const handleDelete = useCallback((file: FileData) => {
+  const handleDelete = (file: FileData) => {
     setDeleteFile(file);
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
-  const handleDownload = useCallback(
-    (file: FileData) => {
-      // Open download URL in new tab (via proxy to bypass corporate firewall)
-      window.open(toProxyDownloadUrl(file.cdnUrl), "_blank");
-      onDownload(file);
-    },
-    [onDownload],
-  );
+  const handleDownload = (file: FileData) => {
+    // Open download URL in new tab (via proxy to bypass corporate firewall)
+    window.open(toProxyDownloadUrl(file.cdnUrl), "_blank");
+    onDownload(file);
+  };
 
   if (files.length === 0) {
     return <EmptyState type="files" className={className} />;

@@ -3,13 +3,13 @@
 import { DashboardSkeleton } from "@/components/skeletons";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
-import { api } from "@baseblocks/backend";
+import { useTeam } from "@/lib/data";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 
@@ -41,7 +41,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const loading = authLoading || sessionPending || hasOtt;
 
-  const team = useQuery(api.teams.queries.getMine);
+  const team = useTeam();
 
   // Redirect to onboarding if no team
   useEffect(() => {

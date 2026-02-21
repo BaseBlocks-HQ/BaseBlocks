@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import type { ElementPreviewProps } from "../registry";
 import { PanelRight } from "lucide-react";
-import { registerLayout } from "../registry";
+import type { ElementPreviewProps } from "../framework/registry";
+import { registerLayout } from "../framework/registry";
 
 function VerticalPreview({ className }: ElementPreviewProps) {
   return (

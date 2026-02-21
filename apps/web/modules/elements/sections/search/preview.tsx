@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
-import type { ElementPreviewProps } from "../../registry";
+import type { ElementPreviewProps } from "../../framework/registry";
 
 export function SearchPreview({ className }: ElementPreviewProps) {
   return (

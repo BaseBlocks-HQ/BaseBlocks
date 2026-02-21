@@ -1,7 +1,7 @@
 "use client";
 
 import type { Id } from "@baseblocks/backend";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 
@@ -34,77 +34,70 @@ export function useImageUpload() {
     error: null,
   });
 
-  const uploadImage = useCallback(
-    async (
-      file: File,
-      siteId: Id<"sites">,
-    ): Promise<ImageUploadResult | null> => {
-      // Validate it's an image
-      if (!file.type.startsWith("image/")) {
-        setUploadState({
-          isUploading: false,
-          progress: null,
-          error: "File must be an image",
-        });
-        return null;
+  const uploadImage = async (
+    file: File,
+    siteId: Id<"sites">,
+  ): Promise<ImageUploadResult | null> => {
+    // Validate it's an image
+    if (!file.type.startsWith("image/")) {
+      setUploadState({
+        isUploading: false,
+        progress: null,
+        error: "File must be an image",
+      });
+      return null;
+    }
+
+    try {
+      setUploadState({
+        isUploading: true,
+        progress: null,
+        error: null,
+      });
+
+      if (!user?.id) {
+        throw new Error("User not found");
       }
 
-      try {
-        setUploadState({
-          isUploading: true,
-          progress: null,
-          error: null,
-        });
+      // Generate storage path for images
+      const path = entityStorageClient.generatePath(siteId, user.id, file.name);
 
-        if (!user?.id) {
-          throw new Error("User not found");
-        }
+      // Upload to Entity Storage (proxy handles auth via session cookie)
+      const { cdnUrl } = await entityStorageClient.upload(
+        file,
+        path,
+        (progress) => {
+          setUploadState((prev) => ({ ...prev, progress }));
+        },
+      );
 
-        // Generate storage path for images
-        const path = entityStorageClient.generatePath(
-          siteId,
-          user.id,
-          file.name,
-        );
+      setUploadState({
+        isUploading: false,
+        progress: { loaded: file.size, total: file.size, percentage: 100 },
+        error: null,
+      });
 
-        // Upload to Entity Storage (proxy handles auth via session cookie)
-        const { cdnUrl } = await entityStorageClient.upload(
-          file,
-          path,
-          (progress) => {
-            setUploadState((prev) => ({ ...prev, progress }));
-          },
-        );
+      // Get image dimensions
+      const dimensions = await getImageDimensions(cdnUrl);
 
-        setUploadState({
-          isUploading: false,
-          progress: { loaded: file.size, total: file.size, percentage: 100 },
-          error: null,
-        });
+      return {
+        url: cdnUrl,
+        ...dimensions,
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "Upload failed";
+      setUploadState({
+        isUploading: false,
+        progress: null,
+        error,
+      });
+      return null;
+    }
+  };
 
-        // Get image dimensions
-        const dimensions = await getImageDimensions(cdnUrl);
-
-        return {
-          url: cdnUrl,
-          ...dimensions,
-        };
-      } catch (err) {
-        const error = err instanceof Error ? err.message : "Upload failed";
-        setUploadState({
-          isUploading: false,
-          progress: null,
-          error,
-        });
-        return null;
-      }
-    },
-    [user],
-  );
-
-  const clearError = useCallback(() => {
+  const clearError = () => {
     setUploadState((prev) => ({ ...prev, error: null }));
-  }, []);
+  };
 
   return {
     uploadImage,

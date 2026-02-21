@@ -20,7 +20,7 @@ import {
   Presentation,
   Search,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // File type icon mapping for documents
 function getFileIcon(contentType: string | undefined) {
@@ -219,7 +219,7 @@ export function SearchBox({
   const serverResults = usePublicQuery ? publicResults : authResults;
 
   // Merge server full-text results with client-side fuzzy title matches
-  const searchResults = useMemo(() => {
+  const searchResults = (() => {
     if (!shouldSearch) return undefined;
     if (serverResults === undefined) return undefined;
 
@@ -235,13 +235,13 @@ export function SearchBox({
       remaining,
     );
     return [...serverResults, ...fuzzyResults];
-  }, [serverResults, allTitles, debouncedQuery, shouldSearch, maxResults]);
+  })();
 
   const isSearching = shouldSearch && searchResults === undefined;
   const hasResults = searchResults && searchResults.length > 0;
   const showDropdown = isFocused && debouncedQuery.trim().length > 0;
 
-  const handleDownload = useCallback((cdnUrl: string, filename: string) => {
+  const handleDownload = (cdnUrl: string, filename: string) => {
     const link = document.createElement("a");
     link.href = toProxyDownloadUrl(cdnUrl);
     link.download = filename;
@@ -250,24 +250,21 @@ export function SearchBox({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, []);
+  };
 
-  const handleDocumentClick = useCallback(
-    (result: SearchResultItem) => {
-      if (result.metadata.cdnUrl) {
-        openFile({
-          url: toProxyDownloadUrl(result.metadata.cdnUrl),
-          filename: result.metadata.filename || result.title,
-          contentType:
-            result.metadata.fileContentType || "application/octet-stream",
-          size: result.metadata.size || 0,
-          searchTerm: debouncedQuery,
-        });
-      }
-      setIsFocused(false);
-    },
-    [openFile, debouncedQuery],
-  );
+  const handleDocumentClick = (result: SearchResultItem) => {
+    if (result.metadata.cdnUrl) {
+      openFile({
+        url: toProxyDownloadUrl(result.metadata.cdnUrl),
+        filename: result.metadata.filename || result.title,
+        contentType:
+          result.metadata.fileContentType || "application/octet-stream",
+        size: result.metadata.size || 0,
+        searchTerm: debouncedQuery,
+      });
+    }
+    setIsFocused(false);
+  };
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>

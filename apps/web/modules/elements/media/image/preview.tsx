@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Image } from "lucide-react";
-import type { ElementPreviewProps } from "../../registry";
+import type { ElementPreviewProps } from "../../framework/registry";
 
 export function ImagePreview({ className }: ElementPreviewProps) {
   return (

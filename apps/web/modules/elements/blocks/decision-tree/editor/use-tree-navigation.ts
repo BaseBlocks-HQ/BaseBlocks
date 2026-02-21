@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 export function useTreeNavigation() {
   const [path, setPath] = useState<string[]>([]);
@@ -9,27 +9,27 @@ export function useTreeNavigation() {
   const currentParentId: string | null =
     path.length > 0 ? (path[path.length - 1] ?? null) : null;
 
-  const navigateInto = useCallback((nodeId: string) => {
+  const navigateInto = (nodeId: string) => {
     setPath((prev) => [...prev, nodeId]);
     setSelectedNodeId(null);
-  }, []);
+  };
 
-  const navigateBack = useCallback(() => {
+  const navigateBack = () => {
     setPath((prev) => {
       if (prev.length === 0) return prev;
       return prev.slice(0, -1);
     });
     setSelectedNodeId(null);
-  }, []);
+  };
 
-  const navigateToIndex = useCallback((index: number) => {
+  const navigateToIndex = (index: number) => {
     setPath((prev) => prev.slice(0, index));
     setSelectedNodeId(null);
-  }, []);
+  };
 
-  const selectNode = useCallback((nodeId: string | null) => {
+  const selectNode = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
-  }, []);
+  };
 
   return {
     path,

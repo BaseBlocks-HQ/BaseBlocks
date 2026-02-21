@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementConfigPanelProps } from "@/modules/elements/registry";
+import type { ElementConfigPanelProps } from "@/modules/elements/framework/registry";
 import type { DirectoryContent } from "@baseblocks/types/elements";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
@@ -12,21 +12,17 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import { Switch } from "@baseblocks/ui/switch";
-import { useCallback } from "react";
 
 export function DirectoryConfigPanel({
   content,
   onUpdate,
 }: ElementConfigPanelProps<"directory">) {
-  const updateSettings = useCallback(
-    (partial: Partial<DirectoryContent["settings"]>) => {
-      onUpdate({
-        ...content,
-        settings: { ...content.settings, ...partial },
-      });
-    },
-    [content, onUpdate],
-  );
+  const updateSettings = (partial: Partial<DirectoryContent["settings"]>) => {
+    onUpdate({
+      ...content,
+      settings: { ...content.settings, ...partial },
+    });
+  };
 
   return (
     <div className="space-y-4 p-1">

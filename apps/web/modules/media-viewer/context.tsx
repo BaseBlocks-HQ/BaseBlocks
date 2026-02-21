@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+import { type ReactNode, createContext, useContext, useState } from "react";
 import type { MediaFile } from "./types";
 
 interface MediaViewerContextValue {
@@ -62,52 +56,49 @@ export function MediaViewerProvider({ children }: MediaViewerProviderProps) {
 
   const isOpen = currentFile !== null;
 
-  const toggleFullscreen = useCallback(() => {
+  const toggleFullscreen = () => {
     setIsFullscreen((prev) => !prev);
-  }, []);
+  };
 
-  const openFile = useCallback((file: MediaFile) => {
+  const openFile = (file: MediaFile) => {
     setCurrentFile(file);
     setFilesState([file]);
     setCurrentIndex(0);
     setIsFullscreen(false); // Default to side-by-side
-  }, []);
+  };
 
-  const closeFile = useCallback(() => {
+  const closeFile = () => {
     setCurrentFile(null);
     setFilesState([]);
     setCurrentIndex(0);
     setIsFullscreen(false);
-  }, []);
+  };
 
-  const setFiles = useCallback(
-    (newFiles: MediaFile[], startIndex = 0) => {
-      if (newFiles.length === 0) {
-        closeFile();
-        return;
-      }
-      setFilesState(newFiles);
-      setCurrentIndex(startIndex);
-      setCurrentFile(newFiles[startIndex] ?? null);
-    },
-    [closeFile],
-  );
+  const setFiles = (newFiles: MediaFile[], startIndex = 0) => {
+    if (newFiles.length === 0) {
+      closeFile();
+      return;
+    }
+    setFilesState(newFiles);
+    setCurrentIndex(startIndex);
+    setCurrentFile(newFiles[startIndex] ?? null);
+  };
 
-  const goToNext = useCallback(() => {
+  const goToNext = () => {
     if (currentIndex < files.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       setCurrentFile(files[nextIndex] ?? null);
     }
-  }, [currentIndex, files]);
+  };
 
-  const goToPrevious = useCallback(() => {
+  const goToPrevious = () => {
     if (currentIndex > 0) {
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
       setCurrentFile(files[prevIndex] ?? null);
     }
-  }, [currentIndex, files]);
+  };
 
   const hasNext = currentIndex < files.length - 1;
   const hasPrevious = currentIndex > 0;

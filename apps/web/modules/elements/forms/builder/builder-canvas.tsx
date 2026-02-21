@@ -27,14 +27,14 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
     useFormBuilder();
   const Editor = getFieldEditor(field.type);
 
-  const handleMoveUp = (e: React.MouseEvent) => {
+  const _handleMoveUp = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (index > 0) {
       moveField(index, index - 1);
     }
   };
 
-  const handleMoveDown = (e: React.MouseEvent) => {
+  const _handleMoveDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (index < form.fields.length - 1) {
       moveField(index, index + 1);

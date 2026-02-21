@@ -1,11 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import {
-  layoutSettings,
-  layoutSlot,
-  layoutType,
-  siteSettings,
-} from "./lib/validators";
+import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
+import { siteSettings } from "./sites/validators";
 
 // ---------------------------------------------------------------------------
 // Schema

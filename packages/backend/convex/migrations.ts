@@ -502,3 +502,112 @@ export const removeHasUndeployedChanges = migrations.define({
 export const runRemoveHasUndeployedChanges = migrations.runner([
   internal.migrations.removeHasUndeployedChanges,
 ]);
+
+// ============================================================
+// Migration 12: Normalize decision-tree block content
+// ============================================================
+// Old format: { nodes: DecisionTreeNode[] }
+// New format: { nodes: DecisionTreeNode[], trees: DecisionTree[] }
+// After migration every decision-tree block has a `trees` array so
+// the frontend normalizeTrees() fallback can be removed.
+
+function generateMigrationTreeId() {
+  return Math.random().toString(36).slice(2, 9);
+}
+
+export const normalizeDecisionTreeContent = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    const processSlots = (
+      slots: typeof layout.slots,
+    ): { updatedSlots: typeof layout.slots; changed: boolean } => {
+      let changed = false;
+      const updatedSlots = slots.map((slot) => ({
+        ...slot,
+        blocks: slot.blocks.map((block) => {
+          if (block.type !== "decision-tree" || !block.content) return block;
+          const content = block.content as {
+            nodes?: unknown[];
+            trees?: unknown[];
+            tabsMode?: string;
+          };
+          // Already normalized
+          if (content.trees && (content.trees as unknown[]).length > 0)
+            return block;
+          // Needs normalization — wrap nodes into a single tree
+          changed = true;
+          return {
+            ...block,
+            content: {
+              ...content,
+              trees: [
+                {
+                  id: generateMigrationTreeId(),
+                  label: "Tree 1",
+                  nodes: content.nodes ?? [],
+                },
+              ],
+            },
+          };
+        }),
+      }));
+      return { updatedSlots, changed };
+    };
+
+    const draftResult = processSlots(layout.slots);
+    const updates: Record<string, any> = {};
+
+    if (draftResult.changed) {
+      updates.slots = draftResult.updatedSlots;
+    }
+
+    if (layout.publishedSlots) {
+      const pubResult = processSlots(layout.publishedSlots);
+      if (pubResult.changed) {
+        updates.publishedSlots = pubResult.updatedSlots;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updates.updatedAt = Date.now();
+      await ctx.db.patch(layout._id, updates);
+    }
+  },
+});
+export const runNormalizeDecisionTrees = migrations.runner([
+  internal.migrations.normalizeDecisionTreeContent,
+]);
+
+// ============================================================
+// Migration 13: Stringify deployment snapshot page-layouts data
+// ============================================================
+// Early deployments stored page-layouts data as native objects.
+// Newer deploys always JSON.stringify() to avoid the 16-level nesting
+// limit. This migration converts the remaining object-format snapshots
+// so the rollback fallback (typeof === "string" ? JSON.parse : data)
+// can be removed.
+
+export const stringifySnapshotData = migrations.define({
+  table: "deploymentSnapshots",
+  batchSize: 50,
+  migrateOne: async (ctx, snapshot) => {
+    if (
+      snapshot.chunkType === "page-layouts" &&
+      typeof snapshot.data !== "string"
+    ) {
+      await ctx.db.patch(snapshot._id, {
+        data: JSON.stringify(snapshot.data),
+      });
+    }
+  },
+});
+export const runStringifySnapshots = migrations.runner([
+  internal.migrations.stringifySnapshotData,
+]);
+
+// Combined runner for data cleanup migrations 12+13
+export const runDataCleanup = migrations.runner([
+  internal.migrations.normalizeDecisionTreeContent,
+  internal.migrations.stringifySnapshotData,
+]);

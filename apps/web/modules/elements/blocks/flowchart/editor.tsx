@@ -1,7 +1,7 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type {
   FlowchartContent,
   FlowchartDiagram,
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
 function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
@@ -55,19 +55,16 @@ export function FlowchartEditor({
     tabsModeRef.current = content.tabsMode ?? "row";
   }, [id]);
 
-  const buildContent = useCallback(
-    (
-      d: FlowchartDiagram[],
-      t?: string,
-      m: "row" | "dropdown" = "row",
-    ): FlowchartContent => ({
-      mermaidCode: d[0]?.mermaidCode ?? "",
-      diagrams: d,
-      theme: t,
-      tabsMode: m,
-    }),
-    [],
-  );
+  const buildContent = (
+    d: FlowchartDiagram[],
+    t?: string,
+    m: "row" | "dropdown" = "row",
+  ): FlowchartContent => ({
+    mermaidCode: d[0]?.mermaidCode ?? "",
+    diagrams: d,
+    theme: t,
+    tabsMode: m,
+  });
 
   const handleChange = (updated: FlowchartDiagram[]) => {
     setDiagrams(updated);

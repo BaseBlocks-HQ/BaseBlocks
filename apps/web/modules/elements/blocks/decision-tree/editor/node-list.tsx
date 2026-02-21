@@ -4,8 +4,8 @@ import {
   DndProvider,
   type DragEndEvent,
   arrayMove,
-} from "@baseblocks/editor/dnd/dnd-provider";
-import { SortableItem } from "@baseblocks/editor/dnd/sortable-item";
+} from "@/modules/editor/dnd/dnd-provider";
+import { SortableItem } from "@/modules/editor/dnd/sortable-item";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";

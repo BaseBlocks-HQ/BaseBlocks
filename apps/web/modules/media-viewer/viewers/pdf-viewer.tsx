@@ -13,7 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -26,7 +26,7 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [scale, setScale] = useState(1);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(!!file.searchTerm);
   const [searchInput, setSearchInput] = useState(file.searchTerm ?? "");
@@ -57,9 +57,9 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
   }, []);
 
   // Track when a text layer finishes rendering
-  const handleTextLayerSuccess = useCallback(() => {
+  const handleTextLayerSuccess = () => {
     setRenderedTextLayers((prev) => prev + 1);
-  }, []);
+  };
 
   // Reset match refs when search changes
   useEffect(() => {
@@ -92,71 +92,62 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
   }, [searchInput, renderedTextLayers, numPages, file.searchTerm]);
 
   // Custom text renderer for highlighting
-  const textRenderer = useCallback(
-    ({ str }: { str: string; itemIndex: number }) => {
-      if (!searchInput.trim()) return str;
+  const textRenderer = ({ str }: { str: string; itemIndex: number }) => {
+    if (!searchInput.trim()) return str;
 
-      const regex = new RegExp(
-        `(${searchInput.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-        "gi",
-      );
-      return str.replace(
-        regex,
-        '<mark style="background-color: #fef08a; padding: 1px 2px; border-radius: 2px;">$1</mark>',
-      );
-    },
-    [searchInput],
-  );
+    const regex = new RegExp(
+      `(${searchInput.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+      "gi",
+    );
+    return str.replace(
+      regex,
+      '<mark style="background-color: #fef08a; padding: 1px 2px; border-radius: 2px;">$1</mark>',
+    );
+  };
 
-  const handleZoomIn = useCallback(() => {
+  const handleZoomIn = () => {
     setScale((prev) => Math.min(prev + 0.25, 3));
-  }, []);
+  };
 
-  const handleZoomOut = useCallback(() => {
+  const handleZoomOut = () => {
     setScale((prev) => Math.max(prev - 0.25, 0.5));
-  }, []);
+  };
 
-  const toggleSearch = useCallback(() => {
+  const toggleSearch = () => {
     setShowSearch((prev) => {
       if (prev) {
         setSearchInput("");
       }
       return !prev;
     });
-  }, []);
+  };
 
-  const jumpToMatch = useCallback(
-    (direction: "next" | "prev") => {
-      if (matchRefs.current.length === 0) return;
+  const jumpToMatch = (direction: "next" | "prev") => {
+    if (matchRefs.current.length === 0) return;
 
-      let newMatch: number;
-      if (direction === "next") {
-        newMatch = currentMatch >= totalMatches ? 1 : currentMatch + 1;
+    let newMatch: number;
+    if (direction === "next") {
+      newMatch = currentMatch >= totalMatches ? 1 : currentMatch + 1;
+    } else {
+      newMatch = currentMatch <= 1 ? totalMatches : currentMatch - 1;
+    }
+
+    const matchElement = matchRefs.current[newMatch - 1];
+    if (matchElement) {
+      matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      setCurrentMatch(newMatch);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        jumpToMatch("prev");
       } else {
-        newMatch = currentMatch <= 1 ? totalMatches : currentMatch - 1;
+        jumpToMatch("next");
       }
-
-      const matchElement = matchRefs.current[newMatch - 1];
-      if (matchElement) {
-        matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        setCurrentMatch(newMatch);
-      }
-    },
-    [currentMatch, totalMatches],
-  );
-
-  const handleSearchKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        if (e.shiftKey) {
-          jumpToMatch("prev");
-        } else {
-          jumpToMatch("next");
-        }
-      }
-    },
-    [jumpToMatch],
-  );
+    }
+  };
 
   // Register controls with parent
   useEffect(() => {
@@ -255,18 +246,10 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
     searchInput,
     currentMatch,
     totalMatches,
-    handleZoomIn,
-    handleZoomOut,
-    toggleSearch,
-    handleSearchKeyDown,
-    jumpToMatch,
   ]);
 
   // Generate page numbers array
-  const pageNumbers = useMemo(
-    () => Array.from({ length: numPages }, (_, i) => i + 1),
-    [numPages],
-  );
+  const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
 
   if (error) {
     return (

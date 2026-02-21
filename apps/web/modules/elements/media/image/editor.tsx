@@ -4,15 +4,15 @@ import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import type { Id } from "@baseblocks/backend";
-import { useEditorContext } from "@baseblocks/editor";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { ImageIcon, Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { Resizable } from "re-resizable";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Custom handle component for resize corners
@@ -53,53 +53,42 @@ export function ImageEditor({
   const uploadProgress = uploadState.progress?.percentage || 0;
 
   // Calculate max width based on container
-  const getMaxWidth = useCallback(() => {
+  const getMaxWidth = () => {
     if (containerRef.current?.parentElement) {
-      return containerRef.current.parentElement.offsetWidth - 32; // Account for padding
+      return containerRef.current.parentElement.offsetWidth - 32;
     }
     return 800;
-  }, []);
+  };
 
-  const handleFilesAccepted = useCallback(
-    async (files: File[]) => {
-      const file = files[0];
-      if (!file) return;
+  const handleFilesAccepted = async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
 
-      // Validate it's an image
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
-        return;
-      }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
 
-      onSaveStatusChange?.("saving");
+    onSaveStatusChange?.("saving");
 
-      const result = await uploadImage(file, siteId as Id<"sites">);
+    const result = await uploadImage(file, siteId as Id<"sites">);
 
-      if (result) {
-        toast.success("Image uploaded");
-        await onUpdate({
-          ...content,
-          url: result.url,
-          width: result.width,
-          height: result.height,
-        });
-        onSaveStatusChange?.("saved");
-      } else if (uploadState.error) {
-        toast.error(uploadState.error);
-        onSaveStatusChange?.("idle");
-      }
-    },
-    [
-      siteId,
-      uploadImage,
-      uploadState.error,
-      onUpdate,
-      content,
-      onSaveStatusChange,
-    ],
-  );
+    if (result) {
+      toast.success("Image uploaded");
+      await onUpdate({
+        ...content,
+        url: result.url,
+        width: result.width,
+        height: result.height,
+      });
+      onSaveStatusChange?.("saved");
+    } else if (uploadState.error) {
+      toast.error(uploadState.error);
+      onSaveStatusChange?.("idle");
+    }
+  };
 
-  const handleRemoveImage = useCallback(async () => {
+  const handleRemoveImage = async () => {
     onSaveStatusChange?.("saving");
     await onUpdate({
       url: "",
@@ -109,9 +98,9 @@ export function ImageEditor({
     setLocalAlt("");
     setLocalCaption("");
     onSaveStatusChange?.("saved");
-  }, [onUpdate, onSaveStatusChange]);
+  };
 
-  const handleSaveMeta = useCallback(async () => {
+  const handleSaveMeta = async () => {
     onSaveStatusChange?.("saving");
     await onUpdate({
       ...content,
@@ -120,34 +109,31 @@ export function ImageEditor({
     });
     setIsEditingMeta(false);
     onSaveStatusChange?.("saved");
-  }, [content, localAlt, localCaption, onUpdate, onSaveStatusChange]);
+  };
 
-  const handleCancelMeta = useCallback(() => {
+  const handleCancelMeta = () => {
     setLocalAlt(content.alt || "");
     setLocalCaption(content.caption || "");
     setIsEditingMeta(false);
-  }, [content.alt, content.caption]);
+  };
 
-  const handleResizeStop = useCallback(
-    async (
-      _e: MouseEvent | TouchEvent,
-      _direction: string,
-      ref: HTMLElement,
-    ) => {
-      setIsResizing(false);
-      const newWidth = ref.offsetWidth;
-      const newHeight = ref.offsetHeight;
+  const handleResizeStop = async (
+    _e: MouseEvent | TouchEvent,
+    _direction: string,
+    ref: HTMLElement,
+  ) => {
+    setIsResizing(false);
+    const newWidth = ref.offsetWidth;
+    const newHeight = ref.offsetHeight;
 
-      onSaveStatusChange?.("saving");
-      await onUpdate({
-        ...content,
-        width: newWidth,
-        height: newHeight,
-      });
-      onSaveStatusChange?.("saved");
-    },
-    [content, onUpdate, onSaveStatusChange],
-  );
+    onSaveStatusChange?.("saving");
+    await onUpdate({
+      ...content,
+      width: newWidth,
+      height: newHeight,
+    });
+    onSaveStatusChange?.("saved");
+  };
 
   // Convert URL to proxy URL if needed
   const imageUrl = content.url ? toProxyDownloadUrl(content.url) : "";

@@ -1,11 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/elements/registry";
-import type {
-  DecisionTree,
-  DecisionTreeNode,
-} from "@baseblocks/types/elements";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
+import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
@@ -23,24 +20,16 @@ import {
   MousePointerClick,
   RotateCcw,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
 import { DetailPanel } from "./viewer/detail-panel";
 import { OptionList } from "./viewer/option-list";
-
-function normalizeTrees(content: {
-  nodes: DecisionTreeNode[];
-  trees?: DecisionTree[];
-}): DecisionTree[] {
-  if (content.trees && content.trees.length > 0) return content.trees;
-  return [{ id: "legacy", label: "Tree 1", nodes: content.nodes || [] }];
-}
 
 export function DecisionTreeRenderer({
   content,
 }: ElementRendererProps<"decision-tree">) {
   const isMobile = useIsMobile();
-  const trees = useMemo(() => normalizeTrees(content), [content]);
+  const trees = content.trees ?? [];
   const [activeTreeId, setActiveTreeId] = useState<string>(trees[0]!.id);
 
   const activeTree = trees.find((t) => t.id === activeTreeId) ?? trees[0]!;
@@ -58,13 +47,9 @@ export function DecisionTreeRenderer({
     navigateToIndex,
   } = useTreeNavigation();
 
-  const rootNodes = useMemo(
-    () =>
-      nodes
-        .filter((n) => n.parentId === currentParentId)
-        .sort((a, b) => a.order - b.order),
-    [nodes, currentParentId],
-  );
+  const rootNodes = nodes
+    .filter((n) => n.parentId === currentParentId)
+    .sort((a, b) => a.order - b.order);
 
   const activeNodeId = path.length > 0 ? path[path.length - 1] : null;
   const detailNodeId = selectedNodeId ?? activeNodeId;

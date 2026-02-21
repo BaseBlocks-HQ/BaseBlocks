@@ -1,7 +1,7 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
-import type { ElementEditorProps } from "@/modules/elements/registry";
+import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type {
   DirectoryColumn,
   DirectoryColumnType,
@@ -35,7 +35,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { csvToDirectoryContent, parseCSV } from "./csv-utils";
 
 const COLUMN_TYPE_OPTIONS: {
@@ -72,14 +72,11 @@ export function DirectoryEditor({
     setLocalContent(content);
   }, [id]);
 
-  const updateContent = useCallback(
-    (newContent: DirectoryContent) => {
-      setLocalContent(newContent);
-      onSaveStatusChange?.("pending");
-      save(newContent);
-    },
-    [save, onSaveStatusChange],
-  );
+  const updateContent = (newContent: DirectoryContent) => {
+    setLocalContent(newContent);
+    onSaveStatusChange?.("pending");
+    save(newContent);
+  };
 
   const addColumn = () => {
     const newCol: DirectoryColumn = {

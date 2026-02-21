@@ -5,7 +5,7 @@
 
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Megaphone } from "lucide-react";
-import { registerElement } from "../../registry";
+import { registerElement } from "../../framework/registry";
 import { BannerConfigPanel } from "./config";
 import { BannerEditor } from "./editor";
 import { BannerPreview } from "./preview";

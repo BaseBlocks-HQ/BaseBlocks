@@ -1,6 +1,6 @@
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/elements/registry";
+import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { ImageIcon } from "lucide-react";
 
 export function ImageRenderer({ content }: ElementRendererProps<"image">) {

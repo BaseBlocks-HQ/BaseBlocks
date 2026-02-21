@@ -1,16 +1,16 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ElementEditorWrapper } from "@/modules/elements/element-editor-wrapper";
+import {
+  DndProvider,
+  type DragEndEvent,
+} from "@/modules/editor/dnd/dnd-provider";
+import { ElementEditorWrapper } from "@/modules/elements/framework/editor-wrapper";
 import {
   getElement,
   getElementConfigPanel,
   hasElementConfigPanel,
-} from "@/modules/elements/registry";
-import {
-  DndProvider,
-  type DragEndEvent,
-} from "@baseblocks/editor/dnd/dnd-provider";
+} from "@/modules/elements/framework/registry";
 import type {
   AnyContent,
   DecisionTreeBlockType,
@@ -37,7 +37,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 // Block types allowed inside decision tree nodes
 const ALLOWED_BLOCK_TYPES: DecisionTreeBlockType[] = [
@@ -74,15 +74,9 @@ export function NodeDetail({
     setLocalName(node.name);
   }, [node.id, node.name]);
 
-  const debouncedSaveName = useDebounceCallback(
-    useCallback(
-      (name: string) => {
-        onUpdateNodeName(node.id, name);
-      },
-      [onUpdateNodeName, node.id],
-    ),
-    500,
-  );
+  const debouncedSaveName = useDebounceCallback((name: string) => {
+    onUpdateNodeName(node.id, name);
+  }, 500);
 
   const blocks = [...node.contentBlocks].sort((a, b) => a.order - b.order);
   const blockIds = blocks.map((b) => b.id);

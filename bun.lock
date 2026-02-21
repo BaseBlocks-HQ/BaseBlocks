@@ -14,7 +14,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@baseblocks/backend": "workspace:*",
-        "@baseblocks/editor": "workspace:*",
         "@baseblocks/types": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@blocknote/core": "^0.46.2",
@@ -53,6 +52,7 @@
         "@types/node": "^22.15.3",
         "@types/react": "19.2.2",
         "@types/react-dom": "19.2.2",
+        "babel-plugin-react-compiler": "^1.0.0",
         "nanoid": "^5.1.6",
         "postcss": "^8.5.6",
         "tailwindcss": "^4.1.18",
@@ -75,33 +75,6 @@
       },
       "peerDependencies": {
         "typescript": "^5",
-      },
-    },
-    "packages/editor": {
-      "name": "@baseblocks/editor",
-      "version": "0.0.0",
-      "dependencies": {
-        "@dnd-kit/core": "^6.3.1",
-        "@dnd-kit/sortable": "^10.0.0",
-        "@dnd-kit/utilities": "^3.2.2",
-        "nanoid": "^5.1.6",
-      },
-      "devDependencies": {
-        "@baseblocks/tsconfig": "workspace:*",
-        "@types/node": "^22.15.3",
-        "@types/react": "19.2.2",
-        "@types/react-dom": "19.2.2",
-        "typescript": "5.9.2",
-      },
-      "peerDependencies": {
-        "@baseblocks/backend": "workspace:*",
-        "@baseblocks/types": "workspace:*",
-        "@baseblocks/ui": "workspace:*",
-        "convex": "^1.31.6",
-        "lucide-react": "^0.563.0",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "sonner": "^2.0.7",
       },
     },
     "packages/types": {
@@ -191,11 +164,15 @@
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
+    "@babel/helper-string-parser": ["@babel/helper-string-parser@7.27.1", "", {}, "sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA=="],
+
+    "@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.28.5", "", {}, "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q=="],
+
     "@babel/runtime": ["@babel/runtime@7.28.6", "", {}, "sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA=="],
 
-    "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
+    "@babel/types": ["@babel/types@7.29.0", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A=="],
 
-    "@baseblocks/editor": ["@baseblocks/editor@workspace:packages/editor"],
+    "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
 
     "@baseblocks/tailwind-config": ["@baseblocks/tailwind-config@workspace:tooling/tailwind"],
 
@@ -776,6 +753,8 @@
     "asn1js": ["asn1js@3.0.7", "", { "dependencies": { "pvtsutils": "^1.3.6", "pvutils": "^1.1.3", "tslib": "^2.8.1" } }, "sha512-uLvq6KJu04qoQM6gvBfKFjlh6Gl0vOKQuR5cJMDHQkmwfMOQeN3F3SHCv9SNYSL+CRoHvOGFfllDlVz03GQjvQ=="],
 
     "attr-accept": ["attr-accept@2.2.5", "", {}, "sha512-0bDNnY/u6pPwHDMoF0FieU354oBi0a8rD9FcsLwzcGWbc8KS8KPIi7y+s13OlVY+gMWc/9xEMUgNE6Qm8ZllYQ=="],
+
+    "babel-plugin-react-compiler": ["babel-plugin-react-compiler@1.0.0", "", { "dependencies": { "@babel/types": "^7.26.0" } }, "sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw=="],
 
     "bail": ["bail@2.0.2", "", {}, "sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw=="],
 

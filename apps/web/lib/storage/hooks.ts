@@ -3,7 +3,7 @@
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useAction, useMutation } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 import { isExtractable } from "./extraction";
@@ -41,139 +41,122 @@ export function useFileUpload() {
     api.actions?.extractDocument?.triggerExtraction,
   );
 
-  const updateUploadState = useCallback(
-    (fileId: string, update: Partial<UploadState>) => {
-      setUploadStates((prev) => ({
-        ...prev,
-        [fileId]: {
-          ...(prev[fileId] || {
-            isUploading: false,
-            progress: null,
-            error: null,
-          }),
-          ...update,
-        },
-      }));
-    },
-    [],
-  );
-
-  const uploadFile = useCallback(
-    async (
-      file: File,
-      options: UploadOptions,
-    ): Promise<Id<"documents"> | null> => {
-      const fileId = `${file.name}-${Date.now()}`;
-
-      try {
-        updateUploadState(fileId, {
-          isUploading: true,
+  const updateUploadState = (fileId: string, update: Partial<UploadState>) => {
+    setUploadStates((prev) => ({
+      ...prev,
+      [fileId]: {
+        ...(prev[fileId] || {
+          isUploading: false,
           progress: null,
           error: null,
-        });
+        }),
+        ...update,
+      },
+    }));
+  };
 
-        if (!user?.id) {
-          throw new Error("User not found");
-        }
+  const uploadFile = async (
+    file: File,
+    options: UploadOptions,
+  ): Promise<Id<"documents"> | null> => {
+    const fileId = `${file.name}-${Date.now()}`;
 
-        // Generate storage path
-        const path = entityStorageClient.generatePath(
-          options.siteId,
-          user.id,
-          file.name,
-        );
+    try {
+      updateUploadState(fileId, {
+        isUploading: true,
+        progress: null,
+        error: null,
+      });
 
-        // Upload to Entity Storage (proxy handles auth via session cookie)
-        const { blobId, cdnUrl } = await entityStorageClient.upload(
-          file,
-          path,
-          (progress) => {
-            updateUploadState(fileId, { progress });
-          },
-        );
-
-        // Create document record in Convex
-        let documentId: Id<"documents">;
-
-        if (options.libraryId) {
-          documentId = await createInLibrary({
-            siteId: options.siteId,
-            libraryId: options.libraryId,
-            folderId: options.folderId,
-            blobId,
-            cdnUrl,
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-            size: file.size,
-          });
-        } else {
-          documentId = await createDocument({
-            siteId: options.siteId,
-            blobId,
-            cdnUrl,
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-            size: file.size,
-          });
-        }
-
-        updateUploadState(fileId, {
-          isUploading: false,
-          progress: { loaded: file.size, total: file.size, percentage: 100 },
-        });
-        options.onSuccess?.(documentId);
-
-        // Trigger text extraction for supported file types (non-blocking)
-        const contentType = file.type || "application/octet-stream";
-        if (isExtractable(contentType) && triggerExtraction) {
-          triggerExtraction({ documentId, authToken: "" }).catch(
-            (err: unknown) => {
-              console.warn("Failed to trigger extraction:", err);
-            },
-          );
-        }
-
-        return documentId;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Upload failed");
-        updateUploadState(fileId, { isUploading: false, error: error.message });
-        options.onError?.(error);
-        return null;
+      if (!user?.id) {
+        throw new Error("User not found");
       }
-    },
-    [
-      user,
-      createDocument,
-      createInLibrary,
-      triggerExtraction,
-      updateUploadState,
-    ],
-  );
 
-  const uploadFiles = useCallback(
-    async (
-      files: File[],
-      options: UploadOptions,
-    ): Promise<(Id<"documents"> | null)[]> => {
-      const results = await Promise.all(
-        files.map((file) => uploadFile(file, options)),
+      // Generate storage path
+      const path = entityStorageClient.generatePath(
+        options.siteId,
+        user.id,
+        file.name,
       );
-      return results;
-    },
-    [uploadFile],
-  );
 
-  const clearUploadState = useCallback((fileId: string) => {
+      // Upload to Entity Storage (proxy handles auth via session cookie)
+      const { blobId, cdnUrl } = await entityStorageClient.upload(
+        file,
+        path,
+        (progress) => {
+          updateUploadState(fileId, { progress });
+        },
+      );
+
+      // Create document record in Convex
+      let documentId: Id<"documents">;
+
+      if (options.libraryId) {
+        documentId = await createInLibrary({
+          siteId: options.siteId,
+          libraryId: options.libraryId,
+          folderId: options.folderId,
+          blobId,
+          cdnUrl,
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: file.size,
+        });
+      } else {
+        documentId = await createDocument({
+          siteId: options.siteId,
+          blobId,
+          cdnUrl,
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+          size: file.size,
+        });
+      }
+
+      updateUploadState(fileId, {
+        isUploading: false,
+        progress: { loaded: file.size, total: file.size, percentage: 100 },
+      });
+      options.onSuccess?.(documentId);
+
+      // Trigger text extraction for supported file types (non-blocking)
+      const contentType = file.type || "application/octet-stream";
+      if (isExtractable(contentType) && triggerExtraction) {
+        triggerExtraction({ documentId, authToken: "" }).catch(
+          (_err: unknown) => {},
+        );
+      }
+
+      return documentId;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Upload failed");
+      updateUploadState(fileId, { isUploading: false, error: error.message });
+      options.onError?.(error);
+      return null;
+    }
+  };
+
+  const uploadFiles = async (
+    files: File[],
+    options: UploadOptions,
+  ): Promise<(Id<"documents"> | null)[]> => {
+    const results = await Promise.all(
+      files.map((file) => uploadFile(file, options)),
+    );
+    return results;
+  };
+
+  const clearUploadState = (fileId: string) => {
     setUploadStates((prev) => {
       const next = { ...prev };
       delete next[fileId];
       return next;
     });
-  }, []);
+  };
 
-  const clearAllUploadStates = useCallback(() => {
+  const clearAllUploadStates = () => {
     setUploadStates({});
-  }, []);
+  };
 
   // Check if any files are uploading
   const isAnyUploading = Object.values(uploadStates).some(

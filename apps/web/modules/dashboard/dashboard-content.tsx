@@ -1,7 +1,6 @@
 "use client";
 
-import { api } from "@baseblocks/backend";
-import { useQuery } from "convex/react";
+import { useSites, useTeam } from "@/lib/data";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./components/create-site-dialog";
 import { SitesGrid } from "./components/sites-grid";
@@ -9,8 +8,8 @@ import { SitesGrid } from "./components/sites-grid";
 export function DashboardContent() {
   const t = useTranslations();
 
-  const team = useQuery(api.teams.queries.getMine);
-  const sites = useQuery(api.sites.queries.list);
+  const team = useTeam();
+  const sites = useSites();
 
   // The layout handles auth and loading states
   // team can be null for users who only have membership in other orgs

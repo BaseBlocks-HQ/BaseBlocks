@@ -1,6 +1,6 @@
 "use client";
 
-import { api } from "@baseblocks/backend";
+import { useMemberRole, useMembers, useTeam } from "@/lib/data";
 import type { Id } from "@baseblocks/backend";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@baseblocks/ui/table";
-import { useQuery } from "convex/react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { InviteMemberDialog } from "./invite-member-dialog";
@@ -31,15 +30,9 @@ interface MemberListItem {
 export function TeamContent() {
   const t = useTranslations("team");
 
-  const team = useQuery(api.teams.queries.getMine);
-  const members = useQuery(
-    api.members.queries.list,
-    team ? { teamId: team._id } : "skip",
-  );
-  const myRole = useQuery(
-    api.members.queries.getMyRole,
-    team ? { teamId: team._id } : "skip",
-  );
+  const team = useTeam();
+  const members = useMembers(team?._id);
+  const myRole = useMemberRole(team?._id);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {
@@ -96,7 +89,7 @@ export function TeamContent() {
                 <TableHead>{t("member.role")}</TableHead>
                 <TableHead>{t("member.joined")}</TableHead>
                 {isAdmin && members.length > 1 && (
-                  <TableHead className="w-[70px]"></TableHead>
+                  <TableHead className="w-[70px]" />
                 )}
               </TableRow>
             </TableHeader>

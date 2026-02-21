@@ -23,7 +23,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { EditSiteDialog } from "./edit-site-dialog";
 
 interface SiteCardProps {
@@ -57,7 +57,7 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
   const siteUrl = getSiteUrl(effectiveTeamSlug, site.slug);
 
   // Preview handler that works on localhost (subdomain) and production
-  const handlePreview = useCallback(() => {
+  const handlePreview = () => {
     const isLocalhost =
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1" ||
@@ -72,15 +72,14 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
     } else {
       window.open(getSiteUrl(effectiveTeamSlug, site.slug), "_blank");
     }
-  }, [effectiveTeamSlug, site.slug]);
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await deleteSite({ siteId: site._id as any });
       setDeleteOpen(false);
-    } catch (err) {
-      console.error("Failed to delete site:", err);
+    } catch (_err) {
     } finally {
       setIsDeleting(false);
     }

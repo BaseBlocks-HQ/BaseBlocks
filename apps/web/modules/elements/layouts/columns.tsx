@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import type { ElementPreviewProps } from "../registry";
 import { Columns3 } from "lucide-react";
-import { registerLayout } from "../registry";
+import type { ElementPreviewProps } from "../framework/registry";
+import { registerLayout } from "../framework/registry";
 
 function ColumnsPreview({ className }: ElementPreviewProps) {
   return (

@@ -1,16 +1,16 @@
 "use client";
 
-import { useAutoSave } from "@/hooks/use-auto-save";
 import { cn } from "@/lib/utils";
+import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { Code } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
   ElementRendererProps,
-} from "../registry";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { Code } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { registerElement } from "../registry";
+} from "../framework/registry";
+import { registerElement } from "../framework/registry";
 
 function CodeEditor({
   id,
@@ -22,13 +22,13 @@ function CodeEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
-  const autoResize = useCallback(() => {
+  const autoResize = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
-  }, []);
+  };
 
   useEffect(() => {
     setLocalText(content.text || "");

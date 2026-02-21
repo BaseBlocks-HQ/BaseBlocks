@@ -1,5 +1,6 @@
 "use client";
 
+import { useSites } from "@/lib/data";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
 import {
@@ -31,7 +32,7 @@ export function LibrariesPageContent() {
     useState<LibraryWithCount | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const sites = useQuery(api.sites.queries.list);
+  const sites = useSites();
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   // Fetch libraries with counts for each site
@@ -46,8 +47,7 @@ export function LibrariesPageContent() {
     try {
       await deleteLibrary({ libraryId: deletingLibrary._id });
       setDeletingLibrary(null);
-    } catch (error) {
-      console.error("Failed to delete library:", error);
+    } catch (_error) {
     } finally {
       setIsDeleting(false);
     }

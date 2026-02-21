@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import { Upload, X } from "lucide-react";
-import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 
 interface DropZoneProps {
@@ -24,14 +23,11 @@ export function DropZone({
   children,
   noClick = false,
 }: DropZoneProps) {
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        onFilesAccepted(acceptedFiles);
-      }
-    },
-    [onFilesAccepted],
-  );
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      onFilesAccepted(acceptedFiles);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } =
     useDropzone({
@@ -105,14 +101,11 @@ export function InlineDropZone({
   disabled = false,
   className,
 }: InlineDropZoneProps) {
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        onFilesAccepted(acceptedFiles);
-      }
-    },
-    [onFilesAccepted],
-  );
+  const onDrop = (acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      onFilesAccepted(acceptedFiles);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

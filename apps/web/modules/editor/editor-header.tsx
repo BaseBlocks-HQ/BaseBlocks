@@ -2,23 +2,13 @@
 
 import { ModeToggle } from "@/components/mode-toggle";
 import { SiteLogo } from "@/components/site-logo";
-import { useCustomizationStyles } from "@/hooks/use-site-customization";
 import { getSiteUrl } from "@/lib/url";
 import { cn } from "@/lib/utils";
+import { useEditorContext } from "@/modules/editor/contexts/editor-context";
+import { useCustomizationStyles } from "@/modules/elements/panels/customization/use-site-customization";
 import { SearchBox } from "@/modules/elements/sections/search/search-box";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import {
-  DeployDialog,
-  DeploymentHistoryPanel,
-  ShareDialog,
-  useEditorContext,
-} from "@baseblocks/editor";
-import type {
-  AccessCodeData,
-  DeploymentData,
-  SharingSettings,
-} from "@baseblocks/editor";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
@@ -36,7 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   Check,
   ChevronDown,
@@ -54,7 +44,12 @@ import {
   Undo2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DeployDialog } from "./components/deploy-dialog";
+import { DeploymentHistoryPanel } from "./components/deployment-history-panel";
+import { ShareDialog } from "./components/share-dialog";
+import type { AccessCodeData, DeploymentData, SharingSettings } from "./types";
 
 interface EditorHeaderProps {
   teamSlug: string;
@@ -96,7 +91,6 @@ export function EditorHeader({
   const {
     canEdit,
     hasUndeployedChanges,
-    deploySite,
     undo,
     redo,
     canUndo,
@@ -106,6 +100,25 @@ export function EditorHeader({
     showControls,
     toggleControls,
   } = useEditorContext();
+
+  const deployMut = useMutation(api.deployments.mutations.deploy);
+  const rollbackMut = useMutation(api.deployments.mutations.rollback);
+
+  const deploySite = async (notes?: string) => {
+    try {
+      await deployMut({ siteId, notes });
+      toast.success("Changes deployed successfully");
+    } catch (_error) {
+      toast.error("Failed to deploy changes");
+    }
+  };
+
+  const handleRollback = async (targetDeploymentId: string) => {
+    await rollbackMut({
+      siteId,
+      targetDeploymentId: targetDeploymentId as Id<"deployments">,
+    });
+  };
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -141,17 +154,15 @@ export function EditorHeader({
           }
         : null;
 
-  const deployments: DeploymentData[] | undefined = useMemo(
-    () =>
-      rawDeployments?.map((d) => ({
-        id: d._id as string,
-        version: d.version,
-        status: d.status,
-        notes: d.notes,
-        deployedAt: d.deployedAt,
-        summary: d.summary,
-      })),
-    [rawDeployments],
+  const deployments: DeploymentData[] | undefined = rawDeployments?.map(
+    (d) => ({
+      id: d._id as string,
+      version: d.version,
+      status: d.status,
+      notes: d.notes,
+      deployedAt: d.deployedAt,
+      summary: d.summary,
+    }),
   );
 
   const showHeader = site.settings.showHeader !== false;
@@ -459,47 +470,44 @@ export function EditorHeader({
           <Separator orientation="vertical" className="mx-1.5 h-5" />
 
           {/* Primary CTA */}
-          {canEdit && (
-            <>
-              {hasUndeployedChanges ? (
-                <Button
-                  size="sm"
-                  onClick={() => setDeployDialogOpen(true)}
-                  className="gap-1.5 bg-amber-600 hover:bg-amber-700"
-                >
-                  <Rocket className="h-4 w-4" />
-                  <span className="hidden md:inline">Deploy Changes</span>
-                  <span className="md:hidden">Deploy</span>
-                </Button>
-              ) : sitePublished ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      Published
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onUnpublish && (
-                      <DropdownMenuItem
-                        onClick={onUnpublish}
-                        variant="destructive"
-                      >
-                        <EyeOff />
-                        {t("editor.unpublish")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button size="sm" onClick={onPublish}>
-                  <Globe className="h-4 w-4" />
-                  {t("editor.publish")}
-                </Button>
-              )}
-            </>
-          )}
+          {canEdit &&
+            (hasUndeployedChanges ? (
+              <Button
+                size="sm"
+                onClick={() => setDeployDialogOpen(true)}
+                className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+              >
+                <Rocket className="h-4 w-4" />
+                <span className="hidden md:inline">Deploy Changes</span>
+                <span className="md:hidden">Deploy</span>
+              </Button>
+            ) : sitePublished ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    Published
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onUnpublish && (
+                    <DropdownMenuItem
+                      onClick={onUnpublish}
+                      variant="destructive"
+                    >
+                      <EyeOff />
+                      {t("editor.unpublish")}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button size="sm" onClick={onPublish}>
+                <Globe className="h-4 w-4" />
+                {t("editor.publish")}
+              </Button>
+            ))}
 
           {/* View-only: just show View Live if published */}
           {!canEdit && sitePublished && (
@@ -545,6 +553,7 @@ export function EditorHeader({
         onOpenChange={setHistoryOpen}
         siteId={siteId}
         deployments={deployments}
+        onRollback={handleRollback}
       />
     </>
   );

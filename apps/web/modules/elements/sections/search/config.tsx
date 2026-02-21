@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementConfigPanelProps } from "@/modules/elements/registry";
+import type { ElementConfigPanelProps } from "@/modules/elements/framework/registry";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
