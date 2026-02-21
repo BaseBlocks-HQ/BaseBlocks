@@ -60,6 +60,12 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
           : "border-border hover:border-muted-foreground/50",
       )}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
     >
       {/* Drag handle and actions */}
       <div

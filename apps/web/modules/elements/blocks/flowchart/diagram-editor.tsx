@@ -237,6 +237,12 @@ export function DiagramEditor({
                     : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 }`}
                 onClick={() => setActiveTabId(diagram.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveTabId(diagram.id);
+                  }
+                }}
               >
                 {editingLabelId === diagram.id ? (
                   <form

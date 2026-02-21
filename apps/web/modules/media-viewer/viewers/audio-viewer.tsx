@@ -96,7 +96,14 @@ export function AudioViewer({ file }: ViewerProps) {
 
   return (
     <div className="flex flex-col h-full items-center justify-center p-8 bg-gradient-to-b from-muted/50 to-muted">
-      <audio ref={audioRef} src={file.url} />
+      <audio ref={audioRef} src={file.url}>
+        <track
+          kind="captions"
+          srcLang="en"
+          label="Captions"
+          src="data:text/vtt,WEBVTT"
+        />
+      </audio>
 
       {/* Album art placeholder */}
       <div className="w-40 h-40 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-8 shadow-lg">

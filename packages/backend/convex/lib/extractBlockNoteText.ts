@@ -12,18 +12,18 @@ export function extractBlockNoteText(blocks: unknown[] | undefined): string {
 
     // Extract direct text content
     if (typeof obj.text === "string") {
-      text += obj.text + " ";
+      text += `${obj.text} `;
     }
 
     // Handle BlockNote inline content (text with styles)
     if (Array.isArray(obj.content)) {
       for (const child of obj.content) {
         if (typeof child === "string") {
-          text += child + " ";
+          text += `${child} `;
         } else if (typeof child === "object" && child !== null) {
           const childObj = child as Record<string, unknown>;
           if (typeof childObj.text === "string") {
-            text += childObj.text + " ";
+            text += `${childObj.text} `;
           }
           // Recursively extract from nested content
           text += extractText(child);

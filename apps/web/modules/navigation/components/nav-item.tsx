@@ -138,9 +138,13 @@ export function NavItem({
         >
           {hasChildren ? (
             <span
-              role="button"
-              tabIndex={0}
               onClick={handleToggleExpand}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleToggleExpand(e as unknown as React.MouseEvent);
+                }
+              }}
               className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {isExpanded ? (
@@ -187,8 +191,6 @@ export function NavItem({
         {/* Expand/collapse toggle - inside the link like in editor */}
         {hasChildren ? (
           <span
-            role="button"
-            tabIndex={0}
             onClick={handleToggleExpand}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

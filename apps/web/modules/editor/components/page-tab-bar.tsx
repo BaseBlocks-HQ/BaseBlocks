@@ -44,6 +44,7 @@ export function PageTabBar({
     <div
       className="group/tabbar mb-6 flex items-center justify-center gap-2"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
     >
       {showControls && (
         <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
@@ -91,8 +92,6 @@ export function PageTabBar({
               {showControls && (
                 <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
                   <span
-                    role="button"
-                    tabIndex={0}
                     className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -109,8 +108,6 @@ export function PageTabBar({
                   </span>
                   {index >= 2 && (
                     <span
-                      role="button"
-                      tabIndex={0}
                       className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();

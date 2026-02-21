@@ -29,6 +29,12 @@ export function FileItem({
     <div
       className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-pointer"
       onClick={onPreview}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPreview();
+        }
+      }}
     >
       <div className={cn("shrink-0", getFileTypeColor(file.contentType))}>
         <FileIcon contentType={file.contentType} className="h-4 w-4" />

@@ -224,7 +224,10 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
       {/* Sidebar-specific settings */}
       {currentNavStyle === "sidebar" && (
         <div className="mt-4 pt-4 border-t">
-          <label className="flex items-center justify-between gap-3 cursor-pointer">
+          <label
+            htmlFor="sidebar-default-expanded"
+            className="flex items-center justify-between gap-3 cursor-pointer"
+          >
             <div>
               <p className="text-sm font-medium">Expand all pages by default</p>
               <p className="text-xs text-muted-foreground">
@@ -232,6 +235,7 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
               </p>
             </div>
             <Switch
+              id="sidebar-default-expanded"
               checked={
                 !!(site.settings as Record<string, unknown>)
                   .sidebarDefaultExpanded

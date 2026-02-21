@@ -138,8 +138,6 @@ export function SortableTreeItem({
         {/* Expand/collapse toggle for pages with children */}
         {hasChildren ? (
           <span
-            role="button"
-            tabIndex={0}
             onClick={handleToggleExpand}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

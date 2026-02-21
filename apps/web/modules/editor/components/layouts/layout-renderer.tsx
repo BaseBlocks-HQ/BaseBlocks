@@ -78,6 +78,13 @@ export function LayoutRenderer({
         e.stopPropagation();
         onSelectLayout();
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelectLayout();
+        }
+      }}
     >
       {/* Layout with inline toolbar */}
       <div className="flex gap-1 items-start">
@@ -95,8 +102,6 @@ export function LayoutRenderer({
           >
             <div
               ref={dragHandleRef}
-              role="button"
-              tabIndex={0}
               className={cn(
                 "flex items-center justify-center h-6 w-6 rounded",
                 "cursor-grab active:cursor-grabbing",

@@ -108,6 +108,13 @@ export function FileListItem({
         className,
       )}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+      tabIndex={onPreview ? 0 : -1}
     >
       {/* File icon */}
       <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>

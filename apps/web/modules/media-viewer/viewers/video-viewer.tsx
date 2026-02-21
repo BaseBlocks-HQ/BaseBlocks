@@ -123,8 +123,22 @@ export function VideoViewer({ file }: ViewerProps) {
           src={file.url}
           className="max-h-full max-w-full"
           onClick={togglePlay}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              togglePlay();
+            }
+          }}
+          tabIndex={0}
           playsInline
-        />
+        >
+          <track
+            kind="captions"
+            srcLang="en"
+            label="Captions"
+            src="data:text/vtt,WEBVTT"
+          />
+        </video>
 
         {/* Play overlay (shown when paused) */}
         {!isPlaying && (

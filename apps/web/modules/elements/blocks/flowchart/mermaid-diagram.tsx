@@ -153,6 +153,11 @@ export function MermaidDiagram({
   }, [svg, fitToView]);
 
   useEffect(() => {
+    if (!contentRef.current) return;
+    contentRef.current.innerHTML = svg ?? "";
+  }, [svg]);
+
+  useEffect(() => {
     if (!isFullscreen) return;
     requestAnimationFrame(fitToView);
   }, [isFullscreen, fitToView]);
@@ -337,7 +342,6 @@ export function MermaidDiagram({
         <div
           ref={contentRef}
           className="absolute left-0 top-0 origin-top-left"
-          dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
     </div>

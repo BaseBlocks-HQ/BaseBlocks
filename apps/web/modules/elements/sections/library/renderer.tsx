@@ -170,6 +170,12 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={() => handleSelectFolder(folder._id, closeOnSelect)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleSelectFolder(folder._id, closeOnSelect);
+              }
+            }}
           >
             <button
               type="button"
@@ -366,6 +372,12 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                       key={folder._id}
                       className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
                       onClick={() => handleSelectFolder(folder._id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleSelectFolder(folder._id);
+                        }
+                      }}
                     >
                       <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="text-sm truncate flex-1 min-w-0">
@@ -379,6 +391,12 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                     key={file._id}
                     className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-primary/5 cursor-pointer group"
                     onClick={() => handlePreview(file)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handlePreview(file);
+                      }
+                    }}
                   >
                     <div
                       className={cn(

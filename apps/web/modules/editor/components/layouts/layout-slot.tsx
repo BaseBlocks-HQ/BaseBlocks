@@ -85,6 +85,13 @@ export function LayoutSlot({
         e.stopPropagation();
         onSelect();
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect();
+        }
+      }}
     >
       {isEmpty ? (
         // Empty slot
@@ -206,6 +213,13 @@ function SortableBlock({
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect();
+        }
       }}
     >
       {/* Block with inline toolbar */}

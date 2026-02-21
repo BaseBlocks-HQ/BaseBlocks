@@ -196,6 +196,8 @@ export function PageEditor({
     <div
       className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      tabIndex={-1}
     >
       <p className="text-muted-foreground text-sm mb-3">
         {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
@@ -274,7 +276,16 @@ export function PageEditor({
   }
 
   return (
-    <div className="min-h-full w-full" onClick={handleEditorClick}>
+    <div
+      className="min-h-full w-full"
+      onClick={handleEditorClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleEditorClick();
+        }
+      }}
+    >
       <div
         className={cn(
           "mx-auto relative",

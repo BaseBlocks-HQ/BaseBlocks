@@ -38,10 +38,10 @@ function extractSnippet(
 
   // Add ellipsis if truncated
   if (start > 0) {
-    snippet = "..." + snippet;
+    snippet = `...${snippet}`;
   }
   if (end < text.length) {
-    snippet = snippet + "...";
+    snippet = `${snippet}...`;
   }
 
   return {

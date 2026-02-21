@@ -52,6 +52,12 @@ export function FolderItem({
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
       >
         <button
           type="button"

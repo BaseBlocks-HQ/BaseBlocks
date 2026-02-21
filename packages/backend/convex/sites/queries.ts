@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
 
@@ -81,7 +82,7 @@ export const getBySlug = query({
     if (!team) return null;
 
     // If no site slug, get the default/first site
-    let site;
+    let site: Doc<"sites"> | null;
     if (!siteSlug) {
       site = await ctx.db
         .query("sites")
@@ -156,7 +157,7 @@ export const getWithDefaultPage = query({
     if (!team) return null;
 
     // Get the specific site by slug, or fall back to first published site
-    let site;
+    let site: Doc<"sites"> | null;
     if (siteSlug) {
       site = await ctx.db
         .query("sites")

@@ -79,13 +79,16 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     const parts = content.split(regex);
 
     let isFirstMatch = true;
-    return parts.map((part, i) => {
+    let matchCount = 0;
+    return parts.map((part) => {
       if (regex.test(part)) {
         const isFirst = isFirstMatch;
         isFirstMatch = false;
+        const matchId = matchCount;
+        matchCount += 1;
         return (
           <mark
-            key={i}
+            key={`match-${part}-${matchId}`}
             ref={
               isFirst
                 ? (el) => {

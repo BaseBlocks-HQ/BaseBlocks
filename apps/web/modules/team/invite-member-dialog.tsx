@@ -29,7 +29,7 @@ interface InviteMemberDialogProps {
   teamId: Id<"teams">;
 }
 
-export function InviteMemberDialog({}: InviteMemberDialogProps) {
+export function InviteMemberDialog(_props: InviteMemberDialogProps) {
   const t = useTranslations("team");
 
   const [open, setOpen] = useState(false);

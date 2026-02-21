@@ -387,6 +387,12 @@ export function DecisionTreeEditor({
                   : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               }`}
               onClick={() => switchTree(tree.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  switchTree(tree.id);
+                }
+              }}
             >
               {editingLabelId === tree.id ? (
                 <form

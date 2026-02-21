@@ -9,16 +9,13 @@ interface DragHandleProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Drag handle component - uses div with role="button" to avoid
- * nested button issues when used inside interactive elements
+ * Drag handle component for sortable controls.
  */
 export const DragHandle = forwardRef<HTMLDivElement, DragHandleProps>(
   ({ className, ...props }, ref) => {
     return (
       <div
         ref={ref}
-        role="button"
-        tabIndex={0}
         className={cn(
           "flex items-center justify-center h-6 w-6 rounded text-muted-foreground",
           "hover:text-foreground hover:bg-accent",

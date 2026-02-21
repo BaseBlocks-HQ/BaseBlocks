@@ -326,6 +326,12 @@ export function SearchBox({
                     key={result._id}
                     className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => handleDocumentClick(result)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleDocumentClick(result);
+                      }
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0 flex-1">

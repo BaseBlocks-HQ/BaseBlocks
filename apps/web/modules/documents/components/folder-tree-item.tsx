@@ -67,6 +67,14 @@ export function FolderTreeItem({
     onToggleExpand(folder._id);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect(folder._id);
+    }
+  };
+
   return (
     <div>
       <div
@@ -76,6 +84,7 @@ export function FolderTreeItem({
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
       >
         {/* Expand/collapse toggle */}
         <button

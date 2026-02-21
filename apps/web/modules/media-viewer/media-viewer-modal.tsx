@@ -297,9 +297,9 @@ export function MediaViewerModal() {
       {/* Gallery indicator (for multiple files) */}
       {files.length > 1 && (
         <footer className="flex items-center justify-center gap-1 py-2 border-t bg-muted/30 shrink-0">
-          {files.map((_, index) => (
+          {files.map((file, index) => (
             <div
-              key={index}
+              key={file.url}
               className={cn(
                 "w-1.5 h-1.5 rounded-full transition-colors",
                 index === currentIndex
