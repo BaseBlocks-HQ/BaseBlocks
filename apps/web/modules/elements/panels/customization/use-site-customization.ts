@@ -1,7 +1,7 @@
 import {
   generateCustomizationStyles,
   hasCustomization,
-} from "@/lib/customization";
+} from "./lib";
 import { useSite } from "@/lib/data";
 import type { Id } from "@baseblocks/backend";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
-import type { PageTab } from "@/modules/editor/types";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import type { PageTab } from "@/modules/shared/types";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";

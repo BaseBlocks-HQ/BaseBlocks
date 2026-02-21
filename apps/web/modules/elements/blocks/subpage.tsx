@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";

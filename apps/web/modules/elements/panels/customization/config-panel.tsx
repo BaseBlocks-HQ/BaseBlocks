@@ -1,8 +1,8 @@
 "use client";
 
-import { lightenColor } from "@/lib/customization";
+import { lightenColor } from "./lib";
 import { useSite } from "@/lib/data";
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type {

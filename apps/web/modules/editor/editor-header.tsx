@@ -4,9 +4,14 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { SiteLogo } from "@/components/site-logo";
 import { getSiteUrl } from "@/lib/url";
 import { cn } from "@/lib/utils";
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
 import { useCustomizationStyles } from "@/modules/elements/panels/customization/use-site-customization";
 import { SearchBox } from "@/modules/elements/sections/search/search-box";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import type {
+  AccessCodeData,
+  DeploymentData,
+  SharingSettings,
+} from "@/modules/shared/types";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";
@@ -49,7 +54,6 @@ import { toast } from "sonner";
 import { DeployDialog } from "./components/deploy-dialog";
 import { DeploymentHistoryPanel } from "./components/deployment-history-panel";
 import { ShareDialog } from "./components/share-dialog";
-import type { AccessCodeData, DeploymentData, SharingSettings } from "./types";
 
 interface EditorHeaderProps {
   teamSlug: string;

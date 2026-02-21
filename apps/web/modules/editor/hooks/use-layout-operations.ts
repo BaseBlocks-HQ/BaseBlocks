@@ -1,9 +1,9 @@
 "use client";
 
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
-import { useEditorMutations } from "@/modules/editor/contexts/editor-mutations";
-import { arrayMove } from "@/modules/editor/dnd";
-import { createLayout } from "@/modules/editor/layouts";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
+import { arrayMove } from "@/modules/shared/dnd";
+import { createLayout } from "@/modules/shared/layouts";
 import type {
   AnyContent,
   LayoutData,

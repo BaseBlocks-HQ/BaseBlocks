@@ -12,9 +12,9 @@ import {
   useFolderOperations,
   useFolderPath,
 } from "@/modules/documents";
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useMediaViewer } from "@/modules/media-viewer";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {

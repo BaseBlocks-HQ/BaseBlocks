@@ -3,7 +3,7 @@
 import {
   type EditorMutations,
   EditorMutationsProvider,
-} from "@/modules/editor/contexts/editor-mutations";
+} from "@/modules/shared/contexts/editor-mutations";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { LayoutType } from "@baseblocks/types";

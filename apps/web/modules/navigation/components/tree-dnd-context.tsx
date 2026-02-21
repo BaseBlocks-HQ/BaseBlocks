@@ -1,7 +1,7 @@
 "use client";
 
-import type { FlattenedPage, TreeProjection } from "@/lib/tree";
-import { INDENT_WIDTH, getProjection } from "@/lib/tree";
+import type { FlattenedPage, TreeProjection } from "../tree";
+import { INDENT_WIDTH, getProjection } from "../tree";
 import type { PageListItem } from "@baseblocks/types";
 import {
   DndContext,

@@ -1,10 +1,10 @@
 "use client";
 
-import type { FlattenedPage } from "@/lib/tree";
-import { INDENT_WIDTH, isValidDrop } from "@/lib/tree";
+import type { FlattenedPage } from "../tree";
+import { INDENT_WIDTH, isValidDrop } from "../tree";
 import { cn } from "@/lib/utils";
-import { DragHandle } from "@/modules/editor/dnd";
 import { HomeIcon, PagesIcon } from "@/modules/elements/framework/icons";
+import { DragHandle } from "@/modules/shared/dnd";
 import type { PageListItem } from "@baseblocks/types";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { useSortable } from "@dnd-kit/sortable";

@@ -14,18 +14,18 @@ export {
   getSortedCategories,
 } from "./categories";
 
-// Layout types
+// Layout types (re-exported from root layouts module)
 export type {
   LayoutType,
   SpacerLayoutHeight,
   LayoutSettings,
   LayoutTypeInfo,
-} from "./layouts";
+} from "../layouts";
 export {
   LAYOUT_SLOT_COUNTS,
   DEFAULT_LAYOUT_SETTINGS,
   LAYOUT_TYPES,
-} from "./layouts";
+} from "../layouts";
 
 // Block types
 export type {

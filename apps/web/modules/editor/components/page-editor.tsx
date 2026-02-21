@@ -1,10 +1,10 @@
 "use client";
 
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
-import { DndProvider } from "@/modules/editor/dnd";
 import { useLayoutOperations } from "@/modules/editor/hooks/use-layout-operations";
 import { usePageTabs } from "@/modules/editor/hooks/use-page-tabs";
-import type { LayoutDoc, PageData } from "@/modules/editor/types";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { DndProvider } from "@/modules/shared/dnd";
+import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type {
   AnyContent,
   LayoutBlockType,

@@ -1,15 +1,15 @@
 "use client";
 
 import { ConfirmDialog } from "@/components/dialogs";
-import type { TreeProjection } from "@/lib/tree";
+import type { TreeProjection } from "../tree";
 import {
   applyMove,
   flattenTree,
   getDescendantIds,
   hashPages,
   isValidDrop,
-} from "@/lib/tree";
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
+} from "../tree";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";

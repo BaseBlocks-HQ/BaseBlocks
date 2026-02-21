@@ -30,7 +30,7 @@ import type { ImageContent, MediaType } from "./media";
 
 import type { FormContent, FormType } from "./forms";
 
-import type { LayoutSettings, LayoutType } from "./layouts";
+import type { LayoutSettings, LayoutType } from "../layouts";
 
 // Union of all element types (excluding layouts which are containers)
 // Note: Navigation is configured at site-level, not as individual elements

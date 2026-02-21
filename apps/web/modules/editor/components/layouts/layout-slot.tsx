@@ -1,13 +1,13 @@
 "use client";
 
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
-import { DndProvider, type DragEndEvent } from "@/modules/editor/dnd";
 import { ElementEditorWrapper } from "@/modules/elements/framework/editor-wrapper";
 import { LayoutContextProvider } from "@/modules/elements/framework/layout-context";
 import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/elements/framework/registry";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { DndProvider, type DragEndEvent } from "@/modules/shared/dnd";
 import type {
   AnyContent,
   ElementType,

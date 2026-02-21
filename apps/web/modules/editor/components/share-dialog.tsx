@@ -1,5 +1,6 @@
 "use client";
 
+import type { AccessCodeData, SharingSettings } from "@/modules/shared/types";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -33,7 +34,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { AccessCodeData, SharingSettings } from "../types";
 
 type Visibility = "private" | "public" | "link-only" | "password";
 

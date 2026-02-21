@@ -1,7 +1,7 @@
 "use client";
 
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
-import { useEditorMutations } from "@/modules/editor/contexts/editor-mutations";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";

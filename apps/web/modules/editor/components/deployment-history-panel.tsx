@@ -1,5 +1,6 @@
 "use client";
 
+import type { DeploymentData } from "@/modules/shared/types";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
@@ -12,7 +13,6 @@ import {
 import { History, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DeploymentData } from "../types";
 import { RollbackDialog } from "./rollback-dialog";
 
 interface DeploymentHistoryPanelProps {

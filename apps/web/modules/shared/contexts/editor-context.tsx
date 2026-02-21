@@ -1,9 +1,12 @@
 "use client";
 
+import type { EditorPermissions, SiteData } from "@/modules/shared/types";
+import type { UndoCommand } from "@/modules/shared/undo";
+import {
+  useUndoKeyboardShortcuts,
+  useUndoManager,
+} from "@/modules/shared/undo";
 import { type ReactNode, createContext, useContext, useState } from "react";
-import type { EditorPermissions, SiteData } from "../types";
-import type { UndoCommand } from "../undo";
-import { useUndoKeyboardShortcuts, useUndoManager } from "../undo";
 
 export interface EditingSubpage {
   pageId: string;

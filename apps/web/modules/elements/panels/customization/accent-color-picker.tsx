@@ -1,6 +1,6 @@
 "use client";
 
-import { isValidHex } from "@/lib/customization";
+import { isValidHex } from "./lib";
 import { cn } from "@/lib/utils";
 import { COLOR_PRESETS } from "@baseblocks/types/elements/customization";
 import { Button } from "@baseblocks/ui/button";

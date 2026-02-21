@@ -2,7 +2,7 @@
 
 import { useSite } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {

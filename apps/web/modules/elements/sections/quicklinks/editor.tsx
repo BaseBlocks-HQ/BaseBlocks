@@ -3,9 +3,9 @@
 import { authClient } from "@/lib/auth/client";
 import { entityStorageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
-import { useEditorContext } from "@/modules/editor/contexts/editor-context";
 import { useLayoutContext } from "@/modules/elements/framework/layout-context";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
+import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import type { QuicklinkItem, QuicklinkType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";

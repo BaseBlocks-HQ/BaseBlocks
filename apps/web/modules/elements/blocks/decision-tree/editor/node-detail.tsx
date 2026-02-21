@@ -1,16 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import {
-  DndProvider,
-  type DragEndEvent,
-} from "@/modules/editor/dnd/dnd-provider";
 import { ElementEditorWrapper } from "@/modules/elements/framework/editor-wrapper";
 import {
   getElement,
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/elements/framework/registry";
+import { DndProvider, type DragEndEvent } from "@/modules/shared/dnd";
 import type {
   AnyContent,
   DecisionTreeBlockType,

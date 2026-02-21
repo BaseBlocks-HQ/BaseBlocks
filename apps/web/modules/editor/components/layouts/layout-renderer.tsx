@@ -1,10 +1,10 @@
 "use client";
 
-import { useEditorContextOptional } from "@/modules/editor/contexts/editor-context";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
-} from "@/modules/editor/layouts";
+} from "@/modules/shared/layouts";
 import type {
   AnyContent,
   LayoutData,
