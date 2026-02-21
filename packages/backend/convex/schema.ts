@@ -126,6 +126,7 @@ export default defineSchema({
 
   // Layouts — content containers for blocks
   layouts: defineTable({
+    siteId: v.optional(v.id("sites")), // Denormalized for efficient site-wide queries
     pageId: v.id("pages"),
     tabId: v.optional(v.string()),
     type: layoutType,
@@ -145,6 +146,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_site", ["siteId"])
     .index("by_page", ["pageId"])
     .index("by_page_tab", ["pageId", "tabId"]),
 

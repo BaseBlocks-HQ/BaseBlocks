@@ -1,8 +1,11 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
+import {
+  resolveLayoutContext,
+  resolvePageContext,
+} from "../lib/resolvers";
 import {
   blockContent,
   layoutSettings,
@@ -10,37 +13,6 @@ import {
   layoutType,
   slotBlock,
 } from "./validators";
-
-// Helper to get teamId from pageId
-async function getTeamIdFromPage(
-  ctx: { db: any },
-  pageId: string,
-): Promise<{ teamId: string; siteId: string } | null> {
-  const page = await ctx.db.get(pageId);
-  if (!page) return null;
-
-  const site = await ctx.db.get(page.siteId);
-  if (!site) return null;
-
-  return { teamId: site.teamId, siteId: site._id };
-}
-
-// Helper to get teamId from layoutId
-async function getTeamIdFromLayout(
-  ctx: { db: any },
-  layoutId: string,
-): Promise<{ teamId: string; pageId: string; siteId: string } | null> {
-  const layout = await ctx.db.get(layoutId);
-  if (!layout) return null;
-
-  const page = await ctx.db.get(layout.pageId);
-  if (!page) return null;
-
-  const site = await ctx.db.get(page.siteId);
-  if (!site) return null;
-
-  return { teamId: site.teamId, pageId: layout.pageId, siteId: site._id };
-}
 
 // Create a new layout
 export const create = mutation({
@@ -53,27 +25,26 @@ export const create = mutation({
     tabId: v.optional(v.string()),
   },
   handler: async (ctx, { pageId, type, slots, settings, order, tabId }) => {
-    const pageInfo = await getTeamIdFromPage(ctx, pageId);
+    const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.teamId as any);
+    await requireAdmin(ctx, pageInfo.teamId);
 
     // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
     if (layoutOrder === undefined) {
       const existingLayouts = await ctx.db
         .query("layouts")
-        .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+        .withIndex("by_page", (q) => q.eq("pageId", pageId))
         .collect();
-      const tabLayouts = existingLayouts.filter((l: any) => l.tabId === tabId);
+      const tabLayouts = existingLayouts.filter((l) => l.tabId === tabId);
       layoutOrder =
-        tabLayouts.reduce((max: number, s: any) => Math.max(max, s.order), -1) +
-        1;
+        tabLayouts.reduce((max, l) => Math.max(max, l.order), -1) + 1;
     }
 
     const now = Date.now();
     const layoutId = await ctx.db.insert("layouts", {
+      siteId: pageInfo.siteId,
       pageId,
       tabId,
       type,
@@ -84,9 +55,8 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    // Update page updatedAt and mark site modified
     await ctx.db.patch(pageId, { updatedAt: now });
-    await markSiteModified(ctx, pageInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, pageInfo.siteId);
 
     return layoutId;
   },
@@ -102,11 +72,10 @@ export const updateSettings = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -114,7 +83,7 @@ export const updateSettings = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -130,11 +99,10 @@ export const updateSlots = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -142,7 +110,7 @@ export const updateSlots = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -160,14 +128,12 @@ export const addBlockToSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
-    // Find slot and add block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
       const newBlocks = [...slot.blocks];
@@ -185,7 +151,7 @@ export const addBlockToSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -203,17 +169,15 @@ export const updateBlockInSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
-    // Find slot and update block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
-      const updatedBlocks = slot.blocks.map((b: any) =>
+      const updatedBlocks = slot.blocks.map((b) =>
         b.id === blockId ? { ...b, content } : b,
       );
       return { ...slot, blocks: updatedBlocks };
@@ -225,7 +189,7 @@ export const updateBlockInSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -242,19 +206,17 @@ export const removeBlockFromSlot = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
-    // Find slot and remove block
-    const updatedSlots = layout.slots.map((slot: any) => {
+    const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
 
       return {
         ...slot,
-        blocks: slot.blocks.filter((b: any) => b.id !== blockId),
+        blocks: slot.blocks.filter((b) => b.id !== blockId),
       };
     });
 
@@ -264,7 +226,7 @@ export const removeBlockFromSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -286,13 +248,12 @@ export const moveBlock = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
-    // Find the block - use the same type as in slots
+    // Find the block
     type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
     let blockToMove: SlotBlock | undefined;
     for (const slot of layout.slots) {
@@ -319,20 +280,18 @@ export const moveBlock = mutation({
         updatedAt: now,
       });
       await ctx.db.patch(layout.pageId, { updatedAt: now });
-      await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+      await markSiteModified(ctx, layoutInfo.siteId);
       return layoutId;
     }
 
     // Move between different slots
     const updatedSlots = layout.slots.map((slot) => {
-      // Remove from source
       if (slot.id === fromSlotId) {
         return {
           ...slot,
           blocks: slot.blocks.filter((b) => b.id !== blockId),
         };
       }
-      // Add to destination
       if (slot.id === toSlotId) {
         const newBlocks = [...slot.blocks];
         newBlocks.splice(toIndex, 0, blockToMove!);
@@ -347,7 +306,7 @@ export const moveBlock = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -360,13 +319,11 @@ export const reorder = mutation({
     layoutIds: v.array(v.id("layouts")),
   },
   handler: async (ctx, { pageId, layoutIds }) => {
-    const pageInfo = await getTeamIdFromPage(ctx, pageId);
+    const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, pageInfo.teamId as any);
+    await requireAdmin(ctx, pageInfo.teamId);
 
-    // Update order for each layout
     for (let i = 0; i < layoutIds.length; i++) {
       const layoutId = layoutIds[i];
       if (layoutId) {
@@ -375,7 +332,7 @@ export const reorder = mutation({
     }
 
     await ctx.db.patch(pageId, { updatedAt: Date.now() });
-    await markSiteModified(ctx, pageInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, pageInfo.siteId);
   },
 });
 
@@ -386,15 +343,14 @@ export const remove = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    // Require admin access for write operations
-    await requireAdmin(ctx, layoutInfo.teamId as any);
+    await requireAdmin(ctx, layoutInfo.teamId);
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
   },
 });
 
@@ -412,10 +368,10 @@ export const addSubpageBlock = mutation({
     const layout = await ctx.db.get(layoutId);
     if (!layout) throw new Error("Layout not found");
 
-    const layoutInfo = await getTeamIdFromLayout(ctx, layoutId);
+    const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    const { auth } = await requireAdmin(ctx, layoutInfo.teamId as any);
+    const { auth } = await requireAdmin(ctx, layoutInfo.teamId);
 
     const page = await ctx.db.get(layout.pageId);
     if (!page) throw new Error("Page not found");
@@ -423,7 +379,7 @@ export const addSubpageBlock = mutation({
     // Check slug uniqueness
     const existingSlug = await ctx.db
       .query("pages")
-      .withIndex("by_slug", (q: any) =>
+      .withIndex("by_slug", (q) =>
         q.eq("siteId", page.siteId).eq("slug", slug.toLowerCase()),
       )
       .first();
@@ -438,14 +394,11 @@ export const addSubpageBlock = mutation({
     // 1. Create child page
     const siblings = await ctx.db
       .query("pages")
-      .withIndex("by_parent", (q: any) =>
+      .withIndex("by_parent", (q) =>
         q.eq("siteId", page.siteId).eq("parentId", layout.pageId),
       )
       .collect();
-    const maxOrder = siblings.reduce(
-      (max: number, p: any) => Math.max(max, p.order),
-      -1,
-    );
+    const maxOrder = siblings.reduce((max, p) => Math.max(max, p.order), -1);
 
     const childPageId = await ctx.db.insert("pages", {
       siteId: page.siteId,
@@ -462,6 +415,7 @@ export const addSubpageBlock = mutation({
 
     // 2. Create default layout on child page
     await ctx.db.insert("layouts", {
+      siteId: page.siteId,
       pageId: childPageId,
       type: "single",
       slots: [{ id: "default-slot", position: 0, blocks: [] }],
@@ -478,7 +432,7 @@ export const addSubpageBlock = mutation({
       content: { pageId: childPageId },
     };
 
-    const updatedSlots = layout.slots.map((s: any) => {
+    const updatedSlots = layout.slots.map((s) => {
       if (s.id !== slotId) return s;
       const newBlocks = [...s.blocks];
       if (index !== undefined && index >= 0 && index <= newBlocks.length) {
@@ -491,7 +445,7 @@ export const addSubpageBlock = mutation({
 
     await ctx.db.patch(layoutId, { slots: updatedSlots, updatedAt: now });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId as Id<"sites">);
+    await markSiteModified(ctx, layoutInfo.siteId);
 
     return { childPageId };
   },

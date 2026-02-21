@@ -611,3 +611,25 @@ export const runDataCleanup = migrations.runner([
   internal.migrations.normalizeDecisionTreeContent,
   internal.migrations.stringifySnapshotData,
 ]);
+
+// ============================================================
+// Migration 14: Backfill siteId on layouts
+// ============================================================
+// New denormalized field for efficient site-wide layout queries.
+// Resolves siteId by looking up the layout's page.
+
+export const backfillLayoutSiteId = migrations.define({
+  table: "layouts",
+  batchSize: 50,
+  migrateOne: async (ctx, layout) => {
+    if (layout.siteId) return; // Already set
+
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) return;
+
+    await ctx.db.patch(layout._id, { siteId: page.siteId });
+  },
+});
+export const runBackfillLayoutSiteId = migrations.runner([
+  internal.migrations.backfillLayoutSiteId,
+]);

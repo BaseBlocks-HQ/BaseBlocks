@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
+import type { GenericMutationCtx } from "convex/server";
+import type { DataModel } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
@@ -14,11 +16,9 @@ export const create = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
-    // Verify access to site
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     const { auth } = await requireAdmin(ctx, site.teamId);
 
     // Check slug uniqueness
@@ -79,7 +79,6 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
     // Check slug uniqueness if changing
@@ -122,10 +121,8 @@ export const reorder = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
-    // Update order for each page based on its position in the array
     const now = Date.now();
     for (let i = 0; i < pageIds.length; i++) {
       const pageId = pageIds[i];
@@ -142,14 +139,14 @@ export const reorder = mutation({
 
 // Helper to recursively delete a page and its children
 async function deletePageRecursively(
-  ctx: { db: any },
-  pageId: string,
-  siteId: string,
+  ctx: Pick<GenericMutationCtx<DataModel>, "db">,
+  pageId: Id<"pages">,
+  siteId: Id<"sites">,
 ) {
   // Delete all layouts for this page
   const layouts = await ctx.db
     .query("layouts")
-    .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .collect();
 
   for (const layout of layouts) {
@@ -159,7 +156,7 @@ async function deletePageRecursively(
   // Recursively delete child pages
   const children = await ctx.db
     .query("pages")
-    .withIndex("by_parent", (q: any) =>
+    .withIndex("by_parent", (q) =>
       q.eq("siteId", siteId).eq("parentId", pageId),
     )
     .collect();
@@ -179,14 +176,12 @@ export const move = mutation({
     newOrder: v.number(),
   },
   handler: async (ctx, { pageId, newParentId, newOrder }) => {
-    // Get page and verify exists
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
     // Verify new parent exists if specified
@@ -197,7 +192,6 @@ export const move = mutation({
       }
 
       // Prevent moving page into itself or its descendants
-      // Walk up the parent chain from newParentId to check for circular reference
       let checkId: Id<"pages"> | undefined = newParentId;
       while (checkId) {
         if (checkId === pageId) {
@@ -208,7 +202,6 @@ export const move = mutation({
       }
     }
 
-    // Update the page with new parent and order
     await ctx.db.patch(pageId, {
       parentId: newParentId,
       order: newOrder,
@@ -279,10 +272,9 @@ export const enablePageTabs = mutation({
       return pageId;
     }
 
-    // Get all existing layouts for this page
     const existingLayouts = await ctx.db
       .query("layouts")
-      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();
@@ -295,7 +287,6 @@ export const enablePageTabs = mutation({
       }
     }
 
-    // Set pageTabs on the page
     await ctx.db.patch(pageId, {
       pageTabs: tabs,
       updatedAt: now,
@@ -321,10 +312,9 @@ export const disablePageTabs = mutation({
 
     await requireAdmin(ctx, site.teamId);
 
-    // Clear tabId from all layouts
     const layouts = await ctx.db
       .query("layouts")
-      .withIndex("by_page", (q: any) => q.eq("pageId", pageId))
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();
@@ -332,7 +322,6 @@ export const disablePageTabs = mutation({
       await ctx.db.patch(layout._id, { tabId: undefined, updatedAt: now });
     }
 
-    // Remove pageTabs from page
     await ctx.db.patch(pageId, {
       pageTabs: undefined,
       updatedAt: now,
@@ -354,22 +343,19 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;
 
-    // Get all root-level pages (excluding the one being deleted and its children)
+    // Get all pages for descendant collection
     const allPages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
-    // Find pages that will remain after deletion (excluding this page and its descendants)
-    const pagesToDelete = new Set<string>([pageId]);
-
     // Collect all descendant IDs
+    const pagesToDelete = new Set<string>([pageId]);
     const collectDescendants = (parentId: string) => {
       const children = allPages.filter((p) => p.parentId === parentId);
       for (const child of children) {
@@ -385,7 +371,6 @@ export const remove = mutation({
 
     // If deleting the default page, reassign to first remaining page
     if (isDefaultPage) {
-      // Find the first root-level page or fall back to first page
       const firstRootPage = remainingPages.find((p) => !p.parentId);
       const newDefaultPage = firstRootPage ?? remainingPages[0];
 
@@ -395,7 +380,6 @@ export const remove = mutation({
           updatedAt: Date.now(),
         });
       } else {
-        // No pages left, clear the default
         await ctx.db.patch(site._id, {
           defaultPageId: undefined,
           updatedAt: Date.now(),
@@ -403,9 +387,7 @@ export const remove = mutation({
       }
     }
 
-    // Delete the page and all its descendants
     await deletePageRecursively(ctx, pageId, page.siteId);
-
     await markSiteModified(ctx, page.siteId);
 
     return { success: true };

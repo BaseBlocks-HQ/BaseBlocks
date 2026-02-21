@@ -1,11 +1,6 @@
 "use client";
 
-import { ModeToggle } from "@/components/mode-toggle";
-import { SiteLogo } from "@/components/site-logo";
 import { getSiteUrl } from "@/lib/url";
-import { cn } from "@/lib/utils";
-import { useCustomizationStyles } from "@/modules/elements/panels/customization/use-site-customization";
-import { SearchBox } from "@/modules/elements/sections/search/search-box";
 import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import type {
   AccessCodeData,
@@ -53,6 +48,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { DeployDialog } from "./components/deploy-dialog";
 import { DeploymentHistoryPanel } from "./components/deployment-history-panel";
+import { HeaderPreview } from "./components/header-preview";
 import { ShareDialog } from "./components/share-dialog";
 
 interface EditorHeaderProps {
@@ -79,6 +75,16 @@ interface EditorHeaderProps {
     logoUrl?: string;
     settings: { primaryColor?: string };
   };
+}
+
+function getPreviewUrl(teamSlug: string, siteSlug: string) {
+  const isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.endsWith(".localhost");
+  return isLocalhost
+    ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
+    : getSiteUrl(teamSlug, siteSlug);
 }
 
 export function EditorHeader({
@@ -170,81 +176,20 @@ export function EditorHeader({
   );
 
   const showHeader = site.settings.showHeader !== false;
-  const showLogo = site.settings.showLogo !== false;
-  const showSiteName = site.settings.showSiteName !== false;
-  const showHeaderSearch = site.settings.showHeaderSearch === true;
-  const headerColor = site.settings.customization?.headerColor;
-  const customizationStyles = useCustomizationStyles(
-    site.settings.customization,
-  );
+  const liveUrl = getSiteUrl(teamSlug, siteSlug);
 
   // Preview mode: show the site header as users will see it
   if (isHeaderPreview && showHeader) {
     return (
-      <header
-        className={cn(
-          "border-b h-14 shrink-0 flex items-center px-4 z-40",
-          !headerColor &&
-            "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        )}
-        style={
-          headerColor
-            ? {
-                ...customizationStyles,
-                backgroundColor: "var(--site-header-bg)",
-                color: "var(--site-header-fg)",
-              }
-            : customizationStyles
-        }
-        {...(headerColor ? { "data-site-customized": "" } : {})}
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsHeaderPreview(false)}
-          className={cn(
-            "mr-3 gap-1.5",
-            headerColor && "text-current hover:bg-current/10",
-          )}
-        >
-          <PanelTop className="h-4 w-4" />
-          Exit Preview
-        </Button>
-
-        <div
-          className={cn(
-            "h-5 w-px mr-3",
-            headerColor ? "bg-current/20" : "bg-border",
-          )}
-        />
-
-        <div className="flex items-center gap-2">
-          {showLogo && <SiteLogo site={site} team={team} />}
-          {showSiteName && <span className="font-semibold">{site.name}</span>}
-        </div>
-
-        <div className="flex items-center gap-3 ml-auto">
-          {showHeaderSearch && (
-            <SearchBox
-              siteId={site._id}
-              usePublicQuery={false}
-              placeholder="Search..."
-              maxResults={5}
-              className="w-64"
-              headerMode={!!headerColor}
-            />
-          )}
-          <ModeToggle
-            className={
-              headerColor ? "text-current hover:bg-current/10" : undefined
-            }
-          />
-        </div>
-      </header>
+      <HeaderPreview
+        site={site}
+        team={team}
+        onExit={() => setIsHeaderPreview(false)}
+      />
     );
   }
 
-  // Editor mode: normal editor controls
+  // Editor mode
   return (
     <>
       <header className="border-b h-14 shrink-0 flex items-center justify-between px-4 bg-background z-40">
@@ -252,52 +197,14 @@ export function EditorHeader({
         <div className="flex items-center gap-2">
           <SidebarTrigger />
           {canEdit && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    disabled={
-                      isUndoRedoExecuting ||
-                      (!canUndo(currentPageId ?? undefined) && !canUndo())
-                    }
-                    onClick={() => {
-                      if (currentPageId && canUndo(currentPageId)) {
-                        undo(currentPageId);
-                      } else {
-                        undo();
-                      }
-                    }}
-                  >
-                    <Undo2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Undo (Cmd+Z)</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    disabled={
-                      isUndoRedoExecuting ||
-                      (!canRedo(currentPageId ?? undefined) && !canRedo())
-                    }
-                    onClick={() => {
-                      if (currentPageId && canRedo(currentPageId)) {
-                        redo(currentPageId);
-                      } else {
-                        redo();
-                      }
-                    }}
-                  >
-                    <Redo2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Redo (Cmd+Shift+Z)</TooltipContent>
-              </Tooltip>
-            </>
+            <UndoRedoControls
+              canUndo={canUndo}
+              canRedo={canRedo}
+              undo={undo}
+              redo={redo}
+              isExecuting={isUndoRedoExecuting}
+              currentPageId={currentPageId}
+            />
           )}
           {!canEdit && (
             <Badge variant="secondary" className="gap-1">
@@ -339,7 +246,7 @@ export function EditorHeader({
 
         {/* Right section */}
         <div className="flex items-center gap-1">
-          {/* Mobile-only: overflow dropdown for secondary actions */}
+          {/* Mobile-only: overflow dropdown */}
           {canEdit && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -349,27 +256,14 @@ export function EditorHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onClick={() => {
-                    const isLocalhost =
-                      window.location.hostname === "localhost" ||
-                      window.location.hostname === "127.0.0.1" ||
-                      window.location.hostname.endsWith(".localhost");
-                    const url = isLocalhost
-                      ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
-                      : getSiteUrl(teamSlug, siteSlug);
-                    window.open(url, "_blank");
-                  }}
+                  onClick={() => window.open(getPreviewUrl(teamSlug, siteSlug), "_blank")}
                 >
                   <Eye />
                   Preview
                 </DropdownMenuItem>
                 {sitePublished && (
                   <DropdownMenuItem asChild>
-                    <a
-                      href={getSiteUrl(teamSlug, siteSlug)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={liveUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink />
                       {t("editor.viewLive")}
                     </a>
@@ -399,16 +293,7 @@ export function EditorHeader({
                     variant="ghost"
                     size="sm"
                     className="gap-1.5"
-                    onClick={() => {
-                      const isLocalhost =
-                        window.location.hostname === "localhost" ||
-                        window.location.hostname === "127.0.0.1" ||
-                        window.location.hostname.endsWith(".localhost");
-                      const url = isLocalhost
-                        ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
-                        : getSiteUrl(teamSlug, siteSlug);
-                      window.open(url, "_blank");
-                    }}
+                    onClick={() => window.open(getPreviewUrl(teamSlug, siteSlug), "_blank")}
                   >
                     <Eye className="h-4 w-4" />
                     Preview
@@ -425,11 +310,7 @@ export function EditorHeader({
                       className="gap-1.5"
                       asChild
                     >
-                      <a
-                        href={getSiteUrl(teamSlug, siteSlug)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={liveUrl} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                         {t("editor.viewLive")}
                       </a>
@@ -474,55 +355,23 @@ export function EditorHeader({
           <Separator orientation="vertical" className="mx-1.5 h-5" />
 
           {/* Primary CTA */}
-          {canEdit &&
-            (hasUndeployedChanges ? (
-              <Button
-                size="sm"
-                onClick={() => setDeployDialogOpen(true)}
-                className="gap-1.5 bg-amber-600 hover:bg-amber-700"
-              >
-                <Rocket className="h-4 w-4" />
-                <span className="hidden md:inline">Deploy Changes</span>
-                <span className="md:hidden">Deploy</span>
-              </Button>
-            ) : sitePublished ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    Published
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {onUnpublish && (
-                    <DropdownMenuItem
-                      onClick={onUnpublish}
-                      variant="destructive"
-                    >
-                      <EyeOff />
-                      {t("editor.unpublish")}
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button size="sm" onClick={onPublish}>
-                <Globe className="h-4 w-4" />
-                {t("editor.publish")}
-              </Button>
-            ))}
+          {canEdit && (
+            <DeployCta
+              hasUndeployedChanges={hasUndeployedChanges}
+              sitePublished={sitePublished}
+              onDeploy={() => setDeployDialogOpen(true)}
+              onPublish={onPublish}
+              onUnpublish={onUnpublish}
+              t={t}
+            />
+          )}
 
           {/* View-only: just show View Live if published */}
           {!canEdit && sitePublished && (
             <>
               <Separator orientation="vertical" className="mx-1.5 h-5" />
               <Button variant="outline" size="sm" asChild>
-                <a
-                  href={getSiteUrl(teamSlug, siteSlug)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={liveUrl} target="_blank" rel="noopener noreferrer">
                   <Globe className="h-4 w-4" />
                   {t("editor.viewLive")}
                 </a>
@@ -532,26 +381,23 @@ export function EditorHeader({
         </div>
       </header>
 
-      {/* Share Dialog */}
       <ShareDialog
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
         siteId={siteId}
         teamSlug={teamSlug}
         siteSlug={siteSlug}
-        siteUrl={getSiteUrl(teamSlug, siteSlug)}
+        siteUrl={liveUrl}
         settings={settings}
         accessCode={accessCode}
       />
 
-      {/* Deploy Dialog */}
       <DeployDialog
         open={deployDialogOpen}
         onOpenChange={setDeployDialogOpen}
         onDeploy={deploySite}
       />
 
-      {/* Deployment History Panel */}
       <DeploymentHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}
@@ -560,5 +406,133 @@ export function EditorHeader({
         onRollback={handleRollback}
       />
     </>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Sub-components (co-located, not worth separate files)
+// --------------------------------------------------------------------------
+
+function UndoRedoControls({
+  canUndo,
+  canRedo,
+  undo,
+  redo,
+  isExecuting,
+  currentPageId,
+}: {
+  canUndo: (scope?: string) => boolean;
+  canRedo: (scope?: string) => boolean;
+  undo: (scope?: string) => void;
+  redo: (scope?: string) => void;
+  isExecuting: boolean;
+  currentPageId: string | null;
+}) {
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={
+              isExecuting ||
+              (!canUndo(currentPageId ?? undefined) && !canUndo())
+            }
+            onClick={() => {
+              if (currentPageId && canUndo(currentPageId)) {
+                undo(currentPageId);
+              } else {
+                undo();
+              }
+            }}
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Undo (Cmd+Z)</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={
+              isExecuting ||
+              (!canRedo(currentPageId ?? undefined) && !canRedo())
+            }
+            onClick={() => {
+              if (currentPageId && canRedo(currentPageId)) {
+                redo(currentPageId);
+              } else {
+                redo();
+              }
+            }}
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Redo (Cmd+Shift+Z)</TooltipContent>
+      </Tooltip>
+    </>
+  );
+}
+
+function DeployCta({
+  hasUndeployedChanges,
+  sitePublished,
+  onDeploy,
+  onPublish,
+  onUnpublish,
+  t,
+}: {
+  hasUndeployedChanges: boolean;
+  sitePublished: boolean;
+  onDeploy: () => void;
+  onPublish: () => void;
+  onUnpublish?: () => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (hasUndeployedChanges) {
+    return (
+      <Button
+        size="sm"
+        onClick={onDeploy}
+        className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+      >
+        <Rocket className="h-4 w-4" />
+        <span className="hidden md:inline">Deploy Changes</span>
+        <span className="md:hidden">Deploy</span>
+      </Button>
+    );
+  }
+
+  if (sitePublished) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
+            Published
+            <ChevronDown className="h-3 w-3 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onUnpublish && (
+            <DropdownMenuItem onClick={onUnpublish} variant="destructive">
+              <EyeOff />
+              {t("editor.unpublish")}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <Button size="sm" onClick={onPublish}>
+      <Globe className="h-4 w-4" />
+      {t("editor.publish")}
+    </Button>
   );
 }

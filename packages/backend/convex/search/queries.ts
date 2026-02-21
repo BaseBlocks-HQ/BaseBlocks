@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../auth";
+import { getActiveLibraryIds } from "../lib/resolvers";
 
 // ============================================================================
 // Helper Functions
@@ -105,7 +106,7 @@ export const searchAll = query({
     // Search by title
     const titleResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_title", (q: any) =>
+      .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -113,7 +114,7 @@ export const searchAll = query({
     // Search by content
     const contentResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_content", (q: any) =>
+      .withSearchIndex("search_content", (q) =>
         q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -172,36 +173,12 @@ export const searchAllPublic = query({
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
 
-    // Get active library IDs (libraries used in blocks on pages)
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    const activeLibraryIds = new Set<string>();
-    for (const page of pages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const layout of layouts) {
-        // ONLY use publishedSlots for public content - never fall back to draft
-        const slotsToCheck = layout.publishedSlots ?? [];
-        for (const slot of slotsToCheck) {
-          for (const block of slot.blocks) {
-            if (block.type === "library" && block.content?.libraryId) {
-              activeLibraryIds.add(block.content.libraryId);
-            }
-          }
-        }
-      }
-    }
+    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
     // Search by title
     const titleResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_title", (q: any) =>
+      .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -209,7 +186,7 @@ export const searchAllPublic = query({
     // Search by content
     const contentResults = await ctx.db
       .query("searchableContent")
-      .withSearchIndex("search_content", (q: any) =>
+      .withSearchIndex("search_content", (q) =>
         q.search("extractedText", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
@@ -299,31 +276,7 @@ export const listTitlesPublic = query({
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
 
-    // Get active library IDs
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    const activeLibraryIds = new Set<string>();
-    for (const page of pages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const layout of layouts) {
-        // ONLY use publishedSlots - never fall back to draft
-        const slotsToCheck = layout.publishedSlots ?? [];
-        for (const slot of slotsToCheck) {
-          for (const block of slot.blocks) {
-            if (block.type === "library" && block.content?.libraryId) {
-              activeLibraryIds.add(block.content.libraryId);
-            }
-          }
-        }
-      }
-    }
+    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
     const all = await ctx.db
       .query("searchableContent")

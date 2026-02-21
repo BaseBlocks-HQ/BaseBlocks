@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import { getLayoutsBySite } from "../lib/resolvers";
 
 /**
  * Deploy site - copies ALL draft fields to published fields for sites, pages, and layouts.
@@ -99,6 +100,9 @@ export const deploy = mutation({
       deploymentVersion: newVersion,
     });
 
+    // Fetch all layouts for site in one query (eliminates N+1)
+    const layoutsByPage = await getLayoutsBySite(ctx, siteId);
+
     // Copy draft → published for each page and its layouts
     for (const page of pages) {
       await ctx.db.patch(page._id, {
@@ -111,10 +115,7 @@ export const deploy = mutation({
         isDeployed: true,
       });
 
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
+      const layouts = layoutsByPage.get(page._id) ?? [];
 
       // Snapshot layouts for this page
       const layoutData = layouts.map((l) => ({
@@ -249,7 +250,7 @@ export const rollback = mutation({
       name: string;
       logoUrl?: string;
       defaultPageId?: Id<"pages">;
-      settings: any;
+      settings: Doc<"sites">["settings"];
     };
 
     await ctx.db.patch(siteId, {
@@ -300,34 +301,32 @@ export const rollback = mutation({
     }
 
     // Restore layout published fields from snapshots
-    // First, mark all layouts as not deployed
-    for (const page of allPages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
+    // First, mark all layouts as not deployed (single query via by_site index)
+    const allLayouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
 
-      for (const layout of layouts) {
-        await ctx.db.patch(layout._id, {
-          isDeployed: false,
-          publishedSlots: undefined,
-          publishedType: undefined,
-          publishedOrder: undefined,
-          publishedSettings: undefined,
-          publishedTabId: undefined,
-        });
-      }
+    for (const layout of allLayouts) {
+      await ctx.db.patch(layout._id, {
+        isDeployed: false,
+        publishedSlots: undefined,
+        publishedType: undefined,
+        publishedOrder: undefined,
+        publishedSettings: undefined,
+        publishedTabId: undefined,
+      });
     }
 
     // Restore from page-layouts snapshots
     for (const layoutSnapshot of pageLayoutSnapshots) {
       const layoutsData = JSON.parse(layoutSnapshot.data as string) as Array<{
         _id: Id<"layouts">;
-        type: string;
+        type: Doc<"layouts">["type"];
         order: number;
         tabId?: string;
-        slots: any;
-        settings: any;
+        slots: Doc<"layouts">["slots"];
+        settings: Doc<"layouts">["settings"];
       }>;
 
       for (const layoutData of layoutsData) {
@@ -335,7 +334,7 @@ export const rollback = mutation({
         if (layout) {
           await ctx.db.patch(layoutData._id, {
             publishedSlots: layoutData.slots,
-            publishedType: layoutData.type as any,
+            publishedType: layoutData.type,
             publishedOrder: layoutData.order,
             publishedSettings: layoutData.settings,
             publishedTabId: layoutData.tabId,
