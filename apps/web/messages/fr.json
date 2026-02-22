@@ -1,0 +1,321 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Creer",
+    "search": "Rechercher",
+    "back": "Retour",
+    "backToHome": "Retour a l'accueil",
+    "next": "Suivant",
+    "previous": "Precedent",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "settings": "Parametres",
+    "logout": "Se deconnecter",
+    "login": "Se connecter",
+    "signIn": "Connexion",
+    "signUp": "S'inscrire",
+    "signOut": "Deconnexion",
+    "getStarted": "Commencer",
+    "goToDashboard": "Aller au tableau de bord",
+    "redirecting": "Redirection..."
+  },
+  "metadata": {
+    "title": "BaseBlocks - De l'idée au site en minutes"
+  },
+  "landing": {
+    "heroTitle": "De l'idée au site en minutes.",
+    "heroSubtitle": "Créez. Publiez. Partagez."
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "sites": "Sites",
+    "settings": "Parametres",
+    "help": "Aide"
+  },
+  "auth": {
+    "loginTitle": "Bon retour",
+    "loginDescription": "Connectez-vous a votre compte pour continuer",
+    "signUpTitle": "Creer un compte",
+    "signUpDescription": "Commencez avec BaseBlocks",
+    "forgotPassword": "Mot de passe oublie ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "hasAccount": "Vous avez deja un compte ?",
+    "continueWith": "Ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithMicrosoft": "Continuer avec Microsoft",
+    "signInFailed": "Echec de la connexion"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcomeBack": "Bon retour",
+    "yourSites": "Vos sites",
+    "manageSites": "Gerez votre documentation interne et vos ressources",
+    "recentSites": "Sites recents",
+    "createSite": "Creer un site",
+    "noSites": "Pas encore de sites",
+    "noSitesDescription": "Creez votre premier site pour commencer",
+    "createFirstSite": "Creer votre premier site"
+  },
+  "sites": {
+    "title": "Sites",
+    "create": "Creer un site",
+    "edit": "Modifier le site",
+    "delete": "Supprimer le site",
+    "settings": "Parametres du site",
+    "publish": "Publier",
+    "unpublish": "Depublier",
+    "preview": "Apercu",
+    "viewLive": "Voir en direct",
+    "siteName": "Nom du site",
+    "siteDescription": "Description du site",
+    "confirmDelete": "Etes-vous sur de vouloir supprimer ce site ? Cette action est irreversible.",
+    "deleteWarning": "Cette action est irreversible.",
+    "noDescription": "Aucune description",
+    "published": "Publié",
+    "draft": "Brouillon"
+  },
+  "editor": {
+    "addBlock": "Ajouter un bloc",
+    "deleteBlock": "Supprimer le bloc",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "duplicate": "Dupliquer",
+    "saveChanges": "Enregistrer les modifications",
+    "unsavedChanges": "Vous avez des modifications non enregistrees",
+    "saving": "Enregistrement...",
+    "saved": "Enregistre",
+    "publish": "Publier",
+    "unpublish": "Depublier",
+    "preview": "Apercu",
+    "viewLive": "Voir en direct",
+    "sidebar": {
+      "pagesTab": "Pages",
+      "componentsTab": "Composants",
+      "layouts": "Dispositions",
+      "blocks": "Blocs",
+      "selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
+      "selectPage": "Selectionnez une page pour ajouter des composants",
+      "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification.",
+      "previewTab": "Apercu"
+    },
+    "layouts": {
+      "single": "Simple",
+      "rows": "Lignes",
+      "columns": "Colonnes",
+      "grid": "Grille",
+      "vertical": "Barre latérale",
+      "spacer": "Espacement"
+    }
+  },
+  "onboarding": {
+    "title": "Commençons",
+    "description": "Configurez votre espace de travail en quelques etapes simples",
+    "step1Title": "Creez votre espace de travail",
+    "step1Description": "Donnez un nom a votre espace de travail",
+    "step2Title": "Invitez votre equipe",
+    "step2Description": "Ajoutez des membres pour collaborer",
+    "step3Title": "Creez votre premier site",
+    "step3Description": "Commencez a construire votre site interne",
+    "teamName": "Nom de l'equipe",
+    "teamNamePlaceholder": "Mon equipe",
+    "createWorkspace": "Creer l'espace de travail",
+    "creating": "Creation en cours..."
+  },
+  "dialogs": {
+    "createSite": {
+      "title": "Creer un nouveau site",
+      "description": "Ajoutez un nouveau site a votre espace de travail",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Mon site",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Une breve description de votre site",
+      "creating": "Creation...",
+      "create": "Creer le site"
+    },
+    "createPage": {
+      "title": "Creer une nouvelle page",
+      "description": "Ajoutez une nouvelle page a votre site",
+      "nameLabel": "Nom de la page",
+      "namePlaceholder": "Ma page",
+      "creating": "Creation...",
+      "create": "Creer la page"
+    },
+    "createFolder": {
+      "title": "Creer un nouveau dossier",
+      "description": "Organisez vos fichiers avec des dossiers",
+      "nameLabel": "Nom du dossier",
+      "namePlaceholder": "Mon dossier",
+      "creating": "Creation...",
+      "create": "Creer le dossier"
+    },
+    "rename": {
+      "title": "Renommer",
+      "nameLabel": "Nouveau nom",
+      "renaming": "Renommage...",
+      "rename": "Renommer"
+    },
+    "delete": {
+      "title": "Confirmer la suppression",
+      "description": "Cette action est irreversible.",
+      "deleting": "Suppression...",
+      "delete": "Supprimer"
+    },
+    "editSite": {
+      "title": "Modifier le site",
+      "description": "Modifiez le nom, la description et le logo de votre site",
+      "logoLabel": "Logo du site",
+      "uploadLogo": "Telecharger un logo",
+      "uploading": "Telechargement...",
+      "saving": "Enregistrement...",
+      "logoHint": "Recommande : 128x128px, max 2Mo",
+      "invalidImageType": "Veuillez selectionner un fichier image",
+      "logoTooLarge": "Le logo doit faire moins de 2Mo"
+    }
+  },
+  "errors": {
+    "notFound": "Page non trouvée",
+    "notFoundDescription": "La page que vous recherchez n'existe pas ou a ete deplacee.",
+    "unauthorized": "Non autorise",
+    "unauthorizedDescription": "Vous n'avez pas la permission d'acceder a cette page.",
+    "serverError": "Erreur serveur",
+    "serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
+    "siteNotFound": "Site non trouvé",
+    "siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
+    "siteNotPublished": "Site non publié",
+    "siteNotPublishedDescription": "Ce site n'est pas encore publié."
+  },
+  "language": {
+    "select": "Choisir la langue",
+    "current": "Langue actuelle"
+  },
+  "blocks": {
+    "heading": "Titre",
+    "paragraph": "Paragraphe",
+    "image": "Image",
+    "file": "Fichier",
+    "callout": "Encadre",
+    "code": "Code",
+    "divider": "Separateur",
+    "quicklinks": "Liens rapides",
+    "search": "Recherche",
+    "library": "Bibliotheque",
+    "spacer": "Espacement"
+  },
+  "libraries": {
+    "title": "Bibliotheques",
+    "subtitle": "Gerez vos bibliotheques de documents et fichiers",
+    "create": "Creer une bibliotheque",
+    "createTitle": "Nouvelle bibliotheque",
+    "createDescription": "Ajoutez une nouvelle bibliotheque de documents",
+    "editTitle": "Modifier la bibliotheque",
+    "editDescription": "Mettez a jour les parametres de la bibliotheque",
+    "deleteTitle": "Supprimer la bibliotheque",
+    "deleteDescription": "Etes-vous sur de vouloir supprimer \"{name}\" ? Tous les documents et dossiers seront definitivement supprimes. Cette action est irreversible.",
+    "siteLabel": "Site",
+    "selectSite": "Selectionnez un site",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ma bibliotheque",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Une breve description de cette bibliotheque",
+    "iconLabel": "Icone",
+    "document": "document",
+    "documents": "documents",
+    "noLibraries": "Aucune bibliotheque",
+    "noLibrariesDescription": "Creez votre premiere bibliotheque pour organiser vos documents",
+    "noSites": "Aucun site disponible",
+    "noSitesDescription": "Creez d'abord un site pour ajouter des bibliotheques",
+    "notFound": "Bibliotheque non trouvée",
+    "folders": "Dossiers",
+    "rootFolder": "Tous les fichiers",
+    "searchPlaceholder": "Rechercher des documents...",
+    "noSearchResults": "Aucun document trouvé",
+    "matchInContent": "Correspondance dans le contenu",
+    "matchInFilename": "Correspondance dans le nom"
+  },
+  "inbox": {
+    "title": "Invitations",
+    "description": "Invitations en attente pour rejoindre des organisations",
+    "noInvitations": "Aucune invitation en attente",
+    "invitedToOrg": "Invitation d'organisation",
+    "invitedYou": "vous a invite a rejoindre son organisation",
+    "asRole": "en tant que {role}",
+    "expires": "Expire le {date}",
+    "accept": "Accepter",
+    "decline": "Refuser"
+  },
+  "settings": {
+    "title": "Parametres du compte",
+    "description": "Gerez les parametres et preferences de votre compte",
+    "accountInfo": "Informations du compte",
+    "email": "Email",
+    "userId": "ID utilisateur",
+    "anonymous": "Utilisateur anonyme",
+    "dangerZone": "Zone de danger",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountWarning": "Une fois votre compte supprime, il n'y a pas de retour en arriere. Toutes vos donnees seront definitivement supprimees.",
+    "deleteConfirmTitle": "Etes-vous absolument sur ?",
+    "deleteConfirmDescription": "Cette action est irreversible. Cela supprimera definitivement votre compte et toutes vos donnees de nos serveurs.",
+    "deleting": "Suppression...",
+    "deleteAccountError": "Echec de la suppression du compte"
+  },
+  "team": {
+    "title": "Membres de l'equipe",
+    "description": "Gerez les membres de votre organisation et leurs roles d'acces",
+    "inviteMember": "Inviter un membre",
+    "memberCount": "{count} membres",
+    "syncMembers": "Synchroniser les membres",
+    "syncing": "Synchronisation...",
+    "syncSuccess": "Membres synchronises avec succes",
+    "noMembers": "Aucun membre pour le moment",
+    "noMembersDescription": "Invitez votre premier membre pour collaborer",
+    "member": {
+      "name": "Nom",
+      "email": "Email",
+      "role": "Role",
+      "joined": "Rejoint",
+      "actions": "Actions"
+    },
+    "roles": {
+      "admin": "Administrateur",
+      "viewer": "Lecteur",
+      "owner": "Proprietaire"
+    },
+    "roleDescriptions": {
+      "admin": "Acces complet pour modifier les sites, pages et gerer l'equipe",
+      "viewer": "Acces en lecture seule pour voir les sites et pages"
+    },
+    "invite": {
+      "title": "Inviter un membre",
+      "description": "Recherchez des utilisateurs par email ou nom d'utilisateur pour les inviter dans votre organisation",
+      "searchPlaceholder": "Rechercher par email ou nom d'utilisateur...",
+      "searching": "Recherche...",
+      "noResults": "Aucun utilisateur trouvé",
+      "selectRole": "Selectionner un role",
+      "inviting": "Invitation en cours...",
+      "invite": "Envoyer l'invitation",
+      "success": "Invitation envoyee avec succes",
+      "alreadyMember": "L'utilisateur est deja membre",
+      "userNotFound": "Utilisateur non trouvé. Il doit d'abord avoir un compte Entity Auth."
+    },
+    "actions": {
+      "changeRole": "Changer le role",
+      "removeMember": "Retirer le membre",
+      "confirmRemove": "Etes-vous sur de vouloir retirer {name} de l'equipe ?",
+      "removing": "Suppression...",
+      "cannotRemoveSelf": "Vous ne pouvez pas vous retirer vous-meme",
+      "cannotRemoveOwner": "Impossible de retirer le proprietaire de l'organisation"
+    },
+    "pendingInvitations": {
+      "title": "Invitations en attente",
+      "noInvitations": "Aucune invitation en attente",
+      "expires": "Expire le {date}",
+      "revoke": "Revoquer",
+      "revoking": "Revocation..."
+    }
+  }
+}
