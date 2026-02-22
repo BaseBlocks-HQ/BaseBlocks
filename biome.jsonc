@@ -1,0 +1,173 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "ignore": [
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/dist/**",
+      "**/_generated/**",
+      "**/convex/_generated/**"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "warn",
+        "noUnusedVariables": "warn",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "noConsole": "warn",
+        "noConsoleLog": "warn"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off",
+        "useButtonType": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "include": ["**/next.config.*"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "useAwait": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["**/page.{ts,tsx,js,jsx}", "**/layout.{ts,tsx,js,jsx}"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "useAwait": "off"
+          }
+        }
+      }
+    },
+    // Architectural boundaries: packages/types must be standalone (no backend, ui, editor deps)
+    {
+      "include": ["packages/types/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@baseblocks/backend": "types must remain standalone — no backend imports",
+                  "@baseblocks/ui": "types must remain standalone — no UI imports",
+                  "@baseblocks/editor": "types must remain standalone — no editor imports",
+                  "convex": "types must remain standalone — no Convex imports",
+                  "convex/values": "types must remain standalone — no Convex imports",
+                  "convex/server": "types must remain standalone — no Convex imports",
+                  "react": "types must remain standalone — no React imports",
+                  "sonner": "types must remain standalone — no runtime imports"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    // Architectural boundaries: packages/ui should not import backend or editor
+    {
+      "include": ["packages/ui/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@baseblocks/backend": "UI package must not depend on backend",
+                  "@baseblocks/editor": "UI package must not depend on editor",
+                  "convex": "UI package must not depend on Convex",
+                  "convex/react": "UI package must not depend on Convex"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    // Architectural boundaries: lib/ is lower-level than modules/
+    {
+      "include": ["apps/web/lib/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@/modules/dashboard": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/editor": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/elements": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/navigation": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/public-site": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/documents": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/media-viewer": "lib/ must not import from modules/ — lib is a lower layer",
+                  "@/modules/team": "lib/ must not import from modules/ — lib is a lower layer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    // Architectural boundaries: shared components/ must not import from modules/
+    {
+      "include": ["apps/web/components/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@/modules/dashboard": "shared components/ must not import from modules/",
+                  "@/modules/editor": "shared components/ must not import from modules/",
+                  "@/modules/elements": "shared components/ must not import from modules/",
+                  "@/modules/navigation": "shared components/ must not import from modules/",
+                  "@/modules/public-site": "shared components/ must not import from modules/",
+                  "@/modules/documents": "shared components/ must not import from modules/",
+                  "@/modules/media-viewer": "shared components/ must not import from modules/",
+                  "@/modules/team": "shared components/ must not import from modules/"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

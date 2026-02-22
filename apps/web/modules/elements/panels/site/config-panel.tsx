@@ -1,0 +1,460 @@
+"use client";
+
+import { useSite } from "@/lib/data";
+import { useImageUpload } from "@/lib/storage";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { cn } from "@/lib/utils";
+import { DropZone } from "@/modules/documents";
+import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
+import { Switch } from "@baseblocks/ui/switch";
+import { useMutation } from "convex/react";
+import {
+  Eye,
+  EyeOff,
+  Globe,
+  ImageIcon,
+  Loader2,
+  Route,
+  Search,
+  Type,
+  Upload,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { MetadataDialog } from "./metadata-dialog";
+
+interface SiteConfigPanelProps {
+  siteId: Id<"sites">;
+}
+
+export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
+  const site = useSite(siteId);
+  const updateSite = useMutation(api.sites.mutations.update);
+  const { uploadImage, uploadState } = useImageUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorCtx = useEditorContextOptional();
+
+  // Local state for editing
+  const [localName, setLocalName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
+
+  // Sync local name with site data
+  useEffect(() => {
+    if (site?.name) {
+      setLocalName(site.name);
+    }
+  }, [site?.name]);
+
+  const isUploading = uploadState.isUploading;
+  const uploadProgress = uploadState.progress?.percentage || 0;
+
+  // Helper to update settings
+  const updateSettings = async (settingKey: string, value: boolean) => {
+    if (!site) return;
+    const oldValue = (site.settings as Record<string, unknown>)[settingKey];
+    try {
+      await updateSite({
+        siteId,
+        settings: {
+          [settingKey]: value,
+        },
+      });
+      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+        editorCtx.pushCommand({
+          description: `Toggle ${settingKey}`,
+          undo: async () => {
+            await updateSite({
+              siteId,
+              settings: { [settingKey]: oldValue as boolean },
+            });
+          },
+          redo: async () => {
+            await updateSite({
+              siteId,
+              settings: { [settingKey]: value },
+            });
+          },
+        });
+      }
+    } catch (_error) {
+      toast.error("Failed to update setting");
+    }
+  };
+
+  // Handle logo upload
+  const handleLogoUpload = async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    const oldLogoUrl = site?.logoUrl;
+    const result = await uploadImage(file, siteId);
+
+    if (result) {
+      await updateSite({
+        siteId,
+        logoUrl: result.url,
+      });
+      toast.success("Logo uploaded");
+
+      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+        const newLogoUrl = result.url;
+        editorCtx.pushCommand({
+          description: "Change logo",
+          undo: async () => {
+            await updateSite({
+              siteId,
+              logoUrl: oldLogoUrl ?? "",
+            });
+          },
+          redo: async () => {
+            await updateSite({
+              siteId,
+              logoUrl: newLogoUrl,
+            });
+          },
+        });
+      }
+    } else if (uploadState.error) {
+      toast.error(uploadState.error);
+    }
+  };
+
+  // Handle name save
+  const handleSaveName = async () => {
+    if (!site || localName === site.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    const oldName = site.name;
+    const newName = localName;
+    try {
+      await updateSite({
+        siteId,
+        name: newName,
+      });
+      setIsEditingName(false);
+      toast.success("Site name updated");
+
+      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+        editorCtx.pushCommand({
+          description: "Rename site",
+          undo: async () => {
+            await updateSite({ siteId, name: oldName });
+          },
+          redo: async () => {
+            await updateSite({ siteId, name: newName });
+          },
+        });
+      }
+    } catch (_error) {
+      toast.error("Failed to update name");
+    }
+  };
+
+  if (!site) {
+    return (
+      <div className="p-4 flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Settings with defaults
+  const showHeader = site.settings.showHeader !== false;
+  const showLogo = site.settings.showLogo !== false;
+  const showSiteName = site.settings.showSiteName !== false;
+  const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const showBreadcrumbs =
+    site.settings.showBreadcrumbs ??
+    site.settings.navigationStyle !== "sidebar";
+
+  return (
+    <div className="p-4 space-y-6">
+      <div>
+        <h3 className="font-semibold text-sm mb-1">Site Settings</h3>
+        <p className="text-xs text-muted-foreground">
+          Configure your site header and branding
+        </p>
+      </div>
+
+      {/* Header Visibility */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {showHeader ? (
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
+            )}
+            <Label htmlFor="show-header" className="text-sm font-medium">
+              Show Header
+            </Label>
+          </div>
+          <Switch
+            id="show-header"
+            checked={showHeader}
+            onCheckedChange={(checked) => updateSettings("showHeader", checked)}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground -mt-2 ml-6">
+          Display the site header with logo and navigation
+        </p>
+      </div>
+
+      {/* Logo Settings - only show if header is visible */}
+      {showHeader && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="show-logo" className="text-sm font-medium">
+                Show Logo
+              </Label>
+            </div>
+            <Switch
+              id="show-logo"
+              checked={showLogo}
+              onCheckedChange={(checked) => updateSettings("showLogo", checked)}
+            />
+          </div>
+
+          {/* Logo Upload - only show if logo is enabled */}
+          {showLogo && (
+            <div className="ml-6 space-y-2">
+              {site.logoUrl ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={toProxyDownloadUrl(site.logoUrl)}
+                    alt="Site logo"
+                    className="h-10 w-10 rounded-md object-contain border bg-muted"
+                  />
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length) handleLogoUpload(files);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          {uploadProgress}%
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3 mr-1" />
+                          Replace
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <DropZone
+                  onFilesAccepted={handleLogoUpload}
+                  accept={{
+                    "image/*": [
+                      ".jpg",
+                      ".jpeg",
+                      ".png",
+                      ".gif",
+                      ".webp",
+                      ".svg",
+                    ],
+                  }}
+                  maxSize={5 * 1024 * 1024}
+                  className="py-4"
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mb-1" />
+                        <p className="text-xs text-muted-foreground">
+                          {uploadProgress}%
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
+                        <p className="text-xs text-muted-foreground">
+                          Drop logo here
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </DropZone>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Site Name Settings - only show if header is visible */}
+      {showHeader && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Type className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="show-site-name" className="text-sm font-medium">
+                Show Site Name
+              </Label>
+            </div>
+            <Switch
+              id="show-site-name"
+              checked={showSiteName}
+              onCheckedChange={(checked) =>
+                updateSettings("showSiteName", checked)
+              }
+            />
+          </div>
+
+          {/* Site Name Input - only show if name is enabled */}
+          {showSiteName && (
+            <div className="ml-6 space-y-2">
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={localName}
+                    onChange={(e) => setLocalName(e.target.value)}
+                    className="text-sm h-8"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveName();
+                      if (e.key === "Escape") {
+                        setLocalName(site.name);
+                        setIsEditingName(false);
+                      }
+                    }}
+                  />
+                  <Button size="sm" className="h-8" onClick={handleSaveName}>
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(true)}
+                  className={cn(
+                    "w-full text-left px-3 py-2 rounded-md border text-sm",
+                    "hover:bg-muted/50 transition-colors cursor-text",
+                  )}
+                >
+                  {site.name}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Header Search Settings - only show if header is visible */}
+      {showHeader && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Label
+                htmlFor="show-header-search"
+                className="text-sm font-medium"
+              >
+                Search in Header
+              </Label>
+            </div>
+            <Switch
+              id="show-header-search"
+              checked={showHeaderSearch}
+              onCheckedChange={(checked) =>
+                updateSettings("showHeaderSearch", checked)
+              }
+            />
+          </div>
+          <p className="text-xs text-muted-foreground ml-6">
+            Add a document search bar to the site header
+          </p>
+        </div>
+      )}
+
+      {/* SEO & Metadata */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm font-medium">SEO & Metadata</Label>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMetadataDialogOpen(true)}
+          >
+            Configure
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Set favicon, title, description, and social sharing metadata
+        </p>
+      </div>
+
+      {/* Breadcrumb Settings */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Route className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="show-breadcrumbs" className="text-sm font-medium">
+              Show Breadcrumbs
+            </Label>
+          </div>
+          <Switch
+            id="show-breadcrumbs"
+            checked={showBreadcrumbs}
+            onCheckedChange={(checked) =>
+              updateSettings("showBreadcrumbs", checked)
+            }
+          />
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Display the current page path below navigation
+        </p>
+      </div>
+
+      <MetadataDialog
+        open={metadataDialogOpen}
+        onOpenChange={setMetadataDialogOpen}
+        siteId={siteId}
+        siteName={site.name}
+        initialValues={{
+          siteTitle: site.settings.siteTitle ?? "",
+          siteDescription: site.settings.siteDescription ?? "",
+          siteKeywords: site.settings.siteKeywords ?? "",
+          favicon: site.settings.favicon ?? "",
+          ogImage: site.settings.ogImage ?? "",
+        }}
+        onSave={async (values) => {
+          await updateSite({ siteId, settings: values });
+        }}
+      />
+    </div>
+  );
+}
