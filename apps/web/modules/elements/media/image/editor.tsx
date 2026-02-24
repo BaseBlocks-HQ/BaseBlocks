@@ -15,7 +15,6 @@ import { Resizable } from "re-resizable";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-// Custom handle component for resize corners
 const ResizeHandle = ({ position }: { position: string }) => (
   <div
     className={cn(

@@ -24,10 +24,8 @@ interface ElementPickerProps {
   onEnableTabs?: () => void;
 }
 
-// Categories that are stubs (empty for now)
 const EMPTY_CATEGORIES: ElementCategory[] = [];
 
-// Categories that show config panels instead of element grids
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
   "navigation",
@@ -199,7 +197,6 @@ export function ElementPicker({
   );
 }
 
-// Re-export components
 export { CategoryMenu } from "./category-menu";
 export { ElementGrid } from "./element-grid";
 export { ElementCard } from "./element-card";

@@ -417,10 +417,6 @@ export function EditorHeader({
   );
 }
 
-// --------------------------------------------------------------------------
-// Sub-components (co-located, not worth separate files)
-// --------------------------------------------------------------------------
-
 function UndoRedoControls({
   canUndo,
   canRedo,

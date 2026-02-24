@@ -82,7 +82,6 @@ export function UploadProgress({
   );
 }
 
-// Component to show multiple uploads
 interface UploadProgressListProps {
   uploads: Record<string, UploadState>;
   onDismiss?: (fileId: string) => void;

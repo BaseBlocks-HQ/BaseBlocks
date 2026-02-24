@@ -147,7 +147,6 @@ export function LayoutSlot({
   );
 }
 
-// Sortable block wrapper - internal component
 interface SortableBlockProps {
   id: string;
   block: {

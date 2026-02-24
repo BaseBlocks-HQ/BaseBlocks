@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from "react";
 
 const SESSION_COOKIE_NAME = "bb_access_session";
 
-// Cookie helpers
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;

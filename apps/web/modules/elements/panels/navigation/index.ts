@@ -5,10 +5,8 @@
  * This module exports the config panel and re-exports navigation types.
  */
 
-// Navigation config panel for the element picker
 export { NavigationConfigPanel } from "./config-panel";
 
-// Re-export navigation types from the types module
 export type {
   NavigationStyle,
   NavigationItem,

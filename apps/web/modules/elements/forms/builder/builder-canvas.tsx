@@ -12,7 +12,6 @@ import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
 import { getFieldEditor } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
-// Import fields to register them
 import "../fields";
 
 interface FieldItemProps {

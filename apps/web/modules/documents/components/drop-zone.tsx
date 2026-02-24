@@ -89,7 +89,6 @@ export function DropZone({
   );
 }
 
-// Compact version for inline use
 interface InlineDropZoneProps {
   onFilesAccepted: (files: File[]) => void;
   disabled?: boolean;
