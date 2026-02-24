@@ -13,34 +13,19 @@ import type {
 import { createField } from "@baseblocks/types/elements";
 import { type ReactNode, createContext, useContext } from "react";
 
-// =============================================================================
-// CONTEXT TYPE
-// =============================================================================
-
 interface FormBuilderContextType {
-  // Form data
   form: FormContent;
-
-  // Field selection
   selectedFieldId: string | null;
   selectField: (id: string | null) => void;
-
-  // Field operations
   addField: (type: FormFieldType, index?: number) => void;
   updateField: (id: string, updates: Partial<FormField>) => void;
   removeField: (id: string) => void;
   moveField: (fromIndex: number, toIndex: number) => void;
   duplicateField: (id: string) => void;
-
-  // Form settings
   updateFormSettings: (updates: Partial<Omit<FormContent, "fields">>) => void;
 }
 
 const FormBuilderContext = createContext<FormBuilderContextType | null>(null);
-
-// =============================================================================
-// PROVIDER
-// =============================================================================
 
 interface FormBuilderProviderProps {
   children: ReactNode;
@@ -136,10 +121,6 @@ export function FormBuilderProvider({
     </FormBuilderContext.Provider>
   );
 }
-
-// =============================================================================
-// HOOK
-// =============================================================================
 
 export function useFormBuilder() {
   const context = useContext(FormBuilderContext);

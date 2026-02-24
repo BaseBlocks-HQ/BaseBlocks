@@ -11,10 +11,8 @@ import { SearchEditor } from "./editor";
 import { SearchPreview } from "./preview";
 import { SearchRenderer } from "./renderer";
 
-// Re-export components
 export { SearchEditor, SearchRenderer, SearchPreview, SearchConfigPanel };
 
-// Register the element
 registerElement({
   type: "search",
   category: "sections",

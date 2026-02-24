@@ -4,13 +4,11 @@ import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { useMutation, useQuery } from "convex/react";
 
-// Export types for consumers
 export type DocumentLibrary = Doc<"documentLibraries">;
 export type DocumentFolder = Doc<"documentFolders">;
 export type Document = Doc<"documents">;
 export type FolderPathItem = { _id: string; name: string };
 
-// Library CRUD operations
 export function useDocumentLibrary(siteId: Id<"sites">) {
   const libraries = useQuery(api.documentLibraries.queries.list, { siteId });
 
@@ -39,7 +37,6 @@ export function useDocumentLibrary(siteId: Id<"sites">) {
   };
 }
 
-// Folder operations within a library
 export function useFolderOperations(libraryId: Id<"documentLibraries"> | null) {
   const folders = useQuery(
     api.documentFolders.queries.listByLibrary,
@@ -78,7 +75,6 @@ export function useFolderOperations(libraryId: Id<"documentLibraries"> | null) {
   };
 }
 
-// File operations within a library
 export function useFileOperations(
   libraryId: Id<"documentLibraries"> | null,
   folderId: Id<"documentFolders"> | null | undefined,
@@ -113,7 +109,6 @@ export function useFileOperations(
   };
 }
 
-// Get folder path for breadcrumbs
 export function useFolderPath(
   folderId: Id<"documentFolders"> | null,
 ): FolderPathItem[] {
@@ -125,7 +120,6 @@ export function useFolderPath(
   return (path || []) as FolderPathItem[];
 }
 
-// Public view hooks (for renderer)
 export function usePublicFolders(
   libraryId: Id<"documentLibraries"> | null,
 ): DocumentFolder[] {

@@ -1,9 +1,3 @@
-/**
- * Element category definitions
- * Categories group related elements for organization and UI display
- */
-
-// All supported element categories
 export type ElementCategory =
   | "site"
   | "navigation"
@@ -14,7 +8,6 @@ export type ElementCategory =
   | "forms"
   | "customization";
 
-// Category metadata for UI display
 export interface CategoryInfo {
   category: ElementCategory;
   label: string;
@@ -23,8 +16,6 @@ export interface CategoryInfo {
   order: number; // Display order in UI
 }
 
-// Category definitions with metadata
-// Order: Site Settings, Navigation, Customization, Layouts, Sections, Blocks, Media, Forms
 export const CATEGORIES: CategoryInfo[] = [
   {
     category: "site",
@@ -84,14 +75,12 @@ export const CATEGORIES: CategoryInfo[] = [
   },
 ];
 
-// Helper to get category info
 export function getCategoryInfo(
   category: ElementCategory,
 ): CategoryInfo | undefined {
   return CATEGORIES.find((c) => c.category === category);
 }
 
-// Helper to get sorted categories
 export function getSortedCategories(): CategoryInfo[] {
   return [...CATEGORIES].sort((a, b) => a.order - b.order);
 }

@@ -1,10 +1,5 @@
-/**
- * Layout type definitions for the editor and renderer
- * Layouts are containers that hold blocks in organized slots (single, rows, columns, grid, spacer, vertical)
- */
 import type { AnyContent } from "./elements";
 
-// Layout types (single, rows, columns, grid, spacer, vertical)
 export type LayoutType =
   | "single" // Single column, full width
   | "rows" // Vertical stack of N rows
@@ -13,8 +8,6 @@ export type LayoutType =
   | "spacer" // Vertical spacer (no slots)
   | "vertical"; // Sidebar layout (rendered beside main content)
 
-// Block types allowed within layout slots
-// This is the intersection of backend schema types and registered frontend elements
 export type LayoutBlockType =
   | "heading"
   | "paragraph"
@@ -27,26 +20,21 @@ export type LayoutBlockType =
   | "code"
   | "quicklinks";
 
-// Block data as stored within a layout slot
 export interface LayoutBlockData {
   id: string;
   type: LayoutBlockType;
   content: AnyContent;
 }
 
-// A slot is a drop zone within a layout
 export interface LayoutSlot {
   id: string;
   position: number; // Order within layout (0-indexed)
   blocks: LayoutBlockData[];
 }
 
-// Spacer height options
 export type SpacerLayoutHeight = "small" | "medium" | "large" | "xlarge";
 
-// Layout settings - simplified (just layout config)
 export interface LayoutSettings {
-  // Configuration (depends on layout type)
   rowCount?: number; // For "rows" layout (2-4)
   columnCount?: number; // For "columns" layout (2-4)
   gridColumns?: number; // For "grid" layout (2-4)
@@ -54,7 +42,6 @@ export interface LayoutSettings {
   spacerHeight?: SpacerLayoutHeight; // For "spacer" layout
 }
 
-// Complete layout data structure
 export interface LayoutData {
   id: string;
   type: LayoutType;
@@ -64,13 +51,11 @@ export interface LayoutData {
   tabId?: string; // Which page tab this layout belongs to
 }
 
-// Page tab definition
 export interface PageTab {
   id: string;
   label: string;
 }
 
-// Default slot counts per layout type
 export const LAYOUT_SLOT_COUNTS: Record<LayoutType, number | "dynamic"> = {
   single: 1,
   rows: "dynamic", // Based on rowCount setting
@@ -80,7 +65,6 @@ export const LAYOUT_SLOT_COUNTS: Record<LayoutType, number | "dynamic"> = {
   vertical: 1, // Sidebar layout (single slot, rendered beside main content)
 };
 
-// Default settings per layout type
 export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> = {
   single: {},
   rows: { rowCount: 2 },
@@ -90,7 +74,6 @@ export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> = {
   vertical: {}, // Sidebar layout - no special settings
 };
 
-// Layout metadata for UI display
 export interface LayoutTypeInfo {
   type: LayoutType;
   label: string;

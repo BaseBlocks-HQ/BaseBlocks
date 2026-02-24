@@ -1,9 +1,5 @@
 import { v } from "convex/values";
 
-// ---------------------------------------------------------------------------
-// Site validators — customization and settings
-// ---------------------------------------------------------------------------
-
 /** Site customization theme options */
 export const siteCustomization = v.object({
   accentColor: v.optional(v.string()),

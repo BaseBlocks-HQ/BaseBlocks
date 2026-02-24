@@ -4,10 +4,6 @@ import { query } from "../_generated/server";
 import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
 /**
  * Extract a text snippet around the first occurrence of a search term
  */
@@ -73,10 +69,6 @@ function formatSearchResult(
     metadata: doc.metadata,
   };
 }
-
-// ============================================================================
-// Queries
-// ============================================================================
 
 /**
  * Unified search across all content types (documents + subpages)

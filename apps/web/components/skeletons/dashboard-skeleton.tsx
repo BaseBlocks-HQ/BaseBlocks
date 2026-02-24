@@ -29,7 +29,6 @@ function SiteCardSkeleton() {
 export function DashboardSkeleton() {
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar skeleton */}
       <div className="w-64 border-r p-4 space-y-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <div className="space-y-1">
@@ -42,7 +41,6 @@ export function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="flex-1 p-6">
         <div className="flex items-center justify-between mb-8">
           <div>

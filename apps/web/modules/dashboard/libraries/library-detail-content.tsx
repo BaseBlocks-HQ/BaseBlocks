@@ -238,7 +238,6 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
                 await removeFile(fileId as Id<"documents">);
               }}
               onRetryExtraction={async (file) => {
-                // TODO: Update token handling after storage migration
                 await retryExtraction({
                   documentId: file._id as Id<"documents">,
                   authToken: "",

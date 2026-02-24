@@ -50,17 +50,14 @@
  * 3. The viewer will automatically be used for matching content types
  */
 
-// Context and hooks
 export {
   MediaViewerProvider,
   useMediaViewer,
   useMediaViewerOptional,
 } from "./context";
 
-// Main modal component
 export { MediaViewerModal } from "./media-viewer-modal";
 
-// Types
 export type {
   MediaFile,
   ViewerProps,
@@ -69,7 +66,6 @@ export type {
 } from "./types";
 export { getMediaFileType, isViewable, getFileExtension } from "./types";
 
-// Individual viewers (for advanced use cases)
 export {
   viewerRegistry,
   getViewer,

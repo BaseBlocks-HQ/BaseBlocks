@@ -10,12 +10,10 @@ import { FlowchartEditor } from "./editor";
 import { FlowchartPreview } from "./preview";
 import { FlowchartRenderer } from "./renderer";
 
-// Re-export components
 export { FlowchartEditor, FlowchartRenderer, FlowchartPreview };
 export { DiagramEditor } from "./diagram-editor";
 export { DiagramViewer } from "./diagram-viewer";
 
-// Register the element
 registerElement({
   type: "flowchart",
   category: "blocks",

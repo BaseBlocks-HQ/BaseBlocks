@@ -7,10 +7,6 @@ import type { FormField, FormFieldType } from "@baseblocks/types/elements";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
-// =============================================================================
-// FIELD COMPONENT PROPS
-// =============================================================================
-
 export interface FieldEditorProps {
   field: FormField;
   onChange: (field: FormField) => void;
@@ -28,10 +24,6 @@ export interface FieldSettingsProps {
   onChange: (field: FormField) => void;
 }
 
-// =============================================================================
-// FIELD REGISTRY ENTRY
-// =============================================================================
-
 export interface FieldRegistryEntry {
   type: FormFieldType;
   label: string;
@@ -43,10 +35,6 @@ export interface FieldRegistryEntry {
   /** Settings panel */
   Settings: ComponentType<FieldSettingsProps>;
 }
-
-// =============================================================================
-// REGISTRY
-// =============================================================================
 
 class FormFieldRegistry {
   private fields = new Map<FormFieldType, FieldRegistryEntry>();
@@ -80,10 +68,8 @@ class FormFieldRegistry {
   }
 }
 
-// Singleton
 export const fieldRegistry = new FormFieldRegistry();
 
-// Convenience exports
 export const registerField = (entry: FieldRegistryEntry) =>
   fieldRegistry.register(entry);
 export const getFieldEntry = (type: FormFieldType) => fieldRegistry.get(type);

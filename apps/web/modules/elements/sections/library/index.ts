@@ -11,10 +11,8 @@ import { LibraryEditor } from "./editor";
 import { LibraryPreview } from "./preview";
 import { LibraryRenderer } from "./renderer";
 
-// Re-export components
 export { LibraryEditor, LibraryRenderer, LibraryPreview, LibraryConfigPanel };
 
-// Register the element
 registerElement({
   type: "library",
   category: "sections",

@@ -3,7 +3,6 @@ import { Skeleton } from "@baseblocks/ui/skeleton";
 export function PublicSiteSkeleton() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
       <header className="border-b">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
@@ -14,9 +13,7 @@ export function PublicSiteSkeleton() {
         </div>
       </header>
 
-      {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar nav */}
         <aside className="w-64 border-r p-4">
           <nav className="space-y-1">
             {[1, 2, 3, 4].map((i) => (
@@ -34,7 +31,6 @@ export function PublicSiteSkeleton() {
           </nav>
         </aside>
 
-        {/* Content */}
         <main className="flex-1 p-8 overflow-auto">
           <div className="max-w-4xl mx-auto space-y-6">
             <Skeleton className="h-8 w-56" />

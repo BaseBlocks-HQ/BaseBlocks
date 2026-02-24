@@ -1,15 +1,8 @@
-/**
- * Centralized type exports
- * Unified Element System
- */
-
-// Page types
 export type {
   PageListItem,
   PageWithChildren,
 } from "./pages";
 
-// Layout types
 export type {
   LayoutType,
   LayoutBlockType,
@@ -26,12 +19,6 @@ export {
   LAYOUT_TYPES,
 } from "./layouts";
 
-// ============================================================
-// UNIFIED ELEMENT SYSTEM
-// All element types, content interfaces, and defaults
-// ============================================================
-
-// Element categories
 export type {
   ElementCategory,
   CategoryInfo,
@@ -42,7 +29,6 @@ export {
   getSortedCategories,
 } from "./elements";
 
-// Element types (unified types)
 export type {
   ElementType,
   AllElementType,
@@ -53,7 +39,6 @@ export type {
   SaveStatus,
 } from "./elements";
 
-// Block types (content primitives)
 export type {
   BlockType,
   HeadingContent,
@@ -66,7 +51,6 @@ export type {
 } from "./elements";
 export { DEFAULT_BLOCK_CONTENT } from "./elements";
 
-// Section types (search, library, quicklinks)
 export type {
   SectionType,
   SearchContent,
@@ -78,7 +62,6 @@ export type {
 } from "./elements";
 export { DEFAULT_SECTION_CONTENT } from "./elements";
 
-// Navigation types (site-level configuration, not content elements)
 export type {
   NavigationStyle,
   NavigationItem,
@@ -91,11 +74,9 @@ export {
   getNavigationStyleInfo,
 } from "./elements";
 
-// Media types (image)
 export type { MediaType, ImageContent, MediaContentUnion } from "./elements";
 export { DEFAULT_MEDIA_CONTENT } from "./elements";
 
-// Form types
 export type {
   FormType,
   FormFieldType,

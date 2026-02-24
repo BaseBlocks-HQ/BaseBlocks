@@ -1,9 +1,3 @@
-/**
- * Unified Element Type System
- * Central exports for all element-related types
- */
-
-// Categories
 export type {
   ElementCategory,
   CategoryInfo,
@@ -14,7 +8,6 @@ export {
   getSortedCategories,
 } from "./categories";
 
-// Layout types (re-exported from root layouts module)
 export type {
   LayoutType,
   SpacerLayoutHeight,
@@ -27,7 +20,6 @@ export {
   LAYOUT_TYPES,
 } from "../layouts";
 
-// Block types
 export type {
   BlockType,
   HeadingContent,
@@ -58,7 +50,6 @@ export type {
 } from "./blocks";
 export { DEFAULT_BLOCK_CONTENT, DEFAULT_IMPORTANCE_PRESETS } from "./blocks";
 
-// Section types
 export type {
   SectionType,
   SearchContent,
@@ -70,7 +61,6 @@ export type {
 } from "./sections";
 export { DEFAULT_SECTION_CONTENT } from "./sections";
 
-// Navigation types (site-level configuration, not content elements)
 export type {
   NavigationStyle,
   NavigationItem,
@@ -83,7 +73,6 @@ export {
   getNavigationStyleInfo,
 } from "./navigation";
 
-// Customization types (site-level styling)
 export type {
   BorderRadiusPreset,
   SiteCustomization,
@@ -98,11 +87,9 @@ export {
   getDarkColorForPreset,
 } from "./customization";
 
-// Media types
 export type { MediaType, ImageContent, MediaContentUnion } from "./media";
 export { DEFAULT_MEDIA_CONTENT } from "./media";
 
-// Form types
 export type {
   FormType,
   FormFieldType,
@@ -127,7 +114,6 @@ export {
   getFieldTypeLabel,
 } from "./forms";
 
-// Content mapping
 export type {
   ElementType,
   AllElementType,
@@ -138,5 +124,4 @@ export type {
   TypedElementData,
 } from "./content-map";
 
-// Save status (shared across all elements)
 export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";

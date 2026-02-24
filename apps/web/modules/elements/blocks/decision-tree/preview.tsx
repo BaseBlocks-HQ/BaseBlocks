@@ -9,7 +9,6 @@ export function DecisionTreePreview({ className }: ElementPreviewProps) {
         className,
       )}
     >
-      {/* Tree branch visualization */}
       <div className="flex items-center gap-1.5">
         <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
         <div className="h-[1px] w-3 bg-muted-foreground/20" />

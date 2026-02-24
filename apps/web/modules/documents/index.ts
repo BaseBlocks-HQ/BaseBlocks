@@ -1,4 +1,3 @@
-// Components
 export { FileIcon, getFileTypeColor } from "./components/file-icon";
 export { EmptyState } from "./components/empty-state";
 export { Breadcrumbs, type BreadcrumbItem } from "./components/breadcrumbs";
@@ -18,7 +17,6 @@ export { FolderTree } from "./components/folder-tree";
 export { FileListItem, type FileData } from "./components/file-list-item";
 export { FileList } from "./components/file-list";
 
-// Hooks
 export {
   useDocumentLibrary,
   useFolderOperations,
@@ -30,7 +28,6 @@ export {
   usePublicLibrary,
 } from "./hooks";
 
-// Types
 export type {
   DocumentLibrary,
   DocumentFolder,

@@ -10,10 +10,8 @@ import { DecisionTreePreview } from "./preview";
 import { DecisionTreeRenderer } from "./renderer";
 import { DecisionTreeEditor } from "./tree-editor";
 
-// Re-export components
 export { DecisionTreeEditor, DecisionTreeRenderer, DecisionTreePreview };
 
-// Register the element
 registerElement({
   type: "decision-tree",
   category: "blocks",

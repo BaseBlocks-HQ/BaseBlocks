@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthContextOrNull } from "../auth";
 
-// Get team by slug (for multi-tenant routing)
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
@@ -13,7 +12,6 @@ export const getBySlug = query({
   },
 });
 
-// Get current user's team (based on membership)
 export const getMine = query({
   args: {},
   handler: async (ctx) => {
@@ -32,7 +30,6 @@ export const getMine = query({
   },
 });
 
-// Check if slug is available
 export const isSlugAvailable = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {

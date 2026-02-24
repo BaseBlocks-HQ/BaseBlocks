@@ -3,7 +3,6 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContext, requireMember } from "../auth";
 
-// List all libraries for a site (authenticated)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
@@ -19,7 +18,6 @@ export const list = query({
   },
 });
 
-// Get a single library
 export const get = query({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
@@ -35,7 +33,6 @@ export const get = query({
   },
 });
 
-// Get library for public site viewing
 export const getPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -51,7 +48,6 @@ export const getPublic = query({
   },
 });
 
-// List libraries for public site viewing
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
@@ -67,7 +63,6 @@ export const listPublic = query({
   },
 });
 
-// List all libraries with document counts for the current user's sites
 export const listAllWithCounts = query({
   args: {},
   handler: async (ctx) => {
@@ -122,7 +117,6 @@ export const listAllWithCounts = query({
   },
 });
 
-// List libraries with counts for a specific site
 export const listWithCounts = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
