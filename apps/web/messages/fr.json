@@ -124,7 +124,8 @@
     "teamName": "Nom de l'equipe",
     "teamNamePlaceholder": "Mon equipe",
     "createWorkspace": "Creer l'espace de travail",
-    "creating": "Creation en cours..."
+    "creating": "Creation en cours...",
+    "orCreateOwn": "Ou creez votre propre espace de travail"
   },
   "dialogs": {
     "createSite": {

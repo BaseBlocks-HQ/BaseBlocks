@@ -8,21 +8,37 @@ export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
+    teamId: v.optional(v.id("teams")),
   },
-  handler: async (ctx, { name, slug }) => {
+  handler: async (ctx, { name, slug, teamId: explicitTeamId }) => {
     const auth = await getAuthContext(ctx);
 
-    // Get user's team via membership
-    const membership = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .first();
+    let resolvedTeamId: typeof explicitTeamId;
 
-    if (!membership) {
-      throw new Error("Team not found. Please complete onboarding first.");
+    if (explicitTeamId) {
+      // If teamId is explicitly provided, verify admin access on that team
+      await requireAdmin(ctx, explicitTeamId);
+      resolvedTeamId = explicitTeamId;
+    } else {
+      // Fall back to first membership (backward compatible)
+      const membership = await ctx.db
+        .query("members")
+        .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+        .first();
+
+      if (!membership) {
+        throw new Error("Team not found. Please complete onboarding first.");
+      }
+
+      // Require admin role to create sites
+      if (membership.role !== "admin") {
+        throw new Error("Admin access required to create sites");
+      }
+
+      resolvedTeamId = membership.teamId;
     }
 
-    const team = await ctx.db.get(membership.teamId);
+    const team = await ctx.db.get(resolvedTeamId!);
     if (!team) {
       throw new Error("Team not found. Please complete onboarding first.");
     }
