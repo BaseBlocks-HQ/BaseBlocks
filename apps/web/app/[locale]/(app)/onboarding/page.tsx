@@ -3,8 +3,10 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
+import { useTeam } from "@/lib/data";
 import { isVercelAppDomain } from "@/lib/url";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -16,9 +18,10 @@ import {
 } from "@baseblocks/ui/card";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -30,6 +33,15 @@ export default function OnboardingPage() {
   const t = useTranslations();
 
   const createTeam = useMutation(api.teams.mutations.create);
+
+  // Watch for team availability (e.g. after accepting an invite)
+  const team = useTeam();
+
+  useEffect(() => {
+    if (team) {
+      router.push("/dashboard");
+    }
+  }, [team, router]);
 
   const handleTeamNameChange = (value: string) => {
     setTeamName(value);
@@ -82,7 +94,19 @@ export default function OnboardingPage() {
           <CardDescription>{t("onboarding.description")}</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Show pending invitations so invited users can accept without
+              creating their own workspace first */}
+          <div className="mb-4">
+            <InvitationInbox fullWidth onboardingMode />
+          </div>
+
+          <Separator className="my-4" />
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t("onboarding.orCreateOwn")}
+            </p>
+
             <div className="space-y-2">
               <Label htmlFor="teamName">{t("onboarding.teamName")}</Label>
               <Input

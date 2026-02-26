@@ -4,8 +4,12 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 
-export function useTeam() {
-  return useQuery(api.teams.queries.getMine);
+export function useTeam(teamId?: Id<"teams">) {
+  return useQuery(api.teams.queries.getMine, teamId ? { teamId } : {});
+}
+
+export function useMyTeams() {
+  return useQuery(api.teams.queries.listMine);
 }
 
 export function useMembers(teamId: Id<"teams"> | undefined) {

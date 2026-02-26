@@ -39,9 +39,14 @@ interface AuthInvitation {
 
 interface InvitationInboxProps {
   fullWidth?: boolean;
+  /** When true, renders invitations inline (no dialog) for the onboarding page */
+  onboardingMode?: boolean;
 }
 
-export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
+export function InvitationInbox({
+  fullWidth = false,
+  onboardingMode = false,
+}: InvitationInboxProps) {
   const t = useTranslations("inbox");
 
   const [open, setOpen] = useState(false);
@@ -68,7 +73,7 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
             id: inv.id,
             organizationId: inv.organizationId,
             organizationName: inv.organizationName,
-            role: inv.role || "viewer",
+            role: inv.role || "member",
             expiresAt: new Date(inv.expiresAt),
             inviterEmail: inv.inviterEmail,
           })),
@@ -86,16 +91,27 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
   const handleAccept = async (invitation: ReceivedInvitation) => {
     setProcessingId(invitation.id);
     try {
-      // Accept in Better Auth
+      // Accept in Better Auth (creates BA member record, updates invitation status)
       await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
       });
-      // Sync to Convex members table
+
+      // Remove from UI immediately — the invitation is consumed in BA and
+      // cannot be re-accepted, so keeping it visible would be misleading
+      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
+
+      // Set the accepted organization as active in the BA session so
+      // subsequent API calls (e.g. inviteMember) target the correct org
+      await authClient.organization.setActive({
+        organizationId: invitation.organizationId,
+      });
+
+      // Sync to Convex members table (creates the Convex member record
+      // which links the user to the team and grants role-based access)
       await syncMember({
         organizationId: invitation.organizationId,
         role: invitation.role,
       });
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to accept invitation",
@@ -138,6 +154,111 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Shared invitation list content
+  const invitationContent = (
+    <div className="space-y-3">
+      {error && (
+        <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">
+          {error}
+        </p>
+      )}
+
+      {!isLoading && invitations.length === 0 && (
+        <div className="text-center py-6">
+          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+          <p className="text-sm text-muted-foreground">{t("noInvitations")}</p>
+        </div>
+      )}
+
+      <div className="space-y-3 max-h-80 overflow-y-auto">
+        {invitations.map((invitation) => (
+          <div
+            key={invitation.id}
+            className="flex items-start gap-3 p-4 rounded-lg border bg-card"
+          >
+            <Avatar className="h-10 w-10">
+              <AvatarFallback>
+                {getInitials(invitation.inviterEmail)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div>
+                <p className="font-medium">
+                  {invitation.organizationName ||
+                    invitation.inviterEmail ||
+                    t("invitedToOrg")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("invitedYou")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant="secondary" className="text-xs">
+                  {invitation.role === "member" ? "viewer" : invitation.role}
+                </Badge>
+                <span>·</span>
+                <span>
+                  {t("expires", { date: formatDate(invitation.expiresAt) })}
+                </span>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  size="sm"
+                  onClick={() => handleAccept(invitation)}
+                  disabled={processingId === invitation.id}
+                >
+                  {processingId === invitation.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      {t("accept")}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDecline(invitation.id)}
+                  disabled={processingId === invitation.id}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  {t("decline")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // In onboarding mode, render inline (no dialog wrapper)
+  if (onboardingMode) {
+    return (
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Inbox className="h-5 w-5" />
+          <h3 className="font-medium">{t("title")}</h3>
+          {isLoading && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+          {invitations.length > 0 && (
+            <Badge
+              variant="destructive"
+              className="h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
+            >
+              {invitations.length}
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground mb-3">{t("description")}</p>
+        {invitationContent}
+      </div>
+    );
+  }
+
+  // Default: render as dialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -183,85 +304,7 @@ export function InvitationInbox({ fullWidth = false }: InvitationInboxProps) {
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {error && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">
-              {error}
-            </p>
-          )}
-
-          {!isLoading && invitations.length === 0 && (
-            <div className="text-center py-8">
-              <Inbox className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {t("noInvitations")}
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-3 max-h-80 overflow-y-auto">
-            {invitations.map((invitation) => (
-              <div
-                key={invitation.id}
-                className="flex items-start gap-3 p-4 rounded-lg border bg-card"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>
-                    {getInitials(invitation.inviterEmail)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div>
-                    <p className="font-medium">
-                      {invitation.organizationName ||
-                        invitation.inviterEmail ||
-                        t("invitedToOrg")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("invitedYou")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="secondary" className="text-xs">
-                      {invitation.role === "member"
-                        ? "viewer"
-                        : invitation.role}
-                    </Badge>
-                    <span>·</span>
-                    <span>
-                      {t("expires", { date: formatDate(invitation.expiresAt) })}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAccept(invitation)}
-                      disabled={processingId === invitation.id}
-                    >
-                      {processingId === invitation.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Check className="h-4 w-4 mr-1" />
-                          {t("accept")}
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDecline(invitation.id)}
-                      disabled={processingId === invitation.id}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      {t("decline")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {invitationContent}
       </DialogContent>
     </Dialog>
   );

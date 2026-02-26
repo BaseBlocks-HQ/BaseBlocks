@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
@@ -8,21 +9,31 @@ export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
+    teamId: v.optional(v.id("teams")),
   },
-  handler: async (ctx, { name, slug }) => {
+  handler: async (ctx, { name, slug, teamId: explicitTeamId }) => {
     const auth = await getAuthContext(ctx);
 
-    // Get user's team via membership
-    const membership = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .first();
+    let resolvedTeamId: Id<"teams">;
 
-    if (!membership) {
-      throw new Error("Team not found. Please complete onboarding first.");
+    if (explicitTeamId) {
+      await requireAdmin(ctx, explicitTeamId);
+      resolvedTeamId = explicitTeamId;
+    } else {
+      const membership = await ctx.db
+        .query("members")
+        .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+        .first();
+
+      if (!membership) {
+        throw new Error("Team not found. Please complete onboarding first.");
+      }
+
+      await requireAdmin(ctx, membership.teamId);
+      resolvedTeamId = membership.teamId;
     }
 
-    const team = await ctx.db.get(membership.teamId);
+    const team = await ctx.db.get(resolvedTeamId);
     if (!team) {
       throw new Error("Team not found. Please complete onboarding first.");
     }

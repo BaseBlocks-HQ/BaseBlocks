@@ -124,7 +124,8 @@
     "teamName": "Team name",
     "teamNamePlaceholder": "My Team",
     "createWorkspace": "Create workspace",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "orCreateOwn": "Or create your own workspace"
   },
   "dialogs": {
     "createSite": {
