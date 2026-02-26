@@ -4,12 +4,9 @@ import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type {
   DecisionTree,
-  DecisionTreeBlockType,
   DecisionTreeContent,
-  DecisionTreeContentBlock,
   DecisionTreeNode,
 } from "@baseblocks/types/elements";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -101,7 +98,6 @@ export function DecisionTreeEditor({
     }
   }, [editingLabelId]);
 
-  // Sync active tab when trees change externally
   useEffect(() => {
     if (trees.length > 0 && !trees.find((t) => t.id === activeTreeId)) {
       setActiveTreeId(trees[0]!.id);
@@ -190,7 +186,7 @@ export function DecisionTreeEditor({
       parentId,
       name,
       order: maxOrder + 1,
-      contentBlocks: [],
+      document: [],
     };
     updateActiveTreeNodes([...nodes, newNode]);
   };
@@ -226,75 +222,9 @@ export function DecisionTreeEditor({
     );
   };
 
-  const handleAddContentBlock = (
-    nodeId: string,
-    type: DecisionTreeBlockType,
-  ) => {
-    const node = activeTree.nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-    const maxOrder = node.contentBlocks.reduce(
-      (max, b) => Math.max(max, b.order),
-      -1,
-    );
-    const newBlock: DecisionTreeContentBlock = {
-      id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      type,
-      content: DEFAULT_BLOCK_CONTENT[type],
-      order: maxOrder + 1,
-    };
+  const handleUpdateDocument = (nodeId: string, document: unknown[]) => {
     updateActiveTreeNodes(
-      activeTree.nodes.map((n) =>
-        n.id === nodeId
-          ? { ...n, contentBlocks: [...n.contentBlocks, newBlock] }
-          : n,
-      ),
-    );
-  };
-
-  const handleUpdateContentBlock = (
-    nodeId: string,
-    block: DecisionTreeContentBlock,
-  ) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              contentBlocks: n.contentBlocks.map((b) =>
-                b.id === block.id ? block : b,
-              ),
-            }
-          : n,
-      ),
-    );
-  };
-
-  const handleRemoveContentBlock = (nodeId: string, blockId: string) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              contentBlocks: n.contentBlocks.filter((b) => b.id !== blockId),
-            }
-          : n,
-      ),
-    );
-  };
-
-  const handleReorderContentBlocks = (nodeId: string, orderedIds: string[]) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              contentBlocks: n.contentBlocks.map((b) => {
-                const idx = orderedIds.indexOf(b.id);
-                return idx !== -1 ? { ...b, order: idx } : b;
-              }),
-            }
-          : n,
-      ),
+      activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, document } : n)),
     );
   };
 
@@ -590,10 +520,7 @@ export function DecisionTreeEditor({
     <NodeDetail
       node={currentNode}
       onUpdateNodeName={handleUpdateNodeName}
-      onUpdateContentBlock={handleUpdateContentBlock}
-      onAddContentBlock={handleAddContentBlock}
-      onRemoveContentBlock={handleRemoveContentBlock}
-      onReorderContentBlocks={handleReorderContentBlocks}
+      onUpdateDocument={handleUpdateDocument}
     />
   ) : (
     <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
@@ -618,10 +545,7 @@ export function DecisionTreeEditor({
         {breadcrumbNav}
 
         <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
-          {/* Node list (options at current level) */}
           <div className="border-b">{nodeListPanel}</div>
-
-          {/* Node detail (content of the node we navigated into) */}
           {currentNode && <div>{nodeDetailPanel}</div>}
         </div>
       </div>
@@ -636,17 +560,14 @@ export function DecisionTreeEditor({
       {treeTabs}
       {breadcrumbNav}
 
-      {/* Split Panel */}
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
-          {/* Left: Node List */}
           <ResizablePanel defaultSize={40} minSize={25}>
             <div className="h-full min-w-0 border-r overflow-hidden">
               {nodeListPanel}
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          {/* Right: Node Detail */}
           <ResizablePanel defaultSize={60} minSize={35}>
             <div className="h-full min-w-0 overflow-hidden">
               {nodeDetailPanel}

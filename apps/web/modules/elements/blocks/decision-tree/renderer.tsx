@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
+import { nodeHasContent } from "./lib";
 import { DetailPanel } from "./viewer/detail-panel";
 import { OptionList } from "./viewer/option-list";
 
@@ -71,7 +72,7 @@ export function DecisionTreeRenderer({
   const detailNode = detailNodeId
     ? (nodes.find((n) => n.id === detailNodeId) ?? null)
     : null;
-  const hasDetailContent = detailNode && detailNode.contentBlocks.length > 0;
+  const hasDetailContent = detailNode && nodeHasContent(detailNode);
 
   const handleSelect = (node: DecisionTreeNode) => {
     const hasChildren = nodes.some((n) => n.parentId === node.id);

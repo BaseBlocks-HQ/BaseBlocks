@@ -834,7 +834,147 @@ export const runReindexSubpageSearch = migrations.runner([
   internal.migrations.reindexSubpageSearch,
 ]);
 
-// Migration 18: Strip HTML entities (&nbsp; etc.) from plain-text block content
+// ============================================================
+// Migration 18: Convert decision-tree contentBlocks → BlockNote document
+// ============================================================
+// Old format: node.contentBlocks = [{ type: "heading", content: { text, level }, order }]
+// New format: node.document = [{ type: "heading", content: "text", props: { level } }]
+// Converts heading, paragraph, callout, code blocks to BlockNote PartialBlock format.
+// Dividers are dropped (no BlockNote equivalent).
+
+function convertContentBlocksToDocument(
+  // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+  blocks: any[] | undefined,
+): unknown[] {
+  if (!Array.isArray(blocks) || blocks.length === 0) return [];
+  const sorted = [...blocks].sort(
+    // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
+  );
+  const doc: unknown[] = [];
+  for (const block of sorted) {
+    switch (block.type) {
+      case "heading":
+        doc.push({
+          type: "heading",
+          content: block.content?.text || "",
+          props: { level: Math.min(block.content?.level || 2, 3) },
+        });
+        break;
+      case "paragraph": {
+        const text: string = block.content?.text || "";
+        for (const line of text.split("\n")) {
+          doc.push({ type: "paragraph", content: line });
+        }
+        break;
+      }
+      case "callout":
+        doc.push({
+          type: "paragraph",
+          content: block.content?.text || "",
+        });
+        break;
+      case "code":
+        doc.push({
+          type: "codeBlock",
+          props: { language: block.content?.language || "typescript" },
+          content: block.content?.text || "",
+        });
+        break;
+      // divider: skip (no BlockNote equivalent)
+    }
+  }
+  return doc;
+}
+
+export const migrateDecisionTreeToRichText = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    const migrateNodes = (
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      nodes: any[],
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    ): { result: any[]; changed: boolean } => {
+      let changed = false;
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      const result = nodes.map((node: any) => {
+        // Already migrated
+        if (node.document !== undefined) return node;
+        const cbs = node.contentBlocks;
+        if (!Array.isArray(cbs)) {
+          // No contentBlocks and no document → add empty document
+          changed = true;
+          const { contentBlocks: _, ...rest } = node;
+          return { ...rest, document: [] };
+        }
+        changed = true;
+        const document = convertContentBlocksToDocument(cbs);
+        const { contentBlocks: _, ...rest } = node;
+        return { ...rest, document };
+      });
+      return { result, changed };
+    };
+
+    // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    const processSlots = (slots: any[]) => {
+      let dirty = false;
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      const cleaned = slots.map((slot: any) => {
+        // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+        const blocks = (slot.blocks as any[]).map((block: any) => {
+          if (block.type !== "decision-tree" || !block.content) return block;
+          const c = block.content;
+
+          const newContent = { ...c };
+
+          // Migrate top-level nodes
+          if (Array.isArray(c.nodes)) {
+            const nodesResult = migrateNodes(c.nodes);
+            if (nodesResult.changed) dirty = true;
+            newContent.nodes = nodesResult.result;
+          }
+
+          // Migrate nodes inside each tree
+          if (Array.isArray(c.trees)) {
+            // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+            newContent.trees = c.trees.map((tree: any) => {
+              if (!Array.isArray(tree.nodes)) return tree;
+              const treeResult = migrateNodes(tree.nodes);
+              if (treeResult.changed) dirty = true;
+              return { ...tree, nodes: treeResult.result };
+            });
+          }
+
+          return { ...block, content: newContent };
+        });
+        return { ...slot, blocks };
+      });
+      return { cleaned, dirty };
+    };
+
+    // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    const patch: any = {};
+
+    const slotsResult = processSlots(layout.slots);
+    if (slotsResult.dirty) patch.slots = slotsResult.cleaned;
+
+    if (layout.publishedSlots) {
+      const pubResult = processSlots(layout.publishedSlots);
+      if (pubResult.dirty) patch.publishedSlots = pubResult.cleaned;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      patch.updatedAt = Date.now();
+      await ctx.db.patch(layout._id, patch);
+    }
+  },
+});
+export const runMigrateDecisionTreeToRichText = migrations.runner([
+  internal.migrations.migrateDecisionTreeToRichText,
+]);
+
+// Migration 18b: Strip HTML entities (&nbsp; etc.) from plain-text block content
 // ContentEditable returns &nbsp; for trailing spaces; the tag-strip regex missed them.
 export const stripHtmlEntities = migrations.define({
   table: "layouts",
