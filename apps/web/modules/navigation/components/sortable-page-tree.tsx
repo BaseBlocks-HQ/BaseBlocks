@@ -1,32 +1,22 @@
 "use client";
 
-import { ConfirmDialog } from "@/components/dialogs";
+import { HomeIcon, PagesIcon } from "@/modules/elements/framework/icons";
 import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";
-import { Button } from "@baseblocks/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
-import { FilePlus, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TreeProjection } from "../tree";
 import {
   applyMove,
   flattenTree,
-  getDescendantIds,
   hashPages,
   isValidDrop,
+  removeChildrenOf,
 } from "../tree";
-import { CreateSubPageDialog } from "./create-sub-page-dialog";
-import { RenamePageDialog } from "./rename-page-dialog";
+import { PageActionsMenu } from "./page-actions-menu";
 import { SortableTreeItem } from "./sortable-tree-item";
 import { TreeDndProvider } from "./tree-dnd-context";
 
@@ -57,107 +47,95 @@ export function SortablePageTree({
   const canEdit = editorContext?.canEdit ?? false;
   const movePage = useMutation(api.pages.mutations.move);
 
-  // Default isExpanded function if not provided
   const isExpanded = isExpandedProp ?? (() => false);
 
-  // Mutation tracking for optimistic updates
+  // Track active drag for child exclusion during drag
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Optimistic update tracking
   const mutationIdRef = useRef(0);
   const [pendingMutation, setPendingMutation] = useState<{
     id: number;
     pages: PageListItem[];
   } | null>(null);
 
-  // Use optimistic pages if there's a pending mutation, otherwise server pages
   const effectivePages = pendingMutation?.pages ?? allPages;
 
-  // Flatten the tree for rendering
-  const flattenedItems = flattenTree(effectivePages, isExpanded);
+  // Flatten tree; during drag, remove children of dragged item
+  const allFlattenedItems = flattenTree(effectivePages, isExpanded);
+  const flattenedItems = activeId
+    ? removeChildrenOf(allFlattenedItems, [activeId])
+    : allFlattenedItems;
 
-  // Create a map for quick page lookup
-  const pageMap = new Map<string, PageListItem>();
+  // Quick lookup maps
+  const hasChildrenMap = new Map<string, boolean>();
   for (const page of effectivePages) {
-    pageMap.set(page._id, page);
+    const has = effectivePages.some((p) => p.parentId === page._id);
+    hasChildrenMap.set(page._id, has);
   }
 
-  // Check for children per page
-  const hasChildrenMap = (() => {
-    const map = new Map<string, boolean>();
-    for (const page of effectivePages) {
-      const children = effectivePages.filter((p) => p.parentId === page._id);
-      map.set(page._id, children.length > 0);
-    }
-    return map;
-  })();
-
-  // Clear pending state when server matches expected result
+  // Clear optimistic state when server catches up
   useEffect(() => {
     if (!pendingMutation) return;
-
-    const serverHash = hashPages(allPages);
-    const expectedHash = hashPages(pendingMutation.pages);
-
-    if (serverHash === expectedHash) {
+    if (hashPages(allPages) === hashPages(pendingMutation.pages)) {
       setPendingMutation(null);
     }
   }, [allPages, pendingMutation]);
 
-  // Handle drag end with optimistic updates
+  // ---- Drag handlers ----
+
+  const handleDragStart = (event: { active: { id: UniqueIdentifier } }) => {
+    setActiveId(String(event.active.id));
+  };
+
   const handleDragEnd = async (
     event: DragEndEvent,
     projection: TreeProjection | null,
   ) => {
-    const { active } = event;
+    setActiveId(null);
 
     if (
       !projection ||
-      !isValidDrop(effectivePages, String(active.id), projection)
+      !isValidDrop(effectivePages, String(event.active.id), projection)
     ) {
       return;
     }
 
-    // Apply optimistic update
-    const newPages = applyMove(effectivePages, String(active.id), projection);
+    // Optimistic update
+    const newPages = applyMove(
+      effectivePages,
+      String(event.active.id),
+      projection,
+    );
     const mutationId = ++mutationIdRef.current;
     setPendingMutation({ id: mutationId, pages: newPages });
 
-    // Auto-expand parent if nesting into it
+    // Auto-expand parent when nesting
     if (projection.position === "child" && projection.overId) {
       onSetExpanded?.(projection.overId, true);
     }
 
+    // Persist to backend — convert null parentId to undefined for Convex
     try {
       await movePage({
-        pageId: active.id as Id<"pages">,
-        newParentId: projection.parentId as Id<"pages"> | undefined,
+        pageId: event.active.id as Id<"pages">,
+        newParentId: projection.parentId
+          ? (projection.parentId as Id<"pages">)
+          : undefined,
         newOrder: projection.order,
       });
-    } catch (_error) {
-      // Rollback only if this mutation is still pending
+    } catch {
       if (pendingMutation?.id === mutationId) {
         setPendingMutation(null);
       }
     }
   };
 
-  // Collapse dragged item's children during drag
-  const handleDragStart = (event: { active: { id: UniqueIdentifier } }) => {
-    // Optionally collapse children of dragged item
-    const draggedId = String(event.active.id);
-    const _descendants = getDescendantIds(effectivePages, draggedId);
-    // We could collapse here if needed, but for now we'll keep them expanded
+  const handleDragCancel = () => {
+    setActiveId(null);
   };
 
-  // Callback to check if an item has children
-  const hasChildren = (id: string) => hasChildrenMap.get(id) ?? false;
-
-  // Callback for auto-expand during drag
-  const handleAutoExpand = (id: string) => {
-    onSetExpanded?.(id, true);
-  };
-
-  if (flattenedItems.length === 0) {
-    return null;
-  }
+  if (flattenedItems.length === 0) return null;
 
   return (
     <TreeDndProvider
@@ -165,9 +143,24 @@ export function SortablePageTree({
       pages={effectivePages}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
       isExpanded={isExpanded}
-      hasChildren={hasChildren}
-      onAutoExpand={handleAutoExpand}
+      hasChildren={(id) => hasChildrenMap.get(id) ?? false}
+      onAutoExpand={(id) => onSetExpanded?.(id, true)}
+      renderOverlay={(id) => {
+        const page = effectivePages.find((p) => p._id === String(id));
+        if (!page) return null;
+        return (
+          <div className="flex items-center gap-2 rounded-md bg-background border shadow-lg px-3 py-1.5 text-sm cursor-grabbing">
+            {page._id === defaultPageId ? (
+              <HomeIcon className="h-4 w-4 shrink-0 text-primary" />
+            ) : (
+              <PagesIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="truncate max-w-48">{page.title}</span>
+          </div>
+        );
+      }}
     >
       {flattenedItems.map((item) => (
         <SortableTreeItem
@@ -194,118 +187,5 @@ export function SortablePageTree({
         />
       ))}
     </TreeDndProvider>
-  );
-}
-
-function PageActionsMenu({
-  page,
-  siteId,
-  isDefault,
-  onExpandParent,
-}: {
-  page: PageListItem;
-  siteId: string;
-  isDefault: boolean;
-  onExpandParent?: () => void;
-}) {
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [subPageOpen, setSubPageOpen] = useState(false);
-
-  const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
-  const removePage = useMutation(api.pages.mutations.remove);
-
-  const handleSetDefault = async () => {
-    await setDefaultPage({
-      siteId: siteId as Id<"sites">,
-      pageId: page._id as Id<"pages">,
-    });
-  };
-
-  const handleDelete = async () => {
-    await removePage({ pageId: page._id as Id<"pages"> });
-    setDeleteOpen(false);
-  };
-
-  const handleSubPageCreated = () => {
-    // Expand the parent page to show the new sub-page
-    onExpandParent?.();
-  };
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover/page:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => setSubPageOpen(true)}>
-            <FilePlus className="h-4 w-4" />
-            Add Sub-page
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setRenameOpen(true)}>
-            <Pencil className="h-4 w-4" />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
-            <Star className="h-4 w-4" />
-            {isDefault ? "Default Page" : "Set as Default"}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <CreateSubPageDialog
-        siteId={siteId}
-        parentId={page._id}
-        parentTitle={page.title}
-        open={subPageOpen}
-        onOpenChange={setSubPageOpen}
-        onSuccess={handleSubPageCreated}
-      />
-
-      <RenamePageDialog
-        page={page}
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-      />
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Delete Page"
-        description={
-          <>
-            Are you sure you want to delete &ldquo;{page.title}&rdquo;? This
-            will also delete all content and child pages. This action cannot be
-            undone.
-            {isDefault && (
-              <span className="block mt-2 text-amber-600 dark:text-amber-400">
-                This is the default page. A new default will be assigned
-                automatically.
-              </span>
-            )}
-          </>
-        }
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={handleDelete}
-      />
-    </>
   );
 }

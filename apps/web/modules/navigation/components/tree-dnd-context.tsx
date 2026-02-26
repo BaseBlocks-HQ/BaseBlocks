@@ -5,6 +5,7 @@ import {
   DndContext,
   type DragEndEvent,
   type DragMoveEvent,
+  DragOverlay,
   type DragStartEvent,
   KeyboardSensor,
   MeasuringStrategy,
@@ -26,29 +27,28 @@ import {
   useRef,
   useState,
 } from "react";
-import type { FlattenedPage, TreeProjection } from "../tree";
-import { INDENT_WIDTH, getProjection } from "../tree";
-
-/** Delay before auto-expanding a collapsed folder on hover (ms) */
-const AUTO_EXPAND_DELAY = 600;
+import type { DropZone, FlattenedPage, TreeProjection } from "../tree";
+import {
+  AUTO_EXPAND_DELAY_MS,
+  DRAG_INDENT_STEP,
+  getDropZone,
+  getProjection,
+} from "../tree";
 
 interface TreeDndContextValue {
   activeId: UniqueIdentifier | null;
-  overId: UniqueIdentifier | null;
-  offsetX: number;
   projection: TreeProjection | null;
-  /** ID of the item being hovered for nesting (for highlight effect) */
-  nestTargetId: UniqueIdentifier | null;
+  dropZone: DropZone | null;
 }
 
 const TreeDndContext = createContext<TreeDndContextValue | null>(null);
 
 export function useTreeDndContext() {
-  const context = useContext(TreeDndContext);
-  if (!context) {
+  const ctx = useContext(TreeDndContext);
+  if (!ctx) {
     throw new Error("useTreeDndContext must be used within TreeDndProvider");
   }
-  return context;
+  return ctx;
 }
 
 interface TreeDndProviderProps {
@@ -57,19 +57,15 @@ interface TreeDndProviderProps {
   pages: PageListItem[];
   onDragStart?: (event: DragStartEvent) => void;
   onDragEnd: (event: DragEndEvent, projection: TreeProjection | null) => void;
-  /** Check if an item is expanded (for auto-expand logic) */
+  onDragCancel?: () => void;
   isExpanded?: (id: string) => boolean;
-  /** Callback to expand an item during drag hover */
   onAutoExpand?: (id: string) => void;
-  /** Check if an item has children (to know if it can be expanded) */
   hasChildren?: (id: string) => boolean;
+  renderOverlay?: (activeId: UniqueIdentifier) => ReactNode;
 }
 
-// Configure measuring strategy for smooth tree DnD
 const measuringConfig = {
-  droppable: {
-    strategy: MeasuringStrategy.Always,
-  },
+  droppable: { strategy: MeasuringStrategy.Always },
 };
 
 export function TreeDndProvider({
@@ -78,34 +74,32 @@ export function TreeDndProvider({
   pages,
   onDragStart,
   onDragEnd,
+  onDragCancel,
   isExpanded,
   onAutoExpand,
   hasChildren,
+  renderOverlay,
 }: TreeDndProviderProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
-  const [offsetX, setOffsetX] = useState(0);
   const [projection, setProjection] = useState<TreeProjection | null>(null);
-  const [nestTargetId, setNestTargetId] = useState<UniqueIdentifier | null>(
-    null,
-  );
+  const [dropZone, setDropZone] = useState<DropZone | null>(null);
 
-  // Auto-expand timer ref
+  // Pointer tracking: initial position captured on drag start
+  const initialPointerRef = useRef({ x: 0, y: 0 });
+
+  // Auto-expand: expands collapsed folders after hovering inside them
   const expandTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastExpandTargetRef = useRef<string | null>(null);
 
-  // Clear expand timer on unmount
   useEffect(() => {
     return () => {
-      if (expandTimerRef.current) {
-        clearTimeout(expandTimerRef.current);
-      }
+      if (expandTimerRef.current) clearTimeout(expandTimerRef.current);
     };
   }, []);
 
-  // Handle auto-expand logic
-  const handleAutoExpand = (targetId: string | null, isNesting: boolean) => {
-    // Clear existing timer if target changed
+  // ---- Auto-expand logic ----
+
+  function scheduleAutoExpand(targetId: string | null) {
     if (lastExpandTargetRef.current !== targetId) {
       if (expandTimerRef.current) {
         clearTimeout(expandTimerRef.current);
@@ -114,13 +108,8 @@ export function TreeDndProvider({
       lastExpandTargetRef.current = targetId;
     }
 
-    // Update nest target for visual highlight
-    setNestTargetId(isNesting && targetId ? targetId : null);
-
-    // Start new timer if hovering over collapsed folder for nesting
     if (
       targetId &&
-      isNesting &&
       onAutoExpand &&
       hasChildren?.(targetId) &&
       !isExpanded?.(targetId) &&
@@ -129,156 +118,154 @@ export function TreeDndProvider({
       expandTimerRef.current = setTimeout(() => {
         onAutoExpand(targetId);
         expandTimerRef.current = null;
-      }, AUTO_EXPAND_DELAY);
+      }, AUTO_EXPAND_DELAY_MS);
     }
-  };
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // 8px movement required to start drag
-      },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: (event, { currentCoordinates }) => {
-        // Custom keyboard navigation for tree
-        switch (event.code) {
-          case "ArrowLeft":
-            // Move item left (outdent)
-            return {
-              ...currentCoordinates,
-              x: currentCoordinates.x - INDENT_WIDTH,
-            };
-          case "ArrowRight":
-            // Move item right (indent)
-            return {
-              ...currentCoordinates,
-              x: currentCoordinates.x + INDENT_WIDTH,
-            };
-          default:
-            return currentCoordinates;
+        if (event.code === "ArrowLeft") {
+          return {
+            ...currentCoordinates,
+            x: currentCoordinates.x - DRAG_INDENT_STEP,
+          };
         }
+        if (event.code === "ArrowRight") {
+          return {
+            ...currentCoordinates,
+            x: currentCoordinates.x + DRAG_INDENT_STEP,
+          };
+        }
+        return currentCoordinates;
       },
     }),
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
+  // ---- Helpers ----
+
+  function clearDragState() {
+    setActiveId(null);
+    setProjection(null);
+    setDropZone(null);
+    if (expandTimerRef.current) {
+      clearTimeout(expandTimerRef.current);
+      expandTimerRef.current = null;
+    }
+    lastExpandTargetRef.current = null;
+  }
+
+  // ---- Event handlers ----
+
+  function handleDragStart(event: DragStartEvent) {
+    const pe = event.activatorEvent as PointerEvent;
+    initialPointerRef.current = { x: pe.clientX, y: pe.clientY };
     setActiveId(event.active.id);
-    setOffsetX(0);
     onDragStart?.(event);
-  };
+  }
 
-  const handleDragMove = (event: DragMoveEvent) => {
+  function handleDragMove(event: DragMoveEvent) {
     const { active, over, delta } = event;
 
-    // Update offset based on horizontal drag distance
-    setOffsetX(delta.x);
+    if (!over) {
+      setProjection(null);
+      setDropZone(null);
+      scheduleAutoExpand(null);
+      return;
+    }
 
-    if (over && active.id !== over.id) {
-      setOverId(over.id);
+    // --- Self-hover: un-nesting via dragging down/left past the ghost ---
+    if (active.id === over.id) {
+      const pointerY = initialPointerRef.current.y + delta.y;
+      const ghostBottom = over.rect.top + over.rect.height;
+      const distancePastBottom = pointerY - ghostBottom;
 
-      // Calculate projection based on current position
-      const newProjection = getProjection(
+      // Combine horizontal drag + vertical distance below ghost into offset
+      let effectiveOffsetX = delta.x;
+      if (distancePastBottom > 4) {
+        const levels = Math.ceil(distancePastBottom / 24);
+        effectiveOffsetX = Math.min(
+          effectiveOffsetX,
+          -levels * DRAG_INDENT_STEP,
+        );
+      }
+
+      const selfProjection = getProjection(
         items,
         String(active.id),
         String(over.id),
-        delta.x,
+        effectiveOffsetX,
         pages,
+        "after",
       );
-      setProjection(newProjection);
-
-      // Handle auto-expand for collapsed folders
-      const isNesting = newProjection?.position === "child";
-      handleAutoExpand(isNesting ? String(over.id) : null, isNesting);
-    } else {
-      setOverId(null);
-      setProjection(null);
-      handleAutoExpand(null, false);
+      setProjection(selfProjection);
+      setDropZone(selfProjection ? "after" : null);
+      scheduleAutoExpand(null);
+      return;
     }
-  };
 
-  const handleDragOver = (event: DragMoveEvent) => {
-    const { active, over, delta } = event;
+    // --- Normal hover: compute zone and projection ---
+    const pointerY = initialPointerRef.current.y + delta.y;
+    const overId = String(over.id);
 
-    if (over && active.id !== over.id) {
-      setOverId(over.id);
+    const zone = getDropZone(
+      pointerY,
+      over.rect,
+      isExpanded?.(overId) ?? false,
+      hasChildren?.(overId) ?? false,
+    );
 
-      // Calculate projection based on current position
-      const newProjection = getProjection(
-        items,
-        String(active.id),
-        String(over.id),
-        delta.x,
-        pages,
-      );
-      setProjection(newProjection);
+    const newProjection = getProjection(
+      items,
+      String(active.id),
+      overId,
+      delta.x,
+      pages,
+      zone,
+    );
 
-      // Handle auto-expand for collapsed folders
-      const isNesting = newProjection?.position === "child";
-      handleAutoExpand(isNesting ? String(over.id) : null, isNesting);
-    } else {
-      setOverId(null);
-      setProjection(null);
-      handleAutoExpand(null, false);
-    }
-  };
+    setProjection(newProjection);
+    setDropZone(zone);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+    // Auto-expand when hovering "inside" a collapsed item
+    scheduleAutoExpand(zone === "inside" ? overId : null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
     const currentProjection = projection;
-    // Reset all state
-    setActiveId(null);
-    setOverId(null);
-    setOffsetX(0);
-    setProjection(null);
-    setNestTargetId(null);
-    // Clear expand timer
-    if (expandTimerRef.current) {
-      clearTimeout(expandTimerRef.current);
-      expandTimerRef.current = null;
-    }
-    lastExpandTargetRef.current = null;
+    clearDragState();
     onDragEnd(event, currentProjection);
-  };
+  }
 
-  const handleDragCancel = () => {
-    setActiveId(null);
-    setOverId(null);
-    setOffsetX(0);
-    setProjection(null);
-    setNestTargetId(null);
-    // Clear expand timer
-    if (expandTimerRef.current) {
-      clearTimeout(expandTimerRef.current);
-      expandTimerRef.current = null;
-    }
-    lastExpandTargetRef.current = null;
-  };
+  function handleDragCancel() {
+    clearDragState();
+    onDragCancel?.();
+  }
 
-  const contextValue: TreeDndContextValue = {
-    activeId,
-    overId,
-    offsetX,
-    projection,
-    nestTargetId,
-  };
+  // ---- Render ----
 
   const itemIds = items.map((item) => item.id);
 
   return (
-    <TreeDndContext.Provider value={contextValue}>
+    <TreeDndContext.Provider value={{ activeId, projection, dropZone }}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         measuring={measuringConfig}
         onDragStart={handleDragStart}
         onDragMove={handleDragMove}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
           {children}
         </SortableContext>
+        <DragOverlay>
+          {activeId && renderOverlay ? renderOverlay(activeId) : null}
+        </DragOverlay>
       </DndContext>
     </TreeDndContext.Provider>
   );
