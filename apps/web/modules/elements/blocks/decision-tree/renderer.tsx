@@ -3,7 +3,23 @@
 import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   Select,
@@ -15,7 +31,6 @@ import {
 import {
   CheckCircle2,
   ChevronLeft,
-  ChevronRight,
   GitFork,
   MousePointerClick,
   RotateCcw,
@@ -129,33 +144,71 @@ export function DecisionTreeRenderer({
   ) : null;
 
   const breadcrumb = (
-    <div className="flex items-center gap-1 text-sm text-muted-foreground overflow-x-auto min-w-0">
-      <button
-        type="button"
-        className="hover:text-foreground transition-colors shrink-0"
-        onClick={() => navigateToIndex(0)}
-      >
-        Start
-      </button>
-      {path.map((nodeId, index) => (
-        <span key={nodeId} className="contents">
-          <ChevronRight className="size-3 shrink-0 text-muted-foreground/40" />
-          {index === path.length - 1 ? (
-            <span className="font-medium text-foreground truncate">
-              {getNodeName(nodeId)}
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            className="cursor-pointer"
+            onClick={() => navigateToIndex(0)}
+          >
+            Start
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        {path.length >= 3 ? (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" className="size-6">
+                    <BreadcrumbEllipsis className="size-4" />
+                    <span className="sr-only">Show more</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuGroup>
+                    {path.slice(0, -1).map((nodeId, index) => (
+                      <DropdownMenuItem
+                        key={nodeId}
+                        onClick={() => navigateToIndex(index + 1)}
+                      >
+                        {getNodeName(nodeId)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="font-medium">
+                {getNodeName(path.at(-1) ?? "")}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        ) : (
+          path.map((nodeId, index) => (
+            <span key={nodeId} className="contents">
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                {index === path.length - 1 ? (
+                  <BreadcrumbPage className="font-medium">
+                    {getNodeName(nodeId)}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    className="cursor-pointer"
+                    onClick={() => navigateToIndex(index + 1)}
+                  >
+                    {getNodeName(nodeId)}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
             </span>
-          ) : (
-            <button
-              type="button"
-              className="hover:text-foreground transition-colors truncate"
-              onClick={() => navigateToIndex(index + 1)}
-            >
-              {getNodeName(nodeId)}
-            </button>
-          )}
-        </span>
-      ))}
-    </div>
+          ))
+        )}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 
   const navigationBar =

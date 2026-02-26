@@ -12,6 +12,7 @@ import type {
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import {
   Breadcrumb,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
@@ -19,6 +20,13 @@ import {
   BreadcrumbSeparator,
 } from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
@@ -502,27 +510,65 @@ export function DecisionTreeEditor({
               <BreadcrumbPage className="text-xs">Root</BreadcrumbPage>
             )}
           </BreadcrumbItem>
-          {path.map((nodeId, index) => (
-            <span key={nodeId} className="contents">
+          {path.length >= 3 ? (
+            <>
               <BreadcrumbSeparator>
                 <ChevronRight className="size-3" />
               </BreadcrumbSeparator>
               <BreadcrumbItem>
-                {index === path.length - 1 ? (
-                  <BreadcrumbPage className="text-xs truncate max-w-[120px]">
-                    {getNodeName(nodeId)}
-                  </BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink
-                    className="cursor-pointer text-xs truncate max-w-[120px]"
-                    onClick={() => navigateToIndex(index + 1)}
-                  >
-                    {getNodeName(nodeId)}
-                  </BreadcrumbLink>
-                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" className="size-6">
+                      <BreadcrumbEllipsis className="size-4" />
+                      <span className="sr-only">Show more</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuGroup>
+                      {path.slice(0, -1).map((nodeId, index) => (
+                        <DropdownMenuItem
+                          key={nodeId}
+                          onClick={() => navigateToIndex(index + 1)}
+                        >
+                          {getNodeName(nodeId)}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </BreadcrumbItem>
-            </span>
-          ))}
+              <BreadcrumbSeparator>
+                <ChevronRight className="size-3" />
+              </BreadcrumbSeparator>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-xs truncate max-w-[120px]">
+                  {getNodeName(path.at(-1) ?? "")}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          ) : (
+            path.map((nodeId, index) => (
+              <span key={nodeId} className="contents">
+                <BreadcrumbSeparator>
+                  <ChevronRight className="size-3" />
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  {index === path.length - 1 ? (
+                    <BreadcrumbPage className="text-xs truncate max-w-[120px]">
+                      {getNodeName(nodeId)}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink
+                      className="cursor-pointer text-xs truncate max-w-[120px]"
+                      onClick={() => navigateToIndex(index + 1)}
+                    >
+                      {getNodeName(nodeId)}
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </span>
+            ))
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     </div>
