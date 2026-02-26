@@ -833,3 +833,106 @@ export const reindexSubpageSearch = migrations.define({
 export const runReindexSubpageSearch = migrations.runner([
   internal.migrations.reindexSubpageSearch,
 ]);
+
+// Migration 18: Strip HTML entities (&nbsp; etc.) from plain-text block content
+// ContentEditable returns &nbsp; for trailing spaces; the tag-strip regex missed them.
+export const stripHtmlEntities = migrations.define({
+  table: "layouts",
+  batchSize: 50,
+  migrateOne: async (ctx, layout) => {
+    const decode = (s: string) =>
+      s
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">");
+
+    const cleanNodes = (
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      nodes: any[] | undefined,
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    ): { result: any[]; changed: boolean } => {
+      if (!Array.isArray(nodes)) return { result: nodes ?? [], changed: false };
+      let changed = false;
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      const result = nodes.map((node: any) => {
+        const cbs = node.contentBlocks;
+        if (!Array.isArray(cbs)) return node;
+        // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+        const newCbs = cbs.map((cb: any) => {
+          const cc = cb.content;
+          if (
+            cc &&
+            typeof cc.text === "string" &&
+            cc.text !== decode(cc.text)
+          ) {
+            changed = true;
+            return { ...cb, content: { ...cc, text: decode(cc.text) } };
+          }
+          return cb;
+        });
+        if (newCbs !== cbs) return { ...node, contentBlocks: newCbs };
+        return node;
+      });
+      return { result, changed };
+    };
+
+    // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    const cleanSlots = (slots: any[]) => {
+      let dirty = false;
+      // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+      const cleaned = slots.map((slot: any) => {
+        // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+        const blocks = (slot.blocks as any[]).map((block: any) => {
+          const c = block.content;
+          if (!c) return block;
+
+          // Direct text fields (heading, paragraph, callout, etc.)
+          if (typeof c.text === "string" && c.text !== decode(c.text)) {
+            dirty = true;
+            return { ...block, content: { ...c, text: decode(c.text) } };
+          }
+
+          // Decision tree: nodes and trees contain nested contentBlocks
+          if (block.type === "decision-tree") {
+            const newContent = { ...c };
+            const nodesResult = cleanNodes(c.nodes);
+            if (nodesResult.changed) dirty = true;
+            newContent.nodes = nodesResult.result;
+            if (Array.isArray(c.trees)) {
+              // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+              newContent.trees = (c.trees as any[]).map((tree: any) => {
+                const treeResult = cleanNodes(tree.nodes);
+                if (treeResult.changed) dirty = true;
+                return { ...tree, nodes: treeResult.result };
+              });
+            }
+            return { ...block, content: newContent };
+          }
+
+          return block;
+        });
+        return { ...slot, blocks };
+      });
+      return { cleaned, dirty };
+    };
+
+    // biome-ignore lint/suspicious/noExplicitAny: migration raw data
+    const patch: any = {};
+
+    const slotsResult = cleanSlots(layout.slots);
+    if (slotsResult.dirty) patch.slots = slotsResult.cleaned;
+
+    if (layout.publishedSlots) {
+      const pubResult = cleanSlots(layout.publishedSlots);
+      if (pubResult.dirty) patch.publishedSlots = pubResult.cleaned;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(layout._id, patch);
+    }
+  },
+});
+export const runStripHtmlEntities = migrations.runner([
+  internal.migrations.stripHtmlEntities,
+]);

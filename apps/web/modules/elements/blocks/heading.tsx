@@ -28,7 +28,12 @@ function HeadingEditor({
   }, [content.text]);
 
   const handleChange = (e: { target: { value: string } }) => {
-    const plainText = e.target.value.replace(/<[^>]*>/g, "");
+    const plainText = e.target.value
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">");
     setLocalText(plainText);
     contentRef.current = plainText.trim() ? plainText : "";
     onSaveStatusChange?.("pending");
