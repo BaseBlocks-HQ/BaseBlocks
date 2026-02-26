@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check --write .",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit",
+    "copy-pdf-worker": "find ../../node_modules/.bun -path '*/pdfjs-dist*/build/pdf.worker.min.mjs' -not -path '*/legacy/*' | head -1 | xargs -I{} cp {} public/pdf.worker.min.mjs"
   },
   "dependencies": {
     "@baseblocks/backend": "workspace:*",

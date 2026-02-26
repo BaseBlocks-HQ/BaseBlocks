@@ -61,6 +61,8 @@ export default defineSchema({
     code: v.string(),
     expiresAt: v.number(),
     createdAt: v.number(),
+    failedAttempts: v.optional(v.number()),
+    lockedUntil: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
     .index("by_code", ["code"])

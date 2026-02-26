@@ -16,6 +16,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 },
+      );
+    }
+
     const response = await fetch(`${ENTITY_STORAGE_SITE_URL}/fs/commit`, {
       method: "POST",
       headers: {

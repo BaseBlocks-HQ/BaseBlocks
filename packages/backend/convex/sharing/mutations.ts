@@ -91,6 +91,9 @@ export const generateNewAccessCode = mutation({
   },
 });
 
+const MAX_VERIFY_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 // Verify an access code and create a session (public mutation)
 export const verifyAccessCode = mutation({
   args: {
@@ -118,14 +121,30 @@ export const verifyAccessCode = mutation({
       throw new ConvexError("Invalid access code");
     }
 
-    // Check if code matches and is not expired
+    if (accessCode.lockedUntil && accessCode.lockedUntil > now) {
+      const minutesRemaining = Math.ceil(
+        (accessCode.lockedUntil - now) / 60000,
+      );
+      throw new ConvexError(
+        `Too many failed attempts. Try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}.`,
+      );
+    }
+
     if (accessCode.code !== code.toUpperCase()) {
+      const failedAttempts = (accessCode.failedAttempts ?? 0) + 1;
+      await ctx.db.patch(accessCode._id, {
+        failedAttempts,
+        lockedUntil:
+          failedAttempts >= MAX_VERIFY_ATTEMPTS ? now + LOCKOUT_DURATION_MS : 0,
+      });
       throw new ConvexError("Invalid access code");
     }
 
     if (accessCode.expiresAt < now) {
       throw new ConvexError("Access code has expired");
     }
+
+    await ctx.db.patch(accessCode._id, { failedAttempts: 0, lockedUntil: 0 });
 
     // Generate session token
     const sessionToken = generateSessionToken();
