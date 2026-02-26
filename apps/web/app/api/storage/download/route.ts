@@ -18,6 +18,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (
+      path.includes("..") ||
+      path.includes("./") ||
+      path.includes(".\\") ||
+      path.includes("\\") ||
+      path.includes("\0")
+    ) {
+      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+    }
+
     // Forward the request to Entity Storage
     const response = await fetch(
       `${ENTITY_STORAGE_SITE_URL}/fs/download?path=${encodeURIComponent(path)}`,

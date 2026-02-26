@@ -5,10 +5,20 @@ import { getAuthContextOrNull } from "../auth";
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    return await ctx.db
+    const team = await ctx.db
       .query("teams")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first();
+    if (!team) return null;
+    // Project only public fields — exclude organizationId and createdBy
+    return {
+      _id: team._id,
+      _creationTime: team._creationTime,
+      name: team.name,
+      slug: team.slug,
+      logoUrl: team.logoUrl,
+      settings: team.settings,
+    };
   },
 });
 
