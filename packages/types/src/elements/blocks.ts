@@ -143,7 +143,10 @@ export interface DecisionTreeNode {
   parentId: string | null;
   name: string;
   order: number;
-  contentBlocks: DecisionTreeContentBlock[];
+  /** BlockNote document content (new format). */
+  document?: unknown[];
+  /** @deprecated Legacy block-based content. Use `document` instead. */
+  contentBlocks?: DecisionTreeContentBlock[];
 }
 
 export interface DecisionTree {
