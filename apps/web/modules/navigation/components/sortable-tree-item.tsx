@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import type { FlattenedPage } from "../tree";
 import { INDENT_WIDTH, isValidDrop } from "../tree";
 import { useTreeDndContext } from "./tree-dnd-context";
+import { DropHighlight, DropLine } from "./tree-drop-indicator";
 
 interface SortableTreeItemProps {
   item: FlattenedPage;
@@ -38,7 +39,7 @@ export function SortableTreeItem({
   onToggleExpand,
   actionsMenu,
 }: SortableTreeItemProps) {
-  const { activeId, projection, nestTargetId } = useTreeDndContext();
+  const { activeId, projection, dropZone } = useTreeDndContext();
 
   const {
     attributes,
@@ -51,32 +52,28 @@ export function SortableTreeItem({
   } = useSortable({ id: item.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
     transition,
   };
 
   const page = item.page;
   const isDefault = defaultPageId === page._id;
-  const isActive = activeId === item.id;
-
-  // Calculate indentation padding
+  const isGhost = isDragging;
   const indentPadding = (item.depth + 1) * INDENT_WIDTH + 20;
 
-  // Check if this is a valid drop target
-  const isValidDropTarget =
+  const isDropTarget =
     activeId !== null &&
     projection?.overId === item.id &&
-    activeId !== item.id &&
     isValidDrop(allPages, String(activeId), projection);
 
-  // Determine drop indicator type
-  const dropPosition = isValidDropTarget ? projection?.position : null;
-  const isNestTarget = nestTargetId === item.id && dropPosition === "child";
+  const isSelfHover = item.id === String(activeId);
 
-  // Calculate drop indicator position based on projection depth
-  const dropIndicatorLeft = projection
-    ? (projection.depth + 1) * INDENT_WIDTH + 20
-    : indentPadding;
+  const showBeforeLine = isDropTarget && dropZone === "before" && !isSelfHover;
+  const showAfterLine = isDropTarget && dropZone === "after";
+  const showInsideHighlight =
+    isDropTarget && dropZone === "inside" && !isSelfHover;
+
+  const lineDepth = projection?.depth ?? item.depth;
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,42 +84,18 @@ export function SortableTreeItem({
     <SidebarMenuItem
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "group/page relative",
-        isDragging && "opacity-50 z-50",
-        isActive && "z-50",
-      )}
+      className={cn("group/page relative")}
     >
-      {/* Drop indicator: Line for before/after positions */}
-      {(dropPosition === "before" || dropPosition === "after") && (
-        <div
-          className="absolute right-2 h-0.5 bg-primary rounded-full pointer-events-none z-20"
-          style={{
-            left: `${dropIndicatorLeft}px`,
-            top: dropPosition === "before" ? "-1px" : "auto",
-            bottom: dropPosition === "after" ? "-1px" : "auto",
-          }}
-        >
-          {/* Circle indicator at the start of the line */}
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary" />
-        </div>
-      )}
-
-      {/* Drop indicator: Highlight for nesting (child position) */}
-      {isNestTarget && (
-        <div
-          className="absolute inset-y-0 right-1 rounded-md border-2 border-primary/80 bg-primary/5 pointer-events-none z-10 transition-all"
-          style={{ left: `${indentPadding - 8}px` }}
-        />
-      )}
+      {showBeforeLine && <DropLine position="before" depth={lineDepth} />}
+      {showAfterLine && <DropLine position="after" depth={lineDepth} />}
+      {showInsideHighlight && <DropHighlight />}
 
       <SidebarMenuButton
         isActive={selectedPageId === page._id}
         onClick={() => onSelect(page._id)}
-        className={cn("w-full pr-8", isActive && "ring-2 ring-primary")}
+        className={cn("w-full pr-8", isGhost && "opacity-30")}
         style={{ paddingLeft: `${indentPadding}px` }}
       >
-        {/* Drag handle - only show for users with edit permissions */}
         {canEdit && (
           <div
             ref={setActivatorNodeRef}
@@ -135,7 +108,6 @@ export function SortableTreeItem({
           </div>
         )}
 
-        {/* Expand/collapse toggle for pages with children */}
         {hasChildren ? (
           <span
             onClick={handleToggleExpand}
@@ -170,7 +142,7 @@ export function SortableTreeItem({
         )}
       </SidebarMenuButton>
 
-      {actionsMenu}
+      {!isGhost && actionsMenu}
     </SidebarMenuItem>
   );
 }
