@@ -73,7 +73,6 @@ export async function getActionAuthContext(
   return auth;
 }
 
-// Query to get the current user's auth context (for client-side use)
 export const getFullAuthContext = query({
   args: {},
   handler: async (ctx) => {
@@ -105,8 +104,6 @@ export const getFullAuthContext = query({
     };
   },
 });
-
-// Role-based authorization helpers
 
 type MemberInfo = {
   _id: Id<"members">;
@@ -193,8 +190,6 @@ export async function checkIsMember(
   const member = await getMemberByUserId(ctx, teamId, auth.userId);
   return !!member;
 }
-
-// Internal queries for use in actions (which cannot access ctx.db directly)
 
 /**
  * Check if a user is a member of the team that owns a site.

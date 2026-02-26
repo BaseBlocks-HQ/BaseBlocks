@@ -10,10 +10,8 @@ import { ImageEditor } from "./editor";
 import { ImagePreview } from "./preview";
 import { ImageRenderer } from "./renderer";
 
-// Re-export components
 export { ImageEditor, ImageRenderer, ImagePreview };
 
-// Register the element
 registerElement({
   type: "image",
   category: "media",

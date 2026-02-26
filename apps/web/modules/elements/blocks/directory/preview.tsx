@@ -9,13 +9,11 @@ export function DirectoryPreview({ className }: ElementPreviewProps) {
         className,
       )}
     >
-      {/* Header row */}
       <div className="flex gap-1">
         <div className="h-2 flex-1 bg-muted-foreground/30 rounded-sm" />
         <div className="h-2 flex-1 bg-muted-foreground/30 rounded-sm" />
         <div className="h-2 flex-1 bg-muted-foreground/30 rounded-sm" />
       </div>
-      {/* Data rows */}
       <div className="flex gap-1">
         <div className="h-2 flex-1 bg-muted-foreground/15 rounded-sm" />
         <div className="h-2 flex-1 bg-muted-foreground/15 rounded-sm" />

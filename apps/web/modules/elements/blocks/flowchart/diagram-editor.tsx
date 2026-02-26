@@ -421,5 +421,4 @@ export function DiagramEditor({
   );
 }
 
-// Re-export helper
 export { generateId as generateDiagramId };

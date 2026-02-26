@@ -5,10 +5,6 @@ import { query } from "../_generated/server";
 import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
 /**
  * Extract a text snippet around the first occurrence of a search term
  * Returns the snippet with the match position for highlighting
@@ -141,11 +137,6 @@ async function performSearch(
   return combined.slice(0, limit);
 }
 
-// ============================================================================
-// Queries
-// ============================================================================
-
-// List documents for a site (authenticated)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
@@ -161,7 +152,6 @@ export const list = query({
   },
 });
 
-// Get single document (authenticated)
 export const get = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {
@@ -176,7 +166,6 @@ export const get = query({
   },
 });
 
-// Search documents by extracted text and filename (authenticated)
 export const search = query({
   args: {
     siteId: v.id("sites"),
@@ -196,8 +185,6 @@ export const search = query({
   },
 });
 
-// Search documents for public site viewing
-// Only returns documents from libraries that are actively used in blocks
 export const searchPublic = query({
   args: {
     siteId: v.id("sites"),
@@ -225,8 +212,6 @@ export const searchPublic = query({
   },
 });
 
-// List documents for public site viewing
-// Only returns documents from libraries actively used in published blocks
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
@@ -248,7 +233,6 @@ export const listPublic = query({
   },
 });
 
-// List documents in a library (authenticated)
 export const listByLibrary = query({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
@@ -267,7 +251,6 @@ export const listByLibrary = query({
   },
 });
 
-// List documents in a specific folder (authenticated)
 export const listByFolder = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -291,7 +274,6 @@ export const listByFolder = query({
   },
 });
 
-// List documents in a library for public viewing
 export const listByLibraryPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -310,7 +292,6 @@ export const listByLibraryPublic = query({
   },
 });
 
-// List documents in a folder for public viewing
 export const listByFolderPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -332,7 +313,6 @@ export const listByFolderPublic = query({
   },
 });
 
-// Get extraction statistics for a site (authenticated)
 export const getExtractionStats = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
@@ -368,7 +348,6 @@ export const getExtractionStats = query({
   },
 });
 
-// List documents with failed extraction (authenticated)
 export const listFailedExtraction = query({
   args: {
     siteId: v.id("sites"),
@@ -389,7 +368,6 @@ export const listFailedExtraction = query({
   },
 });
 
-// Search documents within a specific library (authenticated)
 export const searchByLibrary = query({
   args: {
     libraryId: v.id("documentLibraries"),

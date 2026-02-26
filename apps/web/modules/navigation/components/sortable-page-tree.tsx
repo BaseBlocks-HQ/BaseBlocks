@@ -197,7 +197,6 @@ export function SortablePageTree({
   );
 }
 
-// PageActionsMenu component (extracted for better organization)
 function PageActionsMenu({
   page,
   siteId,

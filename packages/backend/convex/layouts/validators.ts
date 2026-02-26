@@ -1,9 +1,5 @@
 import { v } from "convex/values";
 
-// ---------------------------------------------------------------------------
-// Layout validators — block types, slots, and layout configuration
-// ---------------------------------------------------------------------------
-
 /** All block types supported in layout slots */
 export const blockType = v.union(
   v.literal("heading"),

@@ -10,7 +10,6 @@ import { Trash2, X } from "lucide-react";
 import { getFieldEntry, getFieldSettings } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
-// Import fields to register them
 import "../fields";
 
 export function FieldSettingsPanel() {

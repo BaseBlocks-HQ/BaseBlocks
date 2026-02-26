@@ -1,12 +1,3 @@
-/**
- * Form Builder Types
- * Schema-driven form builder with field registry pattern
- */
-
-// =============================================================================
-// FIELD TYPES
-// =============================================================================
-
 export type FormFieldType =
   | "short-text"
   | "long-text"
@@ -17,19 +8,11 @@ export type FormFieldType =
   | "radio"
   | "date";
 
-// =============================================================================
-// FIELD OPTION (for select, radio, checkbox-group)
-// =============================================================================
-
 export interface FieldOption {
   id: string;
   value: string;
   label: string;
 }
-
-// =============================================================================
-// VALIDATION
-// =============================================================================
 
 export interface FieldValidation {
   required?: boolean;
@@ -39,10 +22,6 @@ export interface FieldValidation {
   max?: number;
   pattern?: string;
 }
-
-// =============================================================================
-// FIELD DEFINITIONS
-// =============================================================================
 
 export interface BaseField {
   id: string;
@@ -103,35 +82,19 @@ export type FormField =
   | RadioField
   | DateField;
 
-// =============================================================================
-// FORM CONTENT (stored in element registry)
-// =============================================================================
-
 export interface FormContent {
   fields: FormField[];
   submitLabel: string;
   successMessage: string;
 }
 
-// =============================================================================
-// FORM TYPE (for element registry)
-// =============================================================================
-
 export type FormType = "form";
-
-// =============================================================================
-// DEFAULTS
-// =============================================================================
 
 export const DEFAULT_FORM_CONTENT: FormContent = {
   fields: [],
   submitLabel: "Submit",
   successMessage: "Thank you for your submission!",
 };
-
-// =============================================================================
-// HELPERS
-// =============================================================================
 
 export function generateFieldId(): string {
   return `field_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;

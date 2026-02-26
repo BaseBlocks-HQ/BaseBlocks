@@ -19,7 +19,6 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import type { ViewerProps } from "../types";
 
-// Configure PDF.js worker using CDN
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export function PdfViewer({ file, renderControls }: ViewerProps) {
@@ -259,7 +258,6 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
     handleZoomIn,
   ]);
 
-  // Generate page numbers array
   const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
 
   if (error) {

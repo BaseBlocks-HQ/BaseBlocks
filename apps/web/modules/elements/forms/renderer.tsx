@@ -12,7 +12,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { getFieldRenderer } from "./builder/field-registry";
 
-// Import fields to register them
 import "./fields";
 
 type FormValues = Record<string, unknown>;

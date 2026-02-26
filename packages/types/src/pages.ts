@@ -1,8 +1,3 @@
-/**
- * Page type definitions
- */
-
-// Page list item (for sidebar display)
 export interface PageListItem {
   _id: string;
   title: string;
@@ -14,7 +9,6 @@ export interface PageListItem {
   isSubpageContent?: boolean;
 }
 
-// Page with children (for tree navigation)
 export interface PageWithChildren extends PageListItem {
   children: PageWithChildren[];
 }

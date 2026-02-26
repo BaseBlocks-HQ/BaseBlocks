@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
 
-// Create a new Library
 export const create = mutation({
   args: {
     siteId: v.id("sites"),
@@ -40,7 +39,6 @@ export const create = mutation({
   },
 });
 
-// Update Library
 export const update = mutation({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -78,7 +76,6 @@ export const update = mutation({
   },
 });
 
-// Delete Libraryry and all its contents
 export const remove = mutation({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {

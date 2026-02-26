@@ -62,7 +62,6 @@ function useElementsLoader() {
   return loaded;
 }
 
-// Inner component that has access to EditorContext
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [, setSelectedSlotId] = useState<string | null>(null);
@@ -303,7 +302,6 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 }
 
-// Wrapper that provides EditorContext, mutations, and PublicSubpageProvider
 export function SiteEditor({ siteId }: SiteEditorProps) {
   const elementsLoaded = useElementsLoader();
 

@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 
-// Create a new team (during onboarding)
 export const create = mutation({
   args: {
     name: v.string(),
@@ -51,7 +50,6 @@ export const create = mutation({
   },
 });
 
-// Update team settings
 export const updateSettings = mutation({
   args: {
     teamId: v.id("teams"),
@@ -76,7 +74,6 @@ export const updateSettings = mutation({
   },
 });
 
-// Update team profile
 export const updateProfile = mutation({
   args: {
     teamId: v.id("teams"),

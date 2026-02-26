@@ -122,8 +122,6 @@ export function DecisionTreeEditor({
     updateTrees(updatedTrees);
   };
 
-  // --- Tree tab operations ---
-
   const addTree = () => {
     const newTree: DecisionTree = {
       id: generateTreeId(),
@@ -175,8 +173,6 @@ export function DecisionTreeEditor({
     saveContent(trees);
   };
 
-  // --- Node operations (operate on active tree's nodes) ---
-
   const handleAddNode = (parentId: string | null, name: string) => {
     const nodes = activeTree.nodes;
     const siblings = nodes.filter((n) => n.parentId === parentId);
@@ -221,8 +217,6 @@ export function DecisionTreeEditor({
       }),
     );
   };
-
-  // --- Content block operations ---
 
   const handleAddContentBlock = (
     nodeId: string,
@@ -306,8 +300,6 @@ export function DecisionTreeEditor({
   const currentNode = currentParentId
     ? (activeTree.nodes.find((n) => n.id === currentParentId) ?? null)
     : null;
-
-  // --- Shared UI pieces ---
 
   const treeTabs = (
     <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30">
@@ -573,7 +565,6 @@ export function DecisionTreeEditor({
     </div>
   );
 
-  // === MOBILE LAYOUT ===
   if (isMobile) {
     return (
       <div className="flex flex-col border rounded-lg overflow-hidden">
@@ -591,7 +582,6 @@ export function DecisionTreeEditor({
     );
   }
 
-  // === DESKTOP LAYOUT ===
   return (
     <div
       className="flex flex-col border rounded-lg overflow-hidden"

@@ -10,7 +10,6 @@ import { Button } from "@baseblocks/ui/button";
 import { getAllFields } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
-// Import fields to register them
 import "../fields";
 
 export function FieldPicker() {

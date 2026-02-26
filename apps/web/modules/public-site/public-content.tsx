@@ -2,7 +2,6 @@
 
 import { LayoutContextProvider } from "@/modules/elements/framework/layout-context";
 import { ElementRendererWrapper } from "@/modules/elements/framework/renderer-wrapper";
-// Register all element renderers for public display
 import "@/modules/elements/layouts";
 import "@/modules/elements/blocks";
 import "@/modules/elements/sections";

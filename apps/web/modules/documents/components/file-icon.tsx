@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 
 const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
-  // Documents
   "application/pdf": FileText,
   "application/msword": FileText,
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
@@ -23,37 +22,31 @@ const FILE_TYPE_ICONS: Record<string, LucideIcon> = {
   "text/markdown": FileText,
   "text/rtf": FileText,
 
-  // Spreadsheets
   "application/vnd.ms-excel": FileSpreadsheet,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
     FileSpreadsheet,
   "text/csv": FileSpreadsheet,
 
-  // Images
   "image/jpeg": Image,
   "image/png": Image,
   "image/gif": Image,
   "image/webp": Image,
   "image/svg+xml": Image,
 
-  // Video
   "video/mp4": FileVideo,
   "video/webm": FileVideo,
   "video/quicktime": FileVideo,
 
-  // Audio
   "audio/mpeg": FileAudio,
   "audio/wav": FileAudio,
   "audio/ogg": FileAudio,
 
-  // Code
   "application/json": FileCode,
   "application/javascript": FileCode,
   "text/html": FileCode,
   "text/css": FileCode,
   "application/xml": FileCode,
 
-  // Archives
   "application/zip": FileArchive,
   "application/x-rar-compressed": FileArchive,
   "application/x-7z-compressed": FileArchive,
@@ -66,10 +59,8 @@ interface FileIconProps {
 }
 
 export function FileIcon({ contentType, className }: FileIconProps) {
-  // Check for exact match first
   let IconComponent = FILE_TYPE_ICONS[contentType];
 
-  // If no exact match, check by type category
   if (!IconComponent) {
     if (contentType.startsWith("image/")) {
       IconComponent = Image;
@@ -87,7 +78,6 @@ export function FileIcon({ contentType, className }: FileIconProps) {
   return <IconComponent className={cn("h-4 w-4", className)} />;
 }
 
-// Helper to get a color class based on file type
 export function getFileTypeColor(contentType: string): string {
   if (contentType.includes("pdf")) return "text-red-500";
   if (contentType.includes("word") || contentType.includes("document"))

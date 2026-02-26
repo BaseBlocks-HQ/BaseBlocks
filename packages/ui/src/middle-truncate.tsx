@@ -30,11 +30,9 @@ export function MiddleTruncate({
     if (!container || !textEl) return;
 
     const checkTruncation = () => {
-      // Reset to full text to measure
       setTruncatedText(text);
       setNeedsTruncation(false);
 
-      // Use requestAnimationFrame to ensure DOM has updated
       requestAnimationFrame(() => {
         if (!container || !textEl) return;
 
@@ -43,7 +41,6 @@ export function MiddleTruncate({
 
         if (textWidth > containerWidth) {
           setNeedsTruncation(true);
-          // Calculate how much text we can fit
           const avgCharWidth = textWidth / text.length;
           const availableChars = Math.floor(containerWidth / avgCharWidth) - 3; // -3 for ellipsis
 
@@ -53,7 +50,6 @@ export function MiddleTruncate({
             const end = text.slice(-endChars);
             setTruncatedText(`${start}...${end}`);
           } else {
-            // Not enough room, just show ellipsis and end
             setTruncatedText(`...${text.slice(-endChars)}`);
           }
         }
@@ -62,7 +58,6 @@ export function MiddleTruncate({
 
     checkTruncation();
 
-    // Recheck on resize
     const resizeObserver = new ResizeObserver(checkTruncation);
     resizeObserver.observe(container);
 

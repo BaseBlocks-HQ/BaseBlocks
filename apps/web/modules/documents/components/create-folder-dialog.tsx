@@ -111,7 +111,6 @@ export function CreateFolderDialog({
   );
 }
 
-// Convenience trigger button
 export function CreateFolderButton({
   onSubmit,
   disabled,

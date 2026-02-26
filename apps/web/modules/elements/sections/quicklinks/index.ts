@@ -10,10 +10,8 @@ import { QuicklinksEditor } from "./editor";
 import { QuicklinksPreview } from "./preview";
 import { QuicklinksRenderer } from "./renderer";
 
-// Re-export components
 export { QuicklinksEditor, QuicklinksRenderer, QuicklinksPreview };
 
-// Register the element
 registerElement({
   type: "quicklinks",
   category: "sections",

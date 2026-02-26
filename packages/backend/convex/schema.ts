@@ -3,12 +3,7 @@ import { v } from "convex/values";
 import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
 import { siteSettings } from "./sites/validators";
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
-
 export default defineSchema({
-  // Teams
   teams: defineTable({
     organizationId: v.optional(v.string()), // Better Auth organization ID
     name: v.string(),
@@ -24,7 +19,6 @@ export default defineSchema({
     .index("by_slug", ["slug"])
     .index("by_organizationId", ["organizationId"]),
 
-  // Sites (a team can have multiple sites)
   sites: defineTable({
     teamId: v.id("teams"),
     name: v.string(),
@@ -62,7 +56,6 @@ export default defineSchema({
     .index("by_team", ["teamId"])
     .index("by_slug", ["teamId", "slug"]),
 
-  // Access codes for password-protected sites
   siteAccessCodes: defineTable({
     siteId: v.id("sites"),
     code: v.string(),
@@ -73,7 +66,6 @@ export default defineSchema({
     .index("by_code", ["code"])
     .index("by_expiresAt", ["expiresAt"]),
 
-  // Sessions for visitors who have verified access codes
   siteAccessSessions: defineTable({
     siteId: v.id("sites"),
     sessionToken: v.string(),
@@ -83,7 +75,6 @@ export default defineSchema({
     .index("by_site_token", ["siteId", "sessionToken"])
     .index("by_expiresAt", ["expiresAt"]),
 
-  // Pages within a site
   pages: defineTable({
     siteId: v.id("sites"),
     parentId: v.optional(v.id("pages")),
@@ -124,7 +115,6 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
-  // Layouts — content containers for blocks
   layouts: defineTable({
     siteId: v.optional(v.id("sites")), // Denormalized for efficient site-wide queries
     pageId: v.id("pages"),
@@ -150,7 +140,6 @@ export default defineSchema({
     .index("by_page", ["pageId"])
     .index("by_page_tab", ["pageId", "tabId"]),
 
-  // Document libraries
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
@@ -159,7 +148,6 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_site", ["siteId"]),
 
-  // Folder hierarchy within libraries
   documentFolders: defineTable({
     libraryId: v.id("documentLibraries"),
     parentId: v.optional(v.id("documentFolders")),
@@ -172,7 +160,6 @@ export default defineSchema({
     .index("by_library", ["libraryId"])
     .index("by_parent", ["libraryId", "parentId"]),
 
-  // Documents/files
   documents: defineTable({
     siteId: v.id("sites"),
     libraryId: v.optional(v.id("documentLibraries")),
@@ -211,7 +198,6 @@ export default defineSchema({
       filterFields: ["siteId"],
     }),
 
-  // Unified searchable content index
   searchableContent: defineTable({
     siteId: v.id("sites"),
     contentType: v.union(v.literal("document"), v.literal("subpage")),
@@ -243,7 +229,6 @@ export default defineSchema({
       filterFields: ["siteId", "contentType"],
     }),
 
-  // Deployment history
   deployments: defineTable({
     siteId: v.id("sites"),
     version: v.number(),
@@ -283,7 +268,6 @@ export default defineSchema({
     .index("by_deployment", ["deploymentId"])
     .index("by_deployment_type", ["deploymentId", "chunkType"]),
 
-  // Team members
   members: defineTable({
     teamId: v.id("teams"),
     userId: v.string(),

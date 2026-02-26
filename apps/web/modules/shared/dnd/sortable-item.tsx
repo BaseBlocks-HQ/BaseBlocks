@@ -45,5 +45,4 @@ export function SortableItem({
   );
 }
 
-// Export hook for more custom implementations
 export { useSortable };

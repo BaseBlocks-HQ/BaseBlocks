@@ -15,7 +15,6 @@ import { useMutation } from "convex/react";
 export function ConvexEditorMutationsProvider({
   children,
 }: { children: React.ReactNode }) {
-  // Layout mutations
   const createLayoutMut = useMutation(api.layouts.mutations.create);
   const removeLayoutMut = useMutation(api.layouts.mutations.remove);
   const reorderLayoutsMut = useMutation(api.layouts.mutations.reorder);
@@ -25,7 +24,6 @@ export function ConvexEditorMutationsProvider({
   const moveBlockMut = useMutation(api.layouts.mutations.moveBlock);
   const updateSettingsMut = useMutation(api.layouts.mutations.updateSettings);
 
-  // Page mutations
   const updatePageTabsMut = useMutation(api.pages.mutations.updatePageTabs);
   const disablePageTabsMut = useMutation(api.pages.mutations.disablePageTabs);
   const enablePageTabsMut = useMutation(api.pages.mutations.enablePageTabs);

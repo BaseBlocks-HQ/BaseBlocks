@@ -14,7 +14,6 @@ import type {
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
-// Element editor props interface
 export interface ElementEditorProps<T extends ElementType = ElementType> {
   id: string;
   type: T;
@@ -25,25 +24,21 @@ export interface ElementEditorProps<T extends ElementType = ElementType> {
   onSaveStatusChange?: (status: SaveStatus) => void;
 }
 
-// Element renderer props interface
 export interface ElementRendererProps<T extends ElementType = ElementType> {
   id: string;
   type: T;
   content: ContentFor<T>;
 }
 
-// Element preview props interface (for UI picker)
 export interface ElementPreviewProps {
   className?: string;
 }
 
-// Config panel props interface
 export interface ElementConfigPanelProps<T extends ElementType = ElementType> {
   content: ContentFor<T>;
   onUpdate: (content: ContentFor<T>) => void;
 }
 
-// Registry entry for an element
 export interface ElementRegistryEntry<T extends ElementType = ElementType> {
   type: T;
   category: ElementCategory;
@@ -58,7 +53,6 @@ export interface ElementRegistryEntry<T extends ElementType = ElementType> {
   defaultContent: AnyContent; // Using AnyContent for flexibility in registration
 }
 
-// Layout registry entry (separate because layouts have different structure)
 export interface LayoutRegistryEntry {
   type: LayoutType;
   category: "layouts";
@@ -69,17 +63,14 @@ export interface LayoutRegistryEntry {
   preview?: ComponentType<ElementPreviewProps>;
 }
 
-// Type for any registry entry
 export type AnyRegistryEntry =
   | ElementRegistryEntry<ElementType>
   | LayoutRegistryEntry;
 
-// The registry class
 class ElementRegistry {
   private elements = new Map<ElementType, ElementRegistryEntry<ElementType>>();
   private layouts = new Map<LayoutType, LayoutRegistryEntry>();
 
-  // Register an element
   register<T extends ElementType>(entry: ElementRegistryEntry<T>): void {
     this.elements.set(
       entry.type,
@@ -87,32 +78,26 @@ class ElementRegistry {
     );
   }
 
-  // Register a layout
   registerLayout(entry: LayoutRegistryEntry): void {
     this.layouts.set(entry.type, entry);
   }
 
-  // Get an element by type
   get<T extends ElementType>(type: T): ElementRegistryEntry<T> | undefined {
     return this.elements.get(type) as ElementRegistryEntry<T> | undefined;
   }
 
-  // Get a layout by type
   getLayout(type: LayoutType): LayoutRegistryEntry | undefined {
     return this.layouts.get(type);
   }
 
-  // Get all elements
   getAll(): ElementRegistryEntry<ElementType>[] {
     return Array.from(this.elements.values());
   }
 
-  // Get all layouts
   getAllLayouts(): LayoutRegistryEntry[] {
     return Array.from(this.layouts.values());
   }
 
-  // Get elements by category
   getByCategory(category: ElementCategory): AnyRegistryEntry[] {
     if (category === "layouts") {
       return Array.from(this.layouts.values());
@@ -122,7 +107,6 @@ class ElementRegistry {
     );
   }
 
-  // Get editor component for an element type
   getEditor<T extends ElementType>(
     type: T,
   ): ComponentType<ElementEditorProps<T>> | undefined {
@@ -130,7 +114,6 @@ class ElementRegistry {
     return entry?.editor as ComponentType<ElementEditorProps<T>> | undefined;
   }
 
-  // Get renderer component for an element type
   getRenderer<T extends ElementType>(
     type: T,
   ): ComponentType<ElementRendererProps<T>> | undefined {
@@ -140,7 +123,6 @@ class ElementRegistry {
       | undefined;
   }
 
-  // Get preview component
   getPreview(
     type: ElementType | LayoutType,
   ): ComponentType<ElementPreviewProps> | undefined {
@@ -151,7 +133,6 @@ class ElementRegistry {
     return layoutEntry?.preview;
   }
 
-  // Get config panel component for an element type
   getConfigPanel<T extends ElementType>(
     type: T,
   ): ComponentType<ElementConfigPanelProps<T>> | undefined {
@@ -161,13 +142,11 @@ class ElementRegistry {
       | undefined;
   }
 
-  // Check if an element has a config panel
   hasConfigPanel(type: ElementType): boolean {
     const entry = this.elements.get(type);
     return !!entry?.configPanel;
   }
 
-  // Get label for any type
   getLabel(type: ElementType | LayoutType): string {
     const elementEntry = this.elements.get(type as ElementType);
     if (elementEntry) return elementEntry.label;
@@ -178,7 +157,6 @@ class ElementRegistry {
     return type;
   }
 
-  // Get icon for any type
   getIcon(type: ElementType | LayoutType): LucideIcon | undefined {
     const elementEntry = this.elements.get(type as ElementType);
     if (elementEntry) return elementEntry.icon;
@@ -187,13 +165,11 @@ class ElementRegistry {
     return layoutEntry?.icon;
   }
 
-  // Get default content for an element type
   getDefaultContent<T extends ElementType>(type: T): ContentFor<T> | undefined {
     const entry = this.elements.get(type);
     return entry?.defaultContent as ContentFor<T> | undefined;
   }
 
-  // Check if an element is registered
   isRegistered(type: ElementType | LayoutType): boolean {
     return (
       this.elements.has(type as ElementType) ||
@@ -201,22 +177,18 @@ class ElementRegistry {
     );
   }
 
-  // Get all registered element types
   getRegisteredTypes(): ElementType[] {
     return Array.from(this.elements.keys());
   }
 
-  // Get all registered layout types
   getRegisteredLayoutTypes(): LayoutType[] {
     return Array.from(this.layouts.keys());
   }
 
-  // Search elements by query (searches label, description, keywords)
   search(query: string): AnyRegistryEntry[] {
     const lowerQuery = query.toLowerCase();
     const results: AnyRegistryEntry[] = [];
 
-    // Search elements
     for (const entry of this.elements.values()) {
       if (
         entry.label.toLowerCase().includes(lowerQuery) ||
@@ -227,7 +199,6 @@ class ElementRegistry {
       }
     }
 
-    // Search layouts
     for (const entry of this.layouts.values()) {
       if (
         entry.label.toLowerCase().includes(lowerQuery) ||
@@ -242,10 +213,8 @@ class ElementRegistry {
   }
 }
 
-// Singleton instance
 const registry = new ElementRegistry();
 
-// Export singleton methods for convenience
 export const registerElement = <T extends ElementType>(
   entry: ElementRegistryEntry<T>,
 ) => registry.register(entry);
@@ -299,8 +268,6 @@ export const getRegisteredLayoutTypes = () =>
 
 export const searchElements = (query: string) => registry.search(query);
 
-// Export the registry class for advanced usage
 export { ElementRegistry };
 
-// Export the singleton for direct access if needed
 export default registry;

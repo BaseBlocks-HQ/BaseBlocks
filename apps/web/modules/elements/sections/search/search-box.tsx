@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// File type icon mapping for documents
 function getFileIcon(contentType: string | undefined) {
   if (!contentType) return <File className="h-4 w-4 text-gray-500" />;
   if (contentType.includes("pdf")) {
@@ -49,14 +48,12 @@ function getFileIcon(contentType: string | undefined) {
   return <File className="h-4 w-4 text-gray-500" />;
 }
 
-// Format file size
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// Highlight text snippet with match
 function HighlightedSnippet({
   snippet,
   matchStart,
@@ -85,7 +82,6 @@ function HighlightedSnippet({
   );
 }
 
-// Search result type from unified search
 interface SearchResultItem {
   _id: string;
   contentType: "document" | "subpage";

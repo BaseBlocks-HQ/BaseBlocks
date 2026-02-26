@@ -86,8 +86,6 @@ export function DecisionTreeRenderer({
   const showMobileDetail =
     isMobile && selectedNodeId && detailNode && hasDetailContent;
 
-  // --- Shared sub-components ---
-
   const treeSelector = showTabs ? (
     <div
       className={cn(
@@ -198,7 +196,6 @@ export function DecisionTreeRenderer({
     </div>
   );
 
-  // === MOBILE LAYOUT ===
   if (isMobile) {
     // Mobile: detail view (leaf selected with content)
     if (showMobileDetail) {
@@ -245,8 +242,6 @@ export function DecisionTreeRenderer({
       </div>
     );
   }
-
-  // === DESKTOP LAYOUT ===
 
   // Desktop: initial state — centered option list
   if (isInitialState) {

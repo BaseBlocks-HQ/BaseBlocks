@@ -19,14 +19,12 @@ interface NavigationConfigPanelProps {
   siteId: Id<"sites">;
 }
 
-// Icon mapping for navigation styles
 const NAV_STYLE_ICONS: Record<NavigationStyle, LucideIcon> = {
   sidebar: PanelLeft,
   topnav: Menu,
   subnav: LayoutList,
 };
 
-// Visual preview components for each navigation style
 function SidebarPreview() {
   return (
     <div className="w-full h-full flex rounded overflow-hidden border border-border/50">

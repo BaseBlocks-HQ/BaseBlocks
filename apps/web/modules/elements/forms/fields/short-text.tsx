@@ -12,10 +12,6 @@ import type {
 } from "../builder/field-registry";
 import { registerField } from "../builder/field-registry";
 
-// =============================================================================
-// EDITOR (Builder Canvas Preview)
-// =============================================================================
-
 function ShortTextEditor({ field }: FieldEditorProps) {
   const f = field as ShortTextField;
   return (
@@ -37,10 +33,6 @@ function ShortTextEditor({ field }: FieldEditorProps) {
     </div>
   );
 }
-
-// =============================================================================
-// RENDERER (Published Form)
-// =============================================================================
 
 function ShortTextRenderer({
   field,
@@ -75,10 +67,6 @@ function ShortTextRenderer({
     </div>
   );
 }
-
-// =============================================================================
-// SETTINGS (Configuration Panel)
-// =============================================================================
 
 function ShortTextSettings({ field, onChange }: FieldSettingsProps) {
   const f = field as ShortTextField;
@@ -137,10 +125,6 @@ function ShortTextSettings({ field, onChange }: FieldSettingsProps) {
     </div>
   );
 }
-
-// =============================================================================
-// REGISTER
-// =============================================================================
 
 registerField({
   type: "short-text",

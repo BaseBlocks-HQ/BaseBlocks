@@ -36,7 +36,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-// Block types allowed inside decision tree nodes
 const ALLOWED_BLOCK_TYPES: DecisionTreeBlockType[] = [
   "heading",
   "paragraph",
@@ -158,7 +157,6 @@ export function NodeDetail({
   );
 }
 
-// Reuses the same SortableBlock pattern from layout-slot.tsx
 function SortableBlock({
   id,
   block,

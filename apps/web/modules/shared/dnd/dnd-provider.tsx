@@ -99,6 +99,5 @@ export function DndProvider({
   );
 }
 
-// Re-export commonly used items
 export { arrayMove } from "@dnd-kit/sortable";
 export type { DragEndEvent, DragStartEvent, UniqueIdentifier };

@@ -1,15 +1,7 @@
-/**
- * Section element types and content definitions
- * Sections are complex pre-built page sections (search, library, etc.)
- */
-
-// Section element types
 export type SectionType =
   | "search" // Search functionality
   | "library" // Document library
   | "quicklinks"; // Quick links grid
-
-// Section content interfaces
 
 export interface SearchContent {
   placeholder?: string;
@@ -37,13 +29,11 @@ export interface QuicklinksContent {
   links: QuicklinkItem[];
 }
 
-// Union of all section content types
 export type SectionContentUnion =
   | SearchContent
   | LibraryContent
   | QuicklinksContent;
 
-// Default content for new sections
 export const DEFAULT_SECTION_CONTENT: Record<SectionType, SectionContentUnion> =
   {
     search: {

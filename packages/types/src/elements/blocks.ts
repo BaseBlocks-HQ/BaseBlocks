@@ -1,9 +1,3 @@
-/**
- * Block element types and content definitions
- * Blocks are basic content primitives (text, code, dividers, etc.)
- */
-
-// Block element types (content primitives only)
 export type BlockType =
   | "heading"
   | "paragraph"
@@ -18,7 +12,6 @@ export type BlockType =
   | "flowchart"
   | "decision-tree";
 
-// Block content interfaces
 export interface HeadingContent {
   text: string;
   level?: 1 | 2 | 3 | 4 | 5;
@@ -44,7 +37,6 @@ export interface BlockSpacerContent {
   height: "small" | "medium" | "large" | "xlarge";
 }
 
-// BlockNote block type - using unknown[] since BlockNote manages its own schema
 export type BlockNoteDocument = unknown[];
 
 export interface RichTextContent {
@@ -89,7 +81,6 @@ export const DEFAULT_IMPORTANCE_PRESETS: BannerImportancePreset[] = [
   { id: "info", name: "Info", color: "#2563EB", foreground: "#FFFFFF" },
 ];
 
-// Directory block types
 export type DirectoryColumnType = "text" | "email" | "phone" | "url";
 
 export interface DirectoryColumn {
@@ -132,8 +123,6 @@ export interface FlowchartContent {
   tabsMode?: TabsDisplayMode;
 }
 
-// Decision tree block types
-// Allowed block types inside decision tree nodes (subset of BaseBlocks block types)
 export type DecisionTreeBlockType =
   | "heading"
   | "paragraph"
@@ -144,7 +133,6 @@ export type DecisionTreeBlockType =
 export interface DecisionTreeContentBlock {
   id: string;
   type: DecisionTreeBlockType;
-  // Uses the same content shapes as BaseBlocks blocks (HeadingContent, ParagraphContent, etc.)
   // biome-ignore lint/suspicious/noExplicitAny: Content varies by block type, matching BaseBlocks layout pattern
   content: any;
   order: number;
@@ -171,7 +159,6 @@ export interface DecisionTreeContent {
   tabsMode?: TabsDisplayMode;
 }
 
-// Union of all block content types
 export type BlockContentUnion =
   | HeadingContent
   | ParagraphContent
@@ -186,7 +173,6 @@ export type BlockContentUnion =
   | FlowchartContent
   | DecisionTreeContent;
 
-// Default content for new blocks
 export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   heading: { text: "", level: 2 },
   paragraph: { text: "" },
