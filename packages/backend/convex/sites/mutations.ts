@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
@@ -13,14 +14,12 @@ export const create = mutation({
   handler: async (ctx, { name, slug, teamId: explicitTeamId }) => {
     const auth = await getAuthContext(ctx);
 
-    let resolvedTeamId: typeof explicitTeamId;
+    let resolvedTeamId: Id<"teams">;
 
     if (explicitTeamId) {
-      // If teamId is explicitly provided, verify admin access on that team
       await requireAdmin(ctx, explicitTeamId);
       resolvedTeamId = explicitTeamId;
     } else {
-      // Fall back to first membership (backward compatible)
       const membership = await ctx.db
         .query("members")
         .withIndex("by_user", (q) => q.eq("userId", auth.userId))
@@ -30,15 +29,11 @@ export const create = mutation({
         throw new Error("Team not found. Please complete onboarding first.");
       }
 
-      // Require admin role to create sites
-      if (membership.role !== "admin") {
-        throw new Error("Admin access required to create sites");
-      }
-
+      await requireAdmin(ctx, membership.teamId);
       resolvedTeamId = membership.teamId;
     }
 
-    const team = await ctx.db.get(resolvedTeamId!);
+    const team = await ctx.db.get(resolvedTeamId);
     if (!team) {
       throw new Error("Team not found. Please complete onboarding first.");
     }

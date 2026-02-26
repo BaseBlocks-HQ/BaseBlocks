@@ -96,6 +96,10 @@ export function InvitationInbox({
         invitationId: invitation.id,
       });
 
+      // Remove from UI immediately — the invitation is consumed in BA and
+      // cannot be re-accepted, so keeping it visible would be misleading
+      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
+
       // Set the accepted organization as active in the BA session so
       // subsequent API calls (e.g. inviteMember) target the correct org
       await authClient.organization.setActive({
@@ -108,8 +112,6 @@ export function InvitationInbox({
         organizationId: invitation.organizationId,
         role: invitation.role,
       });
-
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to accept invitation",
@@ -164,9 +166,7 @@ export function InvitationInbox({
       {!isLoading && invitations.length === 0 && (
         <div className="text-center py-6">
           <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-sm text-muted-foreground">
-            {t("noInvitations")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("noInvitations")}</p>
         </div>
       )}
 
@@ -194,9 +194,7 @@ export function InvitationInbox({
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="secondary" className="text-xs">
-                  {invitation.role === "member"
-                    ? "viewer"
-                    : invitation.role}
+                  {invitation.role === "member" ? "viewer" : invitation.role}
                 </Badge>
                 <span>·</span>
                 <span>
@@ -254,9 +252,7 @@ export function InvitationInbox({
             </Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground mb-3">
-          {t("description")}
-        </p>
+        <p className="text-sm text-muted-foreground mb-3">{t("description")}</p>
         {invitationContent}
       </div>
     );
