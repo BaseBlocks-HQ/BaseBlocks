@@ -4,7 +4,6 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useTeam } from "@/lib/data";
-import { isVercelAppDomain } from "@/lib/url";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
 import { api } from "@baseblocks/backend";
@@ -130,9 +129,7 @@ export default function OnboardingPage() {
                   pattern={SLUG_PATTERN}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {isVercelAppDomain()
-                    ? `/s/${slug || "acme"}`
-                    : `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev"}`}
+                  .{process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev"}
                 </span>
               </div>
             </div>
