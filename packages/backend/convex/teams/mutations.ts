@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
+import { rateLimiter } from "../rateLimits";
 
 export const create = mutation({
   args: {
@@ -10,6 +11,11 @@ export const create = mutation({
   },
   handler: async (ctx, { name, slug, organizationId }) => {
     const auth = await getAuthContext(ctx);
+
+    await rateLimiter.limit(ctx, "createTeam", {
+      key: auth.userId,
+      throws: true,
+    });
 
     // Check slug availability
     const existing = await ctx.db

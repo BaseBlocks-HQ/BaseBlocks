@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import { rateLimiter } from "../rateLimits";
 
 // Visibility types
 const visibilityValidator = v.union(
@@ -101,6 +102,13 @@ export const verifyAccessCode = mutation({
     code: v.string(),
   },
   handler: async (ctx, { siteId, code }) => {
+    // Network-level rate limit: 10 attempts/minute per site, regardless of
+    // which access code is tried. Complements the per-code lockout below.
+    await rateLimiter.limit(ctx, "verifyAccessCode", {
+      key: siteId,
+      throws: true,
+    });
+
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 

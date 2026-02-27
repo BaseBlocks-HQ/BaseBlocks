@@ -79,6 +79,92 @@ function removeLocalePrefix(pathname: string): string {
   return pathname.replace(localePattern, "") || "/";
 }
 
+/**
+ * Build a strict per-request Content-Security-Policy header value.
+ *
+ * Production uses nonce + strict-dynamic (no unsafe-inline, no unsafe-eval).
+ * Development adds unsafe-eval because React uses eval() for error overlays.
+ *
+ * Why nonce-based instead of static:
+ *   A static CSP with 'unsafe-inline' offers no real XSS protection — any
+ *   injected script runs unchecked. A per-request cryptographic nonce means
+ *   only script/style elements we stamp get executed; injected markup is
+ *   blocked even if the attacker knows the policy.
+ *
+ * Why strict-dynamic:
+ *   Next.js loads page chunks dynamically via document.createElement('script').
+ *   strict-dynamic propagates trust from our nonce'd entry bundle to every
+ *   chunk it creates, without us maintaining an URL allowlist.
+ *
+ * style-src-elem vs style-src-attr:
+ *   We use style-src-attr 'unsafe-inline' (attribute-level inline styles only)
+ *   because the public-site customisation system applies dynamic CSS variables
+ *   via React's style={{}} prop — those become style="" attributes at render
+ *   time and cannot carry a nonce. style-src-elem remains strict (nonce only),
+ *   which is the more dangerous surface (injected <style> blocks).
+ */
+function buildCSP(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
+
+  const scriptSrc = [
+    "'self'",
+    `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    // PDF.js uses WebAssembly; wasm-unsafe-eval is narrower than unsafe-eval
+    // (allows Wasm compilation only, not arbitrary JS eval)
+    "'wasm-unsafe-eval'",
+    // React error overlay uses eval() in development only
+    ...(isDev ? ["'unsafe-eval'"] : []),
+  ].join(" ");
+
+  // Dev: add ws://localhost:* for Turbopack HMR websocket
+  const connectSrc = [
+    "'self'",
+    "https://*.convex.cloud",
+    "wss://*.convex.cloud",
+    "https://*.convex.site",
+    ...(isDev ? ["ws://localhost:*", "http://localhost:*"] : []),
+  ].join(" ");
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    // <style> blocks require nonce; style="" attributes allowed for dynamic colours
+    `style-src-elem 'self' 'nonce-${nonce}'`,
+    "style-src-attr 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connectSrc}`,
+    "frame-src https://view.officeapps.live.com https://docs.google.com",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    // Only upgrade insecure requests in production; localhost is HTTP by design
+    ...(isDev ? [] : ["upgrade-insecure-requests"]),
+  ].join("; ");
+}
+
+/**
+ * Attach CSP header and forward the nonce to server components.
+ *
+ * Next.js reads x-middleware-request-{name} response headers and injects them
+ * as {name} request headers on the page — this is how NextResponse.next(
+ * { request: { headers } }) works internally, and what makes headers() in
+ * Server Components see the values set here.
+ */
+function withCSP(
+  response: NextResponse,
+  nonce: string,
+  csp: string,
+): NextResponse {
+  response.headers.set("Content-Security-Policy", csp);
+  // Forwarded to server components as the x-nonce request header
+  response.headers.set("x-middleware-request-x-nonce", nonce);
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
@@ -89,6 +175,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Per-request nonce — cryptographically random, base64-encoded UUID
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = buildCSP(nonce);
+
   // Handle path-based routing for vercel.app domains (/s/[subdomain]/...)
   // This is a fallback since wildcard subdomains don't work on vercel.app
   if (isVercelAppDomain(hostname)) {
@@ -98,10 +188,10 @@ export async function proxy(request: NextRequest) {
       const pathSuffix =
         pathBased.remainingPath === "/" ? "" : pathBased.remainingPath;
       url.pathname = `/${routing.defaultLocale}/site/${pathBased.subdomain}${pathSuffix}`;
-      return NextResponse.rewrite(url);
+      return withCSP(NextResponse.rewrite(url), nonce, csp);
     }
     // No path-based subdomain, continue to intl middleware
-    return intlMiddleware(request);
+    return withCSP(intlMiddleware(request), nonce, csp);
   }
 
   const subdomain = extractSubdomain(request);
@@ -109,7 +199,7 @@ export async function proxy(request: NextRequest) {
   // No subdomain = main app (landing, dashboard, auth)
   // Run the intl middleware for locale detection/routing
   if (!subdomain) {
-    return intlMiddleware(request);
+    return withCSP(intlMiddleware(request), nonce, csp);
   }
 
   // Check if it's a custom domain
@@ -119,7 +209,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     const pathnameWithoutLocale = removeLocalePrefix(pathname);
     url.pathname = `/${routing.defaultLocale}/site/_custom/${encodeURIComponent(customDomain)}${pathnameWithoutLocale}`;
-    return NextResponse.rewrite(url);
+    return withCSP(NextResponse.rewrite(url), nonce, csp);
   }
 
   // Subdomain = published site
@@ -129,7 +219,11 @@ export async function proxy(request: NextRequest) {
     pathnameWithoutLocale.startsWith("/dashboard") ||
     pathnameWithoutLocale.startsWith("/onboarding")
   ) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return withCSP(
+      NextResponse.redirect(new URL("/", request.url)),
+      nonce,
+      csp,
+    );
   }
 
   // Rewrite subdomain root to dynamic route /[locale]/site/[subdomain]/[...path]
@@ -137,7 +231,7 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const pathSuffix = pathnameWithoutLocale === "/" ? "" : pathnameWithoutLocale;
   url.pathname = `/${routing.defaultLocale}/site/${subdomain}${pathSuffix}`;
-  return NextResponse.rewrite(url);
+  return withCSP(NextResponse.rewrite(url), nonce, csp);
 }
 
 export const config = {
