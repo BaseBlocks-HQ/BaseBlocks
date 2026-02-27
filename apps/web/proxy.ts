@@ -12,6 +12,18 @@ function removeLocalePrefix(pathname: string): string {
   return pathname.replace(localePattern, "") || "/";
 }
 
+// App routes that should never be rewritten to site routes
+function isAppRoute(path: string): boolean {
+  return (
+    path === "/" ||
+    path.startsWith("/dashboard") ||
+    path.startsWith("/onboarding") ||
+    path.startsWith("/login") ||
+    path.startsWith("/sites") ||
+    path.startsWith("/s/")
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
@@ -21,17 +33,36 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Vercel preview domains don't support subdomains — use path-based routing (/s/team/...)
+  // Vercel preview domains don't support subdomains.
+  // Use path-based routing: /s/team/site/page sets a cookie, then subsequent
+  // navigation (/{siteSlug}/{pageSlug}) is rewritten using that cookie.
   const hostname = host.split(":")[0] || "";
   if (hostname.endsWith(".vercel.app")) {
+    // Explicit path-based entry: /s/team/...
     const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
     if (match?.[1]) {
       const url = request.nextUrl.clone();
       const remaining = match[2] || "/";
       const pathSuffix = remaining === "/" ? "" : remaining;
       url.pathname = `/${routing.defaultLocale}/site/${match[1]}${pathSuffix}`;
+      const response = NextResponse.rewrite(url);
+      response.cookies.set("__preview_team", match[1], {
+        path: "/",
+        sameSite: "lax",
+      });
+      return response;
+    }
+
+    // Implicit site navigation: cookie from a previous /s/team visit
+    const previewTeam = request.cookies.get("__preview_team")?.value;
+    const pathWithoutLocale = removeLocalePrefix(pathname);
+
+    if (previewTeam && !isAppRoute(pathWithoutLocale)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${routing.defaultLocale}/site/${previewTeam}${pathWithoutLocale}`;
       return NextResponse.rewrite(url);
     }
+
     return intlMiddleware(request);
   }
 

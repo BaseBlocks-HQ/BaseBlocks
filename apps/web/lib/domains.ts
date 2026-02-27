@@ -1,15 +1,6 @@
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 
 /**
- * True when running on a Vercel preview deployment.
- * Preview URLs don't support subdomains, so path-based routing is used instead.
- */
-export function isPreviewDomain(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.location.hostname.endsWith(".vercel.app");
-}
-
-/**
  * Extract team slug from a request host header.
  *
  * Returns:
