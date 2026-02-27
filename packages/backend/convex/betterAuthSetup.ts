@@ -27,12 +27,7 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: siteUrl,
-    trustedOrigins: (request?: Request) => {
-      const origin = request?.headers.get("origin") || "";
-      // Trust Vercel preview deployments for testing
-      if (origin.endsWith(".vercel.app")) return [...appUrls, origin];
-      return appUrls;
-    },
+    trustedOrigins: [...appUrls, "https://*.vercel.app"],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
