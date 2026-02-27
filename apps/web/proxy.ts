@@ -21,6 +21,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Vercel preview domains don't support subdomains — use path-based routing (/s/team/...)
+  const hostname = host.split(":")[0] || "";
+  if (hostname.endsWith(".vercel.app")) {
+    const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
+    if (match?.[1]) {
+      const url = request.nextUrl.clone();
+      const remaining = match[2] || "/";
+      const pathSuffix = remaining === "/" ? "" : remaining;
+      url.pathname = `/${routing.defaultLocale}/site/${match[1]}${pathSuffix}`;
+      return NextResponse.rewrite(url);
+    }
+    return intlMiddleware(request);
+  }
+
   const teamSlug = extractTeamSlug(host);
 
   // No subdomain = main app (landing, dashboard, auth)
