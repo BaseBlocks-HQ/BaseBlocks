@@ -2,7 +2,7 @@
 
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
-import { getSiteUrl } from "@/lib/url";
+import { getPreviewSiteUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -54,25 +54,9 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
   // Use team slug from site object if available, fallback to prop
   const effectiveTeamSlug = site.team?.slug ?? teamSlug ?? "";
 
-  // Link to the site root - the root page will redirect to the default page
-  const siteUrl = getSiteUrl(effectiveTeamSlug, site.slug);
-
-  // Preview handler that works on localhost (subdomain) and production
+  // Preview handler that works on localhost, Vercel preview, and production
   const handlePreview = () => {
-    const isLocalhost =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.endsWith(".localhost");
-
-    if (isLocalhost) {
-      const port = window.location.port || "3000";
-      window.open(
-        `http://${effectiveTeamSlug}.localhost:${port}/${site.slug}`,
-        "_blank",
-      );
-    } else {
-      window.open(getSiteUrl(effectiveTeamSlug, site.slug), "_blank");
-    }
+    window.open(getPreviewSiteUrl(effectiveTeamSlug, site.slug), "_blank");
   };
 
   const handleDelete = async () => {
@@ -172,17 +156,15 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            {/* Published link - only when published, uses proper domain */}
+            {/* Published link - only when published */}
             {site.isPublished && (
               <Button
                 variant="ghost"
                 size="icon"
-                asChild
                 title={t("sites.viewLive")}
+                onClick={handlePreview}
               >
-                <a href={siteUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                <ExternalLink className="h-4 w-4" />
               </Button>
             )}
           </div>
