@@ -18,11 +18,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Intentionally unauthenticated: public-site visitors need media without a
-    // user session. Path obscurity (tenant + siteId + userId + timestamp)
-    // isolates tenants; this regex prevents path traversal and SSRF.
-    const VALID_PATH_RE = /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_.%-]+)+$/;
-    if (!VALID_PATH_RE.test(path)) {
+    if (
+      path.includes("..") ||
+      path.includes("./") ||
+      path.includes(".\\") ||
+      path.includes("\\") ||
+      path.includes("\0")
+    ) {
       return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
 

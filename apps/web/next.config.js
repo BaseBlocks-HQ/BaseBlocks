@@ -2,9 +2,6 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-// CSP is generated per-request in proxy.ts with a cryptographic nonce.
-// Only non-CSP headers live here — these apply to ALL responses including
-// static files (_next/static) which the proxy matcher excludes.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -16,6 +13,22 @@ const securityHeaders = [
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site",
+      "frame-src https://view.officeapps.live.com https://docs.google.com",
+      "worker-src 'self' blob:",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
   },
 ];
 
