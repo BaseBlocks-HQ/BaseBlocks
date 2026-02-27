@@ -1,6 +1,6 @@
 "use client";
 
-import { getSiteUrl } from "@/lib/url";
+import { getPreviewSiteUrl, getSiteUrl } from "@/lib/url";
 import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import type {
   AccessCodeData,
@@ -77,14 +77,8 @@ interface EditorHeaderProps {
   };
 }
 
-function getPreviewUrl(teamSlug: string, siteSlug: string) {
-  const isLocalhost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname.endsWith(".localhost");
-  return isLocalhost
-    ? `http://${teamSlug}.localhost:${window.location.port || "3000"}/${siteSlug}`
-    : getSiteUrl(teamSlug, siteSlug);
+function openSitePreview(teamSlug: string, siteSlug: string) {
+  window.open(getPreviewSiteUrl(teamSlug, siteSlug), "_blank");
 }
 
 export function EditorHeader({
@@ -176,7 +170,6 @@ export function EditorHeader({
   );
 
   const showHeader = site.settings.showHeader !== false;
-  const liveUrl = getSiteUrl(teamSlug, siteSlug);
 
   // Preview mode: show the site header as users will see it
   if (isHeaderPreview && showHeader) {
@@ -256,19 +249,17 @@ export function EditorHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onClick={() =>
-                    window.open(getPreviewUrl(teamSlug, siteSlug), "_blank")
-                  }
+                  onClick={() => openSitePreview(teamSlug, siteSlug)}
                 >
                   <Eye />
                   Preview
                 </DropdownMenuItem>
                 {sitePublished && (
-                  <DropdownMenuItem asChild>
-                    <a href={liveUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink />
-                      {t("editor.viewLive")}
-                    </a>
+                  <DropdownMenuItem
+                    onClick={() => openSitePreview(teamSlug, siteSlug)}
+                  >
+                    <ExternalLink />
+                    {t("editor.viewLive")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -295,9 +286,7 @@ export function EditorHeader({
                     variant="ghost"
                     size="sm"
                     className="gap-1.5"
-                    onClick={() =>
-                      window.open(getPreviewUrl(teamSlug, siteSlug), "_blank")
-                    }
+                    onClick={() => openSitePreview(teamSlug, siteSlug)}
                   >
                     <Eye className="h-4 w-4" />
                     Preview
@@ -312,16 +301,10 @@ export function EditorHeader({
                       variant="ghost"
                       size="sm"
                       className="gap-1.5"
-                      asChild
+                      onClick={() => openSitePreview(teamSlug, siteSlug)}
                     >
-                      <a
-                        href={liveUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        {t("editor.viewLive")}
-                      </a>
+                      <ExternalLink className="h-4 w-4" />
+                      {t("editor.viewLive")}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>View published site</TooltipContent>
@@ -378,11 +361,13 @@ export function EditorHeader({
           {!canEdit && sitePublished && (
             <>
               <Separator orientation="vertical" className="mx-1.5 h-5" />
-              <Button variant="outline" size="sm" asChild>
-                <a href={liveUrl} target="_blank" rel="noopener noreferrer">
-                  <Globe className="h-4 w-4" />
-                  {t("editor.viewLive")}
-                </a>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openSitePreview(teamSlug, siteSlug)}
+              >
+                <Globe className="h-4 w-4" />
+                {t("editor.viewLive")}
               </Button>
             </>
           )}
@@ -395,7 +380,7 @@ export function EditorHeader({
         siteId={siteId}
         teamSlug={teamSlug}
         siteSlug={siteSlug}
-        siteUrl={liveUrl}
+        siteUrl={getSiteUrl(teamSlug, siteSlug)}
         settings={settings}
         accessCode={accessCode}
       />
