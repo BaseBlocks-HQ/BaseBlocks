@@ -17,7 +17,7 @@ import {
   Music,
   X,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
 import { openInNewTab } from "./utils";
@@ -143,10 +143,12 @@ export function MediaViewerModal() {
     }
   };
 
-  // Callback for viewers to register their controls
-  const handleRenderControls = (controls: ReactNode) => {
+  // Stable callback for viewers to register their controls.
+  // useCallback prevents a new reference on every render, which would cause
+  // pdf-viewer and office-viewer useEffects to re-fire → infinite setState loop.
+  const handleRenderControls = useCallback((controls: ReactNode) => {
     setViewerControls(controls);
-  };
+  }, []);
 
   if (!isOpen || !currentFile) {
     return null;

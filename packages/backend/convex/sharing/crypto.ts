@@ -7,11 +7,20 @@ const TOKEN_CHARS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 function secureRandomChars(chars: string, length: number): string {
-  const array = new Uint32Array(length);
-  crypto.getRandomValues(array);
+  // Rejection sampling eliminates modulo bias.
+  // Values >= threshold are discarded and re-drawn so every char index is
+  // equally probable. Expected extra draws < 0.001% for our alphabet sizes.
+  const threshold = 0x100000000 - (0x100000000 % chars.length);
   let result = "";
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(array[i]! % chars.length);
+  while (result.length < length) {
+    const batch = new Uint32Array(length - result.length);
+    crypto.getRandomValues(batch);
+    for (const value of batch) {
+      if (value < threshold) {
+        result += chars.charAt(value % chars.length);
+        if (result.length === length) break;
+      }
+    }
   }
   return result;
 }

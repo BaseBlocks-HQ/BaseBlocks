@@ -3,6 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
+import { rateLimiter } from "../rateLimits";
 
 // Create a new site
 export const create = mutation({
@@ -13,6 +14,11 @@ export const create = mutation({
   },
   handler: async (ctx, { name, slug, teamId: explicitTeamId }) => {
     const auth = await getAuthContext(ctx);
+
+    await rateLimiter.limit(ctx, "createSite", {
+      key: auth.userId,
+      throws: true,
+    });
 
     let resolvedTeamId: Id<"teams">;
 
