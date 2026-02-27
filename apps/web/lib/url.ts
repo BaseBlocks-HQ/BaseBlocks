@@ -21,10 +21,7 @@ export function getSiteUrl(
  * - Vercel preview: /s/team/site (path-based, handled by proxy)
  * - Production: https://team.baseblocks.dev/site
  */
-export function getPreviewSiteUrl(
-  teamSlug: string,
-  siteSlug: string,
-): string {
+export function getPreviewSiteUrl(teamSlug: string, siteSlug: string): string {
   if (typeof window !== "undefined") {
     const { hostname, port } = window.location;
     if (
