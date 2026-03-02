@@ -281,6 +281,7 @@ export function PageEditor({
       onClick={handleEditorClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
+          if (e.target !== e.currentTarget) return;
           e.preventDefault();
           handleEditorClick();
         }

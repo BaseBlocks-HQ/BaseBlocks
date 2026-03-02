@@ -87,6 +87,7 @@ export function LayoutSlot({
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
+          if (e.target !== e.currentTarget) return;
           e.preventDefault();
           e.stopPropagation();
           onSelect();
@@ -215,6 +216,7 @@ function SortableBlock({
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
+          if (e.target !== e.currentTarget) return;
           e.preventDefault();
           e.stopPropagation();
           onSelect();
