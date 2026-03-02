@@ -80,6 +80,7 @@ export function LayoutRenderer({
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
+          if (e.target !== e.currentTarget) return;
           e.preventDefault();
           e.stopPropagation();
           onSelectLayout();
