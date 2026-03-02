@@ -24,6 +24,8 @@ function isAppRoute(path: string): boolean {
   );
 }
 
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
@@ -33,10 +35,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Canonical domain: redirect www → non-www to keep a single origin for auth
+  const hostname = host.split(":")[0] || "";
+  if (hostname === `www.${ROOT_DOMAIN}`) {
+    const url = request.nextUrl.clone();
+    url.host = ROOT_DOMAIN;
+    url.port = "";
+    return NextResponse.redirect(url, 308);
+  }
+
   // Vercel preview domains don't support subdomains.
   // Use path-based routing: /s/team/site/page sets a cookie, then subsequent
   // navigation (/{siteSlug}/{pageSlug}) is rewritten using that cookie.
-  const hostname = host.split(":")[0] || "";
   if (hostname.endsWith(".vercel.app")) {
     // Explicit path-based entry: /s/team/...
     const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
