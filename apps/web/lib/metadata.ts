@@ -22,10 +22,13 @@ interface PublicSiteSettings {
   siteKeywords?: string;
 }
 
+type SiteVisibility = "private" | "public" | "link-only" | "password";
+
 interface PublicSiteDoc {
   _id: Id<"sites">;
   name: string;
   slug: string;
+  visibility?: SiteVisibility;
   updatedAt?: number;
   settings?: PublicSiteSettings;
 }
@@ -169,22 +172,28 @@ export async function buildPublicSiteMetadata({
   const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
   const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
   const canonicalUrl = buildCanonicalUrl(teamSlug, siteSlug, pagePath);
+  const isPublicVisibility = !site.visibility || site.visibility === "public";
 
   const metadata: Metadata = {
     metadataBase: await resolveMetadataBase(teamSlug),
     title,
     description,
     keywords: keywords.length > 0 ? keywords : undefined,
-    alternates: {
-      canonical: canonicalUrl,
-      languages: {
-        en: canonicalUrl,
-        fr: canonicalUrl.replace(
-          `://${teamSlug}.${ROOT_DOMAIN}`,
-          `://${teamSlug}.${ROOT_DOMAIN}/fr`,
-        ),
-      },
-    },
+    // Non-public sites: tell search engines not to index or follow links
+    robots: isPublicVisibility ? undefined : { index: false, follow: false },
+    // Only set canonical/alternates for publicly visible sites
+    alternates: isPublicVisibility
+      ? {
+          canonical: canonicalUrl,
+          languages: {
+            en: canonicalUrl,
+            fr: canonicalUrl.replace(
+              `://${teamSlug}.${ROOT_DOMAIN}`,
+              `://${teamSlug}.${ROOT_DOMAIN}/fr`,
+            ),
+          },
+        }
+      : undefined,
     openGraph: {
       type: "website",
       title,
