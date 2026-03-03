@@ -12,7 +12,31 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(`https://${ROOT_DOMAIN}`),
+  title: {
+    default: "BaseBlocks - Idea to site in minutes",
+    template: "%s | BaseBlocks",
+  },
+  description:
+    "Build, publish, and share internal sites in minutes. BaseBlocks is a collaborative site builder for teams.",
+  keywords: [
+    "site builder",
+    "internal sites",
+    "team collaboration",
+    "documentation",
+    "knowledge base",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "BaseBlocks",
+  },
+  twitter: {
+    card: "summary",
+  },
   icons: {
     icon: [{ url: "/favicon.ico" }],
     shortcut: [{ url: "/favicon.ico" }],

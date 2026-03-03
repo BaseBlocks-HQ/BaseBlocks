@@ -231,3 +231,38 @@ export const getWithDefaultPage = query({
     };
   },
 });
+
+// List all published, public-visibility sites with team slugs (for sitemap generation)
+// No auth required — only exposes public-safe data
+export const listPublishedSlugs = query({
+  args: {},
+  handler: async (ctx) => {
+    const teams = await ctx.db.query("teams").collect();
+
+    const results: Array<{
+      teamSlug: string;
+      siteSlug: string;
+      updatedAt: number;
+    }> = [];
+
+    for (const team of teams) {
+      const sites = await ctx.db
+        .query("sites")
+        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .collect();
+
+      for (const site of sites) {
+        if (!site.isPublished) continue;
+        if (site.visibility && site.visibility !== "public") continue;
+
+        results.push({
+          teamSlug: team.slug,
+          siteSlug: site.slug,
+          updatedAt: site.updatedAt,
+        });
+      }
+    }
+
+    return results;
+  },
+});

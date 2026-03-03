@@ -6,6 +6,8 @@ import { ConvexHttpClient } from "convex/browser";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+
 interface PublicSiteMetadataParams {
   teamSlug: string;
   siteSlug?: string;
@@ -23,6 +25,7 @@ interface PublicSiteSettings {
 interface PublicSiteDoc {
   _id: Id<"sites">;
   name: string;
+  slug: string;
   updatedAt?: number;
   settings?: PublicSiteSettings;
 }
@@ -33,6 +36,7 @@ interface PublicPageDoc {
 
 interface PublicSiteWithDefaultPageDoc {
   site: PublicSiteDoc;
+  team?: { slug: string };
   defaultPage?: PublicPageDoc | null;
 }
 
@@ -88,14 +92,28 @@ async function resolveMetadataBase(teamSlug: string): Promise<URL> {
     return new URL(`${protocol}://${host}`);
   }
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-  return new URL(`https://${teamSlug}.${rootDomain}`);
+  return new URL(`https://${teamSlug}.${ROOT_DOMAIN}`);
 }
 
 function getConvexClient(): ConvexHttpClient | null {
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   if (!convexUrl) return null;
   return new ConvexHttpClient(convexUrl);
+}
+
+/**
+ * Build the canonical URL for a public site page.
+ */
+function buildCanonicalUrl(
+  teamSlug: string,
+  siteSlug?: string,
+  pagePath: string[] = [],
+): string {
+  const base = `https://${teamSlug}.${ROOT_DOMAIN}`;
+  if (!siteSlug) return base;
+  const pathSuffix =
+    pagePath.length > 0 ? `/${siteSlug}/${pagePath.join("/")}` : `/${siteSlug}`;
+  return `${base}${pathSuffix}`;
 }
 
 export async function buildPublicSiteMetadata({
@@ -150,17 +168,31 @@ export async function buildPublicSiteMetadata({
   const version = site.updatedAt;
   const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
   const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
+  const canonicalUrl = buildCanonicalUrl(teamSlug, siteSlug, pagePath);
 
   const metadata: Metadata = {
     metadataBase: await resolveMetadataBase(teamSlug),
     title,
     description,
     keywords: keywords.length > 0 ? keywords : undefined,
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        en: canonicalUrl,
+        fr: canonicalUrl.replace(
+          `://${teamSlug}.${ROOT_DOMAIN}`,
+          `://${teamSlug}.${ROOT_DOMAIN}/fr`,
+        ),
+      },
+    },
     openGraph: {
       type: "website",
       title,
       description,
       siteName: siteTitle,
+      url: canonicalUrl,
+      locale: "en_US",
+      alternateLocale: "fr_FR",
       images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {

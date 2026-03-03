@@ -1,4 +1,5 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { PublicSiteJsonLd } from "@/modules/public-site/json-ld";
 import { PublicSitePageClient } from "@/modules/public-site/public-site-page-client";
 import type { Metadata } from "next";
 
@@ -18,6 +19,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default function PublicSitePage({ params }: Props) {
-  return <PublicSitePageClient params={params} />;
+export default async function PublicSitePage({ params }: Props) {
+  const { subdomain, path } = await params;
+  const siteSlug = path[0];
+  const pagePath = path.length > 1 ? path.slice(1) : [];
+
+  return (
+    <>
+      <PublicSiteJsonLd
+        teamSlug={subdomain}
+        siteSlug={siteSlug}
+        pagePath={pagePath}
+      />
+      <PublicSitePageClient params={params} />
+    </>
+  );
 }

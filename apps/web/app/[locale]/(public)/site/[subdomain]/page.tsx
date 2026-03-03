@@ -1,4 +1,5 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { PublicSiteJsonLd } from "@/modules/public-site/json-ld";
 import { SubdomainRootPageClient } from "@/modules/public-site/subdomain-root-page-client";
 import type { Metadata } from "next";
 
@@ -11,6 +12,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return buildPublicSiteMetadata({ teamSlug: subdomain });
 }
 
-export default function SubdomainRootPage({ params }: Props) {
-  return <SubdomainRootPageClient params={params} />;
+export default async function SubdomainRootPage({ params }: Props) {
+  const { subdomain } = await params;
+  return (
+    <>
+      <PublicSiteJsonLd teamSlug={subdomain} />
+      <SubdomainRootPageClient params={params} />
+    </>
+  );
 }

@@ -422,6 +422,51 @@ export const getFullPath = query({
   },
 });
 
+// List deployed page paths for a published site (for sitemap generation)
+// No auth required — only returns public-safe data for published sites
+export const listDeployedPaths = query({
+  args: { siteId: v.id("sites") },
+  handler: async (ctx, { siteId }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site || !site.isPublished) return [];
+
+    const allPages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    const deployedPages = allPages.filter(
+      (p) => p.isDeployed && !p.isSubpageContent,
+    );
+
+    // Build a map of page ID → published slug for path resolution
+    const slugMap = new Map(
+      deployedPages.map((p) => [p._id, p.publishedSlug ?? p.slug]),
+    );
+    const parentMap = new Map(
+      deployedPages.map((p) => [p._id, p.publishedParentId ?? p.parentId]),
+    );
+
+    // Resolve full path for each page
+    function getFullPath(pageId: Id<"pages">): string {
+      const slugs: string[] = [];
+      let currentId: Id<"pages"> | undefined = pageId;
+      while (currentId) {
+        const slug = slugMap.get(currentId);
+        if (!slug) break;
+        slugs.unshift(slug);
+        currentId = parentMap.get(currentId) as Id<"pages"> | undefined;
+      }
+      return slugs.join("/");
+    }
+
+    return deployedPages.map((page) => ({
+      path: getFullPath(page._id),
+      updatedAt: page.updatedAt,
+    }));
+  },
+});
+
 // Helper: project a page document to use published fields as primary
 function projectPublishedPage(page: {
   _id: string;
