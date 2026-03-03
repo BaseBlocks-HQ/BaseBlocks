@@ -11,6 +11,7 @@ interface SiteDoc {
   _id: Id<"sites">;
   name: string;
   slug: string;
+  visibility?: string;
   settings?: {
     siteTitle?: string;
     siteDescription?: string;
@@ -62,6 +63,9 @@ export async function PublicSiteJsonLd({
   }
 
   if (!site) return null;
+
+  // No structured data for non-public sites — don't help search engines index unlisted content
+  if (site.visibility && site.visibility !== "public") return null;
 
   const siteTitle = site.settings?.siteTitle?.trim() || site.name;
   const siteDescription = site.settings?.siteDescription?.trim() || undefined;
