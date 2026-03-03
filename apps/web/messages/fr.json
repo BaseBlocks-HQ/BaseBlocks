@@ -25,7 +25,8 @@
     "redirecting": "Redirection..."
   },
   "metadata": {
-    "title": "BaseBlocks - De l'idée au site en minutes"
+    "title": "BaseBlocks - De l'idée au site en minutes",
+    "description": "Créez, publiez et partagez des sites internes en quelques minutes. BaseBlocks est un constructeur de sites collaboratif pour les équipes."
   },
   "landing": {
     "heroTitle": "De l'idée au site en minutes.",

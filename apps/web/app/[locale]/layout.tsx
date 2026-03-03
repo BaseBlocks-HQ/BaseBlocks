@@ -21,12 +21,21 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+const OG_LOCALE_MAP: Record<string, string> = {
+  en: "en_US",
+  fr: "fr_FR",
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
 
   return {
     title: t("title"),
+    description: t("description"),
+    openGraph: {
+      locale: OG_LOCALE_MAP[locale] ?? "en_US",
+    },
   };
 }
 
