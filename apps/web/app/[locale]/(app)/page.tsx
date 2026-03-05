@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { useConvexAuth } from "convex/react";
-import { ArrowRight, Blocks, FileText, GitFork, Github } from "lucide-react";
+import { ArrowRight, GitFork, Github } from "lucide-react";
 import {
   AnimatePresence,
   LayoutGroup,
@@ -167,99 +167,15 @@ function GridPattern() {
 
 function EditorMockup() {
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute -inset-8 rounded-3xl bg-amber-500/8 blur-3xl dark:bg-amber-400/[0.05]" />
-      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-xl dark:border-white/[0.08]">
-        {/* Title bar */}
-        <div className="flex items-center gap-2 border-b border-border/60 bg-muted/50 px-4 py-3 dark:border-white/[0.06]">
-          <div className="flex gap-1.5">
-            <div className="h-3 w-3 rounded-full bg-rose-400/80" />
-            <div className="h-3 w-3 rounded-full bg-amber-400/80" />
-            <div className="h-3 w-3 rounded-full bg-emerald-400/80" />
-          </div>
-          <span
-            className="ml-2 text-[11px] text-muted-foreground/60"
-            style={{ fontFamily: FONTS.square }}
-          >
-            BaseBlocks Editor
-          </span>
-        </div>
-
-        {/* Body */}
-        <div className="flex" style={{ height: "clamp(220px, 32vw, 380px)" }}>
-          {/* Sidebar */}
-          <div className="hidden w-40 shrink-0 border-r border-border/40 bg-muted/30 p-3 sm:block dark:border-white/[0.05]">
-            <div
-              className="mb-2.5 text-[10px] uppercase tracking-widest text-muted-foreground/40"
-              style={{ fontFamily: FONTS.triangle }}
-            >
-              Pages
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-xs font-medium text-foreground dark:bg-amber-500/[0.08]">
-                <div className="h-2 w-2 rounded-sm bg-amber-500/60" />
-                Home
-              </div>
-              {["Getting Started", "API Reference", "Team Guide"].map(
-                (page) => (
-                  <div
-                    key={page}
-                    className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground"
-                  >
-                    <div className="h-2 w-2 rounded-sm bg-muted-foreground/15" />
-                    {page}
-                  </div>
-                ),
-              )}
-            </div>
-            <div
-              className="mb-2.5 mt-5 text-[10px] uppercase tracking-widest text-muted-foreground/40"
-              style={{ fontFamily: FONTS.triangle }}
-            >
-              Components
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground">
-                <Blocks className="h-3 w-3 opacity-40" />
-                Layouts
-              </div>
-              <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground">
-                <FileText className="h-3 w-3 opacity-40" />
-                Blocks
-              </div>
-            </div>
-          </div>
-
-          {/* Canvas */}
-          <div className="flex-1 overflow-hidden p-4 sm:p-5">
-            <div className="mb-3 rounded-lg border border-dashed border-border/50 p-3 dark:border-white/[0.06]">
-              <div className="text-sm font-semibold">Welcome to Acme</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Your team&apos;s knowledge base and documentation hub
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              <div className="rounded-lg border border-dashed border-border/50 p-3 dark:border-white/[0.06]">
-                <div className="mb-2 h-12 w-full rounded bg-gradient-to-br from-amber-500/12 via-amber-400/5 to-transparent sm:h-16" />
-                <div className="h-2 w-3/4 rounded bg-muted-foreground/8" />
-                <div className="mt-1.5 h-2 w-1/2 rounded bg-muted-foreground/8" />
-              </div>
-              <div className="rounded-lg border border-dashed border-border/50 p-3 dark:border-white/[0.06]">
-                <div className="mb-2 text-xs font-medium">Quick Links</div>
-                <div className="space-y-1.5">
-                  {[100, 83, 66, 75].map((w) => (
-                    <div
-                      key={w}
-                      className="h-2 rounded bg-muted-foreground/8"
-                      style={{ width: `${w}%` }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative select-none">
+      <Image
+        src="/landing/editor-preview-v3.png"
+        alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
+        width={1388}
+        height={876}
+        className="relative rounded-xl border border-neutral-200 shadow-2xl lg:rounded-r-none lg:border-r-0 dark:border-white/[0.1] dark:lg:border-r-0"
+        priority
+      />
     </div>
   );
 }
@@ -515,87 +431,88 @@ export default function LandingPage() {
             </header>
 
             {/* ── Hero ── */}
-            <section className="relative z-10 overflow-hidden px-6 pt-16 pb-20 sm:pt-24 sm:pb-28">
+            <section className="relative z-10 overflow-x-clip pt-16 pb-20 sm:pt-24 sm:pb-28">
               <GridPattern />
-              <div className="relative z-10 mx-auto max-w-6xl">
-                <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2 lg:gap-20">
-                  {/* Left — copy, each group blurs in sequentially */}
-                  <div>
-                    <BlurIn delay={0.1}>
-                      <div
-                        className="mb-7 inline-flex items-center gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] tracking-wide text-amber-700 dark:border-amber-400/25 dark:text-amber-400"
-                        style={{ fontFamily: FONTS.square }}
+              <div className="relative z-10 mx-auto max-w-6xl px-6">
+                {/* Copy — left-aligned, sets the height context */}
+                <div className="relative z-10 lg:max-w-[42%]">
+                  <BlurIn delay={0.1}>
+                    <div
+                      className="mb-7 inline-flex items-center gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] tracking-wide text-amber-700 dark:border-amber-400/25 dark:text-amber-400"
+                      style={{ fontFamily: FONTS.square }}
+                    >
+                      <GitFork className="h-3 w-3" />
+                      {t("badge")}
+                    </div>
+                  </BlurIn>
+
+                  <BlurIn delay={0.2}>
+                    <h1
+                      className="leading-[0.98] tracking-tight"
+                      style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
+                      aria-label="Build sites your team will actually use."
+                    >
+                      <span
+                        className="block"
+                        style={{ fontFamily: FONTS.grid }}
                       >
-                        <GitFork className="h-3 w-3" />
-                        {t("badge")}
-                      </div>
-                    </BlurIn>
-
-                    <BlurIn delay={0.2}>
-                      <h1
-                        className="leading-[0.98] tracking-tight"
-                        style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
-                        aria-label="Build sites your team will actually use."
+                        BUILD SITES
+                      </span>
+                      <span
+                        className="block"
+                        style={{ fontFamily: FONTS.grid }}
                       >
+                        YOUR TEAM WILL
+                      </span>
+                      <span className="block">
                         <span
-                          className="block"
-                          style={{ fontFamily: FONTS.grid }}
+                          className="text-amber-500 dark:text-amber-400"
+                          style={{ fontFamily: FONTS.square }}
                         >
-                          BUILD SITES
+                          ACTUALLY
                         </span>
-                        <span
-                          className="block"
-                          style={{ fontFamily: FONTS.grid }}
-                        >
-                          YOUR TEAM WILL
-                        </span>
-                        <span className="block">
-                          <span
-                            className="text-amber-500 dark:text-amber-400"
-                            style={{ fontFamily: FONTS.square }}
-                          >
-                            ACTUALLY
-                          </span>
-                          <span style={{ fontFamily: FONTS.grid }}> USE.</span>
-                        </span>
-                      </h1>
-                    </BlurIn>
+                        <span style={{ fontFamily: FONTS.grid }}> USE.</span>
+                      </span>
+                    </h1>
+                  </BlurIn>
 
-                    <BlurIn delay={0.4}>
-                      <p className="mt-7 max-w-sm text-[0.94rem] leading-relaxed text-muted-foreground lg:max-w-[22rem]">
-                        {t("heroSubtitle")}
-                      </p>
-                    </BlurIn>
+                  <BlurIn delay={0.4}>
+                    <p className="mt-7 max-w-sm text-[0.94rem] leading-relaxed text-muted-foreground lg:max-w-[22rem]">
+                      {t("heroSubtitle")}
+                    </p>
+                  </BlurIn>
 
-                    <BlurIn delay={0.55}>
-                      <div className="mt-8 flex flex-wrap gap-3">
-                        {isLoading ? (
-                          <Button size="lg" disabled>
-                            {tc("loading")}
-                          </Button>
-                        ) : (
-                          authCta
-                        )}
-                        <a
-                          href="https://github.com/naaiyy/BaseBlocks"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="outline" size="lg" className="gap-2">
-                            <Github className="h-4 w-4" />
-                            {t("viewOnGithub")}
-                          </Button>
-                        </a>
-                      </div>
-                    </BlurIn>
-                  </div>
-
-                  {/* Right — editor mockup */}
-                  <BlurIn delay={0.35} className="relative">
-                    <EditorMockup />
+                  <BlurIn delay={0.55}>
+                    <div className="mt-8 flex flex-wrap gap-3">
+                      {isLoading ? (
+                        <Button size="lg" disabled>
+                          {tc("loading")}
+                        </Button>
+                      ) : (
+                        authCta
+                      )}
+                      <a
+                        href="https://github.com/naaiyy/BaseBlocks"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="outline" size="lg" className="gap-2">
+                          <Github className="h-4 w-4" />
+                          {t("viewOnGithub")}
+                        </Button>
+                      </a>
+                    </div>
                   </BlurIn>
                 </div>
               </div>
+
+              {/* Editor mockup — absolutely positioned, bleeds off right edge */}
+              <BlurIn
+                delay={0.35}
+                className="mt-14 px-6 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
+              >
+                <EditorMockup />
+              </BlurIn>
             </section>
 
             {/* ── Features ── */}
