@@ -37,6 +37,10 @@ const nextConfig = {
   allowedDevOrigins: ["*.localhost"],
   serverExternalPackages: ["pdfjs-dist"],
   reactCompiler: true,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    qualities: [60, 75, 85, 100],
+  },
   async headers() {
     return [
       {

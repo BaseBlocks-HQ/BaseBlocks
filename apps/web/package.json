@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check --write .",
-    "check-types": "next typegen && tsc --noEmit",
+    "check-types": "next typegen && mkdir -p .next/types && (test -f .next/types/cache-life.d.ts || echo 'export {};' > .next/types/cache-life.d.ts) && tsc --noEmit --incremental false",
     "copy-pdf-worker": "find ../../node_modules/.bun -path '*/pdfjs-dist*/build/pdf.worker.min.mjs' -not -path '*/legacy/*' | head -1 | xargs -I{} cp {} public/pdf.worker.min.mjs"
   },
   "dependencies": {

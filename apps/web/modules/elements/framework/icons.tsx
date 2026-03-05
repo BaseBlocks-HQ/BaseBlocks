@@ -747,11 +747,7 @@ export function DeployRocketIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" stopOpacity="1" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <filter
           id={filterId}
@@ -857,11 +853,7 @@ export function DocumentLibrariesFolderIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <filter
           id={filterId}
@@ -972,11 +964,7 @@ export function TeamUsersIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <linearGradient
           id={grad3}
@@ -987,11 +975,7 @@ export function TeamUsersIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <filter
           id={filterId}
@@ -1097,11 +1081,7 @@ export function CustomizeSquarePointerIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <filter
           id={filterId}
@@ -1217,11 +1197,7 @@ export function OpenSourceSitemapIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <linearGradient
           id={grad5}
@@ -1232,11 +1208,7 @@ export function OpenSourceSitemapIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <linearGradient
           id={grad6}
@@ -1247,11 +1219,7 @@ export function OpenSourceSitemapIcon(props: SVGProps<SVGSVGElement>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="rgba(255, 255, 255, 1)" />
-          <stop
-            offset="1"
-            stopColor="rgba(255, 255, 255, 1)"
-            stopOpacity="0"
-          />
+          <stop offset="1" stopColor="rgba(255, 255, 255, 1)" stopOpacity="0" />
         </linearGradient>
         <filter
           id={filterId}
