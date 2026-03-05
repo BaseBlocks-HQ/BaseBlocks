@@ -1,13 +1,13 @@
 "use client";
 
 import { getPageLink } from "@/lib/url";
-import { HomeIcon, PagesIcon } from "@/modules/elements/framework/icons";
 import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
 import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
 import type { PageWithChildren } from "@baseblocks/types";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { IconFile, IconHouse } from "nucleo-glass";
 import { useEffect } from "react";
 
 interface NavItemProps {
@@ -101,9 +101,9 @@ export function NavItem({
             style={{ paddingLeft: `${(depth + 1) * 12}px` }}
           >
             {isDefault ? (
-              <HomeIcon className="h-4 w-4 text-primary" />
+              <IconHouse className="h-4 w-4 text-primary" />
             ) : (
-              <PagesIcon className="h-4 w-4" />
+              <IconFile className="h-4 w-4" />
             )}
             <span className="truncate">{page.title}</span>
           </SidebarMenuButton>
@@ -156,7 +156,7 @@ export function NavItem({
           ) : (
             <span className="w-4" />
           )}
-          <PagesIcon className="h-4 w-4" />
+          <IconFile className="h-4 w-4" />
           <span className="truncate">{page.title}</span>
         </button>
         {hasChildren &&
@@ -209,7 +209,7 @@ export function NavItem({
         ) : (
           <span className="w-4" />
         )}
-        <PagesIcon className="h-4 w-4" />
+        <IconFile className="h-4 w-4" />
         {page.title}
       </Link>
 

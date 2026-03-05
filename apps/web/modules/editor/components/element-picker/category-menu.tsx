@@ -1,19 +1,19 @@
 "use client";
 
-import {
-  BlocksIcon,
-  CustomizationIcon,
-  FormsIcon,
-  LayoutsIcon,
-  MediaIcon,
-  NavIcon,
-  SectionsIcon,
-  SiteSettingsIcon,
-} from "@/modules/elements/framework/icons";
 import type { ElementCategory } from "@baseblocks/types/elements";
 import { getSortedCategories } from "@baseblocks/types/elements";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
+import {
+  IconColorPalette,
+  IconGear,
+  IconImage,
+  IconPen,
+  IconRectLayoutGrid,
+  IconSitemap,
+  IconSquareGrid2,
+  IconStackPerspective,
+} from "nucleo-glass";
 
 interface CategoryMenuItemProps {
   icon: React.ReactNode;
@@ -60,14 +60,14 @@ interface CategoryMenuProps {
 }
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  site: <SiteSettingsIcon className="h-5 w-5" />,
-  navigation: <NavIcon className="h-5 w-5" />,
-  layouts: <LayoutsIcon className="h-5 w-5" />,
-  sections: <SectionsIcon className="h-5 w-5" />,
-  blocks: <BlocksIcon className="h-5 w-5" />,
-  media: <MediaIcon className="h-5 w-5" />,
-  forms: <FormsIcon className="h-5 w-5" />,
-  customization: <CustomizationIcon className="h-5 w-5" />,
+  site: <IconGear className="h-5 w-5" />,
+  navigation: <IconSitemap className="h-5 w-5" />,
+  layouts: <IconRectLayoutGrid className="h-5 w-5" />,
+  sections: <IconStackPerspective className="h-5 w-5" />,
+  blocks: <IconSquareGrid2 className="h-5 w-5" />,
+  media: <IconImage className="h-5 w-5" />,
+  forms: <IconPen className="h-5 w-5" />,
+  customization: <IconColorPalette className="h-5 w-5" />,
 };
 
 export function CategoryMenu({

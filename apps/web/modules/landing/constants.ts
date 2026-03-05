@@ -1,16 +1,16 @@
-import {
-  CustomizeSquarePointerIcon,
-  DeployRocketIcon,
-  DocumentLibrariesFolderIcon,
-  OpenSourceSitemapIcon,
-  TeamUsersIcon,
-  VisualEditorStackIcon,
-} from "@/modules/elements/framework/icons";
 import editorPreviewImage from "@/public/landing/editor-preview-v3.png";
 import buildSiteImage from "@/public/landing/steps/build-site-v2.png";
 import createWorkspaceImage from "@/public/landing/steps/create-workspace-v7.png";
 import publishTeamImage from "@/public/landing/steps/publish-team-v4.png";
 import type { Transition } from "motion/react";
+import {
+  IconAppStack,
+  IconFolders,
+  IconRocket,
+  IconSitemap,
+  IconSquarePointer,
+  IconUsers,
+} from "nucleo-glass";
 import type { LandingFeature, LandingStep } from "./types";
 
 export type FontVariant =
@@ -60,42 +60,42 @@ export const landingEditorPreviewImage = editorPreviewImage;
 
 export const landingFeatures: readonly LandingFeature[] = [
   {
-    icon: VisualEditorStackIcon,
+    icon: IconAppStack,
     titleKey: "visualEditorTitle",
     descKey: "visualEditorDesc",
     num: "01",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: DeployRocketIcon,
+    icon: IconRocket,
     titleKey: "draftDeployTitle",
     descKey: "draftDeployDesc",
     num: "02",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: DocumentLibrariesFolderIcon,
+    icon: IconFolders,
     titleKey: "documentLibrariesTitle",
     descKey: "documentLibrariesDesc",
     num: "03",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: TeamUsersIcon,
+    icon: IconUsers,
     titleKey: "teamWorkspacesTitle",
     descKey: "teamWorkspacesDesc",
     num: "04",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: CustomizeSquarePointerIcon,
+    icon: IconSquarePointer,
     titleKey: "customThemesTitle",
     descKey: "customThemesDesc",
     num: "05",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: OpenSourceSitemapIcon,
+    icon: IconSitemap,
     titleKey: "openSourceTitle",
     descKey: "openSourceDesc",
     num: "06",

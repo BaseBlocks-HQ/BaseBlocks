@@ -1,13 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { HomeIcon, PagesIcon } from "@/modules/elements/framework/icons";
 import { DragHandle } from "@/modules/shared/dnd";
 import type { PageListItem } from "@baseblocks/types";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { IconFile, IconHouse } from "nucleo-glass";
 import type { ReactNode } from "react";
 import type { FlattenedPage } from "../tree";
 import { INDENT_WIDTH, isValidDrop } from "../tree";
@@ -130,9 +130,9 @@ export function SortableTreeItem({
         )}
 
         {isDefault ? (
-          <HomeIcon className="h-4 w-4 text-primary" />
+          <IconHouse className="h-4 w-4 text-primary" />
         ) : (
-          <PagesIcon className="h-4 w-4" />
+          <IconFile className="h-4 w-4" />
         )}
         <span className="truncate">{page.title}</span>
         {isDefault && (

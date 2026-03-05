@@ -1,9 +1,9 @@
 import type { StaticImageData } from "next/image";
-import type { JSX, SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
 
 export type TranslateFn = (key: string) => string;
 
-export type LandingIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
+export type LandingIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 export interface LandingFeature {
   icon: LandingIcon;

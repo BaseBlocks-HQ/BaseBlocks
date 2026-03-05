@@ -1,12 +1,12 @@
 "use client";
 
-import { HomeIcon, PagesIcon } from "@/modules/elements/framework/icons";
 import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
+import { IconFile, IconHouse } from "nucleo-glass";
 import { useEffect, useRef, useState } from "react";
 import type { TreeProjection } from "../tree";
 import {
@@ -153,9 +153,9 @@ export function SortablePageTree({
         return (
           <div className="flex items-center gap-2 rounded-md bg-background border shadow-lg px-3 py-1.5 text-sm cursor-grabbing">
             {page._id === defaultPageId ? (
-              <HomeIcon className="h-4 w-4 shrink-0 text-primary" />
+              <IconHouse className="h-4 w-4 shrink-0 text-primary" />
             ) : (
-              <PagesIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <IconFile className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="truncate max-w-48">{page.title}</span>
           </div>
