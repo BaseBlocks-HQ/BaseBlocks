@@ -7,12 +7,20 @@ import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
 import authSchema from "./betterAuth/schema";
 
-const siteUrl = process.env.SITE_URL ?? ""; // Convex site URL (where auth routes live)
+const siteUrl = (process.env.SITE_URL ?? "").trim(); // Primary app URL for this deployment
 const appUrls = (process.env.APP_URL ?? "")
   .split(",")
   .map((u) => u.trim())
-  .filter(Boolean); // Frontend URL(s)
-const appUrl = appUrls[0] ?? ""; // Primary frontend URL (for crossDomain)
+  .filter(Boolean); // Additional trusted frontend URL(s)
+
+const primaryAppUrl = siteUrl || appUrls[0] || "";
+if (!primaryAppUrl) {
+  throw new Error("SITE_URL (or APP_URL) must be configured");
+}
+
+const trustedOrigins = Array.from(
+  new Set([...appUrls, siteUrl].filter(Boolean)),
+);
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
@@ -26,8 +34,8 @@ export const authComponent = createClient<DataModel, never>(
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
-    baseURL: siteUrl,
-    trustedOrigins: [...appUrls, "https://*.vercel.app"],
+    baseURL: primaryAppUrl,
+    trustedOrigins: [...trustedOrigins, "https://*.vercel.app"],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
@@ -36,14 +44,14 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirectURI: appUrl ? `${appUrl}/api/auth/callback/google` : undefined,
+        redirectURI: `${primaryAppUrl}/api/auth/callback/google`,
       },
     },
     plugins: [
       organization({
         allowUserToCreateOrganization: true,
       }),
-      crossDomain({ siteUrl: appUrl }),
+      crossDomain({ siteUrl: primaryAppUrl }),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;

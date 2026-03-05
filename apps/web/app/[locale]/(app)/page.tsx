@@ -13,19 +13,14 @@ import {
   VisualEditorStackIcon,
 } from "@/modules/elements/framework/icons";
 import { Button } from "@baseblocks/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@baseblocks/ui/dialog";
 import { useConvexAuth } from "convex/react";
-import {
-  ArrowRight,
-  Blocks,
-  FileText,
-  GitFork,
-  Github,
-} from "lucide-react";
+import { ArrowRight, Blocks, FileText, GitFork, Github } from "lucide-react";
 import {
   AnimatePresence,
   LayoutGroup,
-  motion,
   type Transition,
+  motion,
   useMotionValue,
   useMotionValueEvent,
   useSpring,
@@ -33,6 +28,7 @@ import {
 } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import Image from "next/image";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // ── Pixel fonts ───────────────────────────────────────────────────────────────
@@ -55,7 +51,11 @@ const FONTS: Record<FontVariant, string> = {
 // (4.3x) with Redaction — our Geist Pixel variants are more subtle, so a
 // smaller ratio keeps each variant visible longer.
 
-const ANIMATION_STEPS: ReadonlyArray<{ font: FontVariant; size: number; amber?: true }> = [
+const ANIMATION_STEPS: ReadonlyArray<{
+  font: FontVariant;
+  size: number;
+  amber?: true;
+}> = [
   { font: "square", size: 10 },
   { font: "grid", size: 8.2 },
   { font: "sans", size: 6.8, amber: true },
@@ -73,7 +73,11 @@ const STEP_SIZES = ANIMATION_STEPS.map((s) => s.size);
 // Same spring as looskie — stiffness:30, damping:15, mass:3
 const MORPH_SPRING = { stiffness: 30, damping: 15, mass: 3 } as const;
 // Faster spring for the layoutId travel to the header
-const LAYOUT_SPRING = { type: "spring", stiffness: 80, damping: 20 } as const satisfies Transition;
+const LAYOUT_SPRING = {
+  type: "spring",
+  stiffness: 80,
+  damping: 20,
+} as const satisfies Transition;
 
 // ── Blur-in animation ────────────────────────────────────────────────────────
 // Every element that appears after the intro uses this pattern — same as
@@ -191,15 +195,17 @@ function EditorMockup() {
                 <div className="h-2 w-2 rounded-sm bg-amber-500/60" />
                 Home
               </div>
-              {["Getting Started", "API Reference", "Team Guide"].map((page) => (
-                <div
-                  key={page}
-                  className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground"
-                >
-                  <div className="h-2 w-2 rounded-sm bg-muted-foreground/15" />
-                  {page}
-                </div>
-              ))}
+              {["Getting Started", "API Reference", "Team Guide"].map(
+                (page) => (
+                  <div
+                    key={page}
+                    className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground"
+                  >
+                    <div className="h-2 w-2 rounded-sm bg-muted-foreground/15" />
+                    {page}
+                  </div>
+                ),
+              )}
             </div>
             <div
               className="mb-2.5 mt-5 text-[10px] uppercase tracking-widest text-muted-foreground/40"
@@ -302,9 +308,27 @@ const features = [
 ] as const;
 
 const steps = [
-  { num: "01", titleKey: "step1Title", descKey: "step1Desc" },
-  { num: "02", titleKey: "step2Title", descKey: "step2Desc" },
-  { num: "03", titleKey: "step3Title", descKey: "step3Desc" },
+  {
+    num: "01",
+    titleKey: "step1Title",
+    descKey: "step1Desc",
+    imageSrc: "/landing/steps/create-workspace-v7.png",
+    imageAltKey: "step1ImageAlt",
+  },
+  {
+    num: "02",
+    titleKey: "step2Title",
+    descKey: "step2Desc",
+    imageSrc: "/landing/steps/build-site-v2.png",
+    imageAltKey: "step2ImageAlt",
+  },
+  {
+    num: "03",
+    titleKey: "step3Title",
+    descKey: "step3Desc",
+    imageSrc: "/landing/steps/publish-team-v4.png",
+    imageAltKey: "step3ImageAlt",
+  },
 ] as const;
 
 // ── Landing page ──────────────────────────────────────────────────────────────
@@ -316,7 +340,9 @@ export default function LandingPage() {
   const tc = useTranslations("common");
   const tn = useTranslations("navigation");
   const isDarkTheme = resolvedTheme === "dark";
-  const howItWorksGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
+  const howItWorksGridColor = isDarkTheme
+    ? "rgb(229, 229, 229)"
+    : "rgb(23, 23, 23)";
   const howItWorksGridOpacity = isDarkTheme ? 0.2 : 0.34;
 
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -328,7 +354,8 @@ export default function LandingPage() {
   // Same clamp formula as looskie — v*0.3 for min, v*3.5 for vw, v for max
   const fontSizeRem = useTransform(
     fontSize,
-    (v) => `clamp(${(v * 0.3).toFixed(2)}rem, ${(v * 3.5).toFixed(2)}vw, ${v}rem)`,
+    (v) =>
+      `clamp(${(v * 0.3).toFixed(2)}rem, ${(v * 3.5).toFixed(2)}vw, ${v}rem)`,
   );
 
   useMotionValueEvent(spring, "change", (v) => {
@@ -336,7 +363,11 @@ export default function LandingPage() {
     const i = Math.max(0, Math.min(Math.round(v), LAST_STEP));
     const step = ANIMATION_STEPS[i];
     if (step) {
-      titleRef.current.style.setProperty("font-family", FONTS[step.font], "important");
+      titleRef.current.style.setProperty(
+        "font-family",
+        FONTS[step.font],
+        "important",
+      );
       titleRef.current.style.color = step.amber ? "var(--color-amber-500)" : "";
     }
     if (v > LAST_STEP) setExpanded(true);
@@ -361,7 +392,13 @@ export default function LandingPage() {
   );
 
   return (
-    <div className={expanded ? "min-h-screen bg-background" : "h-screen overflow-hidden bg-background"}>
+    <div
+      className={
+        expanded
+          ? "min-h-screen bg-background"
+          : "h-screen overflow-hidden bg-background"
+      }
+    >
       <LayoutGroup>
         {/* ── Intro ── */}
         <AnimatePresence>
@@ -369,7 +406,10 @@ export default function LandingPage() {
             <motion.div
               key="intro"
               className="fixed inset-0 z-50 flex items-center justify-center bg-background"
-              exit={{ opacity: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }}
+              exit={{
+                opacity: 0,
+                transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+              }}
             >
               <motion.span
                 layoutId="brand"
@@ -401,7 +441,10 @@ export default function LandingPage() {
                       style={{ fontFamily: FONTS.square }}
                       initial={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
                       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                      transition={{ duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] }}
+                      transition={{
+                        duration: 0.8,
+                        ease: [0.2, 0.65, 0.3, 0.9],
+                      }}
                     >
                       B
                     </motion.div>
@@ -409,7 +452,11 @@ export default function LandingPage() {
                       layoutId="brand"
                       transition={LAYOUT_SPRING}
                       className="whitespace-nowrap tracking-tight"
-                      style={{ fontFamily: FONTS.square, fontSize: "0.9375rem", lineHeight: 1 }}
+                      style={{
+                        fontFamily: FONTS.square,
+                        fontSize: "0.9375rem",
+                        lineHeight: 1,
+                      }}
                     >
                       BaseBlocks
                     </motion.span>
@@ -419,7 +466,11 @@ export default function LandingPage() {
                     className="flex items-center gap-4"
                     initial={{ opacity: 0, y: 5, filter: "blur(4px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ duration: 1, ease: [0.2, 0.65, 0.3, 0.9], delay: 0.15 }}
+                    transition={{
+                      duration: 1,
+                      ease: [0.2, 0.65, 0.3, 0.9],
+                      delay: 0.15,
+                    }}
                   >
                     <a
                       href="https://github.com/naaiyy/BaseBlocks"
@@ -454,7 +505,11 @@ export default function LandingPage() {
                 className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent dark:via-white/[0.06]"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                transition={{
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.1,
+                }}
               />
             </header>
 
@@ -481,10 +536,16 @@ export default function LandingPage() {
                         style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
                         aria-label="Build sites your team will actually use."
                       >
-                        <span className="block" style={{ fontFamily: FONTS.grid }}>
+                        <span
+                          className="block"
+                          style={{ fontFamily: FONTS.grid }}
+                        >
                           BUILD SITES
                         </span>
-                        <span className="block" style={{ fontFamily: FONTS.grid }}>
+                        <span
+                          className="block"
+                          style={{ fontFamily: FONTS.grid }}
+                        >
                           YOUR TEAM WILL
                         </span>
                         <span className="block">
@@ -575,7 +636,9 @@ export default function LandingPage() {
                         >
                           {feat.num}
                         </div>
-                        <h3 className="relative z-10 text-[0.94rem] font-semibold">{t(feat.titleKey)}</h3>
+                        <h3 className="relative z-10 text-[0.94rem] font-semibold">
+                          {t(feat.titleKey)}
+                        </h3>
                         <p className="relative z-10 mt-1.5 text-sm leading-relaxed text-muted-foreground">
                           {t(feat.descKey)}
                         </p>
@@ -624,28 +687,59 @@ export default function LandingPage() {
                   </div>
                 </Reveal>
 
-                <div className="mt-16 grid gap-10 sm:grid-cols-3 sm:gap-8">
+                <div className="mt-16 space-y-6 sm:space-y-8">
                   {steps.map((step, i) => (
                     <Reveal key={step.titleKey} delay={0.1 * i}>
-                      <div className="relative">
-                        <div
-                          className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
-                          style={{ fontFamily: FONTS.circle, lineHeight: 1 }}
-                        >
-                          {step.num}
-                        </div>
-                        <h3 className="text-[0.94rem] font-semibold">{t(step.titleKey)}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                          {t(step.descKey)}
-                        </p>
-                        {i < steps.length - 1 && (
+                      <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+                        <div className={i % 2 === 1 ? "lg:order-2" : ""}>
                           <div
-                            className="pointer-events-none absolute top-9 right-0 z-20 hidden translate-x-1/2 text-xs tracking-widest text-amber-600 dark:text-amber-400 sm:block"
-                            style={{ fontFamily: FONTS.square }}
+                            className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
+                            style={{
+                              fontFamily: FONTS.circle,
+                              lineHeight: 1,
+                            }}
                           >
-                            →
+                            {step.num}
                           </div>
-                        )}
+                          <h3 className="text-[1rem] font-semibold sm:text-[1.05rem]">
+                            {t(step.titleKey)}
+                          </h3>
+                          <p className="mt-2 text-[0.92rem] leading-relaxed text-muted-foreground sm:text-sm">
+                            {t(step.descKey)}
+                          </p>
+                        </div>
+                        <div className={i % 2 === 1 ? "lg:order-1" : ""}>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <button
+                                type="button"
+                                className="group relative aspect-[16/9] w-full cursor-zoom-in overflow-hidden rounded-2xl border border-border/60 bg-background/70 text-left shadow-sm transition-colors hover:border-amber-500/30 dark:border-white/[0.08] dark:bg-background/50 dark:hover:border-amber-400/25"
+                                aria-label={`Open ${t(step.imageAltKey)} image`}
+                              >
+                                <Image
+                                  src={step.imageSrc}
+                                  alt={t(step.imageAltKey)}
+                                  fill
+                                  className="object-cover transition-transform duration-300 group-hover:scale-[1.015]"
+                                  sizes="(max-width: 1024px) 100vw, 50vw"
+                                />
+                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-transparent" />
+                              </button>
+                            </DialogTrigger>
+                            <DialogContent
+                              onOpenAutoFocus={(event) =>
+                                event.preventDefault()
+                              }
+                              className="z-[80] !w-auto !max-w-[96vw] overflow-visible border-none bg-transparent p-0 shadow-none sm:!max-w-[96vw]"
+                            >
+                              <img
+                                src={step.imageSrc}
+                                alt={t(step.imageAltKey)}
+                                className="block h-auto max-h-[92vh] w-auto max-w-[96vw] rounded-2xl border border-border/70 bg-background object-contain shadow-2xl shadow-black/35 dark:border-white/[0.1]"
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </div>
                     </Reveal>
                   ))}
@@ -688,7 +782,9 @@ export default function LandingPage() {
                       >
                         B
                       </div>
-                      <span className="text-xs text-muted-foreground/60">{t("footerCopyright")}</span>
+                      <span className="text-xs text-muted-foreground/60">
+                        {t("footerCopyright")}
+                      </span>
                     </div>
                     <a
                       href="https://github.com/naaiyy/BaseBlocks"
