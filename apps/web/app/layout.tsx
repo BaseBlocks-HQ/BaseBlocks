@@ -1,6 +1,11 @@
 import { Analytics } from "@vercel/analytics/next";
+import {
+  GeistPixelCircle,
+  GeistPixelGrid,
+  GeistPixelSquare,
+  GeistPixelTriangle,
+} from "geist/font/pixel";
 import type { Metadata } from "next";
-import { GeistPixelSquare, GeistPixelGrid, GeistPixelTriangle, GeistPixelCircle } from "geist/font/pixel";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -46,11 +51,12 @@ export const metadata: Metadata = {
   },
 };
 
-// Root layout - Next.js 16 requires html/body tags here
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable}`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable}`}
+      >
         {children}
         <Analytics />
       </body>
