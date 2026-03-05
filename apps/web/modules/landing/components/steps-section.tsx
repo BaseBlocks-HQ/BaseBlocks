@@ -1,4 +1,3 @@
-import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { landingFonts, landingSteps } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
 import {
@@ -8,6 +7,7 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import Image from "next/image";
+import { FlickeringGrid } from "./flickering-grid";
 import { Reveal } from "./reveal";
 
 interface StepsSectionProps {
