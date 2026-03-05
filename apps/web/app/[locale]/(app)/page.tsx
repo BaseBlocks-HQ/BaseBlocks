@@ -4,6 +4,14 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Link } from "@/i18n/navigation";
+import {
+  CustomizeSquarePointerIcon,
+  DeployRocketIcon,
+  DocumentLibrariesFolderIcon,
+  OpenSourceSitemapIcon,
+  TeamUsersIcon,
+  VisualEditorStackIcon,
+} from "@/modules/elements/framework/icons";
 import { Button } from "@baseblocks/ui/button";
 import { useConvexAuth } from "convex/react";
 import {
@@ -12,10 +20,6 @@ import {
   FileText,
   GitFork,
   Github,
-  Layers,
-  Paintbrush,
-  Rocket,
-  Users,
 } from "lucide-react";
 import {
   AnimatePresence,
@@ -252,12 +256,49 @@ function EditorMockup() {
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const features = [
-  { icon: Layers, titleKey: "visualEditorTitle", descKey: "visualEditorDesc", num: "01" },
-  { icon: Rocket, titleKey: "draftDeployTitle", descKey: "draftDeployDesc", num: "02" },
-  { icon: FileText, titleKey: "documentLibrariesTitle", descKey: "documentLibrariesDesc", num: "03" },
-  { icon: Users, titleKey: "teamWorkspacesTitle", descKey: "teamWorkspacesDesc", num: "04" },
-  { icon: Paintbrush, titleKey: "customThemesTitle", descKey: "customThemesDesc", num: "05" },
-  { icon: GitFork, titleKey: "openSourceTitle", descKey: "openSourceDesc", num: "06" },
+  {
+    icon: VisualEditorStackIcon,
+    titleKey: "visualEditorTitle",
+    descKey: "visualEditorDesc",
+    num: "01",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: DeployRocketIcon,
+    titleKey: "draftDeployTitle",
+    descKey: "draftDeployDesc",
+    num: "02",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: DocumentLibrariesFolderIcon,
+    titleKey: "documentLibrariesTitle",
+    descKey: "documentLibrariesDesc",
+    num: "03",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: TeamUsersIcon,
+    titleKey: "teamWorkspacesTitle",
+    descKey: "teamWorkspacesDesc",
+    num: "04",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: CustomizeSquarePointerIcon,
+    titleKey: "customThemesTitle",
+    descKey: "customThemesDesc",
+    num: "05",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: OpenSourceSitemapIcon,
+    titleKey: "openSourceTitle",
+    descKey: "openSourceDesc",
+    num: "06",
+    iconClassName:
+      "[transform:scaleY(-1)] group-hover:[transform:scaleY(-1)_scale(1.1)]",
+  },
 ] as const;
 
 const steps = [
@@ -524,18 +565,18 @@ export default function LandingPage() {
                 <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {features.map((feat, i) => (
                     <Reveal key={feat.titleKey} delay={0.06 * i}>
-                      <div className="group h-full overflow-hidden rounded-xl border border-border/50 bg-background/60 p-6 transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-amber-400/20">
+                      <div className="group relative isolate h-full overflow-hidden rounded-xl border border-border/70 bg-background/95 p-6 shadow-sm shadow-black/[0.04] transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:border-white/[0.06] dark:bg-white/[0.02] dark:shadow-none dark:hover:border-amber-400/20">
+                        <feat.icon
+                          className={`absolute right-[-16px] bottom-[-16px] z-0 h-28 w-28 opacity-[0.58] transition-transform duration-300 dark:opacity-35 ${feat.iconClassName}`}
+                        />
                         <div
-                          className="mb-3 text-[11px] text-muted-foreground/25"
+                          className="relative z-10 mb-3 text-[11px] text-muted-foreground/40"
                           style={{ fontFamily: FONTS.circle }}
                         >
                           {feat.num}
                         </div>
-                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-400/[0.08] dark:text-amber-400">
-                          <feat.icon className="h-5 w-5" />
-                        </div>
-                        <h3 className="text-[0.94rem] font-semibold">{t(feat.titleKey)}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                        <h3 className="relative z-10 text-[0.94rem] font-semibold">{t(feat.titleKey)}</h3>
+                        <p className="relative z-10 mt-1.5 text-sm leading-relaxed text-muted-foreground">
                           {t(feat.descKey)}
                         </p>
                       </div>
