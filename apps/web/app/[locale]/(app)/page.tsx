@@ -2,6 +2,7 @@
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
+import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@baseblocks/ui/button";
 import { useConvexAuth } from "convex/react";
@@ -27,6 +28,7 @@ import {
   useTransform,
 } from "motion/react";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // ── Pixel fonts ───────────────────────────────────────────────────────────────
@@ -139,6 +141,12 @@ function Reveal({
     >
       {children}
     </div>
+  );
+}
+
+function GridPattern() {
+  return (
+    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:35px_34px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
   );
 }
 
@@ -262,9 +270,13 @@ const steps = [
 
 export default function LandingPage() {
   const { isAuthenticated, isLoading } = useConvexAuth();
+  const { resolvedTheme } = useTheme();
   const t = useTranslations("landing");
   const tc = useTranslations("common");
   const tn = useTranslations("navigation");
+  const isDarkTheme = resolvedTheme === "dark";
+  const howItWorksGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
+  const howItWorksGridOpacity = isDarkTheme ? 0.2 : 0.34;
 
   const titleRef = useRef<HTMLSpanElement>(null);
   const progress = useMotionValue(0);
@@ -406,8 +418,9 @@ export default function LandingPage() {
             </header>
 
             {/* ── Hero ── */}
-            <section className="relative z-10 px-6 pt-16 pb-20 sm:pt-24 sm:pb-28">
-              <div className="mx-auto max-w-6xl">
+            <section className="relative z-10 overflow-hidden px-6 pt-16 pb-20 sm:pt-24 sm:pb-28">
+              <GridPattern />
+              <div className="relative z-10 mx-auto max-w-6xl">
                 <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2 lg:gap-20">
                   {/* Left — copy, each group blurs in sequentially */}
                   <div>
@@ -427,18 +440,21 @@ export default function LandingPage() {
                         style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
                         aria-label="Build sites your team will actually use."
                       >
-                        <span style={{ fontFamily: FONTS.grid }}>BUILD SITES</span>
-                        <br />
-                        <span style={{ fontFamily: FONTS.grid }}>YOUR TEAM</span>
-                        <br />
-                        <span style={{ fontFamily: FONTS.grid }}>WILL </span>
-                        <span
-                          className="text-amber-500 dark:text-amber-400"
-                          style={{ fontFamily: FONTS.square }}
-                        >
-                          ACTUALLY
+                        <span className="block" style={{ fontFamily: FONTS.grid }}>
+                          BUILD SITES
                         </span>
-                        <span style={{ fontFamily: FONTS.grid }}> USE.</span>
+                        <span className="block" style={{ fontFamily: FONTS.grid }}>
+                          YOUR TEAM WILL
+                        </span>
+                        <span className="block">
+                          <span
+                            className="text-amber-500 dark:text-amber-400"
+                            style={{ fontFamily: FONTS.square }}
+                          >
+                            ACTUALLY
+                          </span>
+                          <span style={{ fontFamily: FONTS.grid }}> USE.</span>
+                        </span>
                       </h1>
                     </BlurIn>
 
@@ -532,9 +548,24 @@ export default function LandingPage() {
             {/* ── How it works ── */}
             <section
               id="how-it-works"
-              className="scroll-mt-20 border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
+              className="relative scroll-mt-20 overflow-hidden border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
             >
-              <div className="mx-auto max-w-6xl">
+              <FlickeringGrid
+                className="absolute inset-0 z-0"
+                color={howItWorksGridColor}
+                squareSize={4}
+                gridGap={8}
+                maxOpacity={howItWorksGridOpacity}
+                flickerChance={0.25}
+              />
+              <div
+                className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b ${
+                  isDarkTheme
+                    ? "from-background/88 via-background/62 to-background/88"
+                    : "from-background/80 via-background/52 to-background/80"
+                }`}
+              />
+              <div className="relative z-10 mx-auto max-w-6xl">
                 <Reveal>
                   <div className="max-w-xl">
                     <div
@@ -557,7 +588,7 @@ export default function LandingPage() {
                     <Reveal key={step.titleKey} delay={0.1 * i}>
                       <div className="relative">
                         <div
-                          className="mb-4 text-7xl text-amber-500/12 dark:text-amber-400/10 sm:text-8xl"
+                          className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
                           style={{ fontFamily: FONTS.circle, lineHeight: 1 }}
                         >
                           {step.num}
@@ -568,7 +599,7 @@ export default function LandingPage() {
                         </p>
                         {i < steps.length - 1 && (
                           <div
-                            className="pointer-events-none absolute top-9 right-0 hidden translate-x-1/2 text-xs tracking-widest text-muted-foreground/15 sm:block"
+                            className="pointer-events-none absolute top-9 right-0 z-20 hidden translate-x-1/2 text-xs tracking-widest text-amber-600 dark:text-amber-400 sm:block"
                             style={{ fontFamily: FONTS.square }}
                           >
                             →
