@@ -31,6 +31,22 @@ const ResizeHandle = ({ position }: { position: string }) => (
   />
 );
 
+function constrainImageDimensions(
+  width: number,
+  height: number,
+  maxWidth: number,
+) {
+  if (width <= maxWidth) {
+    return { width, height };
+  }
+
+  const scale = maxWidth / width;
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  };
+}
+
 export function ImageEditor({
   id,
   content,
@@ -73,12 +89,20 @@ export function ImageEditor({
     const result = await uploadImage(file, siteId as Id<"sites">);
 
     if (result) {
+      const imageWidth = result.width;
+      const imageHeight = result.height;
+      const hasImageDimensions =
+        typeof imageWidth === "number" && typeof imageHeight === "number";
+      const constrainedDimensions = hasImageDimensions
+        ? constrainImageDimensions(imageWidth, imageHeight, getMaxWidth())
+        : undefined;
+
       toast.success("Image uploaded");
       await onUpdate({
         ...content,
         url: result.url,
-        width: result.width,
-        height: result.height,
+        width: constrainedDimensions?.width,
+        height: constrainedDimensions?.height,
       });
       onSaveStatusChange?.("saved");
     } else if (uploadState.error) {
