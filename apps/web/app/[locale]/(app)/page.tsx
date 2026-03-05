@@ -31,13 +31,15 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 // ── Pixel fonts ───────────────────────────────────────────────────────────────
 
-type PixelVariant = "square" | "grid" | "triangle" | "circle";
+type FontVariant = "square" | "grid" | "triangle" | "circle" | "sans" | "mono";
 
-const PIXEL_FONTS: Record<PixelVariant, string> = {
+const FONTS: Record<FontVariant, string> = {
   square: "var(--font-geist-pixel-square)",
   grid: "var(--font-geist-pixel-grid)",
   triangle: "var(--font-geist-pixel-triangle)",
   circle: "var(--font-geist-pixel-circle)",
+  sans: "var(--font-geist-sans)",
+  mono: "var(--font-geist-mono)",
 };
 
 // ── Morph animation config ───────────────────────────────────────────────────
@@ -47,14 +49,14 @@ const PIXEL_FONTS: Record<PixelVariant, string> = {
 // (4.3x) with Redaction — our Geist Pixel variants are more subtle, so a
 // smaller ratio keeps each variant visible longer.
 
-const ANIMATION_STEPS: ReadonlyArray<{ font: PixelVariant; size: number }> = [
+const ANIMATION_STEPS: ReadonlyArray<{ font: FontVariant; size: number; amber?: true }> = [
   { font: "square", size: 10 },
-  { font: "grid", size: 8.5 },
-  { font: "triangle", size: 7 },
-  { font: "circle", size: 5.8 },
-  { font: "square", size: 4.8 },
-  { font: "grid", size: 4 },
-  { font: "triangle", size: 3.4 },
+  { font: "grid", size: 8.2 },
+  { font: "sans", size: 6.8, amber: true },
+  { font: "triangle", size: 5.5 },
+  { font: "mono", size: 4.5 },
+  { font: "circle", size: 3.8 },
+  { font: "square", size: 3.2, amber: true },
   { font: "square", size: 2.8 },
 ];
 
@@ -156,7 +158,7 @@ function EditorMockup() {
           </div>
           <span
             className="ml-2 text-[11px] text-muted-foreground/60"
-            style={{ fontFamily: PIXEL_FONTS.square }}
+            style={{ fontFamily: FONTS.square }}
           >
             BaseBlocks Editor
           </span>
@@ -168,7 +170,7 @@ function EditorMockup() {
           <div className="hidden w-40 shrink-0 border-r border-border/40 bg-muted/30 p-3 sm:block dark:border-white/[0.05]">
             <div
               className="mb-2.5 text-[10px] uppercase tracking-widest text-muted-foreground/40"
-              style={{ fontFamily: PIXEL_FONTS.triangle }}
+              style={{ fontFamily: FONTS.triangle }}
             >
               Pages
             </div>
@@ -189,7 +191,7 @@ function EditorMockup() {
             </div>
             <div
               className="mb-2.5 mt-5 text-[10px] uppercase tracking-widest text-muted-foreground/40"
-              style={{ fontFamily: PIXEL_FONTS.triangle }}
+              style={{ fontFamily: FONTS.triangle }}
             >
               Components
             </div>
@@ -281,7 +283,8 @@ export default function LandingPage() {
     const i = Math.max(0, Math.min(Math.round(v), LAST_STEP));
     const step = ANIMATION_STEPS[i];
     if (step) {
-      titleRef.current.style.setProperty("font-family", PIXEL_FONTS[step.font], "important");
+      titleRef.current.style.setProperty("font-family", FONTS[step.font], "important");
+      titleRef.current.style.color = step.amber ? "var(--color-amber-500)" : "";
     }
     if (v > LAST_STEP) setExpanded(true);
   });
@@ -321,7 +324,7 @@ export default function LandingPage() {
                 className="whitespace-nowrap will-change-transform"
                 style={{
                   fontSize: fontSizeRem,
-                  fontFamily: PIXEL_FONTS.square,
+                  fontFamily: FONTS.square,
                   lineHeight: 1,
                   userSelect: "none",
                 }}
@@ -342,7 +345,7 @@ export default function LandingPage() {
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-sm text-background"
-                      style={{ fontFamily: PIXEL_FONTS.square }}
+                      style={{ fontFamily: FONTS.square }}
                       initial={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
                       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                       transition={{ duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] }}
@@ -353,7 +356,7 @@ export default function LandingPage() {
                       layoutId="brand"
                       transition={LAYOUT_SPRING}
                       className="whitespace-nowrap tracking-tight"
-                      style={{ fontFamily: PIXEL_FONTS.square, fontSize: "0.9375rem", lineHeight: 1 }}
+                      style={{ fontFamily: FONTS.square, fontSize: "0.9375rem", lineHeight: 1 }}
                     >
                       BaseBlocks
                     </motion.span>
@@ -411,7 +414,7 @@ export default function LandingPage() {
                     <BlurIn delay={0.1}>
                       <div
                         className="mb-7 inline-flex items-center gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] tracking-wide text-amber-700 dark:border-amber-400/25 dark:text-amber-400"
-                        style={{ fontFamily: PIXEL_FONTS.square }}
+                        style={{ fontFamily: FONTS.square }}
                       >
                         <GitFork className="h-3 w-3" />
                         {t("badge")}
@@ -424,18 +427,18 @@ export default function LandingPage() {
                         style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
                         aria-label="Build sites your team will actually use."
                       >
-                        <span style={{ fontFamily: PIXEL_FONTS.grid }}>BUILD SITES</span>
+                        <span style={{ fontFamily: FONTS.grid }}>BUILD SITES</span>
                         <br />
-                        <span style={{ fontFamily: PIXEL_FONTS.grid }}>YOUR TEAM</span>
+                        <span style={{ fontFamily: FONTS.grid }}>YOUR TEAM</span>
                         <br />
-                        <span style={{ fontFamily: PIXEL_FONTS.grid }}>WILL </span>
+                        <span style={{ fontFamily: FONTS.grid }}>WILL </span>
                         <span
                           className="text-amber-500 dark:text-amber-400"
-                          style={{ fontFamily: PIXEL_FONTS.square }}
+                          style={{ fontFamily: FONTS.square }}
                         >
                           ACTUALLY
                         </span>
-                        <span style={{ fontFamily: PIXEL_FONTS.grid }}> USE.</span>
+                        <span style={{ fontFamily: FONTS.grid }}> USE.</span>
                       </h1>
                     </BlurIn>
 
@@ -486,13 +489,13 @@ export default function LandingPage() {
                   <div className="max-w-xl">
                     <div
                       className="mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400"
-                      style={{ fontFamily: PIXEL_FONTS.triangle }}
+                      style={{ fontFamily: FONTS.triangle }}
                     >
                       {t("featuresLabel").toUpperCase()}
                     </div>
                     <h2
                       className="text-3xl tracking-tight sm:text-4xl"
-                      style={{ fontFamily: PIXEL_FONTS.grid }}
+                      style={{ fontFamily: FONTS.grid }}
                     >
                       {t("featuresTitle")}
                     </h2>
@@ -508,7 +511,7 @@ export default function LandingPage() {
                       <div className="group h-full overflow-hidden rounded-xl border border-border/50 bg-background/60 p-6 transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-amber-400/20">
                         <div
                           className="mb-3 text-[11px] text-muted-foreground/25"
-                          style={{ fontFamily: PIXEL_FONTS.circle }}
+                          style={{ fontFamily: FONTS.circle }}
                         >
                           {feat.num}
                         </div>
@@ -536,13 +539,13 @@ export default function LandingPage() {
                   <div className="max-w-xl">
                     <div
                       className="mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400"
-                      style={{ fontFamily: PIXEL_FONTS.triangle }}
+                      style={{ fontFamily: FONTS.triangle }}
                     >
                       {t("stepsLabel").toUpperCase()}
                     </div>
                     <h2
                       className="text-3xl tracking-tight sm:text-4xl"
-                      style={{ fontFamily: PIXEL_FONTS.grid }}
+                      style={{ fontFamily: FONTS.grid }}
                     >
                       {t("stepsTitle")}
                     </h2>
@@ -555,7 +558,7 @@ export default function LandingPage() {
                       <div className="relative">
                         <div
                           className="mb-4 text-7xl text-amber-500/12 dark:text-amber-400/10 sm:text-8xl"
-                          style={{ fontFamily: PIXEL_FONTS.circle, lineHeight: 1 }}
+                          style={{ fontFamily: FONTS.circle, lineHeight: 1 }}
                         >
                           {step.num}
                         </div>
@@ -566,7 +569,7 @@ export default function LandingPage() {
                         {i < steps.length - 1 && (
                           <div
                             className="pointer-events-none absolute top-9 right-0 hidden translate-x-1/2 text-xs tracking-widest text-muted-foreground/15 sm:block"
-                            style={{ fontFamily: PIXEL_FONTS.square }}
+                            style={{ fontFamily: FONTS.square }}
                           >
                             →
                           </div>
@@ -585,7 +588,7 @@ export default function LandingPage() {
                   <div className="py-24 sm:py-32">
                     <h2
                       className="max-w-xl text-3xl tracking-tight sm:text-4xl"
-                      style={{ fontFamily: PIXEL_FONTS.grid }}
+                      style={{ fontFamily: FONTS.grid }}
                     >
                       {t("ctaTitle")}
                     </h2>
@@ -609,7 +612,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2.5">
                       <div
                         className="flex h-6 w-6 items-center justify-center rounded bg-foreground text-[10px] text-background"
-                        style={{ fontFamily: PIXEL_FONTS.square }}
+                        style={{ fontFamily: FONTS.square }}
                       >
                         B
                       </div>
