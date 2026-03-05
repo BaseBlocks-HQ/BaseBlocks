@@ -13,7 +13,12 @@ import {
   VisualEditorStackIcon,
 } from "@/modules/elements/framework/icons";
 import { Button } from "@baseblocks/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@baseblocks/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { useConvexAuth } from "convex/react";
 import { ArrowRight, Blocks, FileText, GitFork, Github } from "lucide-react";
 import {
@@ -481,10 +486,6 @@ export default function LandingPage() {
                       <Github className="h-4 w-4" />
                       GitHub
                     </a>
-                    <div className="flex items-center gap-0.5">
-                      <LanguageSwitcher />
-                      <ModeToggle />
-                    </div>
                     {isLoading ? (
                       <Button variant="outline" size="sm" disabled>
                         {tc("loading")}
@@ -732,6 +733,9 @@ export default function LandingPage() {
                               }
                               className="z-[80] !w-auto !max-w-[96vw] overflow-visible border-none bg-transparent p-0 shadow-none sm:!max-w-[96vw]"
                             >
+                              <DialogTitle className="sr-only">
+                                {t(step.imageAltKey)}
+                              </DialogTitle>
                               <img
                                 src={step.imageSrc}
                                 alt={t(step.imageAltKey)}
@@ -786,15 +790,21 @@ export default function LandingPage() {
                         {t("footerCopyright")}
                       </span>
                     </div>
-                    <a
-                      href="https://github.com/naaiyy/BaseBlocks"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Github className="h-3.5 w-3.5" />
-                      GitHub
-                    </a>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        <LanguageSwitcher />
+                        <ModeToggle />
+                      </div>
+                      <a
+                        href="https://github.com/naaiyy/BaseBlocks"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <Github className="h-3.5 w-3.5" />
+                        GitHub
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>

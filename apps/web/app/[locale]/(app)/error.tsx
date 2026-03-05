@@ -13,12 +13,12 @@ export default function AppError({
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
       <h1 className="text-xl font-semibold">Something went wrong</h1>
-      <p className="text-muted-foreground text-sm">
+      <p className="text-muted-foreground max-w-2xl text-sm whitespace-pre-wrap break-words">
         {error.message || "An unexpected error occurred"}
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Button variant="outline" onClick={() => router.back()}>
           Go back
         </Button>
