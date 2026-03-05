@@ -21,6 +21,13 @@ export function ImageRenderer({ content }: ElementRendererProps<"image">) {
 
   // Determine if we have explicit dimensions from resizing
   const hasExplicitSize = content.width && content.height;
+  const imageStyle = hasExplicitSize
+    ? {
+        width: `${content.width}px`,
+        maxWidth: "100%",
+        height: "auto",
+      }
+    : undefined;
 
   return (
     <figure className="my-6">
@@ -35,14 +42,7 @@ export function ImageRenderer({ content }: ElementRendererProps<"image">) {
           content.objectFit === "fill" && "object-fill",
           !content.objectFit && hasExplicitSize && "object-cover",
         )}
-        style={
-          hasExplicitSize
-            ? {
-                width: `${content.width}px`,
-                height: `${content.height}px`,
-              }
-            : undefined
-        }
+        style={imageStyle}
         loading="lazy"
       />
       {content.caption && (
