@@ -68,14 +68,28 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       ? false
       : sessionResult === undefined
         ? null
-        : sessionResult.valid || false;
+        : sessionResult.valid;
 
-  // Side effect: clean up invalid session cookies
   useEffect(() => {
-    if (storedToken && sessionResult !== undefined && !sessionResult.valid) {
-      removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
+    if (!storedToken) {
+      if (justVerified) {
+        setJustVerified(false);
+      }
+      return;
     }
-  }, [storedToken, sessionResult, siteId]);
+
+    if (sessionResult === undefined) return;
+
+    if (sessionResult.valid) {
+      if (justVerified) {
+        setJustVerified(false);
+      }
+      return;
+    }
+
+    removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
+    setJustVerified(false);
+  }, [justVerified, storedToken, sessionResult, siteId]);
 
   // Focus input when gate is shown
   useEffect(() => {
@@ -99,7 +113,6 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
 
       setJustVerified(true);
-      setIsVerifying(false);
     } catch (err) {
       setError(
         err instanceof ConvexError
@@ -108,6 +121,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       );
       setCode("");
       inputRef.current?.focus();
+    } finally {
       setIsVerifying(false);
     }
   };
