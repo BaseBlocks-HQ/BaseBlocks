@@ -94,17 +94,18 @@ export function InvitationInbox({
       await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
       });
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
       await authClient.organization.setActive({
         organizationId: invitation.organizationId,
       });
       await syncMember({
         organizationId: invitation.organizationId,
       });
+      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to accept invitation",
       );
+      loadInvitations();
     } finally {
       setProcessingId(null);
     }

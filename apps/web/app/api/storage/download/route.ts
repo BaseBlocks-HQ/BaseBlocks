@@ -18,12 +18,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const VALID_PATH_RE = /^[a-zA-Z0-9/_.\-]+$/;
     if (
+      !VALID_PATH_RE.test(path) ||
       path.includes("..") ||
-      path.includes("./") ||
-      path.includes(".\\") ||
-      path.includes("\\") ||
-      path.includes("\0")
+      path.includes("//")
     ) {
       return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }

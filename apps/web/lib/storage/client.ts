@@ -124,8 +124,9 @@ export class EntityStorageClient {
    */
   generatePath(siteId: string, userId: string, filename: string): string {
     const timestamp = Date.now();
+    const random = Math.random().toString(36).slice(2, 8);
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-    return `/${this.workspaceTenantId}/documents/${siteId}/${userId}/${timestamp}_${sanitizedFilename}`;
+    return `/${this.workspaceTenantId}/documents/${siteId}/${userId}/${timestamp}_${random}_${sanitizedFilename}`;
   }
 
   /**

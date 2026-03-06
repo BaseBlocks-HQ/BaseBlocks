@@ -398,6 +398,7 @@ export const migrateSubpagesToPages = migrations.define({
 
             await ctx.db.insert("layouts", {
               pageId: childPageId,
+              siteId: page.siteId,
               type: "single",
               slots: [
                 {

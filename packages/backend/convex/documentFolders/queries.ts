@@ -83,11 +83,14 @@ export const getPath = query({
 
     await requireMember(ctx, site.teamId);
 
-    // Build path from folder to root
+    // Build path from folder to root (with cycle detection)
     const path: Array<{ _id: string; name: string }> = [];
+    const visited = new Set<string>();
     let current: typeof folder | null = folder;
 
     while (current) {
+      if (visited.has(current._id)) break; // Circular reference detected
+      visited.add(current._id);
       path.unshift({ _id: current._id, name: current.name });
       if (current.parentId) {
         current = await ctx.db.get(current.parentId);
@@ -160,11 +163,14 @@ export const getPathPublic = query({
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
 
-    // Build path from folder to root
+    // Build path from folder to root (with cycle detection)
     const path: Array<{ _id: string; name: string }> = [];
+    const visited = new Set<string>();
     let current: typeof folder | null = folder;
 
     while (current) {
+      if (visited.has(current._id)) break; // Circular reference detected
+      visited.add(current._id);
       path.unshift({ _id: current._id, name: current.name });
       if (current.parentId) {
         current = await ctx.db.get(current.parentId);

@@ -52,8 +52,11 @@ export function useDebounceCallback<T extends AnyFunction>(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      // Capture the callback at invocation time so a pending call
+      // always executes the callback that was current when scheduled
+      const capturedCallback = callbackRef.current;
       timeoutRef.current = setTimeout(() => {
-        callbackRef.current(...args);
+        capturedCallback(...args);
       }, delay);
     }) as T;
     return fn;
@@ -97,9 +100,12 @@ export function useDebounceCallbackWithFlush<T extends AnyFunction>(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      // Capture the callback at invocation time so a pending call
+      // always executes the callback that was current when scheduled
+      const capturedCallback = callbackRef.current;
       timeoutRef.current = setTimeout(() => {
         pendingArgsRef.current = null;
-        callbackRef.current(...args);
+        capturedCallback(...args);
       }, delay);
     }) as T;
 
