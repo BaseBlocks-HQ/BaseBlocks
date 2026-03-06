@@ -18,7 +18,7 @@ export function PublicSiteSkeleton() {
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r p-4">
           <nav className="space-y-1">
-            {sidebarSkeletonWidths.map((width, index) => (
+            {sidebarSkeletonWidths.map((width) => (
               <div
                 key={width}
                 className="flex items-center gap-2 px-2 py-2 rounded-md"

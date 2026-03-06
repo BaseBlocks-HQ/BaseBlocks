@@ -30,6 +30,7 @@ function CodeEditor({
   }, []);
 
   useEffect(() => {
+    void localText;
     requestAnimationFrame(autoResize);
   }, [autoResize, localText]);
 

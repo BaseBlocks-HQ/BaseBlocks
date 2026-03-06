@@ -24,8 +24,8 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useState } from "react";
 import { EditSiteDialog } from "./edit-site-dialog";
 

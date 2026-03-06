@@ -139,17 +139,10 @@ export function NavItem({
           style={{ paddingLeft: `${(depth + 1) * 12}px` }}
         >
           {hasChildren ? (
-            <span
-              role="button"
-              tabIndex={0}
+            <button
+              type="button"
               aria-label={isExpanded ? "Collapse section" : "Expand section"}
               onClick={handleToggleExpand}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleToggleExpand(e as unknown as React.MouseEvent);
-                }
-              }}
               className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {isExpanded ? (
@@ -157,7 +150,7 @@ export function NavItem({
               ) : (
                 <ChevronRight className="h-3.5 w-3.5" />
               )}
-            </span>
+            </button>
           ) : (
             <span className="w-4" />
           )}
@@ -195,17 +188,10 @@ export function NavItem({
       >
         {/* Expand/collapse toggle - inside the link like in editor */}
         {hasChildren ? (
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
             onClick={handleToggleExpand}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleToggleExpand(e as unknown as React.MouseEvent);
-              }
-            }}
             className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             {isExpanded ? (
@@ -213,7 +199,7 @@ export function NavItem({
             ) : (
               <ChevronRight className="h-3.5 w-3.5" />
             )}
-          </span>
+          </button>
         ) : (
           <span className="w-4" />
         )}

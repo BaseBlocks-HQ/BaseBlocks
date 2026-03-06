@@ -53,20 +53,18 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
 
   return (
     <div
+      role="presentation"
       className={cn(
         "group relative border rounded-lg transition-all cursor-pointer",
         isSelected
           ? "border-primary ring-2 ring-primary/20 bg-primary/5"
           : "border-border hover:border-muted-foreground/50",
       )}
-      role="button"
-      tabIndex={0}
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
         }
+        onSelect();
       }}
     >
       {/* Drag handle and actions */}

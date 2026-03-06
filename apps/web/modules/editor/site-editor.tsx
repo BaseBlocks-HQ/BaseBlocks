@@ -53,9 +53,11 @@ function useElementsLoader() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(elementModuleLoaders.map((loadModule) => loadModule())).then(() => {
-      if (!cancelled) setLoaded(true);
-    });
+    Promise.all(elementModuleLoaders.map((loadModule) => loadModule())).then(
+      () => {
+        if (!cancelled) setLoaded(true);
+      },
+    );
     return () => {
       cancelled = true;
     };

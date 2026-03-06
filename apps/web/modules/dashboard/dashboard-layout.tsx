@@ -1,8 +1,8 @@
 "use client";
 
 import { DashboardSkeleton } from "@/components/skeletons";
-import { useTeam } from "@/lib/data";
 import { redirect } from "@/i18n/navigation";
+import { useTeam } from "@/lib/data";
 import {
   SidebarInset,
   SidebarProvider,

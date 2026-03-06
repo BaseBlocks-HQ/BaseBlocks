@@ -133,7 +133,7 @@ export function MediaViewerModal() {
     try {
       await openInNewTab(currentFile.url, currentFile.contentType);
       setIsOpeningExternal(false);
-    } catch (err) {
+    } catch {
       setIsOpeningExternal(false);
     }
   };

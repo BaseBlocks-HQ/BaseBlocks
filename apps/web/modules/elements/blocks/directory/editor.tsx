@@ -63,9 +63,8 @@ export function DirectoryEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"directory">) {
   void id;
-  const [localContent, setLocalContent] = useOptimistic<DirectoryContent>(
-    content,
-  );
+  const [localContent, setLocalContent] =
+    useOptimistic<DirectoryContent>(content);
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);

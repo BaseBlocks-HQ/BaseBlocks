@@ -248,7 +248,6 @@ function LibraryDialogs({
   onConfirmDelete,
   onConfirmRename,
   onCreateFolder,
-  onDeleteDialogChange,
   onNewFolderDialogChange,
   onNewFolderNameChange,
   onRenameDialogChange,
@@ -263,7 +262,6 @@ function LibraryDialogs({
   onConfirmDelete: () => void;
   onConfirmRename: () => void;
   onCreateFolder: () => void;
-  onDeleteDialogChange: (open: boolean) => void;
   onNewFolderDialogChange: (open: boolean) => void;
   onNewFolderNameChange: (value: string) => void;
   onRenameDialogChange: (value: string) => void;
@@ -315,10 +313,7 @@ function LibraryDialogs({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={newFolderDialog}
-        onOpenChange={onNewFolderDialogChange}
-      >
+      <Dialog open={newFolderDialog} onOpenChange={onNewFolderDialogChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New folder</DialogTitle>
@@ -540,7 +535,9 @@ function useLibraryEditorController({
           libraries={libraries}
           newLibraryName={state.newLibraryName}
           onCreateLibrary={handleCreateLibrary}
-          onLibrarySelect={(value) => onUpdate({ ...content, libraryId: value })}
+          onLibrarySelect={(value) =>
+            onUpdate({ ...content, libraryId: value })
+          }
           onNameChange={(value) =>
             dispatch({ type: "setNewLibraryName", value })
           }
@@ -598,9 +595,7 @@ function useLibraryEditorController({
     <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30">
       <Popover
         open={state.breadcrumbOpen}
-        onOpenChange={(value) =>
-          dispatch({ type: "setBreadcrumbOpen", value })
-        }
+        onOpenChange={(value) => dispatch({ type: "setBreadcrumbOpen", value })}
       >
         <PopoverTrigger asChild>
           <button
@@ -822,9 +817,6 @@ function useLibraryEditorController({
       onConfirmDelete={handleDelete}
       onConfirmRename={handleRename}
       onCreateFolder={handleCreateFolder}
-      onDeleteDialogChange={(open) =>
-        !open && dispatch({ type: "closeDeleteDialog" })
-      }
       onNewFolderDialogChange={(open) =>
         dispatch(
           open ? { type: "openFolderDialog" } : { type: "closeFolderDialog" },
@@ -836,7 +828,9 @@ function useLibraryEditorController({
       onRenameDialogChange={(value) =>
         dispatch({
           type: "setRenameDialog",
-          value: state.renameDialog ? { ...state.renameDialog, name: value } : null,
+          value: state.renameDialog
+            ? { ...state.renameDialog, name: value }
+            : null,
         })
       }
       renameDialog={state.renameDialog}

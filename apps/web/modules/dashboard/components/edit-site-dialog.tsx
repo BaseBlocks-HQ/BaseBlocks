@@ -10,8 +10,8 @@ import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useRef, useState } from "react";
 
 interface EditSiteDialogProps {

@@ -12,8 +12,8 @@ import {
 import { Button } from "@baseblocks/ui/button";
 import { ArrowRight } from "lucide-react";
 import {
-  LazyMotion,
   LayoutGroup,
+  LazyMotion,
   domAnimation,
   useMotionValue,
   useMotionValueEvent,

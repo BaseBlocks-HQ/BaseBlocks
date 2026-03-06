@@ -166,20 +166,11 @@ export function EditableTabs({
           {items.map((item) => (
             <div
               key={item.id}
-              role="button"
-              tabIndex={0}
               className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors shrink-0 ${
                 item.id === activeId
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               }`}
-              onClick={() => onActiveChange(item.id)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onActiveChange(item.id);
-                }
-              }}
             >
               {editingId === item.id ? (
                 renderEditableInput(
@@ -188,15 +179,14 @@ export function EditableTabs({
                 )
               ) : (
                 <>
-                  <span
-                    className="max-w-[10rem] truncate"
-                    onDoubleClick={(event) => {
-                      event.stopPropagation();
-                      startRename(item.id);
-                    }}
+                  <button
+                    type="button"
+                    className="max-w-[10rem] truncate text-left"
+                    onClick={() => onActiveChange(item.id)}
+                    onDoubleClick={() => startRename(item.id)}
                   >
                     {item.label}
-                  </span>
+                  </button>
                   <button
                     type="button"
                     className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"

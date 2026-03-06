@@ -71,6 +71,7 @@ export function LayoutSlot({
 
   return (
     <div
+      role="presentation"
       className={cn(
         "min-h-[48px] rounded",
         // Empty state only - dashed border
@@ -81,19 +82,12 @@ export function LayoutSlot({
               "border-muted-foreground/20 hover:border-muted-foreground/30",
         // Non-empty state - no wrapper backgrounds, let blocks handle their own styling
       )}
-      role="button"
-      tabIndex={0}
-      onClick={(e) => {
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
+        }
         e.stopPropagation();
         onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          e.stopPropagation();
-          onSelect();
-        }
       }}
     >
       {isEmpty ? (
@@ -211,20 +205,14 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
+      role="presentation"
       className="group/block mb-3 min-w-0"
-      role="button"
-      tabIndex={0}
-      onClick={(e) => {
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
+        }
         e.stopPropagation();
         onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          e.stopPropagation();
-          onSelect();
-        }
       }}
     >
       {/* Block with inline toolbar */}

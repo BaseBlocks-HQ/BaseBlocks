@@ -1,13 +1,7 @@
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 export function EditorSkeleton() {
-  const sidebarSkeletonWidths = [
-    "80%-a",
-    "100%-b",
-    "60%-c",
-    "80%-d",
-    "100%-e",
-  ];
+  const sidebarSkeletonWidths = ["80%-a", "100%-b", "60%-c", "80%-d", "100%-e"];
 
   return (
     <div className="flex min-h-screen bg-background">

@@ -45,8 +45,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  // Tracks when user just verified via form submission (before cookie/query cycle catches up)
-  const [justVerified, setJustVerified] = useState(false);
+  const [hasOptimisticAccess, setHasOptimisticAccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const verifyAccessCode = useMutation(api.sharing.mutations.verifyAccessCode);
@@ -61,35 +60,20 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
     storedToken ? { siteId, sessionToken: storedToken } : "skip",
   );
 
-  // Derive hasAccess from token + session validation + just-verified flag
-  const hasAccess = justVerified
-    ? true
-    : !storedToken
-      ? false
-      : sessionResult === undefined
-        ? null
-        : sessionResult.valid;
+  const hasAccess =
+    hasOptimisticAccess && sessionResult === undefined
+      ? true
+      : !storedToken
+        ? false
+        : sessionResult === undefined
+          ? null
+          : sessionResult.valid;
 
   useEffect(() => {
-    if (!storedToken) {
-      if (justVerified) {
-        setJustVerified(false);
-      }
-      return;
+    if (storedToken && sessionResult !== undefined && !sessionResult.valid) {
+      removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
     }
-
-    if (sessionResult === undefined) return;
-
-    if (sessionResult.valid) {
-      if (justVerified) {
-        setJustVerified(false);
-      }
-      return;
-    }
-
-    removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
-    setJustVerified(false);
-  }, [justVerified, storedToken, sessionResult, siteId]);
+  }, [storedToken, sessionResult, siteId]);
 
   // Focus input when gate is shown
   useEffect(() => {
@@ -112,7 +96,8 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       // Store session token in cookie
       setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
 
-      setJustVerified(true);
+      setHasOptimisticAccess(true);
+      setIsVerifying(false);
     } catch (err) {
       setError(
         err instanceof ConvexError
@@ -121,7 +106,6 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       );
       setCode("");
       inputRef.current?.focus();
-    } finally {
       setIsVerifying(false);
     }
   };
@@ -211,16 +195,4 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       </div>
     </div>
   );
-}
-
-// Hook to get the session token for a site
-function useAccessSession(siteId: Id<"sites">): string | null {
-  // Read cookie synchronously — no effect needed
-  if (typeof document === "undefined") return null;
-  return getCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
-}
-
-// Function to clear the session (for logout or expired sessions)
-function clearAccessSession(siteId: Id<"sites">) {
-  removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
 }

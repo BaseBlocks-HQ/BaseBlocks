@@ -34,13 +34,6 @@ function revokeBlobUrl(url: string): void {
 }
 
 /**
- * Check if a URL is already a blob URL
- */
-function isBlobUrl(url: string): boolean {
-  return url.startsWith("blob:");
-}
-
-/**
  * Check if a content type is an Office document
  */
 function isOfficeDocument(contentType?: string): boolean {

@@ -108,15 +108,13 @@ export function NodeList({
             {childNodes.map((node) => (
               <SortableItem key={node.id} id={node.id}>
                 <div
-                  role="button"
-                  tabIndex={0}
+                  role="presentation"
                   className="group flex items-center gap-2 rounded-lg border border-transparent px-4 py-3 cursor-pointer transition-colors hover:bg-primary/5 hover:border-primary/20"
-                  onClick={() => onNavigateInto(node.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      onNavigateInto(node.id);
+                  onMouseDown={(e) => {
+                    if (e.button !== 0) {
+                      return;
                     }
+                    onNavigateInto(node.id);
                   }}
                 >
                   {editingId === node.id ? (

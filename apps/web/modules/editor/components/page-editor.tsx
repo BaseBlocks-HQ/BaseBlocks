@@ -44,6 +44,7 @@ function EmptyLayoutsState({
       className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
       role="presentation"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
     >
       <p className="text-muted-foreground text-sm mb-3">
         {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
@@ -306,16 +307,13 @@ export function PageEditor({
 
   return (
     <div
+      role="presentation"
       className="min-h-full w-full"
-      role="button"
-      tabIndex={0}
-      onClick={handleEditorClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          handleEditorClick();
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
         }
+        handleEditorClick();
       }}
     >
       <div

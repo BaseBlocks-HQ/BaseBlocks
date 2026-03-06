@@ -38,12 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MousePointerClick,
-  Plus,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, MousePointerClick } from "lucide-react";
 import { useOptimistic } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
@@ -303,7 +298,7 @@ export function DecisionTreeEditor({
 
   const resolvedActiveTreeId = trees.find((t) => t.id === activeTreeId)
     ? activeTreeId
-    : trees[0]?.id ?? "";
+    : (trees[0]?.id ?? "");
   const activeTree =
     trees.find((t) => t.id === resolvedActiveTreeId) ?? trees[0]!;
   const debouncedSave = useAutoSave(onUpdate, onSaveStatusChange);
@@ -434,9 +429,7 @@ export function DecisionTreeEditor({
       onRemoveTree={trees.length > 1 ? removeTree : undefined}
       onRenameTree={(treeId, label) => {
         updateTrees(
-          trees.map((tree) =>
-            tree.id === treeId ? { ...tree, label } : tree,
-          ),
+          trees.map((tree) => (tree.id === treeId ? { ...tree, label } : tree)),
         );
       }}
       onSwitchTree={switchTree}

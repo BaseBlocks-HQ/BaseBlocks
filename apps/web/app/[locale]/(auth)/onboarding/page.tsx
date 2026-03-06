@@ -19,8 +19,8 @@ import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
-import { redirect } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 
 export default function OnboardingPage() {

@@ -32,8 +32,8 @@ export function DeployDialog({
     setIsDeploying(true);
     void onDeploy(notes.trim() || undefined)
       .then(() => {
-      setNotes("");
-      onOpenChange(false);
+        setNotes("");
+        onOpenChange(false);
       })
       .finally(() => {
         setIsDeploying(false);

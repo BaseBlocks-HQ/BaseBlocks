@@ -8,10 +8,6 @@ export function useTeam(teamId?: Id<"teams">) {
   return useQuery(api.teams.queries.getMine, teamId ? { teamId } : {});
 }
 
-function useMyTeams() {
-  return useQuery(api.teams.queries.listMine);
-}
-
 export function useMembers(teamId: Id<"teams"> | undefined) {
   return useQuery(api.members.queries.list, teamId ? { teamId } : "skip");
 }

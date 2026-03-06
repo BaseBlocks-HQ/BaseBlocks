@@ -17,10 +17,7 @@ import { FieldPicker } from "./builder/field-picker";
 import { FieldSettingsPanel } from "./builder/field-settings";
 import { FormBuilderProvider } from "./builder/form-builder-context";
 
-export function FormEditor({
-  content,
-  ...props
-}: ElementEditorProps<"form">) {
+export function FormEditor({ content, ...props }: ElementEditorProps<"form">) {
   return (
     <FormEditorContent
       key={JSON.stringify(content)}

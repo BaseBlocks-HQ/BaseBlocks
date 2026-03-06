@@ -58,7 +58,11 @@ type MetadataFormAction =
       type: "reset";
       values: MetadataDialogProps["initialValues"];
     }
-  | { type: "setField"; field: keyof Omit<MetadataFormState, "isSaving" | "uploadingField">; value: string }
+  | {
+      type: "setField";
+      field: keyof Omit<MetadataFormState, "isSaving" | "uploadingField">;
+      value: string;
+    }
   | { type: "setSaving"; value: boolean }
   | { type: "setUploadingField"; value: MetadataAssetField | null };
 
@@ -295,10 +299,7 @@ export function MetadataDialog({
   const isOgImageUploading = state.uploadingField === "ogImage" && isUploading;
   const isMetadataUploading = state.uploadingField !== null && isUploading;
 
-  const handleImageUpload = async (
-    field: MetadataAssetField,
-    file?: File,
-  ) => {
+  const handleImageUpload = async (field: MetadataAssetField, file?: File) => {
     if (!file) {
       return;
     }

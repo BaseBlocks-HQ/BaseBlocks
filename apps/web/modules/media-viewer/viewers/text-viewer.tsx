@@ -56,6 +56,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   }, []);
 
   useEffect(() => {
+    void searchTerm;
     hasScrolledToMatch.current = false;
     firstMatchRef.current = null;
   }, [searchTerm]);

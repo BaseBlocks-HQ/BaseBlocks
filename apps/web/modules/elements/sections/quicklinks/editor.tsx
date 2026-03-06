@@ -343,8 +343,7 @@ export function QuicklinksEditor({
     content.links || [],
   );
   const editingData = state.mode === "editing" ? state.draft : null;
-  const editingId =
-    state.mode === "editing" ? (state.draft?.id ?? null) : null;
+  const editingId = state.mode === "editing" ? (state.draft?.id ?? null) : null;
   const isAddingNew = state.mode === "adding";
   const newLinkData = state.mode === "adding" ? state.draft : null;
 
@@ -373,10 +372,7 @@ export function QuicklinksEditor({
     });
   };
 
-  const handleImageUpload = async (
-    file: File,
-    linkId: string,
-  ) => {
+  const handleImageUpload = async (file: File, linkId: string) => {
     dispatch({ type: "setUploadingLinkId", value: linkId });
     const userId = user?.id;
     if (!userId) {

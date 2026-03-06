@@ -26,11 +26,11 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 20;
 const ZOOM_FACTOR = 0.04;
 
-async function renderMermaidSvg([
-  code,
-  resolvedTheme,
-  theme,
-]: [string, string, string | undefined]) {
+async function renderMermaidSvg([code, resolvedTheme, theme]: [
+  string,
+  string,
+  string | undefined,
+]) {
   const isDark = resolvedTheme === "dark";
   const preset = theme ? THEMES[theme] : undefined;
 

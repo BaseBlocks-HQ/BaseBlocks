@@ -69,9 +69,7 @@ function inboxReducer(state: InboxState, action: InboxAction): InboxState {
       return {
         ...state,
         processingId: null,
-        invitations: state.invitations.filter(
-          (inv) => inv.id !== action.id,
-        ),
+        invitations: state.invitations.filter((inv) => inv.id !== action.id),
       };
     case "PROCESS_ERROR":
       return { ...state, processingId: null, error: action.error };
@@ -130,7 +128,8 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "LOAD_ERROR",
-        error: err instanceof Error ? err.message : "Failed to load invitations",
+        error:
+          err instanceof Error ? err.message : "Failed to load invitations",
       });
     }
   };
@@ -154,7 +153,8 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "PROCESS_ERROR",
-        error: err instanceof Error ? err.message : "Failed to accept invitation",
+        error:
+          err instanceof Error ? err.message : "Failed to accept invitation",
       });
       loadInvitations();
     }
@@ -170,7 +170,8 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "PROCESS_ERROR",
-        error: err instanceof Error ? err.message : "Failed to decline invitation",
+        error:
+          err instanceof Error ? err.message : "Failed to decline invitation",
       });
     }
   };

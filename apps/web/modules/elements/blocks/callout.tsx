@@ -30,6 +30,7 @@ function CalloutEditor({
   }, []);
 
   useEffect(() => {
+    void localText;
     requestAnimationFrame(autoResize);
   }, [autoResize, localText]);
 

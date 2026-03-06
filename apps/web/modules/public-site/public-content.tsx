@@ -112,7 +112,9 @@ function PublicMainContent({
 }) {
   return (
     <div className="p-4 md:p-8">
-      <article className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}>
+      <article
+        className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
+      >
         <h1 className="text-3xl font-bold mb-8">{pageTitle}</h1>
         {hasTabs && (
           <div className="mb-8 flex justify-center">
@@ -138,7 +140,9 @@ function PublicMainContent({
             </aside>
           </div>
         ) : (
-          <div className="space-y-8">{mainLayouts.map(renderPublishedLayout)}</div>
+          <div className="space-y-8">
+            {mainLayouts.map(renderPublishedLayout)}
+          </div>
         )}
       </article>
     </div>

@@ -45,6 +45,7 @@ export function PageTabBar({
       className="group/tabbar mb-6 flex items-center justify-center gap-2"
       role="presentation"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
     >
       {showControls && (
         <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">

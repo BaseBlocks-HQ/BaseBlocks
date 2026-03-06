@@ -1,11 +1,11 @@
 "use client";
 
+import { EditableTabs } from "@/modules/elements/components/editable-tabs";
 import type {
   FlowchartDiagram,
   TabsDisplayMode,
 } from "@baseblocks/types/elements/blocks";
 import { Button } from "@baseblocks/ui/button";
-import { EditableTabs } from "@/modules/elements/components/editable-tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,20 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
 import { THEMES } from "beautiful-mermaid";
-import {
-  ChevronDown,
-  ChevronRight,
-  Palette,
-  Plus,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Palette, Plus } from "lucide-react";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 
@@ -78,7 +66,7 @@ export function DiagramEditor({
     (diagram) => diagram.id === activeTabId,
   )
     ? activeTabId
-    : diagrams[0]?.id ?? "";
+    : (diagrams[0]?.id ?? "");
   const activeDiagram =
     diagrams.find((diagram) => diagram.id === resolvedActiveTabId) ??
     diagrams[0];
@@ -137,9 +125,7 @@ export function DiagramEditor({
         }))}
         onActiveChange={setActiveTabId}
         onAdd={addDiagram}
-        onRemove={
-          allowEmpty || diagrams.length > 1 ? removeDiagram : undefined
-        }
+        onRemove={allowEmpty || diagrams.length > 1 ? removeDiagram : undefined}
         onRename={(diagramId, label) => {
           onChange(
             diagrams.map((diagram) =>

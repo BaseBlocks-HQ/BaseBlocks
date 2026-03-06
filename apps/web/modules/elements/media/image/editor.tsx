@@ -555,9 +555,7 @@ export function ImageEditor({
           id={id}
           onAltChange={(value) => dispatch({ type: "setAlt", value })}
           onCancel={handleCancelMeta}
-          onCaptionChange={(value) =>
-            dispatch({ type: "setCaption", value })
-          }
+          onCaptionChange={(value) => dispatch({ type: "setCaption", value })}
           onSave={handleSaveMeta}
         />
       )}

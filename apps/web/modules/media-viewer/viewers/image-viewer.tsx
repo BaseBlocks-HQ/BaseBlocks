@@ -197,7 +197,6 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
       ref={containerRef}
       role="application"
       aria-label={`Image viewer for ${file.filename}`}
-      tabIndex={0}
       className={cn(
         "h-full overflow-hidden flex items-center justify-center bg-muted/20",
         viewerState.isDragging ? "cursor-grabbing" : "cursor-grab",

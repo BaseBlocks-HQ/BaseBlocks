@@ -77,8 +77,8 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
     setIsSubmitting(true);
     void new Promise((resolve) => setTimeout(resolve, 1000))
       .then(() => {
-      setIsSubmitted(true);
-      toast.success("Form submitted successfully");
+        setIsSubmitted(true);
+        toast.success("Form submitted successfully");
       })
       .catch(() => {
         toast.error("Failed to submit form");

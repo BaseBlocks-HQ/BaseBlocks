@@ -57,22 +57,9 @@ export function FolderTreeItem({
 }: FolderTreeItemProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onSelect(folder._id);
-  };
-
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleExpand(folder._id);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      e.stopPropagation();
-      onSelect(folder._id);
-    }
   };
 
   return (
@@ -83,10 +70,6 @@ export function FolderTreeItem({
           isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50",
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onClick={handleClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
       >
         {/* Expand/collapse toggle */}
         <button
@@ -104,15 +87,18 @@ export function FolderTreeItem({
           )}
         </button>
 
-        {/* Folder icon */}
-        {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        ) : (
-          <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        )}
-
-        {/* Folder name */}
-        <span className="text-sm truncate flex-1">{folder.name}</span>
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-1 text-left"
+          onClick={() => onSelect(folder._id)}
+        >
+          {isExpanded ? (
+            <FolderOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          ) : (
+            <Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          )}
+          <span className="text-sm truncate flex-1">{folder.name}</span>
+        </button>
 
         {/* Actions menu */}
         <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
@@ -165,7 +151,6 @@ export function FolderTreeItem({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
       {/* Children */}
       {isExpanded && children}
     </div>

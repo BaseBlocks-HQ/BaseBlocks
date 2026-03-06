@@ -1,4 +1,3 @@
-
 export { useFileUpload } from "./hooks";
 export type { UploadState } from "./hooks";
 

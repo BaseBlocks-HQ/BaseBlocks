@@ -45,7 +45,9 @@ export function CustomizationConfigPanel({
       ? structuredClone(customization)
       : {};
     const newCopy = structuredClone(newCustomization);
-    const shouldTrackUndo = Boolean(editorCtx && !editorCtx.isUndoRedoExecuting);
+    const shouldTrackUndo = Boolean(
+      editorCtx && !editorCtx.isUndoRedoExecuting,
+    );
     const undoContext = shouldTrackUndo ? editorCtx : null;
 
     setIsSaving(true);

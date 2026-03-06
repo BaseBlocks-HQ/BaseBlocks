@@ -1,7 +1,7 @@
 "use client";
 
-import { getDisplayDomain } from "@/lib/url";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import { NavItem, SortablePageTree } from "@/modules/navigation";
@@ -29,8 +29,8 @@ import {
 } from "@baseblocks/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";

@@ -95,10 +95,3 @@ export function getViewer(contentType: string): ViewerConfig {
     component: UnknownViewer,
   };
 }
-
-/**
- * Check if a content type has a dedicated viewer
- */
-function hasViewer(contentType: string): boolean {
-  return viewerRegistry.some((v) => v.canHandle(contentType));
-}

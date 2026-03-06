@@ -222,14 +222,6 @@ export const registerElement = <T extends ElementType>(
 export const registerLayout = (entry: LayoutRegistryEntry) =>
   registry.registerLayout(entry);
 
-const getElement = <T extends ElementType>(type: T) => registry.get(type);
-
-const getLayoutEntry = (type: LayoutType) => registry.getLayout(type);
-
-const getAllElements = () => registry.getAll();
-
-const getAllLayouts = () => registry.getAllLayouts();
-
 export const getElementsByCategory = (category: ElementCategory) =>
   registry.getByCategory(category);
 
@@ -239,29 +231,11 @@ export const getElementEditor = <T extends ElementType>(type: T) =>
 export const getElementRenderer = <T extends ElementType>(type: T) =>
   registry.getRenderer(type);
 
-const getElementPreview = (type: ElementType | LayoutType) =>
-  registry.getPreview(type);
-
 export const getElementConfigPanel = <T extends ElementType>(type: T) =>
   registry.getConfigPanel(type);
 
 export const hasElementConfigPanel = (type: ElementType) =>
   registry.hasConfigPanel(type);
 
-const getElementLabel = (type: ElementType | LayoutType) =>
-  registry.getLabel(type);
-
-const getElementIcon = (type: ElementType | LayoutType) =>
-  registry.getIcon(type);
-
 export const getDefaultContent = <T extends ElementType>(type: T) =>
   registry.getDefaultContent(type);
-
-const isElementRegistered = (type: ElementType | LayoutType) =>
-  registry.isRegistered(type);
-
-const getRegisteredElementTypes = () => registry.getRegisteredTypes();
-
-const getRegisteredLayoutTypes = () => registry.getRegisteredLayoutTypes();
-
-const searchElements = (query: string) => registry.search(query);

@@ -49,10 +49,10 @@ export function CreateSubPageDialog({
       parentId: parentId as Id<"pages">,
     })
       .then(() => {
-      onOpenChange(false);
-      setTitle("");
-      setSlug("");
-      onSuccess?.();
+        onOpenChange(false);
+        setTitle("");
+        setSlug("");
+        onSuccess?.();
       })
       .catch((err) => {
         const message =

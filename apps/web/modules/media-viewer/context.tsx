@@ -36,14 +36,6 @@ export function useMediaViewer() {
   return context;
 }
 
-/**
- * Optional hook that returns null if not in provider
- * Useful for components that may or may not be inside a provider
- */
-function useMediaViewerOptional() {
-  return use(MediaViewerContext);
-}
-
 interface MediaViewerProviderProps {
   children: ReactNode;
 }

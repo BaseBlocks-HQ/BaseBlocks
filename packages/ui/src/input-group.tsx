@@ -77,7 +77,6 @@ function InputGroupAddon({
           e.currentTarget.parentElement?.querySelector("input")?.focus();
         }
       }}
-      tabIndex={0}
       {...props}
     />
   );

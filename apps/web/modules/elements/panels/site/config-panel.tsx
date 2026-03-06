@@ -213,7 +213,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSettings = async (settingKey: string, value: boolean) => {
     if (!site) return;
     const oldValue = (site.settings as Record<string, unknown>)[settingKey];
-    const shouldTrackUndo = Boolean(editorCtx && !editorCtx.isUndoRedoExecuting);
+    const shouldTrackUndo = Boolean(
+      editorCtx && !editorCtx.isUndoRedoExecuting,
+    );
     const undoContext = shouldTrackUndo ? editorCtx : null;
     try {
       await updateSite({
