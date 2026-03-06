@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Code } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useOptimistic, useRef } from "react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
@@ -17,7 +17,7 @@ function CodeEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"code">) {
-  const [localText, setLocalText] = useState(content.text || "");
+  const [localText, setLocalText] = useOptimistic(content.text || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
@@ -30,9 +30,8 @@ function CodeEditor({
   }, []);
 
   useEffect(() => {
-    setLocalText(content.text || "");
     requestAnimationFrame(autoResize);
-  }, [content.text, autoResize]);
+  }, [autoResize, localText]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;

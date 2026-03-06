@@ -22,7 +22,7 @@ import {
 import {
   type ReactNode,
   createContext,
-  useContext,
+  use,
   useEffect,
   useRef,
   useState,
@@ -44,7 +44,7 @@ interface TreeDndContextValue {
 const TreeDndContext = createContext<TreeDndContextValue | null>(null);
 
 export function useTreeDndContext() {
-  const ctx = useContext(TreeDndContext);
+  const ctx = use(TreeDndContext);
   if (!ctx) {
     throw new Error("useTreeDndContext must be used within TreeDndProvider");
   }
@@ -270,5 +270,3 @@ export function TreeDndProvider({
     </TreeDndContext.Provider>
   );
 }
-
-export type { TreeDndContextValue };

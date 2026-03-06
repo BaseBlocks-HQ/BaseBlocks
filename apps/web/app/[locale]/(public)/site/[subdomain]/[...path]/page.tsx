@@ -31,7 +31,7 @@ export default async function PublicSitePage({ params }: Props) {
         siteSlug={siteSlug}
         pagePath={pagePath}
       />
-      <PublicSitePageClient params={params} />
+      <PublicSitePageClient subdomain={subdomain} path={path} />
     </>
   );
 }

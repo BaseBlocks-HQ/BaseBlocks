@@ -93,8 +93,8 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
     try {
       await deleteLibrary({ libraryId });
       router.push("/dashboard/libraries");
+      setIsDeleting(false);
     } catch (_error) {
-    } finally {
       setIsDeleting(false);
     }
   };

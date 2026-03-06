@@ -24,7 +24,7 @@ export interface FieldSettingsProps {
   onChange: (field: FormField) => void;
 }
 
-export interface FieldRegistryEntry {
+interface FieldRegistryEntry {
   type: FormFieldType;
   label: string;
   icon: LucideIcon;
@@ -68,7 +68,7 @@ class FormFieldRegistry {
   }
 }
 
-export const fieldRegistry = new FormFieldRegistry();
+const fieldRegistry = new FormFieldRegistry();
 
 export const registerField = (entry: FieldRegistryEntry) =>
   fieldRegistry.register(entry);

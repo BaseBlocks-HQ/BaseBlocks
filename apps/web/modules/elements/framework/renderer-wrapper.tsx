@@ -1,5 +1,6 @@
 import { getElementRenderer } from "@/modules/elements/framework/registry";
 import type { AnyContent, ElementType } from "@baseblocks/types/elements";
+import { createElement } from "react";
 
 interface ElementRendererWrapperProps {
   id: string;
@@ -22,5 +23,5 @@ export function ElementRendererWrapper({
     return null;
   }
 
-  return <Renderer id={id} type={type} content={content} />;
+  return createElement(Renderer, { id, type, content });
 }

@@ -195,5 +195,3 @@ registerField({
   Renderer: RadioRenderer,
   Settings: RadioSettings,
 });
-
-export { RadioEditor, RadioRenderer, RadioSettings };

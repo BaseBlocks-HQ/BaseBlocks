@@ -7,7 +7,7 @@ import type { PageListItem } from "@baseblocks/types";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
 import { IconFile, IconHouse } from "nucleo-glass";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { TreeProjection } from "../tree";
 import {
   applyMove,
@@ -74,13 +74,12 @@ export function SortablePageTree({
     hasChildrenMap.set(page._id, has);
   }
 
-  // Clear optimistic state when server catches up
-  useEffect(() => {
-    if (!pendingMutation) return;
-    if (hashPages(allPages) === hashPages(pendingMutation.pages)) {
-      setPendingMutation(null);
-    }
-  }, [allPages, pendingMutation]);
+  if (
+    pendingMutation &&
+    hashPages(allPages) === hashPages(pendingMutation.pages)
+  ) {
+    setPendingMutation(null);
+  }
 
   // ---- Drag handlers ----
 
@@ -116,12 +115,14 @@ export function SortablePageTree({
     }
 
     // Persist to backend — convert null parentId to undefined for Convex
+    const newParentId = projection.parentId
+      ? (projection.parentId as Id<"pages">)
+      : undefined;
+
     try {
       await movePage({
         pageId: event.active.id as Id<"pages">,
-        newParentId: projection.parentId
-          ? (projection.parentId as Id<"pages">)
-          : undefined,
+        newParentId,
         newOrder: projection.order,
       });
     } catch {

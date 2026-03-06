@@ -20,7 +20,7 @@ import {
 } from "@baseblocks/ui/resizable";
 import { SidebarProvider } from "@baseblocks/ui/sidebar";
 import { useMutation } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   ConnectedPageEditor,
@@ -35,6 +35,14 @@ interface SiteEditorProps {
   siteId: string;
 }
 
+const elementModuleLoaders = [
+  () => import("@/modules/elements/layouts"),
+  () => import("@/modules/elements/blocks"),
+  () => import("@/modules/elements/sections"),
+  () => import("@/modules/elements/media"),
+  () => import("@/modules/elements/forms"),
+];
+
 /**
  * Lazily loads element registration modules via dynamic import().
  * In dev mode this defers compilation of 100+ element files until after
@@ -45,13 +53,7 @@ function useElementsLoader() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      import("@/modules/elements/layouts"),
-      import("@/modules/elements/blocks"),
-      import("@/modules/elements/sections"),
-      import("@/modules/elements/media"),
-      import("@/modules/elements/forms"),
-    ]).then(() => {
+    Promise.all(elementModuleLoaders.map((loadModule) => loadModule())).then(() => {
       if (!cancelled) setLoaded(true);
     });
     return () => {
@@ -102,42 +104,43 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   // Create a portal container for Radix portals within the editor content area.
   // This div lives at document.body level (no layout impact) but carries the
   // customization CSS variables so portaled elements inherit the right styles.
-  const [portalContainer, setPortalContainer] = useState<
-    HTMLElement | undefined
-  >(undefined);
-  const portalContainerRef = useRef<HTMLDivElement | null>(null);
+  const portalContainer = useMemo(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
 
-  useEffect(() => {
-    const el = document.createElement("div");
-    el.id = "editor-portal-container";
-    document.body.appendChild(el);
-    portalContainerRef.current = el;
-    setPortalContainer(el);
-
-    return () => {
-      document.body.removeChild(el);
-      portalContainerRef.current = null;
-    };
+    const element = document.createElement("div");
+    element.id = "editor-portal-container";
+    return element;
   }, []);
+
+  // Mount/unmount the portal container element
+  useEffect(() => {
+    if (!portalContainer) return;
+
+    document.body.appendChild(portalContainer);
+    return () => {
+      document.body.removeChild(portalContainer);
+    };
+  }, [portalContainer]);
 
   // Sync customization styles and data attribute onto the portal container
   useEffect(() => {
-    const el = portalContainerRef.current;
-    if (!el) return;
+    if (!portalContainer) return;
 
     // Apply CSS variables
     for (const [key, value] of Object.entries(customizationStyles)) {
       if (typeof value === "string") {
-        el.style.setProperty(key, value);
+        portalContainer.style.setProperty(key, value);
       }
     }
 
     if (isCustomized) {
-      el.setAttribute("data-site-customized", "");
+      portalContainer.setAttribute("data-site-customized", "");
     } else {
-      el.removeAttribute("data-site-customized");
+      portalContainer.removeAttribute("data-site-customized");
     }
-  }, [customizationStyles, isCustomized]);
+  }, [portalContainer, customizationStyles, isCustomized]);
 
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);

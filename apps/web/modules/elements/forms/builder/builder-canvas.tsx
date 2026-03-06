@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { FormField } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { createElement } from "react";
 import { getFieldEditor } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
@@ -58,6 +59,8 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
           ? "border-primary ring-2 ring-primary/20 bg-primary/5"
           : "border-border hover:border-muted-foreground/50",
       )}
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -85,10 +88,10 @@ function FieldItem({ field, index, isSelected, onSelect }: FieldItemProps) {
 
       {/* Field content */}
       <div className="p-4">
-        <Editor
-          field={field}
-          onChange={(updated) => updateField(field.id, updated)}
-        />
+        {createElement(Editor, {
+          field,
+          onChange: (updated: FormField) => updateField(field.id, updated),
+        })}
       </div>
 
       {/* Quick actions */}

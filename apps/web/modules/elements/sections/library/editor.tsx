@@ -48,42 +48,316 @@ import {
   Plus,
   Upload,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import { toast } from "sonner";
 import { FileItem } from "./components/file-item";
 import { FolderItem } from "./components/folder-item";
 import { useContainerWidth } from "./hooks/use-container-width";
 
-export function LibraryEditor({
+interface LibraryDialogState {
+  id: string;
+  name: string;
+  type: "file" | "folder";
+}
+
+interface LibraryEditorState {
+  breadcrumbOpen: boolean;
+  deleteDialog: LibraryDialogState | null;
+  expandedFolders: Set<string>;
+  folderMenuOpen: boolean;
+  newFolderDialog: boolean;
+  newFolderName: string;
+  newLibraryName: string;
+  renameDialog: LibraryDialogState | null;
+  selectedFolderId: string | null;
+}
+
+type LibraryEditorAction =
+  | { type: "closeDeleteDialog" }
+  | { type: "closeFolderDialog" }
+  | { type: "closeRenameDialog" }
+  | { type: "openDeleteDialog"; value: LibraryDialogState }
+  | { type: "openFolderDialog" }
+  | { type: "openRenameDialog"; value: LibraryDialogState }
+  | { type: "selectFolder"; value: string | null; closeMenu?: boolean }
+  | { type: "setBreadcrumbOpen"; value: boolean }
+  | { type: "setDeleteDialog"; value: LibraryDialogState | null }
+  | { type: "setFolderMenuOpen"; value: boolean }
+  | { type: "setNewFolderName"; value: string }
+  | { type: "setNewLibraryName"; value: string }
+  | { type: "setRenameDialog"; value: LibraryDialogState | null }
+  | { type: "toggleFolder"; value: string };
+
+function createLibraryEditorState(): LibraryEditorState {
+  return {
+    breadcrumbOpen: false,
+    deleteDialog: null,
+    expandedFolders: new Set<string>(),
+    folderMenuOpen: false,
+    newFolderDialog: false,
+    newFolderName: "",
+    newLibraryName: "",
+    renameDialog: null,
+    selectedFolderId: null,
+  };
+}
+
+function libraryEditorReducer(
+  state: LibraryEditorState,
+  action: LibraryEditorAction,
+): LibraryEditorState {
+  switch (action.type) {
+    case "closeDeleteDialog":
+      return { ...state, deleteDialog: null };
+    case "closeFolderDialog":
+      return { ...state, newFolderDialog: false, newFolderName: "" };
+    case "closeRenameDialog":
+      return { ...state, renameDialog: null };
+    case "openDeleteDialog":
+      return { ...state, deleteDialog: action.value };
+    case "openFolderDialog":
+      return { ...state, folderMenuOpen: false, newFolderDialog: true };
+    case "openRenameDialog":
+      return { ...state, renameDialog: action.value };
+    case "selectFolder": {
+      const expandedFolders = new Set(state.expandedFolders);
+      if (action.value) {
+        expandedFolders.add(action.value);
+      }
+      return {
+        ...state,
+        breadcrumbOpen: false,
+        expandedFolders,
+        folderMenuOpen: action.closeMenu ? false : state.folderMenuOpen,
+        selectedFolderId: action.value,
+      };
+    }
+    case "setBreadcrumbOpen":
+      return { ...state, breadcrumbOpen: action.value };
+    case "setDeleteDialog":
+      return { ...state, deleteDialog: action.value };
+    case "setFolderMenuOpen":
+      return { ...state, folderMenuOpen: action.value };
+    case "setNewFolderName":
+      return { ...state, newFolderName: action.value };
+    case "setNewLibraryName":
+      return { ...state, newLibraryName: action.value };
+    case "setRenameDialog":
+      return { ...state, renameDialog: action.value };
+    case "toggleFolder": {
+      const expandedFolders = new Set(state.expandedFolders);
+      if (expandedFolders.has(action.value)) {
+        expandedFolders.delete(action.value);
+      } else {
+        expandedFolders.add(action.value);
+      }
+      return { ...state, expandedFolders };
+    }
+    default:
+      return state;
+  }
+}
+
+function LibraryPicker({
+  libraries,
+  newLibraryName,
+  onCreateLibrary,
+  onLibrarySelect,
+  onNameChange,
+}: {
+  libraries: { _id: string; name: string }[] | undefined;
+  newLibraryName: string;
+  onCreateLibrary: () => void;
+  onLibrarySelect: (value: string) => void;
+  onNameChange: (value: string) => void;
+}) {
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <p className="text-sm text-muted-foreground text-center">
+        Select or create a document library
+      </p>
+      {libraries && libraries.length > 0 && (
+        <Select onValueChange={onLibrarySelect}>
+          <SelectTrigger className="text-sm">
+            <SelectValue placeholder="Select library..." />
+          </SelectTrigger>
+          <SelectContent>
+            {libraries.map((library) => (
+              <SelectItem key={library._id} value={library._id}>
+                {library.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      <div className="flex gap-2">
+        <Input
+          placeholder="New library name"
+          value={newLibraryName}
+          onChange={(event) => onNameChange(event.target.value)}
+          onKeyDown={(event) => event.key === "Enter" && onCreateLibrary()}
+          className="text-sm"
+        />
+        <Button
+          size="sm"
+          onClick={onCreateLibrary}
+          disabled={!newLibraryName.trim()}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function FolderMenuContent({
+  breadcrumbNavContent,
+  children,
+  onNewFolder,
+}: {
+  breadcrumbNavContent: React.ReactNode;
+  children: React.ReactNode;
+  onNewFolder: () => void;
+}) {
+  return (
+    <div className="flex flex-col max-h-72 overflow-hidden">
+      <div className="border-b">{breadcrumbNavContent}</div>
+      <div className="flex-1 overflow-auto py-1">{children}</div>
+      <div className="border-t p-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-xs h-7"
+          onClick={onNewFolder}
+        >
+          <FolderPlus className="h-3 w-3 mr-2" />
+          New folder
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function LibraryDialogs({
+  deleteDialog,
+  newFolderDialog,
+  newFolderName,
+  onCloseDelete,
+  onCloseNewFolder,
+  onCloseRename,
+  onConfirmDelete,
+  onConfirmRename,
+  onCreateFolder,
+  onDeleteDialogChange,
+  onNewFolderDialogChange,
+  onNewFolderNameChange,
+  onRenameDialogChange,
+  renameDialog,
+}: {
+  deleteDialog: LibraryDialogState | null;
+  newFolderDialog: boolean;
+  newFolderName: string;
+  onCloseDelete: () => void;
+  onCloseNewFolder: () => void;
+  onCloseRename: () => void;
+  onConfirmDelete: () => void;
+  onConfirmRename: () => void;
+  onCreateFolder: () => void;
+  onDeleteDialogChange: (open: boolean) => void;
+  onNewFolderDialogChange: (open: boolean) => void;
+  onNewFolderNameChange: (value: string) => void;
+  onRenameDialogChange: (value: string) => void;
+  renameDialog: LibraryDialogState | null;
+}) {
+  return (
+    <>
+      <Dialog
+        open={Boolean(renameDialog)}
+        onOpenChange={(open) => !open && onCloseRename()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename {renameDialog?.type}</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={renameDialog?.name || ""}
+            onChange={(event) => onRenameDialogChange(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && onConfirmRename()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={onCloseRename}>
+              Cancel
+            </Button>
+            <Button onClick={onConfirmRename}>Rename</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(deleteDialog)}
+        onOpenChange={(open) => !open && onCloseDelete()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {deleteDialog?.type}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete "{deleteDialog?.name}"?
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCloseDelete}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={onConfirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={newFolderDialog}
+        onOpenChange={onNewFolderDialogChange}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New folder</DialogTitle>
+          </DialogHeader>
+          <Input
+            placeholder="Folder name"
+            value={newFolderName}
+            onChange={(event) => onNewFolderNameChange(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && onCreateFolder()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={onCloseNewFolder}>
+              Cancel
+            </Button>
+            <Button onClick={onCreateFolder} disabled={!newFolderName.trim()}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function useLibraryEditorController({
   content,
   onUpdate,
-}: ElementEditorProps<"library">) {
+}: Pick<ElementEditorProps<"library">, "content" | "onUpdate">) {
   const { siteId } = useEditorContext();
   const { openFile } = useMediaViewer();
   const [containerRef, containerWidth] = useContainerWidth();
 
   const showFolderTree = content.showFolderTree !== false;
   const showSidebar = containerWidth >= 400 && showFolderTree;
-
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(),
+  const [state, dispatch] = useReducer(
+    libraryEditorReducer,
+    undefined,
+    createLibraryEditorState,
   );
-  const [newLibraryName, setNewLibraryName] = useState("");
-  const [folderMenuOpen, setFolderMenuOpen] = useState(false);
-  const [breadcrumbOpen, setBreadcrumbOpen] = useState(false);
-  const [renameDialog, setRenameDialog] = useState<{
-    type: "file" | "folder";
-    id: string;
-    name: string;
-  } | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    type: "file" | "folder";
-    id: string;
-    name: string;
-  } | null>(null);
-  const [newFolderDialog, setNewFolderDialog] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { libraries, create: createLibrary } = useDocumentLibrary(
@@ -100,8 +374,8 @@ export function LibraryEditor({
     remove: removeFolder,
   } = useFolderOperations(libraryId);
 
-  const folderId = selectedFolderId
-    ? (selectedFolderId as Id<"documentFolders">)
+  const folderId = state.selectedFolderId
+    ? (state.selectedFolderId as Id<"documentFolders">)
     : null;
   const {
     files,
@@ -130,18 +404,11 @@ export function LibraryEditor({
   const hasChildren = (id: string) => (folderTree.get(id)?.length || 0) > 0;
 
   const toggleFolder = (id: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    dispatch({ type: "toggleFolder", value: id });
   };
 
   const selectFolder = (id: string | null, closeMenu = false) => {
-    setSelectedFolderId(id);
-    if (id) setExpandedFolders((prev) => new Set(prev).add(id));
-    if (closeMenu) setFolderMenuOpen(false);
-    setBreadcrumbOpen(false);
+    dispatch({ type: "selectFolder", value: id, closeMenu });
   };
 
   const handleFilesAccepted = async (acceptedFiles: File[]) => {
@@ -166,57 +433,63 @@ export function LibraryEditor({
   };
 
   const handleRename = async () => {
-    if (!renameDialog) return;
+    if (!state.renameDialog) return;
     try {
-      if (renameDialog.type === "folder") {
+      if (state.renameDialog.type === "folder") {
         await renameFolder(
-          renameDialog.id as Id<"documentFolders">,
-          renameDialog.name,
+          state.renameDialog.id as Id<"documentFolders">,
+          state.renameDialog.name,
         );
       } else {
-        await renameFile(renameDialog.id as Id<"documents">, renameDialog.name);
+        await renameFile(
+          state.renameDialog.id as Id<"documents">,
+          state.renameDialog.name,
+        );
       }
       toast.success("Renamed");
-      setRenameDialog(null);
+      dispatch({ type: "closeRenameDialog" });
     } catch {
       toast.error("Failed to rename");
     }
   };
 
   const handleDelete = async () => {
-    if (!deleteDialog) return;
+    if (!state.deleteDialog) return;
     try {
-      if (deleteDialog.type === "folder") {
-        await removeFolder(deleteDialog.id as Id<"documentFolders">);
-        if (selectedFolderId === deleteDialog.id) setSelectedFolderId(null);
+      if (state.deleteDialog.type === "folder") {
+        await removeFolder(state.deleteDialog.id as Id<"documentFolders">);
+        if (state.selectedFolderId === state.deleteDialog.id) {
+          dispatch({ type: "selectFolder", value: null });
+        }
       } else {
-        await removeFile(deleteDialog.id as Id<"documents">);
+        await removeFile(state.deleteDialog.id as Id<"documents">);
       }
       toast.success("Deleted");
-      setDeleteDialog(null);
+      dispatch({ type: "closeDeleteDialog" });
     } catch {
       toast.error("Failed to delete");
     }
   };
 
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
+    const folderName = state.newFolderName.trim();
+    const parentFolderId = folderId ?? undefined;
+    if (!folderName) return;
     try {
-      await createFolder(newFolderName.trim(), folderId ?? undefined);
+      await createFolder(folderName, parentFolderId);
       toast.success("Folder created");
-      setNewFolderName("");
-      setNewFolderDialog(false);
+      dispatch({ type: "closeFolderDialog" });
     } catch {
       toast.error("Failed to create folder");
     }
   };
 
   const handleCreateLibrary = async () => {
-    if (!newLibraryName.trim()) return;
+    if (!state.newLibraryName.trim()) return;
     try {
-      const id = await createLibrary(newLibraryName.trim());
+      const id = await createLibrary(state.newLibraryName.trim());
       await onUpdate({ ...content, libraryId: id });
-      setNewLibraryName("");
+      dispatch({ type: "setNewLibraryName", value: "" });
       toast.success("Library created");
     } catch {
       toast.error("Failed to create library");
@@ -230,62 +503,52 @@ export function LibraryEditor({
         key={f._id}
         folder={f}
         level={level}
-        isSelected={selectedFolderId === f._id}
-        isExpanded={expandedFolders.has(f._id)}
+        isSelected={state.selectedFolderId === f._id}
+        isExpanded={state.expandedFolders.has(f._id)}
         hasChildren={hasChildren(f._id)}
         onSelect={() => selectFolder(f._id, !showSidebar)}
         onToggle={() => toggleFolder(f._id)}
         onRename={() =>
-          setRenameDialog({ type: "folder", id: f._id, name: f.name })
+          dispatch({
+            type: "openRenameDialog",
+            value: { type: "folder", id: f._id, name: f.name },
+          })
         }
         onDelete={() =>
-          setDeleteDialog({ type: "folder", id: f._id, name: f.name })
+          dispatch({
+            type: "openDeleteDialog",
+            value: { type: "folder", id: f._id, name: f.name },
+          })
         }
       >
-        {expandedFolders.has(f._id) && renderFolders(f._id, level + 1)}
+        {state.expandedFolders.has(f._id) && renderFolders(f._id, level + 1)}
       </FolderItem>
     ));
   };
 
-  // No library - show picker
   if (!content.libraryId) {
-    return (
-      <div ref={containerRef} className="border rounded-lg p-4 space-y-3">
-        <p className="text-sm text-muted-foreground text-center">
-          Select or create a document library
-        </p>
-        {libraries && libraries.length > 0 && (
-          <Select onValueChange={(v) => onUpdate({ ...content, libraryId: v })}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Select library..." />
-            </SelectTrigger>
-            <SelectContent>
-              {libraries.map((lib) => (
-                <SelectItem key={lib._id} value={lib._id}>
-                  {lib.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        <div className="flex gap-2">
-          <Input
-            placeholder="New library name"
-            value={newLibraryName}
-            onChange={(e) => setNewLibraryName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreateLibrary()}
-            className="text-sm"
-          />
-          <Button
-            size="sm"
-            onClick={handleCreateLibrary}
-            disabled={!newLibraryName.trim()}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    );
+    return {
+      containerRef,
+      dialogs: null,
+      fileList: null,
+      handleFilesAccepted: (_files: File[]) => {},
+      isUploading,
+      libraryId,
+      mobileHeader: null,
+      picker: (
+        <LibraryPicker
+          libraries={libraries}
+          newLibraryName={state.newLibraryName}
+          onCreateLibrary={handleCreateLibrary}
+          onLibrarySelect={(value) => onUpdate({ ...content, libraryId: value })}
+          onNameChange={(value) =>
+            dispatch({ type: "setNewLibraryName", value })
+          }
+        />
+      ),
+      showSidebar,
+      sidebar: null,
+    };
   }
 
   const sortedFiles = [...files].sort((a, b) =>
@@ -305,7 +568,7 @@ export function LibraryEditor({
         type="button"
         className={cn(
           "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-          !selectedFolderId && "bg-accent",
+          !state.selectedFolderId && "bg-accent",
         )}
         onClick={() => selectFolder(null)}
       >
@@ -333,7 +596,12 @@ export function LibraryEditor({
   // Sidebar header with breadcrumb and upload
   const sidebarHeader = (
     <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30">
-      <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
+      <Popover
+        open={state.breadcrumbOpen}
+        onOpenChange={(value) =>
+          dispatch({ type: "setBreadcrumbOpen", value })
+        }
+      >
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -383,35 +651,235 @@ export function LibraryEditor({
 
   // Mobile folder menu content
   const folderMenuContent = (
-    <div className="flex flex-col max-h-72 overflow-hidden">
-      {/* Breadcrumb nav in popover */}
-      <div className="border-b">{breadcrumbNavContent}</div>
-      {/* Folder list */}
+    <FolderMenuContent
+      breadcrumbNavContent={breadcrumbNavContent}
+      onNewFolder={() => dispatch({ type: "openFolderDialog" })}
+    >
+      {folders.length > 0 ? (
+        renderFolders()
+      ) : (
+        <p className="text-xs text-muted-foreground text-center py-3">
+          No folders
+        </p>
+      )}
+    </FolderMenuContent>
+  );
+
+  const sidebar = showSidebar ? (
+    <div className="flex flex-col w-40 border-r bg-muted/20 shrink-0 overflow-hidden">
+      {sidebarHeader}
       <div className="flex-1 overflow-auto py-1">
         {folders.length > 0 ? (
           renderFolders()
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-3">
+          <p className="text-xs text-muted-foreground text-center py-4">
             No folders
           </p>
         )}
       </div>
-      <div className="border-t p-2">
+      <div className="border-t p-1.5">
         <Button
           variant="outline"
           size="sm"
           className="w-full justify-start text-xs h-7"
-          onClick={() => {
-            setFolderMenuOpen(false);
-            setNewFolderDialog(true);
-          }}
+          onClick={() => dispatch({ type: "openFolderDialog" })}
         >
-          <FolderPlus className="h-3 w-3 mr-2" />
+          <FolderPlus className="h-3 w-3 mr-1.5" />
           New folder
         </Button>
       </div>
     </div>
+  ) : null;
+
+  const mobileHeader = !showSidebar ? (
+    <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
+      {showFolderTree && (
+        <>
+          <Popover
+            open={state.folderMenuOpen}
+            onOpenChange={(value) =>
+              dispatch({ type: "setFolderMenuOpen", value })
+            }
+          >
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                <Menu className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="start" className="w-56 p-0">
+              {folderMenuContent}
+            </PopoverContent>
+          </Popover>
+
+          <Popover
+            open={state.breadcrumbOpen}
+            onOpenChange={(value) =>
+              dispatch({ type: "setBreadcrumbOpen", value })
+            }
+          >
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
+              >
+                <Home className="h-3 w-3 shrink-0" />
+                {folderPath.length > 0 && (
+                  <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
+                )}
+                <span className="truncate">{currentLocation}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="start" className="w-48 p-0">
+              {breadcrumbNavContent}
+            </PopoverContent>
+          </Popover>
+        </>
+      )}
+
+      {!showFolderTree && (
+        <span className="text-xs text-muted-foreground flex-1">
+          {currentLibrary?.name || "Library"}
+        </span>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const acceptedFiles = Array.from(event.target.files || []);
+          if (acceptedFiles.length > 0) {
+            handleFilesAccepted(acceptedFiles);
+          }
+          event.target.value = "";
+        }}
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Upload className="h-3.5 w-3.5" />
+        )}
+      </Button>
+    </div>
+  ) : null;
+
+  const fileList = (
+    <div className="flex-1 min-w-0 overflow-auto p-1">
+      {sortedFiles.length > 0 ? (
+        sortedFiles.map((file) => (
+          <FileItem
+            key={file._id}
+            file={file}
+            onPreview={() => handlePreview(file)}
+            onRename={() =>
+              dispatch({
+                type: "openRenameDialog",
+                value: {
+                  type: "file",
+                  id: file._id,
+                  name: file.filename,
+                },
+              })
+            }
+            onDelete={() =>
+              dispatch({
+                type: "openDeleteDialog",
+                value: {
+                  type: "file",
+                  id: file._id,
+                  name: file.filename,
+                },
+              })
+            }
+          />
+        ))
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+          <File className="h-6 w-6 mb-1.5 opacity-50" />
+          <p className="text-xs">No files</p>
+          <p className="text-xs opacity-70">Drop files or click upload</p>
+        </div>
+      )}
+    </div>
   );
+
+  const dialogs = (
+    <LibraryDialogs
+      deleteDialog={state.deleteDialog}
+      newFolderDialog={state.newFolderDialog}
+      newFolderName={state.newFolderName}
+      onCloseDelete={() => dispatch({ type: "closeDeleteDialog" })}
+      onCloseNewFolder={() => dispatch({ type: "closeFolderDialog" })}
+      onCloseRename={() => dispatch({ type: "closeRenameDialog" })}
+      onConfirmDelete={handleDelete}
+      onConfirmRename={handleRename}
+      onCreateFolder={handleCreateFolder}
+      onDeleteDialogChange={(open) =>
+        !open && dispatch({ type: "closeDeleteDialog" })
+      }
+      onNewFolderDialogChange={(open) =>
+        dispatch(
+          open ? { type: "openFolderDialog" } : { type: "closeFolderDialog" },
+        )
+      }
+      onNewFolderNameChange={(value) =>
+        dispatch({ type: "setNewFolderName", value })
+      }
+      onRenameDialogChange={(value) =>
+        dispatch({
+          type: "setRenameDialog",
+          value: state.renameDialog ? { ...state.renameDialog, name: value } : null,
+        })
+      }
+      renameDialog={state.renameDialog}
+    />
+  );
+
+  return {
+    containerRef,
+    dialogs,
+    fileList,
+    handleFilesAccepted,
+    isUploading,
+    libraryId,
+    mobileHeader,
+    picker: null,
+    showSidebar,
+    sidebar,
+  };
+}
+
+export function LibraryEditor({
+  content,
+  onUpdate,
+}: ElementEditorProps<"library">) {
+  const {
+    containerRef,
+    dialogs,
+    fileList,
+    handleFilesAccepted,
+    isUploading,
+    libraryId,
+    mobileHeader,
+    picker,
+    showSidebar,
+    sidebar,
+  } = useLibraryEditorController({
+    content,
+    onUpdate,
+  });
+
+  if (!content.libraryId) {
+    return <div ref={containerRef}>{picker}</div>;
+  }
 
   return (
     <>
@@ -423,234 +891,16 @@ export function LibraryEditor({
       >
         <div ref={containerRef} className="border rounded-lg overflow-hidden">
           <div className="flex h-100">
-            {/* Sidebar - shown when container is wide enough */}
-            {showSidebar && (
-              <div className="flex flex-col w-40 border-r bg-muted/20 shrink-0 overflow-hidden">
-                {sidebarHeader}
-                <div className="flex-1 overflow-auto py-1">
-                  {folders.length > 0 ? (
-                    renderFolders()
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No folders
-                    </p>
-                  )}
-                </div>
-                <div className="border-t p-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start text-xs h-7"
-                    onClick={() => setNewFolderDialog(true)}
-                  >
-                    <FolderPlus className="h-3 w-3 mr-1.5" />
-                    New folder
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* File list area */}
+            {sidebar}
             <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-              {/* Header - show mobile folder nav OR simple upload bar */}
-              {!showSidebar && (
-                <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
-                  {showFolderTree && (
-                    <>
-                      <Popover
-                        open={folderMenuOpen}
-                        onOpenChange={setFolderMenuOpen}
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                          >
-                            <Menu className="h-3.5 w-3.5" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          side="bottom"
-                          align="start"
-                          className="w-56 p-0"
-                        >
-                          {folderMenuContent}
-                        </PopoverContent>
-                      </Popover>
-
-                      <Popover
-                        open={breadcrumbOpen}
-                        onOpenChange={setBreadcrumbOpen}
-                      >
-                        <PopoverTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
-                          >
-                            <Home className="h-3 w-3 shrink-0" />
-                            {folderPath.length > 0 && (
-                              <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
-                            )}
-                            <span className="truncate">{currentLocation}</span>
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          side="bottom"
-                          align="start"
-                          className="w-48 p-0"
-                        >
-                          {breadcrumbNavContent}
-                        </PopoverContent>
-                      </Popover>
-                    </>
-                  )}
-
-                  {!showFolderTree && (
-                    <span className="text-xs text-muted-foreground flex-1">
-                      {currentLibrary?.name || "Library"}
-                    </span>
-                  )}
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = Array.from(e.target.files || []);
-                      if (f.length) handleFilesAccepted(f);
-                      e.target.value = "";
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </div>
-              )}
-
-              {/* File list */}
-              <div className="flex-1 min-w-0 overflow-auto p-1">
-                {sortedFiles.length > 0 ? (
-                  sortedFiles.map((file) => (
-                    <FileItem
-                      key={file._id}
-                      file={file}
-                      onPreview={() => handlePreview(file)}
-                      onRename={() =>
-                        setRenameDialog({
-                          type: "file",
-                          id: file._id,
-                          name: file.filename,
-                        })
-                      }
-                      onDelete={() =>
-                        setDeleteDialog({
-                          type: "file",
-                          id: file._id,
-                          name: file.filename,
-                        })
-                      }
-                    />
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <File className="h-6 w-6 mb-1.5 opacity-50" />
-                    <p className="text-xs">No files</p>
-                    <p className="text-xs opacity-70">
-                      Drop files or click upload
-                    </p>
-                  </div>
-                )}
-              </div>
+              {!showSidebar && mobileHeader}
+              {fileList}
             </div>
           </div>
         </div>
       </DropZone>
 
-      {/* Rename dialog */}
-      <Dialog
-        open={!!renameDialog}
-        onOpenChange={(o) => !o && setRenameDialog(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename {renameDialog?.type}</DialogTitle>
-          </DialogHeader>
-          <Input
-            value={renameDialog?.name || ""}
-            onChange={(e) =>
-              setRenameDialog((p) => p && { ...p, name: e.target.value })
-            }
-            onKeyDown={(e) => e.key === "Enter" && handleRename()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialog(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRename}>Rename</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete dialog */}
-      <Dialog
-        open={!!deleteDialog}
-        onOpenChange={(o) => !o && setDeleteDialog(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {deleteDialog?.type}?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete "{deleteDialog?.name}"?
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New folder dialog */}
-      <Dialog open={newFolderDialog} onOpenChange={setNewFolderDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>New folder</DialogTitle>
-          </DialogHeader>
-          <Input
-            placeholder="Folder name"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewFolderDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateFolder}
-              disabled={!newFolderName.trim()}
-            >
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {dialogs}
     </>
   );
 }

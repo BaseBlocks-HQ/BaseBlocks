@@ -36,7 +36,7 @@ export interface LayoutSlotDoc {
   blocks: LayoutBlockDoc[];
 }
 
-export interface LayoutBlockDoc {
+interface LayoutBlockDoc {
   id: string;
   type: string;
   content: unknown;

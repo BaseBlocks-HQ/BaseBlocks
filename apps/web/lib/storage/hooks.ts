@@ -14,7 +14,7 @@ export interface UploadState {
   error: string | null;
 }
 
-export interface UploadOptions {
+interface UploadOptions {
   siteId: Id<"sites">;
   libraryId?: Id<"documentLibraries">;
   folderId?: Id<"documentFolders">;

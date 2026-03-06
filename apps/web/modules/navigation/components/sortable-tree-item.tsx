@@ -109,12 +109,13 @@ export function SortableTreeItem({
         )}
 
         {hasChildren ? (
-          <span
+          <button
+            type="button"
             onClick={handleToggleExpand}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                handleToggleExpand(e as unknown as React.MouseEvent);
+                onToggleExpand();
               }
             }}
             className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -124,7 +125,7 @@ export function SortableTreeItem({
             ) : (
               <ChevronRight className="h-3.5 w-3.5" />
             )}
-          </span>
+          </button>
         ) : (
           <span className="w-4" />
         )}

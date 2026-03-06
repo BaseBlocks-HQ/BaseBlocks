@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DropdownNavTree } from "./dropdown-nav-tree";
 
-export type HorizontalNavVariant = "topnav" | "tabbar";
+type HorizontalNavVariant = "topnav" | "tabbar";
 
 interface HorizontalNavItemProps {
   page: PageWithChildren;

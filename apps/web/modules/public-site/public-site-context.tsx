@@ -1,7 +1,7 @@
 "use client";
 
 import type { Id } from "@baseblocks/backend";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, use } from "react";
 
 interface PublicSiteContextValue {
   siteId: Id<"sites">;
@@ -30,7 +30,7 @@ export function PublicSiteProvider({
 }
 
 export function usePublicSiteContext() {
-  const context = useContext(PublicSiteContext);
+  const context = use(PublicSiteContext);
   if (!context) {
     throw new Error(
       "usePublicSiteContext must be used within PublicSiteProvider",
@@ -40,5 +40,5 @@ export function usePublicSiteContext() {
 }
 
 export function usePublicSiteContextOptional() {
-  return useContext(PublicSiteContext);
+  return use(PublicSiteContext);
 }

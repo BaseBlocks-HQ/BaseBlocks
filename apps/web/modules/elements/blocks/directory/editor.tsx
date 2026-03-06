@@ -35,7 +35,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useOptimistic, useRef, useState } from "react";
 import { csvToDirectoryContent, parseCSV } from "./csv-utils";
 
 const COLUMN_TYPE_OPTIONS: {
@@ -62,15 +62,13 @@ export function DirectoryEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"directory">) {
-  const [localContent, setLocalContent] = useState<DirectoryContent>(content);
+  void id;
+  const [localContent, setLocalContent] = useOptimistic<DirectoryContent>(
+    content,
+  );
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset local state only when block id changes
-  useEffect(() => {
-    setLocalContent(content);
-  }, [id]);
 
   const updateContent = (newContent: DirectoryContent) => {
     setLocalContent(newContent);
@@ -93,8 +91,9 @@ export function DirectoryEditor({
 
   const removeColumn = (colId: string) => {
     const newRows = localContent.rows.map((row) => {
-      const { [colId]: _, ...rest } = row.cells;
-      return { ...row, cells: rest };
+      const nextCells = { ...row.cells };
+      delete nextCells[colId];
+      return { ...row, cells: nextCells };
     });
     updateContent({
       ...localContent,
@@ -241,7 +240,6 @@ export function DirectoryEditor({
                               setEditingHeaderId(null);
                           }}
                           className="h-7 text-xs font-medium"
-                          autoFocus
                         />
                         <Select
                           value={colType}

@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useEffect, useRef, useState } from "react";
+import { useOptimistic } from "react";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
 function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
@@ -34,25 +34,14 @@ export function FlowchartEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"flowchart">) {
-  const [diagrams, setDiagrams] = useState<FlowchartDiagram[]>(() =>
+  const [diagrams, setDiagrams] = useOptimistic<FlowchartDiagram[]>(
     normalizeDiagrams(content),
   );
-  const [theme, setTheme] = useState<string | undefined>(content.theme);
-  const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
+  const [theme, setTheme] = useOptimistic<string | undefined>(content.theme);
+  const [tabsMode, setTabsMode] = useOptimistic<"row" | "dropdown">(
     content.tabsMode ?? "row",
   );
-  const themeRef = useRef(content.theme);
-  const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
-  const diagramsRef = useRef(diagrams);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
-
-  useEffect(() => {
-    setDiagrams(normalizeDiagrams(content));
-    setTheme(content.theme);
-    setTabsMode(content.tabsMode ?? "row");
-    themeRef.current = content.theme;
-    tabsModeRef.current = content.tabsMode ?? "row";
-  }, [content]);
 
   const buildContent = (
     d: FlowchartDiagram[],
@@ -67,23 +56,20 @@ export function FlowchartEditor({
 
   const handleChange = (updated: FlowchartDiagram[]) => {
     setDiagrams(updated);
-    diagramsRef.current = updated;
     onSaveStatusChange?.("pending");
-    save(buildContent(updated, themeRef.current, tabsModeRef.current));
+    save(buildContent(updated, theme, tabsMode));
   };
 
   const handleThemeChange = (newTheme: string | undefined) => {
     setTheme(newTheme);
-    themeRef.current = newTheme;
     onSaveStatusChange?.("pending");
-    save(buildContent(diagramsRef.current, newTheme, tabsModeRef.current));
+    save(buildContent(diagrams, newTheme, tabsMode));
   };
 
   const handleTabsModeChange = (mode: "row" | "dropdown") => {
     setTabsMode(mode);
-    tabsModeRef.current = mode;
     onSaveStatusChange?.("pending");
-    save(buildContent(diagramsRef.current, themeRef.current, mode));
+    save(buildContent(diagrams, theme, mode));
   };
 
   return (

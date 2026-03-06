@@ -10,8 +10,6 @@ import { DecisionTreePreview } from "./preview";
 import { DecisionTreeRenderer } from "./renderer";
 import { DecisionTreeEditor } from "./tree-editor";
 
-export { DecisionTreeEditor, DecisionTreeRenderer, DecisionTreePreview };
-
 registerElement({
   type: "decision-tree",
   category: "blocks",

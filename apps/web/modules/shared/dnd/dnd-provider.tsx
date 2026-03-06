@@ -100,4 +100,4 @@ export function DndProvider({
 }
 
 export { arrayMove } from "@dnd-kit/sortable";
-export type { DragEndEvent, DragStartEvent, UniqueIdentifier };
+export type { DragEndEvent };

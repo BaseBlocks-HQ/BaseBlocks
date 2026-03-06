@@ -2,6 +2,7 @@
 
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getPreviewSiteUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -23,6 +24,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { EditSiteDialog } from "./edit-site-dialog";
@@ -64,8 +66,8 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
     try {
       await deleteSite({ siteId: site._id as Id<"sites"> });
       setDeleteOpen(false);
+      setIsDeleting(false);
     } catch (_err) {
-    } finally {
       setIsDeleting(false);
     }
   };
@@ -78,10 +80,13 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
             {/* Logo */}
             <div className="flex-shrink-0">
               {site.logoUrl ? (
-                <img
-                  src={site.logoUrl}
+                <Image
+                  src={toProxyDownloadUrl(site.logoUrl)}
                   alt={site.name}
                   className="h-10 w-10 rounded-lg object-contain border bg-muted"
+                  width={40}
+                  height={40}
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">

@@ -11,8 +11,6 @@ import { BannerEditor } from "./editor";
 import { BannerPreview } from "./preview";
 import { BannerRenderer } from "./renderer";
 
-export { BannerEditor, BannerRenderer, BannerPreview, BannerConfigPanel };
-
 registerElement({
   type: "banner",
   category: "blocks",

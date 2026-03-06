@@ -7,6 +7,8 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 
+const EMPTY_PATH: string[] = [];
+
 interface SiteDoc {
   _id: Id<"sites">;
   name: string;
@@ -35,7 +37,7 @@ function getConvexClient(): ConvexHttpClient | null {
 export async function PublicSiteJsonLd({
   teamSlug,
   siteSlug,
-  pagePath = [],
+  pagePath = EMPTY_PATH,
 }: {
   teamSlug: string;
   siteSlug?: string;

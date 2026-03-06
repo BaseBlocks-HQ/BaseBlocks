@@ -28,12 +28,13 @@ interface SitesGridProps {
 
 export function SitesGrid({ sites, teamSlug }: SitesGridProps) {
   const t = useTranslations("dashboard");
+  const loadingCards = ["site-a", "site-b", "site-c"];
 
   if (sites === undefined) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <SiteCardSkeleton key={i} />
+        {loadingCards.map((cardId) => (
+          <SiteCardSkeleton key={cardId} />
         ))}
       </div>
     );

@@ -24,12 +24,177 @@ import {
   Type,
   Upload,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { MetadataDialog } from "./metadata-dialog";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
+}
+
+function SettingSection({
+  control,
+  description,
+  icon,
+  label,
+}: {
+  control: React.ReactNode;
+  description: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="space-y-3 border-t pt-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {icon}
+          <Label className="text-sm font-medium">{label}</Label>
+        </div>
+        {control}
+      </div>
+      <p className="text-xs text-muted-foreground ml-6">{description}</p>
+    </div>
+  );
+}
+
+function LogoUploadSection({
+  fileInputRef,
+  isUploading,
+  logoUrl,
+  onFilesAccepted,
+  uploadProgress,
+}: {
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isUploading: boolean;
+  logoUrl?: string;
+  onFilesAccepted: (files: File[]) => void;
+  uploadProgress: number;
+}) {
+  if (logoUrl) {
+    return (
+      <div className="ml-6 space-y-2">
+        <div className="flex items-center gap-3">
+          <Image
+            src={toProxyDownloadUrl(logoUrl)}
+            alt="Site logo"
+            className="h-10 w-10 rounded-md object-contain border bg-muted"
+            width={40}
+            height={40}
+            unoptimized
+          />
+          <div className="flex-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(event) => {
+                const files = Array.from(event.target.files || []);
+                if (files.length > 0) {
+                  onFilesAccepted(files);
+                }
+                event.target.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  {uploadProgress}%
+                </>
+              ) : (
+                <>
+                  <Upload className="h-3 w-3 mr-1" />
+                  Replace
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ml-6 space-y-2">
+      <DropZone
+        onFilesAccepted={onFilesAccepted}
+        accept={{
+          "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
+        }}
+        maxSize={5 * 1024 * 1024}
+        className="py-4"
+      >
+        <div className="flex flex-col items-center justify-center">
+          {isUploading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mb-1" />
+              <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
+            </>
+          ) : (
+            <>
+              <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
+              <p className="text-xs text-muted-foreground">Drop logo here</p>
+            </>
+          )}
+        </div>
+      </DropZone>
+    </div>
+  );
+}
+
+function SiteNameSection({
+  isEditing,
+  name,
+  onCancel,
+  onChange,
+  onEdit,
+  onSave,
+}: {
+  isEditing: boolean;
+  name: string;
+  onCancel: () => void;
+  onChange: (value: string) => void;
+  onEdit: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="ml-6 space-y-2">
+      {isEditing ? (
+        <div className="flex items-center gap-2">
+          <Input
+            value={name}
+            onChange={(event) => onChange(event.target.value)}
+            className="text-sm h-8"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") onSave();
+              if (event.key === "Escape") onCancel();
+            }}
+          />
+          <Button size="sm" className="h-8" onClick={onSave}>
+            Save
+          </Button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onEdit}
+          className={cn(
+            "w-full text-left px-3 py-2 rounded-md border text-sm",
+            "hover:bg-muted/50 transition-colors cursor-text",
+          )}
+        >
+          {name}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
@@ -38,26 +203,18 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorCtx = useEditorContextOptional();
-
-  // Local state for editing
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
 
-  // Sync local name with site data
-  useEffect(() => {
-    if (site?.name) {
-      setLocalName(site.name);
-    }
-  }, [site?.name]);
-
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
 
-  // Helper to update settings
   const updateSettings = async (settingKey: string, value: boolean) => {
     if (!site) return;
     const oldValue = (site.settings as Record<string, unknown>)[settingKey];
+    const shouldTrackUndo = Boolean(editorCtx && !editorCtx.isUndoRedoExecuting);
+    const undoContext = shouldTrackUndo ? editorCtx : null;
     try {
       await updateSite({
         siteId,
@@ -65,8 +222,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           [settingKey]: value,
         },
       });
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
-        editorCtx.pushCommand({
+      if (undoContext) {
+        undoContext.pushCommand({
           description: `Toggle ${settingKey}`,
           undo: async () => {
             await updateSite({
@@ -87,7 +244,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     }
   };
 
-  // Handle logo upload
   const handleLogoUpload = async (files: File[]) => {
     const file = files[0];
     if (!file) return;
@@ -130,7 +286,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     }
   };
 
-  // Handle name save
   const handleSaveName = async () => {
     if (!site || localName === site.name) {
       setIsEditingName(false);
@@ -139,6 +294,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
     const oldName = site.name;
     const newName = localName;
+    const undoContext =
+      editorCtx && !editorCtx.isUndoRedoExecuting ? editorCtx : null;
     try {
       await updateSite({
         siteId,
@@ -147,8 +304,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       setIsEditingName(false);
       toast.success("Site name updated");
 
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
-        editorCtx.pushCommand({
+      if (undoContext) {
+        undoContext.pushCommand({
           description: "Rename site",
           undo: async () => {
             await updateSite({ siteId, name: oldName });
@@ -171,7 +328,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     );
   }
 
-  // Settings with defaults
   const showHeader = site.settings.showHeader !== false;
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
@@ -189,139 +345,53 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         </p>
       </div>
 
-      {/* Header Visibility */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {showHeader ? (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            )}
-            <Label htmlFor="show-header" className="text-sm font-medium">
-              Show Header
-            </Label>
-          </div>
+      <SettingSection
+        control={
           <Switch
             id="show-header"
             checked={showHeader}
             onCheckedChange={(checked) => updateSettings("showHeader", checked)}
           />
-        </div>
-        <p className="text-xs text-muted-foreground -mt-2 ml-6">
-          Display the site header with logo and navigation
-        </p>
-      </div>
+        }
+        description="Display the site header with logo and navigation"
+        icon={
+          showHeader ? (
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <EyeOff className="h-4 w-4 text-muted-foreground" />
+          )
+        }
+        label="Show Header"
+      />
 
-      {/* Logo Settings - only show if header is visible */}
       {showHeader && (
-        <div className="space-y-3 border-t pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="show-logo" className="text-sm font-medium">
-                Show Logo
-              </Label>
-            </div>
+        <SettingSection
+          control={
             <Switch
               id="show-logo"
               checked={showLogo}
               onCheckedChange={(checked) => updateSettings("showLogo", checked)}
             />
-          </div>
-
-          {/* Logo Upload - only show if logo is enabled */}
-          {showLogo && (
-            <div className="ml-6 space-y-2">
-              {site.logoUrl ? (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={toProxyDownloadUrl(site.logoUrl)}
-                    alt="Site logo"
-                    className="h-10 w-10 rounded-md object-contain border bg-muted"
-                  />
-                  <div className="flex-1">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        if (files.length) handleLogoUpload(files);
-                        e.target.value = "";
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                          {uploadProgress}%
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-3 w-3 mr-1" />
-                          Replace
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <DropZone
-                  onFilesAccepted={handleLogoUpload}
-                  accept={{
-                    "image/*": [
-                      ".jpg",
-                      ".jpeg",
-                      ".png",
-                      ".gif",
-                      ".webp",
-                      ".svg",
-                    ],
-                  }}
-                  maxSize={5 * 1024 * 1024}
-                  className="py-4"
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mb-1" />
-                        <p className="text-xs text-muted-foreground">
-                          {uploadProgress}%
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
-                        <p className="text-xs text-muted-foreground">
-                          Drop logo here
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </DropZone>
-              )}
-            </div>
-          )}
-        </div>
+          }
+          description="Display your uploaded logo in the site header"
+          icon={<ImageIcon className="h-4 w-4 text-muted-foreground" />}
+          label="Show Logo"
+        />
       )}
 
-      {/* Site Name Settings - only show if header is visible */}
+      {showHeader && showLogo && (
+        <LogoUploadSection
+          fileInputRef={fileInputRef}
+          isUploading={isUploading}
+          logoUrl={site.logoUrl}
+          onFilesAccepted={handleLogoUpload}
+          uploadProgress={uploadProgress}
+        />
+      )}
+
       {showHeader && (
-        <div className="space-y-3 border-t pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Type className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="show-site-name" className="text-sm font-medium">
-                Show Site Name
-              </Label>
-            </div>
+        <SettingSection
+          control={
             <Switch
               id="show-site-name"
               checked={showSiteName}
@@ -329,60 +399,33 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 updateSettings("showSiteName", checked)
               }
             />
-          </div>
-
-          {/* Site Name Input - only show if name is enabled */}
-          {showSiteName && (
-            <div className="ml-6 space-y-2">
-              {isEditingName ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={localName}
-                    onChange={(e) => setLocalName(e.target.value)}
-                    className="text-sm h-8"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveName();
-                      if (e.key === "Escape") {
-                        setLocalName(site.name);
-                        setIsEditingName(false);
-                      }
-                    }}
-                  />
-                  <Button size="sm" className="h-8" onClick={handleSaveName}>
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(true)}
-                  className={cn(
-                    "w-full text-left px-3 py-2 rounded-md border text-sm",
-                    "hover:bg-muted/50 transition-colors cursor-text",
-                  )}
-                >
-                  {site.name}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+          }
+          description="Display your site name beside the logo"
+          icon={<Type className="h-4 w-4 text-muted-foreground" />}
+          label="Show Site Name"
+        />
       )}
 
-      {/* Header Search Settings - only show if header is visible */}
+      {showHeader && showSiteName && (
+        <SiteNameSection
+          isEditing={isEditingName}
+          name={localName}
+          onCancel={() => {
+            setLocalName(site.name);
+            setIsEditingName(false);
+          }}
+          onChange={setLocalName}
+          onEdit={() => {
+            setLocalName(site.name);
+            setIsEditingName(true);
+          }}
+          onSave={handleSaveName}
+        />
+      )}
+
       {showHeader && (
-        <div className="space-y-3 border-t pt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Label
-                htmlFor="show-header-search"
-                className="text-sm font-medium"
-              >
-                Search in Header
-              </Label>
-            </div>
+        <SettingSection
+          control={
             <Switch
               id="show-header-search"
               checked={showHeaderSearch}
@@ -390,20 +433,15 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
                 updateSettings("showHeaderSearch", checked)
               }
             />
-          </div>
-          <p className="text-xs text-muted-foreground ml-6">
-            Add a document search bar to the site header
-          </p>
-        </div>
+          }
+          description="Add a document search bar to the site header"
+          icon={<Search className="h-4 w-4 text-muted-foreground" />}
+          label="Search in Header"
+        />
       )}
 
-      {/* SEO & Metadata */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">SEO & Metadata</Label>
-          </div>
+      <SettingSection
+        control={
           <Button
             variant="outline"
             size="sm"
@@ -411,21 +449,14 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           >
             Configure
           </Button>
-        </div>
-        <p className="text-xs text-muted-foreground ml-6">
-          Set favicon, title, description, and social sharing metadata
-        </p>
-      </div>
+        }
+        description="Set favicon, title, description, and social sharing metadata"
+        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
+        label="SEO & Metadata"
+      />
 
-      {/* Breadcrumb Settings */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Route className="h-4 w-4 text-muted-foreground" />
-            <Label htmlFor="show-breadcrumbs" className="text-sm font-medium">
-              Show Breadcrumbs
-            </Label>
-          </div>
+      <SettingSection
+        control={
           <Switch
             id="show-breadcrumbs"
             checked={showBreadcrumbs}
@@ -433,11 +464,11 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
               updateSettings("showBreadcrumbs", checked)
             }
           />
-        </div>
-        <p className="text-xs text-muted-foreground ml-6">
-          Display the current page path below navigation
-        </p>
-      </div>
+        }
+        description="Display the current page path below navigation"
+        icon={<Route className="h-4 w-4 text-muted-foreground" />}
+        label="Show Breadcrumbs"
+      />
 
       <MetadataDialog
         open={metadataDialogOpen}

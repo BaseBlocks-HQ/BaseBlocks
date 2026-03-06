@@ -6,30 +6,23 @@ import { AccessGate, SitePrivate } from "@/modules/public-site";
 import { api } from "@baseblocks/backend";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { use, useEffect } from "react";
+import { redirect } from "next/navigation";
 
 type Props = {
-  params: Promise<{ subdomain: string }>;
+  subdomain: string;
 };
 
-export function SubdomainRootPageClient({ params }: Props) {
-  const { subdomain } = use(params);
-  const router = useRouter();
-
+export function SubdomainRootPageClient({ subdomain }: Props) {
   const siteData = useQuery(api.sites.queries.getWithDefaultPage, {
     teamSlug: subdomain,
   });
 
-  useEffect(() => {
-    if (siteData === undefined) return;
-    if (!siteData || !siteData.defaultPage) return;
-
+  if (siteData?.defaultPage) {
     const visibility = siteData.site.visibility ?? "public";
-    if (visibility === "private" || visibility === "password") return;
-
-    router.replace(getPageLink(siteData.site.slug, siteData.defaultPage.slug));
-  }, [siteData, router]);
+    if (visibility !== "private" && visibility !== "password") {
+      redirect(getPageLink(siteData.site.slug, siteData.defaultPage.slug));
+    }
+  }
 
   if (siteData?.site) {
     const visibility = siteData.site.visibility ?? "public";
@@ -57,11 +50,7 @@ function RedirectToDefaultPage({
   siteSlug,
   defaultPageSlug,
 }: { siteSlug: string; defaultPageSlug?: string }) {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace(getPageLink(siteSlug, defaultPageSlug ?? "home"));
-  }, [siteSlug, defaultPageSlug, router]);
+  redirect(getPageLink(siteSlug, defaultPageSlug ?? "home"));
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

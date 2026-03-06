@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { AlignLeft } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useOptimistic } from "react";
 import ContentEditable from "react-contenteditable";
 import type {
   ElementEditorProps,
@@ -18,14 +18,8 @@ function ParagraphEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"paragraph">) {
-  const [localText, setLocalText] = useState(content.text || "");
-  const contentRef = useRef(content.text || "");
+  const [localText, setLocalText] = useOptimistic(content.text || "");
   const save = useAutoSave(onUpdate, onSaveStatusChange);
-
-  useEffect(() => {
-    setLocalText(content.text || "");
-    contentRef.current = content.text || "";
-  }, [content.text]);
 
   const handleChange = (e: { target: { value: string } }) => {
     const plainText = e.target.value
@@ -36,7 +30,6 @@ function ParagraphEditor({
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">");
     setLocalText(plainText);
-    contentRef.current = plainText.trim() ? plainText : "";
     onSaveStatusChange?.("pending");
     save({ ...content, text: plainText });
   };
@@ -46,7 +39,7 @@ function ParagraphEditor({
   return (
     <div className="rounded-md px-2 py-2 transition-colors hover:bg-muted/50 relative">
       <ContentEditable
-        html={contentRef.current}
+        html={localText.trim() ? localText : ""}
         onChange={handleChange}
         className="w-full outline-none whitespace-pre-wrap"
       />

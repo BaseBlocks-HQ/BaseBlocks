@@ -134,5 +134,3 @@ registerField({
   Renderer: ShortTextRenderer,
   Settings: ShortTextSettings,
 });
-
-export { ShortTextEditor, ShortTextRenderer, ShortTextSettings };

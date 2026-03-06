@@ -29,7 +29,8 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useOptimistic, useReducer, useRef } from "react";
 import { toast } from "sonner";
 
 function generateId() {
@@ -78,17 +79,20 @@ function QuicklinkCard({
       </div>
 
       {/* Card */}
-      <a
-        href={link.url || "#"}
-        onClick={(e) => e.preventDefault()}
+      <button
+        type="button"
+        onClick={(e) => e.stopPropagation()}
         className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
       >
         <div className="w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
           {link.imageUrl ? (
-            <img
+            <Image
               src={link.imageUrl}
               alt={link.title || "Link"}
               className="w-full h-full object-cover"
+              width={48}
+              height={48}
+              unoptimized
             />
           ) : isApp ? (
             <AppWindow className="w-5 h-5 text-primary/70" />
@@ -99,7 +103,7 @@ function QuicklinkCard({
         <span className="text-sm font-medium text-center line-clamp-2 group-hover:text-primary">
           {link.title || "Untitled"}
         </span>
-      </a>
+      </button>
     </div>
   );
 }
@@ -157,10 +161,13 @@ function QuicklinkEditForm({
             className="w-12 h-12 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden hover:border-primary/50 transition-colors disabled:opacity-50"
           >
             {link.imageUrl ? (
-              <img
+              <Image
                 src={link.imageUrl}
                 alt={link.title || "Link cover"}
                 className="w-full h-full object-cover"
+                width={48}
+                height={48}
+                unoptimized
               />
             ) : isUploading ? (
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -275,6 +282,47 @@ function QuicklinkEditForm({
   );
 }
 
+interface QuicklinksEditorState {
+  draft: QuicklinkItem | null;
+  mode: "adding" | "editing" | "idle";
+  uploadingLinkId: string | null;
+}
+
+type QuicklinksEditorAction =
+  | { type: "finishEditing" }
+  | { type: "setUploadingLinkId"; value: string | null }
+  | { type: "startAdding"; draft: QuicklinkItem }
+  | { type: "startEditing"; draft: QuicklinkItem }
+  | { type: "updateDraft"; draft: QuicklinkItem };
+
+function createQuicklinksEditorState(): QuicklinksEditorState {
+  return {
+    draft: null,
+    mode: "idle",
+    uploadingLinkId: null,
+  };
+}
+
+function quicklinksEditorReducer(
+  state: QuicklinksEditorState,
+  action: QuicklinksEditorAction,
+): QuicklinksEditorState {
+  switch (action.type) {
+    case "finishEditing":
+      return { ...state, draft: null, mode: "idle", uploadingLinkId: null };
+    case "setUploadingLinkId":
+      return { ...state, uploadingLinkId: action.value };
+    case "startAdding":
+      return { ...state, draft: action.draft, mode: "adding" };
+    case "startEditing":
+      return { ...state, draft: action.draft, mode: "editing" };
+    case "updateDraft":
+      return { ...state, draft: action.draft };
+    default:
+      return state;
+  }
+}
+
 export function QuicklinksEditor({
   content,
   onUpdate,
@@ -285,66 +333,72 @@ export function QuicklinksEditor({
   const user = session?.user;
   const layoutContext = useLayoutContext();
   const isSidebar = layoutContext?.isSidebar ?? false;
+  const [state, dispatch] = useReducer(
+    quicklinksEditorReducer,
+    undefined,
+    createQuicklinksEditorState,
+  );
 
-  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(
+  const [savedLinks, setSavedLinks] = useOptimistic<QuicklinkItem[]>(
     content.links || [],
   );
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingData, setEditingData] = useState<QuicklinkItem | null>(null);
-  const [uploadingLinkId, setUploadingLinkId] = useState<string | null>(null);
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newLinkData, setNewLinkData] = useState<QuicklinkItem | null>(null);
-
-  useEffect(() => {
-    setSavedLinks(content.links || []);
-    setEditingId(null);
-    setEditingData(null);
-    setIsAddingNew(false);
-    setNewLinkData(null);
-  }, [content.links]);
+  const editingData = state.mode === "editing" ? state.draft : null;
+  const editingId =
+    state.mode === "editing" ? (state.draft?.id ?? null) : null;
+  const isAddingNew = state.mode === "adding";
+  const newLinkData = state.mode === "adding" ? state.draft : null;
 
   const persistLinks = async (links: QuicklinkItem[]) => {
     onSaveStatusChange?.("saving");
-    try {
-      await onUpdate({ links });
-      onSaveStatusChange?.("saved");
-      return true;
-    } catch {
-      onSaveStatusChange?.("idle");
-      toast.error("Failed to save");
-      return false;
+    return Promise.resolve(onUpdate({ links }))
+      .then(() => {
+        onSaveStatusChange?.("saved");
+        return true;
+      })
+      .catch(() => {
+        onSaveStatusChange?.("idle");
+        toast.error("Failed to save");
+        return false;
+      });
+  };
+
+  const applyUploadedImageUrl = (cdnUrl: string) => {
+    if (!state.draft) {
+      return;
     }
+
+    dispatch({
+      type: "updateDraft",
+      draft: { ...state.draft, imageUrl: cdnUrl },
+    });
   };
 
   const handleImageUpload = async (
     file: File,
     linkId: string,
-    isNew: boolean,
   ) => {
-    setUploadingLinkId(linkId);
+    dispatch({ type: "setUploadingLinkId", value: linkId });
+    const userId = user?.id;
+    if (!userId) {
+      toast.error("User not found");
+      dispatch({ type: "setUploadingLinkId", value: null });
+      return;
+    }
+    const timestamp = Date.now();
+    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const path = entityStorageClient.generatePath(
+      siteId,
+      userId,
+      `quicklink_${timestamp}_${sanitizedFilename}`,
+    );
     try {
-      if (!user?.id) throw new Error("User not found");
-
-      const timestamp = Date.now();
-      const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const path = entityStorageClient.generatePath(
-        siteId,
-        user.id,
-        `quicklink_${timestamp}_${sanitizedFilename}`,
-      );
-
       const { cdnUrl } = await entityStorageClient.upload(file, path);
-
-      if (isNew && newLinkData) {
-        setNewLinkData({ ...newLinkData, imageUrl: cdnUrl });
-      } else if (editingData) {
-        setEditingData({ ...editingData, imageUrl: cdnUrl });
-      }
+      applyUploadedImageUrl(cdnUrl);
       toast.success("Image uploaded");
+      dispatch({ type: "setUploadingLinkId", value: null });
     } catch {
       toast.error("Failed to upload image");
-    } finally {
-      setUploadingLinkId(null);
+      dispatch({ type: "setUploadingLinkId", value: null });
     }
   };
 
@@ -362,13 +416,15 @@ export function QuicklinksEditor({
           size="sm"
           className="h-7 px-2 text-xs"
           onClick={() => {
-            setNewLinkData({
-              id: generateId(),
-              title: "",
-              url: "",
-              linkType: "website",
+            dispatch({
+              type: "startAdding",
+              draft: {
+                id: generateId(),
+                title: "",
+                url: "",
+                linkType: "website",
+              },
             });
-            setIsAddingNew(true);
           }}
           disabled={isAddingNew}
         >
@@ -381,25 +437,19 @@ export function QuicklinksEditor({
       {isAddingNew && newLinkData && (
         <QuicklinkEditForm
           link={newLinkData}
-          onChange={setNewLinkData}
+          onChange={(draft) => dispatch({ type: "updateDraft", draft })}
           onSave={async () => {
             if (!newLinkData) return;
             const success = await persistLinks([...savedLinks, newLinkData]);
             if (success) {
               setSavedLinks([...savedLinks, newLinkData]);
-              setIsAddingNew(false);
-              setNewLinkData(null);
+              dispatch({ type: "finishEditing" });
               toast.success("Link added");
             }
           }}
-          onCancel={() => {
-            setIsAddingNew(false);
-            setNewLinkData(null);
-          }}
-          onImageUpload={(file) =>
-            handleImageUpload(file, newLinkData.id, true)
-          }
-          isUploading={uploadingLinkId === newLinkData.id}
+          onCancel={() => dispatch({ type: "finishEditing" })}
+          onImageUpload={(file) => handleImageUpload(file, newLinkData.id)}
+          isUploading={state.uploadingLinkId === newLinkData.id}
           isNew={true}
         />
       )}
@@ -408,7 +458,7 @@ export function QuicklinksEditor({
       {editingId && editingData && (
         <QuicklinkEditForm
           link={editingData}
-          onChange={setEditingData}
+          onChange={(draft) => dispatch({ type: "updateDraft", draft })}
           onSave={async () => {
             if (!editingId || !editingData) return;
             const newLinks = savedLinks.map((l) =>
@@ -417,17 +467,13 @@ export function QuicklinksEditor({
             const success = await persistLinks(newLinks);
             if (success) {
               setSavedLinks(newLinks);
-              setEditingId(null);
-              setEditingData(null);
+              dispatch({ type: "finishEditing" });
               toast.success("Link updated");
             }
           }}
-          onCancel={() => {
-            setEditingId(null);
-            setEditingData(null);
-          }}
-          onImageUpload={(file) => handleImageUpload(file, editingId, false)}
-          isUploading={uploadingLinkId === editingId}
+          onCancel={() => dispatch({ type: "finishEditing" })}
+          onImageUpload={(file) => handleImageUpload(file, editingId)}
+          isUploading={state.uploadingLinkId === editingId}
           isNew={false}
         />
       )}
@@ -450,8 +496,7 @@ export function QuicklinksEditor({
               <QuicklinkCard
                 link={link}
                 onStartEdit={() => {
-                  setEditingId(link.id);
-                  setEditingData({ ...link });
+                  dispatch({ type: "startEditing", draft: { ...link } });
                 }}
                 onRemove={async () => {
                   const newLinks = savedLinks.filter((l) => l.id !== link.id);
@@ -459,8 +504,7 @@ export function QuicklinksEditor({
                   if (success) {
                     setSavedLinks(newLinks);
                     if (editingId === link.id) {
-                      setEditingId(null);
-                      setEditingData(null);
+                      dispatch({ type: "finishEditing" });
                     }
                     toast.success("Link removed");
                   }

@@ -45,7 +45,8 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  // Tracks when user just verified via form submission (before cookie/query cycle catches up)
+  const [justVerified, setJustVerified] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const verifyAccessCode = useMutation(api.sharing.mutations.verifyAccessCode);
@@ -60,17 +61,19 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
     storedToken ? { siteId, sessionToken: storedToken } : "skip",
   );
 
+  // Derive hasAccess from token + session validation + just-verified flag
+  const hasAccess = justVerified
+    ? true
+    : !storedToken
+      ? false
+      : sessionResult === undefined
+        ? null
+        : sessionResult.valid || false;
+
+  // Side effect: clean up invalid session cookies
   useEffect(() => {
-    if (!storedToken) {
-      setHasAccess(false);
-      return;
-    }
-    if (sessionResult === undefined) return;
-    if (sessionResult.valid) {
-      setHasAccess(true);
-    } else {
+    if (storedToken && sessionResult !== undefined && !sessionResult.valid) {
       removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
-      setHasAccess(false);
     }
   }, [storedToken, sessionResult, siteId]);
 
@@ -95,7 +98,8 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       // Store session token in cookie
       setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
 
-      setHasAccess(true);
+      setJustVerified(true);
+      setIsVerifying(false);
     } catch (err) {
       setError(
         err instanceof ConvexError
@@ -104,7 +108,6 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       );
       setCode("");
       inputRef.current?.focus();
-    } finally {
       setIsVerifying(false);
     }
   };
@@ -197,18 +200,13 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
 }
 
 // Hook to get the session token for a site
-export function useAccessSession(siteId: Id<"sites">): string | null {
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const sessionToken = getCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
-    setToken(sessionToken ?? null);
-  }, [siteId]);
-
-  return token;
+function useAccessSession(siteId: Id<"sites">): string | null {
+  // Read cookie synchronously — no effect needed
+  if (typeof document === "undefined") return null;
+  return getCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
 }
 
 // Function to clear the session (for logout or expired sessions)
-export function clearAccessSession(siteId: Id<"sites">) {
+function clearAccessSession(siteId: Id<"sites">) {
   removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
 }

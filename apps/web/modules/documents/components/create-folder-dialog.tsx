@@ -47,11 +47,11 @@ export function CreateFolderDialog({
       await onSubmit(name.trim());
       setName("");
       setIsOpen(false);
+      setIsSubmitting(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to create folder";
       setError(message);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -87,7 +87,6 @@ export function CreateFolderDialog({
               }}
               placeholder="My Folder"
               className="mt-1.5"
-              autoFocus
             />
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>

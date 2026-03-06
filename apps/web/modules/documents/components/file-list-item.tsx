@@ -73,7 +73,8 @@ export function FileListItem({
     setIsRetrying(true);
     try {
       await onRetryExtraction(file);
-    } finally {
+      setIsRetrying(false);
+    } catch (err) {
       setIsRetrying(false);
     }
   };
@@ -102,6 +103,7 @@ export function FileListItem({
 
   return (
     <div
+      role="button"
       className={cn(
         "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors w-full min-w-0",
         onPreview && "cursor-pointer",

@@ -28,8 +28,9 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
     setValues((prev) => ({ ...prev, [fieldName]: value }));
     setErrors((prev) => {
       if (prev[fieldName]) {
-        const { [fieldName]: _, ...rest } = prev;
-        return rest;
+        const nextErrors = { ...prev };
+        delete nextErrors[fieldName];
+        return nextErrors;
       }
       return prev;
     });
@@ -74,17 +75,17 @@ export function FormRenderer({ id, content }: ElementRendererProps<"form">) {
     }
 
     setIsSubmitting(true);
-
-    try {
-      // Simulate form submission
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    void new Promise((resolve) => setTimeout(resolve, 1000))
+      .then(() => {
       setIsSubmitted(true);
       toast.success("Form submitted successfully");
-    } catch (_error) {
-      toast.error("Failed to submit form");
-    } finally {
-      setIsSubmitting(false);
-    }
+      })
+      .catch(() => {
+        toast.error("Failed to submit form");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   if (isSubmitted) {

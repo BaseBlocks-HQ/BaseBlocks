@@ -20,7 +20,7 @@ export function generateSlug(text: string): string {
  * @param slug - The slug to validate
  * @returns True if the slug is valid
  */
-export function isValidSlug(slug: string): boolean {
+function isValidSlug(slug: string): boolean {
   return /^[a-z0-9-]+$/.test(slug) && slug.length > 0;
 }
 

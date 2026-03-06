@@ -27,7 +27,7 @@ export function isExtractable(contentType: string): boolean {
 /**
  * Get file extension from content type
  */
-export function getExtensionFromContentType(contentType: string): string {
+function getExtensionFromContentType(contentType: string): string {
   const typeMap: Record<string, string> = {
     "application/pdf": "pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document":

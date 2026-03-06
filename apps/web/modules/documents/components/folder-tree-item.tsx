@@ -84,6 +84,8 @@ export function FolderTreeItem({
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={handleClick}
+        role="button"
+        tabIndex={0}
         onKeyDown={handleKeyDown}
       >
         {/* Expand/collapse toggle */}

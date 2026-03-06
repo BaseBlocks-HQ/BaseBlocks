@@ -11,7 +11,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -20,23 +20,55 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+interface AudioViewerState {
+  currentTime: number;
+  duration: number;
+  isMuted: boolean;
+  isPlaying: boolean;
+  volume: number;
+}
+
+type AudioViewerAction = {
+  type: "update";
+  value: Partial<AudioViewerState>;
+};
+
+function audioViewerReducer(
+  state: AudioViewerState,
+  action: AudioViewerAction,
+): AudioViewerState {
+  switch (action.type) {
+    case "update":
+      return { ...state, ...action.value };
+    default:
+      return state;
+  }
+}
+
 export function AudioViewer({ file }: ViewerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  const [state, dispatch] = useReducer(audioViewerReducer, {
+    currentTime: 0,
+    duration: 0,
+    isMuted: false,
+    isPlaying: false,
+    volume: 1,
+  });
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleDurationChange = () => setDuration(audio.duration);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => setIsPlaying(false);
+    const handleTimeUpdate = () =>
+      dispatch({ type: "update", value: { currentTime: audio.currentTime } });
+    const handleDurationChange = () =>
+      dispatch({ type: "update", value: { duration: audio.duration } });
+    const handlePlay = () =>
+      dispatch({ type: "update", value: { isPlaying: true } });
+    const handlePause = () =>
+      dispatch({ type: "update", value: { isPlaying: false } });
+    const handleEnded = () =>
+      dispatch({ type: "update", value: { isPlaying: false } });
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("durationchange", handleDurationChange);
@@ -67,22 +99,24 @@ export function AudioViewer({ file }: ViewerProps) {
     const audio = audioRef.current;
     if (!audio || !value[0]) return;
     audio.currentTime = value[0];
-    setCurrentTime(value[0]);
+    dispatch({ type: "update", value: { currentTime: value[0] } });
   };
 
   const handleVolumeChange = (value: number[]) => {
     const audio = audioRef.current;
     if (!audio || value[0] === undefined) return;
     audio.volume = value[0];
-    setVolume(value[0]);
-    setIsMuted(value[0] === 0);
+    dispatch({
+      type: "update",
+      value: { isMuted: value[0] === 0, volume: value[0] },
+    });
   };
 
   const toggleMute = () => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.muted = !audio.muted;
-    setIsMuted(audio.muted);
+    dispatch({ type: "update", value: { isMuted: audio.muted } });
   };
 
   const skip = (seconds: number) => {
@@ -90,7 +124,7 @@ export function AudioViewer({ file }: ViewerProps) {
     if (!audio) return;
     audio.currentTime = Math.max(
       0,
-      Math.min(duration, audio.currentTime + seconds),
+      Math.min(state.duration, audio.currentTime + seconds),
     );
   };
 
@@ -113,15 +147,15 @@ export function AudioViewer({ file }: ViewerProps) {
       {/* Progress bar */}
       <div className="w-full max-w-sm mb-4">
         <Slider
-          value={[currentTime]}
-          max={duration || 100}
+          value={[state.currentTime]}
+          max={state.duration || 100}
           step={0.1}
           onValueChange={handleSeek}
           className="cursor-pointer"
         />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+          <span>{formatTime(state.currentTime)}</span>
+          <span>{formatTime(state.duration)}</span>
         </div>
       </div>
 
@@ -141,9 +175,9 @@ export function AudioViewer({ file }: ViewerProps) {
           size="lg"
           className="rounded-full h-14 w-14"
           onClick={togglePlay}
-          title={isPlaying ? "Pause" : "Play"}
+          title={state.isPlaying ? "Pause" : "Play"}
         >
-          {isPlaying ? (
+          {state.isPlaying ? (
             <Pause className="h-6 w-6" />
           ) : (
             <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
@@ -166,16 +200,16 @@ export function AudioViewer({ file }: ViewerProps) {
           variant="ghost"
           size="icon"
           onClick={toggleMute}
-          title={isMuted ? "Unmute" : "Mute"}
+          title={state.isMuted ? "Unmute" : "Mute"}
         >
-          {isMuted ? (
+          {state.isMuted ? (
             <VolumeX className="h-4 w-4" />
           ) : (
             <Volume2 className="h-4 w-4" />
           )}
         </Button>
         <Slider
-          value={[isMuted ? 0 : volume]}
+          value={[state.isMuted ? 0 : state.volume]}
           max={1}
           step={0.1}
           onValueChange={handleVolumeChange}

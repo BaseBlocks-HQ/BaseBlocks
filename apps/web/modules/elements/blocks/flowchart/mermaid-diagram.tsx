@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 
 interface MermaidDiagramProps {
   code: string;
@@ -25,23 +26,53 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 20;
 const ZOOM_FACTOR = 0.04;
 
+async function renderMermaidSvg([
+  code,
+  resolvedTheme,
+  theme,
+]: [string, string, string | undefined]) {
+  const isDark = resolvedTheme === "dark";
+  const preset = theme ? THEMES[theme] : undefined;
+
+  return renderMermaid(code, {
+    bg: preset?.bg ?? (isDark ? "#09090b" : "#ffffff"),
+    fg: preset?.fg ?? (isDark ? "#fafafa" : "#18181b"),
+    line: preset?.line,
+    accent: preset?.accent,
+    muted: preset?.muted,
+    surface: preset?.surface,
+    border: preset?.border,
+    transparent: true,
+    nodeSpacing: 60,
+    layerSpacing: 80,
+    padding: 60,
+  });
+}
+
 export function MermaidDiagram({
   code,
   contained,
   theme,
 }: MermaidDiagramProps) {
-  const [svg, setSvg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { resolvedTheme } = useTheme();
+  const swrKey = code.trim()
+    ? ([code, resolvedTheme ?? "light", theme] as [
+        string,
+        string,
+        string | undefined,
+      ])
+    : null;
+  const { data: svg, error, isLoading } = useSWR(swrKey, renderMermaidSvg);
+  const errorMessage =
+    error instanceof Error ? error.message : "Invalid diagram syntax";
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(1);
   const translateRef = useRef({ x: 0, y: 0 });
-  const [_renderTick, setRenderTick] = useState(0);
+  const [displayScale, setDisplayScale] = useState(1);
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
@@ -52,7 +83,7 @@ export function MermaidDiagram({
     contentRef.current.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
   }, []);
 
-  const tick = useCallback(() => setRenderTick((n) => n + 1), []);
+  const tick = useCallback(() => setDisplayScale(scaleRef.current), []);
 
   const fitToView = useCallback(() => {
     const container = containerRef.current;
@@ -100,55 +131,6 @@ export function MermaidDiagram({
   }, []);
 
   useEffect(() => {
-    if (!code.trim()) {
-      setSvg(null);
-      setError(null);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    const isDark = resolvedTheme === "dark";
-    const preset = theme ? THEMES[theme] : undefined;
-
-    renderMermaid(code, {
-      bg: preset?.bg ?? (isDark ? "#09090b" : "#ffffff"),
-      fg: preset?.fg ?? (isDark ? "#fafafa" : "#18181b"),
-      line: preset?.line,
-      accent: preset?.accent,
-      muted: preset?.muted,
-      surface: preset?.surface,
-      border: preset?.border,
-      transparent: true,
-      nodeSpacing: 60,
-      layerSpacing: 80,
-      padding: 60,
-    })
-      .then((result) => {
-        if (!cancelled) {
-          setSvg(result);
-          setError(null);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setSvg(null);
-          setError(
-            err instanceof Error ? err.message : "Invalid diagram syntax",
-          );
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [code, resolvedTheme, theme]);
-
-  useEffect(() => {
     if (!svg) return;
     requestAnimationFrame(fitToView);
   }, [svg, fitToView]);
@@ -177,35 +159,30 @@ export function MermaidDiagram({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isFullscreen]);
 
-  useEffect(() => {
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const container = containerRef.current;
     if (!container || !svg) return;
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-      const rect = container.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
 
-      const prev = scaleRef.current;
-      const factor = e.deltaY > 0 ? 1 - ZOOM_FACTOR : 1 + ZOOM_FACTOR;
-      const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev * factor));
-      const ratio = next / prev;
+    const prev = scaleRef.current;
+    const factor = e.deltaY > 0 ? 1 - ZOOM_FACTOR : 1 + ZOOM_FACTOR;
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev * factor));
+    const ratio = next / prev;
 
-      translateRef.current = {
-        x: mx - ratio * (mx - translateRef.current.x),
-        y: my - ratio * (my - translateRef.current.y),
-      };
-      scaleRef.current = next;
-      applyTransform();
-      tick();
+    translateRef.current = {
+      x: mx - ratio * (mx - translateRef.current.x),
+      y: my - ratio * (my - translateRef.current.y),
     };
-
-    container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
-  }, [svg, applyTransform, tick]);
+    scaleRef.current = next;
+    applyTransform();
+    tick();
+  };
 
   const handlePointerDown = (e: React.PointerEvent) => {
     dragging.current = true;
@@ -263,12 +240,12 @@ export function MermaidDiagram({
   );
 
   if (!code.trim()) return emptyCanvas("No diagram code yet");
-  if (loading && !svg) return emptyCanvas("Rendering diagram...");
+  if (isLoading && !svg) return emptyCanvas("Rendering diagram...");
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive min-h-[200px] flex items-center">
-        {error}
+        {errorMessage}
       </div>
     );
   }
@@ -294,7 +271,7 @@ export function MermaidDiagram({
           <ZoomIn className="h-4 w-4" />
         </button>
         <span className="text-xs text-muted-foreground w-10 text-center tabular-nums select-none">
-          {Math.round(scaleRef.current * 100)}%
+          {Math.round(displayScale * 100)}%
         </span>
         <button
           type="button"
@@ -339,6 +316,7 @@ export function MermaidDiagram({
             "radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px)",
           backgroundSize: "24px 24px",
         }}
+        onWheel={handleWheel}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

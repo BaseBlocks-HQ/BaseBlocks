@@ -28,7 +28,7 @@ const PdfViewer = dynamic(
  * Registry of all available viewers
  * Order matters - first matching viewer will be used
  */
-export const viewerRegistry: ViewerConfig[] = [
+const viewerRegistry: ViewerConfig[] = [
   {
     type: "pdf",
     label: "PDF Viewer",
@@ -99,16 +99,6 @@ export function getViewer(contentType: string): ViewerConfig {
 /**
  * Check if a content type has a dedicated viewer
  */
-export function hasViewer(contentType: string): boolean {
+function hasViewer(contentType: string): boolean {
   return viewerRegistry.some((v) => v.canHandle(contentType));
 }
-
-export {
-  ImageViewer,
-  PdfViewer,
-  VideoViewer,
-  AudioViewer,
-  TextViewer,
-  OfficeViewer,
-  UnknownViewer,
-};

@@ -6,7 +6,7 @@ import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LibraryWithCount } from "./library-list-item";
 
 interface LibrarySettingsDialogProps {
@@ -20,20 +20,20 @@ export function LibrarySettingsDialog({
   open,
   onOpenChange,
 }: LibrarySettingsDialogProps) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(library?.name ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
 
   const updateLibrary = useMutation(api.documentLibraries.mutations.update);
 
-  // Reset form when library changes
-  useEffect(() => {
-    if (library) {
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen && library) {
       setName(library.name);
       setError("");
     }
-  }, [library]);
+    onOpenChange(newOpen);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +48,9 @@ export function LibrarySettingsDialog({
         name,
       });
       onOpenChange(false);
+      setIsSubmitting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.error"));
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -58,7 +58,7 @@ export function LibrarySettingsDialog({
   return (
     <FormDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title={t("libraries.editTitle")}
       description={t("libraries.editDescription")}
       onSubmit={handleSubmit}

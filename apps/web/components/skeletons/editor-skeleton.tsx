@@ -1,6 +1,14 @@
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 export function EditorSkeleton() {
+  const sidebarSkeletonWidths = [
+    "80%-a",
+    "100%-b",
+    "60%-c",
+    "80%-d",
+    "100%-e",
+  ];
+
   return (
     <div className="flex min-h-screen bg-background">
       <div className="w-64 border-r flex flex-col">
@@ -11,13 +19,10 @@ export function EditorSkeleton() {
           </div>
         </div>
         <div className="p-3 space-y-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-2 px-2 py-1.5">
+          {sidebarSkeletonWidths.map((item) => (
+            <div key={item} className="flex items-center gap-2 px-2 py-1.5">
               <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton
-                className="h-4"
-                style={{ width: `${60 + (i % 3) * 20}%` }}
-              />
+              <Skeleton className="h-4" style={{ width: item.split("-")[0] }} />
             </div>
           ))}
         </div>

@@ -8,7 +8,7 @@ import type { PageListItem } from "@baseblocks/types";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface RenamePageDialogProps {
   page: PageListItem;
@@ -28,15 +28,6 @@ export function RenamePageDialog({
 
   const updatePage = useMutation(api.pages.mutations.update);
 
-  // Reset form when dialog opens
-  useEffect(() => {
-    if (open) {
-      setTitle(page.title);
-      setSlug(page.slug);
-      setError("");
-    }
-  }, [open, page.title, page.slug]);
-
   const handleTitleChange = (value: string) => {
     setTitle(value);
     setSlug(generateSlug(value));
@@ -44,9 +35,11 @@ export function RenamePageDialog({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      setError("");
+    if (newOpen) {
+      setTitle(page.title);
+      setSlug(page.slug);
     }
+    setError("");
     onOpenChange(newOpen);
   };
 
@@ -62,11 +55,11 @@ export function RenamePageDialog({
         slug,
       });
       onOpenChange(false);
+      setIsSubmitting(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to rename page";
       setError(message);
-    } finally {
       setIsSubmitting(false);
     }
   };

@@ -101,7 +101,7 @@ export function getMediaFileType(contentType: string): MediaFileType {
 /**
  * Check if a content type is viewable (has a dedicated viewer)
  */
-export function isViewable(contentType: string): boolean {
+function isViewable(contentType: string): boolean {
   const type = getMediaFileType(contentType);
   return type !== "unknown";
 }

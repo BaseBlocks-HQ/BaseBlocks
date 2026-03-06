@@ -82,11 +82,5 @@ function serializeJsonLd(data: Record<string, unknown>): string {
  * Uses dangerouslySetInnerHTML as recommended by Next.js docs for structured data.
  */
 export function JsonLdScript({ data }: { data: Record<string, unknown> }) {
-  return (
-    <script
-      type="application/ld+json"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD per Next.js docs — data is sanitized via serializeJsonLd
-      dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
-    />
-  );
+  return <script type="application/ld+json">{serializeJsonLd(data)}</script>;
 }

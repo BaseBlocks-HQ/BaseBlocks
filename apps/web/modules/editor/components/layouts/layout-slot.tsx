@@ -24,7 +24,7 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { createElement, useState } from "react";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -81,6 +81,8 @@ export function LayoutSlot({
               "border-muted-foreground/20 hover:border-muted-foreground/30",
         // Non-empty state - no wrapper backgrounds, let blocks handle their own styling
       )}
+      role="button"
+      tabIndex={0}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
@@ -210,6 +212,8 @@ function SortableBlock({
       ref={setNodeRef}
       style={style}
       className="group/block mb-3 min-w-0"
+      role="button"
+      tabIndex={0}
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
@@ -275,7 +279,10 @@ function SortableBlock({
                     }
                   }}
                 >
-                  <ConfigPanel content={block.content} onUpdate={onUpdate} />
+                  {createElement(ConfigPanel, {
+                    content: block.content,
+                    onUpdate,
+                  })}
                 </PopoverContent>
               </Popover>
             )}

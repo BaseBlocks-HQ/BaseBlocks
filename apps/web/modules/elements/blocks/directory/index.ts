@@ -11,13 +11,6 @@ import { DirectoryEditor } from "./editor";
 import { DirectoryPreview } from "./preview";
 import { DirectoryRenderer } from "./renderer";
 
-export {
-  DirectoryEditor,
-  DirectoryRenderer,
-  DirectoryPreview,
-  DirectoryConfigPanel,
-};
-
 registerElement({
   type: "directory",
   category: "blocks",

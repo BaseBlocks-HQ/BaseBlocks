@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Upload, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
+const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
+
 interface DropZoneProps {
   onFilesAccepted: (files: File[]) => void;
   disabled?: boolean;
@@ -17,7 +19,7 @@ interface DropZoneProps {
 export function DropZone({
   onFilesAccepted,
   disabled = false,
-  maxSize = 50 * 1024 * 1024, // 50MB default
+  maxSize = DEFAULT_MAX_SIZE,
   accept,
   className,
   children,
@@ -95,7 +97,7 @@ interface InlineDropZoneProps {
   className?: string;
 }
 
-export function InlineDropZone({
+function InlineDropZone({
   onFilesAccepted,
   disabled = false,
   className,

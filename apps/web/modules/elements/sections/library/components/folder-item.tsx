@@ -52,6 +52,8 @@ export function FolderItem({
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={onSelect}
+        role="button"
+        tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

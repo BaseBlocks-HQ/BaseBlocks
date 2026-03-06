@@ -58,12 +58,12 @@ export function AccountSettings() {
       await authClient.signOut();
       setOpen(false);
       window.location.href = "/login";
+      setIsDeleting(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t("deleteAccountError");
       setError(message);
       toast.error(message);
-    } finally {
       setIsDeleting(false);
     }
   };

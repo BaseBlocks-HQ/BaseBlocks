@@ -42,25 +42,26 @@ export function CreateSubPageDialog({
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-
-    try {
-      await createPage({
-        siteId: siteId as Id<"sites">,
-        title,
-        slug,
-        parentId: parentId as Id<"pages">,
-      });
+    void createPage({
+      siteId: siteId as Id<"sites">,
+      title,
+      slug,
+      parentId: parentId as Id<"pages">,
+    })
+      .then(() => {
       onOpenChange(false);
       setTitle("");
       setSlug("");
       onSuccess?.();
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create sub-page";
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+      })
+      .catch((err) => {
+        const message =
+          err instanceof Error ? err.message : "Failed to create sub-page";
+        setError(message);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   const handleOpenChange = (newOpen: boolean) => {

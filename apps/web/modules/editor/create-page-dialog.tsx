@@ -18,56 +18,76 @@ interface CreatePageDialogProps {
 }
 
 export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    title: "",
+    slug: "",
+    isSubmitting: false,
+    error: "",
+  });
 
   const createPage = useMutation(api.pages.mutations.create);
 
   const handleTitleChange = (value: string) => {
-    setTitle(value);
-    setSlug(generateSlug(value));
-    setError("");
+    setDialogState((current) => ({
+      ...current,
+      title: value,
+      slug: generateSlug(value),
+      error: "",
+    }));
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    setDialogState((current) => ({
+      ...current,
+      open: newOpen,
+    }));
     if (!newOpen) {
-      setError("");
+      setDialogState((current) => ({
+        ...current,
+        error: "",
+      }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    setDialogState((current) => ({
+      ...current,
+      error: "",
+      isSubmitting: true,
+    }));
 
     try {
       await createPage({
         siteId: siteId as Id<"sites">,
-        title,
-        slug,
+        title: dialogState.title,
+        slug: dialogState.slug,
         parentId: parentId as Id<"pages"> | undefined,
       });
-      setOpen(false);
-      setTitle("");
-      setSlug("");
+      setDialogState({
+        open: false,
+        title: "",
+        slug: "",
+        isSubmitting: false,
+        error: "",
+      });
       toast.success("Page created");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to create page";
-      setError(message);
+      setDialogState((current) => ({
+        ...current,
+        error: message,
+        isSubmitting: false,
+      }));
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <FormDialog
-      open={open}
+      open={dialogState.open}
       onOpenChange={handleOpenChange}
       title="Create New Page"
       description="Add a new page to your site"
@@ -77,7 +97,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         </Button>
       }
       onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
+      isSubmitting={dialogState.isSubmitting}
       submitLabel="Create Page"
       submittingLabel="Creating..."
     >
@@ -86,7 +106,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         <Input
           id="pageTitle"
           placeholder="Getting Started"
-          value={title}
+          value={dialogState.title}
           onChange={(e) => handleTitleChange(e.target.value)}
           required
         />
@@ -97,17 +117,22 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         <Input
           id="pageSlug"
           placeholder="getting-started"
-          value={slug}
+          value={dialogState.slug}
           onChange={(e) => {
-            setSlug(e.target.value.toLowerCase());
-            setError("");
+            setDialogState((current) => ({
+              ...current,
+              slug: e.target.value.toLowerCase(),
+              error: "",
+            }));
           }}
           required
           pattern={SLUG_PATTERN}
         />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {dialogState.error && (
+        <p className="text-sm text-destructive">{dialogState.error}</p>
+      )}
     </FormDialog>
   );
 }

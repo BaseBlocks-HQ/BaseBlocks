@@ -6,7 +6,7 @@ import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { Maximize2, Minimize2, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useOptimistic } from "react";
 import { toast } from "sonner";
 
 interface SubpageEditPanelProps {
@@ -24,15 +24,7 @@ export function SubpageEditPanel({
 }: SubpageEditPanelProps) {
   const { editingSubpage, closeSubpageEditor } = useEditorContext();
   const { pages: pageMutations } = useEditorMutations();
-
-  const [title, setTitle] = useState("");
-
-  // Sync title from server
-  useEffect(() => {
-    if (pageTitle) {
-      setTitle(pageTitle);
-    }
-  }, [pageTitle]);
+  const [title, setTitle] = useOptimistic(pageTitle ?? "");
 
   const debouncedSave = useDebounceCallback(async (newTitle: string) => {
     if (!editingSubpage?.pageId || !newTitle.trim()) return;
@@ -92,8 +84,21 @@ export function SubpageEditPanel({
 
       {/* Full page editor for the subpage */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-        {renderPageEditor(editingSubpage.pageId)}
+        <SubpageEditorContent
+          pageId={editingSubpage.pageId}
+          renderPageEditor={renderPageEditor}
+        />
       </div>
     </div>
   );
+}
+
+function SubpageEditorContent({
+  pageId,
+  renderPageEditor,
+}: {
+  pageId: string;
+  renderPageEditor: (pageId: string) => ReactNode;
+}) {
+  return renderPageEditor(pageId);
 }

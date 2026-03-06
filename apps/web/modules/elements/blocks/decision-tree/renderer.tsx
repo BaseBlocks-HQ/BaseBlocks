@@ -1,41 +1,24 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
-import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  GitFork,
-  MousePointerClick,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
+import { DecisionTreeBreadcrumb } from "./components/decision-tree-breadcrumb";
+import {
+  DecisionTreeDetailPrompt,
+  DecisionTreeEmptyState,
+  DecisionTreeEndState,
+} from "./components/decision-tree-empty-state";
+import {
+  DecisionTreeCenteredPanel,
+  DecisionTreeMobileDetail,
+  DecisionTreeOptionsPanel,
+  DecisionTreeSplitPanel,
+} from "./components/decision-tree-layout";
+import { DecisionTreeSelector } from "./components/decision-tree-selector";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
 import { nodeHasContent } from "./lib";
 import { DetailPanel } from "./viewer/detail-panel";
@@ -48,9 +31,9 @@ export function DecisionTreeRenderer({
   const trees = content.trees ?? [];
   const [activeTreeId, setActiveTreeId] = useState<string>(trees[0]!.id);
 
-  const activeTree = trees.find((t) => t.id === activeTreeId) ?? trees[0]!;
+  const activeTree =
+    trees.find((tree) => tree.id === activeTreeId) ?? trees[0]!;
   const nodes = activeTree.nodes;
-  const showTabs = trees.length > 1;
   const tabsMode = content.tabsMode ?? "row";
 
   const {
@@ -63,30 +46,34 @@ export function DecisionTreeRenderer({
     navigateToIndex,
   } = useTreeNavigation();
 
-  const rootNodes = nodes
-    .filter((n) => n.parentId === currentParentId)
+  const visibleNodes = nodes
+    .filter((node) => node.parentId === currentParentId)
     .sort((a, b) => a.order - b.order);
-
   const activeNodeId = path.length > 0 ? path[path.length - 1] : null;
   const detailNodeId = selectedNodeId ?? activeNodeId;
   const detailNode = detailNodeId
-    ? (nodes.find((n) => n.id === detailNodeId) ?? null)
+    ? (nodes.find((node) => node.id === detailNodeId) ?? null)
     : null;
   const hasDetailContent = detailNode && nodeHasContent(detailNode);
+  const isInitialState = path.length === 0 && selectedNodeId === null;
+  const showMobileDetail =
+    isMobile && selectedNodeId && detailNode && hasDetailContent;
 
-  const handleSelect = (node: DecisionTreeNode) => {
-    const hasChildren = nodes.some((n) => n.parentId === node.id);
+  const handleSelectNode = (node: DecisionTreeNode) => {
+    const hasChildren = nodes.some(
+      (candidate) => candidate.parentId === node.id,
+    );
     if (hasChildren) {
       navigateInto(node.id);
-    } else {
-      selectNode(node.id);
+      return;
     }
+    selectNode(node.id);
   };
 
   const getNodeName = (nodeId: string) =>
-    nodes.find((n) => n.id === nodeId)?.name ?? "...";
+    nodes.find((node) => node.id === nodeId)?.name ?? "...";
 
-  const switchTree = (treeId: string) => {
+  const handleSelectTree = (treeId: string) => {
     if (treeId !== activeTreeId) {
       setActiveTreeId(treeId);
       navigateToIndex(0);
@@ -98,118 +85,13 @@ export function DecisionTreeRenderer({
     selectNode(null);
   };
 
-  const isInitialState = path.length === 0 && selectedNodeId === null;
-  const showMobileDetail =
-    isMobile && selectedNodeId && detailNode && hasDetailContent;
-
-  const treeSelector = showTabs ? (
-    <div
-      className={cn(
-        "border-b",
-        tabsMode === "dropdown" ? "px-3 py-2" : "px-3 py-2",
-      )}
-    >
-      {tabsMode === "dropdown" ? (
-        <Select value={activeTree.id} onValueChange={switchTree}>
-          <SelectTrigger className="h-9 w-full sm:w-[260px]">
-            <SelectValue placeholder="Select tree" />
-          </SelectTrigger>
-          <SelectContent>
-            {trees.map((tree) => (
-              <SelectItem key={tree.id} value={tree.id}>
-                {tree.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {trees.map((tree) => (
-            <button
-              key={tree.id}
-              type="button"
-              onClick={() => switchTree(tree.id)}
-              className={cn(
-                "max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors shrink-0",
-                tree.id === activeTree.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              )}
-            >
-              {tree.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  ) : null;
-
-  const breadcrumb = (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            className="cursor-pointer"
-            onClick={() => navigateToIndex(0)}
-          >
-            Start
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        {path.length >= 3 ? (
-          <>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" className="size-6">
-                    <BreadcrumbEllipsis className="size-4" />
-                    <span className="sr-only">Show more</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuGroup>
-                    {path.slice(0, -1).map((nodeId, index) => (
-                      <DropdownMenuItem
-                        key={nodeId}
-                        onClick={() => navigateToIndex(index + 1)}
-                      >
-                        {getNodeName(nodeId)}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-medium">
-                {getNodeName(path.at(-1) ?? "")}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </>
-        ) : (
-          path.map((nodeId, index) => (
-            <span key={nodeId} className="contents">
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {index === path.length - 1 ? (
-                  <BreadcrumbPage className="font-medium">
-                    {getNodeName(nodeId)}
-                  </BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink
-                    className="cursor-pointer"
-                    onClick={() => navigateToIndex(index + 1)}
-                  >
-                    {getNodeName(nodeId)}
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </span>
-          ))
-        )}
-      </BreadcrumbList>
-    </Breadcrumb>
+  const selector = (
+    <DecisionTreeSelector
+      trees={trees.map((tree) => ({ id: tree.id, label: tree.label }))}
+      activeTreeId={activeTree.id}
+      tabsMode={tabsMode}
+      onSelectTree={handleSelectTree}
+    />
   );
 
   const navigationBar =
@@ -223,162 +105,88 @@ export function DecisionTreeRenderer({
         >
           <ChevronLeft className="size-4" />
         </Button>
-        {breadcrumb}
+        <DecisionTreeBreadcrumb
+          path={path}
+          getNodeName={getNodeName}
+          onNavigateToIndex={navigateToIndex}
+        />
       </div>
     ) : null;
 
-  const endOfPath = (
-    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
-      <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
-        <CheckCircle2 className="size-5 text-primary" />
-      </div>
-      <div className="text-center">
-        <p className="text-sm font-medium">End of path</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          No more options available
-        </p>
-      </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleStartOver}
-        className="mt-1"
-      >
-        <RotateCcw className="size-3.5 mr-1.5" />
-        Start over
-      </Button>
-    </div>
-  );
-
   if (isMobile) {
-    // Mobile: detail view (leaf selected with content)
     if (showMobileDetail) {
       return (
-        <div className="border rounded-lg overflow-hidden">
-          {treeSelector}
-          <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 shrink-0"
-              onClick={() => selectNode(null)}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="text-sm font-medium truncate">
-              {detailNode.name}
-            </span>
-          </div>
+        <DecisionTreeMobileDetail
+          selector={selector}
+          title={detailNode.name}
+          onBack={() => selectNode(null)}
+        >
           <DetailPanel node={detailNode} />
-        </div>
+        </DecisionTreeMobileDetail>
       );
     }
 
-    // Mobile: options view
     return (
-      <div className="border rounded-lg overflow-hidden">
-        {treeSelector}
-        {navigationBar}
-        <div className="p-3">
-          {rootNodes.length > 0 ? (
-            <OptionList
-              nodes={rootNodes}
-              allNodes={nodes}
-              onSelect={handleSelect}
-              selectedNodeId={selectedNodeId}
-            />
-          ) : isInitialState ? (
-            <EmptyTree />
-          ) : (
-            endOfPath
-          )}
-        </div>
-      </div>
+      <DecisionTreeOptionsPanel
+        selector={selector}
+        navigationBar={navigationBar}
+      >
+        {visibleNodes.length > 0 ? (
+          <OptionList
+            nodes={visibleNodes}
+            allNodes={nodes}
+            onSelect={handleSelectNode}
+            selectedNodeId={selectedNodeId}
+          />
+        ) : isInitialState ? (
+          <DecisionTreeEmptyState />
+        ) : (
+          <DecisionTreeEndState onStartOver={handleStartOver} />
+        )}
+      </DecisionTreeOptionsPanel>
     );
   }
 
-  // Desktop: initial state — centered option list
   if (isInitialState) {
     return (
-      <div className="border rounded-lg overflow-hidden">
-        {treeSelector}
-        <div className="flex items-center justify-center py-8">
-          <div className="w-full max-w-lg px-4">
-            {rootNodes.length > 0 ? (
-              <OptionList
-                nodes={rootNodes}
-                allNodes={nodes}
-                onSelect={handleSelect}
-              />
-            ) : (
-              <EmptyTree />
-            )}
-          </div>
-        </div>
-      </div>
+      <DecisionTreeCenteredPanel selector={selector}>
+        {visibleNodes.length > 0 ? (
+          <OptionList
+            nodes={visibleNodes}
+            allNodes={nodes}
+            onSelect={handleSelectNode}
+          />
+        ) : (
+          <DecisionTreeEmptyState />
+        )}
+      </DecisionTreeCenteredPanel>
     );
   }
 
-  // Desktop: navigated state — split view
   return (
-    <div className="border rounded-lg overflow-hidden">
-      {treeSelector}
-      {navigationBar}
-      <div className="flex min-h-[300px]">
-        {/* Left: Options sidebar */}
-        <div className="w-[280px] shrink-0 border-r overflow-y-auto">
-          {rootNodes.length > 0 ? (
-            <OptionList
-              nodes={rootNodes}
-              allNodes={nodes}
-              onSelect={handleSelect}
-              selectedNodeId={selectedNodeId}
-              compact
-            />
-          ) : (
-            endOfPath
-          )}
-        </div>
-
-        {/* Right: Detail content */}
-        <div className="flex-1 min-w-0 overflow-y-auto">
-          {hasDetailContent && detailNode ? (
-            <DetailPanel node={detailNode} />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
-              <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
-                <MousePointerClick className="size-5 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Select an option
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-1">
-                  Choose from the list to view details
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyTree() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
-      <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center">
-        <GitFork className="size-6 text-muted-foreground" />
-      </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-muted-foreground">
-          No options configured
-        </p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          This decision tree doesn&apos;t have any options yet
-        </p>
-      </div>
-    </div>
+    <DecisionTreeSplitPanel
+      selector={selector}
+      navigationBar={navigationBar}
+      options={
+        visibleNodes.length > 0 ? (
+          <OptionList
+            nodes={visibleNodes}
+            allNodes={nodes}
+            onSelect={handleSelectNode}
+            selectedNodeId={selectedNodeId}
+            compact
+          />
+        ) : (
+          <DecisionTreeEndState onStartOver={handleStartOver} />
+        )
+      }
+      detail={
+        hasDetailContent && detailNode ? (
+          <DetailPanel node={detailNode} />
+        ) : (
+          <DecisionTreeDetailPrompt />
+        )
+      }
+    />
   );
 }

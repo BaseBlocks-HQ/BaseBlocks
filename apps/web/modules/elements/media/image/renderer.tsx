@@ -2,6 +2,7 @@ import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 export function ImageRenderer({ content }: ElementRendererProps<"image">) {
   // Handle empty state
@@ -21,19 +22,25 @@ export function ImageRenderer({ content }: ElementRendererProps<"image">) {
 
   // Determine if we have explicit dimensions from resizing
   const hasExplicitSize = content.width && content.height;
+  const width = content.width || 1200;
+  const height = content.height || 800;
   const imageStyle = hasExplicitSize
     ? {
         width: `${content.width}px`,
         maxWidth: "100%",
         height: "auto",
       }
-    : undefined;
+    : { width: "100%", height: "auto" };
 
   return (
     <figure className="my-6">
-      <img
+      <Image
         src={imageUrl}
         alt={content.alt || ""}
+        width={width}
+        height={height}
+        sizes={hasExplicitSize ? `${width}px` : "100vw"}
+        unoptimized
         className={cn(
           "rounded-lg",
           !hasExplicitSize && "max-w-full",
@@ -43,7 +50,6 @@ export function ImageRenderer({ content }: ElementRendererProps<"image">) {
           !content.objectFit && hasExplicitSize && "object-cover",
         )}
         style={imageStyle}
-        loading="lazy"
       />
       {content.caption && (
         <figcaption className="mt-2 text-sm text-muted-foreground text-center">

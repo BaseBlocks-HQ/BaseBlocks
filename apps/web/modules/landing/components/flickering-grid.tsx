@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export interface FlickeringGridProps {
+interface FlickeringGridProps {
   squareSize?: number;
   gridGap?: number;
   flickerChance?: number;
@@ -198,5 +198,3 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
     </div>
   );
 };
-
-export default FlickeringGrid;

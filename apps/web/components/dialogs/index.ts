@@ -6,5 +6,4 @@
  * - modules/editor/: create-page-dialog
  * - modules/navigation/: create-sub-page-dialog, rename-page-dialog
  */
-export { FormDialog } from "./form-dialog";
 export { ConfirmDialog } from "./confirm-dialog";

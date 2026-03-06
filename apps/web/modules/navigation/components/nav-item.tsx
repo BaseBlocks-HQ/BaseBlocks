@@ -10,6 +10,8 @@ import Link from "next/link";
 import { IconFile, IconHouse } from "nucleo-glass";
 import { useEffect } from "react";
 
+const EMPTY_ANCESTOR_IDS: string[] = [];
+
 interface NavItemProps {
   page: PageWithChildren;
   currentSlug?: string;
@@ -35,7 +37,7 @@ export function NavItem({
   mode,
   depth = 0,
   isDefault = false,
-  ancestorIds = [],
+  ancestorIds = EMPTY_ANCESTOR_IDS,
   pagePath,
   onSelect,
   defaultExpanded,
@@ -138,6 +140,9 @@ export function NavItem({
         >
           {hasChildren ? (
             <span
+              role="button"
+              tabIndex={0}
+              aria-label={isExpanded ? "Collapse section" : "Expand section"}
               onClick={handleToggleExpand}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -191,6 +196,9 @@ export function NavItem({
         {/* Expand/collapse toggle - inside the link like in editor */}
         {hasChildren ? (
           <span
+            role="button"
+            tabIndex={0}
+            aria-label={isExpanded ? "Collapse section" : "Expand section"}
             onClick={handleToggleExpand}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

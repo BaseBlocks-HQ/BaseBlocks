@@ -4,10 +4,10 @@ import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { useMutation, useQuery } from "convex/react";
 
-export type DocumentLibrary = Doc<"documentLibraries">;
-export type DocumentFolder = Doc<"documentFolders">;
-export type Document = Doc<"documents">;
-export type FolderPathItem = { _id: string; name: string };
+type DocumentLibrary = Doc<"documentLibraries">;
+type DocumentFolder = Doc<"documentFolders">;
+type Document = Doc<"documents">;
+type FolderPathItem = { _id: string; name: string };
 
 export function useDocumentLibrary(siteId: Id<"sites">) {
   const libraries = useQuery(api.documentLibraries.queries.list, { siteId });

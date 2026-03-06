@@ -1,6 +1,7 @@
 "use client";
 
 import { getDisplayDomain } from "@/lib/url";
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import { NavItem, SortablePageTree } from "@/modules/navigation";
@@ -28,9 +29,10 @@ import {
 } from "@baseblocks/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
 
 function buildPageTree(pages: PageListItem[]): PageWithChildren[] {
@@ -90,7 +92,7 @@ export function EditorSidebar({
 }: EditorSidebarProps) {
   const t = useTranslations();
   const { canEdit, selection, siteId } = useEditorContext();
-  const [activeTab, setActiveTab] = useState("pages");
+  const [manualActiveTab, setManualActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
   );
@@ -105,13 +107,8 @@ export function EditorSidebar({
   const { cssVariables: customizationStyles, isCustomized } =
     useSiteCustomization(siteId as Id<"sites">);
   const pageTree = buildPageTree(navPages);
-
-  // Auto-switch to components tab when a slot or block is selected
-  useEffect(() => {
-    if (selection.slotId || selection.blockId) {
-      setActiveTab("components");
-    }
-  }, [selection.slotId, selection.blockId]);
+  const activeTab =
+    selection.slotId || selection.blockId ? "components" : manualActiveTab;
 
   const handleSelectPage = (pageId: string) => {
     onSelectPage(pageId);
@@ -128,10 +125,13 @@ export function EditorSidebar({
           </Link>
           {/* Site logo */}
           {site.logoUrl ? (
-            <img
-              src={site.logoUrl}
+            <Image
+              src={toProxyDownloadUrl(site.logoUrl)}
               alt={site.name}
               className="h-8 w-8 rounded-lg object-contain border bg-muted flex-shrink-0"
+              width={32}
+              height={32}
+              unoptimized
             />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold flex-shrink-0">
@@ -149,7 +149,7 @@ export function EditorSidebar({
 
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={setManualActiveTab}
         className="flex-1 flex flex-col"
       >
         <div className="px-2 pt-2">

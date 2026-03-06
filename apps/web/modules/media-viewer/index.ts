@@ -53,28 +53,6 @@
 export {
   MediaViewerProvider,
   useMediaViewer,
-  useMediaViewerOptional,
 } from "./context";
 
 export { MediaViewerModal } from "./media-viewer-modal";
-
-export type {
-  MediaFile,
-  ViewerProps,
-  ViewerConfig,
-  MediaFileType,
-} from "./types";
-export { getMediaFileType, isViewable, getFileExtension } from "./types";
-
-export {
-  viewerRegistry,
-  getViewer,
-  hasViewer,
-  ImageViewer,
-  PdfViewer,
-  VideoViewer,
-  AudioViewer,
-  TextViewer,
-  OfficeViewer,
-  UnknownViewer,
-} from "./viewers";

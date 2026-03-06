@@ -195,5 +195,3 @@ registerField({
   Renderer: SelectRenderer,
   Settings: SelectSettings,
 });
-
-export { SelectEditor, SelectRenderer, SelectSettings };

@@ -337,6 +337,8 @@ export function SearchBox({
                     key={result._id}
                     className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => handleResultClick(result)}
+                    role="button"
+                    tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();

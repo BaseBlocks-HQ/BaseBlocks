@@ -1,9 +1,9 @@
 "use client";
 
 import type { LayoutType } from "@baseblocks/types";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, use } from "react";
 
-export interface LayoutContextValue {
+interface LayoutContextValue {
   layoutType: LayoutType;
   isSidebar: boolean; // Convenience: true if layoutType === "vertical"
   layoutId?: string;
@@ -39,5 +39,5 @@ export function LayoutContextProvider({
 
 // Returns null if not in context (safe for elements that don't need it)
 export function useLayoutContext() {
-  return useContext(LayoutContext);
+  return use(LayoutContext);
 }

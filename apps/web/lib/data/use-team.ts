@@ -8,7 +8,7 @@ export function useTeam(teamId?: Id<"teams">) {
   return useQuery(api.teams.queries.getMine, teamId ? { teamId } : {});
 }
 
-export function useMyTeams() {
+function useMyTeams() {
   return useQuery(api.teams.queries.listMine);
 }
 

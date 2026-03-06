@@ -12,44 +12,63 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 export function CreateSiteDialog() {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    name: "",
+    slug: "",
+    isSubmitting: false,
+    error: "",
+  });
   const t = useTranslations();
 
   const createSite = useMutation(api.sites.mutations.create);
 
   const handleNameChange = (value: string) => {
-    setName(value);
-    setSlug(generateSlug(value));
+    setDialogState((current) => ({
+      ...current,
+      name: value,
+      slug: generateSlug(value),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    setDialogState((current) => ({
+      ...current,
+      error: "",
+      isSubmitting: true,
+    }));
 
     try {
       await createSite({
-        name,
-        slug,
+        name: dialogState.name,
+        slug: dialogState.slug,
       });
-      setOpen(false);
-      setName("");
-      setSlug("");
+      setDialogState({
+        open: false,
+        name: "",
+        slug: "",
+        isSubmitting: false,
+        error: "",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
-    } finally {
-      setIsSubmitting(false);
+      setDialogState((current) => ({
+        ...current,
+        error: err instanceof Error ? err.message : t("common.error"),
+        isSubmitting: false,
+      }));
     }
   };
 
   return (
     <FormDialog
-      open={open}
-      onOpenChange={setOpen}
+      open={dialogState.open}
+      onOpenChange={(open) =>
+        setDialogState((current) => ({
+          ...current,
+          open,
+        }))
+      }
       title={t("dialogs.createSite.title")}
       description={t("dialogs.createSite.description")}
       trigger={
@@ -59,7 +78,7 @@ export function CreateSiteDialog() {
         </Button>
       }
       onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
+      isSubmitting={dialogState.isSubmitting}
       submitLabel={t("dialogs.createSite.create")}
       submittingLabel={t("dialogs.createSite.creating")}
     >
@@ -68,7 +87,7 @@ export function CreateSiteDialog() {
         <Input
           id="siteName"
           placeholder={t("dialogs.createSite.namePlaceholder")}
-          value={name}
+          value={dialogState.name}
           onChange={(e) => handleNameChange(e.target.value)}
           required
         />
@@ -79,14 +98,21 @@ export function CreateSiteDialog() {
         <Input
           id="siteSlug"
           placeholder="engineering-docs"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value.toLowerCase())}
+          value={dialogState.slug}
+          onChange={(e) =>
+            setDialogState((current) => ({
+              ...current,
+              slug: e.target.value.toLowerCase(),
+            }))
+          }
           required
           pattern={SLUG_PATTERN}
         />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {dialogState.error && (
+        <p className="text-sm text-destructive">{dialogState.error}</p>
+      )}
     </FormDialog>
   );
 }

@@ -29,6 +29,8 @@ export function FileItem({
     <div
       className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-pointer"
       onClick={onPreview}
+      role="button"
+      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();

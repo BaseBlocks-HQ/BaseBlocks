@@ -120,5 +120,3 @@ registerField({
   Renderer: EmailRenderer,
   Settings: EmailSettings,
 });
-
-export { EmailEditor, EmailRenderer, EmailSettings };

@@ -11,7 +11,7 @@ import type {
   FormFieldType,
 } from "@baseblocks/types/elements";
 import { createField } from "@baseblocks/types/elements";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, use } from "react";
 
 interface FormBuilderContextType {
   form: FormContent;
@@ -123,7 +123,7 @@ export function FormBuilderProvider({
 }
 
 export function useFormBuilder() {
-  const context = useContext(FormBuilderContext);
+  const context = use(FormBuilderContext);
   if (!context) {
     throw new Error("useFormBuilder must be used within FormBuilderProvider");
   }

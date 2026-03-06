@@ -47,8 +47,8 @@ export function LibrariesPageContent() {
     try {
       await deleteLibrary({ libraryId: deletingLibrary._id });
       setDeletingLibrary(null);
+      setIsDeleting(false);
     } catch (_error) {
-    } finally {
       setIsDeleting(false);
     }
   };
@@ -76,8 +76,8 @@ export function LibrariesPageContent() {
           <Skeleton className="h-9 w-28 rounded-md" />
         </div>
         <div className="space-y-8">
-          {[1, 2].map((i) => (
-            <div key={i} className="space-y-3">
+          {["skeleton-a", "skeleton-b"].map((skeletonId) => (
+            <div key={skeletonId} className="space-y-3">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-5 w-24" />

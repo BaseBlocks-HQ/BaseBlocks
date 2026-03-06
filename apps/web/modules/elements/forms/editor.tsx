@@ -18,25 +18,39 @@ import { FieldSettingsPanel } from "./builder/field-settings";
 import { FormBuilderProvider } from "./builder/form-builder-context";
 
 export function FormEditor({
+  content,
+  ...props
+}: ElementEditorProps<"form">) {
+  return (
+    <FormEditorContent
+      key={JSON.stringify(content)}
+      content={content}
+      {...props}
+    />
+  );
+}
+
+function FormEditorContent({
   id,
   content,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"form">) {
   void id;
-  const [localContent, setLocalContent] = useState<FormContent>(content);
+  const [draftContent, setDraftContent] = useState<FormContent | null>(null);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
+  const formContent = draftContent ?? content;
 
   const handleUpdate = (newContent: FormContent) => {
-    setLocalContent(newContent);
+    setDraftContent(newContent);
     onSaveStatusChange?.("pending");
     save(newContent);
   };
 
   return (
     <FormBuilderProvider
-      form={localContent}
+      form={formContent}
       selectedFieldId={selectedFieldId}
       onSelectField={setSelectedFieldId}
       onUpdate={handleUpdate}
@@ -85,10 +99,10 @@ export function FormEditor({
                     <div className="space-y-2">
                       <Label className="text-xs">Submit Button Label</Label>
                       <Input
-                        value={localContent.submitLabel}
+                        value={formContent.submitLabel}
                         onChange={(e) =>
                           handleUpdate({
-                            ...localContent,
+                            ...formContent,
                             submitLabel: e.target.value,
                           })
                         }
@@ -98,10 +112,10 @@ export function FormEditor({
                     <div className="space-y-2">
                       <Label className="text-xs">Success Message</Label>
                       <Input
-                        value={localContent.successMessage}
+                        value={formContent.successMessage}
                         onChange={(e) =>
                           handleUpdate({
-                            ...localContent,
+                            ...formContent,
                             successMessage: e.target.value,
                           })
                         }

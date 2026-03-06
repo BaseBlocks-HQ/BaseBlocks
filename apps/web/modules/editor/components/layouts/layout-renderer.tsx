@@ -74,6 +74,8 @@ export function LayoutRenderer({
         "group/layout rounded-md transition-colors",
         isDragging && "ring-2 ring-primary/30",
       )}
+      role="button"
+      tabIndex={0}
       onClick={(e) => {
         e.stopPropagation();
         onSelectLayout();

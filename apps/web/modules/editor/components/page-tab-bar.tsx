@@ -43,8 +43,8 @@ export function PageTabBar({
   return (
     <div
       className="group/tabbar mb-6 flex items-center justify-center gap-2"
+      role="presentation"
       onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
     >
       {showControls && (
         <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
@@ -91,7 +91,8 @@ export function PageTabBar({
               )}
               {showControls && (
                 <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
-                  <span
+                  <button
+                    type="button"
                     className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -99,15 +100,17 @@ export function PageTabBar({
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
                         e.stopPropagation();
                         onStartRenameTab(tab);
                       }
                     }}
                   >
                     <Pencil className="h-2.5 w-2.5" />
-                  </span>
+                  </button>
                   {index >= 2 && (
-                    <span
+                    <button
+                      type="button"
                       className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -115,13 +118,14 @@ export function PageTabBar({
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
                           e.stopPropagation();
                           onRemoveTab(tab.id);
                         }
                       }}
                     >
                       <X className="h-3 w-3" />
-                    </span>
+                    </button>
                   )}
                 </div>
               )}

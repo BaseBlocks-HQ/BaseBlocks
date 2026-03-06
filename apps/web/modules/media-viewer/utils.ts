@@ -8,7 +8,7 @@
  * Fetch a file and create a blob URL for viewing
  * This bypasses Content-Disposition: attachment headers from CDNs
  */
-export async function createBlobUrl(
+async function createBlobUrl(
   url: string,
   contentType?: string,
 ): Promise<string> {
@@ -27,7 +27,7 @@ export async function createBlobUrl(
 /**
  * Revoke a blob URL to free memory
  */
-export function revokeBlobUrl(url: string): void {
+function revokeBlobUrl(url: string): void {
   if (url.startsWith("blob:")) {
     URL.revokeObjectURL(url);
   }
@@ -36,7 +36,7 @@ export function revokeBlobUrl(url: string): void {
 /**
  * Check if a URL is already a blob URL
  */
-export function isBlobUrl(url: string): boolean {
+function isBlobUrl(url: string): boolean {
   return url.startsWith("blob:");
 }
 

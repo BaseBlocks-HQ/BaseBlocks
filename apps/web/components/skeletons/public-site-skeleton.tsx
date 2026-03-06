@@ -1,6 +1,8 @@
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 export function PublicSiteSkeleton() {
+  const sidebarSkeletonWidths = ["50%", "70%", "90%", "50%"];
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <header className="border-b">
@@ -16,16 +18,13 @@ export function PublicSiteSkeleton() {
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r p-4">
           <nav className="space-y-1">
-            {[1, 2, 3, 4].map((i) => (
+            {sidebarSkeletonWidths.map((width, index) => (
               <div
-                key={i}
+                key={width}
                 className="flex items-center gap-2 px-2 py-2 rounded-md"
               >
                 <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton
-                  className="h-4"
-                  style={{ width: `${50 + (i % 3) * 20}%` }}
-                />
+                <Skeleton className="h-4" style={{ width }} />
               </div>
             ))}
           </nav>

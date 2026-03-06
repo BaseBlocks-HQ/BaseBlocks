@@ -5,9 +5,7 @@
 /**
  * Parse hex color to RGB values
  */
-export function hexToRgb(
-  hex: string,
-): { r: number; g: number; b: number } | null {
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return null;
 
@@ -30,7 +28,7 @@ function srgbToLinear(value: number): number {
  * Compute contrasting foreground color (white or black)
  * Uses relative luminance calculation
  */
-export function computeContrastingForeground(hex: string): "white" | "black" {
+function computeContrastingForeground(hex: string): "white" | "black" {
   const rgb = hexToRgb(hex);
   if (!rgb) return "white";
 

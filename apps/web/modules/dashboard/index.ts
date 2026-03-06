@@ -3,6 +3,3 @@
  */
 export { DashboardContent } from "./dashboard-content";
 export { DashboardLayout } from "./dashboard-layout";
-export { DashboardSidebar } from "./dashboard-sidebar";
-export { SiteCard } from "./components/site-card";
-export { SitesGrid } from "./components/sites-grid";

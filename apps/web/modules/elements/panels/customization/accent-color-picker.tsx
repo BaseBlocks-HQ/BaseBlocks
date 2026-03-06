@@ -13,7 +13,7 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Check, ChevronDown, Pipette } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useOptimistic } from "react";
 import { isValidHex } from "./lib";
 
 interface AccentColorPickerProps {
@@ -29,24 +29,15 @@ export function AccentColorPicker({
   label = "Accent Color",
   description,
 }: AccentColorPickerProps) {
-  const [customColor, setCustomColor] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
-
-  // Find if current value matches a preset
   const selectedPreset = value
     ? COLOR_PRESETS.find((p) => p.value.toLowerCase() === value.toLowerCase())
     : null;
-
-  // Sync custom color input with external value changes
-  useEffect(() => {
-    if (value && !selectedPreset) {
-      setCustomColor(value);
-      setShowCustomInput(true);
-    } else if (!value) {
-      setCustomColor("");
-      setShowCustomInput(false);
-    }
-  }, [value, selectedPreset]);
+  const [customColor, setCustomColor] = useOptimistic(
+    selectedPreset ? "" : (value ?? ""),
+  );
+  const [showCustomInput, setShowCustomInput] = useOptimistic(
+    Boolean(value && !selectedPreset),
+  );
 
   const handlePresetClick = (preset: (typeof COLOR_PRESETS)[number]) => {
     onChange(preset.value);

@@ -2,6 +2,7 @@ import { useLayoutContext } from "@/modules/elements/framework/layout-context";
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { QuicklinkItem } from "@baseblocks/types/elements";
 import { AppWindow, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 /** Only allow safe URL protocols */
 function getSafeHref(url: string): string | undefined {
@@ -33,11 +34,14 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
       {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
       className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
     >
-      <div className="w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
         {link.imageUrl ? (
-          <img
+          <Image
             src={link.imageUrl}
             alt={link.title || "Link"}
+            fill
+            unoptimized
+            sizes="48px"
             className="w-full h-full object-cover"
           />
         ) : isApp ? (

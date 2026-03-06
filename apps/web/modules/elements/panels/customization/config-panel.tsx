@@ -45,6 +45,8 @@ export function CustomizationConfigPanel({
       ? structuredClone(customization)
       : {};
     const newCopy = structuredClone(newCustomization);
+    const shouldTrackUndo = Boolean(editorCtx && !editorCtx.isUndoRedoExecuting);
+    const undoContext = shouldTrackUndo ? editorCtx : null;
 
     setIsSaving(true);
     try {
@@ -55,8 +57,8 @@ export function CustomizationConfigPanel({
         },
       });
 
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
-        editorCtx.pushCommand({
+      if (undoContext) {
+        undoContext.pushCommand({
           description: "Update customization",
           undo: async () => {
             await updateSite({
@@ -72,9 +74,9 @@ export function CustomizationConfigPanel({
           },
         });
       }
+      setIsSaving(false);
     } catch (_error) {
       toast.error("Failed to update customization");
-    } finally {
       setIsSaving(false);
     }
   };
