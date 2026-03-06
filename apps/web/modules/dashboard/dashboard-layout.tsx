@@ -22,16 +22,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const team = useTeam();
 
   useEffect(() => {
-    // Only redirect to onboarding if authenticated but no team.
-    // If auth drops (logout), don't redirect — let AuthGuard handle it.
     if (!authLoading && isAuthenticated && team === null) {
       router.replace("/onboarding");
     }
   }, [authLoading, isAuthenticated, team, router]);
 
-  // Show skeleton while auth or team is loading, and also when team is null
-  // (authenticated but no team → onboarding redirect is in-flight).
-  // Never return null — that causes a blank page flash.
   if (authLoading || !team) {
     return <DashboardSkeleton />;
   }

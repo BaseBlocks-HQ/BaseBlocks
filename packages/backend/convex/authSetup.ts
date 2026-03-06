@@ -1,5 +1,5 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
-import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
+import { convex } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
@@ -7,16 +7,12 @@ import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
 import authSchema from "./authComponent/schema";
 
-const siteUrl = (process.env.SITE_URL ?? "").trim();
-const appUrls = (process.env.APP_URL ?? "")
+const appUrl = (process.env.APP_URL ?? "")
   .split(",")
   .map((u) => u.trim())
   .filter(Boolean);
 
-const primaryAppUrl = siteUrl || appUrls[0] || "";
-const trustedOrigins = Array.from(
-  new Set([...appUrls, siteUrl].filter(Boolean)),
-);
+const primaryAppUrl = appUrl[0] || "";
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
@@ -31,7 +27,7 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: primaryAppUrl,
-    trustedOrigins,
+    trustedOrigins: appUrl,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
@@ -47,7 +43,6 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
       organization({
         allowUserToCreateOrganization: true,
       }),
-      crossDomain({ siteUrl: primaryAppUrl }),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;

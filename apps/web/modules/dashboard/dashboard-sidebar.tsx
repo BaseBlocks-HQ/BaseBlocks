@@ -29,8 +29,6 @@ export function DashboardSidebar({ teamName }: DashboardSidebarProps) {
   const pathname = usePathname();
   const handleLogout = async () => {
     await authClient.signOut();
-    // Clear httpOnly JWT cookie that crossDomainClient can't reach
-    await fetch("/api/auth/sign-out", { method: "POST" });
     window.location.href = "/login";
   };
   const t = useTranslations();
@@ -93,10 +91,7 @@ export function DashboardSidebar({ teamName }: DashboardSidebarProps) {
 
       <SidebarFooter className="border-t">
         <div className="flex flex-col gap-1 px-2 py-2">
-          {/* First row: Inbox button full width */}
           <InvitationInbox fullWidth />
-
-          {/* Second row: Settings, Language, Theme, Logout */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <AccountSettings />

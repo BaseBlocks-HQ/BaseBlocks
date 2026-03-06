@@ -91,24 +91,13 @@ export function InvitationInbox({
   const handleAccept = async (invitation: ReceivedInvitation) => {
     setProcessingId(invitation.id);
     try {
-      // Accept in Better Auth (creates BA member record, updates invitation status)
       await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
       });
-
-      // Remove from UI immediately — the invitation is consumed in BA and
-      // cannot be re-accepted, so keeping it visible would be misleading
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
-
-      // Set the accepted organization as active in the BA session so
-      // subsequent API calls (e.g. inviteMember) target the correct org
       await authClient.organization.setActive({
         organizationId: invitation.organizationId,
       });
-
-      // Sync to Convex members table (creates the Convex member record
-      // which links the user to the team and grants role-based access).
-      // Role is read from the verified BA member record, not from client.
       await syncMember({
         organizationId: invitation.organizationId,
       });

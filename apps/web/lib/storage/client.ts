@@ -19,28 +19,6 @@ export interface UploadProgress {
   percentage: number;
 }
 
-/**
- * Get the Better Auth session cookie from localStorage (crossDomain plugin stores it there)
- * This is needed because the proxy routes use getToken() which requires the session cookie
- */
-function getAuthCookie(): string {
-  if (typeof window === "undefined") return "";
-  const stored = localStorage.getItem("better-auth_cookie");
-  if (!stored) return "";
-  try {
-    const parsed = JSON.parse(stored);
-    return Object.entries(parsed)
-      .reduce((acc, [key, value]) => {
-        const v = value as { value: string; expires?: string };
-        if (v.expires && new Date(v.expires) < new Date()) return acc;
-        return `${acc}; ${key}=${v.value}`;
-      }, "")
-      .replace(/^; /, "");
-  } catch {
-    return "";
-  }
-}
-
 export class EntityStorageClient {
   private siteUrl: string;
   private workspaceTenantId: string;
@@ -79,17 +57,9 @@ export class EntityStorageClient {
             const response = JSON.parse(xhr.responseText);
             const blobId = response.blobId;
 
-            // Commit the file to make it accessible via path (via proxy)
-            const commitCookie = getAuthCookie();
-            const commitHeaders: Record<string, string> = {
-              "Content-Type": "application/json",
-            };
-            if (commitCookie) {
-              commitHeaders["Better-Auth-Cookie"] = commitCookie;
-            }
             const commitResponse = await fetch("/api/storage/commit", {
               method: "POST",
-              headers: commitHeaders,
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ blobId, path }),
             });
 
@@ -139,12 +109,7 @@ export class EntityStorageClient {
         reject(new Error("Upload cancelled"));
       });
 
-      // Use same-origin proxy - auth via Better-Auth-Cookie header
       xhr.open("POST", "/api/storage/upload");
-      const authCookie = getAuthCookie();
-      if (authCookie) {
-        xhr.setRequestHeader("Better-Auth-Cookie", authCookie);
-      }
       xhr.setRequestHeader(
         "Content-Type",
         file.type || "application/octet-stream",

@@ -8,9 +8,6 @@ interface Props {
   params: Promise<{ libraryId: string }>;
 }
 
-/**
- * Library detail page - manage folders and files within a library
- */
 export default function LibraryDetailPage({ params }: Props) {
   const { libraryId } = use(params);
   return (

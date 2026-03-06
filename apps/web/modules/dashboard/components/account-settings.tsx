@@ -54,12 +54,8 @@ export function AccountSettings() {
     setIsDeleting(true);
     setError(null);
     try {
-      // First, delete user data from Convex database
       await deleteMyAccountData();
-
-      // Sign out after deleting data
       await authClient.signOut();
-      await fetch("/api/auth/sign-out", { method: "POST" });
       setOpen(false);
       window.location.href = "/login";
     } catch (err) {

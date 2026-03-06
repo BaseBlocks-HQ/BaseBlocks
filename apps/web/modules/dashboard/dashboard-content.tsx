@@ -11,8 +11,6 @@ export function DashboardContent() {
   const team = useTeam();
   const sites = useSites();
 
-  // The layout handles auth and loading states
-  // team can be null for users who only have membership in other orgs
   return (
     <main className="flex-1 p-6">
       <div className="flex items-center justify-between mb-8">
