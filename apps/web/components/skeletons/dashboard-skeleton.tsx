@@ -27,13 +27,16 @@ function SiteCardSkeleton() {
 }
 
 export function DashboardSkeleton() {
+  const sidebarItems = ["overview", "team", "sites", "settings"];
+  const cardPlaceholders = ["alpha", "beta", "gamma"];
+
   return (
     <div className="flex min-h-screen bg-background">
       <div className="w-64 border-r p-4 space-y-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <div className="space-y-1">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center gap-3 px-2 py-2">
+          {sidebarItems.map((item) => (
+            <div key={item} className="flex items-center gap-3 px-2 py-2">
               <Skeleton className="h-4 w-4 rounded" />
               <Skeleton className="h-4 w-20" />
             </div>
@@ -50,8 +53,8 @@ export function DashboardSkeleton() {
           <Skeleton className="h-9 w-28 rounded-md" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <SiteCardSkeleton key={i} />
+          {cardPlaceholders.map((item) => (
+            <SiteCardSkeleton key={item} />
           ))}
         </div>
       </div>

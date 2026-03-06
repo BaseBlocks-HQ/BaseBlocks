@@ -14,7 +14,7 @@ interface UploadProgressProps {
   className?: string;
 }
 
-export function UploadProgress({
+function UploadProgress({
   filename,
   state,
   onCancel,

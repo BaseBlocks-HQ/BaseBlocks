@@ -51,13 +51,6 @@ export function FolderItem({
           isSelected ? "bg-accent" : "hover:bg-muted/50",
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onClick={onSelect}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onSelect();
-          }
-        }}
       >
         <button
           type="button"
@@ -74,12 +67,18 @@ export function FolderItem({
             )}
           />
         </button>
-        {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-        ) : (
-          <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
-        )}
-        <span className="truncate flex-1 min-w-0">{folder.name}</span>
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-1 text-left"
+          onClick={onSelect}
+        >
+          {isExpanded ? (
+            <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+          ) : (
+            <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
+          <span className="truncate flex-1 min-w-0">{folder.name}</span>
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button

@@ -24,7 +24,7 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { createElement, useState } from "react";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -71,6 +71,7 @@ export function LayoutSlot({
 
   return (
     <div
+      role="presentation"
       className={cn(
         "min-h-[48px] rounded",
         // Empty state only - dashed border
@@ -81,17 +82,12 @@ export function LayoutSlot({
               "border-muted-foreground/20 hover:border-muted-foreground/30",
         // Non-empty state - no wrapper backgrounds, let blocks handle their own styling
       )}
-      onClick={(e) => {
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
+        }
         e.stopPropagation();
         onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          e.stopPropagation();
-          onSelect();
-        }
       }}
     >
       {isEmpty ? (
@@ -209,18 +205,14 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={style}
+      role="presentation"
       className="group/block mb-3 min-w-0"
-      onClick={(e) => {
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
+        }
         e.stopPropagation();
         onSelect();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          e.stopPropagation();
-          onSelect();
-        }
       }}
     >
       {/* Block with inline toolbar */}
@@ -275,7 +267,10 @@ function SortableBlock({
                     }
                   }}
                 >
-                  <ConfigPanel content={block.content} onUpdate={onUpdate} />
+                  {createElement(ConfigPanel, {
+                    content: block.content,
+                    onUpdate,
+                  })}
                 </PopoverContent>
               </Popover>
             )}

@@ -11,7 +11,7 @@ import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useOptimistic, useState } from "react";
 import { getNodeDocument } from "../lib";
 
 interface NodeDetailProps {
@@ -25,11 +25,7 @@ export function NodeDetail({
   onUpdateNodeName,
   onUpdateDocument,
 }: NodeDetailProps) {
-  const [localName, setLocalName] = useState(node.name);
-
-  useEffect(() => {
-    setLocalName(node.name);
-  }, [node.name]);
+  const [localName, setLocalName] = useOptimistic(node.name);
 
   const debouncedSaveName = useDebounceCallback((name: string) => {
     onUpdateNodeName(node.id, name);
@@ -75,18 +71,18 @@ function NodeBlockNoteEditor({
 }) {
   const { resolvedTheme } = useTheme();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
-  const initialContentRef = useRef(document);
+  const [initialContent] = useState(() =>
+    document && document.length > 0 ? (document as Block[]) : undefined,
+  );
 
   const editor = useCreateBlockNote({
-    initialContent:
-      initialContentRef.current && initialContentRef.current.length > 0
-        ? (initialContentRef.current as Block[])
-        : undefined,
+    initialContent,
   });
 
   return (
     // Stop keyboard events from bubbling to parent DnD and node-list handlers
     <div
+      role="presentation"
       className="[&_.bn-container]:!border-none [&_.bn-editor]:!pl-12 [&_.bn-editor]:!pr-4 [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent"
       onKeyDown={(e) => e.stopPropagation()}
     >

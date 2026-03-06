@@ -70,21 +70,17 @@ export function LayoutRenderer({
 
   return (
     <div
+      role="presentation"
       className={cn(
         "group/layout rounded-md transition-colors",
         isDragging && "ring-2 ring-primary/30",
       )}
-      onClick={(e) => {
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
+        }
         e.stopPropagation();
         onSelectLayout();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          e.stopPropagation();
-          onSelectLayout();
-        }
       }}
     >
       {/* Layout with inline toolbar */}

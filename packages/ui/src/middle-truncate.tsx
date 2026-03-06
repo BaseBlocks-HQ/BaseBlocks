@@ -21,26 +21,34 @@ export function MiddleTruncate({
 }: MiddleTruncateProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
-  const [truncatedText, setTruncatedText] = useState(text);
-  const [needsTruncation, setNeedsTruncation] = useState(false);
+  const [displayState, setDisplayState] = useState<{
+    needsTruncation: boolean;
+    truncatedText: string | null;
+  }>({
+    needsTruncation: false,
+    truncatedText: null,
+  });
 
   useEffect(() => {
     const container = containerRef.current;
     const textEl = textRef.current;
     if (!container || !textEl) return;
 
-    const checkTruncation = () => {
-      setTruncatedText(text);
-      setNeedsTruncation(false);
+    let frameId: number | null = null;
 
-      requestAnimationFrame(() => {
+    const checkTruncation = () => {
+      frameId = requestAnimationFrame(() => {
         if (!container || !textEl) return;
 
         const containerWidth = container.offsetWidth;
         const textWidth = textEl.scrollWidth;
+        const nextState = {
+          needsTruncation: false,
+          truncatedText: text,
+        };
 
         if (textWidth > containerWidth) {
-          setNeedsTruncation(true);
+          nextState.needsTruncation = true;
           const avgCharWidth = textWidth / text.length;
           const availableChars = Math.floor(containerWidth / avgCharWidth) - 3; // -3 for ellipsis
 
@@ -48,11 +56,13 @@ export function MiddleTruncate({
             const startChars = availableChars - endChars;
             const start = text.slice(0, startChars);
             const end = text.slice(-endChars);
-            setTruncatedText(`${start}...${end}`);
+            nextState.truncatedText = `${start}...${end}`;
           } else {
-            setTruncatedText(`...${text.slice(-endChars)}`);
+            nextState.truncatedText = `...${text.slice(-endChars)}`;
           }
         }
+
+        setDisplayState(nextState);
       });
     };
 
@@ -61,17 +71,25 @@ export function MiddleTruncate({
     const resizeObserver = new ResizeObserver(checkTruncation);
     resizeObserver.observe(container);
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+      resizeObserver.disconnect();
+    };
   }, [text, endChars]);
 
   return (
     <div ref={containerRef} className={cn("overflow-hidden", className)}>
       <span
         ref={textRef}
-        className={cn("whitespace-nowrap", needsTruncation ? "block" : "block")}
+        className={cn(
+          "block whitespace-nowrap",
+          displayState.needsTruncation && "overflow-hidden",
+        )}
         title={text}
       >
-        {truncatedText}
+        {displayState.truncatedText ?? text}
       </span>
     </div>
   );

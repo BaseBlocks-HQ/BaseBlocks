@@ -7,6 +7,7 @@
 
 import { Button } from "@baseblocks/ui/button";
 import { Trash2, X } from "lucide-react";
+import { createElement } from "react";
 import { getFieldEntry, getFieldSettings } from "./field-registry";
 import { useFormBuilder } from "./form-builder-context";
 
@@ -72,10 +73,10 @@ export function FieldSettingsPanel() {
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-3">
-          <Settings
-            field={selectedField}
-            onChange={(updated) => updateField(selectedField.id, updated)}
-          />
+          {createElement(Settings, {
+            field: selectedField,
+            onChange: (updated) => updateField(selectedField.id, updated),
+          })}
         </div>
       </div>
 

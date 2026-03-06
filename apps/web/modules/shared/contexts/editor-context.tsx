@@ -6,9 +6,9 @@ import {
   useUndoKeyboardShortcuts,
   useUndoManager,
 } from "@/modules/shared/undo";
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { type ReactNode, createContext, use, useState } from "react";
 
-export interface EditingSubpage {
+interface EditingSubpage {
   pageId: string;
 }
 
@@ -77,15 +77,19 @@ export function EditorProvider({
     slotId: null,
     blockId: null,
   });
-  const [editingSubpage, setEditingSubpage] = useState<EditingSubpage | null>(
-    null,
-  );
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [currentPageId, setCurrentPageId] = useState<string | null>(null);
-  const [showControls, setShowControls] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const stored = localStorage.getItem("editor:showControls");
-    return stored === null ? true : stored === "true";
+  const [uiState, setUiState] = useState(() => {
+    const initialShowControls = (() => {
+      if (typeof window === "undefined") return true;
+      const stored = localStorage.getItem("editor:showControls");
+      return stored === null ? true : stored === "true";
+    })();
+
+    return {
+      editingSubpage: null as EditingSubpage | null,
+      activeTabId: null as string | null,
+      currentPageId: null as string | null,
+      showControls: initialShowControls,
+    };
   });
 
   // Derive hasUndeployedChanges from site data
@@ -117,7 +121,7 @@ export function EditorProvider({
     canUndo,
     canRedo,
     canEdit,
-    currentPageId,
+    currentPageId: uiState.currentPageId,
   });
 
   const selectLayout = (layoutId: string | null) => {
@@ -157,11 +161,17 @@ export function EditorProvider({
   };
 
   const openSubpageEditor = (subpage: EditingSubpage) => {
-    setEditingSubpage(subpage);
+    setUiState((current) => ({
+      ...current,
+      editingSubpage: subpage,
+    }));
   };
 
   const closeSubpageEditor = () => {
-    setEditingSubpage(null);
+    setUiState((current) => ({
+      ...current,
+      editingSubpage: null,
+    }));
   };
 
   return (
@@ -173,7 +183,7 @@ export function EditorProvider({
         selectSlot,
         selectBlock,
         clearSelection,
-        editingSubpage,
+        editingSubpage: uiState.editingSubpage,
         openSubpageEditor,
         closeSubpageEditor,
         canEdit,
@@ -181,22 +191,33 @@ export function EditorProvider({
         isViewer,
         isPermissionsLoading,
         hasUndeployedChanges,
-        activeTabId,
-        setActiveTabId,
-        currentPageId,
-        setCurrentPageId,
+        activeTabId: uiState.activeTabId,
+        setActiveTabId: (activeTabId) =>
+          setUiState((current) => ({
+            ...current,
+            activeTabId,
+          })),
+        currentPageId: uiState.currentPageId,
+        setCurrentPageId: (currentPageId) =>
+          setUiState((current) => ({
+            ...current,
+            currentPageId,
+          })),
         pushCommand,
         undo,
         redo,
         canUndo,
         canRedo,
         isUndoRedoExecuting,
-        showControls,
+        showControls: uiState.showControls,
         toggleControls: () =>
-          setShowControls((p) => {
-            const next = !p;
-            localStorage.setItem("editor:showControls", String(next));
-            return next;
+          setUiState((current) => {
+            const showControls = !current.showControls;
+            localStorage.setItem("editor:showControls", String(showControls));
+            return {
+              ...current,
+              showControls,
+            };
           }),
       }}
     >
@@ -206,7 +227,7 @@ export function EditorProvider({
 }
 
 export function useEditorContext() {
-  const context = useContext(EditorContext);
+  const context = use(EditorContext);
   if (!context) {
     throw new Error("useEditorContext must be used within an EditorProvider");
   }
@@ -215,5 +236,5 @@ export function useEditorContext() {
 
 // Optional hook that returns null if not in editor context (for use in renderers)
 export function useEditorContextOptional() {
-  return useContext(EditorContext);
+  return use(EditorContext);
 }

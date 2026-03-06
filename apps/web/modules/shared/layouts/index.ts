@@ -3,8 +3,6 @@
  */
 export {
   generateId,
-  getSlotCount,
-  createSlots,
   createLayout,
   createBlock,
   getLayoutGridStyle,

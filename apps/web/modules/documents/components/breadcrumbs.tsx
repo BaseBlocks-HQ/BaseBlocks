@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ChevronRight, Home } from "lucide-react";
 
-export interface BreadcrumbItem {
+interface BreadcrumbItem {
   id: string | null;
   name: string;
 }

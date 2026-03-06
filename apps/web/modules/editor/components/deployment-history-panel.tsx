@@ -29,6 +29,7 @@ export function DeploymentHistoryPanel({
   deployments,
   onRollback,
 }: DeploymentHistoryPanelProps) {
+  const loadingItems = ["pending-a", "pending-b", "pending-c"];
   const [rollbackTarget, setRollbackTarget] = useState<{
     id: string;
     version: number;
@@ -103,9 +104,9 @@ export function DeploymentHistoryPanel({
           <ScrollArea className="h-[calc(100vh-8rem)] mt-4">
             {deployments === undefined ? (
               <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
+                {loadingItems.map((item) => (
                   <div
-                    key={i}
+                    key={item}
                     className="h-20 rounded-lg bg-muted animate-pulse"
                   />
                 ))}

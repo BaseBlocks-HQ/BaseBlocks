@@ -34,7 +34,8 @@ export function RollbackDialog({
     try {
       await onRollback();
       onOpenChange(false);
-    } finally {
+      setIsRollingBack(false);
+    } catch {
       setIsRollingBack(false);
     }
   };

@@ -13,6 +13,8 @@ import { Button } from "@baseblocks/ui/button";
 import { ArrowRight } from "lucide-react";
 import {
   LayoutGroup,
+  LazyMotion,
+  domAnimation,
   useMotionValue,
   useMotionValueEvent,
   useSpring,
@@ -96,46 +98,48 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
   );
 
   return (
-    <div
-      className={
-        expanded
-          ? "min-h-screen bg-background"
-          : "h-screen overflow-hidden bg-background"
-      }
-    >
-      <LayoutGroup>
-        <IntroOverlay
-          expanded={expanded}
-          titleRef={titleRef}
-          fontSizeRem={fontSizeRem}
-          brandFontFamily={landingFonts.square}
-        />
+    <LazyMotion features={domAnimation} strict>
+      <div
+        className={
+          expanded
+            ? "min-h-screen bg-background"
+            : "h-screen overflow-hidden bg-background"
+        }
+      >
+        <LayoutGroup>
+          <IntroOverlay
+            expanded={expanded}
+            titleRef={titleRef}
+            fontSizeRem={fontSizeRem}
+            brandFontFamily={landingFonts.square}
+          />
 
-        {expanded && (
-          <>
-            <LandingHeader
-              isAuthenticated={isAuthenticated}
-              commonTranslations={commonTranslations}
-              navigationTranslations={navigationTranslations}
-            />
-            <HeroSection
-              authCta={authCta}
-              landingTranslations={landingTranslations}
-            />
-            <FeaturesSection landingTranslations={landingTranslations} />
-            <StepsSection
-              isDarkTheme={isDarkTheme}
-              gridColor={stepsGridColor}
-              gridOpacity={stepsGridOpacity}
-              landingTranslations={landingTranslations}
-            />
-            <FooterSection
-              authCta={authCta}
-              landingTranslations={landingTranslations}
-            />
-          </>
-        )}
-      </LayoutGroup>
-    </div>
+          {expanded && (
+            <>
+              <LandingHeader
+                isAuthenticated={isAuthenticated}
+                commonTranslations={commonTranslations}
+                navigationTranslations={navigationTranslations}
+              />
+              <HeroSection
+                authCta={authCta}
+                landingTranslations={landingTranslations}
+              />
+              <FeaturesSection landingTranslations={landingTranslations} />
+              <StepsSection
+                isDarkTheme={isDarkTheme}
+                gridColor={stepsGridColor}
+                gridOpacity={stepsGridOpacity}
+                landingTranslations={landingTranslations}
+              />
+              <FooterSection
+                authCta={authCta}
+                landingTranslations={landingTranslations}
+              />
+            </>
+          )}
+        </LayoutGroup>
+      </div>
+    </LazyMotion>
   );
 }

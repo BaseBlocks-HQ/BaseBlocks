@@ -30,13 +30,14 @@ export function DeployDialog({
 
   const handleDeploy = async () => {
     setIsDeploying(true);
-    try {
-      await onDeploy(notes.trim() || undefined);
-      setNotes("");
-      onOpenChange(false);
-    } finally {
-      setIsDeploying(false);
-    }
+    void onDeploy(notes.trim() || undefined)
+      .then(() => {
+        setNotes("");
+        onOpenChange(false);
+      })
+      .finally(() => {
+        setIsDeploying(false);
+      });
   };
 
   return (

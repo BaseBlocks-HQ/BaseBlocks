@@ -44,5 +44,3 @@ export function SortableItem({
     </div>
   );
 }
-
-export { useSortable };

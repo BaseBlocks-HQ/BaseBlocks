@@ -63,14 +63,8 @@ export function MediaViewerModal() {
     currentIndex,
   } = useMediaViewer();
 
-  // State to hold viewer-specific controls
+  // State to hold viewer-specific controls — reset on viewer remount via key={currentFile.url}
   const [viewerControls, setViewerControls] = useState<ReactNode>(null);
-
-  // Reset viewer controls when file changes
-  useEffect(() => {
-    if (!currentFile) return;
-    setViewerControls(null);
-  }, [currentFile]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -138,7 +132,8 @@ export function MediaViewerModal() {
     setIsOpeningExternal(true);
     try {
       await openInNewTab(currentFile.url, currentFile.contentType);
-    } finally {
+      setIsOpeningExternal(false);
+    } catch {
       setIsOpeningExternal(false);
     }
   };
@@ -289,6 +284,7 @@ export function MediaViewerModal() {
 
         {/* Viewer component */}
         <ViewerComponent
+          key={currentFile.url}
           file={currentFile}
           onClose={closeFile}
           renderControls={handleRenderControls}

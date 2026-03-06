@@ -15,6 +15,8 @@ import {
   IconStackPerspective,
 } from "nucleo-glass";
 
+const EMPTY_CATEGORY_IDS: ElementCategory[] = [];
+
 interface CategoryMenuItemProps {
   icon: React.ReactNode;
   label: string;
@@ -74,7 +76,7 @@ export function CategoryMenu({
   activeCategory,
   onCategoryHover,
   selectedSlotId,
-  emptyCategoryIds = [],
+  emptyCategoryIds = EMPTY_CATEGORY_IDS,
 }: CategoryMenuProps) {
   const categories = getSortedCategories();
 

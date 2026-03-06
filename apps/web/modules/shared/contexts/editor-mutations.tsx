@@ -1,7 +1,7 @@
 "use client";
 
 import type { LayoutSettings } from "@baseblocks/types";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, use } from "react";
 
 /** All mutation functions the editor needs, grouped by domain */
 export interface EditorMutations {
@@ -81,7 +81,7 @@ export function EditorMutationsProvider({
 }
 
 export function useEditorMutations(): EditorMutations {
-  const context = useContext(EditorMutationsContext);
+  const context = use(EditorMutationsContext);
   if (!context) {
     throw new Error(
       "useEditorMutations must be used within an EditorMutationsProvider",

@@ -103,6 +103,10 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     if (!site) return;
     const oldStyle = (site.settings.navigationStyle ||
       "sidebar") as NavigationStyle;
+    const shouldTrackUndo = Boolean(
+      editorCtx && !editorCtx.isUndoRedoExecuting,
+    );
+    const undoContext = shouldTrackUndo ? editorCtx : null;
     try {
       await updateSite({
         siteId,
@@ -112,8 +116,8 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
       });
       toast.success("Navigation style updated");
 
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
-        editorCtx.pushCommand({
+      if (undoContext) {
+        undoContext.pushCommand({
           description: "Change navigation style",
           undo: async () => {
             await updateSite({
@@ -138,19 +142,22 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     if (!site) return;
     const oldValue = !!(site.settings as Record<string, unknown>)
       .sidebarDefaultExpanded;
+    const shouldTrackUndo = Boolean(
+      editorCtx && !editorCtx.isUndoRedoExecuting,
+    );
+    const successMessage = expanded
+      ? "Sidebar pages will be expanded by default"
+      : "Sidebar pages will be collapsed by default";
+    const undoContext = shouldTrackUndo ? editorCtx : null;
     try {
       await updateSite({
         siteId,
         settings: { sidebarDefaultExpanded: expanded },
       });
-      toast.success(
-        expanded
-          ? "Sidebar pages will be expanded by default"
-          : "Sidebar pages will be collapsed by default",
-      );
+      toast.success(successMessage);
 
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
-        editorCtx.pushCommand({
+      if (undoContext) {
+        undoContext.pushCommand({
           description: "Toggle sidebar default expanded",
           undo: async () => {
             await updateSite({

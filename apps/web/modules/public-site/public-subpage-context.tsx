@@ -1,8 +1,8 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { type ReactNode, createContext, use, useState } from "react";
 
-export interface ViewingSubpage {
+interface ViewingSubpage {
   pageId: string;
 }
 
@@ -49,7 +49,7 @@ export function PublicSubpageProvider({
 }
 
 export function usePublicSubpageContext() {
-  const context = useContext(PublicSubpageContext);
+  const context = use(PublicSubpageContext);
   if (!context) {
     throw new Error(
       "usePublicSubpageContext must be used within a PublicSubpageProvider",
@@ -59,5 +59,5 @@ export function usePublicSubpageContext() {
 }
 
 export function usePublicSubpageContextOptional() {
-  return useContext(PublicSubpageContext);
+  return use(PublicSubpageContext);
 }

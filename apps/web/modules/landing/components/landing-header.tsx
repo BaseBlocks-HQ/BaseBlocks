@@ -3,7 +3,7 @@ import { landingFonts, layoutSpring } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
 import { Button } from "@baseblocks/ui/button";
 import { Github } from "lucide-react";
-import { motion } from "motion/react";
+import { m } from "motion/react";
 
 interface LandingHeaderProps {
   isAuthenticated: boolean;
@@ -21,7 +21,7 @@ export function LandingHeader({
       <div className="bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <motion.div
+            <m.div
               className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-sm text-background"
               style={{ fontFamily: landingFonts.square }}
               initial={{ opacity: 0, scale: 0.7, filter: "blur(4px)" }}
@@ -29,8 +29,8 @@ export function LandingHeader({
               transition={{ duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] }}
             >
               B
-            </motion.div>
-            <motion.span
+            </m.div>
+            <m.span
               layoutId="brand"
               transition={layoutSpring}
               className="whitespace-nowrap tracking-tight"
@@ -41,10 +41,10 @@ export function LandingHeader({
               }}
             >
               BaseBlocks
-            </motion.span>
+            </m.span>
           </div>
 
-          <motion.div
+          <m.div
             className="flex items-center gap-4"
             initial={{ opacity: 0, y: 5, filter: "blur(4px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -72,10 +72,10 @@ export function LandingHeader({
                 <Button size="sm">{commonTranslations("signIn")}</Button>
               </Link>
             )}
-          </motion.div>
+          </m.div>
         </div>
       </div>
-      <motion.div
+      <m.div
         className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent dark:via-white/[0.06]"
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}

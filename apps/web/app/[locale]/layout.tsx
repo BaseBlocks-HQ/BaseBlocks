@@ -4,6 +4,7 @@ import { getToken } from "@/lib/auth/server";
 import { ConvexClientProvider } from "@/lib/convex/provider";
 import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
+import { MotionConfig } from "motion/react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import {
@@ -64,13 +65,15 @@ export default async function LocaleLayout({ children, params }: Props) {
         enableSystem
         disableTransitionOnChange
       >
-        <ConvexClientProvider initialToken={token}>
-          <MediaViewerProvider>
-            {children}
-            <MediaViewerModal />
-          </MediaViewerProvider>
-          <Toaster />
-        </ConvexClientProvider>
+        <MotionConfig reducedMotion="user">
+          <ConvexClientProvider initialToken={token}>
+            <MediaViewerProvider>
+              {children}
+              <MediaViewerModal />
+            </MediaViewerProvider>
+            <Toaster />
+          </ConvexClientProvider>
+        </MotionConfig>
       </ThemeProvider>
     </NextIntlClientProvider>
   );

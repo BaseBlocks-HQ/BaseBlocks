@@ -16,7 +16,7 @@ import {
 import { useMutation } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 
 interface ReceivedInvitation {
   id: string;
@@ -37,6 +37,52 @@ interface AuthInvitation {
   status: string;
 }
 
+type InboxState = {
+  invitations: ReceivedInvitation[];
+  isLoading: boolean;
+  processingId: string | null;
+  error: string | null;
+};
+
+type InboxAction =
+  | { type: "LOAD_START" }
+  | { type: "LOAD_SUCCESS"; invitations: ReceivedInvitation[] }
+  | { type: "LOAD_ERROR"; error: string }
+  | { type: "PROCESS_START"; id: string }
+  | { type: "PROCESS_DONE" }
+  | { type: "REMOVE_INVITATION"; id: string }
+  | { type: "PROCESS_ERROR"; error: string };
+
+function inboxReducer(state: InboxState, action: InboxAction): InboxState {
+  switch (action.type) {
+    case "LOAD_START":
+      return { ...state, isLoading: true, error: null };
+    case "LOAD_SUCCESS":
+      return { ...state, isLoading: false, invitations: action.invitations };
+    case "LOAD_ERROR":
+      return { ...state, isLoading: false, error: action.error };
+    case "PROCESS_START":
+      return { ...state, processingId: action.id };
+    case "PROCESS_DONE":
+      return { ...state, processingId: null };
+    case "REMOVE_INVITATION":
+      return {
+        ...state,
+        processingId: null,
+        invitations: state.invitations.filter((inv) => inv.id !== action.id),
+      };
+    case "PROCESS_ERROR":
+      return { ...state, processingId: null, error: action.error };
+  }
+}
+
+const initialState: InboxState = {
+  invitations: [],
+  isLoading: false,
+  processingId: null,
+  error: null,
+};
+
 interface InvitationInboxProps {
   fullWidth?: boolean;
   /** When true, renders invitations inline (no dialog) for the onboarding page */
@@ -50,26 +96,24 @@ export function InvitationInbox({
   const t = useTranslations("inbox");
 
   const [open, setOpen] = useState(false);
-  const [invitations, setInvitations] = useState<ReceivedInvitation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(inboxReducer, initialState);
+  const { invitations, isLoading, processingId, error } = state;
 
   const syncMember = useMutation(
     api.members.mutations.syncMemberFromInvitation,
   );
 
   const loadInvitations = async () => {
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: "LOAD_START" });
     try {
       const result = await authClient.organization.listUserInvitations();
       if (result.data) {
         const pending = (result.data as AuthInvitation[]).filter(
           (inv) => inv.status === "pending",
         );
-        setInvitations(
-          pending.map((inv) => ({
+        dispatch({
+          type: "LOAD_SUCCESS",
+          invitations: pending.map((inv) => ({
             id: inv.id,
             organizationId: inv.organizationId,
             organizationName: inv.organizationName,
@@ -77,53 +121,58 @@ export function InvitationInbox({
             expiresAt: new Date(inv.expiresAt),
             inviterEmail: inv.inviterEmail,
           })),
-        );
+        });
+      } else {
+        dispatch({ type: "LOAD_SUCCESS", invitations: [] });
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load invitations",
-      );
-    } finally {
-      setIsLoading(false);
+      dispatch({
+        type: "LOAD_ERROR",
+        error:
+          err instanceof Error ? err.message : "Failed to load invitations",
+      });
     }
   };
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
-    setProcessingId(invitation.id);
+    dispatch({ type: "PROCESS_START", id: invitation.id });
     try {
       await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
       });
-      await authClient.organization.setActive({
-        organizationId: invitation.organizationId,
-      });
-      await syncMember({
-        organizationId: invitation.organizationId,
-      });
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitation.id));
+      // setActive and syncMember are independent — run in parallel
+      await Promise.all([
+        authClient.organization.setActive({
+          organizationId: invitation.organizationId,
+        }),
+        syncMember({
+          organizationId: invitation.organizationId,
+        }),
+      ]);
+      dispatch({ type: "REMOVE_INVITATION", id: invitation.id });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to accept invitation",
-      );
+      dispatch({
+        type: "PROCESS_ERROR",
+        error:
+          err instanceof Error ? err.message : "Failed to accept invitation",
+      });
       loadInvitations();
-    } finally {
-      setProcessingId(null);
     }
   };
 
   const handleDecline = async (invitationId: string) => {
-    setProcessingId(invitationId);
+    dispatch({ type: "PROCESS_START", id: invitationId });
     try {
       await authClient.organization.rejectInvitation({
         invitationId,
       });
-      setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
+      dispatch({ type: "REMOVE_INVITATION", id: invitationId });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to decline invitation",
-      );
-    } finally {
-      setProcessingId(null);
+      dispatch({
+        type: "PROCESS_ERROR",
+        error:
+          err instanceof Error ? err.message : "Failed to decline invitation",
+      });
     }
   };
 

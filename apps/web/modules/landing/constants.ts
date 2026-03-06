@@ -13,13 +13,7 @@ import {
 } from "nucleo-glass";
 import type { LandingFeature, LandingStep } from "./types";
 
-export type FontVariant =
-  | "square"
-  | "grid"
-  | "triangle"
-  | "circle"
-  | "sans"
-  | "mono";
+type FontVariant = "square" | "grid" | "triangle" | "circle" | "sans" | "mono";
 
 export const landingFonts: Record<FontVariant, string> = {
   square: "var(--font-geist-pixel-square)",

@@ -5,13 +5,13 @@ import { useState } from "react";
 import { authClient } from "../auth/client";
 import { type UploadProgress, entityStorageClient } from "./client";
 
-export interface ImageUploadState {
+interface ImageUploadState {
   isUploading: boolean;
   progress: UploadProgress | null;
   error: string | null;
 }
 
-export interface ImageUploadResult {
+interface ImageUploadResult {
   url: string;
   width?: number;
   height?: number;

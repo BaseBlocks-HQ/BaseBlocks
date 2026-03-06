@@ -11,7 +11,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface RenameDialogProps {
   type: "file" | "folder";
@@ -28,21 +28,15 @@ export function RenameDialog({
   onOpenChange,
   onSubmit,
 }: RenameDialogProps) {
-  const [name, setName] = useState(currentName);
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (open) {
-      setName(currentName);
-      setError("");
-    }
-  }, [open, currentName]);
-
   const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      setError("");
+    if (newOpen) {
+      setName(currentName);
     }
+    setError("");
     onOpenChange(newOpen);
   };
 
@@ -55,11 +49,11 @@ export function RenameDialog({
     try {
       await onSubmit(name.trim());
       onOpenChange(false);
+      setIsSubmitting(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : `Failed to rename ${type}`;
       setError(message);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -85,7 +79,6 @@ export function RenameDialog({
                 setError("");
               }}
               className="mt-1.5"
-              autoFocus
               onFocus={(e) => {
                 // Select filename without extension for files
                 if (type === "file") {

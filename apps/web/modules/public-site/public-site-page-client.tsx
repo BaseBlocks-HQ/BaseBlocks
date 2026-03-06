@@ -10,18 +10,17 @@ import {
 } from "@/modules/public-site";
 import { api } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
-import { use } from "react";
 
 type Props = {
-  params: Promise<{ subdomain: string; path: string[] }>;
+  subdomain: string;
+  path: string[];
 };
 
 /**
  * Public site page - displays published content
  * All logic is encapsulated in PublicSiteLayout component
  */
-export function PublicSitePageClient({ params }: Props) {
-  const { subdomain, path } = use(params);
+export function PublicSitePageClient({ subdomain, path }: Props) {
   // path[0] is the site slug, path[1:] is the page path
   const siteSlug = path[0] || "";
   // Empty array = "show the default page", backend resolves via defaultPageId

@@ -7,38 +7,28 @@ import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import useSWR from "swr";
 import type { ViewerProps } from "../types";
 
+async function loadTextContent(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch: ${response.status}`);
+  }
+
+  return response.text();
+}
+
 export function TextViewer({ file, renderControls }: ViewerProps) {
-  const [content, setContent] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [wordWrap, setWordWrap] = useState(true);
   const [searchTerm, setSearchTerm] = useState(file.searchTerm ?? "");
   const [showSearch, setShowSearch] = useState(!!file.searchTerm);
   const firstMatchRef = useRef<HTMLElement | null>(null);
   const hasScrolledToMatch = useRef(false);
-
-  // Fetch text content
-  useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-
-    fetch(file.url)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-        return res.text();
-      })
-      .then((text) => {
-        setContent(text);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setIsLoading(false);
-      });
-  }, [file.url]);
+  const { data: content, error, isLoading } = useSWR(file.url, loadTextContent);
+  const errorMessage =
+    error instanceof Error ? error.message : "Failed to load text content";
 
   const handleCopy = useCallback(async () => {
     if (!content) return;
@@ -65,12 +55,13 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
     setWordWrap((prev) => !prev);
   }, []);
 
-  // Highlight search terms in content
-  const highlightedContent = (() => {
-    // Reset scroll flag when search term changes
+  useEffect(() => {
+    void searchTerm;
     hasScrolledToMatch.current = false;
     firstMatchRef.current = null;
+  }, [searchTerm]);
 
+  const highlightedContent = (() => {
     if (!content || !searchTerm.trim()) return content;
 
     const term = searchTerm.trim();
@@ -128,7 +119,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
 
   // Register controls with parent
   useEffect(() => {
-    if (!renderControls || isLoading || error) return;
+    if (!renderControls || isLoading || errorMessage) return;
 
     renderControls(
       <>
@@ -149,7 +140,6 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-7 w-32 text-xs pr-6"
-              autoFocus
             />
             {searchTerm && (
               <button
@@ -190,7 +180,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   }, [
     renderControls,
     isLoading,
-    error,
+    errorMessage,
     showSearch,
     searchTerm,
     wordWrap,
@@ -211,7 +201,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-full text-destructive">
-        Error: {error}
+        Error: {errorMessage}
       </div>
     );
   }

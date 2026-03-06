@@ -32,10 +32,121 @@ import { useEffect, useState } from "react";
 import { usePublicSubpageContext } from "./public-subpage-context";
 import { PublicSubpagePanel } from "./public-subpage-panel";
 
+type LayoutDoc = Doc<"layouts">;
+type SlotDoc = LayoutDoc["slots"][number];
+type BlockDoc = SlotDoc["blocks"][number];
+
 interface PublicContentProps {
   pageId: string;
   /** When true, subpage panel rendering is disabled to prevent infinite recursion */
   nested?: boolean;
+}
+
+function renderPublishedLayout(layout: LayoutDoc) {
+  if (layout.type === "spacer") {
+    const settings = layout.settings as LayoutSettings;
+    const height: SpacerLayoutHeight = settings.spacerHeight ?? "medium";
+    return (
+      <div
+        key={layout._id}
+        style={{ height: `${SPACER_LAYOUT_HEIGHTS[height]}px` }}
+        className="w-full"
+        aria-hidden="true"
+      />
+    );
+  }
+
+  const gridStyle = getLayoutGridStyle(
+    layout.type as LayoutType,
+    layout.settings as LayoutSettings,
+  );
+
+  return (
+    <div key={layout._id} style={gridStyle}>
+      {layout.slots.map((slot: SlotDoc) => (
+        <div key={slot.id} className="min-w-0">
+          {slot.blocks.map((block: BlockDoc, index: number) => (
+            <div
+              key={block.id}
+              className={cn(
+                "prose prose-neutral dark:prose-invert max-w-none",
+                index < slot.blocks.length - 1 && "mb-3",
+              )}
+            >
+              <LayoutContextProvider
+                layoutType={layout.type as LayoutType}
+                layoutId={layout._id}
+              >
+                <ElementRendererWrapper
+                  id={block.id}
+                  type={block.type as ElementType}
+                  content={block.content as AnyContent}
+                />
+              </LayoutContextProvider>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PublicMainContent({
+  pageTitle,
+  pageTabs,
+  activeTabId,
+  hasTabs,
+  hasSidebar,
+  mainLayouts,
+  sidebarLayouts,
+  onTabChange,
+}: {
+  pageTitle: string;
+  pageTabs: Array<{ id: string; label: string }>;
+  activeTabId: string | null;
+  hasTabs: boolean;
+  hasSidebar: boolean;
+  mainLayouts: LayoutDoc[];
+  sidebarLayouts: LayoutDoc[];
+  onTabChange: (tabId: string) => void;
+}) {
+  return (
+    <div className="p-4 md:p-8">
+      <article
+        className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
+      >
+        <h1 className="text-3xl font-bold mb-8">{pageTitle}</h1>
+        {hasTabs && (
+          <div className="mb-8 flex justify-center">
+            <Tabs value={activeTabId ?? undefined} onValueChange={onTabChange}>
+              <TabsList>
+                {pageTabs.map((tab) => (
+                  <TabsTrigger key={tab.id} value={tab.id} className="px-4">
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {hasSidebar ? (
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1 min-w-0 space-y-8">
+              {mainLayouts.map(renderPublishedLayout)}
+            </div>
+            <aside className="w-full lg:w-72 flex-shrink-0 space-y-6">
+              {sidebarLayouts.map(renderPublishedLayout)}
+            </aside>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {mainLayouts.map(renderPublishedLayout)}
+          </div>
+        )}
+      </article>
+    </div>
+  );
 }
 
 function PublicContentInner({ pageId, nested }: PublicContentProps) {
@@ -50,20 +161,16 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
   // Page-level tabs
   const pageTabs = pageData?.pageTabs ?? [];
   const hasTabs = pageTabs.length > 0;
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [userSelectedTabId, setActiveTabId] = useState<string | null>(null);
 
-  // Auto-select first tab
-  useEffect(() => {
-    if (hasTabs) {
-      const tabExists = pageTabs.some((t) => t.id === activeTabId);
-      if (!activeTabId || !tabExists) {
-        const firstTab = pageTabs[0];
-        if (firstTab) setActiveTabId(firstTab.id);
-      }
-    } else {
-      setActiveTabId(null);
+  // Derive the effective active tab during render — no useEffect needed
+  const activeTabId = (() => {
+    if (!hasTabs) return null;
+    if (userSelectedTabId && pageTabs.some((t) => t.id === userSelectedTabId)) {
+      return userSelectedTabId;
     }
-  }, [pageTabs, hasTabs, activeTabId]);
+    return pageTabs[0]?.id ?? null;
+  })();
 
   // ESC key to close subpage panel
   useEffect(() => {
@@ -94,10 +201,6 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
     );
   }
 
-  type LayoutDoc = Doc<"layouts">;
-  type SlotDoc = LayoutDoc["slots"][number];
-  type BlockDoc = SlotDoc["blocks"][number];
-
   // Filter layouts by active tab (if tabs exist)
   const filteredLayouts = hasTabs
     ? layoutsData.filter((layout: LayoutDoc) => layout.tabId === activeTabId)
@@ -112,106 +215,6 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
   );
   const hasSidebar = sidebarLayouts.length > 0;
 
-  // Render a single layout
-  const renderLayout = (layout: LayoutDoc) => {
-    // Handle spacer layouts
-    if (layout.type === "spacer") {
-      const settings = layout.settings as LayoutSettings;
-      const height: SpacerLayoutHeight = settings.spacerHeight ?? "medium";
-      return (
-        <div
-          key={layout._id}
-          style={{ height: `${SPACER_LAYOUT_HEIGHTS[height]}px` }}
-          className="w-full"
-          aria-hidden="true"
-        />
-      );
-    }
-
-    const gridStyle = getLayoutGridStyle(
-      layout.type as LayoutType,
-      layout.settings as LayoutSettings,
-    );
-
-    return (
-      <div key={layout._id} style={gridStyle}>
-        {layout.slots.map((slot: SlotDoc) => (
-          <div key={slot.id} className="min-w-0">
-            {slot.blocks.map((block: BlockDoc, index: number) => (
-              <div
-                key={block.id}
-                className={cn(
-                  "prose prose-neutral dark:prose-invert max-w-none",
-                  index < slot.blocks.length - 1 && "mb-3",
-                )}
-              >
-                <LayoutContextProvider
-                  layoutType={layout.type as LayoutType}
-                  layoutId={layout._id}
-                >
-                  <ElementRendererWrapper
-                    id={block.id}
-                    type={block.type as ElementType}
-                    content={block.content as AnyContent}
-                  />
-                </LayoutContextProvider>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // Main content renderer
-  const renderMainContent = () => (
-    <div className="p-4 md:p-8">
-      <article
-        className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
-      >
-        <h1 className="text-3xl font-bold mb-8">{pageData.title}</h1>
-
-        {/* Page-level tab bar */}
-        {hasTabs && (
-          <div className="mb-8 flex justify-center">
-            <Tabs
-              value={activeTabId ?? undefined}
-              onValueChange={setActiveTabId}
-            >
-              <TabsList>
-                {pageTabs.map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="px-4">
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        )}
-
-        {hasSidebar ? (
-          // Layout with sidebar
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Main content */}
-            <div className="flex-1 min-w-0 space-y-8">
-              {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-            </div>
-
-            {/* Sidebar */}
-            <aside className="w-full lg:w-72 flex-shrink-0 space-y-6">
-              {sidebarLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-            </aside>
-          </div>
-        ) : (
-          // Standard layout without sidebar
-          <div className="space-y-8">
-            {mainLayouts.map((layout: LayoutDoc) => renderLayout(layout))}
-          </div>
-        )}
-      </article>
-    </div>
-  );
-
   // When viewing a subpage, use resizable panels with their own scroll
   if (showSubpagePanel) {
     return (
@@ -222,7 +225,16 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
             <>
               <ResizablePanel defaultSize={58} minSize={30}>
                 <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
-                  {renderMainContent()}
+                  <PublicMainContent
+                    pageTitle={pageData.title}
+                    pageTabs={pageTabs}
+                    activeTabId={activeTabId}
+                    hasTabs={hasTabs}
+                    hasSidebar={hasSidebar}
+                    mainLayouts={mainLayouts}
+                    sidebarLayouts={sidebarLayouts}
+                    onTabChange={setActiveTabId}
+                  />
                 </div>
               </ResizablePanel>
               <ResizableHandle withHandle />
@@ -243,7 +255,18 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
   }
 
   // Normal view - no wrapper, parent handles scroll
-  return renderMainContent();
+  return (
+    <PublicMainContent
+      pageTitle={pageData.title}
+      pageTabs={pageTabs}
+      activeTabId={activeTabId}
+      hasTabs={hasTabs}
+      hasSidebar={hasSidebar}
+      mainLayouts={mainLayouts}
+      sidebarLayouts={sidebarLayouts}
+      onTabChange={setActiveTabId}
+    />
+  );
 }
 
 export function PublicContent({ pageId, nested }: PublicContentProps) {

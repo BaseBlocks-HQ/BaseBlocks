@@ -32,6 +32,106 @@ function ContentSkeleton() {
   );
 }
 
+function EmptyLayoutsState({
+  hasTabs,
+  onAddLayout,
+}: {
+  hasTabs: boolean;
+  onAddLayout: (layoutType: "single" | "columns") => void;
+}) {
+  return (
+    <div
+      className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
+      role="presentation"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <p className="text-muted-foreground text-sm mb-3">
+        {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
+      </p>
+      <div className="flex justify-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAddLayout("single")}
+        >
+          <Plus className="h-3 w-3 mr-1.5" />
+          Single
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAddLayout("columns")}
+        >
+          <Plus className="h-3 w-3 mr-1.5" />
+          Columns
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function LayoutsContent({
+  emptyState,
+  handleMainLayoutDragEnd,
+  handleSidebarLayoutDragEnd,
+  hasSidebar,
+  layouts,
+  mainLayoutIds,
+  mainLayouts,
+  sidebarLayoutIds,
+  sidebarLayouts,
+}: {
+  emptyState: React.ReactNode;
+  handleMainLayoutDragEnd: Parameters<typeof DndProvider>[0]["onDragEnd"];
+  handleSidebarLayoutDragEnd: Parameters<typeof DndProvider>[0]["onDragEnd"];
+  hasSidebar: boolean;
+  layouts: React.ReactNode[];
+  mainLayoutIds: string[];
+  mainLayouts: React.ReactNode[];
+  sidebarLayoutIds: string[];
+  sidebarLayouts: React.ReactNode[];
+}) {
+  if (hasSidebar) {
+    return (
+      <div className="flex gap-8 pb-32">
+        <div className="flex-1 min-w-0 space-y-6">
+          {mainLayouts.length > 0 ? (
+            <DndProvider
+              items={mainLayoutIds}
+              onDragEnd={handleMainLayoutDragEnd}
+            >
+              {mainLayouts}
+            </DndProvider>
+          ) : (
+            emptyState
+          )}
+        </div>
+        <aside className="w-72 flex-shrink-0 space-y-6">
+          <DndProvider
+            items={sidebarLayoutIds}
+            onDragEnd={handleSidebarLayoutDragEnd}
+          >
+            {sidebarLayouts}
+          </DndProvider>
+        </aside>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 pb-32">
+      {layouts.length > 0 ? (
+        <DndProvider items={mainLayoutIds} onDragEnd={handleMainLayoutDragEnd}>
+          {layouts}
+        </DndProvider>
+      ) : (
+        emptyState
+      )}
+    </div>
+  );
+}
+
 interface PageEditorProps {
   pageId: string;
   pageData?: PageData;
@@ -74,19 +174,15 @@ export function PageEditor({
   // Page tabs
   const pageTabs = pageData?.pageTabs ?? [];
   const hasTabs = pageTabs.length > 0;
-
-  // Auto-select first tab when tabs change
-  useEffect(() => {
-    if (hasTabs) {
-      const tabExists = pageTabs.some((t) => t.id === activeTabId);
-      if (!activeTabId || !tabExists) {
-        const firstTab = pageTabs[0];
-        if (firstTab) setActiveTabId(firstTab.id);
-      }
-    } else {
-      setActiveTabId(null);
-    }
-  }, [pageTabs, hasTabs, activeTabId, setActiveTabId]);
+  const firstTabId = pageTabs[0]?.id ?? null;
+  const hasActiveTab = activeTabId
+    ? pageTabs.some((tab) => tab.id === activeTabId)
+    : false;
+  const resolvedActiveTabId = hasTabs
+    ? hasActiveTab
+      ? activeTabId
+      : firstTabId
+    : null;
 
   // Convert layouts from doc format to LayoutData format
   const allLayouts: LayoutData[] = layoutsData
@@ -110,7 +206,7 @@ export function PageEditor({
 
   // Filter layouts by active tab
   const layouts = hasTabs
-    ? allLayouts.filter((l) => l.tabId === activeTabId)
+    ? allLayouts.filter((l) => l.tabId === resolvedActiveTabId)
     : allLayouts;
 
   // Separate main layouts from sidebar layouts
@@ -136,7 +232,7 @@ export function PageEditor({
     allLayouts,
     mainLayoutIds,
     sidebarLayoutIds,
-    activeTabId,
+    activeTabId: resolvedActiveTabId,
     onSelectionChange,
     layoutsData,
   });
@@ -145,7 +241,7 @@ export function PageEditor({
   const tabs = usePageTabs({
     pageId,
     pageTabs,
-    activeTabId,
+    activeTabId: resolvedActiveTabId,
     setActiveTabId,
   });
 
@@ -192,80 +288,14 @@ export function PageEditor({
     />
   );
 
-  const renderEmptyState = () => (
-    <div
-      className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      tabIndex={-1}
-    >
-      <p className="text-muted-foreground text-sm mb-3">
-        {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
-      </p>
-      <div className="flex justify-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleAddLayout("single")}
-        >
-          <Plus className="h-3 w-3 mr-1.5" />
-          Single
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleAddLayout("columns")}
-        >
-          <Plus className="h-3 w-3 mr-1.5" />
-          Columns
-        </Button>
-      </div>
-    </div>
+  const emptyState = (
+    <EmptyLayoutsState hasTabs={hasTabs} onAddLayout={handleAddLayout} />
   );
-
-  const renderLayoutsContent = () => {
-    if (hasSidebar) {
-      return (
-        <div className="flex gap-8 pb-32">
-          <div className="flex-1 min-w-0 space-y-6">
-            {mainLayouts.length > 0 ? (
-              <DndProvider
-                items={mainLayoutIds}
-                onDragEnd={handleMainLayoutDragEnd}
-              >
-                {mainLayouts.map((layout) => renderLayout(layout))}
-              </DndProvider>
-            ) : (
-              renderEmptyState()
-            )}
-          </div>
-          <aside className="w-72 flex-shrink-0 space-y-6">
-            <DndProvider
-              items={sidebarLayoutIds}
-              onDragEnd={handleSidebarLayoutDragEnd}
-            >
-              {sidebarLayouts.map((layout) => renderLayout(layout))}
-            </DndProvider>
-          </aside>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3 pb-32">
-        {layouts.length > 0 ? (
-          <DndProvider
-            items={mainLayoutIds}
-            onDragEnd={handleMainLayoutDragEnd}
-          >
-            {layouts.map((layout) => renderLayout(layout))}
-          </DndProvider>
-        ) : (
-          renderEmptyState()
-        )}
-      </div>
-    );
-  };
+  const renderedLayouts = layouts.map((layout) => renderLayout(layout));
+  const renderedMainLayouts = mainLayouts.map((layout) => renderLayout(layout));
+  const renderedSidebarLayouts = sidebarLayouts.map((layout) =>
+    renderLayout(layout),
+  );
 
   if (pageData === undefined || layoutsData === undefined) {
     return <ContentSkeleton />;
@@ -277,14 +307,13 @@ export function PageEditor({
 
   return (
     <div
+      role="presentation"
       className="min-h-full w-full"
-      onClick={handleEditorClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          if (e.target !== e.currentTarget) return;
-          e.preventDefault();
-          handleEditorClick();
+      onMouseDown={(e) => {
+        if (e.button !== 0) {
+          return;
         }
+        handleEditorClick();
       }}
     >
       <div
@@ -300,7 +329,7 @@ export function PageEditor({
         {hasTabs && (
           <PageTabBar
             pageTabs={pageTabs}
-            activeTabId={activeTabId}
+            activeTabId={resolvedActiveTabId}
             setActiveTabId={setActiveTabId}
             editingTabId={tabs.editingTabId}
             editingLabel={tabs.editingLabel}
@@ -315,10 +344,18 @@ export function PageEditor({
           />
         )}
 
-        {renderLayoutsContent()}
+        <LayoutsContent
+          emptyState={emptyState}
+          handleMainLayoutDragEnd={handleMainLayoutDragEnd}
+          handleSidebarLayoutDragEnd={handleSidebarLayoutDragEnd}
+          hasSidebar={hasSidebar}
+          layouts={renderedLayouts}
+          mainLayoutIds={mainLayoutIds}
+          mainLayouts={renderedMainLayouts}
+          sidebarLayoutIds={sidebarLayoutIds}
+          sidebarLayouts={renderedSidebarLayouts}
+        />
       </div>
     </div>
   );
 }
-
-export { PageEditor as default };

@@ -32,56 +32,91 @@ interface InviteMemberDialogProps {
 export function InviteMemberDialog(_props: InviteMemberDialogProps) {
   const t = useTranslations("team");
 
-  const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "member">("member");
-  const [isInviting, setIsInviting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [dialogState, setDialogState] = useState<{
+    open: boolean;
+    email: string;
+    role: "admin" | "member";
+    isInviting: boolean;
+    error: string | null;
+    success: boolean;
+  }>({
+    open: false,
+    email: "",
+    role: "member",
+    isInviting: false,
+    error: null,
+    success: false,
+  });
 
   const team = useTeam();
 
   const handleInvite = async () => {
-    if (!email.trim()) return;
+    const trimmedEmail = dialogState.email.trim();
+    if (!trimmedEmail) return;
+    const organizationId = team?.organizationId;
+    if (!organizationId) {
+      setDialogState((current) => ({
+        ...current,
+        error: "Team is not linked to an organization",
+      }));
+      return;
+    }
 
-    setIsInviting(true);
-    setError(null);
+    setDialogState((current) => ({
+      ...current,
+      isInviting: true,
+      error: null,
+    }));
 
     try {
-      if (!team?.organizationId) {
-        throw new Error("Team is not linked to an organization");
-      }
-
       await authClient.organization.inviteMember({
-        organizationId: team.organizationId,
-        email: email.trim(),
-        role,
+        organizationId,
+        email: trimmedEmail,
+        role: dialogState.role,
       });
 
-      setSuccess(true);
+      setDialogState((current) => ({
+        ...current,
+        success: true,
+      }));
       setTimeout(() => {
-        setOpen(false);
+        setDialogState((current) => ({
+          ...current,
+          open: false,
+        }));
         resetForm();
       }, 1500);
+      setDialogState((current) => ({
+        ...current,
+        isInviting: false,
+      }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invitation failed");
-    } finally {
-      setIsInviting(false);
+      setDialogState((current) => ({
+        ...current,
+        error: err instanceof Error ? err.message : "Invitation failed",
+        isInviting: false,
+      }));
     }
   };
 
   const resetForm = () => {
-    setEmail("");
-    setRole("member");
-    setError(null);
-    setSuccess(false);
+    setDialogState((current) => ({
+      ...current,
+      email: "",
+      role: "member",
+      error: null,
+      success: false,
+    }));
   };
 
   return (
     <Dialog
-      open={open}
+      open={dialogState.open}
       onOpenChange={(value) => {
-        setOpen(value);
+        setDialogState((current) => ({
+          ...current,
+          open: value,
+        }));
         if (!value) resetForm();
       }}
     >
@@ -103,17 +138,26 @@ export function InviteMemberDialog(_props: InviteMemberDialogProps) {
             <Input
               type="email"
               placeholder="user@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoFocus
+              value={dialogState.email}
+              onChange={(e) =>
+                setDialogState((current) => ({
+                  ...current,
+                  email: e.target.value,
+                }))
+              }
             />
           </div>
 
           <div className="space-y-2">
             <Label>{t("invite.selectRole")}</Label>
             <Select
-              value={role}
-              onValueChange={(value) => setRole(value as "admin" | "member")}
+              value={dialogState.role}
+              onValueChange={(value) =>
+                setDialogState((current) => ({
+                  ...current,
+                  role: value as "admin" | "member",
+                }))
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -139,13 +183,13 @@ export function InviteMemberDialog(_props: InviteMemberDialogProps) {
             </Select>
           </div>
 
-          {error && (
+          {dialogState.error && (
             <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">
-              {error}
+              {dialogState.error}
             </p>
           )}
 
-          {success && (
+          {dialogState.success && (
             <p className="text-sm text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded">
               {t("invite.success")}
             </p>
@@ -155,16 +199,25 @@ export function InviteMemberDialog(_props: InviteMemberDialogProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() =>
+                setDialogState((current) => ({
+                  ...current,
+                  open: false,
+                }))
+              }
             >
               Cancel
             </Button>
             <Button
               type="button"
-              disabled={!email.trim() || isInviting || success}
+              disabled={
+                !dialogState.email.trim() ||
+                dialogState.isInviting ||
+                dialogState.success
+              }
               onClick={handleInvite}
             >
-              {isInviting ? (
+              {dialogState.isInviting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {t("invite.inviting")}

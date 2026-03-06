@@ -116,5 +116,3 @@ registerField({
   Renderer: CheckboxRenderer,
   Settings: CheckboxSettings,
 });
-
-export { CheckboxEditor, CheckboxRenderer, CheckboxSettings };

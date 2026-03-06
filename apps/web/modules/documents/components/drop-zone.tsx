@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Upload, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
+const DEFAULT_MAX_SIZE = 50 * 1024 * 1024;
+
 interface DropZoneProps {
   onFilesAccepted: (files: File[]) => void;
   disabled?: boolean;
@@ -17,7 +19,7 @@ interface DropZoneProps {
 export function DropZone({
   onFilesAccepted,
   disabled = false,
-  maxSize = 50 * 1024 * 1024, // 50MB default
+  maxSize = DEFAULT_MAX_SIZE,
   accept,
   className,
   children,
@@ -85,50 +87,6 @@ export function DropZone({
           <p className="text-xs text-muted-foreground">or click to browse</p>
         </div>
       )}
-    </div>
-  );
-}
-
-interface InlineDropZoneProps {
-  onFilesAccepted: (files: File[]) => void;
-  disabled?: boolean;
-  className?: string;
-}
-
-export function InlineDropZone({
-  onFilesAccepted,
-  disabled = false,
-  className,
-}: InlineDropZoneProps) {
-  const onDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onFilesAccepted(acceptedFiles);
-    }
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    disabled,
-    multiple: true,
-  });
-
-  return (
-    <div
-      {...getRootProps()}
-      className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-md border border-dashed transition-colors cursor-pointer",
-        isDragActive
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 hover:border-muted-foreground/50",
-        disabled && "opacity-50 cursor-not-allowed",
-        className,
-      )}
-    >
-      <input {...getInputProps()} />
-      <Upload className="h-4 w-4 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground">
-        {isDragActive ? "Drop here" : "Upload files"}
-      </span>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import { TextCursorInput } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useRef } from "react";
+import { useState } from "react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
@@ -26,14 +26,15 @@ function RichTextEditor({
 }: ElementEditorProps<"richtext">) {
   const { resolvedTheme } = useTheme();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
-  const initialContentRef = useRef(content.document);
+  const [initialContent] = useState(() =>
+    content.document && content.document.length > 0
+      ? (content.document as Block[])
+      : undefined,
+  );
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
   const editor = useCreateBlockNote({
-    initialContent:
-      initialContentRef.current && initialContentRef.current.length > 0
-        ? (initialContentRef.current as Block[])
-        : undefined,
+    initialContent,
   });
 
   return (

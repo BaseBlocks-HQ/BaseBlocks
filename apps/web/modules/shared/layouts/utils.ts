@@ -23,10 +23,7 @@ export function generateId(): string {
 /**
  * Get the number of slots for a layout based on its type and settings
  */
-export function getSlotCount(
-  type: LayoutType,
-  settings: LayoutSettings,
-): number {
+function getSlotCount(type: LayoutType, settings: LayoutSettings): number {
   switch (type) {
     case "single":
       return 1;
@@ -48,7 +45,7 @@ export function getSlotCount(
 /**
  * Create empty slots for a layout
  */
-export function createSlots(count: number): LayoutSlot[] {
+function createSlots(count: number): LayoutSlot[] {
   return Array.from({ length: count }, (_, i) => ({
     id: generateId(),
     position: i,

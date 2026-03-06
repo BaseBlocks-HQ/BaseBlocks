@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface SiteLogoProps {
   site: { name: string; logoUrl?: string };
   team: {
@@ -11,9 +13,12 @@ export function SiteLogo({ site, team }: SiteLogoProps) {
   // Priority: site logo > team logo > auto-generated
   if (site.logoUrl) {
     return (
-      <img
+      <Image
         src={site.logoUrl}
         alt={site.name}
+        width={32}
+        height={32}
+        unoptimized
         className="h-8 w-8 rounded-lg object-contain"
       />
     );
@@ -21,9 +26,12 @@ export function SiteLogo({ site, team }: SiteLogoProps) {
 
   if (team.logoUrl) {
     return (
-      <img
+      <Image
         src={team.logoUrl}
         alt={team.name}
+        width={32}
+        height={32}
+        unoptimized
         className="h-8 w-8 rounded-lg object-contain"
       />
     );

@@ -11,7 +11,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import type { ViewerProps } from "../types";
 
 function formatTime(seconds: number): string {
@@ -20,14 +20,42 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+interface VideoViewerState {
+  currentTime: number;
+  duration: number;
+  isMuted: boolean;
+  isPlaying: boolean;
+  showControls: boolean;
+  volume: number;
+}
+
+type VideoViewerAction = {
+  type: "update";
+  value: Partial<VideoViewerState>;
+};
+
+function videoViewerReducer(
+  state: VideoViewerState,
+  action: VideoViewerAction,
+): VideoViewerState {
+  switch (action.type) {
+    case "update":
+      return { ...state, ...action.value };
+    default:
+      return state;
+  }
+}
+
 export function VideoViewer({ file }: ViewerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const [state, dispatch] = useReducer(videoViewerReducer, {
+    currentTime: 0,
+    duration: 0,
+    isMuted: false,
+    isPlaying: false,
+    showControls: true,
+    volume: 1,
+  });
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -36,11 +64,16 @@ export function VideoViewer({ file }: ViewerProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleDurationChange = () => setDuration(video.duration);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleEnded = () => setIsPlaying(false);
+    const handleTimeUpdate = () =>
+      dispatch({ type: "update", value: { currentTime: video.currentTime } });
+    const handleDurationChange = () =>
+      dispatch({ type: "update", value: { duration: video.duration } });
+    const handlePlay = () =>
+      dispatch({ type: "update", value: { isPlaying: true } });
+    const handlePause = () =>
+      dispatch({ type: "update", value: { isPlaying: false } });
+    const handleEnded = () =>
+      dispatch({ type: "update", value: { isPlaying: false } });
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("durationchange", handleDurationChange);
@@ -71,22 +104,24 @@ export function VideoViewer({ file }: ViewerProps) {
     const video = videoRef.current;
     if (!video || !value[0]) return;
     video.currentTime = value[0];
-    setCurrentTime(value[0]);
+    dispatch({ type: "update", value: { currentTime: value[0] } });
   };
 
   const handleVolumeChange = (value: number[]) => {
     const video = videoRef.current;
     if (!video || value[0] === undefined) return;
     video.volume = value[0];
-    setVolume(value[0]);
-    setIsMuted(value[0] === 0);
+    dispatch({
+      type: "update",
+      value: { isMuted: value[0] === 0, volume: value[0] },
+    });
   };
 
   const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
     video.muted = !video.muted;
-    setIsMuted(video.muted);
+    dispatch({ type: "update", value: { isMuted: video.muted } });
   };
 
   const skip = (seconds: number) => {
@@ -94,18 +129,18 @@ export function VideoViewer({ file }: ViewerProps) {
     if (!video) return;
     video.currentTime = Math.max(
       0,
-      Math.min(duration, video.currentTime + seconds),
+      Math.min(state.duration, video.currentTime + seconds),
     );
   };
 
   const handleMouseMove = () => {
-    setShowControls(true);
+    dispatch({ type: "update", value: { showControls: true } });
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
     }
-    if (isPlaying) {
+    if (state.isPlaying) {
       hideControlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
+        dispatch({ type: "update", value: { showControls: false } });
       }, 3000);
     }
   };
@@ -114,7 +149,10 @@ export function VideoViewer({ file }: ViewerProps) {
     <div
       className="flex flex-col h-full bg-black"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
+      onMouseLeave={() =>
+        state.isPlaying &&
+        dispatch({ type: "update", value: { showControls: false } })
+      }
     >
       {/* Video container */}
       <div className="flex-1 relative flex items-center justify-center">
@@ -141,7 +179,7 @@ export function VideoViewer({ file }: ViewerProps) {
         </video>
 
         {/* Play overlay (shown when paused) */}
-        {!isPlaying && (
+        {!state.isPlaying && (
           <button
             type="button"
             onClick={togglePlay}
@@ -158,14 +196,14 @@ export function VideoViewer({ file }: ViewerProps) {
       <div
         className={cn(
           "p-3 bg-gradient-to-t from-black/80 to-transparent transition-opacity",
-          showControls ? "opacity-100" : "opacity-0",
+          state.showControls ? "opacity-100" : "opacity-0",
         )}
       >
         {/* Progress bar */}
         <div className="mb-2">
           <Slider
-            value={[currentTime]}
-            max={duration || 100}
+            value={[state.currentTime]}
+            max={state.duration || 100}
             step={0.1}
             onValueChange={handleSeek}
             className="cursor-pointer"
@@ -189,9 +227,9 @@ export function VideoViewer({ file }: ViewerProps) {
             size="icon"
             onClick={togglePlay}
             className="text-white hover:bg-white/20"
-            title={isPlaying ? "Pause" : "Play"}
+            title={state.isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? (
+            {state.isPlaying ? (
               <Pause className="h-5 w-5" />
             ) : (
               <Play className="h-5 w-5" fill="currentColor" />
@@ -209,7 +247,7 @@ export function VideoViewer({ file }: ViewerProps) {
           </Button>
 
           <span className="text-sm tabular-nums">
-            {formatTime(currentTime)} / {formatTime(duration)}
+            {formatTime(state.currentTime)} / {formatTime(state.duration)}
           </span>
 
           <div className="flex-1" />
@@ -221,16 +259,16 @@ export function VideoViewer({ file }: ViewerProps) {
               size="icon"
               onClick={toggleMute}
               className="text-white hover:bg-white/20"
-              title={isMuted ? "Unmute" : "Mute"}
+              title={state.isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? (
+              {state.isMuted ? (
                 <VolumeX className="h-4 w-4" />
               ) : (
                 <Volume2 className="h-4 w-4" />
               )}
             </Button>
             <Slider
-              value={[isMuted ? 0 : volume]}
+              value={[state.isMuted ? 0 : state.volume]}
               max={1}
               step={0.1}
               onValueChange={handleVolumeChange}

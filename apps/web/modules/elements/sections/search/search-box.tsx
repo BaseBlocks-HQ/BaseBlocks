@@ -333,16 +333,11 @@ export function SearchBox({
                 const isContentMatch = result.matchType === "content";
 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={result._id}
-                    className="p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="w-full p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => handleResultClick(result)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleResultClick(result);
-                      }
-                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -421,7 +416,7 @@ export function SearchBox({
                         />
                       </div>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>

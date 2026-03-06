@@ -1,4 +1,4 @@
 /**
  * Validation utilities barrel exports
  */
-export { generateSlug, isValidSlug, SLUG_PATTERN } from "./slug";
+export { generateSlug, SLUG_PATTERN } from "./slug";

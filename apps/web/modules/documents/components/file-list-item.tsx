@@ -73,7 +73,8 @@ export function FileListItem({
     setIsRetrying(true);
     try {
       await onRetryExtraction(file);
-    } finally {
+      setIsRetrying(false);
+    } catch {
       setIsRetrying(false);
     }
   };
@@ -100,28 +101,12 @@ export function FileListItem({
     }
   };
 
-  return (
-    <div
-      className={cn(
-        "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors w-full min-w-0",
-        onPreview && "cursor-pointer",
-        className,
-      )}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      tabIndex={onPreview ? 0 : -1}
-    >
-      {/* File icon */}
+  const fileSummary = (
+    <>
       <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>
         <FileIcon contentType={file.contentType} className="h-5 w-5" />
       </div>
 
-      {/* File info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <MiddleTruncate
@@ -153,6 +138,29 @@ export function FileListItem({
           )}
         </p>
       </div>
+    </>
+  );
+
+  return (
+    <div
+      className={cn(
+        "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors w-full",
+        className,
+      )}
+    >
+      {onPreview ? (
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          onClick={handleClick}
+        >
+          {fileSummary}
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {fileSummary}
+        </div>
+      )}
 
       {/* Actions */}
       {isReadOnly ? (

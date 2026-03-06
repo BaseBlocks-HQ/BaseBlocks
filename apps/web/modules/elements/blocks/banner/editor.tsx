@@ -14,7 +14,7 @@ import {
 } from "@baseblocks/ui/select";
 import { Textarea } from "@baseblocks/ui/textarea";
 import { GripVertical, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useOptimistic, useState } from "react";
 
 export function BannerEditor({
   id,
@@ -22,14 +22,10 @@ export function BannerEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"banner">) {
-  const [localContent, setLocalContent] = useState<BannerContent>(content);
+  void id;
+  const [localContent, setLocalContent] = useOptimistic<BannerContent>(content);
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset local state only when block id changes, not on every content update from parent
-  useEffect(() => {
-    setLocalContent(content);
-  }, [id]);
 
   const updateContent = (newContent: BannerContent) => {
     setLocalContent(newContent);

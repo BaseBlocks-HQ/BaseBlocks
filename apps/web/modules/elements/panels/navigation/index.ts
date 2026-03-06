@@ -6,16 +6,3 @@
  */
 
 export { NavigationConfigPanel } from "./config-panel";
-
-export type {
-  NavigationStyle,
-  NavigationItem,
-  NavigationConfig,
-  NavigationStyleInfo,
-} from "@baseblocks/types/elements/navigation";
-
-export {
-  DEFAULT_NAVIGATION_CONFIG,
-  NAVIGATION_STYLES,
-  getNavigationStyleInfo,
-} from "@baseblocks/types/elements/navigation";

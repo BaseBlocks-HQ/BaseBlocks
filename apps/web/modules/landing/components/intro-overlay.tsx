@@ -1,4 +1,4 @@
-import { AnimatePresence, type MotionValue, motion } from "motion/react";
+import { AnimatePresence, type MotionValue, m } from "motion/react";
 import type { RefObject } from "react";
 
 interface IntroOverlayProps {
@@ -17,7 +17,7 @@ export function IntroOverlay({
   return (
     <AnimatePresence>
       {!expanded && (
-        <motion.div
+        <m.div
           key="intro"
           className="fixed inset-0 z-50 flex items-center justify-center bg-background"
           exit={{
@@ -25,7 +25,7 @@ export function IntroOverlay({
             transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
           }}
         >
-          <motion.span
+          <m.span
             layoutId="brand"
             ref={titleRef}
             className="whitespace-nowrap will-change-transform"
@@ -37,8 +37,8 @@ export function IntroOverlay({
             }}
           >
             BaseBlocks
-          </motion.span>
-        </motion.div>
+          </m.span>
+        </m.div>
       )}
     </AnimatePresence>
   );

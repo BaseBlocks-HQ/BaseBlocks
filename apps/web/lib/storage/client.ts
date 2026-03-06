@@ -8,7 +8,7 @@
  * Uses a same-origin proxy (/api/storage/*) to avoid CORS issues with corporate firewalls
  */
 
-export interface UploadResult {
+interface UploadResult {
   blobId: string;
   cdnUrl: string;
 }
@@ -19,7 +19,7 @@ export interface UploadProgress {
   percentage: number;
 }
 
-export class EntityStorageClient {
+class EntityStorageClient {
   private siteUrl: string;
   private workspaceTenantId: string;
 

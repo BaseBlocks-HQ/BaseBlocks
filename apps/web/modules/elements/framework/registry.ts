@@ -222,15 +222,6 @@ export const registerElement = <T extends ElementType>(
 export const registerLayout = (entry: LayoutRegistryEntry) =>
   registry.registerLayout(entry);
 
-export const getElement = <T extends ElementType>(type: T) =>
-  registry.get(type);
-
-export const getLayoutEntry = (type: LayoutType) => registry.getLayout(type);
-
-export const getAllElements = () => registry.getAll();
-
-export const getAllLayouts = () => registry.getAllLayouts();
-
 export const getElementsByCategory = (category: ElementCategory) =>
   registry.getByCategory(category);
 
@@ -240,34 +231,11 @@ export const getElementEditor = <T extends ElementType>(type: T) =>
 export const getElementRenderer = <T extends ElementType>(type: T) =>
   registry.getRenderer(type);
 
-export const getElementPreview = (type: ElementType | LayoutType) =>
-  registry.getPreview(type);
-
 export const getElementConfigPanel = <T extends ElementType>(type: T) =>
   registry.getConfigPanel(type);
 
 export const hasElementConfigPanel = (type: ElementType) =>
   registry.hasConfigPanel(type);
 
-export const getElementLabel = (type: ElementType | LayoutType) =>
-  registry.getLabel(type);
-
-export const getElementIcon = (type: ElementType | LayoutType) =>
-  registry.getIcon(type);
-
 export const getDefaultContent = <T extends ElementType>(type: T) =>
   registry.getDefaultContent(type);
-
-export const isElementRegistered = (type: ElementType | LayoutType) =>
-  registry.isRegistered(type);
-
-export const getRegisteredElementTypes = () => registry.getRegisteredTypes();
-
-export const getRegisteredLayoutTypes = () =>
-  registry.getRegisteredLayoutTypes();
-
-export const searchElements = (query: string) => registry.search(query);
-
-export { ElementRegistry };
-
-export default registry;

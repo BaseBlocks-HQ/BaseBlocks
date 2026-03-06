@@ -140,5 +140,3 @@ registerField({
   Renderer: LongTextRenderer,
   Settings: LongTextSettings,
 });
-
-export { LongTextEditor, LongTextRenderer, LongTextSettings };

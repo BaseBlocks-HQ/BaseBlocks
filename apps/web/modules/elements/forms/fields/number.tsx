@@ -151,5 +151,3 @@ registerField({
   Renderer: NumberRenderer,
   Settings: NumberSettings,
 });
-
-export { NumberEditor, NumberRenderer, NumberSettings };

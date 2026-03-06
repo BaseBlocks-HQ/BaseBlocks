@@ -37,8 +37,8 @@ export function DeleteConfirmDialog({
     try {
       await onConfirm();
       onOpenChange(false);
+      setIsDeleting(false);
     } catch (_error) {
-    } finally {
       setIsDeleting(false);
     }
   };

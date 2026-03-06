@@ -117,5 +117,3 @@ registerField({
   Renderer: DateRenderer,
   Settings: DateSettings,
 });
-
-export { DateEditor, DateRenderer, DateSettings };

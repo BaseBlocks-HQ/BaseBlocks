@@ -27,48 +27,75 @@ export function CreateLibraryDialog({
   sites,
   defaultSiteId,
 }: CreateLibraryDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [siteId, setSiteId] = useState(defaultSiteId || "");
-  const [name, setName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    siteId: defaultSiteId || "",
+    name: "",
+    isSubmitting: false,
+    error: "",
+  });
   const t = useTranslations();
 
   const createLibrary = useMutation(api.documentLibraries.mutations.create);
 
   const resetForm = () => {
-    setName("");
-    setSiteId(defaultSiteId || "");
-    setError("");
+    setDialogState((current) => ({
+      ...current,
+      siteId: defaultSiteId || "",
+      name: "",
+      error: "",
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
-
-    try {
-      if (!siteId) {
-        throw new Error("Site is required");
-      }
-      await createLibrary({
-        siteId: siteId as Id<"sites">,
-        name,
-      });
-      setOpen(false);
-      resetForm();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
-    } finally {
-      setIsSubmitting(false);
+    setDialogState((current) => ({
+      ...current,
+      error: "",
+      isSubmitting: true,
+    }));
+    if (!dialogState.siteId) {
+      setDialogState((current) => ({
+        ...current,
+        error: "Site is required",
+        isSubmitting: false,
+      }));
+      return;
     }
+
+    void createLibrary({
+      siteId: dialogState.siteId as Id<"sites">,
+      name: dialogState.name,
+    })
+      .then(() => {
+        setDialogState((current) => ({
+          ...current,
+          open: false,
+        }));
+        resetForm();
+      })
+      .catch((err) => {
+        setDialogState((current) => ({
+          ...current,
+          error: err instanceof Error ? err.message : t("common.error"),
+        }));
+      })
+      .finally(() => {
+        setDialogState((current) => ({
+          ...current,
+          isSubmitting: false,
+        }));
+      });
   };
 
   return (
     <FormDialog
-      open={open}
+      open={dialogState.open}
       onOpenChange={(isOpen) => {
-        setOpen(isOpen);
+        setDialogState((current) => ({
+          ...current,
+          open: isOpen,
+        }));
         if (!isOpen) resetForm();
       }}
       title={t("libraries.createTitle")}
@@ -80,13 +107,22 @@ export function CreateLibraryDialog({
         </Button>
       }
       onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
+      isSubmitting={dialogState.isSubmitting}
       submitLabel={t("libraries.create")}
       submittingLabel={t("common.loading")}
     >
       <div className="space-y-2">
         <Label htmlFor="librarySite">{t("libraries.siteLabel")}</Label>
-        <Select value={siteId} onValueChange={setSiteId} required>
+        <Select
+          value={dialogState.siteId}
+          onValueChange={(siteId) =>
+            setDialogState((current) => ({
+              ...current,
+              siteId,
+            }))
+          }
+          required
+        >
           <SelectTrigger>
             <SelectValue placeholder={t("libraries.selectSite")} />
           </SelectTrigger>
@@ -105,13 +141,20 @@ export function CreateLibraryDialog({
         <Input
           id="libraryName"
           placeholder={t("libraries.namePlaceholder")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={dialogState.name}
+          onChange={(e) =>
+            setDialogState((current) => ({
+              ...current,
+              name: e.target.value,
+            }))
+          }
           required
         />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {dialogState.error && (
+        <p className="text-sm text-destructive">{dialogState.error}</p>
+      )}
     </FormDialog>
   );
 }

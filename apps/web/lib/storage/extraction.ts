@@ -23,26 +23,3 @@ export function isExtractable(contentType: string): boolean {
   const normalized = contentType.split(";")[0]?.trim().toLowerCase();
   return normalized ? EXTRACTABLE_TYPES.has(normalized) : false;
 }
-
-/**
- * Get file extension from content type
- */
-export function getExtensionFromContentType(contentType: string): string {
-  const typeMap: Record<string, string> = {
-    "application/pdf": "pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-      "docx",
-    "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-      "pptx",
-    "application/vnd.ms-powerpoint": "ppt",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-    "application/vnd.ms-excel": "xls",
-    "text/plain": "txt",
-    "text/markdown": "md",
-    "text/html": "html",
-  };
-
-  const normalized = contentType.split(";")[0]?.trim().toLowerCase() ?? "";
-  return typeMap[normalized] ?? "file";
-}

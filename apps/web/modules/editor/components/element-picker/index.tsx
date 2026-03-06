@@ -196,7 +196,3 @@ export function ElementPicker({
     </div>
   );
 }
-
-export { CategoryMenu } from "./category-menu";
-export { ElementGrid } from "./element-grid";
-export { ElementCard } from "./element-card";

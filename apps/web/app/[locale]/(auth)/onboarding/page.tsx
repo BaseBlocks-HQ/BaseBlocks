@@ -20,7 +20,8 @@ import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
+import { useState } from "react";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -36,11 +37,9 @@ export default function OnboardingPage() {
   // Watch for team availability (e.g. after accepting an invite)
   const team = useTeam();
 
-  useEffect(() => {
-    if (team) {
-      router.push("/dashboard");
-    }
-  }, [team, router]);
+  if (team) {
+    redirect("/dashboard");
+  }
 
   const handleTeamNameChange = (value: string) => {
     setTeamName(value);
@@ -51,35 +50,42 @@ export default function OnboardingPage() {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-
-    try {
-      if (!session?.user) {
-        throw new Error("Not authenticated");
-      }
-
-      // Create Better Auth organization
-      const orgResult = await authClient.organization.create({
-        name: teamName,
-        slug,
-      });
-
-      if (!orgResult.data?.id) {
-        throw new Error("Failed to create organization");
-      }
-
-      // Create team in Convex with the BA organization ID
-      await createTeam({
-        name: teamName,
-        slug,
-        organizationId: orgResult.data.id,
-      });
-
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
-    } finally {
+    if (!session?.user) {
+      setError("Not authenticated");
       setIsSubmitting(false);
+      return;
     }
+
+    void authClient.organization
+      .create({
+        name: teamName,
+        slug,
+      })
+      .then((orgResult) => {
+        const organizationData = orgResult.data;
+        const organizationId = organizationData
+          ? organizationData.id
+          : undefined;
+
+        if (!organizationId) {
+          setError("Failed to create organization");
+          return;
+        }
+
+        return createTeam({
+          name: teamName,
+          slug,
+          organizationId,
+        }).then(() => {
+          router.push("/dashboard");
+        });
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : t("common.error"));
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (

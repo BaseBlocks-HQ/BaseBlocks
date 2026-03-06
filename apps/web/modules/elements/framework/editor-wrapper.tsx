@@ -3,6 +3,7 @@
 import { getElementEditor } from "@/modules/elements/framework/registry";
 import type { SaveStatus } from "@baseblocks/types";
 import type { AnyContent, ElementType } from "@baseblocks/types/elements";
+import { createElement } from "react";
 
 interface ElementEditorWrapperProps {
   id: string;
@@ -37,15 +38,13 @@ export function ElementEditorWrapper({
     );
   }
 
-  return (
-    <Editor
-      id={id}
-      type={type}
-      content={content}
-      isSelected={isSelected}
-      onUpdate={onUpdate}
-      onRemove={onRemove}
-      onSaveStatusChange={onSaveStatusChange}
-    />
-  );
+  return createElement(Editor, {
+    id,
+    type,
+    content,
+    isSelected,
+    onUpdate,
+    onRemove,
+    onSaveStatusChange,
+  });
 }

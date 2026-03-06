@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useState } from "react";
+import { type ReactNode, createContext, use, useState } from "react";
 import type { MediaFile } from "./types";
 
 interface MediaViewerContextValue {
@@ -29,19 +29,11 @@ interface MediaViewerContextValue {
 const MediaViewerContext = createContext<MediaViewerContextValue | null>(null);
 
 export function useMediaViewer() {
-  const context = useContext(MediaViewerContext);
+  const context = use(MediaViewerContext);
   if (!context) {
     throw new Error("useMediaViewer must be used within a MediaViewerProvider");
   }
   return context;
-}
-
-/**
- * Optional hook that returns null if not in provider
- * Useful for components that may or may not be inside a provider
- */
-export function useMediaViewerOptional() {
-  return useContext(MediaViewerContext);
 }
 
 interface MediaViewerProviderProps {

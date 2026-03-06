@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardSkeleton } from "@/components/skeletons";
-import { useRouter } from "@/i18n/navigation";
+import { redirect } from "@/i18n/navigation";
 import { useTeam } from "@/lib/data";
 import {
   SidebarInset,
@@ -9,7 +9,7 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { useConvexAuth } from "convex/react";
-import { useEffect } from "react";
+import { useLocale } from "next-intl";
 import { DashboardSidebar } from "./dashboard-sidebar";
 
 interface DashboardLayoutProps {
@@ -17,15 +17,13 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const router = useRouter();
+  const locale = useLocale();
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth();
   const team = useTeam();
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && team === null) {
-      router.replace("/onboarding");
-    }
-  }, [authLoading, isAuthenticated, team, router]);
+  if (!authLoading && isAuthenticated && team === null) {
+    redirect({ href: "/onboarding", locale });
+  }
 
   if (authLoading || !team) {
     return <DashboardSkeleton />;

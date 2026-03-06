@@ -17,7 +17,7 @@ export default async function SubdomainRootPage({ params }: Props) {
   return (
     <>
       <PublicSiteJsonLd teamSlug={subdomain} />
-      <SubdomainRootPageClient params={params} />
+      <SubdomainRootPageClient subdomain={subdomain} />
     </>
   );
 }
