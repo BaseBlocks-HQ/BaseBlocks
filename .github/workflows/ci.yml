@@ -10,6 +10,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   react-doctor:
     name: React Doctor
@@ -22,6 +27,7 @@ jobs:
       - uses: millionco/react-doctor@main
         with:
           diff: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   lint:
     name: Lint
