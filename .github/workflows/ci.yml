@@ -22,7 +22,6 @@ jobs:
       - uses: millionco/react-doctor@main
         with:
           diff: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   lint:
     name: Lint
