@@ -1,5 +1,7 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { type Locale, routing } from "@/i18n/routing";
+import { getToken } from "@/lib/auth/server";
+import { ConvexClientProvider } from "@/lib/convex/provider";
 import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
 import type { Metadata } from "next";
@@ -52,6 +54,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   // Providing all messages to the client side
   const messages = await getMessages();
+  const token = await getToken();
 
   return (
     <NextIntlClientProvider messages={messages}>
@@ -61,11 +64,13 @@ export default async function LocaleLayout({ children, params }: Props) {
         enableSystem
         disableTransitionOnChange
       >
-        <MediaViewerProvider>
-          {children}
-          <MediaViewerModal />
-        </MediaViewerProvider>
-        <Toaster />
+        <ConvexClientProvider initialToken={token}>
+          <MediaViewerProvider>
+            {children}
+            <MediaViewerModal />
+          </MediaViewerProvider>
+          <Toaster />
+        </ConvexClientProvider>
       </ThemeProvider>
     </NextIntlClientProvider>
   );

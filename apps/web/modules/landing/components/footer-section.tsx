@@ -2,23 +2,18 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
 import { landingFonts } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
-import { Button } from "@baseblocks/ui/button";
 import { Github } from "lucide-react";
 import type { ReactNode } from "react";
 import { Reveal } from "./reveal";
 
 interface FooterSectionProps {
-  isLoading: boolean;
   authCta: ReactNode;
   landingTranslations: TranslateFn;
-  commonTranslations: TranslateFn;
 }
 
 export function FooterSection({
-  isLoading,
   authCta,
   landingTranslations,
-  commonTranslations,
 }: FooterSectionProps) {
   return (
     <footer className="border-t border-border/40 bg-muted/20 px-6 dark:border-white/[0.04] dark:bg-white/[0.015]">
@@ -34,15 +29,7 @@ export function FooterSection({
             <p className="mt-4 max-w-sm text-[0.94rem] text-muted-foreground">
               {landingTranslations("ctaSubtitle")}
             </p>
-            <div className="mt-8">
-              {isLoading ? (
-                <Button size="lg" disabled>
-                  {commonTranslations("loading")}
-                </Button>
-              ) : (
-                authCta
-              )}
-            </div>
+            <div className="mt-8">{authCta}</div>
           </div>
         </Reveal>
 

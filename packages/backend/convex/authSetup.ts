@@ -5,19 +5,15 @@ import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
-import authSchema from "./betterAuth/schema";
+import authSchema from "./authComponent/schema";
 
-const siteUrl = (process.env.SITE_URL ?? "").trim(); // Primary app URL for this deployment
+const siteUrl = (process.env.SITE_URL ?? "").trim();
 const appUrls = (process.env.APP_URL ?? "")
   .split(",")
   .map((u) => u.trim())
-  .filter(Boolean); // Additional trusted frontend URL(s)
+  .filter(Boolean);
 
 const primaryAppUrl = siteUrl || appUrls[0] || "";
-if (!primaryAppUrl) {
-  throw new Error("SITE_URL (or APP_URL) must be configured");
-}
-
 const trustedOrigins = Array.from(
   new Set([...appUrls, siteUrl].filter(Boolean)),
 );
@@ -35,7 +31,7 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: primaryAppUrl,
-    trustedOrigins: [...trustedOrigins, "https://*.vercel.app"],
+    trustedOrigins,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
@@ -59,6 +55,4 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth(createAuthOptions(ctx));
 
-export const getAuthUser = async (ctx: GenericCtx<DataModel>) => {
-  return authComponent.getAuthUser(ctx);
-};
+export const { getAuthUser } = authComponent.clientApi();

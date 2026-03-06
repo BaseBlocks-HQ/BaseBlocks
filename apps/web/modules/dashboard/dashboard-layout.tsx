@@ -2,7 +2,6 @@
 
 import { DashboardSkeleton } from "@/components/skeletons";
 import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth/client";
 import { useTeam } from "@/lib/data";
 import {
   SidebarInset,
@@ -10,7 +9,7 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { useConvexAuth } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 
 interface DashboardLayoutProps {
@@ -19,50 +18,22 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-
-  // Detect cross-domain OTT exchange in progress (check URL on client only)
-  const [hasOtt, setHasOtt] = useState(false);
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.location.search.includes("ott=")
-    ) {
-      setHasOtt(true);
-    }
-  }, []);
-  // Clear OTT flag once session is established
-  useEffect(() => {
-    if (hasOtt && (isAuthenticated || session)) {
-      setHasOtt(false);
-    }
-  }, [hasOtt, isAuthenticated, session]);
-
-  const loading = authLoading || sessionPending || hasOtt;
-
+  const { isLoading: authLoading, isAuthenticated } = useConvexAuth();
   const team = useTeam();
 
-  // Redirect to onboarding if no team
   useEffect(() => {
-    if (!loading && isAuthenticated && team === null) {
-      router.push("/onboarding");
+    // Only redirect to onboarding if authenticated but no team.
+    // If auth drops (logout), don't redirect — let AuthGuard handle it.
+    if (!authLoading && isAuthenticated && team === null) {
+      router.replace("/onboarding");
     }
-  }, [loading, isAuthenticated, team, router]);
+  }, [authLoading, isAuthenticated, team, router]);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [loading, isAuthenticated, router]);
-
-  if (loading || team === undefined) {
+  // Show skeleton while auth or team is loading, and also when team is null
+  // (authenticated but no team → onboarding redirect is in-flight).
+  // Never return null — that causes a blank page flash.
+  if (authLoading || !team) {
     return <DashboardSkeleton />;
-  }
-
-  if (!isAuthenticated || !team) {
-    return null;
   }
 
   return (

@@ -8,17 +8,13 @@ import { EditorMockup } from "./editor-mockup";
 import { GridPattern } from "./grid-pattern";
 
 interface HeroSectionProps {
-  isLoading: boolean;
   authCta: ReactNode;
   landingTranslations: TranslateFn;
-  commonTranslations: TranslateFn;
 }
 
 export function HeroSection({
-  isLoading,
   authCta,
   landingTranslations,
-  commonTranslations,
 }: HeroSectionProps) {
   return (
     <section className="relative z-10 overflow-x-clip pt-16 pb-20 sm:pt-24 sm:pb-28">
@@ -67,13 +63,7 @@ export function HeroSection({
 
           <BlurIn delay={0.55}>
             <div className="mt-8 flex flex-wrap gap-3">
-              {isLoading ? (
-                <Button size="lg" disabled>
-                  {commonTranslations("loading")}
-                </Button>
-              ) : (
-                authCta
-              )}
+              {authCta}
               <a
                 href="https://github.com/naaiyy/BaseBlocks"
                 target="_blank"

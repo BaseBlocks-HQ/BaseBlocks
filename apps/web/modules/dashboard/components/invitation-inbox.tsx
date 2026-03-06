@@ -107,10 +107,10 @@ export function InvitationInbox({
       });
 
       // Sync to Convex members table (creates the Convex member record
-      // which links the user to the team and grants role-based access)
+      // which links the user to the team and grants role-based access).
+      // Role is read from the verified BA member record, not from client.
       await syncMember({
         organizationId: invitation.organizationId,
-        role: invitation.role,
       });
     } catch (err) {
       setError(

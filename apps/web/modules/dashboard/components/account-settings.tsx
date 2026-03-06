@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import {
@@ -36,7 +35,6 @@ export function AccountSettings() {
   const tCommon = useTranslations("common");
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const router = useRouter();
 
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -61,8 +59,9 @@ export function AccountSettings() {
 
       // Sign out after deleting data
       await authClient.signOut();
+      await fetch("/api/auth/sign-out", { method: "POST" });
       setOpen(false);
-      router.push("/login");
+      window.location.href = "/login";
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t("deleteAccountError");

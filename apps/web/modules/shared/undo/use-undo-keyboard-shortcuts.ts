@@ -25,8 +25,10 @@ export function useUndoKeyboardShortcuts({
 
       const target = e.target as HTMLElement;
       const tagName = target.tagName.toLowerCase();
-      // Skip native input/textarea elements but NOT contenteditable
       if (tagName === "input" || tagName === "textarea") return;
+      // Skip contenteditable elements — let rich text editors handle their own undo/redo
+      if (target.isContentEditable || target.closest("[contenteditable]"))
+        return;
 
       const isMod = e.metaKey || e.ctrlKey;
       if (!isMod) return;

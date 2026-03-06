@@ -27,7 +27,12 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ teamName }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const handleLogout = () => authClient.signOut();
+  const handleLogout = async () => {
+    await authClient.signOut();
+    // Clear httpOnly JWT cookie that crossDomainClient can't reach
+    await fetch("/api/auth/sign-out", { method: "POST" });
+    window.location.href = "/login";
+  };
   const t = useTranslations();
 
   const navItems = [

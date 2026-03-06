@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 
@@ -107,15 +108,45 @@ export const ensureCreatorMember = mutation({
 
 /**
  * Sync a member record after accepting a Better Auth invitation.
- * Maps BA roles to Convex roles ("member" → "viewer", "admin" → "admin").
+ * Verifies the caller is actually a BA member of the organization
+ * before creating the Convex member record.
  */
 export const syncMemberFromInvitation = mutation({
   args: {
     organizationId: v.string(),
-    role: v.string(),
   },
-  handler: async (ctx, { organizationId, role }) => {
+  handler: async (ctx, { organizationId }) => {
     const auth = await getAuthContext(ctx);
+
+    // Verify the caller is actually a BA member of this organization.
+    // This record only exists if they accepted an invitation through
+    // Better Auth's acceptInvitation flow.
+    const baMembers = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: "member",
+        where: [
+          { field: "organizationId", operator: "eq", value: organizationId },
+          { field: "userId", operator: "eq", value: auth.userId },
+        ],
+        limit: 1,
+        paginationOpts: { numItems: 1, cursor: null },
+      },
+    );
+
+    if (
+      !baMembers ||
+      !("page" in baMembers) ||
+      (baMembers as { page: unknown[] }).page.length === 0
+    ) {
+      throw new Error(
+        "No membership found. Accept the invitation before syncing.",
+      );
+    }
+
+    const baMemberRecord = (baMembers as { page: Record<string, unknown>[] })
+      .page[0]!;
+    const baRole = (baMemberRecord.role as string) || "member";
 
     // Find the Convex team linked to this BA organization
     const team = await ctx.db
@@ -141,9 +172,9 @@ export const syncMemberFromInvitation = mutation({
       return { memberId: existing._id, alreadyExists: true };
     }
 
-    // Map BA role to Convex role
+    // Use the role from BA (server-verified), not from client args
     const convexRole: "admin" | "viewer" =
-      role === "admin" ? "admin" : "viewer";
+      baRole === "admin" ? "admin" : "viewer";
 
     const memberId = await ctx.db.insert("members", {
       teamId: team._id,
