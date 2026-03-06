@@ -84,9 +84,18 @@ function selfHoverProjection(
   const projectedDepth = activeItem.depth + dragDepth;
 
   const prev = items[activeIndex - 1];
-  const next = items[activeIndex + 1];
   const maxDepth = prev ? prev.depth + 1 : 0;
-  const minDepth = next ? next.depth : 0;
+
+  // Skip over the active item's descendants to find the true next sibling.
+  // Without this, children set a high minDepth that prevents un-nesting.
+  let nextNonDescendant: FlattenedPage | undefined;
+  for (let i = activeIndex + 1; i < items.length; i++) {
+    if ((items[i] as FlattenedPage).depth <= activeItem.depth) {
+      nextNonDescendant = items[i];
+      break;
+    }
+  }
+  const minDepth = nextNonDescendant ? nextNonDescendant.depth : 0;
   const depth = Math.max(minDepth, Math.min(maxDepth, projectedDepth));
 
   // No-op: depth hasn't changed

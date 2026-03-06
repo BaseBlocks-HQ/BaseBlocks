@@ -285,6 +285,9 @@ export const listByLibraryPublic = query({
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
 
+    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
+    if (!activeLibraryIds.has(libraryId)) return [];
+
     return await ctx.db
       .query("documents")
       .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
@@ -303,6 +306,9 @@ export const listByFolderPublic = query({
 
     const site = await ctx.db.get(library.siteId);
     if (!site || !site.isPublished) return [];
+
+    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
+    if (!activeLibraryIds.has(libraryId)) return [];
 
     return await ctx.db
       .query("documents")

@@ -5,7 +5,7 @@ import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { AlertCircle, Loader2, Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -50,20 +50,29 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
 
   const verifyAccessCode = useMutation(api.sharing.mutations.verifyAccessCode);
 
-  // Check for existing session on mount
-  useEffect(() => {
-    const checkExistingSession = async () => {
-      const sessionToken = getCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
-      if (sessionToken) {
-        // Session exists, assume it's valid (the server will verify when fetching data)
-        setHasAccess(true);
-      } else {
-        setHasAccess(false);
-      }
-    };
+  const storedToken =
+    typeof document !== "undefined"
+      ? getCookie(`${SESSION_COOKIE_NAME}_${siteId}`)
+      : null;
 
-    checkExistingSession();
-  }, [siteId]);
+  const sessionResult = useQuery(
+    api.sharing.queries.validateSession,
+    storedToken ? { siteId, sessionToken: storedToken } : "skip",
+  );
+
+  useEffect(() => {
+    if (!storedToken) {
+      setHasAccess(false);
+      return;
+    }
+    if (sessionResult === undefined) return;
+    if (sessionResult.valid) {
+      setHasAccess(true);
+    } else {
+      removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
+      setHasAccess(false);
+    }
+  }, [storedToken, sessionResult, siteId]);
 
   // Focus input when gate is shown
   useEffect(() => {

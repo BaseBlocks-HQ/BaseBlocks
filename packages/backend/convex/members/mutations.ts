@@ -45,6 +45,22 @@ export const deleteMyAccountData = mutation({
       .collect();
 
     for (const member of memberRecords) {
+      if (member.role === "admin") {
+        const admins = await ctx.db
+          .query("members")
+          .withIndex("by_team", (q) => q.eq("teamId", member.teamId))
+          .filter((q) => q.eq(q.field("role"), "admin"))
+          .collect();
+
+        if (admins.length <= 1) {
+          throw new Error(
+            "Cannot delete account: you are the last admin of a team. Transfer admin role first.",
+          );
+        }
+      }
+    }
+
+    for (const member of memberRecords) {
       await ctx.db.delete(member._id);
     }
 
