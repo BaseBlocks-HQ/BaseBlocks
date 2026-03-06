@@ -18,6 +18,7 @@ function isAppRoute(path: string): boolean {
     path === "/" ||
     path.startsWith("/dashboard") ||
     path.startsWith("/onboarding") ||
+    path.startsWith("/auth") ||
     path.startsWith("/login") ||
     path.startsWith("/sites") ||
     path.startsWith("/s/")
@@ -59,6 +60,8 @@ export async function proxy(request: NextRequest) {
       response.cookies.set("__preview_team", match[1], {
         path: "/",
         sameSite: "lax",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
       });
       return response;
     }
@@ -97,7 +100,8 @@ export async function proxy(request: NextRequest) {
   const pathnameWithoutLocale = removeLocalePrefix(pathname);
   if (
     pathnameWithoutLocale.startsWith("/dashboard") ||
-    pathnameWithoutLocale.startsWith("/onboarding")
+    pathnameWithoutLocale.startsWith("/onboarding") ||
+    pathnameWithoutLocale.startsWith("/login")
   ) {
     return NextResponse.redirect(new URL("/", request.url));
   }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import {
@@ -36,7 +35,6 @@ export function AccountSettings() {
   const tCommon = useTranslations("common");
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const router = useRouter();
 
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,13 +54,10 @@ export function AccountSettings() {
     setIsDeleting(true);
     setError(null);
     try {
-      // First, delete user data from Convex database
       await deleteMyAccountData();
-
-      // Sign out after deleting data
       await authClient.signOut();
       setOpen(false);
-      router.push("/login");
+      window.location.href = "/login";
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t("deleteAccountError");

@@ -10,7 +10,6 @@ import {
   stepSizes,
 } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
-import { useConvexAuth } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import {
   LayoutGroup,
@@ -29,8 +28,11 @@ import { IntroOverlay } from "./components/intro-overlay";
 import { LandingHeader } from "./components/landing-header";
 import { StepsSection } from "./components/steps-section";
 
-export function LandingPage() {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+interface LandingPageProps {
+  isAuthenticated: boolean;
+}
+
+export function LandingPage({ isAuthenticated }: LandingPageProps) {
   const { resolvedTheme } = useTheme();
 
   const landingTranslations = useTranslations("landing");
@@ -112,16 +114,13 @@ export function LandingPage() {
         {expanded && (
           <>
             <LandingHeader
-              isLoading={isLoading}
               isAuthenticated={isAuthenticated}
               commonTranslations={commonTranslations}
               navigationTranslations={navigationTranslations}
             />
             <HeroSection
-              isLoading={isLoading}
               authCta={authCta}
               landingTranslations={landingTranslations}
-              commonTranslations={commonTranslations}
             />
             <FeaturesSection landingTranslations={landingTranslations} />
             <StepsSection
@@ -131,10 +130,8 @@ export function LandingPage() {
               landingTranslations={landingTranslations}
             />
             <FooterSection
-              isLoading={isLoading}
               authCta={authCta}
               landingTranslations={landingTranslations}
-              commonTranslations={commonTranslations}
             />
           </>
         )}

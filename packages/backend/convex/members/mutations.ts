@@ -1,10 +1,8 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 
-/**
- * Update a member's role (admin only)
- */
 export const updateRole = mutation({
   args: {
     memberId: v.id("members"),
@@ -18,7 +16,6 @@ export const updateRole = mutation({
 
     await requireAdmin(ctx, memberToUpdate.teamId);
 
-    // Cannot demote yourself if you're the last admin
     const auth = await getAuthContext(ctx);
     if (memberToUpdate.userId === auth.userId && role === "viewer") {
       const admins = await ctx.db
@@ -37,9 +34,6 @@ export const updateRole = mutation({
   },
 });
 
-/**
- * Delete the current user's account data from all teams
- */
 export const deleteMyAccountData = mutation({
   args: {},
   handler: async (ctx) => {
@@ -58,9 +52,6 @@ export const deleteMyAccountData = mutation({
   },
 });
 
-/**
- * Ensure the team creator is added as an admin member
- */
 export const ensureCreatorMember = mutation({
   args: {
     teamId: v.id("teams"),
@@ -73,12 +64,10 @@ export const ensureCreatorMember = mutation({
       throw new Error("Team not found");
     }
 
-    // Only the team creator can use this mutation
     if (team.createdBy !== auth.userId) {
       throw new Error("Only the team creator can use this operation");
     }
 
-    // Check if user is already a member
     const existingMember = await ctx.db
       .query("members")
       .withIndex("by_team_user", (q) =>
@@ -105,19 +94,40 @@ export const ensureCreatorMember = mutation({
   },
 });
 
-/**
- * Sync a member record after accepting a Better Auth invitation.
- * Maps BA roles to Convex roles ("member" → "viewer", "admin" → "admin").
- */
 export const syncMemberFromInvitation = mutation({
   args: {
     organizationId: v.string(),
-    role: v.string(),
   },
-  handler: async (ctx, { organizationId, role }) => {
+  handler: async (ctx, { organizationId }) => {
     const auth = await getAuthContext(ctx);
 
-    // Find the Convex team linked to this BA organization
+    const baMembers = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: "member",
+        where: [
+          { field: "organizationId", operator: "eq", value: organizationId },
+          { field: "userId", operator: "eq", value: auth.userId },
+        ],
+        limit: 1,
+        paginationOpts: { numItems: 1, cursor: null },
+      },
+    );
+
+    if (
+      !baMembers ||
+      !("page" in baMembers) ||
+      (baMembers as { page: unknown[] }).page.length === 0
+    ) {
+      throw new Error(
+        "No membership found. Accept the invitation before syncing.",
+      );
+    }
+
+    const baMemberRecord = (baMembers as { page: Record<string, unknown>[] })
+      .page[0]!;
+    const baRole = (baMemberRecord.role as string) || "member";
+
     const team = await ctx.db
       .query("teams")
       .withIndex("by_organizationId", (q) =>
@@ -129,7 +139,6 @@ export const syncMemberFromInvitation = mutation({
       throw new Error("Team not found for this organization");
     }
 
-    // Check if already a member
     const existing = await ctx.db
       .query("members")
       .withIndex("by_team_user", (q) =>
@@ -141,9 +150,8 @@ export const syncMemberFromInvitation = mutation({
       return { memberId: existing._id, alreadyExists: true };
     }
 
-    // Map BA role to Convex role
     const convexRole: "admin" | "viewer" =
-      role === "admin" ? "admin" : "viewer";
+      baRole === "admin" ? "admin" : "viewer";
 
     const memberId = await ctx.db.insert("members", {
       teamId: team._id,
@@ -159,9 +167,6 @@ export const syncMemberFromInvitation = mutation({
   },
 });
 
-/**
- * Remove a member from the organization (admin only)
- */
 export const removeMember = mutation({
   args: {
     teamId: v.id("teams"),

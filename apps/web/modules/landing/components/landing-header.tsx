@@ -6,14 +6,12 @@ import { Github } from "lucide-react";
 import { motion } from "motion/react";
 
 interface LandingHeaderProps {
-  isLoading: boolean;
   isAuthenticated: boolean;
   commonTranslations: TranslateFn;
   navigationTranslations: TranslateFn;
 }
 
 export function LandingHeader({
-  isLoading,
   isAuthenticated,
   commonTranslations,
   navigationTranslations,
@@ -65,11 +63,7 @@ export function LandingHeader({
               <Github className="h-4 w-4" />
               GitHub
             </a>
-            {isLoading ? (
-              <Button variant="outline" size="sm" disabled>
-                {commonTranslations("loading")}
-              </Button>
-            ) : isAuthenticated ? (
+            {isAuthenticated ? (
               <Link href="/dashboard">
                 <Button size="sm">{navigationTranslations("dashboard")}</Button>
               </Link>
