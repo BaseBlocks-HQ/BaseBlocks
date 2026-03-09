@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import { ChevronLeft, ChevronRight, MousePointerClick } from "lucide-react";
-import { useOptimistic } from "react";
+import { useOptimistic, useState } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
@@ -286,7 +286,7 @@ export function DecisionTreeEditor({
   void id;
   const isMobile = useIsMobile();
   const [trees, setTrees] = useOptimistic<DecisionTree[]>(content.trees ?? []);
-  const [activeTreeId, setActiveTreeId] = useOptimistic<string>(
+  const [activeTreeId, setActiveTreeId] = useState<string>(
     (content.trees ?? [])[0]?.id ?? "",
   );
   const [tabsMode, setTabsMode] = useOptimistic<"row" | "dropdown">(
