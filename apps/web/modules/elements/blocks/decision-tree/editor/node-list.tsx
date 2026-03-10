@@ -107,13 +107,11 @@ export function NodeList({
           >
             {childNodes.map((node) => (
               <SortableItem key={node.id} id={node.id}>
+                {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled by inner interactive buttons */}
                 <div
                   role="presentation"
                   className="group flex items-center gap-2 rounded-lg border border-transparent px-4 py-3 cursor-pointer transition-colors hover:bg-primary/5 hover:border-primary/20"
-                  onMouseDown={(e) => {
-                    if (e.button !== 0) {
-                      return;
-                    }
+                  onClick={() => {
                     onNavigateInto(node.id);
                   }}
                 >
@@ -208,6 +206,7 @@ export function NodeList({
           {isAdding ? (
             <div className="flex items-center gap-2 p-1">
               <Input
+                autoFocus
                 value={newName}
                 placeholder="Option name..."
                 onChange={(e) => setNewName(e.target.value)}

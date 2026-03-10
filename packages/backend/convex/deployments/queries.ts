@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { requireMember } from "../auth";
+import { checkIsMember } from "../auth";
 
 /**
  * List deployment history for a site (most recent first, authenticated)
@@ -14,7 +14,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const deployments = await ctx.db
       .query("deployments")
@@ -39,7 +39,7 @@ export const getCurrent = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     return await ctx.db
       .query("deployments")
@@ -64,7 +64,7 @@ export const getWithSnapshot = query({
     const site = await ctx.db.get(deployment.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     const snapshots = await ctx.db
       .query("deploymentSnapshots")

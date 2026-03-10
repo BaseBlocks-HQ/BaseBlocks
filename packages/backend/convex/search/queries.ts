@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { requireMember } from "../auth";
+import { checkIsMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
 
 /**
@@ -90,7 +90,7 @@ export const searchAll = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -240,7 +240,7 @@ export const listTitles = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const all = await ctx.db
       .query("searchableContent")

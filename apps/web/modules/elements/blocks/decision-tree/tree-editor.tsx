@@ -461,6 +461,7 @@ export function DecisionTreeEditor({
 
   const nodeDetailPanel = currentNode ? (
     <NodeDetail
+      key={currentNode.id}
       node={currentNode}
       onUpdateNodeName={handleUpdateNodeName}
       onUpdateDocument={handleUpdateDocument}

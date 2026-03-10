@@ -11,7 +11,7 @@ import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import { useTheme } from "next-themes";
-import { useOptimistic, useState } from "react";
+import { useState } from "react";
 import { getNodeDocument } from "../lib";
 
 interface NodeDetailProps {
@@ -25,7 +25,7 @@ export function NodeDetail({
   onUpdateNodeName,
   onUpdateDocument,
 }: NodeDetailProps) {
-  const [localName, setLocalName] = useOptimistic(node.name);
+  const [localName, setLocalName] = useState(node.name);
 
   const debouncedSaveName = useDebounceCallback((name: string) => {
     onUpdateNodeName(node.id, name);

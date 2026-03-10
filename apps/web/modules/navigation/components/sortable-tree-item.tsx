@@ -109,8 +109,10 @@ export function SortableTreeItem({
         )}
 
         {hasChildren ? (
-          <button
-            type="button"
+          // biome-ignore lint/a11y/useSemanticElements: nested inside SidebarMenuButton which renders as <button> — can't nest <button> in <button>
+          <div
+            role="button"
+            tabIndex={0}
             onClick={handleToggleExpand}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -125,7 +127,7 @@ export function SortableTreeItem({
             ) : (
               <ChevronRight className="h-3.5 w-3.5" />
             )}
-          </button>
+          </div>
         ) : (
           <span className="w-4" />
         )}

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext, getAuthContextOrNull, requireMember } from "../auth";
+import { checkIsMember, getAuthContextOrNull } from "../auth";
 
 // List sites for all teams the user is a member of
 export const list = query({
@@ -60,7 +60,9 @@ export const get = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    const isMember = await checkIsMember(ctx, site.teamId);
+    if (!isMember) return null;
+
     return site;
   },
 });
@@ -121,25 +123,14 @@ export const getBySlug = query({
 export const getWithTeam = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    const auth = await getAuthContext(ctx);
-
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
     const team = await ctx.db.get(site.teamId);
     if (!team) return null;
 
-    // Verify access via membership
-    const membership = await ctx.db
-      .query("members")
-      .withIndex("by_team_user", (q) =>
-        q.eq("teamId", team._id).eq("userId", auth.userId),
-      )
-      .first();
-
-    if (!membership) {
-      throw new Error("Unauthorized");
-    }
+    const isMember = await checkIsMember(ctx, team._id);
+    if (!isMember) return null;
 
     return { site, team };
   },
