@@ -14,7 +14,7 @@ import { ArrowRight } from "lucide-react";
 import {
   LayoutGroup,
   LazyMotion,
-  domAnimation,
+  domMax,
   useMotionValue,
   useMotionValueEvent,
   useSpring,
@@ -98,7 +98,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
   );
 
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domMax} strict>
       <div
         className={
           expanded

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContextOrNull, requireMember } from "../auth";
+import { checkIsMember, getAuthContextOrNull } from "../auth";
 import { buildPageTree } from "../lib/tree";
 
 // List pages for a site (authenticated — editor only)
@@ -11,7 +11,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     return await ctx.db
       .query("pages")
@@ -145,7 +145,7 @@ export const getTree = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const allPages = await ctx.db
       .query("pages")
@@ -178,7 +178,7 @@ export const getByPath = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     // Empty path defaults to "home"
     if (path.length === 0) {
@@ -407,7 +407,7 @@ export const getFullPath = query({
     const site = await ctx.db.get(page.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     const slugs: string[] = [];
     let currentPage: typeof page | null = page;

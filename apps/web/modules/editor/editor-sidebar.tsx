@@ -91,7 +91,7 @@ export function EditorSidebar({
   onEnableTabs,
 }: EditorSidebarProps) {
   const t = useTranslations();
-  const { canEdit, selection, siteId } = useEditorContext();
+  const { canEdit, selection, siteId, clearSelection } = useEditorContext();
   const [manualActiveTab, setManualActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -111,6 +111,7 @@ export function EditorSidebar({
     selection.slotId || selection.blockId ? "components" : manualActiveTab;
 
   const handleSelectPage = (pageId: string) => {
+    clearSelection();
     onSelectPage(pageId);
   };
 
@@ -149,7 +150,10 @@ export function EditorSidebar({
 
       <Tabs
         value={activeTab}
-        onValueChange={setManualActiveTab}
+        onValueChange={(val) => {
+          clearSelection();
+          setManualActiveTab(val);
+        }}
         className="flex-1 flex flex-col"
       >
         <div className="px-2 pt-2">

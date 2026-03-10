@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthContextOrNull, requireMember } from "../auth";
+import { checkIsMember, getAuthContextOrNull } from "../auth";
 
 /**
  * List all members for a team
@@ -10,7 +10,7 @@ export const list = query({
     teamId: v.id("teams"),
   },
   handler: async (ctx, { teamId }) => {
-    await requireMember(ctx, teamId);
+    if (!(await checkIsMember(ctx, teamId))) return [];
 
     const members = await ctx.db
       .query("members")
@@ -115,7 +115,7 @@ export const count = query({
     teamId: v.id("teams"),
   },
   handler: async (ctx, { teamId }) => {
-    await requireMember(ctx, teamId);
+    if (!(await checkIsMember(ctx, teamId))) return null;
 
     const members = await ctx.db
       .query("members")

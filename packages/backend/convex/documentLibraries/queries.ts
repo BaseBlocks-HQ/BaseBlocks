@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { getAuthContext, requireMember } from "../auth";
+import { checkIsMember, getAuthContextOrNull } from "../auth";
 
 export const list = query({
   args: { siteId: v.id("sites") },
@@ -9,7 +9,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     return await ctx.db
       .query("documentLibraries")
@@ -27,7 +27,7 @@ export const get = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     return library;
   },
@@ -66,7 +66,8 @@ export const listPublic = query({
 export const listAllWithCounts = query({
   args: {},
   handler: async (ctx) => {
-    const auth = await getAuthContext(ctx);
+    const auth = await getAuthContextOrNull(ctx);
+    if (!auth) return [];
 
     // Find team via membership
     const membership = await ctx.db
@@ -123,7 +124,7 @@ export const listWithCounts = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const libraries = await ctx.db
       .query("documentLibraries")

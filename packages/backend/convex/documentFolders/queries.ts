@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { requireMember } from "../auth";
+import { checkIsMember } from "../auth";
 
 // List all folders in a library (flat list)
 export const listByLibrary = query({
@@ -12,7 +12,7 @@ export const listByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -36,7 +36,7 @@ export const listByParent = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -62,7 +62,7 @@ export const get = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
 
     return folder;
   },
@@ -81,7 +81,7 @@ export const getPath = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     // Build path from folder to root (with cycle detection)
     const path: Array<{ _id: string; name: string }> = [];

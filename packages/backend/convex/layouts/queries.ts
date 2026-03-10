@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { requireMember } from "../auth";
+import { checkIsMember } from "../auth";
 
 // Get all layouts for a page (draft version - for editor, authenticated)
 export const list = query({
@@ -12,7 +12,7 @@ export const list = query({
     const site = await ctx.db.get(page.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
 
     const layouts = await ctx.db
       .query("layouts")
@@ -68,7 +68,7 @@ export const get = query({
     const site = await ctx.db.get(page.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
     return layout;
   },
 });
