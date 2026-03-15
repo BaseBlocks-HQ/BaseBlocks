@@ -75,32 +75,28 @@ function highlightTextMatches(
   }
 
   const textNodes: Text[] = [];
-  const walker = document.createTreeWalker(
-    root,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode(node) {
-        const parent = node.parentElement;
-        const textContent = node.textContent?.trim();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      const textContent = node.textContent?.trim();
 
-        if (!parent || !textContent) {
-          return NodeFilter.FILTER_SKIP;
-        }
+      if (!parent || !textContent) {
+        return NodeFilter.FILTER_SKIP;
+      }
 
-        if (parent.closest("script, style, noscript")) {
-          return NodeFilter.FILTER_REJECT;
-        }
+      if (parent.closest("script, style, noscript")) {
+        return NodeFilter.FILTER_REJECT;
+      }
 
-        if (parent.closest(SEARCH_HIGHLIGHT_SELECTOR)) {
-          return NodeFilter.FILTER_REJECT;
-        }
+      if (parent.closest(SEARCH_HIGHLIGHT_SELECTOR)) {
+        return NodeFilter.FILTER_REJECT;
+      }
 
-        return textContent.toLowerCase().includes(normalizedSearchTerm)
-          ? NodeFilter.FILTER_ACCEPT
-          : NodeFilter.FILTER_SKIP;
-      },
+      return textContent.toLowerCase().includes(normalizedSearchTerm)
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_SKIP;
     },
-  );
+  });
 
   let currentNode = walker.nextNode();
   while (currentNode) {
@@ -268,7 +264,11 @@ function PublicMainContent({
   );
 }
 
-function PublicContentInner({ pageId, nested, searchTerm }: PublicContentProps) {
+function PublicContentInner({
+  pageId,
+  nested,
+  searchTerm,
+}: PublicContentProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
   const showSubpagePanel = !nested && !!viewingSubpage;
   const pageData = usePage(pageId);

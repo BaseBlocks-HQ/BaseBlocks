@@ -28,10 +28,7 @@ export function PublicSubpageProvider({
     null,
   );
 
-  const openSubpage = (
-    pageId: string,
-    options?: { searchTerm?: string },
-  ) => {
+  const openSubpage = (pageId: string, options?: { searchTerm?: string }) => {
     const trimmedSearchTerm = options?.searchTerm?.trim();
     setViewingSubpage({
       pageId,

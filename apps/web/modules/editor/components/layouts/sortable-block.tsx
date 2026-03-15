@@ -23,7 +23,13 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, GripVertical, Settings2, Trash2 } from "lucide-react";
-import { createElement, useState } from "react";
+import {
+  type MouseEvent,
+  type PointerEvent,
+  createElement,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 interface SortableBlockProps {
@@ -52,6 +58,9 @@ export function SortableBlock({
   onRemove,
 }: SortableBlockProps) {
   const [configOpen, setConfigOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickRef = useRef(false);
   const editorSite = useEditorSiteOptional();
   const editorUi = useEditorUiOptional();
   const clipboard = useBlockClipboardOptional();
@@ -76,6 +85,41 @@ export function SortableBlock({
   const hasConfig = hasElementConfigPanel(blockType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
   const canCopyBlock = canEdit && isCopyableBlockType(block.type);
+  const showActions = isSelected && actionsOpen;
+
+  const handlePointerDownCapture = (e: PointerEvent<HTMLButtonElement>) => {
+    pointerStartRef.current = { x: e.clientX, y: e.clientY };
+    suppressClickRef.current = false;
+  };
+
+  const handlePointerMoveCapture = (e: PointerEvent<HTMLButtonElement>) => {
+    const start = pointerStartRef.current;
+    if (!start || suppressClickRef.current) {
+      return;
+    }
+
+    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) {
+      suppressClickRef.current = true;
+    }
+  };
+
+  const handlePointerUpCapture = () => {
+    pointerStartRef.current = null;
+    if (suppressClickRef.current) {
+      globalThis.setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
+    }
+  };
+
+  const handleHandleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    setActionsOpen((open) => !open);
+  };
 
   if (isDragging) {
     return (
@@ -111,80 +155,93 @@ export function SortableBlock({
               isSelected && "opacity-100",
             )}
           >
-            <div
+            <button
               ref={setActivatorNodeRef}
+              type="button"
               className={cn(
                 "flex items-center justify-center h-6 w-6 rounded",
                 "cursor-grab active:cursor-grabbing",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isSelected
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
+              onPointerDownCapture={handlePointerDownCapture}
+              onPointerMoveCapture={handlePointerMoveCapture}
+              onPointerUpCapture={handlePointerUpCapture}
+              onClick={handleHandleClick}
               {...attributes}
               {...listeners}
             >
               <GripVertical className="h-3.5 w-3.5" />
-            </div>
-            {hasConfig && ConfigPanel && (
-              <Popover open={configOpen} onOpenChange={setConfigOpen}>
-                <PopoverTrigger asChild>
+            </button>
+
+            {showActions && (
+              <>
+                {hasConfig && ConfigPanel && (
+                  <Popover
+                    open={isSelected && configOpen}
+                    onOpenChange={setConfigOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="left"
+                      align="start"
+                      className="w-64"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDownOutside={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest('[data-slot="select-content"]')) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {createElement(ConfigPanel, {
+                        content: block.content,
+                        onUpdate,
+                      })}
+                    </PopoverContent>
+                  </Popover>
+                )}
+                {canCopyBlock && (
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                    onClick={(e) => e.stopPropagation()}
+                    size="icon-xs"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clipboard?.copyBlock({
+                        type: block.type,
+                        content: block.content,
+                      });
+                      toast.success("Block copied");
+                    }}
                   >
-                    <Settings2 className="h-3.5 w-3.5" />
+                    <Copy className="h-3.5 w-3.5" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="left"
-                  align="start"
-                  className="w-64"
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDownOutside={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest('[data-slot="select-content"]')) {
-                      e.preventDefault();
-                    }
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove();
                   }}
                 >
-                  {createElement(ConfigPanel, {
-                    content: block.content,
-                    onUpdate,
-                  })}
-                </PopoverContent>
-              </Popover>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </>
             )}
-            {canCopyBlock && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clipboard?.copyBlock({
-                    type: block.type,
-                    content: block.content,
-                  });
-                  toast.success("Block copied");
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
           </div>
         )}
 
