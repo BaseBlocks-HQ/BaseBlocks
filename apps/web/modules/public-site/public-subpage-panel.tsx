@@ -60,7 +60,11 @@ export function PublicSubpagePanel({
 
       {/* Full page content for the subpage */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        <PublicContent pageId={viewingSubpage.pageId} nested />
+        <PublicContent
+          pageId={viewingSubpage.pageId}
+          nested
+          searchTerm={viewingSubpage.searchTerm}
+        />
       </div>
     </div>
   );

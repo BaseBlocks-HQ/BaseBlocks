@@ -4,11 +4,12 @@ import { type ReactNode, createContext, use, useState } from "react";
 
 interface ViewingSubpage {
   pageId: string;
+  searchTerm?: string;
 }
 
 interface PublicSubpageContextValue {
   viewingSubpage: ViewingSubpage | null;
-  openSubpage: (pageId: string) => void;
+  openSubpage: (pageId: string, options?: { searchTerm?: string }) => void;
   closeSubpage: () => void;
 }
 
@@ -27,8 +28,15 @@ export function PublicSubpageProvider({
     null,
   );
 
-  const openSubpage = (pageId: string) => {
-    setViewingSubpage({ pageId });
+  const openSubpage = (
+    pageId: string,
+    options?: { searchTerm?: string },
+  ) => {
+    const trimmedSearchTerm = options?.searchTerm?.trim();
+    setViewingSubpage({
+      pageId,
+      searchTerm: trimmedSearchTerm || undefined,
+    });
   };
 
   const closeSubpage = () => {

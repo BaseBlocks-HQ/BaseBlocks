@@ -257,7 +257,9 @@ export function SearchBox({
   const handleResultClick = (result: SearchResultItem) => {
     if (result.contentType === "subpage" && result.metadata.pageId) {
       if (subpageContext) {
-        subpageContext.openSubpage(result.metadata.pageId);
+        subpageContext.openSubpage(result.metadata.pageId, {
+          searchTerm: debouncedQuery,
+        });
       }
       setIsFocused(false);
       return;

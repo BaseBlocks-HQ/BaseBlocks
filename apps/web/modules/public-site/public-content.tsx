@@ -28,7 +28,7 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { usePublicSubpageContext } from "./public-subpage-context";
 import { PublicSubpagePanel } from "./public-subpage-panel";
 
@@ -40,6 +40,123 @@ interface PublicContentProps {
   pageId: string;
   /** When true, subpage panel rendering is disabled to prevent infinite recursion */
   nested?: boolean;
+  searchTerm?: string;
+}
+
+const SEARCH_HIGHLIGHT_SELECTOR = 'mark[data-search-highlight="true"]';
+const SEARCH_HIGHLIGHT_CLASS_NAME =
+  "bg-yellow-200 dark:bg-yellow-800 text-foreground px-0.5 rounded";
+
+function clearSearchHighlights(root: HTMLElement) {
+  const highlights = root.querySelectorAll(SEARCH_HIGHLIGHT_SELECTOR);
+  for (const highlight of highlights) {
+    const parent = highlight.parentNode;
+    if (!parent) continue;
+
+    parent.replaceChild(
+      document.createTextNode(highlight.textContent ?? ""),
+      highlight,
+    );
+    parent.normalize();
+  }
+}
+
+// Failure modes:
+// - Search opens the subpage before layouts finish rendering.
+// - Matching text lives inside nested text nodes rather than a standalone element.
+// - The result was a title-only match, so there may be nothing in the body to scroll to.
+function highlightTextMatches(
+  root: HTMLElement,
+  searchTerm: string,
+): HTMLElement[] {
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  if (!normalizedSearchTerm) {
+    return [];
+  }
+
+  const textNodes: Text[] = [];
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        const textContent = node.textContent?.trim();
+
+        if (!parent || !textContent) {
+          return NodeFilter.FILTER_SKIP;
+        }
+
+        if (parent.closest("script, style, noscript")) {
+          return NodeFilter.FILTER_REJECT;
+        }
+
+        if (parent.closest(SEARCH_HIGHLIGHT_SELECTOR)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+
+        return textContent.toLowerCase().includes(normalizedSearchTerm)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_SKIP;
+      },
+    },
+  );
+
+  let currentNode = walker.nextNode();
+  while (currentNode) {
+    textNodes.push(currentNode as Text);
+    currentNode = walker.nextNode();
+  }
+
+  const highlights: HTMLElement[] = [];
+
+  for (const textNode of textNodes) {
+    const text = textNode.textContent;
+    const parent = textNode.parentNode;
+
+    if (!text || !parent) {
+      continue;
+    }
+
+    const lowerText = text.toLowerCase();
+    let startIndex = 0;
+    let matchIndex = lowerText.indexOf(normalizedSearchTerm, startIndex);
+
+    if (matchIndex === -1) {
+      continue;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    while (matchIndex !== -1) {
+      if (matchIndex > startIndex) {
+        fragment.appendChild(
+          document.createTextNode(text.slice(startIndex, matchIndex)),
+        );
+      }
+
+      const mark = document.createElement("mark");
+      mark.dataset.searchHighlight = "true";
+      mark.className = SEARCH_HIGHLIGHT_CLASS_NAME;
+      mark.textContent = text.slice(
+        matchIndex,
+        matchIndex + normalizedSearchTerm.length,
+      );
+      fragment.appendChild(mark);
+      highlights.push(mark);
+
+      startIndex = matchIndex + normalizedSearchTerm.length;
+      matchIndex = lowerText.indexOf(normalizedSearchTerm, startIndex);
+    }
+
+    if (startIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(startIndex)));
+    }
+
+    parent.replaceChild(fragment, textNode);
+  }
+
+  return highlights;
 }
 
 function renderPublishedLayout(layout: LayoutDoc) {
@@ -100,6 +217,7 @@ function PublicMainContent({
   mainLayouts,
   sidebarLayouts,
   onTabChange,
+  contentRef,
 }: {
   pageTitle: string;
   pageTabs: Array<{ id: string; label: string }>;
@@ -109,9 +227,10 @@ function PublicMainContent({
   mainLayouts: LayoutDoc[];
   sidebarLayouts: LayoutDoc[];
   onTabChange: (tabId: string) => void;
+  contentRef?: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <div className="p-4 md:p-8">
+    <div ref={contentRef} className="p-4 md:p-8">
       <article
         className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
       >
@@ -149,11 +268,13 @@ function PublicMainContent({
   );
 }
 
-function PublicContentInner({ pageId, nested }: PublicContentProps) {
+function PublicContentInner({ pageId, nested, searchTerm }: PublicContentProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
   const showSubpagePanel = !nested && !!viewingSubpage;
   const pageData = usePage(pageId);
   const layoutsData = usePublishedLayouts(pageId);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const lastAutoScrolledKeyRef = useRef<string | null>(null);
 
   // Fullscreen state for subpage panel
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -184,6 +305,78 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [viewingSubpage, closeSubpage]);
+
+  useEffect(() => {
+    const normalizedSearchTerm = searchTerm?.trim();
+    const contentElement = contentRef.current;
+
+    if (contentElement) {
+      clearSearchHighlights(contentElement);
+    }
+
+    if (!normalizedSearchTerm) {
+      lastAutoScrolledKeyRef.current = null;
+      return;
+    }
+
+    if (
+      !nested ||
+      pageData === undefined ||
+      pageData === null ||
+      layoutsData === undefined
+    ) {
+      return;
+    }
+
+    const scrollKey = `${pageId}:${normalizedSearchTerm.toLowerCase()}`;
+    if (lastAutoScrolledKeyRef.current === scrollKey) {
+      return;
+    }
+
+    let cancelled = false;
+    let frameId = 0;
+    let attempts = 0;
+
+    const tryScrollToMatch = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const currentContentElement = contentRef.current;
+      if (!currentContentElement) {
+        return;
+      }
+
+      const highlights = highlightTextMatches(
+        currentContentElement,
+        normalizedSearchTerm,
+      );
+      const matchElement = highlights[0];
+      if (matchElement) {
+        matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        lastAutoScrolledKeyRef.current = scrollKey;
+        return;
+      }
+
+      if (attempts >= 20) {
+        return;
+      }
+
+      attempts += 1;
+      frameId = requestAnimationFrame(tryScrollToMatch);
+    };
+
+    frameId = requestAnimationFrame(tryScrollToMatch);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frameId);
+      const currentContentElement = contentRef.current;
+      if (currentContentElement) {
+        clearSearchHighlights(currentContentElement);
+      }
+    };
+  }, [layoutsData, nested, pageData, pageId, searchTerm]);
 
   if (pageData === undefined || layoutsData === undefined) {
     return (
@@ -234,6 +427,7 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
                     mainLayouts={mainLayouts}
                     sidebarLayouts={sidebarLayouts}
                     onTabChange={setActiveTabId}
+                    contentRef={contentRef}
                   />
                 </div>
               </ResizablePanel>
@@ -265,10 +459,21 @@ function PublicContentInner({ pageId, nested }: PublicContentProps) {
       mainLayouts={mainLayouts}
       sidebarLayouts={sidebarLayouts}
       onTabChange={setActiveTabId}
+      contentRef={contentRef}
     />
   );
 }
 
-export function PublicContent({ pageId, nested }: PublicContentProps) {
-  return <PublicContentInner pageId={pageId} nested={nested} />;
+export function PublicContent({
+  pageId,
+  nested,
+  searchTerm,
+}: PublicContentProps) {
+  return (
+    <PublicContentInner
+      pageId={pageId}
+      nested={nested}
+      searchTerm={searchTerm}
+    />
+  );
 }
