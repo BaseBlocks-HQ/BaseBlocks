@@ -8,34 +8,48 @@ import {
 import { SortableItem } from "@/modules/shared/dnd";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import {
   Check,
   ChevronRight,
   GitFork,
+  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface NodeListProps {
+  autoEditNodeId?: string | null;
   nodes: DecisionTreeNode[];
   parentId: string | null;
+  onAddParentNode: (nodeId: string) => void;
   onNavigateInto: (nodeId: string) => void;
   onAddNode: (parentId: string | null, name: string) => void;
+  onAutoEditHandled?: () => void;
   onUpdateNode: (nodeId: string, name: string) => void;
   onRemoveNode: (nodeId: string) => void;
   onReorderNodes: (parentId: string | null, orderedIds: string[]) => void;
 }
 
 export function NodeList({
+  autoEditNodeId,
   nodes,
   parentId,
+  onAddParentNode,
   onNavigateInto,
   onAddNode,
+  onAutoEditHandled,
   onUpdateNode,
   onRemoveNode,
   onReorderNodes,
@@ -44,6 +58,9 @@ export function NodeList({
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const pendingEditFocusNodeIdRef = useRef<string | null>(null);
+  const pendingAddInputFocusRef = useRef(false);
 
   const childNodes = nodes
     .filter((n) => n.parentId === parentId)
@@ -59,20 +76,29 @@ export function NodeList({
   };
 
   const handleStartEdit = (nodeId: string, currentName: string) => {
+    pendingEditFocusNodeIdRef.current = nodeId;
     setEditingId(nodeId);
     setEditingName(currentName);
   };
 
   const handleSaveEdit = () => {
-    if (!editingId || !editingName.trim()) return;
-    onUpdateNode(editingId, editingName.trim());
+    const activeEditingId = editingId ?? autoEditNodeId;
+    const activeEditingName =
+      editingId === null && autoEditNodeId
+        ? (childNodes.find((node) => node.id === autoEditNodeId)?.name ?? "")
+        : editingName;
+
+    if (!activeEditingId || !activeEditingName.trim()) return;
+    onUpdateNode(activeEditingId, activeEditingName.trim());
     setEditingId(null);
     setEditingName("");
+    onAutoEditHandled?.();
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingName("");
+    onAutoEditHandled?.();
   };
 
   const handleInputKeyDown = (
@@ -101,6 +127,44 @@ export function NodeList({
 
     const reordered = arrayMove(nodeIds, oldIndex, newIndex);
     onReorderNodes(parentId, reordered);
+  };
+
+  const handleEditInputRef = (
+    input: HTMLInputElement | null,
+    node: DecisionTreeNode,
+  ) => {
+    if (!input) {
+      return;
+    }
+
+    if (autoEditNodeId === node.id && editingId !== node.id) {
+      pendingEditFocusNodeIdRef.current = node.id;
+      setEditingId(node.id);
+      setEditingName(node.name);
+      onAutoEditHandled?.();
+    }
+
+    if (pendingEditFocusNodeIdRef.current !== node.id) {
+      return;
+    }
+
+    pendingEditFocusNodeIdRef.current = null;
+    queueMicrotask(() => {
+      input.focus();
+      input.select();
+    });
+  };
+
+  const handleAddInputRef = (input: HTMLInputElement | null) => {
+    if (!input || !pendingAddInputFocusRef.current) {
+      return;
+    }
+
+    pendingAddInputFocusRef.current = false;
+    queueMicrotask(() => {
+      input.focus();
+      input.select();
+    });
   };
 
   return (
@@ -132,11 +196,18 @@ export function NodeList({
                     onNavigateInto(node.id);
                   }}
                 >
-                  {editingId === node.id ? (
+                  {editingId === node.id || autoEditNodeId === node.id ? (
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Input
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
+                        ref={(input) => handleEditInputRef(input, node)}
+                        value={editingId === node.id ? editingName : node.name}
+                        onChange={(e) => {
+                          if (editingId !== node.id) {
+                            setEditingId(node.id);
+                            onAutoEditHandled?.();
+                          }
+                          setEditingName(e.target.value);
+                        }}
                         onKeyDown={(event) =>
                           handleInputKeyDown(
                             event,
@@ -176,30 +247,57 @@ export function NodeList({
                         {node.name}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="size-8 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartEdit(node.id, node.name);
-                            }}
-                          >
-                            <Pencil className="size-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="size-8 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveNode(node.id);
-                            }}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
+                        <DropdownMenu
+                          open={openMenuId === node.id}
+                          onOpenChange={(open) =>
+                            setOpenMenuId(open ? node.id : null)
+                          }
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="size-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="size-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddParentNode(node.id);
+                                setOpenMenuId(null);
+                              }}
+                            >
+                              <Plus className="size-4 mr-2" />
+                              Add parent
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(node.id, node.name);
+                                setOpenMenuId(null);
+                              }}
+                            >
+                              <Pencil className="size-4 mr-2" />
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveNode(node.id);
+                                setOpenMenuId(null);
+                              }}
+                            >
+                              <Trash2 className="size-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" />
                       </div>
                     </>
@@ -226,19 +324,15 @@ export function NodeList({
           {isAdding ? (
             <div className="flex items-center gap-2 p-1">
               <Input
-                autoFocus
+                ref={handleAddInputRef}
                 value={newName}
                 placeholder="Option name..."
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(event) =>
-                  handleInputKeyDown(
-                    event,
-                    handleAdd,
-                    () => {
-                      setIsAdding(false);
-                      setNewName("");
-                    },
-                  )
+                  handleInputKeyDown(event, handleAdd, () => {
+                    setIsAdding(false);
+                    setNewName("");
+                  })
                 }
                 className="h-9 text-sm"
               />
@@ -267,7 +361,10 @@ export function NodeList({
               variant="outline"
               size="sm"
               className="w-full mt-2"
-              onClick={() => setIsAdding(true)}
+              onClick={() => {
+                pendingAddInputFocusRef.current = true;
+                setIsAdding(true);
+              }}
             >
               <Plus className="size-4 mr-2" />
               Add Option

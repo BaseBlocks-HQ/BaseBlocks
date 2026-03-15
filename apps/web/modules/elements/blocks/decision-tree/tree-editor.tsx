@@ -43,6 +43,7 @@ import { useRef, useState } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
+import { createDecisionTreeNodeId, insertParentForNode } from "./lib";
 
 function generateTreeId() {
   return Math.random().toString(36).slice(2, 9);
@@ -287,6 +288,7 @@ export function DecisionTreeEditor({
   const [activeTreeId, setActiveTreeId] = useState<string>(
     () => (content.trees ?? [])[0]?.id ?? "",
   );
+  const [autoEditNodeId, setAutoEditNodeId] = useState<string | null>(null);
   const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
     content.tabsMode ?? "row",
   );
@@ -364,13 +366,23 @@ export function DecisionTreeEditor({
     const siblings = nodes.filter((n) => n.parentId === parentId);
     const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
     const newNode: DecisionTreeNode = {
-      id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: createDecisionTreeNodeId(),
       parentId,
       name,
       order: maxOrder + 1,
       document: [],
     };
     updateActiveTreeNodes([...nodes, newNode]);
+  };
+
+  const handleAddParentNode = (nodeId: string) => {
+    const result = insertParentForNode(activeTree.nodes, nodeId);
+    if (!result.parentId) {
+      return;
+    }
+
+    setAutoEditNodeId(result.parentId);
+    updateActiveTreeNodes(result.nodes);
   };
 
   const handleUpdateNode = (nodeId: string, name: string) => {
@@ -449,11 +461,14 @@ export function DecisionTreeEditor({
 
   const nodeListPanel = (
     <NodeList
+      autoEditNodeId={autoEditNodeId}
       nodes={activeTree.nodes}
       parentId={currentParentId}
+      onAddParentNode={handleAddParentNode}
       onNavigateInto={navigateInto}
       onAddNode={handleAddNode}
       onUpdateNode={handleUpdateNode}
+      onAutoEditHandled={() => setAutoEditNodeId(null)}
       onRemoveNode={handleRemoveNode}
       onReorderNodes={handleReorderNodes}
     />
