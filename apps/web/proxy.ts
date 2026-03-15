@@ -20,8 +20,7 @@ function isAppRoute(path: string): boolean {
     path.startsWith("/onboarding") ||
     path.startsWith("/auth") ||
     path.startsWith("/login") ||
-    path.startsWith("/sites") ||
-    path.startsWith("/s/")
+    path.startsWith("/sites")
   );
 }
 
@@ -45,19 +44,22 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  // Vercel preview domains don't support subdomains.
-  // Use path-based routing: /s/team/site/page sets a cookie, then subsequent
-  // navigation (/{siteSlug}/{pageSlug}) is rewritten using that cookie.
-  if (hostname.endsWith(".vercel.app")) {
-    // Explicit path-based entry: /s/team/...
-    const match = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
-    if (match?.[1]) {
-      const url = request.nextUrl.clone();
-      const remaining = match[2] || "/";
-      const pathSuffix = remaining === "/" ? "" : remaining;
-      url.pathname = `/${routing.defaultLocale}/site/${match[1]}${pathSuffix}`;
+  // Path-based site entry: /s/team/[...path]
+  // Works on all environments — used by the editor "View Site" button on
+  // localhost and Vercel preview deploys where subdomains aren't available.
+  const sPathMatch = pathname.match(/^\/s\/([^/]+)(\/.*)?$/);
+  if (sPathMatch?.[1]) {
+    const teamSlug = sPathMatch[1];
+    const remaining = sPathMatch[2] || "/";
+    const pathSuffix = remaining === "/" ? "" : remaining;
+    const url = request.nextUrl.clone();
+    url.pathname = `/${routing.defaultLocale}/site/${teamSlug}${pathSuffix}`;
+
+    // Vercel preview: also set a cookie so subsequent in-site navigation
+    // (/{siteSlug}/{pageSlug}) can be rewritten without the /s/ prefix.
+    if (hostname.endsWith(".vercel.app")) {
       const response = NextResponse.rewrite(url);
-      response.cookies.set("__preview_team", match[1], {
+      response.cookies.set("__preview_team", teamSlug, {
         path: "/",
         sameSite: "lax",
         httpOnly: true,
@@ -66,7 +68,12 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    // Implicit site navigation: cookie from a previous /s/team visit
+    return NextResponse.rewrite(url);
+  }
+
+  // Vercel preview domains don't support subdomains — handle implicit
+  // in-site navigation via the __preview_team cookie set above.
+  if (hostname.endsWith(".vercel.app")) {
     const previewTeam = request.cookies.get("__preview_team")?.value;
     const pathWithoutLocale = removeLocalePrefix(pathname);
 

@@ -1,4 +1,5 @@
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+const CANONICAL_ROOT_DOMAIN = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
 
 /**
  * Generate the canonical URL for a published site.
@@ -14,26 +15,22 @@ export function getSiteUrl(
 }
 
 /**
- * Generate a site URL that works on the current domain.
+ * Generate a site URL that works correctly in every environment.
  * Client-side only — falls back to canonical URL on the server.
  *
- * - Localhost: http://team.localhost:port/site
- * - Vercel preview: /s/team/site (path-based, handled by proxy)
- * - Production: https://team.baseblocks.dev/site
+ * - Production: https://team.baseblocks.dev/site (canonical subdomain)
+ * - Localhost / Vercel preview: /s/team/site (path-based, handled by proxy)
  */
-export function getPreviewSiteUrl(teamSlug: string, siteSlug: string): string {
+export function getSiteOpenUrl(teamSlug: string, siteSlug: string): string {
   if (typeof window !== "undefined") {
-    const { hostname, port } = window.location;
+    const { hostname } = window.location;
     if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname.endsWith(".localhost")
+      hostname === CANONICAL_ROOT_DOMAIN ||
+      hostname.endsWith(`.${CANONICAL_ROOT_DOMAIN}`)
     ) {
-      return `http://${teamSlug}.localhost:${port || "3000"}/${siteSlug}`;
+      return getSiteUrl(teamSlug, siteSlug);
     }
-    if (hostname.endsWith(".vercel.app")) {
-      return `/s/${teamSlug}/${siteSlug}`;
-    }
+    return `/s/${teamSlug}/${siteSlug}`;
   }
   return getSiteUrl(teamSlug, siteSlug);
 }

@@ -108,11 +108,6 @@ export function CategoryMenu({
           />
         );
       })}
-      {!selectedSlotId && (
-        <p className="text-xs text-muted-foreground px-3 py-1">
-          Select a slot to add blocks
-        </p>
-      )}
     </div>
   );
 }

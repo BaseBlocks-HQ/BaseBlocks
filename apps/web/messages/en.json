@@ -105,8 +105,7 @@
     "settings": "Site settings",
     "publish": "Publish",
     "unpublish": "Unpublish",
-    "preview": "Preview",
-    "viewLive": "View Live",
+    "viewSite": "View Site",
     "siteName": "Site name",
     "siteDescription": "Site description",
     "confirmDelete": "Are you sure you want to delete this site? This action cannot be undone.",
@@ -127,17 +126,14 @@
     "saved": "Saved",
     "publish": "Publish",
     "unpublish": "Unpublish",
-    "preview": "Preview",
-    "viewLive": "View Live",
+    "viewSite": "View Site",
     "sidebar": {
       "pagesTab": "Pages",
       "componentsTab": "Components",
       "layouts": "Layouts",
       "blocks": "Blocks",
-      "selectSlot": "Select a slot to add blocks",
       "selectPage": "Select a page to add components",
-      "viewOnly": "You have view-only access. Contact an admin to request edit permissions.",
-      "previewTab": "Preview"
+      "viewOnly": "You have view-only access. Contact an admin to request edit permissions."
     },
     "layouts": {
       "single": "Single",

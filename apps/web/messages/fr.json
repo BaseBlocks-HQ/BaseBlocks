@@ -105,8 +105,7 @@
     "settings": "Parametres du site",
     "publish": "Publier",
     "unpublish": "Depublier",
-    "preview": "Apercu",
-    "viewLive": "Voir en direct",
+    "viewSite": "Voir le site",
     "siteName": "Nom du site",
     "siteDescription": "Description du site",
     "confirmDelete": "Etes-vous sur de vouloir supprimer ce site ? Cette action est irreversible.",
@@ -127,17 +126,14 @@
     "saved": "Enregistre",
     "publish": "Publier",
     "unpublish": "Depublier",
-    "preview": "Apercu",
-    "viewLive": "Voir en direct",
+    "viewSite": "Voir le site",
     "sidebar": {
       "pagesTab": "Pages",
       "componentsTab": "Composants",
       "layouts": "Dispositions",
       "blocks": "Blocs",
-      "selectSlot": "Selectionnez un emplacement pour ajouter des blocs",
       "selectPage": "Selectionnez une page pour ajouter des composants",
-      "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification.",
-      "previewTab": "Apercu"
+      "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification."
     },
     "layouts": {
       "single": "Simple",

@@ -3,7 +3,7 @@
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
-import { getPreviewSiteUrl } from "@/lib/url";
+import { getSiteOpenUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -19,7 +19,6 @@ import { useMutation } from "convex/react";
 import {
   Building2,
   ExternalLink,
-  Eye,
   MoreVertical,
   Pencil,
   Trash2,
@@ -56,9 +55,8 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
   // Use team slug from site object if available, fallback to prop
   const effectiveTeamSlug = site.team?.slug ?? teamSlug ?? "";
 
-  // Preview handler that works on localhost, Vercel preview, and production
-  const handlePreview = () => {
-    window.open(getPreviewSiteUrl(effectiveTeamSlug, site.slug), "_blank");
+  const handleViewSite = () => {
+    window.open(getSiteOpenUrl(effectiveTeamSlug, site.slug), "_blank");
   };
 
   const handleDelete = async () => {
@@ -152,26 +150,15 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
                 {t("sites.edit")}
               </Button>
             </Link>
-            {/* Preview button - always available, works on localhost and production */}
             <Button
               variant="ghost"
               size="icon"
-              title={t("sites.preview")}
-              onClick={handlePreview}
+              title={t("sites.viewSite")}
+              disabled={!site.isPublished}
+              onClick={handleViewSite}
             >
-              <Eye className="h-4 w-4" />
+              <ExternalLink className="h-4 w-4" />
             </Button>
-            {/* Published link - only when published */}
-            {site.isPublished && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title={t("sites.viewLive")}
-                onClick={handlePreview}
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>

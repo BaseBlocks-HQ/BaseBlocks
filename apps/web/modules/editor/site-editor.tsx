@@ -215,8 +215,6 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             sitePublished={site.isPublished}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
-            site={site}
-            team={team}
           />
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">

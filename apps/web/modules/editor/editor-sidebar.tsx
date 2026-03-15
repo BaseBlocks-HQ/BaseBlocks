@@ -3,8 +3,7 @@
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
-import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
-import { NavItem, SortablePageTree } from "@/modules/navigation";
+import { SortablePageTree } from "@/modules/navigation";
 import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
 import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
@@ -12,12 +11,9 @@ import type {
   LayoutBlockType,
   LayoutType,
   PageListItem,
-  PageWithChildren,
 } from "@baseblocks/types";
 import type { ElementType } from "@baseblocks/types/elements";
-import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -34,30 +30,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
-
-function buildPageTree(pages: PageListItem[]): PageWithChildren[] {
-  const map = new Map<string, PageWithChildren>();
-  const roots: PageWithChildren[] = [];
-
-  for (const page of pages) {
-    map.set(page._id, { ...page, children: [] });
-  }
-
-  for (const page of pages) {
-    const node = map.get(page._id)!;
-    if (page.parentId && map.has(page.parentId)) {
-      map.get(page.parentId)!.children.push(node);
-    } else {
-      roots.push(node);
-    }
-  }
-
-  for (const node of map.values()) {
-    node.children.sort((a, b) => a.order - b.order);
-  }
-
-  return roots.sort((a, b) => a.order - b.order);
-}
 
 interface EditorSidebarProps {
   site: {
@@ -91,7 +63,7 @@ export function EditorSidebar({
   onEnableTabs,
 }: EditorSidebarProps) {
   const t = useTranslations();
-  const { canEdit, selection, siteId, clearSelection } = useEditorContext();
+  const { canEdit, selection, clearSelection } = useEditorContext();
   const [manualActiveTab, setManualActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -103,10 +75,6 @@ export function EditorSidebar({
     .filter((p) => !p.parentId)
     .sort((a, b) => a.order - b.order);
 
-  // Customization + page tree for preview tab
-  const { cssVariables: customizationStyles, isCustomized } =
-    useSiteCustomization(siteId as Id<"sites">);
-  const pageTree = buildPageTree(navPages);
   const activeTab =
     selection.slotId || selection.blockId ? "components" : manualActiveTab;
 
@@ -163,9 +131,6 @@ export function EditorSidebar({
             </TabsTrigger>
             <TabsTrigger value="components" className="flex-1">
               {t("editor.sidebar.componentsTab")}
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex-1">
-              {t("editor.sidebar.previewTab")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -227,33 +192,6 @@ export function EditorSidebar({
               </div>
             )}
           </SidebarContent>
-        </TabsContent>
-
-        <TabsContent value="preview" className="flex-1 mt-0 overflow-hidden">
-          <div
-            className="h-full flex flex-col"
-            style={customizationStyles}
-            {...(isCustomized ? { "data-site-customized": "" } : {})}
-          >
-            <div className="px-3 pt-2 pb-1">
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                Sidebar Preview
-              </Badge>
-            </div>
-            <ScrollArea className="flex-1">
-              <nav className="space-y-1 p-4">
-                {pageTree.map((page) => (
-                  <NavItem
-                    key={page._id}
-                    page={page}
-                    selectedPageId={selectedPageId}
-                    mode="preview"
-                    onSelect={handleSelectPage}
-                  />
-                ))}
-              </nav>
-            </ScrollArea>
-          </div>
         </TabsContent>
       </Tabs>
     </Sidebar>
