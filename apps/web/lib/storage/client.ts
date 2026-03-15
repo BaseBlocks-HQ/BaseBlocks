@@ -19,6 +19,48 @@ export interface UploadProgress {
   percentage: number;
 }
 
+interface GenerateStoragePathOptions {
+  workspaceTenantId: string;
+  siteId: string;
+  userId: string;
+  filename: string;
+  now?: () => number;
+  random?: () => number;
+}
+
+export function generateStoragePath({
+  workspaceTenantId,
+  siteId,
+  userId,
+  filename,
+  now = Date.now,
+  random = Math.random,
+}: GenerateStoragePathOptions): string {
+  // Failure modes:
+  // - Missing workspace tenant env causes paths like //documents/... that the download proxy rejects.
+  // - Empty site or user IDs produce ambiguous storage keys.
+  // - Filenames can contain characters storage paths should not preserve verbatim.
+  const normalizedTenantId = workspaceTenantId.trim();
+  if (!normalizedTenantId) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID for storage uploads",
+    );
+  }
+
+  if (!siteId.trim()) {
+    throw new Error("Missing site ID for storage upload path");
+  }
+
+  if (!userId.trim()) {
+    throw new Error("Missing user ID for storage upload path");
+  }
+
+  const timestamp = now();
+  const randomSuffix = random().toString(36).slice(2, 8);
+  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+  return `/${normalizedTenantId}/documents/${siteId}/${userId}/${timestamp}_${randomSuffix}_${sanitizedFilename}`;
+}
+
 class EntityStorageClient {
   private siteUrl: string;
   private workspaceTenantId: string;
@@ -123,10 +165,12 @@ class EntityStorageClient {
    * Generate a storage path for a document
    */
   generatePath(siteId: string, userId: string, filename: string): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).slice(2, 8);
-    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-    return `/${this.workspaceTenantId}/documents/${siteId}/${userId}/${timestamp}_${random}_${sanitizedFilename}`;
+    return generateStoragePath({
+      workspaceTenantId: this.workspaceTenantId,
+      siteId,
+      userId,
+      filename,
+    });
   }
 
   /**
