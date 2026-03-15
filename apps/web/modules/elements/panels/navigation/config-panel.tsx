@@ -2,7 +2,7 @@
 
 import { useSite } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {
@@ -97,16 +97,16 @@ const NAV_STYLE_PREVIEWS: Record<NavigationStyle, React.FC> = {
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const site = useSite(siteId);
   const updateSite = useMutation(api.sites.mutations.update);
-  const editorCtx = useEditorContextOptional();
+  const undoContext = useEditorUndoOptional();
 
   const updateNavigationStyle = async (style: NavigationStyle) => {
     if (!site) return;
     const oldStyle = (site.settings.navigationStyle ||
       "sidebar") as NavigationStyle;
     const shouldTrackUndo = Boolean(
-      editorCtx && !editorCtx.isUndoRedoExecuting,
+      undoContext && !undoContext.isUndoRedoExecuting,
     );
-    const undoContext = shouldTrackUndo ? editorCtx : null;
+    const activeUndoContext = shouldTrackUndo ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -116,8 +116,8 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
       });
       toast.success("Navigation style updated");
 
-      if (undoContext) {
-        undoContext.pushCommand({
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
           description: "Change navigation style",
           undo: async () => {
             await updateSite({
@@ -143,12 +143,12 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     const oldValue = !!(site.settings as Record<string, unknown>)
       .sidebarDefaultExpanded;
     const shouldTrackUndo = Boolean(
-      editorCtx && !editorCtx.isUndoRedoExecuting,
+      undoContext && !undoContext.isUndoRedoExecuting,
     );
     const successMessage = expanded
       ? "Sidebar pages will be expanded by default"
       : "Sidebar pages will be collapsed by default";
-    const undoContext = shouldTrackUndo ? editorCtx : null;
+    const activeUndoContext = shouldTrackUndo ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -156,8 +156,8 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
       });
       toast.success(successMessage);
 
-      if (undoContext) {
-        undoContext.pushCommand({
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
           description: "Toggle sidebar default expanded",
           undo: async () => {
             await updateSite({

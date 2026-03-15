@@ -8,7 +8,10 @@ import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/elements/framework/registry";
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorSiteOptional,
+  useEditorUiOptional,
+} from "@/modules/shared/contexts/editor-context";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/types";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -49,10 +52,11 @@ export function SortableBlock({
   onRemove,
 }: SortableBlockProps) {
   const [configOpen, setConfigOpen] = useState(false);
-  const editorCtx = useEditorContextOptional();
+  const editorSite = useEditorSiteOptional();
+  const editorUi = useEditorUiOptional();
   const clipboard = useBlockClipboardOptional();
-  const showControls = editorCtx?.showControls ?? true;
-  const canEdit = editorCtx?.canEdit ?? true;
+  const showControls = editorUi?.showControls ?? true;
+  const canEdit = editorSite?.canEdit ?? true;
   const {
     attributes,
     listeners,

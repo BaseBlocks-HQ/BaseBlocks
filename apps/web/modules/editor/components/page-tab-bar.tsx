@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import type { PageTab } from "@/modules/shared/types";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -38,7 +38,7 @@ export function PageTabBar({
   onStartRenameTab,
   onFinishRenameTab,
 }: PageTabBarProps) {
-  const { clearSelection, showControls } = useEditorContext();
+  const { clearSelection, showControls } = useEditorUi();
 
   return (
     <div

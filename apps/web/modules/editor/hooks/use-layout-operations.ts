@@ -1,7 +1,10 @@
 "use client";
 
 import { useBlockOperations } from "@/modules/editor/hooks/use-block-operations";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorUi,
+  useEditorUndo,
+} from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { arrayMove } from "@/modules/shared/dnd";
 import { createLayout } from "@/modules/shared/layouts";
@@ -29,8 +32,8 @@ export function useLayoutOperations({
   onSelectionChange,
   layoutsData,
 }: UseLayoutOperationsArgs) {
-  const { selectSlot, clearSelection, pushCommand, isUndoRedoExecuting } =
-    useEditorContext();
+  const { selectSlot, clearSelection } = useEditorUi();
+  const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
 
   const { layouts: layoutMutations } = useEditorMutations();
   const {

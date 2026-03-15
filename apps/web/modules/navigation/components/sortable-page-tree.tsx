@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorSiteOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";
@@ -43,8 +43,8 @@ export function SortablePageTree({
   onToggleExpand,
   onSetExpanded,
 }: SortablePageTreeProps) {
-  const editorContext = useEditorContextOptional();
-  const canEdit = editorContext?.canEdit ?? false;
+  const editorSite = useEditorSiteOptional();
+  const canEdit = editorSite?.canEdit ?? false;
   const movePage = useMutation(api.pages.mutations.move);
 
   const isExpanded = isExpandedProp ?? (() => false);

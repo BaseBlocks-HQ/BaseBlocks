@@ -1,7 +1,7 @@
 "use client";
 
 import { useSite } from "@/lib/data";
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type {
@@ -30,7 +30,7 @@ export function CustomizationConfigPanel({
   const site = useSite(siteId);
   const updateSite = useMutation(api.sites.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
-  const editorCtx = useEditorContextOptional();
+  const undoContext = useEditorUndoOptional();
 
   // Get current customization from site settings (may be undefined)
   const customization = site?.settings?.customization as
@@ -46,9 +46,9 @@ export function CustomizationConfigPanel({
       : {};
     const newCopy = structuredClone(newCustomization);
     const shouldTrackUndo = Boolean(
-      editorCtx && !editorCtx.isUndoRedoExecuting,
+      undoContext && !undoContext.isUndoRedoExecuting,
     );
-    const undoContext = shouldTrackUndo ? editorCtx : null;
+    const activeUndoContext = shouldTrackUndo ? undoContext : null;
 
     setIsSaving(true);
     try {
@@ -59,8 +59,8 @@ export function CustomizationConfigPanel({
         },
       });
 
-      if (undoContext) {
-        undoContext.pushCommand({
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
           description: "Update customization",
           undo: async () => {
             await updateSite({

@@ -18,8 +18,16 @@ interface EditorSelection {
   blockId: string | null;
 }
 
-interface EditorContextValue {
+interface EditorSiteContextValue {
   siteId: string;
+  canEdit: boolean;
+  isAdmin: boolean;
+  isViewer: boolean;
+  isPermissionsLoading: boolean;
+  hasUndeployedChanges: boolean;
+}
+
+interface EditorUiContextValue {
   selection: EditorSelection;
   selectLayout: (layoutId: string | null) => void;
   selectSlot: (layoutId: string, slotId: string | null) => void;
@@ -33,31 +41,26 @@ interface EditorContextValue {
   editingSubpage: EditingSubpage | null;
   openSubpageEditor: (subpage: EditingSubpage) => void;
   closeSubpageEditor: () => void;
-  // Permissions
-  canEdit: boolean;
-  isAdmin: boolean;
-  isViewer: boolean;
-  isPermissionsLoading: boolean;
-  // Deploy tracking - derived from timestamps
-  hasUndeployedChanges: boolean;
-  // Page-level tabs
   activeTabId: string | null;
   setActiveTabId: (tabId: string | null) => void;
-  // Undo/Redo
   currentPageId: string | null;
   setCurrentPageId: (pageId: string | null) => void;
+  showControls: boolean;
+  toggleControls: () => void;
+}
+
+interface EditorUndoContextValue {
   pushCommand: (cmd: Omit<UndoCommand, "id" | "timestamp">) => void;
   undo: (pageId?: string) => Promise<void>;
   redo: (pageId?: string) => Promise<void>;
   canUndo: (pageId?: string) => boolean;
   canRedo: (pageId?: string) => boolean;
   isUndoRedoExecuting: boolean;
-  // Editor controls visibility
-  showControls: boolean;
-  toggleControls: () => void;
 }
 
-const EditorContext = createContext<EditorContextValue | null>(null);
+const EditorSiteContext = createContext<EditorSiteContextValue | null>(null);
+const EditorUiContext = createContext<EditorUiContextValue | null>(null);
+const EditorUndoContext = createContext<EditorUndoContextValue | null>(null);
 
 interface EditorProviderProps {
   siteId: string;
@@ -174,67 +177,100 @@ export function EditorProvider({
     }));
   };
 
+  const siteValue: EditorSiteContextValue = {
+    siteId,
+    canEdit,
+    isAdmin,
+    isViewer,
+    isPermissionsLoading,
+    hasUndeployedChanges,
+  };
+
+  const uiValue: EditorUiContextValue = {
+    selection,
+    selectLayout,
+    selectSlot,
+    selectBlock,
+    clearSelection,
+    editingSubpage: uiState.editingSubpage,
+    openSubpageEditor,
+    closeSubpageEditor,
+    activeTabId: uiState.activeTabId,
+    setActiveTabId: (activeTabId) =>
+      setUiState((current) => ({
+        ...current,
+        activeTabId,
+      })),
+    currentPageId: uiState.currentPageId,
+    setCurrentPageId: (currentPageId) =>
+      setUiState((current) => ({
+        ...current,
+        currentPageId,
+      })),
+    showControls: uiState.showControls,
+    toggleControls: () =>
+      setUiState((current) => {
+        const showControls = !current.showControls;
+        localStorage.setItem("editor:showControls", String(showControls));
+        return {
+          ...current,
+          showControls,
+        };
+      }),
+  };
+
+  const undoValue: EditorUndoContextValue = {
+    pushCommand,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    isUndoRedoExecuting,
+  };
+
   return (
-    <EditorContext.Provider
-      value={{
-        siteId,
-        selection,
-        selectLayout,
-        selectSlot,
-        selectBlock,
-        clearSelection,
-        editingSubpage: uiState.editingSubpage,
-        openSubpageEditor,
-        closeSubpageEditor,
-        canEdit,
-        isAdmin,
-        isViewer,
-        isPermissionsLoading,
-        hasUndeployedChanges,
-        activeTabId: uiState.activeTabId,
-        setActiveTabId: (activeTabId) =>
-          setUiState((current) => ({
-            ...current,
-            activeTabId,
-          })),
-        currentPageId: uiState.currentPageId,
-        setCurrentPageId: (currentPageId) =>
-          setUiState((current) => ({
-            ...current,
-            currentPageId,
-          })),
-        pushCommand,
-        undo,
-        redo,
-        canUndo,
-        canRedo,
-        isUndoRedoExecuting,
-        showControls: uiState.showControls,
-        toggleControls: () =>
-          setUiState((current) => {
-            const showControls = !current.showControls;
-            localStorage.setItem("editor:showControls", String(showControls));
-            return {
-              ...current,
-              showControls,
-            };
-          }),
-      }}
-    >
-      {children}
-    </EditorContext.Provider>
+    <EditorSiteContext.Provider value={siteValue}>
+      <EditorUiContext.Provider value={uiValue}>
+        <EditorUndoContext.Provider value={undoValue}>
+          {children}
+        </EditorUndoContext.Provider>
+      </EditorUiContext.Provider>
+    </EditorSiteContext.Provider>
   );
 }
 
-export function useEditorContext() {
-  const context = use(EditorContext);
+export function useEditorSite() {
+  const context = use(EditorSiteContext);
   if (!context) {
-    throw new Error("useEditorContext must be used within an EditorProvider");
+    throw new Error("useEditorSite must be used within an EditorProvider");
   }
   return context;
 }
 
-// Optional hook that returns null if not in editor context (for use in renderers)
-export function useEditorContextOptional() {
-  return use(EditorContext);
+export function useEditorSiteOptional() {
+  return use(EditorSiteContext);
+}
+
+export function useEditorUi() {
+  const context = use(EditorUiContext);
+  if (!context) {
+    throw new Error("useEditorUi must be used within an EditorProvider");
+  }
+  return context;
+}
+
+export function useEditorUiOptional() {
+  return use(EditorUiContext);
+}
+
+export function useEditorUndo() {
+  const context = use(EditorUndoContext);
+  if (!context) {
+    throw new Error("useEditorUndo must be used within an EditorProvider");
+  }
+  return context;
+}
+
+export function useEditorUndoOptional() {
+  return use(EditorUndoContext);
 }

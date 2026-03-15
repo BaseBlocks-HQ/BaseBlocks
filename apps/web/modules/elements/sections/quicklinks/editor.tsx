@@ -5,7 +5,7 @@ import { entityStorageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { useLayoutContext } from "@/modules/elements/framework/layout-context";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { QuicklinkItem, QuicklinkType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -353,7 +353,7 @@ export function QuicklinksEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"quicklinks">) {
-  const { siteId } = useEditorContext();
+  const { siteId } = useEditorSite();
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const layoutContext = useLayoutContext();

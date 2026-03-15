@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
@@ -22,7 +22,7 @@ export function SubpageEditPanel({
   isFullscreen,
   onToggleFullscreen,
 }: SubpageEditPanelProps) {
-  const { editingSubpage, closeSubpageEditor } = useEditorContext();
+  const { editingSubpage, closeSubpageEditor } = useEditorUi();
   const { pages: pageMutations } = useEditorMutations();
   const [title, setTitle] = useState(pageTitle ?? "");
 

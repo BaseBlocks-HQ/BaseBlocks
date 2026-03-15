@@ -1,6 +1,10 @@
 "use client";
 
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorSite,
+  useEditorUi,
+  useEditorUndo,
+} from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -31,18 +35,9 @@ export function EditorHeader({
   onUnpublish,
 }: EditorHeaderProps) {
   const t = useTranslations();
-  const {
-    canEdit,
-    hasUndeployedChanges,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    isUndoRedoExecuting,
-    currentPageId,
-    showControls,
-    toggleControls,
-  } = useEditorContext();
+  const { canEdit, hasUndeployedChanges } = useEditorSite();
+  const { currentPageId, showControls, toggleControls } = useEditorUi();
+  const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);

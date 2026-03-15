@@ -2,7 +2,7 @@
 
 import { useLayouts, usePage } from "@/lib/data";
 import { PageEditor } from "@/modules/editor/components/page-editor";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type { LayoutType } from "@baseblocks/types";
 import { SubpageEditPanel } from "./subpage-edit-panel";
@@ -62,7 +62,7 @@ export function ConnectedSubpageEditPanel({
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }) {
-  const { editingSubpage } = useEditorContext();
+  const { editingSubpage } = useEditorUi();
   const page = usePage(editingSubpage?.pageId);
 
   return (

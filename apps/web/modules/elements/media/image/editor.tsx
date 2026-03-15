@@ -5,7 +5,7 @@ import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -378,7 +378,7 @@ export function ImageEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"image">) {
-  const { siteId } = useEditorContext();
+  const { siteId } = useEditorSite();
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

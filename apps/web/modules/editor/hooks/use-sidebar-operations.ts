@@ -1,5 +1,8 @@
 import { getDefaultContent } from "@/modules/elements/framework/registry";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorUi,
+  useEditorUndo,
+} from "@/modules/shared/contexts/editor-context";
 import {
   createBlock,
   createLayout,
@@ -23,15 +26,9 @@ interface UseSidebarOperationsOptions {
 export function useSidebarOperations({
   selectedPageId,
 }: UseSidebarOperationsOptions) {
-  const {
-    selection,
-    selectSlot,
-    editingSubpage,
-    activeTabId,
-    pushCommand,
-    isUndoRedoExecuting,
-    currentPageId,
-  } = useEditorContext();
+  const { selection, selectSlot, editingSubpage, activeTabId, currentPageId } =
+    useEditorUi();
+  const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
 
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);

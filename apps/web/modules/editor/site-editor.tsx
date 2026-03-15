@@ -9,8 +9,8 @@ import {
   usePublicSubpageContext,
 } from "@/modules/public-site/public-subpage-context";
 import { PublicSubpagePanel } from "@/modules/public-site/public-subpage-panel";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import { EditorProvider } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
@@ -70,7 +70,7 @@ function useElementsLoader() {
 function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, editingSubpage, closeSubpageEditor } = useEditorContext();
+  const { selection, editingSubpage, closeSubpageEditor } = useEditorUi();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
 
   // Fullscreen state for subpage panel

@@ -5,7 +5,10 @@ import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { SortablePageTree } from "@/modules/navigation";
 import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorSite,
+  useEditorUi,
+} from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import type {
   LayoutBlockType,
@@ -63,7 +66,8 @@ export function EditorSidebar({
   onEnableTabs,
 }: EditorSidebarProps) {
   const t = useTranslations();
-  const { canEdit, selection, clearSelection } = useEditorContext();
+  const { canEdit } = useEditorSite();
+  const { selection, clearSelection } = useEditorUi();
   const [manualActiveTab, setManualActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,

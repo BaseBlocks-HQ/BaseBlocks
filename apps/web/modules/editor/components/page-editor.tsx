@@ -2,7 +2,7 @@
 
 import { useLayoutOperations } from "@/modules/editor/hooks/use-layout-operations";
 import { usePageTabs } from "@/modules/editor/hooks/use-page-tabs";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { DndProvider } from "@/modules/shared/dnd";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type {
@@ -157,7 +157,7 @@ export function PageEditor({
     activeTabId: contextActiveTabId,
     setActiveTabId: contextSetActiveTabId,
     setCurrentPageId,
-  } = useEditorContext();
+  } = useEditorUi();
 
   // Nested editors use local tab state to avoid fighting with the parent
   const [localActiveTabId, setLocalActiveTabId] = useState<string | null>(null);

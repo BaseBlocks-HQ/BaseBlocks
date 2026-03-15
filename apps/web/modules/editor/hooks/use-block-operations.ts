@@ -5,7 +5,10 @@ import {
   canPasteCopiedBlock,
   createPastedBlock,
 } from "@/modules/editor/lib/block-clipboard";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import {
+  useEditorUi,
+  useEditorUndo,
+} from "@/modules/shared/contexts/editor-context";
 import type { EditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import type { AnyContent, LayoutData } from "@baseblocks/types";
 import { type MutableRefObject, useRef } from "react";
@@ -29,7 +32,8 @@ export function useBlockOperations({
   layoutsData,
   layoutMutations,
 }: UseBlockOperationsArgs) {
-  const { selectBlock, pushCommand, isUndoRedoExecuting } = useEditorContext();
+  const { selectBlock } = useEditorUi();
+  const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
   const { copiedBlock } = useBlockClipboard();
 
   const lastKnownContentRef: MutableRefObject<Map<string, AnyContent>> = useRef(

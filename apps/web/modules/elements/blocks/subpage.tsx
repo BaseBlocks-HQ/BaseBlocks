@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
@@ -16,7 +16,7 @@ import type {
 import { registerElement } from "../framework/registry";
 
 function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
-  const editorContext = useEditorContextOptional();
+  const editorUi = useEditorUiOptional();
   const page = useQuery(
     api.pages.queries.get,
     content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
@@ -24,8 +24,8 @@ function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!editorContext || !content.pageId) return;
-    editorContext.openSubpageEditor({ pageId: content.pageId });
+    if (!editorUi || !content.pageId) return;
+    editorUi.openSubpageEditor({ pageId: content.pageId });
   };
 
   if (!content.pageId) {

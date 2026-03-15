@@ -14,7 +14,7 @@ import {
 } from "@/modules/documents";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useMediaViewer } from "@/modules/media-viewer";
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -342,7 +342,7 @@ function useLibraryEditorController({
   content,
   onUpdate,
 }: Pick<ElementEditorProps<"library">, "content" | "onUpdate">) {
-  const { siteId } = useEditorContext();
+  const { siteId } = useEditorSite();
   const { openFile } = useMediaViewer();
   const [containerRef, containerWidth] = useContainerWidth();
 

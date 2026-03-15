@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContext } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndo } from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { generateId } from "@/modules/shared/layouts";
 import type { PageTab } from "@/modules/shared/types";
@@ -19,7 +19,7 @@ export function usePageTabs({
   activeTabId,
   setActiveTabId,
 }: UsePageTabsArgs) {
-  const { pushCommand, isUndoRedoExecuting } = useEditorContext();
+  const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
   const { pages: pageMutations } = useEditorMutations();
 
   const [editingTabId, setEditingTabId] = useState<string | null>(null);

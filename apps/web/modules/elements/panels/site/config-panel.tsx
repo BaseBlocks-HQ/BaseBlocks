@@ -5,7 +5,7 @@ import { useImageUpload } from "@/lib/storage";
 import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -202,7 +202,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSite = useMutation(api.sites.mutations.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorCtx = useEditorContextOptional();
+  const undoContext = useEditorUndoOptional();
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
@@ -214,9 +214,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     if (!site) return;
     const oldValue = (site.settings as Record<string, unknown>)[settingKey];
     const shouldTrackUndo = Boolean(
-      editorCtx && !editorCtx.isUndoRedoExecuting,
+      undoContext && !undoContext.isUndoRedoExecuting,
     );
-    const undoContext = shouldTrackUndo ? editorCtx : null;
+    const activeUndoContext = shouldTrackUndo ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -224,8 +224,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           [settingKey]: value,
         },
       });
-      if (undoContext) {
-        undoContext.pushCommand({
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
           description: `Toggle ${settingKey}`,
           undo: async () => {
             await updateSite({
@@ -265,9 +265,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       });
       toast.success("Logo uploaded");
 
-      if (editorCtx && !editorCtx.isUndoRedoExecuting) {
+      if (undoContext && !undoContext.isUndoRedoExecuting) {
         const newLogoUrl = result.url;
-        editorCtx.pushCommand({
+        undoContext.pushCommand({
           description: "Change logo",
           undo: async () => {
             await updateSite({
@@ -296,8 +296,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
     const oldName = site.name;
     const newName = localName;
-    const undoContext =
-      editorCtx && !editorCtx.isUndoRedoExecuting ? editorCtx : null;
+    const activeUndoContext =
+      undoContext && !undoContext.isUndoRedoExecuting ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -306,8 +306,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       setIsEditingName(false);
       toast.success("Site name updated");
 
-      if (undoContext) {
-        undoContext.pushCommand({
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
           description: "Rename site",
           undo: async () => {
             await updateSite({ siteId, name: oldName });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorContextOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
@@ -61,7 +61,7 @@ export function LayoutRenderer({
   dragHandleProps,
   isDragging,
 }: LayoutRendererProps) {
-  const editorCtx = useEditorContextOptional();
+  const editorCtx = useEditorUiOptional();
   const showControls = editorCtx?.showControls ?? true;
   const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
   const spacerHeight = layout.settings.spacerHeight ?? "medium";
