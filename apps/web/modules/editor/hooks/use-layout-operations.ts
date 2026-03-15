@@ -1,21 +1,11 @@
 "use client";
 
-import {
-  canPasteCopiedBlock,
-  createPastedBlock,
-} from "@/modules/editor/lib/block-clipboard";
+import { useBlockOperations } from "@/modules/editor/hooks/use-block-operations";
 import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { arrayMove } from "@/modules/shared/dnd";
 import { createLayout } from "@/modules/shared/layouts";
-import type {
-  AnyContent,
-  LayoutData,
-  LayoutSettings,
-  LayoutType,
-} from "@baseblocks/types";
-import { type MutableRefObject, useRef } from "react";
-import { toast } from "sonner";
+import type { LayoutData, LayoutSettings, LayoutType } from "@baseblocks/types";
 
 interface UseLayoutOperationsArgs {
   pageId: string;
@@ -39,37 +29,22 @@ export function useLayoutOperations({
   onSelectionChange,
   layoutsData,
 }: UseLayoutOperationsArgs) {
-  const {
-    selectSlot,
-    selectBlock,
-    clearSelection,
-    pushCommand,
-    isUndoRedoExecuting,
-    copiedBlock,
-  } = useEditorContext();
+  const { selectSlot, clearSelection, pushCommand, isUndoRedoExecuting } =
+    useEditorContext();
 
   const { layouts: layoutMutations } = useEditorMutations();
-
-  // Track last known block content for undo
-  const lastKnownContentRef: MutableRefObject<Map<string, AnyContent>> = useRef(
-    new Map(),
-  );
-
-  // Seed content ref from query data
-  if (layoutsData) {
-    const map = new Map<string, AnyContent>();
-    for (const layout of layoutsData) {
-      for (const slot of layout.slots) {
-        for (const block of slot.blocks) {
-          map.set(
-            `${layout._id}:${slot.id}:${block.id}`,
-            structuredClone(block.content) as AnyContent,
-          );
-        }
-      }
-    }
-    lastKnownContentRef.current = map;
-  }
+  const {
+    handleUpdateBlock,
+    handleRemoveBlock,
+    handleMoveBlock,
+    handlePasteBlock,
+  } = useBlockOperations({
+    pageId,
+    allLayouts,
+    onSelectionChange,
+    layoutsData,
+    layoutMutations,
+  });
 
   const handleReorderLayouts = async (
     draggedIds: string[],
@@ -176,92 +151,6 @@ export function useLayoutOperations({
     }
   };
 
-  const handleUpdateBlock = async (
-    layoutId: string,
-    slotId: string,
-    blockId: string,
-    content: AnyContent,
-  ) => {
-    const key = `${layoutId}:${slotId}:${blockId}`;
-    const previousContent = lastKnownContentRef.current.get(key);
-
-    await layoutMutations.updateBlockInSlot({
-      layoutId,
-      slotId,
-      blockId,
-      content,
-    });
-
-    lastKnownContentRef.current.set(key, structuredClone(content));
-
-    if (!isUndoRedoExecuting && previousContent) {
-      const oldContent = structuredClone(previousContent);
-      const newContent = structuredClone(content);
-      pushCommand({
-        description: "Update block content",
-        pageId,
-        undo: async () => {
-          await layoutMutations.updateBlockInSlot({
-            layoutId,
-            slotId,
-            blockId,
-            content: oldContent,
-          });
-          lastKnownContentRef.current.set(key, structuredClone(oldContent));
-        },
-        redo: async () => {
-          await layoutMutations.updateBlockInSlot({
-            layoutId,
-            slotId,
-            blockId,
-            content: newContent,
-          });
-          lastKnownContentRef.current.set(key, structuredClone(newContent));
-        },
-      });
-    }
-  };
-
-  const handleRemoveBlock = async (
-    layoutId: string,
-    slotId: string,
-    blockId: string,
-  ) => {
-    const layout = allLayouts.find((l) => l.id === layoutId);
-    const slot = layout?.slots.find((s) => s.id === slotId);
-    const blockIndex = slot?.blocks.findIndex((b) => b.id === blockId) ?? -1;
-    const block = slot?.blocks[blockIndex];
-
-    await layoutMutations.removeBlockFromSlot({ layoutId, slotId, blockId });
-
-    if (!isUndoRedoExecuting && block) {
-      const snapshot = structuredClone(block);
-      pushCommand({
-        description: "Remove block",
-        pageId,
-        undo: async () => {
-          await layoutMutations.addBlockToSlot({
-            layoutId,
-            slotId,
-            block: {
-              id: snapshot.id,
-              type: snapshot.type,
-              content: snapshot.content,
-            },
-            index: blockIndex >= 0 ? blockIndex : undefined,
-          });
-        },
-        redo: async () => {
-          await layoutMutations.removeBlockFromSlot({
-            layoutId,
-            slotId,
-            blockId: snapshot.id,
-          });
-        },
-      });
-    }
-  };
-
   const handleRemoveLayout = async (layoutId: string) => {
     const layout = allLayouts.find((l) => l.id === layoutId);
 
@@ -300,52 +189,6 @@ export function useLayoutOperations({
     }
   };
 
-  const handleMoveBlock = async (
-    layoutId: string,
-    fromSlotId: string,
-    toSlotId: string,
-    blockId: string,
-    toIndex: number,
-  ) => {
-    const layout = allLayouts.find((l) => l.id === layoutId);
-    const fromSlot = layout?.slots.find((s) => s.id === fromSlotId);
-    const originalIndex =
-      fromSlot?.blocks.findIndex((b) => b.id === blockId) ?? 0;
-
-    await layoutMutations.moveBlock({
-      layoutId,
-      fromSlotId,
-      toSlotId,
-      blockId,
-      toIndex,
-    });
-
-    if (!isUndoRedoExecuting) {
-      pushCommand({
-        description: "Move block",
-        pageId,
-        undo: async () => {
-          await layoutMutations.moveBlock({
-            layoutId,
-            fromSlotId: toSlotId,
-            toSlotId: fromSlotId,
-            blockId,
-            toIndex: originalIndex,
-          });
-        },
-        redo: async () => {
-          await layoutMutations.moveBlock({
-            layoutId,
-            fromSlotId,
-            toSlotId,
-            blockId,
-            toIndex,
-          });
-        },
-      });
-    }
-  };
-
   const handleUpdateSettings = async (
     layoutId: string,
     settings: LayoutSettings,
@@ -373,61 +216,6 @@ export function useLayoutOperations({
           });
         },
       });
-    }
-  };
-
-  const handlePasteBlock = async (layoutId: string, slotId: string) => {
-    if (!canPasteCopiedBlock(copiedBlock)) {
-      return;
-    }
-
-    const newBlock = createPastedBlock(copiedBlock);
-
-    try {
-      await layoutMutations.addBlockToSlot({
-        layoutId,
-        slotId,
-        block: newBlock,
-      });
-
-      lastKnownContentRef.current.set(
-        `${layoutId}:${slotId}:${newBlock.id}`,
-        structuredClone(newBlock.content),
-      );
-      selectBlock(layoutId, slotId, newBlock.id);
-      onSelectionChange?.(slotId);
-
-      if (!isUndoRedoExecuting) {
-        const snapshot = structuredClone(newBlock);
-        pushCommand({
-          description: "Paste block",
-          pageId,
-          undo: async () => {
-            await layoutMutations.removeBlockFromSlot({
-              layoutId,
-              slotId,
-              blockId: snapshot.id,
-            });
-          },
-          redo: async () => {
-            await layoutMutations.addBlockToSlot({
-              layoutId,
-              slotId,
-              block: {
-                id: snapshot.id,
-                type: snapshot.type,
-                content: structuredClone(snapshot.content),
-              },
-            });
-            lastKnownContentRef.current.set(
-              `${layoutId}:${slotId}:${snapshot.id}`,
-              structuredClone(snapshot.content),
-            );
-          },
-        });
-      }
-    } catch (_error) {
-      toast.error("Failed to paste block");
     }
   };
 

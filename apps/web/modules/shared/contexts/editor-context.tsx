@@ -1,7 +1,5 @@
 "use client";
 
-import type { CopiedBlock } from "@/modules/editor/lib/block-clipboard";
-import { cloneCopiedBlock } from "@/modules/editor/lib/block-clipboard";
 import type { EditorPermissions, SiteData } from "@/modules/shared/types";
 import type { UndoCommand } from "@/modules/shared/undo";
 import {
@@ -57,9 +55,6 @@ interface EditorContextValue {
   // Editor controls visibility
   showControls: boolean;
   toggleControls: () => void;
-  copiedBlock: CopiedBlock | null;
-  copyBlock: (block: CopiedBlock) => void;
-  clearCopiedBlock: () => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
@@ -82,7 +77,6 @@ export function EditorProvider({
     slotId: null,
     blockId: null,
   });
-  const [copiedBlock, setCopiedBlock] = useState<CopiedBlock | null>(null);
   const [uiState, setUiState] = useState(() => {
     const initialShowControls = (() => {
       if (typeof window === "undefined") return true;
@@ -225,9 +219,6 @@ export function EditorProvider({
               showControls,
             };
           }),
-        copiedBlock,
-        copyBlock: (block) => setCopiedBlock(cloneCopiedBlock(block)),
-        clearCopiedBlock: () => setCopiedBlock(null),
       }}
     >
       {children}

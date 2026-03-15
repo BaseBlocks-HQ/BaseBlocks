@@ -2,6 +2,7 @@
 
 import { EditorSkeleton } from "@/components/skeletons";
 import { useMemberRole, usePages, useSite, useSiteWithTeam } from "@/lib/data";
+import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import {
   PublicSubpageProvider,
@@ -336,9 +337,11 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
   return (
     <ConvexEditorMutationsProvider>
       <EditorProvider siteId={siteId} site={siteData} permissions={permissions}>
-        <PublicSubpageProvider>
-          <SiteEditorInner siteId={siteId} />
-        </PublicSubpageProvider>
+        <BlockClipboardProvider>
+          <PublicSubpageProvider>
+            <SiteEditorInner siteId={siteId} />
+          </PublicSubpageProvider>
+        </BlockClipboardProvider>
       </EditorProvider>
     </ConvexEditorMutationsProvider>
   );
