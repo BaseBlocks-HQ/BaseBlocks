@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { MessageSquare } from "lucide-react";
-import { useCallback, useEffect, useOptimistic, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
@@ -17,7 +17,7 @@ function CalloutEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"callout">) {
-  const [localText, setLocalText] = useOptimistic(content.text || "");
+  const [localText, setLocalText] = useState(content.text || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
@@ -30,9 +30,8 @@ function CalloutEditor({
   }, []);
 
   useEffect(() => {
-    void localText;
     requestAnimationFrame(autoResize);
-  }, [autoResize, localText]);
+  }, [autoResize]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;

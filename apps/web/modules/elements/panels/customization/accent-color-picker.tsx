@@ -13,7 +13,7 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Check, ChevronDown, Pipette } from "lucide-react";
-import { useOptimistic } from "react";
+import { useState } from "react";
 import { isValidHex } from "./lib";
 
 interface AccentColorPickerProps {
@@ -32,10 +32,10 @@ export function AccentColorPicker({
   const selectedPreset = value
     ? COLOR_PRESETS.find((p) => p.value.toLowerCase() === value.toLowerCase())
     : null;
-  const [customColor, setCustomColor] = useOptimistic(
+  const [customColor, setCustomColor] = useState(() =>
     selectedPreset ? "" : (value ?? ""),
   );
-  const [showCustomInput, setShowCustomInput] = useOptimistic(
+  const [showCustomInput, setShowCustomInput] = useState(() =>
     Boolean(value && !selectedPreset),
   );
 

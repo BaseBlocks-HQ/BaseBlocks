@@ -66,14 +66,22 @@ export function QuicklinksRenderer({
     return null;
   }
 
+  if (isSidebar) {
+    return (
+      <div className="flex flex-col gap-3 my-6">
+        {validLinks.map((link) => (
+          <QuicklinkButton key={link.id} link={link} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={
-        isSidebar ? "flex flex-col gap-3 my-6" : "grid grid-cols-5 gap-3 my-6"
-      }
-    >
+    <div className="flex flex-wrap justify-center gap-3 my-6">
       {validLinks.map((link) => (
-        <QuicklinkButton key={link.id} link={link} />
+        <div key={link.id} className="w-[calc(20%-10px)]">
+          <QuicklinkButton link={link} />
+        </div>
       ))}
     </div>
   );

@@ -14,16 +14,16 @@ import {
 } from "@baseblocks/ui/select";
 import { Textarea } from "@baseblocks/ui/textarea";
 import { GripVertical, Plus, Trash2, X } from "lucide-react";
-import { useOptimistic, useState } from "react";
+import { useState } from "react";
 
 export function BannerEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"banner">) {
-  void id;
-  const [localContent, setLocalContent] = useOptimistic<BannerContent>(content);
+  const [localContent, setLocalContent] = useState<BannerContent>(
+    () => content,
+  );
   const [editingAlertId, setEditingAlertId] = useState<string | null>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 

@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import { ChevronLeft, ChevronRight, MousePointerClick } from "lucide-react";
-import { useOptimistic, useState } from "react";
+import { useRef, useState } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
@@ -278,20 +278,19 @@ function DecisionTreeWorkspace({
 }
 
 export function DecisionTreeEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
-  void id;
   const isMobile = useIsMobile();
-  const [trees, setTrees] = useOptimistic<DecisionTree[]>(content.trees ?? []);
+  const [trees, setTrees] = useState<DecisionTree[]>(() => content.trees ?? []);
   const [activeTreeId, setActiveTreeId] = useState<string>(
-    (content.trees ?? [])[0]?.id ?? "",
+    () => (content.trees ?? [])[0]?.id ?? "",
   );
-  const [tabsMode, setTabsMode] = useOptimistic<"row" | "dropdown">(
+  const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
     content.tabsMode ?? "row",
   );
+  const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
 
   const { path, currentParentId, navigateInto, navigateToIndex } =
     useTreeNavigation();
@@ -307,7 +306,7 @@ export function DecisionTreeEditor({
     const newContent: DecisionTreeContent = {
       nodes: updatedTrees[0]?.nodes ?? [],
       trees: updatedTrees,
-      tabsMode,
+      tabsMode: tabsModeRef.current,
     };
     onSaveStatusChange?.("pending");
     debouncedSave(newContent);
@@ -356,6 +355,7 @@ export function DecisionTreeEditor({
 
   const handleTabsModeChange = (mode: "row" | "dropdown") => {
     setTabsMode(mode);
+    tabsModeRef.current = mode;
     saveContent(trees);
   };
 

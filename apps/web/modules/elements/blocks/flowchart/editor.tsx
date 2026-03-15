@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useOptimistic } from "react";
+import { useRef, useState } from "react";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
 function normalizeDiagrams(content: FlowchartContent): FlowchartDiagram[] {
@@ -34,13 +34,16 @@ export function FlowchartEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"flowchart">) {
-  const [diagrams, setDiagrams] = useOptimistic<FlowchartDiagram[]>(
+  const [diagrams, setDiagrams] = useState<FlowchartDiagram[]>(() =>
     normalizeDiagrams(content),
   );
-  const [theme, setTheme] = useOptimistic<string | undefined>(content.theme);
-  const [tabsMode, setTabsMode] = useOptimistic<"row" | "dropdown">(
+  const [theme, setTheme] = useState<string | undefined>(content.theme);
+  const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
     content.tabsMode ?? "row",
   );
+  const themeRef = useRef(content.theme);
+  const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
+  const diagramsRef = useRef(diagrams);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
   const buildContent = (
@@ -56,20 +59,23 @@ export function FlowchartEditor({
 
   const handleChange = (updated: FlowchartDiagram[]) => {
     setDiagrams(updated);
+    diagramsRef.current = updated;
     onSaveStatusChange?.("pending");
-    save(buildContent(updated, theme, tabsMode));
+    save(buildContent(updated, themeRef.current, tabsModeRef.current));
   };
 
   const handleThemeChange = (newTheme: string | undefined) => {
     setTheme(newTheme);
+    themeRef.current = newTheme;
     onSaveStatusChange?.("pending");
-    save(buildContent(diagrams, newTheme, tabsMode));
+    save(buildContent(diagramsRef.current, newTheme, tabsModeRef.current));
   };
 
   const handleTabsModeChange = (mode: "row" | "dropdown") => {
     setTabsMode(mode);
+    tabsModeRef.current = mode;
     onSaveStatusChange?.("pending");
-    save(buildContent(diagrams, theme, mode));
+    save(buildContent(diagramsRef.current, themeRef.current, mode));
   };
 
   return (

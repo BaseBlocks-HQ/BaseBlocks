@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Heading } from "lucide-react";
-import { useOptimistic } from "react";
+import { useState } from "react";
 import ContentEditable from "react-contenteditable";
 import type {
   ElementEditorProps,
@@ -18,7 +18,7 @@ function HeadingEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"heading">) {
-  const [localText, setLocalText] = useOptimistic(content.text || "");
+  const [localText, setLocalText] = useState(content.text || "");
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
   const handleChange = (e: { target: { value: string } }) => {

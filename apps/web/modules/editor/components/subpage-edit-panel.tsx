@@ -6,7 +6,7 @@ import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { Maximize2, Minimize2, X } from "lucide-react";
-import { type ReactNode, useOptimistic } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 interface SubpageEditPanelProps {
@@ -24,7 +24,7 @@ export function SubpageEditPanel({
 }: SubpageEditPanelProps) {
   const { editingSubpage, closeSubpageEditor } = useEditorContext();
   const { pages: pageMutations } = useEditorMutations();
-  const [title, setTitle] = useOptimistic(pageTitle ?? "");
+  const [title, setTitle] = useState(pageTitle ?? "");
 
   const debouncedSave = useDebounceCallback(async (newTitle: string) => {
     if (!editingSubpage?.pageId || !newTitle.trim()) return;

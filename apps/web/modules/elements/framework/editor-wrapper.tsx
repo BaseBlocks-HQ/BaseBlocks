@@ -39,6 +39,7 @@ export function ElementEditorWrapper({
   }
 
   return createElement(Editor, {
+    key: id,
     id,
     type,
     content,

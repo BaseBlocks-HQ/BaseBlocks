@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useOptimistic, useReducer, useRef } from "react";
+import { useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 
 function generateId() {
@@ -364,9 +364,10 @@ export function QuicklinksEditor({
     createQuicklinksEditorState,
   );
 
-  const [savedLinks, setSavedLinks] = useOptimistic<QuicklinkItem[]>(
+  const [savedLinks, setSavedLinks] = useState<QuicklinkItem[]>(
     content.links || [],
   );
+
   const editingData = state.mode === "editing" ? state.draft : null;
   const editingId = state.mode === "editing" ? (state.draft?.id ?? null) : null;
   const isAddingNew = state.mode === "adding";
@@ -500,28 +501,34 @@ export function QuicklinksEditor({
         <div
           className={cn(
             "my-6",
-            isSidebar ? "flex flex-col gap-3" : "grid grid-cols-5 gap-3",
+            isSidebar
+              ? "flex flex-col gap-3"
+              : "flex flex-wrap justify-center gap-3",
           )}
         >
           {visibleCards.map((link) => (
-            <QuicklinkCard
+            <div
               key={link.id}
-              link={link}
-              onStartEdit={() => {
-                dispatch({ type: "startEditing", draft: { ...link } });
-              }}
-              onRemove={async () => {
-                const newLinks = savedLinks.filter((l) => l.id !== link.id);
-                const success = await persistLinks(newLinks);
-                if (success) {
-                  setSavedLinks(newLinks);
-                  if (editingId === link.id) {
-                    dispatch({ type: "finishEditing" });
+              className={isSidebar ? "w-full" : "w-[calc(20%-10px)]"}
+            >
+              <QuicklinkCard
+                link={link}
+                onStartEdit={() => {
+                  dispatch({ type: "startEditing", draft: { ...link } });
+                }}
+                onRemove={async () => {
+                  const newLinks = savedLinks.filter((l) => l.id !== link.id);
+                  const success = await persistLinks(newLinks);
+                  if (success) {
+                    setSavedLinks(newLinks);
+                    if (editingId === link.id) {
+                      dispatch({ type: "finishEditing" });
+                    }
+                    toast.success("Link removed");
                   }
-                  toast.success("Link removed");
-                }
-              }}
-            />
+                }}
+              />
+            </div>
           ))}
         </div>
       ) : !isAddingNew && !editingId ? (

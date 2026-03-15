@@ -35,7 +35,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useOptimistic, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { csvToDirectoryContent, parseCSV } from "./csv-utils";
 
 const COLUMN_TYPE_OPTIONS: {
@@ -57,14 +57,13 @@ const COLUMN_TYPE_PLACEHOLDERS: Record<DirectoryColumnType, string> = {
 };
 
 export function DirectoryEditor({
-  id,
   content,
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"directory">) {
-  void id;
-  const [localContent, setLocalContent] =
-    useOptimistic<DirectoryContent>(content);
+  const [localContent, setLocalContent] = useState<DirectoryContent>(
+    () => content,
+  );
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
