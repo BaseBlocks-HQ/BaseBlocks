@@ -1,6 +1,6 @@
 "use client";
 
-import { getPreviewSiteUrl, getSiteUrl } from "@/lib/url";
+import { getSiteOpenUrl } from "@/lib/url";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -27,12 +27,15 @@ import {
   GripVertical,
   History,
   MoreHorizontal,
-  PanelTop,
   Redo2,
   Rocket,
   Share2,
   Undo2,
 } from "lucide-react";
+
+function openSite(teamSlug: string, siteSlug: string) {
+  window.open(getSiteOpenUrl(teamSlug, siteSlug), "_blank");
+}
 
 interface EditorHeaderLeftSectionProps {
   canEdit: boolean;
@@ -44,8 +47,6 @@ interface EditorHeaderLeftSectionProps {
   currentPageId: string | null;
   showControls: boolean;
   toggleControls: () => void;
-  showHeaderPreview: boolean;
-  onOpenHeaderPreview: () => void;
 }
 
 interface EditorHeaderRightSectionProps {
@@ -72,8 +73,6 @@ export function EditorHeaderLeftSection({
   currentPageId,
   showControls,
   toggleControls,
-  showHeaderPreview,
-  onOpenHeaderPreview,
 }: EditorHeaderLeftSectionProps) {
   return (
     <div className="flex items-center gap-2">
@@ -108,20 +107,6 @@ export function EditorHeaderLeftSection({
           <TooltipContent>
             {showControls ? "Hide controls" : "Show controls"}
           </TooltipContent>
-        </Tooltip>
-      )}
-      {canEdit && showHeaderPreview && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onOpenHeaderPreview}
-            >
-              <PanelTop className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Header Preview</TooltipContent>
         </Tooltip>
       )}
     </div>
@@ -177,19 +162,29 @@ export function EditorHeaderRightSection({
           t={t}
         />
       ) : (
-        sitePublished && (
-          <>
-            <Separator orientation="vertical" className="mx-1.5 h-5" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openPublishedSite(teamSlug, siteSlug)}
-            >
-              <Globe className="h-4 w-4" />
-              {t("editor.viewLive")}
-            </Button>
-          </>
-        )
+        <>
+          <Separator orientation="vertical" className="mx-1.5 h-5" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!sitePublished}
+                  onClick={() => openSite(teamSlug, siteSlug)}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {t("editor.viewSite")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {sitePublished
+                ? "Open published site"
+                : "Publish your site first"}
+            </TooltipContent>
+          </Tooltip>
+        </>
       )}
     </div>
   );
@@ -218,18 +213,13 @@ function EditorHeaderOverflowMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => openPreviewSite(teamSlug, siteSlug)}>
-          <Eye />
-          Preview
+        <DropdownMenuItem
+          onClick={() => openSite(teamSlug, siteSlug)}
+          disabled={!sitePublished}
+        >
+          <ExternalLink />
+          {t("editor.viewSite")}
         </DropdownMenuItem>
-        {sitePublished && (
-          <DropdownMenuItem
-            onClick={() => openPublishedSite(teamSlug, siteSlug)}
-          >
-            <ExternalLink />
-            {t("editor.viewLive")}
-          </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onOpenShare}>
           <Share2 />
@@ -265,34 +255,23 @@ function EditorHeaderSecondaryActions({
     <div className="hidden md:flex items-center gap-1">
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => openPreviewSite(teamSlug, siteSlug)}
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Open site preview in new tab</TooltipContent>
-      </Tooltip>
-      {sitePublished && (
-        <Tooltip>
-          <TooltipTrigger asChild>
+          <span>
             <Button
               variant="ghost"
               size="sm"
               className="gap-1.5"
-              onClick={() => openPublishedSite(teamSlug, siteSlug)}
+              disabled={!sitePublished}
+              onClick={() => openSite(teamSlug, siteSlug)}
             >
               <ExternalLink className="h-4 w-4" />
-              {t("editor.viewLive")}
+              {t("editor.viewSite")}
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>View published site</TooltipContent>
-        </Tooltip>
-      )}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          {sitePublished ? "Open published site" : "Publish your site first"}
+        </TooltipContent>
+      </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -325,14 +304,6 @@ function EditorHeaderSecondaryActions({
       )}
     </div>
   );
-}
-
-function openPreviewSite(teamSlug: string, siteSlug: string) {
-  window.open(getPreviewSiteUrl(teamSlug, siteSlug), "_blank");
-}
-
-function openPublishedSite(teamSlug: string, siteSlug: string) {
-  window.open(getSiteUrl(teamSlug, siteSlug), "_blank");
 }
 
 function UndoRedoControls({
