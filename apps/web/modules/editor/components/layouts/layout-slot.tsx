@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  canPasteCopiedBlock,
+  isCopyableBlockType,
+} from "@/modules/editor/lib/block-clipboard";
 import { ElementEditorWrapper } from "@/modules/elements/framework/editor-wrapper";
 import { LayoutContextProvider } from "@/modules/elements/framework/layout-context";
 import {
@@ -23,8 +27,16 @@ import {
 } from "@baseblocks/ui/popover";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Settings2, Trash2 } from "lucide-react";
+import {
+  ClipboardPaste,
+  Copy,
+  GripVertical,
+  Plus,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import { createElement, useState } from "react";
+import { toast } from "sonner";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -35,6 +47,7 @@ interface LayoutSlotProps {
   onSelect: () => void;
   onSelectBlock: (blockId: string) => void;
   onAddBlock: () => void;
+  onPasteBlock?: () => void;
   onUpdateBlock: (blockId: string, content: AnyContent) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlock?: (toSlotId: string, blockId: string, toIndex: number) => void;
@@ -49,14 +62,23 @@ export function LayoutSlot({
   onSelect,
   onSelectBlock,
   onAddBlock,
+  onPasteBlock,
   onUpdateBlock,
   onRemoveBlock,
   onMoveBlock,
 }: LayoutSlotProps) {
   const isEmpty = slot.blocks.length === 0;
   const blockIds = slot.blocks.map((b) => b.id);
+  const editorCtx = useEditorContextOptional();
+  const showControls = editorCtx?.showControls ?? true;
+  const canEdit = editorCtx?.canEdit ?? true;
+  const copiedBlock = editorCtx?.copiedBlock ?? null;
+  const canPasteBlock =
+    showControls &&
+    canEdit &&
+    canPasteCopiedBlock(copiedBlock) &&
+    !!onPasteBlock;
 
-  // Handle block reorder within this slot
   const handleBlockDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -91,20 +113,33 @@ export function LayoutSlot({
       }}
     >
       {isEmpty ? (
-        // Empty slot
-        <button
-          type="button"
-          className="flex items-center justify-center w-full h-full min-h-[48px] text-muted-foreground text-xs gap-1 hover:text-foreground transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddBlock();
-          }}
-        >
-          <Plus className="h-3 w-3" />
-          Add block
-        </button>
+        <div className="flex items-center justify-center gap-2 w-full min-h-[48px] px-3">
+          <button
+            type="button"
+            className="flex items-center justify-center h-full min-h-[48px] text-muted-foreground text-xs gap-1 hover:text-foreground transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddBlock();
+            }}
+          >
+            <Plus className="h-3 w-3" />
+            Add block
+          </button>
+          {canPasteBlock && (
+            <button
+              type="button"
+              className="flex items-center justify-center h-full min-h-[48px] text-muted-foreground text-xs gap-1 hover:text-foreground transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPasteBlock?.();
+              }}
+            >
+              <ClipboardPaste className="h-3 w-3" />
+              Paste block
+            </button>
+          )}
+        </div>
       ) : (
-        // Slot with blocks
         <div className="p-1">
           <DndProvider items={blockIds} onDragEnd={handleBlockDragEnd}>
             {slot.blocks.map((block) => (
@@ -122,22 +157,41 @@ export function LayoutSlot({
             ))}
           </DndProvider>
 
-          {/* Add block button - minimal */}
-          <button
-            type="button"
-            className={cn(
-              "w-full py-1 mt-1 text-xs text-muted-foreground",
-              "flex items-center justify-center gap-1",
-              "rounded border border-dashed border-transparent",
-              "hover:border-muted-foreground/30 hover:text-foreground transition-colors",
+          <div className="mt-1 flex gap-1">
+            <button
+              type="button"
+              className={cn(
+                "flex-1 py-1 text-xs text-muted-foreground",
+                "flex items-center justify-center gap-1",
+                "rounded border border-dashed border-transparent",
+                "hover:border-muted-foreground/30 hover:text-foreground transition-colors",
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddBlock();
+              }}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+            {canPasteBlock && (
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1 text-xs text-muted-foreground",
+                  "flex items-center justify-center gap-1",
+                  "rounded border border-dashed border-transparent",
+                  "hover:border-muted-foreground/30 hover:text-foreground transition-colors",
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPasteBlock?.();
+                }}
+              >
+                <ClipboardPaste className="h-3 w-3" />
+                Paste
+              </button>
             )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddBlock();
-            }}
-          >
-            <Plus className="h-3 w-3" />
-          </button>
+          </div>
         </div>
       )}
     </div>
@@ -172,6 +226,7 @@ function SortableBlock({
   const [configOpen, setConfigOpen] = useState(false);
   const editorCtx = useEditorContextOptional();
   const showControls = editorCtx?.showControls ?? true;
+  const canEdit = editorCtx?.canEdit ?? true;
   const {
     attributes,
     listeners,
@@ -190,6 +245,7 @@ function SortableBlock({
   const blockType = block.type as ElementType;
   const hasConfig = hasElementConfigPanel(blockType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
+  const canCopyBlock = canEdit && isCopyableBlockType(block.type);
 
   if (isDragging) {
     return (
@@ -215,9 +271,7 @@ function SortableBlock({
         onSelect();
       }}
     >
-      {/* Block with inline toolbar */}
       <div className="flex gap-1 items-start">
-        {/* Block toolbar - inline, inside layout */}
         {showControls && (
           <div
             className={cn(
@@ -274,6 +328,23 @@ function SortableBlock({
                 </PopoverContent>
               </Popover>
             )}
+            {canCopyBlock && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  editorCtx?.copyBlock({
+                    type: block.type,
+                    content: block.content,
+                  });
+                  toast.success("Block copied");
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -288,7 +359,6 @@ function SortableBlock({
           </div>
         )}
 
-        {/* Block content */}
         <div className="min-w-0 flex-1">
           <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
             <ElementEditorWrapper

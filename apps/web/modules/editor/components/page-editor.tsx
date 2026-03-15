@@ -222,6 +222,7 @@ export function PageEditor({
     handleMainLayoutDragEnd,
     handleSidebarLayoutDragEnd,
     handleAddLayout,
+    handlePasteBlock,
     handleUpdateBlock,
     handleRemoveBlock,
     handleRemoveLayout,
@@ -274,6 +275,7 @@ export function PageEditor({
         selectBlock(layout.id, slotId, blockId)
       }
       onAddBlock={(slotId) => handleSelectSlot(layout.id, slotId)}
+      onPasteBlock={(slotId) => handlePasteBlock(layout.id, slotId)}
       onUpdateBlock={(slotId, blockId, content) =>
         handleUpdateBlock(layout.id, slotId, blockId, content)
       }

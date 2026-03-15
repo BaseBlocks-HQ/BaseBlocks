@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  canPasteCopiedBlock,
+  createPastedBlock,
+} from "@/modules/editor/lib/block-clipboard";
 import { useEditorContext } from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { arrayMove } from "@/modules/shared/dnd";
@@ -11,6 +15,7 @@ import type {
   LayoutType,
 } from "@baseblocks/types";
 import { type MutableRefObject, useRef } from "react";
+import { toast } from "sonner";
 
 interface UseLayoutOperationsArgs {
   pageId: string;
@@ -34,8 +39,14 @@ export function useLayoutOperations({
   onSelectionChange,
   layoutsData,
 }: UseLayoutOperationsArgs) {
-  const { selectSlot, clearSelection, pushCommand, isUndoRedoExecuting } =
-    useEditorContext();
+  const {
+    selectSlot,
+    selectBlock,
+    clearSelection,
+    pushCommand,
+    isUndoRedoExecuting,
+    copiedBlock,
+  } = useEditorContext();
 
   const { layouts: layoutMutations } = useEditorMutations();
 
@@ -365,6 +376,61 @@ export function useLayoutOperations({
     }
   };
 
+  const handlePasteBlock = async (layoutId: string, slotId: string) => {
+    if (!canPasteCopiedBlock(copiedBlock)) {
+      return;
+    }
+
+    const newBlock = createPastedBlock(copiedBlock);
+
+    try {
+      await layoutMutations.addBlockToSlot({
+        layoutId,
+        slotId,
+        block: newBlock,
+      });
+
+      lastKnownContentRef.current.set(
+        `${layoutId}:${slotId}:${newBlock.id}`,
+        structuredClone(newBlock.content),
+      );
+      selectBlock(layoutId, slotId, newBlock.id);
+      onSelectionChange?.(slotId);
+
+      if (!isUndoRedoExecuting) {
+        const snapshot = structuredClone(newBlock);
+        pushCommand({
+          description: "Paste block",
+          pageId,
+          undo: async () => {
+            await layoutMutations.removeBlockFromSlot({
+              layoutId,
+              slotId,
+              blockId: snapshot.id,
+            });
+          },
+          redo: async () => {
+            await layoutMutations.addBlockToSlot({
+              layoutId,
+              slotId,
+              block: {
+                id: snapshot.id,
+                type: snapshot.type,
+                content: structuredClone(snapshot.content),
+              },
+            });
+            lastKnownContentRef.current.set(
+              `${layoutId}:${slotId}:${snapshot.id}`,
+              structuredClone(snapshot.content),
+            );
+          },
+        });
+      }
+    } catch (_error) {
+      toast.error("Failed to paste block");
+    }
+  };
+
   return {
     handleMainLayoutDragEnd,
     handleSidebarLayoutDragEnd,
@@ -374,5 +440,6 @@ export function useLayoutOperations({
     handleRemoveLayout,
     handleMoveBlock,
     handleUpdateSettings,
+    handlePasteBlock,
   };
 }

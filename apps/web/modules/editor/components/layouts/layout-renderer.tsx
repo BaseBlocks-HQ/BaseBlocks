@@ -25,6 +25,7 @@ export interface LayoutRendererProps {
   onSelectSlot: (slotId: string) => void;
   onSelectBlock: (slotId: string, blockId: string) => void;
   onAddBlock: (slotId: string) => void;
+  onPasteBlock?: (slotId: string) => void;
   onUpdateBlock: (slotId: string, blockId: string, content: AnyContent) => void;
   onRemoveBlock: (slotId: string, blockId: string) => void;
   onMoveBlock?: (
@@ -50,6 +51,7 @@ export function LayoutRenderer({
   onSelectSlot,
   onSelectBlock,
   onAddBlock,
+  onPasteBlock,
   onUpdateBlock,
   onRemoveBlock,
   onMoveBlock,
@@ -183,6 +185,9 @@ export function LayoutRenderer({
                   onSelect={() => onSelectSlot(slot.id)}
                   onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
                   onAddBlock={() => onAddBlock(slot.id)}
+                  onPasteBlock={
+                    onPasteBlock ? () => onPasteBlock(slot.id) : undefined
+                  }
                   onUpdateBlock={(blockId, content) =>
                     onUpdateBlock(slot.id, blockId, content)
                   }
