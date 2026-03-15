@@ -20,6 +20,7 @@ const geistMono = localFont({
 });
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+const socialImage = "/baseblocks-social-preview.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${ROOT_DOMAIN}`),
@@ -39,10 +40,20 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
+    url: `https://${ROOT_DOMAIN}`,
     siteName: "BaseBlocks",
+    images: [
+      {
+        url: socialImage,
+        width: 2974,
+        height: 1630,
+        alt: "BaseBlocks social preview",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
+    images: [socialImage],
   },
   icons: {
     icon: [{ url: "/favicon.ico" }],
