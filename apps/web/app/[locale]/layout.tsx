@@ -5,7 +5,7 @@ import { ConvexClientProvider } from "@/lib/convex/provider";
 import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
 import { MotionConfig } from "motion/react";
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import {
   getMessages,
@@ -29,16 +29,27 @@ const OG_LOCALE_MAP: Record<string, string> = {
   fr: "fr_FR",
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const parentMetadata = await parent;
+  const parentOpenGraph = parentMetadata.openGraph;
 
   return {
     title: t("title"),
     description: t("description"),
-    openGraph: {
-      locale: OG_LOCALE_MAP[locale] ?? "en_US",
-    },
+    openGraph: parentOpenGraph
+      ? {
+          ...parentOpenGraph,
+          url: parentOpenGraph.url ?? undefined,
+          locale: OG_LOCALE_MAP[locale] ?? "en_US",
+        }
+      : {
+          locale: OG_LOCALE_MAP[locale] ?? "en_US",
+        },
   };
 }
 
