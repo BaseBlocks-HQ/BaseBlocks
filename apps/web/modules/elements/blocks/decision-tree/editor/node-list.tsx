@@ -18,6 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import type { KeyboardEvent } from "react";
 import { useState } from "react";
 
 interface NodeListProps {
@@ -74,6 +75,22 @@ export function NodeList({
     setEditingName("");
   };
 
+  const handleInputKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+    onEnter: () => void,
+    onEscape: () => void,
+  ) => {
+    event.stopPropagation();
+
+    if (event.key === "Enter") {
+      onEnter();
+    }
+
+    if (event.key === "Escape") {
+      onEscape();
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -120,10 +137,13 @@ export function NodeList({
                       <Input
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveEdit();
-                          if (e.key === "Escape") handleCancelEdit();
-                        }}
+                        onKeyDown={(event) =>
+                          handleInputKeyDown(
+                            event,
+                            handleSaveEdit,
+                            handleCancelEdit,
+                          )
+                        }
                         className="h-8 text-sm"
                         onClick={(e) => e.stopPropagation()}
                       />
@@ -210,13 +230,16 @@ export function NodeList({
                 value={newName}
                 placeholder="Option name..."
                 onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
-                  if (e.key === "Escape") {
-                    setIsAdding(false);
-                    setNewName("");
-                  }
-                }}
+                onKeyDown={(event) =>
+                  handleInputKeyDown(
+                    event,
+                    handleAdd,
+                    () => {
+                      setIsAdding(false);
+                      setNewName("");
+                    },
+                  )
+                }
                 className="h-9 text-sm"
               />
               <Button
