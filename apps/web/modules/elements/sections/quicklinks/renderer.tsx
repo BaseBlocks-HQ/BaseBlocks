@@ -4,26 +4,23 @@ import type { QuicklinkItem } from "@baseblocks/types/elements";
 import { AppWindow, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
-/** Only allow safe URL protocols */
-function getSafeHref(url: string): string | undefined {
+function getSafeHref(url: string, linkType?: string): string | undefined {
+  if (!url) return undefined;
+  // App URL schemes (e.g. spotify://, slack://) are intentional — pass through
+  if (linkType === "app") return url;
+  if (url.startsWith("/")) return url;
   try {
-    // Allow relative URLs
-    if (url.startsWith("/")) return url;
-    const parsed = new URL(url);
-    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
-      return url;
-    }
-    return undefined;
+    const { protocol } = new URL(url);
+    return protocol === "https:" || protocol === "http:" ? url : undefined;
   } catch {
-    // If URL parsing fails, only allow relative paths
-    return url.startsWith("/") ? url : undefined;
+    return undefined;
   }
 }
 
 function QuicklinkButton({ link }: { link: QuicklinkItem }) {
   if (!link.url) return null;
 
-  const safeHref = getSafeHref(link.url);
+  const safeHref = getSafeHref(link.url, link.linkType);
   if (!safeHref) return null;
 
   const isApp = link.linkType === "app";
@@ -32,7 +29,7 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
     <a
       href={safeHref}
       {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-      className="group flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
+      className="group w-full flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
     >
       <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
         {link.imageUrl ? (
@@ -42,7 +39,7 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
             fill
             unoptimized
             sizes="48px"
-            className="w-full h-full object-cover"
+            className="object-cover"
           />
         ) : isApp ? (
           <AppWindow className="w-5 h-5 text-primary/70" />
@@ -69,20 +66,14 @@ export function QuicklinksRenderer({
     return null;
   }
 
-  // Sidebar: single column
-  // Main content: flex wrap, centered, max 5 per row
   return (
     <div
       className={
-        isSidebar
-          ? "flex flex-col gap-3 my-6"
-          : "flex flex-wrap justify-center gap-3 my-6"
+        isSidebar ? "flex flex-col gap-3 my-6" : "grid grid-cols-5 gap-3 my-6"
       }
     >
       {validLinks.map((link) => (
-        <div key={link.id} className={isSidebar ? "" : "w-[calc(20%-10px)]"}>
-          <QuicklinkButton link={link} />
-        </div>
+        <QuicklinkButton key={link.id} link={link} />
       ))}
     </div>
   );

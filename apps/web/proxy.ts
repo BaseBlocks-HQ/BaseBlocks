@@ -26,6 +26,13 @@ function isAppRoute(path: string): boolean {
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 
+// Returns true only for the canonical root domain or its subdomains (production).
+// Localhost, Vercel preview, and other non-production hosts return false.
+function isProductionHost(hostname: string): boolean {
+  const root = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
+  return hostname === root || hostname.endsWith(`.${root}`);
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") || "";
@@ -55,9 +62,10 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = `/${routing.defaultLocale}/site/${teamSlug}${pathSuffix}`;
 
-    // Vercel preview: also set a cookie so subsequent in-site navigation
-    // (/{siteSlug}/{pageSlug}) can be rewritten without the /s/ prefix.
-    if (hostname.endsWith(".vercel.app")) {
+    // Non-production (localhost, Vercel preview): set a cookie so subsequent
+    // in-site navigation (/{siteSlug}/{pageSlug}) can be rewritten without
+    // the /s/ prefix — subdomains aren't available in these environments.
+    if (!isProductionHost(hostname)) {
       const response = NextResponse.rewrite(url);
       response.cookies.set("__preview_team", teamSlug, {
         path: "/",
@@ -71,9 +79,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // Vercel preview domains don't support subdomains — handle implicit
-  // in-site navigation via the __preview_team cookie set above.
-  if (hostname.endsWith(".vercel.app")) {
+  // Non-production hosts (localhost, Vercel preview) don't support subdomains —
+  // handle implicit in-site navigation via the __preview_team cookie set above.
+  if (!isProductionHost(hostname)) {
     const previewTeam = request.cookies.get("__preview_team")?.value;
     const pathWithoutLocale = removeLocalePrefix(pathname);
 
