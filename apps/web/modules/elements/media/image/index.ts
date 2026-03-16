@@ -14,7 +14,7 @@ export { ImageEditor, ImageRenderer, ImagePreview };
 
 registerElement({
   type: "image",
-  category: "media",
+  category: "blocks",
   label: "Image",
   description: "Single image with caption",
   icon: Image,

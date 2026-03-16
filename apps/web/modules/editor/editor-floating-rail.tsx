@@ -28,23 +28,20 @@ import {
   IconColorPalette,
   IconFile,
   IconGear,
-  IconImage,
-  IconPen,
   IconRectLayoutGrid,
   IconSitemap,
   IconSquareGrid2,
-  IconStackPerspective,
 } from "nucleo-glass";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ElementCard } from "./components/element-picker/element-card";
 import { ElementGrid } from "./components/element-picker/element-grid";
 import { CreatePageDialog } from "./create-page-dialog";
-
-// Failure modes:
-// - Hover panels close while moving between the rail and the flyout.
-// - Slot-only categories open without a selected slot and create dead-end UI.
-// - View-only users see mutation affordances they cannot use.
-// - Pages flyout breaks tree semantics by rendering list items outside a list wrapper.
 
 interface EditorFloatingRailProps {
   site: {
@@ -67,10 +64,7 @@ const CATEGORY_TITLES: Record<ElementCategory, string> = {
   customization: "Customization",
   navigation: "Navigation",
   layouts: "Layouts",
-  sections: "Sections",
   blocks: "Blocks",
-  media: "Media",
-  forms: "Forms",
 };
 
 const CATEGORY_ICONS: Record<ElementCategory, ReactNode> = {
@@ -78,10 +72,7 @@ const CATEGORY_ICONS: Record<ElementCategory, ReactNode> = {
   customization: <IconColorPalette className="h-5 w-5" />,
   navigation: <IconSitemap className="h-5 w-5" />,
   layouts: <IconRectLayoutGrid className="h-5 w-5" />,
-  sections: <IconStackPerspective className="h-5 w-5" />,
   blocks: <IconSquareGrid2 className="h-5 w-5" />,
-  media: <IconImage className="h-5 w-5" />,
-  forms: <IconPen className="h-5 w-5" />,
 };
 
 const RAIL_ITEMS: Array<{
@@ -115,33 +106,13 @@ const RAIL_ITEMS: Array<{
     icon: CATEGORY_ICONS.layouts,
   },
   {
-    id: "sections",
-    label: CATEGORY_TITLES.sections,
-    icon: CATEGORY_ICONS.sections,
-  },
-  {
     id: "blocks",
     label: CATEGORY_TITLES.blocks,
     icon: CATEGORY_ICONS.blocks,
   },
-  {
-    id: "media",
-    label: CATEGORY_TITLES.media,
-    icon: CATEGORY_ICONS.media,
-  },
-  {
-    id: "forms",
-    label: CATEGORY_TITLES.forms,
-    icon: CATEGORY_ICONS.forms,
-  },
 ];
 
-const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = [
-  "blocks",
-  "sections",
-  "media",
-  "forms",
-];
+const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
 
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
@@ -236,6 +207,139 @@ function RailUndoRedoControls() {
   );
 }
 
+function FloatingRailFlyout({
+  activePanel,
+  canEdit,
+  navPages,
+  onEnableTabs,
+  onSelectElement,
+  onSelectPage,
+  rootPages,
+  selectedPageId,
+  setExpanded,
+  site,
+  toggleExpand,
+  isExpanded,
+}: {
+  activePanel: RailPanelId;
+  canEdit: boolean;
+  navPages: PageListItem[];
+  onEnableTabs?: () => void;
+  onSelectElement: (type: string) => void;
+  onSelectPage: (pageId: string) => void;
+  rootPages: PageListItem[];
+  selectedPageId?: string;
+  setExpanded: (pageId: string, expanded: boolean) => void;
+  site: {
+    _id: string;
+    defaultPageId?: string;
+  };
+  toggleExpand: (pageId: string) => void;
+  isExpanded: (pageId: string) => boolean;
+}) {
+  if (activePanel === "pages") {
+    return (
+      <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold">Pages</p>
+            <p className="text-xs text-muted-foreground">
+              Choose a page to edit
+            </p>
+          </div>
+          {canEdit && <CreatePageDialog siteId={site._id} />}
+        </div>
+
+        <ScrollArea className="h-[min(60vh,32rem)]">
+          <div className="p-2">
+            {rootPages.length > 0 ? (
+              <SidebarMenu>
+                <SortablePageTree
+                  pages={rootPages}
+                  allPages={navPages}
+                  selectedPageId={selectedPageId}
+                  siteId={site._id}
+                  defaultPageId={site.defaultPageId}
+                  onSelect={onSelectPage}
+                  isExpanded={isExpanded}
+                  onToggleExpand={toggleExpand}
+                  onSetExpanded={setExpanded}
+                />
+              </SidebarMenu>
+            ) : (
+              <div className="px-3 py-4 text-sm text-muted-foreground">
+                No pages yet.
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  if (activePanel === "site") {
+    return (
+      <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
+        <ScrollArea className="h-[min(60vh,32rem)]">
+          <SiteConfigPanel siteId={site._id as Id<"sites">} />
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  if (activePanel === "navigation") {
+    return (
+      <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
+        <ScrollArea className="h-[min(60vh,32rem)]">
+          <NavigationConfigPanel siteId={site._id as Id<"sites">} />
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  if (activePanel === "customization") {
+    return (
+      <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
+        <ScrollArea className="h-[min(60vh,32rem)]">
+          <CustomizationConfigPanel siteId={site._id as Id<"sites">} />
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  const elements = getElementsByCategory(activePanel);
+
+  return (
+    <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
+      {!canEdit ? (
+        <div className="px-4 py-4 text-sm text-muted-foreground">
+          You have view-only access. Contact an admin to request edit
+          permissions.
+        </div>
+      ) : (
+        <ScrollArea className="h-[min(60vh,32rem)]">
+          <ElementGrid
+            title={CATEGORY_TITLES[activePanel]}
+            entries={elements}
+            onSelect={onSelectElement}
+          />
+          {activePanel === "layouts" && onEnableTabs && (
+            <div className="px-4 pb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <ElementCard
+                  label="Tabs"
+                  icon={PanelTop}
+                  onClick={onEnableTabs}
+                />
+              </div>
+            </div>
+          )}
+        </ScrollArea>
+      )}
+    </div>
+  );
+}
+
 export function EditorFloatingRail({
   site,
   pages,
@@ -249,8 +353,8 @@ export function EditorFloatingRail({
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
   const [activePanel, setActivePanel] = useState<RailPanelId | null>(null);
-  const [panelTop, setPanelTop] = useState(0);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -261,14 +365,15 @@ export function EditorFloatingRail({
     .filter((page) => !page.parentId)
     .sort((a, b) => a.order - b.order);
 
-  const syncPanelPosition = (panelId: RailPanelId) => {
+  const syncPanelPosition = useCallback((panelId: RailPanelId) => {
     const button = buttonRefs.current[panelId];
-    if (!button) {
+    const panel = panelRef.current;
+    if (!button || !panel) {
       return;
     }
 
-    setPanelTop(button.offsetTop + button.offsetHeight / 2);
-  };
+    panel.style.top = `${button.offsetTop + button.offsetHeight / 2}px`;
+  }, []);
 
   const clearPendingClose = () => {
     if (closeTimeoutRef.current) {
@@ -279,8 +384,10 @@ export function EditorFloatingRail({
 
   const openPanel = (panelId: RailPanelId) => {
     clearPendingClose();
-    syncPanelPosition(panelId);
     setActivePanel(panelId);
+    requestAnimationFrame(() => {
+      syncPanelPosition(panelId);
+    });
   };
 
   const scheduleClose = () => {
@@ -301,18 +408,8 @@ export function EditorFloatingRail({
       return;
     }
 
-    const setActivePanelPosition = () => {
-      const button = buttonRefs.current[activePanel];
-      if (!button) {
-        return;
-      }
-      setPanelTop(button.offsetTop + button.offsetHeight / 2);
-    };
-
-    setActivePanelPosition();
-
     const handleResize = () => {
-      setActivePanelPosition();
+      syncPanelPosition(activePanel);
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -320,13 +417,14 @@ export function EditorFloatingRail({
       }
     };
 
+    syncPanelPosition(activePanel);
     window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activePanel]);
+  }, [activePanel, syncPanelPosition]);
 
   useEffect(() => {
     return () => {
@@ -360,114 +458,6 @@ export function EditorFloatingRail({
     onAddBlock?.(type as LayoutBlockType);
   };
 
-  const renderPanel = () => {
-    if (!activePanel) {
-      return null;
-    }
-
-    if (activePanel === "pages") {
-      return (
-        <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
-          <div className="flex items-center justify-between border-b px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold">Pages</p>
-              <p className="text-xs text-muted-foreground">
-                Choose a page to edit
-              </p>
-            </div>
-            {canEdit && <CreatePageDialog siteId={site._id} />}
-          </div>
-
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <div className="p-2">
-              {rootPages.length > 0 ? (
-                <SidebarMenu>
-                  <SortablePageTree
-                    pages={rootPages}
-                    allPages={navPages}
-                    selectedPageId={selectedPageId}
-                    siteId={site._id}
-                    defaultPageId={site.defaultPageId}
-                    onSelect={handleSelectPage}
-                    isExpanded={isExpanded}
-                    onToggleExpand={toggleExpand}
-                    onSetExpanded={setExpanded}
-                  />
-                </SidebarMenu>
-              ) : (
-                <div className="px-3 py-4 text-sm text-muted-foreground">
-                  No pages yet.
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-      );
-    }
-
-    if (activePanel === "site") {
-      return (
-        <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <SiteConfigPanel siteId={site._id as Id<"sites">} />
-          </ScrollArea>
-        </div>
-      );
-    }
-
-    if (activePanel === "navigation") {
-      return (
-        <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <NavigationConfigPanel siteId={site._id as Id<"sites">} />
-          </ScrollArea>
-        </div>
-      );
-    }
-
-    if (activePanel === "customization") {
-      return (
-        <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <CustomizationConfigPanel siteId={site._id as Id<"sites">} />
-          </ScrollArea>
-        </div>
-      );
-    }
-
-    const elements = getElementsByCategory(activePanel);
-
-    return (
-      <div className="w-[min(22rem,calc(100vw-6rem))] overflow-hidden rounded-3xl border bg-background/96 shadow-2xl backdrop-blur-sm">
-        {!canEdit ? (
-          <div className="px-4 py-4 text-sm text-muted-foreground">
-            You have view-only access. Contact an admin to request edit
-            permissions.
-          </div>
-        ) : (
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <ElementGrid
-              title={CATEGORY_TITLES[activePanel]}
-              entries={elements}
-              onSelect={handleSelectElement}
-            />
-            {activePanel === "layouts" && onEnableTabs && (
-              <div className="px-4 pb-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <ElementCard
-                    label="Tabs"
-                    icon={PanelTop}
-                    onClick={onEnableTabs}
-                  />
-                </div>
-              </div>
-            )}
-          </ScrollArea>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div
       className="pointer-events-auto relative"
@@ -479,21 +469,20 @@ export function EditorFloatingRail({
           {RAIL_ITEMS.map((item) => {
             const categoryId: ElementCategory | null =
               item.id === "pages" ? null : item.id;
-            const disabledReason =
+            const isDisabled =
               !canEdit && item.id !== "pages"
-                ? "View only"
-                : categoryId &&
+                ? true
+                : !!(
+                    categoryId &&
                     SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
                     !selectedSlotId
-                  ? "Select a slot first"
-                  : undefined;
-            const isDisabled = Boolean(disabledReason);
+                  );
 
             return (
               <FloatingRailButton
                 key={item.id}
                 active={activePanel === item.id}
-                disabled={Boolean(isDisabled)}
+                disabled={isDisabled}
                 icon={item.icon}
                 onClick={() => {
                   if (activePanel === item.id) {
@@ -517,13 +506,26 @@ export function EditorFloatingRail({
 
       {activePanel && (
         <div
+          ref={panelRef}
           className="absolute left-full ml-3"
           style={{
-            top: panelTop,
             transform: "translateY(-50%)",
           }}
         >
-          {renderPanel()}
+          <FloatingRailFlyout
+            activePanel={activePanel}
+            canEdit={canEdit}
+            navPages={navPages}
+            onEnableTabs={onEnableTabs}
+            onSelectElement={handleSelectElement}
+            onSelectPage={handleSelectPage}
+            rootPages={rootPages}
+            selectedPageId={selectedPageId}
+            setExpanded={setExpanded}
+            site={site}
+            toggleExpand={toggleExpand}
+            isExpanded={isExpanded}
+          />
         </div>
       )}
     </div>

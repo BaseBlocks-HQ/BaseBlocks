@@ -11,7 +11,7 @@ import { FormRenderer } from "./renderer";
 
 registerElement({
   type: "form",
-  category: "forms",
+  category: "blocks",
   label: "Form",
   description: "Build interactive forms with drag-and-drop fields",
   icon: FileText,

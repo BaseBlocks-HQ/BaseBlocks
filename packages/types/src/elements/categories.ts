@@ -1,12 +1,9 @@
 export type ElementCategory =
   | "site"
+  | "customization"
   | "navigation"
   | "layouts"
-  | "blocks"
-  | "sections"
-  | "media"
-  | "forms"
-  | "customization";
+  | "blocks";
 
 export interface CategoryInfo {
   category: ElementCategory;
@@ -25,53 +22,32 @@ export const CATEGORIES: CategoryInfo[] = [
     order: 0,
   },
   {
+    category: "customization",
+    label: "Customization",
+    description: "Theme colors and styling options",
+    icon: "Palette",
+    order: 1,
+  },
+  {
     category: "navigation",
     label: "Navigation",
     description: "Site-wide navigation configuration",
     icon: "Navigation",
-    order: 1,
+    order: 2,
   },
   {
     category: "layouts",
     label: "Layouts",
     description: "Container structures for organizing content",
     icon: "Layout",
-    order: 2,
-  },
-  {
-    category: "sections",
-    label: "Sections",
-    description: "Complex pre-built page sections",
-    icon: "LayoutTemplate",
-    order: 4,
+    order: 3,
   },
   {
     category: "blocks",
     label: "Blocks",
-    description: "Basic content building blocks",
+    description: "All content elements, including sections, media, and forms",
     icon: "Square",
-    order: 5,
-  },
-  {
-    category: "media",
-    label: "Media",
-    description: "Images, videos, and files",
-    icon: "Image",
-    order: 6,
-  },
-  {
-    category: "forms",
-    label: "Forms",
-    description: "Form inputs and controls",
-    icon: "FormInput",
-    order: 7,
-  },
-  {
-    category: "customization",
-    label: "Customization",
-    description: "Theme colors and styling options",
-    icon: "Palette",
-    order: 8,
+    order: 4,
   },
 ];
 

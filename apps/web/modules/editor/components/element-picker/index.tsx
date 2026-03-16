@@ -53,13 +53,10 @@ export function ElementPicker({
   // Get category title
   const CATEGORY_TITLES: Record<ElementCategory, string> = {
     site: "Site Settings",
+    customization: "Customization",
+    navigation: "Navigation",
     layouts: "Layouts",
     blocks: "Blocks",
-    sections: "Sections",
-    navigation: "Navigation",
-    customization: "Customization",
-    media: "Media",
-    forms: "Forms",
   };
   const categoryTitle = activeCategory
     ? (CATEGORY_TITLES[activeCategory] ?? "")

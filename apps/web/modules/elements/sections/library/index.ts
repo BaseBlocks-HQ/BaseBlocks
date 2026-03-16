@@ -15,7 +15,7 @@ export { LibraryEditor, LibraryRenderer, LibraryPreview, LibraryConfigPanel };
 
 registerElement({
   type: "library",
-  category: "sections",
+  category: "blocks",
   label: "Library",
   description: "Document library with folders",
   icon: Library,

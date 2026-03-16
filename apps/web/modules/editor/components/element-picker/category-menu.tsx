@@ -7,12 +7,9 @@ import { ChevronRight } from "lucide-react";
 import {
   IconColorPalette,
   IconGear,
-  IconImage,
-  IconPen,
   IconRectLayoutGrid,
   IconSitemap,
   IconSquareGrid2,
-  IconStackPerspective,
 } from "nucleo-glass";
 
 const EMPTY_CATEGORY_IDS: ElementCategory[] = [];
@@ -63,13 +60,10 @@ interface CategoryMenuProps {
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   site: <IconGear className="h-5 w-5" />,
+  customization: <IconColorPalette className="h-5 w-5" />,
   navigation: <IconSitemap className="h-5 w-5" />,
   layouts: <IconRectLayoutGrid className="h-5 w-5" />,
-  sections: <IconStackPerspective className="h-5 w-5" />,
   blocks: <IconSquareGrid2 className="h-5 w-5" />,
-  media: <IconImage className="h-5 w-5" />,
-  forms: <IconPen className="h-5 w-5" />,
-  customization: <IconColorPalette className="h-5 w-5" />,
 };
 
 export function CategoryMenu({
@@ -82,12 +76,7 @@ export function CategoryMenu({
 
   // Categories that require a slot to be selected
   // "site" and "layouts" do not require a slot
-  const slotRequiredCategories: ElementCategory[] = [
-    "blocks",
-    "sections",
-    "media",
-    "forms",
-  ];
+  const slotRequiredCategories: ElementCategory[] = ["blocks"];
 
   return (
     <div className="w-full p-2 space-y-1">

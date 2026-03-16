@@ -15,7 +15,7 @@ export { SearchEditor, SearchRenderer, SearchPreview, SearchConfigPanel };
 
 registerElement({
   type: "search",
-  category: "sections",
+  category: "blocks",
   label: "Search",
   description: "Document search with filters",
   icon: Search,

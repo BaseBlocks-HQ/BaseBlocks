@@ -14,7 +14,7 @@ export { QuicklinksEditor, QuicklinksRenderer, QuicklinksPreview };
 
 registerElement({
   type: "quicklinks",
-  category: "sections",
+  category: "blocks",
   label: "Quick Links",
   description: "Grid of linked cards",
   icon: LayoutGrid,
