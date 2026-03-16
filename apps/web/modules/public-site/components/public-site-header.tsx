@@ -9,7 +9,6 @@ import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/types";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";
 import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
-import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 
 interface PublicSiteHeaderProps {
   site: {
@@ -39,7 +38,6 @@ export function PublicSiteHeader({
   pages,
   currentPath,
 }: PublicSiteHeaderProps) {
-  const showSidebar = site.settings.navigationStyle === "sidebar";
   const showTopNav = site.settings.navigationStyle === "topnav";
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
@@ -63,14 +61,10 @@ export function PublicSiteHeader({
       }
     >
       <div className="flex h-14 items-center px-4">
-        {showSidebar ? (
-          <CollapsedSidebarTrigger />
-        ) : (
-          <div className="flex items-center gap-2">
-            {showLogo && <SiteLogo site={site} team={team} />}
-            {showSiteName && <span className="font-semibold">{site.name}</span>}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {showLogo && <SiteLogo site={site} team={team} />}
+          {showSiteName && <span className="font-semibold">{site.name}</span>}
+        </div>
 
         {showTopNav && pages && (
           <div className="flex-1 flex justify-center ml-8">
@@ -129,14 +123,4 @@ export function GradientStripe({
       style={{ background: gradient }}
     />
   );
-}
-
-function CollapsedSidebarTrigger() {
-  const { open } = useSidebar();
-
-  if (open) {
-    return null;
-  }
-
-  return <SidebarTrigger />;
 }

@@ -19,6 +19,7 @@ import {
   Globe,
   ImageIcon,
   Loader2,
+  PanelLeft,
   Route,
   Search,
   Type,
@@ -197,6 +198,198 @@ function SiteNameSection({
   );
 }
 
+function SiteHeaderSettings({
+  showHeader,
+  showHeaderSearch,
+  showLogo,
+  showSiteName,
+  siteName,
+  isEditingName,
+  localName,
+  fileInputRef,
+  isUploading,
+  logoUrl,
+  uploadProgress,
+  onFilesAccepted,
+  onHeaderToggle,
+  onLogoToggle,
+  onSiteNameToggle,
+  onHeaderSearchToggle,
+  onNameChange,
+  onNameCancel,
+  onNameEdit,
+  onNameSave,
+}: {
+  showHeader: boolean;
+  showHeaderSearch: boolean;
+  showLogo: boolean;
+  showSiteName: boolean;
+  siteName: string;
+  isEditingName: boolean;
+  localName: string;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isUploading: boolean;
+  logoUrl?: string;
+  uploadProgress: number;
+  onFilesAccepted: (files: File[]) => void;
+  onHeaderToggle: (checked: boolean) => void;
+  onLogoToggle: (checked: boolean) => void;
+  onSiteNameToggle: (checked: boolean) => void;
+  onHeaderSearchToggle: (checked: boolean) => void;
+  onNameChange: (value: string) => void;
+  onNameCancel: () => void;
+  onNameEdit: () => void;
+  onNameSave: () => void;
+}) {
+  return (
+    <>
+      <SettingSection
+        control={
+          <Switch
+            id="show-header"
+            checked={showHeader}
+            onCheckedChange={onHeaderToggle}
+          />
+        }
+        description="Display the site header with logo and navigation"
+        icon={
+          showHeader ? (
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <EyeOff className="h-4 w-4 text-muted-foreground" />
+          )
+        }
+        label="Show Header"
+      />
+
+      {showHeader && (
+        <SettingSection
+          control={
+            <Switch
+              id="show-logo"
+              checked={showLogo}
+              onCheckedChange={onLogoToggle}
+            />
+          }
+          description="Display your uploaded logo in the site header"
+          icon={<ImageIcon className="h-4 w-4 text-muted-foreground" />}
+          label="Show Logo"
+        />
+      )}
+
+      {showHeader && showLogo && (
+        <LogoUploadSection
+          fileInputRef={fileInputRef}
+          isUploading={isUploading}
+          logoUrl={logoUrl}
+          onFilesAccepted={onFilesAccepted}
+          uploadProgress={uploadProgress}
+        />
+      )}
+
+      {showHeader && (
+        <SettingSection
+          control={
+            <Switch
+              id="show-site-name"
+              checked={showSiteName}
+              onCheckedChange={onSiteNameToggle}
+            />
+          }
+          description="Display your site name beside the logo"
+          icon={<Type className="h-4 w-4 text-muted-foreground" />}
+          label="Show Site Name"
+        />
+      )}
+
+      {showHeader && showSiteName && (
+        <SiteNameSection
+          isEditing={isEditingName}
+          name={isEditingName ? localName : siteName}
+          onCancel={onNameCancel}
+          onChange={onNameChange}
+          onEdit={onNameEdit}
+          onSave={onNameSave}
+        />
+      )}
+
+      {showHeader && (
+        <SettingSection
+          control={
+            <Switch
+              id="show-header-search"
+              checked={showHeaderSearch}
+              onCheckedChange={onHeaderSearchToggle}
+            />
+          }
+          description="Add a document search bar to the site header"
+          icon={<Search className="h-4 w-4 text-muted-foreground" />}
+          label="Search in Header"
+        />
+      )}
+    </>
+  );
+}
+
+function SiteGeneralSettings({
+  showBreadcrumbs,
+  showSidebarDefaultExpanded,
+  sidebarDefaultExpanded,
+  onShowBreadcrumbsChange,
+  onSidebarDefaultExpandedChange,
+  onOpenMetadataDialog,
+}: {
+  showBreadcrumbs: boolean;
+  showSidebarDefaultExpanded: boolean;
+  sidebarDefaultExpanded: boolean;
+  onShowBreadcrumbsChange: (checked: boolean) => void;
+  onSidebarDefaultExpandedChange: (checked: boolean) => void;
+  onOpenMetadataDialog: () => void;
+}) {
+  return (
+    <>
+      <SettingSection
+        control={
+          <Button variant="outline" size="sm" onClick={onOpenMetadataDialog}>
+            Configure
+          </Button>
+        }
+        description="Set favicon, title, description, and social sharing metadata"
+        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
+        label="SEO & Metadata"
+      />
+
+      <SettingSection
+        control={
+          <Switch
+            id="show-breadcrumbs"
+            checked={showBreadcrumbs}
+            onCheckedChange={onShowBreadcrumbsChange}
+          />
+        }
+        description="Display the current page path below navigation"
+        icon={<Route className="h-4 w-4 text-muted-foreground" />}
+        label="Show Breadcrumbs"
+      />
+
+      {showSidebarDefaultExpanded && (
+        <SettingSection
+          control={
+            <Switch
+              id="sidebar-default-expanded"
+              checked={sidebarDefaultExpanded}
+              onCheckedChange={onSidebarDefaultExpandedChange}
+            />
+          }
+          description="Show subpages expanded in the sidebar navigation"
+          icon={<PanelLeft className="h-4 w-4 text-muted-foreground" />}
+          label="Expand All Pages by Default"
+        />
+      )}
+    </>
+  );
+}
+
 export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const site = useSite(siteId);
   const updateSite = useMutation(api.sites.mutations.update);
@@ -322,6 +515,46 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     }
   };
 
+  const updateSidebarDefaultExpanded = async (expanded: boolean) => {
+    if (!site) return;
+    const oldValue = !!(site.settings as Record<string, unknown>)
+      .sidebarDefaultExpanded;
+    const shouldTrackUndo = Boolean(
+      undoContext && !undoContext.isUndoRedoExecuting,
+    );
+    const successMessage = expanded
+      ? "Sidebar pages will be expanded by default"
+      : "Sidebar pages will be collapsed by default";
+    const activeUndoContext = shouldTrackUndo ? undoContext : null;
+    try {
+      await updateSite({
+        siteId,
+        settings: { sidebarDefaultExpanded: expanded },
+      });
+      toast.success(successMessage);
+
+      if (activeUndoContext) {
+        activeUndoContext.pushCommand({
+          description: "Toggle sidebar default expanded",
+          undo: async () => {
+            await updateSite({
+              siteId,
+              settings: { sidebarDefaultExpanded: oldValue },
+            });
+          },
+          redo: async () => {
+            await updateSite({
+              siteId,
+              settings: { sidebarDefaultExpanded: expanded },
+            });
+          },
+        });
+      }
+    } catch (_error) {
+      toast.error("Failed to update setting");
+    }
+  };
+
   if (!site) {
     return (
       <div className="p-4 flex items-center justify-center">
@@ -337,6 +570,10 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const showBreadcrumbs =
     site.settings.showBreadcrumbs ??
     site.settings.navigationStyle !== "sidebar";
+  const showSidebarDefaultExpanded =
+    site.settings.navigationStyle === "sidebar";
+  const sidebarDefaultExpanded = !!(site.settings as Record<string, unknown>)
+    .sidebarDefaultExpanded;
 
   return (
     <div className="p-4 space-y-6">
@@ -347,129 +584,46 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         </p>
       </div>
 
-      <SettingSection
-        control={
-          <Switch
-            id="show-header"
-            checked={showHeader}
-            onCheckedChange={(checked) => updateSettings("showHeader", checked)}
-          />
+      <SiteHeaderSettings
+        showHeader={showHeader}
+        showHeaderSearch={showHeaderSearch}
+        showLogo={showLogo}
+        showSiteName={showSiteName}
+        siteName={site.name}
+        isEditingName={isEditingName}
+        localName={localName}
+        fileInputRef={fileInputRef}
+        isUploading={isUploading}
+        logoUrl={site.logoUrl}
+        uploadProgress={uploadProgress}
+        onFilesAccepted={handleLogoUpload}
+        onHeaderToggle={(checked) => updateSettings("showHeader", checked)}
+        onLogoToggle={(checked) => updateSettings("showLogo", checked)}
+        onSiteNameToggle={(checked) => updateSettings("showSiteName", checked)}
+        onHeaderSearchToggle={(checked) =>
+          updateSettings("showHeaderSearch", checked)
         }
-        description="Display the site header with logo and navigation"
-        icon={
-          showHeader ? (
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <EyeOff className="h-4 w-4 text-muted-foreground" />
-          )
-        }
-        label="Show Header"
+        onNameChange={setLocalName}
+        onNameCancel={() => {
+          setLocalName(site.name);
+          setIsEditingName(false);
+        }}
+        onNameEdit={() => {
+          setLocalName(site.name);
+          setIsEditingName(true);
+        }}
+        onNameSave={handleSaveName}
       />
 
-      {showHeader && (
-        <SettingSection
-          control={
-            <Switch
-              id="show-logo"
-              checked={showLogo}
-              onCheckedChange={(checked) => updateSettings("showLogo", checked)}
-            />
-          }
-          description="Display your uploaded logo in the site header"
-          icon={<ImageIcon className="h-4 w-4 text-muted-foreground" />}
-          label="Show Logo"
-        />
-      )}
-
-      {showHeader && showLogo && (
-        <LogoUploadSection
-          fileInputRef={fileInputRef}
-          isUploading={isUploading}
-          logoUrl={site.logoUrl}
-          onFilesAccepted={handleLogoUpload}
-          uploadProgress={uploadProgress}
-        />
-      )}
-
-      {showHeader && (
-        <SettingSection
-          control={
-            <Switch
-              id="show-site-name"
-              checked={showSiteName}
-              onCheckedChange={(checked) =>
-                updateSettings("showSiteName", checked)
-              }
-            />
-          }
-          description="Display your site name beside the logo"
-          icon={<Type className="h-4 w-4 text-muted-foreground" />}
-          label="Show Site Name"
-        />
-      )}
-
-      {showHeader && showSiteName && (
-        <SiteNameSection
-          isEditing={isEditingName}
-          name={localName}
-          onCancel={() => {
-            setLocalName(site.name);
-            setIsEditingName(false);
-          }}
-          onChange={setLocalName}
-          onEdit={() => {
-            setLocalName(site.name);
-            setIsEditingName(true);
-          }}
-          onSave={handleSaveName}
-        />
-      )}
-
-      {showHeader && (
-        <SettingSection
-          control={
-            <Switch
-              id="show-header-search"
-              checked={showHeaderSearch}
-              onCheckedChange={(checked) =>
-                updateSettings("showHeaderSearch", checked)
-              }
-            />
-          }
-          description="Add a document search bar to the site header"
-          icon={<Search className="h-4 w-4 text-muted-foreground" />}
-          label="Search in Header"
-        />
-      )}
-
-      <SettingSection
-        control={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMetadataDialogOpen(true)}
-          >
-            Configure
-          </Button>
+      <SiteGeneralSettings
+        showBreadcrumbs={showBreadcrumbs}
+        showSidebarDefaultExpanded={showSidebarDefaultExpanded}
+        sidebarDefaultExpanded={sidebarDefaultExpanded}
+        onShowBreadcrumbsChange={(checked) =>
+          updateSettings("showBreadcrumbs", checked)
         }
-        description="Set favicon, title, description, and social sharing metadata"
-        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-        label="SEO & Metadata"
-      />
-
-      <SettingSection
-        control={
-          <Switch
-            id="show-breadcrumbs"
-            checked={showBreadcrumbs}
-            onCheckedChange={(checked) =>
-              updateSettings("showBreadcrumbs", checked)
-            }
-          />
-        }
-        description="Display the current page path below navigation"
-        icon={<Route className="h-4 w-4 text-muted-foreground" />}
-        label="Show Breadcrumbs"
+        onSidebarDefaultExpandedChange={updateSidebarDefaultExpanded}
+        onOpenMetadataDialog={() => setMetadataDialogOpen(true)}
       />
 
       <MetadataDialog

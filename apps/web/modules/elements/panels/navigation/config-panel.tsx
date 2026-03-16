@@ -9,7 +9,6 @@ import {
   NAVIGATION_STYLES,
   type NavigationStyle,
 } from "@baseblocks/types/elements/navigation";
-import { Switch } from "@baseblocks/ui/switch";
 import { useMutation } from "convex/react";
 import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -28,14 +27,12 @@ const NAV_STYLE_ICONS: Record<NavigationStyle, LucideIcon> = {
 function SidebarPreview() {
   return (
     <div className="w-full h-full flex rounded overflow-hidden border border-border/50">
-      {/* Sidebar */}
       <div className="w-1/4 bg-muted/80 border-r border-border/50 flex flex-col gap-1 p-1">
         <div className="h-1.5 w-full bg-foreground/20 rounded-sm" />
         <div className="h-1 w-3/4 bg-foreground/10 rounded-sm" />
         <div className="h-1 w-3/4 bg-foreground/10 rounded-sm" />
         <div className="h-1 w-3/4 bg-foreground/10 rounded-sm" />
       </div>
-      {/* Content */}
       <div className="flex-1 p-1.5 flex flex-col gap-1">
         <div className="h-1.5 w-1/2 bg-foreground/15 rounded-sm" />
         <div className="flex-1 bg-muted/40 rounded-sm" />
@@ -47,7 +44,6 @@ function SidebarPreview() {
 function TopNavPreview() {
   return (
     <div className="w-full h-full flex flex-col rounded overflow-hidden border border-border/50">
-      {/* Top nav */}
       <div className="h-3 bg-muted/80 border-b border-border/50 flex items-center gap-1 px-1.5">
         <div className="h-1.5 w-1.5 bg-foreground/20 rounded-sm" />
         <div className="flex-1" />
@@ -55,7 +51,6 @@ function TopNavPreview() {
         <div className="h-1 w-3 bg-foreground/10 rounded-sm" />
         <div className="h-1 w-3 bg-foreground/10 rounded-sm" />
       </div>
-      {/* Content */}
       <div className="flex-1 p-1.5 flex flex-col gap-1">
         <div className="h-1.5 w-1/3 bg-foreground/15 rounded-sm" />
         <div className="flex-1 bg-muted/40 rounded-sm" />
@@ -67,19 +62,16 @@ function TopNavPreview() {
 function SubNavPreview() {
   return (
     <div className="w-full h-full flex flex-col rounded overflow-hidden border border-border/50">
-      {/* Top nav */}
       <div className="h-3 bg-muted/80 border-b border-border/50 flex items-center gap-1 px-1.5">
         <div className="h-1.5 w-1.5 bg-foreground/20 rounded-sm" />
         <div className="flex-1" />
         <div className="h-1 w-3 bg-foreground/10 rounded-sm" />
       </div>
-      {/* Sub nav */}
       <div className="h-2.5 bg-muted/50 border-b border-border/50 flex items-center gap-1 px-1.5">
         <div className="h-1 w-4 bg-foreground/15 rounded-sm" />
         <div className="h-1 w-4 bg-foreground/10 rounded-sm" />
         <div className="h-1 w-4 bg-foreground/10 rounded-sm" />
       </div>
-      {/* Content */}
       <div className="flex-1 p-1.5 flex flex-col gap-1">
         <div className="h-1.5 w-1/3 bg-foreground/15 rounded-sm" />
         <div className="flex-1 bg-muted/40 rounded-sm" />
@@ -138,46 +130,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     }
   };
 
-  const updateSidebarDefaultExpanded = async (expanded: boolean) => {
-    if (!site) return;
-    const oldValue = !!(site.settings as Record<string, unknown>)
-      .sidebarDefaultExpanded;
-    const shouldTrackUndo = Boolean(
-      undoContext && !undoContext.isUndoRedoExecuting,
-    );
-    const successMessage = expanded
-      ? "Sidebar pages will be expanded by default"
-      : "Sidebar pages will be collapsed by default";
-    const activeUndoContext = shouldTrackUndo ? undoContext : null;
-    try {
-      await updateSite({
-        siteId,
-        settings: { sidebarDefaultExpanded: expanded },
-      });
-      toast.success(successMessage);
-
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: "Toggle sidebar default expanded",
-          undo: async () => {
-            await updateSite({
-              siteId,
-              settings: { sidebarDefaultExpanded: oldValue },
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              settings: { sidebarDefaultExpanded: expanded },
-            });
-          },
-        });
-      }
-    } catch (_error) {
-      toast.error("Failed to update setting");
-    }
-  };
-
   if (!site) {
     return (
       <div className="p-4 flex items-center justify-center">
@@ -225,31 +177,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           );
         })}
       </div>
-
-      {/* Sidebar-specific settings */}
-      {currentNavStyle === "sidebar" && (
-        <div className="mt-4 pt-4 border-t">
-          <label
-            htmlFor="sidebar-default-expanded"
-            className="flex items-center justify-between gap-3 cursor-pointer"
-          >
-            <div>
-              <p className="text-sm font-medium">Expand all pages by default</p>
-              <p className="text-xs text-muted-foreground">
-                Show subpages expanded in the sidebar navigation
-              </p>
-            </div>
-            <Switch
-              id="sidebar-default-expanded"
-              checked={
-                !!(site.settings as Record<string, unknown>)
-                  .sidebarDefaultExpanded
-              }
-              onCheckedChange={updateSidebarDefaultExpanded}
-            />
-          </label>
-        </div>
-      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ interface PublicSiteMainContentProps {
   currentPath: string;
   navigationStyle: NavigationStyle;
   showBreadcrumbs: boolean;
+  hasTopHeader: boolean;
 }
 
 export function PublicSiteMainContent({
@@ -37,8 +38,17 @@ export function PublicSiteMainContent({
   currentPath,
   navigationStyle,
   showBreadcrumbs,
+  hasTopHeader,
 }: PublicSiteMainContentProps) {
   const showSubNav = navigationStyle === "subnav";
+  const subNavTopClass = hasTopHeader ? "top-14" : "top-0";
+  const breadcrumbTopClass = showSubNav
+    ? hasTopHeader
+      ? "top-24"
+      : "top-10"
+    : hasTopHeader
+      ? "top-14"
+      : "top-0";
 
   return (
     <>
@@ -46,7 +56,7 @@ export function PublicSiteMainContent({
         <SubNavBar
           pages={pages}
           currentPath={currentPath}
-          className="sticky top-14 z-30"
+          className={cn("sticky z-30", subNavTopClass)}
         />
       )}
 
@@ -54,7 +64,7 @@ export function PublicSiteMainContent({
         <BreadcrumbBar
           pageId={currentPage._id as Id<"pages">}
           pageTitle={currentPage.title}
-          className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
+          className={cn("sticky z-20", breadcrumbTopClass)}
         />
       )}
 

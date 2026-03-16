@@ -1,5 +1,6 @@
 "use client";
 
+import { ModeToggle } from "@/components/mode-toggle";
 import { SiteLogo } from "@/components/site-logo";
 import { cn } from "@/lib/utils";
 import { NavItem } from "@/modules/navigation";
@@ -8,7 +9,9 @@ import type { SiteCustomization } from "@baseblocks/types/elements/customization
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
+  SidebarRail,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Skeleton } from "@baseblocks/ui/skeleton";
@@ -90,6 +93,12 @@ export function PublicSiteSidebar({
           )}
         </nav>
       </SidebarContent>
+      <SidebarFooter className="border-r border-t px-4 py-3">
+        <div className="flex items-center justify-end">
+          <ModeToggle />
+        </div>
+      </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 }
