@@ -140,11 +140,10 @@ export function PublicSiteLayout({
   }, [customizationStyles, isCustomized]);
 
   const showSidebar = navigationStyle === "sidebar";
-  const showTopHeader = !showSidebar && showHeader;
 
   const mainContent = (
     <>
-      {showTopHeader && (
+      {showHeader && (
         <PublicSiteHeader
           site={site}
           team={team}
@@ -155,7 +154,7 @@ export function PublicSiteLayout({
 
       {!showSidebar &&
         site.settings.customization?.showHeaderGradient &&
-        showTopHeader && (
+        showHeader && (
           <div className="relative z-30">
             <GradientStripe customization={site.settings.customization} />
           </div>
@@ -178,7 +177,6 @@ export function PublicSiteLayout({
         currentPath={currentPathString}
         navigationStyle={navigationStyle}
         showBreadcrumbs={showBreadcrumbs}
-        hasTopHeader={showTopHeader}
       />
     </>
   );
@@ -192,6 +190,11 @@ export function PublicSiteLayout({
       <PublicSubpageProvider>
         {showSidebar ? (
           <SidebarProvider>
+            {site.settings.customization?.showHeaderGradient && showHeader && (
+              <div className="fixed top-14 left-0 right-0 z-30">
+                <GradientStripe customization={site.settings.customization} />
+              </div>
+            )}
             <div
               className="h-screen bg-background flex overflow-hidden w-full"
               style={customizationStyles}
