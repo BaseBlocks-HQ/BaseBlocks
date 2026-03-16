@@ -22,6 +22,8 @@ interface EditorHeaderProps {
   siteSlug: string;
   siteId: Id<"sites">;
   sitePublished: boolean;
+  siteName: string;
+  siteLogoUrl?: string;
   onPublish: () => void;
   onUnpublish?: () => void;
 }
@@ -31,6 +33,8 @@ export function EditorHeader({
   siteSlug,
   siteId,
   sitePublished,
+  siteName,
+  siteLogoUrl,
   onPublish,
   onUnpublish,
 }: EditorHeaderProps) {
@@ -68,6 +72,8 @@ export function EditorHeader({
           isUndoRedoExecuting={isUndoRedoExecuting}
           currentPageId={currentPageId}
           showControls={showControls}
+          siteName={siteName}
+          siteLogoUrl={siteLogoUrl}
           toggleControls={toggleControls}
         />
         <EditorHeaderRightSection

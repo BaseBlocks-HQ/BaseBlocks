@@ -27,8 +27,8 @@ import {
   ConnectedPageEditor,
   ConnectedSubpageEditPanel,
 } from "./components/connected-editors";
+import { EditorFloatingRail } from "./editor-floating-rail";
 import { EditorHeader } from "./editor-header";
-import { EditorSidebar } from "./editor-sidebar";
 import { useSidebarOperations } from "./hooks/use-sidebar-operations";
 import { ConvexEditorMutationsProvider } from "./mutations-bridge";
 
@@ -196,27 +196,30 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">
-        <EditorSidebar
-          site={site}
-          team={team}
-          pages={pages}
-          selectedPageId={selectedPage?._id}
-          selectedSlotId={selection.slotId}
-          onSelectPage={setSelectedPageId}
-          onAddLayout={handleAddLayout}
-          onAddBlock={handleAddBlock}
-          onEnableTabs={handleEnableTabs}
-        />
-
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <EditorHeader
             teamSlug={team.slug}
             siteSlug={site.slug}
             siteId={site._id}
             sitePublished={site.isPublished}
+            siteName={site.name}
+            siteLogoUrl={site.logoUrl}
             onPublish={handlePublish}
             onUnpublish={handleUnpublish}
           />
+
+          <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6">
+            <EditorFloatingRail
+              site={site}
+              pages={pages}
+              selectedPageId={selectedPage?._id}
+              selectedSlotId={selection.slotId}
+              onSelectPage={setSelectedPageId}
+              onAddLayout={handleAddLayout}
+              onAddBlock={handleAddBlock}
+              onEnableTabs={handleEnableTabs}
+            />
+          </div>
 
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
             {showSubpagePanel ? (
@@ -227,7 +230,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizablePanel defaultSize={58} minSize={30}>
                       <PortalContainerProvider value={portalContainer}>
                         <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-8"
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pl-20 md:p-8 md:pl-24 lg:pl-28"
                           style={customizationStyles}
                           {...(isCustomized
                             ? { "data-site-customized": "" }
@@ -282,7 +285,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-auto p-4 md:p-8"
+                  className="h-full overflow-auto p-4 pl-20 md:p-8 md:pl-24 lg:pl-28"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >

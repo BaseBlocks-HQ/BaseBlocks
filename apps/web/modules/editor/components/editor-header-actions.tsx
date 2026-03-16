@@ -1,5 +1,6 @@
 "use client";
 
+import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getSiteOpenUrl } from "@/lib/url";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
@@ -11,13 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Separator } from "@baseblocks/ui/separator";
-import { SidebarTrigger } from "@baseblocks/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
 import {
+  ArrowLeft,
   Check,
   ChevronDown,
   ExternalLink,
@@ -32,6 +33,8 @@ import {
   Share2,
   Undo2,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 function openSite(teamSlug: string, siteSlug: string) {
   window.open(getSiteOpenUrl(teamSlug, siteSlug), "_blank");
@@ -46,6 +49,8 @@ interface EditorHeaderLeftSectionProps {
   isUndoRedoExecuting: boolean;
   currentPageId: string | null;
   showControls: boolean;
+  siteName: string;
+  siteLogoUrl?: string;
   toggleControls: () => void;
 }
 
@@ -72,11 +77,40 @@ export function EditorHeaderLeftSection({
   isUndoRedoExecuting,
   currentPageId,
   showControls,
+  siteName,
+  siteLogoUrl,
   toggleControls,
 }: EditorHeaderLeftSectionProps) {
   return (
-    <div className="flex items-center gap-2">
-      <SidebarTrigger />
+    <div className="flex min-w-0 items-center gap-2">
+      <Link href="/dashboard">
+        <Button variant="ghost" size="icon-sm">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Back to dashboard</span>
+        </Button>
+      </Link>
+      <div className="flex min-w-0 items-center gap-3">
+        {siteLogoUrl ? (
+          <Image
+            src={toProxyDownloadUrl(siteLogoUrl)}
+            alt={siteName}
+            className="h-8 w-8 rounded-lg object-contain"
+            width={32}
+            height={32}
+            unoptimized
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+            {siteName[0]?.toUpperCase() ?? "S"}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium leading-none">
+            {siteName}
+          </p>
+        </div>
+      </div>
+      <Separator orientation="vertical" className="mx-1 h-5" />
       {canEdit && (
         <UndoRedoControls
           canUndo={canUndo}
