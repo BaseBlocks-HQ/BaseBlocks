@@ -1,6 +1,5 @@
 "use client";
 
-import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
@@ -70,8 +69,6 @@ export function LayoutRenderer({
   const [actionsOpen, setActionsOpen] = useState(false);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressClickRef = useRef(false);
-  const editorCtx = useEditorUiOptional();
-  const showControls = editorCtx?.showControls ?? true;
   const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
   const spacerHeight = layout.settings.spacerHeight ?? "medium";
   const showActions = isSelected && actionsOpen;
@@ -130,51 +127,49 @@ export function LayoutRenderer({
       }}
     >
       <div className="flex gap-1 items-start">
-        {showControls && (
-          <div
+        <div
+          className={cn(
+            "flex flex-col gap-0.5 shrink-0",
+            "transition-opacity",
+            selectedBlockId
+              ? "opacity-0 pointer-events-none"
+              : "opacity-0 group-hover/layout:opacity-100",
+            isSelected && !selectedBlockId && "opacity-100",
+          )}
+        >
+          <button
+            ref={dragHandleRef}
+            type="button"
             className={cn(
-              "flex flex-col gap-0.5 shrink-0",
-              "transition-opacity",
-              selectedBlockId
-                ? "opacity-0 pointer-events-none"
-                : "opacity-0 group-hover/layout:opacity-100",
-              isSelected && !selectedBlockId && "opacity-100",
+              "flex items-center justify-center h-6 w-6 rounded",
+              "cursor-grab active:cursor-grabbing",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isSelected
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
+            onPointerDownCapture={handlePointerDownCapture}
+            onPointerMoveCapture={handlePointerMoveCapture}
+            onPointerUpCapture={handlePointerUpCapture}
+            onClick={handleHandleClick}
+            {...dragHandleProps}
           >
-            <button
-              ref={dragHandleRef}
-              type="button"
-              className={cn(
-                "flex items-center justify-center h-6 w-6 rounded",
-                "cursor-grab active:cursor-grabbing",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isSelected
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-              onPointerDownCapture={handlePointerDownCapture}
-              onPointerMoveCapture={handlePointerMoveCapture}
-              onPointerUpCapture={handlePointerUpCapture}
-              onClick={handleHandleClick}
-              {...dragHandleProps}
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+          {showActions && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
             >
-              <GripVertical className="h-3.5 w-3.5" />
-            </button>
-            {showActions && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-muted-foreground hover:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        )}
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1 rounded-md transition-colors hover:bg-muted/20">
           {layout.type === "spacer" ? (

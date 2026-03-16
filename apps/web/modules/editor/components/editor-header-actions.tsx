@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Separator } from "@baseblocks/ui/separator";
@@ -25,13 +24,10 @@ import {
   Eye,
   EyeOff,
   Globe,
-  GripVertical,
   History,
   MoreHorizontal,
-  Redo2,
   Rocket,
   Share2,
-  Undo2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,16 +38,8 @@ function openSite(teamSlug: string, siteSlug: string) {
 
 interface EditorHeaderLeftSectionProps {
   canEdit: boolean;
-  canUndo: (scope?: string) => boolean;
-  canRedo: (scope?: string) => boolean;
-  undo: (scope?: string) => void;
-  redo: (scope?: string) => void;
-  isUndoRedoExecuting: boolean;
-  currentPageId: string | null;
-  showControls: boolean;
   siteName: string;
   siteLogoUrl?: string;
-  toggleControls: () => void;
 }
 
 interface EditorHeaderRightSectionProps {
@@ -70,16 +58,8 @@ interface EditorHeaderRightSectionProps {
 
 export function EditorHeaderLeftSection({
   canEdit,
-  canUndo,
-  canRedo,
-  undo,
-  redo,
-  isUndoRedoExecuting,
-  currentPageId,
-  showControls,
   siteName,
   siteLogoUrl,
-  toggleControls,
 }: EditorHeaderLeftSectionProps) {
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -110,38 +90,11 @@ export function EditorHeaderLeftSection({
           </p>
         </div>
       </div>
-      <Separator orientation="vertical" className="mx-1 h-5" />
-      {canEdit && (
-        <UndoRedoControls
-          canUndo={canUndo}
-          canRedo={canRedo}
-          undo={undo}
-          redo={redo}
-          isExecuting={isUndoRedoExecuting}
-          currentPageId={currentPageId}
-        />
-      )}
       {!canEdit && (
         <Badge variant="secondary" className="gap-1">
           <Eye className="h-3 w-3" />
           View Only
         </Badge>
-      )}
-      {canEdit && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={showControls ? "secondary" : "ghost"}
-              size="icon-sm"
-              onClick={toggleControls}
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {showControls ? "Hide controls" : "Show controls"}
-          </TooltipContent>
-        </Tooltip>
       )}
     </div>
   );
@@ -162,99 +115,92 @@ export function EditorHeaderRightSection({
 }: EditorHeaderRightSectionProps) {
   return (
     <div className="flex items-center gap-1">
-      {canEdit && (
-        <EditorHeaderOverflowMenu
-          sitePublished={sitePublished}
-          teamSlug={teamSlug}
-          siteSlug={siteSlug}
-          onOpenShare={onOpenShare}
-          onOpenHistory={onOpenHistory}
-          t={t}
-        />
-      )}
-
-      {canEdit && (
-        <EditorHeaderSecondaryActions
-          sitePublished={sitePublished}
-          teamSlug={teamSlug}
-          siteSlug={siteSlug}
-          onOpenShare={onOpenShare}
-          onOpenHistory={onOpenHistory}
-          t={t}
-        />
-      )}
-
-      <Separator orientation="vertical" className="mx-1.5 h-5" />
-
       {canEdit ? (
-        <DeployCta
-          hasUndeployedChanges={hasUndeployedChanges}
+        <>
+          <EditorHeaderMenuButton
+            sitePublished={sitePublished}
+            onOpenShare={onOpenShare}
+            onOpenHistory={onOpenHistory}
+          />
+          <ViewSiteButton
+            sitePublished={sitePublished}
+            teamSlug={teamSlug}
+            siteSlug={siteSlug}
+            t={t}
+          />
+          <Separator orientation="vertical" className="mx-1.5 h-5" />
+          <DeployCta
+            hasUndeployedChanges={hasUndeployedChanges}
+            sitePublished={sitePublished}
+            onDeploy={onOpenDeploy}
+            onPublish={onPublish}
+            onUnpublish={onUnpublish}
+            t={t}
+          />
+        </>
+      ) : (
+        <ViewSiteButton
           sitePublished={sitePublished}
-          onDeploy={onOpenDeploy}
-          onPublish={onPublish}
-          onUnpublish={onUnpublish}
+          teamSlug={teamSlug}
+          siteSlug={siteSlug}
           t={t}
         />
-      ) : (
-        <>
-          <Separator orientation="vertical" className="mx-1.5 h-5" />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!sitePublished}
-                  onClick={() => openSite(teamSlug, siteSlug)}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {t("editor.viewSite")}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              {sitePublished
-                ? "Open published site"
-                : "Publish your site first"}
-            </TooltipContent>
-          </Tooltip>
-        </>
       )}
     </div>
   );
 }
 
-function EditorHeaderOverflowMenu({
+function ViewSiteButton({
   sitePublished,
   teamSlug,
   siteSlug,
-  onOpenShare,
-  onOpenHistory,
   t,
 }: {
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
+  t: (key: string) => string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5"
+            disabled={!sitePublished}
+            onClick={() => openSite(teamSlug, siteSlug)}
+          >
+            <ExternalLink className="h-4 w-4" />
+            {t("editor.viewSite")}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {sitePublished ? "Open published site" : "Publish your site first"}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function EditorHeaderMenuButton({
+  sitePublished,
+  onOpenShare,
+  onOpenHistory,
+}: {
+  sitePublished: boolean;
   onOpenShare: () => void;
   onOpenHistory: () => void;
-  t: (key: string) => string;
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="md:hidden">
+        <Button variant="ghost" size="icon-sm">
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onClick={() => openSite(teamSlug, siteSlug)}
-          disabled={!sitePublished}
-        >
-          <ExternalLink />
-          {t("editor.viewSite")}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onOpenShare}>
           <Share2 />
           Share
@@ -267,141 +213,6 @@ function EditorHeaderOverflowMenu({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function EditorHeaderSecondaryActions({
-  sitePublished,
-  teamSlug,
-  siteSlug,
-  onOpenShare,
-  onOpenHistory,
-  t,
-}: {
-  sitePublished: boolean;
-  teamSlug: string;
-  siteSlug: string;
-  onOpenShare: () => void;
-  onOpenHistory: () => void;
-  t: (key: string) => string;
-}) {
-  return (
-    <div className="hidden md:flex items-center gap-1">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              disabled={!sitePublished}
-              onClick={() => openSite(teamSlug, siteSlug)}
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t("editor.viewSite")}
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          {sitePublished ? "Open published site" : "Publish your site first"}
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5"
-            onClick={onOpenShare}
-          >
-            <Share2 className="h-4 w-4" />
-            Share
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Share site</TooltipContent>
-      </Tooltip>
-      {sitePublished && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              onClick={onOpenHistory}
-            >
-              <History className="h-4 w-4" />
-              History
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Deployment History</TooltipContent>
-        </Tooltip>
-      )}
-    </div>
-  );
-}
-
-function UndoRedoControls({
-  canUndo,
-  canRedo,
-  undo,
-  redo,
-  isExecuting,
-  currentPageId,
-}: {
-  canUndo: (scope?: string) => boolean;
-  canRedo: (scope?: string) => boolean;
-  undo: (scope?: string) => void;
-  redo: (scope?: string) => void;
-  isExecuting: boolean;
-  currentPageId: string | null;
-}) {
-  return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={
-              isExecuting ||
-              (!canUndo(currentPageId ?? undefined) && !canUndo())
-            }
-            onClick={() => {
-              if (currentPageId && canUndo(currentPageId)) {
-                undo(currentPageId);
-                return;
-              }
-              undo();
-            }}
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Undo (Cmd+Z)</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            disabled={
-              isExecuting ||
-              (!canRedo(currentPageId ?? undefined) && !canRedo())
-            }
-            onClick={() => {
-              if (currentPageId && canRedo(currentPageId)) {
-                redo(currentPageId);
-                return;
-              }
-              redo();
-            }}
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Redo (Cmd+Shift+Z)</TooltipContent>
-      </Tooltip>
-    </>
   );
 }
 

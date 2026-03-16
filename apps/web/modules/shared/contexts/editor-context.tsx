@@ -45,8 +45,6 @@ interface EditorUiContextValue {
   setActiveTabId: (tabId: string | null) => void;
   currentPageId: string | null;
   setCurrentPageId: (pageId: string | null) => void;
-  showControls: boolean;
-  toggleControls: () => void;
 }
 
 interface EditorUndoContextValue {
@@ -80,19 +78,10 @@ export function EditorProvider({
     slotId: null,
     blockId: null,
   });
-  const [uiState, setUiState] = useState(() => {
-    const initialShowControls = (() => {
-      if (typeof window === "undefined") return true;
-      const stored = localStorage.getItem("editor:showControls");
-      return stored === null ? true : stored === "true";
-    })();
-
-    return {
-      editingSubpage: null as EditingSubpage | null,
-      activeTabId: null as string | null,
-      currentPageId: null as string | null,
-      showControls: initialShowControls,
-    };
+  const [uiState, setUiState] = useState({
+    editingSubpage: null as EditingSubpage | null,
+    activeTabId: null as string | null,
+    currentPageId: null as string | null,
   });
 
   // Derive hasUndeployedChanges from site data
@@ -207,16 +196,6 @@ export function EditorProvider({
         ...current,
         currentPageId,
       })),
-    showControls: uiState.showControls,
-    toggleControls: () =>
-      setUiState((current) => {
-        const showControls = !current.showControls;
-        localStorage.setItem("editor:showControls", String(showControls));
-        return {
-          ...current,
-          showControls,
-        };
-      }),
   };
 
   const undoValue: EditorUndoContextValue = {

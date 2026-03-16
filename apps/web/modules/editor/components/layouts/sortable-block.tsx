@@ -8,10 +8,7 @@ import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/elements/framework/registry";
-import {
-  useEditorSiteOptional,
-  useEditorUiOptional,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorSiteOptional } from "@/modules/shared/contexts/editor-context";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/types";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -62,9 +59,7 @@ export function SortableBlock({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressClickRef = useRef(false);
   const editorSite = useEditorSiteOptional();
-  const editorUi = useEditorUiOptional();
   const clipboard = useBlockClipboardOptional();
-  const showControls = editorUi?.showControls ?? true;
   const canEdit = editorSite?.canEdit ?? true;
   const {
     attributes,
@@ -146,104 +141,102 @@ export function SortableBlock({
       }}
     >
       <div className="flex gap-1 items-start">
-        {showControls && (
-          <div
+        <div
+          className={cn(
+            "flex flex-col gap-0.5 shrink-0",
+            "transition-opacity",
+            "opacity-0 group-hover/block:opacity-100",
+            isSelected && "opacity-100",
+          )}
+        >
+          <button
+            ref={setActivatorNodeRef}
+            type="button"
             className={cn(
-              "flex flex-col gap-0.5 shrink-0",
-              "transition-opacity",
-              "opacity-0 group-hover/block:opacity-100",
-              isSelected && "opacity-100",
+              "flex items-center justify-center h-6 w-6 rounded",
+              "cursor-grab active:cursor-grabbing",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isSelected
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
+            onPointerDownCapture={handlePointerDownCapture}
+            onPointerMoveCapture={handlePointerMoveCapture}
+            onPointerUpCapture={handlePointerUpCapture}
+            onClick={handleHandleClick}
+            {...attributes}
+            {...listeners}
           >
-            <button
-              ref={setActivatorNodeRef}
-              type="button"
-              className={cn(
-                "flex items-center justify-center h-6 w-6 rounded",
-                "cursor-grab active:cursor-grabbing",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isSelected
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
-              )}
-              onPointerDownCapture={handlePointerDownCapture}
-              onPointerMoveCapture={handlePointerMoveCapture}
-              onPointerUpCapture={handlePointerUpCapture}
-              onClick={handleHandleClick}
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="h-3.5 w-3.5" />
-            </button>
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
 
-            {showActions && (
-              <>
-                {hasConfig && ConfigPanel && (
-                  <Popover
-                    open={isSelected && configOpen}
-                    onOpenChange={setConfigOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Settings2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      side="left"
-                      align="start"
-                      className="w-64"
+          {showActions && (
+            <>
+              {hasConfig && ConfigPanel && (
+                <Popover
+                  open={isSelected && configOpen}
+                  onOpenChange={setConfigOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-muted-foreground hover:text-foreground"
                       onClick={(e) => e.stopPropagation()}
-                      onPointerDownOutside={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (target.closest('[data-slot="select-content"]')) {
-                          e.preventDefault();
-                        }
-                      }}
                     >
-                      {createElement(ConfigPanel, {
-                        content: block.content,
-                        onUpdate,
-                      })}
-                    </PopoverContent>
-                  </Popover>
-                )}
-                {canCopyBlock && (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      clipboard?.copyBlock({
-                        type: block.type,
-                        content: block.content,
-                      });
-                      toast.success("Block copied");
+                      <Settings2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="left"
+                    align="start"
+                    className="w-64"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDownOutside={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.closest('[data-slot="select-content"]')) {
+                        e.preventDefault();
+                      }
                     }}
                   >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+                    {createElement(ConfigPanel, {
+                      content: block.content,
+                      onUpdate,
+                    })}
+                  </PopoverContent>
+                </Popover>
+              )}
+              {canCopyBlock && (
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  className="text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-foreground"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onRemove();
+                    clipboard?.copyBlock({
+                      type: block.type,
+                      content: block.content,
+                    });
+                    toast.success("Block copied");
                   }}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Copy className="h-3.5 w-3.5" />
                 </Button>
-              </>
-            )}
-          </div>
-        )}
+              )}
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>

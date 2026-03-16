@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useEditorSite,
-  useEditorUi,
-  useEditorUndo,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -40,8 +36,6 @@ export function EditorHeader({
 }: EditorHeaderProps) {
   const t = useTranslations();
   const { canEdit, hasUndeployedChanges } = useEditorSite();
-  const { currentPageId, showControls, toggleControls } = useEditorUi();
-  const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -65,16 +59,8 @@ export function EditorHeader({
       <header className="border-b h-14 shrink-0 flex items-center justify-between px-4 bg-background z-40">
         <EditorHeaderLeftSection
           canEdit={canEdit}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          undo={undo}
-          redo={redo}
-          isUndoRedoExecuting={isUndoRedoExecuting}
-          currentPageId={currentPageId}
-          showControls={showControls}
           siteName={siteName}
           siteLogoUrl={siteLogoUrl}
-          toggleControls={toggleControls}
         />
         <EditorHeaderRightSection
           canEdit={canEdit}

@@ -2,10 +2,7 @@
 
 import { useBlockClipboardOptional } from "@/modules/editor/contexts/block-clipboard-context";
 import { canPasteCopiedBlock } from "@/modules/editor/lib/block-clipboard";
-import {
-  useEditorSiteOptional,
-  useEditorUiOptional,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorSiteOptional } from "@/modules/shared/contexts/editor-context";
 import { DndProvider, type DragEndEvent } from "@/modules/shared/dnd";
 import type {
   AnyContent,
@@ -47,17 +44,12 @@ export function LayoutSlot({
 }: LayoutSlotProps) {
   const isEmpty = slot.blocks.length === 0;
   const blockIds = slot.blocks.map((b) => b.id);
-  const editorUi = useEditorUiOptional();
   const editorSite = useEditorSiteOptional();
   const clipboard = useBlockClipboardOptional();
-  const showControls = editorUi?.showControls ?? true;
   const canEdit = editorSite?.canEdit ?? true;
   const copiedBlock = clipboard?.copiedBlock ?? null;
   const canPasteBlock =
-    showControls &&
-    canEdit &&
-    canPasteCopiedBlock(copiedBlock) &&
-    !!onPasteBlock;
+    canEdit && canPasteCopiedBlock(copiedBlock) && !!onPasteBlock;
 
   const handleBlockDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

@@ -38,7 +38,7 @@ export function PageTabBar({
   onStartRenameTab,
   onFinishRenameTab,
 }: PageTabBarProps) {
-  const { clearSelection, showControls } = useEditorUi();
+  const { clearSelection } = useEditorUi();
 
   return (
     <div
@@ -47,18 +47,16 @@ export function PageTabBar({
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
-      {showControls && (
-        <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-            onClick={onDisableTabs}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+      <div className="opacity-0 group-hover/tabbar:opacity-100 transition-opacity">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          onClick={onDisableTabs}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
 
       <Tabs
         value={activeTabId ?? undefined}
@@ -90,46 +88,44 @@ export function PageTabBar({
               ) : (
                 <span className="select-none">{tab.label}</span>
               )}
-              {showControls && (
-                <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
-                  <button
-                    type="button"
-                    className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
-                    onClick={(e) => {
+              <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartRenameTab(tab);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
                       e.stopPropagation();
                       onStartRenameTab(tab);
+                    }
+                  }}
+                >
+                  <Pencil className="h-2.5 w-2.5" />
+                </button>
+                {index >= 2 && (
+                  <button
+                    type="button"
+                    className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveTab(tab.id);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         e.stopPropagation();
-                        onStartRenameTab(tab);
+                        onRemoveTab(tab.id);
                       }
                     }}
                   >
-                    <Pencil className="h-2.5 w-2.5" />
+                    <X className="h-3 w-3" />
                   </button>
-                  {index >= 2 && (
-                    <button
-                      type="button"
-                      className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveTab(tab.id);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onRemoveTab(tab.id);
-                        }
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </TabsTrigger>
           ))}
         </TabsList>

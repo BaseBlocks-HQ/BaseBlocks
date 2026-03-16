@@ -9,6 +9,7 @@ import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-s
 import {
   useEditorSite,
   useEditorUi,
+  useEditorUndo,
 } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import type {
@@ -17,10 +18,12 @@ import type {
   PageListItem,
 } from "@baseblocks/types";
 import type { ElementCategory } from "@baseblocks/types/elements";
+import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { Separator } from "@baseblocks/ui/separator";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
-import { PanelTop } from "lucide-react";
+import { PanelTop, Redo2, Undo2 } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -182,6 +185,54 @@ function FloatingRailButton({
     >
       {icon}
     </button>
+  );
+}
+
+function RailUndoRedoControls() {
+  const { currentPageId } = useEditorUi();
+  const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
+
+  return (
+    <div className="flex flex-col gap-1 pt-2">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="h-11 w-11 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        disabled={
+          isUndoRedoExecuting ||
+          (!canUndo(currentPageId ?? undefined) && !canUndo())
+        }
+        onClick={() => {
+          if (currentPageId && canUndo(currentPageId)) {
+            undo(currentPageId);
+            return;
+          }
+          undo();
+        }}
+      >
+        <Undo2 className="h-4 w-4" />
+        <span className="sr-only">Undo</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="h-11 w-11 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        disabled={
+          isUndoRedoExecuting ||
+          (!canRedo(currentPageId ?? undefined) && !canRedo())
+        }
+        onClick={() => {
+          if (currentPageId && canRedo(currentPageId)) {
+            redo(currentPageId);
+            return;
+          }
+          redo();
+        }}
+      >
+        <Redo2 className="h-4 w-4" />
+        <span className="sr-only">Redo</span>
+      </Button>
+    </div>
   );
 }
 
@@ -459,6 +510,8 @@ export function EditorFloatingRail({
               />
             );
           })}
+          <Separator className="mx-1 mt-2 w-auto" />
+          <RailUndoRedoControls />
         </div>
       </div>
 
