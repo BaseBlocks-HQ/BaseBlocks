@@ -165,6 +165,7 @@
   --color-fd-accent: var(--accent);
   --color-fd-accent-foreground: var(--accent-foreground);
   --color-fd-ring: oklch(0.7 0.16 72);
+  --bb-docs-sidebar-surface: var(--sidebar);
 }
 
 .dark .bb-docs-shell {
@@ -184,11 +185,13 @@
   --color-fd-accent: var(--accent);
   --color-fd-accent-foreground: var(--accent-foreground);
   --color-fd-ring: oklch(0.78 0.16 72);
+  --bb-docs-sidebar-surface: var(--sidebar);
 }
 
 .bb-docs-shell #nd-sidebar,
 .bb-docs-shell [data-sidebar-panel],
 .bb-docs-shell footer[grid-area="footer"] {
+  background: var(--bb-docs-sidebar-surface);
   backdrop-filter: blur(18px);
 }
 
