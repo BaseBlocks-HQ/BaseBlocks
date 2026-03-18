@@ -6,10 +6,7 @@ type DocsPageHeroProps = {
   title: string;
 };
 
-export function DocsPageHero({
-  description,
-  title,
-}: DocsPageHeroProps) {
+export function DocsPageHero({ description, title }: DocsPageHeroProps) {
   return (
     <section className="bb-docs-hero relative overflow-hidden rounded-[1.75rem] border px-5 py-7 md:px-7 md:py-9">
       <div className="relative z-10">

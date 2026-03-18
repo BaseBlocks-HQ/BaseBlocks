@@ -18,15 +18,12 @@ export default async function DocsSectionLayout({
   params,
 }: LayoutProps) {
   const { locale } = await params;
-  const [
-    authed,
-    commonTranslations,
-    navigationTranslations,
-  ] = await Promise.all([
-    isAuthenticated(),
-    getTranslations({ locale, namespace: "common" }),
-    getTranslations({ locale, namespace: "navigation" }),
-  ]);
+  const [authed, commonTranslations, navigationTranslations] =
+    await Promise.all([
+      isAuthenticated(),
+      getTranslations({ locale, namespace: "common" }),
+      getTranslations({ locale, namespace: "navigation" }),
+    ]);
 
   const authAction = authed ? (
     <Link href="/dashboard">

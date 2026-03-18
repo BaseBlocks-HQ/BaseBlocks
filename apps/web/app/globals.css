@@ -80,7 +80,6 @@
   }
 }
 
-/* Skeleton shimmer animation */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -258,7 +257,6 @@
   display: none !important;
 }
 
-/* Accessibility: respect OS-level reduced motion preference (WCAG 2.3.3) */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

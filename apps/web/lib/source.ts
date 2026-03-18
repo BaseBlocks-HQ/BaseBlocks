@@ -6,10 +6,10 @@ import { defineI18nUI } from "fumadocs-ui/i18n";
 import { icons } from "lucide-react";
 import {
   IconBadgeSparkle,
-  IconColorPalette,
   IconCodeEditor,
-  IconFile,
+  IconColorPalette,
   IconFeather,
+  IconFile,
   IconGauge,
   IconGear,
   IconMonitor,
