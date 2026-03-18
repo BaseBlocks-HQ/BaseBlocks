@@ -153,6 +153,11 @@
   width: var(--fd-sidebar-width) !important;
 }
 
+#nd-sidebar > .border-t,
+#nd-sidebar-mobile > .border-t {
+  display: none;
+}
+
 /* Accessibility: respect OS-level reduced motion preference (WCAG 2.3.3) */
 @media (prefers-reduced-motion: reduce) {
   *,

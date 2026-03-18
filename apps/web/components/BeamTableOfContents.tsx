@@ -3,12 +3,11 @@
 import { cn } from "@/lib/utils";
 import { I18nLabel } from "fumadocs-ui/contexts/i18n";
 import { AlignLeft } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 type HeadingTag = "H2" | "H3" | "H4" | "H5" | "H6";
 
 type BeamHeading = {
-  href: string;
   id: string;
   isLast: boolean;
   level: number;
@@ -49,7 +48,6 @@ function toBeamHeadings(elements: HTMLHeadingElement[]): BeamHeading[] {
     const next = elements[index + 1];
 
     return {
-      href: `#${heading.id}`,
       id: heading.id,
       isLast: index === elements.length - 1,
       level: currentLevel - minLevel,
@@ -64,26 +62,37 @@ function toBeamHeadings(elements: HTMLHeadingElement[]): BeamHeading[] {
   });
 }
 
+function readRenderedHeadings() {
+  if (typeof document === "undefined") {
+    return [];
+  }
+
+  const elements = Array.from(
+    document.querySelectorAll<HTMLHeadingElement>(headingSelector),
+  );
+
+  return toBeamHeadings(elements);
+}
+
 function useRenderedHeadings() {
   const [headings, setHeadings] = useState<BeamHeading[]>([]);
 
   useEffect(() => {
-    const update = () => {
-      const elements = Array.from(
-        document.querySelectorAll<HTMLHeadingElement>(headingSelector),
-      );
-      setHeadings(toBeamHeadings(elements));
-    };
-
-    update();
+    const frame = window.requestAnimationFrame(() => {
+      startTransition(() => {
+        setHeadings(readRenderedHeadings());
+      });
+    });
 
     const page = document.getElementById("nd-page");
     if (!page) {
-      return;
+      return () => window.cancelAnimationFrame(frame);
     }
 
     const observer = new MutationObserver(() => {
-      update();
+      startTransition(() => {
+        setHeadings(readRenderedHeadings());
+      });
     });
 
     observer.observe(page, {
@@ -91,7 +100,10 @@ function useRenderedHeadings() {
       subtree: true,
     });
 
-    return () => observer.disconnect();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, []);
 
   return headings;
@@ -99,10 +111,10 @@ function useRenderedHeadings() {
 
 function useActiveHeadingIds(ids: string[]) {
   const [activeIds, setActiveIds] = useState<Set<string>>(() => new Set());
+  const emptyActiveIds = useMemo(() => new Set<string>(), []);
 
   useEffect(() => {
     if (ids.length === 0) {
-      setActiveIds(new Set());
       return;
     }
 
@@ -139,11 +151,10 @@ function useActiveHeadingIds(ids: string[]) {
     return () => observer.disconnect();
   }, [ids]);
 
-  return activeIds;
+  return ids.length === 0 ? emptyActiveIds : activeIds;
 }
 
 function BeamTocItem({
-  href,
   id,
   isActive,
   isLast,
@@ -162,18 +173,18 @@ function BeamTocItem({
   const hasDiagonal = effectiveLevel !== effectivePrevLevel;
   const topClass = hasDiagonal ? "top-1.5" : "top-0";
   const bottomClass =
-    isLast || (nextEffectiveLevel !== undefined && nextEffectiveLevel !== effectiveLevel)
+    isLast ||
+    (nextEffectiveLevel !== undefined && nextEffectiveLevel !== effectiveLevel)
       ? "bottom-1.5"
       : "bottom-0";
 
   return (
-    <a
-      href={href}
+    <button
+      type="button"
       data-active={isActive}
-      className="group relative block py-1.5 no-underline outline-none"
+      className="group relative block w-full py-1.5 text-left outline-none"
       style={{ paddingInlineStart: `${paddingStart}px` }}
-      onClick={(event) => {
-        event.preventDefault();
+      onClick={() => {
         const element = document.getElementById(id);
         if (!element) {
           return;
@@ -254,13 +265,16 @@ function BeamTocItem({
       >
         {title}
       </span>
-    </a>
+    </button>
   );
 }
 
 export function BeamTableOfContents() {
   const headings = useRenderedHeadings();
-  const headingIds = useMemo(() => headings.map((heading) => heading.id), [headings]);
+  const headingIds = useMemo(
+    () => headings.map((heading) => heading.id),
+    [headings],
+  );
   const activeIds = useActiveHeadingIds(headingIds);
 
   if (headings.length === 0) {
@@ -270,7 +284,7 @@ export function BeamTableOfContents() {
   return (
     <div
       id="nd-toc"
-      className="sticky top-(--fd-docs-row-1) hidden h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] w-(--fd-toc-width) flex-col pt-12 pe-4 pb-2 [grid-area:toc] xl:flex"
+      className="sticky top-(--fd-docs-row-1) hidden h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] w-(--fd-toc-width) flex-col pt-12 pe-4 pb-2 [grid-area:toc] xl:flex md:top-(--fd-docs-row-2) md:h-[calc(var(--fd-docs-height)-var(--fd-docs-row-2))]"
     >
       <h3
         id="toc-title"

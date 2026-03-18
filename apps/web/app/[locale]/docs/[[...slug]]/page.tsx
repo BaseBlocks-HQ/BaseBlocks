@@ -1,15 +1,15 @@
 import { BeamTableOfContents } from "@/components/BeamTableOfContents";
 import { source } from "@/lib/source";
 import type { TOCItemType } from "fumadocs-core/toc";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import defaultMdxComponents from "fumadocs-ui/mdx";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
 } from "fumadocs-ui/layouts/docs/page";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
 
 type PageProps = {
