@@ -69,10 +69,10 @@ export default async function DocsSectionLayout({
       <DocsLayout
         containerProps={{
           style: {
-            gridTemplate: `"sidebar sidebar header header header"
+            gridTemplate: `"sidebar sidebar header toc toc"
               "sidebar sidebar toc-popover toc toc"
               "sidebar sidebar main toc toc" 1fr
-              "sidebar sidebar footer footer footer" / minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(0, calc(var(--fd-layout-width,97rem) - var(--fd-sidebar-width) - var(--fd-toc-width))) var(--fd-toc-width) minmax(min-content, 1fr)`,
+              "sidebar sidebar footer footer ." / minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(0, calc(var(--fd-layout-width,97rem) - var(--fd-sidebar-width) - var(--fd-toc-width))) var(--fd-toc-width) minmax(min-content, 1fr)`,
           } as CSSProperties,
         }}
         themeSwitch={{ enabled: false }}
