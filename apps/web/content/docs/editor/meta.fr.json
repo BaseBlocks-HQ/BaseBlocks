@@ -1,0 +1,5 @@
+{
+  "title": "Éditeur",
+  "icon": "PenLine",
+  "pages": ["index", "pages", "layouts", "elements"]
+}

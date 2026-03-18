@@ -58,7 +58,11 @@ export function PublicHeader({
               <>
                 <span className="text-border">|</span>
                 <Link href="/">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                  >
                     {homepageLinkLabel ?? "Homepage"}
                   </Button>
                 </Link>

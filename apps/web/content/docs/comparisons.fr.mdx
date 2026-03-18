@@ -1,0 +1,168 @@
+---
+title: Comparaisons
+description: Comment BaseBlocks se compare à SharePoint, Confluence, Notion, GitBook et Outline.
+icon: Scale
+---
+
+import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
+
+BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier du contenu interne. Cette page le compare aux alternatives les plus courantes — honnêtement et sur la base de faits vérifiables.
+
+<Callout type="info" title="Note d'équité">
+  Cette comparaison est maintenue par l'équipe BaseBlocks. Nous avons fait de notre mieux pour représenter chaque produit avec précision. Si quelque chose est incorrect ou obsolète, [ouvrez un ticket](https://github.com/naaiyy/BaseBlocks/issues).
+</Callout>
+
+## En un coup d'œil
+
+| | **BaseBlocks** | SharePoint | Confluence | Notion | GitBook | Outline |
+|---|---|---|---|---|---|---|
+| Open source | **Oui (MIT)** | Non | Non | Non | Frontend uniquement | Oui (MIT) |
+| Auto-hébergeable | **Oui** | On-prem (complexe) | Déprécié 2026 | Non | Frontend uniquement | Oui (Docker) |
+| Éditeur glisser-déposer | **Oui** | Partiel | Non | Basé sur blocs | Non | Non |
+| Flux brouillon / publication | **Oui** | Au niveau page | Oui + Live Docs | Non (immédiat) | Demandes de modification | Non (immédiat) |
+| Publication de site public | **Oui** | Non | Non | Oui (Notion Sites) | Oui | Non |
+| Multi-tenant | **Oui** | Non | Non | Non | Non | Non |
+| Identité visuelle personnalisée | **Oui (par site)** | Oui (org) | Limitée | Limitée | Oui (Pro+) | Oui |
+| Gratuit pour démarrer | **Oui** | Non | Oui (10 users) | Oui (individus) | Oui (public uniquement) | Non (auto-hébergement gratuit) |
+| Prix de départ payant | **Gratuit** | ~12,50 $/u/mois (M365) | 6,40 $/u/mois | 10 $/u/mois | 65 $/site/mois | 10 $/mois forfait |
+
+---
+
+## Comparaisons détaillées
+
+<Accordions type="single">
+
+<Accordion title="BaseBlocks vs SharePoint">
+
+**SharePoint** est la plateforme intranet et de gestion documentaire d'entreprise de Microsoft, profondément intégrée à Microsoft 365.
+
+**Avantages de SharePoint :**
+- Intégration Microsoft 365 inégalée (Teams, OneDrive, Outlook, Word, Excel)
+- Conformité entreprise, eDiscovery, journaux d'audit et sécurité avancée
+- RBAC granulaire au niveau site, bibliothèque, dossier et fichier
+- Large écosystème de modules tiers
+
+**Avantages de BaseBlocks :**
+- Aucun coût de licence par utilisateur — BaseBlocks est gratuit et open source
+- Éditeur visuel glisser-déposer vs le système de composants WebPart de SharePoint (fonctionnel mais pas moderne)
+- Identité visuelle personnalisée par site sans administration enterprise lourde
+- Multi-tenant par conception — gérez des espaces de travail d'équipe séparés depuis un seul déploiement
+- Auto-hébergeable sans engagement d'infrastructure ; SharePoint on-premises est une entreprise considérable
+- Aucun abonnement Microsoft 365 requis
+
+**À savoir :**
+- Microsoft retire les plans SharePoint autonomes (Plan 1, Plan 2) — les nouvelles ventes s'arrêtent en juin 2026, fin de vie en décembre 2029. À l'avenir, SharePoint est inclus dans Microsoft 365 à partir de ~12,50 $/utilisateur/mois minimum.
+- Si votre organisation paie déjà Microsoft 365, SharePoint n'a aucun coût supplémentaire et ses intégrations sont difficiles à reproduire ailleurs.
+
+**Choisissez SharePoint si** votre organisation est centrée sur Microsoft 365 et a besoin d'outils de conformité enterprise.
+**Choisissez BaseBlocks si** vous voulez un constructeur de sites léger et open source sans charge enterprise.
+
+</Accordion>
+
+<Accordion title="BaseBlocks vs Confluence">
+
+**Confluence** est le wiki d'équipe d'Atlassian, largement utilisé aux côtés de Jira pour les équipes logicielles et projets.
+
+**Avantages de Confluence :**
+- Intégration Jira étroite — lier les tickets à la documentation est fluide
+- Bibliothèque de modèles mature
+- Édition collaborative en temps réel (Live Docs, GA 2026)
+- Hiérarchie de pages solide et recherche en texte intégral
+
+**Avantages de BaseBlocks :**
+- Open source et gratuit — Confluence Cloud commence à 6,40 $/utilisateur/mois ; pour 50 utilisateurs, c'est 320 $/mois
+- Auto-hébergeable : Confluence déprécie les nouvelles ventes de licences Data Center (auto-hébergées) à partir de mars 2026 — cette voie est éliminée
+- Éditeur de mise en page visuel glisser-déposer ; Confluence utilise un éditeur basé sur des blocs sans contrôle de mise en page
+- Publication de site public — Confluence n'a pas de sortie de site public native
+- Identité visuelle personnalisée par site ; la personnalisation Confluence est limitée
+
+**À savoir :**
+- Confluence Cloud Free prend en charge jusqu'à 10 utilisateurs — un bon point de départ pour les petites équipes.
+- La voie Data Center (auto-hébergé) se termine : Atlassian ne vendra plus de nouvelles licences Data Center après mars 2026. Les équipes qui comptent sur l'auto-hébergement devront migrer vers le Cloud ou changer d'outil.
+
+**Choisissez Confluence si** vous êtes profondément dans l'écosystème Atlassian et que l'intégration Jira est une priorité.
+**Choisissez BaseBlocks si** vous avez besoin d'une alternative auto-hébergeable et open source avec un éditeur visuel et une publication publique.
+
+</Accordion>
+
+<Accordion title="BaseBlocks vs Notion">
+
+**Notion** est un espace de travail tout-en-un flexible combinant wikis, bases de données et gestion de projet dans une interface basée sur des blocs.
+
+**Avantages de Notion :**
+- Très flexible — s'adapte aux wikis, tableaux kanban, bases de données et calendriers dans un seul outil
+- Édition de blocs intuitive ; très faible barrière d'entrée
+- Niveau gratuit généreux pour les individus
+- Notion Sites permet de publier des pages publiquement avec un domaine personnalisé
+- Notion AI inclus dans le plan Business
+
+**Avantages de BaseBlocks :**
+- Open source et auto-hébergeable — Notion est un SaaS fermé sans option auto-hébergée
+- Vrai flux brouillon / publication — les modifications Notion sur les pages partagées sont publiées immédiatement sans étape de staging
+- Identité visuelle personnalisée par site sans outils tiers ; la personnalisation native de Notion est minimale (Super.so, Notiondesk, etc. sont nécessaires pour un vrai white-labeling)
+- Conception multi-tenant — gérez des espaces de travail d'équipe séparés ; le modèle teamspace de Notion est un seul espace de travail par organisation
+- Conçu spécifiquement comme un constructeur de sites ; Notion est un outil généraliste adapté pour les sites
+
+**À savoir :**
+- Le niveau gratuit de Notion est orienté individu. Les fonctionnalités d'équipe (teamspaces fermés, permissions avancées) nécessitent Plus à 10 $/utilisateur/mois ou Business à 20 $/utilisateur/mois.
+- Notion Sites avec domaine personnalisé est disponible à partir du plan Plus ; la marque Notion n'est supprimée que lorsqu'un domaine personnalisé est connecté.
+
+**Choisissez Notion si** votre équipe a besoin d'un espace de travail tout-en-un flexible avec des bases de données, des vues projet et une grande base d'utilisateurs existante.
+**Choisissez BaseBlocks si** vous voulez un constructeur de sites dédié avec un flux de publication approprié, un code source open source et un auto-hébergement.
+
+</Accordion>
+
+<Accordion title="BaseBlocks vs GitBook">
+
+**GitBook** est une plateforme de documentation orientée IA, axée sur la documentation développeur, les bases de connaissances internes et les centres d'aide.
+
+**Avantages de GitBook :**
+- Flux solide brouillon → révision → publication via les demandes de modification (similaire aux pull requests)
+- Git Sync : synchronisation bidirectionnelle avec GitHub et GitLab — les commits dans Git se reflètent dans GitBook
+- Documentation multi-version (v2.0, v2.1, langues séparées)
+- Fonctionnalités natives d'IA (GitBook Agent)
+- Gratuit pour les projets open source avec du contenu public
+
+**Avantages de BaseBlocks :**
+- Entièrement open source et auto-hébergeable — la plateforme de contenu de GitBook est propriétaire ; seul le frontend de rendu est open source
+- Pas de tarification par site — GitBook Pro coûte 65 $/site/mois de base plus 12 $/utilisateur/mois ; les configurations multi-sites deviennent rapidement coûteuses
+- Éditeur de mise en page visuel glisser-déposer ; GitBook utilise un éditeur basé sur des blocs sans contrôle de mise en page
+- Multi-tenant par conception ; GitBook n'est pas conçu pour gérer des espaces de travail client/équipe séparés
+
+**À savoir :**
+- Le moteur de rendu de GitBook (frontend Next.js) est open source sur GitHub, mais le système de gestion de contenu ne l'est pas. Forker le moteur de rendu est possible mais non supporté.
+- GitBook est conçu spécifiquement pour la documentation ; BaseBlocks couvre une définition plus large du site interne (portails, intégration, hubs).
+
+**Choisissez GitBook si** vous construisez de la documentation technique avec un flux de travail centré sur Git et avez besoin du support multi-version.
+**Choisissez BaseBlocks si** vous avez besoin d'une plateforme entièrement open source et auto-hébergeable avec édition visuelle et gestion multi-sites.
+
+</Accordion>
+
+<Accordion title="BaseBlocks vs Outline">
+
+**Outline** est un wiki d'équipe open source — l'alternative open source la plus proche de BaseBlocks pour les bases de connaissances internes.
+
+**Avantages d'Outline :**
+- Wiki open source mature et éprouvé (licence MIT, activement maintenu)
+- Édition collaborative en temps réel incluse
+- Tarification cloud forfaitaire (10 $/mois jusqu'à 10 membres) — favorable pour les équipes en croissance
+- RBAC solide : rôles Admin, Éditeur, Lecteur, Invité plus permissions au niveau document
+- Interface claire et rapide avec édition orientée clavier
+
+**Avantages de BaseBlocks :**
+- Éditeur de mise en page visuel glisser-déposer ; Outline utilise un éditeur de blocs ProseMirror sans contrôle de mise en page
+- Publication de site public — Outline est un outil interne uniquement ; il n'y a pas de sortie de site public ni de flux de déploiement
+- Vrai modèle brouillon / publication — les modifications Outline sont visibles par l'équipe immédiatement ; il n'y a pas d'étape de staging
+- Conception multi-tenant — BaseBlocks gère des espaces de travail d'équipe séparés ; Outline est mono-espace de travail par installation
+- Identité visuelle personnalisée par site intégrée à l'éditeur ; la personnalisation d'Outline nécessite de modifier le code source
+
+**À savoir :**
+- Les deux sont sous licence MIT et auto-hébergeables. Outline utilise Docker + une base de données (PostgreSQL) + stockage objet. BaseBlocks utilise le même pattern de stack.
+- Outline est un excellent choix pour un wiki d'équipe. BaseBlocks est plus approprié lorsque vous devez publier des sites à des audiences externes ou avez besoin d'un contrôle de publication par site.
+
+**Choisissez Outline si** vous avez besoin d'un wiki interne rapide et collaboratif avec une tarification forfaitaire et une édition en temps réel.
+**Choisissez BaseBlocks si** vous avez besoin de sites publics, d'un flux brouillon/publication ou d'un éditeur de mise en page visuel.
+
+</Accordion>
+
+</Accordions>

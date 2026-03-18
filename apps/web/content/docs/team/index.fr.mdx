@@ -1,0 +1,60 @@
+---
+title: Équipe
+description: Une équipe est un espace de travail avec son propre sous-domaine, ses membres et ses sites. Tout dans BaseBlocks appartient à une équipe.
+icon: Users
+---
+
+Une équipe est l'espace de travail de premier niveau dans BaseBlocks. Elle a son propre sous-domaine, ses propres membres et contient tous vos sites.
+
+```
+https://votre-equipe.baseblocks.dev
+```
+
+Chaque site, page et document que vous créez appartient à une équipe.
+
+## Créer une équipe
+
+Lors de votre inscription, vous êtes redirigé vers une page de configuration où vous créez votre première équipe. Entrez un nom et choisissez un identifiant — l'identifiant se génère automatiquement à partir du nom.
+
+L'identifiant devient le sous-domaine de tous les sites dans l'espace de travail. Il doit être en minuscules et séparé par des tirets.
+
+<Callout type="info">
+  Chaque compte dispose actuellement d'une seule équipe. La création et le passage entre plusieurs équipes est prévu pour une prochaine version.
+</Callout>
+
+## Membres et rôles
+
+Chaque membre de l'équipe a un rôle qui contrôle ce qu'il peut faire.
+
+| Rôle | Modifier les pages | Publier | Gérer les membres | Gérer les paramètres |
+|---|---|---|---|---|
+| **Administrateur** | ✓ | ✓ | ✓ | ✓ |
+| **Membre** | ✓ | ✗ | ✗ | ✗ |
+| **Lecteur** | ✗ | ✗ | ✗ | ✗ |
+
+**Administrateur** — Accès complet. Peut modifier le contenu, publier des sites, inviter et supprimer des membres, et modifier les paramètres de l'équipe et du site. L'utilisateur qui crée l'équipe est Administrateur par défaut.
+
+**Membre** — Peut modifier les pages et les mises en page dans l'éditeur. Ne peut pas publier, inviter d'autres personnes ou modifier les paramètres.
+
+**Lecteur** — Accès en lecture seule aux sites que l'équipe possède. Utile pour les parties prenantes qui ont besoin de consulter le contenu sans pouvoir rien modifier.
+
+## Inviter des membres
+
+Ouvrez **Paramètres de l'équipe → Membres** et entrez l'adresse email de la personne que vous souhaitez inviter. Ils reçoivent une invitation par email. Jusqu'à son acceptation, l'invitation apparaît comme en attente dans la liste des membres.
+
+Les utilisateurs invités peuvent se voir attribuer n'importe quel rôle au moment de l'invitation. Le rôle peut être modifié à tout moment par un Administrateur.
+
+## Retirer des membres
+
+Ouvrez **Paramètres de l'équipe → Membres**, trouvez le membre et cliquez sur **Retirer**. Ils perdent immédiatement l'accès à tous les sites de l'espace de travail.
+
+## Et ensuite
+
+<Cards>
+  <Card href="/docs/team/settings" title="Paramètres de l'équipe">
+    Nom, identifiant, gestion des membres et configuration de l'espace de travail.
+  </Card>
+  <Card href="/docs/sites" title="Sites">
+    Créez et gérez des sites dans votre espace de travail d'équipe.
+  </Card>
+</Cards>

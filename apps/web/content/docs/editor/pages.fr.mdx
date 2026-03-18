@@ -1,0 +1,61 @@
+---
+title: Pages
+description: Gérez votre arborescence de pages — ajoutez des pages, imbriquez-les en sous-pages, configurez les paramètres et utilisez les onglets pour les pages à plusieurs sections.
+icon: FileText
+---
+
+import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
+
+## L'arborescence des pages
+
+La barre latérale affiche chaque page de votre site sous forme d'arborescence. Les pages sont listées dans l'ordre où elles apparaissent dans la navigation. Faites glisser n'importe quelle page pour la réorganiser ou déposez-la sur une autre page pour l'imbriquer en sous-page.
+
+## Ajouter des pages
+
+Cliquez sur le bouton **+** en haut de la barre latérale. Une nouvelle page sans titre est créée et ouverte pour édition immédiatement.
+
+## Imbriquer des pages
+
+Faites glisser une page sur une autre pour en faire une sous-page. Les sous-pages apparaissent en retrait sous leur page parente dans la barre latérale et dans la navigation.
+
+Les sous-pages sont utiles pour :
+- Documenter une section de produit avec plusieurs sujets enfants
+- Créer des flux d'intégration avec une vue d'ensemble parente et des pages enfants étape par étape
+- Organiser les grands sites en groupes logiques
+
+Il n'y a pas de limite de profondeur imposée, mais gardez l'imbrication peu profonde pour la lisibilité.
+
+## Paramètres de page
+
+Chaque page a ses propres paramètres. Ouvrez-les en cliquant sur l'icône d'engrenage à côté de la page dans la barre latérale.
+
+| Paramètre | Description |
+|---|---|
+| Titre | Affiché dans la barre latérale, la navigation et l'onglet du navigateur |
+| Identifiant | Apparaît dans l'URL : `votre-equipe.baseblocks.dev/site/identifiant` |
+| Méta description | Utilisée dans les aperçus de partage social et les extraits de moteurs de recherche |
+
+Changer un identifiant change l'URL de la page. Les liens existants vers l'ancienne URL seront cassés — il n'y a pas de redirection automatique.
+
+## Onglets de page
+
+Une page peut avoir plusieurs onglets. Chaque onglet est un ensemble indépendant de mises en page et de contenu.
+
+Les onglets sont utiles pour présenter différentes vues d'un même sujet — par exemple, une page sur une fonctionnalité avec des onglets séparés pour Vue d'ensemble, Configuration et Référence API.
+
+Pour ajouter un onglet, ouvrez la page et cliquez sur **Ajouter un onglet** dans l'en-tête de l'éditeur. Les onglets peuvent être renommés et réorganisés. Supprimer un onglet supprime tout son contenu.
+
+## Annuler et rétablir
+
+Toutes les actions de l'éditeur peuvent être annulées.
+
+| Action | Mac | Windows / Linux |
+|---|---|---|
+| Annuler | `Cmd Z` | `Ctrl Z` |
+| Rétablir | `Cmd Shift Z` | `Ctrl Shift Z` |
+
+L'historique d'annulation est par session. Recharger la page efface la pile d'annulation.
+
+<Callout type="info">
+  L'annulation couvre les opérations de mise en page, les modifications de blocs, la réorganisation des pages, la gestion des onglets et la plupart des interactions de l'éditeur. La publication n'est pas annulable — utilisez la restauration pour revenir à un site publié.
+</Callout>

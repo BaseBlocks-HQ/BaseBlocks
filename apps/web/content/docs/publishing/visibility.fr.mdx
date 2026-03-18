@@ -1,0 +1,67 @@
+---
+title: Visibilité du site
+description: Contrôlez qui peut accéder à votre site publié. Quatre modes — public, privé, accessible par lien et protégé par mot de passe.
+icon: Lock
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+La visibilité du site contrôle qui peut ouvrir l'URL de votre site publié. Trouvez-la dans **Paramètres du site → Visibilité**.
+
+<Tabs items={['Public', 'Privé', 'Par lien', 'Mot de passe']}>
+
+<Tab value="Public">
+
+### Public
+
+Toute personne avec l'URL peut voir le site. Aucune connexion requise. Les moteurs de recherche peuvent l'indexer.
+
+Utilisez pour : documentation externe, bases de connaissances publiques ou tout ce que vous voulez rendre ouvertement accessible.
+
+</Tab>
+
+<Tab value="Privé">
+
+### Privé
+
+Seuls les membres de l'équipe connectés peuvent voir le site. Les visiteurs non authentifiés sont redirigés vers la page de connexion.
+
+Utilisez pour : documentation d'équipe interne, guides de processus sensibles ou tout ce qui doit rester dans l'espace de travail.
+
+</Tab>
+
+<Tab value="Par lien">
+
+### Accessible par lien
+
+Toute personne avec l'URL exacte peut voir le site. Il n'est pas répertorié ni découvrable via la plateforme BaseBlocks. Les moteurs de recherche ne sont pas empêchés de l'indexer, mais le site n'apparaîtra dans aucun répertoire BaseBlocks.
+
+Utilisez pour : références partagées que vous souhaitez envoyer à des personnes spécifiques sans ouvrir complètement au public.
+
+</Tab>
+
+<Tab value="Mot de passe">
+
+### Protégé par mot de passe
+
+Les visiteurs sont invités à entrer un code d'accès avant de voir le site. Le code d'accès est distinct de tout compte BaseBlocks — toute personne avec le code peut entrer, qu'elle ait un compte BaseBlocks ou non.
+
+**Comment ça fonctionne :**
+- Générez un code d'accès depuis Paramètres du site → Visibilité
+- Partagez le code avec les personnes qui ont besoin d'accès
+- Les codes sont limités dans le temps et peuvent être révoqués à tout moment
+- Les tentatives échouées sont limitées en débit pour empêcher les accès par force brute
+
+Utilisez pour : portails partenaires, contenu destiné aux clients ou tout ce qui nécessite un contrôle d'accès simple sans connexion requise.
+
+<Callout type="info">
+  Les codes d'accès ne sont pas des comptes utilisateur. Ils ne connectent pas une personne spécifique — ils accordent un accès temporaire au site. Pour un vrai contrôle d'accès par utilisateur, utilisez la visibilité Privée avec l'appartenance à l'équipe.
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+## Changer la visibilité
+
+Allez dans **Paramètres du site → Visibilité**, sélectionnez un mode et sauvegardez. Le changement prend effet immédiatement sur le site publié. Le brouillon n'est pas affecté.

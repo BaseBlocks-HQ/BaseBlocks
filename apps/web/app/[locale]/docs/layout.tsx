@@ -2,10 +2,10 @@ import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { Link } from "@/i18n/navigation";
 import { isAuthenticated } from "@/lib/auth/server";
-import { docsI18n, source } from "@/lib/source";
+import { source } from "@/lib/source";
 import { Button } from "@baseblocks/ui/button";
-import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { CSSProperties, ReactNode } from "react";
@@ -66,14 +66,6 @@ export default async function DocsSectionLayout({
 
   return (
     <>
-      <PublicHeader
-        authAction={authAction}
-        className="md:hidden"
-        docsLabel={navigationTranslations("docs")}
-        showDocsLink={false}
-        showHomepageLink={true}
-        homepageLinkLabel={navigationTranslations("home")}
-      />
       <DocsLayout
         containerProps={{
           style: {
@@ -102,7 +94,7 @@ export default async function DocsSectionLayout({
           component: (
             <PublicHeader
               authAction={authAction}
-              className="hidden md:block [grid-area:header] z-30 md:layout:[--fd-header-height:65px]"
+              className="[grid-area:header] z-30 md:layout:[--fd-header-height:65px]"
               contentClassName="mx-0 max-w-none px-6 xl:px-8"
               docsLabel={navigationTranslations("docs")}
               showDocsLink={false}
@@ -119,7 +111,7 @@ export default async function DocsSectionLayout({
         {children}
         <PublicFooter
           authCta={authCta}
-          className="hidden border-t md:block [grid-area:footer]"
+          className="border-t [grid-area:footer]"
           contentClassName="mx-0 max-w-none"
           ctaSubtitle={landingTranslations("ctaSubtitle")}
           ctaTitle={landingTranslations("ctaTitle")}
@@ -128,15 +120,6 @@ export default async function DocsSectionLayout({
           showCta={false}
         />
       </DocsLayout>
-      <PublicFooter
-        authCta={authCta}
-        className="md:hidden"
-        ctaSubtitle={landingTranslations("ctaSubtitle")}
-        ctaTitle={landingTranslations("ctaTitle")}
-        docsCta={docsCta}
-        footerCopyright={landingTranslations("footerCopyright")}
-        showCta={false}
-      />
     </>
   );
 }

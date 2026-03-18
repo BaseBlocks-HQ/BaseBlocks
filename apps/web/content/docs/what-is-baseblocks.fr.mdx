@@ -1,0 +1,51 @@
+---
+title: Qu'est-ce que BaseBlocks
+description: BaseBlocks est un constructeur de sites open source pour les équipes — éditeur glisser-déposer, flux brouillon/publication et espaces de travail multi-tenant inclus.
+icon: BookOpen
+---
+
+import { GithubInfo } from 'fumadocs-ui/components/github-info';
+
+BaseBlocks est un constructeur de sites open source pour les équipes. Vous créez et publiez des sites internes — documentation, bases de connaissances, portails d'intégration, hubs d'équipe — sans écrire de code ni gérer d'infrastructure.
+
+## Le problème qu'il résout
+
+La plupart des équipes se retrouvent avec du contenu éparpillé entre un wiki, un dossier Google Drive, un espace de travail Notion et un message épinglé Slack. Rien de tout cela n'est conçu pour ressembler à un site, et rien ne dispose d'un vrai flux de publication.
+
+BaseBlocks donne aux équipes un vrai constructeur de sites avec :
+
+- Un éditeur visuel glisser-déposer — sans Markdown, sans code
+- Un modèle brouillon et publication — les modifications restent privées jusqu'à ce que vous soyez prêt
+- Une vraie URL — chaque site obtient un sous-domaine que votre équipe peut mettre en favoris
+- Un contrôle d'accès — décidez qui peut modifier, publier ou simplement consulter
+
+## Concepts fondamentaux
+
+**Équipe** — Un espace de travail avec son propre sous-domaine (`votre-equipe.baseblocks.dev`). Une équipe peut avoir de nombreux sites.
+
+**Site** — Une collection de pages publiées sous un seul chemin URL (`votre-equipe.baseblocks.dev/nom-du-site`). Les sites ont leur propre identité visuelle, leurs paramètres de visibilité et leurs accès membres.
+
+**Page** — Une page à l'intérieur d'un site. Les pages sont organisées en arborescence et peuvent être imbriquées en sous-pages. Chaque page contient des mises en page et des blocs.
+
+**Mise en page** — Une ligne sur la page. Les mises en page contiennent un ou plusieurs emplacements (colonnes) où les blocs sont placés.
+
+**Bloc** — Un contenu à l'intérieur d'un emplacement de mise en page. Titres, paragraphes, images, blocs de code, encadrés et bien plus.
+
+**Brouillon / Publié** — Chaque site existe dans deux états. Les modifications vont toujours au brouillon. La publication copie le brouillon vers le site publié. Les visiteurs voient la version publiée. La restauration remplace la version publiée par un instantané précédent.
+
+## À qui s'adresse-t-il
+
+BaseBlocks convient à toute équipe qui a besoin d'un site interne qu'elle peut réellement maintenir :
+
+- **Équipes d'ingénierie** construisant des portails développeurs internes ou des runbooks
+- **Équipes Ops et RH** publiant des guides d'intégration et de la documentation de processus
+- **Équipes produit** maintenant des bibliothèques de spécifications internes ou des journaux de décision
+- **Toute équipe** qui veut une vraie URL, pas un Google Doc partagé
+
+## Open source
+
+BaseBlocks est sous licence MIT. Vous pouvez l'héberger vous-même, le forker ou y contribuer.
+
+<GithubInfo owner="naaiyy" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
+
+Hébergé dans le cloud sur [baseblocks.dev](https://baseblocks.dev) — gratuit pour commencer.

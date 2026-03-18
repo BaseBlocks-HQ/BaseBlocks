@@ -1,0 +1,68 @@
+---
+title: Publication
+description: Chaque site a un état brouillon et un état publié. Les modifications restent en brouillon jusqu'à ce que vous publiiez. Les instantanés automatiques vous permettent de revenir en arrière à tout moment.
+icon: Globe
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+## Brouillon et publié
+
+Chaque site existe simultanément dans deux états : **brouillon** et **publié**.
+
+- **Brouillon** est ce que vous construisez dans l'éditeur. Les modifications, nouvelles pages et changements de mise en page vont tous au brouillon. Les visiteurs ne voient jamais le brouillon.
+- **Publié** est ce que les visiteurs voient lorsqu'ils ouvrent l'URL de votre site. Il ne change que lorsque vous publiez.
+
+Les deux états sont complètement indépendants. Vous pouvez entièrement reconstruire une page en brouillon sans affecter ce qui est actuellement publié.
+
+## Publier
+
+<Steps>
+<Step>
+
+### Construire en brouillon
+
+Apportez toutes vos modifications dans l'éditeur. Ajoutez des pages, mettez à jour les mises en page, modifiez le contenu. Rien n'est encore visible pour les visiteurs.
+
+</Step>
+<Step>
+
+### Aperçu (optionnel)
+
+Utilisez le bouton **Aperçu** dans l'en-tête de l'éditeur pour voir le rendu en direct de votre brouillon avant de publier. Le mode aperçu montre le brouillon tel que les visiteurs le verront.
+
+</Step>
+<Step>
+
+### Publier
+
+Cliquez sur **Publier** dans l'en-tête de l'éditeur. Un instantané du brouillon actuel est sauvegardé automatiquement, puis le brouillon est copié vers le site publié.
+
+La publication est immédiate — il n'y a pas de file d'attente ni de délai de traitement.
+
+</Step>
+</Steps>
+
+## Instantanés et restauration
+
+Un instantané est pris automatiquement à chaque publication. Les instantanés capturent l'état complet de toutes les pages et du contenu à ce moment-là.
+
+Pour voir les instantanés, ouvrez **Historique des déploiements** depuis l'en-tête de l'éditeur. Chaque entrée affiche l'horodatage de publication.
+
+Pour restaurer, sélectionnez un instantané et cliquez sur **Restaurer**. Cela remplace l'état publié actuel par l'instantané. Le brouillon actuel n'est pas affecté.
+
+<Callout type="info">
+  La restauration n'affecte que l'état publié. Votre brouillon reste tel quel. Si vous voulez que le brouillon corresponde également à l'instantané, publiez à nouveau après la restauration — le brouillon aura divergé.
+</Callout>
+
+## Ce qui est publié
+
+La publication copie l'ensemble du site — toutes les pages, tous les onglets, toutes les mises en page et tous les blocs. La publication de pages individuelles n'est actuellement pas supportée.
+
+## Et ensuite
+
+<Cards>
+  <Card href="/docs/publishing/visibility" title="Visibilité du site">
+    Contrôlez qui peut accéder à votre site publié — public, privé, accessible par lien ou protégé par mot de passe.
+  </Card>
+</Cards>
