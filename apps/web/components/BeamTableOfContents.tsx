@@ -217,7 +217,7 @@ function BeamTocItem({
               x2={lineX}
               y2="12"
               className={cn(
-                "stroke-fd-primary transition-opacity duration-300",
+                "stroke-fd-foreground transition-opacity duration-300",
                 isActive ? "opacity-35" : "opacity-0",
               )}
               strokeWidth="3"
@@ -229,7 +229,7 @@ function BeamTocItem({
               x2={lineX}
               y2="12"
               className={cn(
-                "stroke-fd-primary transition-opacity duration-300",
+                "stroke-fd-foreground transition-opacity duration-300",
                 isActive ? "opacity-100" : "opacity-0",
               )}
               strokeWidth="1.5"
@@ -248,7 +248,7 @@ function BeamTocItem({
       >
         <div
           className={cn(
-            "absolute inset-0 w-full origin-top bg-fd-primary transition-[transform,opacity] duration-300 ease-out",
+            "absolute inset-0 w-full origin-top bg-fd-foreground transition-[transform,opacity] duration-300 ease-out",
             "shadow-[0_0_14px_1px_rgba(0,0,0,0.16)] dark:shadow-[0_0_16px_1px_rgba(255,255,255,0.38)]",
             isActive ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0",
           )}
@@ -259,7 +259,7 @@ function BeamTocItem({
         className={cn(
           "relative z-10 block truncate pe-2 text-sm transition-colors duration-200",
           isActive
-            ? "font-medium text-fd-primary"
+            ? "font-medium text-fd-foreground"
             : "text-fd-muted-foreground group-hover:text-fd-foreground",
         )}
       >

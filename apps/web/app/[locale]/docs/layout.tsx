@@ -1,4 +1,3 @@
-import { PublicFooter } from "@/components/public/public-footer";
 import { PublicHeader } from "@/components/public/public-header";
 import { Link } from "@/i18n/navigation";
 import { isAuthenticated } from "@/lib/auth/server";
@@ -6,7 +5,6 @@ import { source } from "@/lib/source";
 import { Button } from "@baseblocks/ui/button";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -23,12 +21,10 @@ export default async function DocsSectionLayout({
   const [
     authed,
     commonTranslations,
-    landingTranslations,
     navigationTranslations,
   ] = await Promise.all([
     isAuthenticated(),
     getTranslations({ locale, namespace: "common" }),
-    getTranslations({ locale, namespace: "landing" }),
     getTranslations({ locale, namespace: "navigation" }),
   ]);
 
@@ -42,32 +38,11 @@ export default async function DocsSectionLayout({
     </Link>
   );
 
-  const authCta = authed ? (
-    <Link href="/dashboard">
-      <Button size="lg" className="gap-2">
-        {commonTranslations("goToDashboard")} <ArrowRight className="h-4 w-4" />
-      </Button>
-    </Link>
-  ) : (
-    <Link href="/login">
-      <Button size="lg" className="gap-2">
-        {landingTranslations("getStarted")} <ArrowRight className="h-4 w-4" />
-      </Button>
-    </Link>
-  );
-
-  const docsCta = (
-    <Link href="/docs">
-      <Button variant="outline" size="lg">
-        {landingTranslations("viewDocs")}
-      </Button>
-    </Link>
-  );
-
   return (
     <>
       <DocsLayout
         containerProps={{
+          className: "bb-docs-shell",
           style: {
             gridTemplate: `"sidebar sidebar header toc toc"
               "sidebar sidebar toc-popover toc toc"
@@ -76,7 +51,9 @@ export default async function DocsSectionLayout({
           } as CSSProperties,
         }}
         themeSwitch={{ enabled: false }}
-        sidebar={{ footer: null }}
+        sidebar={{
+          footer: null,
+        }}
         links={[
           {
             type: "custom" as const,
@@ -109,16 +86,6 @@ export default async function DocsSectionLayout({
         tree={source.getPageTree(locale)}
       >
         {children}
-        <PublicFooter
-          authCta={authCta}
-          className="border-t [grid-area:footer]"
-          contentClassName="mx-0 max-w-none"
-          ctaSubtitle={landingTranslations("ctaSubtitle")}
-          ctaTitle={landingTranslations("ctaTitle")}
-          docsCta={docsCta}
-          footerCopyright={landingTranslations("footerCopyright")}
-          showCta={false}
-        />
       </DocsLayout>
     </>
   );

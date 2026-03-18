@@ -1,5 +1,5 @@
 {
   "title": "Editor",
-  "icon": "PenLine",
+  "icon": "CodeEditor",
   "pages": ["index", "pages", "layouts", "elements"]
 }

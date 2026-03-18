@@ -2,7 +2,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { type Locale, routing } from "@/i18n/routing";
 import { getToken } from "@/lib/auth/server";
 import { ConvexClientProvider } from "@/lib/convex/provider";
-import { docsI18nProvider } from "@/lib/source";
+import { docsI18n } from "@/lib/source";
 import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
 import { RootProvider } from "fumadocs-ui/provider/next";
@@ -30,6 +30,11 @@ const OG_LOCALE_MAP: Record<string, string> = {
   en: "en_US",
   fr: "fr_FR",
 };
+
+const DOCS_LOCALES = docsI18n.languages.map((locale) => ({
+  locale,
+  name: locale === "fr" ? "Français" : "English",
+}));
 
 export async function generateMetadata(
   { params }: Props,
@@ -79,7 +84,10 @@ export default async function LocaleLayout({ children, params }: Props) {
         disableTransitionOnChange
       >
         <RootProvider
-          i18n={docsI18nProvider(locale)}
+          i18n={{
+            locale,
+            locales: DOCS_LOCALES,
+          }}
           theme={{ enabled: false }}
         >
           <MotionConfig reducedMotion="user">

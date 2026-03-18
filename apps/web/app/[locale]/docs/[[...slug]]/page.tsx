@@ -1,4 +1,6 @@
 import { BeamTableOfContents } from "@/components/BeamTableOfContents";
+import { getDocsMdxComponents } from "@/components/docs/docs-mdx-components";
+import { DocsPageHero } from "@/components/docs/docs-page-hero";
 import { source } from "@/lib/source";
 import type { TOCItemType } from "fumadocs-core/toc";
 import {
@@ -7,7 +9,6 @@ import {
   DocsPage,
   DocsTitle,
 } from "fumadocs-ui/layouts/docs/page";
-import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ComponentType } from "react";
@@ -17,7 +18,7 @@ type PageProps = {
 };
 
 type DocsContentData = {
-  body: ComponentType<{ components?: typeof defaultMdxComponents }>;
+  body: ComponentType<{ components?: ReturnType<typeof getDocsMdxComponents> }>;
   toc?: TOCItemType[];
   title?: string;
   description?: string;
@@ -58,6 +59,8 @@ export default async function DocsPageRoute({ params }: PageProps) {
 
   const pageData = page.data as typeof page.data & DocsContentData;
   const MdxContent = pageData.body;
+  const isTopLevelPage = !slug || slug.length <= 1;
+  const mdxComponents = getDocsMdxComponents();
 
   return (
     <DocsPage
@@ -66,10 +69,21 @@ export default async function DocsPageRoute({ params }: PageProps) {
       }}
       toc={pageData.toc}
     >
-      <DocsTitle>{pageData.title}</DocsTitle>
-      <DocsDescription>{pageData.description}</DocsDescription>
+      {isTopLevelPage ? (
+        <DocsPageHero
+          description={pageData.description}
+          title={pageData.title ?? "Documentation"}
+        />
+      ) : (
+        <>
+          <DocsTitle className="bb-docs-title">{pageData.title}</DocsTitle>
+          <DocsDescription className="bb-docs-description">
+            {pageData.description}
+          </DocsDescription>
+        </>
+      )}
       <DocsBody>
-        <MdxContent components={defaultMdxComponents} />
+        <MdxContent components={mdxComponents} />
       </DocsBody>
     </DocsPage>
   );
