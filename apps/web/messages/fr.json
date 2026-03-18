@@ -71,6 +71,7 @@
   "navigation": {
     "dashboard": "Tableau de bord",
     "docs": "Docs",
+    "home": "Aller à l'accueil",
     "sites": "Sites",
     "settings": "Parametres",
     "help": "Aide"

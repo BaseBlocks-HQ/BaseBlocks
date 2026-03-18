@@ -71,6 +71,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "docs": "Docs",
+    "home": "Go to Homepage",
     "sites": "Sites",
     "settings": "Settings",
     "help": "Help"

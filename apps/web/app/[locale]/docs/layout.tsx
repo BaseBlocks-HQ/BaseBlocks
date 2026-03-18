@@ -70,6 +70,8 @@ export default async function DocsSectionLayout({
         className="md:hidden"
         docsLabel={navigationTranslations("docs")}
         showDocsLink={false}
+        showHomepageLink={true}
+        homepageLinkLabel={navigationTranslations("home")}
       />
       <DocsLayout
         containerProps={{
@@ -80,7 +82,8 @@ export default async function DocsSectionLayout({
               "sidebar sidebar footer footer footer" / minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(0, calc(var(--fd-layout-width,97rem) - var(--fd-sidebar-width) - var(--fd-toc-width))) var(--fd-toc-width) minmax(min-content, 1fr)`,
           } as CSSProperties,
         }}
-        i18n={docsI18n}
+        themeSwitch={{ enabled: false }}
+        sidebar={{ footer: null }}
         nav={{
           component: (
             <PublicHeader
@@ -89,6 +92,8 @@ export default async function DocsSectionLayout({
               contentClassName="mx-0 max-w-none px-6 xl:px-8"
               docsLabel={navigationTranslations("docs")}
               showDocsLink={false}
+              showHomepageLink={true}
+              homepageLinkLabel={navigationTranslations("home")}
             />
           ),
           enabled: true,

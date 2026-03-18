@@ -10,7 +10,9 @@ interface PublicHeaderProps {
   className?: string;
   contentClassName?: string;
   docsLabel: string;
+  homepageLinkLabel?: string;
   showDocsLink?: boolean;
+  showHomepageLink?: boolean;
 }
 
 export function PublicHeader({
@@ -18,7 +20,9 @@ export function PublicHeader({
   className,
   contentClassName,
   docsLabel,
+  homepageLinkLabel,
   showDocsLink = true,
+  showHomepageLink = false,
 }: PublicHeaderProps) {
   return (
     <header className={cn("sticky top-0 z-50", className)}>
@@ -30,22 +34,36 @@ export function PublicHeader({
           )}
         >
           <div className="flex items-center gap-2.5">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-sm text-background"
-              style={{ fontFamily: landingFonts.square }}
-            >
-              B
-            </div>
-            <span
-              className="whitespace-nowrap tracking-tight"
-              style={{
-                fontFamily: landingFonts.square,
-                fontSize: "0.9375rem",
-                lineHeight: 1,
-              }}
-            >
-              BaseBlocks
-            </span>
+            <Link href="/">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-sm text-background"
+                  style={{ fontFamily: landingFonts.square }}
+                >
+                  B
+                </div>
+                <span
+                  className="whitespace-nowrap tracking-tight"
+                  style={{
+                    fontFamily: landingFonts.square,
+                    fontSize: "0.9375rem",
+                    lineHeight: 1,
+                  }}
+                >
+                  BaseBlocks
+                </span>
+              </div>
+            </Link>
+            {showHomepageLink ? (
+              <>
+                <span className="text-border">|</span>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    {homepageLinkLabel ?? "Homepage"}
+                  </Button>
+                </Link>
+              </>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-4">
