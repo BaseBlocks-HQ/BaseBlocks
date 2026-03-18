@@ -8,15 +8,18 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "collections/*": ["./.source/*"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".source/**/*.ts",
     "next-env.d.ts",
     "next.config.js",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "source.config.ts"
   ],
   "exclude": ["node_modules"]
 }

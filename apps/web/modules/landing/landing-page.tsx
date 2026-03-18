@@ -97,6 +97,14 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
     </Link>
   );
 
+  const docsCta = (
+    <Link href="/docs">
+      <Button variant="outline" size="lg">
+        {landingTranslations("viewDocs")}
+      </Button>
+    </Link>
+  );
+
   return (
     <LazyMotion features={domMax} strict>
       <div
@@ -123,6 +131,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
               />
               <HeroSection
                 authCta={authCta}
+                docsCta={docsCta}
                 landingTranslations={landingTranslations}
               />
               <FeaturesSection landingTranslations={landingTranslations} />
@@ -134,6 +143,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
               />
               <FooterSection
                 authCta={authCta}
+                docsCta={docsCta}
                 landingTranslations={landingTranslations}
               />
             </>

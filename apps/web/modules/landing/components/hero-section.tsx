@@ -9,11 +9,13 @@ import { GridPattern } from "./grid-pattern";
 
 interface HeroSectionProps {
   authCta: ReactNode;
+  docsCta: ReactNode;
   landingTranslations: TranslateFn;
 }
 
 export function HeroSection({
   authCta,
+  docsCta,
   landingTranslations,
 }: HeroSectionProps) {
   return (
@@ -64,6 +66,7 @@ export function HeroSection({
           <BlurIn delay={0.55}>
             <div className="mt-8 flex flex-wrap gap-3">
               {authCta}
+              {docsCta}
               <a
                 href="https://github.com/naaiyy/BaseBlocks"
                 target="_blank"

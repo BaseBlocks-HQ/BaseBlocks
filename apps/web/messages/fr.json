@@ -33,6 +33,7 @@
     "heroTitle": "Créez des sites internes que votre équipe utilisera vraiment",
     "heroSubtitle": "Un constructeur de sites open source pour la documentation, les bases de connaissances et les portails d'équipe. Glissez, déposez, publiez.",
     "getStarted": "Commencer — Gratuit",
+    "viewDocs": "Voir la doc",
     "viewOnGithub": "Voir sur GitHub",
     "featuresLabel": "Fonctionnalités",
     "featuresTitle": "Tout ce qu'il faut, rien de superflu",
@@ -69,6 +70,7 @@
   },
   "navigation": {
     "dashboard": "Tableau de bord",
+    "docs": "Docs",
     "sites": "Sites",
     "settings": "Parametres",
     "help": "Aide"

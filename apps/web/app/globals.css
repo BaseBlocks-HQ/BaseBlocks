@@ -1,4 +1,6 @@
 @import "@baseblocks/tailwind-config/theme.css";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 :root {
   --radius: 0.625rem;
@@ -140,6 +142,15 @@
   & .badge {
     border-radius: var(--radius-pill, var(--radius));
   }
+}
+
+#nd-docs-layout {
+  --fd-sidebar-width: 240px !important;
+}
+
+#nd-sidebar {
+  align-items: flex-start !important;
+  width: var(--fd-sidebar-width) !important;
 }
 
 /* Accessibility: respect OS-level reduced motion preference (WCAG 2.3.3) */

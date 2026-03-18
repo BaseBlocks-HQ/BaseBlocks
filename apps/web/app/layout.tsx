@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable} min-h-screen flex flex-col`}
       >
         {children}
         <Analytics />

@@ -33,6 +33,7 @@
     "heroTitle": "Build internal sites your team will actually use",
     "heroSubtitle": "An open-source site builder for documentation, knowledge bases, and team portals. Drag, drop, deploy.",
     "getStarted": "Get Started — Free",
+    "viewDocs": "View Docs",
     "viewOnGithub": "View on GitHub",
     "featuresLabel": "Features",
     "featuresTitle": "Everything you need, nothing you don't",
@@ -69,6 +70,7 @@
   },
   "navigation": {
     "dashboard": "Dashboard",
+    "docs": "Docs",
     "sites": "Sites",
     "settings": "Settings",
     "help": "Help"

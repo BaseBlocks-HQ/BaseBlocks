@@ -16,6 +16,7 @@ function removeLocalePrefix(pathname: string): string {
 function isAppRoute(path: string): boolean {
   return (
     path === "/" ||
+    path.startsWith("/docs") ||
     path.startsWith("/dashboard") ||
     path.startsWith("/onboarding") ||
     path.startsWith("/auth") ||
@@ -114,6 +115,7 @@ export async function proxy(request: NextRequest) {
   // Block access to internal routes from subdomains
   const pathnameWithoutLocale = removeLocalePrefix(pathname);
   if (
+    pathnameWithoutLocale.startsWith("/docs") ||
     pathnameWithoutLocale.startsWith("/dashboard") ||
     pathnameWithoutLocale.startsWith("/onboarding") ||
     pathnameWithoutLocale.startsWith("/login")

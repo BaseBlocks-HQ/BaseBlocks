@@ -1,0 +1,108 @@
+---
+title: Documentation
+description: Learn how BaseBlocks works and how to get a site live quickly.
+---
+
+# BaseBlocks Documentation
+
+BaseBlocks lets teams build and publish internal sites without heavy setup. This page demonstrates the full depth of the table of contents staircase.
+
+## Getting Started
+
+Everything begins from the dashboard. Create a team, then create your first site.
+
+### Create Your Team
+
+Teams group your sites and members together. You choose a slug (e.g. `acme`) that becomes part of your site URLs.
+
+#### Inviting Members
+
+Open the Team settings panel and send invitations by email. Invited users join with the **Member** role by default. Admins can promote or remove them at any time.
+
+#### Roles and Permissions
+
+| Role | Can Edit | Can Publish | Can Manage Members |
+|------|----------|-------------|-------------------|
+| Admin | ✓ | ✓ | ✓ |
+| Member | ✓ | ✗ | ✗ |
+| Viewer | ✗ | ✗ | ✗ |
+
+### Create Your First Site
+
+From the dashboard, click **New Site**. Pick a name and a slug. The slug appears in the URL: `team.baseblocks.dev/site-slug`.
+
+#### Choosing a Slug
+
+Slugs are lowercase, hyphen-separated, and must be unique within the team. They can be changed later from site settings.
+
+## The Editor
+
+The editor is where you build pages. It has three main areas: the sidebar, the canvas, and the element picker.
+
+### Sidebar
+
+The sidebar shows your page tree. Drag pages to reorder them. Right-click a page for rename, duplicate, and delete options.
+
+#### Adding Pages
+
+Click the **+** button at the top of the sidebar to add a new page. Pages can be nested to create subpages — useful for documenting product sections or onboarding flows.
+
+#### Page Settings
+
+Each page has a title, a slug, and an optional meta description. Open page settings by clicking the gear icon next to the page in the sidebar.
+
+### Canvas
+
+The canvas renders your page live. Click any block to select it. Drag the handle on the left to reorder blocks within a layout.
+
+#### Layouts
+
+A layout is a row of one or more columns. You can choose from single-column, two-column, or three-column grids. Layouts stack vertically on mobile.
+
+#### Blocks
+
+Each cell in a layout holds one block. Blocks are the actual content: headings, text, images, buttons, and more.
+
+### Element Picker
+
+Open the element picker from the sidebar to add a new block. Elements are grouped by category. Click any element to insert it into the currently selected slot.
+
+#### Custom Elements
+
+Coming soon — you will be able to register custom React elements through the elements API and have them appear in the picker.
+
+## Publishing
+
+Publishing makes your current draft visible to anyone with the site URL.
+
+### Drafts and Live State
+
+Every site has a draft state and a live state. Edits always go to the draft. Publishing copies the draft to live. Rolling back replaces the live state with a previous snapshot.
+
+#### Snapshots
+
+A snapshot is taken automatically before each publish. You can view and restore snapshots from the Deployment History panel in the editor header.
+
+### Custom Domains
+
+Custom domains are not yet available. Planned for a future release.
+
+## Settings
+
+Site and team settings live outside the editor.
+
+### Site Settings
+
+Site settings cover the name, slug, branding colors, and visibility of the site.
+
+#### Branding
+
+You can set a primary accent color and a header background color. These cascade through the site using CSS custom properties and apply to all interactive elements.
+
+### Team Settings
+
+Team settings cover billing, member management, and API keys.
+
+#### API Keys
+
+API keys let you query your site data programmatically. Generate a key from Team Settings → API. Keys are scoped to read-only by default.

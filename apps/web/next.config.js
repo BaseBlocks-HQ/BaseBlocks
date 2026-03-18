@@ -1,6 +1,8 @@
+import { createMDX } from "fumadocs-mdx/next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+const withMDX = createMDX();
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -51,4 +53,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withMDX(withNextIntl(nextConfig));

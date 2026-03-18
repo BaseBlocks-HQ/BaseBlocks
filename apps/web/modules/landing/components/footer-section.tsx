@@ -8,11 +8,13 @@ import { Reveal } from "./reveal";
 
 interface FooterSectionProps {
   authCta: ReactNode;
+  docsCta: ReactNode;
   landingTranslations: TranslateFn;
 }
 
 export function FooterSection({
   authCta,
+  docsCta,
   landingTranslations,
 }: FooterSectionProps) {
   return (
@@ -29,7 +31,10 @@ export function FooterSection({
             <p className="mt-4 max-w-sm text-[0.94rem] text-muted-foreground">
               {landingTranslations("ctaSubtitle")}
             </p>
-            <div className="mt-8">{authCta}</div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {authCta}
+              {docsCta}
+            </div>
           </div>
         </Reveal>
 

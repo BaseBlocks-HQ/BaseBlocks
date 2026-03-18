@@ -63,6 +63,11 @@ export function LandingHeader({
               <Github className="h-4 w-4" />
               GitHub
             </a>
+            <Link href="/docs">
+              <Button variant="outline" size="sm">
+                {navigationTranslations("docs")}
+              </Button>
+            </Link>
             {isAuthenticated ? (
               <Link href="/dashboard">
                 <Button size="sm">{navigationTranslations("dashboard")}</Button>
