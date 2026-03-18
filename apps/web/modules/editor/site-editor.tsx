@@ -221,7 +221,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             />
           </div>
 
-          <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+          <div className="absolute inset-0 min-w-0 overflow-hidden">
             {showSubpagePanel ? (
               <ResizablePanelGroup orientation="horizontal" className="h-full">
                 {/* Main content area */}
@@ -230,7 +230,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizablePanel defaultSize={58} minSize={30}>
                       <PortalContainerProvider value={portalContainer}>
                         <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pl-20 md:p-8 md:pl-24 lg:pl-28"
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                           style={customizationStyles}
                           {...(isCustomized
                             ? { "data-site-customized": "" }
@@ -285,7 +285,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-auto p-4 pl-20 md:p-8 md:pl-24 lg:pl-28"
+                  className="h-full overflow-auto p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >
