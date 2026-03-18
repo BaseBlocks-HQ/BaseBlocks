@@ -1,0 +1,43 @@
+---
+title: Team Settings
+description: Configure your team workspace — name, slug, member roles, and upcoming features like custom domains.
+icon: Settings
+---
+
+Access team settings from the dashboard by clicking your team name → **Settings**.
+
+## General
+
+**Name** — The display name for your team. Shown in the dashboard and navigation. Can be changed at any time without affecting URLs.
+
+**Slug** — The subdomain used in all your site URLs:
+
+```
+https://your-slug.baseblocks.dev/site-name
+```
+
+<Callout type="warn">
+  Changing the team slug changes the URL for every site in the workspace. Existing links and bookmarks will break. There is no automatic redirect.
+</Callout>
+
+## Members
+
+The Members tab shows all current members and pending invitations.
+
+**Invite a member** — Enter an email address and select a role. An invitation email is sent. The invitation expires after 7 days if not accepted.
+
+**Change a role** — Click the role badge next to a member's name to select a new role. Takes effect immediately.
+
+**Remove a member** — Click **Remove** next to a member's name. They lose access to all sites in the workspace immediately. Their content is not deleted.
+
+**Revoke an invitation** — Click **Revoke** next to a pending invitation before it is accepted.
+
+## Coming soon
+
+<Callout type="warn">
+  The following settings are planned for a future release and are not yet available.
+</Callout>
+
+**Custom domain** — Map a custom domain (e.g., `sites.yourcompany.com`) to your team workspace so all site URLs use your domain instead of `baseblocks.dev`.
+
+**Billing** — Manage your subscription and usage when paid plans are introduced.

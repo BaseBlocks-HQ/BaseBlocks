@@ -1,0 +1,61 @@
+---
+title: Elements
+description: Elements are the content units placed inside layout slots. BaseBlocks includes blocks, sections, media, and form elements.
+icon: Puzzle
+---
+
+An element is the content that fills a layout slot. Open the element picker from the sidebar, select a layout slot on the canvas, then click any element to insert it.
+
+Each slot holds exactly one element. To change an element, remove the existing one and insert a new one.
+
+## Blocks
+
+General-purpose content units.
+
+**Heading** — A title or section heading. Supports H1 through H6. Used for page titles and section breaks.
+
+**Paragraph** — Plain text block. Supports basic inline formatting (bold, italic, links).
+
+**Rich Text** — Full-featured text editor with headings, lists, inline code, links, images, and more. Use for longer-form content where Paragraph is too limited.
+
+**Callout** — A highlighted notice box. Supports info, warning, error, and success variants. Use for important notes, tips, or alerts.
+
+**Code** — A syntax-highlighted code block. Supports multiple languages. Includes a copy button.
+
+**Divider** — A horizontal rule. Useful for separating sections within a page visually.
+
+**Spacer** — Inline vertical spacer inside a layout slot. Different from a Spacer layout — this adds space within a slot rather than between rows.
+
+**Subpage** — Embeds a card or list linking to a child page. Useful on parent pages that act as index pages for a section.
+
+**Banner** — A wide, styled announcement strip. Supports a headline, body text, and an optional call-to-action button.
+
+**Directory** — Renders a directory listing of pages or subpages. Useful for building navigation hubs or listing all pages in a section.
+
+**Flowchart** — Renders a diagram from [Mermaid](https://mermaid.js.org) syntax. Paste Mermaid-compatible code to generate flowcharts, sequence diagrams, and more.
+
+**Decision Tree** — An interactive branching element for presenting conditional content paths. Users click through choices to reach different outcomes.
+
+## Sections
+
+Larger structural elements that span the full slot.
+
+**Quick Links** — A configurable grid of icon links. Use for navigation hubs, resource lists, or "jump to" sections.
+
+**Search** — An inline full-text search bar scoped to the current site's pages and document library. Drop this on any page to make content searchable without leaving the page.
+
+**Library** — A browsable, searchable view of the site's document library. Displays uploaded PDFs and files with metadata, preview, and download.
+
+## Media
+
+**Image** — Uploads or links an image. Supports alt text and optional captions. Images are stored in the site's media library.
+
+**File** — Displays a downloadable file attachment with filename, file type, and size. Stored in the site's document library.
+
+## Forms
+
+**Form** — A form builder element. Add fields (text, email, select, checkbox, and more), set labels and validation, and connect submissions to a destination.
+
+<Callout type="warn" title="Custom elements — coming soon">
+  A public elements API for registering custom React elements will be available in a future release. Custom elements will appear in the picker alongside built-in ones.
+</Callout>

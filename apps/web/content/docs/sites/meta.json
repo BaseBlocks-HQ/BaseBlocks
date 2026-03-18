@@ -1,0 +1,5 @@
+{
+  "title": "Sites",
+  "icon": "Building2",
+  "pages": ["index", "settings", "branding"]
+}

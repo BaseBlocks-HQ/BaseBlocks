@@ -1,0 +1,51 @@
+---
+title: What is BaseBlocks
+description: BaseBlocks is an open-source site builder for teams — drag-and-drop pages, draft/publish flow, and multi-tenant workspaces out of the box.
+icon: BookOpen
+---
+
+import { GithubInfo } from 'fumadocs-ui/components/github-info';
+
+BaseBlocks is an open-source site builder for teams. You build and publish internal sites — documentation, knowledge bases, onboarding portals, team hubs — without writing code or managing infrastructure.
+
+## The problem it solves
+
+Most teams end up with content spread across a wiki, a Google Drive folder, a Notion workspace, and a pinned Slack message. None of it is designed to look like a site, and none of it has a real publish workflow.
+
+BaseBlocks gives teams a proper site builder with:
+
+- A visual drag-and-drop editor — no Markdown, no code required
+- A draft and publish model — edits stay private until you're ready
+- A real URL — every site gets a subdomain your team can bookmark
+- Access control — decide who can edit, publish, or just view
+
+## Core concepts
+
+**Team** — A workspace with its own subdomain (`your-team.baseblocks.dev`). One team can have many sites.
+
+**Site** — A collection of pages published under a single URL path (`your-team.baseblocks.dev/site-slug`). Sites have their own branding, visibility settings, and member access.
+
+**Page** — A page inside a site. Pages are organized in a tree and can be nested into subpages. Each page has layouts and blocks.
+
+**Layout** — A row on the page. Layouts contain one or more slots (columns) where blocks are placed.
+
+**Block** — A piece of content inside a layout slot. Headings, paragraphs, images, code blocks, callouts, and more.
+
+**Draft / Live** — Every site has two states. Edits always go to draft. Publishing copies the draft to live. Visitors see the live version. Rollback replaces the live version with any previous snapshot.
+
+## Who it's for
+
+BaseBlocks works for any team that needs an internal site they can actually maintain:
+
+- **Engineering teams** building internal developer portals or runbooks
+- **Ops and HR teams** publishing onboarding guides and process documentation
+- **Product teams** maintaining internal spec libraries or decision logs
+- **Any team** that wants a real URL, not a shared Google Doc
+
+## Open source
+
+BaseBlocks is MIT licensed. You can self-host it, fork it, or contribute to it.
+
+<GithubInfo owner="naaiyy" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
+
+Cloud-hosted at [baseblocks.dev](https://baseblocks.dev) — free to get started.

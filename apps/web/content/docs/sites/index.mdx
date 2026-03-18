@@ -1,0 +1,51 @@
+---
+title: Sites
+description: A site is a collection of pages published under a single URL. One team can have many sites.
+icon: Building2
+---
+
+A site is a collection of pages, layouts, and documents published as a unit under a single URL.
+
+```
+https://your-team.baseblocks.dev/your-site
+```
+
+One team can have as many sites as needed. Common patterns:
+
+- One site per product or service (`/product-a`, `/product-b`)
+- One site per audience (`/internal`, `/onboarding`, `/partners`)
+- One site per project or quarter
+
+## Creating a site
+
+From the team dashboard, click **New Site**. Enter a name and a slug. The slug becomes the path segment in the URL.
+
+Slugs are lowercase and hyphen-separated. They must be unique within the team. You can change the slug later in site settings — see the [settings page](/docs/sites/settings) for the implications.
+
+## Site URL structure
+
+```
+https://[team-slug].baseblocks.dev/[site-slug]/[page-slug]
+```
+
+Example:
+
+```
+https://acme.baseblocks.dev/engineering/onboarding
+```
+
+Where:
+- `acme` is the team slug
+- `engineering` is the site slug
+- `onboarding` is the page slug
+
+## In this section
+
+<Cards>
+  <Card href="/docs/sites/settings" title="Site Settings">
+    Name, slug, visibility, and meta description.
+  </Card>
+  <Card href="/docs/sites/branding" title="Branding">
+    Accent colors, border radius, and navigation style.
+  </Card>
+</Cards>

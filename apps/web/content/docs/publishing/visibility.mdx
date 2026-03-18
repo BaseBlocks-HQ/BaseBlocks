@@ -1,0 +1,67 @@
+---
+title: Site Visibility
+description: Control who can access your live site. Four modes — public, private, link-only, and password-protected.
+icon: Lock
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Site visibility controls who can open your live site URL. Find it in **Site Settings → Visibility**.
+
+<Tabs items={['Public', 'Private', 'Link-only', 'Password']}>
+
+<Tab value="Public">
+
+### Public
+
+Anyone with the URL can view the site. No login required. Search engines can index it.
+
+Use for: external-facing documentation, public knowledge bases, or anything you want openly accessible.
+
+</Tab>
+
+<Tab value="Private">
+
+### Private
+
+Only team members who are signed in can view the site. Visitors who aren't authenticated are redirected to the login page.
+
+Use for: internal team documentation, sensitive process guides, or anything that should stay inside the workspace.
+
+</Tab>
+
+<Tab value="Link-only">
+
+### Link-only
+
+Anyone with the exact URL can view the site. It is not listed or discoverable through the BaseBlocks platform. Search engines are not prevented from indexing it, but the site won't appear in any BaseBlocks directory.
+
+Use for: shared references you want to send to specific people without fully opening to the public.
+
+</Tab>
+
+<Tab value="Password">
+
+### Password-protected
+
+Visitors are prompted for an access code before seeing the site. The access code is separate from any BaseBlocks account — anyone with the code can enter, whether or not they have a BaseBlocks account.
+
+**How it works:**
+- Generate an access code from Site Settings → Visibility
+- Share the code with the people who need access
+- Codes are time-limited and can be revoked at any time
+- Failed attempts are rate-limited to prevent brute-force access
+
+Use for: partner portals, client-facing content, or anything that needs simple access control without requiring sign-in.
+
+<Callout type="info">
+  Access codes are not user accounts. They don't log a specific person in — they grant temporary access to the site. For proper per-user access control, use Private visibility with team membership.
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+## Changing visibility
+
+Go to **Site Settings → Visibility**, select a mode, and save. The change takes effect immediately on the live site. Draft is not affected.

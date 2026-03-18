@@ -1,0 +1,44 @@
+---
+title: Site Settings
+description: Configure a site's name, slug, visibility, and metadata.
+icon: SlidersHorizontal
+---
+
+Access site settings from the editor header → **Settings**, or from the team dashboard by clicking the settings icon on a site card.
+
+## General
+
+**Name** — The display name for the site. Shown in the dashboard, the editor, and optionally in the site navigation. Can be changed at any time.
+
+**Slug** — The path segment that identifies this site in the URL:
+
+```
+https://your-team.baseblocks.dev/[site-slug]
+```
+
+<Callout type="warn">
+  Changing the site slug changes the URL for every page in the site. Existing links and bookmarks will break. There is no automatic redirect.
+</Callout>
+
+**Meta description** — A short description used in browser tab previews, social sharing cards (Open Graph), and search engine snippets. Keep it under 160 characters.
+
+## Visibility
+
+Controls who can view the live (published) site. Four options:
+
+| Mode | Who can view |
+|---|---|
+| Public | Anyone with the URL |
+| Private | Signed-in team members only |
+| Link-only | Anyone with the exact URL (not discoverable) |
+| Password | Anyone with the access code |
+
+See [Site Visibility](/docs/publishing/visibility) for details on each mode.
+
+## Deleting a site
+
+Site deletion is available from the bottom of Site Settings. Deleting a site removes all pages, layouts, documents, and snapshots permanently.
+
+<Callout type="error">
+  Site deletion is permanent and cannot be undone. There is no recovery path after deletion.
+</Callout>

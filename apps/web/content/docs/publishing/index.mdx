@@ -1,0 +1,68 @@
+---
+title: Publishing
+description: Every site has a draft state and a live state. Edits stay in draft until you publish. Automatic snapshots let you roll back at any time.
+icon: Globe
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+## Draft and live
+
+Every site exists in two states simultaneously: **draft** and **live**.
+
+- **Draft** is what you build in the editor. Edits, new pages, and layout changes all go to draft. Visitors never see draft.
+- **Live** is what visitors see when they open your site URL. It only changes when you publish.
+
+The two states are completely independent. You can rebuild a page entirely in draft without affecting what's currently live.
+
+## Publishing
+
+<Steps>
+<Step>
+
+### Build in draft
+
+Make all your changes in the editor. Add pages, update layouts, edit content. Nothing is visible to visitors yet.
+
+</Step>
+<Step>
+
+### Preview (optional)
+
+Use the **Preview** button in the editor header to see the live render of your draft before publishing. Preview mode shows the draft as visitors will see it.
+
+</Step>
+<Step>
+
+### Publish
+
+Click **Publish** in the editor header. A snapshot of the current draft is saved automatically, then the draft is copied to live.
+
+Publishing is immediate — there is no queue or processing delay.
+
+</Step>
+</Steps>
+
+## Snapshots and rollback
+
+A snapshot is taken automatically every time you publish. Snapshots capture the full state of all pages and content at that moment.
+
+To view snapshots, open **Deployment History** from the editor header. Each entry shows the publish timestamp.
+
+To roll back, select a snapshot and click **Restore**. This replaces the current live state with the snapshot. The current draft is not affected.
+
+<Callout type="info">
+  Rollback only affects the live state. Your draft stays as-is. If you want the draft to also match the snapshot, publish again after rolling back — the draft will have diverged.
+</Callout>
+
+## What's published
+
+Publishing copies the entire site — all pages, all tabs, all layouts, and all blocks. Individual page publishing is not currently supported.
+
+## What's next
+
+<Cards>
+  <Card href="/docs/publishing/visibility" title="Site Visibility">
+    Control who can access your live site — public, private, link-only, or password-protected.
+  </Card>
+</Cards>

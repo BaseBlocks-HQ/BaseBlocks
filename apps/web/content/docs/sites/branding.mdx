@@ -1,0 +1,47 @@
+---
+title: Branding
+description: Customize the look of your site — accent color, header background, border radius, and navigation style.
+icon: Palette
+---
+
+Each site has its own branding settings, independent of other sites in the team. Changes apply to the live site immediately — you don't need to publish for branding changes to take effect.
+
+Access branding from the editor header → **Settings → Branding**.
+
+## Accent color
+
+The primary interactive color used across the site — links, buttons, active states, and focus rings.
+
+Set as a hex value (e.g., `#3b82f6`) or an HSL value. The editor shows a live preview as you type.
+
+The accent color cascades through the site via CSS custom properties (`--accent`). All interactive elements inherit it automatically.
+
+## Header background
+
+The background color of the site navigation header. Defaults to the site's background color.
+
+Setting a distinct header background helps establish visual hierarchy, especially on sites with a light content area and a darker branded nav bar.
+
+## Border radius
+
+Controls the roundness of UI elements — cards, buttons, inputs, and containers.
+
+| Setting | Value | Look |
+|---|---|---|
+| None | `0px` | Sharp corners, flat UI |
+| Small | `4px` | Subtly rounded |
+| Medium | `8px` | Standard rounded (default) |
+| Large | `12px` | Prominently rounded |
+| Full | `9999px` | Pill-shaped buttons and fully rounded containers |
+
+## Navigation style
+
+Controls how the top navigation header is rendered on the public site.
+
+| Style | Description |
+|---|---|
+| Default | Standard header with logo, navigation links, and action button |
+| Minimal | Simplified header, no navigation links — good for single-page or focused sites |
+| Sidebar | Navigation rendered in a persistent left sidebar instead of the top header |
+
+Navigation style affects the live site only. The editor always shows the default editor chrome.

@@ -1,0 +1,5 @@
+{
+  "title": "Team",
+  "icon": "Users",
+  "pages": ["index", "settings"]
+}

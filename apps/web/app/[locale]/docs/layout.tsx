@@ -5,6 +5,7 @@ import { isAuthenticated } from "@/lib/auth/server";
 import { docsI18n, source } from "@/lib/source";
 import { Button } from "@baseblocks/ui/button";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { CSSProperties, ReactNode } from "react";
@@ -84,6 +85,19 @@ export default async function DocsSectionLayout({
         }}
         themeSwitch={{ enabled: false }}
         sidebar={{ footer: null }}
+        links={[
+          {
+            type: "custom" as const,
+            children: (
+              <GithubInfo
+                owner="naaiyy"
+                repo="BaseBlocks"
+                token={process.env.GITHUB_TOKEN}
+                className="lg:-mx-2"
+              />
+            ),
+          },
+        ]}
         nav={{
           component: (
             <PublicHeader
