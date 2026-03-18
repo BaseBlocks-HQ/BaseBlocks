@@ -6,7 +6,7 @@ import { Button } from "@baseblocks/ui/button";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { getTranslations } from "next-intl/server";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type LayoutProps = {
   children: ReactNode;
@@ -40,12 +40,6 @@ export default async function DocsSectionLayout({
       <DocsLayout
         containerProps={{
           className: "bb-docs-shell",
-          style: {
-            gridTemplate: `"sidebar sidebar header toc toc"
-              "sidebar sidebar toc-popover toc toc"
-              "sidebar sidebar main toc toc" 1fr
-              "sidebar sidebar footer footer ." / minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(0, calc(var(--fd-layout-width,97rem) - var(--fd-sidebar-width) - var(--fd-toc-width))) var(--fd-toc-width) minmax(min-content, 1fr)`,
-          } as CSSProperties,
         }}
         themeSwitch={{ enabled: false }}
         sidebar={{
