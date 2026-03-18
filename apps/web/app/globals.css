@@ -143,8 +143,35 @@
   }
 }
 
-#nd-docs-layout {
-  --fd-sidebar-width: 240px !important;
+/* Mobile: collapse gutter/sidebar/toc columns to 0, full-width content */
+@media (max-width: 767.9px) {
+  #nd-docs-layout {
+    grid-template:
+      "sidebar sidebar header toc toc"
+      "sidebar sidebar toc-popover toc toc"
+      "sidebar sidebar main toc toc" 1fr
+      "sidebar sidebar footer footer ." / 0px 0px 1fr 0px 0px !important;
+  }
+}
+
+/* Desktop: custom 5-column layout with gutters */
+@media (min-width: 768px) {
+  #nd-docs-layout {
+    --fd-sidebar-width: 240px !important;
+    grid-template:
+      "sidebar sidebar header toc toc"
+      "sidebar sidebar toc-popover toc toc"
+      "sidebar sidebar main toc toc" 1fr
+      "sidebar sidebar footer footer ." /
+      minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(
+        0,
+        calc(
+          var(--fd-layout-width, 97rem) - var(--fd-sidebar-width) -
+            var(--fd-toc-width)
+        )
+      )
+      var(--fd-toc-width) minmax(min-content, 1fr) !important;
+  }
 }
 
 .bb-docs-shell {
@@ -240,9 +267,11 @@
   letter-spacing: -0.02em;
 }
 
-#nd-sidebar {
-  align-items: flex-start !important;
-  width: var(--fd-sidebar-width) !important;
+@media (min-width: 768px) {
+  #nd-sidebar {
+    align-items: flex-start !important;
+    width: var(--fd-sidebar-width) !important;
+  }
 }
 
 #nd-sidebar > .border-t,
