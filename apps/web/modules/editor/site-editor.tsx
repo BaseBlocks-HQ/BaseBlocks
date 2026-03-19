@@ -208,7 +208,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6">
+          <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6 max-sm:inset-y-auto max-sm:top-auto max-sm:bottom-4 max-sm:left-1/2 max-sm:-translate-x-1/2">
             <EditorFloatingRail
               site={site}
               pages={pages}
