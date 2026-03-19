@@ -31,7 +31,7 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
       {...(isApp ? {} : { target: "_blank", rel: "noopener noreferrer" })}
       className="group w-full flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
     >
-      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <div className="not-prose relative w-12 h-12 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
         {link.imageUrl ? (
           <Image
             src={link.imageUrl}
