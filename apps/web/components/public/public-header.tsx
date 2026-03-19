@@ -29,13 +29,13 @@ export function PublicHeader({
     <header className={cn("sticky top-0 z-50", className)}>
       <div className="relative isolate">
         <PublicHeaderBlur />
+        <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
         <div
           className={cn(
             "relative mx-auto flex h-16 max-w-6xl items-center justify-between px-6",
             contentClassName,
           )}
         >
-          <div className="absolute inset-0 rounded-b-[1.75rem] bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
           <div className="relative flex w-full items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <Link href="/">
