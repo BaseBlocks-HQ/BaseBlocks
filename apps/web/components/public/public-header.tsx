@@ -32,7 +32,7 @@ export function PublicHeader({
         <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
         <div
           className={cn(
-            "relative mx-auto flex min-h-16 max-w-6xl items-center justify-between px-6 pt-[env(safe-area-inset-top)]",
+            "relative mx-auto flex min-h-[calc(4rem_+_env(safe-area-inset-top))] max-w-6xl items-center justify-between px-6 pt-[env(safe-area-inset-top)]",
             contentClassName,
           )}
         >

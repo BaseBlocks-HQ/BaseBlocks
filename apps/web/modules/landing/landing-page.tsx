@@ -110,8 +110,8 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
       <div
         className={
           expanded
-            ? "min-h-screen bg-background"
-            : "h-screen overflow-hidden bg-background"
+            ? "min-h-dvh bg-background"
+            : "h-dvh overflow-hidden bg-background"
         }
       >
         <LayoutGroup>
