@@ -154,7 +154,7 @@ function FloatingRailButton({
       type="button"
       aria-disabled={disabled}
       className={cn(
-        "flex h-11 w-11 max-sm:h-9 max-sm:w-9 items-center justify-center rounded-2xl border transition-colors",
+        "flex h-9 w-9 items-center justify-center rounded-2xl border transition-colors",
         active
           ? "border-border bg-accent/70 text-foreground shadow-sm"
           : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
@@ -179,7 +179,7 @@ function RailUndoRedoControls({ horizontal = false }: { horizontal?: boolean }) 
       <Button
         variant="ghost"
         size="icon-sm"
-        className="h-11 w-11 max-sm:h-9 max-sm:w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        className="h-9 w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
         disabled={
           isUndoRedoExecuting ||
           (!canUndo(currentPageId ?? undefined) && !canUndo())
@@ -198,7 +198,7 @@ function RailUndoRedoControls({ horizontal = false }: { horizontal?: boolean }) 
       <Button
         variant="ghost"
         size="icon-sm"
-        className="h-11 w-11 max-sm:h-9 max-sm:w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        className="h-9 w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
         disabled={
           isUndoRedoExecuting ||
           (!canRedo(currentPageId ?? undefined) && !canRedo())
@@ -236,7 +236,7 @@ function EllipsisButton({
         <button
           type="button"
           className={cn(
-            "flex h-11 w-11 max-sm:h-9 max-sm:w-9 items-center justify-center rounded-2xl border transition-colors",
+            "flex h-9 w-9 items-center justify-center rounded-2xl border transition-colors",
             hasActiveOverflow
               ? "border-border bg-accent/70 text-foreground shadow-sm"
               : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
@@ -597,7 +597,7 @@ export function EditorFloatingRail({
       onMouseEnter={isMobile ? undefined : clearPendingClose}
       onMouseLeave={isMobile ? undefined : scheduleClose}
     >
-      <div className="rounded-[32px] border bg-background/88 p-2 max-sm:p-1.5 shadow-xl backdrop-blur-md">
+      <div className="rounded-[32px] border bg-background/88 p-1.5 shadow-xl backdrop-blur-md">
         <div className={cn("flex gap-1", isMobile ? "flex-row items-center" : "flex-col")}>
           {visibleItems.map((item) => {
             const categoryId: ElementCategory | null =

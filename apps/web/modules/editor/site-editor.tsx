@@ -19,7 +19,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
-import { SidebarProvider } from "@baseblocks/ui/sidebar";
 import { useMutation } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -194,8 +193,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const { site, team } = siteData;
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden">
         <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <EditorHeader
             teamSlug={team.slug}
@@ -285,7 +283,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-auto p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                  className="h-full overflow-y-auto overflow-x-hidden p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >
@@ -305,7 +303,6 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           </div>
         </main>
       </div>
-    </SidebarProvider>
   );
 }
 
