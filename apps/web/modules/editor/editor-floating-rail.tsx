@@ -119,10 +119,11 @@ const RAIL_ITEMS: Array<{
 
 const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
 
-const BUTTON_SLOT = 48; // h-11 w-11 (44px) + gap-1 (4px)
-const RAIL_PADDING = 16; // p-2 (8px) * 2 sides
-const FIXED_RIGHT_WIDTH = 101; // separator + gap + undo + gap + redo + gaps ≈ 101px
-const RAIL_MARGIN = 24; // total horizontal margin around the rail on mobile
+// Mobile rail sizing: h-9 w-9 buttons (36px) + gap-1 (4px) + p-1.5 padding
+const BUTTON_SLOT_MOBILE = 40; // 36px button + 4px gap
+const RAIL_PADDING_MOBILE = 12; // p-1.5 (6px) * 2 sides
+const FIXED_RIGHT_MOBILE = 85; // sep(1) + gap(4) + undo(36) + gap(4) + redo(36) + gaps
+const RAIL_MARGIN = 24; // inset-x-3 (12px) * 2 sides
 
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
@@ -153,7 +154,7 @@ function FloatingRailButton({
       type="button"
       aria-disabled={disabled}
       className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-2xl border transition-colors",
+        "flex h-11 w-11 max-sm:h-9 max-sm:w-9 items-center justify-center rounded-2xl border transition-colors",
         active
           ? "border-border bg-accent/70 text-foreground shadow-sm"
           : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
@@ -178,7 +179,7 @@ function RailUndoRedoControls({ horizontal = false }: { horizontal?: boolean }) 
       <Button
         variant="ghost"
         size="icon-sm"
-        className="h-11 w-11 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        className="h-11 w-11 max-sm:h-9 max-sm:w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
         disabled={
           isUndoRedoExecuting ||
           (!canUndo(currentPageId ?? undefined) && !canUndo())
@@ -197,7 +198,7 @@ function RailUndoRedoControls({ horizontal = false }: { horizontal?: boolean }) 
       <Button
         variant="ghost"
         size="icon-sm"
-        className="h-11 w-11 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
+        className="h-11 w-11 max-sm:h-9 max-sm:w-9 rounded-2xl text-muted-foreground hover:bg-accent/55 hover:text-foreground"
         disabled={
           isUndoRedoExecuting ||
           (!canRedo(currentPageId ?? undefined) && !canRedo())
@@ -235,7 +236,7 @@ function EllipsisButton({
         <button
           type="button"
           className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-2xl border transition-colors",
+            "flex h-11 w-11 max-sm:h-9 max-sm:w-9 items-center justify-center rounded-2xl border transition-colors",
             hasActiveOverflow
               ? "border-border bg-accent/70 text-foreground shadow-sm"
               : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
@@ -424,6 +425,7 @@ export function EditorFloatingRail({
   const [visibleCount, setVisibleCount] = useState(RAIL_ITEMS.length);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const railWrapperRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -434,10 +436,10 @@ export function EditorFloatingRail({
 
     const computeVisible = () => {
       const available =
-        window.innerWidth - RAIL_MARGIN - RAIL_PADDING - FIXED_RIGHT_WIDTH;
+        window.innerWidth - RAIL_MARGIN - RAIL_PADDING_MOBILE - FIXED_RIGHT_MOBILE;
       return Math.min(
         RAIL_ITEMS.length,
-        Math.max(1, Math.floor(available / BUTTON_SLOT)),
+        Math.max(1, Math.floor(available / BUTTON_SLOT_MOBILE)),
       );
     };
 
@@ -459,6 +461,22 @@ export function EditorFloatingRail({
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  // Close flyout on mobile when tapping outside the rail + panel
+  useEffect(() => {
+    if (!isMobile || !activePanel) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (
+        !railWrapperRef.current?.contains(target) &&
+        !(target as HTMLElement).closest?.("[data-radix-popper-content-wrapper]")
+      ) {
+        setActivePanel(null);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isMobile, activePanel]);
 
   const navPages = pages.filter((page) => !page.isSubpageContent);
   const rootPages = navPages
@@ -574,11 +592,12 @@ export function EditorFloatingRail({
 
   return (
     <div
+      ref={railWrapperRef}
       className="pointer-events-auto relative"
       onMouseEnter={isMobile ? undefined : clearPendingClose}
       onMouseLeave={isMobile ? undefined : scheduleClose}
     >
-      <div className="rounded-[32px] border bg-background/88 p-2 shadow-xl backdrop-blur-md">
+      <div className="rounded-[32px] border bg-background/88 p-2 max-sm:p-1.5 shadow-xl backdrop-blur-md">
         <div className={cn("flex gap-1", isMobile ? "flex-row items-center" : "flex-col")}>
           {visibleItems.map((item) => {
             const categoryId: ElementCategory | null =

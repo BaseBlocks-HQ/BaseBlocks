@@ -208,7 +208,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6 max-sm:inset-y-auto max-sm:top-auto max-sm:bottom-4 max-sm:left-1/2 max-sm:-translate-x-1/2">
+          <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-4 max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
             <EditorFloatingRail
               site={site}
               pages={pages}
@@ -230,7 +230,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizablePanel defaultSize={58} minSize={30}>
                       <PortalContainerProvider value={portalContainer}>
                         <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                           style={customizationStyles}
                           {...(isCustomized
                             ? { "data-site-customized": "" }
@@ -285,7 +285,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-auto p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                  className="h-full overflow-auto p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >
