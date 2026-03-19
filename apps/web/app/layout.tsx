@@ -5,7 +5,7 @@ import {
   GeistPixelSquare,
   GeistPixelTriangle,
 } from "geist/font/pixel";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import "./globals.css";
@@ -21,6 +21,12 @@ const geistMono = localFont({
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 const socialImage = "/baseblocks-social-preview.png";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${ROOT_DOMAIN}`),

@@ -193,7 +193,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const { site, team } = siteData;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-dvh w-full overflow-hidden">
         <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <EditorHeader
             teamSlug={team.slug}
@@ -206,7 +206,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-4 max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
+          <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-[calc(1rem_+_env(safe-area-inset-bottom))] max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
             <EditorFloatingRail
               site={site}
               pages={pages}
@@ -228,7 +228,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizablePanel defaultSize={58} minSize={30}>
                       <PortalContainerProvider value={portalContainer}>
                         <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
                           style={customizationStyles}
                           {...(isCustomized
                             ? { "data-site-customized": "" }
@@ -283,7 +283,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             ) : (
               <PortalContainerProvider value={portalContainer}>
                 <div
-                  className="h-full overflow-y-auto overflow-x-hidden p-4 pt-18 max-sm:pb-24 sm:pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                  className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
                   style={customizationStyles}
                   {...(isCustomized ? { "data-site-customized": "" } : {})}
                 >
