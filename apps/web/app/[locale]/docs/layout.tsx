@@ -72,7 +72,7 @@ export default async function DocsSectionLayout({
           component: (
             <PublicHeader
               authAction={authAction}
-              className="[grid-area:header] z-30 md:layout:[--fd-header-height:65px]"
+              className="[grid-area:header] z-30 layout:[--fd-header-height:var(--bb-header-height)]"
               contentClassName="mx-0 max-w-none px-6 xl:px-8"
               docsLabel={navigationTranslations("docs")}
               mobileActions={<DocsMobileHeaderActions />}

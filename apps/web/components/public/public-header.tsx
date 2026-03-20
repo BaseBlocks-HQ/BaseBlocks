@@ -28,13 +28,15 @@ export function PublicHeader({
   showHomepageLink = false,
 }: PublicHeaderProps) {
   return (
-    <header className={cn("sticky top-0 z-50", className)}>
+    <header
+      className={cn("sticky top-0 z-50 [--bb-header-height:3.5rem]", className)}
+    >
       <div className="relative isolate">
         <PublicHeaderBlur />
         <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
         <div
           className={cn(
-            "relative mx-auto flex min-h-[calc(4rem_+_env(safe-area-inset-top))] max-w-6xl items-center justify-between px-4 pt-[env(safe-area-inset-top)] sm:px-6",
+            "relative mx-auto flex min-h-(--bb-header-height) max-w-6xl items-center justify-between px-4 sm:px-6",
             contentClassName,
           )}
         >

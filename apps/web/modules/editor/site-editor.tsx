@@ -228,7 +228,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                   <ResizablePanel defaultSize={58} minSize={30}>
                     <PortalContainerProvider value={portalContainer}>
                       <div
-                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
+                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[4.5rem] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[4.5rem] md:pl-24 lg:pl-28"
                         style={customizationStyles}
                         {...(isCustomized
                           ? { "data-site-customized": "" }
@@ -283,7 +283,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           ) : (
             <PortalContainerProvider value={portalContainer}>
               <div
-                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
+                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[4.5rem] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[4.5rem] md:pl-24 lg:pl-28"
                 style={customizationStyles}
                 {...(isCustomized ? { "data-site-customized": "" } : {})}
               >
