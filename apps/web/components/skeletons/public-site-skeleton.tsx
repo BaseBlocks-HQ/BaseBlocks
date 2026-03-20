@@ -4,8 +4,8 @@ export function PublicSiteSkeleton() {
   const sidebarSkeletonWidths = ["50%", "70%", "90%", "50%"];
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <header className="border-b">
+    <div className="flex min-h-dvh flex-col overflow-hidden bg-background">
+      <header className="shrink-0 border-b">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -15,8 +15,8 @@ export function PublicSiteSkeleton() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 border-r p-4">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className="hidden w-64 shrink-0 border-r p-4 lg:block">
           <nav className="space-y-1">
             {sidebarSkeletonWidths.map((width) => (
               <div
@@ -30,8 +30,8 @@ export function PublicSiteSkeleton() {
           </nav>
         </aside>
 
-        <main className="flex-1 p-8 overflow-auto">
-          <div className="max-w-4xl mx-auto space-y-6">
+        <main className="min-w-0 flex-1 overflow-auto p-4 sm:p-8">
+          <div className="mx-auto max-w-4xl min-w-0 space-y-6">
             <Skeleton className="h-8 w-56" />
             <div className="space-y-3">
               <Skeleton className="h-4 w-full" />

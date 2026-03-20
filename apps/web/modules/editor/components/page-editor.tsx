@@ -21,12 +21,12 @@ import { PageTabBar } from "./page-tab-bar";
 
 function ContentSkeleton() {
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="animate-pulse space-y-4 w-full max-w-2xl">
-        <div className="h-8 bg-muted rounded w-1/3" />
-        <div className="h-4 bg-muted rounded w-full" />
-        <div className="h-4 bg-muted rounded w-2/3" />
-        <div className="h-32 bg-muted rounded w-full" />
+    <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-2xl animate-pulse space-y-4">
+        <div className="h-8 w-1/2 rounded bg-muted sm:w-1/3" />
+        <div className="h-4 w-full rounded bg-muted" />
+        <div className="h-4 w-2/3 rounded bg-muted" />
+        <div className="h-32 w-full rounded bg-muted" />
       </div>
     </div>
   );
