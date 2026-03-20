@@ -224,6 +224,20 @@
   backdrop-filter: blur(18px);
 }
 
+.bb-docs-shell [data-toc-popover] > header,
+.bb-docs-shell [data-toc-popover-trigger],
+.bb-docs-shell [data-toc-popover-content] {
+  background: var(--color-fd-popover);
+}
+
+.bb-docs-shell [data-toc-popover] {
+  z-index: 20;
+}
+
+.bb-docs-shell [data-toc-popover] > header {
+  backdrop-filter: none;
+}
+
 .bb-docs-shell #nd-page {
   position: relative;
 }

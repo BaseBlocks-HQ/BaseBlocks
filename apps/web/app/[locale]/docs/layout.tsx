@@ -1,3 +1,4 @@
+import { DocsMobileHeaderActions } from "@/components/docs/docs-mobile-header-actions";
 import { PublicHeader } from "@/components/public/public-header";
 import { Link } from "@/i18n/navigation";
 import { isAuthenticated } from "@/lib/auth/server";
@@ -5,6 +6,7 @@ import { source } from "@/lib/source";
 import { Button } from "@baseblocks/ui/button";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { LayoutDashboard, LogIn } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
@@ -27,11 +29,19 @@ export default async function DocsSectionLayout({
 
   const authAction = authed ? (
     <Link href="/dashboard">
-      <Button size="sm">{navigationTranslations("dashboard")}</Button>
+      <Button size="sm" className="max-sm:size-8 max-sm:px-0">
+        <LayoutDashboard className="h-4 w-4 shrink-0 sm:hidden" />
+        <span className="max-sm:sr-only">
+          {navigationTranslations("dashboard")}
+        </span>
+      </Button>
     </Link>
   ) : (
     <Link href="/login">
-      <Button size="sm">{commonTranslations("signIn")}</Button>
+      <Button size="sm" className="max-sm:size-8 max-sm:px-0">
+        <LogIn className="h-4 w-4 shrink-0 sm:hidden" />
+        <span className="max-sm:sr-only">{commonTranslations("signIn")}</span>
+      </Button>
     </Link>
   );
 
@@ -65,6 +75,7 @@ export default async function DocsSectionLayout({
               className="[grid-area:header] z-30 md:layout:[--fd-header-height:65px]"
               contentClassName="mx-0 max-w-none px-6 xl:px-8"
               docsLabel={navigationTranslations("docs")}
+              mobileActions={<DocsMobileHeaderActions />}
               showDocsLink={false}
               showHomepageLink={true}
               homepageLinkLabel={navigationTranslations("home")}
