@@ -20,14 +20,11 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, GripVertical, Settings2, Trash2 } from "lucide-react";
-import {
-  type MouseEvent,
-  type PointerEvent,
-  createElement,
-  useRef,
-  useState,
-} from "react";
+import { createElement, useState } from "react";
 import { toast } from "sonner";
+
+// Same zone height as layout-renderer — keeps vertical rhythm consistent.
+const CONTROL_ZONE = "pt-7";
 
 interface SortableBlockProps {
   id: string;
@@ -55,9 +52,7 @@ export function SortableBlock({
   onRemove,
 }: SortableBlockProps) {
   const [configOpen, setConfigOpen] = useState(false);
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
-  const suppressClickRef = useRef(false);
+  const [isHovered, setIsHovered] = useState(false);
   const editorSite = useEditorSiteOptional();
   const clipboard = useBlockClipboardOptional();
   const canEdit = editorSite?.canEdit ?? true;
@@ -80,48 +75,15 @@ export function SortableBlock({
   const hasConfig = hasElementConfigPanel(blockType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
   const canCopyBlock = canEdit && isCopyableBlockType(block.type);
-  const showActions = isSelected && actionsOpen;
 
-  const handlePointerDownCapture = (e: PointerEvent<HTMLButtonElement>) => {
-    pointerStartRef.current = { x: e.clientX, y: e.clientY };
-    suppressClickRef.current = false;
-  };
-
-  const handlePointerMoveCapture = (e: PointerEvent<HTMLButtonElement>) => {
-    const start = pointerStartRef.current;
-    if (!start || suppressClickRef.current) {
-      return;
-    }
-
-    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) {
-      suppressClickRef.current = true;
-    }
-  };
-
-  const handlePointerUpCapture = () => {
-    pointerStartRef.current = null;
-    if (suppressClickRef.current) {
-      globalThis.setTimeout(() => {
-        suppressClickRef.current = false;
-      }, 0);
-    }
-  };
-
-  const handleHandleClick = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-    setActionsOpen((open) => !open);
-  };
+  const showControls = isHovered || isSelected;
 
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
         style={style}
-        className="min-h-[40px] rounded border border-dashed border-primary/40 bg-primary/5 mb-2"
+        className="min-h-[40px] rounded border border-dashed border-primary/40 bg-primary/5"
       />
     );
   }
@@ -131,24 +93,18 @@ export function SortableBlock({
       ref={setNodeRef}
       style={style}
       role="presentation"
-      className="group/block mb-3 min-w-0"
+      className={cn("relative min-w-0", CONTROL_ZONE)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onMouseDown={(e) => {
-        if (e.button !== 0) {
-          return;
-        }
+        if (e.button !== 0) return;
         e.stopPropagation();
         onSelect();
       }}
     >
-      <div className="flex gap-1 items-start">
-        <div
-          className={cn(
-            "flex flex-col gap-0.5 shrink-0",
-            "transition-opacity",
-            "opacity-0 group-hover/block:opacity-100",
-            isSelected && "opacity-100",
-          )}
-        >
+      {/* Controls live in the top padding zone — content never shifts */}
+      {showControls && (
+        <div className="absolute top-0.5 left-0 flex items-center gap-0.5">
           <button
             ref={setActivatorNodeRef}
             type="button"
@@ -160,23 +116,16 @@ export function SortableBlock({
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
-            onPointerDownCapture={handlePointerDownCapture}
-            onPointerMoveCapture={handlePointerMoveCapture}
-            onPointerUpCapture={handlePointerUpCapture}
-            onClick={handleHandleClick}
             {...attributes}
             {...listeners}
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>
 
-          {showActions && (
+          {isSelected && (
             <>
               {hasConfig && ConfigPanel && (
-                <Popover
-                  open={isSelected && configOpen}
-                  onOpenChange={setConfigOpen}
-                >
+                <Popover open={configOpen} onOpenChange={setConfigOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
@@ -188,7 +137,7 @@ export function SortableBlock({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    side="left"
+                    side="bottom"
                     align="start"
                     className="w-64"
                     onClick={(e) => e.stopPropagation()}
@@ -237,20 +186,18 @@ export function SortableBlock({
             </>
           )}
         </div>
+      )}
 
-        <div className="min-w-0 flex-1">
-          <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
-            <ElementEditorWrapper
-              id={block.id}
-              type={block.type as ElementType}
-              content={block.content}
-              isSelected={isSelected}
-              onUpdate={onUpdate}
-              onRemove={onRemove}
-            />
-          </LayoutContextProvider>
-        </div>
-      </div>
+      <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
+        <ElementEditorWrapper
+          id={block.id}
+          type={block.type as ElementType}
+          content={block.content}
+          isSelected={isSelected}
+          onUpdate={onUpdate}
+          onRemove={onRemove}
+        />
+      </LayoutContextProvider>
     </div>
   );
 }

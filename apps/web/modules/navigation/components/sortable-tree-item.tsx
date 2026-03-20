@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { DragHandle } from "@/modules/shared/dnd";
 import type { PageListItem } from "@baseblocks/types";
-import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
+import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -13,6 +13,9 @@ import type { FlattenedPage } from "../tree";
 import { INDENT_WIDTH, isValidDrop } from "../tree";
 import { useTreeDndContext } from "./tree-dnd-context";
 import { DropHighlight, DropLine } from "./tree-drop-indicator";
+
+const treeItemButtonClassName =
+  "peer/menu-button flex h-8 w-full items-center gap-2 overflow-hidden rounded-md p-2 pr-8 text-left text-sm outline-hidden ring-ring transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0";
 
 interface SortableTreeItemProps {
   item: FlattenedPage;
@@ -90,10 +93,11 @@ export function SortableTreeItem({
       {showAfterLine && <DropLine position="after" depth={lineDepth} />}
       {showInsideHighlight && <DropHighlight />}
 
-      <SidebarMenuButton
-        isActive={selectedPageId === page._id}
+      <button
+        type="button"
+        data-active={selectedPageId === page._id}
         onClick={() => onSelect(page._id)}
-        className={cn("w-full pr-8", isGhost && "opacity-30")}
+        className={cn(treeItemButtonClassName, isGhost && "opacity-30")}
         style={{ paddingLeft: `${indentPadding}px` }}
       >
         {canEdit && (
@@ -109,7 +113,7 @@ export function SortableTreeItem({
         )}
 
         {hasChildren ? (
-          // biome-ignore lint/a11y/useSemanticElements: nested inside SidebarMenuButton which renders as <button> — can't nest <button> in <button>
+          // biome-ignore lint/a11y/useSemanticElements: nested inside the row button — can't nest <button> in <button>
           <div
             role="button"
             tabIndex={0}
@@ -143,7 +147,7 @@ export function SortableTreeItem({
             Default
           </span>
         )}
-      </SidebarMenuButton>
+      </button>
 
       {!isGhost && actionsMenu}
     </SidebarMenuItem>

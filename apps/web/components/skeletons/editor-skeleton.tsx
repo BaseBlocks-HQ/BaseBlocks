@@ -27,15 +27,18 @@ export function EditorSkeleton() {
         </div>
 
         <div className="relative flex-1 overflow-hidden">
-          <div className="absolute inset-y-0 left-3 flex items-center sm:left-4 lg:left-6">
-            <div className="rounded-[32px] border bg-background/88 p-2 shadow-xl">
-              <div className="flex flex-col gap-1">
+          <div className="absolute z-30 flex max-sm:inset-x-0 max-sm:bottom-[calc(1rem_+_env(safe-area-inset-bottom))] max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
+            <div className="rounded-[1.75rem] border bg-background/90 p-1.5 shadow-lg sm:rounded-[2rem] sm:p-2 sm:shadow-xl">
+              <div className="flex items-center gap-0.5 sm:flex-col sm:gap-1">
                 {railItems.map((item) => (
-                  <Skeleton key={item} className="h-11 w-11 rounded-2xl" />
+                  <Skeleton
+                    key={item}
+                    className="h-9 w-9 rounded-[1.15rem] sm:h-10 sm:w-10 sm:rounded-[1.35rem]"
+                  />
                 ))}
-                <div className="mx-1 my-2 h-px bg-border" />
-                <Skeleton className="h-11 w-11 rounded-2xl" />
-                <Skeleton className="h-11 w-11 rounded-2xl" />
+                <div className="mx-0.5 h-7 w-px self-center bg-border/80 sm:mx-1 sm:mt-2 sm:h-px sm:w-auto" />
+                <Skeleton className="h-9 w-9 rounded-[1.15rem] sm:h-10 sm:w-10 sm:rounded-[1.35rem]" />
+                <Skeleton className="h-9 w-9 rounded-[1.15rem] sm:h-10 sm:w-10 sm:rounded-[1.35rem]" />
               </div>
             </div>
           </div>

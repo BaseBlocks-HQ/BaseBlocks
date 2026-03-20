@@ -168,12 +168,15 @@ function ViewSiteButton({
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5"
+            aria-label={t("editor.viewSite")}
+            className="gap-1.5 max-sm:size-8 max-sm:px-0"
             disabled={!sitePublished}
             onClick={() => openSite(teamSlug, siteSlug)}
           >
             <ExternalLink className="h-4 w-4" />
-            {t("editor.viewSite")}
+            <span className="max-sm:sr-only sm:not-sr-only">
+              {t("editor.viewSite")}
+            </span>
           </Button>
         </span>
       </TooltipTrigger>

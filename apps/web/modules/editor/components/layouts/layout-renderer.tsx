@@ -14,10 +14,7 @@ import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import {
   type ButtonHTMLAttributes,
-  type MouseEvent,
-  type PointerEvent,
   type Ref,
-  useRef,
   useState,
 } from "react";
 import { LayoutSlot } from "./layout-slot";
@@ -47,6 +44,11 @@ export interface LayoutRendererProps {
   isDragging?: boolean;
 }
 
+// The control zone is the top-padding that permanently reserves space for the
+// controls row. Controls are absolutely positioned within it so content never
+// shifts on hover/selection.
+const CONTROL_ZONE = "pt-7"; // 28px = h-6 handle + 4px gap above content
+
 export function LayoutRenderer({
   layout,
   isSelected,
@@ -66,77 +68,35 @@ export function LayoutRenderer({
   dragHandleProps,
   isDragging,
 }: LayoutRendererProps) {
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
-  const suppressClickRef = useRef(false);
+  const [isHovered, setIsHovered] = useState(false);
   const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
   const spacerHeight = layout.settings.spacerHeight ?? "medium";
-  const showActions = isSelected && actionsOpen;
+
+  const showControls = !selectedBlockId && (isHovered || isSelected);
 
   const handleSpacerHeightChange = (height: SpacerLayoutHeight) => {
     onUpdateSettings?.({ ...layout.settings, spacerHeight: height });
-  };
-
-  const handlePointerDownCapture = (e: PointerEvent<HTMLButtonElement>) => {
-    pointerStartRef.current = { x: e.clientX, y: e.clientY };
-    suppressClickRef.current = false;
-  };
-
-  const handlePointerMoveCapture = (e: PointerEvent<HTMLButtonElement>) => {
-    const start = pointerStartRef.current;
-    if (!start || suppressClickRef.current) {
-      return;
-    }
-
-    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) {
-      suppressClickRef.current = true;
-    }
-  };
-
-  const handlePointerUpCapture = () => {
-    pointerStartRef.current = null;
-    if (suppressClickRef.current) {
-      globalThis.setTimeout(() => {
-        suppressClickRef.current = false;
-      }, 0);
-    }
-  };
-
-  const handleHandleClick = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-    setActionsOpen((open) => !open);
   };
 
   return (
     <div
       role="presentation"
       className={cn(
-        "group/layout rounded-md transition-colors",
+        "relative rounded-md transition-colors",
+        CONTROL_ZONE,
         isDragging && "ring-2 ring-primary/30",
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onMouseDown={(e) => {
-        if (e.button !== 0) {
-          return;
-        }
+        if (e.button !== 0) return;
         e.stopPropagation();
         onSelectLayout();
       }}
     >
-      <div className="flex gap-1 items-start">
-        <div
-          className={cn(
-            "flex flex-col gap-0.5 shrink-0",
-            "transition-opacity",
-            selectedBlockId
-              ? "opacity-0 pointer-events-none"
-              : "opacity-0 group-hover/layout:opacity-100",
-            isSelected && !selectedBlockId && "opacity-100",
-          )}
-        >
+      {/* Controls live in the top padding zone — content never shifts */}
+      {showControls && (
+        <div className="absolute top-0.5 left-0 flex items-center gap-0.5">
           <button
             ref={dragHandleRef}
             type="button"
@@ -148,15 +108,11 @@ export function LayoutRenderer({
                 ? "bg-muted text-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent",
             )}
-            onPointerDownCapture={handlePointerDownCapture}
-            onPointerMoveCapture={handlePointerMoveCapture}
-            onPointerUpCapture={handlePointerUpCapture}
-            onClick={handleHandleClick}
             {...dragHandleProps}
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>
-          {showActions && (
+          {isSelected && (
             <Button
               variant="ghost"
               size="icon-xs"
@@ -170,25 +126,24 @@ export function LayoutRenderer({
             </Button>
           )}
         </div>
+      )}
 
-        <div className="min-w-0 flex-1 rounded-md transition-colors hover:bg-muted/20">
-          {layout.type === "spacer" ? (
-            <div
-              className={cn(
-                "w-full max-w-full box-border",
-                "border border-dashed border-muted-foreground/30 rounded-md",
-                "flex items-center justify-center gap-2 sm:gap-3",
-                "transition-colors",
-                "hover:border-muted-foreground/50 hover:bg-muted/30",
-              )}
-              style={{ height: `${SPACER_LAYOUT_HEIGHTS[spacerHeight]}px` }}
-            >
-              <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-
-              <div className="flex gap-0.5 sm:gap-1">
-                {(
-                  Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]
-                ).map((size) => (
+      <div className="rounded-md transition-colors hover:bg-muted/20">
+        {layout.type === "spacer" ? (
+          <div
+            className={cn(
+              "w-full max-w-full box-border",
+              "border border-dashed border-muted-foreground/30 rounded-md",
+              "flex items-center justify-center gap-2 sm:gap-3",
+              "transition-colors",
+              "hover:border-muted-foreground/50 hover:bg-muted/30",
+            )}
+            style={{ height: `${SPACER_LAYOUT_HEIGHTS[spacerHeight]}px` }}
+          >
+            <MoveVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+            <div className="flex gap-0.5 sm:gap-1">
+              {(Object.keys(SPACER_LAYOUT_HEIGHTS) as SpacerLayoutHeight[]).map(
+                (size) => (
                   <Button
                     key={size}
                     variant={spacerHeight === size ? "default" : "outline"}
@@ -207,42 +162,42 @@ export function LayoutRenderer({
                           ? "L"
                           : "XL"}
                   </Button>
-                ))}
-              </div>
+                ),
+              )}
             </div>
-          ) : (
-            <div style={gridStyle} className="min-h-[48px] p-2">
-              {layout.slots.map((slot) => (
-                <LayoutSlot
-                  key={slot.id}
-                  slot={slot}
-                  layoutId={layout.id}
-                  layoutType={layout.type}
-                  isSelected={selectedSlotId === slot.id}
-                  selectedBlockId={
-                    selectedSlotId === slot.id ? selectedBlockId : null
-                  }
-                  onSelect={() => onSelectSlot(slot.id)}
-                  onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
-                  onAddBlock={() => onAddBlock(slot.id)}
-                  onPasteBlock={
-                    onPasteBlock ? () => onPasteBlock(slot.id) : undefined
-                  }
-                  onUpdateBlock={(blockId, content) =>
-                    onUpdateBlock(slot.id, blockId, content)
-                  }
-                  onRemoveBlock={(blockId) => onRemoveBlock(slot.id, blockId)}
-                  onMoveBlock={
-                    onMoveBlock
-                      ? (toSlotId, blockId, toIndex) =>
-                          onMoveBlock(slot.id, toSlotId, blockId, toIndex)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div style={gridStyle} className="min-h-[48px] p-2">
+            {layout.slots.map((slot) => (
+              <LayoutSlot
+                key={slot.id}
+                slot={slot}
+                layoutId={layout.id}
+                layoutType={layout.type}
+                isSelected={selectedSlotId === slot.id}
+                selectedBlockId={
+                  selectedSlotId === slot.id ? selectedBlockId : null
+                }
+                onSelect={() => onSelectSlot(slot.id)}
+                onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
+                onAddBlock={() => onAddBlock(slot.id)}
+                onPasteBlock={
+                  onPasteBlock ? () => onPasteBlock(slot.id) : undefined
+                }
+                onUpdateBlock={(blockId, content) =>
+                  onUpdateBlock(slot.id, blockId, content)
+                }
+                onRemoveBlock={(blockId) => onRemoveBlock(slot.id, blockId)}
+                onMoveBlock={
+                  onMoveBlock
+                    ? (toSlotId, blockId, toIndex) =>
+                        onMoveBlock(slot.id, toSlotId, blockId, toIndex)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

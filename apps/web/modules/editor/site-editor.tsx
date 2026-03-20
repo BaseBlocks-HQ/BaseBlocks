@@ -194,115 +194,115 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   return (
     <div className="flex h-dvh w-full overflow-hidden">
-        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          <EditorHeader
-            teamSlug={team.slug}
-            siteSlug={site.slug}
-            siteId={site._id}
-            sitePublished={site.isPublished}
-            siteName={site.name}
-            siteLogoUrl={site.logoUrl}
-            onPublish={handlePublish}
-            onUnpublish={handleUnpublish}
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+        <EditorHeader
+          teamSlug={team.slug}
+          siteSlug={site.slug}
+          siteId={site._id}
+          sitePublished={site.isPublished}
+          siteName={site.name}
+          siteLogoUrl={site.logoUrl}
+          onPublish={handlePublish}
+          onUnpublish={handleUnpublish}
+        />
+
+        <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-[calc(1rem_+_env(safe-area-inset-bottom))] max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
+          <EditorFloatingRail
+            site={site}
+            pages={pages}
+            selectedPageId={selectedPage?._id}
+            selectedSlotId={selection.slotId}
+            onSelectPage={setSelectedPageId}
+            onAddLayout={handleAddLayout}
+            onAddBlock={handleAddBlock}
+            onEnableTabs={handleEnableTabs}
           />
+        </div>
 
-          <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-[calc(1rem_+_env(safe-area-inset-bottom))] max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
-            <EditorFloatingRail
-              site={site}
-              pages={pages}
-              selectedPageId={selectedPage?._id}
-              selectedSlotId={selection.slotId}
-              onSelectPage={setSelectedPageId}
-              onAddLayout={handleAddLayout}
-              onAddBlock={handleAddBlock}
-              onEnableTabs={handleEnableTabs}
-            />
-          </div>
-
-          <div className="absolute inset-0 min-w-0 overflow-hidden">
-            {showSubpagePanel ? (
-              <ResizablePanelGroup orientation="horizontal" className="h-full">
-                {/* Main content area */}
-                {!isFullscreen && (
-                  <>
-                    <ResizablePanel defaultSize={58} minSize={30}>
-                      <PortalContainerProvider value={portalContainer}>
-                        <div
-                          className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
-                          style={customizationStyles}
-                          {...(isCustomized
-                            ? { "data-site-customized": "" }
-                            : {})}
-                        >
-                          {selectedPage ? (
-                            <ConnectedPageEditor
-                              pageId={selectedPage._id}
-                              onSelectionChange={handleSlotSelectionChange}
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              Select a page to edit
-                            </div>
-                          )}
-                        </div>
-                      </PortalContainerProvider>
-                    </ResizablePanel>
-                    <ResizableHandle withHandle />
-                  </>
+        <div className="absolute inset-0 min-w-0 overflow-hidden">
+          {showSubpagePanel ? (
+            <ResizablePanelGroup orientation="horizontal" className="h-full">
+              {/* Main content area */}
+              {!isFullscreen && (
+                <>
+                  <ResizablePanel defaultSize={58} minSize={30}>
+                    <PortalContainerProvider value={portalContainer}>
+                      <div
+                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
+                        style={customizationStyles}
+                        {...(isCustomized
+                          ? { "data-site-customized": "" }
+                          : {})}
+                      >
+                        {selectedPage ? (
+                          <ConnectedPageEditor
+                            pageId={selectedPage._id}
+                            onSelectionChange={handleSlotSelectionChange}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                            Select a page to edit
+                          </div>
+                        )}
+                      </div>
+                    </PortalContainerProvider>
+                  </ResizablePanel>
+                  <ResizableHandle withHandle />
+                </>
+              )}
+              {/* Subpage panel - editing takes priority over viewing */}
+              <ResizablePanel
+                defaultSize={isFullscreen ? 100 : 42}
+                minSize={30}
+              >
+                <PortalContainerProvider value={portalContainer}>
+                  <div
+                    className="h-full w-full min-w-0 overflow-hidden border-l"
+                    style={customizationStyles}
+                    {...(isCustomized ? { "data-site-customized": "" } : {})}
+                  >
+                    {editingSubpage ? (
+                      <ConnectedSubpageEditPanel
+                        isFullscreen={isFullscreen}
+                        onToggleFullscreen={() =>
+                          setIsFullscreen(!isFullscreen)
+                        }
+                      />
+                    ) : (
+                      <PublicSubpagePanel
+                        isFullscreen={isFullscreen}
+                        onToggleFullscreen={() =>
+                          setIsFullscreen(!isFullscreen)
+                        }
+                      />
+                    )}
+                  </div>
+                </PortalContainerProvider>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <PortalContainerProvider value={portalContainer}>
+              <div
+                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
+                style={customizationStyles}
+                {...(isCustomized ? { "data-site-customized": "" } : {})}
+              >
+                {selectedPage ? (
+                  <ConnectedPageEditor
+                    pageId={selectedPage._id}
+                    onSelectionChange={handleSlotSelectionChange}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Select a page to edit
+                  </div>
                 )}
-                {/* Subpage panel - editing takes priority over viewing */}
-                <ResizablePanel
-                  defaultSize={isFullscreen ? 100 : 42}
-                  minSize={30}
-                >
-                  <PortalContainerProvider value={portalContainer}>
-                    <div
-                      className="h-full w-full min-w-0 overflow-hidden border-l"
-                      style={customizationStyles}
-                      {...(isCustomized ? { "data-site-customized": "" } : {})}
-                    >
-                      {editingSubpage ? (
-                        <ConnectedSubpageEditPanel
-                          isFullscreen={isFullscreen}
-                          onToggleFullscreen={() =>
-                            setIsFullscreen(!isFullscreen)
-                          }
-                        />
-                      ) : (
-                        <PublicSubpagePanel
-                          isFullscreen={isFullscreen}
-                          onToggleFullscreen={() =>
-                            setIsFullscreen(!isFullscreen)
-                          }
-                        />
-                      )}
-                    </div>
-                  </PortalContainerProvider>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            ) : (
-              <PortalContainerProvider value={portalContainer}>
-                <div
-                  className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[calc(4.5rem_+_env(safe-area-inset-top))] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[calc(4.5rem_+_env(safe-area-inset-top))] md:pl-24 lg:pl-28"
-                  style={customizationStyles}
-                  {...(isCustomized ? { "data-site-customized": "" } : {})}
-                >
-                  {selectedPage ? (
-                    <ConnectedPageEditor
-                      pageId={selectedPage._id}
-                      onSelectionChange={handleSlotSelectionChange}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      Select a page to edit
-                    </div>
-                  )}
-                </div>
-              </PortalContainerProvider>
-            )}
-          </div>
-        </main>
-      </div>
+              </div>
+            </PortalContainerProvider>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
 

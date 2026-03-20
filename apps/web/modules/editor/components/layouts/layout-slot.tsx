@@ -112,7 +112,7 @@ export function LayoutSlot({
           )}
         </div>
       ) : (
-        <div className="p-1">
+        <div className="flex flex-col gap-2 p-1">
           <DndProvider items={blockIds} onDragEnd={handleBlockDragEnd}>
             {slot.blocks.map((block) => (
               <SortableBlock
