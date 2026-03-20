@@ -168,8 +168,9 @@
       minmax(min-content, 1fr) var(--fd-sidebar-col) minmax(
         0,
         calc(
-          var(--fd-layout-width, 97rem) - var(--fd-sidebar-width) -
-            var(--fd-toc-width)
+          var(--fd-layout-width, 97rem) -
+          var(--fd-sidebar-width) -
+          var(--fd-toc-width)
         )
       )
       var(--fd-toc-width) minmax(min-content, 1fr) !important;

@@ -12,11 +12,7 @@ import type {
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
-import {
-  type ButtonHTMLAttributes,
-  type Ref,
-  useState,
-} from "react";
+import { type ButtonHTMLAttributes, type Ref, useState } from "react";
 import { LayoutSlot } from "./layout-slot";
 
 export interface LayoutRendererProps {

@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@baseblocks/ui/button";
-import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { SidebarTrigger } from "fumadocs-ui/components/sidebar/base";
+import { useSearchContext } from "fumadocs-ui/contexts/search";
 import { Search, Sidebar } from "lucide-react";
 
 // Failure modes:
