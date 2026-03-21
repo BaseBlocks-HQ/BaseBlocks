@@ -5,7 +5,6 @@ import { useCustomizationStyles } from "@/modules/elements/panels/customization/
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/types";
-import type { BannerContent } from "@baseblocks/types/elements";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";
 import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
 import { SidebarProvider } from "@baseblocks/ui/sidebar";
@@ -79,30 +78,6 @@ export function PublicSiteLayout({
     }
   }
 
-  const siteWideBanners = useQuery(api.banners.queries.getSiteWideBanners, {
-    siteId: site._id,
-  });
-
-  const pageSpecificBanners = useQuery(
-    api.banners.queries.getBannersForPage,
-    currentPage?._id
-      ? { siteId: site._id, pageId: currentPage._id as Id<"pages"> }
-      : "skip",
-  );
-
-  const allBanners = (() => {
-    const combined = [
-      ...(siteWideBanners ?? []),
-      ...(pageSpecificBanners ?? []),
-    ];
-    const seen = new Set<string>();
-    return combined.filter((b) => {
-      if (seen.has(b.id)) return false;
-      seen.add(b.id);
-      return true;
-    });
-  })();
-
   const showHeader = site.settings.showHeader !== false;
   const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
   const navigationStyle = site.settings.navigationStyle;
@@ -170,10 +145,6 @@ export function PublicSiteLayout({
             : currentPage
         }
         pages={pages}
-        banners={allBanners.map((banner) => ({
-          id: banner.id,
-          content: banner.content as BannerContent,
-        }))}
         currentPath={currentPathString}
         navigationStyle={navigationStyle}
         showBreadcrumbs={showBreadcrumbs}

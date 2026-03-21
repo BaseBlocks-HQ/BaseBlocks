@@ -33,10 +33,6 @@ function extractTextFromSlots(
           if (typeof c.title === "string") parts.push(c.title);
           if (typeof c.text === "string") parts.push(c.text);
           break;
-        case "banner":
-          if (typeof c.title === "string") parts.push(c.title);
-          if (typeof c.description === "string") parts.push(c.description);
-          break;
         case "code":
           if (typeof c.code === "string") parts.push(c.code);
           break;

@@ -11,7 +11,6 @@
 import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as auth from "../auth.js";
 import type * as authSetup from "../authSetup.js";
-import type * as banners_queries from "../banners/queries.js";
 import type * as crons from "../crons.js";
 import type * as deployments_mutations from "../deployments/mutations.js";
 import type * as deployments_queries from "../deployments/queries.js";
@@ -59,7 +58,6 @@ declare const fullApi: ApiFromModules<{
   "actions/extractDocument": typeof actions_extractDocument;
   auth: typeof auth;
   authSetup: typeof authSetup;
-  "banners/queries": typeof banners_queries;
   crons: typeof crons;
   "deployments/mutations": typeof deployments_mutations;
   "deployments/queries": typeof deployments_queries;

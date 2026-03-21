@@ -2,19 +2,12 @@
 
 import { ContentSkeleton } from "@/components/skeletons";
 import { cn } from "@/lib/utils";
-import { BannerRenderer } from "@/modules/elements/blocks/banner/renderer";
 import { SubNavBar } from "@/modules/navigation";
 import { BreadcrumbBar } from "@/modules/navigation";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/types";
-import type { BannerContent } from "@baseblocks/types/elements";
 import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
 import { PublicContent } from "../public-content";
-
-interface BannerItem {
-  id: string;
-  content: BannerContent;
-}
 
 interface CurrentPage {
   _id: string;
@@ -24,7 +17,6 @@ interface CurrentPage {
 interface PublicSiteMainContentProps {
   currentPage: CurrentPage | null | undefined;
   pages?: PageWithChildren[];
-  banners: BannerItem[];
   currentPath: string;
   navigationStyle: NavigationStyle;
   showBreadcrumbs: boolean;
@@ -33,7 +25,6 @@ interface PublicSiteMainContentProps {
 export function PublicSiteMainContent({
   currentPage,
   pages,
-  banners,
   currentPath,
   navigationStyle,
   showBreadcrumbs,
@@ -56,19 +47,6 @@ export function PublicSiteMainContent({
           pageTitle={currentPage.title}
           className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
         />
-      )}
-
-      {banners.length > 0 && (
-        <div className="w-full z-10 flex-shrink-0">
-          {banners.map((banner) => (
-            <BannerRenderer
-              key={banner.id}
-              id={banner.id}
-              type="banner"
-              content={banner.content}
-            />
-          ))}
-        </div>
       )}
 
       <div className="flex-1 flex flex-col min-h-0 overflow-auto">

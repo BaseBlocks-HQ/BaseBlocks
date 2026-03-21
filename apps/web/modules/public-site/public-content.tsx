@@ -6,7 +6,6 @@ import "@/modules/elements/layouts";
 import "@/modules/elements/blocks";
 import "@/modules/elements/sections";
 import "@/modules/elements/media";
-import "@/modules/elements/forms";
 import { ContentSkeleton } from "@/components/skeletons";
 import { usePage, usePublishedLayouts } from "@/lib/data";
 import { cn } from "@/lib/utils";

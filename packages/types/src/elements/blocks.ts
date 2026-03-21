@@ -7,7 +7,6 @@ export type BlockType =
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
   | "richtext"
   | "subpage"
-  | "banner"
   | "directory"
   | "flowchart"
   | "decision-tree";
@@ -46,40 +45,6 @@ export interface RichTextContent {
 export interface SubpageContent {
   pageId: string;
 }
-
-export interface BannerAlert {
-  id: string;
-  title: string;
-  description: string;
-  importance: string; // references preset id
-}
-
-export interface BannerImportancePreset {
-  id: string;
-  name: string;
-  color: string; // bg hex color
-  foreground: string; // text hex color
-}
-
-export interface BannerSettings {
-  dismissible: boolean;
-  autoCycle: boolean;
-  cycleIntervalMs: number;
-  scope: "this-page" | "site-wide" | "specific-pages";
-  targetPageIds: string[];
-}
-
-export interface BannerContent {
-  alerts: BannerAlert[];
-  importancePresets: BannerImportancePreset[];
-  settings: BannerSettings;
-}
-
-export const DEFAULT_IMPORTANCE_PRESETS: BannerImportancePreset[] = [
-  { id: "critical", name: "Critical", color: "#DC2626", foreground: "#FFFFFF" },
-  { id: "warning", name: "Warning", color: "#D97706", foreground: "#FFFFFF" },
-  { id: "info", name: "Info", color: "#2563EB", foreground: "#FFFFFF" },
-];
 
 export type DirectoryColumnType = "text" | "email" | "phone" | "url";
 
@@ -171,7 +136,6 @@ export type BlockContentUnion =
   | BlockSpacerContent
   | RichTextContent
   | SubpageContent
-  | BannerContent
   | DirectoryContent
   | FlowchartContent
   | DecisionTreeContent;
@@ -185,17 +149,6 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   "block-spacer": { height: "medium" },
   richtext: { document: [] } as RichTextContent,
   subpage: { pageId: "" },
-  banner: {
-    alerts: [],
-    importancePresets: DEFAULT_IMPORTANCE_PRESETS,
-    settings: {
-      dismissible: true,
-      autoCycle: true,
-      cycleIntervalMs: 5000,
-      scope: "this-page",
-      targetPageIds: [],
-    },
-  } as BannerContent,
   directory: {
     columns: [],
     rows: [],

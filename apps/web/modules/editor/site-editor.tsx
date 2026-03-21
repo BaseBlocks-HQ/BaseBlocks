@@ -40,7 +40,6 @@ const elementModuleLoaders = [
   () => import("@/modules/elements/blocks"),
   () => import("@/modules/elements/sections"),
   () => import("@/modules/elements/media"),
-  () => import("@/modules/elements/forms"),
 ];
 
 /**

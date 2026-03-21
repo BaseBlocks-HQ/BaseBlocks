@@ -1,5 +1,4 @@
 import type {
-  BannerContent,
   BlockSpacerContent,
   BlockType,
   CalloutContent,
@@ -23,11 +22,9 @@ import type {
 
 import type { ImageContent, MediaType } from "./media";
 
-import type { FormContent, FormType } from "./forms";
-
 import type { LayoutSettings, LayoutType } from "../layouts";
 
-export type ElementType = BlockType | SectionType | MediaType | FormType;
+export type ElementType = BlockType | SectionType | MediaType;
 
 export type AllElementType = LayoutType | ElementType;
 
@@ -40,7 +37,6 @@ export type ContentTypeMap = {
   "block-spacer": BlockSpacerContent;
   richtext: RichTextContent;
   subpage: SubpageContent;
-  banner: BannerContent;
   directory: DirectoryContent;
   flowchart: FlowchartContent;
   "decision-tree": DecisionTreeContent;
@@ -50,8 +46,6 @@ export type ContentTypeMap = {
   quicklinks: QuicklinksContent;
 
   image: ImageContent;
-
-  form: FormContent;
 };
 
 export type LayoutSettingsMap = {
