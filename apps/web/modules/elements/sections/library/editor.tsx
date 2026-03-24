@@ -1,7 +1,6 @@
 "use client";
 
 import { useFileUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import {
   DropZone,
@@ -419,7 +418,7 @@ function useLibraryEditorController({
 
   const handlePreview = (file: FileData) => {
     openFile({
-      url: toProxyDownloadUrl(file.cdnUrl),
+      url: file.downloadUrl,
       filename: file.filename,
       contentType: file.contentType,
       size: file.size,

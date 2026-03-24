@@ -1,6 +1,6 @@
 "use client";
 
-import { toProxyDownloadUrl } from "@/lib/storage/client";
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
@@ -96,7 +96,7 @@ interface SearchResultItem {
     filename?: string;
     fileContentType?: string;
     size?: number;
-    cdnUrl?: string;
+    downloadUrl?: string;
     libraryId?: string;
     // Subpage metadata
     pageId?: string;
@@ -178,6 +178,7 @@ export function SearchBox({
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { openFile } = useMediaViewer();
   const subpageContext = usePublicSubpageContextOptional();
+  const sessionTokens = getStoredAccessSessionTokens();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -196,12 +197,17 @@ export function SearchBox({
   const shouldSearch = debouncedQuery.trim().length > 0 && !!siteId;
 
   // Preload all titles for client-side fuzzy matching (lightweight, cached by Convex)
-  const allTitles = useQuery(
-    usePublicQuery
-      ? api.search.queries.listTitlesPublic
-      : api.search.queries.listTitles,
-    siteId ? { siteId } : "skip",
+  const authTitles = useQuery(
+    api.search.queries.listTitles,
+    !usePublicQuery && siteId ? { siteId } : "skip",
   );
+
+  const publicTitles = useQuery(
+    api.search.queries.listTitlesPublic,
+    usePublicQuery && siteId ? { siteId, sessionTokens } : "skip",
+  );
+
+  const allTitles = usePublicQuery ? publicTitles : authTitles;
 
   // Server full-text search queries
   const authResults = useQuery(
@@ -214,7 +220,12 @@ export function SearchBox({
   const publicResults = useQuery(
     api.search.queries.searchAllPublic,
     usePublicQuery && shouldSearch
-      ? { siteId, query: debouncedQuery, limit: maxResults }
+      ? {
+          siteId,
+          query: debouncedQuery,
+          limit: maxResults,
+          sessionTokens,
+        }
       : "skip",
   ) as SearchResultItem[] | undefined;
 
@@ -243,9 +254,9 @@ export function SearchBox({
   const hasResults = searchResults && searchResults.length > 0;
   const showDropdown = isFocused && debouncedQuery.trim().length > 0;
 
-  const handleDownload = (cdnUrl: string, filename: string) => {
+  const handleDownload = (downloadUrl: string, filename: string) => {
     const link = document.createElement("a");
-    link.href = toProxyDownloadUrl(cdnUrl);
+    link.href = downloadUrl;
     link.download = filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -265,9 +276,9 @@ export function SearchBox({
       return;
     }
 
-    if (result.metadata.cdnUrl) {
+    if (result.metadata.downloadUrl) {
       openFile({
-        url: toProxyDownloadUrl(result.metadata.cdnUrl),
+        url: result.metadata.downloadUrl,
         filename: result.metadata.filename || result.title,
         contentType:
           result.metadata.fileContentType || "application/octet-stream",
@@ -388,7 +399,7 @@ export function SearchBox({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {result.metadata.cdnUrl && (
+                          {result.metadata.downloadUrl && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -396,7 +407,7 @@ export function SearchBox({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDownload(
-                                  result.metadata.cdnUrl!,
+                                  result.metadata.downloadUrl!,
                                   result.metadata.filename || result.title,
                                 );
                               }}

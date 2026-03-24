@@ -4,6 +4,16 @@ import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
+import { buildDocumentDownloadUrl } from "../storage/paths";
+import { canAccessPublishedSite } from "../sharing/access";
+
+function mapDocument(doc: Doc<"documents">) {
+  const downloadUrl = buildDocumentDownloadUrl(doc._id);
+  return {
+    ...doc,
+    downloadUrl,
+  };
+}
 
 /**
  * Extract a text snippet around the first occurrence of a search term
@@ -67,8 +77,7 @@ function formatSearchResult(
     filename: doc.filename,
     contentType: doc.contentType,
     size: doc.size,
-    cdnUrl: doc.cdnUrl,
-    blobId: doc.blobId,
+    downloadUrl: buildDocumentDownloadUrl(doc._id),
     libraryId: doc.libraryId,
     matchType,
     snippet: snippetData?.snippet ?? null,
@@ -148,7 +157,8 @@ export const list = query({
     return await ctx.db
       .query("documents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+      .collect()
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
@@ -162,7 +172,7 @@ export const get = query({
     if (!site) return null;
 
     await requireMember(ctx, site.teamId);
-    return doc;
+    return mapDocument(doc);
   },
 });
 
@@ -190,14 +200,19 @@ export const searchPublic = query({
     siteId: v.id("sites"),
     query: v.string(),
     limit: v.optional(v.number()),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId, query: searchQuery, limit = 20 }) => {
+  handler: async (
+    ctx,
+    { siteId, query: searchQuery, limit = 20, sessionTokens },
+  ) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
-    // Check site is published
     const site = await ctx.db.get(siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
@@ -215,10 +230,13 @@ export const searchPublic = query({
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId }) => {
+  handler: async (ctx, { siteId, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
@@ -227,9 +245,9 @@ export const listPublic = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    return allDocs.filter(
-      (doc) => doc.libraryId && activeLibraryIds.has(doc.libraryId),
-    );
+    return allDocs
+      .filter((doc) => doc.libraryId && activeLibraryIds.has(doc.libraryId))
+      .map(mapDocument);
   },
 });
 
@@ -247,7 +265,8 @@ export const listByLibrary = query({
     return await ctx.db
       .query("documents")
       .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
-      .collect();
+      .collect()
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
@@ -270,20 +289,24 @@ export const listByFolder = query({
       .withIndex("by_folder", (q) =>
         q.eq("libraryId", libraryId).eq("folderId", folderId),
       )
-      .collect();
+      .collect()
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
 export const listByLibraryPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { libraryId }) => {
+  handler: async (ctx, { libraryId, sessionTokens }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return [];
@@ -291,7 +314,8 @@ export const listByLibraryPublic = query({
     return await ctx.db
       .query("documents")
       .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
-      .collect();
+      .collect()
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
@@ -299,13 +323,16 @@ export const listByFolderPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
     folderId: v.optional(v.id("documentFolders")),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { libraryId, folderId }) => {
+  handler: async (ctx, { libraryId, folderId, sessionTokens }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return [];
@@ -315,7 +342,8 @@ export const listByFolderPublic = query({
       .withIndex("by_folder", (q) =>
         q.eq("libraryId", libraryId).eq("folderId", folderId),
       )
-      .collect();
+      .collect()
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
@@ -370,7 +398,8 @@ export const listFailedExtraction = query({
       .withIndex("by_extraction_status", (q) =>
         q.eq("siteId", siteId).eq("extractionStatus", "failed"),
       )
-      .take(limit);
+      .take(limit)
+      .then((docs) => docs.map(mapDocument));
   },
 });
 
@@ -427,5 +456,77 @@ export const searchByLibrary = query({
     }
 
     return combined.slice(0, limit);
+  },
+});
+
+export const getDownloadAsset = query({
+  args: { documentId: v.id("documents") },
+  handler: async (ctx, { documentId }) => {
+    const document = await ctx.db.get(documentId);
+    if (!document) {
+      return null;
+    }
+
+    const site = await ctx.db.get(document.siteId);
+    if (!site) {
+      return null;
+    }
+
+    await requireMember(ctx, site.teamId);
+
+    if (!document.assetId) {
+      return null;
+    }
+
+    const asset = await ctx.db.get(document.assetId);
+    if (!asset) {
+      return null;
+    }
+
+    return {
+      documentId: document._id,
+      filename: document.filename,
+      contentType: document.contentType,
+      size: document.size,
+      bucket: asset.bucket,
+      objectKey: asset.objectKey,
+    };
+  },
+});
+
+export const getPublicDownloadAsset = query({
+  args: {
+    documentId: v.id("documents"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { documentId, sessionTokens }) => {
+    const document = await ctx.db.get(documentId);
+    if (!document || !document.libraryId || !document.assetId) {
+      return null;
+    }
+
+    const site = await ctx.db.get(document.siteId);
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return null;
+    }
+
+    const activeLibraryIds = await getActiveLibraryIds(ctx, document.siteId);
+    if (!activeLibraryIds.has(document.libraryId)) {
+      return null;
+    }
+
+    const asset = await ctx.db.get(document.assetId);
+    if (!asset) {
+      return null;
+    }
+
+    return {
+      documentId: document._id,
+      filename: document.filename,
+      contentType: document.contentType,
+      size: document.size,
+      bucket: asset.bucket,
+      objectKey: asset.objectKey,
+    };
   },
 });

@@ -1,6 +1,5 @@
 "use client";
 
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getSiteOpenUrl } from "@/lib/url";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
@@ -72,7 +71,7 @@ export function EditorHeaderLeftSection({
       <div className="flex min-w-0 items-center gap-3">
         {siteLogoUrl ? (
           <Image
-            src={toProxyDownloadUrl(siteLogoUrl)}
+            src={siteLogoUrl}
             alt={siteName}
             className="h-8 w-8 rounded-lg object-contain"
             width={32}

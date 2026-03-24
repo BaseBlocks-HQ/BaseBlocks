@@ -2,7 +2,6 @@
 
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getSiteOpenUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -79,7 +78,7 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
             <div className="flex-shrink-0">
               {site.logoUrl ? (
                 <Image
-                  src={toProxyDownloadUrl(site.logoUrl)}
+                  src={site.logoUrl}
                   alt={site.name}
                   className="h-10 w-10 rounded-lg object-contain border bg-muted"
                   width={40}

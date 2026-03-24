@@ -1,12 +1,31 @@
 "use client";
 
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { useMutation, useQuery } from "convex/react";
 
 type DocumentLibrary = Doc<"documentLibraries">;
 type DocumentFolder = Doc<"documentFolders">;
-type Document = Doc<"documents">;
+type DocumentFile = {
+  _id: Id<"documents">;
+  _creationTime: number;
+  siteId: Id<"sites">;
+  libraryId?: Id<"documentLibraries">;
+  folderId?: Id<"documentFolders">;
+  assetId?: Id<"assets">;
+  filename: string;
+  contentType: string;
+  size: number;
+  extractedText?: string;
+  pageCount?: number;
+  wordCount?: number;
+  extractionStatus?: string;
+  extractionError?: string;
+  uploadedBy: string;
+  createdAt: number;
+  downloadUrl: string;
+};
 type FolderPathItem = { _id: string; name: string };
 
 export function useDocumentLibrary(siteId: Id<"sites">) {
@@ -89,7 +108,7 @@ export function useFileOperations(
   const removeDocument = useMutation(api.documents.mutations.remove);
 
   return {
-    files: (files || []) as Document[],
+    files: (files || []) as DocumentFile[],
     isLoading: files === undefined,
 
     rename: async (documentId: Id<"documents">, filename: string) => {
@@ -123,9 +142,10 @@ export function useFolderPath(
 export function usePublicFolders(
   libraryId: Id<"documentLibraries"> | null,
 ): DocumentFolder[] {
+  const sessionTokens = getStoredAccessSessionTokens();
   const folders = useQuery(
     api.documentFolders.queries.listByLibraryPublic,
-    libraryId ? { libraryId } : "skip",
+    libraryId ? { libraryId, sessionTokens } : "skip",
   );
   return (folders || []) as DocumentFolder[];
 }
@@ -133,20 +153,24 @@ export function usePublicFolders(
 export function usePublicFiles(
   libraryId: Id<"documentLibraries"> | null,
   folderId: Id<"documentFolders"> | null | undefined,
-): Document[] {
+): DocumentFile[] {
+  const sessionTokens = getStoredAccessSessionTokens();
   const files = useQuery(
     api.documents.queries.listByFolderPublic,
-    libraryId ? { libraryId, folderId: folderId ?? undefined } : "skip",
+    libraryId
+      ? { libraryId, folderId: folderId ?? undefined, sessionTokens }
+      : "skip",
   );
-  return (files || []) as Document[];
+  return (files || []) as DocumentFile[];
 }
 
 export function usePublicFolderPath(
   folderId: Id<"documentFolders"> | null,
 ): FolderPathItem[] {
+  const sessionTokens = getStoredAccessSessionTokens();
   const path = useQuery(
     api.documentFolders.queries.getPathPublic,
-    folderId ? { folderId } : "skip",
+    folderId ? { folderId, sessionTokens } : "skip",
   );
   return (path || []) as FolderPathItem[];
 }
@@ -154,8 +178,9 @@ export function usePublicFolderPath(
 export function usePublicLibrary(
   libraryId: Id<"documentLibraries"> | null,
 ): DocumentLibrary | undefined | null {
+  const sessionTokens = getStoredAccessSessionTokens();
   return useQuery(
     api.documentLibraries.queries.getPublic,
-    libraryId ? { libraryId } : "skip",
+    libraryId ? { libraryId, sessionTokens } : "skip",
   );
 }

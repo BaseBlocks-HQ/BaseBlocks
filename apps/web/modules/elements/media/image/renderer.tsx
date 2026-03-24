@@ -1,4 +1,3 @@
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import { ImageIcon } from "lucide-react";
@@ -18,7 +17,7 @@ export function ImageRenderer({ content }: ElementRendererProps<"image">) {
   }
 
   // Convert URL to proxy URL if needed
-  const imageUrl = toProxyDownloadUrl(content.url);
+  const imageUrl = content.url;
 
   // Determine if we have explicit dimensions from resizing
   const hasExplicitSize = content.width && content.height;

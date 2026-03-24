@@ -24,6 +24,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()),
+    logoAssetId: v.optional(v.id("assets")), // FK to assets table for cleanup on replace
     defaultPageId: v.optional(v.id("pages")),
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),
@@ -162,12 +163,29 @@ export default defineSchema({
     .index("by_library", ["libraryId"])
     .index("by_parent", ["libraryId", "parentId"]),
 
+  assets: defineTable({
+    siteId: v.id("sites"),
+    kind: v.union(v.literal("document"), v.literal("siteAsset")),
+    visibility: v.union(v.literal("public"), v.literal("private")),
+    provider: v.literal("s3"),
+    bucket: v.string(),
+    objectKey: v.string(),
+    filename: v.optional(v.string()),
+    contentType: v.string(),
+    size: v.number(),
+    checksum: v.optional(v.string()),
+    uploadedBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_kind", ["siteId", "kind"])
+    .index("by_object", ["provider", "bucket", "objectKey"]),
+
   documents: defineTable({
     siteId: v.id("sites"),
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")),
-    blobId: v.string(),
-    cdnUrl: v.string(),
+    assetId: v.optional(v.id("assets")),
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
@@ -210,8 +228,9 @@ export default defineSchema({
       filename: v.optional(v.string()),
       fileContentType: v.optional(v.string()),
       size: v.optional(v.number()),
-      cdnUrl: v.optional(v.string()),
+      downloadUrl: v.optional(v.string()),
       libraryId: v.optional(v.string()),
+      assetId: v.optional(v.id("assets")),
       pageId: v.optional(v.id("pages")),
       layoutId: v.optional(v.id("layouts")),
       blockId: v.optional(v.string()),

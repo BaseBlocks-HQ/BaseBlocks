@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember, getAuthContextOrNull } from "../auth";
+import { canAccessPublishedSite } from "../sharing/access";
 
 export const list = query({
   args: { siteId: v.id("sites") },
@@ -36,13 +37,16 @@ export const get = query({
 export const getPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { libraryId }) => {
+  handler: async (ctx, { libraryId, sessionTokens }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return null;
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return null;
+    }
 
     return library;
   },
@@ -51,10 +55,13 @@ export const getPublic = query({
 export const listPublic = query({
   args: {
     siteId: v.id("sites"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId }) => {
+  handler: async (ctx, { siteId, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     return await ctx.db
       .query("documentLibraries")

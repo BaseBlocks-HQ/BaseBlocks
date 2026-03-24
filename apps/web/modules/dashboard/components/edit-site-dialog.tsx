@@ -1,8 +1,7 @@
 "use client";
 
 import { FormDialog } from "@/components/dialogs/form-dialog";
-import { authClient } from "@/lib/auth/client";
-import { entityStorageClient, toProxyDownloadUrl } from "@/lib/storage/client";
+import { storageClient } from "@/lib/storage/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -21,6 +20,7 @@ interface EditSiteDialogProps {
     _id: string;
     name: string;
     logoUrl?: string;
+    logoAssetId?: string;
   };
 }
 
@@ -33,6 +33,7 @@ export function EditSiteDialog({
     name: site.name,
     logoUrl: site.logoUrl || "",
     logoPreview: site.logoUrl || "",
+    logoAssetId: site.logoAssetId || "",
     isSubmitting: false,
     isUploadingLogo: false,
     error: "",
@@ -40,8 +41,7 @@ export function EditSiteDialog({
   const t = useTranslations();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
   const updateSite = useMutation(api.sites.mutations.update);
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -50,6 +50,7 @@ export function EditSiteDialog({
         name: site.name,
         logoUrl: site.logoUrl || "",
         logoPreview: site.logoUrl || "",
+        logoAssetId: site.logoAssetId || "",
         isSubmitting: false,
         isUploadingLogo: false,
         error: "",
@@ -85,27 +86,36 @@ export function EditSiteDialog({
       error: "",
       isUploadingLogo: true,
     }));
-    const userId = user?.id;
-    if (!userId) {
-      setDialogState((current) => ({
-        ...current,
-        error: "User not found",
-        isUploadingLogo: false,
-      }));
-      return;
-    }
-    const timestamp = Date.now();
-    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const path = `/logos/${site._id}/${timestamp}_${sanitizedFilename}`;
+
+    let objectKey: string | null = null;
 
     try {
-      // Upload to Entity Storage (proxy handles auth via session cookie)
-      const { cdnUrl } = await entityStorageClient.upload(file, path);
+      const uploadResult = await storageClient.upload(file, {
+        siteId: site._id,
+        purpose: "siteAsset",
+      });
+      objectKey = uploadResult.objectKey;
+
+      const verified = await storageClient.finalize({
+        siteId: site._id,
+        purpose: "siteAsset",
+        objectKey,
+      });
+
+      const { assetId, url } = await createSiteAsset({
+        siteId: site._id as Id<"sites">,
+        objectKey: verified.objectKey,
+        filename: file.name,
+        contentType: verified.contentType,
+        size: verified.size,
+        checksum: verified.checksum,
+      });
 
       setDialogState((current) => ({
         ...current,
-        logoUrl: cdnUrl,
-        logoPreview: cdnUrl,
+        logoUrl: url,
+        logoPreview: url,
+        logoAssetId: assetId,
         isUploadingLogo: false,
       }));
       // Reset the file input
@@ -113,6 +123,14 @@ export function EditSiteDialog({
         fileInputRef.current.value = "";
       }
     } catch (err) {
+      if (objectKey) {
+        await storageClient.cleanup({
+          siteId: site._id,
+          purpose: "siteAsset",
+          objectKey,
+        });
+      }
+
       setDialogState((current) => ({
         ...current,
         error: err instanceof Error ? err.message : t("common.error"),
@@ -130,6 +148,7 @@ export function EditSiteDialog({
       ...current,
       logoUrl: "",
       logoPreview: "",
+      logoAssetId: "",
     }));
   };
 
@@ -140,13 +159,18 @@ export function EditSiteDialog({
       error: "",
       isSubmitting: true,
     }));
-    const nextLogoUrl = dialogState.logoUrl ? dialogState.logoUrl : undefined;
+
+    // Determine what changed about the logo
+    const hadLogo = !!site.logoAssetId || !!site.logoUrl;
+    const hasNewAsset = !!dialogState.logoAssetId;
+    const logoCleared = hadLogo && !dialogState.logoUrl;
 
     try {
       await updateSite({
         siteId: site._id as Id<"sites">,
         name: dialogState.name,
-        logoUrl: nextLogoUrl,
+        ...(hasNewAsset && { logoAssetId: dialogState.logoAssetId as Id<"assets"> }),
+        ...(logoCleared && { clearLogo: true }),
       });
       onOpenChange(false);
       setDialogState((current) => ({
@@ -179,7 +203,7 @@ export function EditSiteDialog({
           {dialogState.logoPreview ? (
             <div className="relative">
               <Image
-                src={toProxyDownloadUrl(dialogState.logoPreview)}
+                src={dialogState.logoPreview}
                 alt="Site logo"
                 className="h-16 w-16 rounded-lg object-contain border bg-muted"
                 width={64}

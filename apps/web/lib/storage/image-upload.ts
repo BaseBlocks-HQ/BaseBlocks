@@ -1,9 +1,10 @@
 "use client";
 
+import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { useMutation } from "convex/react";
 import { useState } from "react";
-import { authClient } from "../auth/client";
-import { type UploadProgress, entityStorageClient } from "./client";
+import { type UploadProgress, storageClient } from "./client";
 
 interface ImageUploadState {
   isUploading: boolean;
@@ -22,12 +23,9 @@ interface ImageUploadResult {
  * Use this for images embedded in elements (like the image element).
  * For document library files, use useFileUpload instead.
  *
- * NOTE: Entity Storage upload requires a migration to a new storage backend.
- * Token handling will be updated as part of the storage migration.
  */
 export function useImageUpload() {
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
   const [uploadState, setUploadState] = useState<ImageUploadState>({
     isUploading: false,
     progress: null,
@@ -38,6 +36,8 @@ export function useImageUpload() {
     file: File,
     siteId: Id<"sites">,
   ): Promise<ImageUploadResult | null> => {
+    let objectKey: string | null = null;
+
     // Validate it's an image
     if (!file.type.startsWith("image/")) {
       setUploadState({
@@ -55,21 +55,30 @@ export function useImageUpload() {
         error: null,
       });
 
-      if (!user?.id) {
-        throw new Error("User not found");
-      }
-
-      // Generate storage path for images
-      const path = entityStorageClient.generatePath(siteId, user.id, file.name);
-
-      // Upload to Entity Storage (proxy handles auth via session cookie)
-      const { cdnUrl } = await entityStorageClient.upload(
-        file,
-        path,
-        (progress) => {
+      const uploadResult = await storageClient.upload(file, {
+        siteId,
+        purpose: "siteAsset",
+        onProgress: (progress) => {
           setUploadState((prev) => ({ ...prev, progress }));
         },
-      );
+      });
+      objectKey = uploadResult.objectKey;
+
+      // Server-verify the upload before writing to Convex
+      const verified = await storageClient.finalize({
+        siteId,
+        purpose: "siteAsset",
+        objectKey,
+      });
+
+      const { url } = await createSiteAsset({
+        siteId,
+        objectKey: verified.objectKey,
+        filename: file.name,
+        contentType: verified.contentType,
+        size: verified.size,
+        checksum: verified.checksum,
+      });
 
       setUploadState({
         isUploading: false,
@@ -78,13 +87,21 @@ export function useImageUpload() {
       });
 
       // Get image dimensions
-      const dimensions = await getImageDimensions(cdnUrl);
+      const dimensions = await getImageDimensions(url);
 
       return {
-        url: cdnUrl,
+        url,
         ...dimensions,
       };
     } catch (err) {
+      if (objectKey) {
+        await storageClient.cleanup({
+          siteId,
+          purpose: "siteAsset",
+          objectKey,
+        });
+      }
+
       const error = err instanceof Error ? err.message : "Upload failed";
       setUploadState({
         isUploading: false,

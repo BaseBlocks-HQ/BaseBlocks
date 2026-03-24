@@ -59,18 +59,8 @@ function toPublicAssetUrl(rawUrl: string | undefined): string | undefined {
   const trimmed = asOptional(rawUrl);
   if (!trimmed) return undefined;
 
-  if (trimmed.startsWith("/api/storage/download")) {
+  if (trimmed.startsWith("/api/storage/")) {
     return trimmed;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    const path = parsed.searchParams.get("path");
-    if (path) {
-      return `/api/storage/download?path=${encodeURIComponent(path)}`;
-    }
-  } catch {
-    // Keep non-URL strings as-is (they might already be root-relative paths).
   }
 
   return trimmed;
@@ -172,7 +162,9 @@ export async function buildPublicSiteMetadata({
   const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
   const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
   const canonicalUrl = buildCanonicalUrl(teamSlug, siteSlug, pagePath);
-  const isPublicVisibility = !site.visibility || site.visibility === "public";
+  const visibility = site.visibility ?? "public";
+  const isPublicVisibility = visibility === "public";
+  const hasOpenAccess = visibility === "public" || visibility === "link-only";
 
   const metadata: Metadata = {
     metadataBase: await resolveMetadataBase(teamSlug),
@@ -202,19 +194,19 @@ export async function buildPublicSiteMetadata({
       url: canonicalUrl,
       locale: "en_US",
       alternateLocale: "fr_FR",
-      images: ogImage ? [{ url: ogImage }] : undefined,
+      images: hasOpenAccess && ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {
-      card: ogImage ? "summary_large_image" : "summary",
+      card: hasOpenAccess && ogImage ? "summary_large_image" : "summary",
       title,
       description,
-      images: ogImage ? [ogImage] : undefined,
+      images: hasOpenAccess && ogImage ? [ogImage] : undefined,
     },
   };
 
   // Only set icons when a tenant favicon exists — omitting the key entirely
   // lets Next.js inherit the parent layout's default BaseBlocks favicon.
-  if (favicon) {
+  if (hasOpenAccess && favicon) {
     metadata.icons = {
       icon: [{ url: favicon }],
       shortcut: [{ url: favicon }],

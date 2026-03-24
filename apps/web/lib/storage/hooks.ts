@@ -4,8 +4,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useAction, useMutation } from "convex/react";
 import { useState } from "react";
-import { authClient } from "../auth/client";
-import { type UploadProgress, entityStorageClient } from "./client";
+import { type UploadProgress, storageClient } from "./client";
 import { isExtractable } from "./extraction";
 
 export interface UploadState {
@@ -25,12 +24,8 @@ interface UploadOptions {
 /**
  * Hook for uploading files to Library
  *
- * NOTE: Entity Storage upload requires a migration to a new storage backend.
- * Token handling will be updated as part of the storage migration.
  */
 export function useFileUpload() {
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>(
     {},
   );
@@ -60,6 +55,7 @@ export function useFileUpload() {
     options: UploadOptions,
   ): Promise<Id<"documents"> | null> => {
     const fileId = `${file.name}-${Date.now()}`;
+    let objectKey: string | null = null;
 
     try {
       updateUploadState(fileId, {
@@ -68,27 +64,23 @@ export function useFileUpload() {
         error: null,
       });
 
-      if (!user?.id) {
-        throw new Error("User not found");
-      }
-
-      // Generate storage path
-      const path = entityStorageClient.generatePath(
-        options.siteId,
-        user.id,
-        file.name,
-      );
-
-      // Upload to Entity Storage (proxy handles auth via session cookie)
-      const { blobId, cdnUrl } = await entityStorageClient.upload(
-        file,
-        path,
-        (progress) => {
+      const uploadResult = await storageClient.upload(file, {
+        siteId: options.siteId,
+        purpose: "document",
+        onProgress: (progress) => {
           updateUploadState(fileId, { progress });
         },
-      );
+      });
+      objectKey = uploadResult.objectKey;
 
-      // Create document record in Convex
+      // Server-verify the upload before writing to Convex
+      const verified = await storageClient.finalize({
+        siteId: options.siteId,
+        purpose: "document",
+        objectKey,
+      });
+
+      // Create document record in Convex with server-verified metadata
       let documentId: Id<"documents">;
 
       if (options.libraryId) {
@@ -96,20 +88,20 @@ export function useFileUpload() {
           siteId: options.siteId,
           libraryId: options.libraryId,
           folderId: options.folderId,
-          blobId,
-          cdnUrl,
+          objectKey: verified.objectKey,
           filename: file.name,
-          contentType: file.type || "application/octet-stream",
-          size: file.size,
+          contentType: verified.contentType,
+          size: verified.size,
+          checksum: verified.checksum,
         });
       } else {
         documentId = await createDocument({
           siteId: options.siteId,
-          blobId,
-          cdnUrl,
+          objectKey: verified.objectKey,
           filename: file.name,
-          contentType: file.type || "application/octet-stream",
-          size: file.size,
+          contentType: verified.contentType,
+          size: verified.size,
+          checksum: verified.checksum,
         });
       }
 
@@ -122,13 +114,19 @@ export function useFileUpload() {
       // Trigger text extraction for supported file types (non-blocking)
       const contentType = file.type || "application/octet-stream";
       if (isExtractable(contentType) && triggerExtraction) {
-        triggerExtraction({ documentId, authToken: "" }).catch(
-          (_err: unknown) => {},
-        );
+        triggerExtraction({ documentId }).catch((_err: unknown) => {});
       }
 
       return documentId;
     } catch (err) {
+      if (objectKey) {
+        await storageClient.cleanup({
+          siteId: options.siteId,
+          purpose: "document",
+          objectKey,
+        });
+      }
+
       const error = err instanceof Error ? err : new Error("Upload failed");
       updateUploadState(fileId, { isUploading: false, error: error.message });
       options.onError?.(error);

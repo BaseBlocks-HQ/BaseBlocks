@@ -35,7 +35,7 @@ export interface FileData {
   filename: string;
   contentType: string;
   size: number;
-  cdnUrl: string;
+  downloadUrl: string;
   createdAt: number;
   extractionStatus?: string;
   extractionError?: string;

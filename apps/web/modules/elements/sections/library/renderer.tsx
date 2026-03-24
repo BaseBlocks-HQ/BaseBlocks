@@ -1,6 +1,5 @@
 "use client";
 
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import {
   usePublicFiles,
   usePublicFolderPath,
@@ -71,9 +70,9 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     setBreadcrumbOpen(false);
   };
 
-  const downloadFile = (cdnUrl: string, filename: string) => {
+  const downloadFile = (fileUrl: string, filename: string) => {
     const link = document.createElement("a");
-    link.href = toProxyDownloadUrl(cdnUrl);
+    link.href = fileUrl;
     link.download = filename;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -84,7 +83,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
 
   const previewFile = (file: (typeof files)[number]) => {
     openFile({
-      url: toProxyDownloadUrl(file.cdnUrl),
+      url: file.downloadUrl,
       filename: file.filename,
       contentType: file.contentType,
       size: file.size,
@@ -243,7 +242,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
                 }
                 onDownloadFile={(file) =>
                   downloadFile(
-                    (file as (typeof files)[number]).cdnUrl,
+                    (file as (typeof files)[number]).downloadUrl,
                     file.filename,
                   )
                 }

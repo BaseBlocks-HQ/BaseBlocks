@@ -5,7 +5,15 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "STORAGE_BUCKET_NAME",
+        "STORAGE_ENDPOINT",
+        "STORAGE_REGION",
+        "STORAGE_ACCESS_KEY_ID",
+        "STORAGE_SECRET_ACCESS_KEY",
+        "EXTRACTION_API_SECRET"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]

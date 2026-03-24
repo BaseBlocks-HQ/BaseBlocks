@@ -1,34 +1,73 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { type MutationCtx, mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 import { resolveSiteContext } from "../lib/resolvers";
+import { getStorageBucketName } from "../storage/config";
+import { deleteDocumentRows } from "./lib";
 
-// Create document record (after upload to Entity Storage)
+async function createDocumentAsset(
+  ctx: MutationCtx,
+  args: {
+    siteId: Parameters<typeof resolveSiteContext>[1];
+    uploadedBy: string;
+    objectKey: string;
+    filename: string;
+    contentType: string;
+    size: number;
+    checksum?: string;
+  },
+) {
+  return await ctx.db.insert("assets", {
+    siteId: args.siteId,
+    kind: "document",
+    visibility: "private",
+    provider: "s3",
+    bucket: getStorageBucketName(),
+    objectKey: args.objectKey,
+    filename: args.filename,
+    contentType: args.contentType,
+    size: args.size,
+    checksum: args.checksum,
+    uploadedBy: args.uploadedBy,
+    createdAt: Date.now(),
+  });
+}
+
+// Create document record after direct upload to object storage
 export const create = mutation({
   args: {
     siteId: v.id("sites"),
-    blobId: v.string(),
-    cdnUrl: v.string(),
+    objectKey: v.string(),
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
+    checksum: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { siteId, blobId, cdnUrl, filename, contentType, size },
+    { siteId, objectKey, filename, contentType, size, checksum },
   ) => {
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
     const { auth } = await requireAdmin(ctx, siteCtx.teamId);
+    const assetId = await createDocumentAsset(ctx, {
+      siteId,
+      uploadedBy: auth.userId,
+      objectKey,
+      filename,
+      contentType,
+      size,
+      checksum,
+    });
 
     const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
-      blobId,
-      cdnUrl,
+      assetId,
       filename,
       contentType,
       size,
@@ -44,12 +83,13 @@ export const create = mutation({
       sourceId: documentId,
       title: filename,
       extractedText: filename,
-      metadata: {
+      metadata: buildDocumentSearchMetadata({
+        documentId,
+        assetId,
         filename,
-        fileContentType: contentType,
+        contentType,
         size,
-        cdnUrl,
-      },
+      }),
       updatedAt: Date.now(),
     });
 
@@ -64,11 +104,11 @@ export const createInLibrary = mutation({
     siteId: v.id("sites"),
     libraryId: v.id("documentLibraries"),
     folderId: v.optional(v.id("documentFolders")),
-    blobId: v.string(),
-    cdnUrl: v.string(),
+    objectKey: v.string(),
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
+    checksum: v.optional(v.string()),
   },
   handler: async (
     ctx,
@@ -76,11 +116,11 @@ export const createInLibrary = mutation({
       siteId,
       libraryId,
       folderId,
-      blobId,
-      cdnUrl,
+      objectKey,
       filename,
       contentType,
       size,
+      checksum,
     },
   ) => {
     const siteCtx = await resolveSiteContext(ctx, siteId);
@@ -102,13 +142,22 @@ export const createInLibrary = mutation({
       }
     }
 
+    const assetId = await createDocumentAsset(ctx, {
+      siteId,
+      uploadedBy: auth.userId,
+      objectKey,
+      filename,
+      contentType,
+      size,
+      checksum,
+    });
+
     const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
       libraryId,
       folderId,
-      blobId,
-      cdnUrl,
+      assetId,
       filename,
       contentType,
       size,
@@ -124,13 +173,14 @@ export const createInLibrary = mutation({
       sourceId: documentId,
       title: filename,
       extractedText: filename,
-      metadata: {
+      metadata: buildDocumentSearchMetadata({
+        documentId,
+        assetId,
         filename,
-        fileContentType: contentType,
+        contentType,
         size,
-        cdnUrl,
         libraryId,
-      },
+      }),
       updatedAt: Date.now(),
     });
 
@@ -227,19 +277,7 @@ export const remove = mutation({
 
     await requireAdmin(ctx, siteCtx.teamId);
 
-    // Remove from search index
-    const searchEntry = await ctx.db
-      .query("searchableContent")
-      .withIndex("by_source", (q) =>
-        q.eq("contentType", "document").eq("sourceId", documentId),
-      )
-      .first();
-
-    if (searchEntry) {
-      await ctx.db.delete(searchEntry._id);
-    }
-
-    await ctx.db.delete(documentId);
+    await deleteDocumentRows(ctx, document);
     await markSiteModified(ctx, document.siteId);
   },
 });

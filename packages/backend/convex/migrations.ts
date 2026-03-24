@@ -1,6 +1,7 @@
 import { Migrations } from "@convex-dev/migrations";
 import { components, internal } from "./_generated/api.js";
 import type { DataModel, Doc, Id } from "./_generated/dataModel.js";
+import { buildDocumentSearchMetadata } from "./lib/documentSearchMetadata.js";
 import { extractBlockNoteText } from "./lib/extractBlockNoteText.js";
 import { isExtractable } from "./lib/extractable.js";
 
@@ -70,7 +71,7 @@ export const indexSubpages = migrations.define({
 // Migration 2: Index existing documents with extracted text
 export const indexDocuments = migrations.define({
   table: "documents",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, doc) => {
     // Only index documents that have extracted text
     if (!doc.extractedText) return;
@@ -90,13 +91,14 @@ export const indexDocuments = migrations.define({
         sourceId: doc._id,
         title: doc.filename,
         extractedText: doc.extractedText,
-        metadata: {
+        metadata: buildDocumentSearchMetadata({
+          documentId: doc._id,
+          assetId: doc.assetId,
           filename: doc.filename,
-          fileContentType: doc.contentType,
+          contentType: doc.contentType,
           size: doc.size,
-          cdnUrl: doc.cdnUrl,
           libraryId: doc.libraryId,
-        },
+        }),
         updatedAt: Date.now(),
       });
     }
@@ -107,7 +109,7 @@ export const indexDocuments = migrations.define({
 // Sets them to "unsupported" so they don't appear as awaiting extraction
 export const fixPendingNonExtractable = migrations.define({
   table: "documents",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, doc) => {
     if (doc.extractionStatus === "pending" && !isExtractable(doc.contentType)) {
       await ctx.db.patch(doc._id, {
@@ -122,7 +124,7 @@ export const fixPendingNonExtractable = migrations.define({
 // Ensures every document is findable by filename, even if extraction failed/unsupported
 export const indexAllDocuments = migrations.define({
   table: "documents",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, doc) => {
     // Check if already indexed
     const existing = await ctx.db
@@ -143,13 +145,14 @@ export const indexAllDocuments = migrations.define({
       sourceId: doc._id,
       title: doc.filename,
       extractedText,
-      metadata: {
+      metadata: buildDocumentSearchMetadata({
+        documentId: doc._id,
+        assetId: doc.assetId,
         filename: doc.filename,
-        fileContentType: doc.contentType,
+        contentType: doc.contentType,
         size: doc.size,
-        cdnUrl: doc.cdnUrl,
         libraryId: doc.libraryId,
-      },
+      }),
       updatedAt: Date.now(),
     });
   },
@@ -180,7 +183,7 @@ export const bootstrapSitePublishedFields = migrations.define({
 // Migration 6: Bootstrap published fields on pages
 export const bootstrapPagePublishedFields = migrations.define({
   table: "pages",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, page) => {
     // Only bootstrap if not already done
     if (page.isDeployed !== undefined) return;
@@ -452,7 +455,7 @@ export const migrateSubpagesToPages = migrations.define({
 // Migration 9: Clean up subpage search entries (no longer needed)
 export const cleanupSubpageSearchEntries = migrations.define({
   table: "searchableContent",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, entry) => {
     if (entry.contentType === "subpage") {
       await ctx.db.delete(entry._id);
@@ -493,7 +496,7 @@ export const runFlagSubpageContent = migrations.runner([
 // Migration 11: Remove deprecated hasUndeployedChanges field from all sites
 export const removeHasUndeployedChanges = migrations.define({
   table: "sites",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, site) => {
     if (
       (site as { hasUndeployedChanges?: unknown }).hasUndeployedChanges !==
@@ -596,7 +599,7 @@ export const runNormalizeDecisionTrees = migrations.runner([
 
 export const stringifySnapshotData = migrations.define({
   table: "deploymentSnapshots",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, snapshot) => {
     if (
       snapshot.chunkType === "page-layouts" &&
@@ -626,7 +629,7 @@ export const runDataCleanup = migrations.runner([
 
 export const backfillLayoutSiteId = migrations.define({
   table: "layouts",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, layout) => {
     if (layout.siteId) return; // Already set
 
@@ -979,7 +982,7 @@ export const runMigrateDecisionTreeToRichText = migrations.runner([
 // ContentEditable returns &nbsp; for trailing spaces; the tag-strip regex missed them.
 export const stripHtmlEntities = migrations.define({
   table: "layouts",
-  batchSize: 50,
+  batchSize: 5,
   migrateOne: async (ctx, layout) => {
     const decode = (s: string) =>
       s
@@ -1076,4 +1079,62 @@ export const stripHtmlEntities = migrations.define({
 });
 export const runStripHtmlEntities = migrations.runner([
   internal.migrations.stripHtmlEntities,
+]);
+
+// ============================================================
+// Migration 19: Purge all deployment history
+// ============================================================
+// The legacy Entity Storage service is being removed.  Old
+// deploymentSnapshot rows contain /api/storage/download?path=…
+// URLs from the previous provider.  Rolling back to any snapshot
+// that was created before the Railway migration would restore
+// broken asset references.
+//
+// Decision: accept no rollback to pre-migration deployments.
+// Delete every deployment + snapshot row so the table is clean.
+// New deployments after running this migration will only reference
+// Railway storage and will be fully rollback-safe.
+//
+// Run: npx convex run migrations:runPurgeDeploymentHistory
+export const purgeDeploymentHistory = migrations.define({
+  table: "deployments",
+  batchSize: 5,
+  migrateOne: async (ctx, deployment) => {
+    const snapshots = await ctx.db
+      .query("deploymentSnapshots")
+      .withIndex("by_deployment", (q) =>
+        q.eq("deploymentId", deployment._id),
+      )
+      .collect();
+
+    for (const snapshot of snapshots) {
+      await ctx.db.delete(snapshot._id);
+    }
+
+    await ctx.db.delete(deployment._id);
+  },
+});
+export const runPurgeDeploymentHistory = migrations.runner([
+  internal.migrations.purgeDeploymentHistory,
+]);
+
+// Migration 20: Strip legacy cdnUrl from searchableContent.metadata
+// ============================================================
+// The old Entity Storage provider stored a cdnUrl field in search metadata.
+// Temporarily kept in schema to allow old documents to pass validation.
+// This migration removes it so the schema field can be dropped.
+//
+// Run: npx convex run migrations:runStripSearchCdnUrl
+export const stripSearchCdnUrl = migrations.define({
+  table: "searchableContent",
+  batchSize: 50,
+  migrateOne: async (ctx, doc) => {
+    const meta = doc.metadata as typeof doc.metadata & { cdnUrl?: string };
+    if (!meta.cdnUrl) return;
+    const { cdnUrl: _removed, ...rest } = meta;
+    await ctx.db.patch(doc._id, { metadata: rest });
+  },
+});
+export const runStripSearchCdnUrl = migrations.runner([
+  internal.migrations.stripSearchCdnUrl,
 ]);

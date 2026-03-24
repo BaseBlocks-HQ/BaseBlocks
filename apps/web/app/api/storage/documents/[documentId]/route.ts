@@ -1,0 +1,65 @@
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
+import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
+import { createSignedDownloadUrl } from "@/lib/storage/server";
+import { api } from "@baseblocks/backend";
+import { type NextRequest, NextResponse } from "next/server";
+
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ documentId: string }> },
+) {
+  try {
+    const { documentId } = await context.params;
+    const token = await getToken();
+    const authedClient = getServerConvexClient(token);
+    const sessionTokens = getRequestAccessSessionTokens(request);
+
+    let document = token
+      ? await authedClient
+          .query(api.documents.queries.getDownloadAsset, {
+            documentId: documentId as never,
+          })
+          .catch(() => null)
+      : null;
+
+    if (!document) {
+      document = await getServerConvexClient().query(
+        api.documents.queries.getPublicDownloadAsset,
+        {
+          documentId: documentId as never,
+          sessionTokens,
+        },
+      );
+    }
+
+    if (!document) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
+    }
+
+    const download = request.nextUrl.searchParams.get("download") === "1";
+    const signedUrl = await createSignedDownloadUrl({
+      bucket: document.bucket,
+      objectKey: document.objectKey,
+      filename: document.filename,
+      download,
+    });
+
+    return NextResponse.redirect(signedUrl, {
+      headers: {
+        "Cache-Control": "private, no-store",
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to serve document",
+      },
+      { status: 500 },
+    );
+  }
+}

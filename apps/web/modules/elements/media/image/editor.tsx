@@ -1,7 +1,6 @@
 "use client";
 
 import { useImageUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
@@ -513,7 +512,7 @@ export function ImageEditor({
     onSaveStatusChange?.("saved");
   };
 
-  const imageUrl = content.url ? toProxyDownloadUrl(content.url) : "";
+  const imageUrl = content.url ? content.url : "";
 
   if (!content.url) {
     return (

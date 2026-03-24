@@ -2,7 +2,9 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { normalizeDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { getActiveLibraryIds } from "../lib/resolvers";
+import { canAccessPublishedSite } from "../sharing/access";
 
 /**
  * Extract a text snippet around the first occurrence of a search term
@@ -66,7 +68,13 @@ function formatSearchResult(
     snippet: snippetData?.snippet ?? null,
     snippetMatchStart: snippetData?.matchStart ?? null,
     snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata: doc.metadata,
+    metadata:
+      doc.contentType === "document"
+        ? normalizeDocumentSearchMetadata({
+            sourceId: doc.sourceId,
+            metadata: doc.metadata,
+          })
+        : doc.metadata,
   };
 }
 
@@ -149,6 +157,7 @@ export const searchAllPublic = query({
   args: {
     siteId: v.id("sites"),
     query: v.string(),
+    sessionTokens: v.optional(v.array(v.string())),
     contentTypes: v.optional(
       v.array(v.union(v.literal("document"), v.literal("subpage"))),
     ),
@@ -156,14 +165,15 @@ export const searchAllPublic = query({
   },
   handler: async (
     ctx,
-    { siteId, query: searchQuery, contentTypes, limit = 20 },
+    { siteId, query: searchQuery, sessionTokens, contentTypes, limit = 20 },
   ) => {
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
-    // Check site is published
     const site = await ctx.db.get(siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
@@ -252,7 +262,13 @@ export const listTitles = query({
       contentType: doc.contentType,
       sourceId: doc.sourceId,
       title: doc.title,
-      metadata: doc.metadata,
+      metadata:
+        doc.contentType === "document"
+          ? normalizeDocumentSearchMetadata({
+              sourceId: doc.sourceId,
+              metadata: doc.metadata,
+            })
+          : doc.metadata,
     }));
   },
 });
@@ -263,10 +279,13 @@ export const listTitles = query({
 export const listTitlesPublic = query({
   args: {
     siteId: v.id("sites"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId }) => {
+  handler: async (ctx, { siteId, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
 
@@ -290,7 +309,13 @@ export const listTitlesPublic = query({
         contentType: doc.contentType,
         sourceId: doc.sourceId,
         title: doc.title,
-        metadata: doc.metadata,
+        metadata:
+          doc.contentType === "document"
+            ? normalizeDocumentSearchMetadata({
+                sourceId: doc.sourceId,
+                metadata: doc.metadata,
+              })
+            : doc.metadata,
       }));
   },
 });

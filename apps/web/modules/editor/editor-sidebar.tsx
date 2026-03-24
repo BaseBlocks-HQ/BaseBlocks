@@ -1,6 +1,5 @@
 "use client";
 
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { SortablePageTree } from "@/modules/navigation";
@@ -99,7 +98,7 @@ export function EditorSidebar({
           {/* Site logo */}
           {site.logoUrl ? (
             <Image
-              src={toProxyDownloadUrl(site.logoUrl)}
+              src={site.logoUrl}
               alt={site.name}
               className="h-8 w-8 rounded-lg object-contain border bg-muted flex-shrink-0"
               width={32}

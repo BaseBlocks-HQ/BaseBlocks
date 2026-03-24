@@ -1,17 +1,4 @@
-/**
- * Entity Storage client for file uploads
- *
- * Upload flow:
- * 1. POST /fs/upload with Bearer token -> { blobId }
- * 2. Commit to Convex with blobId reference
- *
- * Uses a same-origin proxy (/api/storage/*) to avoid CORS issues with corporate firewalls
- */
-
-interface UploadResult {
-  blobId: string;
-  cdnUrl: string;
-}
+import type { UploadPurpose } from "@baseblocks/types";
 
 export interface UploadProgress {
   loaded: number;
@@ -19,201 +6,162 @@ export interface UploadProgress {
   percentage: number;
 }
 
-interface GenerateStoragePathOptions {
-  workspaceTenantId: string;
-  siteId: string;
-  userId: string;
-  filename: string;
-  now?: () => number;
-  random?: () => number;
+interface UploadResult {
+  objectKey: string;
+  size: number;
 }
 
-export function generateStoragePath({
-  workspaceTenantId,
-  siteId,
-  userId,
-  filename,
-  now = Date.now,
-  random = Math.random,
-}: GenerateStoragePathOptions): string {
-  // Failure modes:
-  // - Missing workspace tenant env causes paths like //documents/... that the download proxy rejects.
-  // - Empty site or user IDs produce ambiguous storage keys.
-  // - Filenames can contain characters storage paths should not preserve verbatim.
-  const normalizedTenantId = workspaceTenantId.trim();
-  if (!normalizedTenantId) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID for storage uploads",
-    );
-  }
-
-  if (!siteId.trim()) {
-    throw new Error("Missing site ID for storage upload path");
-  }
-
-  if (!userId.trim()) {
-    throw new Error("Missing user ID for storage upload path");
-  }
-
-  const timestamp = now();
-  const randomSuffix = random().toString(36).slice(2, 8);
-  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-  return `/${normalizedTenantId}/documents/${siteId}/${userId}/${timestamp}_${randomSuffix}_${sanitizedFilename}`;
+export interface FinalizeResult {
+  objectKey: string;
+  size: number;
+  contentType: string;
+  checksum: string;
 }
 
-class EntityStorageClient {
-  private siteUrl: string;
-  private workspaceTenantId: string;
+interface UploadIntent {
+  objectKey: string;
+  uploadUrl: string;
+}
 
-  constructor(siteUrl: string, workspaceTenantId: string) {
-    this.siteUrl = siteUrl;
-    this.workspaceTenantId = workspaceTenantId;
+class StorageClient {
+  private async createUploadIntent(
+    file: File,
+    options: {
+      siteId: string;
+      purpose: UploadPurpose;
+    },
+  ): Promise<UploadIntent> {
+    const response = await fetch("/api/storage/upload", {
+      method: "POST",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+        "Content-Length": `${file.size}`,
+        "X-Baseblocks-Site-Id": options.siteId,
+        "X-Baseblocks-Upload-Purpose": options.purpose,
+        "X-Baseblocks-Filename": file.name,
+      },
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as Partial<
+      UploadIntent & { error: string }
+    >;
+    if (!response.ok || !payload.objectKey || !payload.uploadUrl) {
+      throw new Error(payload.error || `Upload failed: ${response.status}`);
+    }
+
+    return {
+      objectKey: payload.objectKey,
+      uploadUrl: payload.uploadUrl,
+    };
   }
 
   /**
-   * Upload a file to Entity Storage
-   * Returns blobId and CDN URL for the file
-   * Uses same-origin proxy which handles auth via session cookie
+   * After a direct PUT upload completes, call this to get server-verified
+   * metadata (size, contentType, etag/checksum).  Always pass the returned
+   * values to Convex mutations instead of the client-side File properties.
    */
+  async finalize(options: {
+    siteId: string;
+    purpose: UploadPurpose;
+    objectKey: string;
+  }): Promise<FinalizeResult> {
+    const response = await fetch("/api/storage/finalize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        objectKey: options.objectKey,
+        siteId: options.siteId,
+        purpose: options.purpose,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as Partial<
+      FinalizeResult & { error: string }
+    >;
+    if (!response.ok || !payload.objectKey) {
+      throw new Error(payload.error || `Finalize failed: ${response.status}`);
+    }
+
+    return {
+      objectKey: payload.objectKey,
+      size: payload.size ?? 0,
+      contentType: payload.contentType ?? "application/octet-stream",
+      checksum: payload.checksum ?? "",
+    };
+  }
+
+  async cleanup(options: {
+    siteId: string;
+    purpose: UploadPurpose;
+    objectKey: string;
+  }): Promise<void> {
+    await fetch("/api/storage/upload", {
+      method: "DELETE",
+      headers: {
+        "X-Baseblocks-Site-Id": options.siteId,
+        "X-Baseblocks-Upload-Purpose": options.purpose,
+        "X-Baseblocks-Object-Key": options.objectKey,
+      },
+    }).catch(() => undefined);
+  }
+
   async upload(
     file: File,
-    path: string,
-    onProgress?: (progress: UploadProgress) => void,
+    options: {
+      siteId: string;
+      purpose: UploadPurpose;
+      onProgress?: (progress: UploadProgress) => void;
+    },
   ): Promise<UploadResult> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+    return await new Promise((resolve, reject) => {
+      this.createUploadIntent(file, options)
+        .then(({ objectKey, uploadUrl }) => {
+          const xhr = new XMLHttpRequest();
 
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable && onProgress) {
-          onProgress({
-            loaded: event.loaded,
-            total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100),
-          });
-        }
-      });
-
-      xhr.addEventListener("load", async () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            const blobId = response.blobId;
-
-            const commitResponse = await fetch("/api/storage/commit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ blobId, path }),
-            });
-
-            if (!commitResponse.ok) {
-              const commitError = await commitResponse.json().catch(() => ({}));
-              reject(
-                new Error(
-                  commitError.error ||
-                    `Commit failed: ${commitResponse.status}`,
-                ),
-              );
+          xhr.upload.addEventListener("progress", (event) => {
+            if (!event.lengthComputable || !options.onProgress) {
               return;
             }
 
-            // Use proxy download endpoint to bypass corporate firewall CORS blocking
-            const cdnUrl = `/api/storage/download?path=${encodeURIComponent(path)}`;
-            resolve({
-              blobId,
-              cdnUrl,
+            options.onProgress({
+              loaded: event.loaded,
+              total: event.total,
+              percentage: Math.round((event.loaded / event.total) * 100),
             });
-          } catch (err) {
-            reject(
-              err instanceof Error
-                ? err
-                : new Error("Invalid response from storage server"),
-            );
-          }
-        } else {
-          try {
-            const error = JSON.parse(xhr.responseText);
-            reject(
-              new Error(
-                error.message || error.error || `Upload failed: ${xhr.status}`,
-              ),
-            );
-          } catch {
-            reject(new Error(`Upload failed: ${xhr.status}`));
-          }
-        }
-      });
+          });
 
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error during upload"));
-      });
+          xhr.addEventListener("load", () => {
+            if (xhr.status < 200 || xhr.status >= 300) {
+              reject(new Error(`Upload failed: ${xhr.status}`));
+              return;
+            }
 
-      xhr.addEventListener("abort", () => {
-        reject(new Error("Upload cancelled"));
-      });
+            resolve({
+              objectKey,
+              size: file.size,
+            });
+          });
 
-      xhr.open("POST", "/api/storage/upload");
-      xhr.setRequestHeader(
-        "Content-Type",
-        file.type || "application/octet-stream",
-      );
-      // Send raw file bytes, not FormData - ConvexFS streams body directly to storage
-      xhr.send(file);
+          xhr.addEventListener("error", () => {
+            reject(new Error("Network error during upload"));
+          });
+
+          xhr.addEventListener("abort", () => {
+            reject(new Error("Upload cancelled"));
+          });
+
+          xhr.open("PUT", uploadUrl);
+          xhr.setRequestHeader(
+            "Content-Type",
+            file.type || "application/octet-stream",
+          );
+          xhr.send(file);
+        })
+        .catch((error) => {
+          reject(error);
+        });
     });
-  }
-
-  /**
-   * Generate a storage path for a document
-   */
-  generatePath(siteId: string, userId: string, filename: string): string {
-    return generateStoragePath({
-      workspaceTenantId: this.workspaceTenantId,
-      siteId,
-      userId,
-      filename,
-    });
-  }
-
-  /**
-   * Get the download URL for a blob
-   */
-  getDownloadUrl(blobId: string): string {
-    return `${this.siteUrl}/fs/blobs/${blobId}`;
   }
 }
 
-// Environment configuration
-const ENTITY_STORAGE_SITE_URL =
-  process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL ?? "";
-const WORKSPACE_TENANT_ID =
-  process.env.NEXT_PUBLIC_ENTITY_AUTH_WORKSPACE_TENANT_ID ?? "";
-
-// Singleton client instance
-export const entityStorageClient = new EntityStorageClient(
-  ENTITY_STORAGE_SITE_URL,
-  WORKSPACE_TENANT_ID,
-);
-
-/**
- * Convert a storage URL to use the proxy endpoint
- * This handles both old direct Convex URLs and new proxy URLs
- * Use this for all downloads to bypass corporate firewall CORS blocking
- */
-export function toProxyDownloadUrl(cdnUrl: string): string {
-  // Already a proxy URL
-  if (cdnUrl.startsWith("/api/storage/download")) {
-    return cdnUrl;
-  }
-
-  // Extract path from Convex URL: https://xxx.convex.site/fs/download?path=...
-  try {
-    const url = new URL(cdnUrl);
-    const path = url.searchParams.get("path");
-    if (path) {
-      return `/api/storage/download?path=${encodeURIComponent(path)}`;
-    }
-  } catch {
-    // Not a valid URL, return as-is
-  }
-
-  return cdnUrl;
-}
+export const storageClient = new StorageClient();

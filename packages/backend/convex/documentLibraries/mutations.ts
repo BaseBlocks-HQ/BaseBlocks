@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../auth";
+import { deleteDocumentRows } from "../documents/lib";
 
 export const create = mutation({
   args: {
@@ -87,14 +88,14 @@ export const remove = mutation({
 
     await requireAdmin(ctx, site.teamId);
 
-    // Delete all documents in the library
+    // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
       .query("documents")
       .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
       .collect();
 
     for (const doc of documents) {
-      await ctx.db.delete(doc._id);
+      await deleteDocumentRows(ctx, doc);
     }
 
     // Delete all folders in the library

@@ -1,7 +1,4 @@
-export type {
-  PageListItem,
-  PageWithChildren,
-} from "./pages";
+export type { PageListItem, PageWithChildren } from "./pages";
 
 export type {
   LayoutType,
@@ -19,15 +16,8 @@ export {
   LAYOUT_TYPES,
 } from "./layouts";
 
-export type {
-  ElementCategory,
-  CategoryInfo,
-} from "./elements";
-export {
-  CATEGORIES,
-  getCategoryInfo,
-  getSortedCategories,
-} from "./elements";
+export type { ElementCategory, CategoryInfo } from "./elements";
+export { CATEGORIES, getCategoryInfo, getSortedCategories } from "./elements";
 
 export type {
   ElementType,
@@ -76,3 +66,12 @@ export {
 
 export type { MediaType, ImageContent, MediaContentUnion } from "./elements";
 export { DEFAULT_MEDIA_CONTENT } from "./elements";
+
+export type { UploadPurpose } from "./storage";
+export {
+  extractableDocumentMimeTypes,
+  isExtractableDocumentMimeType,
+  isSupportedUploadMimeType,
+  normalizeMimeType,
+  supportedUploadMimeTypes,
+} from "./storage";

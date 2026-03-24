@@ -1,11 +1,11 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import { entityStorageClient } from "@/lib/storage/client";
+import { storageClient } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { useLayoutContext } from "@/modules/elements/framework/layout-context";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { api } from "@baseblocks/backend";
 import type { QuicklinkItem, QuicklinkType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
+import { useMutation } from "convex/react";
 import {
   AppWindow,
   Check,
@@ -354,8 +355,7 @@ export function QuicklinksEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorSite();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
   const layoutContext = useLayoutContext();
   const isSidebar = layoutContext?.isSidebar ?? false;
   const [state, dispatch] = useReducer(
@@ -387,41 +387,57 @@ export function QuicklinksEditor({
       });
   };
 
-  const applyUploadedImageUrl = (cdnUrl: string) => {
+  const applyUploadedImageUrl = (url: string) => {
     if (!state.draft) {
       return;
     }
 
     dispatch({
       type: "updateDraft",
-      draft: { ...state.draft, imageUrl: cdnUrl },
+      draft: { ...state.draft, imageUrl: url },
     });
   };
 
   const handleImageUpload = async (file: File, linkId: string) => {
     dispatch({ type: "setUploadingLinkId", value: linkId });
-    const userId = user?.id;
-    if (!userId) {
-      toast.error("User not found");
-      dispatch({ type: "setUploadingLinkId", value: null });
-      return;
-    }
-    const timestamp = Date.now();
-    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const path = entityStorageClient.generatePath(
-      siteId,
-      userId,
-      `quicklink_${timestamp}_${sanitizedFilename}`,
-    );
-    try {
-      const { cdnUrl } = await entityStorageClient.upload(file, path);
-      applyUploadedImageUrl(cdnUrl);
+    const contentType = file.type || "application/octet-stream";
+    let objectKey: string | null = null;
+
+    const uploadedUrl = await storageClient
+      .upload(file, {
+        siteId,
+        purpose: "siteAsset",
+      })
+      .then(async (uploadResult) => {
+        objectKey = uploadResult.objectKey;
+        const { url } = await createSiteAsset({
+          siteId: siteId as never,
+          objectKey,
+          filename: file.name,
+          contentType,
+          size: file.size,
+        });
+        return url;
+      })
+      .catch(async () => {
+        if (objectKey) {
+          await storageClient.cleanup({
+            siteId,
+            purpose: "siteAsset",
+            objectKey,
+          });
+        }
+        return null;
+      });
+
+    if (uploadedUrl) {
+      applyUploadedImageUrl(uploadedUrl);
       toast.success("Image uploaded");
-      dispatch({ type: "setUploadingLinkId", value: null });
-    } catch {
+    } else {
       toast.error("Failed to upload image");
-      dispatch({ type: "setUploadingLinkId", value: null });
     }
+
+    dispatch({ type: "setUploadingLinkId", value: null });
   };
 
   const visibleCards = savedLinks.filter((l) => l.id !== editingId);

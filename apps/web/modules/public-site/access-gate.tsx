@@ -1,5 +1,6 @@
 "use client";
 
+import { getAccessSessionCookieName } from "@/lib/public-site/access-session";
 import type { Id } from "@baseblocks/backend";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -9,8 +10,6 @@ import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { AlertCircle, Loader2, Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-const SESSION_COOKIE_NAME = "bb_access_session";
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
@@ -49,11 +48,10 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const verifyAccessCode = useMutation(api.sharing.mutations.verifyAccessCode);
+  const sessionCookieName = getAccessSessionCookieName(siteId);
 
   const storedToken =
-    typeof document !== "undefined"
-      ? getCookie(`${SESSION_COOKIE_NAME}_${siteId}`)
-      : null;
+    typeof document !== "undefined" ? getCookie(sessionCookieName) : null;
 
   const sessionResult = useQuery(
     api.sharing.queries.validateSession,
@@ -71,9 +69,9 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
 
   useEffect(() => {
     if (storedToken && sessionResult !== undefined && !sessionResult.valid) {
-      removeCookie(`${SESSION_COOKIE_NAME}_${siteId}`);
+      removeCookie(sessionCookieName);
     }
-  }, [storedToken, sessionResult, siteId]);
+  }, [sessionCookieName, sessionResult, storedToken]);
 
   // Focus input when gate is shown
   useEffect(() => {
@@ -94,7 +92,7 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
       });
 
       // Store session token in cookie
-      setCookie(`${SESSION_COOKIE_NAME}_${siteId}`, result.sessionToken, 7);
+      setCookie(sessionCookieName, result.sessionToken, 7);
 
       setHasOptimisticAccess(true);
       setIsVerifying(false);

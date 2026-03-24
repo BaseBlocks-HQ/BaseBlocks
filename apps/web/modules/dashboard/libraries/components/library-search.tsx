@@ -53,8 +53,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
         filename: doc.filename,
         contentType: doc.contentType,
         size: doc.size,
-        cdnUrl: doc.cdnUrl,
-        blobId: doc.blobId,
+        downloadUrl: doc.downloadUrl,
         libraryId: doc.libraryId,
         matchType: "filename" as const,
         snippet: null,
@@ -93,7 +92,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
           {searchResults.map(
             (result: {
               _id: string;
-              cdnUrl: string | null;
+              downloadUrl: string | null;
               contentType: string;
               filename: string;
               snippet: string | null;
@@ -101,7 +100,7 @@ export function LibrarySearch({ libraryId }: LibrarySearchProps) {
             }) => (
               <a
                 key={result._id}
-                href={result.cdnUrl || "#"}
+                href={result.downloadUrl || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-3 p-3 hover:bg-accent transition-colors border-b last:border-b-0"

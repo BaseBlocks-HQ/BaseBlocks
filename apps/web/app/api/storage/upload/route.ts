@@ -1,44 +1,85 @@
 import { getToken } from "@/lib/auth/server";
-/**
- * Proxy endpoint for file uploads to Entity Storage
- * Authenticates via Better Auth session cookie, then forwards JWT to Entity Storage
- */
+import { canUploadToSite } from "@/lib/convex/server";
+import {
+  createObjectKey,
+  createSignedUploadUrl,
+  deleteObject,
+} from "@/lib/storage/server";
+import {
+  type UploadPurpose,
+  isSupportedUploadMimeType,
+  normalizeMimeType,
+} from "@baseblocks/types";
 import { type NextRequest, NextResponse } from "next/server";
 
-const ENTITY_STORAGE_SITE_URL = process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL;
+const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
 
-const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50 MB
+function parsePurpose(value: string | null): UploadPurpose | null {
+  if (value === "document" || value === "siteAsset") {
+    return value;
+  }
+  return null;
+}
 
-const ALLOWED_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "image/avif",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "text/plain",
-  "text/csv",
-]);
+function matchesUploadPrefix(
+  siteId: string,
+  purpose: UploadPurpose,
+  objectKey: string,
+) {
+  const kind = purpose === "document" ? "documents" : "assets";
+  return objectKey.startsWith(`sites/${siteId}/${kind}/`);
+}
+
+async function requireAuthorizedSiteId(request: NextRequest): Promise<{
+  siteId: string;
+  purpose: UploadPurpose;
+}> {
+  const token = await getToken();
+  if (!token) {
+    throw new Response(JSON.stringify({ error: "Not authenticated" }), {
+      status: 401,
+    });
+  }
+
+  const siteId = request.headers.get("x-baseblocks-site-id")?.trim();
+  const purpose = parsePurpose(
+    request.headers.get("x-baseblocks-upload-purpose")?.trim() || null,
+  );
+
+  if (!siteId || !purpose) {
+    throw new Response(
+      JSON.stringify({ error: "Missing upload authorization headers" }),
+      {
+        status: 400,
+      },
+    );
+  }
+
+  const canUpload = await canUploadToSite(siteId, token);
+  if (!canUpload) {
+    throw new Response(JSON.stringify({ error: "Not authorized" }), {
+      status: 403,
+    });
+  }
+
+  return { siteId, purpose };
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const token = await getToken();
-    if (!token) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const { siteId, purpose } = await requireAuthorizedSiteId(request);
+    const filename = request.headers.get("x-baseblocks-filename")?.trim();
+    if (!filename) {
+      return NextResponse.json(
+        { error: "Missing x-baseblocks-filename header" },
+        { status: 400 },
+      );
     }
 
     const contentType =
       request.headers.get("content-type") || "application/octet-stream";
-
-    const mimeType = contentType.split(";")[0]?.trim() ?? "";
-    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    const normalizedMimeType = normalizeMimeType(contentType);
+    if (!normalizedMimeType || !isSupportedUploadMimeType(normalizedMimeType)) {
       return NextResponse.json(
         { error: "File type not allowed" },
         { status: 415 },
@@ -46,45 +87,69 @@ export async function POST(request: NextRequest) {
     }
 
     const contentLength = request.headers.get("content-length");
-    if (contentLength && Number.parseInt(contentLength, 10) > MAX_UPLOAD_SIZE) {
+    const size = contentLength ? Number.parseInt(contentLength, 10) : null;
+    if (size && size > MAX_UPLOAD_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 50 MB" },
         { status: 413 },
       );
     }
 
-    const body = await request.arrayBuffer();
-
-    if (body.byteLength > MAX_UPLOAD_SIZE) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 50 MB" },
-        { status: 413 },
-      );
-    }
-
-    const response = await fetch(`${ENTITY_STORAGE_SITE_URL}/fs/upload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": contentType,
-        "Content-Length": body.byteLength.toString(),
-      },
-      body: body,
+    const objectKey = createObjectKey({
+      siteId,
+      purpose,
+      filename,
+    });
+    const uploadUrl = await createSignedUploadUrl({
+      objectKey,
+      contentType: normalizedMimeType,
     });
 
-    const data = await response.json().catch(() => ({}));
+    return NextResponse.json({
+      objectKey,
+      uploadUrl,
+      size,
+      contentType: normalizedMimeType,
+    });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
 
-    if (!response.ok) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { siteId, purpose } = await requireAuthorizedSiteId(request);
+    const objectKey = request.headers.get("x-baseblocks-object-key")?.trim();
+    if (!objectKey) {
       return NextResponse.json(
-        { error: data.error || `Upload failed: ${response.status}` },
-        { status: response.status },
+        { error: "Missing x-baseblocks-object-key header" },
+        { status: 400 },
       );
     }
 
-    return NextResponse.json(data);
+    if (!matchesUploadPrefix(siteId, purpose, objectKey)) {
+      return NextResponse.json(
+        { error: "Invalid object key" },
+        { status: 400 },
+      );
+    }
+
+    await deleteObject({ objectKey });
+    return NextResponse.json({ deleted: true });
   } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      { error: error instanceof Error ? error.message : "Cleanup failed" },
       { status: 500 },
     );
   }

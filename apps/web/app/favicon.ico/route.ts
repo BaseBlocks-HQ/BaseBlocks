@@ -15,27 +15,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const ENTITY_STORAGE_SITE_URL = process.env.NEXT_PUBLIC_ENTITY_STORAGE_SITE_URL;
-
 let defaultFaviconCache: ArrayBuffer | null = null;
-
-function extractStoragePath(faviconUrl: string): string | undefined {
-  if (faviconUrl.startsWith("/api/storage/download")) {
-    try {
-      const url = new URL(faviconUrl, "http://localhost");
-      return url.searchParams.get("path") || undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
-  try {
-    const parsed = new URL(faviconUrl);
-    return parsed.searchParams.get("path") || undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 async function getDefaultFavicon(): Promise<NextResponse> {
   if (!defaultFaviconCache) {
@@ -57,6 +37,7 @@ async function getDefaultFavicon(): Promise<NextResponse> {
 
 export async function GET(request: Request) {
   const host = request.headers.get("host") || "";
+  const protocol = request.headers.get("x-forwarded-proto") || "https";
   const teamSlug = extractTeamSlug(host);
 
   // custom: prefix means custom domain — no favicon lookup for those yet
@@ -75,20 +56,21 @@ export async function GET(request: Request) {
       teamSlug,
     });
 
+    const visibility = site?.visibility ?? "public";
+    if (visibility === "private" || visibility === "password") {
+      return getDefaultFavicon();
+    }
+
     const favicon = (site?.settings as Record<string, unknown> | undefined)
       ?.favicon as string | undefined;
     if (!favicon) {
       return getDefaultFavicon();
     }
 
-    const storagePath = extractStoragePath(favicon);
-    if (!storagePath) {
-      return getDefaultFavicon();
-    }
-
-    const response = await fetch(
-      `${ENTITY_STORAGE_SITE_URL}/fs/download?path=${encodeURIComponent(storagePath)}`,
-    );
+    const targetUrl = favicon.startsWith("/")
+      ? new URL(favicon, `${protocol}://${host}`).toString()
+      : favicon;
+    const response = await fetch(targetUrl);
 
     if (!response.ok) {
       return getDefaultFavicon();

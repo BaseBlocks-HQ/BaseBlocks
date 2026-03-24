@@ -6,6 +6,7 @@
     "dev": "turbo run dev",
     "lint": "biome check --write .",
     "format": "biome format --write .",
+    "test": "bun test",
     "check-types": "turbo run check-types"
   },
   "devDependencies": {

@@ -1,0 +1,7 @@
+.git
+.turbo
+node_modules
+**/node_modules
+apps/web/.next
+*.log
+*.tmp

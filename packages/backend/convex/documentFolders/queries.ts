@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { canAccessPublishedSite } from "../sharing/access";
 
 // List all folders in a library (flat list)
 export const listByLibrary = query({
@@ -107,13 +108,16 @@ export const getPath = query({
 export const listByLibraryPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { libraryId }) => {
+  handler: async (ctx, { libraryId, sessionTokens }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -129,13 +133,16 @@ export const listByParentPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
     parentId: v.optional(v.id("documentFolders")),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { libraryId, parentId }) => {
+  handler: async (ctx, { libraryId, parentId, sessionTokens }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -152,8 +159,9 @@ export const listByParentPublic = query({
 export const getPathPublic = query({
   args: {
     folderId: v.id("documentFolders"),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { folderId }) => {
+  handler: async (ctx, { folderId, sessionTokens }) => {
     const folder = await ctx.db.get(folderId);
     if (!folder) return [];
 
@@ -161,7 +169,9 @@ export const getPathPublic = query({
     if (!library) return [];
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !site.isPublished) return [];
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return [];
+    }
 
     // Build path from folder to root (with cycle detection)
     const path: Array<{ _id: string; name: string }> = [];

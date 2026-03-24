@@ -24,7 +24,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://vercel.live",
+      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://vercel.live https://*.storageapi.dev",
       "frame-src https://view.officeapps.live.com https://docs.google.com https://vercel.live",
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
@@ -37,7 +37,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["*.localhost"],
-  serverExternalPackages: ["pdfjs-dist"],
+  serverExternalPackages: ["@napi-rs/canvas", "officeparser"],
   reactCompiler: true,
   images: {
     formats: ["image/avif", "image/webp"],

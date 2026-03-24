@@ -3,6 +3,8 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { getAuthContext, requireAdmin } from "../auth";
 import { markSiteModified } from "../lib/markModified";
+import { deleteObjectAction } from "../storage/actions";
+import { deleteDocumentRows } from "../documents/lib";
 
 // Create a new site
 export const create = mutation({
@@ -92,6 +94,8 @@ export const update = mutation({
     siteId: v.id("sites"),
     name: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
+    logoAssetId: v.optional(v.id("assets")),
+    clearLogo: v.optional(v.boolean()),
     settings: v.optional(
       v.object({
         favicon: v.optional(v.string()),
@@ -140,16 +144,50 @@ export const update = mutation({
       }),
     ),
   },
-  handler: async (ctx, { siteId, name, logoUrl, settings }) => {
+  handler: async (ctx, { siteId, name, logoUrl, logoAssetId, clearLogo, settings }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
-    if (logoUrl !== undefined) updates.logoUrl = logoUrl;
+
+    // Logo replacement: clean up the previous asset when a new one is uploaded
+    if (logoAssetId !== undefined && site.logoAssetId && site.logoAssetId !== logoAssetId) {
+      const oldAsset = await ctx.db.get(site.logoAssetId);
+      await ctx.db.delete(site.logoAssetId);
+      if (oldAsset) {
+        await ctx.scheduler.runAfter(0, deleteObjectAction, {
+          bucket: oldAsset.bucket,
+          objectKey: oldAsset.objectKey,
+        });
+      }
+    }
+
+    if (logoAssetId !== undefined) {
+      updates.logoAssetId = logoAssetId;
+      // Derive the display URL from the asset ID so they're always in sync
+      updates.logoUrl = `/api/storage/assets/${logoAssetId}`;
+    }
+
+    // Logo removal: clean up the existing asset
+    if (clearLogo && site.logoAssetId) {
+      const oldAsset = await ctx.db.get(site.logoAssetId);
+      await ctx.db.delete(site.logoAssetId);
+      if (oldAsset) {
+        await ctx.scheduler.runAfter(0, deleteObjectAction, {
+          bucket: oldAsset.bucket,
+          objectKey: oldAsset.objectKey,
+        });
+      }
+      updates.logoAssetId = undefined;
+      updates.logoUrl = undefined;
+    } else if (logoUrl !== undefined && logoAssetId === undefined) {
+      // Legacy path: plain URL update without an assetId (e.g. external URL)
+      updates.logoUrl = logoUrl;
+    }
+
     if (settings !== undefined) {
       updates.settings = { ...site.settings, ...settings };
     }
@@ -349,44 +387,31 @@ export const setDefaultPage = mutation({
   },
 });
 
-// Delete site
+// Delete site and all related data
 export const remove = mutation({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access for write operations
     await requireAdmin(ctx, site.teamId);
 
-    // Delete all pages and their layouts
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    for (const page of pages) {
-      // Delete all layouts in page
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const layout of layouts) {
-        await ctx.db.delete(layout._id);
-      }
-
-      await ctx.db.delete(page._id);
-    }
-
-    // Delete all document libraries and their contents
+    // 1. Delete all document libraries and their contents
+    //    (documents first so assets + S3 objects are properly cleaned up)
     const libraries = await ctx.db
       .query("documentLibraries")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
     for (const library of libraries) {
-      // Delete all folders in library
+      const docs = await ctx.db
+        .query("documents")
+        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+        .collect();
+      for (const doc of docs) {
+        await deleteDocumentRows(ctx, doc);
+      }
+
       const folders = await ctx.db
         .query("documentFolders")
         .withIndex("by_library", (q) => q.eq("libraryId", library._id))
@@ -395,19 +420,95 @@ export const remove = mutation({
         await ctx.db.delete(folder._id);
       }
 
-      // Delete all documents in library
-      const docs = await ctx.db
-        .query("documents")
-        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
-        .collect();
-      for (const doc of docs) {
-        await ctx.db.delete(doc._id);
-      }
-
       await ctx.db.delete(library._id);
     }
 
-    // Delete site
+    // 2. Delete site-level documents (not in any library)
+    const siteDocs = await ctx.db
+      .query("documents")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const doc of siteDocs) {
+      // deleteDocumentRows is idempotent-safe; already-deleted ones are filtered by DB
+      if (doc.libraryId) continue; // already handled above
+      await deleteDocumentRows(ctx, doc);
+    }
+
+    // 3. Delete all site assets (logos, favicons, og images, editor media)
+    //    and schedule their S3 object deletions
+    const siteAssets = await ctx.db
+      .query("assets")
+      .withIndex("by_site_kind", (q) =>
+        q.eq("siteId", siteId).eq("kind", "siteAsset"),
+      )
+      .collect();
+    for (const asset of siteAssets) {
+      await ctx.db.delete(asset._id);
+      await ctx.scheduler.runAfter(0, deleteObjectAction, {
+        bucket: asset.bucket,
+        objectKey: asset.objectKey,
+      });
+    }
+
+    // 4. Delete all searchableContent for the site (subpages + any remaining docs)
+    const searchEntries = await ctx.db
+      .query("searchableContent")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const entry of searchEntries) {
+      await ctx.db.delete(entry._id);
+    }
+
+    // 5. Delete all pages and their layouts
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const page of pages) {
+      const layouts = await ctx.db
+        .query("layouts")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+      for (const layout of layouts) {
+        await ctx.db.delete(layout._id);
+      }
+      await ctx.db.delete(page._id);
+    }
+
+    // 6. Delete deployment history (snapshots before deployments, FK order)
+    const deployments = await ctx.db
+      .query("deployments")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const deployment of deployments) {
+      const snapshots = await ctx.db
+        .query("deploymentSnapshots")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deployment._id))
+        .collect();
+      for (const snapshot of snapshots) {
+        await ctx.db.delete(snapshot._id);
+      }
+      await ctx.db.delete(deployment._id);
+    }
+
+    // 7. Delete access codes and sessions
+    const accessCodes = await ctx.db
+      .query("siteAccessCodes")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const code of accessCodes) {
+      await ctx.db.delete(code._id);
+    }
+
+    const accessSessions = await ctx.db
+      .query("siteAccessSessions")
+      .withIndex("by_site_token", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const session of accessSessions) {
+      await ctx.db.delete(session._id);
+    }
+
+    // 8. Delete the site itself
     await ctx.db.delete(siteId);
 
     return { success: true };

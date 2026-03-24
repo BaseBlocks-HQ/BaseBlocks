@@ -1,7 +1,6 @@
 "use client";
 
 import { useImageUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -201,7 +200,7 @@ function MetadataAssetCard({
         title === "Favicon" ? (
           <div className="h-16 w-16 rounded-lg border bg-background p-2">
             <NextImage
-              src={toProxyDownloadUrl(imageUrl)}
+              src={imageUrl}
               alt={alt}
               className="h-full w-full object-contain"
               width={64}
@@ -211,7 +210,7 @@ function MetadataAssetCard({
           </div>
         ) : (
           <NextImage
-            src={toProxyDownloadUrl(imageUrl)}
+            src={imageUrl}
             alt={alt}
             className="h-20 w-full rounded border bg-muted object-cover"
             width={1200}

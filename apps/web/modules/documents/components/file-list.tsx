@@ -1,6 +1,5 @@
 "use client";
 
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
@@ -47,7 +46,7 @@ export function FileList({
 
   const handleDownload = (file: FileData) => {
     // Open download URL in new tab (via proxy to bypass corporate firewall)
-    window.open(toProxyDownloadUrl(file.cdnUrl), "_blank");
+    window.open(file.downloadUrl), "_blank";
     onDownload(file);
   };
 

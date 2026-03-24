@@ -240,7 +240,6 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
               onRetryExtraction={async (file) => {
                 await retryExtraction({
                   documentId: file._id as Id<"documents">,
-                  authToken: "",
                 });
               }}
             />

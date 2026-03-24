@@ -5,6 +5,7 @@
  */
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 
 /**
  * Get document for extraction (internal use only)
@@ -14,7 +15,26 @@ export const getForExtraction = internalQuery({
     documentId: v.id("documents"),
   },
   handler: async (ctx, { documentId }) => {
-    return await ctx.db.get(documentId);
+    const document = await ctx.db.get(documentId);
+    if (!document?.assetId) {
+      return null;
+    }
+
+    const asset = await ctx.db.get(document.assetId);
+    if (!asset) {
+      return null;
+    }
+
+    return {
+      documentId: document._id,
+      siteId: document.siteId,
+      extractionStatus: document.extractionStatus,
+      filename: document.filename,
+      contentType: document.contentType,
+      assetId: document.assetId,
+      bucket: asset.bucket,
+      objectKey: asset.objectKey,
+    };
   },
 });
 
@@ -66,7 +86,7 @@ export const updateExtraction = internalMutation({
     await ctx.db.patch(documentId, updates);
 
     // Update search index when extraction completes
-    if (status === "completed" && extractedText) {
+    if (status === "completed" && extractedText !== undefined) {
       // Check if already indexed
       const existing = await ctx.db
         .query("searchableContent")
@@ -81,13 +101,14 @@ export const updateExtraction = internalMutation({
         sourceId: documentId,
         title: document.filename,
         extractedText,
-        metadata: {
+        metadata: buildDocumentSearchMetadata({
+          documentId,
+          assetId: document.assetId,
           filename: document.filename,
-          fileContentType: document.contentType,
+          contentType: document.contentType,
           size: document.size,
-          cdnUrl: document.cdnUrl,
           libraryId: document.libraryId,
-        },
+        }),
         updatedAt: Date.now(),
       };
 

@@ -2,7 +2,6 @@
 
 import { useSite } from "@/lib/data";
 import { useImageUpload } from "@/lib/storage";
-import { toProxyDownloadUrl } from "@/lib/storage/client";
 import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
 import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
@@ -76,7 +75,7 @@ function LogoUploadSection({
       <div className="ml-6 space-y-2">
         <div className="flex items-center gap-3">
           <Image
-            src={toProxyDownloadUrl(logoUrl)}
+            src={logoUrl}
             alt="Site logo"
             className="h-10 w-10 rounded-md object-contain border bg-muted"
             width={40}
