@@ -37,15 +37,33 @@ export async function GET(
       expiresInSeconds: 60 * 60,
     });
 
-    return NextResponse.redirect(signedUrl, {
-      headers: asset.contentType.startsWith("image/")
-        ? {
-            "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
-          }
-        : {
-            "Cache-Control": "private, no-store",
-          },
+    // Proxy server-side to avoid CORS/Referer blocks when the browser fetches
+    // assets from a custom subdomain (e.g. filassistance.baseblocks.dev).
+    const isImage = asset.contentType.startsWith("image/");
+    const upstream = await fetch(signedUrl);
+    if (!upstream.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch asset from storage" },
+        { status: upstream.status },
+      );
+    }
+
+    const headers = new Headers({
+      "Content-Type": asset.contentType,
+      "Cache-Control": isImage
+        ? "public, max-age=300, stale-while-revalidate=3600"
+        : "private, no-store",
     });
+    const contentLength = upstream.headers.get("Content-Length");
+    if (contentLength) headers.set("Content-Length", contentLength);
+    if (download && asset.filename) {
+      headers.set(
+        "Content-Disposition",
+        `attachment; filename="${asset.filename}"`,
+      );
+    }
+
+    return new NextResponse(upstream.body, { headers });
   } catch (error) {
     return NextResponse.json(
       {
