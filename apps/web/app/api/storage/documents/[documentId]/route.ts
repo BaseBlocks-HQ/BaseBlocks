@@ -48,11 +48,31 @@ export async function GET(
       download,
     });
 
-    return NextResponse.redirect(signedUrl, {
-      headers: {
-        "Cache-Control": "private, no-store",
-      },
+    // Proxy the content server-side to avoid CORS issues when the browser
+    // fetches documents (e.g. PDF viewer) from a different origin (Tigris).
+    const upstream = await fetch(signedUrl);
+    if (!upstream.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch document from storage" },
+        { status: upstream.status },
+      );
+    }
+
+    const headers = new Headers({
+      "Cache-Control": "private, no-store",
+      "Content-Type":
+        upstream.headers.get("Content-Type") ?? "application/octet-stream",
     });
+    const contentLength = upstream.headers.get("Content-Length");
+    if (contentLength) headers.set("Content-Length", contentLength);
+    if (download && document.filename) {
+      headers.set(
+        "Content-Disposition",
+        `attachment; filename="${document.filename}"`,
+      );
+    }
+
+    return new NextResponse(upstream.body, { headers });
   } catch (error) {
     return NextResponse.json(
       {
