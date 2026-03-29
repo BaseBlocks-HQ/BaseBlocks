@@ -2,11 +2,23 @@
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
+import {
+  getTeamDashboardPath,
+  getTeamLibrariesPath,
+  getTeamMembersPath,
+} from "@/lib/routes/team-routes";
 import { AccountSettings } from "@/modules/dashboard/components/account-settings";
 import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
+import { useTeamAccess } from "@/modules/team/team-access";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -18,56 +30,101 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import { Folder, Home, LogOut, Users } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Folder,
+  Home,
+  LogOut,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
-interface DashboardSidebarProps {
-  teamName: string;
-}
-
-export function DashboardSidebar({ teamName }: DashboardSidebarProps) {
+export function DashboardSidebar() {
   const pathname = usePathname();
-  const handleLogout = async () => {
-    await authClient.signOut();
-    window.location.href = "/login";
-  };
+  const router = useRouter();
   const t = useTranslations();
+  const { team, teams } = useTeamAccess();
 
   const navItems = [
     {
       title: t("navigation.dashboard"),
-      href: "/dashboard",
+      href: getTeamDashboardPath(team.slug),
       icon: Home,
-      isActive: pathname === "/dashboard",
+      isActive: pathname === getTeamDashboardPath(team.slug),
     },
     {
       title: t("team.title"),
-      href: "/dashboard/team",
+      href: getTeamMembersPath(team.slug),
       icon: Users,
-      isActive: pathname.startsWith("/dashboard/team"),
+      isActive: pathname.startsWith(getTeamMembersPath(team.slug)),
     },
     {
       title: t("libraries.title"),
-      href: "/dashboard/libraries",
+      href: getTeamLibrariesPath(team.slug),
       icon: Folder,
-      isActive: pathname.startsWith("/dashboard/libraries"),
+      isActive: pathname.startsWith(getTeamLibrariesPath(team.slug)),
     },
   ];
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    window.location.href = "/login";
+  };
 
   return (
     <Sidebar collapsible="offcanvas" className="min-h-svh">
       <SidebarHeader className="border-b">
-        <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+        <div className="flex items-center gap-2 px-2 py-1">
+          <Link
+            href={getTeamDashboardPath(team.slug)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold"
+          >
             B
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">BaseBlocks</span>
-            <span className="text-xs text-muted-foreground truncate max-w-[140px]">
-              {teamName}
-            </span>
-          </div>
-        </Link>
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
+              >
+                <div className="min-w-0">
+                  <span className="block text-sm font-semibold">
+                    BaseBlocks
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {team.name}
+                  </span>
+                </div>
+                <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              {teams.map((workspace) => (
+                <DropdownMenuItem
+                  key={workspace._id}
+                  onClick={() =>
+                    router.push(getTeamDashboardPath(workspace.slug))
+                  }
+                >
+                  <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {workspace.name}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {workspace.slug}
+                      </span>
+                    </div>
+                    {workspace._id === team._id && (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

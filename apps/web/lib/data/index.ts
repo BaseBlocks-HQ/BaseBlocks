@@ -5,5 +5,5 @@ export {
   useLayouts,
   usePublishedLayouts,
 } from "./use-page";
-export { useSite, useSiteWithTeam, useSites } from "./use-site";
-export { useTeam, useMembers, useMemberRole } from "./use-team";
+export { useSite, useTeamSites } from "./use-site";
+export { useMembers, useTeamBySlug, useTeams } from "./use-team";

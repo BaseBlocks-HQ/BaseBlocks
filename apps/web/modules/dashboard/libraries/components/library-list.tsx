@@ -5,12 +5,20 @@ import { useTranslations } from "next-intl";
 import { LibraryListItem, type LibraryWithCount } from "./library-list-item";
 
 interface LibraryListProps {
+  canManageLibraries: boolean;
   libraries: LibraryWithCount[];
   onEdit: (library: LibraryWithCount) => void;
   onDelete: (library: LibraryWithCount) => void;
+  teamSlug: string;
 }
 
-export function LibraryList({ libraries, onEdit, onDelete }: LibraryListProps) {
+export function LibraryList({
+  canManageLibraries,
+  libraries,
+  onEdit,
+  onDelete,
+  teamSlug,
+}: LibraryListProps) {
   const t = useTranslations();
 
   if (libraries.length === 0) {
@@ -34,9 +42,11 @@ export function LibraryList({ libraries, onEdit, onDelete }: LibraryListProps) {
       {libraries.map((library) => (
         <LibraryListItem
           key={library._id}
+          canManageLibraries={canManageLibraries}
           library={library}
           onEdit={onEdit}
           onDelete={onDelete}
+          teamSlug={teamSlug}
         />
       ))}
     </div>

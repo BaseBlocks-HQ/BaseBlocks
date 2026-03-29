@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { type MutationCtx, mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireLibraryManager } from "../auth";
 import { deleteDocumentRows } from "../documents/lib";
 
 // Create a new folder
@@ -18,7 +18,7 @@ export const create = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requireLibraryManager(ctx, site.teamId);
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -78,7 +78,7 @@ export const update = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireLibraryManager(ctx, site.teamId);
 
     // Check for duplicate name if renaming
     if (
@@ -129,7 +129,7 @@ export const move = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireLibraryManager(ctx, site.teamId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -220,7 +220,7 @@ export const remove = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireLibraryManager(ctx, site.teamId);
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

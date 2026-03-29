@@ -67,6 +67,7 @@ export function EditorHeader({
                 canEdit={canEdit}
                 siteName={siteName}
                 siteLogoUrl={siteLogoUrl}
+                teamSlug={teamSlug}
               />
               <EditorHeaderRightSection
                 canEdit={canEdit}

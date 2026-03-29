@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { type MutationCtx, mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireLibraryManager } from "../auth";
 import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
@@ -53,7 +53,7 @@ export const create = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, siteCtx.teamId);
+    const { auth } = await requireLibraryManager(ctx, siteCtx.teamId);
     const assetId = await createDocumentAsset(ctx, {
       siteId,
       uploadedBy: auth.userId,
@@ -126,7 +126,7 @@ export const createInLibrary = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, siteCtx.teamId);
+    const { auth } = await requireLibraryManager(ctx, siteCtx.teamId);
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -202,7 +202,7 @@ export const move = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireAdmin(ctx, siteCtx.teamId);
+    await requireLibraryManager(ctx, siteCtx.teamId);
 
     if (!document.libraryId) {
       throw new Error("Document is not in a library");
@@ -233,7 +233,7 @@ export const rename = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireAdmin(ctx, siteCtx.teamId);
+    await requireLibraryManager(ctx, siteCtx.teamId);
 
     await ctx.db.patch(documentId, { filename });
     return documentId;
@@ -254,7 +254,7 @@ export const updateMetadata = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireAdmin(ctx, siteCtx.teamId);
+    await requireLibraryManager(ctx, siteCtx.teamId);
 
     const updates: Record<string, unknown> = {};
     if (extractedText !== undefined) updates.extractedText = extractedText;
@@ -275,7 +275,7 @@ export const remove = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireAdmin(ctx, siteCtx.teamId);
+    await requireLibraryManager(ctx, siteCtx.teamId);
 
     await deleteDocumentRows(ctx, document);
     await markSiteModified(ctx, document.siteId);

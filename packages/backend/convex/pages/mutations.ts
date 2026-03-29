@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { DataModel } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireContentEditor } from "../auth";
 import { indexSubpageContent, removeSubpageIndex } from "../lib/indexSubpage";
 import { markSiteModified } from "../lib/markModified";
 
@@ -20,7 +20,7 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requireContentEditor(ctx, site.teamId);
 
     // Check slug uniqueness
     const existing = await ctx.db
@@ -80,7 +80,7 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     // Check slug uniqueness if changing
     if (slug && slug !== page.slug) {
@@ -127,7 +127,7 @@ export const reorder = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     const now = Date.now();
     for (let i = 0; i < pageIds.length; i++) {
@@ -188,7 +188,7 @@ export const move = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -240,7 +240,7 @@ export const updatePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     await ctx.db.patch(pageId, {
       pageTabs,
@@ -271,7 +271,7 @@ export const enablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     // Skip if tabs already enabled
     if (page.pageTabs && page.pageTabs.length > 0) {
@@ -316,7 +316,7 @@ export const disablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     const layouts = await ctx.db
       .query("layouts")
@@ -349,7 +349,7 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireContentEditor(ctx, site.teamId);
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;

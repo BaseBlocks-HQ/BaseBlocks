@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireSiteManager } from "../auth";
 
 // Visibility types
 const visibilityValidator = v.union(
@@ -23,7 +23,7 @@ export const updateVisibility = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     const now = Date.now();
     await ctx.db.patch(siteId, {
@@ -63,7 +63,7 @@ export const generateNewAccessCode = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     const now = Date.now();
     const rotationHours = site.accessCodeRotationHours ?? 24;
@@ -176,7 +176,7 @@ export const updateAccessSettings = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (accessCodeRotationHours !== undefined) {

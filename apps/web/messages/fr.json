@@ -318,11 +318,13 @@
     },
     "roles": {
       "admin": "Administrateur",
+      "editor": "Editeur",
       "viewer": "Lecteur",
       "owner": "Proprietaire"
     },
     "roleDescriptions": {
       "admin": "Acces complet pour modifier les sites, pages et gerer l'equipe",
+      "editor": "Peut modifier les sites, bibliotheques, documents et publier les changements",
       "viewer": "Acces en lecture seule pour voir les sites et pages"
     },
     "invite": {

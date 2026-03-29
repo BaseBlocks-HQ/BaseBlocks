@@ -3,6 +3,7 @@
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import type { TeamRole } from "@baseblocks/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,7 @@ interface Member {
   userId?: string;
   email: string;
   name?: string;
-  role: "admin" | "viewer";
+  role: TeamRole;
 }
 
 interface MemberActionsProps {
@@ -60,7 +61,7 @@ export function MemberActions({
     showRoleDialog: boolean;
     isRemoving: boolean;
     isChangingRole: boolean;
-    newRole: "admin" | "viewer";
+    newRole: TeamRole;
     error: string | null;
   }>({
     showRemoveDialog: false,
@@ -204,7 +205,7 @@ export function MemberActions({
               onValueChange={(value) =>
                 setUiState((current) => ({
                   ...current,
-                  newRole: value as "admin" | "viewer",
+                  newRole: value as TeamRole,
                 }))
               }
             >
@@ -217,6 +218,14 @@ export function MemberActions({
                     <span>{t("roles.admin")}</span>
                     <span className="text-xs text-muted-foreground">
                       {t("roleDescriptions.admin")}
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="editor">
+                  <div className="flex flex-col items-start">
+                    <span>{t("roles.editor")}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("roleDescriptions.editor")}
                     </span>
                   </div>
                 </SelectItem>

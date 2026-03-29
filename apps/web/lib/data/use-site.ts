@@ -11,13 +11,9 @@ export function useSite(siteId: Id<"sites"> | string | undefined) {
   );
 }
 
-export function useSiteWithTeam(siteId: Id<"sites"> | string | undefined) {
+export function useTeamSites(teamId: Id<"teams"> | string | undefined) {
   return useQuery(
-    api.sites.queries.getWithTeam,
-    siteId ? { siteId: siteId as Id<"sites"> } : "skip",
+    api.sites.queries.listByTeam,
+    teamId ? { teamId: teamId as Id<"teams"> } : "skip",
   );
-}
-
-export function useSites() {
-  return useQuery(api.sites.queries.list);
 }

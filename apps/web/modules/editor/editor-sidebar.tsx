@@ -1,5 +1,7 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
+import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { SortablePageTree } from "@/modules/navigation";
@@ -29,7 +31,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
 
@@ -90,7 +91,7 @@ export function EditorSidebar({
     <Sidebar>
       <SidebarHeader className="border-b h-14 px-4 flex items-center">
         <div className="flex items-center gap-2 w-full">
-          <Link href="/dashboard">
+          <Link href={getTeamDashboardPath(team.slug)}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>

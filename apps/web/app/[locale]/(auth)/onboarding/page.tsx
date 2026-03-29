@@ -3,7 +3,7 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
-import { useTeam } from "@/lib/data";
+import { useTeams } from "@/lib/data/use-team";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
 import { api } from "@baseblocks/backend";
@@ -35,9 +35,9 @@ export default function OnboardingPage() {
   const createTeam = useMutation(api.teams.mutations.create);
 
   // Watch for team availability (e.g. after accepting an invite)
-  const team = useTeam();
+  const teams = useTeams();
 
-  if (team) {
+  if (teams && teams.length > 0) {
     redirect("/dashboard");
   }
 

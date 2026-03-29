@@ -1,7 +1,8 @@
 "use client";
 
 import { EditorSkeleton } from "@/components/skeletons";
-import { useMemberRole, usePages, useSite, useSiteWithTeam } from "@/lib/data";
+import { usePages } from "@/lib/data/use-page";
+import { useSite } from "@/lib/data/use-site";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import {
@@ -11,6 +12,7 @@ import {
 import { PublicSubpagePanel } from "@/modules/public-site/public-subpage-panel";
 import { EditorProvider } from "@/modules/shared/contexts/editor-context";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
+import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
@@ -66,6 +68,7 @@ function useElementsLoader() {
 }
 
 function SiteEditorInner({ siteId }: SiteEditorProps) {
+  const { team } = useTeamAccess();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [, setSelectedSlotId] = useState<string | null>(null);
   const { selection, editingSubpage, closeSubpageEditor } = useEditorUi();
@@ -95,7 +98,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
 
-  const siteData = useSiteWithTeam(siteId);
+  const site = useSite(siteId);
   const pages = usePages(siteId);
 
   // Get customization CSS variables for preview
@@ -177,19 +180,17 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       selectedPageId: selectedPage?._id,
     });
 
-  if (siteData === undefined || pages === undefined) {
+  if (site === undefined || pages === undefined) {
     return <EditorSkeleton />;
   }
 
-  if (!siteData) {
+  if (!site || site.teamId !== team._id) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Site not found</p>
       </div>
     );
   }
-
-  const { site, team } = siteData;
 
   return (
     <div className="flex h-dvh w-full overflow-hidden">
@@ -307,12 +308,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
 export function SiteEditor({ siteId }: SiteEditorProps) {
   const elementsLoaded = useElementsLoader();
+  const { capabilities } = useTeamAccess();
 
-  // Fetch site data for EditorProvider props
   const site = useSite(siteId);
-
-  // Fetch user role for permissions
-  const myRole = useMemberRole(site?.teamId);
 
   const siteData = site
     ? {
@@ -323,10 +321,9 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
     : undefined;
 
   const permissions = {
-    canEdit: myRole?.role === "admin",
-    isAdmin: myRole?.role === "admin",
-    isViewer: myRole?.role === "viewer",
-    isLoading: myRole === undefined || site === undefined,
+    canEdit: capabilities.canEditContent,
+    isAdmin: capabilities.canManageTeam,
+    isLoading: site === undefined,
   };
 
   if (!elementsLoaded) {

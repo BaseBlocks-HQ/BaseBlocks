@@ -16,7 +16,7 @@ type Props = {
   params: Promise<{ siteId: string }>;
 };
 
-export default function SiteEditorPage({ params }: Props) {
+export default function TeamSiteEditorPage({ params }: Props) {
   const { siteId } = use(params);
   return <SiteEditor siteId={siteId} />;
 }

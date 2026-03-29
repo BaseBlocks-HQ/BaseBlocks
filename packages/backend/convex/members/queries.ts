@@ -83,6 +83,28 @@ export const isAdmin = query({
   },
 });
 
+export const listMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const auth = await getAuthContextOrNull(ctx);
+    if (!auth) return [];
+
+    const memberships = await ctx.db
+      .query("members")
+      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+      .collect();
+
+    memberships.sort((a, b) => b.joinedAt - a.joinedAt);
+
+    return memberships.map((membership) => ({
+      _id: membership._id,
+      teamId: membership.teamId,
+      role: membership.role,
+      joinedAt: membership.joinedAt,
+    }));
+  },
+});
+
 /**
  * Check if current user is a member (admin or viewer) for a team
  */

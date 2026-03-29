@@ -1,6 +1,7 @@
 "use client";
 
-import { useSites } from "@/lib/data";
+import { useTeamSites } from "@/lib/data/use-site";
+import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
 import {
@@ -31,14 +32,14 @@ export function LibrariesPageContent() {
   const [deletingLibrary, setDeletingLibrary] =
     useState<LibraryWithCount | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const sites = useSites();
+  const { capabilities, team } = useTeamAccess();
+  const sites = useTeamSites(team._id);
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   // Fetch libraries with counts for each site
   const siteLibraries = useQuery(
     api.documentLibraries.queries.listAllWithCounts,
-    sites ? {} : "skip",
+    sites ? { teamId: team._id } : "skip",
   );
 
   const handleDelete = async () => {
@@ -101,7 +102,9 @@ export function LibrariesPageContent() {
           <h1 className="text-2xl font-bold">{t("libraries.title")}</h1>
           <p className="text-muted-foreground">{t("libraries.subtitle")}</p>
         </div>
-        {sites && sites.length > 0 && <CreateLibraryDialog sites={sites} />}
+        {capabilities.canManageLibraries && sites && sites.length > 0 && (
+          <CreateLibraryDialog sites={sites} />
+        )}
       </div>
 
       {sites.length === 0 ? (
@@ -128,9 +131,11 @@ export function LibrariesPageContent() {
                   </span>
                 </div>
                 <LibraryList
+                  canManageLibraries={capabilities.canManageLibraries}
                   libraries={libraries}
                   onEdit={setEditingLibrary}
                   onDelete={setDeletingLibrary}
+                  teamSlug={team.slug}
                 />
               </div>
             );
@@ -139,38 +144,42 @@ export function LibrariesPageContent() {
       )}
 
       {/* Edit Dialog */}
-      <LibrarySettingsDialog
-        library={editingLibrary}
-        open={!!editingLibrary}
-        onOpenChange={(open) => !open && setEditingLibrary(null)}
-      />
+      {capabilities.canManageLibraries && (
+        <LibrarySettingsDialog
+          library={editingLibrary}
+          open={!!editingLibrary}
+          onOpenChange={(open) => !open && setEditingLibrary(null)}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deletingLibrary}
-        onOpenChange={(open) => !open && setDeletingLibrary(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("libraries.deleteDescription", {
-                name: deletingLibrary?.name ?? "",
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? t("common.loading") : t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {capabilities.canManageLibraries && (
+        <AlertDialog
+          open={!!deletingLibrary}
+          onOpenChange={(open) => !open && setDeletingLibrary(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("libraries.deleteDescription", {
+                  name: deletingLibrary?.name ?? "",
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? t("common.loading") : t("common.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </main>
   );
 }

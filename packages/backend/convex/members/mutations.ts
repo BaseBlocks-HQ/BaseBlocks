@@ -1,3 +1,4 @@
+import { teamRoles } from "@baseblocks/types";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { mutation } from "../_generated/server";
@@ -6,7 +7,7 @@ import { getAuthContext, requireAdmin } from "../auth";
 export const updateRole = mutation({
   args: {
     memberId: v.id("members"),
-    role: v.union(v.literal("admin"), v.literal("viewer")),
+    role: v.union(...teamRoles.map((role) => v.literal(role))),
   },
   handler: async (ctx, { memberId, role }) => {
     const memberToUpdate = await ctx.db.get(memberId);
@@ -17,7 +18,7 @@ export const updateRole = mutation({
     await requireAdmin(ctx, memberToUpdate.teamId);
 
     const auth = await getAuthContext(ctx);
-    if (memberToUpdate.userId === auth.userId && role === "viewer") {
+    if (memberToUpdate.userId === auth.userId && role !== "admin") {
       const admins = await ctx.db
         .query("members")
         .withIndex("by_team", (q) => q.eq("teamId", memberToUpdate.teamId))
@@ -166,8 +167,7 @@ export const syncMemberFromInvitation = mutation({
       return { memberId: existing._id, alreadyExists: true };
     }
 
-    const convexRole: "admin" | "viewer" =
-      baRole === "admin" ? "admin" : "viewer";
+    const convexRole = baRole === "admin" ? "admin" : "editor";
 
     const memberId = await ctx.db.insert("members", {
       teamId: team._id,

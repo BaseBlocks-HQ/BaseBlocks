@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "@/i18n/navigation";
+import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import { useFileUpload } from "@/lib/storage/hooks";
 import {
   Breadcrumbs,
@@ -13,6 +14,7 @@ import {
   useFolderOperations,
   useFolderPath,
 } from "@/modules/documents";
+import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {
@@ -40,6 +42,7 @@ interface LibraryDetailContentProps {
 export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   const router = useRouter();
   const t = useTranslations();
+  const { capabilities, team } = useTeamAccess();
   const [selectedFolderId, setSelectedFolderId] =
     useState<Id<"documentFolders"> | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -92,7 +95,7 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
     setIsDeleting(true);
     try {
       await deleteLibrary({ libraryId });
-      router.push("/dashboard/libraries");
+      router.push(getTeamLibrariesPath(team.slug));
       setIsDeleting(false);
     } catch (_error) {
       setIsDeleting(false);
@@ -142,13 +145,23 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
     );
   }
 
+  if (site.teamId !== team._id) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">{t("libraries.notFound")}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
       <LibraryHeader
+        canManageLibraries={capabilities.canManageLibraries}
         library={library}
         onEdit={() => setEditDialogOpen(true)}
         onDelete={() => setDeleteDialogOpen(true)}
+        teamSlug={team.slug}
       />
 
       {/* Search Bar */}
@@ -166,14 +179,17 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
             <span className="text-sm font-medium">
               {t("libraries.folders")}
             </span>
-            <CreateFolderButton
-              onSubmit={async (name) => {
-                await createFolder(name, selectedFolderId ?? undefined);
-              }}
-            />
+            {capabilities.canManageLibraries && (
+              <CreateFolderButton
+                onSubmit={async (name) => {
+                  await createFolder(name, selectedFolderId ?? undefined);
+                }}
+              />
+            )}
           </div>
           <div className="flex-1 min-h-0">
             <FolderTree
+              canManageFolders={capabilities.canManageLibraries}
               folders={folders}
               selectedFolderId={selectedFolderId}
               onSelectFolder={(folderId) =>
@@ -211,7 +227,7 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
           <div className="px-4 pt-4">
             <DropZone
               onFilesAccepted={handleFilesAccepted}
-              disabled={isAnyUploading}
+              disabled={isAnyUploading || !capabilities.canManageLibraries}
               className="min-h-[80px]"
             />
           </div>
@@ -230,6 +246,7 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
           <div className="flex-1 overflow-auto p-4">
             <FileList
               files={files}
+              isReadOnly={!capabilities.canManageLibraries}
               onDownload={() => {}}
               onRename={async (fileId, newName) => {
                 await renameFile(fileId as Id<"documents">, newName);
@@ -248,42 +265,46 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
       </div>
 
       {/* Edit Dialog */}
-      <LibrarySettingsDialog
-        library={
-          library
-            ? {
-                _id: library._id,
-                name: library.name,
-                siteId: library.siteId,
-                documentCount: files.length,
-              }
-            : null
-        }
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-      />
+      {capabilities.canManageLibraries && (
+        <LibrarySettingsDialog
+          library={
+            library
+              ? {
+                  _id: library._id,
+                  name: library.name,
+                  siteId: library.siteId,
+                  documentCount: files.length,
+                }
+              : null
+          }
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("libraries.deleteDescription", { name: library.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? t("common.loading") : t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {capabilities.canManageLibraries && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("libraries.deleteDescription", { name: library.name })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? t("common.loading") : t("common.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

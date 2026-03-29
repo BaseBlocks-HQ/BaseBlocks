@@ -169,7 +169,9 @@ export function EditSiteDialog({
       await updateSite({
         siteId: site._id as Id<"sites">,
         name: dialogState.name,
-        ...(hasNewAsset && { logoAssetId: dialogState.logoAssetId as Id<"assets"> }),
+        ...(hasNewAsset && {
+          logoAssetId: dialogState.logoAssetId as Id<"assets">,
+        }),
         ...(logoCleared && { clearLogo: true }),
       });
       onOpenChange(false);

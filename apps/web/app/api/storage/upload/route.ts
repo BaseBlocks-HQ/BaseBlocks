@@ -116,6 +116,8 @@ export async function POST(request: NextRequest) {
       return error;
     }
 
+    console.error("[storage/upload] request failed", error);
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 },
@@ -147,6 +149,8 @@ export async function DELETE(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
+
+    console.error("[storage/upload] cleanup failed", error);
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Cleanup failed" },

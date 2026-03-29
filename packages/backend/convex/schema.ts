@@ -1,3 +1,4 @@
+import { teamRoles } from "@baseblocks/types";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
@@ -295,7 +296,7 @@ export default defineSchema({
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
-    role: v.union(v.literal("admin"), v.literal("viewer")),
+    role: v.union(...teamRoles.map((role) => v.literal(role))),
     joinedAt: v.number(),
   })
     .index("by_team", ["teamId"])

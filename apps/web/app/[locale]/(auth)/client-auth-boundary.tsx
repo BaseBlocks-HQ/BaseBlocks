@@ -9,8 +9,9 @@ import { useRouter } from "next/navigation";
 import type { PropsWithChildren } from "react";
 
 // TODO: [convex-better-auth] Remove cast when upstream fixes FilterApi visibility for clientApi queries
-const getAuthUserFn = (api as Record<string, Record<string, unknown>>).authSetup
-  ?.getAuthUser as FunctionReference<"query", "public">;
+const getAuthUserFn = (
+  api as Record<string, Record<string, unknown>>
+).authSetup?.safeGetAuthUser as FunctionReference<"query", "public">;
 
 export function ClientAuthBoundary({ children }: PropsWithChildren) {
   const router = useRouter();

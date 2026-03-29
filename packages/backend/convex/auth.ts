@@ -1,3 +1,8 @@
+import {
+  type TeamCapability,
+  type TeamRole,
+  hasTeamCapability,
+} from "@baseblocks/types";
 import type {
   GenericActionCtx,
   GenericMutationCtx,
@@ -107,7 +112,7 @@ export const getFullAuthContext = query({
 
 type MemberInfo = {
   _id: Id<"members">;
-  role: "admin" | "viewer";
+  role: TeamRole;
   userId: string;
 };
 
@@ -141,6 +146,14 @@ export async function requireAdmin(
   ctx: AuthCtx,
   teamId: Id<"teams">,
 ): Promise<AuthWithMember> {
+  return requireTeamCapability(ctx, teamId, "canManageTeam");
+}
+
+export async function requireTeamCapability(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+  capability: TeamCapability,
+): Promise<AuthWithMember> {
   const auth = await requireAuthContext(ctx);
   const member = await getMemberByUserId(ctx, teamId, auth.userId);
 
@@ -148,11 +161,39 @@ export async function requireAdmin(
     throw new ConvexError("Not a member of this organization");
   }
 
-  if (member.role !== "admin") {
-    throw new ConvexError("Admin access required");
+  if (!hasTeamCapability(member.role, capability)) {
+    throw new ConvexError("Insufficient permissions for this action");
   }
 
   return { auth, member };
+}
+
+export async function requireContentEditor(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+): Promise<AuthWithMember> {
+  return requireTeamCapability(ctx, teamId, "canEditContent");
+}
+
+export async function requireLibraryManager(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+): Promise<AuthWithMember> {
+  return requireTeamCapability(ctx, teamId, "canManageLibraries");
+}
+
+export async function requirePublisher(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+): Promise<AuthWithMember> {
+  return requireTeamCapability(ctx, teamId, "canPublish");
+}
+
+export async function requireSiteManager(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+): Promise<AuthWithMember> {
+  return requireTeamCapability(ctx, teamId, "canManageSites");
 }
 
 export async function requireMember(
@@ -173,11 +214,19 @@ export async function checkIsAdmin(
   ctx: AuthCtx,
   teamId: Id<"teams">,
 ): Promise<boolean> {
+  return checkTeamCapability(ctx, teamId, "canManageTeam");
+}
+
+export async function checkTeamCapability(
+  ctx: AuthCtx,
+  teamId: Id<"teams">,
+  capability: TeamCapability,
+): Promise<boolean> {
   const auth = await getAuthContextOrNull(ctx);
   if (!auth) return false;
 
   const member = await getMemberByUserId(ctx, teamId, auth.userId);
-  return member?.role === "admin";
+  return member ? hasTeamCapability(member.role, capability) : false;
 }
 
 export async function checkIsMember(

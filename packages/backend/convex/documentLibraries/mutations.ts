@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireLibraryManager } from "../auth";
 import { deleteDocumentRows } from "../documents/lib";
 
 export const create = mutation({
@@ -12,7 +12,7 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requireLibraryManager(ctx, site.teamId);
 
     // Check for duplicate library name within site
     const existingLibrary = await ctx.db
@@ -52,7 +52,7 @@ export const update = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireLibraryManager(ctx, site.teamId);
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -86,7 +86,7 @@ export const remove = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireLibraryManager(ctx, site.teamId);
 
     // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db

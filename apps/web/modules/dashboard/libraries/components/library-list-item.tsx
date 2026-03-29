@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { getTeamLibraryDetailPath } from "@/lib/routes/team-routes";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -20,22 +21,26 @@ export interface LibraryWithCount {
 }
 
 interface LibraryListItemProps {
+  canManageLibraries: boolean;
   library: LibraryWithCount;
   onEdit: (library: LibraryWithCount) => void;
   onDelete: (library: LibraryWithCount) => void;
+  teamSlug: string;
 }
 
 export function LibraryListItem({
+  canManageLibraries,
   library,
   onEdit,
   onDelete,
+  teamSlug,
 }: LibraryListItemProps) {
   const t = useTranslations();
 
   return (
     <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
       <Link
-        href={`/dashboard/libraries/${library._id}`}
+        href={getTeamLibraryDetailPath(teamSlug, library._id)}
         className="flex items-center gap-3 flex-1 min-w-0"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -52,27 +57,29 @@ export function LibraryListItem({
         </div>
       </Link>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">{t("common.settings")}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(library)}>
-            <Pencil className="h-4 w-4 mr-2" />
-            {t("common.edit")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete(library)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            {t("common.delete")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {canManageLibraries && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">{t("common.settings")}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(library)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              {t("common.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(library)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("common.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

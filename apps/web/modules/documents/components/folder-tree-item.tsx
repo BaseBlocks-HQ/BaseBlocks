@@ -39,6 +39,7 @@ interface FolderTreeItemProps {
   onRename: (folderId: string) => void;
   onDelete: (folderId: string) => void;
   onCreateSubfolder: (parentId: string) => void;
+  readOnly?: boolean;
   children?: React.ReactNode;
 }
 
@@ -53,6 +54,7 @@ export function FolderTreeItem({
   onRename,
   onDelete,
   onCreateSubfolder,
+  readOnly = false,
   children,
 }: FolderTreeItemProps) {
   const [showMenu, setShowMenu] = useState(false);
@@ -71,7 +73,6 @@ export function FolderTreeItem({
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
       >
-        {/* Expand/collapse toggle */}
         <button
           type="button"
           onClick={handleToggle}
@@ -100,58 +101,58 @@ export function FolderTreeItem({
           <span className="text-sm truncate flex-1">{folder.name}</span>
         </button>
 
-        {/* Actions menu */}
-        <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100",
-                showMenu && "opacity-100",
-              )}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onCreateSubfolder(folder._id);
-                setShowMenu(false);
-              }}
-            >
-              <FolderPlus className="h-4 w-4 mr-2" />
-              New subfolder
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onRename(folder._id);
-                setShowMenu(false);
-              }}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(folder._id);
-                setShowMenu(false);
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!readOnly && (
+          <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100",
+                  showMenu && "opacity-100",
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateSubfolder(folder._id);
+                  setShowMenu(false);
+                }}
+              >
+                <FolderPlus className="h-4 w-4 mr-2" />
+                New subfolder
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRename(folder._id);
+                  setShowMenu(false);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(folder._id);
+                  setShowMenu(false);
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
-      {/* Children */}
       {isExpanded && children}
     </div>
   );

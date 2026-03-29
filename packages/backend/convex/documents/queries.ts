@@ -4,8 +4,8 @@ import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
-import { buildDocumentDownloadUrl } from "../storage/paths";
 import { canAccessPublishedSite } from "../sharing/access";
+import { buildDocumentDownloadUrl } from "../storage/paths";
 
 function mapDocument(doc: Doc<"documents">) {
   const downloadUrl = buildDocumentDownloadUrl(doc._id);

@@ -2,6 +2,6 @@
 
 import { LibrariesPageContent } from "@/modules/dashboard/libraries";
 
-export default function LibrariesPage() {
+export default function TeamLibrariesPage() {
   return <LibrariesPageContent />;
 }

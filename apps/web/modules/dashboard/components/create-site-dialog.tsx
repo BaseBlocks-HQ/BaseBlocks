@@ -3,6 +3,7 @@
 import { FormDialog } from "@/components/dialogs/form-dialog";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -11,7 +12,15 @@ import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-export function CreateSiteDialog() {
+interface CreateSiteDialogProps {
+  disabled?: boolean;
+  teamId: Id<"teams">;
+}
+
+export function CreateSiteDialog({
+  disabled = false,
+  teamId,
+}: CreateSiteDialogProps) {
   const [dialogState, setDialogState] = useState({
     open: false,
     name: "",
@@ -43,6 +52,7 @@ export function CreateSiteDialog() {
       await createSite({
         name: dialogState.name,
         slug: dialogState.slug,
+        teamId,
       });
       setDialogState({
         open: false,
@@ -72,7 +82,7 @@ export function CreateSiteDialog() {
       title={t("dialogs.createSite.title")}
       description={t("dialogs.createSite.description")}
       trigger={
-        <Button>
+        <Button disabled={disabled}>
           <Plus className="h-4 w-4 mr-2" />
           {t("dashboard.createSite")}
         </Button>

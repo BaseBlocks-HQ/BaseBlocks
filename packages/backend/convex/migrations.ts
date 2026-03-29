@@ -1102,9 +1102,7 @@ export const purgeDeploymentHistory = migrations.define({
   migrateOne: async (ctx, deployment) => {
     const snapshots = await ctx.db
       .query("deploymentSnapshots")
-      .withIndex("by_deployment", (q) =>
-        q.eq("deploymentId", deployment._id),
-      )
+      .withIndex("by_deployment", (q) => q.eq("deploymentId", deployment._id))
       .collect();
 
     for (const snapshot of snapshots) {

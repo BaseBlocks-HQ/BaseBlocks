@@ -22,35 +22,31 @@ export const getBySlug = query({
   },
 });
 
-export const getMine = query({
-  args: {
-    teamId: v.optional(v.id("teams")),
-  },
-  handler: async (ctx, { teamId }) => {
+export const getBySlugForMember = query({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
     const auth = await getAuthContextOrNull(ctx);
     if (!auth) return null;
 
-    if (teamId) {
-      const member = await ctx.db
-        .query("members")
-        .withIndex("by_team_user", (q) =>
-          q.eq("teamId", teamId).eq("userId", auth.userId),
-        )
-        .first();
-      if (!member) return null;
-      return await ctx.db.get(teamId);
-    }
+    const team = await ctx.db
+      .query("teams")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    if (!team) return null;
 
-    const memberships = await ctx.db
+    const membership = await ctx.db
       .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .collect();
+      .withIndex("by_team_user", (q) =>
+        q.eq("teamId", team._id).eq("userId", auth.userId),
+      )
+      .first();
+    if (!membership) return null;
 
-    if (memberships.length === 0) return null;
-
-    memberships.sort((a, b) => b.joinedAt - a.joinedAt);
-
-    return await ctx.db.get(memberships[0]!.teamId);
+    return {
+      ...team,
+      memberRole: membership.role,
+      joinedAt: membership.joinedAt,
+    };
   },
 });
 
@@ -67,11 +63,13 @@ export const listMine = query({
 
     if (memberships.length === 0) return [];
 
+    memberships.sort((a, b) => b.joinedAt - a.joinedAt);
+
     const teams = await Promise.all(
       memberships.map(async (m) => {
         const team = await ctx.db.get(m.teamId);
         if (!team) return null;
-        return { ...team, memberRole: m.role };
+        return { ...team, memberRole: m.role, joinedAt: m.joinedAt };
       }),
     );
 

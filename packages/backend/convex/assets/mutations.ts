@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireSiteManager } from "../auth";
 import { resolveSiteContext } from "../lib/resolvers";
 import { getStorageBucketName } from "../storage/config";
 import { buildAssetUrl } from "../storage/paths";
@@ -23,7 +23,7 @@ export const createSiteAsset = mutation({
       throw new ConvexError("Site not found");
     }
 
-    const { auth } = await requireAdmin(ctx, siteCtx.teamId);
+    const { auth } = await requireSiteManager(ctx, siteCtx.teamId);
 
     const assetId = await ctx.db.insert("assets", {
       siteId,

@@ -1,15 +1,15 @@
 "use client";
 
-import { useSites, useTeam } from "@/lib/data";
+import { useTeamSites } from "@/lib/data/use-site";
+import { useTeamAccess } from "@/modules/team/team-access";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./components/create-site-dialog";
 import { SitesGrid } from "./components/sites-grid";
 
 export function DashboardContent() {
   const t = useTranslations();
-
-  const team = useTeam();
-  const sites = useSites();
+  const { capabilities, team } = useTeamAccess();
+  const sites = useTeamSites(team._id);
 
   return (
     <main className="flex-1 p-6">
@@ -18,10 +18,15 @@ export function DashboardContent() {
           <h1 className="text-2xl font-bold">{t("dashboard.yourSites")}</h1>
           <p className="text-muted-foreground">{t("dashboard.manageSites")}</p>
         </div>
-        <CreateSiteDialog />
+        {capabilities.canManageSites && <CreateSiteDialog teamId={team._id} />}
       </div>
 
-      <SitesGrid sites={sites} teamSlug={team?.slug} />
+      <SitesGrid
+        canManageSites={capabilities.canManageSites}
+        sites={sites}
+        teamId={team._id}
+        teamSlug={team.slug}
+      />
     </main>
   );
 }

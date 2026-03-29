@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requireContentEditor } from "../auth";
 import { indexSubpageContent } from "../lib/indexSubpage";
 import { markSiteModified } from "../lib/markModified";
 import { resolveLayoutContext, resolvePageContext } from "../lib/resolvers";
@@ -26,7 +26,7 @@ export const create = mutation({
     const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
-    await requireAdmin(ctx, pageInfo.teamId);
+    await requireContentEditor(ctx, pageInfo.teamId);
 
     // Get max order if not specified (scoped to same tab)
     let layoutOrder = order;
@@ -73,7 +73,7 @@ export const updateSettings = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -100,7 +100,7 @@ export const updateSlots = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     const now = Date.now();
     await ctx.db.patch(layoutId, {
@@ -130,7 +130,7 @@ export const addBlockToSlot = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
@@ -172,7 +172,7 @@ export const updateBlockInSlot = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
@@ -210,7 +210,7 @@ export const removeBlockFromSlot = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     const updatedSlots = layout.slots.map((slot) => {
       if (slot.id !== slotId) return slot;
@@ -253,7 +253,7 @@ export const moveBlock = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     // Find the block
     type SlotBlock = (typeof layout.slots)[0]["blocks"][0];
@@ -324,7 +324,7 @@ export const reorder = mutation({
     const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
 
-    await requireAdmin(ctx, pageInfo.teamId);
+    await requireContentEditor(ctx, pageInfo.teamId);
 
     for (let i = 0; i < layoutIds.length; i++) {
       const layoutId = layoutIds[i];
@@ -348,7 +348,7 @@ export const remove = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    await requireAdmin(ctx, layoutInfo.teamId);
+    await requireContentEditor(ctx, layoutInfo.teamId);
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
@@ -373,7 +373,7 @@ export const addSubpageBlock = mutation({
     const layoutInfo = await resolveLayoutContext(ctx, layoutId);
     if (!layoutInfo) throw new Error("Layout not found");
 
-    const { auth } = await requireAdmin(ctx, layoutInfo.teamId);
+    const { auth } = await requireContentEditor(ctx, layoutInfo.teamId);
 
     const page = await ctx.db.get(layout.pageId);
     if (!page) throw new Error("Page not found");

@@ -1,41 +1,21 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { getAuthContext, requireAdmin } from "../auth";
+import { requirePublisher, requireSiteManager } from "../auth";
+import { deleteDocumentRows } from "../documents/lib";
 import { markSiteModified } from "../lib/markModified";
 import { deleteObjectAction } from "../storage/actions";
-import { deleteDocumentRows } from "../documents/lib";
 
 // Create a new site
 export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
-    teamId: v.optional(v.id("teams")),
+    teamId: v.id("teams"),
   },
-  handler: async (ctx, { name, slug, teamId: explicitTeamId }) => {
-    const auth = await getAuthContext(ctx);
+  handler: async (ctx, { name, slug, teamId }) => {
+    const { auth } = await requireSiteManager(ctx, teamId);
 
-    let resolvedTeamId: Id<"teams">;
-
-    if (explicitTeamId) {
-      await requireAdmin(ctx, explicitTeamId);
-      resolvedTeamId = explicitTeamId;
-    } else {
-      const membership = await ctx.db
-        .query("members")
-        .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-        .first();
-
-      if (!membership) {
-        throw new Error("Team not found. Please complete onboarding first.");
-      }
-
-      await requireAdmin(ctx, membership.teamId);
-      resolvedTeamId = membership.teamId;
-    }
-
-    const team = await ctx.db.get(resolvedTeamId);
+    const team = await ctx.db.get(teamId);
     if (!team) {
       throw new Error("Team not found. Please complete onboarding first.");
     }
@@ -56,7 +36,7 @@ export const create = mutation({
 
     const now = Date.now();
     const siteId = await ctx.db.insert("sites", {
-      teamId: team._id,
+      teamId,
       name,
       slug: slug.toLowerCase(),
       isPublished: false,
@@ -144,17 +124,24 @@ export const update = mutation({
       }),
     ),
   },
-  handler: async (ctx, { siteId, name, logoUrl, logoAssetId, clearLogo, settings }) => {
+  handler: async (
+    ctx,
+    { siteId, name, logoUrl, logoAssetId, clearLogo, settings },
+  ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
 
     // Logo replacement: clean up the previous asset when a new one is uploaded
-    if (logoAssetId !== undefined && site.logoAssetId && site.logoAssetId !== logoAssetId) {
+    if (
+      logoAssetId !== undefined &&
+      site.logoAssetId &&
+      site.logoAssetId !== logoAssetId
+    ) {
       const oldAsset = await ctx.db.get(site.logoAssetId);
       await ctx.db.delete(site.logoAssetId);
       if (oldAsset) {
@@ -206,7 +193,7 @@ export const publish = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requirePublisher(ctx, site.teamId);
     const now = Date.now();
 
     await ctx.db.patch(siteId, {
@@ -347,7 +334,7 @@ export const unpublish = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.teamId);
+    await requirePublisher(ctx, site.teamId);
 
     await ctx.db.patch(siteId, {
       isPublished: false,
@@ -369,7 +356,7 @@ export const setDefaultPage = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     // Verify the page belongs to this site
     const page = await ctx.db.get(pageId);
@@ -394,7 +381,7 @@ export const remove = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireAdmin(ctx, site.teamId);
+    await requireSiteManager(ctx, site.teamId);
 
     // 1. Delete all document libraries and their contents
     //    (documents first so assets + S3 objects are properly cleaned up)

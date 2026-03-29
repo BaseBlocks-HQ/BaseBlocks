@@ -1,3 +1,4 @@
+import { teamRoles } from "@baseblocks/types";
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 
@@ -55,7 +56,7 @@ export const deleteMember = internalMutation({
 export const updateMemberRole = internalMutation({
   args: {
     memberId: v.id("members"),
-    role: v.union(v.literal("admin"), v.literal("viewer")),
+    role: v.union(...teamRoles.map((role) => v.literal(role))),
   },
   handler: async (ctx, { memberId, role }) => {
     await ctx.db.patch(memberId, { role });
@@ -87,7 +88,7 @@ export const addMemberFromInvitation = internalMutation({
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
-    role: v.union(v.literal("admin"), v.literal("viewer")),
+    role: v.union(...teamRoles.map((role) => v.literal(role))),
   },
   handler: async (ctx, { teamId, userId, email, name, imageUrl, role }) => {
     const now = Date.now();

@@ -74,6 +74,8 @@ export async function GET(
 
     return new NextResponse(upstream.body, { headers });
   } catch (error) {
+    console.error("[storage/documents] serve failed", error);
+
     return NextResponse.json(
       {
         error:

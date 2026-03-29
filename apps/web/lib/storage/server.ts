@@ -11,7 +11,9 @@ import type { UploadPurpose } from "@baseblocks/types";
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
-    throw new Error(`Missing ${name}`);
+    throw new Error(
+      `Missing ${name} in the web server environment (for local dev, set it in apps/web/.env.local)`,
+    );
   }
   return value;
 }

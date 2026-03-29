@@ -185,13 +185,24 @@ export function InvitationInbox({
     return "?";
   };
 
-  // Load invitations on mount and poll every 30 seconds
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only + interval
+  // Load once on mount so the badge state is populated immediately.
   useEffect(() => {
-    loadInvitations();
-    const interval = setInterval(loadInvitations, 30000);
-    return () => clearInterval(interval);
+    void loadInvitations();
   }, []);
+
+  // Poll only while the inbox is visible. Keeping it always-on creates
+  // unnecessary background traffic across dashboard pages.
+  useEffect(() => {
+    if (!onboardingMode && !open) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      void loadInvitations();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [onboardingMode, open]);
 
   // Shared invitation list content
   const invitationContent = (
@@ -233,7 +244,7 @@ export function InvitationInbox({
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="secondary" className="text-xs">
-                  {invitation.role === "member" ? "viewer" : invitation.role}
+                  {invitation.role === "member" ? "editor" : invitation.role}
                 </Badge>
                 <span>·</span>
                 <span>

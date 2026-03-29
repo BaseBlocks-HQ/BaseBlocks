@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { requireAdmin } from "../auth";
+import { requirePublisher } from "../auth";
 import { getLayoutsBySite } from "../lib/resolvers";
 
 /**
@@ -17,7 +17,7 @@ export const deploy = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requirePublisher(ctx, site.teamId);
     const now = Date.now();
 
     // Mark current active deployment as superseded
@@ -178,7 +178,7 @@ export const rollback = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireAdmin(ctx, site.teamId);
+    const { auth } = await requirePublisher(ctx, site.teamId);
 
     // Verify target deployment belongs to this site
     const targetDeployment = await ctx.db.get(targetDeploymentId);

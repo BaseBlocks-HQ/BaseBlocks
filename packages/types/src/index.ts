@@ -1,4 +1,10 @@
 export type { PageListItem, PageWithChildren } from "./pages";
+export type {
+  TeamCapability,
+  TeamCapabilities,
+  TeamRole,
+} from "./access";
+export { getTeamCapabilities, hasTeamCapability, teamRoles } from "./access";
 
 export type {
   LayoutType,

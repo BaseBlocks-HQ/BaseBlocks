@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemberRole, useMembers, useTeam } from "@/lib/data";
+import { useMembers } from "@/lib/data/use-team";
+import { useTeamAccess } from "@/modules/team/team-access";
 import type { Id } from "@baseblocks/backend";
+import type { TeamRole } from "@baseblocks/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import {
@@ -23,16 +25,15 @@ interface MemberListItem {
   email: string;
   name?: string;
   imageUrl?: string;
-  role: "admin" | "viewer";
+  role: TeamRole;
   joinedAt: number;
 }
 
 export function TeamContent() {
   const t = useTranslations("team");
 
-  const team = useTeam();
+  const { capabilities, team } = useTeamAccess();
   const members = useMembers(team?._id);
-  const myRole = useMemberRole(team?._id);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {
@@ -59,10 +60,9 @@ export function TeamContent() {
 
   const getRoleBadgeVariant = (role: string) => {
     if (role === "admin") return "secondary";
+    if (role === "editor") return "default";
     return "outline";
   };
-
-  const isAdmin = myRole?.role === "admin";
 
   if (!team) {
     return null;
@@ -76,7 +76,9 @@ export function TeamContent() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && <InviteMemberDialog teamId={team._id} />}
+          {capabilities.canManageTeam && (
+            <InviteMemberDialog organizationId={team.organizationId} />
+          )}
         </div>
       </div>
 
@@ -88,7 +90,7 @@ export function TeamContent() {
                 <TableHead>{t("member.email")}</TableHead>
                 <TableHead>{t("member.role")}</TableHead>
                 <TableHead>{t("member.joined")}</TableHead>
-                {isAdmin && members.length > 1 && (
+                {capabilities.canManageTeam && members.length > 1 && (
                   <TableHead className="w-[70px]" />
                 )}
               </TableRow>
@@ -111,18 +113,20 @@ export function TeamContent() {
                     <Badge variant={getRoleBadgeVariant(member.role)}>
                       {member.role === "admin"
                         ? t("roles.admin")
-                        : t("roles.viewer")}
+                        : member.role === "editor"
+                          ? t("roles.editor")
+                          : t("roles.viewer")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(member.joinedAt)}
                   </TableCell>
-                  {isAdmin && members.length > 1 && (
+                  {capabilities.canManageTeam && members.length > 1 && (
                     <TableCell>
                       <MemberActions
                         member={member}
                         teamId={team._id}
-                        isCurrentUserAdmin={isAdmin}
+                        isCurrentUserAdmin={capabilities.canManageTeam}
                       />
                     </TableCell>
                   )}
@@ -138,7 +142,9 @@ export function TeamContent() {
           <p className="text-muted-foreground mt-1 mb-4">
             {t("noMembersDescription")}
           </p>
-          {isAdmin && <InviteMemberDialog teamId={team._id} />}
+          {capabilities.canManageTeam && (
+            <InviteMemberDialog organizationId={team.organizationId} />
+          )}
         </div>
       )}
     </main>

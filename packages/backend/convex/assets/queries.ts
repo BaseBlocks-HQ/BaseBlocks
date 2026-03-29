@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { checkIsAdmin } from "../auth";
+import { checkTeamCapability } from "../auth";
 import { canAccessPublishedSite } from "../sharing/access";
 
 export const canUploadToSite = query({
@@ -13,7 +13,7 @@ export const canUploadToSite = query({
       return false;
     }
 
-    return checkIsAdmin(ctx, site.teamId);
+    return checkTeamCapability(ctx, site.teamId, "canManageSites");
   },
 });
 
@@ -52,7 +52,11 @@ export const getAuthorizedAsset = query({
       return null;
     }
 
-    const isAdmin = await checkIsAdmin(ctx, site.teamId);
-    return isAdmin ? asset : null;
+    const canManageSites = await checkTeamCapability(
+      ctx,
+      site.teamId,
+      "canManageSites",
+    );
+    return canManageSites ? asset : null;
   },
 });

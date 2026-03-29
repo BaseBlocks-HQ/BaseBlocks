@@ -69,6 +69,7 @@ export const tables = {
     createdAt: v.number(),
   })
     .index("organizationId", ["organizationId"])
+    .index("organizationId_userId", ["organizationId", "userId"])
     .index("userId", ["userId"]),
   invitation: defineTable({
     organizationId: v.string(),

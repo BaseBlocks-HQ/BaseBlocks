@@ -9,6 +9,7 @@ import { type FolderData, FolderTreeItem } from "./folder-tree-item";
 import { RenameDialog } from "./rename-dialog";
 
 interface FolderTreeProps {
+  canManageFolders?: boolean;
   folders: FolderData[];
   selectedFolderId: string | null;
   onSelectFolder: (folderId: string | null) => void;
@@ -94,6 +95,7 @@ function FolderTreeBranch({
   onSelectFolder,
   onToggleExpand,
   parentId,
+  readOnly = false,
   selectedFolderId,
 }: {
   expandedFolders: Set<string>;
@@ -106,6 +108,7 @@ function FolderTreeBranch({
   onSelectFolder: (folderId: string | null) => void;
   onToggleExpand: (folderId: string) => void;
   parentId?: string;
+  readOnly?: boolean;
   selectedFolderId: string | null;
 }) {
   const children = folderTree.get(parentId) || [];
@@ -123,6 +126,7 @@ function FolderTreeBranch({
       onRename={onRename}
       onDelete={onDelete}
       onCreateSubfolder={onCreateSubfolder}
+      readOnly={readOnly}
     >
       {expandedFolders.has(folder._id) && (
         <FolderTreeBranch
@@ -136,6 +140,7 @@ function FolderTreeBranch({
           onSelectFolder={onSelectFolder}
           onToggleExpand={onToggleExpand}
           parentId={folder._id}
+          readOnly={readOnly}
           selectedFolderId={selectedFolderId}
         />
       )}
@@ -144,6 +149,7 @@ function FolderTreeBranch({
 }
 
 export function FolderTree({
+  canManageFolders = true,
   folders,
   selectedFolderId,
   onSelectFolder,
@@ -162,7 +168,6 @@ export function FolderTree({
     renameFolderId: null,
   });
 
-  // Build folder tree structure
   const folderTree = (() => {
     const childrenMap = new Map<string | undefined, FolderData[]>();
 
@@ -173,7 +178,6 @@ export function FolderTree({
       childrenMap.set(parentKey, children);
     }
 
-    // Sort children by order
     for (const children of childrenMap.values()) {
       children.sort((a, b) => a.order - b.order);
     }
@@ -181,7 +185,6 @@ export function FolderTree({
     return childrenMap;
   })();
 
-  // Check if folder has children
   const hasChildren = (folderId: string) => {
     return (folderTree.get(folderId)?.length || 0) > 0;
   };
@@ -198,7 +201,6 @@ export function FolderTree({
     dispatch({ type: "openDelete", folderId });
   };
 
-  // Get folder by ID
   const getFolderById = (id: string) => folders.find((f) => f._id === id);
 
   const renamingFolder = state.renameFolderId
@@ -216,31 +218,34 @@ export function FolderTree({
             expandedFolders={state.expandedFolders}
             folderTree={folderTree}
             getHasChildren={hasChildren}
-            onCreateSubfolder={handleCreateSubfolder}
-            onDelete={handleDelete}
-            onRename={handleRename}
+            onCreateSubfolder={
+              canManageFolders ? handleCreateSubfolder : () => {}
+            }
+            onDelete={canManageFolders ? handleDelete : () => {}}
+            onRename={canManageFolders ? handleRename : () => {}}
             onSelectFolder={onSelectFolder}
             onToggleExpand={(folderId) =>
               dispatch({ type: "toggleExpand", folderId })
             }
+            readOnly={!canManageFolders}
             selectedFolderId={selectedFolderId}
           />
         </div>
       </ScrollArea>
 
-      {/* Create folder dialog */}
-      <CreateFolderDialog
-        open={state.createDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) dispatch({ type: "closeCreate" });
-        }}
-        onSubmit={async (name) => {
-          await onCreateFolder(name, state.createParentId);
-        }}
-      />
+      {canManageFolders && (
+        <CreateFolderDialog
+          open={state.createDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) dispatch({ type: "closeCreate" });
+          }}
+          onSubmit={async (name) => {
+            await onCreateFolder(name, state.createParentId);
+          }}
+        />
+      )}
 
-      {/* Rename dialog */}
-      {renamingFolder && (
+      {canManageFolders && renamingFolder && (
         <RenameDialog
           type="folder"
           currentName={renamingFolder.name}
@@ -254,8 +259,7 @@ export function FolderTree({
         />
       )}
 
-      {/* Delete confirmation dialog */}
-      {deletingFolder && (
+      {canManageFolders && deletingFolder && (
         <DeleteConfirmDialog
           type="folder"
           name={deletingFolder.name}
@@ -265,7 +269,6 @@ export function FolderTree({
           }}
           onConfirm={async () => {
             await onDeleteFolder(state.deleteFolderId!);
-            // If we deleted the selected folder, clear selection
             if (selectedFolderId === state.deleteFolderId) {
               onSelectFolder(null);
             }

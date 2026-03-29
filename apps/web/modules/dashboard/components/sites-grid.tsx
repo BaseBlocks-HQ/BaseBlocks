@@ -1,6 +1,7 @@
 "use client";
 
 import { SiteCardSkeleton } from "@/components/skeletons";
+import type { Id } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -8,6 +9,7 @@ import { CreateSiteDialog } from "./create-site-dialog";
 import { SiteCard } from "./site-card";
 
 interface SitesGridProps {
+  canManageSites: boolean;
   sites:
     | Array<{
         _id: string;
@@ -23,10 +25,16 @@ interface SitesGridProps {
         } | null;
       }>
     | undefined;
-  teamSlug?: string; // Optional fallback for sites without team info
+  teamId: Id<"teams">;
+  teamSlug: string;
 }
 
-export function SitesGrid({ sites, teamSlug }: SitesGridProps) {
+export function SitesGrid({
+  canManageSites,
+  sites,
+  teamId,
+  teamSlug,
+}: SitesGridProps) {
   const t = useTranslations("dashboard");
   const loadingCards = ["site-a", "site-b", "site-c"];
 
@@ -49,7 +57,7 @@ export function SitesGrid({ sites, teamSlug }: SitesGridProps) {
           <p className="text-muted-foreground text-sm mb-4">
             {t("noSitesDescription")}
           </p>
-          <CreateSiteDialog />
+          {canManageSites && <CreateSiteDialog teamId={teamId} />}
         </CardContent>
       </Card>
     );
@@ -58,7 +66,12 @@ export function SitesGrid({ sites, teamSlug }: SitesGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {sites.map((site) => (
-        <SiteCard key={site._id} site={site} teamSlug={teamSlug} />
+        <SiteCard
+          key={site._id}
+          canManageSites={canManageSites}
+          site={site}
+          teamSlug={teamSlug}
+        />
       ))}
     </div>
   );

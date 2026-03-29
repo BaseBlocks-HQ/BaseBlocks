@@ -46,7 +46,6 @@ interface LayoutBlockDoc {
 export interface EditorPermissions {
   canEdit: boolean;
   isAdmin: boolean;
-  isViewer: boolean;
   isLoading: boolean;
 }
 

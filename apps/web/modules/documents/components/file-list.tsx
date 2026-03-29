@@ -46,7 +46,7 @@ export function FileList({
 
   const handleDownload = (file: FileData) => {
     // Open download URL in new tab (via proxy to bypass corporate firewall)
-    window.open(file.downloadUrl), "_blank";
+    window.open(file.downloadUrl, "_blank");
     onDownload(file);
   };
 

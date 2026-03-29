@@ -2,6 +2,7 @@
 
 import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
 import { Link } from "@/i18n/navigation";
+import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl } from "@/lib/url";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -28,6 +29,7 @@ import { useState } from "react";
 import { EditSiteDialog } from "./edit-site-dialog";
 
 interface SiteCardProps {
+  canManageSites: boolean;
   site: {
     _id: string;
     name: string;
@@ -40,10 +42,10 @@ interface SiteCardProps {
       slug: string;
     } | null;
   };
-  teamSlug?: string; // Optional now, will use site.team.slug if available
+  teamSlug: string;
 }
 
-export function SiteCard({ site, teamSlug }: SiteCardProps) {
+export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,7 +54,7 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
   const deleteSite = useMutation(api.sites.mutations.remove);
 
   // Use team slug from site object if available, fallback to prop
-  const effectiveTeamSlug = site.team?.slug ?? teamSlug ?? "";
+  const effectiveTeamSlug = site.team?.slug ?? teamSlug;
 
   const handleViewSite = () => {
     window.open(getSiteOpenUrl(effectiveTeamSlug, site.slug), "_blank");
@@ -109,28 +111,32 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
                   >
                     {site.isPublished ? t("sites.published") : t("sites.draft")}
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <MoreVertical className="h-4 w-4" />
-                        <span className="sr-only">{t("common.settings")}</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        {t("common.edit")}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteOpen(true)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {t("common.delete")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canManageSites && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreVertical className="h-4 w-4" />
+                          <span className="sr-only">
+                            {t("common.settings")}
+                          </span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          {t("common.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeleteOpen(true)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t("common.delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </div>
               {site.team && (
@@ -144,7 +150,10 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Link href={`/sites/${site._id}`} className="flex-1">
+            <Link
+              href={getTeamSiteEditorPath(effectiveTeamSlug, site._id)}
+              className="flex-1"
+            >
               <Button variant="outline" className="w-full">
                 {t("sites.edit")}
               </Button>
@@ -162,19 +171,27 @@ export function SiteCard({ site, teamSlug }: SiteCardProps) {
         </CardContent>
       </Card>
 
-      <EditSiteDialog open={editOpen} onOpenChange={setEditOpen} site={site} />
+      {canManageSites && (
+        <EditSiteDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          site={site}
+        />
+      )}
 
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title={t("sites.delete")}
-        description={t("sites.confirmDelete")}
-        confirmLabel={
-          isDeleting ? t("dialogs.delete.deleting") : t("sites.delete")
-        }
-        variant="destructive"
-        onConfirm={handleDelete}
-      />
+      {canManageSites && (
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t("sites.delete")}
+          description={t("sites.confirmDelete")}
+          confirmLabel={
+            isDeleting ? t("dialogs.delete.deleting") : t("sites.delete")
+          }
+          variant="destructive"
+          onConfirm={handleDelete}
+        />
+      )}
     </>
   );
 }

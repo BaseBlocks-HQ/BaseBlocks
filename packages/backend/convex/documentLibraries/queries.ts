@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { checkIsMember, getAuthContextOrNull } from "../auth";
+import { checkIsMember } from "../auth";
 import { canAccessPublishedSite } from "../sharing/access";
 
 export const list = query({
@@ -71,20 +71,11 @@ export const listPublic = query({
 });
 
 export const listAllWithCounts = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-    if (!auth) return [];
+  args: { teamId: v.id("teams") },
+  handler: async (ctx, { teamId }) => {
+    if (!(await checkIsMember(ctx, teamId))) return [];
 
-    // Find team via membership
-    const membership = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .first();
-
-    if (!membership) return [];
-
-    const team = await ctx.db.get(membership.teamId);
+    const team = await ctx.db.get(teamId);
     if (!team) return [];
 
     const sites = await ctx.db

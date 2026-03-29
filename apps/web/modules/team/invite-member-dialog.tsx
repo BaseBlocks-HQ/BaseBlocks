@@ -1,8 +1,6 @@
 "use client";
 
 import { authClient } from "@/lib/auth/client";
-import { useTeam } from "@/lib/data";
-import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -26,10 +24,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface InviteMemberDialogProps {
-  teamId: Id<"teams">;
+  organizationId?: string;
 }
 
-export function InviteMemberDialog(_props: InviteMemberDialogProps) {
+export function InviteMemberDialog({
+  organizationId,
+}: InviteMemberDialogProps) {
   const t = useTranslations("team");
 
   const [dialogState, setDialogState] = useState<{
@@ -48,12 +48,9 @@ export function InviteMemberDialog(_props: InviteMemberDialogProps) {
     success: false,
   });
 
-  const team = useTeam();
-
   const handleInvite = async () => {
     const trimmedEmail = dialogState.email.trim();
     if (!trimmedEmail) return;
-    const organizationId = team?.organizationId;
     if (!organizationId) {
       setDialogState((current) => ({
         ...current,
@@ -173,9 +170,9 @@ export function InviteMemberDialog(_props: InviteMemberDialogProps) {
                 </SelectItem>
                 <SelectItem value="member">
                   <div className="flex flex-col">
-                    <span>{t("roles.viewer")}</span>
+                    <span>{t("roles.editor")}</span>
                     <span className="text-xs text-muted-foreground">
-                      {t("roleDescriptions.viewer")}
+                      {t("roleDescriptions.editor")}
                     </span>
                   </div>
                 </SelectItem>

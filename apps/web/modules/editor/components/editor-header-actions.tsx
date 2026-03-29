@@ -1,5 +1,7 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
+import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl } from "@/lib/url";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
@@ -29,7 +31,6 @@ import {
   Share2,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 function openSite(teamSlug: string, siteSlug: string) {
   window.open(getSiteOpenUrl(teamSlug, siteSlug), "_blank");
@@ -39,6 +40,7 @@ interface EditorHeaderLeftSectionProps {
   canEdit: boolean;
   siteName: string;
   siteLogoUrl?: string;
+  teamSlug: string;
 }
 
 interface EditorHeaderRightSectionProps {
@@ -59,10 +61,11 @@ export function EditorHeaderLeftSection({
   canEdit,
   siteName,
   siteLogoUrl,
+  teamSlug,
 }: EditorHeaderLeftSectionProps) {
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <Link href="/dashboard">
+      <Link href={getTeamDashboardPath(teamSlug)}>
         <Button variant="ghost" size="icon-sm">
           <ArrowLeft className="h-4 w-4" />
           <span className="sr-only">Back to dashboard</span>

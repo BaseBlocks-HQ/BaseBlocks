@@ -8,8 +8,9 @@ interface Props {
   params: Promise<{ libraryId: string }>;
 }
 
-export default function LibraryDetailPage({ params }: Props) {
+export default function TeamLibraryDetailPage({ params }: Props) {
   const { libraryId } = use(params);
+
   return (
     <LibraryDetailContent libraryId={libraryId as Id<"documentLibraries">} />
   );

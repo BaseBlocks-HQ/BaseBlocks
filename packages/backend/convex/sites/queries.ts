@@ -1,55 +1,30 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { checkIsMember, getAuthContextOrNull } from "../auth";
+import { checkIsMember } from "../auth";
 
-// List sites for all teams the user is a member of
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-    if (!auth) return [];
+export const listByTeam = query({
+  args: { teamId: v.id("teams") },
+  handler: async (ctx, { teamId }) => {
+    const isMember = await checkIsMember(ctx, teamId);
+    if (!isMember) return [];
 
-    // Get all memberships for this user
-    const memberships = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
+    const team = await ctx.db.get(teamId);
+    if (!team) return [];
+
+    const sites = await ctx.db
+      .query("sites")
+      .withIndex("by_team", (q) => q.eq("teamId", teamId))
       .collect();
 
-    if (memberships.length === 0) return [];
-
-    // Collect all team IDs from memberships
-    const teamIds = memberships.map((m) => m.teamId);
-
-    // Fetch all teams
-    const teams = await Promise.all(teamIds.map((id) => ctx.db.get(id)));
-    const teamMap = new Map(teams.filter(Boolean).map((t) => [t!._id, t!]));
-
-    // Fetch sites for all teams
-    const sitesPromises = teamIds.map((teamId) =>
-      ctx.db
-        .query("sites")
-        .withIndex("by_team", (q) => q.eq("teamId", teamId))
-        .collect(),
-    );
-    const sitesArrays = await Promise.all(sitesPromises);
-
-    // Flatten and add team info
-    const sites = sitesArrays.flat().map((site) => {
-      const team = teamMap.get(site.teamId);
-      return {
-        ...site,
-        team: team
-          ? {
-              _id: team._id,
-              name: team.name,
-              slug: team.slug,
-            }
-          : null,
-      };
-    });
-
-    return sites;
+    return sites.map((site) => ({
+      ...site,
+      team: {
+        _id: team._id,
+        name: team.name,
+        slug: team.slug,
+      },
+    }));
   },
 });
 
@@ -116,23 +91,6 @@ export const getBySlug = query({
       defaultPageId: site.publishedDefaultPageId ?? site.defaultPageId,
       settings: site.publishedSettings ?? site.settings,
     };
-  },
-});
-
-// Get site with team info (for dashboard)
-export const getWithTeam = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return null;
-
-    const team = await ctx.db.get(site.teamId);
-    if (!team) return null;
-
-    const isMember = await checkIsMember(ctx, team._id);
-    if (!isMember) return null;
-
-    return { site, team };
   },
 });
 

@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/auth/server";
 import { canUploadToSite } from "@/lib/convex/server";
 import { headObject } from "@/lib/storage/server";
-import { type UploadPurpose } from "@baseblocks/types";
+import type { UploadPurpose } from "@baseblocks/types";
 import { type NextRequest, NextResponse } from "next/server";
 
 function parsePurpose(value: unknown): UploadPurpose | null {
@@ -43,10 +43,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { objectKey, siteId, purpose: rawPurpose } = body as Record<
-      string,
-      unknown
-    >;
+    const {
+      objectKey,
+      siteId,
+      purpose: rawPurpose,
+    } = body as Record<string, unknown>;
 
     if (
       typeof objectKey !== "string" ||
@@ -72,7 +73,10 @@ export async function POST(request: NextRequest) {
 
     if (!matchesUploadPrefix(siteId, purpose, objectKey)) {
       return NextResponse.json(
-        { error: "objectKey does not match expected prefix for this site and purpose" },
+        {
+          error:
+            "objectKey does not match expected prefix for this site and purpose",
+        },
         { status: 400 },
       );
     }
@@ -80,7 +84,9 @@ export async function POST(request: NextRequest) {
     const meta = await headObject({ objectKey });
     if (!meta) {
       return NextResponse.json(
-        { error: "Object not found in storage. Upload may not have completed." },
+        {
+          error: "Object not found in storage. Upload may not have completed.",
+        },
         { status: 404 },
       );
     }
@@ -92,6 +98,8 @@ export async function POST(request: NextRequest) {
       checksum: meta.etag,
     });
   } catch (error) {
+    console.error("[storage/finalize] request failed", error);
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Finalize failed" },
       { status: 500 },

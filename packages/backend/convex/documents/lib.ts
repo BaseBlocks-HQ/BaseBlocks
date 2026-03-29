@@ -1,3 +1,4 @@
+import type { Doc } from "../_generated/dataModel";
 /**
  * Shared document deletion helper.
  *
@@ -10,7 +11,6 @@
  *   4. Schedule the S3 object deletion (runs after the transaction commits).
  */
 import type { MutationCtx } from "../_generated/server";
-import type { Doc } from "../_generated/dataModel";
 import { deleteObjectAction } from "../storage/actions";
 
 export async function deleteDocumentRows(
