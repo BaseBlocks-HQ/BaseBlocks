@@ -1,7 +1,65 @@
+import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import type { DataModel } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContextOrNull } from "../auth";
+
+async function getWorkspaceTeams(
+  ctx: GenericQueryCtx<DataModel>,
+  userId: string,
+) {
+  const memberships = await ctx.db
+    .query("members")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+
+  if (memberships.length === 0) {
+    return [];
+  }
+
+  memberships.sort((a, b) => b.joinedAt - a.joinedAt);
+
+  const teams = await Promise.all(
+    memberships.map(async (membership) => {
+      const team = await ctx.db.get(membership.teamId);
+      if (!team) return null;
+      return {
+        ...team,
+        memberRole: membership.role,
+        joinedAt: membership.joinedAt,
+      };
+    }),
+  );
+
+  return teams.filter((team): team is NonNullable<typeof team> => team !== null);
+}
+
+async function getActiveOrganizationId(
+  ctx: GenericQueryCtx<DataModel>,
+): Promise<string | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity?.sessionId) {
+    return null;
+  }
+
+  const session = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
+    model: "session",
+    where: [
+      {
+        field: "_id",
+        value: identity.sessionId as string,
+      },
+      {
+        field: "expiresAt",
+        operator: "gt",
+        value: Date.now(),
+      },
+    ],
+  })) as { activeOrganizationId?: string | null } | null;
+
+  return session?.activeOrganizationId ?? null;
+}
 
 export const getBySlug = query({
   args: { slug: v.string() },
@@ -23,132 +81,43 @@ export const getBySlug = query({
   },
 });
 
-export const getBySlugForMember = query({
-  args: { slug: v.string() },
-  handler: async (ctx, { slug }) => {
+export const getWorkspaceBoundary = query({
+  args: {
+    teamSlug: v.optional(v.string()),
+  },
+  handler: async (ctx, { teamSlug }) => {
     const auth = await getAuthContextOrNull(ctx);
-    if (!auth) return null;
+    if (!auth) {
+      return {
+        activeWorkspace: null,
+        requestedWorkspace: null,
+        teams: [],
+      };
+    }
 
-    const team = await ctx.db
-      .query("teams")
-      .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .first();
-    if (!team) return null;
+    const teams = await getWorkspaceTeams(ctx, auth.userId);
+    if (teams.length === 0) {
+      return {
+        activeWorkspace: null,
+        requestedWorkspace: null,
+        teams: [],
+      };
+    }
 
-    const membership = await ctx.db
-      .query("members")
-      .withIndex("by_team_user", (q) =>
-        q.eq("teamId", team._id).eq("userId", auth.userId),
-      )
-      .first();
-    if (!membership) return null;
+    const activeOrganizationId = await getActiveOrganizationId(ctx);
+    const activeWorkspace =
+      teams.find((team) => team.organizationId === activeOrganizationId) ??
+      teams[0] ??
+      null;
+
+    const requestedWorkspace = teamSlug
+      ? teams.find((team) => team.slug === teamSlug) ?? null
+      : null;
 
     return {
-      ...team,
-      memberRole: membership.role,
-      joinedAt: membership.joinedAt,
-    };
-  },
-});
-
-export const listMine = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-    if (!auth) return [];
-
-    const memberships = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .collect();
-
-    if (memberships.length === 0) return [];
-
-    memberships.sort((a, b) => b.joinedAt - a.joinedAt);
-
-    const teams = await Promise.all(
-      memberships.map(async (m) => {
-        const team = await ctx.db.get(m.teamId);
-        if (!team) return null;
-        return { ...team, memberRole: m.role, joinedAt: m.joinedAt };
-      }),
-    );
-
-    return teams.filter((t): t is NonNullable<typeof t> => t !== null);
-  },
-});
-
-export const getActiveWorkspace = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-    if (!auth) return null;
-
-    const memberships = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .collect();
-
-    if (memberships.length === 0) return null;
-
-    memberships.sort((a, b) => b.joinedAt - a.joinedAt);
-
-    const identity = await ctx.auth.getUserIdentity();
-    let activeOrganizationId: string | null = null;
-
-    if (identity?.sessionId) {
-      const session = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
-        model: "session",
-        where: [
-          {
-            field: "_id",
-            value: identity.sessionId as string,
-          },
-          {
-            field: "expiresAt",
-            operator: "gt",
-            value: Date.now(),
-          },
-        ],
-      })) as { activeOrganizationId?: string | null } | null;
-
-      activeOrganizationId = session?.activeOrganizationId ?? null;
-    }
-
-    const teams = await Promise.all(
-      memberships.map(async (membership) => {
-        const team = await ctx.db.get(membership.teamId);
-        if (!team) return null;
-        return {
-          ...team,
-          memberRole: membership.role,
-          joinedAt: membership.joinedAt,
-        };
-      }),
-    );
-
-    const availableTeams = teams.filter(
-      (team): team is NonNullable<typeof team> => team !== null,
-    );
-
-    if (availableTeams.length === 0) {
-      return null;
-    }
-
-    const activeTeam =
-      availableTeams.find(
-        (team) => team.organizationId === activeOrganizationId,
-      ) ?? availableTeams[0];
-
-    if (!activeTeam) {
-      return null;
-    }
-
-    return {
-      _id: activeTeam._id,
-      name: activeTeam.name,
-      slug: activeTeam.slug,
-      organizationId: activeTeam.organizationId,
+      activeWorkspace,
+      requestedWorkspace,
+      teams,
     };
   },
 });

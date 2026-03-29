@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth/client";
+import { useRouter } from "@/i18n/navigation";
 import { api } from "@baseblocks/backend";
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
@@ -94,6 +95,7 @@ export function InvitationInbox({
   onboardingMode = false,
 }: InvitationInboxProps) {
   const t = useTranslations("inbox");
+  const router = useRouter();
 
   const [open, setOpen] = useState(false);
   const [state, dispatch] = useReducer(inboxReducer, initialState);
@@ -150,6 +152,9 @@ export function InvitationInbox({
         }),
       ]);
       dispatch({ type: "REMOVE_INVITATION", id: invitation.id });
+      if (onboardingMode) {
+        router.push("/dashboard");
+      }
     } catch (err) {
       dispatch({
         type: "PROCESS_ERROR",

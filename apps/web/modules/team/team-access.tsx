@@ -1,14 +1,12 @@
 "use client";
 
 import { authClient } from "@/lib/auth/client";
-import { useTeamBySlug, useTeams } from "@/lib/data/use-team";
 import type { Id } from "@baseblocks/backend";
 import {
   type TeamCapabilities,
   type TeamRole,
   getTeamCapabilities,
 } from "@baseblocks/types";
-import { useConvexAuth } from "convex/react";
 import { type ReactNode, createContext, use, useEffect } from "react";
 
 export type TeamRecord = {
@@ -36,33 +34,25 @@ const TeamAccessContext = createContext<TeamAccessValue | null>(null);
 
 interface TeamAccessProviderProps {
   children: ReactNode;
-  initialTeam?: TeamRecord | null;
-  initialTeams?: TeamRecord[];
-  teamSlug: string;
+  workspace: {
+    team: TeamRecord;
+    teams: TeamRecord[];
+  };
 }
 
 export function TeamAccessProvider({
   children,
-  initialTeam,
-  initialTeams,
-  teamSlug,
+  workspace,
 }: TeamAccessProviderProps) {
-  const teamQuery = useTeamBySlug(teamSlug);
-  const teamsQuery = useTeams();
   const {
     data: session,
     isPending: isSessionPending,
   } = authClient.useSession();
-  const { isLoading: isConvexLoading } = useConvexAuth();
   const activeOrganizationId = session?.session?.activeOrganizationId;
-  const team = teamQuery === undefined ? initialTeam : teamQuery;
-  const teams = teamsQuery === undefined ? (initialTeams ?? []) : teamsQuery;
-  const isTeamPending = teamQuery === undefined && initialTeam === undefined;
-  const isTeamsPending =
-    teamsQuery === undefined && initialTeams === undefined;
+  const { team, teams } = workspace;
 
   useEffect(() => {
-    if (isSessionPending || isConvexLoading) return;
+    if (isSessionPending) return;
     if (!session?.session) return;
     if (!team?.organizationId) return;
 
@@ -75,32 +65,10 @@ export function TeamAccessProvider({
       .catch(() => null);
   }, [
     activeOrganizationId,
-    isConvexLoading,
     isSessionPending,
     session?.session,
     team?.organizationId,
   ]);
-
-  if (
-    isSessionPending ||
-    isConvexLoading ||
-    isTeamPending ||
-    isTeamsPending
-  ) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading workspace...</p>
-      </div>
-    );
-  }
-
-  if (!team) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Workspace not found</p>
-      </div>
-    );
-  }
 
   const capabilities = getTeamCapabilities(team.memberRole);
 

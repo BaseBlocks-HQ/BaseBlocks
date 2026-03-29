@@ -1,6 +1,4 @@
-import { api } from "@baseblocks/backend";
-import { getToken } from "@/lib/auth/server";
-import { getServerConvexClient } from "@/lib/convex/server";
+import { getWorkspaceBoundaryState } from "@/lib/workspace/server";
 import { TeamAccessProvider } from "@/modules/team/team-access";
 import { redirect } from "next/navigation";
 
@@ -14,27 +12,23 @@ export default async function TeamLayout({
   params,
 }: TeamLayoutProps) {
   const { teamSlug } = await params;
-  const token = await getToken();
+  const { activeWorkspace, requestedWorkspace, teams } =
+    await getWorkspaceBoundaryState(teamSlug);
 
-  if (!token) {
-    redirect("/login");
+  if (teams.length === 0) {
+    redirect("/onboarding");
   }
 
-  const client = getServerConvexClient(token);
-  const [team, teams] = await Promise.all([
-    client.query(api.teams.queries.getBySlugForMember, { slug: teamSlug }),
-    client.query(api.teams.queries.listMine, {}),
-  ]);
-
-  if (!team) {
+  if (!requestedWorkspace) {
     redirect("/dashboard");
   }
 
   return (
     <TeamAccessProvider
-      teamSlug={teamSlug}
-      initialTeam={team}
-      initialTeams={teams}
+      workspace={{
+        team: requestedWorkspace,
+        teams,
+      }}
     >
       {children}
     </TeamAccessProvider>
