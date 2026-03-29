@@ -21,7 +21,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
-import { useMutation } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -35,6 +35,8 @@ import { ConvexEditorMutationsProvider } from "./mutations-bridge";
 
 interface SiteEditorProps {
   siteId: string;
+  initialPages?: Doc<"pages">[];
+  initialSite?: Doc<"sites"> | null;
 }
 
 const elementModuleLoaders = [
@@ -67,8 +69,9 @@ function useElementsLoader() {
   return loaded;
 }
 
-function SiteEditorInner({ siteId }: SiteEditorProps) {
+function SiteEditorInner({ initialPages, initialSite, siteId }: SiteEditorProps) {
   const { team } = useTeamAccess();
+  const { isLoading: isConvexLoading } = useConvexAuth();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [, setSelectedSlotId] = useState<string | null>(null);
   const { selection, editingSubpage, closeSubpageEditor } = useEditorUi();
@@ -98,8 +101,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
 
-  const site = useSite(siteId);
-  const pages = usePages(siteId);
+  const siteQuery = useSite(siteId);
+  const pagesQuery = usePages(siteId);
+  const site =
+    isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
+  const pages =
+    isConvexLoading || pagesQuery === undefined ? initialPages : pagesQuery;
 
   // Get customization CSS variables for preview
   const { cssVariables: customizationStyles, isCustomized } =
@@ -306,11 +313,13 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 }
 
-export function SiteEditor({ siteId }: SiteEditorProps) {
+export function SiteEditor({ initialPages, initialSite, siteId }: SiteEditorProps) {
   const elementsLoaded = useElementsLoader();
   const { capabilities } = useTeamAccess();
-
-  const site = useSite(siteId);
+  const { isLoading: isConvexLoading } = useConvexAuth();
+  const siteQuery = useSite(siteId);
+  const site =
+    isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
 
   const siteData = site
     ? {
@@ -335,7 +344,11 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
       <EditorProvider siteId={siteId} site={siteData} permissions={permissions}>
         <BlockClipboardProvider>
           <PublicSubpageProvider>
-            <SiteEditorInner siteId={siteId} />
+            <SiteEditorInner
+              initialPages={initialPages}
+              initialSite={initialSite}
+              siteId={siteId}
+            />
           </PublicSubpageProvider>
         </BlockClipboardProvider>
       </EditorProvider>

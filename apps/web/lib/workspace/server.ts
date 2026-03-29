@@ -10,16 +10,28 @@ interface WorkspaceBoundaryState {
   teams: TeamRecord[];
 }
 
-export async function getWorkspaceBoundaryState(
+export async function getWorkspaceBoundaryContext(
   teamSlug?: string,
-): Promise<WorkspaceBoundaryState> {
+): Promise<{
+  client: ReturnType<typeof getServerConvexClient>;
+  state: WorkspaceBoundaryState;
+}> {
   const token = await getToken();
   if (!token) {
     redirect("/login");
   }
 
   const client = getServerConvexClient(token);
-  return await client.query(api.teams.queries.getWorkspaceBoundary, {
+  const state = await client.query(api.teams.queries.getWorkspaceBoundary, {
     ...(teamSlug ? { teamSlug } : {}),
   });
+
+  return { client, state };
+}
+
+export async function getWorkspaceBoundaryState(
+  teamSlug?: string,
+): Promise<WorkspaceBoundaryState> {
+  const { state } = await getWorkspaceBoundaryContext(teamSlug);
+  return state;
 }

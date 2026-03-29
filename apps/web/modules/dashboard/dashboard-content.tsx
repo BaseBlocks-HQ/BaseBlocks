@@ -2,14 +2,34 @@
 
 import { useTeamSites } from "@/lib/data/use-site";
 import { useTeamAccess } from "@/modules/team/team-access";
+import { useConvexAuth } from "convex/react";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./components/create-site-dialog";
 import { SitesGrid } from "./components/sites-grid";
 
-export function DashboardContent() {
+interface DashboardContentProps {
+  initialSites?: Array<{
+    _id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    logoUrl?: string;
+    isPublished: boolean;
+    team?: {
+      _id: string;
+      name: string;
+      slug: string;
+    } | null;
+  }>;
+}
+
+export function DashboardContent({ initialSites }: DashboardContentProps) {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
-  const sites = useTeamSites(team._id);
+  const sitesQuery = useTeamSites(team._id);
+  const { isLoading: isConvexLoading } = useConvexAuth();
+  const sites =
+    isConvexLoading || sitesQuery === undefined ? initialSites : sitesQuery;
 
   return (
     <main className="flex-1 p-6">
