@@ -11,7 +11,7 @@ import {
 import { useConvexAuth } from "convex/react";
 import { type ReactNode, createContext, use, useEffect } from "react";
 
-type TeamRecord = {
+export type TeamRecord = {
   _id: Id<"teams">;
   joinedAt: number;
   logoUrl?: string;
@@ -36,21 +36,30 @@ const TeamAccessContext = createContext<TeamAccessValue | null>(null);
 
 interface TeamAccessProviderProps {
   children: ReactNode;
+  initialTeam?: TeamRecord | null;
+  initialTeams?: TeamRecord[];
   teamSlug: string;
 }
 
 export function TeamAccessProvider({
   children,
+  initialTeam,
+  initialTeams,
   teamSlug,
 }: TeamAccessProviderProps) {
-  const team = useTeamBySlug(teamSlug);
-  const teams = useTeams();
+  const teamQuery = useTeamBySlug(teamSlug);
+  const teamsQuery = useTeams();
   const {
     data: session,
     isPending: isSessionPending,
   } = authClient.useSession();
   const { isLoading: isConvexLoading } = useConvexAuth();
   const activeOrganizationId = session?.session?.activeOrganizationId;
+  const team = teamQuery === undefined ? initialTeam : teamQuery;
+  const teams = teamsQuery === undefined ? (initialTeams ?? []) : teamsQuery;
+  const isTeamPending = teamQuery === undefined && initialTeam === undefined;
+  const isTeamsPending =
+    teamsQuery === undefined && initialTeams === undefined;
 
   useEffect(() => {
     if (isSessionPending || isConvexLoading) return;
@@ -75,8 +84,8 @@ export function TeamAccessProvider({
   if (
     isSessionPending ||
     isConvexLoading ||
-    team === undefined ||
-    teams === undefined
+    isTeamPending ||
+    isTeamsPending
   ) {
     return (
       <div className="flex min-h-screen items-center justify-center">

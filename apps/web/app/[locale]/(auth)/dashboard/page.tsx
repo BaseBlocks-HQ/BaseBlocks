@@ -1,34 +1,21 @@
-"use client";
-
-import { DashboardSkeleton } from "@/components/skeletons";
-import { authClient } from "@/lib/auth/client";
-import { useTeams } from "@/lib/data/use-team";
+import { api } from "@baseblocks/backend";
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
-import { useConvexAuth } from "convex/react";
 import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
-  const teams = useTeams();
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
-  const { isLoading: isConvexLoading } = useConvexAuth();
-
-  if (isSessionPending || isConvexLoading || teams === undefined) {
-    return <DashboardSkeleton />;
+export default async function DashboardPage() {
+  const token = await getToken();
+  if (!token) {
+    redirect("/login");
   }
 
-  if (teams.length === 0) {
+  const client = getServerConvexClient(token);
+  const workspace = await client.query(api.teams.queries.getActiveWorkspace, {});
+
+  if (!workspace) {
     redirect("/onboarding");
   }
 
-  const activeOrganizationId = session?.session?.activeOrganizationId;
-  const activeTeam =
-    teams.find((team) => team.organizationId === activeOrganizationId) ??
-    teams[0];
-
-  if (activeTeam) {
-    redirect(getTeamDashboardPath(activeTeam.slug));
-  }
-
-  return <DashboardSkeleton />;
+  redirect(getTeamDashboardPath(workspace.slug));
 }
