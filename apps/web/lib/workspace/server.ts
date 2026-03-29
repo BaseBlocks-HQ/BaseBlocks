@@ -1,6 +1,4 @@
-import { api } from "@baseblocks/backend";
-import { getToken } from "@/lib/auth/server";
-import { getServerConvexClient } from "@/lib/convex/server";
+import { getAuthenticatedShellContext } from "@/lib/auth-shell/server";
 import { redirect } from "next/navigation";
 import type { TeamRecord } from "@/modules/team/team-access";
 
@@ -13,18 +11,15 @@ interface WorkspaceBoundaryState {
 export async function getWorkspaceBoundaryContext(
   teamSlug?: string,
 ): Promise<{
-  client: ReturnType<typeof getServerConvexClient>;
+  client: NonNullable<
+    Awaited<ReturnType<typeof getAuthenticatedShellContext>>["client"]
+  >;
   state: WorkspaceBoundaryState;
 }> {
-  const token = await getToken();
-  if (!token) {
+  const { client, token, state } = await getAuthenticatedShellContext(teamSlug);
+  if (!token || !client) {
     redirect("/login");
   }
-
-  const client = getServerConvexClient(token);
-  const state = await client.query(api.teams.queries.getWorkspaceBoundary, {
-    ...(teamSlug ? { teamSlug } : {}),
-  });
 
   return { client, state };
 }

@@ -49,6 +49,7 @@ export function EditorHeader({
     deploySite,
     rollbackDeployment,
   } = useEditorHeaderData({
+    shareOpen: shareDialogOpen,
     siteId,
     teamSlug,
     siteSlug,

@@ -1,11 +1,24 @@
-import { isAuthenticated } from "@/lib/auth/server";
+import { AuthenticatedShellProvider } from "@/lib/auth-shell/provider";
+import { getAuthenticatedShellContext } from "@/lib/auth-shell/server";
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 import { ClientAuthBoundary } from "./client-auth-boundary";
 
 export default async function AuthLayout({ children }: PropsWithChildren) {
-  if (!(await isAuthenticated())) {
+  const { token, state } = await getAuthenticatedShellContext();
+
+  if (!token) {
     redirect("/login");
   }
-  return <ClientAuthBoundary>{children}</ClientAuthBoundary>;
+
+  return (
+    <AuthenticatedShellProvider
+      value={{
+        activeWorkspace: state.activeWorkspace,
+        teams: state.teams,
+      }}
+    >
+      <ClientAuthBoundary>{children}</ClientAuthBoundary>
+    </AuthenticatedShellProvider>
+  );
 }

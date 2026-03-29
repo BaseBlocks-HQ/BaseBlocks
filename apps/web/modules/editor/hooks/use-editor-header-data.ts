@@ -12,6 +12,7 @@ import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
 
 interface UseEditorHeaderDataParams {
+  shareOpen: boolean;
   siteId: Id<"sites">;
   teamSlug: string;
   siteSlug: string;
@@ -19,6 +20,7 @@ interface UseEditorHeaderDataParams {
 }
 
 export function useEditorHeaderData({
+  shareOpen,
   siteId,
   teamSlug,
   siteSlug,
@@ -27,8 +29,14 @@ export function useEditorHeaderData({
   const deployMut = useMutation(api.deployments.mutations.deploy);
   const rollbackMut = useMutation(api.deployments.mutations.rollback);
 
-  const sharingSettings = useQuery(api.sharing.queries.getSettings, { siteId });
-  const rawAccessCode = useQuery(api.sharing.queries.getAccessCode, { siteId });
+  const sharingSettings = useQuery(
+    api.sharing.queries.getSettings,
+    shareOpen ? { siteId } : "skip",
+  );
+  const rawAccessCode = useQuery(
+    api.sharing.queries.getAccessCode,
+    shareOpen ? { siteId } : "skip",
+  );
   const rawDeployments = useQuery(
     api.deployments.queries.list,
     historyOpen ? { siteId, limit: 50 } : "skip",

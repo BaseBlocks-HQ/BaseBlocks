@@ -12,8 +12,9 @@ export default async function TeamLayout({
   params,
 }: TeamLayoutProps) {
   const { teamSlug } = await params;
-  const { activeWorkspace, requestedWorkspace, teams } =
-    await getWorkspaceBoundaryState(teamSlug);
+  const { requestedWorkspace, teams } = await getWorkspaceBoundaryState(
+    teamSlug,
+  );
 
   if (teams.length === 0) {
     redirect("/onboarding");
@@ -24,12 +25,7 @@ export default async function TeamLayout({
   }
 
   return (
-    <TeamAccessProvider
-      workspace={{
-        team: requestedWorkspace,
-        teams,
-      }}
-    >
+    <TeamAccessProvider team={requestedWorkspace}>
       {children}
     </TeamAccessProvider>
   );

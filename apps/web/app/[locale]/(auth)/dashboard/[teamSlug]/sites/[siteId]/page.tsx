@@ -1,17 +1,8 @@
 import { api } from "@baseblocks/backend";
-import { EditorSkeleton } from "@/components/skeletons";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
-import dynamic from "next/dynamic";
+import { SiteEditor } from "@/modules/editor/site-editor";
 import { redirect } from "next/navigation";
-
-const SiteEditor = dynamic(
-  () =>
-    import("@/modules/editor/site-editor").then((m) => ({
-      default: m.SiteEditor,
-    })),
-  { loading: () => <EditorSkeleton />, ssr: false },
-);
 
 type Props = {
   params: Promise<{ siteId: string; teamSlug: string }>;
