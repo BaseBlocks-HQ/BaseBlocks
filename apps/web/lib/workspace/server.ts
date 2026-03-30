@@ -1,6 +1,6 @@
 import { getAuthenticatedShellContext } from "@/lib/auth-shell/server";
-import { redirect } from "next/navigation";
 import type { TeamRecord } from "@/modules/team/team-access";
+import { redirect } from "next/navigation";
 
 interface WorkspaceBoundaryState {
   activeWorkspace: TeamRecord | null;
@@ -8,9 +8,7 @@ interface WorkspaceBoundaryState {
   teams: TeamRecord[];
 }
 
-export async function getWorkspaceBoundaryContext(
-  teamSlug?: string,
-): Promise<{
+export async function getWorkspaceBoundaryContext(teamSlug?: string): Promise<{
   client: NonNullable<
     Awaited<ReturnType<typeof getAuthenticatedShellContext>>["client"]
   >;

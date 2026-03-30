@@ -1,6 +1,7 @@
 "use client";
 
 import { FormDialog } from "@/components/dialogs/form-dialog";
+import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -26,6 +27,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
     error: "",
   });
 
+  const haptic = useHaptic();
   const createPage = useMutation(api.pages.mutations.create);
 
   const handleTitleChange = (value: string) => {
@@ -65,6 +67,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         slug: dialogState.slug,
         parentId: parentId as Id<"pages"> | undefined,
       });
+      haptic.trigger("success");
       setDialogState({
         open: false,
         title: "",
@@ -76,6 +79,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to create page";
+      haptic.trigger("error");
       setDialogState((current) => ({
         ...current,
         error: message,

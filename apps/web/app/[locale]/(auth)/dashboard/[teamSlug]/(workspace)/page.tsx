@@ -1,6 +1,6 @@
-import { api } from "@baseblocks/backend";
 import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
 import { DashboardContent } from "@/modules/dashboard/dashboard-content";
+import { api } from "@baseblocks/backend";
 
 interface TeamDashboardPageProps {
   params: Promise<{ teamSlug: string }>;

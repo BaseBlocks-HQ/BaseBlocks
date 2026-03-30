@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
 import { useRouter } from "@/i18n/navigation";
+import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";

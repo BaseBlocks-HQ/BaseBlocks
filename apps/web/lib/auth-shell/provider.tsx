@@ -8,8 +8,9 @@ interface AuthenticatedShellValue {
   teams: TeamRecord[];
 }
 
-const AuthenticatedShellContext =
-  createContext<AuthenticatedShellValue | null>(null);
+const AuthenticatedShellContext = createContext<AuthenticatedShellValue | null>(
+  null,
+);
 
 export function AuthenticatedShellProvider({
   children,

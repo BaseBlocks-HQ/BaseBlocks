@@ -1,4 +1,5 @@
 import { DocsMobileHeaderActions } from "@/components/docs/docs-mobile-header-actions";
+import { DocsSidebarHaptics } from "@/components/docs/docs-sidebar-haptics";
 import { PublicHeader } from "@/components/public/public-header";
 import { Link } from "@/i18n/navigation";
 import { isAuthenticated } from "@/lib/auth/server";
@@ -47,6 +48,7 @@ export default async function DocsSectionLayout({
 
   return (
     <>
+      <DocsSidebarHaptics />
       <DocsLayout
         containerProps={{
           className: "bb-docs-shell",

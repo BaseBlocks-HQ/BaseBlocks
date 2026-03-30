@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { useHaptic } from "@/lib/use-haptic";
 import {
   animationSteps,
   landingFonts,
@@ -45,6 +46,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
   const stepsGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
   const stepsGridOpacity = isDarkTheme ? 0.2 : 0.34;
 
+  const haptic = useHaptic();
   const titleRef = useRef<HTMLSpanElement>(null);
   const progress = useMotionValue(0);
   const spring = useSpring(progress, morphSpring);
@@ -85,13 +87,13 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
 
   const authCta = isAuthenticated ? (
     <Link href="/dashboard">
-      <Button size="lg" className="gap-2">
+      <Button size="lg" className="gap-2" onClick={() => haptic.trigger("heavy")}>
         {commonTranslations("goToDashboard")} <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
   ) : (
     <Link href="/login">
-      <Button size="lg" className="gap-2">
+      <Button size="lg" className="gap-2" onClick={() => haptic.trigger("heavy")}>
         {landingTranslations("getStarted")} <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
@@ -99,7 +101,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
 
   const docsCta = (
     <Link href="/docs">
-      <Button variant="outline" size="lg">
+      <Button variant="outline" size="lg" onClick={() => haptic.trigger("heavy")}>
         {landingTranslations("viewDocs")}
       </Button>
     </Link>

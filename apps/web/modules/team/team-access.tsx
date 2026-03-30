@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
 import { useAuthenticatedShell } from "@/lib/auth-shell/provider";
+import { authClient } from "@/lib/auth/client";
 import type { Id } from "@baseblocks/backend";
 import {
   type TeamCapabilities,
@@ -38,11 +38,12 @@ interface TeamAccessProviderProps {
   team: TeamRecord;
 }
 
-export function TeamAccessProvider({ children, team }: TeamAccessProviderProps) {
-  const {
-    data: session,
-    isPending: isSessionPending,
-  } = authClient.useSession();
+export function TeamAccessProvider({
+  children,
+  team,
+}: TeamAccessProviderProps) {
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const activeOrganizationId = session?.session?.activeOrganizationId;
   const { teams } = useAuthenticatedShell();
 

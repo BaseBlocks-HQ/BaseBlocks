@@ -3,6 +3,7 @@
 import { EditorSkeleton } from "@/components/skeletons";
 import { usePages } from "@/lib/data/use-page";
 import { useSite } from "@/lib/data/use-site";
+import { useHaptic } from "@/lib/use-haptic";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
 import {
@@ -69,7 +70,11 @@ function useElementsLoader() {
   return loaded;
 }
 
-function SiteEditorInner({ initialPages, initialSite, siteId }: SiteEditorProps) {
+function SiteEditorInner({
+  initialPages,
+  initialSite,
+  siteId,
+}: SiteEditorProps) {
   const { team } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -153,14 +158,17 @@ function SiteEditorInner({ initialPages, initialSite, siteId }: SiteEditorProps)
     }
   }, [portalContainer, customizationStyles, isCustomized]);
 
+  const haptic = useHaptic();
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
 
   const handlePublish = async () => {
     try {
       await publishSite({ siteId: siteId as Id<"sites"> });
+      haptic.trigger("success");
       toast.success("Site published");
     } catch (_error) {
+      haptic.trigger("error");
       toast.error("Failed to publish site");
     }
   };
@@ -168,8 +176,10 @@ function SiteEditorInner({ initialPages, initialSite, siteId }: SiteEditorProps)
   const handleUnpublish = async () => {
     try {
       await unpublishSite({ siteId: siteId as Id<"sites"> });
+      haptic.trigger("warning");
       toast.success("Site unpublished");
     } catch (_error) {
+      haptic.trigger("error");
       toast.error("Failed to unpublish site");
     }
   };
@@ -313,7 +323,11 @@ function SiteEditorInner({ initialPages, initialSite, siteId }: SiteEditorProps)
   );
 }
 
-export function SiteEditor({ initialPages, initialSite, siteId }: SiteEditorProps) {
+export function SiteEditor({
+  initialPages,
+  initialSite,
+  siteId,
+}: SiteEditorProps) {
   const elementsLoaded = useElementsLoader();
   const { capabilities } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();

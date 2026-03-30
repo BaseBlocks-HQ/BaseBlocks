@@ -1,6 +1,7 @@
 "use client";
 
 import { FormDialog } from "@/components/dialogs/form-dialog";
+import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -29,6 +30,7 @@ export function CreateSiteDialog({
     error: "",
   });
   const t = useTranslations();
+  const haptic = useHaptic();
 
   const createSite = useMutation(api.sites.mutations.create);
 
@@ -54,6 +56,7 @@ export function CreateSiteDialog({
         slug: dialogState.slug,
         teamId,
       });
+      haptic.trigger("success");
       setDialogState({
         open: false,
         name: "",
@@ -62,6 +65,7 @@ export function CreateSiteDialog({
         error: "",
       });
     } catch (err) {
+      haptic.trigger("error");
       setDialogState((current) => ({
         ...current,
         error: err instanceof Error ? err.message : t("common.error"),

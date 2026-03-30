@@ -1,7 +1,7 @@
-import { api } from "@baseblocks/backend";
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import type { TeamRecord } from "@/modules/team/team-access";
+import { api } from "@baseblocks/backend";
 import { cache } from "react";
 
 interface AuthenticatedShellState {

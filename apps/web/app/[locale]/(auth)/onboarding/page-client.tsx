@@ -3,6 +3,7 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
+import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
 import { api } from "@baseblocks/backend";
@@ -29,6 +30,7 @@ export function OnboardingPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
+  const haptic = useHaptic();
   const createTeam = useMutation(api.teams.mutations.create);
 
   const handleTeamNameChange = (value: string) => {
@@ -65,10 +67,12 @@ export function OnboardingPageClient() {
           slug,
           organizationId,
         }).then(() => {
+          haptic.trigger("success");
           router.push("/dashboard");
         });
       })
       .catch((err) => {
+        haptic.trigger("error");
         setError(err instanceof Error ? err.message : t("common.error"));
       })
       .finally(() => {

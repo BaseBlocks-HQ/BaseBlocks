@@ -63,6 +63,7 @@
         "swr": "^2.4.1",
         "tailwind-merge": "^3.4.0",
         "use-debounce": "^10.1.0",
+        "web-haptics": "^0.0.6",
         "yauzl": "^3.2.1",
         "zod": "^4.3.6",
       },
@@ -88,6 +89,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.917.0",
+        "@baseblocks/types": "workspace:*",
         "@convex-dev/better-auth": "^0.10.10",
         "@convex-dev/migrations": "^0.3.1",
         "better-auth": "^1.4.18",
@@ -1757,6 +1759,8 @@
     "warning": ["warning@4.0.3", "", { "dependencies": { "loose-envify": "^1.0.0" } }, "sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w=="],
 
     "wasm-feature-detect": ["wasm-feature-detect@1.8.0", "", {}, "sha512-zksaLKM2fVlnB5jQQDqKXXwYHLQUVH9es+5TOOHwGOVJOCeRBCiPjwSg+3tN2AdTCzjgli4jijCH290kXb/zWQ=="],
+
+    "web-haptics": ["web-haptics@0.0.6", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18", "svelte": ">=4", "vue": ">=3" }, "optionalPeers": ["react", "react-dom", "svelte", "vue"] }, "sha512-eCzcf1LDi20+Fr0x9V3OkX92k0gxEQXaHajmhXHitsnk6SxPeshv8TBtBRqxyst8HI1uf2FyFVE7QS3jo1gkrw=="],
 
     "web-namespaces": ["web-namespaces@2.0.1", "", {}, "sha512-bKr1DkiNa2krS7qxNtdrtHAmzuYGFQLiQ13TsorsdT6ULTkPLKuu5+GsFpDlg6JFjUTwX2DyhMPG2be8uPrqsQ=="],
 

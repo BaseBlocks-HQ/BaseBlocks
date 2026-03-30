@@ -1,3 +1,4 @@
+import { useHaptic } from "@/lib/use-haptic";
 import { getDefaultContent } from "@/modules/elements/framework/registry";
 import {
   useEditorUi,
@@ -26,6 +27,7 @@ interface UseSidebarOperationsOptions {
 export function useSidebarOperations({
   selectedPageId,
 }: UseSidebarOperationsOptions) {
+  const haptic = useHaptic();
   const { selection, selectSlot, editingSubpage, activeTabId, currentPageId } =
     useEditorUi();
   const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
@@ -52,6 +54,7 @@ export function useSidebarOperations({
 
     const newLayout = createLayout(type);
     const pageIdStr = targetPageId as string;
+    haptic.trigger("heavy");
     const layoutId = await createLayoutMutation({
       pageId: targetPageId,
       type: newLayout.type,
@@ -99,6 +102,7 @@ export function useSidebarOperations({
       const slug = `sub-page-${blockId.slice(0, 8)}`;
 
       try {
+        haptic.trigger("heavy");
         await addSubpageBlockMutation({
           layoutId: selection.layoutId as Id<"layouts">,
           slotId: selection.slotId,
@@ -107,6 +111,7 @@ export function useSidebarOperations({
           slug,
         });
       } catch (_error) {
+        haptic.trigger("error");
         toast.error("Failed to create sub-page");
       }
       return;
@@ -119,6 +124,7 @@ export function useSidebarOperations({
     const layoutId = selection.layoutId;
     const slotId = selection.slotId;
 
+    haptic.trigger("heavy");
     await addBlockMutation({
       layoutId: layoutId as Id<"layouts">,
       slotId,
@@ -161,6 +167,7 @@ export function useSidebarOperations({
       : selectedPageId;
 
     if (!targetPageId) return;
+    haptic.trigger("heavy");
     await enablePageTabsMutation({
       pageId: targetPageId,
       tabs: [

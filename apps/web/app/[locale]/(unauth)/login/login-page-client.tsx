@@ -3,6 +3,7 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
+import { useHaptic } from "@/lib/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import {
   Card,
@@ -19,8 +20,10 @@ export function LoginPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations();
+  const haptic = useHaptic();
 
   const handleGoogleSignIn = async () => {
+    haptic.trigger("heavy");
     setError(null);
     setIsLoading(true);
     try {
@@ -29,6 +32,7 @@ export function LoginPageClient() {
         callbackURL: "/dashboard",
       });
     } catch (err) {
+      haptic.trigger("error");
       setError(err instanceof Error ? err.message : t("auth.signInFailed"));
       setIsLoading(false);
     }
