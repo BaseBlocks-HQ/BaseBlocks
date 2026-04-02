@@ -2,8 +2,8 @@ import { getToken } from "@/lib/auth/server";
 import { canUploadToSite } from "@/lib/convex/server";
 import {
   createObjectKey,
-  createSignedUploadUrl,
   deleteObject,
+  uploadObject,
 } from "@/lib/storage/server";
 import {
   type UploadPurpose,
@@ -13,6 +13,8 @@ import {
 import { type NextRequest, NextResponse } from "next/server";
 
 const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
+
+export const runtime = "nodejs";
 
 function parsePurpose(value: string | null): UploadPurpose | null {
   if (value === "document" || value === "siteAsset") {
@@ -65,30 +67,70 @@ async function requireAuthorizedSiteId(request: NextRequest): Promise<{
   return { siteId, purpose };
 }
 
-export async function POST(request: NextRequest) {
+function getValidatedUploadMetadata(request: NextRequest): {
+  filename: string;
+  contentType: string;
+  size: number | null;
+} {
+  const filename = request.headers.get("x-baseblocks-filename")?.trim();
+  if (!filename) {
+    throw new Response(
+      JSON.stringify({ error: "Missing x-baseblocks-filename header" }),
+      {
+        status: 400,
+      },
+    );
+  }
+
+  const contentType =
+    request.headers.get("content-type") || "application/octet-stream";
+  const normalizedMimeType = normalizeMimeType(contentType);
+  if (!normalizedMimeType || !isSupportedUploadMimeType(normalizedMimeType)) {
+    throw new Response(JSON.stringify({ error: "File type not allowed" }), {
+      status: 415,
+    });
+  }
+
+  const contentLength = request.headers.get("content-length");
+  const size = contentLength ? Number.parseInt(contentLength, 10) : null;
+  if (size !== null && Number.isNaN(size)) {
+    throw new Response(
+      JSON.stringify({ error: "Invalid content-length header" }),
+      {
+        status: 400,
+      },
+    );
+  }
+
+  if (size !== null && size > MAX_UPLOAD_SIZE) {
+    throw new Response(
+      JSON.stringify({ error: "File too large. Maximum size is 50 MB" }),
+      {
+        status: 413,
+      },
+    );
+  }
+
+  return {
+    filename,
+    contentType: normalizedMimeType,
+    size,
+  };
+}
+
+export async function PUT(request: NextRequest) {
   try {
     const { siteId, purpose } = await requireAuthorizedSiteId(request);
-    const filename = request.headers.get("x-baseblocks-filename")?.trim();
-    if (!filename) {
+    const { filename, contentType, size } = getValidatedUploadMetadata(request);
+    const body = new Uint8Array(await request.arrayBuffer());
+    if (body.byteLength === 0) {
       return NextResponse.json(
-        { error: "Missing x-baseblocks-filename header" },
+        { error: "Upload body is empty" },
         { status: 400 },
       );
     }
 
-    const contentType =
-      request.headers.get("content-type") || "application/octet-stream";
-    const normalizedMimeType = normalizeMimeType(contentType);
-    if (!normalizedMimeType || !isSupportedUploadMimeType(normalizedMimeType)) {
-      return NextResponse.json(
-        { error: "File type not allowed" },
-        { status: 415 },
-      );
-    }
-
-    const contentLength = request.headers.get("content-length");
-    const size = contentLength ? Number.parseInt(contentLength, 10) : null;
-    if (size && size > MAX_UPLOAD_SIZE) {
+    if (body.byteLength > MAX_UPLOAD_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 50 MB" },
         { status: 413 },
@@ -100,23 +142,22 @@ export async function POST(request: NextRequest) {
       purpose,
       filename,
     });
-    const uploadUrl = await createSignedUploadUrl({
+
+    await uploadObject({
       objectKey,
-      contentType: normalizedMimeType,
+      contentType,
+      body,
     });
 
     return NextResponse.json({
       objectKey,
-      uploadUrl,
-      size,
-      contentType: normalizedMimeType,
+      size: size ?? body.byteLength,
+      contentType,
     });
   } catch (error) {
     if (error instanceof Response) {
       return error;
     }
-
-    console.error("[storage/upload] request failed", error);
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Upload failed" },
@@ -149,8 +190,6 @@ export async function DELETE(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-
-    console.error("[storage/upload] cleanup failed", error);
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Cleanup failed" },

@@ -89,20 +89,19 @@ export async function readObjectBytes(args: {
   return await response.Body.transformToByteArray();
 }
 
-export async function createSignedUploadUrl(args: {
+export async function uploadObject(args: {
   bucket?: string;
   objectKey: string;
   contentType: string;
-  expiresInSeconds?: number;
-}): Promise<string> {
-  return await getSignedUrl(
-    getStorageClient(),
+  body: Uint8Array;
+}): Promise<void> {
+  await getStorageClient().send(
     new PutObjectCommand({
       Bucket: args.bucket ?? getStorageBucketName(),
       Key: args.objectKey,
       ContentType: args.contentType,
+      Body: args.body,
     }),
-    { expiresIn: args.expiresInSeconds ?? 60 * 15 },
   );
 }
 

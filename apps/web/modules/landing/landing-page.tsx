@@ -87,13 +87,21 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
 
   const authCta = isAuthenticated ? (
     <Link href="/dashboard">
-      <Button size="lg" className="gap-2" onClick={() => haptic.trigger("heavy")}>
+      <Button
+        size="lg"
+        className="gap-2"
+        onClick={() => haptic.trigger("heavy")}
+      >
         {commonTranslations("goToDashboard")} <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
   ) : (
     <Link href="/login">
-      <Button size="lg" className="gap-2" onClick={() => haptic.trigger("heavy")}>
+      <Button
+        size="lg"
+        className="gap-2"
+        onClick={() => haptic.trigger("heavy")}
+      >
         {landingTranslations("getStarted")} <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
@@ -101,7 +109,11 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
 
   const docsCta = (
     <Link href="/docs">
-      <Button variant="outline" size="lg" onClick={() => haptic.trigger("heavy")}>
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={() => haptic.trigger("heavy")}
+      >
         {landingTranslations("viewDocs")}
       </Button>
     </Link>

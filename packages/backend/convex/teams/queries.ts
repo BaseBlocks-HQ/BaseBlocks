@@ -32,7 +32,9 @@ async function getWorkspaceTeams(
     }),
   );
 
-  return teams.filter((team): team is NonNullable<typeof team> => team !== null);
+  return teams.filter(
+    (team): team is NonNullable<typeof team> => team !== null,
+  );
 }
 
 async function getActiveOrganizationId(
@@ -111,7 +113,7 @@ export const getWorkspaceBoundary = query({
       null;
 
     const requestedWorkspace = teamSlug
-      ? teams.find((team) => team.slug === teamSlug) ?? null
+      ? (teams.find((team) => team.slug === teamSlug) ?? null)
       : null;
 
     return {

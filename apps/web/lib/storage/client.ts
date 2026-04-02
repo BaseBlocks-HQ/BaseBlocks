@@ -18,45 +18,9 @@ export interface FinalizeResult {
   checksum: string;
 }
 
-interface UploadIntent {
-  objectKey: string;
-  uploadUrl: string;
-}
-
 class StorageClient {
-  private async createUploadIntent(
-    file: File,
-    options: {
-      siteId: string;
-      purpose: UploadPurpose;
-    },
-  ): Promise<UploadIntent> {
-    const response = await fetch("/api/storage/upload", {
-      method: "POST",
-      headers: {
-        "Content-Type": file.type || "application/octet-stream",
-        "Content-Length": `${file.size}`,
-        "X-Baseblocks-Site-Id": options.siteId,
-        "X-Baseblocks-Upload-Purpose": options.purpose,
-        "X-Baseblocks-Filename": file.name,
-      },
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as Partial<
-      UploadIntent & { error: string }
-    >;
-    if (!response.ok || !payload.objectKey || !payload.uploadUrl) {
-      throw new Error(payload.error || `Upload failed: ${response.status}`);
-    }
-
-    return {
-      objectKey: payload.objectKey,
-      uploadUrl: payload.uploadUrl,
-    };
-  }
-
   /**
-   * After a direct PUT upload completes, call this to get server-verified
+   * After a server-mediated upload completes, call this to get server-verified
    * metadata (size, contentType, etag/checksum).  Always pass the returned
    * values to Convex mutations instead of the client-side File properties.
    */
@@ -114,52 +78,57 @@ class StorageClient {
     },
   ): Promise<UploadResult> {
     return await new Promise((resolve, reject) => {
-      this.createUploadIntent(file, options)
-        .then(({ objectKey, uploadUrl }) => {
-          const xhr = new XMLHttpRequest();
+      const xhr = new XMLHttpRequest();
 
-          xhr.upload.addEventListener("progress", (event) => {
-            if (!event.lengthComputable || !options.onProgress) {
-              return;
-            }
+      xhr.upload.addEventListener("progress", (event) => {
+        if (!event.lengthComputable || !options.onProgress) {
+          return;
+        }
 
-            options.onProgress({
-              loaded: event.loaded,
-              total: event.total,
-              percentage: Math.round((event.loaded / event.total) * 100),
-            });
-          });
-
-          xhr.addEventListener("load", () => {
-            if (xhr.status < 200 || xhr.status >= 300) {
-              reject(new Error(`Upload failed: ${xhr.status}`));
-              return;
-            }
-
-            resolve({
-              objectKey,
-              size: file.size,
-            });
-          });
-
-          xhr.addEventListener("error", () => {
-            reject(new Error("Network error during upload"));
-          });
-
-          xhr.addEventListener("abort", () => {
-            reject(new Error("Upload cancelled"));
-          });
-
-          xhr.open("PUT", uploadUrl);
-          xhr.setRequestHeader(
-            "Content-Type",
-            file.type || "application/octet-stream",
-          );
-          xhr.send(file);
-        })
-        .catch((error) => {
-          reject(error);
+        options.onProgress({
+          loaded: event.loaded,
+          total: event.total,
+          percentage: Math.round((event.loaded / event.total) * 100),
         });
+      });
+
+      xhr.addEventListener("load", () => {
+        let payload: Partial<{ objectKey: string; error: string }> = {};
+        try {
+          payload = JSON.parse(xhr.responseText) as Partial<{
+            objectKey: string;
+            error: string;
+          }>;
+        } catch {}
+
+        if (xhr.status < 200 || xhr.status >= 300 || !payload.objectKey) {
+          reject(new Error(payload.error || `Upload failed: ${xhr.status}`));
+          return;
+        }
+
+        resolve({
+          objectKey: payload.objectKey,
+          size: file.size,
+        });
+      });
+
+      xhr.addEventListener("error", () => {
+        reject(new Error("Network error during upload"));
+      });
+
+      xhr.addEventListener("abort", () => {
+        reject(new Error("Upload cancelled"));
+      });
+
+      xhr.open("PUT", "/api/storage/upload");
+      xhr.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream",
+      );
+      xhr.setRequestHeader("X-Baseblocks-Site-Id", options.siteId);
+      xhr.setRequestHeader("X-Baseblocks-Upload-Purpose", options.purpose);
+      xhr.setRequestHeader("X-Baseblocks-Filename", file.name);
+      xhr.send(file);
     });
   }
 }
