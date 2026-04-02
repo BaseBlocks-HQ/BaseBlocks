@@ -274,7 +274,7 @@ function SiteEditorInner({
               >
                 <PortalContainerProvider value={portalContainer}>
                   <div
-                    className="h-full w-full min-w-0 overflow-hidden border-l"
+                    className="h-full w-full min-w-0 overflow-hidden border-l pt-[3.5rem]"
                     style={customizationStyles}
                     {...(isCustomized ? { "data-site-customized": "" } : {})}
                   >
