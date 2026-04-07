@@ -9,7 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Globe } from "lucide-react";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { ChevronsUpDown, Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 const languageNames: Record<Locale, string> = {
@@ -22,7 +23,13 @@ const languageFlags: Record<Locale, string> = {
   en: "🇺🇸",
 };
 
-export function LanguageSwitcher() {
+export function LanguageSwitcher({
+  triggerClassName,
+  variant = "icon",
+}: {
+  triggerClassName?: string;
+  variant?: "icon" | "row";
+} = {}) {
   const t = useTranslations("language");
   const locale = useLocale() as Locale;
   const router = useRouter();
@@ -35,10 +42,33 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" title={t("select")}>
-          <Globe className="h-4 w-4" />
-          <span className="sr-only">{t("select")}</span>
-        </Button>
+        {variant === "row" ? (
+          <Button
+            className={cn(
+              "flex h-10 w-full items-center gap-2 rounded-[1.15rem] border border-transparent px-3 text-muted-foreground hover:bg-accent/55 hover:text-foreground sm:rounded-[1.25rem]",
+              triggerClassName,
+            )}
+            title={t("select")}
+            type="button"
+            variant="ghost"
+          >
+            <Globe className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1 truncate text-left text-foreground">
+              {languageNames[locale]}
+            </span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Button>
+        ) : (
+          <Button
+            className={cn(triggerClassName)}
+            size="icon"
+            title={t("select")}
+            variant="ghost"
+          >
+            <Globe className="h-4 w-4" />
+            <span className="sr-only">{t("select")}</span>
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {routing.locales.map((loc) => (

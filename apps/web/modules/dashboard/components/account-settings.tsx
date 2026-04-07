@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
@@ -31,7 +32,11 @@ import { IconGear } from "nucleo-glass";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function AccountSettings() {
+export function AccountSettings({
+  triggerClassName,
+}: {
+  triggerClassName?: string;
+} = {}) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const { data: session } = authClient.useSession();
@@ -72,7 +77,13 @@ export function AccountSettings() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start gap-2 h-8 px-2">
+        <Button
+          variant="ghost"
+          className={cn(
+            "h-8 w-full justify-start gap-2 px-2",
+            triggerClassName,
+          )}
+        >
           <IconGear className="h-4 w-4" />
           <span>{tCommon("settings")}</span>
         </Button>
@@ -87,7 +98,6 @@ export function AccountSettings() {
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* User Profile Section */}
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               {user?.image && <AvatarImage src={user.image} />}
@@ -108,7 +118,6 @@ export function AccountSettings() {
             </div>
           </div>
 
-          {/* Account Info */}
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <h3 className="font-medium text-sm">{t("accountInfo")}</h3>
             <div className="space-y-2 text-sm">
@@ -133,7 +142,6 @@ export function AccountSettings() {
 
           <Separator />
 
-          {/* Danger Zone */}
           <div className="space-y-3">
             <h3 className="font-medium text-sm text-destructive">
               {t("dangerZone")}

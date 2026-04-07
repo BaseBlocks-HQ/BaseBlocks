@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { Check, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -87,12 +88,13 @@ const initialState: InboxState = {
 
 interface InvitationInboxProps {
   fullWidth?: boolean;
-  /** When true, renders invitations inline (no dialog) for the onboarding page */
+  fullWidthTriggerClassName?: string;
   onboardingMode?: boolean;
 }
 
 export function InvitationInbox({
   fullWidth = false,
+  fullWidthTriggerClassName,
   onboardingMode = false,
 }: InvitationInboxProps) {
   const t = useTranslations("inbox");
@@ -143,7 +145,6 @@ export function InvitationInbox({
       await authClient.organization.acceptInvitation({
         invitationId: invitation.id,
       });
-      // setActive and syncMember are independent — run in parallel
       await Promise.all([
         authClient.organization.setActive({
           organizationId: invitation.organizationId,
@@ -191,13 +192,10 @@ export function InvitationInbox({
     return "?";
   };
 
-  // Load once on mount so the badge state is populated immediately.
   useEffect(() => {
     void loadInvitations();
   }, [loadInvitations]);
 
-  // Poll only while the inbox is visible. Keeping it always-on creates
-  // unnecessary background traffic across dashboard pages.
   useEffect(() => {
     if (!onboardingMode && !open) {
       return;
@@ -210,7 +208,6 @@ export function InvitationInbox({
     return () => clearInterval(interval);
   }, [onboardingMode, open, loadInvitations]);
 
-  // Shared invitation list content
   const invitationContent = (
     <div className="space-y-3">
       {error && (
@@ -289,7 +286,6 @@ export function InvitationInbox({
     </div>
   );
 
-  // In onboarding mode, render inline (no dialog wrapper)
   if (onboardingMode) {
     return (
       <div>
@@ -314,14 +310,16 @@ export function InvitationInbox({
     );
   }
 
-  // Default: render as dialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {fullWidth ? (
           <Button
             variant="ghost"
-            className="w-full justify-start gap-2 h-8 px-2 relative"
+            className={cn(
+              "relative h-8 w-full justify-start gap-2 px-2",
+              fullWidthTriggerClassName,
+            )}
           >
             <IconInbox className="h-4 w-4" />
             <span>{t("title")}</span>

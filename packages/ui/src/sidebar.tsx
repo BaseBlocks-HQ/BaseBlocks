@@ -178,17 +178,26 @@ function Sidebar({
   }
 
   if (isMobile) {
+    const isFloating = variant === "floating";
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          showCloseButton={false}
+          className={cn(
+            "text-sidebar-foreground gap-0 p-0",
+            isFloating
+              ? "flex min-h-0 flex-col data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left !inset-y-auto !top-3 !bottom-3 !left-3 !right-auto !h-auto !max-h-[calc(100svh-1.5rem)] !w-[min(18rem,calc(100vw-1.5rem))] rounded-[1.75rem] !border !border-border/80 !bg-background/95 shadow-2xl backdrop-blur-md sm:!max-w-none"
+              : "bg-sidebar w-(--sidebar-width)",
+          )}
           style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
+            isFloating
+              ? undefined
+              : ({
+                  "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+                } as React.CSSProperties)
           }
           side={side}
         >
@@ -196,7 +205,16 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div
+            className={cn(
+              "flex w-full flex-col",
+              isFloating
+                ? "min-h-0 flex-1 overflow-hidden rounded-[1.75rem]"
+                : "h-full min-h-0",
+            )}
+          >
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );
@@ -211,7 +229,6 @@ function Sidebar({
       data-side={side}
       data-slot="sidebar"
     >
-      {/* This is what handles the sidebar gap on desktop */}
       <div
         data-slot="sidebar-gap"
         className={cn(
@@ -240,7 +257,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+          className="bg-sidebar flex h-full w-full flex-col group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm"
         >
           {children}
         </div>

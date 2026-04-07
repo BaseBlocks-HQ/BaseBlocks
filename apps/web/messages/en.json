@@ -20,6 +20,9 @@
     "signIn": "Sign In",
     "signUp": "Sign up",
     "signOut": "Sign Out",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
     "getStarted": "Get Started",
     "goToDashboard": "Go to Dashboard",
     "redirecting": "Redirecting..."

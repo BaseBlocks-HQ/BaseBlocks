@@ -20,6 +20,9 @@
     "signIn": "Connexion",
     "signUp": "S'inscrire",
     "signOut": "Deconnexion",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeSystem": "Système",
     "getStarted": "Commencer",
     "goToDashboard": "Aller au tableau de bord",
     "redirecting": "Redirection..."
