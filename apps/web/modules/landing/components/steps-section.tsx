@@ -95,7 +95,6 @@ export function StepsSection({
                           sizes="(max-width: 1024px) 100vw, 50vw"
                           placeholder="blur"
                         />
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-transparent" />
                       </button>
                     </DialogTrigger>
                     <DialogContent
