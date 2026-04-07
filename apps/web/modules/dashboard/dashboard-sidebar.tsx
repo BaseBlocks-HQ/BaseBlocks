@@ -76,27 +76,16 @@ export function DashboardSidebar() {
     <Sidebar collapsible="offcanvas" className="min-h-svh">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-1">
-          <Link
-            href={getTeamDashboardPath(team.slug)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold"
-          >
-            B
-          </Link>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
               >
-                <div className="min-w-0">
-                  <span className="block text-sm font-semibold">
-                    BaseBlocks
-                  </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {team.name}
-                  </span>
-                </div>
-                <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                <span className="block truncate text-sm font-semibold">
+                  {team.name}
+                </span>
+                <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
