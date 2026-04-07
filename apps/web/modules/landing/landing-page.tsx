@@ -112,6 +112,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
       <Button
         variant="outline"
         size="lg"
+        className="bg-background dark:bg-background dark:hover:bg-accent"
         onClick={() => haptic.trigger("heavy")}
       >
         {landingTranslations("viewDocs")}

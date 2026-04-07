@@ -25,7 +25,7 @@ export function HeroSection({
         <div className="relative z-10 lg:max-w-[42%]">
           <BlurIn delay={0.1}>
             <div
-              className="mb-7 inline-flex items-center gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] tracking-wide text-amber-700 dark:border-amber-400/25 dark:text-amber-400"
+              className="mb-7 inline-flex items-center gap-2 rounded-sm border border-foreground/10 bg-foreground px-3 py-1 text-[11px] tracking-wide text-background"
               style={{ fontFamily: landingFonts.square }}
             >
               <GitFork className="h-3 w-3" />
@@ -37,7 +37,7 @@ export function HeroSection({
             <h1
               className="leading-[0.98] tracking-tight"
               style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
-              aria-label="Build sites your team will actually use."
+              aria-label="Build sites your team will actually use"
             >
               <span className="block" style={{ fontFamily: landingFonts.grid }}>
                 BUILD SITES
@@ -46,13 +46,13 @@ export function HeroSection({
                 YOUR TEAM WILL
               </span>
               <span className="block">
+                <span style={{ fontFamily: landingFonts.grid }}>ACTUALLY </span>
                 <span
                   className="text-amber-500 dark:text-amber-400"
                   style={{ fontFamily: landingFonts.square }}
                 >
-                  ACTUALLY
+                  USE.
                 </span>
-                <span style={{ fontFamily: landingFonts.grid }}> USE.</span>
               </span>
             </h1>
           </BlurIn>
@@ -72,7 +72,7 @@ export function HeroSection({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button variant="outline" size="lg" className="gap-2">
+                <Button variant="outline" size="lg" className="gap-2 bg-background dark:bg-background dark:hover:bg-accent">
                   <Github className="h-4 w-4" />
                   {landingTranslations("viewOnGithub")}
                 </Button>
