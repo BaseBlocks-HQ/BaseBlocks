@@ -16,9 +16,9 @@ import {
 } from "@baseblocks/ui/dialog";
 import { useMutation } from "convex/react";
 import { Check, Loader2, X } from "lucide-react";
-import { IconInbox } from "nucleo-glass";
 import { useTranslations } from "next-intl";
-import { useEffect, useReducer, useState } from "react";
+import { IconInbox } from "nucleo-glass";
+import { useCallback, useEffect, useReducer, useState } from "react";
 
 interface ReceivedInvitation {
   id: string;
@@ -106,7 +106,7 @@ export function InvitationInbox({
     api.members.mutations.syncMemberFromInvitation,
   );
 
-  const loadInvitations = async () => {
+  const loadInvitations = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
     try {
       const result = await authClient.organization.listUserInvitations();
@@ -135,7 +135,7 @@ export function InvitationInbox({
           err instanceof Error ? err.message : "Failed to load invitations",
       });
     }
-  };
+  }, []);
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     dispatch({ type: "PROCESS_START", id: invitation.id });
@@ -194,7 +194,7 @@ export function InvitationInbox({
   // Load once on mount so the badge state is populated immediately.
   useEffect(() => {
     void loadInvitations();
-  }, []);
+  }, [loadInvitations]);
 
   // Poll only while the inbox is visible. Keeping it always-on creates
   // unnecessary background traffic across dashboard pages.
@@ -208,7 +208,7 @@ export function InvitationInbox({
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [onboardingMode, open]);
+  }, [onboardingMode, open, loadInvitations]);
 
   // Shared invitation list content
   const invitationContent = (

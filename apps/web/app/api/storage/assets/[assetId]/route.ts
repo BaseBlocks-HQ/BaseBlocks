@@ -65,8 +65,6 @@ export async function GET(
 
     return new NextResponse(upstream.body, { headers });
   } catch (error) {
-    console.error("[storage/assets] serve failed", error);
-
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to serve asset",

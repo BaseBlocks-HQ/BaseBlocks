@@ -98,8 +98,6 @@ export async function POST(request: NextRequest) {
       checksum: meta.etag,
     });
   } catch (error) {
-    console.error("[storage/finalize] request failed", error);
-
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Finalize failed" },
       { status: 500 },
