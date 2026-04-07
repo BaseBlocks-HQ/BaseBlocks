@@ -33,11 +33,31 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
     emailAndPassword: {
       enabled: false,
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github", "microsoft"],
+        allowDifferentEmails: false,
+      },
+    },
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         redirectURI: `${primaryAppUrl}/api/auth/callback/google`,
+      },
+      github: {
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        redirectURI: `${primaryAppUrl}/api/auth/callback/github`,
+      },
+      microsoft: {
+        clientId: process.env.MICROSOFT_CLIENT_ID!,
+        clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+        tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+        authority: "https://login.microsoftonline.com",
+        prompt: "select_account",
+        redirectURI: `${primaryAppUrl}/api/auth/callback/microsoft`,
       },
     },
     plugins: [

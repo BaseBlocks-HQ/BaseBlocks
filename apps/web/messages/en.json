@@ -89,6 +89,7 @@
     "hasAccount": "Already have an account?",
     "continueWith": "Or continue with",
     "continueWithGoogle": "Continue with Google",
+    "continueWithGitHub": "Continue with GitHub",
     "continueWithMicrosoft": "Continue with Microsoft",
     "signInFailed": "Sign in failed"
   },
