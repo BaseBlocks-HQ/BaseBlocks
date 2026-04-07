@@ -13,7 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Label } from "@baseblocks/ui/label";
-import { Check, ChevronDown } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
+import { Check, ChevronDown, Info } from "lucide-react";
 
 interface BorderRadiusPickerProps {
   value: BorderRadiusPreset | undefined;
@@ -41,7 +46,19 @@ export function BorderRadiusPicker({
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium">Border Radius</Label>
+      <div className="flex items-center gap-1.5">
+        <Label className="text-sm font-medium">Border Radius</Label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {value
+              ? "Applied to buttons, cards, and inputs"
+              : "Using theme default radius"}
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
@@ -100,12 +117,6 @@ export function BorderRadiusPicker({
           })}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <p className="text-xs text-muted-foreground">
-        {value
-          ? "Applied to buttons, cards, and inputs"
-          : "Using theme default radius"}
-      </p>
     </div>
   );
 }

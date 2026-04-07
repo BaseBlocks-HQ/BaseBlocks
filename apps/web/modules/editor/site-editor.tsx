@@ -23,7 +23,8 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { useConvexAuth, useMutation } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ConnectedPageEditor,
@@ -77,7 +78,9 @@ function SiteEditorInner({
 }: SiteEditorProps) {
   const { team } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const selectedPageId = searchParams.get("page");
   const [, setSelectedSlotId] = useState<string | null>(null);
   const { selection, editingSubpage, closeSubpageEditor } = useEditorUi();
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
@@ -188,8 +191,18 @@ function SiteEditorInner({
     setSelectedSlotId(slotId);
   };
 
+  const setSelectedPageId = (id: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set("page", id);
+    } else {
+      params.delete("page");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
   const selectedPage = selectedPageId
-    ? pages?.find((p: Doc<"pages">) => p._id === selectedPageId)
+    ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
   const { handleAddLayout, handleAddBlock, handleEnableTabs } =
@@ -358,11 +371,13 @@ export function SiteEditor({
       <EditorProvider siteId={siteId} site={siteData} permissions={permissions}>
         <BlockClipboardProvider>
           <PublicSubpageProvider>
-            <SiteEditorInner
-              initialPages={initialPages}
-              initialSite={initialSite}
-              siteId={siteId}
-            />
+            <Suspense fallback={<EditorSkeleton />}>
+              <SiteEditorInner
+                initialPages={initialPages}
+                initialSite={initialSite}
+                siteId={siteId}
+              />
+            </Suspense>
           </PublicSubpageProvider>
         </BlockClipboardProvider>
       </EditorProvider>

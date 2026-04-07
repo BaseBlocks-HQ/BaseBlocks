@@ -9,7 +9,6 @@ import {
   NAVIGATION_STYLES,
   type NavigationStyle,
 } from "@baseblocks/types/elements/navigation";
-import { Switch } from "@baseblocks/ui/switch";
 import { useMutation } from "convex/react";
 import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -138,46 +137,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     }
   };
 
-  const updateSidebarDefaultExpanded = async (expanded: boolean) => {
-    if (!site) return;
-    const oldValue = !!(site.settings as Record<string, unknown>)
-      .sidebarDefaultExpanded;
-    const shouldTrackUndo = Boolean(
-      undoContext && !undoContext.isUndoRedoExecuting,
-    );
-    const successMessage = expanded
-      ? "Sidebar pages will be expanded by default"
-      : "Sidebar pages will be collapsed by default";
-    const activeUndoContext = shouldTrackUndo ? undoContext : null;
-    try {
-      await updateSite({
-        siteId,
-        settings: { sidebarDefaultExpanded: expanded },
-      });
-      toast.success(successMessage);
-
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: "Toggle sidebar default expanded",
-          undo: async () => {
-            await updateSite({
-              siteId,
-              settings: { sidebarDefaultExpanded: oldValue },
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              settings: { sidebarDefaultExpanded: expanded },
-            });
-          },
-        });
-      }
-    } catch (_error) {
-      toast.error("Failed to update setting");
-    }
-  };
-
   if (!site) {
     return (
       <div className="p-4 flex items-center justify-center">
@@ -225,31 +184,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           );
         })}
       </div>
-
-      {/* Sidebar-specific settings */}
-      {currentNavStyle === "sidebar" && (
-        <div className="mt-4 pt-4 border-t">
-          <label
-            htmlFor="sidebar-default-expanded"
-            className="flex items-center justify-between gap-3 cursor-pointer"
-          >
-            <div>
-              <p className="text-sm font-medium">Expand all pages by default</p>
-              <p className="text-xs text-muted-foreground">
-                Show subpages expanded in the sidebar navigation
-              </p>
-            </div>
-            <Switch
-              id="sidebar-default-expanded"
-              checked={
-                !!(site.settings as Record<string, unknown>)
-                  .sidebarDefaultExpanded
-              }
-              onCheckedChange={updateSidebarDefaultExpanded}
-            />
-          </label>
-        </div>
-      )}
     </div>
   );
 }

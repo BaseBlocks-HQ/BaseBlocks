@@ -12,7 +12,12 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { Check, ChevronDown, Pipette } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
+import { Check, ChevronDown, Info, Pipette } from "lucide-react";
 import { useState } from "react";
 import { isValidHex } from "./lib";
 
@@ -71,7 +76,17 @@ export function AccentColorPicker({
 
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Label className="text-sm font-medium">{label}</Label>
+        {description && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+            </TooltipTrigger>
+            <TooltipContent side="top">{description}</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
 
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
@@ -174,10 +189,6 @@ export function AccentColorPicker({
             Done
           </Button>
         </div>
-      )}
-
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
       )}
     </div>
   );

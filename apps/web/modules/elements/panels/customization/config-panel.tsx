@@ -11,8 +11,13 @@ import type {
 import { getDarkColorForPreset } from "@baseblocks/types/elements/customization";
 import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AccentColorPicker } from "./accent-color-picker";
@@ -147,23 +152,17 @@ export function CustomizationConfigPanel({
 
   return (
     <div className="p-4 space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-semibold text-sm mb-1">Customization</h3>
-          <p className="text-xs text-muted-foreground">
-            Customize your site&apos;s appearance
-          </p>
+          <h3 className="font-semibold text-sm">Customization</h3>
         </div>
         {isSaving && (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         )}
       </div>
 
-      {/* Live Preview (always visible when any customization is set) */}
       <CustomizationPreview customization={customization} />
 
-      {/* Primary Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.accentColor}
@@ -173,7 +172,6 @@ export function CustomizationConfigPanel({
         />
       </div>
 
-      {/* Header Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.headerColor}
@@ -183,7 +181,6 @@ export function CustomizationConfigPanel({
         />
       </div>
 
-      {/* Secondary Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.secondaryColor}
@@ -193,7 +190,6 @@ export function CustomizationConfigPanel({
         />
       </div>
 
-      {/* Tertiary Color */}
       <div className="border-t pt-4">
         <AccentColorPicker
           value={customization?.tertiaryColor}
@@ -203,14 +199,18 @@ export function CustomizationConfigPanel({
         />
       </div>
 
-      {/* Header Gradient Toggle */}
       <div className="border-t pt-4">
         <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
+          <div className="flex items-center gap-1.5">
             <Label className="text-sm font-medium">Header Gradient</Label>
-            <p className="text-xs text-muted-foreground">
-              Show a gradient stripe below the header
-            </p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Show a gradient stripe below the header
+              </TooltipContent>
+            </Tooltip>
           </div>
           <Switch
             checked={customization?.showHeaderGradient ?? false}
@@ -219,7 +219,6 @@ export function CustomizationConfigPanel({
         </div>
       </div>
 
-      {/* Border Radius */}
       <div className="border-t pt-4">
         <BorderRadiusPicker
           value={customization?.borderRadius}

@@ -11,13 +11,20 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
 import {
   Eye,
   EyeOff,
   Globe,
   ImageIcon,
+  Info,
   Loader2,
+  PanelLeft,
   Route,
   Search,
   Type,
@@ -44,15 +51,20 @@ function SettingSection({
   label: string;
 }) {
   return (
-    <div className="space-y-3 border-t pt-4">
+    <div className="border-t pt-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {icon}
           <Label className="text-sm font-medium">{label}</Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+            </TooltipTrigger>
+            <TooltipContent side="top">{description}</TooltipContent>
+          </Tooltip>
         </div>
         {control}
       </div>
-      <p className="text-xs text-muted-foreground ml-6">{description}</p>
     </div>
   );
 }
@@ -336,14 +348,16 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const showBreadcrumbs =
     site.settings.showBreadcrumbs ??
     site.settings.navigationStyle !== "sidebar";
+  const isSidebarNav =
+    !site.settings.navigationStyle ||
+    site.settings.navigationStyle === "sidebar";
+  const sidebarDefaultExpanded = !!(site.settings as Record<string, unknown>)
+    .sidebarDefaultExpanded;
 
   return (
     <div className="p-4 space-y-6">
       <div>
-        <h3 className="font-semibold text-sm mb-1">Site Settings</h3>
-        <p className="text-xs text-muted-foreground">
-          Configure your site header and branding
-        </p>
+        <h3 className="font-semibold text-sm">Site Settings</h3>
       </div>
 
       <SettingSection
@@ -470,6 +484,23 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         icon={<Route className="h-4 w-4 text-muted-foreground" />}
         label="Show Breadcrumbs"
       />
+
+      {isSidebarNav && (
+        <SettingSection
+          control={
+            <Switch
+              id="sidebar-default-expanded"
+              checked={sidebarDefaultExpanded}
+              onCheckedChange={(checked) =>
+                updateSettings("sidebarDefaultExpanded", checked)
+              }
+            />
+          }
+          description="Show subpages expanded in the sidebar navigation"
+          icon={<PanelLeft className="h-4 w-4 text-muted-foreground" />}
+          label="Expand Pages by Default"
+        />
+      )}
 
       <MetadataDialog
         open={metadataDialogOpen}

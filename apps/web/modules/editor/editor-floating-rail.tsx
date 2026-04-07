@@ -256,13 +256,8 @@ function FloatingRailFlyout({
   if (activePanel === "pages") {
     return (
       <div className={RAIL_FLYOUT_CLASS}>
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold">Pages</p>
-            <p className="text-xs text-muted-foreground">
-              Choose a page to edit
-            </p>
-          </div>
+        <div className="flex items-center justify-between px-4 py-3">
+          <p className="text-sm font-semibold">Pages</p>
           {canEdit && <CreatePageDialog siteId={site._id} />}
         </div>
 
