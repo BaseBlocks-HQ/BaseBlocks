@@ -31,8 +31,13 @@ import {
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { IconCirclePowerOff, IconFolder, IconHouse, IconUsers } from "nucleo-glass";
 import { useTranslations } from "next-intl";
+import {
+  IconCirclePowerOff,
+  IconFolder,
+  IconHouse,
+  IconUsers,
+} from "nucleo-glass";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -68,8 +73,8 @@ export function DashboardSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="min-h-svh">
-      <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2 px-2 py-1">
+      <SidebarHeader className="border-b h-14 px-4 flex items-center">
+        <div className="flex items-center gap-2 w-full">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

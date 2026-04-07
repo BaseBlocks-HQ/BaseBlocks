@@ -72,7 +72,11 @@ export function HeroSection({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button variant="outline" size="lg" className="gap-2 bg-background dark:bg-background dark:hover:bg-accent">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 bg-background dark:bg-background dark:hover:bg-accent"
+                >
                   <Github className="h-4 w-4" />
                   {landingTranslations("viewOnGithub")}
                 </Button>

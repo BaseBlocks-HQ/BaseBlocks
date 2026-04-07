@@ -8,7 +8,10 @@ import {
 import dynamic from "next/dynamic";
 
 const DashboardSidebar = dynamic(
-  () => import("./dashboard-sidebar").then((m) => ({ default: m.DashboardSidebar })),
+  () =>
+    import("./dashboard-sidebar").then((m) => ({
+      default: m.DashboardSidebar,
+    })),
   { ssr: false },
 );
 
