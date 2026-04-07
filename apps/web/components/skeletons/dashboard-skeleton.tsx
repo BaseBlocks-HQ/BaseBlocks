@@ -1,28 +1,38 @@
-import { Card, CardContent, CardHeader } from "@baseblocks/ui/card";
+import { cn } from "@baseblocks/ui/lib/utils";
+import {
+  NestedCard,
+  NestedCardPeek,
+  NestedCardSurface,
+  nestedCardPeekActionClass,
+  nestedCardShellOuterRadiusClass,
+} from "@baseblocks/ui/nested-card";
 import { Skeleton } from "@baseblocks/ui/skeleton";
+
+const dashboardSitesGridClassName =
+  "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3";
 
 function SiteCardSkeleton() {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-5 w-12 rounded-full" />
+    <NestedCard className="min-h-[13rem]">
+      <NestedCardSurface className="min-h-0 flex-1 px-3 pb-3 pt-4">
+        <div className="flex h-full min-h-0 flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+              <Skeleton className="h-6 w-32" />
             </div>
-            <Skeleton className="h-3 w-20 mt-2" />
+            <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+          </div>
+          <div className="flex min-w-0 items-end gap-3">
+            <Skeleton className="h-5 w-16 rounded-full" />
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 flex-1 rounded-md" />
-          <Skeleton className="h-9 w-9 rounded-md" />
-        </div>
-      </CardContent>
-    </Card>
+      </NestedCardSurface>
+      <NestedCardPeek>
+        <Skeleton className={cn("flex-1", nestedCardPeekActionClass)} />
+        <Skeleton className={cn("flex-1", nestedCardPeekActionClass)} />
+      </NestedCardPeek>
+    </NestedCard>
   );
 }
 
@@ -51,18 +61,22 @@ export function DashboardSkeleton() {
           <Skeleton className="h-8 w-8 rounded-md" />
         </header>
 
-        <div className="min-w-0 flex-1 p-4 sm:p-6">
-          <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <Skeleton className="mb-2 h-7 w-32" />
-              <Skeleton className="h-4 w-full max-w-56" />
+        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6">
+          <div className="mx-auto w-full max-w-[64rem]">
+            <div className="mb-6 sm:mb-8">
+              <Skeleton className="h-7 w-32" />
             </div>
-            <Skeleton className="h-9 w-full max-w-28 rounded-md sm:w-28" />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {cardPlaceholders.map((item) => (
-              <SiteCardSkeleton key={item} />
-            ))}
+            <div className={dashboardSitesGridClassName}>
+              <Skeleton
+                className={cn(
+                  "h-[13rem] w-full",
+                  nestedCardShellOuterRadiusClass,
+                )}
+              />
+              {cardPlaceholders.map((item) => (
+                <SiteCardSkeleton key={item} />
+              ))}
+            </div>
           </div>
         </div>
       </div>

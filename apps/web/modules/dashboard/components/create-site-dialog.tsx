@@ -5,9 +5,10 @@ import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -86,10 +87,22 @@ export function CreateSiteDialog({
       title={t("dialogs.createSite.title")}
       description={t("dialogs.createSite.description")}
       trigger={
-        <Button disabled={disabled}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("dashboard.createSite")}
-        </Button>
+        <button
+          className={cn(
+            nestedCardRadiusClass,
+            "flex min-h-[13rem] w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/35 bg-transparent text-muted-foreground transition-colors",
+            "hover:border-primary/45 hover:bg-accent/20 hover:text-foreground",
+            "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+            "disabled:pointer-events-none disabled:opacity-50",
+          )}
+          disabled={disabled}
+          type="button"
+        >
+          <span className="flex items-center gap-2 font-medium">
+            <Plus className="h-4 w-4 shrink-0" />
+            {t("dashboard.createSite")}
+          </span>
+        </button>
       }
       onSubmit={handleSubmit}
       isSubmitting={dialogState.isSubmitting}

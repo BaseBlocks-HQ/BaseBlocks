@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
 import {
   Sidebar,
   SidebarContent,
@@ -43,8 +44,10 @@ import {
 const sidebarFloatingInnerClass =
   "[&_[data-slot=sidebar-inner]]:rounded-[1.75rem] [&_[data-slot=sidebar-inner]]:border-border/80 [&_[data-slot=sidebar-inner]]:!bg-background/90 [&_[data-slot=sidebar-inner]]:shadow-xl [&_[data-slot=sidebar-inner]]:backdrop-blur-md sm:[&_[data-slot=sidebar-inner]]:rounded-[2rem]";
 
-const pillRowClass =
-  "flex h-10 w-full items-center gap-2 rounded-[1.15rem] border border-transparent px-3 text-muted-foreground transition-colors hover:bg-accent/55 hover:text-foreground sm:rounded-[1.25rem]";
+const pillRowClass = cn(
+  "flex h-10 w-full items-center gap-2 border border-transparent px-3 text-muted-foreground transition-colors hover:bg-accent/55 hover:text-foreground",
+  nestedCardRadiusClass,
+);
 
 const navActiveClass =
   "data-[active=true]:border-border data-[active=true]:bg-accent/70 data-[active=true]:font-medium data-[active=true]:text-foreground data-[active=true]:shadow-sm";

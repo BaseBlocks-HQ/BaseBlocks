@@ -29,6 +29,8 @@ interface SitesGridProps {
   teamSlug: string;
 }
 
+const sitesGridClassName = "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3";
+
 export function SitesGrid({
   canManageSites,
   sites,
@@ -36,12 +38,15 @@ export function SitesGrid({
   teamSlug,
 }: SitesGridProps) {
   const t = useTranslations("dashboard");
-  const loadingCards = ["site-a", "site-b", "site-c"];
+  const loadingSkeletonIds = canManageSites
+    ? ["site-a", "site-b"]
+    : ["site-a", "site-b", "site-c"];
 
   if (sites === undefined) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {loadingCards.map((cardId) => (
+      <div className={sitesGridClassName}>
+        {canManageSites && <CreateSiteDialog teamId={teamId} />}
+        {loadingSkeletonIds.map((cardId) => (
           <SiteCardSkeleton key={cardId} />
         ))}
       </div>
@@ -50,21 +55,28 @@ export function SitesGrid({
 
   if (sites.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <Globe className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="font-semibold mb-2">{t("noSites")}</h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            {t("noSitesDescription")}
-          </p>
-          {canManageSites && <CreateSiteDialog teamId={teamId} />}
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-stretch gap-8">
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
+            <p className="text-sm text-muted-foreground">
+              {t("noSitesDescription")}
+            </p>
+          </CardContent>
+        </Card>
+        {canManageSites && (
+          <div className={sitesGridClassName}>
+            <CreateSiteDialog teamId={teamId} />
+          </div>
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={sitesGridClassName}>
+      {canManageSites && <CreateSiteDialog teamId={teamId} />}
       {sites.map((site) => (
         <SiteCard
           key={site._id}
