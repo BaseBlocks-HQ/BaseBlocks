@@ -152,7 +152,7 @@ export function DirectoryRenderer({
   const showCopyColumn = settings.copyMode === "row";
 
   return (
-    <div className="space-y-3">
+    <div className="not-prose space-y-3">
       {/* Search */}
       {settings.showSearch && (
         <div className="relative">
