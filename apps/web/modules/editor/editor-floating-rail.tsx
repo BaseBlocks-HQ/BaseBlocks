@@ -395,7 +395,7 @@ export function EditorFloatingRail({
         return;
       }
 
-      panel.style.top = `${button.offsetTop + button.offsetHeight / 2}px`;
+      panel.style.top = `${button.offsetTop}px`;
     },
     [isMobile],
   );
@@ -574,7 +574,7 @@ export function EditorFloatingRail({
               ? "bottom-full left-1/2 mb-3 -translate-x-1/2"
               : "left-full ml-3",
           )}
-          style={isMobile ? undefined : { transform: "translateY(-50%)" }}
+          style={undefined}
         >
           <FloatingRailFlyout
             activePanel={activePanel}

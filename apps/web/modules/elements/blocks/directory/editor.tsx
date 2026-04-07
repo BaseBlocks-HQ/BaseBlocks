@@ -26,6 +26,8 @@ import {
   TableRow,
 } from "@baseblocks/ui/table";
 import {
+  ChevronLeft,
+  ChevronRight,
   Globe,
   Mail,
   Phone,
@@ -65,8 +67,21 @@ export function DirectoryEditor({
     () => content,
   );
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
+
+  const pageSize = localContent.settings.pageSize;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(localContent.rows.length / pageSize),
+  );
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const paginatedRows = localContent.rows.slice(
+    startIndex,
+    startIndex + pageSize,
+  );
 
   const updateContent = (newContent: DirectoryContent) => {
     setLocalContent(newContent);
@@ -124,17 +139,20 @@ export function DirectoryEditor({
       id: `row-${Date.now()}`,
       cells: {},
     };
+    const newRowCount = localContent.rows.length + 1;
+    const newLastPage = Math.ceil(newRowCount / pageSize);
     updateContent({
       ...localContent,
       rows: [...localContent.rows, newRow],
     });
+    setCurrentPage(newLastPage);
   };
 
   const removeRow = (rowId: string) => {
-    updateContent({
-      ...localContent,
-      rows: localContent.rows.filter((r) => r.id !== rowId),
-    });
+    const newRows = localContent.rows.filter((r) => r.id !== rowId);
+    const newTotalPages = Math.max(1, Math.ceil(newRows.length / pageSize));
+    if (safeCurrentPage > newTotalPages) setCurrentPage(newTotalPages);
+    updateContent({ ...localContent, rows: newRows });
   };
 
   const updateCell = (rowId: string, colId: string, value: string) => {
@@ -295,8 +313,8 @@ export function DirectoryEditor({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {localContent.rows.map((row) => (
-              <TableRow key={row.id} className="group">
+            {paginatedRows.map((row) => (
+              <TableRow key={row.id}>
                 {localContent.columns.map((col) => (
                   <TableCell key={col.id} className="p-1">
                     <Input
@@ -314,7 +332,7 @@ export function DirectoryEditor({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
                     onClick={() => removeRow(row.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -332,6 +350,31 @@ export function DirectoryEditor({
         className="hidden"
         onChange={handleCSVImport}
       />
+      {localContent.rows.length > pageSize && (
+        <div className="flex items-center justify-between px-1">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {safeCurrentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
