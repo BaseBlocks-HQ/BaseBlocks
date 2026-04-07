@@ -10,6 +10,11 @@ import { type NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 const require = createRequire(import.meta.url);
 
+// pdfjs-dist requires DOM globals that don't exist in Node.js.
+// We patch them once at module load time rather than on every request —
+// serverless functions are single-tenant, so there is no concurrent-write risk.
+let pdfGlobalsPatched = false;
+
 function countWords(text: string): number {
   const trimmed = text.trim();
   if (!trimmed) {
@@ -45,25 +50,38 @@ function extractTextFromPlainBytes(bytes: Uint8Array, contentType: string) {
 }
 
 async function extractPdfText(bytes: Uint8Array) {
-  const { DOMMatrix, ImageData, Path2D } = await import("@napi-rs/canvas");
-  globalThis.DOMMatrix = DOMMatrix as unknown as typeof globalThis.DOMMatrix;
-  globalThis.ImageData = ImageData as unknown as typeof globalThis.ImageData;
-  globalThis.Path2D = Path2D as unknown as typeof globalThis.Path2D;
+  if (!pdfGlobalsPatched) {
+    const { DOMMatrix, ImageData, Path2D } = await import("@napi-rs/canvas");
+    globalThis.DOMMatrix = DOMMatrix as unknown as typeof globalThis.DOMMatrix;
+    globalThis.ImageData = ImageData as unknown as typeof globalThis.ImageData;
+    globalThis.Path2D = Path2D as unknown as typeof globalThis.Path2D;
+    pdfGlobalsPatched = true;
+  }
 
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const workerPath =
-    [
-      path.join(process.cwd(), "node_modules/pdfjs-dist/build/pdf.worker.mjs"),
-      path.join(
-        process.cwd(),
-        "../node_modules/pdfjs-dist/build/pdf.worker.mjs",
-      ),
-      path.join(
-        process.cwd(),
-        "../../node_modules/pdfjs-dist/build/pdf.worker.mjs",
-      ),
-    ].find((candidate) => existsSync(candidate)) ??
-    require.resolve("pdfjs-dist/build/pdf.worker.mjs");
+  const workerPath = (() => {
+    try {
+      return require.resolve("pdfjs-dist/build/pdf.worker.mjs");
+    } catch {
+      return (
+        [
+          path.join(
+            process.cwd(),
+            "node_modules/pdfjs-dist/build/pdf.worker.mjs",
+          ),
+          path.join(
+            process.cwd(),
+            "../node_modules/pdfjs-dist/build/pdf.worker.mjs",
+          ),
+          path.join(
+            process.cwd(),
+            "../../node_modules/pdfjs-dist/build/pdf.worker.mjs",
+          ),
+        ].find((candidate) => existsSync(candidate)) ??
+        "pdfjs-dist/build/pdf.worker.mjs"
+      );
+    }
+  })();
   pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).toString();
 
   const document = await pdfjs.getDocument({

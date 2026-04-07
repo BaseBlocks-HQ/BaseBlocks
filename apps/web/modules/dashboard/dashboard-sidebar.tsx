@@ -30,8 +30,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import { Check, ChevronsUpDown, LogOut } from "lucide-react";
-import { IconFolder, IconHouse, IconUsers } from "nucleo-glass";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { IconCirclePowerOff, IconFolder, IconHouse, IconUsers } from "nucleo-glass";
 import { useTranslations } from "next-intl";
 
 export function DashboardSidebar() {
@@ -145,7 +145,7 @@ export function DashboardSidebar() {
                 onClick={handleLogout}
                 title={t("common.signOut")}
               >
-                <LogOut className="h-4 w-4" />
+                <IconCirclePowerOff className="h-4 w-4" />
               </Button>
             </div>
           </div>

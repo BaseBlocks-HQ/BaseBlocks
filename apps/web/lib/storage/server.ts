@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -101,6 +102,32 @@ export async function uploadObject(args: {
       Key: args.objectKey,
       ContentType: args.contentType,
       Body: args.body,
+    }),
+  );
+}
+
+/**
+ * Stream a Web ReadableStream directly to storage without buffering it in
+ * memory.  Use this for user uploads — avoids loading the full file into the
+ * serverless function's heap.
+ */
+export async function streamObject(args: {
+  bucket?: string;
+  objectKey: string;
+  contentType: string;
+  body: ReadableStream<Uint8Array>;
+  contentLength?: number;
+}): Promise<void> {
+  const nodeStream = Readable.fromWeb(
+    args.body as unknown as import("stream/web").ReadableStream,
+  );
+  await getStorageClient().send(
+    new PutObjectCommand({
+      Bucket: args.bucket ?? getStorageBucketName(),
+      Key: args.objectKey,
+      ContentType: args.contentType,
+      ContentLength: args.contentLength,
+      Body: nodeStream,
     }),
   );
 }

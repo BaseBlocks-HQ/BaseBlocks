@@ -3,7 +3,7 @@ import { canUploadToSite } from "@/lib/convex/server";
 import {
   createObjectKey,
   deleteObject,
-  uploadObject,
+  streamObject,
 } from "@/lib/storage/server";
 import {
   type UploadPurpose,
@@ -122,38 +122,27 @@ export async function PUT(request: NextRequest) {
   try {
     const { siteId, purpose } = await requireAuthorizedSiteId(request);
     const { filename, contentType, size } = getValidatedUploadMetadata(request);
-    const body = new Uint8Array(await request.arrayBuffer());
-    if (body.byteLength === 0) {
+
+    if (!request.body) {
       return NextResponse.json(
         { error: "Upload body is empty" },
         { status: 400 },
       );
     }
 
-    if (body.byteLength > MAX_UPLOAD_SIZE) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 50 MB" },
-        { status: 413 },
-      );
-    }
+    const objectKey = createObjectKey({ siteId, purpose, filename });
 
-    const objectKey = createObjectKey({
-      siteId,
-      purpose,
-      filename,
-    });
-
-    await uploadObject({
+    // Stream directly to storage — avoids loading the full file into memory.
+    // Content-length is forwarded so the SDK can set it on the S3 request;
+    // the finalize endpoint does a HeadObject for the authoritative size.
+    await streamObject({
       objectKey,
       contentType,
-      body,
+      body: request.body,
+      contentLength: size ?? undefined,
     });
 
-    return NextResponse.json({
-      objectKey,
-      size: size ?? body.byteLength,
-      contentType,
-    });
+    return NextResponse.json({ objectKey, contentType });
   } catch (error) {
     if (error instanceof Response) {
       return error;

@@ -168,7 +168,7 @@ export default defineSchema({
     siteId: v.id("sites"),
     kind: v.union(v.literal("document"), v.literal("siteAsset")),
     visibility: v.union(v.literal("public"), v.literal("private")),
-    provider: v.literal("s3"),
+    provider: v.string(),
     bucket: v.string(),
     objectKey: v.string(),
     filename: v.optional(v.string()),
