@@ -1,6 +1,8 @@
 import { v } from "convex/values";
+import { components } from "../_generated/api";
 import { query } from "../_generated/server";
 import { checkIsMember, getAuthContextOrNull } from "../auth";
+import { mergeMemberProfiles } from "./profileMerge";
 
 /**
  * List all members for a team
@@ -17,7 +19,7 @@ export const list = query({
       .withIndex("by_team", (q) => q.eq("teamId", teamId))
       .collect();
 
-    return members.map((m) => ({
+    const memberSnapshots = members.map((m) => ({
       _id: m._id,
       userId: m.userId,
       email: m.email,
@@ -26,6 +28,40 @@ export const list = query({
       role: m.role,
       joinedAt: m.joinedAt,
     }));
+
+    if (memberSnapshots.length === 0) {
+      return memberSnapshots;
+    }
+
+    const authUsersResult = await ctx.runQuery(
+      components.betterAuth.adapter.findMany,
+      {
+        model: "user",
+        where: [
+          {
+            field: "_id",
+            operator: "in",
+            value: memberSnapshots.map((member) => member.userId),
+          },
+        ],
+        paginationOpts: {
+          numItems: memberSnapshots.length,
+          cursor: null,
+        },
+      },
+    );
+
+    const authUsers =
+      authUsersResult && "page" in authUsersResult
+        ? (authUsersResult.page as {
+            _id: string;
+            email: string;
+            image?: string | null;
+            name: string;
+          }[])
+        : [];
+
+    return mergeMemberProfiles(memberSnapshots, authUsers);
   },
 });
 

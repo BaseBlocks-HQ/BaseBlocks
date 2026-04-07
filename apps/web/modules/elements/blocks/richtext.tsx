@@ -7,17 +7,132 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import type { Block } from "@blocknote/core";
+import { SideMenuExtension, SuggestionMenu } from "@blocknote/core/extensions";
 import { BlockNoteView } from "@blocknote/mantine";
-import { useCreateBlockNote } from "@blocknote/react";
+import {
+  BlockColorsItem,
+  DragHandleButton,
+  DragHandleMenu,
+  RemoveBlockItem,
+  SideMenu,
+  SideMenuController,
+  type SideMenuProps,
+  useBlockNoteEditor,
+  useComponentsContext,
+  useCreateBlockNote,
+  useExtensionState,
+} from "@blocknote/react";
 import { TextCursorInput } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import type {
   ElementEditorProps,
   ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+
+type RichTextEditorInstance = ReturnType<typeof useCreateBlockNote>;
+type RichTextBlock = RichTextEditorInstance["document"][number];
+
+type RichTextSideMenuContextValue = {
+  block: RichTextBlock | undefined;
+  editor: RichTextEditorInstance;
+};
+
+const RichTextSideMenuContext =
+  createContext<RichTextSideMenuContextValue | null>(null);
+
+/**
+ * Must stay at module scope — BlockNote issue #688: an inline or recreated
+ * `dragHandleMenu` component can prevent `DragHandleMenu` from rendering.
+ * Block/editor are passed via RichTextSideMenuContext.
+ */
+function RichTextDragHandleMenu() {
+  const ctx = useContext(RichTextSideMenuContext);
+
+  return (
+    <DragHandleMenu>
+      {ctx?.block !== undefined ? (
+        <AddBlockMenuRow block={ctx.block} editor={ctx.editor} />
+      ) : null}
+      <RemoveBlockItem>Delete</RemoveBlockItem>
+      <BlockColorsItem>Colors</BlockColorsItem>
+    </DragHandleMenu>
+  );
+}
+
+/**
+ * Subscribes to the side menu block at the same level as SideMenu, then
+ * provides it to RichTextDragHandleMenu via context (see BlockNote #688).
+ */
+function RichTextSideMenu(props: SideMenuProps) {
+  const editor = useBlockNoteEditor();
+  const block = useExtensionState(SideMenuExtension, {
+    editor,
+    selector: (state) => state?.block,
+  }) as RichTextBlock | undefined;
+
+  const ctxValue: RichTextSideMenuContextValue = { block, editor };
+
+  return (
+    <RichTextSideMenuContext.Provider value={ctxValue}>
+      {/*
+        SideMenu only forwards dragHandleMenu when it renders its *default*
+        children. With custom children you must pass dragHandleMenu to
+        DragHandleButton (BlockNote issue #688 / SideMenu.tsx TODO).
+      */}
+      <SideMenu {...props}>
+        <DragHandleButton {...props} dragHandleMenu={RichTextDragHandleMenu} />
+      </SideMenu>
+    </RichTextSideMenuContext.Provider>
+  );
+}
+
+function AddBlockMenuRow({
+  block,
+  editor,
+}: {
+  block: RichTextBlock;
+  editor: RichTextEditorInstance;
+}) {
+  const Components = useComponentsContext()!;
+
+  const onClick = useCallback(() => {
+    const suggestionMenu = editor.getExtension(SuggestionMenu);
+    if (!suggestionMenu) {
+      return;
+    }
+
+    const blockContent = block.content;
+    const isBlockEmpty =
+      blockContent !== undefined &&
+      Array.isArray(blockContent) &&
+      blockContent.length === 0;
+
+    if (isBlockEmpty) {
+      editor.setTextCursorPosition(block);
+      suggestionMenu.openSuggestionMenu("/");
+    } else {
+      const insertedBlock = editor.insertBlocks(
+        [{ type: "paragraph" }],
+        block,
+        "after",
+      )[0];
+      if (insertedBlock === undefined) {
+        return;
+      }
+      editor.setTextCursorPosition(insertedBlock);
+      suggestionMenu.openSuggestionMenu("/");
+    }
+  }, [block, editor]);
+
+  return (
+    <Components.Generic.Menu.Item className="bn-menu-item" onClick={onClick}>
+      Add block below
+    </Components.Generic.Menu.Item>
+  );
+}
 
 function RichTextEditor({
   content,
@@ -38,15 +153,28 @@ function RichTextEditor({
   });
 
   return (
-    <div className="rounded-md transition-colors hover:bg-muted/50 [&_.bn-container]:!border-none [&_.bn-editor]:!pr-0 [&_.bn-editor]:!pl-12 [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent">
+    <div
+      className={cn(
+        "rounded-md transition-colors hover:bg-muted/50",
+        "[&_.bn-container]:!border-none [&_.bn-container]:!bg-transparent",
+        "[&_.bn-editor]:!bg-transparent",
+        // BlockNote default is padding-inline: 54px for + and drag handle; one handle needs less gutter.
+        "[&_.bn-editor]:!ps-7 [&_.bn-editor]:!pe-2",
+      )}
+    >
       <BlockNoteView
         editor={editor}
         theme={blockNoteTheme}
+        sideMenu={false}
         onChange={() => {
           onSaveStatusChange?.("pending");
           save({ ...content, document: editor.document });
         }}
-      />
+      >
+        <SideMenuController
+          sideMenu={(props) => <RichTextSideMenu {...props} />}
+        />
+      </BlockNoteView>
     </div>
   );
 }

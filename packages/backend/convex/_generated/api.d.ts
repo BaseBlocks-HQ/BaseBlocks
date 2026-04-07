@@ -37,6 +37,7 @@ import type * as lib_resolvers from "../lib/resolvers.js";
 import type * as lib_tree from "../lib/tree.js";
 import type * as members_internal from "../members/internal.js";
 import type * as members_mutations from "../members/mutations.js";
+import type * as members_profileMerge from "../members/profileMerge.js";
 import type * as members_queries from "../members/queries.js";
 import type * as migrations from "../migrations.js";
 import type * as pages_mutations from "../pages/mutations.js";
@@ -94,6 +95,7 @@ declare const fullApi: ApiFromModules<{
   "lib/tree": typeof lib_tree;
   "members/internal": typeof members_internal;
   "members/mutations": typeof members_mutations;
+  "members/profileMerge": typeof members_profileMerge;
   "members/queries": typeof members_queries;
   migrations: typeof migrations;
   "pages/mutations": typeof pages_mutations;
