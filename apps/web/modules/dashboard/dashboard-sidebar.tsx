@@ -30,14 +30,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import {
-  Check,
-  ChevronsUpDown,
-  Folder,
-  Home,
-  LogOut,
-  Users,
-} from "lucide-react";
+import { Check, ChevronsUpDown, LogOut } from "lucide-react";
+import { IconFolder, IconHouse, IconUsers } from "nucleo-glass";
 import { useTranslations } from "next-intl";
 
 export function DashboardSidebar() {
@@ -50,19 +44,19 @@ export function DashboardSidebar() {
     {
       title: t("navigation.dashboard"),
       href: getTeamDashboardPath(team.slug),
-      icon: Home,
+      icon: IconHouse,
       isActive: pathname === getTeamDashboardPath(team.slug),
     },
     {
       title: t("team.title"),
       href: getTeamMembersPath(team.slug),
-      icon: Users,
+      icon: IconUsers,
       isActive: pathname.startsWith(getTeamMembersPath(team.slug)),
     },
     {
       title: t("libraries.title"),
       href: getTeamLibrariesPath(team.slug),
-      icon: Folder,
+      icon: IconFolder,
       isActive: pathname.startsWith(getTeamLibrariesPath(team.slug)),
     },
   ];
