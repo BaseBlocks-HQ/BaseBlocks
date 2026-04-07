@@ -15,7 +15,8 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { useMutation } from "convex/react";
-import { Check, Inbox, Loader2, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
+import { IconInbox } from "nucleo-glass";
 import { useTranslations } from "next-intl";
 import { useEffect, useReducer, useState } from "react";
 
@@ -220,7 +221,7 @@ export function InvitationInbox({
 
       {!isLoading && invitations.length === 0 && (
         <div className="text-center py-6">
-          <Inbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+          <IconInbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
           <p className="text-sm text-muted-foreground">{t("noInvitations")}</p>
         </div>
       )}
@@ -293,7 +294,7 @@ export function InvitationInbox({
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Inbox className="h-5 w-5" />
+          <IconInbox className="h-5 w-5" />
           <h3 className="font-medium">{t("title")}</h3>
           {isLoading && (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -322,7 +323,7 @@ export function InvitationInbox({
             variant="ghost"
             className="w-full justify-start gap-2 h-8 px-2 relative"
           >
-            <Inbox className="h-4 w-4" />
+            <IconInbox className="h-4 w-4" />
             <span>{t("title")}</span>
             {invitations.length > 0 && (
               <Badge
@@ -335,7 +336,7 @@ export function InvitationInbox({
           </Button>
         ) : (
           <Button variant="ghost" size="icon" className="relative">
-            <Inbox className="h-4 w-4" />
+            <IconInbox className="h-4 w-4" />
             {invitations.length > 0 && (
               <Badge
                 variant="destructive"
@@ -350,7 +351,7 @@ export function InvitationInbox({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Inbox className="h-5 w-5" />
+            <IconInbox className="h-5 w-5" />
             {t("title")}
             {isLoading && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

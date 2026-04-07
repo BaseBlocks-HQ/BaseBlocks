@@ -5,7 +5,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
-import { DashboardSidebar } from "./dashboard-sidebar";
+import dynamic from "next/dynamic";
+
+const DashboardSidebar = dynamic(
+  () => import("./dashboard-sidebar").then((m) => ({ default: m.DashboardSidebar })),
+  { ssr: false },
+);
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

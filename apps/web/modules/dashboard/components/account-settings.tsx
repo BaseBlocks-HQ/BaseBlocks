@@ -26,6 +26,7 @@ import {
 import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
+import { IconGear } from "nucleo-glass";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -72,7 +73,7 @@ export function AccountSettings() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" className="w-full justify-start gap-2 h-8 px-2">
-          <Settings className="h-4 w-4" />
+          <IconGear className="h-4 w-4" />
           <span>{tCommon("settings")}</span>
         </Button>
       </DialogTrigger>
