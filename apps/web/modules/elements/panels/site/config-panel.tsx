@@ -2,7 +2,6 @@
 
 import { useSite } from "@/lib/data";
 import { useImageUpload } from "@/lib/storage";
-import { cn } from "@/lib/utils";
 import { DropZone } from "@/modules/documents";
 import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
@@ -25,6 +24,7 @@ import {
   Info,
   Loader2,
   PanelLeft,
+  Pencil,
   Route,
   Search,
   Type,
@@ -51,20 +51,18 @@ function SettingSection({
   label: string;
 }) {
   return (
-    <div className="border-t pt-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {icon}
-          <Label className="text-sm font-medium">{label}</Label>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
-            </TooltipTrigger>
-            <TooltipContent side="top">{description}</TooltipContent>
-          </Tooltip>
-        </div>
-        {control}
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {icon}
+        <Label className="text-sm font-medium">{label}</Label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+          </TooltipTrigger>
+          <TooltipContent side="top">{description}</TooltipContent>
+        </Tooltip>
       </div>
+      {control}
     </div>
   );
 }
@@ -161,15 +159,17 @@ function LogoUploadSection({
 }
 
 function SiteNameSection({
+  displayName,
+  editValue,
   isEditing,
-  name,
   onCancel,
   onChange,
   onEdit,
   onSave,
 }: {
+  displayName: string;
+  editValue: string;
   isEditing: boolean;
-  name: string;
   onCancel: () => void;
   onChange: (value: string) => void;
   onEdit: () => void;
@@ -178,31 +178,48 @@ function SiteNameSection({
   return (
     <div className="ml-6 space-y-2">
       {isEditing ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
-            value={name}
+            value={editValue}
             onChange={(event) => onChange(event.target.value)}
-            className="text-sm h-8"
+            aria-label="Site name"
+            className="h-8 text-sm sm:min-w-0 sm:flex-1"
             onKeyDown={(event) => {
               if (event.key === "Enter") onSave();
               if (event.key === "Escape") onCancel();
             }}
           />
-          <Button size="sm" className="h-8" onClick={onSave}>
-            Save
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" className="h-8" onClick={onSave}>
+              Save
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={onEdit}
-          className={cn(
-            "w-full text-left px-3 py-2 rounded-md border text-sm",
-            "hover:bg-muted/50 transition-colors cursor-text",
-          )}
-        >
-          {name}
-        </button>
+        <div className="flex items-center gap-2 rounded-md border border-border/80 bg-muted/20 px-3 py-2">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {displayName.trim() ? displayName : "Untitled site"}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 px-2.5"
+            onClick={onEdit}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -423,8 +440,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
       {showHeader && showSiteName && (
         <SiteNameSection
+          displayName={site.name}
+          editValue={localName}
           isEditing={isEditingName}
-          name={localName}
           onCancel={() => {
             setLocalName(site.name);
             setIsEditingName(false);

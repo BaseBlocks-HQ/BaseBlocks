@@ -163,68 +163,56 @@ export function CustomizationConfigPanel({
 
       <CustomizationPreview customization={customization} />
 
-      <div className="border-t pt-4">
-        <AccentColorPicker
-          value={customization?.accentColor}
-          onChange={handleColorChange("accentColor")}
-          label="Primary Color"
-          description="Buttons, links, and focus states"
-        />
-      </div>
+      <AccentColorPicker
+        value={customization?.accentColor}
+        onChange={handleColorChange("accentColor")}
+        label="Primary Color"
+        description="Buttons, links, and focus states"
+      />
 
-      <div className="border-t pt-4">
-        <AccentColorPicker
-          value={customization?.headerColor}
-          onChange={handleColorChange("headerColor")}
-          label="Header Color"
-          description="Header background and navigation bar"
-        />
-      </div>
+      <AccentColorPicker
+        value={customization?.headerColor}
+        onChange={handleColorChange("headerColor")}
+        label="Header Color"
+        description="Header background and navigation bar"
+      />
 
-      <div className="border-t pt-4">
-        <AccentColorPicker
-          value={customization?.secondaryColor}
-          onChange={handleColorChange("secondaryColor")}
-          label="Secondary Color"
-          description="Gradient end color and decorative elements"
-        />
-      </div>
+      <AccentColorPicker
+        value={customization?.secondaryColor}
+        onChange={handleColorChange("secondaryColor")}
+        label="Secondary Color"
+        description="Gradient end color and decorative elements"
+      />
 
-      <div className="border-t pt-4">
-        <AccentColorPicker
-          value={customization?.tertiaryColor}
-          onChange={handleColorChange("tertiaryColor")}
-          label="Tertiary Color"
-          description="Middle gradient color"
-        />
-      </div>
+      <AccentColorPicker
+        value={customization?.tertiaryColor}
+        onChange={handleColorChange("tertiaryColor")}
+        label="Tertiary Color"
+        description="Middle gradient color"
+      />
 
-      <div className="border-t pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Label className="text-sm font-medium">Header Gradient</Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Show a gradient stripe below the header
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <Switch
-            checked={customization?.showHeaderGradient ?? false}
-            onCheckedChange={handleGradientToggle}
-          />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Label className="text-sm font-medium">Header Gradient</Label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              Show a gradient stripe below the header
+            </TooltipContent>
+          </Tooltip>
         </div>
-      </div>
-
-      <div className="border-t pt-4">
-        <BorderRadiusPicker
-          value={customization?.borderRadius}
-          onChange={handleBorderRadiusChange}
+        <Switch
+          checked={customization?.showHeaderGradient ?? false}
+          onCheckedChange={handleGradientToggle}
         />
       </div>
+
+      <BorderRadiusPicker
+        value={customization?.borderRadius}
+        onChange={handleBorderRadiusChange}
+      />
     </div>
   );
 }
