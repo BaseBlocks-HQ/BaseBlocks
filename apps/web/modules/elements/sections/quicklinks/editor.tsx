@@ -48,6 +48,23 @@ function isWebUrl(url: string): boolean {
   }
 }
 
+function AddQuicklinkCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed bg-card hover:bg-primary/5 hover:border-primary/30 transition-all duration-200"
+    >
+      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Plus className="w-5 h-5 text-primary/70 group-hover:text-primary transition-colors" />
+      </div>
+      <span className="text-sm font-medium text-center text-muted-foreground group-hover:text-primary transition-colors">
+        Add link
+      </span>
+    </button>
+  );
+}
+
 function QuicklinkCard({
   link,
   onStartEdit,
@@ -444,32 +461,6 @@ export function QuicklinksEditor({
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">
-          Links ({savedLinks.length})
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 px-2 text-xs"
-          onClick={() => {
-            dispatch({
-              type: "startAdding",
-              draft: {
-                id: generateId(),
-                title: "",
-                url: "",
-                linkType: "website",
-              },
-            });
-          }}
-          disabled={isAddingNew}
-        >
-          <Plus className="w-3 h-3 mr-1" />
-          Add
-        </Button>
-      </div>
-
       {isAddingNew && newLinkData && (
         <QuicklinkEditForm
           link={newLinkData}
@@ -513,49 +504,56 @@ export function QuicklinksEditor({
         />
       )}
 
-      {visibleCards.length > 0 ? (
-        <div
-          className={cn(
-            "my-6",
-            isSidebar
-              ? "flex flex-col gap-3"
-              : "flex flex-wrap justify-center gap-3",
-          )}
-        >
-          {visibleCards.map((link) => (
-            <div
-              key={link.id}
-              className={isSidebar ? "w-full" : "w-[calc(20%-10px)]"}
-            >
-              <QuicklinkCard
-                link={link}
-                onStartEdit={() => {
-                  dispatch({ type: "startEditing", draft: { ...link } });
-                }}
-                onRemove={async () => {
-                  const newLinks = savedLinks.filter((l) => l.id !== link.id);
-                  const success = await persistLinks(newLinks);
-                  if (success) {
-                    setSavedLinks(newLinks);
-                    if (editingId === link.id) {
-                      dispatch({ type: "finishEditing" });
-                    }
-                    toast.success("Link removed");
+      <div
+        className={cn(
+          isSidebar
+            ? "flex flex-col gap-3"
+            : "flex flex-wrap justify-center gap-3",
+        )}
+      >
+        {!isAddingNew && (
+          <div className={isSidebar ? "w-full" : "w-[calc(20%-10px)]"}>
+            <AddQuicklinkCard
+              onClick={() => {
+                dispatch({
+                  type: "startAdding",
+                  draft: {
+                    id: generateId(),
+                    title: "",
+                    url: "",
+                    linkType: "website",
+                  },
+                });
+              }}
+            />
+          </div>
+        )}
+
+        {visibleCards.map((link) => (
+          <div
+            key={link.id}
+            className={isSidebar ? "w-full" : "w-[calc(20%-10px)]"}
+          >
+            <QuicklinkCard
+              link={link}
+              onStartEdit={() => {
+                dispatch({ type: "startEditing", draft: { ...link } });
+              }}
+              onRemove={async () => {
+                const newLinks = savedLinks.filter((l) => l.id !== link.id);
+                const success = await persistLinks(newLinks);
+                if (success) {
+                  setSavedLinks(newLinks);
+                  if (editingId === link.id) {
+                    dispatch({ type: "finishEditing" });
                   }
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      ) : !isAddingNew && !editingId ? (
-        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-          <ExternalLink className="w-6 h-6 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-sm text-muted-foreground">No quick links yet</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Click "Add" to create your first link
-          </p>
-        </div>
-      ) : null}
+                  toast.success("Link removed");
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

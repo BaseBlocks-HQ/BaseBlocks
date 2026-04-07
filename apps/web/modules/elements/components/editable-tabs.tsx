@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {
   Select,
@@ -106,7 +107,7 @@ export function EditableTabs({
   );
 
   return (
-    <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b bg-muted/30 min-w-0">
+    <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30 min-w-0">
       {tabsMode === "dropdown" ? (
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {editingId === activeItem?.id ? (
@@ -166,16 +167,17 @@ export function EditableTabs({
           {items.map((item) => (
             <div
               key={item.id}
-              className={`group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors shrink-0 ${
+              className={cn(
+                "group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors shrink-0",
                 item.id === activeId
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+              )}
             >
               {editingId === item.id ? (
                 renderEditableInput(
                   "bg-transparent border-none outline-none w-20 text-xs text-inherit",
-                  "p-0.5 rounded hover:bg-white/20",
+                  "p-0.5 rounded hover:bg-foreground/10",
                 )
               ) : (
                 <>
@@ -189,7 +191,7 @@ export function EditableTabs({
                   </button>
                   <button
                     type="button"
-                    className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                    className="hidden group-hover/tab:flex p-0.5 rounded hover:bg-foreground/10"
                     onClick={(event) => {
                       event.stopPropagation();
                       startRename(item.id);
@@ -201,7 +203,7 @@ export function EditableTabs({
                   {onRemove && (
                     <button
                       type="button"
-                      className="p-0.5 rounded opacity-0 group-hover/tab:opacity-100 transition-opacity hover:bg-white/20"
+                      className="hidden group-hover/tab:flex p-0.5 rounded hover:bg-foreground/10"
                       onClick={(event) => {
                         event.stopPropagation();
                         onRemove(item.id);

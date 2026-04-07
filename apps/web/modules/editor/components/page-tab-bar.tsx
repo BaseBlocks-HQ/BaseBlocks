@@ -6,6 +6,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+import type { KeyboardEvent, MouseEvent } from "react";
 
 interface PageTabBarProps {
   pageTabs: PageTab[];
@@ -21,6 +22,38 @@ interface PageTabBarProps {
   onRemoveTab: (tabId: string) => void;
   onStartRenameTab: (tab: PageTab) => void;
   onFinishRenameTab: () => void;
+}
+
+interface TabIconButtonProps {
+  "aria-label": string;
+  destructive?: boolean;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+}
+
+function TabIconButton({
+  "aria-label": ariaLabel,
+  destructive = false,
+  onClick,
+  onKeyDown,
+  children,
+}: TabIconButtonProps) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      className={[
+        "h-4 w-4 rounded-sm flex items-center justify-center cursor-pointer",
+        "text-muted-foreground/50",
+        destructive ? "hover:text-destructive" : "hover:text-foreground",
+      ].join(" ")}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+    >
+      {children}
+    </button>
+  );
 }
 
 export function PageTabBar({
@@ -66,68 +99,75 @@ export function PageTabBar({
         }}
       >
         <TabsList>
-          {pageTabs.map((tab, index) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="group/tab relative gap-1 px-4"
-            >
-              {editingTabId === tab.id ? (
-                <Input
-                  ref={tabInputRef}
-                  value={editingLabel}
-                  onChange={(e) => setEditingLabel(e.target.value)}
-                  onBlur={onFinishRenameTab}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") onFinishRenameTab();
-                    if (e.key === "Escape") setEditingTabId(null);
-                  }}
-                  className="h-5 w-20 px-1 py-0 text-sm border-none shadow-none focus-visible:ring-1"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <span className="select-none">{tab.label}</span>
-              )}
-              <div className="flex items-center gap-0.5 opacity-0 group-hover/tab:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-foreground cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStartRenameTab(tab);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onStartRenameTab(tab);
-                    }
-                  }}
-                >
-                  <Pencil className="h-2.5 w-2.5" />
-                </button>
-                {index >= 2 && (
-                  <button
-                    type="button"
-                    className="h-4 w-4 rounded-sm flex items-center justify-center text-muted-foreground/50 hover:text-destructive cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemoveTab(tab.id);
-                    }}
+          {pageTabs.map((tab, index) => {
+            const isEditing = editingTabId === tab.id;
+            // First two tabs are protected — require a minimum of two tabs
+            const canRemove = index >= 2;
+
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="group/tab flex items-center gap-1.5 px-3"
+              >
+                {isEditing ? (
+                  <Input
+                    ref={tabInputRef}
+                    value={editingLabel}
+                    onChange={(e) => setEditingLabel(e.target.value)}
+                    onBlur={onFinishRenameTab}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onRemoveTab(tab.id);
-                      }
+                      if (e.key === "Enter") onFinishRenameTab();
+                      if (e.key === "Escape") setEditingTabId(null);
                     }}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                    className="h-5 w-20 px-1 py-0 text-sm border-none shadow-none focus-visible:ring-1"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <>
+                    <span className="select-none">{tab.label}</span>
+                    <div className="hidden group-hover/tab:flex items-center gap-0.5">
+                      <TabIconButton
+                        aria-label="Rename tab"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStartRenameTab(tab);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onStartRenameTab(tab);
+                          }
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </TabIconButton>
+                      {canRemove && (
+                        <TabIconButton
+                          aria-label="Remove tab"
+                          destructive
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveTab(tab.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onRemoveTab(tab.id);
+                            }
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </TabIconButton>
+                      )}
+                    </div>
+                  </>
                 )}
-              </div>
-            </TabsTrigger>
-          ))}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
       </Tabs>
 

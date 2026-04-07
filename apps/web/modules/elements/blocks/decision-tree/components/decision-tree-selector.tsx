@@ -32,12 +32,7 @@ export function DecisionTreeSelector({
   }
 
   return (
-    <div
-      className={cn(
-        "border-b",
-        tabsMode === "dropdown" ? "px-3 py-2" : "px-3 py-2",
-      )}
-    >
+    <div className="border-b px-3 py-2">
       {tabsMode === "dropdown" ? (
         <Select value={activeTreeId} onValueChange={onSelectTree}>
           <SelectTrigger className="h-9 w-full sm:w-[260px]">
