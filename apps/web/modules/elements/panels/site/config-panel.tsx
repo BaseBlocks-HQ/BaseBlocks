@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { MetadataDialog } from "./metadata-dialog";
+import { SiteMetadataSection } from "./site-metadata-section";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
@@ -187,7 +187,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const undoContext = useEditorUndoOptional();
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
 
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
@@ -349,33 +348,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
         {showHeader && (
           <PanelSettingRow
-            htmlFor="show-logo"
-            label="Show logo"
-            tooltip="When enabled, the logo you upload appears in the header (if the header is visible)."
-            control={
-              <Switch
-                id="show-logo"
-                checked={showLogo}
-                onCheckedChange={(checked) =>
-                  updateSettings("showLogo", checked)
-                }
-              />
-            }
-          />
-        )}
-
-        {showHeader && showLogo && (
-          <LogoUploadSection
-            fileInputRef={fileInputRef}
-            isUploading={isUploading}
-            logoUrl={site.logoUrl}
-            onFilesAccepted={handleLogoUpload}
-            uploadProgress={uploadProgress}
-          />
-        )}
-
-        {showHeader && (
-          <PanelSettingRow
             htmlFor="show-site-name"
             label="Show site name"
             tooltip="Displays your site name beside the logo when both logo and name are turned on."
@@ -411,6 +383,33 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
         {showHeader && (
           <PanelSettingRow
+            htmlFor="show-logo"
+            label="Show logo"
+            tooltip="When enabled, the logo you upload appears in the header (if the header is visible)."
+            control={
+              <Switch
+                id="show-logo"
+                checked={showLogo}
+                onCheckedChange={(checked) =>
+                  updateSettings("showLogo", checked)
+                }
+              />
+            }
+          />
+        )}
+
+        {showHeader && showLogo && (
+          <LogoUploadSection
+            fileInputRef={fileInputRef}
+            isUploading={isUploading}
+            logoUrl={site.logoUrl}
+            onFilesAccepted={handleLogoUpload}
+            uploadProgress={uploadProgress}
+          />
+        )}
+
+        {showHeader && (
+          <PanelSettingRow
             htmlFor="show-header-search"
             label="Search in header"
             tooltip="Adds a search field so visitors can find documents from the header."
@@ -425,23 +424,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
             }
           />
         )}
-      </CollapsibleSettingsSection>
-
-      <CollapsibleSettingsSection title="Discovery and SEO">
-        <PanelSettingRow
-          label="SEO and metadata"
-          tooltip="Favicon, page title, meta description, keywords, and the image used when your site is shared on social apps."
-          control={
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => setMetadataDialogOpen(true)}
-            >
-              Edit
-            </Button>
-          }
-        />
 
         <PanelSettingRow
           htmlFor="show-breadcrumbs"
@@ -476,22 +458,25 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         )}
       </CollapsibleSettingsSection>
 
-      <MetadataDialog
-        open={metadataDialogOpen}
-        onOpenChange={setMetadataDialogOpen}
-        siteId={siteId}
-        siteName={site.name}
-        initialValues={{
-          siteTitle: site.settings.siteTitle ?? "",
-          siteDescription: site.settings.siteDescription ?? "",
-          siteKeywords: site.settings.siteKeywords ?? "",
-          favicon: site.settings.favicon ?? "",
-          ogImage: site.settings.ogImage ?? "",
-        }}
-        onSave={async (values) => {
-          await updateSite({ siteId, settings: values });
-        }}
-      />
+      <CollapsibleSettingsSection
+        title="Discovery and SEO"
+        contentClassName="p-3"
+      >
+        <SiteMetadataSection
+          siteId={siteId}
+          siteName={site.name}
+          initialValues={{
+            siteTitle: site.settings.siteTitle ?? "",
+            siteDescription: site.settings.siteDescription ?? "",
+            siteKeywords: site.settings.siteKeywords ?? "",
+            favicon: site.settings.favicon ?? "",
+            ogImage: site.settings.ogImage ?? "",
+          }}
+          onSave={async (values) => {
+            await updateSite({ siteId, settings: values });
+          }}
+        />
+      </CollapsibleSettingsSection>
     </div>
   );
 }

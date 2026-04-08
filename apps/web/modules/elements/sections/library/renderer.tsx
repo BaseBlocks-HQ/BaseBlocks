@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  type FileData,
+  type FolderData,
   usePublicFiles,
   usePublicFolderPath,
   usePublicFolders,
@@ -10,29 +12,20 @@ import type { ElementRendererProps } from "@/modules/elements/framework/registry
 import { useMediaViewer } from "@/modules/media-viewer";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { FolderOpen, Menu } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { useState } from "react";
-import { LibraryBreadcrumbTrigger } from "./components/library-breadcrumb-trigger";
-import { LibraryFileList } from "./components/library-file-list";
-import { LibraryFolderTree } from "./components/library-folder-tree";
+import { LibraryBrowser } from "./components/library-browser";
+import { LibraryContentList } from "./components/library-content-list";
 import { useContainerWidth } from "./hooks/use-container-width";
 
 export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const [containerRef, containerWidth] = useContainerWidth();
-  const showSidebar = containerWidth >= 400;
+  const showSidebar = containerWidth >= 560;
 
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
   );
-  const [folderMenuOpen, setFolderMenuOpen] = useState(false);
-  const [breadcrumbOpen, setBreadcrumbOpen] = useState(false);
   const { openFile } = useMediaViewer();
 
   const libraryId = content.libraryId
@@ -59,15 +52,11 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     });
   };
 
-  const selectFolder = (folderKey: string | null, closeMenu = false) => {
+  const selectFolder = (folderKey: string | null) => {
     setSelectedFolderId(folderKey);
     if (folderKey) {
       setExpandedFolders((prev) => new Set(prev).add(folderKey));
     }
-    if (closeMenu) {
-      setFolderMenuOpen(false);
-    }
-    setBreadcrumbOpen(false);
   };
 
   const downloadFile = (fileUrl: string, filename: string) => {
@@ -81,7 +70,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     document.body.removeChild(link);
   };
 
-  const previewFile = (file: (typeof files)[number]) => {
+  const previewFile = (file: FileData) => {
     openFile({
       url: file.downloadUrl,
       filename: file.filename,
@@ -108,158 +97,62 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const currentSubfolders = folders
     .filter((folder) => folder.parentId === (selectedFolderId ?? undefined))
     .sort((a, b) => a.order - b.order);
-  const hasContent = sortedFiles.length > 0 || currentSubfolders.length > 0;
   const showFolders = content.showFolderTree !== false;
   const currentLocation =
     folderPath.length > 0
       ? folderPath[folderPath.length - 1]!.name
       : library.name;
 
-  const breadcrumbNavContent = (
-    <div className="py-1">
-      <button
-        type="button"
-        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded"
-        onClick={() => selectFolder(null)}
-      >
-        <span className="truncate">{library.name}</span>
-      </button>
-      {folderPath.map((folder, index) => (
-        <button
-          key={folder._id}
-          type="button"
-          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded"
-          style={{ paddingLeft: `${(index + 1) * 12 + 12}px` }}
-          onClick={() => selectFolder(folder._id)}
-        >
-          <span className="truncate">{folder.name}</span>
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <div
-      ref={containerRef}
-      className="w-full border rounded-lg overflow-hidden"
+    <LibraryBrowser
+      containerRef={containerRef}
+      libraryName={library.name}
+      currentLocation={currentLocation}
+      folderPath={folderPath}
+      folders={folders}
+      expandedFolders={expandedFolders}
+      selectedFolderId={selectedFolderId}
+      showFolderTree={showFolders}
+      showSidebar={showSidebar}
+      onSelectFolder={selectFolder}
+      onToggleFolder={toggleFolder}
     >
-      <div className="flex h-100">
-        {showFolders && showSidebar && (
-          <div className="flex flex-col w-36 border-r bg-muted/20 shrink-0 overflow-hidden">
-            <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30">
-              <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
-                <PopoverTrigger asChild>
-                  <LibraryBreadcrumbTrigger
-                    folderPath={folderPath}
-                    currentLocation={currentLocation}
-                  />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className="w-48 p-0"
-                >
-                  {breadcrumbNavContent}
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex-1 overflow-auto py-1">
-              <LibraryFolderTree
-                folders={folders}
-                expandedFolders={expandedFolders}
-                selectedFolderId={selectedFolderId}
-                onSelectFolder={(folderKey) => selectFolder(folderKey)}
-                onToggleFolder={toggleFolder}
-              />
-            </div>
-          </div>
+      <LibraryContentList
+        subfolders={currentSubfolders as FolderData[]}
+        files={sortedFiles as FileData[]}
+        onSelectFolder={selectFolder}
+        onOpenFile={previewFile}
+        renderFileActions={(file) => (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(event) => {
+                event.stopPropagation();
+                previewFile(file);
+              }}
+              title="Preview"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            {content.allowDownloads !== false ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  downloadFile(file.downloadUrl, file.filename);
+                }}
+                title="Download"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </>
         )}
-
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {showFolders && !showSidebar && (
-            <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
-              <Popover open={folderMenuOpen} onOpenChange={setFolderMenuOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                  >
-                    <Menu className="h-3.5 w-3.5" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className="w-56 p-0"
-                >
-                  <div className="flex flex-col max-h-72 overflow-hidden">
-                    <div className="border-b">{breadcrumbNavContent}</div>
-                    <ScrollArea className="flex-1">
-                      <div className="py-1">
-                        <LibraryFolderTree
-                          folders={folders}
-                          expandedFolders={expandedFolders}
-                          selectedFolderId={selectedFolderId}
-                          onSelectFolder={(folderKey) =>
-                            selectFolder(folderKey, true)
-                          }
-                          onToggleFolder={toggleFolder}
-                        />
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
-                <PopoverTrigger asChild>
-                  <LibraryBreadcrumbTrigger
-                    folderPath={folderPath}
-                    currentLocation={currentLocation}
-                  />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="start"
-                  className="w-48 p-0"
-                >
-                  {breadcrumbNavContent}
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-
-          {hasContent ? (
-            <ScrollArea className="flex-1 min-w-0">
-              <LibraryFileList
-                subfolders={currentSubfolders}
-                files={sortedFiles}
-                allowDownloads={content.allowDownloads !== false}
-                onSelectFolder={(folderKey) => selectFolder(folderKey)}
-                onPreviewFile={(file) =>
-                  previewFile(file as (typeof files)[number])
-                }
-                onDownloadFile={(file) =>
-                  downloadFile(
-                    (file as (typeof files)[number]).downloadUrl,
-                    file.filename,
-                  )
-                }
-              />
-            </ScrollArea>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-              <FolderOpen
-                className="h-10 w-10 mb-3 opacity-30"
-                strokeWidth={1.5}
-              />
-              <p className="text-sm font-medium">No files yet</p>
-              <p className="text-xs opacity-60 mt-0.5">This folder is empty</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      />
+    </LibraryBrowser>
   );
 }

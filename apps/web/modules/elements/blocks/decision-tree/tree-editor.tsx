@@ -259,8 +259,11 @@ function DecisionTreeWorkspace({
       {treeTabs}
       {breadcrumbNav}
 
-      <div className="flex-1 min-h-0">
-        <ResizablePanelGroup orientation="horizontal" className="h-full">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+        <ResizablePanelGroup
+          orientation="horizontal"
+          className="h-full min-w-0"
+        >
           <ResizablePanel defaultSize={40} minSize={25}>
             <div className="h-full min-w-0 border-r overflow-hidden">
               {nodeListPanel}

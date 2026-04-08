@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useRef, useState } from "react";
+import { MiddleTruncate } from "../viewer/middle-truncate";
 
 interface NodeListProps {
   autoEditNodeId?: string | null;
@@ -168,9 +169,9 @@ export function NodeList({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="p-3 space-y-1.5">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="min-w-0 space-y-1.5 p-3">
           <DndProvider
             items={nodeIds}
             onDragEnd={handleDragEnd}
@@ -187,11 +188,15 @@ export function NodeList({
             }}
           >
             {childNodes.map((node) => (
-              <SortableItem key={node.id} id={node.id}>
+              <SortableItem
+                key={node.id}
+                id={node.id}
+                className="min-w-0 w-full"
+              >
                 {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled by inner interactive buttons */}
                 <div
                   role="presentation"
-                  className="group flex items-center gap-2 rounded-lg border border-transparent px-4 py-3 cursor-pointer transition-colors hover:bg-primary/5 hover:border-primary/20"
+                  className="group flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-transparent px-4 py-3 cursor-pointer transition-colors hover:bg-primary/5 hover:border-primary/20"
                   onClick={() => {
                     onNavigateInto(node.id);
                   }}
@@ -243,9 +248,10 @@ export function NodeList({
                     </div>
                   ) : (
                     <>
-                      <span className="flex-1 text-sm font-medium truncate min-w-0">
-                        {node.name}
-                      </span>
+                      <MiddleTruncate
+                        text={node.name}
+                        className="w-0 flex-1 text-sm font-medium"
+                      />
                       <div className="flex items-center gap-1 shrink-0">
                         <DropdownMenu
                           open={openMenuId === node.id}
@@ -322,7 +328,7 @@ export function NodeList({
           )}
 
           {isAdding ? (
-            <div className="flex items-center gap-2 p-1">
+            <div className="flex min-w-0 items-center gap-2 p-1">
               <Input
                 ref={handleAddInputRef}
                 value={newName}

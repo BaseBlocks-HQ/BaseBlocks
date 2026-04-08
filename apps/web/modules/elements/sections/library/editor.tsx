@@ -1,11 +1,9 @@
 "use client";
 
 import { useFileUpload } from "@/lib/storage";
-import { cn } from "@/lib/utils";
 import {
   DropZone,
   type FileData,
-  type FolderData,
   useDocumentLibrary,
   useFileOperations,
   useFolderOperations,
@@ -23,12 +21,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@baseblocks/ui/dialog";
-import { Input } from "@baseblocks/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
+import { Input } from "@baseblocks/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,20 +37,20 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import {
-  ChevronRight,
-  File,
-  Folder,
+  Eye,
   FolderPlus,
-  Home,
   Loader2,
-  Menu,
+  MoreHorizontal,
+  Pencil,
   Plus,
+  Trash2,
   Upload,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useReducer, useRef } from "react";
 import { toast } from "sonner";
-import { FileItem } from "./components/file-item";
-import { FolderItem } from "./components/folder-item";
+import { LibraryBrowser } from "./components/library-browser";
+import { LibraryContentList } from "./components/library-content-list";
 import { useContainerWidth } from "./hooks/use-container-width";
 
 interface LibraryDialogState {
@@ -60,10 +60,8 @@ interface LibraryDialogState {
 }
 
 interface LibraryEditorState {
-  breadcrumbOpen: boolean;
   deleteDialog: LibraryDialogState | null;
   expandedFolders: Set<string>;
-  folderMenuOpen: boolean;
   newFolderDialog: boolean;
   newFolderName: string;
   newLibraryName: string;
@@ -78,10 +76,8 @@ type LibraryEditorAction =
   | { type: "openDeleteDialog"; value: LibraryDialogState }
   | { type: "openFolderDialog" }
   | { type: "openRenameDialog"; value: LibraryDialogState }
-  | { type: "selectFolder"; value: string | null; closeMenu?: boolean }
-  | { type: "setBreadcrumbOpen"; value: boolean }
+  | { type: "selectFolder"; value: string | null }
   | { type: "setDeleteDialog"; value: LibraryDialogState | null }
-  | { type: "setFolderMenuOpen"; value: boolean }
   | { type: "setNewFolderName"; value: string }
   | { type: "setNewLibraryName"; value: string }
   | { type: "setRenameDialog"; value: LibraryDialogState | null }
@@ -89,10 +85,8 @@ type LibraryEditorAction =
 
 function createLibraryEditorState(): LibraryEditorState {
   return {
-    breadcrumbOpen: false,
     deleteDialog: null,
     expandedFolders: new Set<string>(),
-    folderMenuOpen: false,
     newFolderDialog: false,
     newFolderName: "",
     newLibraryName: "",
@@ -115,7 +109,7 @@ function libraryEditorReducer(
     case "openDeleteDialog":
       return { ...state, deleteDialog: action.value };
     case "openFolderDialog":
-      return { ...state, folderMenuOpen: false, newFolderDialog: true };
+      return { ...state, newFolderDialog: true };
     case "openRenameDialog":
       return { ...state, renameDialog: action.value };
     case "selectFolder": {
@@ -125,18 +119,12 @@ function libraryEditorReducer(
       }
       return {
         ...state,
-        breadcrumbOpen: false,
         expandedFolders,
-        folderMenuOpen: action.closeMenu ? false : state.folderMenuOpen,
         selectedFolderId: action.value,
       };
     }
-    case "setBreadcrumbOpen":
-      return { ...state, breadcrumbOpen: action.value };
     case "setDeleteDialog":
       return { ...state, deleteDialog: action.value };
-    case "setFolderMenuOpen":
-      return { ...state, folderMenuOpen: action.value };
     case "setNewFolderName":
       return { ...state, newFolderName: action.value };
     case "setNewLibraryName":
@@ -203,34 +191,6 @@ function LibraryPicker({
           disabled={!newLibraryName.trim()}
         >
           <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function FolderMenuContent({
-  breadcrumbNavContent,
-  children,
-  onNewFolder,
-}: {
-  breadcrumbNavContent: React.ReactNode;
-  children: React.ReactNode;
-  onNewFolder: () => void;
-}) {
-  return (
-    <div className="flex flex-col max-h-72 overflow-hidden">
-      <div className="border-b">{breadcrumbNavContent}</div>
-      <div className="flex-1 overflow-auto py-1">{children}</div>
-      <div className="border-t p-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start text-xs h-7"
-          onClick={onNewFolder}
-        >
-          <FolderPlus className="h-3 w-3 mr-2" />
-          New folder
         </Button>
       </div>
     </div>
@@ -346,7 +306,7 @@ function useLibraryEditorController({
   const [containerRef, containerWidth] = useContainerWidth();
 
   const showFolderTree = content.showFolderTree !== false;
-  const showSidebar = containerWidth >= 400 && showFolderTree;
+  const showSidebar = containerWidth >= 560 && showFolderTree;
   const [state, dispatch] = useReducer(
     libraryEditorReducer,
     undefined,
@@ -383,26 +343,12 @@ function useLibraryEditorController({
   const isUploading = Object.values(uploadStates).some((s) => s.isUploading);
   const currentLibrary = libraries?.find((l) => l._id === content.libraryId);
 
-  const folderTree = (() => {
-    const map = new Map<string | undefined, FolderData[]>();
-    for (const f of folders) {
-      const key = f.parentId || undefined;
-      const arr = map.get(key) || [];
-      arr.push(f);
-      map.set(key, arr);
-    }
-    for (const arr of map.values()) arr.sort((a, b) => a.order - b.order);
-    return map;
-  })();
-
-  const hasChildren = (id: string) => (folderTree.get(id)?.length || 0) > 0;
-
   const toggleFolder = (id: string) => {
     dispatch({ type: "toggleFolder", value: id });
   };
 
-  const selectFolder = (id: string | null, closeMenu = false) => {
-    dispatch({ type: "selectFolder", value: id, closeMenu });
+  const selectFolder = (id: string | null) => {
+    dispatch({ type: "selectFolder", value: id });
   };
 
   const handleFilesAccepted = async (acceptedFiles: File[]) => {
@@ -490,45 +436,13 @@ function useLibraryEditorController({
     }
   };
 
-  const renderFolders = (parentId?: string, level = 0): React.ReactNode => {
-    const children = folderTree.get(parentId) || [];
-    return children.map((f) => (
-      <FolderItem
-        key={f._id}
-        folder={f}
-        level={level}
-        isSelected={state.selectedFolderId === f._id}
-        isExpanded={state.expandedFolders.has(f._id)}
-        hasChildren={hasChildren(f._id)}
-        onSelect={() => selectFolder(f._id, !showSidebar)}
-        onToggle={() => toggleFolder(f._id)}
-        onRename={() =>
-          dispatch({
-            type: "openRenameDialog",
-            value: { type: "folder", id: f._id, name: f.name },
-          })
-        }
-        onDelete={() =>
-          dispatch({
-            type: "openDeleteDialog",
-            value: { type: "folder", id: f._id, name: f.name },
-          })
-        }
-      >
-        {state.expandedFolders.has(f._id) && renderFolders(f._id, level + 1)}
-      </FolderItem>
-    ));
-  };
-
   if (!content.libraryId) {
     return {
       containerRef,
       dialogs: null,
-      fileList: null,
       handleFilesAccepted: (_files: File[]) => {},
       isUploading,
       libraryId,
-      mobileHeader: null,
       picker: (
         <LibraryPicker
           libraries={libraries}
@@ -542,7 +456,6 @@ function useLibraryEditorController({
           }
         />
       ),
-      showSidebar,
       sidebar: null,
     };
   }
@@ -550,192 +463,19 @@ function useLibraryEditorController({
   const sortedFiles = [...files].sort((a, b) =>
     a.filename.localeCompare(b.filename),
   );
+  const currentSubfolders = folders
+    .filter(
+      (folder) => folder.parentId === (state.selectedFolderId ?? undefined),
+    )
+    .sort((a, b) => a.order - b.order);
 
-  // Current location display text
   const lastFolder =
     folderPath.length > 0 ? folderPath[folderPath.length - 1] : null;
   const currentLocation =
     lastFolder?.name ?? (currentLibrary?.name || "Library");
 
-  // Breadcrumb navigation popover content
-  const breadcrumbNavContent = (
-    <div className="py-1">
-      <button
-        type="button"
-        className={cn(
-          "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-          !state.selectedFolderId && "bg-accent",
-        )}
-        onClick={() => selectFolder(null)}
-      >
-        <Home className="h-3.5 w-3.5" />
-        <span className="truncate">{currentLibrary?.name || "Library"}</span>
-      </button>
-      {folderPath.map((folder, index) => (
-        <button
-          key={folder._id}
-          type="button"
-          className={cn(
-            "w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-muted/50 rounded",
-            index === folderPath.length - 1 && "bg-accent",
-          )}
-          style={{ paddingLeft: `${(index + 1) * 12 + 12}px` }}
-          onClick={() => selectFolder(folder._id)}
-        >
-          <Folder className="h-3.5 w-3.5" />
-          <span className="truncate">{folder.name}</span>
-        </button>
-      ))}
-    </div>
-  );
-
-  // Sidebar header with breadcrumb and upload
-  const sidebarHeader = (
-    <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30">
-      <Popover
-        open={state.breadcrumbOpen}
-        onOpenChange={(value) => dispatch({ type: "setBreadcrumbOpen", value })}
-      >
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
-          >
-            <Home className="h-3 w-3 shrink-0" />
-            {folderPath.length > 0 && (
-              <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
-            )}
-            <span className="truncate">{currentLocation}</span>
-            {folderPath.length > 0 && (
-              <ChevronRight className="h-3 w-3 shrink-0 opacity-30" />
-            )}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent side="bottom" align="start" className="w-48 p-0">
-          {breadcrumbNavContent}
-        </PopoverContent>
-      </Popover>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          const f = Array.from(e.target.files || []);
-          if (f.length) handleFilesAccepted(f);
-          e.target.value = "";
-        }}
-      />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-5 w-5 shrink-0"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-      >
-        {isUploading ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Upload className="h-3 w-3" />
-        )}
-      </Button>
-    </div>
-  );
-
-  // Mobile folder menu content
-  const folderMenuContent = (
-    <FolderMenuContent
-      breadcrumbNavContent={breadcrumbNavContent}
-      onNewFolder={() => dispatch({ type: "openFolderDialog" })}
-    >
-      {folders.length > 0 ? (
-        renderFolders()
-      ) : (
-        <p className="text-xs text-muted-foreground text-center py-3">
-          No folders
-        </p>
-      )}
-    </FolderMenuContent>
-  );
-
-  const sidebar = showSidebar ? (
-    <div className="flex flex-col w-40 border-r bg-muted/20 shrink-0 overflow-hidden">
-      {sidebarHeader}
-      <div className="flex-1 overflow-auto py-1">
-        {folders.length > 0 ? (
-          renderFolders()
-        ) : (
-          <p className="text-xs text-muted-foreground text-center py-4">
-            No folders
-          </p>
-        )}
-      </div>
-      <div className="border-t p-1.5">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start text-xs h-7"
-          onClick={() => dispatch({ type: "openFolderDialog" })}
-        >
-          <FolderPlus className="h-3 w-3 mr-1.5" />
-          New folder
-        </Button>
-      </div>
-    </div>
-  ) : null;
-
-  const mobileHeader = !showSidebar ? (
-    <div className="flex items-center gap-1 px-1.5 py-1 border-b bg-muted/30 shrink-0">
-      {showFolderTree && (
-        <>
-          <Popover
-            open={state.folderMenuOpen}
-            onOpenChange={(value) =>
-              dispatch({ type: "setFolderMenuOpen", value })
-            }
-          >
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                <Menu className="h-3.5 w-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" className="w-56 p-0">
-              {folderMenuContent}
-            </PopoverContent>
-          </Popover>
-
-          <Popover
-            open={state.breadcrumbOpen}
-            onOpenChange={(value) =>
-              dispatch({ type: "setBreadcrumbOpen", value })
-            }
-          >
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground min-w-0 flex-1 overflow-hidden"
-              >
-                <Home className="h-3 w-3 shrink-0" />
-                {folderPath.length > 0 && (
-                  <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
-                )}
-                <span className="truncate">{currentLocation}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" className="w-48 p-0">
-              {breadcrumbNavContent}
-            </PopoverContent>
-          </Popover>
-        </>
-      )}
-
-      {!showFolderTree && (
-        <span className="text-xs text-muted-foreground flex-1">
-          {currentLibrary?.name || "Library"}
-        </span>
-      )}
-
+  const uploadTrigger = (
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -752,57 +492,89 @@ function useLibraryEditorController({
       <Button
         variant="ghost"
         size="icon"
-        className="h-6 w-6 shrink-0"
+        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
       >
         {isUploading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <Upload className="h-3.5 w-3.5" />
+          <Upload className="h-4 w-4" />
         )}
       </Button>
-    </div>
-  ) : null;
+    </>
+  );
 
-  const fileList = (
-    <div className="flex-1 min-w-0 overflow-auto p-1">
-      {sortedFiles.length > 0 ? (
-        sortedFiles.map((file) => (
-          <FileItem
-            key={file._id}
-            file={file}
-            onPreview={() => handlePreview(file)}
-            onRename={() =>
-              dispatch({
-                type: "openRenameDialog",
-                value: {
-                  type: "file",
-                  id: file._id,
-                  name: file.filename,
-                },
-              })
-            }
-            onDelete={() =>
-              dispatch({
-                type: "openDeleteDialog",
-                value: {
-                  type: "file",
-                  id: file._id,
-                  name: file.filename,
-                },
-              })
-            }
-          />
-        ))
-      ) : (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-          <File className="h-6 w-6 mb-1.5 opacity-50" />
-          <p className="text-xs">No files</p>
-          <p className="text-xs opacity-70">Drop files or click upload</p>
-        </div>
+  const contentList = (
+    <LibraryContentList
+      subfolders={currentSubfolders}
+      files={sortedFiles}
+      onSelectFolder={selectFolder}
+      onOpenFile={handlePreview}
+      renderFolderActions={(folder) => (
+        <LibraryItemMenu
+          items={[
+            {
+              label: "Rename",
+              icon: <Pencil className="mr-2 h-4 w-4" />,
+              onSelect: () =>
+                dispatch({
+                  type: "openRenameDialog",
+                  value: { type: "folder", id: folder._id, name: folder.name },
+                }),
+            },
+            {
+              label: "Delete",
+              icon: <Trash2 className="mr-2 h-4 w-4" />,
+              onSelect: () =>
+                dispatch({
+                  type: "openDeleteDialog",
+                  value: { type: "folder", id: folder._id, name: folder.name },
+                }),
+              destructive: true,
+            },
+          ]}
+        />
       )}
-    </div>
+      renderFileActions={(file) => (
+        <LibraryItemMenu
+          items={[
+            {
+              label: "Preview",
+              icon: <Eye className="mr-2 h-4 w-4" />,
+              onSelect: () => handlePreview(file),
+            },
+            {
+              label: "Rename",
+              icon: <Pencil className="mr-2 h-4 w-4" />,
+              onSelect: () =>
+                dispatch({
+                  type: "openRenameDialog",
+                  value: { type: "file", id: file._id, name: file.filename },
+                }),
+            },
+            {
+              label: "Delete",
+              icon: <Trash2 className="mr-2 h-4 w-4" />,
+              onSelect: () =>
+                dispatch({
+                  type: "openDeleteDialog",
+                  value: { type: "file", id: file._id, name: file.filename },
+                }),
+              destructive: true,
+            },
+          ]}
+        />
+      )}
+      emptyState={
+        <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+          <p className="text-sm font-medium">No files yet</p>
+          <p className="mt-0.5 text-xs opacity-70">
+            Drop files here or upload one
+          </p>
+        </div>
+      }
+    />
   );
 
   const dialogs = (
@@ -839,14 +611,88 @@ function useLibraryEditorController({
   return {
     containerRef,
     dialogs,
-    fileList,
     handleFilesAccepted,
     isUploading,
     libraryId,
-    mobileHeader,
     picker: null,
-    showSidebar,
-    sidebar,
+    sidebar: (
+      <LibraryBrowser
+        containerRef={containerRef}
+        libraryName={currentLibrary?.name || "Library"}
+        currentLocation={currentLocation}
+        folderPath={folderPath}
+        folders={folders}
+        expandedFolders={state.expandedFolders}
+        selectedFolderId={state.selectedFolderId}
+        showFolderTree={showFolderTree}
+        showSidebar={showSidebar}
+        onSelectFolder={selectFolder}
+        onToggleFolder={toggleFolder}
+        renderTreeActions={(folder) => (
+          <LibraryItemMenu
+            items={[
+              {
+                label: "Rename",
+                icon: <Pencil className="mr-2 h-4 w-4" />,
+                onSelect: () =>
+                  dispatch({
+                    type: "openRenameDialog",
+                    value: {
+                      type: "folder",
+                      id: folder._id,
+                      name: folder.name,
+                    },
+                  }),
+              },
+              {
+                label: "Delete",
+                icon: <Trash2 className="mr-2 h-4 w-4" />,
+                onSelect: () =>
+                  dispatch({
+                    type: "openDeleteDialog",
+                    value: {
+                      type: "folder",
+                      id: folder._id,
+                      name: folder.name,
+                    },
+                  }),
+                destructive: true,
+              },
+            ]}
+          />
+        )}
+        sidebarFooter={
+          <div className="flex items-center gap-1">
+            {uploadTrigger}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 flex-1 justify-start text-muted-foreground hover:text-foreground"
+              onClick={() => dispatch({ type: "openFolderDialog" })}
+            >
+              <FolderPlus className="mr-2 h-4 w-4" />
+              New folder
+            </Button>
+          </div>
+        }
+        mobileMenuFooter={
+          <div className="flex items-center gap-1">
+            {uploadTrigger}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 flex-1 justify-start text-muted-foreground hover:text-foreground"
+              onClick={() => dispatch({ type: "openFolderDialog" })}
+            >
+              <FolderPlus className="mr-2 h-4 w-4" />
+              New folder
+            </Button>
+          </div>
+        }
+      >
+        {contentList}
+      </LibraryBrowser>
+    ),
   };
 }
 
@@ -857,13 +703,10 @@ export function LibraryEditor({
   const {
     containerRef,
     dialogs,
-    fileList,
     handleFilesAccepted,
     isUploading,
     libraryId,
-    mobileHeader,
     picker,
-    showSidebar,
     sidebar,
   } = useLibraryEditorController({
     content,
@@ -882,18 +725,55 @@ export function LibraryEditor({
         className="border-0 rounded-none"
         noClick
       >
-        <div ref={containerRef} className="border rounded-lg overflow-hidden">
-          <div className="flex h-100">
-            {sidebar}
-            <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-              {!showSidebar && mobileHeader}
-              {fileList}
-            </div>
-          </div>
-        </div>
+        {sidebar}
       </DropZone>
 
       {dialogs}
     </>
+  );
+}
+
+interface LibraryItemMenuEntry {
+  label: string;
+  icon: ReactNode;
+  onSelect: () => void;
+  destructive?: boolean;
+}
+
+function LibraryItemMenu({ items }: { items: LibraryItemMenuEntry[] }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        {items.map((item, index) => (
+          <div key={item.label}>
+            {index > 0 && item.destructive ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuItem
+              onClick={(event) => {
+                event.stopPropagation();
+                item.onSelect();
+              }}
+              className={
+                item.destructive
+                  ? "text-destructive focus:text-destructive"
+                  : undefined
+              }
+            >
+              {item.icon}
+              {item.label}
+            </DropdownMenuItem>
+          </div>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

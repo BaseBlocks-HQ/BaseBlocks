@@ -1,6 +1,9 @@
 "use client";
 
-import { getElementsByCategory } from "@/modules/elements/framework/registry";
+import {
+  type AnyRegistryEntry,
+  getElementsByCategory,
+} from "@/modules/elements/framework/registry";
 import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/elements/panels/navigation";
@@ -18,13 +21,18 @@ import type {
   LayoutType,
   PageListItem,
 } from "@baseblocks/types";
-import type { ElementCategory } from "@baseblocks/types/elements";
+import type { ElementCategory, ElementType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Separator } from "@baseblocks/ui/separator";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@baseblocks/ui/tooltip";
 import { PanelTop, Redo2, Undo2 } from "lucide-react";
 import {
   IconColorPalette,
@@ -89,21 +97,6 @@ const RAIL_ITEMS: Array<{
     icon: <IconFile className="h-5 w-5" />,
   },
   {
-    id: "site",
-    label: CATEGORY_TITLES.site,
-    icon: CATEGORY_ICONS.site,
-  },
-  {
-    id: "customization",
-    label: CATEGORY_TITLES.customization,
-    icon: CATEGORY_ICONS.customization,
-  },
-  {
-    id: "navigation",
-    label: CATEGORY_TITLES.navigation,
-    icon: CATEGORY_ICONS.navigation,
-  },
-  {
     id: "layouts",
     label: CATEGORY_TITLES.layouts,
     icon: CATEGORY_ICONS.layouts,
@@ -113,9 +106,36 @@ const RAIL_ITEMS: Array<{
     label: CATEGORY_TITLES.blocks,
     icon: CATEGORY_ICONS.blocks,
   },
+  {
+    id: "navigation",
+    label: CATEGORY_TITLES.navigation,
+    icon: CATEGORY_ICONS.navigation,
+  },
+  {
+    id: "customization",
+    label: CATEGORY_TITLES.customization,
+    icon: CATEGORY_ICONS.customization,
+  },
+  {
+    id: "site",
+    label: CATEGORY_TITLES.site,
+    icon: CATEGORY_ICONS.site,
+  },
 ];
 
 const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
+
+const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
+  {
+    title: "Writing",
+    types: ["heading", "paragraph", "richtext", "callout", "code"],
+  },
+  { title: "Structure", types: ["divider", "block-spacer"] },
+  {
+    title: "Advanced",
+    types: ["subpage", "directory", "flowchart", "decision-tree"],
+  },
+];
 
 const TabsPreview = themedPickerImagePreview(
   "/editor/picker/layouts/tabs-light.png",
@@ -137,6 +157,7 @@ function FloatingRailButton({
   onFocus,
   onMouseEnter,
   registerRef,
+  tooltip,
 }: {
   active: boolean;
   disabled: boolean;
@@ -146,14 +167,15 @@ function FloatingRailButton({
   onFocus: () => void;
   onMouseEnter: () => void;
   registerRef: (node: HTMLButtonElement | null) => void;
+  tooltip?: string;
 }) {
-  return (
+  const button = (
     <button
       ref={registerRef}
       type="button"
       aria-disabled={disabled}
       aria-label={label}
-      title={label}
+      title={tooltip ? undefined : label}
       className={cn(
         "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors sm:h-10 sm:w-10 sm:rounded-[1.35rem]",
         active
@@ -168,6 +190,17 @@ function FloatingRailButton({
     >
       {icon}
     </button>
+  );
+
+  if (!tooltip) return button;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex">{button}</span>
+      </TooltipTrigger>
+      <TooltipContent side="right">{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -323,6 +356,37 @@ function FloatingRailFlyout({
   }
 
   const elements = getElementsByCategory(activePanel);
+
+  if (activePanel === "blocks") {
+    const byType = new Map(elements.map((e) => [e.type, e]));
+    return (
+      <EditorFlyoutSurface>
+        {!canEdit ? (
+          <div className="px-4 py-4 text-sm text-muted-foreground">
+            You have view-only access. Contact an admin to request edit
+            permissions.
+          </div>
+        ) : (
+          <ScrollArea className="h-[min(60vh,32rem)]">
+            {BLOCK_GROUPS.map((group) => {
+              const groupEntries = group.types
+                .map((type) => byType.get(type))
+                .filter((e): e is AnyRegistryEntry => e !== undefined);
+              if (groupEntries.length === 0) return null;
+              return (
+                <ElementGrid
+                  key={group.title}
+                  title={group.title}
+                  entries={groupEntries}
+                  onSelect={onSelectElement}
+                />
+              );
+            })}
+          </ScrollArea>
+        )}
+      </EditorFlyoutSurface>
+    );
+  }
 
   return (
     <EditorFlyoutSurface>
@@ -531,6 +595,14 @@ export function EditorFloatingRail({
                     !selectedSlotId
                   );
 
+            const disabledTooltip =
+              isDisabled &&
+              categoryId &&
+              SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
+              !selectedSlotId
+                ? "Select a section on the page first"
+                : undefined;
+
             return (
               <FloatingRailButton
                 key={item.id}
@@ -538,6 +610,7 @@ export function EditorFloatingRail({
                 disabled={isDisabled}
                 icon={item.icon}
                 label={item.label}
+                tooltip={disabledTooltip}
                 onClick={() => {
                   if (activePanel === item.id) {
                     setActivePanel(null);

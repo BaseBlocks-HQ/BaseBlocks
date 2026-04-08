@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { ChevronRight } from "lucide-react";
+import { MiddleTruncate } from "./middle-truncate";
 
 interface OptionListProps {
   nodes: DecisionTreeNode[];
@@ -54,14 +55,10 @@ export function OptionList({
             )}
             onClick={() => onSelect(node)}
           >
-            <span
-              className={cn(
-                "font-medium min-w-0 truncate",
-                compact && "text-sm",
-              )}
-            >
-              {node.name}
-            </span>
+            <MiddleTruncate
+              text={node.name}
+              className={cn("flex-1 font-medium", compact && "text-sm")}
+            />
             {hasChildren && (
               <ChevronRight
                 className={cn(

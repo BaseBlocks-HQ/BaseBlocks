@@ -16,7 +16,7 @@ function DecisionTreeShell({
   children,
 }: DecisionTreeShellProps) {
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="w-full min-w-0 border rounded-lg overflow-hidden">
       {selector}
       {navigationBar}
       {children}
