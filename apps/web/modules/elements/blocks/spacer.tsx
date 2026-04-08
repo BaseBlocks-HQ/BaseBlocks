@@ -14,10 +14,10 @@ import { Check, ChevronDown, MoveVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 const SPACER_HEIGHTS: Record<BlockSpacerContent["height"], number> = {
   small: 32,
@@ -173,20 +173,10 @@ function SpacerRenderer({ content }: ElementRendererProps<"block-spacer">) {
   );
 }
 
-function SpacerPreview({ className }: ElementPreviewProps) {
-  return (
-    <div
-      className={cn(
-        "w-full h-full p-3 flex flex-col items-center justify-center gap-2",
-        className,
-      )}
-    >
-      <div className="w-full h-px bg-muted-foreground/20" />
-      <MoveVertical className="h-3 w-3 text-muted-foreground/40" />
-      <div className="w-full h-px bg-muted-foreground/20" />
-    </div>
-  );
-}
+const SpacerPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/spacer-light.png",
+  "/editor/picker/blocks/spacer-dark.png",
+);
 
 registerElement({
   type: "block-spacer",

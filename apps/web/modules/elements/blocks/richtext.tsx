@@ -27,10 +27,10 @@ import { useTheme } from "next-themes";
 import { createContext, useCallback, useContext, useState } from "react";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 type RichTextEditorInstance = ReturnType<typeof useCreateBlockNote>;
 type RichTextBlock = RichTextEditorInstance["document"][number];
@@ -197,21 +197,10 @@ function RichTextRenderer({ content }: ElementRendererProps<"richtext">) {
   );
 }
 
-function RichTextPreview({ className }: ElementPreviewProps) {
-  return (
-    <div
-      className={cn(
-        "w-full h-full p-3 flex flex-col justify-center gap-1.5",
-        className,
-      )}
-    >
-      <div className="h-2 w-1/3 bg-muted-foreground/40 rounded font-bold" />
-      <div className="h-1.5 w-full bg-muted-foreground/30 rounded" />
-      <div className="h-1.5 w-full bg-muted-foreground/30 rounded" />
-      <div className="h-1.5 w-2/3 bg-primary/30 rounded" />
-    </div>
-  );
-}
+const RichTextPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/richtext-light.png",
+  "/editor/picker/blocks/richtext-dark.png",
+);
 
 registerElement({
   type: "richtext",

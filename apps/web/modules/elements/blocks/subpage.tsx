@@ -1,6 +1,4 @@
 "use client";
-
-import { cn } from "@/lib/utils";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
 import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
@@ -10,10 +8,10 @@ import { useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   const editorUi = useEditorUiOptional();
@@ -89,19 +87,10 @@ function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
   );
 }
 
-function SubpagePreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={cn("w-full h-full p-3 flex items-center", className)}>
-      <div className="w-full h-full bg-card rounded-lg border flex items-center px-3 gap-2">
-        <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center shrink-0">
-          <FileText className="h-3 w-3 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0" />
-        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-      </div>
-    </div>
-  );
-}
+const SubpagePreview = themedPickerImagePreview(
+  "/editor/picker/blocks/subpage-light.png",
+  "/editor/picker/blocks/subpage-dark.png",
+);
 
 registerElement({
   type: "subpage",

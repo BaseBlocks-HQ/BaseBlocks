@@ -81,9 +81,20 @@ export function AccentColorPicker({
         {description && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+              <button
+                type="button"
+                className="inline-flex shrink-0 rounded-sm text-muted-foreground/70 outline-offset-2 hover:text-foreground focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`About ${label}`}
+              >
+                <Info className="h-3 w-3" />
+              </button>
             </TooltipTrigger>
-            <TooltipContent side="top">{description}</TooltipContent>
+            <TooltipContent
+              side="top"
+              className="max-w-[min(280px,calc(100vw-2rem))] text-pretty"
+            >
+              {description}
+            </TooltipContent>
           </Tooltip>
         )}
       </div>

@@ -1,11 +1,11 @@
 "use client";
 import { FormDialog } from "@/components/dialogs/form-dialog";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
 interface CreateSubPageDialogProps {
@@ -29,12 +29,22 @@ export function CreateSubPageDialog({
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [slugLockedByUser, setSlugLockedByUser] = useState(false);
 
   const createPage = useMutation(api.pages.mutations.create);
+  const pages = useQuery(
+    api.pages.queries.list,
+    open ? { siteId: siteId as Id<"sites"> } : "skip",
+  );
+  const usedSlugs = new Set(
+    (pages ?? []).map((page) => page.slug.toLowerCase()),
+  );
+  const autoSlug = uniqueSlugAmong(generateSlug(title), usedSlugs);
+  const slugValue = slugLockedByUser ? slug : autoSlug;
 
   const handleTitleChange = (value: string) => {
+    setSlugLockedByUser(false);
     setTitle(value);
-    setSlug(generateSlug(value));
     setError("");
   };
 
@@ -45,11 +55,12 @@ export function CreateSubPageDialog({
     void createPage({
       siteId: siteId as Id<"sites">,
       title,
-      slug,
+      slug: slugValue,
       parentId: parentId as Id<"pages">,
     })
       .then(() => {
         onOpenChange(false);
+        setSlugLockedByUser(false);
         setTitle("");
         setSlug("");
         onSuccess?.();
@@ -66,6 +77,7 @@ export function CreateSubPageDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
+      setSlugLockedByUser(false);
       setTitle("");
       setSlug("");
       setError("");
@@ -100,8 +112,9 @@ export function CreateSubPageDialog({
         <Input
           id="subPageSlug"
           placeholder="getting-started"
-          value={slug}
+          value={slugValue}
           onChange={(e) => {
+            setSlugLockedByUser(true);
             setSlug(e.target.value.toLowerCase());
             setError("");
           }}

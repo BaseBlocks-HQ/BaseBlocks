@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { AlignLeft } from "lucide-react";
@@ -8,10 +7,10 @@ import { useState } from "react";
 import ContentEditable from "react-contenteditable";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function ParagraphEditor({
   content,
@@ -56,20 +55,10 @@ function ParagraphRenderer({ content }: ElementRendererProps<"paragraph">) {
   return <p className="mb-4 leading-relaxed">{content.text}</p>;
 }
 
-function ParagraphPreview({ className }: ElementPreviewProps) {
-  return (
-    <div
-      className={cn(
-        "w-full h-full p-3 flex flex-col justify-center gap-1.5",
-        className,
-      )}
-    >
-      <div className="h-1.5 w-full bg-muted-foreground/30 rounded" />
-      <div className="h-1.5 w-full bg-muted-foreground/30 rounded" />
-      <div className="h-1.5 w-3/4 bg-muted-foreground/30 rounded" />
-    </div>
-  );
-}
+const ParagraphPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/paragraph-light.png",
+  "/editor/picker/blocks/paragraph-dark.png",
+);
 
 registerElement({
   type: "paragraph",

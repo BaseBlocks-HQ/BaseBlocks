@@ -16,6 +16,28 @@ export function generateSlug(text: string): string {
 }
 
 /**
- * Slug validation pattern for HTML input elements
+ * HTML `pattern` is compiled with RegExp `v` (unicode sets). Unescaped `-` in
+ * `[...]` is special; escape the hyphen so the class is valid.
  */
-export const SLUG_PATTERN = "[a-z0-9-]+";
+export const SLUG_PATTERN = "[a-z0-9\\-]+";
+
+/**
+ * Pick the first slug `base`, `base-2`, `base-3`, … not present in `used`.
+ */
+export function uniqueSlugAmong(
+  base: string,
+  used: ReadonlySet<string>,
+): string {
+  if (!base) {
+    return base;
+  }
+  const lower = base.toLowerCase();
+  const usedLower = new Set([...used].map((s) => s.toLowerCase()));
+  let candidate = lower;
+  let n = 2;
+  while (usedLower.has(candidate)) {
+    candidate = `${lower}-${n}`;
+    n += 1;
+  }
+  return candidate;
+}

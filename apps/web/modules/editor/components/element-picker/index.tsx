@@ -1,6 +1,7 @@
 "use client";
 
 import { getElementsByCategory } from "@/modules/elements/framework/registry";
+import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/elements/panels/navigation";
 import { SiteConfigPanel } from "@/modules/elements/panels/site";
@@ -25,6 +26,11 @@ interface ElementPickerProps {
 }
 
 const EMPTY_CATEGORIES: ElementCategory[] = [];
+
+const TabsPreview = themedPickerImagePreview(
+  "/editor/picker/layouts/tabs-light.png",
+  "/editor/picker/layouts/tabs-dark.png",
+);
 
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
@@ -138,7 +144,7 @@ export function ElementPicker({
       {/* Flyout panel with site config */}
       {activeCategory === "site" && siteId && (
         <div
-          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <SiteConfigPanel siteId={siteId as Id<"sites">} />
@@ -148,7 +154,7 @@ export function ElementPicker({
       {/* Flyout panel with navigation config */}
       {activeCategory === "navigation" && siteId && (
         <div
-          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <NavigationConfigPanel siteId={siteId as Id<"sites">} />
@@ -158,7 +164,7 @@ export function ElementPicker({
       {/* Flyout panel with customization config */}
       {activeCategory === "customization" && siteId && (
         <div
-          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <CustomizationConfigPanel siteId={siteId as Id<"sites">} />
@@ -168,7 +174,7 @@ export function ElementPicker({
       {/* Flyout panel with elements */}
       {activeCategory && !showsConfigPanel && categoryElements.length > 0 && (
         <div
-          className="absolute left-full top-0 ml-1 w-80 bg-popover border rounded-lg shadow-lg z-50 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <ElementGrid
@@ -178,14 +184,14 @@ export function ElementPicker({
           />
           {/* Extra Tabs card in layouts flyout */}
           {activeCategory === "layouts" && onEnableTabs && (
-            <div className="px-4 pb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <ElementCard
-                  label="Tabs"
-                  icon={PanelTop}
-                  onClick={onEnableTabs}
-                />
-              </div>
+            <div className="px-[15px] pb-[15px]">
+              <ElementCard
+                description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
+                label="Tabs"
+                icon={PanelTop}
+                preview={TabsPreview}
+                onClick={onEnableTabs}
+              />
             </div>
           )}
         </div>

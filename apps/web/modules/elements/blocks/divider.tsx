@@ -1,14 +1,12 @@
 "use client";
-
-import { cn } from "@/lib/utils";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Minus } from "lucide-react";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function DividerEditor(_props: ElementEditorProps<"divider">) {
   return (
@@ -22,13 +20,10 @@ function DividerRenderer(_props: ElementRendererProps<"divider">) {
   return <hr className="my-8" />;
 }
 
-function DividerPreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={cn("w-full h-full p-3 flex items-center", className)}>
-      <div className="w-full h-px bg-border" />
-    </div>
-  );
-}
+const DividerPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/divider-light.png",
+  "/editor/picker/blocks/divider-dark.png",
+);
 
 registerElement({
   type: "divider",

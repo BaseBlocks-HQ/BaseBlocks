@@ -1,23 +1,11 @@
-import { cn } from "@/lib/utils";
 import { LayoutGrid } from "lucide-react";
-import type { ElementPreviewProps } from "../framework/registry";
 import { registerLayout } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
-function GridPreview({ className }: ElementPreviewProps) {
-  return (
-    <div
-      className={cn(
-        "w-full h-full p-2 grid grid-cols-2 grid-rows-2 gap-1",
-        className,
-      )}
-    >
-      <div className="bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-      <div className="bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-      <div className="bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-      <div className="bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-    </div>
-  );
-}
+const GridPreview = themedPickerImagePreview(
+  "/editor/picker/layouts/grid-light.png",
+  "/editor/picker/layouts/grid-dark.png",
+);
 
 registerLayout({
   type: "grid",

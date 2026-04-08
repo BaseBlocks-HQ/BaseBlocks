@@ -50,12 +50,20 @@ export function BorderRadiusPicker({
         <Label className="text-sm font-medium">Border Radius</Label>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
+            <button
+              type="button"
+              className="inline-flex shrink-0 rounded-sm text-muted-foreground/70 outline-offset-2 hover:text-foreground focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="About border radius"
+            >
+              <Info className="h-3 w-3" />
+            </button>
           </TooltipTrigger>
-          <TooltipContent side="top">
-            {value
-              ? "Applied to buttons, cards, and inputs"
-              : "Using theme default radius"}
+          <TooltipContent
+            side="top"
+            className="max-w-[min(280px,calc(100vw-2rem))] text-pretty"
+          >
+            Controls corner rounding on buttons, cards, and inputs. Default
+            follows the theme until you pick a preset.
           </TooltipContent>
         </Tooltip>
       </div>

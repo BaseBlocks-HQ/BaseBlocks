@@ -3,33 +3,18 @@
 import { useSite } from "@/lib/data";
 import { useImageUpload } from "@/lib/storage";
 import { DropZone } from "@/modules/documents";
+import {
+  CollapsibleSettingsSection,
+  PanelSettingRow,
+} from "@/modules/elements/panels/shared/editor-panel-primitives";
 import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
-import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
-import {
-  Eye,
-  EyeOff,
-  Globe,
-  ImageIcon,
-  Info,
-  Loader2,
-  PanelLeft,
-  Pencil,
-  Route,
-  Search,
-  Type,
-  Upload,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -37,34 +22,6 @@ import { MetadataDialog } from "./metadata-dialog";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
-}
-
-function SettingSection({
-  control,
-  description,
-  icon,
-  label,
-}: {
-  control: React.ReactNode;
-  description: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        {icon}
-        <Label className="text-sm font-medium">{label}</Label>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
-          </TooltipTrigger>
-          <TooltipContent side="top">{description}</TooltipContent>
-        </Tooltip>
-      </div>
-      {control}
-    </div>
-  );
 }
 
 function LogoUploadSection({
@@ -82,17 +39,18 @@ function LogoUploadSection({
 }) {
   if (logoUrl) {
     return (
-      <div className="ml-6 space-y-2">
+      <div className="border-t border-border/60 px-3 py-3">
+        <p className="mb-2 text-xs text-muted-foreground">Current logo</p>
         <div className="flex items-center gap-3">
           <Image
             src={logoUrl}
             alt="Site logo"
-            className="h-10 w-10 rounded-md object-contain border bg-muted"
+            className="h-10 w-10 rounded-md border border-border/60 bg-background object-contain"
             width={40}
             height={40}
             unoptimized
           />
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <input
               ref={fileInputRef}
               type="file"
@@ -109,19 +67,17 @@ function LogoUploadSection({
             <Button
               variant="outline"
               size="sm"
+              className="h-8"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                   {uploadProgress}%
                 </>
               ) : (
-                <>
-                  <Upload className="h-3 w-3 mr-1" />
-                  Replace
-                </>
+                "Replace"
               )}
             </Button>
           </div>
@@ -131,26 +87,25 @@ function LogoUploadSection({
   }
 
   return (
-    <div className="ml-6 space-y-2">
+    <div className="border-t border-border/60 px-3 py-3">
       <DropZone
         onFilesAccepted={onFilesAccepted}
         accept={{
           "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
         }}
         maxSize={5 * 1024 * 1024}
-        className="py-4"
+        className="border-dashed py-6"
       >
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-1 text-center">
           {isUploading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mb-1" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
             </>
           ) : (
-            <>
-              <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
-              <p className="text-xs text-muted-foreground">Drop logo here</p>
-            </>
+            <p className="text-xs text-muted-foreground">
+              Drop an image here, or click to browse
+            </p>
           )}
         </div>
       </DropZone>
@@ -176,7 +131,7 @@ function SiteNameSection({
   onSave: () => void;
 }) {
   return (
-    <div className="ml-6 space-y-2">
+    <div className="border-t border-border/60 px-3 py-3">
       {isEditing ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -205,18 +160,17 @@ function SiteNameSection({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-md border border-border/80 bg-muted/20 px-3 py-2">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+        <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/80 px-2.5 py-1.5">
+          <span className="min-w-0 flex-1 truncate text-sm">
             {displayName.trim() ? displayName : "Untitled site"}
           </span>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-8 shrink-0 gap-1.5 px-2.5"
+            className="h-7 shrink-0 px-2 text-xs"
             onClick={onEdit}
           >
-            <Pencil className="h-3.5 w-3.5" />
             Edit
           </Button>
         </div>
@@ -352,7 +306,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
   if (!site) {
     return (
-      <div className="p-4 flex items-center justify-center">
+      <div className="flex items-center justify-center p-4">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
@@ -372,153 +326,155 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     .sidebarDefaultExpanded;
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h3 className="font-semibold text-sm">Site Settings</h3>
-      </div>
+    <div className="space-y-5 p-4">
+      <header>
+        <h3 className="text-sm font-semibold tracking-tight">Site settings</h3>
+      </header>
 
-      <SettingSection
-        control={
-          <Switch
-            id="show-header"
-            checked={showHeader}
-            onCheckedChange={(checked) => updateSettings("showHeader", checked)}
-          />
-        }
-        description="Display the site header with logo and navigation"
-        icon={
-          showHeader ? (
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <EyeOff className="h-4 w-4 text-muted-foreground" />
-          )
-        }
-        label="Show Header"
-      />
-
-      {showHeader && (
-        <SettingSection
+      <CollapsibleSettingsSection title="Header">
+        <PanelSettingRow
+          htmlFor="show-header"
+          label="Show header"
+          tooltip="Top bar with your branding, site name, and navigation."
           control={
             <Switch
-              id="show-logo"
-              checked={showLogo}
-              onCheckedChange={(checked) => updateSettings("showLogo", checked)}
-            />
-          }
-          description="Display your uploaded logo in the site header"
-          icon={<ImageIcon className="h-4 w-4 text-muted-foreground" />}
-          label="Show Logo"
-        />
-      )}
-
-      {showHeader && showLogo && (
-        <LogoUploadSection
-          fileInputRef={fileInputRef}
-          isUploading={isUploading}
-          logoUrl={site.logoUrl}
-          onFilesAccepted={handleLogoUpload}
-          uploadProgress={uploadProgress}
-        />
-      )}
-
-      {showHeader && (
-        <SettingSection
-          control={
-            <Switch
-              id="show-site-name"
-              checked={showSiteName}
+              id="show-header"
+              checked={showHeader}
               onCheckedChange={(checked) =>
-                updateSettings("showSiteName", checked)
+                updateSettings("showHeader", checked)
               }
             />
           }
-          description="Display your site name beside the logo"
-          icon={<Type className="h-4 w-4 text-muted-foreground" />}
-          label="Show Site Name"
         />
-      )}
 
-      {showHeader && showSiteName && (
-        <SiteNameSection
-          displayName={site.name}
-          editValue={localName}
-          isEditing={isEditingName}
-          onCancel={() => {
-            setLocalName(site.name);
-            setIsEditingName(false);
-          }}
-          onChange={setLocalName}
-          onEdit={() => {
-            setLocalName(site.name);
-            setIsEditingName(true);
-          }}
-          onSave={handleSaveName}
-        />
-      )}
-
-      {showHeader && (
-        <SettingSection
-          control={
-            <Switch
-              id="show-header-search"
-              checked={showHeaderSearch}
-              onCheckedChange={(checked) =>
-                updateSettings("showHeaderSearch", checked)
-              }
-            />
-          }
-          description="Add a document search bar to the site header"
-          icon={<Search className="h-4 w-4 text-muted-foreground" />}
-          label="Search in Header"
-        />
-      )}
-
-      <SettingSection
-        control={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMetadataDialogOpen(true)}
-          >
-            Configure
-          </Button>
-        }
-        description="Set favicon, title, description, and social sharing metadata"
-        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-        label="SEO & Metadata"
-      />
-
-      <SettingSection
-        control={
-          <Switch
-            id="show-breadcrumbs"
-            checked={showBreadcrumbs}
-            onCheckedChange={(checked) =>
-              updateSettings("showBreadcrumbs", checked)
+        {showHeader && (
+          <PanelSettingRow
+            htmlFor="show-logo"
+            label="Show logo"
+            tooltip="When enabled, the logo you upload appears in the header (if the header is visible)."
+            control={
+              <Switch
+                id="show-logo"
+                checked={showLogo}
+                onCheckedChange={(checked) =>
+                  updateSettings("showLogo", checked)
+                }
+              />
             }
           />
-        }
-        description="Display the current page path below navigation"
-        icon={<Route className="h-4 w-4 text-muted-foreground" />}
-        label="Show Breadcrumbs"
-      />
+        )}
 
-      {isSidebarNav && (
-        <SettingSection
+        {showHeader && showLogo && (
+          <LogoUploadSection
+            fileInputRef={fileInputRef}
+            isUploading={isUploading}
+            logoUrl={site.logoUrl}
+            onFilesAccepted={handleLogoUpload}
+            uploadProgress={uploadProgress}
+          />
+        )}
+
+        {showHeader && (
+          <PanelSettingRow
+            htmlFor="show-site-name"
+            label="Show site name"
+            tooltip="Displays your site name beside the logo when both logo and name are turned on."
+            control={
+              <Switch
+                id="show-site-name"
+                checked={showSiteName}
+                onCheckedChange={(checked) =>
+                  updateSettings("showSiteName", checked)
+                }
+              />
+            }
+          />
+        )}
+
+        {showHeader && showSiteName && (
+          <SiteNameSection
+            displayName={site.name}
+            editValue={localName}
+            isEditing={isEditingName}
+            onCancel={() => {
+              setLocalName(site.name);
+              setIsEditingName(false);
+            }}
+            onChange={setLocalName}
+            onEdit={() => {
+              setLocalName(site.name);
+              setIsEditingName(true);
+            }}
+            onSave={handleSaveName}
+          />
+        )}
+
+        {showHeader && (
+          <PanelSettingRow
+            htmlFor="show-header-search"
+            label="Search in header"
+            tooltip="Adds a search field so visitors can find documents from the header."
+            control={
+              <Switch
+                id="show-header-search"
+                checked={showHeaderSearch}
+                onCheckedChange={(checked) =>
+                  updateSettings("showHeaderSearch", checked)
+                }
+              />
+            }
+          />
+        )}
+      </CollapsibleSettingsSection>
+
+      <CollapsibleSettingsSection title="Discovery and SEO">
+        <PanelSettingRow
+          label="SEO and metadata"
+          tooltip="Favicon, page title, meta description, keywords, and the image used when your site is shared on social apps."
+          control={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={() => setMetadataDialogOpen(true)}
+            >
+              Edit
+            </Button>
+          }
+        />
+
+        <PanelSettingRow
+          htmlFor="show-breadcrumbs"
+          label="Breadcrumbs"
+          tooltip="Shows the path to the current page under the main navigation so visitors know where they are."
           control={
             <Switch
-              id="sidebar-default-expanded"
-              checked={sidebarDefaultExpanded}
+              id="show-breadcrumbs"
+              checked={showBreadcrumbs}
               onCheckedChange={(checked) =>
-                updateSettings("sidebarDefaultExpanded", checked)
+                updateSettings("showBreadcrumbs", checked)
               }
             />
           }
-          description="Show subpages expanded in the sidebar navigation"
-          icon={<PanelLeft className="h-4 w-4 text-muted-foreground" />}
-          label="Expand Pages by Default"
         />
-      )}
+
+        {isSidebarNav && (
+          <PanelSettingRow
+            htmlFor="sidebar-default-expanded"
+            label="Expand sidebar pages"
+            tooltip="When using sidebar navigation, nested pages start expanded instead of collapsed."
+            control={
+              <Switch
+                id="sidebar-default-expanded"
+                checked={sidebarDefaultExpanded}
+                onCheckedChange={(checked) =>
+                  updateSettings("sidebarDefaultExpanded", checked)
+                }
+              />
+            }
+          />
+        )}
+      </CollapsibleSettingsSection>
 
       <MetadataDialog
         open={metadataDialogOpen}

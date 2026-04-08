@@ -1,7 +1,3 @@
-import editorPreviewImage from "@/public/landing/editor-preview-v3.png";
-import buildSiteImage from "@/public/landing/steps/build-site-v2.png";
-import createWorkspaceImage from "@/public/landing/steps/create-workspace-v7.png";
-import publishTeamImage from "@/public/landing/steps/publish-team-v4.png";
 import type { Transition } from "motion/react";
 import {
   IconAppStack,
@@ -50,7 +46,10 @@ export const layoutSpring = {
   damping: 20,
 } as const satisfies Transition;
 
-export const landingEditorPreviewImage = editorPreviewImage;
+export const landingEditorPreviewImages = {
+  light: "/landing/hero-image-light.png",
+  dark: "/landing/hero-image-dark.png",
+} as const;
 
 export const landingFeatures: readonly LandingFeature[] = [
   {
@@ -104,20 +103,29 @@ export const landingSteps: readonly LandingStep[] = [
     titleKey: "step1Title",
     descKey: "step1Desc",
     imageAltKey: "step1ImageAlt",
-    image: createWorkspaceImage,
+    image: {
+      light: "/landing/steps/create-workspace-light.png",
+      dark: "/landing/steps/create-workspace-dark.png",
+    },
   },
   {
     num: "02",
     titleKey: "step2Title",
     descKey: "step2Desc",
     imageAltKey: "step2ImageAlt",
-    image: buildSiteImage,
+    image: {
+      light: "/landing/steps/build-site-light.png",
+      dark: "/landing/steps/build-site-dark.png",
+    },
   },
   {
     num: "03",
     titleKey: "step3Title",
     descKey: "step3Desc",
     imageAltKey: "step3ImageAlt",
-    image: publishTeamImage,
+    image: {
+      light: "/landing/steps/publish-team-light.png",
+      dark: "/landing/steps/publish-team-dark.png",
+    },
   },
 ] as const;

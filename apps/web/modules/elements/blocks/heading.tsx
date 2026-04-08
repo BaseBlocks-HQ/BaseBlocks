@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Heading } from "lucide-react";
@@ -8,10 +7,10 @@ import { useState } from "react";
 import ContentEditable from "react-contenteditable";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function HeadingEditor({
   content,
@@ -83,19 +82,10 @@ function HeadingRenderer({ content }: ElementRendererProps<"heading">) {
   }
 }
 
-function HeadingPreview({ className }: ElementPreviewProps) {
-  return (
-    <div
-      className={cn(
-        "w-full h-full p-3 flex flex-col justify-center",
-        className,
-      )}
-    >
-      <div className="h-3 w-3/4 bg-foreground/80 rounded" />
-      <div className="h-2 w-1/2 bg-muted-foreground/30 rounded mt-2" />
-    </div>
-  );
-}
+const HeadingPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/heading-light.png",
+  "/editor/picker/blocks/heading-dark.png",
+);
 
 registerElement({
   type: "heading",

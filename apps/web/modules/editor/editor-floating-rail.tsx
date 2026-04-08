@@ -1,6 +1,7 @@
 "use client";
 
 import { getElementsByCategory } from "@/modules/elements/framework/registry";
+import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/elements/panels/navigation";
 import { SiteConfigPanel } from "@/modules/elements/panels/site";
@@ -114,6 +115,11 @@ const RAIL_ITEMS: Array<{
 ];
 
 const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
+
+const TabsPreview = themedPickerImagePreview(
+  "/editor/picker/layouts/tabs-light.png",
+  "/editor/picker/layouts/tabs-dark.png",
+);
 
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
@@ -335,14 +341,14 @@ function FloatingRailFlyout({
             onSelect={onSelectElement}
           />
           {activePanel === "layouts" && onEnableTabs && (
-            <div className="px-4 pb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <ElementCard
-                  label="Tabs"
-                  icon={PanelTop}
-                  onClick={onEnableTabs}
-                />
-              </div>
+            <div className="px-[15px] pb-[15px]">
+              <ElementCard
+                description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
+                label="Tabs"
+                icon={PanelTop}
+                preview={TabsPreview}
+                onClick={onEnableTabs}
+              />
             </div>
           )}
         </ScrollArea>

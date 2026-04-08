@@ -2,13 +2,13 @@
 
 import { FormDialog } from "@/components/dialogs/form-dialog";
 import { useHaptic } from "@/lib/use-haptic";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,16 +27,29 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
     error: "",
   });
 
+  const [slugLockedByUser, setSlugLockedByUser] = useState(false);
+
   const haptic = useHaptic();
   const createPage = useMutation(api.pages.mutations.create);
+  const pages = useQuery(
+    api.pages.queries.list,
+    dialogState.open ? { siteId: siteId as Id<"sites"> } : "skip",
+  );
+  const usedSlugs = new Set(
+    (pages ?? []).map((page) => page.slug.toLowerCase()),
+  );
+  const autoSlug = uniqueSlugAmong(generateSlug(dialogState.title), usedSlugs);
+  const slugValue = slugLockedByUser ? dialogState.slug : autoSlug;
 
   const handleTitleChange = (value: string) => {
-    setDialogState((current) => ({
-      ...current,
-      title: value,
-      slug: generateSlug(value),
-      error: "",
-    }));
+    setSlugLockedByUser(false);
+    setDialogState((current) => {
+      return {
+        ...current,
+        title: value,
+        error: "",
+      };
+    });
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -45,6 +58,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       open: newOpen,
     }));
     if (!newOpen) {
+      setSlugLockedByUser(false);
       setDialogState((current) => ({
         ...current,
         error: "",
@@ -64,10 +78,11 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       await createPage({
         siteId: siteId as Id<"sites">,
         title: dialogState.title,
-        slug: dialogState.slug,
+        slug: slugValue,
         parentId: parentId as Id<"pages"> | undefined,
       });
       haptic.trigger("success");
+      setSlugLockedByUser(false);
       setDialogState({
         open: false,
         title: "",
@@ -121,8 +136,9 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         <Input
           id="pageSlug"
           placeholder="getting-started"
-          value={dialogState.slug}
+          value={slugValue}
           onChange={(e) => {
+            setSlugLockedByUser(true);
             setDialogState((current) => ({
               ...current,
               slug: e.target.value.toLowerCase(),

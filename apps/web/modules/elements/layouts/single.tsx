@@ -1,15 +1,11 @@
-import { cn } from "@/lib/utils";
 import { Square } from "lucide-react";
-import type { ElementPreviewProps } from "../framework/registry";
 import { registerLayout } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
-function SinglePreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={cn("w-full h-full p-2", className)}>
-      <div className="w-full h-full bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-    </div>
-  );
-}
+const SinglePreview = themedPickerImagePreview(
+  "/editor/picker/layouts/single-light-v2.png",
+  "/editor/picker/layouts/single-dark-v2.png",
+);
 
 registerLayout({
   type: "single",

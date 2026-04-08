@@ -1,16 +1,15 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { MessageSquare } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function CalloutEditor({
   content,
@@ -62,18 +61,10 @@ function CalloutRenderer({ content }: ElementRendererProps<"callout">) {
   );
 }
 
-function CalloutPreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={cn("w-full h-full p-3 flex items-center", className)}>
-      <div className="w-full h-full bg-muted rounded-lg border flex items-center px-3">
-        <div className="flex flex-col gap-1 flex-1">
-          <div className="h-1.5 w-3/4 bg-muted-foreground/30 rounded" />
-          <div className="h-1.5 w-1/2 bg-muted-foreground/20 rounded" />
-        </div>
-      </div>
-    </div>
-  );
-}
+const CalloutPreview = themedPickerImagePreview(
+  "/editor/picker/blocks/callout-light.png",
+  "/editor/picker/blocks/callout-dark.png",
+);
 
 registerElement({
   type: "callout",

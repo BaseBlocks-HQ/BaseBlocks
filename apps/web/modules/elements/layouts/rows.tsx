@@ -1,16 +1,11 @@
-import { cn } from "@/lib/utils";
 import { Rows3 } from "lucide-react";
-import type { ElementPreviewProps } from "../framework/registry";
 import { registerLayout } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
-function RowsPreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={cn("w-full h-full p-2 flex flex-col gap-1", className)}>
-      <div className="flex-1 bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-      <div className="flex-1 bg-muted/50 rounded border border-dashed border-muted-foreground/30" />
-    </div>
-  );
-}
+const RowsPreview = themedPickerImagePreview(
+  "/editor/picker/layouts/rows-light.png",
+  "/editor/picker/layouts/rows-dark.png",
+);
 
 registerLayout({
   type: "rows",

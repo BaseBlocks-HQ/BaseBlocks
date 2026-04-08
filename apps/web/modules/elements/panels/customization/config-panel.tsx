@@ -1,6 +1,10 @@
 "use client";
 
 import { useSite } from "@/lib/data";
+import {
+  CollapsibleSettingsSection,
+  PanelSettingRow,
+} from "@/modules/elements/panels/shared/editor-panel-primitives";
 import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -9,15 +13,9 @@ import type {
   SiteCustomization,
 } from "@baseblocks/types/elements/customization";
 import { getDarkColorForPreset } from "@baseblocks/types/elements/customization";
-import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
-import { Info, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AccentColorPicker } from "./accent-color-picker";
@@ -37,12 +35,10 @@ export function CustomizationConfigPanel({
   const [isSaving, setIsSaving] = useState(false);
   const undoContext = useEditorUndoOptional();
 
-  // Get current customization from site settings (may be undefined)
   const customization = site?.settings?.customization as
     | SiteCustomization
     | undefined;
 
-  // Generic save helper
   const saveCustomization = async (newCustomization: SiteCustomization) => {
     if (!site) return;
 
@@ -88,7 +84,6 @@ export function CustomizationConfigPanel({
     }
   };
 
-  // Handle color change for a specific field
   const handleColorChange =
     (
       field: "accentColor" | "headerColor" | "secondaryColor" | "tertiaryColor",
@@ -112,7 +107,6 @@ export function CustomizationConfigPanel({
       await saveCustomization(newCustomization);
     };
 
-  // Handle border radius change
   const handleBorderRadiusChange = async (
     radius: BorderRadiusPreset | undefined,
   ) => {
@@ -128,7 +122,6 @@ export function CustomizationConfigPanel({
     await saveCustomization(newCustomization);
   };
 
-  // Handle gradient toggle
   const handleGradientToggle = async (checked: boolean) => {
     if (!site) return;
 
@@ -144,75 +137,81 @@ export function CustomizationConfigPanel({
 
   if (!site) {
     return (
-      <div className="p-4 flex items-center justify-center">
+      <div className="flex items-center justify-center p-4">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-semibold text-sm">Customization</h3>
-        </div>
+    <div className="space-y-5 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-semibold tracking-tight">Customization</h3>
         {isSaving && (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
         )}
       </div>
 
-      <CustomizationPreview customization={customization} />
+      <CollapsibleSettingsSection title="Preview" contentClassName="p-3">
+        <CustomizationPreview customization={customization} />
+      </CollapsibleSettingsSection>
 
-      <AccentColorPicker
-        value={customization?.accentColor}
-        onChange={handleColorChange("accentColor")}
-        label="Primary Color"
-        description="Buttons, links, and focus states"
-      />
+      <CollapsibleSettingsSection title="Colors" contentClassName="p-3">
+        <div className="space-y-4">
+          <AccentColorPicker
+            value={customization?.accentColor}
+            onChange={handleColorChange("accentColor")}
+            label="Primary Color"
+            description="Buttons, links, and focus states across the public site."
+          />
 
-      <AccentColorPicker
-        value={customization?.headerColor}
-        onChange={handleColorChange("headerColor")}
-        label="Header Color"
-        description="Header background and navigation bar"
-      />
+          <AccentColorPicker
+            value={customization?.headerColor}
+            onChange={handleColorChange("headerColor")}
+            label="Header Color"
+            description="Background of the site header and navigation bar."
+          />
 
-      <AccentColorPicker
-        value={customization?.secondaryColor}
-        onChange={handleColorChange("secondaryColor")}
-        label="Secondary Color"
-        description="Gradient end color and decorative elements"
-      />
+          <AccentColorPicker
+            value={customization?.secondaryColor}
+            onChange={handleColorChange("secondaryColor")}
+            label="Secondary Color"
+            description="Used for gradient accents and supporting UI highlights."
+          />
 
-      <AccentColorPicker
-        value={customization?.tertiaryColor}
-        onChange={handleColorChange("tertiaryColor")}
-        label="Tertiary Color"
-        description="Middle gradient color"
-      />
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Label className="text-sm font-medium">Header Gradient</Label>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3 w-3 text-muted-foreground/60 cursor-default" />
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              Show a gradient stripe below the header
-            </TooltipContent>
-          </Tooltip>
+          <AccentColorPicker
+            value={customization?.tertiaryColor}
+            onChange={handleColorChange("tertiaryColor")}
+            label="Tertiary Color"
+            description="Middle tone when a three-color header gradient is shown."
+          />
         </div>
-        <Switch
-          checked={customization?.showHeaderGradient ?? false}
-          onCheckedChange={handleGradientToggle}
-        />
-      </div>
+      </CollapsibleSettingsSection>
 
-      <BorderRadiusPicker
-        value={customization?.borderRadius}
-        onChange={handleBorderRadiusChange}
-      />
+      <CollapsibleSettingsSection
+        title="Shape and Effects"
+        contentClassName="p-3"
+      >
+        <div className="space-y-4">
+          <PanelSettingRow
+            htmlFor="header-gradient"
+            label="Header Gradient"
+            tooltip="Adds a subtle gradient stripe along the header for extra depth."
+            control={
+              <Switch
+                id="header-gradient"
+                checked={customization?.showHeaderGradient ?? false}
+                onCheckedChange={handleGradientToggle}
+              />
+            }
+          />
+
+          <BorderRadiusPicker
+            value={customization?.borderRadius}
+            onChange={handleBorderRadiusChange}
+          />
+        </div>
+      </CollapsibleSettingsSection>
     </div>
   );
 }

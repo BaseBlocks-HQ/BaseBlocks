@@ -1,4 +1,3 @@
-import type { StaticImageData } from "next/image";
 import type { ComponentType, SVGProps } from "react";
 
 export type TranslateFn = (key: string) => string;
@@ -18,5 +17,8 @@ export interface LandingStep {
   titleKey: string;
   descKey: string;
   imageAltKey: string;
-  image: StaticImageData;
+  image: {
+    light: string;
+    dark: string;
+  };
 }
