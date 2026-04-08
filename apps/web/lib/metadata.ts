@@ -55,17 +55,6 @@ function parseKeywords(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
-function toPublicAssetUrl(rawUrl: string | undefined): string | undefined {
-  const trimmed = asOptional(rawUrl);
-  if (!trimmed) return undefined;
-
-  if (trimmed.startsWith("/api/storage/")) {
-    return trimmed;
-  }
-
-  return trimmed;
-}
-
 function withVersion(
   url: string | undefined,
   version: number | undefined,
@@ -159,8 +148,8 @@ export async function buildPublicSiteMetadata({
   const description = asOptional(settings.siteDescription);
   const keywords = parseKeywords(settings.siteKeywords);
   const version = site.updatedAt;
-  const ogImage = withVersion(toPublicAssetUrl(settings.ogImage), version);
-  const favicon = withVersion(toPublicAssetUrl(settings.favicon), version);
+  const ogImage = withVersion(asOptional(settings.ogImage), version);
+  const favicon = withVersion(asOptional(settings.favicon), version);
   const canonicalUrl = buildCanonicalUrl(teamSlug, siteSlug, pagePath);
   const visibility = site.visibility ?? "public";
   const isPublicVisibility = visibility === "public";
@@ -194,13 +183,13 @@ export async function buildPublicSiteMetadata({
       url: canonicalUrl,
       locale: "en_US",
       alternateLocale: "fr_FR",
-      images: hasOpenAccess && ogImage ? [{ url: ogImage }] : undefined,
+      ...(hasOpenAccess && ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     twitter: {
-      card: hasOpenAccess && ogImage ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: hasOpenAccess && ogImage ? [ogImage] : undefined,
+      ...(hasOpenAccess && ogImage ? { images: [ogImage] } : {}),
     },
   };
 
