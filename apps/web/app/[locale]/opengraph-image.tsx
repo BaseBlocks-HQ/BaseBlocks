@@ -1,32 +1,10 @@
-import { api } from "@baseblocks/backend";
-import { ConvexHttpClient } from "convex/browser";
 import { ImageResponse } from "next/og";
 
+export const alt = "BaseBlocks — Build, publish, and share internal sites in minutes.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OpenGraphImage({
-  params,
-}: {
-  params: Promise<{ subdomain: string }>;
-}) {
-  const { subdomain } = await params;
-
-  let siteName = subdomain;
-
-  try {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (convexUrl) {
-      const client = new ConvexHttpClient(convexUrl);
-      const siteData = await client.query(api.sites.queries.getWithDefaultPage, {
-        teamSlug: subdomain,
-      });
-      if (siteData?.site?.name) siteName = siteData.site.name;
-    }
-  } catch {
-    // fall back to subdomain
-  }
-
+export default function OpenGraphImage() {
   return new ImageResponse(
     <div
       style={{
@@ -62,33 +40,46 @@ export default async function OpenGraphImage({
           position: "relative",
         }}
       >
-        {/* BaseBlocks attribution */}
+        {/* Wordmark */}
         <div style={{ display: "flex" }}>
           <span
             style={{
               fontSize: 22,
               fontWeight: 600,
               letterSpacing: "-0.02em",
-              color: "#888",
+              color: "#111",
             }}
           >
             BaseBlocks
           </span>
         </div>
 
-        {/* Site name */}
+        {/* Headline */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div
             style={{
-              fontSize: 80,
+              fontSize: 76,
               fontWeight: 700,
               letterSpacing: "-0.04em",
               lineHeight: 1.0,
               color: "#111",
               display: "flex",
+              flexWrap: "wrap",
+              gap: "0 16px",
             }}
           >
-            {siteName}
+            <span>Build, publish,</span>
+            <span style={{ color: "#6366f1" }}>and share.</span>
+          </div>
+          <div
+            style={{
+              fontSize: 28,
+              color: "#888",
+              display: "flex",
+              marginTop: 12,
+            }}
+          >
+            The collaborative site builder for teams.
           </div>
         </div>
       </div>

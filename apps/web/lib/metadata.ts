@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+const OG_API_BASE = `https://${ROOT_DOMAIN}/api/og`;
 
 interface PublicSiteMetadataParams {
   teamSlug: string;
@@ -183,13 +184,17 @@ export async function buildPublicSiteMetadata({
       url: canonicalUrl,
       locale: "en_US",
       alternateLocale: "fr_FR",
-      ...(hasOpenAccess && ogImage ? { images: [{ url: ogImage }] } : {}),
+      images: hasOpenAccess
+        ? [{ url: ogImage ?? `${OG_API_BASE}?name=${encodeURIComponent(siteTitle)}`, width: 1200, height: 630 }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(hasOpenAccess && ogImage ? { images: [ogImage] } : {}),
+      images: hasOpenAccess
+        ? [ogImage ?? `${OG_API_BASE}?name=${encodeURIComponent(siteTitle)}`]
+        : undefined,
     },
   };
 
