@@ -10,14 +10,10 @@ interface ElementGridProps {
   onSelect: (type: string) => void;
 }
 
-/** ~15px panel padding (Framer fresco panel), ~10px between list and tiles. */
 export function ElementGrid({ title, entries, onSelect }: ElementGridProps) {
   return (
-    <div className="px-[15px] pb-3 pt-[15px]">
-      <CollapsibleSettingsSection
-        title={title}
-        contentClassName="flex flex-col gap-3 p-2.5"
-      >
+    <div className="p-4">
+      <CollapsibleSettingsSection title={title} contentVariant="stack">
         {entries.map((entry) => (
           <ElementCard
             key={entry.type}

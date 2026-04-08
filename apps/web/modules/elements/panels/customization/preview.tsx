@@ -32,7 +32,6 @@ export function CustomizationPreview({
 
   return (
     <div
-      className="overflow-hidden rounded-lg border bg-card"
       style={cssVariables}
       {...(customized ? { "data-site-customized": true } : {})}
     >

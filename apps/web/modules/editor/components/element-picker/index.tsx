@@ -13,6 +13,7 @@ import type {
 } from "@baseblocks/types/elements";
 import { PanelTop } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { EditorFlyoutSurface } from "../editor-flyout-surface";
 import { CategoryMenu } from "./category-menu";
 import { ElementCard } from "./element-card";
 import { ElementGrid } from "./element-grid";
@@ -143,38 +144,38 @@ export function ElementPicker({
 
       {/* Flyout panel with site config */}
       {activeCategory === "site" && siteId && (
-        <div
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
+        <EditorFlyoutSurface
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <SiteConfigPanel siteId={siteId as Id<"sites">} />
-        </div>
+        </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with navigation config */}
       {activeCategory === "navigation" && siteId && (
-        <div
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
+        <EditorFlyoutSurface
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <NavigationConfigPanel siteId={siteId as Id<"sites">} />
-        </div>
+        </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with customization config */}
       {activeCategory === "customization" && siteId && (
-        <div
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
+        <EditorFlyoutSurface
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <CustomizationConfigPanel siteId={siteId as Id<"sites">} />
-        </div>
+        </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with elements */}
       {activeCategory && !showsConfigPanel && categoryElements.length > 0 && (
-        <div
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] w-[min(22rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border bg-popover shadow-lg"
+        <EditorFlyoutSurface
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <ElementGrid
@@ -184,7 +185,7 @@ export function ElementPicker({
           />
           {/* Extra Tabs card in layouts flyout */}
           {activeCategory === "layouts" && onEnableTabs && (
-            <div className="px-[15px] pb-[15px]">
+            <div className="px-4 pb-4">
               <ElementCard
                 description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
                 label="Tabs"
@@ -194,7 +195,7 @@ export function ElementPicker({
               />
             </div>
           )}
-        </div>
+        </EditorFlyoutSurface>
       )}
     </div>
   );

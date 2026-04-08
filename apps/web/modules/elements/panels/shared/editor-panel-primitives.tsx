@@ -14,16 +14,21 @@ import {
 } from "@baseblocks/ui/tooltip";
 import { ChevronDown, Info } from "lucide-react";
 
+const sectionSurfaceClassName =
+  "overflow-hidden rounded-xl border border-border/70 bg-muted/5";
+
 export function CollapsibleSettingsSection({
   title,
   children,
   contentClassName,
   defaultOpen = true,
+  contentVariant = "framed",
 }: {
   title: string;
   children: React.ReactNode;
   contentClassName?: string;
   defaultOpen?: boolean;
+  contentVariant?: "framed" | "plain" | "stack";
 }) {
   return (
     <Collapsible defaultOpen={defaultOpen} className="group/collapsible">
@@ -43,15 +48,24 @@ export function CollapsibleSettingsSection({
             {title}
           </span>
         </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div
-            className={cn(
-              "overflow-hidden rounded-lg border border-border/70 bg-muted/5",
-              contentClassName ?? "divide-y divide-border/60",
-            )}
-          >
-            {children}
-          </div>
+        <CollapsibleContent
+          className={cn(
+            contentVariant === "stack" && "flex flex-col gap-3",
+            contentVariant !== "framed" && contentClassName,
+          )}
+        >
+          {contentVariant === "framed" ? (
+            <div
+              className={cn(
+                sectionSurfaceClassName,
+                contentClassName ?? "divide-y divide-border/60",
+              )}
+            >
+              {children}
+            </div>
+          ) : (
+            children
+          )}
         </CollapsibleContent>
       </section>
     </Collapsible>

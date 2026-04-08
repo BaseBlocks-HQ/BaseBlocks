@@ -41,6 +41,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { EditorFlyoutSurface } from "./components/editor-flyout-surface";
 import { ElementCard } from "./components/element-picker/element-card";
 import { ElementGrid } from "./components/element-picker/element-grid";
 import { CreatePageDialog } from "./create-page-dialog";
@@ -126,9 +127,6 @@ const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "customization",
   "navigation",
 ];
-
-const RAIL_FLYOUT_CLASS =
-  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border bg-background/96 shadow-2xl backdrop-blur-sm sm:w-[min(22rem,calc(100vw-6rem))]";
 
 function FloatingRailButton({
   active,
@@ -261,7 +259,7 @@ function FloatingRailFlyout({
 }) {
   if (activePanel === "pages") {
     return (
-      <div className={RAIL_FLYOUT_CLASS}>
+      <EditorFlyoutSurface>
         <div className="flex items-center justify-between px-4 py-3">
           <p className="text-sm font-semibold">Pages</p>
           {canEdit && <CreatePageDialog siteId={site._id} />}
@@ -290,44 +288,44 @@ function FloatingRailFlyout({
             )}
           </div>
         </ScrollArea>
-      </div>
+      </EditorFlyoutSurface>
     );
   }
 
   if (activePanel === "site") {
     return (
-      <div className={RAIL_FLYOUT_CLASS}>
+      <EditorFlyoutSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <SiteConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </div>
+      </EditorFlyoutSurface>
     );
   }
 
   if (activePanel === "navigation") {
     return (
-      <div className={RAIL_FLYOUT_CLASS}>
+      <EditorFlyoutSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <NavigationConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </div>
+      </EditorFlyoutSurface>
     );
   }
 
   if (activePanel === "customization") {
     return (
-      <div className={RAIL_FLYOUT_CLASS}>
+      <EditorFlyoutSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <CustomizationConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </div>
+      </EditorFlyoutSurface>
     );
   }
 
   const elements = getElementsByCategory(activePanel);
 
   return (
-    <div className={RAIL_FLYOUT_CLASS}>
+    <EditorFlyoutSurface>
       {!canEdit ? (
         <div className="px-4 py-4 text-sm text-muted-foreground">
           You have view-only access. Contact an admin to request edit
@@ -341,7 +339,7 @@ function FloatingRailFlyout({
             onSelect={onSelectElement}
           />
           {activePanel === "layouts" && onEnableTabs && (
-            <div className="px-[15px] pb-[15px]">
+            <div className="px-4 pb-4">
               <ElementCard
                 description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
                 label="Tabs"
@@ -353,7 +351,7 @@ function FloatingRailFlyout({
           )}
         </ScrollArea>
       )}
-    </div>
+    </EditorFlyoutSurface>
   );
 }
 

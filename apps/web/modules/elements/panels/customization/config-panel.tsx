@@ -152,7 +152,11 @@ export function CustomizationConfigPanel({
         )}
       </div>
 
-      <CollapsibleSettingsSection title="Preview" contentClassName="p-3">
+      <CollapsibleSettingsSection
+        title="Preview"
+        contentClassName="pt-2"
+        contentVariant="plain"
+      >
         <CustomizationPreview customization={customization} />
       </CollapsibleSettingsSection>
 

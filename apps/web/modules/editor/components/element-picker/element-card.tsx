@@ -9,6 +9,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Check, Info } from "lucide-react";
 import type { ComponentType } from "react";
+import {
+  elementCardButtonClassName,
+  elementCardOuterClassName,
+  elementCardPreviewClassName,
+  elementCardPreviewFrameClassName,
+} from "./element-card-constants";
 
 interface ElementCardProps {
   label: string;
@@ -30,26 +36,19 @@ export function ElementCard({
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-all",
-        isSelected
-          ? "border-primary ring-2 ring-primary/15"
-          : "hover:border-border hover:shadow-md",
+        elementCardOuterClassName,
+        !isSelected && "hover:border-border hover:shadow-md",
       )}
     >
       <button
         type="button"
         aria-label={label}
         aria-pressed={isSelected === undefined ? undefined : isSelected}
-        className="flex w-full flex-col rounded-xl bg-transparent p-0 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className={elementCardButtonClassName}
         onClick={onClick}
       >
-        <div className="p-2.5">
-          <div
-            className={cn(
-              "relative w-full min-h-[120px] overflow-hidden rounded-md bg-muted/35 ring-1 ring-border/25 dark:bg-muted/25 dark:ring-border/40",
-              "aspect-[7/4]",
-            )}
-          >
+        <div className={elementCardPreviewFrameClassName}>
+          <div className={cn(elementCardPreviewClassName, "aspect-[7/4]")}>
             <div className="absolute inset-0">
               {Preview ? (
                 <Preview className="h-full w-full" />
@@ -83,7 +82,7 @@ export function ElementCard({
           <TooltipTrigger asChild>
             <button
               type="button"
-              className="absolute bottom-2.5 right-2.5 z-20 inline-flex size-6 items-center justify-center rounded-md bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border/60 backdrop-blur-sm hover:text-foreground focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute bottom-2 right-2 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-background/90 text-muted-foreground shadow-sm ring-1 ring-border/60 backdrop-blur-sm hover:text-foreground focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
               aria-label={`About ${label}`}
             >
               <Info className="h-3 w-3" />

@@ -233,6 +233,25 @@ export function DirectoryEditor({
 
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={addRow}
+          className="flex-1 border-dashed"
+        >
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Add Row
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5 mr-1.5" />
+          Import CSV
+        </Button>
+      </div>
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
@@ -375,25 +394,6 @@ export function DirectoryEditor({
           </Button>
         </div>
       )}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={addRow}
-          className="flex-1 border-dashed"
-        >
-          <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Add Row
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload className="h-3.5 w-3.5 mr-1.5" />
-          Import CSV
-        </Button>
-      </div>
     </div>
   );
 }

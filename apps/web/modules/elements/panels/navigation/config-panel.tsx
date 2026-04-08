@@ -101,13 +101,10 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
     "sidebar") as NavigationStyle;
 
   return (
-    <div className="space-y-4 px-[15px] pb-3 pt-[15px]">
+    <div className="space-y-5 p-4">
       <h3 className="text-sm font-semibold tracking-tight">Navigation</h3>
 
-      <CollapsibleSettingsSection
-        title="Layout"
-        contentClassName="flex flex-col gap-3 p-2.5"
-      >
+      <CollapsibleSettingsSection title="Layout" contentVariant="stack">
         {NAVIGATION_STYLES.map((styleInfo) => {
           const Icon = NAV_STYLE_ICONS[styleInfo.style];
           const Preview = NAV_STYLE_PREVIEWS[styleInfo.style];
