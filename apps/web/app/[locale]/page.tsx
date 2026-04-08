@@ -2,7 +2,7 @@ import { isAuthenticated } from "@/lib/auth/server";
 import { LandingPage } from "@/modules/landing";
 import type { Metadata } from "next";
 
-const OG_IMAGE = "https://baseblocks.dev/api/og";
+const OG_IMAGE = "https://baseblocks.dev/opengraph-image";
 
 export const metadata: Metadata = {
   title: "BaseBlocks - Idea to site in minutes",

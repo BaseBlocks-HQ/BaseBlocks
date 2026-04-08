@@ -139,6 +139,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - Files with extensions (favicon.ico, sitemap.xml, robots.txt, images, etc.)
      */
-    "/((?!api|_next/static|_next/image|.*\\..*).*)",
+    "/((?!api|opengraph-image|_next/static|_next/image|.*\\..*).*)",
   ],
 };
