@@ -185,7 +185,15 @@ export async function buildPublicSiteMetadata({
       locale: "en_US",
       alternateLocale: "fr_FR",
       images: hasOpenAccess
-        ? [{ url: ogImage ?? `${OG_API_BASE}?name=${encodeURIComponent(siteTitle)}`, width: 1200, height: 630 }]
+        ? [
+            {
+              url:
+                ogImage ??
+                `${OG_API_BASE}?name=${encodeURIComponent(siteTitle)}`,
+              width: 1200,
+              height: 630,
+            },
+          ]
         : undefined,
     },
     twitter: {

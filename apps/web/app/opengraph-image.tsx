@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "BaseBlocks — Build, publish, and share internal sites in minutes.";
+export const alt =
+  "BaseBlocks — Build, publish, and share internal sites in minutes.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
