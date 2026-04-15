@@ -3,6 +3,27 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const withMDX = createMDX();
+const storageEndpoint = process.env.STORAGE_ENDPOINT?.trim();
+const storageOrigin = (() => {
+  if (!storageEndpoint) {
+    return null;
+  }
+
+  try {
+    return new URL(storageEndpoint).origin;
+  } catch {
+    return null;
+  }
+})();
+const connectSrc = [
+  "'self'",
+  "https://*.convex.cloud",
+  "wss://*.convex.cloud",
+  "https://*.convex.site",
+  "https://vercel.live",
+  "https://vitals.vercel-insights.com",
+  ...(storageOrigin ? [storageOrigin] : []),
+].join(" ");
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -24,7 +45,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.convex.site https://vercel.live https://*.storageapi.dev https://vitals.vercel-insights.com",
+      `connect-src ${connectSrc}`,
       "frame-src https://view.officeapps.live.com https://docs.google.com https://vercel.live",
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",

@@ -3,7 +3,8 @@ import { canUploadToSite } from "@/lib/convex/server";
 import {
   createObjectKey,
   deleteObject,
-  streamObject,
+  getStorageMaxUploadSize,
+  signUpload,
 } from "@/lib/storage/server";
 import {
   type UploadPurpose,
@@ -12,11 +13,9 @@ import {
 } from "@baseblocks/types";
 import { type NextRequest, NextResponse } from "next/server";
 
-const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
-
 export const runtime = "nodejs";
 
-function parsePurpose(value: string | null): UploadPurpose | null {
+function parsePurpose(value: unknown): UploadPurpose | null {
   if (value === "document" || value === "siteAsset") {
     return value;
   }
@@ -32,10 +31,10 @@ function matchesUploadPrefix(
   return objectKey.startsWith(`sites/${siteId}/${kind}/`);
 }
 
-async function requireAuthorizedSiteId(request: NextRequest): Promise<{
+async function requireAuthorizedUploadSite(args: {
   siteId: string;
   purpose: UploadPurpose;
-}> {
+}): Promise<void> {
   const token = await getToken();
   if (!token) {
     throw new Response(JSON.stringify({ error: "Not authenticated" }), {
@@ -43,113 +42,113 @@ async function requireAuthorizedSiteId(request: NextRequest): Promise<{
     });
   }
 
-  const siteId = request.headers.get("x-baseblocks-site-id")?.trim();
-  const purpose = parsePurpose(
-    request.headers.get("x-baseblocks-upload-purpose")?.trim() || null,
-  );
-
-  if (!siteId || !purpose) {
-    throw new Response(
-      JSON.stringify({ error: "Missing upload authorization headers" }),
-      {
-        status: 400,
-      },
-    );
-  }
-
-  const canUpload = await canUploadToSite(siteId, token);
+  const canUpload = await canUploadToSite(args.siteId, token);
   if (!canUpload) {
     throw new Response(JSON.stringify({ error: "Not authorized" }), {
       status: 403,
     });
   }
-
-  return { siteId, purpose };
 }
 
-function getValidatedUploadMetadata(request: NextRequest): {
+function getValidatedUploadMetadata(body: unknown): {
+  siteId: string;
+  purpose: UploadPurpose;
   filename: string;
   contentType: string;
-  size: number | null;
+  size: number;
 } {
-  const filename = request.headers.get("x-baseblocks-filename")?.trim();
-  if (!filename) {
-    throw new Response(
-      JSON.stringify({ error: "Missing x-baseblocks-filename header" }),
-      {
-        status: 400,
-      },
-    );
+  const payload = body as Record<string, unknown>;
+  const siteId =
+    typeof payload.siteId === "string" ? payload.siteId.trim() : "";
+  const purpose = parsePurpose(payload.purpose);
+  const filename =
+    typeof payload.filename === "string" ? payload.filename.trim() : "";
+  const contentType =
+    typeof payload.contentType === "string"
+      ? payload.contentType
+      : "application/octet-stream";
+  const normalizedMimeType = normalizeMimeType(contentType);
+  const size = typeof payload.size === "number" ? payload.size : Number.NaN;
+
+  if (!siteId || !purpose) {
+    throw new Response(JSON.stringify({ error: "Missing siteId or purpose" }), {
+      status: 400,
+    });
   }
 
-  const contentType =
-    request.headers.get("content-type") || "application/octet-stream";
-  const normalizedMimeType = normalizeMimeType(contentType);
+  if (!filename) {
+    throw new Response(JSON.stringify({ error: "Missing filename" }), {
+      status: 400,
+    });
+  }
+
   if (!normalizedMimeType || !isSupportedUploadMimeType(normalizedMimeType)) {
     throw new Response(JSON.stringify({ error: "File type not allowed" }), {
       status: 415,
     });
   }
 
-  const contentLength = request.headers.get("content-length");
-  const size = contentLength ? Number.parseInt(contentLength, 10) : null;
-  if (size !== null && Number.isNaN(size)) {
-    throw new Response(
-      JSON.stringify({ error: "Invalid content-length header" }),
-      {
-        status: 400,
-      },
-    );
+  if (!Number.isFinite(size) || size < 0) {
+    throw new Response(JSON.stringify({ error: "Invalid file size" }), {
+      status: 400,
+    });
   }
 
-  if (size !== null && size > MAX_UPLOAD_SIZE) {
+  const maxUploadSize = getStorageMaxUploadSize();
+  if (maxUploadSize !== null && size > maxUploadSize) {
     throw new Response(
-      JSON.stringify({ error: "File too large. Maximum size is 50 MB" }),
-      {
-        status: 413,
-      },
+      JSON.stringify({
+        error: `File too large. Maximum size is ${maxUploadSize} bytes`,
+      }),
+      { status: 413 },
     );
   }
 
   return {
+    siteId,
+    purpose,
     filename,
     contentType: normalizedMimeType,
     size,
   };
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { siteId, purpose } = await requireAuthorizedSiteId(request);
-    const { filename, contentType, size } = getValidatedUploadMetadata(request);
-
-    if (!request.body) {
-      return NextResponse.json(
-        { error: "Upload body is empty" },
-        { status: 400 },
-      );
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const objectKey = createObjectKey({ siteId, purpose, filename });
+    const { siteId, purpose, filename, contentType } =
+      getValidatedUploadMetadata(body);
+    await requireAuthorizedUploadSite({ siteId, purpose });
 
-    // Stream directly to storage — avoids loading the full file into memory.
-    // Content-length is forwarded so the SDK can set it on the S3 request;
-    // the finalize endpoint does a HeadObject for the authoritative size.
-    await streamObject({
+    const objectKey = createObjectKey({ siteId, purpose, filename });
+    const upload = await signUpload({
       objectKey,
       contentType,
-      body: request.body,
-      contentLength: size ?? undefined,
     });
 
-    return NextResponse.json({ objectKey, contentType });
+    return NextResponse.json({
+      objectKey,
+      contentType,
+      uploadUrl: upload.url,
+      uploadMethod: upload.method,
+      uploadHeaders: upload.headers,
+    });
   } catch (error) {
     if (error instanceof Response) {
       return error;
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to authorize upload",
+      },
       { status: 500 },
     );
   }
@@ -157,13 +156,27 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { siteId, purpose } = await requireAuthorizedSiteId(request);
+    const token = await getToken();
+    if (!token) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const siteId = request.headers.get("x-baseblocks-site-id")?.trim() || "";
+    const purpose = parsePurpose(
+      request.headers.get("x-baseblocks-upload-purpose")?.trim() || null,
+    );
     const objectKey = request.headers.get("x-baseblocks-object-key")?.trim();
-    if (!objectKey) {
+
+    if (!siteId || !purpose || !objectKey) {
       return NextResponse.json(
-        { error: "Missing x-baseblocks-object-key header" },
+        { error: "Missing cleanup authorization headers" },
         { status: 400 },
       );
+    }
+
+    const canUpload = await canUploadToSite(siteId, token);
+    if (!canUpload) {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
     if (!matchesUploadPrefix(siteId, purpose, objectKey)) {
@@ -176,10 +189,6 @@ export async function DELETE(request: NextRequest) {
     await deleteObject({ objectKey });
     return NextResponse.json({ deleted: true });
   } catch (error) {
-    if (error instanceof Response) {
-      return error;
-    }
-
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Cleanup failed" },
       { status: 500 },

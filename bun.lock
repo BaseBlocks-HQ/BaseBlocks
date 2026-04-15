@@ -17,9 +17,8 @@
       "name": "@baseblocks/web",
       "version": "0.1.0",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.917.0",
-        "@aws-sdk/s3-request-presigner": "^3.917.0",
         "@baseblocks/backend": "workspace:*",
+        "@baseblocks/storage": "workspace:*",
         "@baseblocks/types": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@blocknote/core": "^0.46.2",
@@ -91,7 +90,7 @@
       "name": "@baseblocks/backend",
       "version": "0.0.0",
       "dependencies": {
-        "@aws-sdk/client-s3": "^3.917.0",
+        "@baseblocks/storage": "workspace:*",
         "@baseblocks/types": "workspace:*",
         "@convex-dev/better-auth": "^0.10.10",
         "@convex-dev/migrations": "^0.3.1",
@@ -105,6 +104,20 @@
       },
       "peerDependencies": {
         "typescript": "^5",
+      },
+    },
+    "packages/storage": {
+      "name": "@baseblocks/storage",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aws-sdk/client-s3": "^3.917.0",
+        "@aws-sdk/s3-request-presigner": "^3.917.0",
+        "@baseblocks/types": "workspace:*",
+      },
+      "devDependencies": {
+        "@baseblocks/tsconfig": "workspace:*",
+        "@types/node": "^22.15.3",
+        "typescript": "5.9.2",
       },
     },
     "packages/types": {
@@ -286,6 +299,8 @@
     "@babel/types": ["@babel/types@7.29.0", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A=="],
 
     "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
+
+    "@baseblocks/storage": ["@baseblocks/storage@workspace:packages/storage"],
 
     "@baseblocks/tailwind-config": ["@baseblocks/tailwind-config@workspace:tooling/tailwind"],
 
@@ -955,7 +970,7 @@
 
     "@turbo/windows-arm64": ["@turbo/windows-arm64@2.9.4", "", { "os": "win32", "cpu": "arm64" }, "sha512-dlko15TQVu/BFYmIY018Y3covWMRQlUgAkD+OOk+Rokcfj6VY02Vv4mCfT/Zns6B4q8jGbOd6IZhnCFYsE8Viw=="],
 
-    "@types/bun": ["@types/bun@1.3.11", "", { "dependencies": { "bun-types": "1.3.11" } }, "sha512-5vPne5QvtpjGpsGYXiFyycfpDF2ECyPcTSsFBMa0fraoxiQyMJ3SmuQIGhzPg2WJuWxVBoxWJ2kClYTcw/4fAg=="],
+    "@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
 
     "@types/debug": ["@types/debug@4.1.12", "", { "dependencies": { "@types/ms": "*" } }, "sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ=="],
 
@@ -1033,7 +1048,7 @@
 
     "buffer-from": ["buffer-from@1.1.2", "", {}, "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="],
 
-    "bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
+    "bun-types": ["bun-types@1.3.12", "", { "dependencies": { "@types/node": "*" } }, "sha512-HqOLj5PoFajAQciOMRiIZGNoKxDJSr6qigAttOX40vJuSp6DN/CxWp9s3C1Xwm4oH7ybueITwiaOcWXoYVoRkA=="],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001766", "", {}, "sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA=="],
 

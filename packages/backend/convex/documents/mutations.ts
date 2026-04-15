@@ -1,3 +1,7 @@
+import {
+  getStorageBucketNameFromEnv,
+  getStorageProviderNameFromEnv,
+} from "@baseblocks/storage";
 import { v } from "convex/values";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";
@@ -5,7 +9,6 @@ import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 import { resolveSiteContext } from "../lib/resolvers";
-import { getStorageBucketName } from "../storage/config";
 import { deleteDocumentRows } from "./lib";
 
 async function createDocumentAsset(
@@ -24,8 +27,8 @@ async function createDocumentAsset(
     siteId: args.siteId,
     kind: "document",
     visibility: "private",
-    provider: "s3",
-    bucket: getStorageBucketName(),
+    provider: getStorageProviderNameFromEnv(),
+    bucket: getStorageBucketNameFromEnv(),
     objectKey: args.objectKey,
     filename: args.filename,
     contentType: args.contentType,

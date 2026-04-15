@@ -1,29 +1,29 @@
-import { ConvexError } from "convex/values";
-
-function requireEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new ConvexError(`Missing ${name}`);
-  }
-  return value;
-}
+import {
+  getStorageBucketNameFromEnv,
+  getStorageProviderNameFromEnv,
+  readStorageConfigFromEnv,
+} from "@baseblocks/storage";
 
 export function getStorageBucketName(): string {
-  return requireEnv("STORAGE_BUCKET_NAME");
+  return getStorageBucketNameFromEnv();
 }
 
 export function getStorageEndpoint(): string {
-  return requireEnv("STORAGE_ENDPOINT");
+  return readStorageConfigFromEnv().endpoint;
 }
 
 export function getStorageRegion(): string {
-  return requireEnv("STORAGE_REGION");
+  return readStorageConfigFromEnv().region;
 }
 
 export function getStorageAccessKeyId(): string {
-  return requireEnv("STORAGE_ACCESS_KEY_ID");
+  return readStorageConfigFromEnv().accessKeyId;
 }
 
 export function getStorageSecretAccessKey(): string {
-  return requireEnv("STORAGE_SECRET_ACCESS_KEY");
+  return readStorageConfigFromEnv().secretAccessKey;
+}
+
+export function getStorageProviderName(): string {
+  return getStorageProviderNameFromEnv();
 }

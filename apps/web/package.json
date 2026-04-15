@@ -12,9 +12,8 @@
     "check-types": "fumadocs-mdx && next typegen && mkdir -p .next/types && (test -f .next/types/cache-life.d.ts || echo 'export {};' > .next/types/cache-life.d.ts) && tsc --noEmit --incremental false"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.917.0",
-    "@aws-sdk/s3-request-presigner": "^3.917.0",
     "@baseblocks/backend": "workspace:*",
+    "@baseblocks/storage": "workspace:*",
     "@baseblocks/types": "workspace:*",
     "@baseblocks/ui": "workspace:*",
     "@blocknote/core": "^0.46.2",

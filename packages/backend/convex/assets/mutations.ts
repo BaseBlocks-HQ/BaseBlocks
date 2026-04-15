@@ -1,8 +1,11 @@
+import {
+  getStorageBucketNameFromEnv,
+  getStorageProviderNameFromEnv,
+} from "@baseblocks/storage";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireSiteManager } from "../auth";
 import { resolveSiteContext } from "../lib/resolvers";
-import { getStorageBucketName } from "../storage/config";
 import { buildAssetUrl } from "../storage/paths";
 
 export const createSiteAsset = mutation({
@@ -29,8 +32,8 @@ export const createSiteAsset = mutation({
       siteId,
       kind: "siteAsset",
       visibility: "public",
-      provider: "s3",
-      bucket: getStorageBucketName(),
+      provider: getStorageProviderNameFromEnv(),
+      bucket: getStorageBucketNameFromEnv(),
       objectKey,
       filename,
       contentType,

@@ -58,7 +58,7 @@ Official documentation at [baseblocks.dev/docs](https://baseblocks.dev/docs) cov
 
 #### Pluggable Storage Architecture
 
-Storage providers are now fully pluggable — swap in your own provider instead of being locked into a single vendor. Makes self-hosting significantly simpler and gives teams full control over where their files live.
+BaseBlocks ships with an S3-compatible storage adapter and selects the concrete provider entirely through environment variables. Railway buckets work out of the box, but the same adapter can target AWS S3, Cloudflare R2, MinIO, Backblaze B2, or any other S3-compatible provider without changing app code.
 
 #### Custom Domains
 
