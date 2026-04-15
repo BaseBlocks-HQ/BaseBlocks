@@ -22,12 +22,14 @@ export async function readObjectBytes(args: {
   return await storageProvider.readObjectBytes(args);
 }
 
-export async function signUpload(args: {
+export async function streamObject(args: {
+  bucket?: string;
   objectKey: string;
   contentType: string;
-  expiresInSeconds?: number;
+  body: ReadableStream<Uint8Array>;
+  contentLength?: number;
 }) {
-  return await storageProvider.signUpload(args);
+  await storageProvider.streamObject(args);
 }
 
 export async function createSignedDownloadUrl(args: {

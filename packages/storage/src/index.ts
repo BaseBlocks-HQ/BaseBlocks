@@ -6,11 +6,7 @@ import {
   readStorageConfigFromEnv,
 } from "./config";
 import { createObjectKey, toAttachmentContentDisposition } from "./object-key";
-import type {
-  SignedUpload,
-  StorageObjectMetadata,
-  StorageProvider,
-} from "./provider";
+import type { StorageObjectMetadata, StorageProvider } from "./provider";
 import { S3CompatibleStorageProvider } from "./s3-compatible-storage-provider";
 
 let cachedProvider: StorageProvider | null = null;
@@ -42,9 +38,4 @@ export {
   readStorageConfigFromEnv,
   toAttachmentContentDisposition,
 };
-export type {
-  SignedUpload,
-  StorageConfig,
-  StorageObjectMetadata,
-  StorageProvider,
-};
+export type { StorageConfig, StorageObjectMetadata, StorageProvider };

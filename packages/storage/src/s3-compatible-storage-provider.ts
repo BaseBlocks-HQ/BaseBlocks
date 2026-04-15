@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -8,11 +9,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { StorageConfig } from "./config";
 import { toAttachmentContentDisposition } from "./object-key";
-import type {
-  SignedUpload,
-  StorageObjectMetadata,
-  StorageProvider,
-} from "./provider";
+import type { StorageObjectMetadata, StorageProvider } from "./provider";
 
 export class S3CompatibleStorageProvider implements StorageProvider {
   readonly driver = "s3-compatible";
@@ -32,30 +29,6 @@ export class S3CompatibleStorageProvider implements StorageProvider {
         secretAccessKey: config.secretAccessKey,
       },
     });
-  }
-
-  async signUpload(args: {
-    objectKey: string;
-    contentType: string;
-    expiresInSeconds?: number;
-  }): Promise<SignedUpload> {
-    const url = await getSignedUrl(
-      this.#client,
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: args.objectKey,
-        ContentType: args.contentType,
-      }),
-      { expiresIn: args.expiresInSeconds ?? 60 * 15 },
-    );
-
-    return {
-      url,
-      method: "PUT",
-      headers: {
-        "Content-Type": args.contentType,
-      },
-    };
   }
 
   async createSignedDownloadUrl(args: {
@@ -97,6 +70,28 @@ export class S3CompatibleStorageProvider implements StorageProvider {
     }
 
     return await response.Body.transformToByteArray();
+  }
+
+  async streamObject(args: {
+    bucket?: string;
+    objectKey: string;
+    contentType: string;
+    body: ReadableStream<Uint8Array>;
+    contentLength?: number;
+  }): Promise<void> {
+    const nodeStream = Readable.fromWeb(
+      args.body as unknown as import("stream/web").ReadableStream,
+    );
+
+    await this.#client.send(
+      new PutObjectCommand({
+        Bucket: args.bucket ?? this.bucket,
+        Key: args.objectKey,
+        ContentType: args.contentType,
+        ContentLength: args.contentLength,
+        Body: nodeStream,
+      }),
+    );
   }
 
   async deleteObject(args: {
