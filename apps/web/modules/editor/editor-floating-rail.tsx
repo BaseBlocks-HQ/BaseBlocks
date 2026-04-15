@@ -135,6 +135,10 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
     title: "Advanced",
     types: ["subpage", "directory", "flowchart", "decision-tree"],
   },
+  {
+    title: "Sections",
+    types: ["search", "library", "quicklinks"],
+  },
 ];
 
 const TabsPreview = themedPickerImagePreview(
