@@ -1,4 +1,3 @@
-import { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -79,17 +78,13 @@ export class S3CompatibleStorageProvider implements StorageProvider {
     body: ReadableStream<Uint8Array>;
     contentLength?: number;
   }): Promise<void> {
-    const nodeStream = Readable.fromWeb(
-      args.body as unknown as import("stream/web").ReadableStream,
-    );
-
     await this.#client.send(
       new PutObjectCommand({
         Bucket: args.bucket ?? this.bucket,
         Key: args.objectKey,
         ContentType: args.contentType,
         ContentLength: args.contentLength,
-        Body: nodeStream,
+        Body: args.body,
       }),
     );
   }
