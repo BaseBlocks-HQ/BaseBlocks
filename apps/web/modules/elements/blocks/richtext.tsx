@@ -3,8 +3,11 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
+import { useSiteAssetUpload } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
+import { useEditorSite } from "@/modules/shared/contexts/editor-site-context";
+import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import type { Block } from "@blocknote/core";
 import { SideMenuExtension, SuggestionMenu } from "@blocknote/core/extensions";
@@ -140,6 +143,8 @@ function RichTextEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"richtext">) {
   const { resolvedTheme } = useTheme();
+  const { siteId } = useEditorSite();
+  const { uploadSiteAsset } = useSiteAssetUpload();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
   const [initialContent] = useState(() =>
     content.document && content.document.length > 0
@@ -150,6 +155,13 @@ function RichTextEditor({
 
   const editor = useCreateBlockNote({
     initialContent,
+    uploadFile: async (file) => {
+      const asset = await uploadSiteAsset(file, siteId as Id<"sites">);
+      if (!asset) {
+        throw new Error("Upload failed");
+      }
+      return asset.url;
+    },
   });
 
   return (

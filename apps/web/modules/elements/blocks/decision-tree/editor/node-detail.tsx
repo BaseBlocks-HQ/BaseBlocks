@@ -3,6 +3,9 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
+import { useSiteAssetUpload } from "@/lib/storage";
+import { useEditorSite } from "@/modules/shared/contexts/editor-site-context";
+import type { Id } from "@baseblocks/backend";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
@@ -70,6 +73,8 @@ function NodeBlockNoteEditor({
   onChange: (document: unknown[]) => void;
 }) {
   const { resolvedTheme } = useTheme();
+  const { siteId } = useEditorSite();
+  const { uploadSiteAsset } = useSiteAssetUpload();
   const blockNoteTheme = resolvedTheme === "dark" ? "dark" : "light";
   const [initialContent] = useState(() =>
     document && document.length > 0 ? (document as Block[]) : undefined,
@@ -77,6 +82,13 @@ function NodeBlockNoteEditor({
 
   const editor = useCreateBlockNote({
     initialContent,
+    uploadFile: async (file) => {
+      const asset = await uploadSiteAsset(file, siteId as Id<"sites">);
+      if (!asset) {
+        throw new Error("Upload failed");
+      }
+      return asset.url;
+    },
   });
 
   return (
