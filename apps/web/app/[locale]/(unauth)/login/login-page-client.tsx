@@ -8,10 +8,11 @@ import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { useEffect } from "react";
+import { useState } from "react";
 
 type SocialProvider = "google" | "github" | "microsoft";
+const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
 
 function getAuthCallbackUrl(redirectTo: string): string {
   const url = new URL("/login", window.location.origin);
@@ -32,7 +33,7 @@ export function LoginPageClient() {
   const { data: session } = authClient.useSession();
 
   useEffect(() => {
-    if (!session) {
+    if (!session || authRedirectMode !== "cross-domain") {
       return;
     }
 
@@ -46,7 +47,10 @@ export function LoginPageClient() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: getAuthCallbackUrl(redirectTo),
+        callbackURL:
+          authRedirectMode === "cross-domain"
+            ? getAuthCallbackUrl(redirectTo)
+            : redirectTo,
       });
     } catch (err) {
       haptic.trigger("error");

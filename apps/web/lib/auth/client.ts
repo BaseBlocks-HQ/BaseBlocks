@@ -7,6 +7,12 @@ import {
 import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
+const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
+const authPlugins =
+  authRedirectMode === "cross-domain"
+    ? [organizationClient(), crossDomainClient(), convexClient()]
+    : [organizationClient(), convexClient()];
+
 export const authClient = createAuthClient({
-  plugins: [organizationClient(), crossDomainClient(), convexClient()],
+  plugins: authPlugins,
 });

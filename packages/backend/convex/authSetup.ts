@@ -15,6 +15,9 @@ const authSiteUrl = parseAuthOrigin(
   process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
   "SITE_URL",
 );
+const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
+const useCrossDomainAuth = authRedirectMode === "cross-domain";
+const authBaseUrl = useCrossDomainAuth ? authSiteUrl : primaryAppUrl;
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
@@ -28,7 +31,7 @@ export const authComponent = createClient<DataModel, never>(
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
-    baseURL: authSiteUrl,
+    baseURL: authBaseUrl,
     trustedOrigins: authOrigins,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
@@ -64,7 +67,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
       organization({
         allowUserToCreateOrganization: true,
       }),
-      crossDomain({ siteUrl: primaryAppUrl }),
+      ...(useCrossDomainAuth ? [crossDomain({ siteUrl: primaryAppUrl })] : []),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;
