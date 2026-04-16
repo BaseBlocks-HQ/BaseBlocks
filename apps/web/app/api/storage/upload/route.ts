@@ -4,7 +4,7 @@ import {
   createObjectKey,
   deleteObject,
   getStorageMaxUploadSize,
-  streamObject,
+  signUpload,
 } from "@/lib/storage/server";
 import {
   type UploadPurpose,
@@ -50,39 +50,25 @@ async function requireAuthorizedUploadSite(args: {
   }
 }
 
-function parseSizeHeader(rawValue: string | null): number | null {
-  if (!rawValue) {
-    return null;
-  }
-
-  const size = Number.parseInt(rawValue, 10);
-  if (!Number.isFinite(size) || size < 0) {
-    throw new Response(JSON.stringify({ error: "Invalid file size" }), {
-      status: 400,
-    });
-  }
-
-  return size;
-}
-
-function getValidatedUploadMetadata(request: NextRequest): {
+function getValidatedUploadMetadata(body: unknown): {
   siteId: string;
   purpose: UploadPurpose;
   filename: string;
   contentType: string;
-  size: number | null;
+  size: number;
 } {
-  const siteId = request.headers.get("x-baseblocks-site-id")?.trim() || "";
-  const purpose = parsePurpose(
-    request.headers.get("x-baseblocks-upload-purpose")?.trim() || null,
-  );
-  const filename = request.headers.get("x-baseblocks-filename")?.trim() || "";
+  const payload = body as Record<string, unknown>;
+  const siteId =
+    typeof payload.siteId === "string" ? payload.siteId.trim() : "";
+  const purpose = parsePurpose(payload.purpose);
+  const filename =
+    typeof payload.filename === "string" ? payload.filename.trim() : "";
   const contentType =
-    request.headers.get("content-type") || "application/octet-stream";
+    typeof payload.contentType === "string"
+      ? payload.contentType
+      : "application/octet-stream";
   const normalizedMimeType = normalizeMimeType(contentType);
-  const size =
-    parseSizeHeader(request.headers.get("x-baseblocks-upload-size")) ??
-    parseSizeHeader(request.headers.get("content-length"));
+  const size = typeof payload.size === "number" ? payload.size : Number.NaN;
 
   if (!siteId || !purpose) {
     throw new Response(JSON.stringify({ error: "Missing siteId or purpose" }), {
@@ -102,14 +88,14 @@ function getValidatedUploadMetadata(request: NextRequest): {
     });
   }
 
-  if (size === 0) {
-    throw new Response(JSON.stringify({ error: "Upload body is empty" }), {
+  if (!Number.isFinite(size) || size < 0) {
+    throw new Response(JSON.stringify({ error: "Invalid file size" }), {
       status: 400,
     });
   }
 
   const maxUploadSize = getStorageMaxUploadSize();
-  if (maxUploadSize !== null && size !== null && size > maxUploadSize) {
+  if (maxUploadSize !== null && size > maxUploadSize) {
     throw new Response(
       JSON.stringify({
         error: `File too large. Maximum size is ${maxUploadSize} bytes`,
@@ -127,32 +113,31 @@ function getValidatedUploadMetadata(request: NextRequest): {
   };
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    if (!request.body) {
-      return NextResponse.json(
-        { error: "Upload body is empty" },
-        { status: 400 },
-      );
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { siteId, purpose, filename, contentType, size } =
-      getValidatedUploadMetadata(request);
+    const { siteId, purpose, filename, contentType } =
+      getValidatedUploadMetadata(body);
     await requireAuthorizedUploadSite({ siteId, purpose });
 
     const objectKey = createObjectKey({ siteId, purpose, filename });
-
-    await streamObject({
+    const upload = await signUpload({
       objectKey,
       contentType,
-      body: request.body,
-      contentLength: size ?? undefined,
     });
 
     return NextResponse.json({
       objectKey,
       contentType,
-      size,
+      uploadUrl: upload.url,
+      uploadMethod: upload.method,
+      uploadHeaders: upload.headers,
     });
   } catch (error) {
     if (error instanceof Response) {
@@ -160,7 +145,10 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload failed" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to authorize upload",
+      },
       { status: 500 },
     );
   }

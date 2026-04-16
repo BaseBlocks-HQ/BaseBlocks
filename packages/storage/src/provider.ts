@@ -1,3 +1,9 @@
+export interface SignedUpload {
+  url: string;
+  method: "PUT";
+  headers: Record<string, string>;
+}
+
 export interface StorageObjectMetadata {
   size: number;
   contentType: string;
@@ -9,6 +15,11 @@ export interface StorageProvider {
   readonly provider: string;
   readonly bucket: string;
 
+  signUpload(args: {
+    objectKey: string;
+    contentType: string;
+    expiresInSeconds?: number;
+  }): Promise<SignedUpload>;
   createSignedDownloadUrl(args: {
     bucket?: string;
     objectKey: string;

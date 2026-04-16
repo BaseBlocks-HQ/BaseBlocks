@@ -15,6 +15,14 @@ export {
   getStorageProviderNameFromEnv as getStorageProviderName,
 };
 
+export async function signUpload(args: {
+  objectKey: string;
+  contentType: string;
+  expiresInSeconds?: number;
+}) {
+  return await storageProvider.signUpload(args);
+}
+
 export async function readObjectBytes(args: {
   bucket?: string;
   objectKey: string;

@@ -30,6 +30,30 @@ export class S3CompatibleStorageProvider implements StorageProvider {
     });
   }
 
+  async signUpload(args: {
+    objectKey: string;
+    contentType: string;
+    expiresInSeconds?: number;
+  }) {
+    const url = await getSignedUrl(
+      this.#client,
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: args.objectKey,
+        ContentType: args.contentType,
+      }),
+      { expiresIn: args.expiresInSeconds ?? 60 * 15 },
+    );
+
+    return {
+      url,
+      method: "PUT" as const,
+      headers: {
+        "Content-Type": args.contentType,
+      },
+    };
+  }
+
   async createSignedDownloadUrl(args: {
     bucket?: string;
     objectKey: string;

@@ -11,6 +11,14 @@ interface UploadResult {
   size: number;
 }
 
+interface AuthorizedUploadResult {
+  objectKey: string;
+  contentType: string;
+  uploadUrl: string;
+  uploadMethod: "PUT";
+  uploadHeaders: Record<string, string>;
+}
+
 export interface FinalizeResult {
   objectKey: string;
   size: number;
@@ -20,7 +28,7 @@ export interface FinalizeResult {
 
 class StorageClient {
   /**
-   * After a same-origin upload completes, call this to get server-verified
+   * After a direct upload completes, call this to get server-verified
    * metadata (size, contentType, etag/checksum).  Always pass the returned
    * values to Convex mutations instead of the client-side File properties.
    */
@@ -77,6 +85,44 @@ class StorageClient {
       onProgress?: (progress: UploadProgress) => void;
     },
   ): Promise<UploadResult> {
+    const authorizeResponse = await fetch("/api/storage/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        siteId: options.siteId,
+        purpose: options.purpose,
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+        size: file.size,
+      }),
+    });
+
+    const authorizePayload = (await authorizeResponse
+      .json()
+      .catch(() => ({}))) as Partial<
+      AuthorizedUploadResult & { error: string }
+    >;
+    if (
+      !authorizeResponse.ok ||
+      !authorizePayload.objectKey ||
+      !authorizePayload.uploadUrl ||
+      !authorizePayload.uploadMethod ||
+      !authorizePayload.uploadHeaders
+    ) {
+      throw new Error(
+        authorizePayload.error ||
+          `Upload authorization failed: ${authorizeResponse.status}`,
+      );
+    }
+
+    const authorizedUpload: AuthorizedUploadResult = {
+      objectKey: authorizePayload.objectKey,
+      contentType: authorizePayload.contentType ?? "application/octet-stream",
+      uploadUrl: authorizePayload.uploadUrl,
+      uploadMethod: authorizePayload.uploadMethod,
+      uploadHeaders: authorizePayload.uploadHeaders,
+    };
+
     return await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
 
@@ -93,24 +139,13 @@ class StorageClient {
       });
 
       xhr.addEventListener("load", () => {
-        let payload: Partial<{
-          objectKey: string;
-          error: string;
-        }> = {};
-        try {
-          payload = JSON.parse(xhr.responseText || "{}") as Partial<{
-            objectKey: string;
-            error: string;
-          }>;
-        } catch {}
-
-        if (xhr.status < 200 || xhr.status >= 300 || !payload.objectKey) {
-          reject(new Error(payload.error || `Upload failed: ${xhr.status}`));
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new Error(`Upload failed: ${xhr.status}`));
           return;
         }
 
         resolve({
-          objectKey: payload.objectKey,
+          objectKey: authorizedUpload.objectKey,
           size: file.size,
         });
       });
@@ -123,15 +158,12 @@ class StorageClient {
         reject(new Error("Upload cancelled"));
       });
 
-      xhr.open("PUT", "/api/storage/upload");
-      xhr.setRequestHeader(
-        "Content-Type",
-        file.type || "application/octet-stream",
-      );
-      xhr.setRequestHeader("X-Baseblocks-Site-Id", options.siteId);
-      xhr.setRequestHeader("X-Baseblocks-Upload-Purpose", options.purpose);
-      xhr.setRequestHeader("X-Baseblocks-Filename", file.name);
-      xhr.setRequestHeader("X-Baseblocks-Upload-Size", `${file.size}`);
+      xhr.open(authorizedUpload.uploadMethod, authorizedUpload.uploadUrl);
+      for (const [key, value] of Object.entries(
+        authorizedUpload.uploadHeaders,
+      )) {
+        xhr.setRequestHeader(key, value);
+      }
       xhr.send(file);
     });
   }
