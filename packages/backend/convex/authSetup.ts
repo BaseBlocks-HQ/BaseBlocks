@@ -11,13 +11,14 @@ import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
 
 const authOrigins = parseAuthOrigins(process.env.APP_URL);
 const primaryAppUrl = authOrigins[0]!;
-const authSiteUrl = parseAuthOrigin(
-  process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
-  "SITE_URL",
-);
 const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
 const useCrossDomainAuth = authRedirectMode === "cross-domain";
-const authBaseUrl = useCrossDomainAuth ? authSiteUrl : primaryAppUrl;
+const authBaseUrl = useCrossDomainAuth
+  ? parseAuthOrigin(
+      process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
+      "SITE_URL",
+    )
+  : primaryAppUrl;
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
