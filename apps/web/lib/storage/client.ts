@@ -124,25 +124,25 @@ class StorageClient {
     };
 
     return await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener("progress", (event) => {
-        if (!event.lengthComputable || !options.onProgress) {
-          return;
-        }
-
-        options.onProgress({
-          loaded: event.loaded,
-          total: event.total,
-          percentage: Math.round((event.loaded / event.total) * 100),
-        });
+      options.onProgress?.({
+        loaded: 0,
+        total: file.size,
+        percentage: 0,
       });
+
+      const xhr = new XMLHttpRequest();
 
       xhr.addEventListener("load", () => {
         if (xhr.status < 200 || xhr.status >= 300) {
           reject(new Error(`Upload failed: ${xhr.status}`));
           return;
         }
+
+        options.onProgress?.({
+          loaded: file.size,
+          total: file.size,
+          percentage: 100,
+        });
 
         resolve({
           objectKey: authorizedUpload.objectKey,
