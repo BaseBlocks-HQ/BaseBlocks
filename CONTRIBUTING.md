@@ -61,13 +61,46 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 
    This starts both the Next.js app (port 3001) and Convex backend.
 
-5. **Optional: expose dev auth to your phone with Tailscale**
+5. **Use the right auth mode**
+
+   `bun run dev` and `bun run dev:local` keep localhost as the active auth
+   origin for desktop testing.
+
+   `bun run dev:mobile` switches the active auth origin to your Tailscale HTTPS
+   hostname so OAuth returns to your phone instead of localhost.
+
+   The mobile runner auto-detects the hostname from `tailscale status --json`.
+   If you need to override it:
+
+   ```bash
+   DEV_AUTH_MOBILE_ORIGIN=https://your-machine.your-tailnet.ts.net bun run dev:mobile
+   ```
+
+6. **Optional: expose dev auth to your phone with Tailscale**
 
    ```bash
    tailscale serve --bg --https=443 http://127.0.0.1:3001
    ```
 
    Use the resulting `https://<machine>.<tailnet>.ts.net` URL on your phone.
+
+7. **Register both dev callback origins in your OAuth providers**
+
+   If you use both localhost and Tailscale testing, add both to the provider
+   dashboard:
+
+   - Google JavaScript origins:
+     - `http://localhost:3001`
+     - `https://your-machine.your-tailnet.ts.net`
+   - Google redirect URIs:
+     - `http://localhost:3001/api/auth/callback/google`
+     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
+   - GitHub callback URLs:
+     - `http://localhost:3001/api/auth/callback/github`
+     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/github`
+   - Microsoft redirect URIs:
+     - `http://localhost:3001/api/auth/callback/microsoft`
+     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
 
 ## Project Structure
 

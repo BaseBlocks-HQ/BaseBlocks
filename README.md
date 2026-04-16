@@ -139,38 +139,50 @@ This starts the Next.js app on `http://localhost:3001` and the Convex backend.
 
 ### Local auth on desktop + mobile
 
-For OAuth in development, use two separate concepts:
+Use the same code path in both cases and switch only the active auth origin:
 
-- `SITE_URL`: the stable auth callback origin. In this stack, that should stay
-  on your Convex site URL.
-- `APP_URL`: a comma-separated allowlist of browser origins allowed to start
-  sign-in and receive the final redirect.
-
-Keep `localhost` for normal desktop work and add your Tailscale hostname only
-if you want to test the same dev server on a phone:
-
-```env
-SITE_URL=https://your-deployment.convex.site
-APP_URL=http://localhost:3001,https://your-machine.your-tailnet.ts.net
+```bash
+bun run dev
 ```
 
-`APP_URL` must contain exact origins only. Do not include paths.
+This is localhost-first auth for normal desktop development.
 
-Then register your OAuth settings like this:
+```bash
+bun run dev:mobile
+```
 
-- App origins, where the provider uses them:
-  - `http://localhost:3001`
-  - `https://your-machine.your-tailnet.ts.net`
-- Redirect URI:
-  - `https://your-deployment.convex.site/api/auth/callback/google`
+This is Tailscale-first auth for testing the same dev app on your phone. The
+runner auto-detects your Tailscale hostname from `tailscale status --json`.
+If you need to override it:
 
-To expose your local dev server privately to devices on your tailnet:
+```bash
+DEV_AUTH_MOBILE_ORIGIN=https://your-machine.your-tailnet.ts.net bun run dev:mobile
+```
+
+If you want your phone to reach the local Next dev server, expose it inside
+your tailnet:
 
 ```bash
 tailscale serve --bg --https=443 http://127.0.0.1:3001
 ```
 
 Then open `https://your-machine.your-tailnet.ts.net/login` on your phone.
+
+Provider dashboard settings for dev should include both localhost and your
+Tailscale hostname if you use both modes:
+
+- Google JavaScript origins:
+  - `http://localhost:3001`
+  - `https://your-machine.your-tailnet.ts.net`
+- Google redirect URIs:
+  - `http://localhost:3001/api/auth/callback/google`
+  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
+- GitHub callback URLs:
+  - `http://localhost:3001/api/auth/callback/github`
+  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/github`
+- Microsoft redirect URIs:
+  - `http://localhost:3001/api/auth/callback/microsoft`
+  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
 
 ## Project Structure
 

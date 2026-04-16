@@ -3,7 +3,10 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev-auth-mode.mjs local",
+    "dev:local": "node scripts/dev-auth-mode.mjs local",
+    "dev:mobile": "node scripts/dev-auth-mode.mjs mobile",
+    "dev:raw": "turbo run dev",
     "lint": "biome check --write .",
     "format": "biome format --write .",
     "test": "bun test",
