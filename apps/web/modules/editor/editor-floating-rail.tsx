@@ -305,7 +305,7 @@ function EllipsisButton({
         side="top"
         align="center"
         sideOffset={8}
-        className="flex w-auto flex-row gap-1 rounded-[32px] border bg-background/88 p-1.5 shadow-xl backdrop-blur-md"
+        className="flex w-auto flex-row gap-1 rounded-[32px] border bg-background/88 p-1.5 backdrop-blur-md"
       >
         {overflowItems.map((item) => (
           <button
@@ -686,7 +686,7 @@ export function EditorFloatingRail({
       onMouseEnter={isMobile ? undefined : clearPendingClose}
       onMouseLeave={isMobile ? undefined : scheduleClose}
     >
-      <div className="rounded-[32px] border bg-background/88 p-1.5 shadow-xl backdrop-blur-md sm:rounded-[2rem] sm:bg-background/90 sm:p-2">
+      <div className="rounded-[32px] border bg-background/88 p-1.5 backdrop-blur-md sm:rounded-[2rem] sm:bg-background/90 sm:p-2">
         <div
           className={cn(
             "flex gap-1",
