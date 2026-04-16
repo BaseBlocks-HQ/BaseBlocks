@@ -27,6 +27,38 @@ export interface FinalizeResult {
 }
 
 class StorageClient {
+  private async uploadViaProxy(
+    file: File,
+    options: {
+      siteId: string;
+      purpose: UploadPurpose;
+    },
+  ): Promise<UploadResult> {
+    const response = await fetch("/api/storage/upload", {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type || "application/octet-stream",
+        "X-Baseblocks-Site-Id": options.siteId,
+        "X-Baseblocks-Upload-Purpose": options.purpose,
+        "X-Baseblocks-Filename": file.name,
+        "X-Baseblocks-Upload-Size": `${file.size}`,
+      },
+      body: file,
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as Partial<
+      UploadResult & { error: string }
+    >;
+    if (!response.ok || !payload.objectKey) {
+      throw new Error(payload.error || `Upload failed: ${response.status}`);
+    }
+
+    return {
+      objectKey: payload.objectKey,
+      size: file.size,
+    };
+  }
+
   /**
    * After a direct upload completes, call this to get server-verified
    * metadata (size, contentType, etag/checksum).  Always pass the returned
@@ -134,7 +166,7 @@ class StorageClient {
 
       xhr.addEventListener("load", () => {
         if (xhr.status < 200 || xhr.status >= 300) {
-          reject(new Error(`Upload failed: ${xhr.status}`));
+          this.uploadViaProxy(file, options).then(resolve).catch(reject);
           return;
         }
 
@@ -151,7 +183,7 @@ class StorageClient {
       });
 
       xhr.addEventListener("error", () => {
-        reject(new Error("Network error during upload"));
+        this.uploadViaProxy(file, options).then(resolve).catch(reject);
       });
 
       xhr.addEventListener("abort", () => {

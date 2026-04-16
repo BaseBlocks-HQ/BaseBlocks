@@ -5,6 +5,7 @@ import {
   deleteObject,
   getStorageMaxUploadSize,
   signUpload,
+  streamObject,
 } from "@/lib/storage/server";
 import {
   type UploadPurpose,
@@ -113,6 +114,83 @@ function getValidatedUploadMetadata(body: unknown): {
   };
 }
 
+function parseSizeHeader(rawValue: string | null): number | null {
+  if (!rawValue) {
+    return null;
+  }
+
+  const size = Number.parseInt(rawValue, 10);
+  if (!Number.isFinite(size) || size < 0) {
+    throw new Response(JSON.stringify({ error: "Invalid file size" }), {
+      status: 400,
+    });
+  }
+
+  return size;
+}
+
+function getValidatedProxyUploadMetadata(request: NextRequest): {
+  siteId: string;
+  purpose: UploadPurpose;
+  filename: string;
+  contentType: string;
+  size: number | null;
+} {
+  const siteId = request.headers.get("x-baseblocks-site-id")?.trim() || "";
+  const purpose = parsePurpose(
+    request.headers.get("x-baseblocks-upload-purpose")?.trim() || null,
+  );
+  const filename = request.headers.get("x-baseblocks-filename")?.trim() || "";
+  const contentType =
+    request.headers.get("content-type") || "application/octet-stream";
+  const normalizedMimeType = normalizeMimeType(contentType);
+  const size =
+    parseSizeHeader(request.headers.get("x-baseblocks-upload-size")) ??
+    parseSizeHeader(request.headers.get("content-length"));
+
+  if (!siteId || !purpose) {
+    throw new Response(JSON.stringify({ error: "Missing siteId or purpose" }), {
+      status: 400,
+    });
+  }
+
+  if (!filename) {
+    throw new Response(JSON.stringify({ error: "Missing filename" }), {
+      status: 400,
+    });
+  }
+
+  if (!normalizedMimeType || !isSupportedUploadMimeType(normalizedMimeType)) {
+    throw new Response(JSON.stringify({ error: "File type not allowed" }), {
+      status: 415,
+    });
+  }
+
+  if (size === 0) {
+    throw new Response(JSON.stringify({ error: "Upload body is empty" }), {
+      status: 400,
+    });
+  }
+
+  const maxUploadSize = getStorageMaxUploadSize();
+  if (maxUploadSize !== null && size !== null && size > maxUploadSize) {
+    throw new Response(
+      JSON.stringify({
+        error: `File too large. Maximum size is ${maxUploadSize} bytes`,
+      }),
+      { status: 413 },
+    );
+  }
+
+  return {
+    siteId,
+    purpose,
+    filename,
+    contentType: normalizedMimeType,
+    size,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     let body: unknown;
@@ -151,6 +229,44 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error ? error.message : "Failed to authorize upload",
       },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    if (!request.body) {
+      return NextResponse.json(
+        { error: "Upload body is empty" },
+        { status: 400 },
+      );
+    }
+
+    const { siteId, purpose, filename, contentType, size } =
+      getValidatedProxyUploadMetadata(request);
+    await requireAuthorizedUploadSite({ siteId, purpose });
+
+    const objectKey = createObjectKey({ siteId, purpose, filename });
+    await streamObject({
+      objectKey,
+      contentType,
+      body: request.body,
+      contentLength: size ?? undefined,
+    });
+
+    return NextResponse.json({
+      objectKey,
+      contentType,
+      size,
+    });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 },
     );
   }
