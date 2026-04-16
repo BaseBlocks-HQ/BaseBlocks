@@ -19,7 +19,7 @@ export function HeroSection({
   landingTranslations,
 }: HeroSectionProps) {
   return (
-    <section className="relative z-10 overflow-x-clip pt-16 pb-20 sm:pt-24 sm:pb-28">
+    <section className="relative z-10 overflow-x-clip pt-28 pb-20 sm:pt-24 sm:pb-28">
       <GridPattern />
       <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="relative z-10 lg:max-w-[42%]">
