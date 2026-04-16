@@ -43,7 +43,7 @@ export interface LayoutRendererProps {
 // The control zone is the top-padding that permanently reserves space for the
 // controls row. Controls are absolutely positioned within it so content never
 // shifts on hover/selection.
-const CONTROL_ZONE = "pt-7"; // 28px = h-6 handle + 4px gap above content
+const CONTROL_ZONE = "pt-6"; // 24px reserves room for the 24px controls row
 
 export function LayoutRenderer({
   layout,

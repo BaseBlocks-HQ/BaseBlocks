@@ -24,7 +24,7 @@ import { createElement, useState } from "react";
 import { toast } from "sonner";
 
 // Same zone height as layout-renderer — keeps vertical rhythm consistent.
-const CONTROL_ZONE = "pt-7";
+const CONTROL_ZONE = "pt-6";
 
 interface SortableBlockProps {
   id: string;
