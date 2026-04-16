@@ -225,7 +225,7 @@ function SiteEditorInner({
   }
 
   const railPositionClass = isMobile
-    ? "pointer-events-none fixed inset-x-3 bottom-4 z-40 flex justify-center"
+    ? "pointer-events-none fixed inset-x-3 bottom-3 z-40 flex justify-center"
     : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
 
   if (isMobile && !showSubpagePanel) {
@@ -259,7 +259,7 @@ function SiteEditorInner({
 
           <PortalContainerProvider value={portalContainer}>
             <div
-              className="overflow-visible p-4"
+              className="overflow-visible p-4 pb-24"
               style={customizationStyles}
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
