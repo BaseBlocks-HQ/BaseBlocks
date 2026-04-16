@@ -7,12 +7,16 @@ import { landingFonts } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useEffect } from "react";
 
 type SocialProvider = "google" | "github" | "microsoft";
 
-function getAuthCallbackUrl(pathname: string): string {
-  return new URL(pathname, window.location.origin).toString();
+function getAuthCallbackUrl(redirectTo: string): string {
+  const url = new URL("/login", window.location.origin);
+  url.searchParams.set("redirectTo", redirectTo);
+  return url.toString();
 }
 
 export function LoginPageClient() {
@@ -22,6 +26,18 @@ export function LoginPageClient() {
   );
   const t = useTranslations();
   const haptic = useHaptic();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    router.replace(redirectTo);
+  }, [redirectTo, router, session]);
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
     haptic.trigger("heavy");
@@ -30,7 +46,7 @@ export function LoginPageClient() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: getAuthCallbackUrl("/dashboard"),
+        callbackURL: getAuthCallbackUrl(redirectTo),
       });
     } catch (err) {
       haptic.trigger("error");
