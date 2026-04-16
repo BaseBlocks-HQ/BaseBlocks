@@ -225,13 +225,13 @@ function SiteEditorInner({
   }
 
   const railPositionClass = isMobile
-    ? "pointer-events-none absolute inset-x-3 bottom-4 z-30 flex justify-center"
+    ? "pointer-events-none fixed inset-x-3 bottom-4 z-40 flex justify-center"
     : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
 
   if (isMobile && !showSubpagePanel) {
     return (
-      <div className="flex h-screen w-full overflow-hidden bg-background">
-        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="w-full bg-background">
+        <main className="relative">
           <div className={railPositionClass}>
             <EditorFloatingRail
               site={site}
@@ -245,38 +245,36 @@ function SiteEditorInner({
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-            <EditorHeader
-              inFlow
-              teamSlug={team.slug}
-              siteSlug={site.slug}
-              siteId={site._id}
-              sitePublished={site.isPublished}
-              siteName={site.name}
-              siteLogoUrl={site.logoUrl}
-              onPublish={handlePublish}
-              onUnpublish={handleUnpublish}
-            />
+          <EditorHeader
+            inFlow
+            teamSlug={team.slug}
+            siteSlug={site.slug}
+            siteId={site._id}
+            sitePublished={site.isPublished}
+            siteName={site.name}
+            siteLogoUrl={site.logoUrl}
+            onPublish={handlePublish}
+            onUnpublish={handleUnpublish}
+          />
 
-            <PortalContainerProvider value={portalContainer}>
-              <div
-                className="overflow-visible p-4 pb-24"
-                style={customizationStyles}
-                {...(isCustomized ? { "data-site-customized": "" } : {})}
-              >
-                {selectedPage ? (
-                  <ConnectedPageEditor
-                    pageId={selectedPage._id}
-                    onSelectionChange={handleSlotSelectionChange}
-                  />
-                ) : (
-                  <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-                    Select a page to edit
-                  </div>
-                )}
-              </div>
-            </PortalContainerProvider>
-          </div>
+          <PortalContainerProvider value={portalContainer}>
+            <div
+              className="overflow-visible p-4"
+              style={customizationStyles}
+              {...(isCustomized ? { "data-site-customized": "" } : {})}
+            >
+              {selectedPage ? (
+                <ConnectedPageEditor
+                  pageId={selectedPage._id}
+                  onSelectionChange={handleSlotSelectionChange}
+                />
+              ) : (
+                <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
+                  Select a page to edit
+                </div>
+              )}
+            </div>
+          </PortalContainerProvider>
         </main>
       </div>
     );
