@@ -19,9 +19,9 @@ export function HeroSection({
   landingTranslations,
 }: HeroSectionProps) {
   return (
-    <section className="relative z-10 overflow-x-clip max-sm:h-screen max-sm:overflow-hidden max-sm:pt-0 max-sm:pb-0 sm:pt-24 sm:pb-28">
+    <section className="relative z-10 overflow-x-clip pt-16 pb-20 sm:pt-24 sm:pb-28">
       <GridPattern />
-      <div className="relative z-10 mx-auto max-w-6xl px-6 max-sm:flex max-sm:min-h-screen max-sm:flex-col max-sm:justify-center max-sm:pt-[7.5rem] max-sm:pb-8">
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="relative z-10 lg:max-w-[42%]">
           <BlurIn delay={0.1}>
             <div
@@ -88,7 +88,7 @@ export function HeroSection({
 
       <BlurIn
         delay={0.35}
-        className="mt-12 -mx-6 px-0 max-sm:absolute max-sm:inset-0 max-sm:z-0 max-sm:mt-0 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:mx-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
+        className="mt-14 px-6 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
       >
         <EditorMockup />
       </BlurIn>
