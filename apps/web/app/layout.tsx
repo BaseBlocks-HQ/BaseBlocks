@@ -24,7 +24,7 @@ const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
+  themeColor: "black",
 };
 
 export const metadata: Metadata = {

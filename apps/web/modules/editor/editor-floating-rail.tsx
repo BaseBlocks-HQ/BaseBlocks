@@ -23,7 +23,6 @@ import type {
 } from "@baseblocks/types";
 import type { ElementCategory, ElementType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
-import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Separator } from "@baseblocks/ui/separator";
@@ -211,15 +210,9 @@ function FloatingRailButton({
 function RailUndoRedoControls() {
   const { currentPageId } = useEditorUi();
   const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
-  const isMobile = useIsMobile();
 
   return (
-    <div
-      className={cn(
-        "flex items-center gap-0.5 sm:flex-col sm:gap-1",
-        isMobile ? "pl-0.5" : "pt-2",
-      )}
-    >
+    <div className="flex flex-col gap-1 pt-2">
       <Button
         variant="ghost"
         size="icon-sm"
@@ -436,10 +429,8 @@ export function EditorFloatingRail({
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
   const [activePanel, setActivePanel] = useState<RailPanelId | null>(null);
-  const isMobile = useIsMobile();
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const railRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -450,22 +441,15 @@ export function EditorFloatingRail({
     .filter((page) => !page.parentId)
     .sort((a, b) => a.order - b.order);
 
-  const syncPanelPosition = useCallback(
-    (panelId: RailPanelId) => {
-      if (isMobile) {
-        return;
-      }
+  const syncPanelPosition = useCallback((panelId: RailPanelId) => {
+    const button = buttonRefs.current[panelId];
+    const panel = panelRef.current;
+    if (!button || !panel) {
+      return;
+    }
 
-      const button = buttonRefs.current[panelId];
-      const panel = panelRef.current;
-      if (!button || !panel) {
-        return;
-      }
-
-      panel.style.top = `${button.offsetTop}px`;
-    },
-    [isMobile],
-  );
+    panel.style.top = `${button.offsetTop}px`;
+  }, []);
 
   const clearPendingClose = () => {
     if (closeTimeoutRef.current) {
@@ -511,40 +495,13 @@ export function EditorFloatingRail({
 
     syncPanelPosition(activePanel);
     window.addEventListener("keydown", handleKeyDown);
-    if (!isMobile) {
-      window.addEventListener("resize", handleResize);
-    }
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      if (!isMobile) {
-        window.removeEventListener("resize", handleResize);
-      }
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activePanel, isMobile, syncPanelPosition]);
-
-  useEffect(() => {
-    if (!activePanel || !isMobile) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (
-        railRef.current?.contains(target) ||
-        panelRef.current?.contains(target)
-      ) {
-        return;
-      }
-
-      setActivePanel(null);
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [activePanel, isMobile]);
+  }, [activePanel, syncPanelPosition]);
 
   useEffect(() => {
     return () => {
@@ -580,13 +537,12 @@ export function EditorFloatingRail({
 
   return (
     <div
-      ref={railRef}
       className="pointer-events-auto relative"
-      onMouseEnter={isMobile ? undefined : clearPendingClose}
-      onMouseLeave={isMobile ? undefined : scheduleClose}
+      onMouseEnter={clearPendingClose}
+      onMouseLeave={scheduleClose}
     >
-      <div className="rounded-[1.75rem] border bg-background/90 p-1.5 shadow-lg backdrop-blur-md sm:rounded-[2rem] sm:p-2 sm:shadow-xl">
-        <div className="flex items-center gap-0.5 sm:flex-col sm:gap-1">
+      <div className="rounded-[2rem] border bg-background/90 p-2 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col gap-1">
           {RAIL_ITEMS.map((item) => {
             const categoryId: ElementCategory | null =
               item.id === "pages" ? null : item.id;
@@ -623,35 +579,20 @@ export function EditorFloatingRail({
                   openPanel(item.id);
                 }}
                 onFocus={() => openPanel(item.id)}
-                onMouseEnter={isMobile ? () => {} : () => openPanel(item.id)}
+                onMouseEnter={() => openPanel(item.id)}
                 registerRef={(node) => {
                   buttonRefs.current[item.id] = node;
                 }}
               />
             );
           })}
-          <Separator
-            orientation={isMobile ? "vertical" : "horizontal"}
-            className={cn(
-              "bg-border/80",
-              isMobile ? "mx-0.5 h-7 w-px self-center" : "mx-1 mt-2 w-auto",
-            )}
-          />
+          <Separator className="mx-1 mt-2 w-auto bg-border/80" />
           <RailUndoRedoControls />
         </div>
       </div>
 
       {activePanel && (
-        <div
-          ref={panelRef}
-          className={cn(
-            "absolute",
-            isMobile
-              ? "bottom-full left-1/2 mb-3 -translate-x-1/2"
-              : "left-full ml-3",
-          )}
-          style={undefined}
-        >
+        <div ref={panelRef} className="absolute left-full ml-3">
           <FloatingRailFlyout
             activePanel={activePanel}
             canEdit={canEdit}

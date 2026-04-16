@@ -27,6 +27,7 @@ export function LandingHeader({
   return (
     <PublicHeader
       authAction={authAction}
+      mobileChromeMode="overlay"
       docsLabel={navigationTranslations("docs")}
     />
   );

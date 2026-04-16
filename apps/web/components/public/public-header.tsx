@@ -12,6 +12,7 @@ interface PublicHeaderProps {
   contentClassName?: string;
   docsLabel: string;
   homepageLinkLabel?: string;
+  mobileChromeMode?: "default" | "overlay";
   mobileActions?: ReactNode;
   showDocsLink?: boolean;
   showHomepageLink?: boolean;
@@ -23,24 +24,46 @@ export function PublicHeader({
   contentClassName,
   docsLabel,
   homepageLinkLabel,
+  mobileChromeMode = "default",
   mobileActions,
   showDocsLink = true,
   showHomepageLink = false,
 }: PublicHeaderProps) {
+  const isMobileOverlay = mobileChromeMode === "overlay";
+
   return (
     <header
-      className={cn("sticky top-0 z-50 [--bb-header-height:3.5rem]", className)}
+      className={cn(
+        "z-50 [--bb-header-height:3.5rem]",
+        isMobileOverlay
+          ? "max-sm:absolute max-sm:inset-x-0 max-sm:top-0 sm:sticky sm:top-0"
+          : "sticky top-0",
+        className,
+      )}
     >
       <div className="relative isolate">
-        <PublicHeaderBlur />
-        <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+        <div className={cn(isMobileOverlay && "max-sm:hidden")}>
+          <PublicHeaderBlur />
+        </div>
         <div
           className={cn(
-            "relative mx-auto flex min-h-(--bb-header-height) max-w-6xl items-center justify-between px-4 sm:px-6",
+            "absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12",
+            isMobileOverlay && "max-sm:hidden",
+          )}
+        />
+        <div
+          className={cn(
+            "relative mx-auto max-w-6xl px-4 sm:px-6",
+            isMobileOverlay && "max-sm:px-5 max-sm:pt-[42px]",
             contentClassName,
           )}
         >
-          <div className="relative flex min-w-0 w-full items-center justify-between gap-2 sm:gap-4">
+          <div
+            className={cn(
+              "relative flex h-14 min-w-0 w-full items-center justify-between gap-2 sm:gap-4",
+              isMobileOverlay && "max-sm:h-12",
+            )}
+          >
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
               <Link href="/">
                 <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">

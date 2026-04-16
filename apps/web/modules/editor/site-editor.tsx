@@ -223,7 +223,7 @@ function SiteEditorInner({
   }
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden bg-background">
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <EditorHeader
           teamSlug={team.slug}
@@ -236,7 +236,7 @@ function SiteEditorInner({
           onUnpublish={handleUnpublish}
         />
 
-        <div className="pointer-events-none absolute z-30 flex max-sm:inset-x-3 max-sm:bottom-[calc(1rem_+_env(safe-area-inset-bottom))] max-sm:justify-center sm:inset-y-14 sm:left-4 sm:items-center lg:left-6">
+        <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6">
           <EditorFloatingRail
             site={site}
             pages={pages}
@@ -258,7 +258,7 @@ function SiteEditorInner({
                   <ResizablePanel defaultSize={58} minSize={30}>
                     <PortalContainerProvider value={portalContainer}>
                       <div
-                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-[4.5rem] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[4.5rem] md:pl-24 lg:pl-28"
+                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                         style={customizationStyles}
                         {...(isCustomized
                           ? { "data-site-customized": "" }
@@ -287,7 +287,7 @@ function SiteEditorInner({
               >
                 <PortalContainerProvider value={portalContainer}>
                   <div
-                    className="h-full w-full min-w-0 overflow-hidden border-l pt-[3.5rem]"
+                    className="h-full w-full min-w-0 overflow-hidden border-l pt-14"
                     style={customizationStyles}
                     {...(isCustomized ? { "data-site-customized": "" } : {})}
                   >
@@ -313,7 +313,7 @@ function SiteEditorInner({
           ) : (
             <PortalContainerProvider value={portalContainer}>
               <div
-                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-[4.5rem] max-sm:pb-[calc(6rem_+_env(safe-area-inset-bottom))] sm:pl-20 md:p-8 md:pt-[4.5rem] md:pl-24 lg:pl-28"
+                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
                 style={customizationStyles}
                 {...(isCustomized ? { "data-site-customized": "" } : {})}
               >

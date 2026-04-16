@@ -61,8 +61,8 @@ export function EditorHeader({
       <header className="absolute inset-x-0 top-0 z-40 [--bb-header-height:3.5rem]">
         <div className="relative isolate">
           <PublicHeaderBlur />
-          <div className="relative flex min-h-(--bb-header-height) items-center justify-between px-4">
-            <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+          <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+          <div className="relative flex h-14 items-center justify-between px-4">
             <div className="relative flex w-full items-center justify-between gap-4">
               <EditorHeaderLeftSection
                 canEdit={canEdit}
