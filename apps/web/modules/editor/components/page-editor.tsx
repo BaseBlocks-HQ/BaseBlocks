@@ -94,7 +94,7 @@ function LayoutsContent({
 }) {
   if (hasSidebar) {
     return (
-      <div className="flex gap-8 pb-32">
+      <div className="flex gap-8 pb-24 sm:pb-32">
         <div className="flex-1 min-w-0 space-y-6">
           {mainLayouts.length > 0 ? (
             <DndProvider
@@ -120,7 +120,7 @@ function LayoutsContent({
   }
 
   return (
-    <div className="space-y-3 pb-32">
+    <div className="space-y-3 pb-24 sm:pb-32">
       {layouts.length > 0 ? (
         <DndProvider items={mainLayoutIds} onDragEnd={handleMainLayoutDragEnd}>
           {layouts}
