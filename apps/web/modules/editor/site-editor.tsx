@@ -230,7 +230,11 @@ function SiteEditorInner({
 
   if (isMobile && !showSubpagePanel) {
     return (
-      <div className="w-full bg-background">
+      <div
+        className="w-full bg-background"
+        style={customizationStyles}
+        {...(isCustomized ? { "data-site-customized": "" } : {})}
+      >
         <main className="relative">
           <div className={railPositionClass}>
             <EditorFloatingRail
