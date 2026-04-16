@@ -1,6 +1,7 @@
 "use client";
 
 import { PublicHeaderBlur } from "@/components/public/public-header-blur";
+import { cn } from "@/lib/utils";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
 import { useTranslations } from "next-intl";
@@ -15,6 +16,7 @@ import { ShareDialog } from "./components/share-dialog";
 import { useEditorHeaderData } from "./hooks/use-editor-header-data";
 
 interface EditorHeaderProps {
+  inFlow?: boolean;
   teamSlug: string;
   siteSlug: string;
   siteId: Id<"sites">;
@@ -26,6 +28,7 @@ interface EditorHeaderProps {
 }
 
 export function EditorHeader({
+  inFlow = false,
   teamSlug,
   siteSlug,
   siteId,
@@ -58,7 +61,12 @@ export function EditorHeader({
 
   return (
     <>
-      <header className="absolute inset-x-0 top-0 z-40 [--bb-header-height:3.5rem]">
+      <header
+        className={cn(
+          "z-40 [--bb-header-height:3.5rem]",
+          inFlow ? "relative" : "absolute inset-x-0 top-0",
+        )}
+      >
         <div className="relative isolate">
           <PublicHeaderBlur />
           <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />

@@ -23,7 +23,13 @@ import type {
 } from "@baseblocks/types";
 import type { ElementCategory, ElementType } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@baseblocks/ui/popover";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Separator } from "@baseblocks/ui/separator";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
@@ -32,7 +38,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { PanelTop, Redo2, Undo2 } from "lucide-react";
+import { MoreHorizontal, PanelTop, Redo2, Undo2 } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -123,6 +129,10 @@ const RAIL_ITEMS: Array<{
 ];
 
 const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
+const BUTTON_SLOT_MOBILE = 40;
+const RAIL_PADDING_MOBILE = 12;
+const FIXED_RIGHT_MOBILE = 85;
+const RAIL_MARGIN = 24;
 
 const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
   {
@@ -207,12 +217,16 @@ function FloatingRailButton({
   );
 }
 
-function RailUndoRedoControls() {
+function RailUndoRedoControls({
+  horizontal = false,
+}: { horizontal?: boolean }) {
   const { currentPageId } = useEditorUi();
   const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
 
   return (
-    <div className="flex flex-col gap-1 pt-2">
+    <div
+      className={cn("flex gap-1", horizontal ? "flex-row" : "flex-col pt-2")}
+    >
       <Button
         variant="ghost"
         size="icon-sm"
@@ -254,6 +268,65 @@ function RailUndoRedoControls() {
         <span className="sr-only">Redo</span>
       </Button>
     </div>
+  );
+}
+
+function EllipsisButton({
+  activePanel,
+  onSelect,
+  overflowItems,
+}: {
+  activePanel: RailPanelId | null;
+  onSelect: (id: RailPanelId) => void;
+  overflowItems: typeof RAIL_ITEMS;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasActiveOverflow = overflowItems.some(
+    (item) => item.id === activePanel,
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors",
+            hasActiveOverflow
+              ? "border-border bg-accent/70 text-foreground shadow-sm"
+              : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
+          )}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          <span className="sr-only">More options</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="center"
+        sideOffset={8}
+        className="flex w-auto flex-row gap-1 rounded-[32px] border bg-background/88 p-1.5 shadow-xl backdrop-blur-md"
+      >
+        {overflowItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors",
+              activePanel === item.id
+                ? "border-border bg-accent/70 text-foreground shadow-sm"
+                : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
+            )}
+            onClick={() => {
+              setOpen(false);
+              onSelect(item.id);
+            }}
+          >
+            {item.icon}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -428,9 +501,12 @@ export function EditorFloatingRail({
 }: EditorFloatingRailProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
+  const isMobile = useIsMobile();
   const [activePanel, setActivePanel] = useState<RailPanelId | null>(null);
+  const [visibleCount, setVisibleCount] = useState(RAIL_ITEMS.length);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const railWrapperRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
     site._id,
@@ -441,15 +517,45 @@ export function EditorFloatingRail({
     .filter((page) => !page.parentId)
     .sort((a, b) => a.order - b.order);
 
-  const syncPanelPosition = useCallback((panelId: RailPanelId) => {
-    const button = buttonRefs.current[panelId];
-    const panel = panelRef.current;
-    if (!button || !panel) {
+  useEffect(() => {
+    if (!isMobile) {
+      setVisibleCount(RAIL_ITEMS.length);
       return;
     }
 
-    panel.style.top = `${button.offsetTop}px`;
-  }, []);
+    const computeVisible = () => {
+      const available =
+        window.innerWidth -
+        RAIL_MARGIN -
+        RAIL_PADDING_MOBILE -
+        FIXED_RIGHT_MOBILE;
+      return Math.min(
+        RAIL_ITEMS.length,
+        Math.max(1, Math.floor(available / BUTTON_SLOT_MOBILE)),
+      );
+    };
+
+    const handleResize = () => setVisibleCount(computeVisible());
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
+
+  const syncPanelPosition = useCallback(
+    (panelId: RailPanelId) => {
+      if (isMobile) {
+        return;
+      }
+      const button = buttonRefs.current[panelId];
+      const panel = panelRef.current;
+      if (!button || !panel) {
+        return;
+      }
+
+      panel.style.top = `${button.offsetTop}px`;
+    },
+    [isMobile],
+  );
 
   const clearPendingClose = () => {
     if (closeTimeoutRef.current) {
@@ -495,13 +601,37 @@ export function EditorFloatingRail({
 
     syncPanelPosition(activePanel);
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", handleResize);
+    if (!isMobile) {
+      window.addEventListener("resize", handleResize);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      if (!isMobile) {
+        window.removeEventListener("resize", handleResize);
+      }
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activePanel, syncPanelPosition]);
+  }, [activePanel, isMobile, syncPanelPosition]);
+
+  useEffect(() => {
+    if (!isMobile || !activePanel) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (
+        railWrapperRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setActivePanel(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [activePanel, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -535,15 +665,35 @@ export function EditorFloatingRail({
     onAddBlock?.(type as LayoutBlockType);
   };
 
+  const clampedVisible = Math.min(visibleCount, RAIL_ITEMS.length);
+  const visibleItems = isMobile
+    ? RAIL_ITEMS.slice(0, clampedVisible)
+    : RAIL_ITEMS;
+  const overflowItems = isMobile ? RAIL_ITEMS.slice(clampedVisible) : [];
+
+  const handleButtonClick = (itemId: RailPanelId) => {
+    if (activePanel === itemId) {
+      setActivePanel(null);
+      return;
+    }
+    openPanel(itemId);
+  };
+
   return (
     <div
+      ref={railWrapperRef}
       className="pointer-events-auto relative"
-      onMouseEnter={clearPendingClose}
-      onMouseLeave={scheduleClose}
+      onMouseEnter={isMobile ? undefined : clearPendingClose}
+      onMouseLeave={isMobile ? undefined : scheduleClose}
     >
-      <div className="rounded-[2rem] border bg-background/90 p-2 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col gap-1">
-          {RAIL_ITEMS.map((item) => {
+      <div className="rounded-[32px] border bg-background/88 p-1.5 shadow-xl backdrop-blur-md sm:rounded-[2rem] sm:bg-background/90 sm:p-2">
+        <div
+          className={cn(
+            "flex gap-1",
+            isMobile ? "flex-row items-center" : "flex-col",
+          )}
+        >
+          {visibleItems.map((item) => {
             const categoryId: ElementCategory | null =
               item.id === "pages" ? null : item.id;
             const isDisabled =
@@ -571,28 +721,45 @@ export function EditorFloatingRail({
                 icon={item.icon}
                 label={item.label}
                 tooltip={disabledTooltip}
-                onClick={() => {
-                  if (activePanel === item.id) {
-                    setActivePanel(null);
-                    return;
-                  }
-                  openPanel(item.id);
-                }}
+                onClick={() => handleButtonClick(item.id)}
                 onFocus={() => openPanel(item.id)}
-                onMouseEnter={() => openPanel(item.id)}
+                onMouseEnter={isMobile ? () => {} : () => openPanel(item.id)}
                 registerRef={(node) => {
                   buttonRefs.current[item.id] = node;
                 }}
               />
             );
           })}
-          <Separator className="mx-1 mt-2 w-auto bg-border/80" />
-          <RailUndoRedoControls />
+
+          {overflowItems.length > 0 ? (
+            <EllipsisButton
+              activePanel={activePanel}
+              onSelect={handleButtonClick}
+              overflowItems={overflowItems}
+            />
+          ) : null}
+
+          <Separator
+            orientation={isMobile ? "vertical" : "horizontal"}
+            className={cn(
+              "bg-border/80",
+              isMobile ? "mx-0.5 h-7 w-px self-center" : "mx-1 mt-2 w-auto",
+            )}
+          />
+          <RailUndoRedoControls horizontal={isMobile} />
         </div>
       </div>
 
       {activePanel && (
-        <div ref={panelRef} className="absolute left-full ml-3">
+        <div
+          ref={panelRef}
+          className={cn(
+            "absolute",
+            isMobile
+              ? "bottom-full left-1/2 mb-3 -translate-x-1/2"
+              : "left-full ml-3",
+          )}
+        >
           <FloatingRailFlyout
             activePanel={activePanel}
             canEdit={canEdit}

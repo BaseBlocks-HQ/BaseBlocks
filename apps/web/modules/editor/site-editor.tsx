@@ -17,6 +17,7 @@ import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -77,6 +78,7 @@ function SiteEditorInner({
   siteId,
 }: SiteEditorProps) {
   const { team } = useTeamAccess();
+  const isMobile = useIsMobile();
   const { isLoading: isConvexLoading } = useConvexAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -222,6 +224,64 @@ function SiteEditorInner({
     );
   }
 
+  const railPositionClass = isMobile
+    ? "pointer-events-none absolute inset-x-3 bottom-4 z-30 flex justify-center"
+    : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
+
+  if (isMobile && !showSubpagePanel) {
+    return (
+      <div className="flex min-h-screen w-full bg-background">
+        <main className="relative flex min-w-0 flex-1 flex-col">
+          <div className={railPositionClass}>
+            <EditorFloatingRail
+              site={site}
+              pages={pages}
+              selectedPageId={selectedPage?._id}
+              selectedSlotId={selection.slotId}
+              onSelectPage={setSelectedPageId}
+              onAddLayout={handleAddLayout}
+              onAddBlock={handleAddBlock}
+              onEnableTabs={handleEnableTabs}
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <EditorHeader
+              inFlow
+              teamSlug={team.slug}
+              siteSlug={site.slug}
+              siteId={site._id}
+              sitePublished={site.isPublished}
+              siteName={site.name}
+              siteLogoUrl={site.logoUrl}
+              onPublish={handlePublish}
+              onUnpublish={handleUnpublish}
+            />
+
+            <PortalContainerProvider value={portalContainer}>
+              <div
+                className="overflow-visible p-4 pb-24"
+                style={customizationStyles}
+                {...(isCustomized ? { "data-site-customized": "" } : {})}
+              >
+                {selectedPage ? (
+                  <ConnectedPageEditor
+                    pageId={selectedPage._id}
+                    onSelectionChange={handleSlotSelectionChange}
+                  />
+                ) : (
+                  <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
+                    Select a page to edit
+                  </div>
+                )}
+              </div>
+            </PortalContainerProvider>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -236,7 +296,7 @@ function SiteEditorInner({
           onUnpublish={handleUnpublish}
         />
 
-        <div className="pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6">
+        <div className={railPositionClass}>
           <EditorFloatingRail
             site={site}
             pages={pages}
