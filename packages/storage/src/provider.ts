@@ -1,7 +1,7 @@
 export interface SignedUpload {
   url: string;
-  method: "PUT";
-  headers: Record<string, string>;
+  method: "POST";
+  fields: Record<string, string>;
 }
 
 export interface StorageObjectMetadata {
@@ -18,6 +18,7 @@ export interface StorageProvider {
   signUpload(args: {
     objectKey: string;
     contentType: string;
+    maxUploadSizeBytes?: number;
     expiresInSeconds?: number;
   }): Promise<SignedUpload>;
   createSignedDownloadUrl(args: {

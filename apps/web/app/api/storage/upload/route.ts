@@ -127,9 +127,11 @@ export async function POST(request: NextRequest) {
     await requireAuthorizedUploadSite({ siteId, purpose });
 
     const objectKey = createObjectKey({ siteId, purpose, filename });
+    const maxUploadSize = getStorageMaxUploadSize() ?? undefined;
     const upload = await signUpload({
       objectKey,
       contentType,
+      maxUploadSizeBytes: maxUploadSize,
     });
 
     return NextResponse.json({
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
       contentType,
       uploadUrl: upload.url,
       uploadMethod: upload.method,
-      uploadHeaders: upload.headers,
+      uploadFields: upload.fields,
     });
   } catch (error) {
     if (error instanceof Response) {

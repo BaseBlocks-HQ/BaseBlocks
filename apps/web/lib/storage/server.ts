@@ -18,6 +18,7 @@ export {
 export async function signUpload(args: {
   objectKey: string;
   contentType: string;
+  maxUploadSizeBytes?: number;
   expiresInSeconds?: number;
 }) {
   return await storageProvider.signUpload(args);

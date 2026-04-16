@@ -15,8 +15,8 @@ interface AuthorizedUploadResult {
   objectKey: string;
   contentType: string;
   uploadUrl: string;
-  uploadMethod: "PUT";
-  uploadHeaders: Record<string, string>;
+  uploadMethod: "POST";
+  uploadFields: Record<string, string>;
 }
 
 export interface FinalizeResult {
@@ -107,7 +107,7 @@ class StorageClient {
       !authorizePayload.objectKey ||
       !authorizePayload.uploadUrl ||
       !authorizePayload.uploadMethod ||
-      !authorizePayload.uploadHeaders
+      !authorizePayload.uploadFields
     ) {
       throw new Error(
         authorizePayload.error ||
@@ -120,7 +120,7 @@ class StorageClient {
       contentType: authorizePayload.contentType ?? "application/octet-stream",
       uploadUrl: authorizePayload.uploadUrl,
       uploadMethod: authorizePayload.uploadMethod,
-      uploadHeaders: authorizePayload.uploadHeaders,
+      uploadFields: authorizePayload.uploadFields,
     };
 
     return await new Promise((resolve, reject) => {
@@ -159,12 +159,14 @@ class StorageClient {
       });
 
       xhr.open(authorizedUpload.uploadMethod, authorizedUpload.uploadUrl);
+      const formData = new FormData();
       for (const [key, value] of Object.entries(
-        authorizedUpload.uploadHeaders,
+        authorizedUpload.uploadFields,
       )) {
-        xhr.setRequestHeader(key, value);
+        formData.append(key, value);
       }
-      xhr.send(file);
+      formData.append("file", file);
+      xhr.send(formData);
     });
   }
 }

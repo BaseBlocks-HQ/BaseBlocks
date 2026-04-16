@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { StorageConfig } from "./config";
 import { toAttachmentContentDisposition } from "./object-key";
@@ -33,24 +34,31 @@ export class S3CompatibleStorageProvider implements StorageProvider {
   async signUpload(args: {
     objectKey: string;
     contentType: string;
+    maxUploadSizeBytes?: number;
     expiresInSeconds?: number;
   }) {
-    const url = await getSignedUrl(
-      this.#client,
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: args.objectKey,
-        ContentType: args.contentType,
-      }),
-      { expiresIn: args.expiresInSeconds ?? 60 * 15 },
-    );
+    const maxUploadCondition: ["content-length-range", number, number][] =
+      args.maxUploadSizeBytes === undefined
+        ? []
+        : [["content-length-range", 0, args.maxUploadSizeBytes]];
 
-    return {
-      url,
-      method: "PUT" as const,
-      headers: {
+    const signedPost = await createPresignedPost(this.#client, {
+      Bucket: this.bucket,
+      Key: args.objectKey,
+      Fields: {
         "Content-Type": args.contentType,
       },
+      Conditions: [
+        { "Content-Type": args.contentType },
+        ...maxUploadCondition,
+      ],
+      Expires: args.expiresInSeconds ?? 60 * 15,
+    });
+
+    return {
+      url: signedPost.url,
+      method: "POST" as const,
+      fields: signedPost.fields,
     };
   }
 
