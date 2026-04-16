@@ -34,6 +34,25 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 
    Then edit each file — you'll need a Convex deployment URL from `npx convex dev`.
 
+   For OAuth in development, keep the auth callback origin stable on
+   `SITE_URL`, and use `APP_URL` as a comma-separated allowlist of exact app
+   origins that are allowed to start sign-in and receive the final redirect.
+   Keep `localhost` for normal desktop development and add a Tailscale hostname
+   only when you want to test on mobile:
+
+   ```env
+   SITE_URL=https://your-deployment.convex.site
+   APP_URL=http://localhost:3001,https://your-machine.your-tailnet.ts.net
+   ```
+
+   Register your OAuth provider like this. For Google:
+
+   - App origins, where the provider uses them:
+     - `http://localhost:3001`
+     - `https://your-machine.your-tailnet.ts.net`
+   - Redirect URI:
+     - `https://your-deployment.convex.site/api/auth/callback/google`
+
 4. **Start the dev server**
 
    ```bash
@@ -41,6 +60,14 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
    ```
 
    This starts both the Next.js app (port 3001) and Convex backend.
+
+5. **Optional: expose dev auth to your phone with Tailscale**
+
+   ```bash
+   tailscale serve --bg --https=443 http://127.0.0.1:3001
+   ```
+
+   Use the resulting `https://<machine>.<tailnet>.ts.net` URL on your phone.
 
 ## Project Structure
 

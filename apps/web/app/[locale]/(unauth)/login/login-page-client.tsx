@@ -11,6 +11,10 @@ import { useState } from "react";
 
 type SocialProvider = "google" | "github" | "microsoft";
 
+function getAuthCallbackUrl(pathname: string): string {
+  return new URL(pathname, window.location.origin).toString();
+}
+
 export function LoginPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [activeProvider, setActiveProvider] = useState<SocialProvider | null>(
@@ -26,7 +30,7 @@ export function LoginPageClient() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: getAuthCallbackUrl("/dashboard"),
       });
     } catch (err) {
       haptic.trigger("error");

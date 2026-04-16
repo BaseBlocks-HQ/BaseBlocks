@@ -12,6 +12,7 @@ import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as assets_mutations from "../assets/mutations.js";
 import type * as assets_queries from "../assets/queries.js";
 import type * as auth from "../auth.js";
+import type * as authOrigins from "../authOrigins.js";
 import type * as authSetup from "../authSetup.js";
 import type * as crons from "../crons.js";
 import type * as deployments_mutations from "../deployments/mutations.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "assets/mutations": typeof assets_mutations;
   "assets/queries": typeof assets_queries;
   auth: typeof auth;
+  authOrigins: typeof authOrigins;
   authSetup: typeof authSetup;
   crons: typeof crons;
   "deployments/mutations": typeof deployments_mutations;

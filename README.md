@@ -129,13 +129,48 @@ bun install
 # Set up environment variables
 cp .env.example apps/web/.env.local
 cp .env.example packages/backend/.env.local
-# Edit both files with your Convex deployment URLs
+# Edit both files with your Convex deployment URLs and auth origins
 
 # Start development
 bun run dev
 ```
 
 This starts the Next.js app on `http://localhost:3001` and the Convex backend.
+
+### Local auth on desktop + mobile
+
+For OAuth in development, use two separate concepts:
+
+- `SITE_URL`: the stable auth callback origin. In this stack, that should stay
+  on your Convex site URL.
+- `APP_URL`: a comma-separated allowlist of browser origins allowed to start
+  sign-in and receive the final redirect.
+
+Keep `localhost` for normal desktop work and add your Tailscale hostname only
+if you want to test the same dev server on a phone:
+
+```env
+SITE_URL=https://your-deployment.convex.site
+APP_URL=http://localhost:3001,https://your-machine.your-tailnet.ts.net
+```
+
+`APP_URL` must contain exact origins only. Do not include paths.
+
+Then register your OAuth settings like this:
+
+- App origins, where the provider uses them:
+  - `http://localhost:3001`
+  - `https://your-machine.your-tailnet.ts.net`
+- Redirect URI:
+  - `https://your-deployment.convex.site/api/auth/callback/google`
+
+To expose your local dev server privately to devices on your tailnet:
+
+```bash
+tailscale serve --bg --https=443 http://127.0.0.1:3001
+```
+
+Then open `https://your-machine.your-tailnet.ts.net/login` on your phone.
 
 ## Project Structure
 

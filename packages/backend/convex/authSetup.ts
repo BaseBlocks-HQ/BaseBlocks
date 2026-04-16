@@ -1,5 +1,5 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
+import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
@@ -7,13 +7,14 @@ import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 import authSchema from "./authComponent/schema";
+import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
 
-const appUrl = (process.env.APP_URL ?? "")
-  .split(",")
-  .map((u) => u.trim())
-  .filter(Boolean);
-
-const primaryAppUrl = appUrl[0] || "";
+const authOrigins = parseAuthOrigins(process.env.APP_URL);
+const primaryAppUrl = authOrigins[0]!;
+const authSiteUrl = parseAuthOrigin(
+  process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
+  "SITE_URL",
+);
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
@@ -27,8 +28,8 @@ export const authComponent = createClient<DataModel, never>(
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
-    baseURL: primaryAppUrl,
-    trustedOrigins: appUrl,
+    baseURL: authSiteUrl,
+    trustedOrigins: authOrigins,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
@@ -45,13 +46,11 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         prompt: "select_account",
-        redirectURI: `${primaryAppUrl}/api/auth/callback/google`,
       },
       github: {
         clientId: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         prompt: "select_account",
-        redirectURI: `${primaryAppUrl}/api/auth/callback/github`,
       },
       microsoft: {
         clientId: process.env.MICROSOFT_CLIENT_ID!,
@@ -59,13 +58,13 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
         tenantId: process.env.MICROSOFT_TENANT_ID || "common",
         authority: "https://login.microsoftonline.com",
         prompt: "select_account",
-        redirectURI: `${primaryAppUrl}/api/auth/callback/microsoft`,
       },
     },
     plugins: [
       organization({
         allowUserToCreateOrganization: true,
       }),
+      crossDomain({ siteUrl: primaryAppUrl }),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;
