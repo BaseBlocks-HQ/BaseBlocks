@@ -259,7 +259,7 @@ function SiteEditorInner({
 
           <PortalContainerProvider value={portalContainer}>
             <div
-              className="overflow-visible p-4 pb-24"
+              className="overflow-visible p-4 pb-20"
               style={customizationStyles}
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
