@@ -230,8 +230,8 @@ function SiteEditorInner({
 
   if (isMobile && !showSubpagePanel) {
     return (
-      <div className="flex min-h-screen w-full bg-background">
-        <main className="relative flex min-w-0 flex-1 flex-col">
+      <div className="flex h-screen w-full overflow-hidden bg-background">
+        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className={railPositionClass}>
             <EditorFloatingRail
               site={site}
@@ -245,7 +245,7 @@ function SiteEditorInner({
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
             <EditorHeader
               inFlow
               teamSlug={team.slug}
