@@ -48,10 +48,7 @@ export class S3CompatibleStorageProvider implements StorageProvider {
       Fields: {
         "Content-Type": args.contentType,
       },
-      Conditions: [
-        { "Content-Type": args.contentType },
-        ...maxUploadCondition,
-      ],
+      Conditions: [{ "Content-Type": args.contentType }, ...maxUploadCondition],
       Expires: args.expiresInSeconds ?? 60 * 15,
     });
 
