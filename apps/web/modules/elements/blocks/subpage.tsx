@@ -1,11 +1,13 @@
 "use client";
+import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
 import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { Button } from "@baseblocks/ui/button";
 import { useQuery } from "convex/react";
-import { ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, FileText, MoreHorizontal } from "lucide-react";
 import type {
   ElementEditorProps,
   ElementRendererProps,
@@ -36,20 +38,38 @@ function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   }
 
   return (
-    <button
-      type="button"
-      className="w-full flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors text-left"
-      onClick={handleClick}
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-        <FileText className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium truncate">{page?.title ?? "Loading..."}</h3>
-        <p className="text-sm text-muted-foreground">Click to edit sub-page</p>
-      </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-    </button>
+    <div className="w-full flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors">
+      <button
+        type="button"
+        className="min-w-0 flex flex-1 items-center gap-3 text-left"
+        onClick={handleClick}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+          <FileText className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium truncate">
+            {page?.title ?? "Loading..."}
+          </h3>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+      </button>
+      <PageExportMenu
+        pageId={content.pageId}
+        mode="draft"
+        trigger={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            title="Export sub-page"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        }
+      />
+    </div>
   );
 }
 
@@ -71,19 +91,36 @@ function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
   };
 
   return (
-    <button
-      type="button"
-      className="not-prose w-full flex items-center gap-3 p-4 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors text-left"
-      onClick={handleClick}
-    >
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-        <FileText className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium truncate">{page.title}</h3>
-      </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-    </button>
+    <div className="not-prose w-full flex items-center gap-2 p-3 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/30 transition-colors">
+      <button
+        type="button"
+        className="min-w-0 flex flex-1 items-center gap-3 text-left"
+        onClick={handleClick}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+          <FileText className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium truncate">{page.title}</h3>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+      </button>
+      <PageExportMenu
+        pageId={content.pageId}
+        mode="published"
+        trigger={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            title="Export sub-page"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        }
+      />
+    </div>
   );
 }
 

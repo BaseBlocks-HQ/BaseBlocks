@@ -1,5 +1,6 @@
 "use client";
 
+import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -38,6 +39,7 @@ export function PublicSubpagePanel({
           </h2>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <PageExportMenu pageId={viewingSubpage.pageId} mode="published" />
           {onToggleFullscreen && (
             <Button
               variant="ghost"

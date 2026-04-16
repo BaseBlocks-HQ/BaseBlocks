@@ -1,5 +1,6 @@
 "use client";
 
+import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { Button } from "@baseblocks/ui/button";
@@ -56,6 +57,7 @@ export function SubpageEditPanel({
           className="h-8 text-sm font-medium flex-1 border-none shadow-none focus-visible:ring-0 px-1"
         />
         <div className="flex items-center gap-1 shrink-0">
+          <PageExportMenu pageId={editingSubpage.pageId} mode="draft" />
           {onToggleFullscreen && (
             <Button
               variant="ghost"
