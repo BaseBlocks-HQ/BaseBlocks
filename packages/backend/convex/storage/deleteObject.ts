@@ -1,6 +1,6 @@
 "use node";
 
-import { getStorageProviderFromEnv } from "@baseblocks/storage";
+import { getStorageProviderFromEnv } from "@baseblocks/storage/node";
 import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 const storageProvider = getStorageProviderFromEnv();

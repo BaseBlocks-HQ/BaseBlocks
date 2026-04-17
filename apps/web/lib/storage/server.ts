@@ -5,7 +5,7 @@ import {
   getStorageMaxUploadSizeFromEnv,
   getStorageProviderFromEnv,
   getStorageProviderNameFromEnv,
-} from "@baseblocks/storage";
+} from "@baseblocks/storage/node";
 
 const storageProvider = getStorageProviderFromEnv();
 

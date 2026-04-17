@@ -9,7 +9,7 @@ import {
   getStorageProviderFromEnv,
   getStorageProviderNameFromEnv,
   verifyUploadTicket,
-} from "@baseblocks/storage";
+} from "@baseblocks/storage/node";
 import { normalizeMimeType } from "@baseblocks/types";
 import {
   type AllowedOriginPattern,
