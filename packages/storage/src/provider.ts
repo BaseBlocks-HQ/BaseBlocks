@@ -1,3 +1,5 @@
+import type { Readable } from "node:stream";
+
 export interface StorageObjectMetadata {
   size: number;
   contentType: string;
@@ -24,7 +26,7 @@ export interface StorageProvider {
     bucket?: string;
     objectKey: string;
     contentType: string;
-    body: ReadableStream<Uint8Array>;
+    body: ReadableStream<Uint8Array> | Uint8Array | Readable;
     contentLength?: number;
   }): Promise<void>;
   deleteObject(args: { bucket?: string; objectKey: string }): Promise<void>;

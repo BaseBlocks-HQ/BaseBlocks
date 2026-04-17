@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -9,6 +10,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { StorageConfig } from "./config";
 import { toAttachmentContentDisposition } from "./object-key";
 import type { StorageObjectMetadata, StorageProvider } from "./provider";
+import { toPutObjectBody } from "./put-object-body";
 
 export class S3CompatibleStorageProvider implements StorageProvider {
   readonly driver = "s3-compatible";
@@ -75,16 +77,18 @@ export class S3CompatibleStorageProvider implements StorageProvider {
     bucket?: string;
     objectKey: string;
     contentType: string;
-    body: ReadableStream<Uint8Array>;
+    body: ReadableStream<Uint8Array> | Uint8Array | Readable;
     contentLength?: number;
   }): Promise<void> {
+    const body = await toPutObjectBody(args.body);
+
     await this.#client.send(
       new PutObjectCommand({
         Bucket: args.bucket ?? this.bucket,
         Key: args.objectKey,
         ContentType: args.contentType,
         ContentLength: args.contentLength,
-        Body: args.body,
+        Body: body,
       }),
     );
   }

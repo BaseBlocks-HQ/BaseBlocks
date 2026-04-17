@@ -3,7 +3,6 @@ import {
   type ServerResponse,
   createServer,
 } from "node:http";
-import { Readable } from "node:stream";
 import {
   UploadTicketVerificationError,
   getStorageMaxUploadSizeFromEnv,
@@ -12,6 +11,11 @@ import {
   verifyUploadTicket,
 } from "@baseblocks/storage";
 import { normalizeMimeType } from "@baseblocks/types";
+import {
+  type AllowedOriginPattern,
+  isAllowedOrigin,
+  parseAllowedOrigins,
+} from "./allowed-origin";
 
 // Failure modes:
 // - Missing upload signing secret lets unauthenticated clients write objects.
@@ -31,20 +35,8 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function getAllowedOrigins(): Set<string> {
-  const rawOrigins = requireEnv("STORAGE_UPLOAD_ALLOWED_ORIGINS");
-  const origins = rawOrigins
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
-  if (origins.length === 0) {
-    throw new Error(
-      "STORAGE_UPLOAD_ALLOWED_ORIGINS must include at least one origin",
-    );
-  }
-
-  return new Set(origins);
+function getAllowedOrigins(): AllowedOriginPattern[] {
+  return parseAllowedOrigins(requireEnv("STORAGE_UPLOAD_ALLOWED_ORIGINS"));
 }
 
 const uploadSigningSecret = requireEnv("STORAGE_UPLOAD_SIGNING_SECRET");
@@ -64,7 +56,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Max-Age": "86400",
   };
 
-  if (origin && allowedOrigins.has(origin)) {
+  if (origin && isAllowedOrigin(origin, allowedOrigins)) {
     headers["Access-Control-Allow-Origin"] = origin;
   }
 
@@ -171,7 +163,7 @@ async function handleUpload(
       objectKey: ticket.objectKey,
       contentType: ticket.contentType,
       contentLength,
-      body: Readable.toWeb(request) as unknown as ReadableStream<Uint8Array>,
+      body: request,
     });
 
     writeJson(
@@ -223,7 +215,7 @@ createServer(async (request, response) => {
   }
 
   const origin = getOrigin(request);
-  if (!origin || !allowedOrigins.has(origin)) {
+  if (!origin || !isAllowedOrigin(origin, allowedOrigins)) {
     writeJson(response, 403, { error: "Origin not allowed" });
     return;
   }
