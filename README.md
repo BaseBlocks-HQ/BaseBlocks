@@ -169,7 +169,12 @@ tailscale serve --bg --https=443 http://127.0.0.1:3001
 Then open `https://your-machine.your-tailnet.ts.net/login` on your phone.
 
 Provider dashboard settings for dev should include both localhost and your
-Tailscale hostname if you use both modes:
+Tailscale hostname if you use both modes.
+
+By default this repo runs auth in `same-origin` mode, so the OAuth callback
+origin is the currently active app origin (`APP_URL`), not the Convex
+`SITE_URL`. `SITE_URL` only becomes the callback origin if you explicitly switch
+to `AUTH_REDIRECT_MODE=cross-domain`.
 
 - Google JavaScript origins:
   - `http://localhost:3001`
@@ -183,6 +188,14 @@ Tailscale hostname if you use both modes:
 - Microsoft redirect URIs:
   - `http://localhost:3001/api/auth/callback/microsoft`
   - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
+
+Microsoft sign-in caveat: if the callback returns to
+`?error=email_not_found`, the redirect URI is usually not the problem. Better
+Auth's Microsoft provider currently expects an `email` claim in the ID token.
+Some Entra accounts, especially managed or external multi-tenant accounts, do
+not include that claim consistently. In the Microsoft app registration, add the
+`email` optional claim for ID tokens and verify the exact account type you want
+to support.
 
 ## Project Structure
 

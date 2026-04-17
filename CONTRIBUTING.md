@@ -34,24 +34,30 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 
    Then edit each file — you'll need a Convex deployment URL from `npx convex dev`.
 
-   For OAuth in development, keep the auth callback origin stable on
-   `SITE_URL`, and use `APP_URL` as a comma-separated allowlist of exact app
-   origins that are allowed to start sign-in and receive the final redirect.
-   Keep `localhost` for normal desktop development and add a Tailscale hostname
-   only when you want to test on mobile:
+   `SITE_URL` is the Convex site origin used for backend HTTP endpoints.
+   `APP_URL` is the comma-separated allowlist of exact app origins that are
+   allowed to start sign-in and receive the final redirect.
+
+   By default this repo runs auth in `same-origin` mode, so the active app
+   origin is also the OAuth callback origin. Keep `localhost` for normal
+   desktop development and add a Tailscale hostname only when you want to test
+   on mobile:
 
    ```env
    SITE_URL=https://your-deployment.convex.site
    APP_URL=http://localhost:3001,https://your-machine.your-tailnet.ts.net
    ```
 
-   Register your OAuth provider like this. For Google:
+   Register your OAuth providers against the active app origins, not
+   `SITE_URL`, unless you explicitly switch to `AUTH_REDIRECT_MODE=cross-domain`.
+   For Google:
 
    - App origins, where the provider uses them:
      - `http://localhost:3001`
      - `https://your-machine.your-tailnet.ts.net`
-   - Redirect URI:
-     - `https://your-deployment.convex.site/api/auth/callback/google`
+   - Redirect URIs:
+     - `http://localhost:3001/api/auth/callback/google`
+     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
 
 4. **Start the dev server**
 
@@ -101,6 +107,14 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
    - Microsoft redirect URIs:
      - `http://localhost:3001/api/auth/callback/microsoft`
      - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
+
+   Microsoft caveat: if Microsoft auth succeeds for one account but another
+   account returns to `?error=email_not_found`, the redirect URI is usually
+   correct. Better Auth's Microsoft provider expects an `email` claim in the ID
+   token. Add the `email` optional claim for ID tokens in the Entra app
+   registration and verify whether your tenant/account-type choice (`common`,
+   single-tenant, work/school, personal) matches the accounts you want to
+   support.
 
 ## Project Structure
 
