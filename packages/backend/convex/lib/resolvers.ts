@@ -86,14 +86,27 @@ export async function getActiveLibraryIds(
   ctx: DbCtx,
   siteId: Id<"sites">,
 ): Promise<Set<string>> {
+  return getActiveLibraryIdsForPageIds(ctx, siteId);
+}
+
+export async function getActiveLibraryIdsForPageIds(
+  ctx: DbCtx,
+  siteId: Id<"sites">,
+  pageIds?: Iterable<string>,
+): Promise<Set<string>> {
   // Single query via denormalized siteId on layouts
   const layouts = await ctx.db
     .query("layouts")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
 
+  const allowedPageIds = pageIds ? new Set(pageIds) : null;
   const activeLibraryIds = new Set<string>();
   for (const layout of layouts) {
+    if (allowedPageIds && !allowedPageIds.has(layout.pageId)) {
+      continue;
+    }
+
     // ONLY use publishedSlots for public content - never fall back to draft
     const slotsToScan = layout.publishedSlots ?? [];
     for (const slot of slotsToScan) {

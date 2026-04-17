@@ -1,5 +1,6 @@
 "use client";
 
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -19,11 +20,12 @@ export function PublicSubpagePanel({
   onToggleFullscreen,
 }: PublicSubpagePanelProps) {
   const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
+  const sessionTokens = getStoredAccessSessionTokens();
 
   const page = useQuery(
     api.pages.queries.get,
     viewingSubpage?.pageId
-      ? { pageId: viewingSubpage.pageId as Id<"pages"> }
+      ? { pageId: viewingSubpage.pageId as Id<"pages">, sessionTokens }
       : "skip",
   );
 

@@ -1,13 +1,15 @@
 "use client";
 
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 
 export function usePage(pageId: Id<"pages"> | string | undefined) {
+  const sessionTokens = getStoredAccessSessionTokens();
   return useQuery(
     api.pages.queries.get,
-    pageId ? { pageId: pageId as Id<"pages"> } : "skip",
+    pageId ? { pageId: pageId as Id<"pages">, sessionTokens } : "skip",
   );
 }
 
@@ -19,9 +21,10 @@ export function usePages(siteId: Id<"sites"> | string | undefined) {
 }
 
 export function usePageAncestors(pageId: Id<"pages"> | string | undefined) {
+  const sessionTokens = getStoredAccessSessionTokens();
   return useQuery(
     api.pages.queries.getAncestors,
-    pageId ? { pageId: pageId as Id<"pages"> } : "skip",
+    pageId ? { pageId: pageId as Id<"pages">, sessionTokens } : "skip",
   );
 }
 
@@ -33,8 +36,9 @@ export function useLayouts(pageId: Id<"pages"> | string | undefined) {
 }
 
 export function usePublishedLayouts(pageId: Id<"pages"> | string | undefined) {
+  const sessionTokens = getStoredAccessSessionTokens();
   return useQuery(
     api.layouts.queries.listPublished,
-    pageId ? { pageId: pageId as Id<"pages"> } : "skip",
+    pageId ? { pageId: pageId as Id<"pages">, sessionTokens } : "skip",
   );
 }

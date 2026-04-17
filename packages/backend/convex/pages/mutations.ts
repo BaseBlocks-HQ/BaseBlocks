@@ -6,6 +6,21 @@ import { mutation } from "../_generated/server";
 import { requireContentEditor } from "../auth";
 import { indexSubpageContent, removeSubpageIndex } from "../lib/indexSubpage";
 import { markSiteModified } from "../lib/markModified";
+import { pageAccessPolicyValidator } from "../lib/pageAccess";
+
+async function validateAudienceIdsForSite(
+  ctx: Pick<GenericMutationCtx<DataModel>, "db">,
+  siteId: Id<"sites">,
+  audienceIds: Id<"siteAudiences">[],
+): Promise<void> {
+  const uniqueAudienceIds = Array.from(new Set(audienceIds));
+  for (const audienceId of uniqueAudienceIds) {
+    const audience = await ctx.db.get(audienceId);
+    if (!audience || audience.siteId !== siteId) {
+      throw new Error("Invalid audience selection");
+    }
+  }
+}
 
 // Create a new page
 export const create = mutation({
@@ -111,6 +126,41 @@ export const update = mutation({
     if (title !== undefined) {
       await indexSubpageContent(ctx, pageId);
     }
+
+    return pageId;
+  },
+});
+
+export const updateAccessPolicy = mutation({
+  args: {
+    pageId: v.id("pages"),
+    accessPolicy: pageAccessPolicyValidator,
+  },
+  handler: async (ctx, { pageId, accessPolicy }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    if (
+      accessPolicy.kind === "audiences" &&
+      accessPolicy.audienceIds.length === 0
+    ) {
+      throw new Error("Choose at least one audience");
+    }
+
+    if (accessPolicy.kind === "audiences") {
+      await validateAudienceIdsForSite(ctx, site._id, accessPolicy.audienceIds);
+    }
+
+    await ctx.db.patch(pageId, {
+      accessPolicy,
+      updatedAt: Date.now(),
+    });
+    await markSiteModified(ctx, page.siteId);
 
     return pageId;
   },

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { canViewerAccessPublishedPageById } from "../lib/pageAccess";
 
 // Get all layouts for a page (draft version - for editor, authenticated)
 export const list = query({
@@ -28,8 +29,20 @@ export const list = query({
 
 // Get all layouts for a page (published version - for public site)
 export const listPublished = query({
-  args: { pageId: v.id("pages") },
-  handler: async (ctx, { pageId }) => {
+  args: {
+    pageId: v.id("pages"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { pageId, sessionTokens }) => {
+    const canAccessPage = await canViewerAccessPublishedPageById(
+      ctx,
+      pageId,
+      sessionTokens,
+    );
+    if (!canAccessPage) {
+      return [];
+    }
+
     const layouts = await ctx.db
       .query("layouts")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))

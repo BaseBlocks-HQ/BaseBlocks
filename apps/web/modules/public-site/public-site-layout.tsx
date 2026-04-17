@@ -1,5 +1,6 @@
 "use client";
 
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
 import { useCustomizationStyles } from "@/modules/elements/panels/customization/use-site-customization";
 import { api } from "@baseblocks/backend";
@@ -52,14 +53,17 @@ export function PublicSiteLayout({
   team,
   pagePath,
 }: PublicSiteLayoutProps) {
+  const sessionTokens = getStoredAccessSessionTokens();
   const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
     siteId: site._id,
+    sessionTokens,
   });
   const pages = pagesRaw as PageWithChildren[] | undefined;
 
   const currentPage = useQuery(api.pages.queries.getByPathPublished, {
     siteId: site._id,
     path: pagePath,
+    sessionTokens,
   });
 
   const ancestors = useQuery(

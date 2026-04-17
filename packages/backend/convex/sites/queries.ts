@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { getAccessiblePublishedPages } from "../lib/pageAccess";
 
 export const listByTeam = query({
   args: { teamId: v.id("teams") },
@@ -100,8 +101,9 @@ export const getWithDefaultPage = query({
   args: {
     teamSlug: v.string(),
     siteSlug: v.optional(v.string()),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { teamSlug, siteSlug }) => {
+  handler: async (ctx, { teamSlug, siteSlug, sessionTokens }) => {
     // Find team
     const team = await ctx.db
       .query("teams")
@@ -129,27 +131,26 @@ export const getWithDefaultPage = query({
 
     if (!site || !site.isPublished) return null;
 
-    // Use published defaultPageId (fall back to draft for migration compat)
+    const accessiblePages = await getAccessiblePublishedPages(
+      ctx,
+      site,
+      sessionTokens,
+    );
     const publishedDefaultPageId =
       site.publishedDefaultPageId ?? site.defaultPageId;
 
-    // Get the default page
-    let defaultPage = null;
-    if (publishedDefaultPageId) {
-      defaultPage = await ctx.db.get(publishedDefaultPageId);
-    }
+    let defaultPage =
+      accessiblePages.find((page) => page._id === publishedDefaultPageId) ??
+      null;
 
-    // If no default page set, get the first deployed page by published order
     if (!defaultPage) {
-      const pages = await ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect();
-      const deployedPages = pages.filter((p) => p.isDeployed);
-      deployedPages.sort(
-        (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-      );
-      defaultPage = deployedPages[0] ?? null;
+      const rootPages = accessiblePages
+        .filter((page) => !(page.publishedParentId ?? page.parentId))
+        .sort(
+          (a, b) =>
+            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+        );
+      defaultPage = rootPages[0] ?? null;
     }
 
     // Project published fields — only expose public-safe data

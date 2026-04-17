@@ -1,10 +1,22 @@
 export type { PageListItem, PageWithChildren } from "./pages";
 export type {
+  PageAccessKind,
+  PageAccessPolicy,
+  SiteAudience,
+} from "./page-access";
+export type {
   TeamCapability,
   TeamCapabilities,
   TeamRole,
 } from "./access";
 export { getTeamCapabilities, hasTeamCapability, teamRoles } from "./access";
+export {
+  canAccessPagePolicy,
+  isPageRestricted,
+  normalizePageAccessPolicy,
+  pageAccessKinds,
+  publicPageAccessPolicy,
+} from "./page-access";
 
 export type {
   LayoutType,
