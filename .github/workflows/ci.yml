@@ -91,3 +91,8 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: "https://placeholder.convex.cloud"
           NEXT_PUBLIC_CONVEX_SITE_URL: "https://placeholder.convex.site"
           NEXT_PUBLIC_ROOT_DOMAIN: "baseblocks.dev"
+          STORAGE_BUCKET_NAME: "placeholder-bucket"
+          STORAGE_ENDPOINT: "https://example.invalid"
+          STORAGE_REGION: "us-east-1"
+          STORAGE_ACCESS_KEY_ID: "placeholder"
+          STORAGE_SECRET_ACCESS_KEY: "placeholder"
