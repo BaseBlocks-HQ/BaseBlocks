@@ -26,7 +26,7 @@ jobs:
 
       - uses: millionco/react-doctor@main
         with:
-          diff: main
+          diff: ${{ github.event_name == 'pull_request' && 'main' || github.event.before }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   lint:
