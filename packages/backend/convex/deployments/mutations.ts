@@ -79,6 +79,7 @@ export const deploy = mutation({
       icon: p.icon,
       order: p.order,
       parentId: p.parentId,
+      accessPolicy: p.accessPolicy,
       pageTabs: p.pageTabs,
     }));
 
@@ -111,6 +112,7 @@ export const deploy = mutation({
         publishedIcon: page.icon,
         publishedOrder: page.order,
         publishedParentId: page.parentId,
+        publishedAccessPolicy: page.accessPolicy,
         publishedPageTabs: page.pageTabs,
         isDeployed: true,
       });
@@ -271,6 +273,7 @@ export const rollback = mutation({
       icon?: string;
       order: number;
       parentId?: Id<"pages">;
+      accessPolicy?: Doc<"pages">["accessPolicy"];
       pageTabs?: Array<{ id: string; label: string }>;
     }>;
 
@@ -294,6 +297,7 @@ export const rollback = mutation({
           publishedIcon: pageData.icon,
           publishedOrder: pageData.order,
           publishedParentId: pageData.parentId,
+          publishedAccessPolicy: pageData.accessPolicy,
           publishedPageTabs: pageData.pageTabs,
           isDeployed: true,
         });

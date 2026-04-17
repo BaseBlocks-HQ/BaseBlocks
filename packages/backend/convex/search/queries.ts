@@ -3,7 +3,8 @@ import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
 import { normalizeDocumentSearchMetadata } from "../lib/documentSearchMetadata";
-import { getActiveLibraryIds } from "../lib/resolvers";
+import { getAccessiblePublishedPages } from "../lib/pageAccess";
+import { getActiveLibraryIdsForPageIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
 
 /**
@@ -175,7 +176,17 @@ export const searchAllPublic = query({
       return [];
     }
 
-    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
+    const accessiblePages = await getAccessiblePublishedPages(
+      ctx,
+      site,
+      sessionTokens,
+    );
+    const accessiblePageIds = new Set(accessiblePages.map((page) => page._id));
+    const activeLibraryIds = await getActiveLibraryIdsForPageIds(
+      ctx,
+      siteId,
+      accessiblePageIds,
+    );
 
     // Search by title
     const titleResults = await ctx.db
@@ -214,8 +225,9 @@ export const searchAllPublic = query({
         return activeLibraryIds.has(libraryId);
       }
 
-      // Subpages are always included (they're part of the site)
-      return true;
+      const pageId = doc.metadata.pageId;
+      if (!pageId) return false;
+      return accessiblePageIds.has(pageId);
     };
 
     // Content matches first
@@ -287,7 +299,17 @@ export const listTitlesPublic = query({
       return [];
     }
 
-    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
+    const accessiblePages = await getAccessiblePublishedPages(
+      ctx,
+      site,
+      sessionTokens,
+    );
+    const accessiblePageIds = new Set(accessiblePages.map((page) => page._id));
+    const activeLibraryIds = await getActiveLibraryIdsForPageIds(
+      ctx,
+      siteId,
+      accessiblePageIds,
+    );
 
     const all = await ctx.db
       .query("searchableContent")
@@ -302,7 +324,9 @@ export const listTitlesPublic = query({
             activeLibraryIds.has(doc.metadata.libraryId)
           );
         }
-        return true; // subpages always included
+
+        const pageId = doc.metadata.pageId;
+        return pageId ? accessiblePageIds.has(pageId) : false;
       })
       .map((doc) => ({
         _id: doc._id,

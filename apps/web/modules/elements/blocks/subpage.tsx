@@ -1,4 +1,5 @@
 "use client";
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
 import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
@@ -17,9 +18,12 @@ import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   const editorUi = useEditorUiOptional();
+  const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
     api.pages.queries.get,
-    content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
+    content.pageId
+      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
+      : "skip",
   );
 
   const handleClick = (e: React.MouseEvent) => {
@@ -75,9 +79,12 @@ function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
 
 function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
   const subpageContext = usePublicSubpageContextOptional();
+  const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
     api.pages.queries.get,
-    content.pageId ? { pageId: content.pageId as Id<"pages"> } : "skip",
+    content.pageId
+      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
+      : "skip",
   );
 
   if (!content.pageId || !page) {

@@ -2,6 +2,7 @@ import { teamRoles } from "@baseblocks/types";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
+import { pageAccessPolicyValidator } from "./lib/pageAccess";
 import { siteSettings } from "./sites/validators";
 
 export default defineSchema({
@@ -79,6 +80,28 @@ export default defineSchema({
     .index("by_site_token", ["siteId", "sessionToken"])
     .index("by_expiresAt", ["expiresAt"]),
 
+  siteAudiences: defineTable({
+    siteId: v.id("sites"),
+    name: v.string(),
+    createdAt: v.number(),
+    createdBy: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_name", ["siteId", "name"]),
+
+  siteAudienceMembers: defineTable({
+    siteId: v.id("sites"),
+    audienceId: v.id("siteAudiences"),
+    userId: v.string(),
+    addedAt: v.number(),
+    addedBy: v.string(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_audience", ["audienceId"])
+    .index("by_audience_user", ["audienceId", "userId"])
+    .index("by_site_user", ["siteId", "userId"]),
+
   pages: defineTable({
     siteId: v.id("sites"),
     parentId: v.optional(v.id("pages")),
@@ -88,6 +111,7 @@ export default defineSchema({
     order: v.number(),
     isPublished: v.boolean(),
     isSubpageContent: v.optional(v.boolean()),
+    accessPolicy: v.optional(pageAccessPolicyValidator),
     pageTabs: v.optional(
       v.array(
         v.object({
@@ -105,6 +129,7 @@ export default defineSchema({
     publishedIcon: v.optional(v.string()),
     publishedOrder: v.optional(v.number()),
     publishedParentId: v.optional(v.id("pages")),
+    publishedAccessPolicy: v.optional(pageAccessPolicyValidator),
     publishedPageTabs: v.optional(
       v.array(
         v.object({

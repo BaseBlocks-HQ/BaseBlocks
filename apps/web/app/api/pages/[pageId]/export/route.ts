@@ -1,5 +1,6 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
+import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
 import {
   buildPageExportDocument,
   createPageExportFilename,
@@ -44,6 +45,7 @@ export async function GET(
     const token = await getToken();
     const authedClient = getServerConvexClient(token);
     const publicClient = getServerConvexClient();
+    const sessionTokens = getRequestAccessSessionTokens(request);
 
     const isDraft = requestedMode === "draft";
     if (isDraft && !token) {
@@ -59,6 +61,7 @@ export async function GET(
         })
       : await publicClient.query(api.pages.queries.get, {
           pageId: pageId as never,
+          sessionTokens,
         });
 
     if (!page) {
@@ -71,6 +74,7 @@ export async function GET(
         })
       : await publicClient.query(api.layouts.queries.listPublished, {
           pageId: pageId as never,
+          sessionTokens,
         });
 
     const pageTitle =

@@ -1,6 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/components/dialogs";
+import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";
@@ -13,9 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { useMutation } from "convex/react";
-import { FilePlus, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
+import {
+  FilePlus,
+  Lock,
+  MoreHorizontal,
+  Pencil,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { CreateSubPageDialog } from "./create-sub-page-dialog";
+import { PageAccessDialog } from "./page-access-dialog";
 import { RenamePageDialog } from "./rename-page-dialog";
 
 interface PageActionsMenuProps {
@@ -34,6 +43,8 @@ export function PageActionsMenu({
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [subPageOpen, setSubPageOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const { isAdmin } = useEditorSite();
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const removePage = useMutation(api.pages.mutations.remove);
@@ -73,6 +84,10 @@ export function PageActionsMenu({
             <Pencil className="h-4 w-4" />
             Rename
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setAccessOpen(true)}>
+            <Lock className="h-4 w-4" />
+            Access...
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
             <Star className="h-4 w-4" />
             {isDefault ? "Default Page" : "Set as Default"}
@@ -101,6 +116,14 @@ export function PageActionsMenu({
         page={page}
         open={renameOpen}
         onOpenChange={setRenameOpen}
+      />
+
+      <PageAccessDialog
+        isAdmin={isAdmin}
+        open={accessOpen}
+        onOpenChange={setAccessOpen}
+        page={page}
+        siteId={siteId}
       />
 
       <ConfirmDialog

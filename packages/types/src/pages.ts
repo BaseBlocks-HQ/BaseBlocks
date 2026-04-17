@@ -1,3 +1,5 @@
+import type { PageAccessPolicy } from "./page-access";
+
 export interface PageListItem {
   _id: string;
   title: string;
@@ -7,6 +9,8 @@ export interface PageListItem {
   order: number;
   isPublished: boolean;
   isSubpageContent?: boolean;
+  accessPolicy?: PageAccessPolicy;
+  publishedAccessPolicy?: PageAccessPolicy;
 }
 
 export interface PageWithChildren extends PageListItem {

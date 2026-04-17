@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember, getAuthContextOrNull } from "../auth";
+import {
+  canViewerAccessPublishedPageById,
+  getAccessiblePublishedPages,
+} from "../lib/pageAccess";
 import { buildPageTree } from "../lib/tree";
 
 // List pages for a site (authenticated — editor only)
@@ -22,19 +26,19 @@ export const list = query({
 
 // Get page by ID (authenticated — requires team membership)
 export const get = query({
-  args: { pageId: v.id("pages") },
-  handler: async (ctx, { pageId }) => {
+  args: {
+    pageId: v.id("pages"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { pageId, sessionTokens }) => {
     const page = await ctx.db.get(pageId);
     if (!page) return null;
 
-    // Verify the caller has access to this page's site
     const site = await ctx.db.get(page.siteId);
     if (!site) return null;
 
-    // Allow access if user is a team member OR site is published
     const auth = await getAuthContextOrNull(ctx);
     if (auth) {
-      // Authenticated user — check membership
       const member = await ctx.db
         .query("members")
         .withIndex("by_team_user", (q) =>
@@ -44,8 +48,7 @@ export const get = query({
       if (member) return page;
     }
 
-    // Not a member — only return if site is published and page is deployed
-    if (site.isPublished && page.isDeployed) {
+    if (await canViewerAccessPublishedPageById(ctx, pageId, sessionTokens)) {
       return page;
     }
 
@@ -58,8 +61,9 @@ export const getBySlug = query({
   args: {
     siteId: v.id("sites"),
     slug: v.string(),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId, slug }) => {
+  handler: async (ctx, { siteId, slug, sessionTokens }) => {
     const page = await ctx.db
       .query("pages")
       .withIndex("by_slug", (q) => q.eq("siteId", siteId).eq("slug", slug))
@@ -82,8 +86,10 @@ export const getBySlug = query({
       if (member) return page;
     }
 
-    // Not a member — only return if site is published and page is deployed
-    if (site.isPublished && page.isDeployed) {
+    if (
+      page.isDeployed &&
+      (await canViewerAccessPublishedPageById(ctx, page._id, sessionTokens))
+    ) {
       return page;
     }
 
@@ -96,8 +102,9 @@ export const getChildren = query({
   args: {
     siteId: v.id("sites"),
     parentId: v.optional(v.id("pages")),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId, parentId }) => {
+  handler: async (ctx, { siteId, parentId, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
@@ -114,7 +121,22 @@ export const getChildren = query({
       isMember = !!member;
     }
 
-    if (!isMember && !site.isPublished) return [];
+    if (!isMember) {
+      const accessiblePages = await getAccessiblePublishedPages(
+        ctx,
+        site,
+        sessionTokens,
+      );
+
+      return accessiblePages
+        .filter(
+          (page) => (page.publishedParentId ?? page.parentId) === parentId,
+        )
+        .sort(
+          (a, b) =>
+            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+        );
+    }
 
     const pages = await ctx.db
       .query("pages")
@@ -122,16 +144,6 @@ export const getChildren = query({
         q.eq("siteId", siteId).eq("parentId", parentId),
       )
       .collect();
-
-    // Public access: only deployed pages with published ordering
-    if (!isMember) {
-      return pages
-        .filter((p) => p.isDeployed)
-        .sort(
-          (a, b) =>
-            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-        );
-    }
 
     pages.sort((a, b) => a.order - b.order);
     return pages;
@@ -229,8 +241,11 @@ export const getByPath = query({
 
 // Get ancestors of a page (for breadcrumbs — requires membership or published site)
 export const getAncestors = query({
-  args: { pageId: v.id("pages") },
-  handler: async (ctx, { pageId }) => {
+  args: {
+    pageId: v.id("pages"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { pageId, sessionTokens }) => {
     const page = await ctx.db.get(pageId);
     if (!page) return [];
 
@@ -250,7 +265,51 @@ export const getAncestors = query({
       isMember = !!member;
     }
 
-    if (!isMember && !site.isPublished) return [];
+    if (!isMember) {
+      const accessiblePages = await getAccessiblePublishedPages(
+        ctx,
+        site,
+        sessionTokens,
+      );
+      const accessiblePageMap = new Map(
+        accessiblePages.map((accessiblePage) => [
+          accessiblePage._id,
+          accessiblePage,
+        ]),
+      );
+      if (!accessiblePageMap.has(pageId)) {
+        return [];
+      }
+
+      const ancestors: Array<{
+        _id: string;
+        title: string;
+        slug: string;
+      }> = [];
+
+      let currentPage = accessiblePageMap.get(pageId) ?? null;
+
+      while (
+        currentPage &&
+        (currentPage.publishedParentId ?? currentPage.parentId)
+      ) {
+        const parent = accessiblePageMap.get(
+          (currentPage.publishedParentId ??
+            currentPage.parentId) as Id<"pages">,
+        );
+        if (!parent) break;
+
+        ancestors.unshift({
+          _id: parent._id,
+          title: parent.publishedTitle ?? parent.title,
+          slug: parent.publishedSlug ?? parent.slug,
+        });
+
+        currentPage = parent;
+      }
+
+      return ancestors;
+    }
 
     const ancestors: Array<{
       _id: string;
@@ -286,20 +345,17 @@ export const getAncestors = query({
 // Uses publishedTitle, publishedSlug, publishedOrder, publishedParentId
 // Only includes pages that have been deployed on published sites
 export const getTreePublished = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
+  args: {
+    siteId: v.id("sites"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { siteId, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
 
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    // Filter to only deployed pages, excluding subpage block content
-    const deployedPages = allPages.filter(
-      (p) => p.isDeployed && !p.isSubpageContent,
-    );
+    const deployedPages = (
+      await getAccessiblePublishedPages(ctx, site, sessionTokens)
+    ).filter((page) => !page.isSubpageContent);
 
     // Project to published fields (fall back to draft for migration compat)
     return buildPageTree(
@@ -322,17 +378,17 @@ export const getByPathPublished = query({
   args: {
     siteId: v.id("sites"),
     path: v.array(v.string()),
+    sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { siteId, path }) => {
+  handler: async (ctx, { siteId, path, sessionTokens }) => {
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return null;
 
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    const deployedPages = allPages.filter((p) => p.isDeployed);
+    const deployedPages = await getAccessiblePublishedPages(
+      ctx,
+      site,
+      sessionTokens,
+    );
 
     // Empty path: resolve via site's defaultPageId, then fall back to first root page
     if (path.length === 0) {
@@ -430,13 +486,8 @@ export const listDeployedPaths = query({
     const site = await ctx.db.get(siteId);
     if (!site || !site.isPublished) return [];
 
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    const deployedPages = allPages.filter(
-      (p) => p.isDeployed && !p.isSubpageContent,
+    const deployedPages = (await getAccessiblePublishedPages(ctx, site)).filter(
+      (page) => !page.isSubpageContent,
     );
 
     // Build a map of page ID → published slug for path resolution

@@ -1,6 +1,7 @@
 "use client";
 
 import { PublicSiteSkeleton } from "@/components/skeletons";
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
 import { AccessGate, SitePrivate } from "@/modules/public-site";
 import { api } from "@baseblocks/backend";
@@ -13,8 +14,10 @@ type Props = {
 };
 
 export function SubdomainRootPageClient({ subdomain }: Props) {
+  const sessionTokens = getStoredAccessSessionTokens();
   const siteData = useQuery(api.sites.queries.getWithDefaultPage, {
     teamSlug: subdomain,
+    sessionTokens,
   });
 
   if (siteData?.defaultPage) {
@@ -39,6 +42,16 @@ export function SubdomainRootPageClient({ subdomain }: Props) {
             defaultPageSlug={siteData.defaultPage?.slug}
           />
         </AccessGate>
+      );
+    }
+
+    if (!siteData.defaultPage) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-6 text-center">
+          <p className="text-muted-foreground">
+            No accessible pages are available on this site yet.
+          </p>
+        </div>
       );
     }
   }

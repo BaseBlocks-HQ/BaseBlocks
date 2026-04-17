@@ -259,6 +259,7 @@ export const publish = mutation({
         icon: p.icon,
         order: p.order,
         parentId: p.parentId,
+        accessPolicy: p.accessPolicy,
         pageTabs: p.pageTabs,
       }));
 
@@ -276,6 +277,7 @@ export const publish = mutation({
           publishedIcon: page.icon,
           publishedOrder: page.order,
           publishedParentId: page.parentId,
+          publishedAccessPolicy: page.accessPolicy,
           publishedPageTabs: page.pageTabs,
           isDeployed: true,
         });
