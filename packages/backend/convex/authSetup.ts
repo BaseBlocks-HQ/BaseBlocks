@@ -11,10 +11,14 @@ import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
 
 const authOrigins = parseAuthOrigins(process.env.APP_URL);
 const primaryAppUrl = authOrigins[0]!;
+const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
+const useCrossDomainAuth = authRedirectMode === "cross-domain";
 
 const authBaseUrl = parseAuthOrigin(
-  process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
-  "SITE_URL",
+  useCrossDomainAuth
+    ? (process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "")
+    : primaryAppUrl,
+  useCrossDomainAuth ? "SITE_URL" : "APP_URL",
 );
 const trustedOrigins = Array.from(
   new Set([
@@ -71,7 +75,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
       organization({
         allowUserToCreateOrganization: true,
       }),
-      crossDomain({ siteUrl: primaryAppUrl }),
+      ...(useCrossDomainAuth ? [crossDomain({ siteUrl: primaryAppUrl })] : []),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;
