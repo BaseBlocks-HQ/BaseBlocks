@@ -1,19 +1,15 @@
 {
-  "name": "@baseblocks/storage",
+  "name": "@baseblocks/upload-service",
   "version": "0.0.0",
   "type": "module",
   "private": true,
-  "sideEffects": false,
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
-    "check-types": "tsc --noEmit",
-    "lint": "biome check --write ."
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.917.0",
-    "@aws-sdk/s3-request-presigner": "3.917.0",
+    "@baseblocks/storage": "workspace:*",
     "@baseblocks/types": "workspace:*"
   },
   "devDependencies": {

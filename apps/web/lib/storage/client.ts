@@ -15,8 +15,8 @@ interface AuthorizedUploadResult {
   objectKey: string;
   contentType: string;
   uploadUrl: string;
-  uploadMethod: "POST";
-  uploadFields: Record<string, string>;
+  uploadMethod: "PUT";
+  uploadToken: string;
 }
 
 export interface FinalizeResult {
@@ -27,38 +27,6 @@ export interface FinalizeResult {
 }
 
 class StorageClient {
-  private async uploadViaProxy(
-    file: File,
-    options: {
-      siteId: string;
-      purpose: UploadPurpose;
-    },
-  ): Promise<UploadResult> {
-    const response = await fetch("/api/storage/upload", {
-      method: "PUT",
-      headers: {
-        "Content-Type": file.type || "application/octet-stream",
-        "X-Baseblocks-Site-Id": options.siteId,
-        "X-Baseblocks-Upload-Purpose": options.purpose,
-        "X-Baseblocks-Filename": file.name,
-        "X-Baseblocks-Upload-Size": `${file.size}`,
-      },
-      body: file,
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as Partial<
-      UploadResult & { error: string }
-    >;
-    if (!response.ok || !payload.objectKey) {
-      throw new Error(payload.error || `Upload failed: ${response.status}`);
-    }
-
-    return {
-      objectKey: payload.objectKey,
-      size: file.size,
-    };
-  }
-
   /**
    * After a direct upload completes, call this to get server-verified
    * metadata (size, contentType, etag/checksum).  Always pass the returned
@@ -139,7 +107,7 @@ class StorageClient {
       !authorizePayload.objectKey ||
       !authorizePayload.uploadUrl ||
       !authorizePayload.uploadMethod ||
-      !authorizePayload.uploadFields
+      !authorizePayload.uploadToken
     ) {
       throw new Error(
         authorizePayload.error ||
@@ -152,7 +120,7 @@ class StorageClient {
       contentType: authorizePayload.contentType ?? "application/octet-stream",
       uploadUrl: authorizePayload.uploadUrl,
       uploadMethod: authorizePayload.uploadMethod,
-      uploadFields: authorizePayload.uploadFields,
+      uploadToken: authorizePayload.uploadToken,
     };
 
     return await new Promise((resolve, reject) => {
@@ -166,7 +134,12 @@ class StorageClient {
 
       xhr.addEventListener("load", () => {
         if (xhr.status < 200 || xhr.status >= 300) {
-          this.uploadViaProxy(file, options).then(resolve).catch(reject);
+          try {
+            const payload = JSON.parse(xhr.responseText) as { error?: string };
+            reject(new Error(payload.error || `Upload failed: ${xhr.status}`));
+          } catch {
+            reject(new Error(`Upload failed: ${xhr.status}`));
+          }
           return;
         }
 
@@ -183,7 +156,7 @@ class StorageClient {
       });
 
       xhr.addEventListener("error", () => {
-        this.uploadViaProxy(file, options).then(resolve).catch(reject);
+        reject(new Error("Network error during upload"));
       });
 
       xhr.addEventListener("abort", () => {
@@ -191,14 +164,15 @@ class StorageClient {
       });
 
       xhr.open(authorizedUpload.uploadMethod, authorizedUpload.uploadUrl);
-      const formData = new FormData();
-      for (const [key, value] of Object.entries(
-        authorizedUpload.uploadFields,
-      )) {
-        formData.append(key, value);
-      }
-      formData.append("file", file);
-      xhr.send(formData);
+      xhr.setRequestHeader(
+        "Content-Type",
+        file.type || "application/octet-stream",
+      );
+      xhr.setRequestHeader(
+        "X-Baseblocks-Upload-Ticket",
+        authorizedUpload.uploadToken,
+      );
+      xhr.send(file);
     });
   }
 }

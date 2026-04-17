@@ -13,6 +13,19 @@
         "typescript": "5.9.2",
       },
     },
+    "apps/upload": {
+      "name": "@baseblocks/upload-service",
+      "version": "0.0.0",
+      "dependencies": {
+        "@baseblocks/storage": "workspace:*",
+        "@baseblocks/types": "workspace:*",
+      },
+      "devDependencies": {
+        "@baseblocks/tsconfig": "workspace:*",
+        "@types/node": "^22.15.3",
+        "typescript": "5.9.2",
+      },
+    },
     "apps/web": {
       "name": "@baseblocks/web",
       "version": "0.1.0",
@@ -113,7 +126,6 @@
       "version": "0.0.0",
       "dependencies": {
         "@aws-sdk/client-s3": "3.917.0",
-        "@aws-sdk/s3-presigned-post": "3.917.0",
         "@aws-sdk/s3-request-presigner": "3.917.0",
         "@baseblocks/types": "workspace:*",
       },
@@ -267,8 +279,6 @@
 
     "@aws-sdk/region-config-resolver": ["@aws-sdk/region-config-resolver@3.914.0", "", { "dependencies": { "@aws-sdk/types": "3.914.0", "@smithy/config-resolver": "^4.4.0", "@smithy/types": "^4.8.0", "tslib": "^2.6.2" } }, "sha512-KlmHhRbn1qdwXUdsdrJ7S/MAkkC1jLpQ11n+XvxUUUCGAJd1gjC7AjxPZUM7ieQ2zcb8bfEzIU7al+Q3ZT0u7Q=="],
 
-    "@aws-sdk/s3-presigned-post": ["@aws-sdk/s3-presigned-post@3.917.0", "", { "dependencies": { "@aws-sdk/client-s3": "3.917.0", "@aws-sdk/types": "3.914.0", "@aws-sdk/util-format-url": "3.914.0", "@smithy/middleware-endpoint": "^4.3.5", "@smithy/signature-v4": "^5.3.3", "@smithy/types": "^4.8.0", "@smithy/util-hex-encoding": "^4.2.0", "@smithy/util-utf8": "^4.2.0", "tslib": "^2.6.2" } }, "sha512-Y1DqPMLiMosz7Zx/NTHED5z5dkqMjkcmjBRfGXfBkHXc+ePMtQ1pVXpueloFrjboagGAAfoQtwkXyVHuUn3JIQ=="],
-
     "@aws-sdk/s3-request-presigner": ["@aws-sdk/s3-request-presigner@3.917.0", "", { "dependencies": { "@aws-sdk/signature-v4-multi-region": "3.916.0", "@aws-sdk/types": "3.914.0", "@aws-sdk/util-format-url": "3.914.0", "@smithy/middleware-endpoint": "^4.3.5", "@smithy/protocol-http": "^5.3.3", "@smithy/smithy-client": "^4.9.1", "@smithy/types": "^4.8.0", "tslib": "^2.6.2" } }, "sha512-V1cSM6yQv8lV1Obrp5ti8iXLCRKq45OQETANkiMWRbAwTbzKQml0EfP08BFS+LKtSl2gJfO9tH7O2RgRuqhUuQ=="],
 
     "@aws-sdk/signature-v4-multi-region": ["@aws-sdk/signature-v4-multi-region@3.916.0", "", { "dependencies": { "@aws-sdk/middleware-sdk-s3": "3.916.0", "@aws-sdk/types": "3.914.0", "@smithy/protocol-http": "^5.3.3", "@smithy/signature-v4": "^5.3.3", "@smithy/types": "^4.8.0", "tslib": "^2.6.2" } }, "sha512-fuzUMo6xU7e0NBzBA6TQ4FUf1gqNbg4woBSvYfxRRsIfKmSMn9/elXXn4sAE5UKvlwVQmYnb6p7dpVRPyFvnQA=="],
@@ -312,6 +322,8 @@
     "@baseblocks/types": ["@baseblocks/types@workspace:packages/types"],
 
     "@baseblocks/ui": ["@baseblocks/ui@workspace:packages/ui"],
+
+    "@baseblocks/upload-service": ["@baseblocks/upload-service@workspace:apps/upload"],
 
     "@baseblocks/web": ["@baseblocks/web@workspace:apps/web"],
 

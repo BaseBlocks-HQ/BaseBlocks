@@ -1,5 +1,6 @@
 import {
   createObjectKey,
+  createUploadTicket,
   getStorageBucketNameFromEnv,
   getStorageMaxUploadSizeFromEnv,
   getStorageProviderFromEnv,
@@ -10,19 +11,11 @@ const storageProvider = getStorageProviderFromEnv();
 
 export {
   createObjectKey,
+  createUploadTicket,
   getStorageBucketNameFromEnv as getStorageBucketName,
   getStorageMaxUploadSizeFromEnv as getStorageMaxUploadSize,
   getStorageProviderNameFromEnv as getStorageProviderName,
 };
-
-export async function signUpload(args: {
-  objectKey: string;
-  contentType: string;
-  maxUploadSizeBytes?: number;
-  expiresInSeconds?: number;
-}) {
-  return await storageProvider.signUpload(args);
-}
 
 export async function readObjectBytes(args: {
   bucket?: string;

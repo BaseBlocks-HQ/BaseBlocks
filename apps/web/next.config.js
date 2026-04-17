@@ -4,6 +4,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const withMDX = createMDX();
 const storageEndpoint = process.env.STORAGE_ENDPOINT?.trim();
+const uploadServiceUrl = process.env.STORAGE_UPLOAD_SERVICE_URL?.trim();
 const storageOrigin = (() => {
   if (!storageEndpoint) {
     return null;
@@ -11,6 +12,17 @@ const storageOrigin = (() => {
 
   try {
     return new URL(storageEndpoint).origin;
+  } catch {
+    return null;
+  }
+})();
+const uploadServiceOrigin = (() => {
+  if (!uploadServiceUrl) {
+    return null;
+  }
+
+  try {
+    return new URL(uploadServiceUrl).origin;
   } catch {
     return null;
   }
@@ -23,6 +35,7 @@ const connectSrc = [
   "https://vercel.live",
   "https://vitals.vercel-insights.com",
   ...(storageOrigin ? [storageOrigin] : []),
+  ...(uploadServiceOrigin ? [uploadServiceOrigin] : []),
 ].join(" ");
 
 const securityHeaders = [

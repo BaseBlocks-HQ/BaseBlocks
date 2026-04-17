@@ -8,6 +8,11 @@ import {
 import { createObjectKey, toAttachmentContentDisposition } from "./object-key";
 import type { StorageProvider } from "./provider";
 import { S3CompatibleStorageProvider } from "./s3-compatible-storage-provider";
+import {
+  UploadTicketVerificationError,
+  createUploadTicket,
+  verifyUploadTicket,
+} from "./upload-ticket";
 
 let cachedProvider: StorageProvider | null = null;
 
@@ -32,15 +37,15 @@ export function getStorageProviderFromEnv(
 
 export {
   createObjectKey,
+  createUploadTicket,
   getStorageBucketNameFromEnv,
   getStorageMaxUploadSizeFromEnv,
   getStorageProviderNameFromEnv,
   readStorageConfigFromEnv,
   toAttachmentContentDisposition,
+  UploadTicketVerificationError,
+  verifyUploadTicket,
 };
 export type { StorageConfig } from "./config";
-export type {
-  SignedUpload,
-  StorageObjectMetadata,
-  StorageProvider,
-} from "./provider";
+export type { StorageObjectMetadata, StorageProvider } from "./provider";
+export type { UploadTicketClaims } from "./upload-ticket";
