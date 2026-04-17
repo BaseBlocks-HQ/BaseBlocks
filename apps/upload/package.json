@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "STORAGE_UPLOAD_ALLOWED_ORIGINS=http://localhost:3001 bun --env-file ../web/.env.local --watch src/index.ts",
+    "dev": "bash -c 'set -a; source ../web/.env.local; set +a; export STORAGE_UPLOAD_ALLOWED_ORIGINS=\"http://localhost:3001\"; bun --watch src/index.ts'",
     "start": "bun src/index.ts",
     "check-types": "tsc --noEmit"
   },
