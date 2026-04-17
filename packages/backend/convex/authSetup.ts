@@ -1,7 +1,7 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
-import { organization } from "better-auth/plugins";
+import { oAuthProxy, organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
@@ -13,12 +13,38 @@ const authOrigins = parseAuthOrigins(process.env.APP_URL);
 const primaryAppUrl = authOrigins[0]!;
 const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
 const useCrossDomainAuth = authRedirectMode === "cross-domain";
+
+function getProductionAppUrl(origins: string[]): string {
+  const explicitProductionUrl = process.env.AUTH_PRODUCTION_URL;
+  if (explicitProductionUrl) {
+    return parseAuthOrigin(explicitProductionUrl, "AUTH_PRODUCTION_URL");
+  }
+
+  const nonLocalOrigin = origins.find((origin) => {
+    const { hostname } = new URL(origin);
+    return (
+      hostname !== "localhost" &&
+      !hostname.endsWith(".vercel.app") &&
+      !hostname.endsWith(".ts.net")
+    );
+  });
+
+  return nonLocalOrigin ?? primaryAppUrl;
+}
+
 const authBaseUrl = useCrossDomainAuth
   ? parseAuthOrigin(
       process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
       "SITE_URL",
     )
   : primaryAppUrl;
+const productionAppUrl = getProductionAppUrl(authOrigins);
+const trustedOrigins = Array.from(
+  new Set([
+    ...authOrigins,
+    "https://base-blocks-*.vercel.app",
+  ]),
+);
 
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
@@ -33,7 +59,7 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: authBaseUrl,
-    trustedOrigins: authOrigins,
+    trustedOrigins,
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: false,
@@ -67,6 +93,9 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
     plugins: [
       organization({
         allowUserToCreateOrganization: true,
+      }),
+      oAuthProxy({
+        productionURL: productionAppUrl,
       }),
       ...(useCrossDomainAuth ? [crossDomain({ siteUrl: primaryAppUrl })] : []),
       convex({ authConfig }),
