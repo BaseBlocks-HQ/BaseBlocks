@@ -56,11 +56,10 @@ export function getDraftPageAccessPolicy(page: {
 }
 
 export function getPublishedPageAccessPolicy(page: {
-  accessPolicy?: Doc<"pages">["accessPolicy"];
   publishedAccessPolicy?: Doc<"pages">["publishedAccessPolicy"];
 }) {
   return normalizePageAccessPolicy(
-    page.publishedAccessPolicy ?? page.accessPolicy ?? publicPageAccessPolicy,
+    page.publishedAccessPolicy ?? publicPageAccessPolicy,
   );
 }
 

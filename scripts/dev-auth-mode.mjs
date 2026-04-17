@@ -64,17 +64,10 @@ function resolveOrigins(mode) {
 
   if (mode === "mobile") {
     const mobileOrigin = getMobileOrigin();
-    return [mobileOrigin, localOrigin];
+    return [mobileOrigin];
   }
 
-  const mobileOrigin = process.env.DEV_AUTH_MOBILE_ORIGIN
-    ? normalizeOrigin(
-        process.env.DEV_AUTH_MOBILE_ORIGIN,
-        "DEV_AUTH_MOBILE_ORIGIN",
-      )
-    : detectTailscaleOrigin();
-
-  return mobileOrigin ? [localOrigin, mobileOrigin] : [localOrigin];
+  return [localOrigin];
 }
 
 function buildEnv(mode) {

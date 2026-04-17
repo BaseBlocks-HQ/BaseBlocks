@@ -86,7 +86,7 @@ export function PageActionsMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setAccessOpen(true)}>
             <Lock className="h-4 w-4" />
-            Access...
+            Access
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
             <Star className="h-4 w-4" />

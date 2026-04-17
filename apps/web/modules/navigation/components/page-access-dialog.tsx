@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDialog } from "@/components/dialogs";
 import { useSiteAudiences } from "@/lib/data";
 import { api } from "@baseblocks/backend";
 import { normalizePageAccessPolicy } from "@baseblocks/types";
@@ -19,7 +20,7 @@ import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
 import { useMutation } from "convex/react";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Trash2, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AudienceMembersDialog } from "./audience-members-dialog";
@@ -44,12 +45,17 @@ export function PageAccessDialog({
     api.pages.mutations.updateAccessPolicy,
   );
   const createAudience = useMutation(api.siteAudiences.mutations.create);
+  const deleteAudience = useMutation(
+    api.siteAudiences.mutations.deleteAudience,
+  );
   const [mode, setMode] = useState<"public" | "audiences">("public");
   const [selectedAudienceIds, setSelectedAudienceIds] = useState<string[]>([]);
   const [newAudienceName, setNewAudienceName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingAudience, setIsCreatingAudience] = useState(false);
+  const [isDeletingAudience, setIsDeletingAudience] = useState(false);
   const [managingAudienceId, setManagingAudienceId] = useState<string>();
+  const [deletingAudienceId, setDeletingAudienceId] = useState<string>();
 
   const currentPolicy = useMemo(
     () => normalizePageAccessPolicy(page.accessPolicy),
@@ -134,6 +140,38 @@ export function PageAccessDialog({
     }
   };
 
+  const deletingAudience = useMemo(
+    () => audiences?.find((audience) => audience._id === deletingAudienceId),
+    [audiences, deletingAudienceId],
+  );
+
+  const handleDeleteAudience = async () => {
+    if (!deletingAudienceId) {
+      return;
+    }
+
+    setIsDeletingAudience(true);
+    try {
+      await deleteAudience({
+        audienceId: deletingAudienceId as never,
+      });
+      setSelectedAudienceIds((current) =>
+        current.filter((audienceId) => audienceId !== deletingAudienceId),
+      );
+      if (managingAudienceId === deletingAudienceId) {
+        setManagingAudienceId(undefined);
+      }
+      toast.success("Audience deleted");
+      setDeletingAudienceId(undefined);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete audience",
+      );
+    } finally {
+      setIsDeletingAudience(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,8 +179,7 @@ export function PageAccessDialog({
           <DialogHeader>
             <DialogTitle>Page access</DialogTitle>
             <DialogDescription>
-              Choose whether {page.title} is visible to everyone or only to
-              specific signed-in audiences. Access changes go live on the next
+              Choose who can open {page.title}. Live changes apply on the next
               deploy.
             </DialogDescription>
           </DialogHeader>
@@ -168,10 +205,10 @@ export function PageAccessDialog({
               <Label className="flex cursor-pointer items-start gap-3 rounded-md border p-3">
                 <RadioGroupItem value="audiences" />
                 <div>
-                  <p className="font-medium">Restricted to audiences</p>
+                  <p className="font-medium">Specific audiences</p>
                   <p className="text-sm text-muted-foreground">
-                    Hide this page from navigation and direct visits unless the
-                    viewer is signed in and belongs to an allowed audience.
+                    Only signed-in members of the selected audiences can open
+                    this page.
                   </p>
                 </div>
               </Label>
@@ -182,9 +219,6 @@ export function PageAccessDialog({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="font-medium">Allowed audiences</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Pick one or more audiences for this page.
-                    </p>
                   </div>
                   {isAdmin && (
                     <div className="flex items-center gap-2">
@@ -220,8 +254,8 @@ export function PageAccessDialog({
                 ) : audiences.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     {isAdmin
-                      ? "Create an audience, then add members to it."
-                      : "An admin needs to create audiences before you can restrict this page."}
+                      ? "Create an audience, then add members."
+                      : "An admin needs to create an audience first."}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -244,15 +278,31 @@ export function PageAccessDialog({
                           </div>
                         </div>
                         {isAdmin && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setManagingAudienceId(audience._id)}
-                          >
-                            <Users className="mr-2 h-4 w-4" />
-                            Members
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setManagingAudienceId(audience._id)
+                              }
+                            >
+                              <Users className="mr-2 h-4 w-4" />
+                              Members
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() =>
+                                setDeletingAudienceId(audience._id)
+                              }
+                              title={`Delete ${audience.name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
                     ))}
@@ -289,6 +339,26 @@ export function PageAccessDialog({
           }
         }}
         siteId={siteId}
+      />
+
+      <ConfirmDialog
+        open={!!deletingAudienceId}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingAudience) {
+            setDeletingAudienceId(undefined);
+          }
+        }}
+        title="Delete Audience"
+        description={
+          <>
+            Delete &ldquo;{deletingAudience?.name ?? "this audience"}&rdquo;?
+            This removes all of its members and clears it from draft page access
+            rules.
+          </>
+        }
+        confirmLabel={isDeletingAudience ? "Deleting..." : "Delete"}
+        variant="destructive"
+        onConfirm={handleDeleteAudience}
       />
     </>
   );
