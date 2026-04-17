@@ -6,6 +6,7 @@ import { normalizeDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { getAccessiblePublishedPages } from "../lib/pageAccess";
 import { getActiveLibraryIdsForPageIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
+import { mapDocumentListing } from "../documents/listings";
 
 /**
  * Extract a text snippet around the first occurrence of a search term
@@ -76,6 +77,43 @@ function formatSearchResult(
             metadata: doc.metadata,
           })
         : doc.metadata,
+  };
+}
+
+function formatDocumentTitleResult(doc: Doc<"documentListings">) {
+  const listing = mapDocumentListing(doc);
+  return {
+    _id: `document:${listing._id}`,
+    contentType: "document" as const,
+    sourceId: listing._id,
+    title: listing.filename,
+    metadata: normalizeDocumentSearchMetadata({
+      sourceId: listing._id,
+      metadata: {
+        assetId: listing.assetId,
+        filename: listing.filename,
+        fileContentType: listing.contentType,
+        size: listing.size,
+        downloadUrl: listing.downloadUrl,
+        libraryId: listing.libraryId,
+      },
+    }),
+  };
+}
+
+function formatSubpageTitleResult(page: {
+  _id: string;
+  title: string;
+  publishedTitle?: string;
+}) {
+  return {
+    _id: `subpage:${page._id}`,
+    contentType: "subpage" as const,
+    sourceId: page._id,
+    title: page.publishedTitle ?? page.title,
+    metadata: {
+      pageId: page._id,
+    },
   };
 }
 
@@ -264,24 +302,23 @@ export const listTitles = query({
 
     if (!(await checkIsMember(ctx, site.teamId))) return [];
 
-    const all = await ctx.db
-      .query("searchableContent")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const [documents, pages] = await Promise.all([
+      ctx.db
+        .query("documentListings")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+      ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+    ]);
 
-    return all.map((doc) => ({
-      _id: doc._id,
-      contentType: doc.contentType,
-      sourceId: doc.sourceId,
-      title: doc.title,
-      metadata:
-        doc.contentType === "document"
-          ? normalizeDocumentSearchMetadata({
-              sourceId: doc.sourceId,
-              metadata: doc.metadata,
-            })
-          : doc.metadata,
-    }));
+    return [
+      ...documents.map(formatDocumentTitleResult),
+      ...pages
+        .filter((page) => page.isSubpageContent)
+        .map(formatSubpageTitleResult),
+    ];
   },
 });
 
@@ -311,35 +348,21 @@ export const listTitlesPublic = query({
       accessiblePageIds,
     );
 
-    const all = await ctx.db
-      .query("searchableContent")
+    const documents = await ctx.db
+      .query("documentListings")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    return all
-      .filter((doc) => {
-        if (doc.contentType === "document") {
-          return (
-            doc.metadata.libraryId &&
-            activeLibraryIds.has(doc.metadata.libraryId)
-          );
-        }
-
-        const pageId = doc.metadata.pageId;
-        return pageId ? accessiblePageIds.has(pageId) : false;
-      })
-      .map((doc) => ({
-        _id: doc._id,
-        contentType: doc.contentType,
-        sourceId: doc.sourceId,
-        title: doc.title,
-        metadata:
-          doc.contentType === "document"
-            ? normalizeDocumentSearchMetadata({
-                sourceId: doc.sourceId,
-                metadata: doc.metadata,
-              })
-            : doc.metadata,
-      }));
+    return [
+      ...documents
+        .filter(
+          (document) =>
+            document.libraryId && activeLibraryIds.has(document.libraryId),
+        )
+        .map(formatDocumentTitleResult),
+      ...accessiblePages
+        .filter((page) => page.isSubpageContent)
+        .map(formatSubpageTitleResult),
+    ];
   },
 });

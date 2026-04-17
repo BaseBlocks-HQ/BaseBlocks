@@ -23,6 +23,7 @@ import type * as documentLibraries_mutations from "../documentLibraries/mutation
 import type * as documentLibraries_queries from "../documentLibraries/queries.js";
 import type * as documents_internal from "../documents/internal.js";
 import type * as documents_lib from "../documents/lib.js";
+import type * as documents_listings from "../documents/listings.js";
 import type * as documents_mutations from "../documents/mutations.js";
 import type * as documents_queries from "../documents/queries.js";
 import type * as http from "../http.js";
@@ -85,6 +86,7 @@ declare const fullApi: ApiFromModules<{
   "documentLibraries/queries": typeof documentLibraries_queries;
   "documents/internal": typeof documents_internal;
   "documents/lib": typeof documents_lib;
+  "documents/listings": typeof documents_listings;
   "documents/mutations": typeof documents_mutations;
   "documents/queries": typeof documents_queries;
   http: typeof http;

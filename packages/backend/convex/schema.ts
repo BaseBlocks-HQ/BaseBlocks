@@ -244,6 +244,37 @@ export default defineSchema({
       filterFields: ["siteId"],
     }),
 
+  documentListings: defineTable({
+    documentId: v.id("documents"),
+    siteId: v.id("sites"),
+    libraryId: v.optional(v.id("documentLibraries")),
+    folderId: v.optional(v.id("documentFolders")),
+    assetId: v.optional(v.id("assets")),
+    filename: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+    pageCount: v.optional(v.number()),
+    wordCount: v.optional(v.number()),
+    extractionStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("unsupported"),
+      ),
+    ),
+    extractionError: v.optional(v.string()),
+    uploadedBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_document", ["documentId"])
+    .index("by_site", ["siteId"])
+    .index("by_library", ["libraryId"])
+    .index("by_folder", ["libraryId", "folderId"])
+    .index("by_site_extraction_status", ["siteId", "extractionStatus"]),
+
   searchableContent: defineTable({
     siteId: v.id("sites"),
     contentType: v.union(v.literal("document"), v.literal("subpage")),

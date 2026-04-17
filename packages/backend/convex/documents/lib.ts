@@ -12,6 +12,7 @@ import type { Doc } from "../_generated/dataModel";
  */
 import type { MutationCtx } from "../_generated/server";
 import { deleteObjectAction } from "../storage/actions";
+import { deleteDocumentListing } from "./listings";
 
 export async function deleteDocumentRows(
   ctx: MutationCtx,
@@ -38,6 +39,9 @@ export async function deleteDocumentRows(
 
   // 4. Delete the document record
   await ctx.db.delete(document._id);
+
+  // 4b. Delete the lightweight listing entry
+  await deleteDocumentListing(ctx, document._id);
 
   // 5. Schedule S3 deletion (fire-and-forget, after DB commit)
   if (asset) {

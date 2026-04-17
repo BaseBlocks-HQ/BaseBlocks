@@ -99,7 +99,7 @@ export const listAllWithCounts = query({
 
       for (const lib of libraries) {
         const docs = await ctx.db
-          .query("documents")
+          .query("documentListings")
           .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
           .collect();
 
@@ -132,7 +132,7 @@ export const listWithCounts = query({
     return Promise.all(
       libraries.map(async (lib) => {
         const docs = await ctx.db
-          .query("documents")
+          .query("documentListings")
           .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
           .collect();
         return { ...lib, documentCount: docs.length };

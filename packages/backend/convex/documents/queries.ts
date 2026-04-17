@@ -6,6 +6,7 @@ import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
 import { buildDocumentDownloadUrl } from "../storage/paths";
+import { mapDocumentListing } from "./listings";
 
 function mapDocument(doc: Doc<"documents">) {
   const downloadUrl = buildDocumentDownloadUrl(doc._id);
@@ -13,6 +14,42 @@ function mapDocument(doc: Doc<"documents">) {
     ...doc,
     downloadUrl,
   };
+}
+
+async function listDocumentsForSite(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  siteId: Id<"sites">,
+) {
+  const listings = await ctx.db
+    .query("documentListings")
+    .withIndex("by_site", (q) => q.eq("siteId", siteId))
+    .collect();
+  return listings.map(mapDocumentListing);
+}
+
+async function listDocumentsForLibrary(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  libraryId: Id<"documentLibraries">,
+) {
+  const listings = await ctx.db
+    .query("documentListings")
+    .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+    .collect();
+  return listings.map(mapDocumentListing);
+}
+
+async function listDocumentsForFolder(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  libraryId: Id<"documentLibraries">,
+  folderId: Id<"documentFolders"> | undefined,
+) {
+  const listings = await ctx.db
+    .query("documentListings")
+    .withIndex("by_folder", (q) =>
+      q.eq("libraryId", libraryId).eq("folderId", folderId),
+    )
+    .collect();
+  return listings.map(mapDocumentListing);
 }
 
 /**
@@ -153,12 +190,7 @@ export const list = query({
     if (!site) return [];
 
     await requireMember(ctx, site.teamId);
-
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect()
-      .then((docs) => docs.map(mapDocument));
+    return await listDocumentsForSite(ctx, siteId);
   },
 });
 
@@ -239,15 +271,14 @@ export const listPublic = query({
     }
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
-
-    const allDocs = await ctx.db
-      .query("documents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const allDocs = await listDocumentsForSite(ctx, siteId);
 
     return allDocs
       .filter((doc) => doc.libraryId && activeLibraryIds.has(doc.libraryId))
-      .map(mapDocument);
+      .map((doc) => ({
+        ...doc,
+        downloadUrl: doc.downloadUrl,
+      }));
   },
 });
 
@@ -261,12 +292,7 @@ export const listByLibrary = query({
     if (!site) return [];
 
     await requireMember(ctx, site.teamId);
-
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
-      .collect()
-      .then((docs) => docs.map(mapDocument));
+    return await listDocumentsForLibrary(ctx, libraryId);
   },
 });
 
@@ -283,14 +309,7 @@ export const listByFolder = query({
     if (!site) return [];
 
     await requireMember(ctx, site.teamId);
-
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_folder", (q) =>
-        q.eq("libraryId", libraryId).eq("folderId", folderId),
-      )
-      .collect()
-      .then((docs) => docs.map(mapDocument));
+    return await listDocumentsForFolder(ctx, libraryId, folderId);
   },
 });
 
@@ -310,12 +329,7 @@ export const listByLibraryPublic = query({
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return [];
-
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
-      .collect()
-      .then((docs) => docs.map(mapDocument));
+    return await listDocumentsForLibrary(ctx, libraryId);
   },
 });
 
@@ -336,14 +350,7 @@ export const listByFolderPublic = query({
 
     const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return [];
-
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_folder", (q) =>
-        q.eq("libraryId", libraryId).eq("folderId", folderId),
-      )
-      .collect()
-      .then((docs) => docs.map(mapDocument));
+    return await listDocumentsForFolder(ctx, libraryId, folderId);
   },
 });
 
@@ -355,11 +362,7 @@ export const getExtractionStats = query({
 
     await requireMember(ctx, site.teamId);
 
-    // Get all documents for the site
-    const allDocs = await ctx.db
-      .query("documents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const allDocs = await listDocumentsForSite(ctx, siteId);
 
     // Count by status
     const stats = {
@@ -392,14 +395,13 @@ export const listFailedExtraction = query({
     if (!site) return [];
 
     await requireMember(ctx, site.teamId);
-
     return await ctx.db
-      .query("documents")
-      .withIndex("by_extraction_status", (q) =>
+      .query("documentListings")
+      .withIndex("by_site_extraction_status", (q) =>
         q.eq("siteId", siteId).eq("extractionStatus", "failed"),
       )
       .take(limit)
-      .then((docs) => docs.map(mapDocument));
+      .then((docs) => docs.map(mapDocumentListing));
   },
 });
 

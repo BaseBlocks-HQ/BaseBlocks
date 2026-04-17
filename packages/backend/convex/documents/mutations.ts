@@ -10,6 +10,7 @@ import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 import { resolveSiteContext } from "../lib/resolvers";
 import { deleteDocumentRows } from "./lib";
+import { upsertDocumentListing } from "./listings";
 
 async function createDocumentAsset(
   ctx: MutationCtx,
@@ -36,6 +37,47 @@ async function createDocumentAsset(
     checksum: args.checksum,
     uploadedBy: args.uploadedBy,
     createdAt: Date.now(),
+  });
+}
+
+async function patchDocumentSearchEntry(
+  ctx: MutationCtx,
+  document: {
+    _id: string;
+    siteId: string;
+    assetId?: string;
+    filename: string;
+    contentType: string;
+    size: number;
+    libraryId?: string;
+    extractedText?: string;
+  },
+) {
+  const entry = await ctx.db
+    .query("searchableContent")
+    .withIndex("by_source", (q) =>
+      q.eq("contentType", "document").eq("sourceId", document._id),
+    )
+    .first();
+
+  if (!entry) {
+    return;
+  }
+
+  await ctx.db.patch(entry._id, {
+    title: document.filename,
+    extractedText: document.extractedText?.trim()
+      ? document.extractedText
+      : document.filename,
+    metadata: buildDocumentSearchMetadata({
+      documentId: document._id,
+      assetId: document.assetId,
+      filename: document.filename,
+      contentType: document.contentType,
+      size: document.size,
+      libraryId: document.libraryId,
+    }),
+    updatedAt: Date.now(),
   });
 }
 
@@ -94,6 +136,18 @@ export const create = mutation({
         size,
       }),
       updatedAt: Date.now(),
+    });
+
+    await upsertDocumentListing(ctx, {
+      _id: documentId,
+      siteId,
+      assetId,
+      filename,
+      contentType,
+      size,
+      extractionStatus: extractable ? "pending" : "unsupported",
+      uploadedBy: auth.userId,
+      createdAt: Date.now(),
     });
 
     await markSiteModified(ctx, siteId);
@@ -187,6 +241,20 @@ export const createInLibrary = mutation({
       updatedAt: Date.now(),
     });
 
+    await upsertDocumentListing(ctx, {
+      _id: documentId,
+      siteId,
+      libraryId,
+      folderId,
+      assetId,
+      filename,
+      contentType,
+      size,
+      extractionStatus: extractable ? "pending" : "unsupported",
+      uploadedBy: auth.userId,
+      createdAt: Date.now(),
+    });
+
     await markSiteModified(ctx, siteId);
     return documentId;
   },
@@ -219,6 +287,8 @@ export const move = mutation({
     }
 
     await ctx.db.patch(documentId, { folderId });
+    await upsertDocumentListing(ctx, { ...document, folderId });
+    await patchDocumentSearchEntry(ctx, document);
     return documentId;
   },
 });
@@ -239,6 +309,8 @@ export const rename = mutation({
     await requireLibraryManager(ctx, siteCtx.teamId);
 
     await ctx.db.patch(documentId, { filename });
+    await upsertDocumentListing(ctx, { ...document, filename });
+    await patchDocumentSearchEntry(ctx, { ...document, filename });
     return documentId;
   },
 });
@@ -264,6 +336,8 @@ export const updateMetadata = mutation({
     if (pageCount !== undefined) updates.pageCount = pageCount;
 
     await ctx.db.patch(documentId, updates);
+    await upsertDocumentListing(ctx, { ...document, ...updates });
+    await patchDocumentSearchEntry(ctx, { ...document, ...updates });
     return documentId;
   },
 });

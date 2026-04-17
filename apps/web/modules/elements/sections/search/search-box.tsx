@@ -140,7 +140,8 @@ function fuzzyMatchTitles(
   const results: SearchResultItem[] = [];
 
   for (const item of titles) {
-    if (serverResultIds.has(item._id)) continue;
+    const itemKey = `${item.contentType}:${item.sourceId}`;
+    if (serverResultIds.has(itemKey)) continue;
     if (results.length >= limit) break;
 
     const titleLower = item.title.toLowerCase();
@@ -196,19 +197,6 @@ export function SearchBox({
 
   const shouldSearch = debouncedQuery.trim().length > 0 && !!siteId;
 
-  // Preload all titles for client-side fuzzy matching (lightweight, cached by Convex)
-  const authTitles = useQuery(
-    api.search.queries.listTitles,
-    !usePublicQuery && siteId ? { siteId } : "skip",
-  );
-
-  const publicTitles = useQuery(
-    api.search.queries.listTitlesPublic,
-    usePublicQuery && siteId ? { siteId, sessionTokens } : "skip",
-  );
-
-  const allTitles = usePublicQuery ? publicTitles : authTitles;
-
   // Server full-text search queries
   const authResults = useQuery(
     api.search.queries.searchAll,
@@ -231,15 +219,38 @@ export function SearchBox({
 
   const serverResults = usePublicQuery ? publicResults : authResults;
 
+  // Loading the full title list is expensive on large sites, so only fetch it
+  // after a real search starts and only when full-text search under-fills.
+  const shouldLoadTitles =
+    shouldSearch &&
+    debouncedQuery.trim().length >= 2 &&
+    serverResults !== undefined &&
+    serverResults.length < maxResults;
+
+  const authTitles = useQuery(
+    api.search.queries.listTitles,
+    !usePublicQuery && shouldLoadTitles ? { siteId } : "skip",
+  );
+
+  const publicTitles = useQuery(
+    api.search.queries.listTitlesPublic,
+    usePublicQuery && shouldLoadTitles ? { siteId, sessionTokens } : "skip",
+  );
+
+  const allTitles = usePublicQuery ? publicTitles : authTitles;
+
   // Merge server full-text results with client-side fuzzy title matches
   const searchResults = (() => {
     if (!shouldSearch) return undefined;
     if (serverResults === undefined) return undefined;
 
-    const serverIds = new Set(serverResults.map((r) => r._id));
+    const serverIds = new Set(
+      serverResults.map((result) => `${result.contentType}:${result.sourceId}`),
+    );
     const remaining = maxResults - serverResults.length;
 
     if (remaining <= 0) return serverResults;
+    if (!allTitles) return serverResults;
 
     const fuzzyResults = fuzzyMatchTitles(
       allTitles,

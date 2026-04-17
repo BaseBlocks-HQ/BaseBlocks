@@ -6,6 +6,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
+import { upsertDocumentListing } from "./listings";
 
 /**
  * Get document for extraction (internal use only)
@@ -84,6 +85,7 @@ export const updateExtraction = internalMutation({
     }
 
     await ctx.db.patch(documentId, updates);
+    await upsertDocumentListing(ctx, { ...document, ...updates });
 
     // Update search index when extraction completes
     if (status === "completed" && extractedText !== undefined) {
