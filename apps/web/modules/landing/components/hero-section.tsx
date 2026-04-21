@@ -1,12 +1,10 @@
 import { landingFonts } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
 import { Button } from "@baseblocks/ui/button";
-import { GitFork, Github } from "lucide-react";
+import { Github } from "lucide-react";
 import type { ReactNode } from "react";
 import { BlurIn } from "./blur-in";
 import { EditorMockup } from "./editor-mockup";
-import { GridPattern } from "./grid-pattern";
-
 interface HeroSectionProps {
   authCta: ReactNode;
   docsCta: ReactNode;
@@ -20,20 +18,9 @@ export function HeroSection({
 }: HeroSectionProps) {
   return (
     <section className="relative z-10 overflow-x-clip pt-28 pb-20 sm:pt-24 sm:pb-28">
-      <GridPattern />
-      <div className="relative z-10 mx-auto max-w-6xl px-6">
+<div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="relative z-10 lg:max-w-[42%]">
-          <BlurIn delay={0.1}>
-            <div
-              className="mb-7 inline-flex items-center gap-2 rounded-sm border border-foreground/10 bg-foreground px-3 py-1 text-[11px] tracking-wide text-background"
-              style={{ fontFamily: landingFonts.square }}
-            >
-              <GitFork className="h-3 w-3" />
-              {landingTranslations("badge")}
-            </div>
-          </BlurIn>
-
-          <BlurIn delay={0.2}>
+<BlurIn delay={0.2}>
             <h1
               className="leading-[0.98] tracking-tight"
               style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
