@@ -28,6 +28,7 @@ export type {
   CodeContent,
   DividerContent,
   BlockSpacerContent,
+  FileContent,
   SubpageContent,
   DirectoryColumnType,
   DirectoryColumn,

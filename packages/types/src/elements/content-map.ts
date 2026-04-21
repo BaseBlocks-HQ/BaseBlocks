@@ -6,6 +6,7 @@ import type {
   DecisionTreeContent,
   DirectoryContent,
   DividerContent,
+  FileContent,
   FlowchartContent,
   HeadingContent,
   ParagraphContent,
@@ -35,6 +36,7 @@ export type ContentTypeMap = {
   code: CodeContent;
   divider: DividerContent;
   "block-spacer": BlockSpacerContent;
+  file: FileContent;
   richtext: RichTextContent;
   subpage: SubpageContent;
   directory: DirectoryContent;

@@ -55,6 +55,7 @@ export type {
   CodeContent,
   DividerContent,
   BlockSpacerContent,
+  FileContent,
   BlockContentUnion,
 } from "./elements";
 export { DEFAULT_BLOCK_CONTENT } from "./elements";

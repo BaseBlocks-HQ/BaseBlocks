@@ -12,6 +12,7 @@ export type LayoutBlockType =
   | "heading"
   | "paragraph"
   | "image"
+  | "file"
   | "library"
   | "search"
   | "divider"

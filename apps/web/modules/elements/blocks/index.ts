@@ -11,6 +11,7 @@ import "./callout";
 import "./code";
 import "./divider";
 import "./spacer";
+import "./file";
 
 import "./richtext";
 import "./subpage";

@@ -2,12 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import {
+  DocumentFileRow,
   type FileData,
-  FileIcon,
   type FolderData,
-  getFileTypeColor,
 } from "@/modules/documents";
-import { MiddleTruncate } from "@baseblocks/ui/middle-truncate";
 import { File, Folder } from "lucide-react";
 import type { ReactNode } from "react";
 import { LibraryContentRow } from "./library-content-row";
@@ -61,53 +59,14 @@ export function LibraryContentList({
         ))}
 
         {files.map((file) => (
-          <LibraryContentRow
+          <DocumentFileRow
             key={file._id}
-            icon={
-              <div
-                className={cn("shrink-0", getFileTypeColor(file.contentType))}
-              >
-                <FileIcon contentType={file.contentType} className="h-4 w-4" />
-              </div>
-            }
-            title={
-              <MiddleTruncate
-                text={file.filename}
-                className="min-w-0"
-                endChars={12}
-              />
-            }
-            meta={formatFileMeta(file)}
-            onClick={() => onOpenFile(file)}
+            file={file}
+            onOpen={onOpenFile}
             actions={renderFileActions?.(file)}
           />
         ))}
       </div>
     </div>
   );
-}
-
-function formatFileMeta(file: Pick<FileData, "size" | "createdAt">) {
-  const parts = [formatFileSize(file.size)];
-
-  if (file.createdAt) {
-    parts.push(
-      new Date(file.createdAt).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-    );
-  }
-
-  return parts.join(" • ");
-}
-
-function formatFileSize(bytes: number) {
-  if (bytes === 0) return "0 B";
-
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.floor(Math.log(bytes) / Math.log(1024));
-
-  return `${Number.parseFloat((bytes / 1024 ** index).toFixed(1))} ${units[index]}`;
 }

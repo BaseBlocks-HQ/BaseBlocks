@@ -1,4 +1,8 @@
 export { FileIcon, getFileTypeColor } from "./components/file-icon";
+export {
+  DocumentFileRow,
+  type DocumentFileRowData,
+} from "./components/document-file-row";
 export { Breadcrumbs } from "./components/breadcrumbs";
 export { DropZone } from "./components/drop-zone";
 export { UploadProgressList } from "./components/upload-progress";

@@ -16,7 +16,7 @@ export function cloneCopiedBlock(block: CopiedBlock): CopiedBlock {
 }
 
 export function isCopyableBlockType(type: string): boolean {
-  return type !== "subpage";
+  return type !== "subpage" && type !== "file";
 }
 
 export function canPasteCopiedBlock(

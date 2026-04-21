@@ -52,6 +52,35 @@ async function listDocumentsForFolder(
   return listings.map(mapDocumentListing);
 }
 
+async function isPublishedFileBlockDocument(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  document: Doc<"documents">,
+) {
+  const layouts = await ctx.db
+    .query("layouts")
+    .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
+    .collect();
+
+  for (const layout of layouts) {
+    if (!layout.isDeployed) {
+      continue;
+    }
+
+    for (const slot of layout.publishedSlots ?? []) {
+      for (const block of slot.blocks) {
+        if (
+          block.type === "file" &&
+          block.content?.documentId === document._id
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 /**
  * Extract a text snippet around the first occurrence of a search term
  * Returns the snippet with the match position for highlighting
@@ -503,7 +532,7 @@ export const getPublicDownloadAsset = query({
   },
   handler: async (ctx, { documentId, sessionTokens }) => {
     const document = await ctx.db.get(documentId);
-    if (!document || !document.libraryId || !document.assetId) {
+    if (!document || !document.assetId) {
       return null;
     }
 
@@ -512,9 +541,16 @@ export const getPublicDownloadAsset = query({
       return null;
     }
 
-    const activeLibraryIds = await getActiveLibraryIds(ctx, document.siteId);
-    if (!activeLibraryIds.has(document.libraryId)) {
-      return null;
+    if (document.libraryId) {
+      const activeLibraryIds = await getActiveLibraryIds(ctx, document.siteId);
+      if (!activeLibraryIds.has(document.libraryId)) {
+        return null;
+      }
+    } else {
+      const isPublishedFile = await isPublishedFileBlockDocument(ctx, document);
+      if (!isPublishedFile) {
+        return null;
+      }
     }
 
     const asset = await ctx.db.get(document.assetId);

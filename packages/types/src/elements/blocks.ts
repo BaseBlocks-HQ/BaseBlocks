@@ -5,6 +5,7 @@ export type BlockType =
   | "code"
   | "divider"
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
+  | "file"
   | "richtext"
   | "subpage"
   | "directory"
@@ -34,6 +35,14 @@ export type DividerContent = Record<string, never>;
 
 export interface BlockSpacerContent {
   height: "small" | "medium" | "large" | "xlarge";
+}
+
+export interface FileContent {
+  documentId?: string;
+  filename?: string;
+  contentType?: string;
+  size?: number;
+  createdAt?: number;
 }
 
 export type BlockNoteDocument = unknown[];
@@ -134,6 +143,7 @@ export type BlockContentUnion =
   | CodeContent
   | DividerContent
   | BlockSpacerContent
+  | FileContent
   | RichTextContent
   | SubpageContent
   | DirectoryContent
@@ -147,6 +157,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   code: { text: "", language: "typescript" },
   divider: {},
   "block-spacer": { height: "medium" },
+  file: {},
   richtext: { document: [] } as RichTextContent,
   subpage: { pageId: "" },
   directory: {

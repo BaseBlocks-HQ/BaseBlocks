@@ -140,6 +140,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
     types: ["heading", "paragraph", "richtext", "callout", "code"],
   },
   { title: "Structure", types: ["divider", "block-spacer"] },
+  { title: "Media", types: ["image", "file"] },
   {
     title: "Advanced",
     types: ["subpage", "directory", "flowchart", "decision-tree"],
@@ -519,7 +520,6 @@ export function EditorFloatingRail({
 
   useEffect(() => {
     if (!isMobile) {
-      setVisibleCount(RAIL_ITEMS.length);
       return;
     }
 
@@ -536,9 +536,12 @@ export function EditorFloatingRail({
     };
 
     const handleResize = () => setVisibleCount(computeVisible());
-    handleResize();
+    const animationFrame = requestAnimationFrame(handleResize);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [isMobile]);
 
   const syncPanelPosition = useCallback(
@@ -665,7 +668,9 @@ export function EditorFloatingRail({
     onAddBlock?.(type as LayoutBlockType);
   };
 
-  const clampedVisible = Math.min(visibleCount, RAIL_ITEMS.length);
+  const clampedVisible = isMobile
+    ? Math.min(visibleCount, RAIL_ITEMS.length)
+    : RAIL_ITEMS.length;
   const visibleItems = isMobile
     ? RAIL_ITEMS.slice(0, clampedVisible)
     : RAIL_ITEMS;
