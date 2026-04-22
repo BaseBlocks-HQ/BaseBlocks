@@ -23,6 +23,7 @@
     "themeLight": "Clair",
     "themeDark": "Sombre",
     "themeSystem": "Système",
+    "themeMenu": "Thème",
     "getStarted": "Commencer",
     "goToDashboard": "Aller au tableau de bord",
     "redirecting": "Redirection..."
@@ -231,6 +232,7 @@
   },
   "language": {
     "select": "Choisir la langue",
+    "menuLabel": "Langue",
     "current": "Langue actuelle"
   },
   "blocks": {

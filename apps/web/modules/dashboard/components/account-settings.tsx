@@ -29,12 +29,22 @@ import { useMutation } from "convex/react";
 import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconGear } from "nucleo-glass";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 export function AccountSettings({
+  asChild = false,
+  children,
+  open: openProp,
+  onOpenChange,
+  showTrigger = true,
   triggerClassName,
 }: {
+  asChild?: boolean;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
   triggerClassName?: string;
 } = {}) {
   const t = useTranslations("settings");
@@ -42,9 +52,16 @@ export function AccountSettings({
   const { data: session } = authClient.useSession();
   const user = session?.user;
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const open = openProp ?? internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    if (openProp === undefined) {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
 
   const deleteMyAccountData = useMutation(
     api.members.mutations.deleteMyAccountData,
@@ -76,18 +93,24 @@ export function AccountSettings({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn(
-            "h-8 w-full justify-start gap-2 px-2",
-            triggerClassName,
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          {asChild && children ? (
+            children
+          ) : (
+            <Button
+              variant="ghost"
+              className={cn(
+                "h-8 w-full justify-start gap-2 px-2",
+                triggerClassName,
+              )}
+            >
+              <IconGear className="h-4 w-4" />
+              <span>{tCommon("settings")}</span>
+            </Button>
           )}
-        >
-          <IconGear className="h-4 w-4" />
-          <span>{tCommon("settings")}</span>
-        </Button>
-      </DialogTrigger>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

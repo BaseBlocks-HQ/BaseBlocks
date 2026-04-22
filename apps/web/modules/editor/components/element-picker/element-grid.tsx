@@ -17,7 +17,6 @@ export function ElementGrid({ title, entries, onSelect }: ElementGridProps) {
         {entries.map((entry) => (
           <ElementCard
             key={entry.type}
-            description={entry.description}
             label={entry.label}
             icon={entry.icon}
             preview={entry.preview}

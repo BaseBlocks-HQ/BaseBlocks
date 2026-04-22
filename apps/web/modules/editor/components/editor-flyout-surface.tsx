@@ -3,7 +3,7 @@
 import { cn } from "@baseblocks/ui/lib/utils";
 
 export const editorFlyoutSurfaceClassName =
-  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border bg-background/96 shadow-2xl backdrop-blur-sm sm:w-[min(22rem,calc(100vw-6rem))]";
+  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md sm:w-[min(22rem,calc(100vw-6rem))]";
 
 export function EditorFlyoutSurface({
   className,

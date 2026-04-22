@@ -23,6 +23,7 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
+    "themeMenu": "Theme",
     "getStarted": "Get Started",
     "goToDashboard": "Go to Dashboard",
     "redirecting": "Redirecting..."
@@ -231,6 +232,7 @@
   },
   "language": {
     "select": "Select language",
+    "menuLabel": "Language",
     "current": "Current language"
   },
   "blocks": {

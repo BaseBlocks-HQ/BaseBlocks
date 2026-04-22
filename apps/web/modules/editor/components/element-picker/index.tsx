@@ -187,7 +187,6 @@ export function ElementPicker({
           {activeCategory === "layouts" && onEnableTabs && (
             <div className="px-4 pb-4">
               <ElementCard
-                description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
                 label="Tabs"
                 icon={PanelTop}
                 preview={TabsPreview}

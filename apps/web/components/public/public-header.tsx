@@ -1,3 +1,4 @@
+import { BrandLogoMark } from "@/components/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { landingFonts } from "@/modules/landing/constants";
@@ -65,14 +66,12 @@ export function PublicHeader({
             )}
           >
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
-              <Link href="/">
+              <Link href="/" aria-label="BaseBlocks">
                 <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground text-sm text-background"
-                    style={{ fontFamily: landingFonts.square }}
-                  >
-                    B
-                  </div>
+                  <BrandLogoMark
+                    className="h-8 w-8"
+                    priority={isMobileOverlay}
+                  />
                   <span
                     className="hidden tracking-tight min-[380px]:inline"
                     style={{

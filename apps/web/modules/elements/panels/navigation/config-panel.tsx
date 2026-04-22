@@ -113,7 +113,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           return (
             <ElementCard
               key={styleInfo.style}
-              description={styleInfo.description}
               icon={Icon}
               isSelected={isSelected}
               label={styleInfo.label}

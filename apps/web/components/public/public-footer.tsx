@@ -1,3 +1,4 @@
+import { BrandLogoMark } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ModeToggle } from "@/components/mode-toggle";
 import { cn } from "@/lib/utils";
@@ -55,12 +56,7 @@ export function PublicFooter({
         <div className="border-t border-border/40 py-6 dark:border-white/[0.04]">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2.5">
-              <div
-                className="flex h-6 w-6 items-center justify-center rounded bg-foreground text-[10px] text-background"
-                style={{ fontFamily: landingFonts.square }}
-              >
-                B
-              </div>
+              <BrandLogoMark className="h-6 w-6" />
               <span className="text-xs text-muted-foreground/60">
                 {footerCopyright}
               </span>

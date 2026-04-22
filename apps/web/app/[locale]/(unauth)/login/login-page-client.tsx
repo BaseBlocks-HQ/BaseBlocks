@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogoMark } from "@/components/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";
@@ -14,10 +15,29 @@ import { useState } from "react";
 type SocialProvider = "google" | "github" | "microsoft";
 const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
 
+interface SignInWithProviderArgs {
+  callbackURL: string;
+  fallbackError: string;
+  provider: SocialProvider;
+}
+
 function getAuthCallbackUrl(redirectTo: string): string {
   const url = new URL("/login", window.location.origin);
   url.searchParams.set("redirectTo", redirectTo);
   return url.toString();
+}
+
+async function signInWithProvider({
+  callbackURL,
+  fallbackError,
+  provider,
+}: SignInWithProviderArgs): Promise<string | null> {
+  try {
+    await authClient.signIn.social({ provider, callbackURL });
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : fallbackError;
+  }
 }
 
 export function LoginPageClient() {
@@ -44,17 +64,19 @@ export function LoginPageClient() {
     haptic.trigger("heavy");
     setError(null);
     setActiveProvider(provider);
-    try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL:
-          authRedirectMode === "cross-domain"
-            ? getAuthCallbackUrl(redirectTo)
-            : redirectTo,
-      });
-    } catch (err) {
+
+    const errorMessage = await signInWithProvider({
+      provider,
+      callbackURL:
+        authRedirectMode === "cross-domain"
+          ? getAuthCallbackUrl(redirectTo)
+          : redirectTo,
+      fallbackError: t("auth.signInFailed"),
+    });
+
+    if (errorMessage) {
       haptic.trigger("error");
-      setError(err instanceof Error ? err.message : t("auth.signInFailed"));
+      setError(errorMessage);
       setActiveProvider(null);
     }
   };
@@ -64,12 +86,7 @@ export function LoginPageClient() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
-            <div
-              className="flex size-6 items-center justify-center rounded-md bg-foreground text-xs text-background"
-              style={{ fontFamily: landingFonts.square }}
-            >
-              B
-            </div>
+            <BrandLogoMark className="size-6" priority />
             <span
               style={{ fontFamily: landingFonts.square }}
               className="tracking-tight"

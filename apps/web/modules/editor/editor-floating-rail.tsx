@@ -306,7 +306,7 @@ function EllipsisButton({
         side="top"
         align="center"
         sideOffset={8}
-        className="flex w-auto flex-row gap-1 rounded-[32px] border bg-background/88 p-1.5 backdrop-blur-md"
+        className="flex w-auto flex-row gap-1 rounded-[32px] border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md"
       >
         {overflowItems.map((item) => (
           <button
@@ -476,7 +476,6 @@ function FloatingRailFlyout({
           {activePanel === "layouts" && onEnableTabs && (
             <div className="px-4 pb-4">
               <ElementCard
-                description="Adds a tabbed section so visitors can switch between groups of layouts on this page."
                 label="Tabs"
                 icon={PanelTop}
                 preview={TabsPreview}
@@ -691,7 +690,7 @@ export function EditorFloatingRail({
       onMouseEnter={isMobile ? undefined : clearPendingClose}
       onMouseLeave={isMobile ? undefined : scheduleClose}
     >
-      <div className="rounded-[32px] border bg-background/88 p-1.5 backdrop-blur-md sm:rounded-[2rem] sm:bg-background/90 sm:p-2">
+      <div className="rounded-[32px] border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md sm:rounded-[2rem] sm:bg-sidebar/95 sm:p-2">
         <div
           className={cn(
             "flex gap-1",

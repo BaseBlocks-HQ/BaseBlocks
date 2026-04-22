@@ -3,6 +3,9 @@
 import { cn } from "@baseblocks/ui/lib/utils";
 import Image from "next/image";
 import type { ElementPreviewProps } from "./registry";
+
+const shouldOptimizePickerImages = process.env.NODE_ENV === "production";
+
 export function themedPickerImagePreview(lightSrc: string, darkSrc: string) {
   function ThemedPickerImagePreview({ className }: ElementPreviewProps) {
     return (
@@ -18,6 +21,7 @@ export function themedPickerImagePreview(lightSrc: string, darkSrc: string) {
           fill
           className="object-cover object-center dark:hidden"
           sizes="(max-width: 768px) 90vw, 320px"
+          unoptimized={!shouldOptimizePickerImages}
         />
         <Image
           src={darkSrc}
@@ -25,6 +29,7 @@ export function themedPickerImagePreview(lightSrc: string, darkSrc: string) {
           fill
           className="hidden object-cover object-center dark:block"
           sizes="(max-width: 768px) 90vw, 320px"
+          unoptimized={!shouldOptimizePickerImages}
         />
       </div>
     );
