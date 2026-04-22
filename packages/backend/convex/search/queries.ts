@@ -2,11 +2,11 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { mapDocumentListing } from "../documents/listings";
 import { normalizeDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { getAccessiblePublishedPages } from "../lib/pageAccess";
 import { getActiveLibraryIdsForPageIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
-import { mapDocumentListing } from "../documents/listings";
 
 /**
  * Extract a text snippet around the first occurrence of a search term

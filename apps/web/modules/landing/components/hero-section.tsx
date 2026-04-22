@@ -18,9 +18,9 @@ export function HeroSection({
 }: HeroSectionProps) {
   return (
     <section className="relative z-10 overflow-x-clip pt-28 pb-20 sm:pt-24 sm:pb-28">
-<div className="relative z-10 mx-auto max-w-6xl px-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="relative z-10 lg:max-w-[42%]">
-<BlurIn delay={0.2}>
+          <BlurIn delay={0.2}>
             <h1
               className="leading-[0.98] tracking-tight"
               style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
