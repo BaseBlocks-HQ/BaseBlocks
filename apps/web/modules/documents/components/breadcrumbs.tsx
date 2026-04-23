@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ChevronRight, Home } from "lucide-react";
+import { ChevronRight, FolderOpen } from "lucide-react";
 
 interface BreadcrumbItem {
   id: string | null;
@@ -10,14 +10,12 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
-  libraryName?: string;
   onNavigate: (folderId: string | null) => void;
   className?: string;
 }
 
 export function Breadcrumbs({
   items,
-  libraryName,
   onNavigate,
   className,
 }: BreadcrumbsProps) {
@@ -29,29 +27,26 @@ export function Breadcrumbs({
       )}
       aria-label="Breadcrumb"
     >
-      <button
-        type="button"
-        onClick={() => onNavigate(null)}
-        className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Home className="h-4 w-4" />
-        {libraryName && <span className="hidden sm:inline">{libraryName}</span>}
-      </button>
-
       {items.map((item, index) => (
-        <div key={item.id} className="flex items-center">
-          <ChevronRight className="h-4 w-4 text-muted-foreground mx-1" />
+        <div key={item.id ?? "root"} className="flex min-w-0 items-center">
+          {index > 0 ? (
+            <ChevronRight className="mx-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          ) : null}
           {index === items.length - 1 ? (
-            <span className="font-medium text-foreground truncate max-w-[150px]">
-              {item.name}
+            <span className="flex min-w-0 items-center gap-1.5 font-medium text-foreground">
+              {index === 0 ? (
+                <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : null}
+              <span className="truncate">{item.name}</span>
             </span>
           ) : (
             <button
               type="button"
               onClick={() => onNavigate(item.id)}
-              className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[150px]"
+              className="flex min-w-0 items-center gap-1.5 truncate text-muted-foreground transition-colors hover:text-foreground"
             >
-              {item.name}
+              {index === 0 ? <FolderOpen className="h-4 w-4 shrink-0" /> : null}
+              <span className="truncate">{item.name}</span>
             </button>
           )}
         </div>

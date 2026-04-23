@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { FolderOpen } from "lucide-react";
 import { useReducer } from "react";
 import { CreateFolderDialog } from "./create-folder-dialog";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
@@ -17,6 +18,7 @@ interface FolderTreeProps {
   onRenameFolder: (folderId: string, name: string) => Promise<void>;
   onDeleteFolder: (folderId: string) => Promise<void>;
   className?: string;
+  rootLabel?: string;
 }
 
 interface FolderTreeState {
@@ -157,6 +159,7 @@ export function FolderTree({
   onRenameFolder,
   onDeleteFolder,
   className,
+  rootLabel,
 }: FolderTreeProps) {
   const [state, dispatch] = useReducer(folderTreeReducer, {
     createDialogOpen: false,
@@ -213,7 +216,22 @@ export function FolderTree({
   return (
     <>
       <ScrollArea className={cn("h-full", className)}>
-        <div className="py-2">
+        <div className="space-y-0.5 px-2 py-2">
+          {rootLabel ? (
+            <button
+              type="button"
+              className={cn(
+                "flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                selectedFolderId === null
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-muted/50",
+              )}
+              onClick={() => onSelectFolder(null)}
+            >
+              <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate">{rootLabel}</span>
+            </button>
+          ) : null}
           <FolderTreeBranch
             expandedFolders={state.expandedFolders}
             folderTree={folderTree}

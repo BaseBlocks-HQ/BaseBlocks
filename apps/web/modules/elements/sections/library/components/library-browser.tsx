@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {
   Popover,
@@ -7,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@baseblocks/ui/popover";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { Folder, Home, Menu } from "lucide-react";
+import { Folder, FolderOpen, Menu } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { LibraryBreadcrumbTrigger } from "./library-breadcrumb-trigger";
@@ -74,7 +75,7 @@ export function LibraryBrowser({
           setFolderMenuOpen(false);
         }}
       >
-        <Home className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="truncate">{libraryName}</span>
       </button>
       {folderPath.map((folder, index) => (
@@ -96,20 +97,24 @@ export function LibraryBrowser({
     </div>
   );
 
-  const rootButton = (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+  const rootTreeRow = (
+    <button
+      type="button"
+      className={cn(
+        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] leading-5 transition-colors",
+        selectedFolderId === null
+          ? "bg-background shadow-[0_1px_2px_rgba(15,23,42,0.05)]"
+          : "hover:bg-background/70",
+      )}
       onClick={() => {
         onSelectFolder(null);
         setBreadcrumbOpen(false);
         setFolderMenuOpen(false);
       }}
-      title={libraryName}
     >
-      <Home className="h-3.5 w-3.5" />
-    </Button>
+      <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate">{libraryName}</span>
+    </button>
   );
 
   return (
@@ -121,10 +126,10 @@ export function LibraryBrowser({
         {showFolderTree && showSidebar ? (
           <div className="flex w-52 shrink-0 flex-col overflow-hidden border-r bg-muted/15">
             <div className="flex items-center gap-1 px-3 pb-1 pt-2">
-              {rootButton}
               <Popover open={breadcrumbOpen} onOpenChange={setBreadcrumbOpen}>
                 <PopoverTrigger asChild>
                   <LibraryBreadcrumbTrigger
+                    libraryName={libraryName}
                     folderPath={folderPath}
                     currentLocation={currentLocation}
                   />
@@ -140,7 +145,8 @@ export function LibraryBrowser({
             </div>
 
             <ScrollArea className="flex-1">
-              <div className="px-2 pb-2">
+              <div className="space-y-0.5 px-2 pb-2">
+                {rootTreeRow}
                 {folders.length > 0 ? (
                   <LibraryFolderTree
                     folders={folders}
@@ -190,7 +196,8 @@ export function LibraryBrowser({
                       <div className="flex max-h-80 flex-col overflow-hidden">
                         <div className="p-1">{breadcrumbNavContent}</div>
                         <ScrollArea className="flex-1">
-                          <div className="px-2 pb-2">
+                          <div className="space-y-0.5 px-2 pb-2">
+                            {rootTreeRow}
                             {folders.length > 0 ? (
                               <LibraryFolderTree
                                 folders={folders}
@@ -216,7 +223,6 @@ export function LibraryBrowser({
                       </div>
                     </PopoverContent>
                   </Popover>
-                  {rootButton}
 
                   <Popover
                     open={breadcrumbOpen}
@@ -224,6 +230,7 @@ export function LibraryBrowser({
                   >
                     <PopoverTrigger asChild>
                       <LibraryBreadcrumbTrigger
+                        libraryName={libraryName}
                         folderPath={folderPath}
                         currentLocation={currentLocation}
                       />
@@ -240,6 +247,7 @@ export function LibraryBrowser({
               ) : (
                 <div className="min-w-0 flex-1">
                   <LibraryBreadcrumbTrigger
+                    libraryName={libraryName}
                     folderPath={folderPath}
                     currentLocation={currentLocation}
                   />

@@ -1,5 +1,6 @@
+import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
+import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
 import { mapDocumentListing } from "../documents/listings";
@@ -55,7 +56,9 @@ function formatSearchResult(
   doc: Doc<"searchableContent">,
   matchType: "title" | "content",
   searchTerm: string,
+  documentListing?: Doc<"documentListings"> | null,
 ) {
+  const listing = documentListing ? mapDocumentListing(documentListing) : null;
   const snippetData =
     matchType === "content"
       ? extractSnippet(doc.extractedText, searchTerm)
@@ -65,19 +68,43 @@ function formatSearchResult(
     _id: doc._id,
     contentType: doc.contentType,
     sourceId: doc.sourceId,
-    title: doc.title,
+    title: listing?.filename ?? doc.title,
     matchType,
     snippet: snippetData?.snippet ?? null,
     snippetMatchStart: snippetData?.matchStart ?? null,
     snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata:
-      doc.contentType === "document"
+    metadata: listing
+      ? normalizeDocumentSearchMetadata({
+          sourceId: listing._id,
+          metadata: {
+            assetId: listing.assetId,
+            filename: listing.filename,
+            fileContentType: listing.contentType,
+            size: listing.size,
+            downloadUrl: listing.downloadUrl,
+            libraryId: listing.libraryId,
+          },
+        })
+      : doc.contentType === "document"
         ? normalizeDocumentSearchMetadata({
             sourceId: doc.sourceId,
             metadata: doc.metadata,
           })
         : doc.metadata,
   };
+}
+
+async function getDocumentListingForSearchResult(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  doc: Doc<"searchableContent">,
+) {
+  if (doc.contentType !== "document") return null;
+  return await ctx.db
+    .query("documentListings")
+    .withIndex("by_document", (q) =>
+      q.eq("documentId", doc.sourceId as Id<"documents">),
+    )
+    .first();
 }
 
 function formatDocumentTitleResult(doc: Doc<"documentListings">) {
@@ -115,6 +142,13 @@ function formatSubpageTitleResult(page: {
       pageId: page._id,
     },
   };
+}
+
+function contentTypeMatches(
+  doc: Doc<"searchableContent">,
+  contentTypes?: Array<"document" | "subpage">,
+) {
+  return !contentTypes?.length || contentTypes.includes(doc.contentType);
 }
 
 /**
@@ -162,26 +196,33 @@ export const searchAll = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    // Filter by content type if specified
-    const shouldInclude = (doc: Doc<"searchableContent">) => {
-      if (!contentTypes || contentTypes.length === 0) return true;
-      return contentTypes.includes(doc.contentType);
+    const getVisibleDocumentListing = async (doc: Doc<"searchableContent">) => {
+      if (!contentTypeMatches(doc, contentTypes)) return null;
+      if (doc.contentType !== "document") return null;
+      return await getDocumentListingForSearchResult(ctx, doc);
+    };
+
+    const shouldIncludeSubpage = (doc: Doc<"searchableContent">) => {
+      if (doc.contentType !== "subpage") return false;
+      return contentTypeMatches(doc, contentTypes);
     };
 
     // Content matches first (higher relevance)
     for (const doc of contentResults) {
-      if (!seen.has(doc._id) && shouldInclude(doc)) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "content", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getVisibleDocumentListing(doc);
+      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, "content", trimmed, listing));
     }
 
     // Then title matches
     for (const doc of titleResults) {
-      if (!seen.has(doc._id) && shouldInclude(doc)) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "title", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getVisibleDocumentListing(doc);
+      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, "title", trimmed, listing));
     }
 
     return combined.slice(0, limit);
@@ -246,23 +287,19 @@ export const searchAllPublic = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const shouldInclude = (doc: Doc<"searchableContent">) => {
-      // Filter by content type if specified
-      if (
-        contentTypes &&
-        contentTypes.length > 0 &&
-        !contentTypes.includes(doc.contentType)
-      ) {
-        return false;
+    const getVisibleDocumentListing = async (doc: Doc<"searchableContent">) => {
+      if (!contentTypeMatches(doc, contentTypes)) return null;
+      if (doc.contentType !== "document") return null;
+      const listing = await getDocumentListingForSearchResult(ctx, doc);
+      if (!listing?.libraryId || !activeLibraryIds.has(listing.libraryId)) {
+        return null;
       }
+      return listing;
+    };
 
-      // For documents, only include if in active library
-      if (doc.contentType === "document") {
-        const libraryId = doc.metadata.libraryId;
-        if (!libraryId) return false;
-        return activeLibraryIds.has(libraryId);
-      }
-
+    const shouldIncludeSubpage = (doc: Doc<"searchableContent">) => {
+      if (!contentTypeMatches(doc, contentTypes)) return false;
+      if (doc.contentType !== "subpage") return false;
       const pageId = doc.metadata.pageId;
       if (!pageId) return false;
       return accessiblePageIds.has(pageId);
@@ -270,18 +307,20 @@ export const searchAllPublic = query({
 
     // Content matches first
     for (const doc of contentResults) {
-      if (!seen.has(doc._id) && shouldInclude(doc)) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "content", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getVisibleDocumentListing(doc);
+      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, "content", trimmed, listing));
     }
 
     // Then title matches
     for (const doc of titleResults) {
-      if (!seen.has(doc._id) && shouldInclude(doc)) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "title", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getVisibleDocumentListing(doc);
+      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, "title", trimmed, listing));
     }
 
     return combined.slice(0, limit);

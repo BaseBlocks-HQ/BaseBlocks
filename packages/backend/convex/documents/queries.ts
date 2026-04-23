@@ -52,6 +52,16 @@ async function listDocumentsForFolder(
   return listings.map(mapDocumentListing);
 }
 
+async function getDocumentListing(
+  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
+  documentId: Id<"documents">,
+) {
+  return await ctx.db
+    .query("documentListings")
+    .withIndex("by_document", (q) => q.eq("documentId", documentId))
+    .first();
+}
+
 async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
@@ -130,21 +140,23 @@ function extractSnippet(
  */
 function formatSearchResult(
   doc: Doc<"documents">,
+  listing: Doc<"documentListings">,
   matchType: "content" | "filename",
   searchTerm: string,
 ) {
+  const visibleDocument = mapDocumentListing(listing);
   const snippetData =
     matchType === "content"
       ? extractSnippet(doc.extractedText, searchTerm)
       : null;
 
   return {
-    _id: doc._id,
-    filename: doc.filename,
-    contentType: doc.contentType,
-    size: doc.size,
-    downloadUrl: buildDocumentDownloadUrl(doc._id),
-    libraryId: doc.libraryId,
+    _id: visibleDocument._id,
+    filename: visibleDocument.filename,
+    contentType: visibleDocument.contentType,
+    size: visibleDocument.size,
+    downloadUrl: visibleDocument.downloadUrl,
+    libraryId: visibleDocument.libraryId,
     matchType,
     snippet: snippetData?.snippet ?? null,
     snippetMatchStart: snippetData?.matchStart ?? null,
@@ -183,29 +195,31 @@ async function performSearch(
   const seen = new Set<string>();
   const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-  // Helper to check if document should be included
-  const shouldInclude = (doc: Doc<"documents">) => {
-    // If no active library filter, include all
-    if (!activeLibraryIds) return true;
-    // If document has no library, exclude (orphaned)
-    if (!doc.libraryId) return false;
-    // Include only if library is active
-    return activeLibraryIds.includes(doc.libraryId);
+  const getVisibleListing = async (doc: Doc<"documents">) => {
+    const listing = await getDocumentListing(ctx, doc._id);
+    if (!listing) return null;
+    if (!activeLibraryIds) return listing;
+    if (!listing.libraryId) return null;
+    return activeLibraryIds.includes(listing.libraryId) ? listing : null;
   };
 
   // Content matches first (higher relevance)
   for (const doc of contentResults) {
-    if (!seen.has(doc._id) && shouldInclude(doc)) {
+    if (!seen.has(doc._id)) {
+      const listing = await getVisibleListing(doc);
+      if (!listing) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", searchTerm));
+      combined.push(formatSearchResult(doc, listing, "content", searchTerm));
     }
   }
 
   // Then filename matches
   for (const doc of filenameResults) {
-    if (!seen.has(doc._id) && shouldInclude(doc)) {
+    if (!seen.has(doc._id)) {
+      const listing = await getVisibleListing(doc);
+      if (!listing) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "filename", searchTerm));
+      combined.push(formatSearchResult(doc, listing, "filename", searchTerm));
     }
   }
 
@@ -473,17 +487,19 @@ export const searchByLibrary = query({
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
     for (const doc of contentResults) {
-      if (!seen.has(doc._id) && doc.libraryId === libraryId) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "content", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getDocumentListing(ctx, doc._id);
+      if (!listing || listing.libraryId !== libraryId) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, listing, "content", trimmed));
     }
 
     for (const doc of filenameResults) {
-      if (!seen.has(doc._id) && doc.libraryId === libraryId) {
-        seen.add(doc._id);
-        combined.push(formatSearchResult(doc, "filename", trimmed));
-      }
+      if (seen.has(doc._id)) continue;
+      const listing = await getDocumentListing(ctx, doc._id);
+      if (!listing || listing.libraryId !== libraryId) continue;
+      seen.add(doc._id);
+      combined.push(formatSearchResult(doc, listing, "filename", trimmed));
     }
 
     return combined.slice(0, limit);
@@ -505,6 +521,11 @@ export const getDownloadAsset = query({
 
     await requireMember(ctx, site.teamId);
 
+    const listing = await getDocumentListing(ctx, documentId);
+    if (!listing) {
+      return null;
+    }
+
     if (!document.assetId) {
       return null;
     }
@@ -516,9 +537,9 @@ export const getDownloadAsset = query({
 
     return {
       documentId: document._id,
-      filename: document.filename,
-      contentType: document.contentType,
-      size: document.size,
+      filename: listing.filename,
+      contentType: listing.contentType,
+      size: listing.size,
       bucket: asset.bucket,
       objectKey: asset.objectKey,
     };
@@ -541,9 +562,14 @@ export const getPublicDownloadAsset = query({
       return null;
     }
 
-    if (document.libraryId) {
+    const listing = await getDocumentListing(ctx, documentId);
+    if (!listing) {
+      return null;
+    }
+
+    if (listing.libraryId) {
       const activeLibraryIds = await getActiveLibraryIds(ctx, document.siteId);
-      if (!activeLibraryIds.has(document.libraryId)) {
+      if (!activeLibraryIds.has(listing.libraryId)) {
         return null;
       }
     } else {
@@ -560,9 +586,9 @@ export const getPublicDownloadAsset = query({
 
     return {
       documentId: document._id,
-      filename: document.filename,
-      contentType: document.contentType,
-      size: document.size,
+      filename: listing.filename,
+      contentType: listing.contentType,
+      size: listing.size,
       bucket: asset.bucket,
       objectKey: asset.objectKey,
     };

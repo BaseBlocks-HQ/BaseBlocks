@@ -1,6 +1,7 @@
 import { Migrations } from "@convex-dev/migrations";
 import { components, internal } from "./_generated/api.js";
 import type { DataModel, Doc, Id } from "./_generated/dataModel.js";
+import { deleteDocumentRows } from "./documents/lib.js";
 import { buildDocumentSearchMetadata } from "./lib/documentSearchMetadata.js";
 import { extractBlockNoteText } from "./lib/extractBlockNoteText.js";
 import { isExtractable } from "./lib/extractable.js";
@@ -1135,4 +1136,44 @@ export const stripSearchCdnUrl = migrations.define({
 });
 export const runStripSearchCdnUrl = migrations.runner([
   internal.migrations.stripSearchCdnUrl,
+]);
+
+// Migration 21: Enforce document listing projection integrity
+// ============================================================
+// documents is the canonical table. documentListings is a required lightweight
+// projection for any document visible in library/file UIs. Rows that do not
+// have their counterpart are invalid historical drift and must be removed.
+//
+// Run:
+//   npx convex run --deployment dev --push migrations:runPurgeInvalidDocumentRows
+//   npx convex run --deployment prod --push migrations:runPurgeInvalidDocumentRows
+export const purgeDocumentsMissingListings = migrations.define({
+  table: "documents",
+  batchSize: 25,
+  migrateOne: async (ctx, document) => {
+    const listing = await ctx.db
+      .query("documentListings")
+      .withIndex("by_document", (q) => q.eq("documentId", document._id))
+      .first();
+
+    if (listing) return;
+
+    await deleteDocumentRows(ctx, document);
+  },
+});
+
+export const purgeListingsMissingDocuments = migrations.define({
+  table: "documentListings",
+  batchSize: 50,
+  migrateOne: async (ctx, listing) => {
+    const document = await ctx.db.get(listing.documentId);
+    if (document) return;
+
+    await ctx.db.delete(listing._id);
+  },
+});
+
+export const runPurgeInvalidDocumentRows = migrations.runner([
+  internal.migrations.purgeDocumentsMissingListings,
+  internal.migrations.purgeListingsMissingDocuments,
 ]);

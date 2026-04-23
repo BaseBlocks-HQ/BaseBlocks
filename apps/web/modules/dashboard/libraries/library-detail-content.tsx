@@ -4,6 +4,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import { useFileUpload } from "@/lib/storage/hooks";
 import { cn } from "@/lib/utils";
+import { LibrarySearch } from "@/modules/dashboard/libraries/components/library-search";
 import {
   Breadcrumbs,
   CreateFolderButton,
@@ -14,7 +15,6 @@ import {
   useFolderOperations,
   useFolderPath,
 } from "@/modules/documents";
-import { LibrarySearch } from "@/modules/dashboard/libraries/components/library-search";
 import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -38,14 +38,7 @@ import {
 } from "@baseblocks/ui/empty";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useAction, useMutation, useQuery } from "convex/react";
-import {
-  ArrowLeft,
-  File,
-  Pencil,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { ArrowLeft, File, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -116,19 +109,24 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   };
 
   // Full-area drop zone — noClick so we don't accidentally open picker on content click
-  const { getRootProps, getInputProps, isDragActive, isDragReject, open: openFilePicker } =
-    useDropzone({
-      onDrop: (acceptedFiles) => {
-        if (acceptedFiles.length > 0) handleFilesAccepted(acceptedFiles);
-      },
-      disabled: isAnyUploading || !capabilities.canManageLibraries,
-      maxSize: MAX_FILE_SIZE,
-      multiple: true,
-      noClick: true,
-    });
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    isDragReject,
+    open: openFilePicker,
+  } = useDropzone({
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) handleFilesAccepted(acceptedFiles);
+    },
+    disabled: isAnyUploading || !capabilities.canManageLibraries,
+    maxSize: MAX_FILE_SIZE,
+    multiple: true,
+    noClick: true,
+  });
 
   const breadcrumbItems = [
-    { id: null, name: t("libraries.rootFolder") },
+    { id: null, name: library?.name ?? t("libraries.rootFolder") },
     ...folderPath.map((folder) => ({ id: folder._id, name: folder.name })),
   ];
 
@@ -179,7 +177,6 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
   return (
     <div className="flex flex-1 flex-col px-4 py-6 sm:px-6">
       <div className="mx-auto flex w-full max-w-[64rem] flex-1 flex-col gap-4 min-h-0">
-
         {/* ── Header row — mirrors the main libraries page ── */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-2">
@@ -226,15 +223,14 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
 
         {/* ── Shell ── */}
         <div className="flex flex-1 min-h-0 overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-
           {/* ── Panel sidebar ── */}
           <div className="flex w-52 shrink-0 flex-col overflow-hidden border-r bg-muted/15">
-
             {/* Folder tree */}
             <div className="flex-1 min-h-0">
               <FolderTree
                 canManageFolders={capabilities.canManageLibraries}
                 folders={folders}
+                rootLabel={library.name}
                 selectedFolderId={selectedFolderId}
                 onSelectFolder={(id) =>
                   setSelectedFolderId(id as Id<"documentFolders"> | null)
@@ -260,10 +256,7 @@ export function LibraryDetailContent({ libraryId }: LibraryDetailContentProps) {
                 <CreateFolderButton
                   className="w-full"
                   onSubmit={async (name) => {
-                    await createFolder(
-                      name,
-                      selectedFolderId ?? undefined,
-                    );
+                    await createFolder(name, selectedFolderId ?? undefined);
                   }}
                 />
               </div>
