@@ -3,34 +3,42 @@ import {
   NestedCard,
   NestedCardPeek,
   NestedCardSurface,
-  nestedCardPeekActionClass,
+  nestedCardRadiusClass,
   nestedCardShellOuterRadiusClass,
 } from "@baseblocks/ui/nested-card";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 const dashboardSitesGridClassName =
-  "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3";
+  "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
 
 function SiteCardSkeleton() {
   return (
     <NestedCard className="min-h-[13rem]">
       <NestedCardSurface className="min-h-0 flex-1 px-3 pb-3 pt-4">
-        <div className="flex h-full min-h-0 flex-col justify-between gap-4">
+        <div className="flex h-full min-h-0 flex-col gap-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
-              <Skeleton className="h-6 w-32" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-3 w-16" />
+              </div>
             </div>
-            <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
-          </div>
-          <div className="flex min-w-0 items-end gap-3">
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
+              <Skeleton className="h-9 w-9 shrink-0 rounded-xl" />
+            </div>
           </div>
         </div>
       </NestedCardSurface>
-      <NestedCardPeek>
-        <Skeleton className={cn("flex-1", nestedCardPeekActionClass)} />
-        <Skeleton className={cn("flex-1", nestedCardPeekActionClass)} />
+      <NestedCardPeek
+        className={cn(
+          nestedCardRadiusClass,
+          "border border-border/55 bg-background/80 p-1 shadow-[inset_0_1px_0_hsl(var(--background)/0.5)] dark:border-border/40 dark:bg-background/46 dark:shadow-[inset_0_1px_0_hsl(var(--background)/0.19)]",
+        )}
+      >
+        <Skeleton className="h-8 min-h-8 flex-1 rounded-[0.9rem] sm:rounded-[1rem]" />
+        <Skeleton className="h-8 min-h-8 flex-1 rounded-[0.9rem] sm:rounded-[1rem]" />
       </NestedCardPeek>
     </NestedCard>
   );

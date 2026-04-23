@@ -90,16 +90,20 @@ export function CreateSiteDialog({
         <button
           className={cn(
             nestedCardRadiusClass,
-            "flex min-h-[13rem] w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-muted-foreground/35 bg-transparent text-muted-foreground transition-colors",
-            "hover:border-primary/45 hover:bg-accent/20 hover:text-foreground",
+            "group relative flex min-h-[13rem] w-full flex-col items-center justify-center gap-3 overflow-hidden border-2 border-dashed border-muted-foreground/35 bg-transparent text-muted-foreground transition-[transform,border-color,background-color,color,box-shadow] duration-200 ease-out",
+            "hover:-translate-y-0.5 hover:border-primary/28 hover:bg-accent/14 hover:text-foreground hover:shadow-[0_10px_28px_hsl(var(--primary)/0.08)]",
             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+            "active:scale-[0.98]",
             "disabled:pointer-events-none disabled:opacity-50",
           )}
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2 font-medium">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/[0.018] via-transparent to-transparent opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100" />
+          <span className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-card shadow-[inset_0_1px_0_hsl(var(--background)/0.5)] transition-colors duration-200 ease-out group-hover:border-primary/25 group-hover:bg-background">
             <Plus className="h-4 w-4 shrink-0" />
+          </span>
+          <span className="relative flex items-center gap-2 font-medium">
             {t("dashboard.createSite")}
           </span>
         </button>

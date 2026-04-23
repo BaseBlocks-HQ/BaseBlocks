@@ -30,7 +30,7 @@ interface SitesGridProps {
 }
 
 const sitesGridClassName =
-  "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3";
+  "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
 
 export function SitesGrid({
   canManageSites,
