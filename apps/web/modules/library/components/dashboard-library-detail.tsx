@@ -1,5 +1,6 @@
 "use client";
 
+import { InlineEditableText } from "@/components/inline-editable-text";
 import { Link, useRouter } from "@/i18n/navigation";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import {
@@ -20,12 +21,18 @@ import {
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { LibrarySettingsDialog } from "../../dashboard/libraries/components/library-settings-dialog";
+import { toast } from "sonner";
 import { LibraryExplorer } from "./library-explorer";
 
 export function DashboardLibraryDetail({
@@ -46,7 +53,7 @@ export function DashboardLibraryDetail({
     siteId: data.library?.siteId ?? null,
   });
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const updateLibrary = useMutation(api.documentLibraries.mutations.update);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -84,6 +91,19 @@ export function DashboardLibraryDetail({
     }
   };
 
+  const handleRenameLibrary = async (name: string) => {
+    try {
+      await updateLibrary({
+        libraryId,
+        name,
+      });
+      toast.success(t("common.saved"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("common.error"));
+      throw error;
+    }
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
       <div className="mx-auto flex min-h-0 w-full max-w-[72rem] flex-1 flex-col gap-4 overflow-hidden">
@@ -102,9 +122,13 @@ export function DashboardLibraryDetail({
             </Button>
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
-                <h1 className="truncate text-2xl font-bold">
-                  {data.library.name}
-                </h1>
+                <InlineEditableText
+                  disabled={!capabilities.canManageLibraries}
+                  inputClassName="h-auto border-none shadow-none"
+                  onSubmit={handleRenameLibrary}
+                  textClassName="max-w-full text-2xl font-bold"
+                  value={data.library.name}
+                />
                 <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums text-muted-foreground">
                   {data.files.length.toLocaleString()}
                 </span>
@@ -116,25 +140,27 @@ export function DashboardLibraryDetail({
           </div>
 
           {capabilities.canManageLibraries ? (
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditDialogOpen(true)}
-              >
-                <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                {t("common.edit")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                className="border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                {t("common.delete")}
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label="Library actions"
+                  className="h-9 w-9 shrink-0"
+                  size="icon"
+                  variant="outline"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setDeleteDialogOpen(true)}
+                  variant="destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("common.delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : null}
         </header>
 
@@ -149,19 +175,6 @@ export function DashboardLibraryDetail({
           className="flex-1"
         />
       </div>
-
-      {capabilities.canManageLibraries ? (
-        <LibrarySettingsDialog
-          library={{
-            _id: data.library._id,
-            name: data.library.name,
-            siteId: data.library.siteId,
-            documentCount: data.files.length,
-          }}
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-        />
-      ) : null}
 
       {capabilities.canManageLibraries ? (
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

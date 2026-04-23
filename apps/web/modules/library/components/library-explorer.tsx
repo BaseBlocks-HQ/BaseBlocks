@@ -15,12 +15,7 @@ import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  CreateFolderDialog,
-  DeleteItemDialog,
-  MoveItemDialog,
-  RenameItemDialog,
-} from "./library-dialogs";
+import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
 import { LibraryFileViewer } from "./library-file-viewer";
 import { LibraryTree } from "./library-tree";
 import { UploadDropzone } from "./upload-dropzone";
@@ -57,10 +52,6 @@ export function LibraryExplorer({
   const [currentFolderId, setCurrentFolderId] = useState<FolderId | null>(null);
   const [openFilePath, setOpenFilePath] = useState<string | null>(null);
   const [treeDrawerOpen, setTreeDrawerOpen] = useState(false);
-  const [createFolderOpen, setCreateFolderOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<LibraryDialogTarget | null>(
-    null,
-  );
   const [deleteTarget, setDeleteTarget] = useState<LibraryDialogTarget | null>(
     null,
   );
@@ -104,15 +95,6 @@ export function LibraryExplorer({
     }
   };
 
-  const renameItem = async (target: LibraryDialogTarget, name: string) => {
-    if (target.kind === "folder") {
-      await actions.renameFolder?.(target.id, name);
-    } else {
-      await actions.renameFile?.(target.id, name);
-    }
-    toast.success("Renamed");
-  };
-
   const deleteItem = async (target: LibraryDialogTarget) => {
     if (target.kind === "folder") {
       await actions.deleteFolder?.(target.id);
@@ -146,8 +128,8 @@ export function LibraryExplorer({
     toast.success("Moved");
   };
 
-  const createFolder = async (name: string) => {
-    await actions.createFolder?.(name, currentFolderId ?? undefined);
+  const createFolder = async (name: string, parentId?: FolderId) => {
+    await actions.createFolder?.(name, parentId);
     toast.success("Folder created");
   };
 
@@ -202,12 +184,13 @@ export function LibraryExplorer({
     document.body.removeChild(link);
   };
 
-  const renameEntity = (entity: LibraryEntity) => {
-    setRenameTarget(
-      entity.kind === "folder"
-        ? { kind: "folder", id: entity.folder._id, name: entity.folder.name }
-        : { kind: "file", id: entity.file._id, name: entity.file.filename },
-    );
+  const renameEntity = async (entity: LibraryEntity, name: string) => {
+    if (entity.kind === "folder") {
+      await actions.renameFolder?.(entity.folder._id, name);
+    } else {
+      await actions.renameFile?.(entity.file._id, name);
+    }
+    toast.success("Renamed");
   };
 
   const moveEntity = (entity: LibraryEntity) => {
@@ -269,8 +252,14 @@ export function LibraryExplorer({
     <LibraryTree
       allowDownloads={options.allowDownloads}
       canManage={canManage}
+      currentFolderId={currentFolderId}
+      currentFolderPath={
+        currentFolderId
+          ? (model.folderPathById.get(currentFolderId) ?? null)
+          : null
+      }
       entities={model.entitiesByTreePath}
-      onCreateFolder={() => setCreateFolderOpen(true)}
+      onCreateFolder={createFolder}
       onDeleteEntity={deleteEntity}
       onDownloadFile={(entity) => {
         if (entity.kind === "file") downloadFile(entity.file);
@@ -380,16 +369,6 @@ export function LibraryExplorer({
         </DrawerContent>
       </Drawer>
 
-      <CreateFolderDialog
-        open={createFolderOpen}
-        onOpenChange={setCreateFolderOpen}
-        onSubmit={createFolder}
-      />
-      <RenameItemDialog
-        target={renameTarget}
-        onOpenChange={(open) => !open && setRenameTarget(null)}
-        onSubmit={renameItem}
-      />
       <DeleteItemDialog
         target={deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

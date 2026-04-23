@@ -1,14 +1,12 @@
 "use client";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
 import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { Button } from "@baseblocks/ui/button";
 import { useQuery } from "convex/react";
-import { ChevronRight, FileText, MoreHorizontal } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementEditorProps,
   ElementRendererProps,
@@ -58,21 +56,6 @@ function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
         </div>
         <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
       </button>
-      <PageExportMenu
-        pageId={content.pageId}
-        mode="draft"
-        trigger={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            title="Export sub-page"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        }
-      />
     </div>
   );
 }
@@ -112,21 +95,6 @@ function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
         </div>
         <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
       </button>
-      <PageExportMenu
-        pageId={content.pageId}
-        mode="published"
-        trigger={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            title="Export sub-page"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        }
-      />
     </div>
   );
 }

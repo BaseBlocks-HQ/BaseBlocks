@@ -1,6 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import {
+  type LibraryTreeViewMode,
+  buildDraftFolderViewPath,
+  buildLibraryTreeView,
+  getLibraryTreeViewLookupPath,
+  getLibraryTreeViewNameFromPath,
+} from "@/modules/library/model/library-tree-view";
 import type { FolderId, LibraryEntity } from "@/modules/library/types";
 import type {
   ContextMenuOpenContext,
@@ -9,14 +16,26 @@ import type {
   FileTree as FileTreeModel,
 } from "@pierre/trees";
 import { FileTree, useFileTree, useFileTreeSearch } from "@pierre/trees/react";
-import { FolderPlus, ListTree, Search, Upload } from "lucide-react";
+import {
+  Download,
+  FolderInput,
+  FolderOpen,
+  FolderPlus,
+  ListTree,
+  Pencil,
+  Search,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import {
   type MouseEvent as ReactMouseEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 
 const treeComposition = {
   contextMenu: {
@@ -46,53 +65,11 @@ const treeUnsafeCSS = `
 
   [data-item-section='content'] {
     flex: 1 1 auto;
+    min-width: 0;
   }
 
   [data-item-section='decoration']:empty {
     display: none;
-  }
-
-  [data-truncate-group-container='middle'] {
-    width: 100%;
-  }
-
-  [data-truncate-group-container='middle'] > [data-truncate-segment-priority='2'] {
-    flex: 1 1 auto;
-  }
-
-  [data-truncate-group-container='middle'] > [data-truncate-segment-priority='1'] {
-    flex: 0 0 auto;
-  }
-
-  [data-type='item'] > [data-item-section='spacing'] {
-    order: 0;
-  }
-
-  [data-type='item'] > [data-item-section='icon'] {
-    order: 1;
-  }
-
-  [data-type='item'] > [data-item-section='content'] {
-    display: none;
-  }
-
-  [data-type='item']::after {
-    content: attr(aria-label);
-    order: 2;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  [data-type='item'] > [data-item-section='decoration'] {
-    order: 3;
-  }
-
-  [data-type='item'] > [data-item-section='action'] {
-    order: 4;
   }
 `;
 
@@ -118,6 +95,8 @@ const treePanelStyle = {
 export function LibraryTree({
   allowDownloads,
   canManage,
+  currentFolderId,
+  currentFolderPath,
   entities,
   onCreateFolder,
   onDeleteEntity,
@@ -133,8 +112,10 @@ export function LibraryTree({
 }: {
   allowDownloads: boolean;
   canManage: boolean;
+  currentFolderId: FolderId | null;
+  currentFolderPath: string | null;
   entities: Map<string, LibraryEntity>;
-  onCreateFolder: () => void;
+  onCreateFolder: (name: string, parentId?: FolderId) => Promise<void>;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
   onDropEntities?: (
@@ -143,21 +124,23 @@ export function LibraryTree({
   ) => Promise<void>;
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
-  onRenameEntity: (entity: LibraryEntity) => void;
+  onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
   onUploadFiles: () => void;
   paths: string[];
   title?: string;
   uploadDisabled?: boolean;
 }) {
-  const [flattenEmptyDirectories, setFlattenEmptyDirectories] = useState(false);
+  const [mode, setMode] = useState<LibraryTreeViewMode>("tree");
 
   return (
     <LibraryTreeModel
-      key={flattenEmptyDirectories ? "flat" : "tree"}
+      key={mode}
       allowDownloads={allowDownloads}
       canManage={canManage}
+      currentFolderId={currentFolderId}
+      currentFolderPath={currentFolderPath}
       entities={entities}
-      flattenEmptyDirectories={flattenEmptyDirectories}
+      mode={mode}
       onCreateFolder={onCreateFolder}
       onDeleteEntity={onDeleteEntity}
       onDownloadFile={onDownloadFile}
@@ -165,7 +148,9 @@ export function LibraryTree({
       onMoveEntity={onMoveEntity}
       onOpenEntity={onOpenEntity}
       onRenameEntity={onRenameEntity}
-      onToggleFlatten={() => setFlattenEmptyDirectories((value) => !value)}
+      onToggleMode={() =>
+        setMode((value) => (value === "tree" ? "flat" : "tree"))
+      }
       onUploadFiles={onUploadFiles}
       paths={paths}
       title={title}
@@ -177,8 +162,10 @@ export function LibraryTree({
 function LibraryTreeModel({
   allowDownloads,
   canManage,
+  currentFolderId,
+  currentFolderPath,
   entities,
-  flattenEmptyDirectories,
+  mode,
   onCreateFolder,
   onDeleteEntity,
   onDownloadFile,
@@ -186,7 +173,7 @@ function LibraryTreeModel({
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
-  onToggleFlatten,
+  onToggleMode,
   onUploadFiles,
   paths,
   title,
@@ -194,9 +181,11 @@ function LibraryTreeModel({
 }: {
   allowDownloads: boolean;
   canManage: boolean;
+  currentFolderId: FolderId | null;
+  currentFolderPath: string | null;
   entities: Map<string, LibraryEntity>;
-  flattenEmptyDirectories: boolean;
-  onCreateFolder: () => void;
+  mode: LibraryTreeViewMode;
+  onCreateFolder: (name: string, parentId?: FolderId) => Promise<void>;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
   onDropEntities?: (
@@ -205,19 +194,31 @@ function LibraryTreeModel({
   ) => Promise<void>;
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
-  onRenameEntity: (entity: LibraryEntity) => void;
-  onToggleFlatten: () => void;
+  onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
+  onToggleMode: () => void;
   onUploadFiles: () => void;
   paths: string[];
   title?: string;
   uploadDisabled?: boolean;
 }) {
-  const [initialPaths] = useState(() => paths);
-  const entitiesRef = useRef(entities);
+  const view = useMemo(
+    () =>
+      buildLibraryTreeView({
+        entitiesByTreePath: entities,
+        mode,
+        treePaths: paths,
+      }),
+    [entities, mode, paths],
+  );
+  const entitiesRef = useRef(view.entitiesByViewPath);
   const modelRef = useRef<FileTreeModel | null>(null);
+  const onCreateFolderRef = useRef(onCreateFolder);
   const onDropEntitiesRef = useRef(onDropEntities);
-  const onOpenEntityRef = useRef(onOpenEntity);
-  const pathsRef = useRef(paths);
+  const onRenameEntityRef = useRef(onRenameEntity);
+  const pathsRef = useRef(view.paths);
+  const draftFoldersRef = useRef(
+    new Map<string, { parentId: FolderId | undefined }>(),
+  );
 
   const { model } = useFileTree({
     composition: treeComposition,
@@ -249,36 +250,86 @@ function LibraryTreeModel({
           }
         : false,
     fileTreeSearchMode: "hide-non-matches",
-    flattenEmptyDirectories,
+    flattenEmptyDirectories: false,
     icons: { colored: true, set: "complete" },
     initialExpansion: "open",
-    paths: initialPaths,
+    paths: view.paths,
+    renaming: canManage
+      ? {
+          onError: (error) => {
+            toast.error(error);
+          },
+          onRename: ({ destinationPath, isFolder, sourcePath }) => {
+            const lookupPath = getLibraryTreeViewLookupPath(
+              sourcePath,
+              isFolder,
+            );
+            const nextName = getLibraryTreeViewNameFromPath(
+              destinationPath,
+              mode,
+            ).trim();
+            const draftFolder = draftFoldersRef.current.get(lookupPath);
+            const entity = entitiesRef.current.get(lookupPath);
+
+            if (!nextName) {
+              modelRef.current?.resetPaths(pathsRef.current);
+              return;
+            }
+
+            if (draftFolder) {
+              draftFoldersRef.current.delete(lookupPath);
+              void onCreateFolderRef
+                .current(nextName, draftFolder.parentId)
+                .catch((error) => {
+                  modelRef.current?.resetPaths(pathsRef.current);
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Folder creation failed",
+                  );
+                });
+              return;
+            }
+
+            if (!entity) {
+              modelRef.current?.resetPaths(pathsRef.current);
+              return;
+            }
+
+            void onRenameEntityRef.current(entity, nextName).catch((error) => {
+              modelRef.current?.resetPaths(pathsRef.current);
+              toast.error(
+                error instanceof Error ? error.message : "Rename failed",
+              );
+            });
+          },
+        }
+      : false,
     search: true,
     searchBlurBehavior: "retain",
-    stickyFolders: true,
+    stickyFolders: mode === "tree",
     unsafeCSS: treeUnsafeCSS,
-    onSelectionChange: (selectedPaths) => {
-      const selectedPath = selectedPaths.at(-1);
-      if (!selectedPath) return;
-      const entity = entitiesRef.current.get(selectedPath);
-      if (entity) onOpenEntityRef.current(entity);
-    },
   });
   const search = useFileTreeSearch(model);
 
   useEffect(() => {
-    entitiesRef.current = entities;
+    entitiesRef.current = view.entitiesByViewPath;
     modelRef.current = model;
+    onCreateFolderRef.current = onCreateFolder;
     onDropEntitiesRef.current = onDropEntities;
-    onOpenEntityRef.current = onOpenEntity;
-    pathsRef.current = paths;
-  }, [entities, model, onDropEntities, onOpenEntity, paths]);
+    onRenameEntityRef.current = onRenameEntity;
+    pathsRef.current = view.paths;
+  }, [model, onCreateFolder, onDropEntities, onRenameEntity, view]);
 
   useEffect(() => {
-    model.resetPaths(paths);
-  }, [model, paths]);
+    model.resetPaths(view.paths);
+  }, [model, view.paths]);
 
   const openEntityFromEvent = (event: ReactMouseEvent<HTMLElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
     const path = event.nativeEvent.composedPath();
     if (
       path.some(
@@ -301,8 +352,42 @@ function LibraryTreeModel({
     const entityPath = row.dataset.itemPath ?? row.dataset.fileTreeStickyPath;
     if (!entityPath) return;
 
-    const entity = entities.get(entityPath);
-    if (entity) onOpenEntity(entity);
+    const entity = view.entitiesByViewPath.get(entityPath);
+    if (entity?.kind === "file") onOpenEntity(entity);
+  };
+
+  const createFolderInline = () => {
+    if (!canManage) return;
+
+    const selectedPath = model.getSelectedPaths().at(-1);
+    const selectedEntity = selectedPath
+      ? view.entitiesByViewPath.get(selectedPath)
+      : undefined;
+    const parentId =
+      selectedEntity?.kind === "folder"
+        ? selectedEntity.folder._id
+        : selectedEntity?.kind === "file"
+          ? selectedEntity.file.folderId
+          : (currentFolderId ?? undefined);
+    const parentActualPath =
+      selectedEntity?.kind === "folder"
+        ? selectedEntity.path
+        : selectedEntity?.kind === "file"
+          ? getParentActualPath(selectedEntity.path)
+          : currentFolderPath;
+    const draft = buildDraftFolderViewPath({
+      existingViewPaths: view.paths,
+      mode,
+      parentActualPath,
+    });
+
+    draftFoldersRef.current.set(draft.viewPath, { parentId });
+    model.add(draft.viewPath);
+
+    if (!model.startRenaming(draft.viewPath, { removeIfCanceled: true })) {
+      draftFoldersRef.current.delete(draft.viewPath);
+      model.resetPaths(pathsRef.current);
+    }
   };
 
   return (
@@ -312,13 +397,13 @@ function LibraryTreeModel({
       header={
         <LibraryTreeHeader
           canManage={canManage}
-          flattenEmptyDirectories={flattenEmptyDirectories}
-          onCreateFolder={onCreateFolder}
+          mode={mode}
+          onCreateFolder={createFolderInline}
+          onToggleMode={onToggleMode}
           onToggleSearch={() => {
             if (search.isOpen) search.close();
             else search.open();
           }}
-          onToggleFlatten={onToggleFlatten}
           onUploadFiles={onUploadFiles}
           searchOpen={search.isOpen}
           title={title}
@@ -328,7 +413,7 @@ function LibraryTreeModel({
       model={model}
       onClick={openEntityFromEvent}
       renderContextMenu={(item, context) => {
-        const entity = entities.get(item.path);
+        const entity = view.entitiesByViewPath.get(item.path);
         if (!entity) return null;
 
         return (
@@ -341,7 +426,10 @@ function LibraryTreeModel({
             onDownload={() => onDownloadFile(entity)}
             onMove={() => onMoveEntity(entity)}
             onOpen={() => onOpenEntity(entity)}
-            onRename={() => onRenameEntity(entity)}
+            onRename={() => {
+              context.close({ restoreFocus: false });
+              model.startRenaming(item.path);
+            }}
           />
         );
       }}
@@ -375,20 +463,20 @@ function resolveDropTargetFolderId(
 
 function LibraryTreeHeader({
   canManage,
-  flattenEmptyDirectories,
+  mode,
   onCreateFolder,
+  onToggleMode,
   onToggleSearch,
-  onToggleFlatten,
   onUploadFiles,
   searchOpen,
   title,
   uploadDisabled,
 }: {
   canManage: boolean;
-  flattenEmptyDirectories: boolean;
+  mode: LibraryTreeViewMode;
   onCreateFolder: () => void;
+  onToggleMode: () => void;
   onToggleSearch: () => void;
-  onToggleFlatten: () => void;
   onUploadFiles: () => void;
   searchOpen: boolean;
   title?: string;
@@ -412,13 +500,9 @@ function LibraryTreeHeader({
           <Search className="h-3.5 w-3.5" />
         </TreeHeaderButton>
         <TreeHeaderButton
-          label={
-            flattenEmptyDirectories
-              ? "Show folder levels"
-              : "Flatten empty folders"
-          }
-          onClick={onToggleFlatten}
-          pressed={flattenEmptyDirectories}
+          label={mode === "tree" ? "Show flat list" : "Show tree list"}
+          onClick={onToggleMode}
+          pressed={mode === "flat"}
         >
           <ListTree className="h-3.5 w-3.5" />
         </TreeHeaderButton>
@@ -515,15 +599,39 @@ function LibraryTreeContextMenu({
       className="fixed z-50 min-w-44 rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-border/80"
       style={{ left, top }}
     >
-      <MenuItem onClick={() => runAction(onOpen)}>Open</MenuItem>
+      <MenuItem
+        icon={<FolderOpen className="h-3.5 w-3.5" />}
+        onClick={() => runAction(onOpen)}
+      >
+        Open
+      </MenuItem>
       {entity.kind === "file" && allowDownloads ? (
-        <MenuItem onClick={() => runAction(onDownload)}>Download</MenuItem>
+        <MenuItem
+          icon={<Download className="h-3.5 w-3.5" />}
+          onClick={() => runAction(onDownload)}
+        >
+          Download
+        </MenuItem>
       ) : null}
       {canManage ? (
         <>
-          <MenuItem onClick={() => runAction(onRename)}>Rename</MenuItem>
-          <MenuItem onClick={() => runAction(onMove)}>Move</MenuItem>
-          <MenuItem destructive onClick={() => runAction(onDelete)}>
+          <MenuItem
+            icon={<Pencil className="h-3.5 w-3.5" />}
+            onClick={onRename}
+          >
+            Rename
+          </MenuItem>
+          <MenuItem
+            icon={<FolderInput className="h-3.5 w-3.5" />}
+            onClick={() => runAction(onMove)}
+          >
+            Move
+          </MenuItem>
+          <MenuItem
+            destructive
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+            onClick={() => runAction(onDelete)}
+          >
             Delete
           </MenuItem>
         </>
@@ -536,10 +644,12 @@ function LibraryTreeContextMenu({
 function MenuItem({
   children,
   destructive,
+  icon,
   onClick,
 }: {
   children: React.ReactNode;
   destructive?: boolean;
+  icon?: React.ReactNode;
   onClick: () => void;
 }) {
   return (
@@ -547,13 +657,19 @@ function MenuItem({
       type="button"
       role="menuitem"
       className={cn(
-        "flex h-8 w-full items-center rounded-sm px-2 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+        "flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
         destructive &&
           "text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive",
       )}
       onClick={onClick}
     >
+      <span className="shrink-0">{icon}</span>
       {children}
     </button>
   );
+}
+
+function getParentActualPath(path: string) {
+  const separatorIndex = path.lastIndexOf("/");
+  return separatorIndex === -1 ? null : path.slice(0, separatorIndex);
 }
