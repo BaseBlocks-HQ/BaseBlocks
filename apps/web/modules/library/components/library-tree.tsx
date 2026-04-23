@@ -1,12 +1,14 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { LibraryEntity } from "@/modules/library/types";
+import type { FolderId, LibraryEntity } from "@/modules/library/types";
 import type {
   ContextMenuOpenContext,
   FileTreeCompositionOptions,
+  FileTreeDropResult,
+  FileTree as FileTreeModel,
 } from "@pierre/trees";
-import { FileTree, useFileTree } from "@pierre/trees/react";
+import { FileTree, useFileTree, useFileTreeSearch } from "@pierre/trees/react";
 import { FolderPlus, ListTree, Search, Upload } from "lucide-react";
 import {
   type MouseEvent as ReactMouseEvent,
@@ -27,7 +29,19 @@ const treeComposition = {
 const treeUnsafeCSS = `
   [data-type='item'] {
     box-sizing: border-box;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      box-shadow 120ms ease;
     width: 100%;
+  }
+
+  [data-type='item']:hover {
+    color: var(--trees-selected-fg);
+  }
+
+  [data-file-tree-search-container][data-open='false'] {
+    display: none;
   }
 
   [data-item-section='content'] {
@@ -87,8 +101,18 @@ const treePanelStyle = {
   height: "100%",
   minHeight: 0,
   width: "100%",
+  "--trees-accent-override": "var(--primary)",
   "--trees-bg-override": "transparent",
-  "--trees-search-bg-override": "light-dark(#fff, oklch(14.5% 0 0))",
+  "--trees-bg-muted-override":
+    "color-mix(in oklab, var(--primary) 7%, transparent)",
+  "--trees-border-color-override": "transparent",
+  "--trees-focus-ring-color-override": "var(--ring)",
+  "--trees-search-bg-override":
+    "color-mix(in oklab, var(--primary) 6%, var(--background))",
+  "--trees-selected-bg-override":
+    "color-mix(in oklab, var(--primary) 10%, transparent)",
+  "--trees-selected-focused-border-color-override":
+    "color-mix(in oklab, var(--primary) 42%, transparent)",
 } as const;
 
 export function LibraryTree({
@@ -98,11 +122,13 @@ export function LibraryTree({
   onCreateFolder,
   onDeleteEntity,
   onDownloadFile,
+  onDropEntities,
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
   onUploadFiles,
   paths,
+  title,
   uploadDisabled,
 }: {
   allowDownloads: boolean;
@@ -111,11 +137,16 @@ export function LibraryTree({
   onCreateFolder: () => void;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
+  onDropEntities?: (
+    entities: LibraryEntity[],
+    targetFolderId: FolderId | undefined,
+  ) => Promise<void>;
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity) => void;
   onUploadFiles: () => void;
   paths: string[];
+  title?: string;
   uploadDisabled?: boolean;
 }) {
   const [flattenEmptyDirectories, setFlattenEmptyDirectories] = useState(false);
@@ -130,12 +161,14 @@ export function LibraryTree({
       onCreateFolder={onCreateFolder}
       onDeleteEntity={onDeleteEntity}
       onDownloadFile={onDownloadFile}
+      onDropEntities={onDropEntities}
       onMoveEntity={onMoveEntity}
       onOpenEntity={onOpenEntity}
       onRenameEntity={onRenameEntity}
       onToggleFlatten={() => setFlattenEmptyDirectories((value) => !value)}
       onUploadFiles={onUploadFiles}
       paths={paths}
+      title={title}
       uploadDisabled={uploadDisabled}
     />
   );
@@ -149,12 +182,14 @@ function LibraryTreeModel({
   onCreateFolder,
   onDeleteEntity,
   onDownloadFile,
+  onDropEntities,
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
   onToggleFlatten,
   onUploadFiles,
   paths,
+  title,
   uploadDisabled,
 }: {
   allowDownloads: boolean;
@@ -164,24 +199,55 @@ function LibraryTreeModel({
   onCreateFolder: () => void;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
+  onDropEntities?: (
+    entities: LibraryEntity[],
+    targetFolderId: FolderId | undefined,
+  ) => Promise<void>;
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity) => void;
   onToggleFlatten: () => void;
   onUploadFiles: () => void;
   paths: string[];
+  title?: string;
   uploadDisabled?: boolean;
 }) {
-  const initialPaths = useRef(paths).current;
+  const [initialPaths] = useState(() => paths);
   const entitiesRef = useRef(entities);
+  const modelRef = useRef<FileTreeModel | null>(null);
+  const onDropEntitiesRef = useRef(onDropEntities);
   const onOpenEntityRef = useRef(onOpenEntity);
-
-  entitiesRef.current = entities;
-  onOpenEntityRef.current = onOpenEntity;
+  const pathsRef = useRef(paths);
 
   const { model } = useFileTree({
     composition: treeComposition,
     density: "compact",
+    dragAndDrop:
+      canManage && onDropEntities
+        ? {
+            canDrag: (draggedPaths) =>
+              draggedPaths.every((path) => entitiesRef.current.has(path)),
+            onDropComplete: (event) => {
+              const draggedEntities = resolveDroppedEntities(
+                event,
+                entitiesRef.current,
+              );
+              const targetFolderId = resolveDropTargetFolderId(
+                event,
+                entitiesRef.current,
+              );
+
+              void onDropEntitiesRef
+                .current?.(draggedEntities, targetFolderId)
+                .catch(() => {
+                  modelRef.current?.resetPaths(pathsRef.current);
+                });
+            },
+            onDropError: () => {
+              modelRef.current?.resetPaths(pathsRef.current);
+            },
+          }
+        : false,
     fileTreeSearchMode: "hide-non-matches",
     flattenEmptyDirectories,
     icons: { colored: true, set: "complete" },
@@ -198,6 +264,15 @@ function LibraryTreeModel({
       if (entity) onOpenEntityRef.current(entity);
     },
   });
+  const search = useFileTreeSearch(model);
+
+  useEffect(() => {
+    entitiesRef.current = entities;
+    modelRef.current = model;
+    onDropEntitiesRef.current = onDropEntities;
+    onOpenEntityRef.current = onOpenEntity;
+    pathsRef.current = paths;
+  }, [entities, model, onDropEntities, onOpenEntity, paths]);
 
   useEffect(() => {
     model.resetPaths(paths);
@@ -239,9 +314,14 @@ function LibraryTreeModel({
           canManage={canManage}
           flattenEmptyDirectories={flattenEmptyDirectories}
           onCreateFolder={onCreateFolder}
-          onOpenSearch={() => model.openSearch()}
+          onToggleSearch={() => {
+            if (search.isOpen) search.close();
+            else search.open();
+          }}
           onToggleFlatten={onToggleFlatten}
           onUploadFiles={onUploadFiles}
+          searchOpen={search.isOpen}
+          title={title}
           uploadDisabled={uploadDisabled}
         />
       }
@@ -270,53 +350,93 @@ function LibraryTreeModel({
   );
 }
 
+function resolveDroppedEntities(
+  event: FileTreeDropResult,
+  entities: Map<string, LibraryEntity>,
+) {
+  return event.draggedPaths.flatMap((path) => {
+    const entity = entities.get(path);
+    return entity ? [entity] : [];
+  });
+}
+
+function resolveDropTargetFolderId(
+  event: FileTreeDropResult,
+  entities: Map<string, LibraryEntity>,
+) {
+  if (event.target.kind === "root") return undefined;
+  const targetPath =
+    event.target.directoryPath ?? event.target.flattenedSegmentPath;
+  if (!targetPath) return undefined;
+
+  const target = entities.get(targetPath);
+  return target?.kind === "folder" ? target.folder._id : undefined;
+}
+
 function LibraryTreeHeader({
   canManage,
   flattenEmptyDirectories,
   onCreateFolder,
-  onOpenSearch,
+  onToggleSearch,
   onToggleFlatten,
   onUploadFiles,
+  searchOpen,
+  title,
   uploadDisabled,
 }: {
   canManage: boolean;
   flattenEmptyDirectories: boolean;
   onCreateFolder: () => void;
-  onOpenSearch: () => void;
+  onToggleSearch: () => void;
   onToggleFlatten: () => void;
   onUploadFiles: () => void;
+  searchOpen: boolean;
+  title?: string;
   uploadDisabled?: boolean;
 }) {
   return (
-    <div className="group/tree-header flex h-10 items-center justify-end gap-1.5 border-b bg-background/95 px-2">
-      <TreeHeaderButton label="Search files" onClick={onOpenSearch}>
-        <Search className="h-3.5 w-3.5" />
-      </TreeHeaderButton>
-      <TreeHeaderButton
-        label={
-          flattenEmptyDirectories
-            ? "Show folder levels"
-            : "Flatten empty folders"
-        }
-        onClick={onToggleFlatten}
-        pressed={flattenEmptyDirectories}
-      >
-        <ListTree className="h-3.5 w-3.5" />
-      </TreeHeaderButton>
-      {canManage ? (
-        <>
-          <TreeHeaderButton
-            disabled={uploadDisabled}
-            label="Upload files"
-            onClick={onUploadFiles}
-          >
-            <Upload className="h-3.5 w-3.5" />
-          </TreeHeaderButton>
-          <TreeHeaderButton label="New folder" onClick={onCreateFolder}>
-            <FolderPlus className="h-3.5 w-3.5" />
-          </TreeHeaderButton>
-        </>
-      ) : null}
+    <div className="group/tree-header flex h-10 items-center justify-between gap-2 bg-transparent px-2">
+      <div className="flex min-w-0 items-center gap-2 pl-1">
+        {title ? (
+          <span className="truncate text-xs font-medium text-foreground">
+            {title}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <TreeHeaderButton
+          label={searchOpen ? "Close search" : "Search files"}
+          onClick={onToggleSearch}
+          pressed={searchOpen}
+        >
+          <Search className="h-3.5 w-3.5" />
+        </TreeHeaderButton>
+        <TreeHeaderButton
+          label={
+            flattenEmptyDirectories
+              ? "Show folder levels"
+              : "Flatten empty folders"
+          }
+          onClick={onToggleFlatten}
+          pressed={flattenEmptyDirectories}
+        >
+          <ListTree className="h-3.5 w-3.5" />
+        </TreeHeaderButton>
+        {canManage ? (
+          <>
+            <TreeHeaderButton
+              disabled={uploadDisabled}
+              label="Upload files"
+              onClick={onUploadFiles}
+            >
+              <Upload className="h-3.5 w-3.5" />
+            </TreeHeaderButton>
+            <TreeHeaderButton label="New folder" onClick={onCreateFolder}>
+              <FolderPlus className="h-3.5 w-3.5" />
+            </TreeHeaderButton>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -340,8 +460,8 @@ function TreeHeaderButton({
       aria-label={label}
       aria-pressed={pressed}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:bg-muted focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
-        pressed && "bg-muted text-foreground",
+        "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
+        pressed && "bg-primary/10 text-primary",
       )}
       disabled={disabled}
       onClick={onClick}

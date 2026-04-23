@@ -19,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
-import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useMutation, useQuery } from "convex/react";
@@ -106,11 +105,9 @@ export function DashboardLibraryDetail({
                 <h1 className="truncate text-2xl font-bold">
                   {data.library.name}
                 </h1>
-                <Badge variant="secondary" className="shrink-0 tabular-nums">
-                  {data.files.length === 1
-                    ? "1 file"
-                    : `${data.files.length.toLocaleString()} files`}
-                </Badge>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums text-muted-foreground">
+                  {data.files.length.toLocaleString()}
+                </span>
               </div>
               <p className="truncate text-sm text-muted-foreground">
                 {site.name}

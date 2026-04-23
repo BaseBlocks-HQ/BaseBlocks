@@ -92,8 +92,12 @@ export function LibraryExplorer({
   };
 
   const uploadFiles = async (files: File[]) => {
+    const upload = actions.uploadFiles;
+    if (!upload) return;
+
+    const targetFolderId = currentFolderId ?? undefined;
     try {
-      await actions.uploadFiles?.(files, currentFolderId ?? undefined);
+      await upload(files, targetFolderId);
       toast.success("Uploaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
@@ -145,6 +149,46 @@ export function LibraryExplorer({
   const createFolder = async (name: string) => {
     await actions.createFolder?.(name, currentFolderId ?? undefined);
     toast.success("Folder created");
+  };
+
+  // Failure modes:
+  // - Move mutations are unavailable in read-only contexts
+  // - Target folder was deleted or permissions changed before the drop commits
+  // - Multiple selected items partially move if the backend rejects one request
+  const dropEntities = async (
+    entities: LibraryEntity[],
+    targetFolderId: FolderId | undefined,
+  ) => {
+    if (!canManage) throw new Error("You do not have permission to move files");
+
+    let movedCount = 0;
+    for (const entity of entities) {
+      if (entity.kind === "folder") {
+        if (!actions.moveFolder) {
+          throw new Error("Moving folders is not available for this library");
+        }
+        if ((entity.folder.parentId ?? undefined) === targetFolderId) continue;
+        await actions.moveFolder(entity.folder._id, targetFolderId);
+        if (currentFolderId === entity.folder._id) {
+          setCurrentFolderId(entity.folder._id);
+        }
+      } else {
+        if (!actions.moveFile) {
+          throw new Error("Moving files is not available for this library");
+        }
+        if ((entity.file.folderId ?? undefined) === targetFolderId) continue;
+        await actions.moveFile(entity.file._id, targetFolderId);
+        if (
+          openEntity?.kind === "file" &&
+          openEntity.file._id === entity.file._id
+        ) {
+          setCurrentFolderId(targetFolderId ?? null);
+        }
+      }
+      movedCount += 1;
+    }
+
+    if (movedCount > 0) toast.success("Moved");
   };
 
   const downloadFile = (file: LibraryFile) => {
@@ -231,11 +275,26 @@ export function LibraryExplorer({
       onDownloadFile={(entity) => {
         if (entity.kind === "file") downloadFile(entity.file);
       }}
+      onDropEntities={
+        canManage && actions.moveFile && actions.moveFolder
+          ? async (entities, targetFolderId) => {
+              try {
+                await dropEntities(entities, targetFolderId);
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Move failed",
+                );
+                throw error;
+              }
+            }
+          : undefined
+      }
       paths={model.treePaths}
       onOpenEntity={openEntityInExplorer}
       onMoveEntity={moveEntity}
       onRenameEntity={renameEntity}
       onUploadFiles={() => fileInputRef.current?.click()}
+      title={options.embedded ? data.library.name : undefined}
       uploadDisabled={uploadState?.isAnyUploading}
     />
   );
@@ -302,28 +361,13 @@ export function LibraryExplorer({
   ) : (
     <div className="min-h-0 flex-1">{tree}</div>
   );
-  const embeddedHeader = options.embedded ? (
-    <div className="flex min-h-10 items-center gap-2 border-b bg-background px-3">
-      <div className="min-w-0 flex-1">
-        <h2 className="truncate text-sm font-medium" title={data.library.name}>
-          {data.library.name}
-        </h2>
-      </div>
-      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
-        {data.files.length === 1
-          ? "1 file"
-          : `${data.files.length.toLocaleString()} files`}
-      </span>
-    </div>
-  ) : null;
-
   return (
     <>
       <UploadDropzone
         disabled={!canManage || !actions.uploadFiles}
         onFilesAccepted={uploadFiles}
         className={cn(
-          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border border-solid border-muted-foreground/25 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-primary/30 hover:bg-primary/5",
           options.embedded ? "h-[32rem]" : "h-full flex-1",
           className,
         )}
@@ -339,7 +383,6 @@ export function LibraryExplorer({
             event.target.value = "";
           }}
         />
-        {embeddedHeader}
         {uploadState && Object.keys(uploadState.uploadStates).length > 0 ? (
           <div className="border-b px-3 py-2">
             <UploadProgressList
