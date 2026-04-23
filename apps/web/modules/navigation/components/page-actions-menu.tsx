@@ -1,6 +1,6 @@
 "use client";
 
-import { FormDialog, ConfirmDialog } from "@/components/dialogs";
+import { ConfirmDialog, FormDialog } from "@/components/dialogs";
 import { usePages } from "@/lib/data";
 import {
   useEditorSite,
@@ -183,17 +183,13 @@ export function PageActionsMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleSetExposure("block")}>
             <Check
-              className={
-                exposure === "block" ? "h-4 w-4" : "h-4 w-4 opacity-0"
-              }
+              className={exposure === "block" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
             />
             Page Block Only
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleSetExposure("both")}>
             <Check
-              className={
-                exposure === "both" ? "h-4 w-4" : "h-4 w-4 opacity-0"
-              }
+              className={exposure === "both" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
             />
             Navigation and Block
           </DropdownMenuItem>

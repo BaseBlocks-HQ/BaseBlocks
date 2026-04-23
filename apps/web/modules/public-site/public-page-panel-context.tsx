@@ -1,12 +1,8 @@
 "use client";
 
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
-import {
-  type ReactNode,
-  createContext,
-  use,
-} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, createContext, use } from "react";
 
 interface ViewingPage {
   pageId: string;

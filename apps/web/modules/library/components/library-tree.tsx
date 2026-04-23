@@ -2,10 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import {
-  buildLibraryTreeViewLookup,
   type LibraryTreeViewMode,
   buildDraftFolderViewPath,
   buildLibraryTreeView,
+  buildLibraryTreeViewLookup,
   getLibraryTreeViewLookupPath,
   getLibraryTreeViewNameFromPath,
 } from "@/modules/library/model/library-tree-view";
@@ -324,7 +324,14 @@ function LibraryTreeModel({
     onDropEntitiesRef.current = onDropEntities;
     onRenameEntityRef.current = onRenameEntity;
     pathsRef.current = view.paths;
-  }, [entityLookup, model, onCreateFolder, onDropEntities, onRenameEntity, view.paths]);
+  }, [
+    entityLookup,
+    model,
+    onCreateFolder,
+    onDropEntities,
+    onRenameEntity,
+    view.paths,
+  ]);
 
   useEffect(() => {
     model.resetPaths(view.paths);

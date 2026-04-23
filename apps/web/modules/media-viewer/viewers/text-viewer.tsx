@@ -160,10 +160,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
         >
           <WrapText className="h-4 w-4" />
         </ViewerToolbarIconButton>
-        <ViewerToolbarIconButton
-          label="Copy to clipboard"
-          onClick={handleCopy}
-        >
+        <ViewerToolbarIconButton label="Copy to clipboard" onClick={handleCopy}>
           {copied ? (
             <Check className="h-4 w-4 text-green-500" />
           ) : (

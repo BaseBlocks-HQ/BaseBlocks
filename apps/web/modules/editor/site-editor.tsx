@@ -2,8 +2,8 @@
 
 import { EditorSkeleton } from "@/components/skeletons";
 import { usePages } from "@/lib/data/use-page";
-import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useSite } from "@/lib/data/use-site";
+import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
