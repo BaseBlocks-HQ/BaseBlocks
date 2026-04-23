@@ -69,11 +69,11 @@ export function TeamContent() {
   }
 
   return (
-    <main className="flex-1 p-6 space-y-6">
+    <main className="flex-1 px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-[64rem] space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center gap-2">
           {capabilities.canManageTeam && (
@@ -147,6 +147,7 @@ export function TeamContent() {
           )}
         </div>
       )}
+      </div>
     </main>
   );
 }

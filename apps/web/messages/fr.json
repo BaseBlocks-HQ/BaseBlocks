@@ -306,7 +306,7 @@
     "deleteAccountError": "Echec de la suppression du compte"
   },
   "team": {
-    "title": "Membres de l'equipe",
+    "title": "Équipe",
     "description": "Gerez les membres de votre organisation et leurs roles d'acces",
     "inviteMember": "Inviter un membre",
     "memberCount": "{count} membres",

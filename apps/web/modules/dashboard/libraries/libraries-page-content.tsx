@@ -68,39 +68,41 @@ export function LibrariesPageContent() {
 
   if (sites === undefined) {
     return (
-      <main className="flex-1 p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <Skeleton className="h-7 w-36 mb-2" />
-            <Skeleton className="h-4 w-56" />
-          </div>
-          <Skeleton className="h-9 w-28 rounded-md" />
-        </div>
-        <div className="space-y-8">
-          {["skeleton-a", "skeleton-b"].map((skeletonId) => (
-            <div key={skeletonId} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-4 rounded" />
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-4 w-6 rounded-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-14 w-full rounded-lg" />
-                <Skeleton className="h-14 w-full rounded-lg" />
-              </div>
+      <main className="flex-1 px-4 py-6 sm:px-6">
+        <div className="mx-auto w-full max-w-[64rem]">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton className="h-7 w-36 mb-2" />
+              <Skeleton className="h-4 w-56" />
             </div>
-          ))}
+            <Skeleton className="h-9 w-28 rounded-md" />
+          </div>
+          <div className="space-y-8">
+            {["skeleton-a", "skeleton-b"].map((skeletonId) => (
+              <div key={skeletonId} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-4 w-6 rounded-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 p-6">
+    <main className="flex-1 px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-[64rem]">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">{t("libraries.title")}</h1>
-          <p className="text-muted-foreground">{t("libraries.subtitle")}</p>
         </div>
         {capabilities.canManageLibraries && sites && sites.length > 0 && (
           <CreateLibraryDialog sites={sites} />
@@ -180,6 +182,7 @@ export function LibrariesPageContent() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+      </div>
     </main>
   );
 }

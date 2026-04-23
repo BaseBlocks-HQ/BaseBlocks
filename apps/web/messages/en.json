@@ -306,7 +306,7 @@
     "deleteAccountError": "Failed to delete account"
   },
   "team": {
-    "title": "Team Members",
+    "title": "Team",
     "description": "Manage your organization's team members and their access roles",
     "inviteMember": "Invite Member",
     "memberCount": "{count} members",
