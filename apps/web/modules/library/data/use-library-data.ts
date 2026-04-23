@@ -73,6 +73,7 @@ export function useLibraryActions(args: {
   uploadStates: ReturnType<typeof useFileUpload>["uploadStates"];
   isAnyUploading: boolean;
   clearAllUploadStates: () => void;
+  totalProgress: ReturnType<typeof useFileUpload>["totalProgress"];
 } {
   const createFolderMutation = useMutation(
     api.documentFolders.mutations.create,
@@ -86,13 +87,19 @@ export function useLibraryActions(args: {
   const retryExtractionAction = useAction(
     api.actions.extractDocument.retryExtraction,
   );
-  const { uploadFiles, uploadStates, isAnyUploading, clearAllUploadStates } =
-    useFileUpload();
+  const {
+    uploadFiles,
+    uploadStates,
+    isAnyUploading,
+    clearAllUploadStates,
+    totalProgress,
+  } = useFileUpload();
 
   return {
     uploadStates,
     isAnyUploading,
     clearAllUploadStates,
+    totalProgress,
     createFolder: async (name, parentId) => {
       if (!args.libraryId) throw new Error("No library selected");
       await createFolderMutation({
@@ -128,11 +135,15 @@ export function useLibraryActions(args: {
       if (!args.libraryId || !args.siteId) {
         throw new Error("No library selected");
       }
-      await uploadFiles(files, {
-        siteId: args.siteId,
-        libraryId: args.libraryId,
-        folderId,
-      });
+      try {
+        return await uploadFiles(files, {
+          siteId: args.siteId,
+          libraryId: args.libraryId,
+          folderId,
+        });
+      } finally {
+        clearAllUploadStates();
+      }
     },
   };
 }

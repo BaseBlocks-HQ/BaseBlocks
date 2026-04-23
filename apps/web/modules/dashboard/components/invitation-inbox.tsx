@@ -1,20 +1,17 @@
 "use client";
 
+import {
+  DashboardConfirmDialog,
+  DashboardDialogShell,
+} from "@/components/dialogs";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
 import { Check, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -86,6 +83,13 @@ const initialState: InboxState = {
   error: null,
 };
 
+function organizationLabel(
+  invitation: ReceivedInvitation,
+  invitedToOrg: string,
+) {
+  return invitation.organizationName || invitation.inviterEmail || invitedToOrg;
+}
+
 interface InvitationInboxProps {
   fullWidth?: boolean;
   fullWidthTriggerClassName?: string;
@@ -98,15 +102,29 @@ export function InvitationInbox({
   onboardingMode = false,
 }: InvitationInboxProps) {
   const t = useTranslations("inbox");
+  const tTeam = useTranslations("team");
+  const tCommon = useTranslations("common");
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [declineTarget, setDeclineTarget] = useState<ReceivedInvitation | null>(
+    null,
+  );
+  const [isDeclining, setIsDeclining] = useState(false);
   const [state, dispatch] = useReducer(inboxReducer, initialState);
   const { invitations, isLoading, processingId, error } = state;
 
   const syncMember = useMutation(
     api.members.mutations.syncMemberFromInvitation,
   );
+
+  const roleLabel = (role: string) => {
+    if (role === "admin") return tTeam("roles.admin");
+    if (role === "owner") return tTeam("roles.owner");
+    if (role === "member" || role === "editor") return tTeam("roles.editor");
+    if (role === "viewer") return tTeam("roles.viewer");
+    return role;
+  };
 
   const loadInvitations = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
@@ -133,11 +151,10 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "LOAD_ERROR",
-        error:
-          err instanceof Error ? err.message : "Failed to load invitations",
+        error: err instanceof Error ? err.message : t("loadFailed"),
       });
     }
-  }, []);
+  }, [t]);
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     dispatch({ type: "PROCESS_START", id: invitation.id });
@@ -160,14 +177,13 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "PROCESS_ERROR",
-        error:
-          err instanceof Error ? err.message : "Failed to accept invitation",
+        error: err instanceof Error ? err.message : t("acceptFailed"),
       });
       loadInvitations();
     }
   };
 
-  const handleDecline = async (invitationId: string) => {
+  const runDecline = async (invitationId: string) => {
     dispatch({ type: "PROCESS_START", id: invitationId });
     try {
       await authClient.organization.rejectInvitation({
@@ -177,10 +193,19 @@ export function InvitationInbox({
     } catch (err) {
       dispatch({
         type: "PROCESS_ERROR",
-        error:
-          err instanceof Error ? err.message : "Failed to decline invitation",
+        error: err instanceof Error ? err.message : t("declineFailed"),
       });
+      throw err;
     }
+  };
+
+  const confirmDecline = () => {
+    if (!declineTarget) return;
+    setIsDeclining(true);
+    void runDecline(declineTarget.id)
+      .then(() => setDeclineTarget(null))
+      .catch(() => {})
+      .finally(() => setIsDeclining(false));
   };
 
   const formatDate = (date: Date) => {
@@ -210,156 +235,208 @@ export function InvitationInbox({
 
   const invitationContent = (
     <div className="space-y-3">
-      {error && (
-        <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">
+      {error ? (
+        <p
+          className={cn(
+            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
+          )}
+        >
           {error}
         </p>
-      )}
+      ) : null}
 
-      {!isLoading && invitations.length === 0 && (
-        <div className="text-center py-6">
-          <IconInbox className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-sm text-muted-foreground">{t("noInvitations")}</p>
+      {!isLoading && invitations.length === 0 ? (
+        <div className="py-6 text-center">
+          <IconInbox className="mx-auto mb-2 h-10 w-10 text-sidebar-foreground/35" />
+          <p className="text-sm text-sidebar-foreground/55">
+            {t("noInvitations")}
+          </p>
         </div>
-      )}
+      ) : null}
 
-      <div className="space-y-3 max-h-80 overflow-y-auto">
-        {invitations.map((invitation) => (
-          <div
-            key={invitation.id}
-            className="flex items-start gap-3 p-4 rounded-lg border bg-card"
-          >
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>
-                {getInitials(invitation.inviterEmail)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 space-y-2">
-              <div>
-                <p className="font-medium">
-                  {invitation.organizationName ||
-                    invitation.inviterEmail ||
-                    t("invitedToOrg")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t("invitedYou")}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="text-xs">
-                  {invitation.role === "member" ? "editor" : invitation.role}
-                </Badge>
-                <span>·</span>
-                <span>
-                  {t("expires", { date: formatDate(invitation.expiresAt) })}
-                </span>
-              </div>
-              <div className="flex gap-2 pt-1">
-                <Button
-                  size="sm"
-                  onClick={() => handleAccept(invitation)}
-                  disabled={processingId === invitation.id}
-                >
-                  {processingId === invitation.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4 mr-1" />
-                      {t("accept")}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDecline(invitation.id)}
-                  disabled={processingId === invitation.id}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  {t("decline")}
-                </Button>
+      <ScrollArea className="max-h-80">
+        <div className="space-y-3 pr-3">
+          {invitations.map((invitation) => (
+            <div
+              key={invitation.id}
+              className="flex items-start gap-3 rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-4 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]"
+            >
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
+                  {getInitials(invitation.inviterEmail)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div>
+                  <p className="font-medium text-sidebar-foreground">
+                    {organizationLabel(invitation, t("invitedToOrg"))}
+                  </p>
+                  <p className="text-sm text-sidebar-foreground/55">
+                    {t("invitedYou")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-sidebar-foreground/55">
+                  <Badge
+                    variant="secondary"
+                    className="border-sidebar-border/60 bg-sidebar-accent/40 text-xs text-sidebar-foreground"
+                  >
+                    {roleLabel(invitation.role)}
+                  </Badge>
+                  <span aria-hidden>·</span>
+                  <span>
+                    {t("expires", { date: formatDate(invitation.expiresAt) })}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    className="h-8 gap-2 rounded-full px-3.5 text-sm"
+                    onClick={() => handleAccept(invitation)}
+                    disabled={processingId === invitation.id}
+                  >
+                    {processingId === invitation.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 shrink-0" />
+                        {t("accept")}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-2 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    onClick={() => setDeclineTarget(invitation)}
+                    disabled={processingId === invitation.id}
+                  >
+                    <X className="h-4 w-4 shrink-0" />
+                    {t("decline")}
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
+  );
+
+  const declineDescriptionOrg = declineTarget
+    ? organizationLabel(declineTarget, t("invitedToOrg"))
+    : "";
+
+  const headerTitle = (
+    <span className="flex items-center gap-2">
+      <IconInbox className="h-5 w-5 shrink-0" />
+      <span>{t("title")}</span>
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-sidebar-foreground/50" />
+      ) : null}
+    </span>
   );
 
   if (onboardingMode) {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-3">
+        <div className="mb-3 flex items-center gap-2">
           <IconInbox className="h-5 w-5" />
           <h3 className="font-medium">{t("title")}</h3>
-          {isLoading && (
+          {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          )}
-          {invitations.length > 0 && (
+          ) : null}
+          {invitations.length > 0 ? (
             <Badge
               variant="destructive"
-              className="h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
+              className="flex h-5 min-w-5 animate-pulse items-center justify-center px-1 text-[10px] font-bold"
             >
               {invitations.length}
             </Badge>
-          )}
+          ) : null}
         </div>
-        <p className="text-sm text-muted-foreground mb-3">{t("description")}</p>
         {invitationContent}
+        <DashboardConfirmDialog
+          open={!!declineTarget}
+          onOpenChange={(next) => !next && setDeclineTarget(null)}
+          title={t("declineTitle")}
+          description={t("declineDescription", {
+            organization: declineDescriptionOrg,
+          })}
+          cancelLabel={tCommon("cancel")}
+          confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
+          confirmDisabled={isDeclining}
+          variant="default"
+          onConfirm={confirmDecline}
+        />
       </div>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {fullWidth ? (
-          <Button
-            variant="ghost"
-            className={cn(
-              "relative h-8 w-full justify-start gap-2 px-2",
-              fullWidthTriggerClassName,
-            )}
-          >
-            <IconInbox className="h-4 w-4" />
-            <span>{t("title")}</span>
-            {invitations.length > 0 && (
-              <Badge
-                variant="destructive"
-                className="ml-auto h-5 min-w-5 px-1 flex items-center justify-center text-[10px] font-bold animate-pulse"
-              >
-                {invitations.length}
-              </Badge>
-            )}
-          </Button>
-        ) : (
-          <Button variant="ghost" size="icon" className="relative">
-            <IconInbox className="h-4 w-4" />
-            {invitations.length > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] font-bold animate-pulse"
-              >
-                {invitations.length}
-              </Badge>
-            )}
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <IconInbox className="h-5 w-5" />
-            {t("title")}
-            {isLoading && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-          </DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
-        </DialogHeader>
-
+    <>
+      <DashboardDialogShell
+        open={open}
+        onOpenChange={setOpen}
+        title={headerTitle}
+        contentClassName="sm:max-w-md"
+        bodyClassName="px-5 pb-4 pt-1"
+        trigger={
+          fullWidth ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className={cn(
+                "relative h-8 w-full justify-start gap-2 px-2",
+                fullWidthTriggerClassName,
+              )}
+            >
+              <IconInbox className="h-4 w-4" />
+              <span>{t("title")}</span>
+              {invitations.length > 0 ? (
+                <Badge
+                  variant="destructive"
+                  className="ml-auto flex h-5 min-w-5 items-center justify-center px-1 text-[10px] font-bold"
+                >
+                  {invitations.length}
+                </Badge>
+              ) : null}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="relative"
+            >
+              <IconInbox className="h-4 w-4" />
+              {invitations.length > 0 ? (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center p-0 text-[10px] font-bold"
+                >
+                  {invitations.length}
+                </Badge>
+              ) : null}
+            </Button>
+          )
+        }
+      >
         {invitationContent}
-      </DialogContent>
-    </Dialog>
+      </DashboardDialogShell>
+
+      <DashboardConfirmDialog
+        open={!!declineTarget}
+        onOpenChange={(next) => !next && setDeclineTarget(null)}
+        title={t("declineTitle")}
+        description={t("declineDescription", {
+          organization: declineDescriptionOrg,
+        })}
+        cancelLabel={tCommon("cancel")}
+        confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
+        confirmDisabled={isDeclining}
+        variant="default"
+        onConfirm={confirmDecline}
+      />
+    </>
   );
 }

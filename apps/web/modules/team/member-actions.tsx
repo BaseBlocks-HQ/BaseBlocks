@@ -1,19 +1,13 @@
 "use client";
 
+import {
+  DashboardConfirmDialog,
+  DashboardFormDialog,
+} from "@/components/dialogs";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { TeamRole } from "@baseblocks/types";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import { Label } from "@baseblocks/ui/label";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
   SelectContent,
@@ -30,9 +26,10 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import { useMutation } from "convex/react";
-import { Loader2, MoreHorizontal, Shield, UserMinus } from "lucide-react";
+import { MoreHorizontal, Shield, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Member {
   _id: Id<"members">;
@@ -48,12 +45,16 @@ interface MemberActionsProps {
   isCurrentUserAdmin: boolean;
 }
 
+const teamSelectTriggerClassName =
+  "h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground shadow-[inset_0_1px_0_hsl(var(--background)/0.35)]";
+
 export function MemberActions({
   member,
   teamId,
   isCurrentUserAdmin,
 }: MemberActionsProps) {
   const t = useTranslations("team");
+  const tCommon = useTranslations("common");
   const { data: session } = authClient.useSession();
 
   const [uiState, setUiState] = useState<{
@@ -78,34 +79,70 @@ export function MemberActions({
   const isCurrentUser = session?.user?.id === member.userId;
   const canModify = isCurrentUserAdmin && !isCurrentUser;
 
-  const handleRemove = async () => {
-    setUiState((current) => ({
-      ...current,
-      isRemoving: true,
-      error: null,
-    }));
+  const memberLabel = member.name || member.email;
 
-    try {
-      await removeMember({
-        teamId,
-        memberId: member._id,
-      });
-
+  const handleRemoveDialogOpenChange = (open: boolean) => {
+    if (!open) {
       setUiState((current) => ({
         ...current,
         showRemoveDialog: false,
         isRemoving: false,
       }));
-    } catch (err) {
-      setUiState((current) => ({
-        ...current,
-        error: err instanceof Error ? err.message : "Failed to remove member",
-        isRemoving: false,
-      }));
+      return;
     }
+    setUiState((current) => ({
+      ...current,
+      showRemoveDialog: true,
+    }));
   };
 
-  const handleRoleChange = async () => {
+  const handleRemove = () => {
+    setUiState((current) => ({
+      ...current,
+      isRemoving: true,
+    }));
+
+    void removeMember({
+      teamId,
+      memberId: member._id,
+    })
+      .then(() => {
+        setUiState((current) => ({
+          ...current,
+          showRemoveDialog: false,
+          isRemoving: false,
+        }));
+      })
+      .catch((err: unknown) => {
+        toast.error(err instanceof Error ? err.message : tCommon("error"));
+        setUiState((current) => ({
+          ...current,
+          isRemoving: false,
+        }));
+      });
+  };
+
+  const handleRoleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setUiState((current) => ({
+        ...current,
+        showRoleDialog: false,
+        newRole: member.role,
+        error: null,
+        isChangingRole: false,
+      }));
+      return;
+    }
+    setUiState((current) => ({
+      ...current,
+      showRoleDialog: true,
+      newRole: member.role,
+      error: null,
+    }));
+  };
+
+  const handleRoleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (uiState.newRole === member.role) {
       setUiState((current) => ({
         ...current,
@@ -125,7 +162,6 @@ export function MemberActions({
         memberId: member._id,
         role: uiState.newRole,
       });
-
       setUiState((current) => ({
         ...current,
         showRoleDialog: false,
@@ -134,7 +170,7 @@ export function MemberActions({
     } catch (err) {
       setUiState((current) => ({
         ...current,
-        error: err instanceof Error ? err.message : "Failed to change role",
+        error: err instanceof Error ? err.message : tCommon("error"),
         isChangingRole: false,
       }));
     }
@@ -150,7 +186,7 @@ export function MemberActions({
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{t("member.actions")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -159,10 +195,12 @@ export function MemberActions({
               setUiState((current) => ({
                 ...current,
                 showRoleDialog: true,
+                newRole: member.role,
+                error: null,
               }))
             }
           >
-            <Shield className="h-4 w-4 mr-2" />
+            <Shield className="mr-2 h-4 w-4" />
             {t("actions.changeRole")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -175,136 +213,100 @@ export function MemberActions({
               }))
             }
           >
-            <UserMinus className="h-4 w-4 mr-2" />
+            <UserMinus className="mr-2 h-4 w-4" />
             {t("actions.removeMember")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Change Role Dialog */}
-      <AlertDialog
+      <DashboardFormDialog
         open={uiState.showRoleDialog}
-        onOpenChange={(showRoleDialog) =>
-          setUiState((current) => ({
-            ...current,
-            showRoleDialog,
-          }))
-        }
+        onOpenChange={handleRoleDialogOpenChange}
+        title={t("actions.changeRole")}
+        description={t("actions.changeRoleDescription", {
+          name: memberLabel,
+        })}
+        onSubmit={handleRoleSubmit}
+        isSubmitting={uiState.isChangingRole}
+        submitDisabled={uiState.newRole === member.role}
+        submitLabel={tCommon("save")}
+        submittingLabel={tCommon("loading")}
+        cancelLabel={tCommon("cancel")}
+        bodyClassName="px-5 pb-4"
+        formClassName="space-y-4"
+        footerClassName="pt-2"
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("actions.changeRole")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Change the role for {member.name || member.email}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+          <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
+            {t("member.role")}
+          </Label>
+          <Select
+            value={uiState.newRole}
+            onValueChange={(value) =>
+              setUiState((current) => ({
+                ...current,
+                newRole: value as TeamRole,
+                error: null,
+              }))
+            }
+          >
+            <SelectTrigger className={teamSelectTriggerClassName}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+              <SelectItem
+                value="admin"
+                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              >
+                {t("roles.admin")}
+              </SelectItem>
+              <SelectItem
+                value="editor"
+                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              >
+                {t("roles.editor")}
+              </SelectItem>
+              <SelectItem
+                value="viewer"
+                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              >
+                {t("roles.viewer")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
+            {uiState.newRole === "admin"
+              ? t("roleDescriptions.admin")
+              : uiState.newRole === "editor"
+                ? t("roleDescriptions.editor")
+                : t("roleDescriptions.viewer")}
+          </p>
+        </div>
 
-          <div className="py-4">
-            <Select
-              value={uiState.newRole}
-              onValueChange={(value) =>
-                setUiState((current) => ({
-                  ...current,
-                  newRole: value as TeamRole,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">
-                  <div className="flex flex-col items-start">
-                    <span>{t("roles.admin")}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("roleDescriptions.admin")}
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="editor">
-                  <div className="flex flex-col items-start">
-                    <span>{t("roles.editor")}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("roleDescriptions.editor")}
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="viewer">
-                  <div className="flex flex-col items-start">
-                    <span>{t("roles.viewer")}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("roleDescriptions.viewer")}
-                    </span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {uiState.error && (
-              <p className="text-sm text-destructive mt-2">{uiState.error}</p>
+        {uiState.error ? (
+          <p
+            className={cn(
+              "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
             )}
-          </div>
+          >
+            {uiState.error}
+          </p>
+        ) : null}
+      </DashboardFormDialog>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRoleChange}
-              disabled={
-                uiState.isChangingRole || uiState.newRole === member.role
-              }
-            >
-              {uiState.isChangingRole && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Save
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Remove Member Dialog */}
-      <AlertDialog
+      <DashboardConfirmDialog
         open={uiState.showRemoveDialog}
-        onOpenChange={(showRemoveDialog) =>
-          setUiState((current) => ({
-            ...current,
-            showRemoveDialog,
-          }))
+        onOpenChange={handleRemoveDialogOpenChange}
+        title={t("actions.removeMember")}
+        description={t("actions.confirmRemove", { name: memberLabel })}
+        cancelLabel={tCommon("cancel")}
+        confirmLabel={
+          uiState.isRemoving ? t("actions.removing") : t("actions.removeMember")
         }
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("actions.removeMember")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("actions.confirmRemove", {
-                name: member.name || member.email,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {uiState.error && (
-            <p className="text-sm text-destructive">{uiState.error}</p>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRemove}
-              disabled={uiState.isRemoving}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {uiState.isRemoving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t("actions.removing")}
-                </>
-              ) : (
-                t("actions.removeMember")
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        confirmDisabled={uiState.isRemoving}
+        variant="destructive"
+        onConfirm={handleRemove}
+      />
     </>
   );
 }

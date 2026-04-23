@@ -24,6 +24,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useConvexAuth, useMutation } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -324,24 +325,26 @@ function SiteEditorInner({
                 <>
                   <ResizablePanel defaultSize={58} minSize={30}>
                     <PortalContainerProvider value={portalContainer}>
-                      <div
-                        className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
-                        style={customizationStyles}
-                        {...(isCustomized
-                          ? { "data-site-customized": "" }
-                          : {})}
-                      >
-                        {selectedPage ? (
-                          <ConnectedPageEditor
-                            pageId={selectedPage._id}
-                            onSelectionChange={handleSlotSelectionChange}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-muted-foreground">
-                            Select a page to edit
-                          </div>
-                        )}
-                      </div>
+                      <ScrollArea className="h-full w-full min-h-0 min-w-0">
+                        <div
+                          className="p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                          style={customizationStyles}
+                          {...(isCustomized
+                            ? { "data-site-customized": "" }
+                            : {})}
+                        >
+                          {selectedPage ? (
+                            <ConnectedPageEditor
+                              pageId={selectedPage._id}
+                              onSelectionChange={handleSlotSelectionChange}
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-muted-foreground">
+                              Select a page to edit
+                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
                     </PortalContainerProvider>
                   </ResizablePanel>
                   <ResizableHandle withHandle />
@@ -379,22 +382,24 @@ function SiteEditorInner({
             </ResizablePanelGroup>
           ) : (
             <PortalContainerProvider value={portalContainer}>
-              <div
-                className="h-full overflow-y-auto overflow-x-hidden p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
-                style={customizationStyles}
-                {...(isCustomized ? { "data-site-customized": "" } : {})}
-              >
-                {selectedPage ? (
-                  <ConnectedPageEditor
-                    pageId={selectedPage._id}
-                    onSelectionChange={handleSlotSelectionChange}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Select a page to edit
-                  </div>
-                )}
-              </div>
+              <ScrollArea className="h-full min-h-0">
+                <div
+                  className="p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+                  style={customizationStyles}
+                  {...(isCustomized ? { "data-site-customized": "" } : {})}
+                >
+                  {selectedPage ? (
+                    <ConnectedPageEditor
+                      pageId={selectedPage._id}
+                      onSelectionChange={handleSlotSelectionChange}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      Select a page to edit
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             </PortalContainerProvider>
           )}
         </div>

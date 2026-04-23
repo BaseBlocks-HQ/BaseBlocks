@@ -6,6 +6,7 @@ import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -85,12 +86,14 @@ export function PageBlockEditPanel({
       </div>
 
       {/* Full page editor for the referenced page */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-        <PageEditorContent
-          pageId={editingPage.pageId}
-          renderPageEditor={renderPageEditor}
-        />
-      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="p-4">
+          <PageEditorContent
+            pageId={editingPage.pageId}
+            renderPageEditor={renderPageEditor}
+          />
+        </div>
+      </ScrollArea>
     </div>
   );
 }

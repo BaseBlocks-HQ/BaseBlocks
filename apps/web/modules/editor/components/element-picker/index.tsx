@@ -11,6 +11,7 @@ import type {
   ElementType,
   LayoutType,
 } from "@baseblocks/types/elements";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { PanelTop } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { EditorFlyoutSurface } from "../editor-flyout-surface";
@@ -145,55 +146,63 @@ export function ElementPicker({
       {/* Flyout panel with site config */}
       {activeCategory === "site" && siteId && (
         <EditorFlyoutSurface
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <SiteConfigPanel siteId={siteId as Id<"sites">} />
+          <ScrollArea className="max-h-[calc(100vh-200px)]">
+            <SiteConfigPanel siteId={siteId as Id<"sites">} />
+          </ScrollArea>
         </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with navigation config */}
       {activeCategory === "navigation" && siteId && (
         <EditorFlyoutSurface
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <NavigationConfigPanel siteId={siteId as Id<"sites">} />
+          <ScrollArea className="max-h-[calc(100vh-200px)]">
+            <NavigationConfigPanel siteId={siteId as Id<"sites">} />
+          </ScrollArea>
         </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with customization config */}
       {activeCategory === "customization" && siteId && (
         <EditorFlyoutSurface
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <CustomizationConfigPanel siteId={siteId as Id<"sites">} />
+          <ScrollArea className="max-h-[calc(100vh-200px)]">
+            <CustomizationConfigPanel siteId={siteId as Id<"sites">} />
+          </ScrollArea>
         </EditorFlyoutSurface>
       )}
 
       {/* Flyout panel with elements */}
       {activeCategory && !showsConfigPanel && categoryElements.length > 0 && (
         <EditorFlyoutSurface
-          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)] overflow-auto"
+          className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
-          <ElementGrid
-            title={categoryTitle}
-            entries={categoryElements}
-            onSelect={handleSelect}
-          />
-          {/* Extra Tabs card in layouts flyout */}
-          {activeCategory === "layouts" && onEnableTabs && (
-            <div className="px-4 pb-4">
-              <ElementCard
-                label="Tabs"
-                icon={PanelTop}
-                preview={TabsPreview}
-                onClick={onEnableTabs}
-              />
-            </div>
-          )}
+          <ScrollArea className="max-h-[calc(100vh-200px)]">
+            <ElementGrid
+              title={categoryTitle}
+              entries={categoryElements}
+              onSelect={handleSelect}
+            />
+            {/* Extra Tabs card in layouts flyout */}
+            {activeCategory === "layouts" && onEnableTabs && (
+              <div className="px-4 pb-4">
+                <ElementCard
+                  label="Tabs"
+                  icon={PanelTop}
+                  preview={TabsPreview}
+                  onClick={onEnableTabs}
+                />
+              </div>
+            )}
+          </ScrollArea>
         </EditorFlyoutSurface>
       )}
     </div>

@@ -134,6 +134,7 @@
     "saved": "Enregistre",
     "publish": "Publier",
     "unpublish": "Depublier",
+    "currentSite": "Actuel",
     "viewSite": "Voir le site",
     "sidebar": {
       "pagesTab": "Pages",
@@ -288,7 +289,36 @@
     "searchPlaceholder": "Rechercher des documents...",
     "noSearchResults": "Aucun document trouvé",
     "matchInContent": "Correspondance dans le contenu",
-    "matchInFilename": "Correspondance dans le nom"
+    "matchInFilename": "Correspondance dans le nom",
+    "explorer": {
+      "deleteFileTitle": "Supprimer le fichier ?",
+      "deleteFolderTitle": "Supprimer le dossier ?",
+      "deleteItemDescription": "Cette action supprimera définitivement « {name} ». Elle est irréversible.",
+      "moveFileTitle": "Déplacer le fichier",
+      "moveFolderTitle": "Déplacer le dossier",
+      "destinationLabel": "Destination",
+      "libraryRoot": "Racine de la bibliothèque",
+      "chooseFolderPlaceholder": "Choisir un dossier",
+      "renameFileTitle": "Renommer le fichier",
+      "renameFolderTitle": "Renommer le dossier",
+      "newFolderTitle": "Nouveau dossier",
+      "itemNameLabel": "Nom",
+      "folderNamePlaceholder": "Nom du dossier",
+      "moveAction": "Déplacer",
+      "renameAction": "Renommer",
+      "createFolderAction": "Créer",
+      "dropzoneUploading": "Envoi en cours…",
+      "toastUploading": "Envoi de {name}…",
+      "toastUploadingCount": "Envoi de {count} fichiers…",
+      "toastUploadedOne": "{name} ajouté",
+      "toastUploadedMany": "{count} fichiers ajoutés",
+      "toastUploadedPartial": "{ok} envoyés, {failed} en échec",
+      "toastUploadFailed": "Échec de l'envoi",
+      "toastDeleted": "Supprimé",
+      "toastMoved": "Déplacé",
+      "toastRenamed": "Renommé",
+      "toastFolderCreated": "Dossier créé"
+    }
   },
   "inbox": {
     "title": "Invitations",
@@ -299,7 +329,14 @@
     "asRole": "en tant que {role}",
     "expires": "Expire le {date}",
     "accept": "Accepter",
-    "decline": "Refuser"
+    "decline": "Refuser",
+    "loadFailed": "Impossible de charger les invitations",
+    "acceptFailed": "Impossible d'accepter l'invitation",
+    "declineFailed": "Impossible de refuser l'invitation",
+    "declineTitle": "Refuser l'invitation ?",
+    "declineDescription": "Vous ne rejoindrez pas {organization}. Vous pourrez etre invite a nouveau.",
+    "declineConfirm": "Refuser",
+    "declining": "Refus…"
   },
   "settings": {
     "title": "Parametres du compte",
@@ -347,6 +384,10 @@
     "invite": {
       "title": "Inviter un membre",
       "description": "Recherchez des utilisateurs par email ou nom d'utilisateur pour les inviter dans votre organisation",
+      "emailPlaceholder": "nom@exemple.com",
+      "emailRequired": "Saisissez une adresse e-mail.",
+      "organizationRequired": "Cette equipe n'est pas liee a une organisation.",
+      "invitationFailed": "L'invitation a echoue",
       "searchPlaceholder": "Rechercher par email ou nom d'utilisateur...",
       "searching": "Recherche...",
       "noResults": "Aucun utilisateur trouvé",
@@ -359,6 +400,7 @@
     },
     "actions": {
       "changeRole": "Changer le role",
+      "changeRoleDescription": "Choisissez un nouveau role pour {name}.",
       "removeMember": "Retirer le membre",
       "confirmRemove": "Etes-vous sur de vouloir retirer {name} de l'equipe ?",
       "removing": "Suppression...",

@@ -74,6 +74,7 @@ export function EditorHeader({
             <div className="relative flex w-full items-center justify-between gap-4">
               <EditorHeaderLeftSection
                 canEdit={canEdit}
+                currentSiteId={siteId}
                 siteName={siteName}
                 siteLogoUrl={siteLogoUrl}
                 teamSlug={teamSlug}

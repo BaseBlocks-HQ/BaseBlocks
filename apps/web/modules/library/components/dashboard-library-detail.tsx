@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardConfirmDialog } from "@/components/dialogs";
 import { InlineEditableText } from "@/components/inline-editable-text";
 import { Link, useRouter } from "@/i18n/navigation";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
@@ -10,16 +11,6 @@ import {
 import type { LibraryId } from "@/modules/library/types";
 import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -177,26 +168,19 @@ export function DashboardLibraryDetail({
       </div>
 
       {capabilities.canManageLibraries ? (
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("libraries.deleteDescription", { name: data.library.name })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteLibrary}
-                disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {isDeleting ? t("common.loading") : t("common.delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <DashboardConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => !open && setDeleteDialogOpen(false)}
+          title={t("libraries.deleteTitle")}
+          description={t("libraries.deleteDescription", {
+            name: data.library.name,
+          })}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={isDeleting ? t("common.loading") : t("common.delete")}
+          confirmDisabled={isDeleting}
+          variant="destructive"
+          onConfirm={handleDeleteLibrary}
+        />
       ) : null}
     </div>
   );

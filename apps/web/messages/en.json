@@ -134,6 +134,7 @@
     "saved": "Saved",
     "publish": "Publish",
     "unpublish": "Unpublish",
+    "currentSite": "Current",
     "viewSite": "View Site",
     "sidebar": {
       "pagesTab": "Pages",
@@ -288,7 +289,36 @@
     "searchPlaceholder": "Search documents...",
     "noSearchResults": "No documents found",
     "matchInContent": "Match in content",
-    "matchInFilename": "Match in filename"
+    "matchInFilename": "Match in filename",
+    "explorer": {
+      "deleteFileTitle": "Delete file?",
+      "deleteFolderTitle": "Delete folder?",
+      "deleteItemDescription": "This will permanently delete \"{name}\". This action cannot be undone.",
+      "moveFileTitle": "Move file",
+      "moveFolderTitle": "Move folder",
+      "destinationLabel": "Destination",
+      "libraryRoot": "Library root",
+      "chooseFolderPlaceholder": "Choose folder",
+      "renameFileTitle": "Rename file",
+      "renameFolderTitle": "Rename folder",
+      "newFolderTitle": "New folder",
+      "itemNameLabel": "Name",
+      "folderNamePlaceholder": "Folder name",
+      "moveAction": "Move",
+      "renameAction": "Rename",
+      "createFolderAction": "Create",
+      "dropzoneUploading": "Uploading…",
+      "toastUploading": "Uploading {name}…",
+      "toastUploadingCount": "Uploading {count} files…",
+      "toastUploadedOne": "{name} added",
+      "toastUploadedMany": "{count} files added",
+      "toastUploadedPartial": "{ok} uploaded, {failed} failed",
+      "toastUploadFailed": "Upload failed",
+      "toastDeleted": "Deleted",
+      "toastMoved": "Moved",
+      "toastRenamed": "Renamed",
+      "toastFolderCreated": "Folder created"
+    }
   },
   "inbox": {
     "title": "Invitations",
@@ -299,7 +329,14 @@
     "asRole": "as {role}",
     "expires": "Expires {date}",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "loadFailed": "Failed to load invitations",
+    "acceptFailed": "Failed to accept invitation",
+    "declineFailed": "Failed to decline invitation",
+    "declineTitle": "Decline invitation?",
+    "declineDescription": "You will not join {organization}. You can be invited again later.",
+    "declineConfirm": "Decline",
+    "declining": "Declining…"
   },
   "settings": {
     "title": "Account Settings",
@@ -347,6 +384,10 @@
     "invite": {
       "title": "Invite Team Member",
       "description": "Search for users by email or username to invite them to your organization",
+      "emailPlaceholder": "name@example.com",
+      "emailRequired": "Enter an email address.",
+      "organizationRequired": "This team is not linked to an organization.",
+      "invitationFailed": "Invitation failed",
       "searchPlaceholder": "Search by email or username...",
       "searching": "Searching...",
       "noResults": "No users found",
@@ -359,6 +400,7 @@
     },
     "actions": {
       "changeRole": "Change Role",
+      "changeRoleDescription": "Choose a new role for {name}.",
       "removeMember": "Remove Member",
       "confirmRemove": "Are you sure you want to remove {name} from the team?",
       "removing": "Removing...",

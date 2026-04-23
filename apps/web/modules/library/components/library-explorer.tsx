@@ -13,13 +13,13 @@ import type {
 } from "@/modules/library/types";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { Skeleton } from "@baseblocks/ui/skeleton";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
 import { LibraryFileViewer } from "./library-file-viewer";
 import { LibraryTree } from "./library-tree";
 import { UploadDropzone } from "./upload-dropzone";
-import { UploadProgressList } from "./upload-progress";
 
 const skeletonRows = [
   "library-skeleton-row-1",
@@ -43,12 +43,13 @@ export function LibraryExplorer({
   className?: string;
   data: LibraryExplorerData;
   options: LibraryExplorerOptions;
+  /** When provided, disables upload controls and shows in-dropzone upload progress. */
   uploadState?: {
-    clearAllUploadStates: () => void;
     isAnyUploading: boolean;
-    uploadStates: Record<string, unknown>;
+    totalProgress?: { percentage: number } | null;
   };
 }) {
+  const tExplorer = useTranslations("libraries.explorer");
   const [currentFolderId, setCurrentFolderId] = useState<FolderId | null>(null);
   const [openFilePath, setOpenFilePath] = useState<string | null>(null);
   const [treeDrawerOpen, setTreeDrawerOpen] = useState(false);
@@ -84,14 +85,46 @@ export function LibraryExplorer({
 
   const uploadFiles = async (files: File[]) => {
     const upload = actions.uploadFiles;
-    if (!upload) return;
+    if (!upload || files.length === 0) return;
 
     const targetFolderId = currentFolderId ?? undefined;
+    const count = files.length;
+    const primaryName = files[0]?.name ?? "";
+
+    const toastId = toast.loading(
+      count === 1
+        ? tExplorer("toastUploading", { name: primaryName })
+        : tExplorer("toastUploadingCount", { count }),
+    );
+
     try {
-      await upload(files, targetFolderId);
-      toast.success("Uploaded");
+      const results = await upload(files, targetFolderId);
+      const succeeded = results.filter(Boolean).length;
+      const failed = count - succeeded;
+
+      if (failed === 0) {
+        toast.success(
+          count === 1
+            ? tExplorer("toastUploadedOne", { name: primaryName })
+            : tExplorer("toastUploadedMany", { count: succeeded }),
+          { id: toastId },
+        );
+      } else if (succeeded === 0) {
+        toast.error(tExplorer("toastUploadFailed"), { id: toastId });
+      } else {
+        toast.warning(
+          tExplorer("toastUploadedPartial", {
+            ok: succeeded,
+            failed,
+          }),
+          { id: toastId },
+        );
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      toast.error(
+        error instanceof Error ? error.message : tExplorer("toastUploadFailed"),
+        { id: toastId },
+      );
     }
   };
 
@@ -107,7 +140,7 @@ export function LibraryExplorer({
         setOpenFilePath(null);
       }
     }
-    toast.success("Deleted");
+    toast.success(tExplorer("toastDeleted"));
   };
 
   const moveItem = async (
@@ -125,12 +158,12 @@ export function LibraryExplorer({
         setCurrentFolderId(targetFolderId ?? null);
       }
     }
-    toast.success("Moved");
+    toast.success(tExplorer("toastMoved"));
   };
 
   const createFolder = async (name: string, parentId?: FolderId) => {
     await actions.createFolder?.(name, parentId);
-    toast.success("Folder created");
+    toast.success(tExplorer("toastFolderCreated"));
   };
 
   // Failure modes:
@@ -170,7 +203,7 @@ export function LibraryExplorer({
       movedCount += 1;
     }
 
-    if (movedCount > 0) toast.success("Moved");
+    if (movedCount > 0) toast.success(tExplorer("toastMoved"));
   };
 
   const downloadFile = (file: LibraryFile) => {
@@ -190,7 +223,7 @@ export function LibraryExplorer({
     } else {
       await actions.renameFile?.(entity.file._id, name);
     }
-    toast.success("Renamed");
+    toast.success(tExplorer("toastRenamed"));
   };
 
   const moveEntity = (entity: LibraryEntity) => {
@@ -333,6 +366,9 @@ export function LibraryExplorer({
     <>
       <UploadDropzone
         disabled={!canManage || !actions.uploadFiles}
+        isUploading={uploadState?.isAnyUploading ?? false}
+        uploadPercent={uploadState?.totalProgress?.percentage ?? null}
+        uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(
           "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border border-solid border-muted-foreground/25 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-primary/30 hover:bg-primary/5",
@@ -351,14 +387,6 @@ export function LibraryExplorer({
             event.target.value = "";
           }}
         />
-        {uploadState && Object.keys(uploadState.uploadStates).length > 0 ? (
-          <div className="border-b px-3 py-2">
-            <UploadProgressList
-              uploads={uploadState.uploadStates as never}
-              onDismiss={uploadState.clearAllUploadStates}
-            />
-          </div>
-        ) : null}
         {fileViewer}
       </UploadDropzone>
 

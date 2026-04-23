@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl } from "@/lib/url";
+import { EditorSiteSwitcher } from "@/modules/editor/components/editor-site-switcher";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -21,16 +22,14 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
-  ExternalLink,
   Eye,
   EyeOff,
   Globe,
   History,
   MoreHorizontal,
-  Rocket,
   Share2,
 } from "lucide-react";
-import Image from "next/image";
+import { IconRocket, IconWindow2 } from "nucleo-glass";
 
 function openSite(teamSlug: string, siteSlug: string) {
   window.open(getSiteOpenUrl(teamSlug, siteSlug), "_blank");
@@ -38,6 +37,7 @@ function openSite(teamSlug: string, siteSlug: string) {
 
 interface EditorHeaderLeftSectionProps {
   canEdit: boolean;
+  currentSiteId: string;
   siteName: string;
   siteLogoUrl?: string;
   teamSlug: string;
@@ -59,6 +59,7 @@ interface EditorHeaderRightSectionProps {
 
 export function EditorHeaderLeftSection({
   canEdit,
+  currentSiteId,
   siteName,
   siteLogoUrl,
   teamSlug,
@@ -71,27 +72,12 @@ export function EditorHeaderLeftSection({
           <span className="sr-only">Back to dashboard</span>
         </Button>
       </Link>
-      <div className="flex min-w-0 items-center gap-3">
-        {siteLogoUrl ? (
-          <Image
-            src={siteLogoUrl}
-            alt={siteName}
-            className="h-8 w-8 rounded-lg object-contain"
-            width={32}
-            height={32}
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
-            {siteName[0]?.toUpperCase() ?? "S"}
-          </div>
-        )}
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium leading-none">
-            {siteName}
-          </p>
-        </div>
-      </div>
+      <EditorSiteSwitcher
+        currentSiteId={currentSiteId}
+        currentSiteName={siteName}
+        currentSiteLogoUrl={siteLogoUrl}
+        teamSlug={teamSlug}
+      />
       {!canEdit && (
         <Badge variant="secondary" className="gap-1">
           <Eye className="h-3 w-3" />
@@ -175,7 +161,7 @@ function ViewSiteButton({
             disabled={!sitePublished}
             onClick={() => openSite(teamSlug, siteSlug)}
           >
-            <ExternalLink className="h-4 w-4" />
+            <IconWindow2 className="h-4 w-4 shrink-0" />
             <span className="max-sm:sr-only sm:not-sr-only">
               {t("editor.viewSite")}
             </span>
@@ -243,7 +229,7 @@ function DeployCta({
         onClick={onDeploy}
         className="gap-1.5 bg-amber-600 hover:bg-amber-700"
       >
-        <Rocket className="h-4 w-4" />
+        <IconRocket className="h-4 w-4 shrink-0" />
         <span className="hidden md:inline">Deploy Changes</span>
         <span className="md:hidden">Deploy</span>
       </Button>

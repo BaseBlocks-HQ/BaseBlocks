@@ -16,6 +16,8 @@ interface DashboardFormDialogProps {
   children: ReactNode;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   isSubmitting: boolean;
+  /** Extra disable conditions (e.g. empty required fields). */
+  submitDisabled?: boolean;
   submitLabel?: string;
   submittingLabel?: string;
   cancelLabel?: string;
@@ -39,6 +41,7 @@ export function DashboardFormDialog({
   children,
   onSubmit,
   isSubmitting,
+  submitDisabled = false,
   submitLabel = "Save",
   submittingLabel = "Saving...",
   cancelLabel = "Cancel",
@@ -86,7 +89,7 @@ export function DashboardFormDialog({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || submitDisabled}
             className={cn(
               "h-8 rounded-full px-4 text-sm",
               submitButtonClassName,

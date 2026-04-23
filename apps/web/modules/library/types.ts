@@ -53,5 +53,8 @@ export interface LibraryExplorerActions {
   renameFile?: (fileId: DocumentId, filename: string) => Promise<void>;
   renameFolder?: (folderId: FolderId, name: string) => Promise<void>;
   retryExtraction?: (file: LibraryFile) => Promise<void>;
-  uploadFiles?: (files: File[], folderId?: FolderId) => Promise<void>;
+  uploadFiles?: (
+    files: File[],
+    folderId?: FolderId,
+  ) => Promise<(DocumentId | null)[]>;
 }

@@ -26,6 +26,7 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -133,30 +134,32 @@ export function DashboardSidebar() {
       collapsible="offcanvas"
       variant="floating"
     >
-      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-auto p-1.5">
-        <SidebarGroup className="p-0">
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Button
-                    asChild
-                    className={cn(
-                      pillRowClass,
-                      item.isActive && navActiveClass,
-                    )}
-                    variant="ghost"
-                  >
-                    <Link href={item.href} title={item.title}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.title}</span>
-                    </Link>
-                  </Button>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1.5">
+        <ScrollArea className="min-h-0 h-full">
+          <SidebarGroup className="p-0">
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <Button
+                      asChild
+                      className={cn(
+                        pillRowClass,
+                        item.isActive && navActiveClass,
+                      )}
+                      variant="ghost"
+                    >
+                      <Link href={item.href} title={item.title}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    </Button>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </ScrollArea>
       </SidebarContent>
 
       <SidebarFooter className="mt-auto shrink-0 border-0 p-1.5">

@@ -5,6 +5,7 @@ import { PageExportMenu } from "@/modules/page-export/components/page-export-men
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { PublicContent } from "./public-content";
@@ -63,13 +64,13 @@ export function PublicPagePanel({
       </div>
 
       {/* Full page content for the referenced page */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      <ScrollArea className="min-h-0 flex-1">
         <PublicContent
           pageId={viewingPage.pageId}
           nested
           searchTerm={viewingPage.searchTerm}
         />
-      </div>
+      </ScrollArea>
     </div>
   );
 }

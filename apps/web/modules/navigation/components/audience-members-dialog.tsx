@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -92,38 +93,40 @@ export function AudienceMembersDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-          {members === undefined || assignments === undefined ? (
-            <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading members...
-            </div>
-          ) : members.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Invite team members before assigning this audience.
-            </p>
-          ) : (
-            members.map((member) => (
-              <Label
-                key={member._id}
-                className="flex items-start gap-3 rounded-md border p-3"
-              >
-                <Checkbox
-                  checked={selectedUserIds.includes(member.userId)}
-                  onCheckedChange={() => toggleUserId(member.userId)}
-                />
-                <div className="min-w-0">
-                  <p className="font-medium">
-                    {member.name?.trim() || member.email}
-                  </p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {member.email}
-                  </p>
-                </div>
-              </Label>
-            ))
-          )}
-        </div>
+        <ScrollArea className="max-h-80">
+          <div className="space-y-3 pr-3">
+            {members === undefined || assignments === undefined ? (
+              <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading members...
+              </div>
+            ) : members.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Invite team members before assigning this audience.
+              </p>
+            ) : (
+              members.map((member) => (
+                <Label
+                  key={member._id}
+                  className="flex items-start gap-3 rounded-md border p-3"
+                >
+                  <Checkbox
+                    checked={selectedUserIds.includes(member.userId)}
+                    onCheckedChange={() => toggleUserId(member.userId)}
+                  />
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {member.name?.trim() || member.email}
+                    </p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {member.email}
+                    </p>
+                  </div>
+                </Label>
+              ))
+            )}
+          </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
