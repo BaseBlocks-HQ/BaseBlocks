@@ -67,7 +67,7 @@ export function FileList({
           className,
         )}
       >
-        <div className="space-y-1 py-2 w-full min-w-0">
+        <div className="space-y-0.5 px-2 py-2 w-full min-w-0">
           {sortedFiles.map((file) => (
             <FileListItem
               key={file._id}

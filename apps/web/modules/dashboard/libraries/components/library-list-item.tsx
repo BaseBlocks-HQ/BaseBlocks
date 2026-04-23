@@ -38,48 +38,66 @@ export function LibraryListItem({
   const t = useTranslations();
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+    <article className="group relative rounded-xl border bg-card p-4 transition-shadow duration-150 hover:shadow-sm">
+      {/*
+       * Full-card link painted first in DOM so it's behind everything else.
+       * The dropdown below uses `relative z-10` to rise above this absolute layer.
+       */}
       <Link
         href={getTeamLibraryDetailPath(teamSlug, library._id)}
-        className="flex items-center gap-3 flex-1 min-w-0"
-      >
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Folder className="h-5 w-5" />
+        className="absolute inset-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={library.name}
+      />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Folder className="h-[18px] w-[18px]" />
+          </div>
+
+          {canManageLibraries && (
+            /* relative z-10 lifts this above the absolute Link */
+            <div className="relative z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={t("common.settings")}
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(library)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {t("common.edit")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onDelete(library)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t("common.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium truncate">{library.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {library.documentCount}{" "}
+
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-medium leading-snug">
+            {library.name}
+          </h3>
+          <p className="mt-0.5 tabular-nums text-xs text-muted-foreground">
             {library.documentCount === 1
-              ? t("libraries.document")
-              : t("libraries.documents")}
+              ? `1 ${t("libraries.document")}`
+              : `${library.documentCount} ${t("libraries.documents")}`}
           </p>
         </div>
-      </Link>
-
-      {canManageLibraries && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">{t("common.settings")}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(library)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t("common.edit")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(library)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {t("common.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
+      </div>
+    </article>
   );
 }

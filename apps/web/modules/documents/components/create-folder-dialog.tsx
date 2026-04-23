@@ -113,15 +113,17 @@ export function CreateFolderDialog({
 export function CreateFolderButton({
   onSubmit,
   disabled,
+  className,
 }: {
   onSubmit: (name: string) => Promise<void>;
   disabled?: boolean;
+  className?: string;
 }) {
   return (
     <CreateFolderDialog
       onSubmit={onSubmit}
       trigger={
-        <Button variant="outline" size="sm" disabled={disabled}>
+        <Button variant="outline" size="sm" disabled={disabled} className={className}>
           <FolderPlus className="h-4 w-4 mr-2" />
           New Folder
         </Button>

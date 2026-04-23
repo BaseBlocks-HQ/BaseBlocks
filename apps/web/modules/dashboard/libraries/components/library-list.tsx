@@ -23,14 +23,14 @@ export function LibraryList({
 
   if (libraries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-          <Folder className="h-8 w-8 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-10 text-center">
+        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+          <Folder className="h-5 w-5 text-muted-foreground" />
         </div>
-        <h3 className="font-medium text-lg mb-1">
+        <p className="mb-0.5 text-sm font-medium">
           {t("libraries.noLibraries")}
-        </h3>
-        <p className="text-muted-foreground text-sm">
+        </p>
+        <p className="text-xs text-muted-foreground">
           {t("libraries.noLibrariesDescription")}
         </p>
       </div>
@@ -38,7 +38,7 @@ export function LibraryList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {libraries.map((library) => (
         <LibraryListItem
           key={library._id}

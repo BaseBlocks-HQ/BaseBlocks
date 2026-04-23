@@ -103,15 +103,18 @@ export function FileListItem({
 
   const fileSummary = (
     <>
-      <div className={cn("flex-shrink-0", getFileTypeColor(file.contentType))}>
-        <FileIcon contentType={file.contentType} className="h-5 w-5" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.32),0_1px_2px_rgba(15,23,42,0.06)]">
+        <FileIcon
+          contentType={file.contentType}
+          className={cn("h-[18px] w-[18px]", getFileTypeColor(file.contentType))}
+        />
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <MiddleTruncate
             text={file.filename}
-            className="text-sm font-medium"
+            className="text-sm font-medium leading-5"
             endChars={12}
           />
           {file.extractionStatus === "failed" && (
@@ -131,10 +134,10 @@ export function FileListItem({
             <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {formatFileSize(file.size)} • {formatDate(file.createdAt)}
+        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+          {formatFileSize(file.size)} · {formatDate(file.createdAt)}
           {file.extractionStatus === "failed" && (
-            <span className="text-destructive ml-1">• Extraction failed</span>
+            <span className="text-destructive ml-1">· Extraction failed</span>
           )}
         </p>
       </div>
@@ -144,7 +147,7 @@ export function FileListItem({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 py-2 px-3 rounded-md hover:bg-muted/50 transition-colors w-full",
+        "group flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-muted/50",
         className,
       )}
     >
@@ -164,32 +167,32 @@ export function FileListItem({
 
       {/* Actions */}
       {isReadOnly ? (
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
           {onPreview && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
                 onPreview(file);
               }}
               title="Preview"
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-3.5 w-3.5" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7"
             onClick={(e) => {
               e.stopPropagation();
               onDownload(file);
             }}
             title="Download"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-3.5 w-3.5" />
           </Button>
         </div>
       ) : (
@@ -199,12 +202,12 @@ export function FileListItem({
               variant="ghost"
               size="icon"
               className={cn(
-                "h-8 w-8 flex-shrink-0 opacity-0 group-hover:opacity-100",
+                "h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100",
                 showMenu && "opacity-100",
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
