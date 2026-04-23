@@ -2,12 +2,12 @@
 
 import { useSite } from "@/lib/data";
 import { useImageUpload } from "@/lib/storage";
-import { DropZone } from "@/modules/documents";
 import {
   CollapsibleSettingsSection,
   PanelSettingRow,
 } from "@/modules/elements/panels/shared/editor-panel-primitives";
 import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
+import { DropZone } from "@/modules/shared/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

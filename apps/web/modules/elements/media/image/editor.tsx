@@ -2,9 +2,9 @@
 
 import { useImageUpload } from "@/lib/storage";
 import { cn } from "@/lib/utils";
-import { DropZone } from "@/modules/documents";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { DropZone } from "@/modules/shared/file-ui";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";

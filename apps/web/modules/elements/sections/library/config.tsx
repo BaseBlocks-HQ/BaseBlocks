@@ -13,19 +13,6 @@ export function LibraryConfigPanel({
       <h4 className="font-medium text-sm">Library Settings</h4>
 
       <div className="flex items-center justify-between">
-        <Label htmlFor="show-folder-tree" className="text-sm">
-          Show folder tree
-        </Label>
-        <Switch
-          id="show-folder-tree"
-          checked={content.showFolderTree !== false}
-          onCheckedChange={(checked) =>
-            onUpdate({ ...content, showFolderTree: checked })
-          }
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
         <div>
           <Label htmlFor="allow-downloads" className="text-sm">
             Allow downloads

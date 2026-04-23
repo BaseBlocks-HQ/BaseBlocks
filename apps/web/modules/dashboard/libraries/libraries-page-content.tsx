@@ -14,8 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
-import { Skeleton } from "@baseblocks/ui/skeleton";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useMutation, useQuery } from "convex/react";
 import { ChevronDown, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -27,8 +27,11 @@ import { LibrarySettingsDialog } from "./components/library-settings-dialog";
 
 export function LibrariesPageContent() {
   const t = useTranslations();
-  const [editingLibrary, setEditingLibrary] = useState<LibraryWithCount | null>(null);
-  const [deletingLibrary, setDeletingLibrary] = useState<LibraryWithCount | null>(null);
+  const [editingLibrary, setEditingLibrary] = useState<LibraryWithCount | null>(
+    null,
+  );
+  const [deletingLibrary, setDeletingLibrary] =
+    useState<LibraryWithCount | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [collapsedSites, setCollapsedSites] = useState<Set<string>>(new Set());
 
@@ -184,7 +187,9 @@ export function LibrariesPageContent() {
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{t("libraries.deleteTitle")}</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {t("libraries.deleteTitle")}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   {t("libraries.deleteDescription", {
                     name: deletingLibrary?.name ?? "",

@@ -11,7 +11,6 @@ export interface SearchContent {
 
 export interface LibraryContent {
   libraryId?: string;
-  showFolderTree?: boolean;
   allowDownloads?: boolean;
 }
 
@@ -42,7 +41,6 @@ export const DEFAULT_SECTION_CONTENT: Record<SectionType, SectionContentUnion> =
       showFileType: true,
     },
     library: {
-      showFolderTree: true,
       allowDownloads: true,
     },
     quicklinks: { links: [] },

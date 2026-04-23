@@ -1,10 +1,10 @@
 "use client";
 
 import { useFileUpload } from "@/lib/storage";
-import type { DocumentFileRowData } from "@/modules/documents";
-import { DocumentFileRow, DropZone } from "@/modules/documents";
+import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { DropZone, FileIcon, getFileTypeColor } from "@/modules/shared/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
@@ -33,7 +33,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useReducer } from "react";
+import { type ReactNode, useReducer } from "react";
 import { toast } from "sonner";
 import type {
   ElementEditorProps,
@@ -42,8 +42,12 @@ import type {
 import { registerElement } from "../framework/registry";
 import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
-interface FileData extends DocumentFileRowData {
+interface FileData {
   _id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  createdAt?: number;
   downloadUrl: string;
 }
 
@@ -286,6 +290,79 @@ function FileDialogs({
   );
 }
 
+function SingleFileRow({
+  actions,
+  file,
+  onOpen,
+}: {
+  actions?: ReactNode;
+  file: FileData;
+  onOpen?: () => void;
+}) {
+  return (
+    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border bg-card p-2 transition-colors hover:border-primary/30 hover:bg-primary/5">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 text-left"
+      >
+        <span
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-lg bg-muted/70",
+            getFileTypeColor(file.contentType),
+          )}
+        >
+          <FileIcon contentType={file.contentType} className="h-5 w-5" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium">
+            {file.filename}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground tabular-nums">
+            {formatFileMeta(file)}
+          </span>
+        </span>
+      </button>
+      {actions}
+    </div>
+  );
+}
+
+function formatFileMeta(file: Pick<FileData, "size" | "createdAt">) {
+  const parts = [formatFileSize(file.size)];
+  if (file.createdAt) {
+    parts.push(
+      new Date(file.createdAt).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    );
+  }
+  return parts.join(" • ");
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(
+    units.length - 1,
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+  );
+  return `${Number.parseFloat((bytes / 1024 ** index).toFixed(1))} ${units[index]}`;
+}
+
+function setFileSaveStatus(
+  onSaveStatusChange: ElementEditorProps<"file">["onSaveStatusChange"],
+  status: Parameters<
+    NonNullable<ElementEditorProps<"file">["onSaveStatusChange"]>
+  >[0],
+) {
+  if (onSaveStatusChange) {
+    onSaveStatusChange(status);
+  }
+}
+
 // Failure modes:
 // - Upload can fail validation or network/server verification before a document exists.
 // - A saved document id can point at a deleted document from another editor session.
@@ -338,14 +415,14 @@ function FileEditor({
     const file = files[0];
     if (!file) return;
 
-    onSaveStatusChange?.("saving");
+    setFileSaveStatus(onSaveStatusChange, "saving");
     const documentId = await uploadFile(file, {
       siteId: siteId as Id<"sites">,
       onError: (error) => toast.error(error.message),
     });
 
     if (!documentId) {
-      onSaveStatusChange?.("idle");
+      setFileSaveStatus(onSaveStatusChange, "idle");
       return;
     }
 
@@ -360,7 +437,7 @@ function FileEditor({
 
     await onUpdate(getFileContent(nextFile));
     toast.success("Uploaded");
-    onSaveStatusChange?.("saved");
+    setFileSaveStatus(onSaveStatusChange, "saved");
   };
 
   const handleRename = async () => {
@@ -370,7 +447,7 @@ function FileEditor({
     if (!nextName) return;
 
     try {
-      onSaveStatusChange?.("saving");
+      setFileSaveStatus(onSaveStatusChange, "saving");
       await renameDocument({
         documentId: resolvedFile._id as Id<"documents">,
         filename: nextName,
@@ -378,10 +455,10 @@ function FileEditor({
       await onUpdate(getFileContent({ ...resolvedFile, filename: nextName }));
       dispatch({ type: "closeRenameDialog" });
       toast.success("Renamed");
-      onSaveStatusChange?.("saved");
+      setFileSaveStatus(onSaveStatusChange, "saved");
     } catch {
       toast.error("Failed to rename");
-      onSaveStatusChange?.("idle");
+      setFileSaveStatus(onSaveStatusChange, "idle");
     }
   };
 
@@ -389,15 +466,15 @@ function FileEditor({
     if (!resolvedFile) return;
 
     try {
-      onSaveStatusChange?.("saving");
+      setFileSaveStatus(onSaveStatusChange, "saving");
       await removeDocument({ documentId: resolvedFile._id as Id<"documents"> });
       await onUpdate({});
       dispatch({ type: "closeDeleteDialog" });
       toast.success("Deleted");
-      onSaveStatusChange?.("saved");
+      setFileSaveStatus(onSaveStatusChange, "saved");
     } catch {
       toast.error("Failed to delete");
-      onSaveStatusChange?.("idle");
+      setFileSaveStatus(onSaveStatusChange, "idle");
     }
   };
 
@@ -413,10 +490,9 @@ function FileEditor({
 
   return (
     <>
-      <DocumentFileRow
+      <SingleFileRow
         file={resolvedFile}
-        onOpen={previewFile}
-        variant="block"
+        onOpen={() => previewFile(resolvedFile)}
         actions={
           <FileItemMenu
             onDelete={() => dispatch({ type: "openDeleteDialog" })}
@@ -456,9 +532,8 @@ function FileRenderer({ content }: ElementRendererProps<"file">) {
   }
 
   return (
-    <DocumentFileRow
+    <SingleFileRow
       file={file}
-      variant="block"
       onOpen={() =>
         openFile({
           url: file.downloadUrl,

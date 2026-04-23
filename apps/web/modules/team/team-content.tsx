@@ -71,82 +71,82 @@ export function TeamContent() {
   return (
     <main className="flex-1 px-4 py-6 sm:px-6">
       <div className="mx-auto w-full max-w-[64rem] space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">{t("title")}</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {capabilities.canManageTeam && (
+              <InviteMemberDialog organizationId={team.organizationId} />
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {capabilities.canManageTeam && (
-            <InviteMemberDialog organizationId={team.organizationId} />
-          )}
-        </div>
-      </div>
 
-      {members && members.length > 0 ? (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("member.email")}</TableHead>
-                <TableHead>{t("member.role")}</TableHead>
-                <TableHead>{t("member.joined")}</TableHead>
-                {capabilities.canManageTeam && members.length > 1 && (
-                  <TableHead className="w-[70px]" />
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((member: MemberListItem) => (
-                <TableRow key={member._id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.imageUrl} />
-                        <AvatarFallback>
-                          {getInitials(member.name, member.email)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{member.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleBadgeVariant(member.role)}>
-                      {member.role === "admin"
-                        ? t("roles.admin")
-                        : member.role === "editor"
-                          ? t("roles.editor")
-                          : t("roles.viewer")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(member.joinedAt)}
-                  </TableCell>
+        {members && members.length > 0 ? (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("member.email")}</TableHead>
+                  <TableHead>{t("member.role")}</TableHead>
+                  <TableHead>{t("member.joined")}</TableHead>
                   {capabilities.canManageTeam && members.length > 1 && (
-                    <TableCell>
-                      <MemberActions
-                        member={member}
-                        teamId={team._id}
-                        isCurrentUserAdmin={capabilities.canManageTeam}
-                      />
-                    </TableCell>
+                    <TableHead className="w-[70px]" />
                   )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/10">
-          <Users className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">{t("noMembers")}</h3>
-          <p className="text-muted-foreground mt-1 mb-4">
-            {t("noMembersDescription")}
-          </p>
-          {capabilities.canManageTeam && (
-            <InviteMemberDialog organizationId={team.organizationId} />
-          )}
-        </div>
-      )}
+              </TableHeader>
+              <TableBody>
+                {members.map((member: MemberListItem) => (
+                  <TableRow key={member._id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.imageUrl} />
+                          <AvatarFallback>
+                            {getInitials(member.name, member.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{member.email}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleBadgeVariant(member.role)}>
+                        {member.role === "admin"
+                          ? t("roles.admin")
+                          : member.role === "editor"
+                            ? t("roles.editor")
+                            : t("roles.viewer")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(member.joinedAt)}
+                    </TableCell>
+                    {capabilities.canManageTeam && members.length > 1 && (
+                      <TableCell>
+                        <MemberActions
+                          member={member}
+                          teamId={team._id}
+                          isCurrentUserAdmin={capabilities.canManageTeam}
+                        />
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/10">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">{t("noMembers")}</h3>
+            <p className="text-muted-foreground mt-1 mb-4">
+              {t("noMembersDescription")}
+            </p>
+            {capabilities.canManageTeam && (
+              <InviteMemberDialog organizationId={team.organizationId} />
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
