@@ -67,6 +67,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
     plugins: [
       organization({
         allowUserToCreateOrganization: true,
+        cancelPendingInvitationsOnReInvite: true,
       }),
       ...(useCrossDomainAuth ? [crossDomain({ siteUrl: primaryAppUrl })] : []),
       convex({ authConfig }),

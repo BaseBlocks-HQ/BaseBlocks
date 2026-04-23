@@ -339,19 +339,14 @@
     "declining": "Declining…"
   },
   "settings": {
-    "title": "Account Settings",
-    "description": "Manage your account settings and preferences",
-    "accountInfo": "Account Information",
-    "email": "Email",
-    "userId": "User ID",
-    "anonymous": "Anonymous User",
-    "dangerZone": "Danger Zone",
-    "deleteAccount": "Delete Account",
-    "deleteAccountWarning": "Once you delete your account, there is no going back. All your data will be permanently removed.",
-    "deleteConfirmTitle": "Are you absolutely sure?",
-    "deleteConfirmDescription": "This action cannot be undone. This will permanently delete your account and remove all your data from our servers.",
-    "deleting": "Deleting...",
-    "deleteAccountError": "Failed to delete account"
+    "title": "Account",
+    "anonymous": "Guest",
+    "deleteAccount": "Delete account",
+    "deleteConfirmTitle": "Delete your account?",
+    "deleteConfirmDescription": "Your account and all data will be removed permanently.",
+    "deleteConfirmAction": "Delete",
+    "deleting": "Deleting…",
+    "deleteAccountError": "Could not delete account"
   },
   "team": {
     "title": "Team",

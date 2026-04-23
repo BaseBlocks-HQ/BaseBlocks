@@ -15,9 +15,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
-import { Loader2, Mail, Settings, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconGear } from "nucleo-glass";
 import { type ReactNode, useState } from "react";
@@ -46,12 +45,12 @@ export function AccountSettings({
   const [internalOpen, setInternalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const open = openProp ?? internalOpen;
   const setOpen = (nextOpen: boolean) => {
     if (!nextOpen) {
       setDeleteConfirmOpen(false);
-      setError(null);
+      setDeleteError(null);
     }
     if (openProp === undefined) {
       setInternalOpen(nextOpen);
@@ -73,15 +72,20 @@ export function AccountSettings({
     if (!next) {
       if (isDeleting) return;
       setDeleteConfirmOpen(false);
-      setError(null);
+      setDeleteError(null);
       return;
     }
     setDeleteConfirmOpen(true);
   };
 
+  const openDeleteConfirm = () => {
+    setDeleteError(null);
+    setDeleteConfirmOpen(true);
+  };
+
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
-    setError(null);
+    setDeleteError(null);
     try {
       await deleteMyAccountData();
       await authClient.signOut();
@@ -92,7 +96,7 @@ export function AccountSettings({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : t("deleteAccountError");
-      setError(message);
+      setDeleteError(message);
       toast.error(message);
       setIsDeleting(false);
     }
@@ -106,10 +110,7 @@ export function AccountSettings({
       <Button
         type="button"
         variant="ghost"
-        className={cn(
-          "h-8 w-full justify-start gap-2 px-2",
-          triggerClassName,
-        )}
+        className={cn("h-8 w-full justify-start gap-2 px-2", triggerClassName)}
       >
         <IconGear className="h-4 w-4" />
         <span>{tCommon("settings")}</span>
@@ -121,119 +122,72 @@ export function AccountSettings({
       <DashboardDialogShell
         open={open}
         onOpenChange={setOpen}
-        title={
-          <span className="flex items-center gap-2">
-            <Settings className="h-5 w-5 shrink-0" />
-            {t("title")}
-          </span>
-        }
-        description={t("description")}
-        contentClassName="sm:max-w-md"
-        bodyClassName="px-5 pb-4 pt-1"
+        title={t("title")}
+        contentClassName="sm:max-w-sm"
+        headerClassName="px-5 pb-1 pt-4"
+        titleClassName="text-sm font-medium tracking-tight text-sidebar-foreground"
+        bodyClassName="flex flex-col gap-0 px-5 pb-4 pt-0"
         trigger={trigger || undefined}
       >
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              {user?.image && <AvatarImage src={user.image} />}
-              <AvatarFallback className="text-lg">
-                {getInitials(user?.name, user?.email)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-semibold text-sidebar-foreground">
-                {user?.name || t("anonymous")}
-              </p>
-              {user?.email && (
-                <div className="flex items-center gap-2 text-sm text-sidebar-foreground/60">
-                  <Mail className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{user.email}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-[0.95rem] border border-sidebar-border/70 bg-sidebar-accent/20 p-4">
-            <h3 className="text-sm font-medium text-sidebar-foreground">
-              {t("accountInfo")}
-            </h3>
-            <div className="space-y-2 text-sm">
-              {user?.email && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sidebar-foreground/60">{t("email")}</span>
-                  <span className="max-w-[200px] truncate font-medium text-sidebar-foreground">
-                    {user.email}
-                  </span>
-                </div>
-              )}
-              {user?.id && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sidebar-foreground/60">{t("userId")}</span>
-                  <span className="max-w-[200px] truncate font-mono text-xs text-sidebar-foreground">
-                    {user.id}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Separator className="bg-sidebar-border/60" />
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-destructive">
-              {t("dangerZone")}
-            </h3>
-            <p className="text-pretty text-sm text-sidebar-foreground/60">
-              {t("deleteAccountWarning")}
+        <div className="flex gap-3.5">
+          <Avatar className="h-11 w-11 shrink-0 ring-1 ring-sidebar-border/50 ring-offset-2 ring-offset-sidebar">
+            {user?.image && <AvatarImage alt="" src={user.image} />}
+            <AvatarFallback className="text-xs font-medium">
+              {getInitials(user?.name, user?.email)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1 space-y-0.5 pt-0.5">
+            <p className="text-balance text-[0.9375rem] font-medium leading-snug tracking-tight text-sidebar-foreground">
+              {user?.name || t("anonymous")}
             </p>
-
-            {error && (
-              <p
-                className={cn(
-                  "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-                )}
-              >
-                {error}
+            {user?.email ? (
+              <p className="truncate text-pretty text-xs leading-relaxed text-sidebar-foreground/50">
+                {user.email}
               </p>
-            )}
-
-            <Button
-              type="button"
-              variant="destructive"
-              className="h-9 w-full rounded-full"
-              onClick={() => {
-                setError(null);
-                setDeleteConfirmOpen(true);
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t("deleteAccount")}
-            </Button>
+            ) : null}
           </div>
         </div>
+
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={openDeleteConfirm}
+          className="mt-8 h-9 w-full shrink-0 rounded-full px-4 text-sm"
+        >
+          <Trash2 className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+          {t("deleteAccount")}
+        </Button>
       </DashboardDialogShell>
 
       <AlertDialog
         open={deleteConfirmOpen}
         onOpenChange={handleDeleteDialogOpenChange}
       >
-        <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
-          <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
-            <AlertDialogTitle className="text-base font-semibold text-balance">
+        <AlertDialogContent className="overflow-hidden gap-0 rounded-[1.25rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[min(100vw-2rem,20rem)]">
+          <AlertDialogHeader className="space-y-2 px-5 pt-5 pb-1 text-left">
+            <AlertDialogTitle className="text-balance text-[0.9375rem] font-medium leading-snug tracking-tight text-sidebar-foreground">
               {t("deleteConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription
               asChild
-              className="text-sm text-sidebar-foreground/60"
+              className="text-xs leading-relaxed text-sidebar-foreground/50"
             >
-              <div className="text-pretty">{t("deleteConfirmDescription")}</div>
+              <p className="text-pretty">{t("deleteConfirmDescription")}</p>
             </AlertDialogDescription>
+            {deleteError ? (
+              <p
+                role="alert"
+                className="text-pretty pt-1 text-xs leading-relaxed text-destructive"
+              >
+                {deleteError}
+              </p>
+            ) : null}
           </AlertDialogHeader>
-          <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+          <AlertDialogFooter className="flex flex-row gap-2 px-5 pb-4 pt-3">
             <AlertDialogCancel
               size="sm"
               disabled={isDeleting}
-              className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="mt-0 h-9 flex-1 rounded-[0.65rem] border-sidebar-border/60 bg-transparent text-xs font-normal text-sidebar-foreground hover:bg-sidebar-accent/40"
             >
               {tCommon("cancel")}
             </AlertDialogCancel>
@@ -242,21 +196,21 @@ export function AccountSettings({
               variant="destructive"
               size="sm"
               disabled={isDeleting}
-              className="rounded-full px-4 text-sm"
+              className="h-9 flex-1 rounded-[0.65rem] text-xs font-medium transition-transform active:scale-[0.98]"
               onClick={() => {
                 void handleDeleteAccount();
               }}
             >
               {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2
+                    className="size-3.5 shrink-0 animate-spin"
+                    aria-hidden
+                  />
                   {t("deleting")}
-                </>
+                </span>
               ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t("deleteAccount")}
-                </>
+                t("deleteConfirmAction")
               )}
             </Button>
           </AlertDialogFooter>

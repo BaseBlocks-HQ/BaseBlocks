@@ -2,6 +2,7 @@
 
 import { DashboardFormDialog } from "@/components/dialogs";
 import { authClient } from "@/lib/auth/client";
+import { getAuthClientDataOrThrow } from "@/lib/auth/result";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -99,11 +100,14 @@ export function InviteMemberDialog({
     }));
 
     try {
-      await authClient.organization.inviteMember({
-        organizationId,
-        email: trimmedEmail,
-        role: dialogState.role,
-      });
+      getAuthClientDataOrThrow(
+        await authClient.organization.inviteMember({
+          organizationId,
+          email: trimmedEmail,
+          role: dialogState.role,
+        }),
+        t("invite.invitationFailed"),
+      );
 
       setDialogState((current) => ({
         ...current,
