@@ -1,17 +1,15 @@
 "use client";
 
-import { FormDialog } from "@/components/dialogs/form-dialog";
+import { DashboardFormDialog } from "@/components/dialogs";
 import { storageClient } from "@/lib/storage/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { useRef, useState } from "react";
+import { EditSiteLogoField } from "./edit-site-logo-field";
 
 interface EditSiteDialogProps {
   open: boolean;
@@ -23,6 +21,9 @@ interface EditSiteDialogProps {
     logoAssetId?: string;
   };
 }
+
+const siteNameInputClassName =
+  "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent";
 
 export function EditSiteDialog({
   open,
@@ -44,8 +45,13 @@ export function EditSiteDialog({
   const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
   const updateSite = useMutation(api.sites.mutations.update);
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
+  // Failure modes:
+  // - Site name is empty
+  // - Uploaded file is not an image
+  // - Uploaded file exceeds the size limit
+  // - Asset creation or site update fails
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
       setDialogState({
         name: site.name,
         logoUrl: site.logoUrl || "",
@@ -56,28 +62,35 @@ export function EditSiteDialog({
         error: "",
       });
     }
-    onOpenChange(newOpen);
+
+    onOpenChange(nextOpen);
+  };
+
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       setDialogState((current) => ({
         ...current,
         error: t("dialogs.editSite.invalidImageType"),
       }));
+      resetFileInput();
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       setDialogState((current) => ({
         ...current,
         error: t("dialogs.editSite.logoTooLarge"),
       }));
+      resetFileInput();
       return;
     }
 
@@ -118,10 +131,7 @@ export function EditSiteDialog({
         logoAssetId: assetId,
         isUploadingLogo: false,
       }));
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      resetFileInput();
     } catch (err) {
       if (objectKey) {
         await storageClient.cleanup({
@@ -136,10 +146,7 @@ export function EditSiteDialog({
         error: err instanceof Error ? err.message : t("common.error"),
         isUploadingLogo: false,
       }));
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      resetFileInput();
     }
   };
 
@@ -149,18 +156,28 @@ export function EditSiteDialog({
       logoUrl: "",
       logoPreview: "",
       logoAssetId: "",
+      error: "",
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const trimmedName = dialogState.name.trim();
+
+    if (!trimmedName) {
+      setDialogState((current) => ({
+        ...current,
+        error: t("dialogs.editSite.nameRequired"),
+      }));
+      return;
+    }
+
     setDialogState((current) => ({
       ...current,
       error: "",
       isSubmitting: true,
     }));
 
-    // Determine what changed about the logo
     const hadLogo = !!site.logoAssetId || !!site.logoUrl;
     const hasNewAsset = !!dialogState.logoAssetId;
     const logoCleared = hadLogo && !dialogState.logoUrl;
@@ -168,17 +185,13 @@ export function EditSiteDialog({
     try {
       await updateSite({
         siteId: site._id as Id<"sites">,
-        name: dialogState.name,
+        name: trimmedName,
         ...(hasNewAsset && {
           logoAssetId: dialogState.logoAssetId as Id<"assets">,
         }),
         ...(logoCleared && { clearLogo: true }),
       });
-      onOpenChange(false);
-      setDialogState((current) => ({
-        ...current,
-        isSubmitting: false,
-      }));
+      handleOpenChange(false);
     } catch (err) {
       setDialogState((current) => ({
         ...current,
@@ -189,96 +202,57 @@ export function EditSiteDialog({
   };
 
   return (
-    <FormDialog
+    <DashboardFormDialog
       open={open}
       onOpenChange={handleOpenChange}
       title={t("dialogs.editSite.title")}
-      description={t("dialogs.editSite.description")}
       onSubmit={handleSubmit}
       isSubmitting={dialogState.isSubmitting}
       submitLabel={t("common.save")}
       submittingLabel={t("dialogs.editSite.saving")}
+      cancelLabel={t("common.cancel")}
+      bodyClassName="px-5 pb-4"
+      formClassName="space-y-4"
+      footerClassName="pt-2"
     >
-      <div className="space-y-2">
-        <Label>{t("dialogs.editSite.logoLabel")}</Label>
-        <div className="flex items-center gap-4">
-          {dialogState.logoPreview ? (
-            <div className="relative">
-              <Image
-                src={dialogState.logoPreview}
-                alt="Site logo"
-                className="h-16 w-16 rounded-lg object-contain border bg-muted"
-                width={64}
-                height={64}
-                unoptimized
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6"
-                onClick={handleRemoveLogo}
-                disabled={dialogState.isUploadingLogo}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed bg-muted text-muted-foreground">
-              <ImagePlus className="h-6 w-6" />
-            </div>
-          )}
-          <div className="flex-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-              disabled={dialogState.isUploadingLogo}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={dialogState.isUploadingLogo}
-            >
-              {dialogState.isUploadingLogo ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("dialogs.editSite.uploading")}
-                </>
-              ) : (
-                t("dialogs.editSite.uploadLogo")
-              )}
-            </Button>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("dialogs.editSite.logoHint")}
-            </p>
-          </div>
+      <div className="space-y-3">
+        <div>
+          <Label
+            htmlFor="editSiteName"
+            className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+          >
+            {t("sites.siteName")}
+          </Label>
+          <Input
+            id="editSiteName"
+            placeholder={t("dialogs.createSite.namePlaceholder")}
+            value={dialogState.name}
+            onChange={(e) =>
+              setDialogState((current) => ({
+                ...current,
+                name: e.target.value,
+                error: "",
+              }))
+            }
+            aria-invalid={!!dialogState.error}
+            className={siteNameInputClassName}
+          />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="editSiteName">{t("sites.siteName")}</Label>
-        <Input
-          id="editSiteName"
-          placeholder={t("dialogs.createSite.namePlaceholder")}
-          value={dialogState.name}
-          onChange={(e) =>
-            setDialogState((current) => ({
-              ...current,
-              name: e.target.value,
-            }))
-          }
-          required
+        <EditSiteLogoField
+          fileInputRef={fileInputRef}
+          isUploading={dialogState.isUploadingLogo}
+          logoPreview={dialogState.logoPreview}
+          onLogoUpload={handleLogoUpload}
+          onRemoveLogo={handleRemoveLogo}
         />
       </div>
 
-      {dialogState.error && (
-        <p className="text-sm text-destructive">{dialogState.error}</p>
-      )}
-    </FormDialog>
+      {dialogState.error ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {dialogState.error}
+        </p>
+      ) : null}
+    </DashboardFormDialog>
   );
 }

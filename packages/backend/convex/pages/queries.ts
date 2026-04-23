@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember, getAuthContextOrNull } from "../auth";
 import {
@@ -17,10 +17,33 @@ export const list = query({
 
     if (!(await checkIsMember(ctx, site.teamId))) return [];
 
-    return await ctx.db
+    const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
+
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
+    const referencedPageIds = new Set<string>();
+    for (const layout of layouts) {
+      for (const slot of layout.slots) {
+        for (const block of slot.blocks) {
+          if (block.type !== "page") continue;
+          const pageId = block.content?.pageId;
+          if (typeof pageId === "string") {
+            referencedPageIds.add(pageId);
+          }
+        }
+      }
+    }
+
+    return pages.map((page) => ({
+      ...page,
+      hasPageBlockReference: referencedPageIds.has(page._id),
+    }));
   },
 });
 
@@ -355,7 +378,7 @@ export const getTreePublished = query({
 
     const deployedPages = (
       await getAccessiblePublishedPages(ctx, site, sessionTokens)
-    ).filter((page) => !page.isSubpageContent);
+    ).filter((page) => page.showInNavigation !== false);
 
     // Project to published fields (fall back to draft for migration compat)
     return buildPageTree(
@@ -487,7 +510,7 @@ export const listDeployedPaths = query({
     if (!site || !site.isPublished) return [];
 
     const deployedPages = (await getAccessiblePublishedPages(ctx, site)).filter(
-      (page) => !page.isSubpageContent,
+      (page) => page.showInNavigation !== false,
     );
 
     // Build a map of page ID → published slug for path resolution

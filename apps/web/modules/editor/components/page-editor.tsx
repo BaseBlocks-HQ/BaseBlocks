@@ -137,7 +137,7 @@ interface PageEditorProps {
   pageData?: PageData;
   layouts?: LayoutDoc[];
   onSelectionChange?: (slotId: string | null) => void;
-  /** When true, uses local state instead of shared context for tabs/currentPageId (used in subpage panel) */
+  /** When true, uses local state instead of shared context for tabs/currentPageId (used in the page panel) */
   nested?: boolean;
 }
 

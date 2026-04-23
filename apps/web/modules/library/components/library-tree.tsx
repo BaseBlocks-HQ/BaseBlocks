@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
+  buildLibraryTreeViewLookup,
   type LibraryTreeViewMode,
   buildDraftFolderViewPath,
   buildLibraryTreeView,
@@ -210,7 +211,11 @@ function LibraryTreeModel({
       }),
     [entities, mode, paths],
   );
-  const entitiesRef = useRef(view.entitiesByViewPath);
+  const entityLookup = useMemo(
+    () => buildLibraryTreeViewLookup(view.entitiesByViewPath),
+    [view.entitiesByViewPath],
+  );
+  const entitiesRef = useRef(entityLookup);
   const modelRef = useRef<FileTreeModel | null>(null);
   const onCreateFolderRef = useRef(onCreateFolder);
   const onDropEntitiesRef = useRef(onDropEntities);
@@ -313,13 +318,13 @@ function LibraryTreeModel({
   const search = useFileTreeSearch(model);
 
   useEffect(() => {
-    entitiesRef.current = view.entitiesByViewPath;
+    entitiesRef.current = entityLookup;
     modelRef.current = model;
     onCreateFolderRef.current = onCreateFolder;
     onDropEntitiesRef.current = onDropEntities;
     onRenameEntityRef.current = onRenameEntity;
     pathsRef.current = view.paths;
-  }, [model, onCreateFolder, onDropEntities, onRenameEntity, view]);
+  }, [entityLookup, model, onCreateFolder, onDropEntities, onRenameEntity, view.paths]);
 
   useEffect(() => {
     model.resetPaths(view.paths);
@@ -352,7 +357,7 @@ function LibraryTreeModel({
     const entityPath = row.dataset.itemPath ?? row.dataset.fileTreeStickyPath;
     if (!entityPath) return;
 
-    const entity = view.entitiesByViewPath.get(entityPath);
+    const entity = entityLookup.get(entityPath);
     if (entity?.kind === "file") onOpenEntity(entity);
   };
 
@@ -361,7 +366,7 @@ function LibraryTreeModel({
 
     const selectedPath = model.getSelectedPaths().at(-1);
     const selectedEntity = selectedPath
-      ? view.entitiesByViewPath.get(selectedPath)
+      ? entityLookup.get(selectedPath)
       : undefined;
     const parentId =
       selectedEntity?.kind === "folder"
@@ -413,7 +418,7 @@ function LibraryTreeModel({
       model={model}
       onClick={openEntityFromEvent}
       renderContextMenu={(item, context) => {
-        const entity = view.entitiesByViewPath.get(item.path);
+        const entity = entityLookup.get(item.path);
         if (!entity) return null;
 
         return (

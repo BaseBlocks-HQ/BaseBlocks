@@ -2,7 +2,7 @@
 
 import { createContext, use } from "react";
 
-export interface EditingSubpage {
+export interface EditingPagePanel {
   pageId: string;
 }
 
@@ -22,9 +22,9 @@ export interface EditorUiContextValue {
     blockId: string | null,
   ) => void;
   clearSelection: () => void;
-  editingSubpage: EditingSubpage | null;
-  openSubpageEditor: (subpage: EditingSubpage) => void;
-  closeSubpageEditor: () => void;
+  editingPage: EditingPagePanel | null;
+  openPageEditor: (page: EditingPagePanel) => void;
+  closePageEditor: () => void;
   activeTabId: string | null;
   setActiveTabId: (tabId: string | null) => void;
   currentPageId: string | null;

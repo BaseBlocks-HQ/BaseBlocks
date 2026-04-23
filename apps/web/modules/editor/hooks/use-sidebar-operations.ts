@@ -28,15 +28,13 @@ export function useSidebarOperations({
   selectedPageId,
 }: UseSidebarOperationsOptions) {
   const haptic = useHaptic();
-  const { selection, selectSlot, editingSubpage, activeTabId, currentPageId } =
+  const { selection, selectSlot, editingPage, activeTabId, currentPageId } =
     useEditorUi();
   const { pushCommand, isUndoRedoExecuting } = useEditorUndo();
 
   const createLayoutMutation = useMutation(api.layouts.mutations.create);
   const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
-  const addSubpageBlockMutation = useMutation(
-    api.layouts.mutations.addSubpageBlock,
-  );
+  const addPageBlockMutation = useMutation(api.layouts.mutations.addPageBlock);
   const removeLayoutMutation = useMutation(api.layouts.mutations.remove);
   const removeBlockMutation = useMutation(
     api.layouts.mutations.removeBlockFromSlot,
@@ -46,8 +44,8 @@ export function useSidebarOperations({
   );
 
   const handleAddLayout = async (type: LayoutType) => {
-    const targetPageId = editingSubpage
-      ? (editingSubpage.pageId as Id<"pages">)
+    const targetPageId = editingPage
+      ? (editingPage.pageId as Id<"pages">)
       : selectedPageId;
 
     if (!targetPageId) return;
@@ -60,7 +58,7 @@ export function useSidebarOperations({
       type: newLayout.type,
       slots: newLayout.slots,
       settings: newLayout.settings,
-      tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
+      tabId: editingPage ? undefined : (activeTabId ?? undefined),
     });
 
     if (newLayout.slots.length > 0) {
@@ -85,7 +83,7 @@ export function useSidebarOperations({
             type: newLayout.type,
             slots: newLayout.slots,
             settings: newLayout.settings,
-            tabId: editingSubpage ? undefined : (activeTabId ?? undefined),
+            tabId: editingPage ? undefined : (activeTabId ?? undefined),
           });
           layoutIdRef.value = newId as string;
         },
@@ -96,14 +94,14 @@ export function useSidebarOperations({
   const handleAddBlock = async (type: ElementType) => {
     if (!selection.layoutId || !selection.slotId) return;
 
-    if (type === "subpage") {
+    if (type === "page") {
       const blockId = generateId();
-      const title = "New Sub-page";
-      const slug = `sub-page-${blockId.slice(0, 8)}`;
+      const title = "New Page";
+      const slug = `page-${blockId.slice(0, 8)}`;
 
       try {
         haptic.trigger("heavy");
-        await addSubpageBlockMutation({
+        await addPageBlockMutation({
           layoutId: selection.layoutId as Id<"layouts">,
           slotId: selection.slotId,
           blockId,
@@ -112,7 +110,7 @@ export function useSidebarOperations({
         });
       } catch (_error) {
         haptic.trigger("error");
-        toast.error("Failed to create sub-page");
+        toast.error("Failed to create page");
       }
       return;
     }
@@ -162,8 +160,8 @@ export function useSidebarOperations({
   };
 
   const handleEnableTabs = async () => {
-    const targetPageId = editingSubpage
-      ? (editingSubpage.pageId as Id<"pages">)
+    const targetPageId = editingPage
+      ? (editingPage.pageId as Id<"pages">)
       : selectedPageId;
 
     if (!targetPageId) return;

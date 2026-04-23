@@ -53,7 +53,7 @@ function readZipEntryText(
 describe("page export", () => {
   test("buildPageExportDocument_serializesSupportedBlocks", () => {
     const exportDocument = buildPageExportDocument({
-      pageTitle: "Subpage Export",
+      pageTitle: "Page Export",
       layouts: [
         {
           order: 0,
@@ -146,9 +146,9 @@ describe("page export", () => {
       ],
     });
 
-    expect(exportDocument.title).toBe("Subpage Export");
+    expect(exportDocument.title).toBe("Page Export");
     expect(exportDocument.blocks).toEqual([
-      { type: "heading", level: 1, text: "Subpage Export" },
+      { type: "heading", level: 1, text: "Page Export" },
       { type: "heading", level: 2, text: "Overview" },
       { type: "paragraph", text: "Line one" },
       { type: "paragraph", text: "Line two" },

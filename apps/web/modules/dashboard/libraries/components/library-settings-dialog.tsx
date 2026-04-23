@@ -1,9 +1,10 @@
 "use client";
 
-import { FormDialog } from "@/components/dialogs/form-dialog";
+import { DashboardFormDialog } from "@/components/dialogs";
 import { api } from "@baseblocks/backend";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -14,6 +15,9 @@ interface LibrarySettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const libraryNameInputClassName =
+  "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent";
 
 export function LibrarySettingsDialog({
   library,
@@ -28,16 +32,32 @@ export function LibrarySettingsDialog({
   const updateLibrary = useMutation(api.documentLibraries.mutations.update);
 
   const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen && library) {
+    if (!newOpen) {
+      setError("");
+      onOpenChange(false);
+      return;
+    }
+
+    if (library) {
       setName(library.name);
       setError("");
     }
-    onOpenChange(newOpen);
+    onOpenChange(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Failure modes:
+  // - No library is selected
+  // - Library name is empty
+  // - Update mutation fails
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!library) return;
+
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError(t("libraries.nameRequired"));
+      return;
+    }
 
     setError("");
     setIsSubmitting(true);
@@ -45,10 +65,9 @@ export function LibrarySettingsDialog({
     try {
       await updateLibrary({
         libraryId: library._id,
-        name,
+        name: trimmedName,
       });
       onOpenChange(false);
-      setIsSubmitting(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.error"));
       setIsSubmitting(false);
@@ -56,28 +75,48 @@ export function LibrarySettingsDialog({
   };
 
   return (
-    <FormDialog
+    <DashboardFormDialog
       open={open}
       onOpenChange={handleOpenChange}
       title={t("libraries.editTitle")}
-      description={t("libraries.editDescription")}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       submitLabel={t("common.save")}
       submittingLabel={t("common.loading")}
+      cancelLabel={t("common.cancel")}
+      bodyClassName="px-5 pb-4"
+      formClassName="space-y-4"
+      footerClassName="pt-2"
     >
-      <div className="space-y-2">
-        <Label htmlFor="editLibraryName">{t("libraries.nameLabel")}</Label>
+      <div>
+        <Label
+          htmlFor="editLibraryName"
+          className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+        >
+          {t("libraries.nameLabel")}
+        </Label>
         <Input
           id="editLibraryName"
           placeholder={t("libraries.namePlaceholder")}
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
+          onChange={(e) => {
+            setName(e.target.value);
+            setError("");
+          }}
+          aria-invalid={!!error}
+          className={libraryNameInputClassName}
         />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </FormDialog>
+      {error && (
+        <p
+          className={cn(
+            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
+          )}
+        >
+          {error}
+        </p>
+      )}
+    </DashboardFormDialog>
   );
 }

@@ -4,7 +4,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { DataModel } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireContentEditor } from "../auth";
-import { indexSubpageContent, removeSubpageIndex } from "../lib/indexSubpage";
+import {
+  indexPageContent,
+  removePageContentIndex,
+} from "../lib/indexPageContent";
 import { markSiteModified } from "../lib/markModified";
 import { pageAccessPolicyValidator } from "../lib/pageAccess";
 
@@ -30,8 +33,12 @@ export const create = mutation({
     slug: v.string(),
     parentId: v.optional(v.id("pages")),
     icon: v.optional(v.string()),
+    showInNavigation: v.optional(v.boolean()),
   },
-  handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
+  handler: async (
+    ctx,
+    { siteId, title, slug, parentId, icon, showInNavigation },
+  ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
@@ -68,6 +75,7 @@ export const create = mutation({
       icon,
       order: maxOrder + 1,
       isPublished: false,
+      showInNavigation,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -79,6 +87,186 @@ export const create = mutation({
   },
 });
 
+export const setExposure = mutation({
+  args: {
+    pageId: v.id("pages"),
+    exposure: v.union(
+      v.literal("navigation"),
+      v.literal("block"),
+      v.literal("both"),
+    ),
+    targetPageId: v.optional(v.id("pages")),
+    targetLayoutId: v.optional(v.id("layouts")),
+    targetSlotId: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    { pageId, exposure, targetPageId, targetLayoutId, targetSlotId },
+  ) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    const now = Date.now();
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
+      .collect();
+
+    const removeReferences = async () => {
+      for (const layout of layouts) {
+        let changed = false;
+        const nextSlots = layout.slots.map((slot) => {
+          const nextBlocks = slot.blocks.filter((block) => {
+            if (block.type !== "page") return true;
+            const linkedPageId = block.content?.pageId;
+            const shouldKeep = linkedPageId !== pageId;
+            if (!shouldKeep) {
+              changed = true;
+            }
+            return shouldKeep;
+          });
+
+          if (nextBlocks.length === slot.blocks.length) {
+            return slot;
+          }
+
+          return {
+            ...slot,
+            blocks: nextBlocks,
+          };
+        });
+
+        if (!changed) continue;
+
+        await ctx.db.patch(layout._id, {
+          slots: nextSlots,
+          updatedAt: now,
+        });
+        await ctx.db.patch(layout.pageId, { updatedAt: now });
+      }
+    };
+
+    const ensureReferenceOnTargetPage = async () => {
+      if (!targetPageId || targetPageId === pageId) return;
+
+      const targetPage = await ctx.db.get(targetPageId);
+      if (!targetPage || targetPage.siteId !== page.siteId) return;
+
+      const targetLayouts = layouts
+        .filter((layout) => layout.pageId === targetPageId)
+        .sort((a, b) => a.order - b.order);
+
+      const existingReference = targetLayouts.some((layout) =>
+        layout.slots.some((slot) =>
+          slot.blocks.some(
+            (block) =>
+              block.type === "page" && block.content?.pageId === pageId,
+          ),
+        ),
+      );
+
+      if (existingReference) return;
+
+      const requestedLayout = targetLayoutId
+        ? targetLayouts.find((layout) => layout._id === targetLayoutId)
+        : undefined;
+
+      const targetLayout =
+        requestedLayout && requestedLayout.slots.length > 0
+          ? requestedLayout
+          : targetLayouts.find((layout) => layout.slots.length > 0);
+
+      if (!targetLayout) {
+        await ctx.db.insert("layouts", {
+          siteId: page.siteId,
+          pageId: targetPageId,
+          type: "single",
+          slots: [
+            {
+              id: "default-slot",
+              position: 0,
+              blocks: [
+                {
+                  id: `page-${pageId}-${now}`,
+                  type: "page",
+                  content: { pageId },
+                },
+              ],
+            },
+          ],
+          settings: {},
+          order: 0,
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.patch(targetPageId, { updatedAt: now });
+        return;
+      }
+
+      const targetSlot =
+        (targetSlotId
+          ? targetLayout.slots.find((slot) => slot.id === targetSlotId)
+          : undefined) ?? targetLayout.slots[0];
+      if (!targetSlot) return;
+
+      const nextSlots = targetLayout.slots.map((slot) =>
+        slot.id === targetSlot.id
+          ? {
+              ...slot,
+              blocks: [
+                ...slot.blocks,
+                {
+                  id: `page-${pageId}-${now}`,
+                  type: "page" as const,
+                  content: { pageId },
+                },
+              ],
+            }
+          : slot,
+      );
+
+      await ctx.db.patch(targetLayout._id, {
+        slots: nextSlots,
+        updatedAt: now,
+      });
+      await ctx.db.patch(targetPageId, { updatedAt: now });
+    };
+
+    if (exposure === "navigation") {
+      await removeReferences();
+      await ctx.db.patch(pageId, {
+        showInNavigation: true,
+        updatedAt: now,
+      });
+      await markSiteModified(ctx, page.siteId);
+      return { exposure };
+    }
+
+    if (exposure === "block") {
+      await ensureReferenceOnTargetPage();
+      await ctx.db.patch(pageId, {
+        showInNavigation: false,
+        updatedAt: now,
+      });
+      await markSiteModified(ctx, page.siteId);
+      return { exposure };
+    }
+
+    await ensureReferenceOnTargetPage();
+    await ctx.db.patch(pageId, {
+      showInNavigation: true,
+      updatedAt: now,
+    });
+    await markSiteModified(ctx, page.siteId);
+    return { exposure };
+  },
+});
+
 // Update page
 export const update = mutation({
   args: {
@@ -87,8 +275,12 @@ export const update = mutation({
     slug: v.optional(v.string()),
     icon: v.optional(v.string()),
     isPublished: v.optional(v.boolean()),
+    showInNavigation: v.optional(v.boolean()),
   },
-  handler: async (ctx, { pageId, title, slug, icon, isPublished }) => {
+  handler: async (
+    ctx,
+    { pageId, title, slug, icon, isPublished, showInNavigation },
+  ) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -118,13 +310,16 @@ export const update = mutation({
     if (slug !== undefined) updates.slug = slug.toLowerCase();
     if (icon !== undefined) updates.icon = icon;
     if (isPublished !== undefined) updates.isPublished = isPublished;
+    if (showInNavigation !== undefined) {
+      updates.showInNavigation = showInNavigation;
+    }
 
     await ctx.db.patch(pageId, updates);
     await markSiteModified(ctx, page.siteId);
 
     // Re-index if title changed (title is part of the search index)
     if (title !== undefined) {
-      await indexSubpageContent(ctx, pageId);
+      await indexPageContent(ctx, pageId);
     }
 
     return pageId;
@@ -445,7 +640,7 @@ export const remove = mutation({
 
     // Remove search index entries for all pages being deleted
     for (const id of pagesToDelete) {
-      await removeSubpageIndex(ctx, id as Id<"pages">);
+      await removePageContentIndex(ctx, id as Id<"pages">);
     }
 
     await deletePageRecursively(ctx, pageId, page.siteId);

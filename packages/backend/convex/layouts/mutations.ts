@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireContentEditor } from "../auth";
-import { indexSubpageContent } from "../lib/indexSubpage";
+import { indexPageContent } from "../lib/indexPageContent";
 import { markSiteModified } from "../lib/markModified";
 import { resolveLayoutContext, resolvePageContext } from "../lib/resolvers";
 import {
@@ -109,7 +109,7 @@ export const updateSlots = mutation({
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId);
-    await indexSubpageContent(ctx, layout.pageId);
+    await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
   },
@@ -151,7 +151,7 @@ export const addBlockToSlot = mutation({
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId);
-    await indexSubpageContent(ctx, layout.pageId);
+    await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
   },
@@ -190,7 +190,7 @@ export const updateBlockInSlot = mutation({
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId);
-    await indexSubpageContent(ctx, layout.pageId);
+    await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
   },
@@ -228,7 +228,7 @@ export const removeBlockFromSlot = mutation({
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId);
-    await indexSubpageContent(ctx, layout.pageId);
+    await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
   },
@@ -356,8 +356,8 @@ export const remove = mutation({
   },
 });
 
-// Atomically create a child page + default layout + subpage block in one mutation
-export const addSubpageBlock = mutation({
+// Atomically create a child page + default layout + page block in one mutation
+export const addPageBlock = mutation({
   args: {
     layoutId: v.id("layouts"),
     slotId: v.string(),
@@ -409,7 +409,7 @@ export const addSubpageBlock = mutation({
       parentId: layout.pageId,
       order: maxOrder + 1,
       isPublished: false,
-      isSubpageContent: true,
+      showInNavigation: false,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -427,10 +427,10 @@ export const addSubpageBlock = mutation({
       updatedAt: now,
     });
 
-    // 3. Add subpage block to the specified slot
+    // 3. Add page block to the specified slot
     const block = {
       id: blockId,
-      type: "subpage" as const,
+      type: "page" as const,
       content: { pageId: childPageId },
     };
 
@@ -448,7 +448,7 @@ export const addSubpageBlock = mutation({
     await ctx.db.patch(layoutId, { slots: updatedSlots, updatedAt: now });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
     await markSiteModified(ctx, layoutInfo.siteId);
-    await indexSubpageContent(ctx, childPageId);
+    await indexPageContent(ctx, childPageId);
 
     return { childPageId };
   },

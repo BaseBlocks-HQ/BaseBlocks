@@ -1,7 +1,11 @@
 "use client";
 
-import { ConfirmDialog } from "@/components/dialogs";
-import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { FormDialog, ConfirmDialog } from "@/components/dialogs";
+import { usePages } from "@/lib/data";
+import {
+  useEditorSite,
+  useEditorUi,
+} from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";
@@ -13,8 +17,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import { Label } from "@baseblocks/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@baseblocks/ui/select";
 import { useMutation } from "convex/react";
 import {
+  Check,
   FilePlus,
   Lock,
   MoreHorizontal,
@@ -22,8 +35,9 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
-import { CreateSubPageDialog } from "./create-sub-page-dialog";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { CreateChildPageDialog } from "./create-child-page-dialog";
 import { PageAccessDialog } from "./page-access-dialog";
 import { RenamePageDialog } from "./rename-page-dialog";
 
@@ -42,12 +56,64 @@ export function PageActionsMenu({
 }: PageActionsMenuProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [subPageOpen, setSubPageOpen] = useState(false);
+  const [childPageOpen, setChildPageOpen] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
+  const [exposureDialogOpen, setExposureDialogOpen] = useState(false);
+  const [pendingExposure, setPendingExposure] = useState<
+    "block" | "both" | null
+  >(null);
+  const [targetPageId, setTargetPageId] = useState("");
+
   const { isAdmin } = useEditorSite();
+  const { currentPageId, selection } = useEditorUi();
+  const pages = usePages(siteId);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const removePage = useMutation(api.pages.mutations.remove);
+  const setExposure = useMutation(api.pages.mutations.setExposure);
+
+  const exposure =
+    page.showInNavigation !== false
+      ? page.hasPageBlockReference
+        ? "both"
+        : "navigation"
+      : "block";
+
+  const targetOptions = useMemo(
+    () =>
+      (pages ?? [])
+        .filter((candidate) => candidate._id !== page._id)
+        .sort((a, b) => a.title.localeCompare(b.title)),
+    [page._id, pages],
+  );
+
+  const handleSetExposure = async (
+    nextExposure: "navigation" | "block" | "both",
+  ) => {
+    const inferredTargetPageId =
+      currentPageId && currentPageId !== page._id ? currentPageId : null;
+
+    if (
+      (nextExposure === "block" || nextExposure === "both") &&
+      !inferredTargetPageId
+    ) {
+      setPendingExposure(nextExposure);
+      setTargetPageId("");
+      setExposureDialogOpen(true);
+      return;
+    }
+
+    await setExposure({
+      pageId: page._id as Id<"pages">,
+      exposure: nextExposure,
+      targetPageId: inferredTargetPageId as Id<"pages"> | undefined,
+      targetLayoutId:
+        selection.layoutId && inferredTargetPageId
+          ? (selection.layoutId as Id<"layouts">)
+          : undefined,
+      targetSlotId: selection.slotId ?? undefined,
+    });
+  };
 
   const handleSetDefault = async () => {
     await setDefaultPage({
@@ -59,6 +125,33 @@ export function PageActionsMenu({
   const handleDelete = async () => {
     await removePage({ pageId: page._id as Id<"pages"> });
     setDeleteOpen(false);
+  };
+
+  const handleExposureDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setPendingExposure(null);
+      setTargetPageId("");
+    }
+    setExposureDialogOpen(open);
+  };
+
+  const handleConfirmExposureTarget = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ) => {
+    e.preventDefault();
+
+    if (!pendingExposure || !targetPageId) {
+      toast.error("Choose a page to insert the block into");
+      return;
+    }
+
+    await setExposure({
+      pageId: page._id as Id<"pages">,
+      exposure: pendingExposure,
+      targetPageId: targetPageId as Id<"pages">,
+    });
+
+    handleExposureDialogOpenChange(false);
   };
 
   return (
@@ -74,10 +167,35 @@ export function PageActionsMenu({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => setSubPageOpen(true)}>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem onClick={() => setChildPageOpen(true)}>
             <FilePlus className="h-4 w-4" />
-            Add Sub-page
+            Add Child Page
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => handleSetExposure("navigation")}>
+            <Check
+              className={
+                exposure === "navigation" ? "h-4 w-4" : "h-4 w-4 opacity-0"
+              }
+            />
+            Navigation Only
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleSetExposure("block")}>
+            <Check
+              className={
+                exposure === "block" ? "h-4 w-4" : "h-4 w-4 opacity-0"
+              }
+            />
+            Page Block Only
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleSetExposure("both")}>
+            <Check
+              className={
+                exposure === "both" ? "h-4 w-4" : "h-4 w-4 opacity-0"
+              }
+            />
+            Navigation and Block
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>
@@ -103,12 +221,12 @@ export function PageActionsMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <CreateSubPageDialog
+      <CreateChildPageDialog
         siteId={siteId}
         parentId={page._id}
         parentTitle={page.title}
-        open={subPageOpen}
-        onOpenChange={setSubPageOpen}
+        open={childPageOpen}
+        onOpenChange={setChildPageOpen}
         onSuccess={() => onExpandParent?.()}
       />
 
@@ -147,6 +265,33 @@ export function PageActionsMenu({
         variant="destructive"
         onConfirm={handleDelete}
       />
+
+      <FormDialog
+        open={exposureDialogOpen}
+        onOpenChange={handleExposureDialogOpenChange}
+        title="Choose Block Page"
+        description="Pick which page should receive the page block."
+        onSubmit={handleConfirmExposureTarget}
+        isSubmitting={false}
+        submitLabel="Insert Block"
+        submittingLabel="Inserting..."
+      >
+        <div className="space-y-2">
+          <Label htmlFor="pageExposureTarget">Insert Into Page</Label>
+          <Select value={targetPageId} onValueChange={setTargetPageId}>
+            <SelectTrigger id="pageExposureTarget">
+              <SelectValue placeholder="Choose a page" />
+            </SelectTrigger>
+            <SelectContent>
+              {targetOptions.map((candidate) => (
+                <SelectItem key={candidate._id} value={candidate._id}>
+                  {candidate.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </FormDialog>
     </>
   );
 }

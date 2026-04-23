@@ -1,11 +1,8 @@
 "use client";
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
+import { usePage } from "@/lib/data";
+import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
 import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementEditorProps,
@@ -13,28 +10,23 @@ import type {
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
 import { themedPickerImagePreview } from "../framework/themed-picker-image";
+import { PageConfigPanel } from "./page-config";
 
-function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
+function PageEditor({ content }: ElementEditorProps<"page">) {
   const editorUi = useEditorUiOptional();
-  const sessionTokens = getStoredAccessSessionTokens();
-  const page = useQuery(
-    api.pages.queries.get,
-    content.pageId
-      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
-      : "skip",
-  );
+  const page = usePage(content.pageId);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!editorUi || !content.pageId) return;
-    editorUi.openSubpageEditor({ pageId: content.pageId });
+    editorUi.openPageEditor({ pageId: content.pageId });
   };
 
   if (!content.pageId) {
     return (
       <div className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/30 text-muted-foreground">
         <FileText className="h-5 w-5 shrink-0" />
-        <span className="text-sm">Sub-page not configured</span>
+        <span className="text-sm">Page not configured</span>
       </div>
     );
   }
@@ -60,23 +52,17 @@ function SubpageEditor({ content }: ElementEditorProps<"subpage">) {
   );
 }
 
-function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
-  const subpageContext = usePublicSubpageContextOptional();
-  const sessionTokens = getStoredAccessSessionTokens();
-  const page = useQuery(
-    api.pages.queries.get,
-    content.pageId
-      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
-      : "skip",
-  );
+function PageRenderer({ content }: ElementRendererProps<"page">) {
+  const pagePanel = usePublicPagePanelOptional();
+  const page = usePage(content.pageId);
 
   if (!content.pageId || !page) {
     return null;
   }
 
   const handleClick = () => {
-    if (subpageContext) {
-      subpageContext.openSubpage(content.pageId);
+    if (pagePanel) {
+      pagePanel.openPage(content.pageId);
     }
   };
 
@@ -99,20 +85,21 @@ function SubpageRenderer({ content }: ElementRendererProps<"subpage">) {
   );
 }
 
-const SubpagePreview = themedPickerImagePreview(
-  "/editor/picker/blocks/subpage-light.png",
-  "/editor/picker/blocks/subpage-dark.png",
+const PagePreview = themedPickerImagePreview(
+  "/editor/picker/blocks/page-light.png",
+  "/editor/picker/blocks/page-dark.png",
 );
 
 registerElement({
-  type: "subpage",
+  type: "page",
   category: "blocks",
-  label: "Sub-page",
-  description: "Create a linked sub-page that opens in a side panel",
+  label: "Page",
+  description: "Reference a page and open it in a panel",
   icon: FileText,
-  keywords: ["page", "link", "subpage", "process", "document", "nested"],
-  editor: SubpageEditor,
-  renderer: SubpageRenderer,
-  preview: SubpagePreview,
-  defaultContent: DEFAULT_BLOCK_CONTENT.subpage,
+  keywords: ["page", "process", "document", "nested", "panel"],
+  editor: PageEditor,
+  renderer: PageRenderer,
+  preview: PagePreview,
+  configPanel: PageConfigPanel,
+  defaultContent: DEFAULT_BLOCK_CONTENT.page,
 });

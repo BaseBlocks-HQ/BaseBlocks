@@ -46,7 +46,7 @@ type PageForAccess = Pick<
   | "accessPolicy"
   | "publishedAccessPolicy"
   | "isDeployed"
-  | "isSubpageContent"
+  | "showInNavigation"
 >;
 
 export function getDraftPageAccessPolicy(page: {

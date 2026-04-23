@@ -33,7 +33,7 @@ import type * as layouts_validators from "../layouts/validators.js";
 import type * as lib_documentSearchMetadata from "../lib/documentSearchMetadata.js";
 import type * as lib_extractBlockNoteText from "../lib/extractBlockNoteText.js";
 import type * as lib_extractable from "../lib/extractable.js";
-import type * as lib_indexSubpage from "../lib/indexSubpage.js";
+import type * as lib_indexPageContent from "../lib/indexPageContent.js";
 import type * as lib_markModified from "../lib/markModified.js";
 import type * as lib_pageAccess from "../lib/pageAccess.js";
 import type * as lib_resolvers from "../lib/resolvers.js";
@@ -96,7 +96,7 @@ declare const fullApi: ApiFromModules<{
   "lib/documentSearchMetadata": typeof lib_documentSearchMetadata;
   "lib/extractBlockNoteText": typeof lib_extractBlockNoteText;
   "lib/extractable": typeof lib_extractable;
-  "lib/indexSubpage": typeof lib_indexSubpage;
+  "lib/indexPageContent": typeof lib_indexPageContent;
   "lib/markModified": typeof lib_markModified;
   "lib/pageAccess": typeof lib_pageAccess;
   "lib/resolvers": typeof lib_resolvers;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmDialog } from "@/components/dialogs/confirm-dialog";
+import { DashboardConfirmDialog } from "@/components/dialogs";
 import { Link } from "@/i18n/navigation";
 import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl } from "@/lib/url";
@@ -228,7 +228,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
       )}
 
       {canManageSites && (
-        <ConfirmDialog
+        <DashboardConfirmDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t("sites.delete")}
@@ -236,6 +236,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
           confirmLabel={
             isDeleting ? t("dialogs.delete.deleting") : t("sites.delete")
           }
+          confirmDisabled={isDeleting}
           variant="destructive"
           onConfirm={handleDelete}
         />

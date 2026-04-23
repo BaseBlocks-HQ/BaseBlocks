@@ -8,28 +8,28 @@ import { Button } from "@baseblocks/ui/button";
 import { useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { PublicContent } from "./public-content";
-import { usePublicSubpageContext } from "./public-subpage-context";
+import { usePublicPagePanel } from "./public-page-panel-context";
 
-interface PublicSubpagePanelProps {
+interface PublicPagePanelProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
 
-export function PublicSubpagePanel({
+export function PublicPagePanel({
   isFullscreen,
   onToggleFullscreen,
-}: PublicSubpagePanelProps) {
-  const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
+}: PublicPagePanelProps) {
+  const { viewingPage, closePage } = usePublicPagePanel();
   const sessionTokens = getStoredAccessSessionTokens();
 
   const page = useQuery(
     api.pages.queries.get,
-    viewingSubpage?.pageId
-      ? { pageId: viewingSubpage.pageId as Id<"pages">, sessionTokens }
+    viewingPage?.pageId
+      ? { pageId: viewingPage.pageId as Id<"pages">, sessionTokens }
       : "skip",
   );
 
-  if (!viewingSubpage) return null;
+  if (!viewingPage) return null;
 
   return (
     <div className="h-full min-w-0 flex flex-col bg-background overflow-hidden">
@@ -41,7 +41,7 @@ export function PublicSubpagePanel({
           </h2>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <PageExportMenu pageId={viewingSubpage.pageId} mode="published" />
+          <PageExportMenu pageId={viewingPage.pageId} mode="published" />
           {onToggleFullscreen && (
             <Button
               variant="ghost"
@@ -56,18 +56,18 @@ export function PublicSubpagePanel({
               )}
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={closeSubpage}>
+          <Button variant="ghost" size="icon" onClick={closePage}>
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Full page content for the subpage */}
+      {/* Full page content for the referenced page */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <PublicContent
-          pageId={viewingSubpage.pageId}
+          pageId={viewingPage.pageId}
           nested
-          searchTerm={viewingSubpage.searchTerm}
+          searchTerm={viewingPage.searchTerm}
         />
       </div>
     </div>

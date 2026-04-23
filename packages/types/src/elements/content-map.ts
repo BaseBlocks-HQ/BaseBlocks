@@ -9,9 +9,9 @@ import type {
   FileContent,
   FlowchartContent,
   HeadingContent,
+  PageBlockContent,
   ParagraphContent,
   RichTextContent,
-  SubpageContent,
 } from "./blocks";
 
 import type {
@@ -38,7 +38,7 @@ export type ContentTypeMap = {
   "block-spacer": BlockSpacerContent;
   file: FileContent;
   richtext: RichTextContent;
-  subpage: SubpageContent;
+  page: PageBlockContent;
   directory: DirectoryContent;
   flowchart: FlowchartContent;
   "decision-tree": DecisionTreeContent;

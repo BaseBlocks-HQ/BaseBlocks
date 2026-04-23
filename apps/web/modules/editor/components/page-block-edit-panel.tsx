@@ -10,32 +10,32 @@ import { Maximize2, Minimize2, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
-interface SubpageEditPanelProps {
+interface PageBlockEditPanelProps {
   pageTitle?: string;
   renderPageEditor: (pageId: string) => ReactNode;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
 
-export function SubpageEditPanel({
+export function PageBlockEditPanel({
   pageTitle,
   renderPageEditor,
   isFullscreen,
   onToggleFullscreen,
-}: SubpageEditPanelProps) {
-  const { editingSubpage, closeSubpageEditor } = useEditorUi();
+}: PageBlockEditPanelProps) {
+  const { editingPage, closePageEditor } = useEditorUi();
   const { pages: pageMutations } = useEditorMutations();
   const [title, setTitle] = useState(pageTitle ?? "");
 
   const debouncedSave = useDebounceCallback(async (newTitle: string) => {
-    if (!editingSubpage?.pageId || !newTitle.trim()) return;
+    if (!editingPage?.pageId || !newTitle.trim()) return;
     try {
       await pageMutations.update({
-        pageId: editingSubpage.pageId,
+        pageId: editingPage.pageId,
         title: newTitle.trim(),
       });
     } catch (_error) {
-      toast.error("Failed to rename sub-page");
+      toast.error("Failed to rename page");
     }
   }, 500);
 
@@ -44,7 +44,7 @@ export function SubpageEditPanel({
     debouncedSave(e.target.value);
   };
 
-  if (!editingSubpage) return null;
+  if (!editingPage) return null;
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
@@ -53,11 +53,11 @@ export function SubpageEditPanel({
         <Input
           value={title}
           onChange={handleTitleChange}
-          placeholder="Sub-page title..."
+          placeholder="Page title..."
           className="h-8 text-sm font-medium flex-1 border-none shadow-none focus-visible:ring-0 px-1"
         />
         <div className="flex items-center gap-1 shrink-0">
-          <PageExportMenu pageId={editingSubpage.pageId} mode="draft" />
+          <PageExportMenu pageId={editingPage.pageId} mode="draft" />
           {onToggleFullscreen && (
             <Button
               variant="ghost"
@@ -77,17 +77,17 @@ export function SubpageEditPanel({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={closeSubpageEditor}
+            onClick={closePageEditor}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Full page editor for the subpage */}
+      {/* Full page editor for the referenced page */}
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-        <SubpageEditorContent
-          pageId={editingSubpage.pageId}
+        <PageEditorContent
+          pageId={editingPage.pageId}
           renderPageEditor={renderPageEditor}
         />
       </div>
@@ -95,7 +95,7 @@ export function SubpageEditPanel({
   );
 }
 
-function SubpageEditorContent({
+function PageEditorContent({
   pageId,
   renderPageEditor,
 }: {

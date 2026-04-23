@@ -305,14 +305,14 @@ function normalizeBlock(
         : [];
     case "directory":
       return normalizeDirectoryBlock(record);
-    case "subpage": {
+    case "page": {
       const pageId = readString(record.pageId);
       const title = labelsByPageId.get(pageId);
       return title
         ? [
             {
               type: "paragraph",
-              text: `Referenced sub-page: ${title}`,
+              text: `Referenced page: ${title}`,
             },
           ]
         : [];

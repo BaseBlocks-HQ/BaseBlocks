@@ -11,7 +11,7 @@ import {
   type EditorSiteContextValue,
 } from "./editor-site-context";
 import {
-  type EditingSubpage,
+  type EditingPagePanel,
   type EditorSelection,
   EditorUiContext,
   type EditorUiContextValue,
@@ -25,6 +25,10 @@ interface EditorProviderProps {
   siteId: string;
   site?: SiteData;
   permissions: EditorPermissions;
+  pagePanelState?: Pick<
+    EditorUiContextValue,
+    "editingPage" | "openPageEditor" | "closePageEditor"
+  >;
   children: ReactNode;
 }
 
@@ -32,6 +36,7 @@ export function EditorProvider({
   siteId,
   site,
   permissions,
+  pagePanelState,
   children,
 }: EditorProviderProps) {
   const [selection, setSelection] = useState<EditorSelection>({
@@ -39,8 +44,8 @@ export function EditorProvider({
     slotId: null,
     blockId: null,
   });
+  const [editingPage, setEditingPage] = useState<EditingPagePanel | null>(null);
   const [uiState, setUiState] = useState({
-    editingSubpage: null as EditingSubpage | null,
     activeTabId: null as string | null,
     currentPageId: null as string | null,
   });
@@ -95,17 +100,17 @@ export function EditorProvider({
         slotId: null,
         blockId: null,
       }),
-    editingSubpage: uiState.editingSubpage,
-    openSubpageEditor: (subpage) =>
-      setUiState((current) => ({
-        ...current,
-        editingSubpage: subpage,
-      })),
-    closeSubpageEditor: () =>
-      setUiState((current) => ({
-        ...current,
-        editingSubpage: null,
-      })),
+    editingPage: pagePanelState?.editingPage ?? editingPage,
+    openPageEditor:
+      pagePanelState?.openPageEditor ??
+      ((page) => {
+        setEditingPage(page);
+      }),
+    closePageEditor:
+      pagePanelState?.closePageEditor ??
+      (() => {
+        setEditingPage(null);
+      }),
     activeTabId: uiState.activeTabId,
     setActiveTabId: (activeTabId) =>
       setUiState((current) => ({

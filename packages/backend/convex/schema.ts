@@ -110,7 +110,7 @@ export default defineSchema({
     icon: v.optional(v.string()),
     order: v.number(),
     isPublished: v.boolean(),
-    isSubpageContent: v.optional(v.boolean()),
+    showInNavigation: v.optional(v.boolean()),
     accessPolicy: v.optional(pageAccessPolicyValidator),
     pageTabs: v.optional(
       v.array(
@@ -277,7 +277,7 @@ export default defineSchema({
 
   searchableContent: defineTable({
     siteId: v.id("sites"),
-    contentType: v.union(v.literal("document"), v.literal("subpage")),
+    contentType: v.union(v.literal("document"), v.literal("page")),
     sourceId: v.string(),
     title: v.string(),
     extractedText: v.string(),

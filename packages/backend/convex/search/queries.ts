@@ -128,14 +128,14 @@ function formatDocumentTitleResult(doc: Doc<"documentListings">) {
   };
 }
 
-function formatSubpageTitleResult(page: {
+function formatPageTitleResult(page: {
   _id: string;
   title: string;
   publishedTitle?: string;
 }) {
   return {
-    _id: `subpage:${page._id}`,
-    contentType: "subpage" as const,
+    _id: `page:${page._id}`,
+    contentType: "page" as const,
     sourceId: page._id,
     title: page.publishedTitle ?? page.title,
     metadata: {
@@ -146,13 +146,13 @@ function formatSubpageTitleResult(page: {
 
 function contentTypeMatches(
   doc: Doc<"searchableContent">,
-  contentTypes?: Array<"document" | "subpage">,
+  contentTypes?: Array<"document" | "page">,
 ) {
   return !contentTypes?.length || contentTypes.includes(doc.contentType);
 }
 
 /**
- * Unified search across all content types (documents + subpages)
+ * Unified search across all content types (documents + pages)
  * For authenticated users (dashboard)
  */
 export const searchAll = query({
@@ -160,7 +160,7 @@ export const searchAll = query({
     siteId: v.id("sites"),
     query: v.string(),
     contentTypes: v.optional(
-      v.array(v.union(v.literal("document"), v.literal("subpage"))),
+      v.array(v.union(v.literal("document"), v.literal("page"))),
     ),
     limit: v.optional(v.number()),
   },
@@ -202,8 +202,8 @@ export const searchAll = query({
       return await getDocumentListingForSearchResult(ctx, doc);
     };
 
-    const shouldIncludeSubpage = (doc: Doc<"searchableContent">) => {
-      if (doc.contentType !== "subpage") return false;
+    const shouldIncludePage = (doc: Doc<"searchableContent">) => {
+      if (doc.contentType !== "page") return false;
       return contentTypeMatches(doc, contentTypes);
     };
 
@@ -211,7 +211,7 @@ export const searchAll = query({
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      if (!listing && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "content", trimmed, listing));
     }
@@ -220,7 +220,7 @@ export const searchAll = query({
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      if (!listing && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "title", trimmed, listing));
     }
@@ -239,7 +239,7 @@ export const searchAllPublic = query({
     query: v.string(),
     sessionTokens: v.optional(v.array(v.string())),
     contentTypes: v.optional(
-      v.array(v.union(v.literal("document"), v.literal("subpage"))),
+      v.array(v.union(v.literal("document"), v.literal("page"))),
     ),
     limit: v.optional(v.number()),
   },
@@ -297,9 +297,9 @@ export const searchAllPublic = query({
       return listing;
     };
 
-    const shouldIncludeSubpage = (doc: Doc<"searchableContent">) => {
+    const shouldIncludePage = (doc: Doc<"searchableContent">) => {
       if (!contentTypeMatches(doc, contentTypes)) return false;
-      if (doc.contentType !== "subpage") return false;
+      if (doc.contentType !== "page") return false;
       const pageId = doc.metadata.pageId;
       if (!pageId) return false;
       return accessiblePageIds.has(pageId);
@@ -309,7 +309,7 @@ export const searchAllPublic = query({
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      if (!listing && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "content", trimmed, listing));
     }
@@ -318,7 +318,7 @@ export const searchAllPublic = query({
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludeSubpage(doc)) continue;
+      if (!listing && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "title", trimmed, listing));
     }
@@ -354,9 +354,7 @@ export const listTitles = query({
 
     return [
       ...documents.map(formatDocumentTitleResult),
-      ...pages
-        .filter((page) => page.isSubpageContent)
-        .map(formatSubpageTitleResult),
+      ...pages.map(formatPageTitleResult),
     ];
   },
 });
@@ -399,9 +397,7 @@ export const listTitlesPublic = query({
             document.libraryId && activeLibraryIds.has(document.libraryId),
         )
         .map(formatDocumentTitleResult),
-      ...accessiblePages
-        .filter((page) => page.isSubpageContent)
-        .map(formatSubpageTitleResult),
+      ...accessiblePages.map(formatPageTitleResult),
     ];
   },
 });

@@ -29,7 +29,7 @@ export type {
   DividerContent,
   BlockSpacerContent,
   FileContent,
-  SubpageContent,
+  PageBlockContent,
   DirectoryColumnType,
   DirectoryColumn,
   DirectoryRow,

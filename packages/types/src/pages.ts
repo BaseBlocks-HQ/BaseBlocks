@@ -8,7 +8,8 @@ export interface PageListItem {
   parentId?: string;
   order: number;
   isPublished: boolean;
-  isSubpageContent?: boolean;
+  showInNavigation?: boolean;
+  hasPageBlockReference?: boolean;
   accessPolicy?: PageAccessPolicy;
   publishedAccessPolicy?: PageAccessPolicy;
 }

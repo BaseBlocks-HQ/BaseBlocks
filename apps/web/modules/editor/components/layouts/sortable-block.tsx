@@ -151,6 +151,7 @@ export function SortableBlock({
                     {createElement(ConfigPanel, {
                       content: block.content,
                       onUpdate,
+                      onRemove,
                     })}
                   </PopoverContent>
                 </Popover>

@@ -37,6 +37,7 @@ export interface ElementPreviewProps {
 export interface ElementConfigPanelProps<T extends ElementType = ElementType> {
   content: ContentFor<T>;
   onUpdate: (content: ContentFor<T>) => void;
+  onRemove?: () => void;
 }
 
 export interface ElementRegistryEntry<T extends ElementType = ElementType> {

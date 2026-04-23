@@ -1,15 +1,10 @@
 "use client";
 
 import { Button } from "@baseblocks/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@baseblocks/ui/dialog";
-import type { ReactNode } from "react";
+import { DialogFooter } from "@baseblocks/ui/dialog";
+import type { FormEvent, ReactNode } from "react";
+
+import { DialogShell } from "./dialog-shell";
 
 interface FormDialogProps {
   open: boolean;
@@ -18,7 +13,7 @@ interface FormDialogProps {
   description?: string;
   trigger?: ReactNode;
   children: ReactNode;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   isSubmitting: boolean;
   submitLabel?: string;
   submittingLabel?: string;
@@ -40,29 +35,28 @@ export function FormDialog({
   submittingLabel = "Saving...",
 }: FormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          {children}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? submittingLabel : submitLabel}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <DialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      trigger={trigger}
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        {children}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? submittingLabel : submitLabel}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogShell>
   );
 }

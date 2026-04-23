@@ -7,7 +7,7 @@ import type { PageListItem } from "@baseblocks/types";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronRight, Lock } from "lucide-react";
+import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
 import { IconFile, IconHouse } from "nucleo-glass";
 import type { ReactNode } from "react";
 import type { FlattenedPage } from "../tree";
@@ -65,6 +65,7 @@ export function SortableTreeItem({
   const isGhost = isDragging;
   const indentPadding = (item.depth + 1) * INDENT_WIDTH + 20;
   const isRestricted = isPageRestricted(page.accessPolicy);
+  const isHiddenFromNavigation = page.showInNavigation === false;
 
   const isDropTarget =
     activeId !== null &&
@@ -144,6 +145,9 @@ export function SortableTreeItem({
           <IconFile className="h-4 w-4" />
         )}
         <span className="truncate">{page.title}</span>
+        {isHiddenFromNavigation && (
+          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
         {isRestricted && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
         {isDefault && (
           <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">

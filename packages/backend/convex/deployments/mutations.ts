@@ -130,7 +130,7 @@ export const deploy = mutation({
       }));
 
       // Stringify layout data to avoid Convex 16-level nesting limit
-      // (BlockNote content within subpage blocks can be deeply nested)
+      // (BlockNote content within page blocks can be deeply nested)
       await ctx.db.insert("deploymentSnapshots", {
         deploymentId,
         siteId,

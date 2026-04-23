@@ -2,15 +2,16 @@
 
 import { EditorSkeleton } from "@/components/skeletons";
 import { usePages } from "@/lib/data/use-page";
+import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useSite } from "@/lib/data/use-site";
 import { useHaptic } from "@/lib/use-haptic";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
+import { PublicPagePanel } from "@/modules/public-site/public-page-panel";
 import {
-  PublicSubpageProvider,
-  usePublicSubpageContext,
-} from "@/modules/public-site/public-subpage-context";
-import { PublicSubpagePanel } from "@/modules/public-site/public-subpage-panel";
+  PublicPagePanelProvider,
+  usePublicPagePanel,
+} from "@/modules/public-site/public-page-panel-context";
 import { EditorProvider } from "@/modules/shared/contexts/editor-context";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { useTeamAccess } from "@/modules/team/team-access";
@@ -24,12 +25,12 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { useConvexAuth, useMutation } from "convex/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
+  ConnectedPageBlockEditPanel,
   ConnectedPageEditor,
-  ConnectedSubpageEditPanel,
 } from "./components/connected-editors";
 import { EditorFloatingRail } from "./editor-floating-rail";
 import { EditorHeader } from "./editor-header";
@@ -80,28 +81,29 @@ function SiteEditorInner({
   const { team } = useTeamAccess();
   const isMobile = useIsMobile();
   const { isLoading: isConvexLoading } = useConvexAuth();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
   const [, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, editingSubpage, closeSubpageEditor } = useEditorUi();
-  const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
+  const { selection, editingPage, closePageEditor } = useEditorUi();
+  const { viewingPage, closePage } = usePublicPagePanel();
 
-  // Fullscreen state for subpage panel
+  // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Determine if any subpage panel should be shown
-  const showSubpagePanel = editingSubpage || viewingSubpage;
+  // Determine if any page panel should be shown
+  const showPagePanel = editingPage || viewingPage;
 
-  // ESC key to close subpage panel
+  // ESC key to close page panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingSubpage) {
-          closeSubpageEditor();
+        if (editingPage) {
+          closePageEditor();
           setIsFullscreen(false);
-        } else if (viewingSubpage) {
-          closeSubpage();
+        } else if (viewingPage) {
+          closePage();
           setIsFullscreen(false);
         }
       }
@@ -109,7 +111,7 @@ function SiteEditorInner({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editingSubpage, closeSubpageEditor, viewingSubpage, closeSubpage]);
+  }, [editingPage, closePageEditor, viewingPage, closePage]);
 
   const siteQuery = useSite(siteId);
   const pagesQuery = usePages(siteId);
@@ -193,14 +195,17 @@ function SiteEditorInner({
     setSelectedSlotId(slotId);
   };
 
+  const replaceEditorUrl = (updates: Record<string, string | null>) => {
+    const nextUrl = buildPathWithUpdatedSearchParams(
+      pathname,
+      searchParams.toString(),
+      updates,
+    );
+    router.replace(nextUrl, { scroll: false });
+  };
+
   const setSelectedPageId = (id: string | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (id) {
-      params.set("page", id);
-    } else {
-      params.delete("page");
-    }
-    router.replace(`?${params.toString()}`, { scroll: false });
+    replaceEditorUrl({ page: id });
   };
 
   const selectedPage = selectedPageId
@@ -228,7 +233,7 @@ function SiteEditorInner({
     ? "pointer-events-none fixed inset-x-3 bottom-3 z-40 flex justify-center"
     : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
 
-  if (isMobile && !showSubpagePanel) {
+  if (isMobile && !showPagePanel) {
     return (
       <div
         className="w-full bg-background"
@@ -312,7 +317,7 @@ function SiteEditorInner({
         </div>
 
         <div className="absolute inset-0 min-w-0 overflow-hidden">
-          {showSubpagePanel ? (
+          {showPagePanel ? (
             <ResizablePanelGroup orientation="horizontal" className="h-full">
               {/* Main content area */}
               {!isFullscreen && (
@@ -342,7 +347,7 @@ function SiteEditorInner({
                   <ResizableHandle withHandle />
                 </>
               )}
-              {/* Subpage panel - editing takes priority over viewing */}
+              {/* Page panel - editing takes priority over viewing */}
               <ResizablePanel
                 defaultSize={isFullscreen ? 100 : 42}
                 minSize={30}
@@ -353,15 +358,15 @@ function SiteEditorInner({
                     style={customizationStyles}
                     {...(isCustomized ? { "data-site-customized": "" } : {})}
                   >
-                    {editingSubpage ? (
-                      <ConnectedSubpageEditPanel
+                    {editingPage ? (
+                      <ConnectedPageBlockEditPanel
                         isFullscreen={isFullscreen}
                         onToggleFullscreen={() =>
                           setIsFullscreen(!isFullscreen)
                         }
                       />
                     ) : (
-                      <PublicSubpagePanel
+                      <PublicPagePanel
                         isFullscreen={isFullscreen}
                         onToggleFullscreen={() =>
                           setIsFullscreen(!isFullscreen)
@@ -398,6 +403,68 @@ function SiteEditorInner({
   );
 }
 
+function SiteEditorShell({
+  initialPages,
+  initialSite,
+  permissions,
+  siteData,
+  siteId,
+}: SiteEditorProps & {
+  permissions: {
+    canEdit: boolean;
+    isAdmin: boolean;
+    isLoading: boolean;
+  };
+  siteData?: {
+    teamId?: string;
+    contentModifiedAt?: number;
+    lastDeployedAt?: number;
+  };
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editingPageId = searchParams.get("editorPanelPage");
+
+  const replaceEditorUrl = (updates: Record<string, string | null>) => {
+    const nextUrl = buildPathWithUpdatedSearchParams(
+      pathname,
+      searchParams.toString(),
+      updates,
+    );
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  return (
+    <ConvexEditorMutationsProvider>
+      <EditorProvider
+        siteId={siteId}
+        site={siteData}
+        permissions={permissions}
+        pagePanelState={{
+          editingPage: editingPageId ? { pageId: editingPageId } : null,
+          openPageEditor: (page) => {
+            replaceEditorUrl({ editorPanelPage: page.pageId });
+          },
+          closePageEditor: () => {
+            replaceEditorUrl({ editorPanelPage: null });
+          },
+        }}
+      >
+        <BlockClipboardProvider>
+          <PublicPagePanelProvider>
+            <SiteEditorInner
+              initialPages={initialPages}
+              initialSite={initialSite}
+              siteId={siteId}
+            />
+          </PublicPagePanelProvider>
+        </BlockClipboardProvider>
+      </EditorProvider>
+    </ConvexEditorMutationsProvider>
+  );
+}
+
 export function SiteEditor({
   initialPages,
   initialSite,
@@ -429,20 +496,14 @@ export function SiteEditor({
   }
 
   return (
-    <ConvexEditorMutationsProvider>
-      <EditorProvider siteId={siteId} site={siteData} permissions={permissions}>
-        <BlockClipboardProvider>
-          <PublicSubpageProvider>
-            <Suspense fallback={<EditorSkeleton />}>
-              <SiteEditorInner
-                initialPages={initialPages}
-                initialSite={initialSite}
-                siteId={siteId}
-              />
-            </Suspense>
-          </PublicSubpageProvider>
-        </BlockClipboardProvider>
-      </EditorProvider>
-    </ConvexEditorMutationsProvider>
+    <Suspense fallback={<EditorSkeleton />}>
+      <SiteEditorShell
+        initialPages={initialPages}
+        initialSite={initialSite}
+        permissions={permissions}
+        siteData={siteData}
+        siteId={siteId}
+      />
+    </Suspense>
   );
 }

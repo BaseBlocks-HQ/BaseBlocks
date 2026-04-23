@@ -439,7 +439,7 @@ export const remove = mutation({
       });
     }
 
-    // 4. Delete all searchableContent for the site (subpages + any remaining docs)
+    // 4. Delete all searchableContent for the site (pages + any remaining docs)
     const searchEntries = await ctx.db
       .query("searchableContent")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

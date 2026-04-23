@@ -28,8 +28,8 @@ import {
 } from "@baseblocks/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
-import { usePublicSubpageContext } from "./public-subpage-context";
-import { PublicSubpagePanel } from "./public-subpage-panel";
+import { PublicPagePanel } from "./public-page-panel";
+import { usePublicPagePanel } from "./public-page-panel-context";
 
 type LayoutDoc = Doc<"layouts">;
 type SlotDoc = LayoutDoc["slots"][number];
@@ -37,7 +37,7 @@ type BlockDoc = SlotDoc["blocks"][number];
 
 interface PublicContentProps {
   pageId: string;
-  /** When true, subpage panel rendering is disabled to prevent infinite recursion */
+  /** When true, page panel rendering is disabled to prevent infinite recursion */
   nested?: boolean;
   searchTerm?: string;
 }
@@ -61,7 +61,7 @@ function clearSearchHighlights(root: HTMLElement) {
 }
 
 // Failure modes:
-// - Search opens the subpage before layouts finish rendering.
+// - Search opens the page panel before layouts finish rendering.
 // - Matching text lives inside nested text nodes rather than a standalone element.
 // - The result was a title-only match, so there may be nothing in the body to scroll to.
 function highlightTextMatches(
@@ -268,14 +268,14 @@ function PublicContentInner({
   nested,
   searchTerm,
 }: PublicContentProps) {
-  const { viewingSubpage, closeSubpage } = usePublicSubpageContext();
-  const showSubpagePanel = !nested && !!viewingSubpage;
+  const { viewingPage, closePage } = usePublicPagePanel();
+  const showPagePanel = !nested && !!viewingPage;
   const pageData = usePage(pageId);
   const layoutsData = usePublishedLayouts(pageId);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastAutoScrolledKeyRef = useRef<string | null>(null);
 
-  // Fullscreen state for subpage panel
+  // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Page-level tabs
@@ -292,18 +292,18 @@ function PublicContentInner({
     return pageTabs[0]?.id ?? null;
   })();
 
-  // ESC key to close subpage panel
+  // ESC key to close page panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && viewingSubpage) {
-        closeSubpage();
+      if (e.key === "Escape" && viewingPage) {
+        closePage();
         setIsFullscreen(false);
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [viewingSubpage, closeSubpage]);
+  }, [viewingPage, closePage]);
 
   useEffect(() => {
     const normalizedSearchTerm = searchTerm?.trim();
@@ -407,8 +407,8 @@ function PublicContentInner({
   );
   const hasSidebar = sidebarLayouts.length > 0;
 
-  // When viewing a subpage, use resizable panels with their own scroll
-  if (showSubpagePanel) {
+  // When viewing a page in the side panel, use resizable panels with their own scroll
+  if (showPagePanel) {
     return (
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
@@ -433,10 +433,10 @@ function PublicContentInner({
               <ResizableHandle withHandle />
             </>
           )}
-          {/* Subpage panel */}
+          {/* Page panel */}
           <ResizablePanel defaultSize={isFullscreen ? 100 : 42} minSize={30}>
             <div className="h-full w-full min-w-0 overflow-hidden border-l">
-              <PublicSubpagePanel
+              <PublicPagePanel
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               />

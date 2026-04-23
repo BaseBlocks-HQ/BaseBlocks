@@ -73,9 +73,7 @@ export function EditorSidebar({
     site._id,
   );
 
-  // Filter out pages created as subpage block content — they're accessed via the subpage block's side panel
-  const navPages = pages.filter((p) => !p.isSubpageContent);
-  const rootPages = navPages
+  const rootPages = pages
     .filter((p) => !p.parentId)
     .sort((a, b) => a.order - b.order);
 
@@ -152,7 +150,7 @@ export function EditorSidebar({
                 <SidebarMenu>
                   <SortablePageTree
                     pages={rootPages}
-                    allPages={navPages}
+                    allPages={pages}
                     selectedPageId={selectedPageId}
                     siteId={site._id}
                     defaultPageId={site.defaultPageId}

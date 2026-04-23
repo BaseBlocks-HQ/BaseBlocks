@@ -14,7 +14,7 @@ import "./spacer";
 import "./file";
 
 import "./richtext";
-import "./subpage";
+import "./page";
 
 import "./directory";
 import "./flowchart";

@@ -8,15 +8,24 @@ import { isExtractable } from "./lib/extractable.js";
 
 export const migrations = new Migrations<DataModel>(components.migrations);
 
-// Define the subpage content type
-interface SubpageContent {
+type LegacyPageDoc = Doc<"pages"> & {
+  isSubpageContent?: boolean;
+  showInNavigation?: boolean;
+};
+
+type LegacySearchableContentDoc = Doc<"searchableContent"> & {
+  contentType: Doc<"searchableContent">["contentType"] | "subpage";
+};
+
+// Legacy inline page block content before page blocks referenced real pages.
+interface LegacyInlinePageBlockContent {
   title?: string;
   description?: string;
   content?: unknown[];
 }
 
-// Migration 1: Index all existing subpages from layouts
-export const indexSubpages = migrations.define({
+// Migration 1: Index all existing legacy page blocks from layouts
+export const indexLegacyPageBlocks = migrations.define({
   table: "layouts",
   batchSize: 20, // Layouts can be large with nested content
   migrateOne: async (ctx, layout) => {
@@ -27,15 +36,15 @@ export const indexSubpages = migrations.define({
     // Process all slots and blocks
     for (const slot of layout.slots) {
       for (const block of slot.blocks) {
-        if (block.type === "subpage" && block.content) {
-          const content = block.content as SubpageContent;
+        if ((block.type as string) === "subpage" && block.content) {
+          const content = block.content as LegacyInlinePageBlockContent;
           const sourceId = `${layout._id}:${slot.id}:${block.id}`;
 
           // Check if already indexed
           const existing = await ctx.db
             .query("searchableContent")
             .withIndex("by_source", (q) =>
-              q.eq("contentType", "subpage").eq("sourceId", sourceId),
+              q.eq("contentType", "page").eq("sourceId", sourceId),
             )
             .first();
 
@@ -48,7 +57,7 @@ export const indexSubpages = migrations.define({
             if (combinedText.length > 0) {
               await ctx.db.insert("searchableContent", {
                 siteId: page.siteId,
-                contentType: "subpage",
+                contentType: "page",
                 sourceId,
                 title: content.title || "Untitled",
                 extractedText: combinedText,
@@ -234,7 +243,7 @@ export const bootstrapLayoutPublishedFields = migrations.define({
 
 // Runner for all migrations - run in order
 export const runAll = migrations.runner([
-  internal.migrations.indexSubpages,
+  internal.migrations.indexLegacyPageBlocks,
   internal.migrations.indexDocuments,
 ]);
 
@@ -252,8 +261,8 @@ export const runDeploymentBootstrap = migrations.runner([
 ]);
 
 // Individual runners for testing
-export const runSubpages = migrations.runner([
-  internal.migrations.indexSubpages,
+export const runLegacyPageBlocks = migrations.runner([
+  internal.migrations.indexLegacyPageBlocks,
 ]);
 export const runDocuments = migrations.runner([
   internal.migrations.indexDocuments,
@@ -275,11 +284,11 @@ export const runBootstrapLayouts = migrations.runner([
 ]);
 
 // ============================================================
-// Migration 8: Convert subpage blocks to reference real child pages
+// Migration 8: Convert legacy inline page blocks to reference real child pages
 // ============================================================
 
-// Old subpage block content shape (pre-migration)
-interface OldSubpageContent {
+// Old inline page block content shape (pre-migration)
+interface OldInlinePageBlockContent {
   title?: string;
   description?: string;
   content?: unknown[];
@@ -294,11 +303,11 @@ function titleToSlug(title: string): string {
     title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "subpage"
+      .replace(/^-+|-+$/g, "") || "page"
   );
 }
 
-export const migrateSubpagesToPages = migrations.define({
+export const migrateLegacyInlinePageBlocks = migrations.define({
   table: "layouts",
   batchSize: 10,
   migrateOne: async (ctx, layout) => {
@@ -316,11 +325,11 @@ export const migrateSubpagesToPages = migrations.define({
         const updatedBlocks = [];
         for (const block of slot.blocks) {
           if (
-            block.type === "subpage" &&
+            (block.type as string) === "subpage" &&
             block.content &&
             (block.content as { pageId?: unknown }).pageId === undefined
           ) {
-            const content = block.content as OldSubpageContent;
+            const content = block.content as OldInlinePageBlockContent;
             const title = content.title || "Untitled";
             const baseSlug = titleToSlug(title);
 
@@ -359,7 +368,7 @@ export const migrateSubpagesToPages = migrations.define({
               parentId: layout.pageId,
               order: maxOrder + 1,
               isPublished: false,
-              isSubpageContent: true,
+              showInNavigation: false,
               createdBy: page.createdBy,
               createdAt: now,
               updatedAt: now,
@@ -419,6 +428,7 @@ export const migrateSubpagesToPages = migrations.define({
 
             updatedBlocks.push({
               ...block,
+              type: "page",
               content: { pageId: childPageId },
             });
             changed = true;
@@ -453,45 +463,47 @@ export const migrateSubpagesToPages = migrations.define({
   },
 });
 
-// Migration 9: Clean up subpage search entries (no longer needed)
-export const cleanupSubpageSearchEntries = migrations.define({
+// Migration 9: Clean up legacy page search entries (no longer needed)
+export const cleanupLegacyPageSearchEntries = migrations.define({
   table: "searchableContent",
   batchSize: 5,
   migrateOne: async (ctx, entry) => {
-    if (entry.contentType === "subpage") {
+    const legacyContentType = (entry as LegacySearchableContentDoc)
+      .contentType as string;
+    if (legacyContentType === "subpage") {
       await ctx.db.delete(entry._id);
     }
   },
 });
 
-export const runMigrateSubpages = migrations.runner([
-  internal.migrations.migrateSubpagesToPages,
+export const runMigrateLegacyInlinePageBlocks = migrations.runner([
+  internal.migrations.migrateLegacyInlinePageBlocks,
 ]);
-export const runCleanupSubpageSearch = migrations.runner([
-  internal.migrations.cleanupSubpageSearchEntries,
+export const runCleanupLegacyPageSearch = migrations.runner([
+  internal.migrations.cleanupLegacyPageSearchEntries,
 ]);
 
-// Migration 10: Flag pages referenced by subpage blocks as isSubpageContent
-export const flagSubpageContentPages = migrations.define({
+// Migration 10: Hide pages referenced by legacy page blocks from navigation
+export const backfillLegacyPageVisibility = migrations.define({
   table: "layouts",
   batchSize: 20,
   migrateOne: async (ctx, layout) => {
     const slotsToCheck = [...layout.slots, ...(layout.publishedSlots ?? [])];
     for (const slot of slotsToCheck) {
       for (const block of slot.blocks) {
-        if (block.type === "subpage" && block.content?.pageId) {
+        if ((block.type as string) === "subpage" && block.content?.pageId) {
           const pageId = block.content.pageId as Id<"pages">;
-          const page = await ctx.db.get(pageId);
-          if (page && !page.isSubpageContent) {
-            await ctx.db.patch(pageId, { isSubpageContent: true });
+          const page = (await ctx.db.get(pageId)) as LegacyPageDoc | null;
+          if (page && page.showInNavigation !== false) {
+            await ctx.db.patch(pageId, { showInNavigation: false });
           }
         }
       }
     }
   },
 });
-export const runFlagSubpageContent = migrations.runner([
-  internal.migrations.flagSubpageContentPages,
+export const runBackfillLegacyPageVisibility = migrations.runner([
+  internal.migrations.backfillLegacyPageVisibility,
 ]);
 
 // Migration 11: Remove deprecated hasUndeployedChanges field from all sites
@@ -645,29 +657,26 @@ export const runBackfillLayoutSiteId = migrations.runner([
 ]);
 
 // ============================================================
-// Migration 15: Index existing subpage content pages for search
+// Migration 15: Index existing pages for search
 // ============================================================
-// After the subpage refactor (subpages are now real pages with
-// isSubpageContent=true), search indexing was not wired up.
-// This migration indexes all existing subpage pages into
+// Searchable page content now uses the page ID as the source ID for every page.
+// This migration indexes all existing pages into
 // searchableContent using pageId as sourceId.
 
-export const indexSubpagePages = migrations.define({
+export const indexPagesForSearch = migrations.define({
   table: "pages",
   batchSize: 20,
   migrateOne: async (ctx, page) => {
-    if (!page.isSubpageContent) return;
-
     // Skip if already indexed with the new format
     const existing = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q) =>
-        q.eq("contentType", "subpage").eq("sourceId", page._id),
+        q.eq("contentType", "page").eq("sourceId", page._id),
       )
       .first();
     if (existing) return;
 
-    // Get all layouts for this subpage
+    // Get all layouts for this page
     const layouts = await ctx.db
       .query("layouts")
       .withIndex("by_page", (q) => q.eq("pageId", page._id))
@@ -701,7 +710,7 @@ export const indexSubpagePages = migrations.define({
 
     await ctx.db.insert("searchableContent", {
       siteId: page.siteId,
-      contentType: "subpage",
+      contentType: "page",
       sourceId: page._id,
       title: page.title,
       extractedText: combinedText,
@@ -712,24 +721,24 @@ export const indexSubpagePages = migrations.define({
     });
   },
 });
-export const runIndexSubpagePages = migrations.runner([
-  internal.migrations.indexSubpagePages,
+export const runIndexPagesForSearch = migrations.runner([
+  internal.migrations.indexPagesForSearch,
 ]);
 
 // ============================================================
-// Migration 16: Deploy subpage content layouts
+// Migration 16: Deploy hidden page layouts
 // ============================================================
-// The subpage refactor migration created new pages + layouts for
-// subpage content but never set isDeployed/publishedSlots on them.
+// The legacy page-block migration created new pages + layouts for
+// hidden page content but never set isDeployed/publishedSlots on them.
 // The old inline content lived in the parent layout's publishedSlots
-// so it was always visible. This migration marks subpage content
+// so it was always visible. This migration marks hidden page
 // pages and their layouts as deployed so listPublished returns them.
 
-export const deploySubpageLayouts = migrations.define({
+export const deployHiddenPageLayouts = migrations.define({
   table: "pages",
   batchSize: 20,
   migrateOne: async (ctx, page) => {
-    if (!page.isSubpageContent) return;
+    if (page.showInNavigation !== false) return;
 
     // Mark the page as deployed if it isn't already
     if (!page.isDeployed) {
@@ -744,7 +753,7 @@ export const deploySubpageLayouts = migrations.define({
       });
     }
 
-    // Deploy all layouts for this subpage
+    // Deploy all layouts for this page
     const layouts = await ctx.db
       .query("layouts")
       .withIndex("by_page", (q) => q.eq("pageId", page._id))
@@ -764,27 +773,25 @@ export const deploySubpageLayouts = migrations.define({
     }
   },
 });
-export const runDeploySubpageLayouts = migrations.runner([
-  internal.migrations.deploySubpageLayouts,
+export const runDeployHiddenPageLayouts = migrations.runner([
+  internal.migrations.deployHiddenPageLayouts,
 ]);
 
 // ============================================================
-// Migration 17: Re-index subpage search content (fix richtext extraction)
+// Migration 17: Re-index page search content (fix richtext extraction)
 // ============================================================
 // Migration 15 used c.content instead of c.document for richtext blocks.
-// This migration deletes all subpage search entries and re-indexes them.
+// This migration deletes all page search entries and re-indexes them.
 
-export const reindexSubpageSearch = migrations.define({
+export const reindexPageSearch = migrations.define({
   table: "pages",
   batchSize: 20,
   migrateOne: async (ctx, page) => {
-    if (!page.isSubpageContent) return;
-
     // Delete existing entry
     const existing = await ctx.db
       .query("searchableContent")
       .withIndex("by_source", (q) =>
-        q.eq("contentType", "subpage").eq("sourceId", page._id),
+        q.eq("contentType", "page").eq("sourceId", page._id),
       )
       .first();
     if (existing) {
@@ -824,7 +831,7 @@ export const reindexSubpageSearch = migrations.define({
 
     await ctx.db.insert("searchableContent", {
       siteId: page.siteId,
-      contentType: "subpage",
+      contentType: "page",
       sourceId: page._id,
       title: page.title,
       extractedText: combinedText,
@@ -835,12 +842,97 @@ export const reindexSubpageSearch = migrations.define({
     });
   },
 });
-export const runReindexSubpageSearch = migrations.runner([
-  internal.migrations.reindexSubpageSearch,
+export const runReindexPageSearch = migrations.runner([
+  internal.migrations.reindexPageSearch,
 ]);
 
 // ============================================================
-// Migration 18: Convert decision-tree contentBlocks → BlockNote document
+// Migration 18: Final page model cutover
+// ============================================================
+// - Renames legacy `subpage` block types to `page`
+// - Backfills showInNavigation and removes legacy isSubpageContent
+
+export const renameLegacyPageBlocks = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    const normalizeSlots = (slots: typeof layout.slots) => {
+      let changed = false;
+      const normalizedSlots: typeof layout.slots = slots.map((slot) => ({
+        ...slot,
+        blocks: slot.blocks.map((block) => {
+          if ((block.type as string) !== "subpage") {
+            return block;
+          }
+
+          changed = true;
+          return {
+            ...block,
+            type: "page" as const,
+            content: block.content ?? {},
+          } as (typeof slot.blocks)[number];
+        }),
+      }));
+
+      return { changed, normalizedSlots };
+    };
+
+    const draft = normalizeSlots(layout.slots);
+    const published = layout.publishedSlots
+      ? normalizeSlots(layout.publishedSlots)
+      : null;
+
+    if (!draft.changed && !published?.changed) {
+      return;
+    }
+
+    await ctx.db.patch(layout._id, {
+      ...(draft.changed
+        ? { slots: draft.normalizedSlots as typeof layout.slots }
+        : {}),
+      ...(published?.changed
+        ? { publishedSlots: published.normalizedSlots as typeof layout.slots }
+        : {}),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const backfillPageVisibility = migrations.define({
+  table: "pages",
+  batchSize: 20,
+  migrateOne: async (ctx, page) => {
+    const legacyPage = page as LegacyPageDoc;
+    const nextShowInNavigation =
+      legacyPage.showInNavigation ?? !legacyPage.isSubpageContent;
+
+    const needsReplace =
+      legacyPage.showInNavigation === undefined ||
+      legacyPage.isSubpageContent !== undefined;
+
+    if (!needsReplace) {
+      return;
+    }
+
+    const { isSubpageContent: _legacyFlag, ...rest } = legacyPage;
+    await ctx.db.replace(page._id, {
+      ...rest,
+      showInNavigation: nextShowInNavigation,
+    });
+  },
+});
+
+export const runPageModelCutover = migrations.runner([
+  internal.migrations.renameLegacyPageBlocks,
+  internal.migrations.backfillPageVisibility,
+  internal.migrations.cleanupLegacyPageSearchEntries,
+  internal.migrations.indexPagesForSearch,
+  internal.migrations.deployHiddenPageLayouts,
+  internal.migrations.reindexPageSearch,
+]);
+
+// ============================================================
+// Migration 19: Convert decision-tree contentBlocks → BlockNote document
 // ============================================================
 // Old format: node.contentBlocks = [{ type: "heading", content: { text, level }, order }]
 // New format: node.document = [{ type: "heading", content: "text", props: { level } }]
@@ -1176,4 +1268,64 @@ export const purgeListingsMissingDocuments = migrations.define({
 export const runPurgeInvalidDocumentRows = migrations.runner([
   internal.migrations.purgeDocumentsMissingListings,
   internal.migrations.purgeListingsMissingDocuments,
+]);
+
+// Migration 22: Remove legacy page block openMode
+// ============================================================
+// Page blocks now always open in a panel. Navigation always navigates.
+// Any stored openMode flags are stale historical data and should be removed.
+export const removeLegacyPageBlockOpenMode = migrations.define({
+  table: "layouts",
+  batchSize: 20,
+  migrateOne: async (ctx, layout) => {
+    const normalizeSlots = (slots: typeof layout.slots) => {
+      let changed = false;
+
+      const normalizedSlots: typeof layout.slots = slots.map((slot) => ({
+        ...slot,
+        blocks: slot.blocks.map((block) => {
+          if (block.type !== "page" || !block.content) {
+            return block;
+          }
+
+          const content = block.content as { openMode?: unknown };
+          if (!("openMode" in content)) {
+            return block;
+          }
+
+          changed = true;
+          const { openMode: _removed, ...rest } = content;
+          return {
+            ...block,
+            content: rest,
+          } as (typeof slot.blocks)[number];
+        }),
+      }));
+
+      return { changed, normalizedSlots };
+    };
+
+    const draft = normalizeSlots(layout.slots);
+    const published = layout.publishedSlots
+      ? normalizeSlots(layout.publishedSlots)
+      : null;
+
+    if (!draft.changed && !published?.changed) {
+      return;
+    }
+
+    await ctx.db.patch(layout._id, {
+      ...(draft.changed
+        ? { slots: draft.normalizedSlots as typeof layout.slots }
+        : {}),
+      ...(published?.changed
+        ? { publishedSlots: published.normalizedSlots as typeof layout.slots }
+        : {}),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const runRemoveLegacyPageBlockOpenMode = migrations.runner([
+  internal.migrations.removeLegacyPageBlockOpenMode,
 ]);

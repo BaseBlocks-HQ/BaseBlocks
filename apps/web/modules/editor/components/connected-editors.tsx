@@ -5,7 +5,7 @@ import { PageEditor } from "@/modules/editor/components/page-editor";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type { LayoutType } from "@baseblocks/types";
-import { SubpageEditPanel } from "./subpage-edit-panel";
+import { PageBlockEditPanel } from "./page-block-edit-panel";
 
 /** Fetches page + layouts data from Convex and renders PageEditor */
 export function ConnectedPageEditor({
@@ -54,19 +54,19 @@ export function ConnectedPageEditor({
   );
 }
 
-/** Fetches subpage title from Convex and renders SubpageEditPanel */
-export function ConnectedSubpageEditPanel({
+/** Fetches page title from Convex and renders the page block edit panel. */
+export function ConnectedPageBlockEditPanel({
   isFullscreen,
   onToggleFullscreen,
 }: {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }) {
-  const { editingSubpage } = useEditorUi();
-  const page = usePage(editingSubpage?.pageId);
+  const { editingPage } = useEditorUi();
+  const page = usePage(editingPage?.pageId);
 
   return (
-    <SubpageEditPanel
+    <PageBlockEditPanel
       pageTitle={page?.title}
       renderPageEditor={(pageId) => (
         <ConnectedPageEditor pageId={pageId} nested />

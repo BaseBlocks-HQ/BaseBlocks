@@ -3,6 +3,7 @@ import type { LibraryEntity, LibraryFile, LibraryFolder } from "../types";
 import {
   buildDraftFolderViewPath,
   buildLibraryTreeView,
+  buildLibraryTreeViewLookup,
   buildLibraryTreeViewPath,
   getLibraryTreeViewLookupPath,
   getLibraryTreeViewNameFromPath,
@@ -90,6 +91,46 @@ describe("buildLibraryTreeView", () => {
     expect(view.entitiesByViewPath.get("src > components > Avatar.tsx")).toBe(
       file,
     );
+  });
+
+  test("builds a lookup that resolves folder paths without trailing slashes", () => {
+    const folder = folderEntity(
+      "folder-components",
+      "components",
+      "src/components",
+    );
+    const view = buildLibraryTreeView({
+      entitiesByTreePath: new Map<string, LibraryEntity>([
+        ["src/components/", folder],
+      ]),
+      mode: "tree",
+      treePaths: ["src/components/"],
+    });
+
+    const lookup = buildLibraryTreeViewLookup(view.entitiesByViewPath);
+
+    expect(lookup.get("src/components")).toBe(folder);
+    expect(lookup.get("src/components/")).toBe(folder);
+  });
+
+  test("builds a lookup that resolves flat folder paths without trailing slashes", () => {
+    const folder = folderEntity(
+      "folder-components",
+      "components",
+      "src/components",
+    );
+    const view = buildLibraryTreeView({
+      entitiesByTreePath: new Map<string, LibraryEntity>([
+        ["src/components/", folder],
+      ]),
+      mode: "flat",
+      treePaths: ["src/components/"],
+    });
+
+    const lookup = buildLibraryTreeViewLookup(view.entitiesByViewPath);
+
+    expect(lookup.get("src > components")).toBe(folder);
+    expect(lookup.get("src > components/")).toBe(folder);
   });
 });
 

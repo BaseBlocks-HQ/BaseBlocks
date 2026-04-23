@@ -18,8 +18,8 @@ import {
 } from "./components/public-site-header";
 import { PublicSiteMainContent } from "./components/public-site-main-content";
 import { PublicSiteSidebar } from "./components/public-site-sidebar";
+import { PublicPagePanelProvider } from "./public-page-panel-context";
 import { PublicSiteProvider } from "./public-site-context";
-import { PublicSubpageProvider } from "./public-subpage-context";
 
 interface PublicSiteLayoutProps {
   site: {
@@ -162,7 +162,7 @@ export function PublicSiteLayout({
       siteSlug={site.slug}
       teamSlug={team.slug}
     >
-      <PublicSubpageProvider>
+      <PublicPagePanelProvider>
         {showSidebar ? (
           <SidebarProvider>
             {site.settings.customization?.showHeaderGradient && showHeader && (
@@ -198,7 +198,7 @@ export function PublicSiteLayout({
             {mainContent}
           </div>
         )}
-      </PublicSubpageProvider>
+      </PublicPagePanelProvider>
     </PublicSiteProvider>
   );
 }

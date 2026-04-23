@@ -7,7 +7,7 @@ export type BlockType =
   | "block-spacer" // Renamed from "spacer" to avoid confusion with layout spacer
   | "file"
   | "richtext"
-  | "subpage"
+  | "page"
   | "directory"
   | "flowchart"
   | "decision-tree";
@@ -51,7 +51,7 @@ export interface RichTextContent {
   document: unknown[];
 }
 
-export interface SubpageContent {
+export interface PageBlockContent {
   pageId: string;
 }
 
@@ -145,7 +145,7 @@ export type BlockContentUnion =
   | BlockSpacerContent
   | FileContent
   | RichTextContent
-  | SubpageContent
+  | PageBlockContent
   | DirectoryContent
   | FlowchartContent
   | DecisionTreeContent;
@@ -159,7 +159,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   "block-spacer": { height: "medium" },
   file: {},
   richtext: { document: [] } as RichTextContent,
-  subpage: { pageId: "" },
+  page: { pageId: "" } as PageBlockContent,
   directory: {
     columns: [],
     rows: [],

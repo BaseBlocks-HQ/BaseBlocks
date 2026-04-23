@@ -143,7 +143,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
   { title: "Files", types: ["image", "file"] },
   {
     title: "Advanced",
-    types: ["subpage", "directory", "flowchart", "decision-tree"],
+    types: ["page", "directory", "flowchart", "decision-tree"],
   },
   {
     title: "Sections",
@@ -512,7 +512,7 @@ export function EditorFloatingRail({
     site._id,
   );
 
-  const navPages = pages.filter((page) => !page.isSubpageContent);
+  const navPages = pages.filter((page) => page.showInNavigation !== false);
   const rootPages = navPages
     .filter((page) => !page.parentId)
     .sort((a, b) => a.order - b.order);

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormDialog } from "@/components/dialogs/form-dialog";
+import { DashboardFormDialog } from "@/components/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
@@ -12,80 +12,183 @@ import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type FormEvent, useReducer, useState } from "react";
 
 interface CreateSiteDialogProps {
   disabled?: boolean;
   teamId: Id<"teams">;
 }
 
+interface CreateSiteFormState {
+  name: string;
+  slug: string;
+  error: string;
+  isSubmitting: boolean;
+  isSlugCustomized: boolean;
+}
+
+type CreateSiteFormAction =
+  | { type: "reset" }
+  | { type: "nameChanged"; value: string }
+  | { type: "slugChanged"; value: string }
+  | { type: "errorChanged"; value: string }
+  | { type: "submitStarted" }
+  | { type: "submitFinished" };
+
+const slugRegex = new RegExp(`^${SLUG_PATTERN}$`);
+
+const siteNameInputClassName =
+  "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent";
+
+const siteSlugInputClassName =
+  "h-auto border-0 bg-transparent px-0 py-0.5 text-[0.95rem] leading-snug text-sidebar-foreground/80 shadow-none placeholder:text-sidebar-foreground/35 focus-visible:ring-0 md:!text-[0.95rem] dark:bg-transparent";
+
+const initialFormState: CreateSiteFormState = {
+  name: "",
+  slug: "",
+  error: "",
+  isSubmitting: false,
+  isSlugCustomized: false,
+};
+
+function createSiteFormReducer(
+  state: CreateSiteFormState,
+  action: CreateSiteFormAction,
+): CreateSiteFormState {
+  switch (action.type) {
+    case "reset":
+      return initialFormState;
+    case "nameChanged":
+      return {
+        ...state,
+        name: action.value,
+        slug: state.isSlugCustomized ? state.slug : generateSlug(action.value),
+        error: "",
+      };
+    case "slugChanged":
+      return {
+        ...state,
+        slug: action.value.toLowerCase(),
+        isSlugCustomized: true,
+        error: "",
+      };
+    case "errorChanged":
+      return {
+        ...state,
+        error: action.value,
+      };
+    case "submitStarted":
+      return {
+        ...state,
+        error: "",
+        isSubmitting: true,
+      };
+    case "submitFinished":
+      return {
+        ...state,
+        isSubmitting: false,
+      };
+    default:
+      return state;
+  }
+}
+
 export function CreateSiteDialog({
   disabled = false,
   teamId,
 }: CreateSiteDialogProps) {
-  const [dialogState, setDialogState] = useState({
-    open: false,
-    name: "",
-    slug: "",
-    isSubmitting: false,
-    error: "",
-  });
   const t = useTranslations();
   const haptic = useHaptic();
+  const [open, setOpen] = useState(false);
+  const [formState, dispatch] = useReducer(
+    createSiteFormReducer,
+    initialFormState,
+  );
 
   const createSite = useMutation(api.sites.mutations.create);
 
-  const handleNameChange = (value: string) => {
-    setDialogState((current) => ({
-      ...current,
-      name: value,
-      slug: generateSlug(value),
-    }));
+  // Failure modes:
+  // - Site name is empty
+  // - Slug is empty or invalid
+  // - Site creation mutation rejects
+  const resetForm = () => {
+    dispatch({ type: "reset" });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+
+    if (!nextOpen) {
+      resetForm();
+      return;
+    }
+
+    dispatch({ type: "errorChanged", value: "" });
+  };
+
+  const handleNameChange = (value: string) => {
+    dispatch({ type: "nameChanged", value });
+  };
+
+  const handleSlugChange = (value: string) => {
+    dispatch({ type: "slugChanged", value });
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setDialogState((current) => ({
-      ...current,
-      error: "",
-      isSubmitting: true,
-    }));
+    const trimmedName = formState.name.trim();
+    const trimmedSlug = formState.slug.trim();
+
+    if (!trimmedName) {
+      dispatch({
+        type: "errorChanged",
+        value: t("dialogs.createSite.nameRequired"),
+      });
+      return;
+    }
+
+    if (!trimmedSlug) {
+      dispatch({
+        type: "errorChanged",
+        value: t("dialogs.createSite.slugRequired"),
+      });
+      return;
+    }
+
+    if (!slugRegex.test(trimmedSlug)) {
+      dispatch({
+        type: "errorChanged",
+        value: t("dialogs.createSite.slugHint"),
+      });
+      return;
+    }
+
+    dispatch({ type: "submitStarted" });
 
     try {
       await createSite({
-        name: dialogState.name,
-        slug: dialogState.slug,
+        name: trimmedName,
+        slug: trimmedSlug,
         teamId,
       });
       haptic.trigger("success");
-      setDialogState({
-        open: false,
-        name: "",
-        slug: "",
-        isSubmitting: false,
-        error: "",
-      });
+      setOpen(false);
+      resetForm();
     } catch (err) {
       haptic.trigger("error");
-      setDialogState((current) => ({
-        ...current,
-        error: err instanceof Error ? err.message : t("common.error"),
-        isSubmitting: false,
-      }));
+      dispatch({
+        type: "errorChanged",
+        value: err instanceof Error ? err.message : t("common.error"),
+      });
+      dispatch({ type: "submitFinished" });
     }
   };
 
   return (
-    <FormDialog
-      open={dialogState.open}
-      onOpenChange={(open) =>
-        setDialogState((current) => ({
-          ...current,
-          open,
-        }))
-      }
+    <DashboardFormDialog
+      open={open}
+      onOpenChange={handleOpenChange}
       title={t("dialogs.createSite.title")}
-      description={t("dialogs.createSite.description")}
       trigger={
         <button
           className={cn(
@@ -109,41 +212,53 @@ export function CreateSiteDialog({
         </button>
       }
       onSubmit={handleSubmit}
-      isSubmitting={dialogState.isSubmitting}
+      isSubmitting={formState.isSubmitting}
       submitLabel={t("dialogs.createSite.create")}
       submittingLabel={t("dialogs.createSite.creating")}
+      cancelLabel={t("common.cancel")}
+      bodyClassName="px-5 pb-3"
+      formClassName="space-y-2"
     >
-      <div className="space-y-2">
-        <Label htmlFor="siteName">{t("dialogs.createSite.nameLabel")}</Label>
-        <Input
-          id="siteName"
-          placeholder={t("dialogs.createSite.namePlaceholder")}
-          value={dialogState.name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          required
-        />
+      <div className="space-y-2.5">
+        <div>
+          <Label
+            htmlFor="siteName"
+            className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+          >
+            {t("dialogs.createSite.nameLabel")}
+          </Label>
+          <Input
+            id="siteName"
+            placeholder={t("dialogs.createSite.namePlaceholder")}
+            value={formState.name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            aria-invalid={!!formState.error}
+            className={siteNameInputClassName}
+          />
+        </div>
+        <div>
+          <Label
+            htmlFor="siteSlug"
+            className="mb-0.5 block text-[11px] font-medium tracking-wide text-sidebar-foreground/45"
+          >
+            {t("dialogs.createSite.slugLabel")}
+          </Label>
+          <Input
+            id="siteSlug"
+            placeholder={t("dialogs.createSite.slugPlaceholder")}
+            value={formState.slug}
+            onChange={(e) => handleSlugChange(e.target.value)}
+            aria-invalid={!!formState.error}
+            className={siteSlugInputClassName}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="siteSlug">URL Slug</Label>
-        <Input
-          id="siteSlug"
-          placeholder="engineering-docs"
-          value={dialogState.slug}
-          onChange={(e) =>
-            setDialogState((current) => ({
-              ...current,
-              slug: e.target.value.toLowerCase(),
-            }))
-          }
-          required
-          pattern={SLUG_PATTERN}
-        />
-      </div>
-
-      {dialogState.error && (
-        <p className="text-sm text-destructive">{dialogState.error}</p>
-      )}
-    </FormDialog>
+      {formState.error ? (
+        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {formState.error}
+        </p>
+      ) : null}
+    </DashboardFormDialog>
   );
 }

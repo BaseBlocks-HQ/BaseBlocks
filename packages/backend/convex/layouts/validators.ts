@@ -17,7 +17,7 @@ export const blockType = v.union(
   v.literal("table"),
   v.literal("quicklinks"),
   v.literal("richtext"),
-  v.literal("subpage"),
+  v.literal("page"),
   v.literal("directory"),
   v.literal("flowchart"),
   v.literal("decision-tree"),

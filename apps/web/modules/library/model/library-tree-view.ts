@@ -39,6 +39,22 @@ export function buildLibraryTreeView(args: {
   };
 }
 
+export function buildLibraryTreeViewLookup(
+  entitiesByViewPath: Map<string, LibraryEntity>,
+) {
+  const lookup = new Map<string, LibraryEntity>();
+
+  for (const [viewPath, entity] of entitiesByViewPath) {
+    lookup.set(viewPath, entity);
+
+    if (entity.kind === "folder" && viewPath.endsWith("/")) {
+      lookup.set(viewPath.slice(0, -1), entity);
+    }
+  }
+
+  return lookup;
+}
+
 export function buildLibraryTreeViewPath(
   actualPath: string,
   kind: LibraryEntity["kind"],

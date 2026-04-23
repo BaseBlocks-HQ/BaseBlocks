@@ -3,7 +3,7 @@
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
-import { usePublicSubpageContextOptional } from "@/modules/public-site/public-subpage-context";
+import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -84,7 +84,7 @@ function HighlightedSnippet({
 
 interface SearchResultItem {
   _id: string;
-  contentType: "document" | "subpage";
+  contentType: "document" | "page";
   sourceId: string;
   title: string;
   matchType: "title" | "content";
@@ -98,7 +98,7 @@ interface SearchResultItem {
     size?: number;
     downloadUrl?: string;
     libraryId?: string;
-    // Subpage metadata
+    // Page metadata
     pageId?: string;
   };
 }
@@ -125,7 +125,7 @@ function fuzzyMatchTitles(
   titles:
     | {
         _id: string;
-        contentType: "document" | "subpage";
+        contentType: "document" | "page";
         sourceId: string;
         title: string;
         metadata: SearchResultItem["metadata"];
@@ -178,7 +178,7 @@ export function SearchBox({
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { openFile } = useMediaViewer();
-  const subpageContext = usePublicSubpageContextOptional();
+  const pagePanel = usePublicPagePanelOptional();
   const sessionTokens = getStoredAccessSessionTokens();
 
   // Close dropdown when clicking outside
@@ -277,9 +277,9 @@ export function SearchBox({
   };
 
   const handleResultClick = (result: SearchResultItem) => {
-    if (result.contentType === "subpage" && result.metadata.pageId) {
-      if (subpageContext) {
-        subpageContext.openSubpage(result.metadata.pageId, {
+    if (result.contentType === "page" && result.metadata.pageId) {
+      if (pagePanel) {
+        pagePanel.openPage(result.metadata.pageId, {
           searchTerm: debouncedQuery,
         });
       }
@@ -353,7 +353,7 @@ export function SearchBox({
           ) : hasResults && searchResults ? (
             <div className="divide-y">
               {searchResults.map((result) => {
-                const isSubpage = result.contentType === "subpage";
+                const isPage = result.contentType === "page";
                 const isContentMatch = result.matchType === "content";
 
                 return (
@@ -366,7 +366,7 @@ export function SearchBox({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         {showFileType &&
-                          (isSubpage ? (
+                          (isPage ? (
                             <NotebookText className="h-4 w-4 text-indigo-500" />
                           ) : (
                             getFileIcon(result.metadata.fileContentType)
@@ -376,9 +376,9 @@ export function SearchBox({
                             {result.title}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {isSubpage ? (
+                            {isPage ? (
                               <span className="text-indigo-600 dark:text-indigo-400">
-                                Sub-page
+                                Page
                               </span>
                             ) : (
                               <>
@@ -394,7 +394,7 @@ export function SearchBox({
                           </p>
                         </div>
                       </div>
-                      {isSubpage ? (
+                      {isPage ? (
                         <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       ) : (
                         <div className="flex items-center gap-1 flex-shrink-0">

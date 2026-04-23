@@ -8,7 +8,7 @@ import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
-interface CreateSubPageDialogProps {
+interface CreateChildPageDialogProps {
   siteId: string;
   parentId: string;
   parentTitle: string;
@@ -17,14 +17,14 @@ interface CreateSubPageDialogProps {
   onSuccess?: () => void;
 }
 
-export function CreateSubPageDialog({
+export function CreateChildPageDialog({
   siteId,
   parentId,
   parentTitle,
   open,
   onOpenChange,
   onSuccess,
-}: CreateSubPageDialogProps) {
+}: CreateChildPageDialogProps) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +67,7 @@ export function CreateSubPageDialog({
       })
       .catch((err) => {
         const message =
-          err instanceof Error ? err.message : "Failed to create sub-page";
+          err instanceof Error ? err.message : "Failed to create page";
         setError(message);
       })
       .finally(() => {
@@ -89,7 +89,7 @@ export function CreateSubPageDialog({
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title="Create Sub-page"
+      title="Create Child Page"
       description={`Add a new page under "${parentTitle}"`}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
@@ -97,9 +97,9 @@ export function CreateSubPageDialog({
       submittingLabel="Creating..."
     >
       <div className="space-y-2">
-        <Label htmlFor="subPageTitle">Page Title</Label>
+        <Label htmlFor="childPageTitle">Page Title</Label>
         <Input
-          id="subPageTitle"
+          id="childPageTitle"
           placeholder="Getting Started"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
@@ -108,9 +108,9 @@ export function CreateSubPageDialog({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="subPageSlug">URL Slug</Label>
+        <Label htmlFor="childPageSlug">URL Slug</Label>
         <Input
-          id="subPageSlug"
+          id="childPageSlug"
           placeholder="getting-started"
           value={slugValue}
           onChange={(e) => {

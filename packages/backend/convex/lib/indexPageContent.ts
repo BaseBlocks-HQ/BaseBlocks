@@ -59,19 +59,19 @@ function extractTextFromSlots(
 }
 
 /**
- * Index or update a subpage's content in searchableContent.
+ * Index or update a page's searchable content.
  *
- * Call this from layout mutations when the page is a subpage content page
- * (`isSubpageContent === true`). Uses the page ID as the sourceId.
+ * Uses the page ID as the sourceId so search results stay attached to the
+ * page itself, regardless of how it is surfaced in navigation.
  */
-export async function indexSubpageContent(
+export async function indexPageContent(
   ctx: MutationCtx,
   pageId: Id<"pages">,
 ): Promise<void> {
   const page = await ctx.db.get(pageId);
-  if (!page || !page.isSubpageContent) return;
+  if (!page) return;
 
-  // Get all layouts for this subpage
+  // Get all layouts for this page
   const layouts = await ctx.db
     .query("layouts")
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
@@ -91,13 +91,13 @@ export async function indexSubpageContent(
   const existing = await ctx.db
     .query("searchableContent")
     .withIndex("by_source", (q) =>
-      q.eq("contentType", "subpage").eq("sourceId", pageId),
+      q.eq("contentType", "page").eq("sourceId", pageId),
     )
     .first();
 
   const indexData = {
     siteId: page.siteId,
-    contentType: "subpage" as const,
+    contentType: "page" as const,
     sourceId: pageId,
     title: page.title,
     extractedText: combinedText,
@@ -115,17 +115,16 @@ export async function indexSubpageContent(
 }
 
 /**
- * Remove a subpage's searchableContent entry.
- * Call when a subpage is deleted.
+ * Remove a page's searchableContent entry.
  */
-export async function removeSubpageIndex(
+export async function removePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
 ): Promise<void> {
   const existing = await ctx.db
     .query("searchableContent")
     .withIndex("by_source", (q) =>
-      q.eq("contentType", "subpage").eq("sourceId", pageId),
+      q.eq("contentType", "page").eq("sourceId", pageId),
     )
     .first();
 
