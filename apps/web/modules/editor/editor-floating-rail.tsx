@@ -140,7 +140,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
     types: ["heading", "paragraph", "richtext", "callout", "code"],
   },
   { title: "Structure", types: ["divider", "block-spacer"] },
-  { title: "Media", types: ["image", "file"] },
+  { title: "Files", types: ["image", "file"] },
   {
     title: "Advanced",
     types: ["subpage", "directory", "flowchart", "decision-tree"],

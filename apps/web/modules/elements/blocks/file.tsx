@@ -1,8 +1,8 @@
 "use client";
 
 import { useFileUpload } from "@/lib/storage";
-import { DocumentFileRow, DropZone } from "@/modules/documents";
 import type { DocumentFileRowData } from "@/modules/documents";
+import { DocumentFileRow, DropZone } from "@/modules/documents";
 import { useMediaViewer } from "@/modules/media-viewer";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import { api } from "@baseblocks/backend";
@@ -37,12 +37,12 @@ import { useReducer } from "react";
 import { toast } from "sonner";
 import type {
   ElementEditorProps,
-  ElementPreviewProps,
   ElementRendererProps,
 } from "../framework/registry";
 import { registerElement } from "../framework/registry";
+import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
-interface MediaFileData extends DocumentFileRowData {
+interface FileData extends DocumentFileRowData {
   _id: string;
   downloadUrl: string;
 }
@@ -96,7 +96,7 @@ function getDocumentUrl(documentId: string) {
 
 function getContentSnapshot(
   content: ElementEditorProps<"file">["content"],
-): MediaFileData | null {
+): FileData | null {
   if (
     !content.documentId ||
     !content.filename ||
@@ -116,7 +116,7 @@ function getContentSnapshot(
   };
 }
 
-function getFileContent(file: MediaFileData) {
+function getFileContent(file: FileData) {
   return {
     documentId: file._id,
     filename: file.filename,
@@ -126,7 +126,7 @@ function getFileContent(file: MediaFileData) {
   };
 }
 
-function MediaUploadState({
+function FileUploadState({
   isUploading,
   onFilesAccepted,
   uploadProgress,
@@ -153,8 +153,8 @@ function MediaUploadState({
           <div className="min-w-0">
             <p className="truncate font-medium">
               {isUploading
-                ? `Uploading media... ${uploadProgress}%`
-                : "Upload media"}
+                ? `Uploading file... ${uploadProgress}%`
+                : "Upload file"}
             </p>
           </div>
         </div>
@@ -171,7 +171,7 @@ function MediaUploadState({
   );
 }
 
-function MediaItemMenu({
+function FileItemMenu({
   onDelete,
   onPreview,
   onRename,
@@ -320,12 +320,12 @@ function FileEditor({
             size: document.size,
             createdAt: document.createdAt,
             downloadUrl: document.downloadUrl,
-          } satisfies MediaFileData)
+          } satisfies FileData)
         : null;
   const isUploading = isAnyUploading;
   const uploadProgress = totalProgress?.percentage ?? 0;
 
-  const previewFile = (file: MediaFileData) => {
+  const previewFile = (file: FileData) => {
     openFile({
       url: file.downloadUrl,
       filename: file.filename,
@@ -349,7 +349,7 @@ function FileEditor({
       return;
     }
 
-    const nextFile: MediaFileData = {
+    const nextFile: FileData = {
       _id: documentId,
       filename: file.name,
       contentType: file.type || "application/octet-stream",
@@ -403,7 +403,7 @@ function FileEditor({
 
   if (!resolvedFile) {
     return (
-      <MediaUploadState
+      <FileUploadState
         isUploading={isUploading}
         onFilesAccepted={handleFilesAccepted}
         uploadProgress={uploadProgress}
@@ -418,7 +418,7 @@ function FileEditor({
         onOpen={previewFile}
         variant="block"
         actions={
-          <MediaItemMenu
+          <FileItemMenu
             onDelete={() => dispatch({ type: "openDeleteDialog" })}
             onPreview={() => previewFile(resolvedFile)}
             onRename={() =>
@@ -471,28 +471,15 @@ function FileRenderer({ content }: ElementRendererProps<"file">) {
   );
 }
 
-function FilePreview({ className }: ElementPreviewProps) {
-  return (
-    <div className={className}>
-      <div className="flex h-full w-full items-center justify-center bg-muted/30 p-3">
-        <div className="flex w-full items-center gap-2 rounded-lg border bg-background/85 p-2 shadow-sm">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-            <FileUp className="h-4 w-4" />
-          </div>
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="h-2.5 w-3/4 rounded bg-foreground/70" />
-            <div className="h-2 w-1/2 rounded bg-muted-foreground/35" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const FilePreview = themedPickerImagePreview(
+  "/editor/picker/blocks/file-light.png",
+  "/editor/picker/blocks/file-dark.png",
+);
 
 registerElement({
   type: "file",
   category: "blocks",
-  label: "Media",
+  label: "File",
   description: "Upload and preview a single file",
   icon: FileUp,
   keywords: ["file", "media", "document", "pdf", "upload"],
