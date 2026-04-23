@@ -274,7 +274,7 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
 
   if (state.error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 text-destructive">
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-destructive">
         <AlertCircle className="h-8 w-8" />
         <p>Failed to load PDF: {state.error}</p>
       </div>
@@ -282,47 +282,52 @@ export function PdfViewer({ file, renderControls }: ViewerProps) {
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-auto bg-muted/20">
-      <Document
-        file={file.url}
-        onLoadSuccess={({ numPages }) => {
-          dispatch({ type: "documentLoaded", numPages });
-          hasScrolledToFirstMatch.current = false;
-          resetSearchState();
-        }}
-        onLoadError={(err) => {
-          dispatch({ type: "setError", value: err.message });
-        }}
-        loading={
-          <div className="flex flex-col items-center justify-center h-full gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-muted-foreground">Loading PDF...</p>
-          </div>
-        }
-        className="flex flex-col items-center py-4 gap-4"
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20">
+      <div
+        ref={containerRef}
+        className="min-h-0 flex-1 overflow-auto p-4 pt-14 overscroll-contain"
       >
-        {pageNumbers.map((pageNumber) => (
-          <Page
-            key={pageNumber}
-            pageNumber={pageNumber}
-            width={
-              state.containerWidth
-                ? state.containerWidth * state.scale
-                : undefined
-            }
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            customTextRenderer={textRenderer}
-            onRenderTextLayerSuccess={handleTextLayerSuccess}
-            loading={
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            }
-            className="shadow-lg"
-          />
-        ))}
-      </Document>
+        <Document
+          file={file.url}
+          onLoadSuccess={({ numPages }) => {
+            dispatch({ type: "documentLoaded", numPages });
+            hasScrolledToFirstMatch.current = false;
+            resetSearchState();
+          }}
+          onLoadError={(err) => {
+            dispatch({ type: "setError", value: err.message });
+          }}
+          loading={
+            <div className="flex h-full flex-col items-center justify-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-muted-foreground">Loading PDF…</p>
+            </div>
+          }
+          className="mx-auto flex w-fit flex-col items-center gap-4 pb-4"
+        >
+          {pageNumbers.map((pageNumber) => (
+            <Page
+              key={pageNumber}
+              pageNumber={pageNumber}
+              width={
+                state.containerWidth
+                  ? state.containerWidth * state.scale
+                  : undefined
+              }
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              customTextRenderer={textRenderer}
+              onRenderTextLayerSuccess={handleTextLayerSuccess}
+              loading={
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              }
+              className="overflow-hidden rounded-sm bg-background shadow-lg outline outline-1 outline-border/50"
+            />
+          ))}
+        </Document>
+      </div>
     </div>
   );
 }

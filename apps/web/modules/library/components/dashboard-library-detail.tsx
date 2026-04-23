@@ -52,8 +52,8 @@ export function DashboardLibraryDetail({
 
   if (data.isLoading || site === undefined) {
     return (
-      <div className="flex flex-1 flex-col px-4 py-6 sm:px-6">
-        <div className="mx-auto flex w-full max-w-[72rem] flex-1 flex-col gap-4">
+      <div className="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6">
+        <div className="mx-auto flex min-h-0 w-full max-w-[72rem] flex-1 flex-col gap-4">
           <div className="flex items-center gap-2">
             <Skeleton className="h-8 w-8 rounded-md" />
             <Skeleton className="h-7 w-48" />
@@ -85,8 +85,8 @@ export function DashboardLibraryDetail({
   };
 
   return (
-    <div className="flex flex-1 flex-col px-4 py-6 sm:px-6">
-      <div className="mx-auto flex w-full max-w-[72rem] flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
+      <div className="mx-auto flex min-h-0 w-full max-w-[72rem] flex-1 flex-col gap-4 overflow-hidden">
         <header className="flex min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <Button

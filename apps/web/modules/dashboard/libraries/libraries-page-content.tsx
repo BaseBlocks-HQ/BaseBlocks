@@ -76,7 +76,7 @@ export function LibrariesPageContent() {
 
   if (sites === undefined) {
     return (
-      <main className="flex-1 px-4 py-6 sm:px-6">
+      <main className="min-h-0 flex-1 overflow-auto px-4 py-6 sm:px-6">
         <div className="mx-auto w-full max-w-[64rem]">
           <div className="mb-8 flex items-center justify-between">
             <Skeleton className="h-7 w-28" />
@@ -113,7 +113,7 @@ export function LibrariesPageContent() {
   }
 
   return (
-    <main className="flex-1 px-4 py-6 sm:px-6">
+    <main className="min-h-0 flex-1 overflow-auto px-4 py-6 sm:px-6">
       <div className="mx-auto w-full max-w-[64rem]">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t("libraries.title")}</h1>

@@ -1,9 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@baseblocks/ui/button";
+import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewer-toolbar-icon-button";
 import { Maximize2, Minimize2, RotateCw } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import type { ViewerProps } from "../types";
 
@@ -24,28 +23,21 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
 
     renderControls(
       <>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={rotate}
-          title="Rotate"
-        >
-          <RotateCw className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn("h-7 w-7", fitToFrame && "bg-muted")}
+        <ViewerToolbarIconButton label="Rotate" onClick={rotate}>
+          <RotateCw className="h-4 w-4" />
+        </ViewerToolbarIconButton>
+        <ViewerToolbarIconButton
+          className={cn(fitToFrame && "bg-primary/10 text-primary")}
+          label={fitToFrame ? "Actual size" : "Fit to frame"}
           onClick={toggleFit}
-          title={fitToFrame ? "Actual size" : "Fit to frame"}
+          pressed={fitToFrame}
         >
           {fitToFrame ? (
-            <Maximize2 className="h-3.5 w-3.5" />
+            <Maximize2 className="h-4 w-4" />
           ) : (
-            <Minimize2 className="h-3.5 w-3.5" />
+            <Minimize2 className="h-4 w-4" />
           )}
-        </Button>
+        </ViewerToolbarIconButton>
       </>,
     );
   }, [fitToFrame, renderControls, rotate, toggleFit]);
@@ -53,23 +45,20 @@ export function ImageViewer({ file, renderControls }: ViewerProps) {
   return (
     <div
       aria-label={`Image viewer for ${file.filename}`}
-      className="grid h-full min-h-0 min-w-0 place-items-center overflow-auto bg-muted/20 p-4"
+      className="grid h-full min-h-0 min-w-0 place-items-center overflow-auto bg-muted/20 p-4 pt-14 overscroll-contain"
       role="img"
     >
-      <Image
+      <img
         alt={file.filename}
         className={cn(
-          "block select-none rounded-sm shadow-sm ring-1 ring-border/50",
+          "block select-none rounded-sm shadow-sm outline outline-1 outline-border/50",
           fitToFrame
             ? "max-h-full max-w-full object-contain"
             : "max-w-none object-none",
         )}
         draggable={false}
-        height={900}
         src={file.url}
         style={{ transform: `rotate(${rotation}deg)` }}
-        unoptimized
-        width={1600}
       />
     </div>
   );

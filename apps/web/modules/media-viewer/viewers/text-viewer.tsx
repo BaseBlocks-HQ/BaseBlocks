@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@baseblocks/ui/button";
+import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewer-toolbar-icon-button";
 import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
@@ -123,58 +123,53 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
 
     renderControls(
       <>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn("h-7 w-7", showSearch && "bg-muted")}
+        <ViewerToolbarIconButton
+          className={cn(showSearch && "bg-primary/10 text-primary")}
+          label="Search"
           onClick={toggleSearch}
-          title="Search"
+          pressed={showSearch}
         >
-          <Search className="h-3.5 w-3.5" />
-        </Button>
+          <Search className="h-4 w-4" />
+        </ViewerToolbarIconButton>
         {showSearch && (
           <div className="relative">
             <Input
               type="text"
-              placeholder="Search..."
+              placeholder="Search…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-7 w-32 text-xs pr-6"
+              className="h-8 w-32 pr-7 text-xs"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear Search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
             )}
           </div>
         )}
-        <div className="w-px h-4 bg-border mx-0.5" />
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn("h-7 w-7", wordWrap && "bg-muted")}
+        <ViewerToolbarIconButton
+          className={cn(wordWrap && "bg-primary/10 text-primary")}
+          label={wordWrap ? "Disable word wrap" : "Enable word wrap"}
           onClick={toggleWordWrap}
-          title={wordWrap ? "Disable word wrap" : "Enable word wrap"}
+          pressed={wordWrap}
         >
-          <WrapText className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
+          <WrapText className="h-4 w-4" />
+        </ViewerToolbarIconButton>
+        <ViewerToolbarIconButton
+          label="Copy to clipboard"
           onClick={handleCopy}
-          title="Copy to clipboard"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-green-500" />
+            <Check className="h-4 w-4 text-green-500" />
           ) : (
-            <Copy className="h-3.5 w-3.5" />
+            <Copy className="h-4 w-4" />
           )}
-        </Button>
+        </ViewerToolbarIconButton>
       </>,
     );
   }, [
@@ -193,7 +188,7 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
       </div>
     );
   }
@@ -207,10 +202,10 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   }
 
   return (
-    <ScrollArea className="h-full">
+    <ScrollArea className="h-full min-h-0 bg-muted/20">
       <pre
         className={cn(
-          "p-4 text-sm font-mono",
+          "min-h-full p-4 pt-14 font-mono text-sm",
           wordWrap ? "whitespace-pre-wrap break-words" : "whitespace-pre",
         )}
       >

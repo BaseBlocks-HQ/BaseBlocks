@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@baseblocks/ui/button";
+import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewer-toolbar-icon-button";
 import { Input } from "@baseblocks/ui/input";
 import {
   ChevronDown,
@@ -41,31 +41,31 @@ export function PdfViewerControls({
 }: PdfViewerControlsProps) {
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn("h-7 w-7", showSearch && "bg-muted")}
+      <ViewerToolbarIconButton
+        className={cn(showSearch && "bg-primary/10 text-primary")}
+        label="Search"
         onClick={onToggleSearch}
-        title="Search"
+        pressed={showSearch}
       >
-        <Search className="h-3.5 w-3.5" />
-      </Button>
+        <Search className="h-4 w-4" />
+      </ViewerToolbarIconButton>
       {showSearch && (
         <>
           <div className="relative">
             <Input
               type="text"
-              placeholder="Search in PDF..."
+              placeholder="Search in PDF…"
               value={searchInput}
               onChange={(event) => onSearchChange(event.target.value)}
               onKeyDown={onSearchKeyDown}
-              className="h-7 w-40 text-xs pr-6"
+              className="h-8 w-40 pr-7 text-xs"
             />
             {searchInput && (
               <button
                 type="button"
                 onClick={() => onSearchChange("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear Search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -76,52 +76,39 @@ export function PdfViewerControls({
               {currentMatch}/{totalMatches}
             </span>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+          <ViewerToolbarIconButton
+            disabled={totalMatches === 0}
+            label="Previous match (Shift+Enter)"
             onClick={() => onJumpToMatch("prev")}
-            disabled={totalMatches === 0}
-            title="Previous match (Shift+Enter)"
           >
-            <ChevronUp className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            <ChevronUp className="h-4 w-4" />
+          </ViewerToolbarIconButton>
+          <ViewerToolbarIconButton
+            disabled={totalMatches === 0}
+            label="Next match (Enter)"
             onClick={() => onJumpToMatch("next")}
-            disabled={totalMatches === 0}
-            title="Next match (Enter)"
           >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </Button>
+            <ChevronDown className="h-4 w-4" />
+          </ViewerToolbarIconButton>
         </>
       )}
-      <div className="w-px h-4 bg-border mx-0.5" />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={onZoomOut}
+      <ViewerToolbarIconButton
         disabled={scale <= 0.5}
-        title="Zoom out"
+        label="Zoom out"
+        onClick={onZoomOut}
       >
-        <ZoomOut className="h-3.5 w-3.5" />
-      </Button>
+        <ZoomOut className="h-4 w-4" />
+      </ViewerToolbarIconButton>
       <span className="text-xs text-muted-foreground min-w-[3rem] text-center tabular-nums">
         {Math.round(scale * 100)}%
       </span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={onZoomIn}
+      <ViewerToolbarIconButton
         disabled={scale >= 3}
-        title="Zoom in"
+        label="Zoom in"
+        onClick={onZoomIn}
       >
-        <ZoomIn className="h-3.5 w-3.5" />
-      </Button>
+        <ZoomIn className="h-4 w-4" />
+      </ViewerToolbarIconButton>
     </>
   );
 }

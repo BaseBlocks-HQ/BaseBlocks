@@ -302,59 +302,38 @@ export function LibraryExplorer({
   const fileViewer = openFile ? (
     <div ref={splitRef} className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
       <aside
-        className="hidden min-h-0 min-w-[280px] max-w-[520px] shrink-0 overflow-hidden border-r md:block"
+        className="hidden min-h-0 min-w-[280px] max-w-[520px] shrink-0 overflow-hidden md:block"
         style={{ width: sidebarWidth }}
       >
         {tree}
       </aside>
-      <button
-        type="button"
-        aria-label="Resize file tree"
-        className="hidden w-1 shrink-0 cursor-col-resize bg-border transition-colors hover:bg-ring focus-visible:bg-ring focus-visible:outline-none md:block"
-        onPointerDown={(event) => {
-          event.preventDefault();
-          setIsResizingSidebar(true);
-        }}
-      />
       <div
-        className="min-h-0 min-w-0 flex-1 overflow-hidden"
+        className="relative min-h-0 min-w-0 flex-1 overflow-hidden border-l"
         style={{ maxWidth: "100%" }}
       >
+        <button
+          type="button"
+          aria-label="Resize file tree"
+          className="group absolute inset-y-0 left-0 z-10 hidden w-3 cursor-col-resize items-center justify-center bg-transparent focus-visible:outline-none md:flex"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            setIsResizingSidebar(true);
+          }}
+        >
+          <span
+            className={cn(
+              "h-10 w-px translate-x-px rounded-full bg-muted-foreground/20 transition-[background-color,height]",
+              "group-hover:h-20 group-hover:bg-primary/40 group-focus-visible:h-20 group-focus-visible:bg-primary/50",
+              isResizingSidebar && "h-24 bg-primary/60",
+            )}
+          />
+        </button>
         <LibraryFileViewer
+          key={openFile._id}
           allowDownloads={options.allowDownloads}
           file={openFile}
           onClose={() => setOpenFilePath(null)}
-          onDelete={
-            canManage && actions.deleteFile
-              ? () =>
-                  setDeleteTarget({
-                    kind: "file",
-                    id: openFile._id,
-                    name: openFile.filename,
-                  })
-              : undefined
-          }
-          onMove={
-            canManage && actions.moveFile
-              ? () =>
-                  setMoveTarget({
-                    kind: "file",
-                    id: openFile._id,
-                    name: openFile.filename,
-                  })
-              : undefined
-          }
           onOpenTree={() => setTreeDrawerOpen(true)}
-          onRename={
-            canManage && actions.renameFile
-              ? () =>
-                  setRenameTarget({
-                    kind: "file",
-                    id: openFile._id,
-                    name: openFile.filename,
-                  })
-              : undefined
-          }
         />
       </div>
     </div>

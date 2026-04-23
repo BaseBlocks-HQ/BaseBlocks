@@ -69,7 +69,7 @@ export function TeamContent() {
   }
 
   return (
-    <main className="flex-1 px-4 py-6 sm:px-6">
+    <main className="min-h-0 flex-1 overflow-auto px-4 py-6 sm:px-6">
       <div className="mx-auto w-full max-w-[64rem] space-y-6">
         <div className="flex items-center justify-between">
           <div>

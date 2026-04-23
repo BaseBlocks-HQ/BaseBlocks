@@ -23,12 +23,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider defaultOpen={true}>
       <DashboardSidebar />
-      <SidebarInset>
+      <SidebarInset className="h-svh overflow-hidden">
         <SidebarTrigger
           className="absolute top-4 left-4 z-50 h-10 w-10 shrink-0 rounded-[1.25rem] border border-border/60 bg-background/90 shadow-md backdrop-blur-sm md:hidden"
           title="Open menu"
         />
-        <div className="flex min-h-svh flex-1 flex-col max-md:pt-14">
+        <div className="flex h-svh min-h-0 flex-1 flex-col overflow-hidden max-md:pt-14">
           {children}
         </div>
       </SidebarInset>

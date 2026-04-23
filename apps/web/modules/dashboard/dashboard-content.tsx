@@ -31,7 +31,7 @@ export function DashboardContent({ initialSites }: DashboardContentProps) {
     isConvexLoading || sitesQuery === undefined ? initialSites : sitesQuery;
 
   return (
-    <main className="flex-1 px-4 py-6 sm:px-6">
+    <main className="min-h-0 flex-1 overflow-auto px-4 py-6 sm:px-6">
       <div className="mx-auto w-full max-w-[64rem]">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">{t("dashboard.yourSites")}</h1>
