@@ -12,7 +12,7 @@ import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface AudienceMembersDialogProps {
@@ -21,6 +21,8 @@ interface AudienceMembersDialogProps {
   onOpenChange: (open: boolean) => void;
   siteId: string;
 }
+
+type TranslationFn = ReturnType<typeof useTranslations>;
 
 export function AudienceMembersDialog({
   audienceId,
@@ -33,17 +35,48 @@ export function AudienceMembersDialog({
   const site = useSite(siteId);
   const members = useMembers(site?._id ? site.teamId : undefined);
   const assignments = useAudienceMemberAssignments(audienceId);
+  const resetKey = [
+    audienceId ?? "no-audience",
+    open ? "open" : "closed",
+    assignments?.userIds.join(",") ?? "loading",
+  ].join(":");
+
+  return (
+    <AudienceMembersDialogContent
+      key={resetKey}
+      assignments={assignments}
+      audienceId={audienceId}
+      members={members}
+      onOpenChange={onOpenChange}
+      open={open}
+      t={t}
+      tCommon={tCommon}
+    />
+  );
+}
+
+function AudienceMembersDialogContent({
+  assignments,
+  audienceId,
+  members,
+  onOpenChange,
+  open,
+  t,
+  tCommon,
+}: {
+  assignments: ReturnType<typeof useAudienceMemberAssignments>;
+  audienceId?: string;
+  members: ReturnType<typeof useMembers>;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  t: TranslationFn;
+  tCommon: TranslationFn;
+}) {
   const setMembers = useMutation(api.siteAudiences.mutations.setMembers);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
+    assignments?.userIds ?? [],
+  );
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    setSelectedUserIds(assignments?.userIds ?? []);
-  }, [assignments?.userIds, open]);
 
   const toggleUserId = (userId: string) => {
     setSelectedUserIds((current) =>
@@ -59,18 +92,22 @@ export function AudienceMembersDialog({
     }
 
     setIsSaving(true);
-    try {
-      await setMembers({
-        audienceId: audienceId as never,
-        userIds: selectedUserIds,
-      });
-      toast.success(t("toastSuccess"));
-      onOpenChange(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("toastError"));
-    } finally {
-      setIsSaving(false);
+    const saveError = await setMembers({
+      audienceId: audienceId as never,
+      userIds: selectedUserIds,
+    })
+      .then(() => null)
+      .catch((error) =>
+        error instanceof Error ? error : new Error(t("toastError")),
+      );
+    setIsSaving(false);
+    if (saveError) {
+      toast.error(saveError.message);
+      return;
     }
+
+    toast.success(t("toastSuccess"));
+    onOpenChange(false);
   };
 
   const audienceName = assignments?.audience.name?.trim();

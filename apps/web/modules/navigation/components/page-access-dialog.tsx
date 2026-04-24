@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
 import { useMutation } from "convex/react";
 import { Loader2, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AudienceMembersDialog } from "./audience-members-dialog";
 
@@ -31,6 +31,31 @@ interface PageAccessDialogProps {
 }
 
 export function PageAccessDialog({
+  isAdmin,
+  open,
+  onOpenChange,
+  page,
+  siteId,
+}: PageAccessDialogProps) {
+  const resetKey = [
+    page._id,
+    open ? "open" : "closed",
+    JSON.stringify(normalizePageAccessPolicy(page.accessPolicy)),
+  ].join(":");
+
+  return (
+    <PageAccessDialogContent
+      key={resetKey}
+      isAdmin={isAdmin}
+      onOpenChange={onOpenChange}
+      open={open}
+      page={page}
+      siteId={siteId}
+    />
+  );
+}
+
+function PageAccessDialogContent({
   isAdmin,
   open,
   onOpenChange,
@@ -63,18 +88,6 @@ export function PageAccessDialog({
   const [isDeletingAudience, setIsDeletingAudience] = useState(false);
   const [managingAudienceId, setManagingAudienceId] = useState<string>();
   const [deletingAudienceId, setDeletingAudienceId] = useState<string>();
-
-  useEffect(() => {
-    if (!open) return;
-    const policy = normalizePageAccessPolicy(page.accessPolicy);
-    setMode(policy.kind);
-    setSelectedAudienceIds(
-      policy.kind === "audiences" ? policy.audienceIds : [],
-    );
-    setNewAudienceName("");
-    setManagingAudienceId(undefined);
-    setDeletingAudienceId(undefined);
-  }, [open, page.accessPolicy]);
 
   const toggleAudience = (audienceId: string) => {
     setSelectedAudienceIds((current) =>
