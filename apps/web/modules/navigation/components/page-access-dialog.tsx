@@ -74,7 +74,7 @@ export function PageAccessDialog({
     setNewAudienceName("");
     setManagingAudienceId(undefined);
     setDeletingAudienceId(undefined);
-  }, [open, page._id, page.accessPolicy]);
+  }, [open, page.accessPolicy]);
 
   const toggleAudience = (audienceId: string) => {
     setSelectedAudienceIds((current) =>
@@ -134,9 +134,7 @@ export function PageAccessDialog({
     })
       .then(() => null)
       .catch((error) =>
-        error instanceof Error
-          ? error
-          : new Error(t("toastUpdateAccessError")),
+        error instanceof Error ? error : new Error(t("toastUpdateAccessError")),
       );
     setIsSaving(false);
     if (saveError) {
@@ -244,9 +242,7 @@ export function PageAccessDialog({
                         size="sm"
                         variant="outline"
                         onClick={handleCreateAudience}
-                        disabled={
-                          isCreatingAudience || !newAudienceName.trim()
-                        }
+                        disabled={isCreatingAudience || !newAudienceName.trim()}
                         className="h-8 rounded-full border-sidebar-border/70"
                       >
                         {isCreatingAudience ? (
@@ -378,7 +374,9 @@ export function PageAccessDialog({
           name: deleteAudienceName,
         })}
         confirmLabel={
-          isDeletingAudience ? t("deletingAudience") : t("deleteAudienceConfirm")
+          isDeletingAudience
+            ? t("deletingAudience")
+            : t("deleteAudienceConfirm")
         }
         cancelLabel={tCommon("cancel")}
         confirmDisabled={isDeletingAudience}

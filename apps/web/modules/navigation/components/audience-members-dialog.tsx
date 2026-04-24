@@ -67,9 +67,7 @@ export function AudienceMembersDialog({
       toast.success(t("toastSuccess"));
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("toastError"),
-      );
+      toast.error(error instanceof Error ? error.message : t("toastError"));
     } finally {
       setIsSaving(false);
     }
@@ -96,7 +94,9 @@ export function AudienceMembersDialog({
               {t("loading")}
             </div>
           ) : members.length === 0 ? (
-            <p className="text-sm text-sidebar-foreground/60">{t("emptyTeam")}</p>
+            <p className="text-sm text-sidebar-foreground/60">
+              {t("emptyTeam")}
+            </p>
           ) : (
             members.map((member) => (
               <Label

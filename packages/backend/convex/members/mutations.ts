@@ -1,6 +1,7 @@
 import { teamRoles } from "@baseblocks/types";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import {
   type MutationCtx,
   internalMutation,
@@ -169,10 +170,10 @@ async function promoteLocalAdminToBetterAuthOwner(
 
 async function repairOrganizationMembershipsForTeam(
   ctx: MutationCtx,
-  teamId: string,
+  teamId: Id<"teams">,
   dryRun: boolean,
 ) {
-  const team = await ctx.db.get(teamId as never);
+  const team = await ctx.db.get(teamId);
   if (!team) {
     throw new Error(`Team not found: ${teamId}`);
   }

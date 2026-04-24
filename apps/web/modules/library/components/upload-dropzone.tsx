@@ -84,7 +84,9 @@ export function UploadDropzone({
                   className="h-3.5 w-3.5 shrink-0 animate-spin text-primary"
                   aria-hidden
                 />
-                <span className="min-w-0 flex-1 truncate">{uploadingLabel}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {uploadingLabel}
+                </span>
                 {uploadPercent != null ? (
                   <span className="shrink-0 text-muted-foreground">
                     {uploadPercent}%
@@ -100,9 +102,7 @@ export function UploadDropzone({
                     }}
                   />
                 ) : (
-                  <div
-                    className="absolute inset-y-0 left-0 w-[38%] rounded-full bg-primary/55 [animation:library-upload-shimmer_1.15s_ease-in-out_infinite] motion-reduce:[animation:none] motion-reduce:opacity-70"
-                  />
+                  <div className="absolute inset-y-0 left-0 w-[38%] rounded-full bg-primary/55 [animation:library-upload-shimmer_1.15s_ease-in-out_infinite] motion-reduce:[animation:none] motion-reduce:opacity-70" />
                 )}
               </div>
             </div>

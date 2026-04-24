@@ -72,14 +72,6 @@
     "footerCommunity": "Communauté",
     "footerCopyright": "\u00a9 2026 BaseBlocks. Licence MIT."
   },
-  "navigation": {
-    "dashboard": "Tableau de bord",
-    "docs": "Docs",
-    "home": "Aller à l'accueil",
-    "sites": "Sites",
-    "settings": "Parametres",
-    "help": "Aide"
-  },
   "auth": {
     "loginTitle": "Bon retour",
     "loginDescription": "Connectez-vous a votre compte pour continuer",
@@ -274,6 +266,12 @@
     }
   },
   "navigation": {
+    "dashboard": "Tableau de bord",
+    "docs": "Docs",
+    "home": "Aller à l'accueil",
+    "sites": "Sites",
+    "settings": "Parametres",
+    "help": "Aide",
     "tree": {
       "defaultBadge": "Par defaut",
       "breadcrumbShowMore": "Afficher plus"
