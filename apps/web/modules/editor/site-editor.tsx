@@ -7,11 +7,12 @@ import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
-import { PublicPagePanel } from "@/modules/public-site/public-page-panel";
+import { PublicPageDetailPanel } from "@/modules/public-site/public-page-detail-panel";
 import {
   PublicPagePanelProvider,
   usePublicPagePanel,
 } from "@/modules/public-site/public-page-panel-context";
+import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
 import { EditorProvider } from "@/modules/shared/contexts/editor-context";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import { useTeamAccess } from "@/modules/team/team-access";
@@ -19,18 +20,13 @@ import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useConvexAuth, useMutation } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  ConnectedPageBlockEditPanel,
+  ConnectedEditorPageDetailPanel,
   ConnectedPageEditor,
 } from "./components/connected-editors";
 import { EditorFloatingRail } from "./editor-floating-rail";
@@ -93,8 +89,12 @@ function SiteEditorInner({
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Determine if any page panel should be shown
-  const showPagePanel = editingPage || viewingPage;
+  const activePageDetail = editingPage
+    ? { kind: "editor" as const }
+    : viewingPage
+      ? { kind: "viewer" as const }
+      : null;
+  const showPagePanel = activePageDetail !== null;
 
   // ESC key to close page panel
   useEffect(() => {
@@ -233,6 +233,32 @@ function SiteEditorInner({
   const railPositionClass = isMobile
     ? "pointer-events-none fixed inset-x-3 bottom-3 z-40 flex justify-center"
     : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
+  const showFloatingRail = !(isMobile && showPagePanel);
+
+  const pageEditor = selectedPage ? (
+    <ConnectedPageEditor
+      pageId={selectedPage._id}
+      onSelectionChange={handleSlotSelectionChange}
+    />
+  ) : (
+    <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
+      Select a page to edit
+    </div>
+  );
+
+  const editorCanvas = (
+    <ScrollArea className="h-full min-h-0">
+      <div
+        className={
+          showPagePanel
+            ? "px-4 pb-6 pt-18 pl-20 md:px-6 md:pb-8 md:pt-18 md:pl-24 lg:px-8 lg:pl-28"
+            : "p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+        }
+      >
+        {pageEditor}
+      </div>
+    </ScrollArea>
+  );
 
   if (isMobile && !showPagePanel) {
     return (
@@ -242,18 +268,20 @@ function SiteEditorInner({
         {...(isCustomized ? { "data-site-customized": "" } : {})}
       >
         <main className="relative">
-          <div className={railPositionClass}>
-            <EditorFloatingRail
-              site={site}
-              pages={pages}
-              selectedPageId={selectedPage?._id}
-              selectedSlotId={selection.slotId}
-              onSelectPage={setSelectedPageId}
-              onAddLayout={handleAddLayout}
-              onAddBlock={handleAddBlock}
-              onEnableTabs={handleEnableTabs}
-            />
-          </div>
+          {showFloatingRail ? (
+            <div className={railPositionClass}>
+              <EditorFloatingRail
+                site={site}
+                pages={pages}
+                selectedPageId={selectedPage?._id}
+                selectedSlotId={selection.slotId}
+                onSelectPage={setSelectedPageId}
+                onAddLayout={handleAddLayout}
+                onAddBlock={handleAddBlock}
+                onEnableTabs={handleEnableTabs}
+              />
+            </div>
+          ) : null}
 
           <EditorHeader
             inFlow
@@ -317,92 +345,40 @@ function SiteEditorInner({
           />
         </div>
 
-        <div className="absolute inset-0 min-w-0 overflow-hidden">
-          {showPagePanel ? (
-            <ResizablePanelGroup orientation="horizontal" className="h-full">
-              {/* Main content area */}
-              {!isFullscreen && (
-                <>
-                  <ResizablePanel defaultSize={58} minSize={30}>
-                    <PortalContainerProvider value={portalContainer}>
-                      <ScrollArea className="h-full w-full min-h-0 min-w-0">
-                        <div
-                          className="p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
-                          style={customizationStyles}
-                          {...(isCustomized
-                            ? { "data-site-customized": "" }
-                            : {})}
-                        >
-                          {selectedPage ? (
-                            <ConnectedPageEditor
-                              pageId={selectedPage._id}
-                              onSelectionChange={handleSlotSelectionChange}
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-muted-foreground">
-                              Select a page to edit
-                            </div>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </PortalContainerProvider>
-                  </ResizablePanel>
-                  <ResizableHandle withHandle />
-                </>
-              )}
-              {/* Page panel - editing takes priority over viewing */}
-              <ResizablePanel
-                defaultSize={isFullscreen ? 100 : 42}
-                minSize={30}
-              >
-                <PortalContainerProvider value={portalContainer}>
-                  <div
-                    className="h-full w-full min-w-0 overflow-hidden border-l pt-14"
-                    style={customizationStyles}
-                    {...(isCustomized ? { "data-site-customized": "" } : {})}
-                  >
-                    {editingPage ? (
-                      <ConnectedPageBlockEditPanel
-                        isFullscreen={isFullscreen}
-                        onToggleFullscreen={() =>
-                          setIsFullscreen(!isFullscreen)
-                        }
-                      />
-                    ) : (
-                      <PublicPagePanel
-                        isFullscreen={isFullscreen}
-                        onToggleFullscreen={() =>
-                          setIsFullscreen(!isFullscreen)
-                        }
-                      />
-                    )}
-                  </div>
-                </PortalContainerProvider>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : (
-            <PortalContainerProvider value={portalContainer}>
-              <ScrollArea className="h-full min-h-0">
-                <div
-                  className="p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
-                  style={customizationStyles}
-                  {...(isCustomized ? { "data-site-customized": "" } : {})}
-                >
-                  {selectedPage ? (
-                    <ConnectedPageEditor
-                      pageId={selectedPage._id}
-                      onSelectionChange={handleSlotSelectionChange}
+        <PortalContainerProvider value={portalContainer}>
+          <div
+            className="absolute inset-0 min-w-0 overflow-hidden"
+            style={customizationStyles}
+            {...(isCustomized ? { "data-site-customized": "" } : {})}
+          >
+            {showPagePanel ? (
+              <SplitViewShell
+                className="h-full"
+                detail={
+                  activePageDetail?.kind === "editor" ? (
+                    <ConnectedEditorPageDetailPanel
+                      isFullscreen={isFullscreen}
+                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      Select a page to edit
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </PortalContainerProvider>
-          )}
-        </div>
+                    <PublicPageDetailPanel
+                      isFullscreen={isFullscreen}
+                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+                    />
+                  )
+                }
+                detailCollapsedOnMobile
+                detailExpanded={isFullscreen}
+                detailPanelClassName="pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4"
+                detailSurfaceClassName="rounded-xl bg-background"
+                main={editorCanvas}
+                mainPanelClassName="pr-2 md:pr-3 lg:pr-4"
+              />
+            ) : (
+              editorCanvas
+            )}
+          </div>
+        </PortalContainerProvider>
       </main>
     </div>
   );

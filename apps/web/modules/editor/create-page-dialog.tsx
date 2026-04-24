@@ -1,6 +1,13 @@
 "use client";
 
-import { DashboardFormDialog } from "@/components/dialogs";
+import {
+  DashboardFormDialog,
+  dashboardDialogFormErrorClassName,
+  dashboardDialogPrimaryFieldLabelClassName,
+  dashboardDialogPrimaryInlineInputClassName,
+  dashboardDialogSecondaryFieldLabelClassName,
+  dashboardDialogSecondaryInlineInputClassName,
+} from "@/components/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
@@ -121,39 +128,54 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       submitLabel={t("create")}
       submittingLabel={t("creating")}
       cancelLabel={tCommon("cancel")}
+      bodyClassName="px-5 pb-3"
+      formClassName="space-y-2"
     >
-      <div className="space-y-2">
-        <Label htmlFor="pageTitle">{t("titleLabel")}</Label>
-        <Input
-          id="pageTitle"
-          placeholder={t("titlePlaceholder")}
-          value={dialogState.title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="pageSlug">{t("slugLabel")}</Label>
-        <Input
-          id="pageSlug"
-          placeholder={t("slugPlaceholder")}
-          value={slugValue}
-          onChange={(e) => {
-            setSlugLockedByUser(true);
-            setDialogState((current) => ({
-              ...current,
-              slug: e.target.value.toLowerCase(),
-              error: "",
-            }));
-          }}
-          required
-          pattern={SLUG_PATTERN}
-        />
+      <div className="space-y-2.5">
+        <div>
+          <Label
+            htmlFor="pageTitle"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("titleLabel")}
+          </Label>
+          <Input
+            id="pageTitle"
+            placeholder={t("titlePlaceholder")}
+            value={dialogState.title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            aria-invalid={!!dialogState.error}
+            className={dashboardDialogPrimaryInlineInputClassName}
+          />
+        </div>
+        <div>
+          <Label
+            htmlFor="pageSlug"
+            className={dashboardDialogSecondaryFieldLabelClassName}
+          >
+            {t("slugLabel")}
+          </Label>
+          <Input
+            id="pageSlug"
+            placeholder={t("slugPlaceholder")}
+            value={slugValue}
+            onChange={(e) => {
+              setSlugLockedByUser(true);
+              setDialogState((current) => ({
+                ...current,
+                slug: e.target.value.toLowerCase(),
+                error: "",
+              }));
+            }}
+            aria-invalid={!!dialogState.error}
+            pattern={SLUG_PATTERN}
+            className={dashboardDialogSecondaryInlineInputClassName}
+          />
+        </div>
       </div>
 
       {dialogState.error ? (
-        <p className="text-sm text-destructive">{dialogState.error}</p>
+        <p className={dashboardDialogFormErrorClassName}>{dialogState.error}</p>
       ) : null}
     </DashboardFormDialog>
   );

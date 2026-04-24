@@ -11,10 +11,12 @@ import type {
   LibraryExplorerOptions,
   LibraryFile,
 } from "@/modules/library/types";
+import { SplitViewPanel } from "@/modules/shared/components/split-view-panel";
+import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
 import { LibraryFileViewer } from "./library-file-viewer";
@@ -59,10 +61,7 @@ export function LibraryExplorer({
   const [moveTarget, setMoveTarget] = useState<LibraryDialogTarget | null>(
     null,
   );
-  const [sidebarWidth, setSidebarWidth] = useState(340);
-  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const splitRef = useRef<HTMLDivElement>(null);
 
   const canManage = options.access === "manage";
   const model = useMemo(
@@ -97,32 +96,36 @@ export function LibraryExplorer({
         : tExplorer("toastUploadingCount", { count }),
     );
 
-    try {
-      const results = await upload(files, targetFolderId);
-      const succeeded = results.filter(Boolean).length;
-      const failed = count - succeeded;
-
-      if (failed === 0) {
-        toast.success(
-          count === 1
-            ? tExplorer("toastUploadedOne", { name: primaryName })
-            : tExplorer("toastUploadedMany", { count: succeeded }),
-          { id: toastId },
-        );
-      } else if (succeeded === 0) {
-        toast.error(tExplorer("toastUploadFailed"), { id: toastId });
-      } else {
-        toast.warning(
-          tExplorer("toastUploadedPartial", {
-            ok: succeeded,
-            failed,
-          }),
-          { id: toastId },
-        );
-      }
-    } catch (error) {
+    const results = await upload(files, targetFolderId).catch((error) => {
       toast.error(
         error instanceof Error ? error.message : tExplorer("toastUploadFailed"),
+        { id: toastId },
+      );
+      return null;
+    });
+
+    if (!results) {
+      return;
+    }
+
+    const succeeded = results.filter(Boolean).length;
+    const failed = count - succeeded;
+
+    if (failed === 0) {
+      toast.success(
+        count === 1
+          ? tExplorer("toastUploadedOne", { name: primaryName })
+          : tExplorer("toastUploadedMany", { count: succeeded }),
+        { id: toastId },
+      );
+    } else if (succeeded === 0) {
+      toast.error(tExplorer("toastUploadFailed"), { id: toastId });
+    } else {
+      toast.warning(
+        tExplorer("toastUploadedPartial", {
+          ok: succeeded,
+          failed,
+        }),
         { id: toastId },
       );
     }
@@ -242,28 +245,6 @@ export function LibraryExplorer({
     );
   };
 
-  useEffect(() => {
-    if (!isResizingSidebar) return;
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const left = splitRef.current?.getBoundingClientRect().left ?? 0;
-      setSidebarWidth(Math.min(520, Math.max(280, event.clientX - left)));
-    };
-    const stopResizing = () => setIsResizingSidebar(false);
-
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", stopResizing, { once: true });
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", stopResizing);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizingSidebar]);
-
   if (data.isLoading) {
     return <LibraryExplorerSkeleton className={className} />;
   }
@@ -299,16 +280,13 @@ export function LibraryExplorer({
       }}
       onDropEntities={
         canManage && actions.moveFile && actions.moveFolder
-          ? async (entities, targetFolderId) => {
-              try {
-                await dropEntities(entities, targetFolderId);
-              } catch (error) {
+          ? (entities, targetFolderId) =>
+              dropEntities(entities, targetFolderId).catch((error) => {
                 toast.error(
                   error instanceof Error ? error.message : "Move failed",
                 );
                 throw error;
-              }
-            }
+              })
           : undefined
       }
       paths={model.treePaths}
@@ -320,36 +298,16 @@ export function LibraryExplorer({
       uploadDisabled={uploadState?.isAnyUploading}
     />
   );
+  const treePanel = (
+    <SplitViewPanel className="rounded-[1.5rem] bg-background/70">
+      {tree}
+    </SplitViewPanel>
+  );
 
   const fileViewer = openFile ? (
-    <div ref={splitRef} className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-      <aside
-        className="hidden min-h-0 min-w-[280px] max-w-[520px] shrink-0 overflow-hidden md:block"
-        style={{ width: sidebarWidth }}
-      >
-        {tree}
-      </aside>
-      <div
-        className="relative min-h-0 min-w-0 flex-1 overflow-hidden border-l"
-        style={{ maxWidth: "100%" }}
-      >
-        <button
-          type="button"
-          aria-label="Resize file tree"
-          className="group absolute inset-y-0 left-0 z-10 hidden w-3 cursor-col-resize items-center justify-center bg-transparent focus-visible:outline-none md:flex"
-          onPointerDown={(event) => {
-            event.preventDefault();
-            setIsResizingSidebar(true);
-          }}
-        >
-          <span
-            className={cn(
-              "h-10 w-px translate-x-px rounded-full bg-muted-foreground/20 transition-[background-color,height]",
-              "group-hover:h-20 group-hover:bg-primary/40 group-focus-visible:h-20 group-focus-visible:bg-primary/50",
-              isResizingSidebar && "h-24 bg-primary/60",
-            )}
-          />
-        </button>
+    <SplitViewShell
+      className="min-h-0 flex-1"
+      detail={
         <LibraryFileViewer
           key={openFile._id}
           allowDownloads={options.allowDownloads}
@@ -357,10 +315,18 @@ export function LibraryExplorer({
           onClose={() => setOpenFilePath(null)}
           onOpenTree={() => setTreeDrawerOpen(true)}
         />
-      </div>
-    </div>
+      }
+      detailCollapsedOnMobile
+      detailDefaultSize={64}
+      detailSurfaceClassName="rounded-[1.5rem] bg-background"
+      insetClassName="gap-3 p-3"
+      main={treePanel}
+      mainDefaultSize={36}
+      minDetailSize={38}
+      minMainSize={24}
+    />
   ) : (
-    <div className="min-h-0 flex-1">{tree}</div>
+    <div className="min-h-0 flex-1 p-3">{treePanel}</div>
   );
   return (
     <>
@@ -371,7 +337,7 @@ export function LibraryExplorer({
         uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(
-          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border border-solid border-muted-foreground/25 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-primary/30 hover:bg-primary/5",
+          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-[2rem] border border-solid border-border/70 bg-card/95 shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_24px_60px_hsl(var(--foreground)/0.08)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-primary/25 hover:bg-card",
           options.embedded ? "h-[32rem]" : "h-full flex-1",
           className,
         )}

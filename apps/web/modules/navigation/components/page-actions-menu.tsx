@@ -1,6 +1,10 @@
 "use client";
 
-import { ConfirmDialog, FormDialog } from "@/components/dialogs";
+import {
+  DashboardConfirmDialog,
+  DashboardFormDialog,
+  dashboardDialogPrimaryFieldLabelClassName,
+} from "@/components/dialogs";
 import { usePages } from "@/lib/data";
 import {
   useEditorSite,
@@ -35,6 +39,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CreateChildPageDialog } from "./create-child-page-dialog";
@@ -54,6 +59,9 @@ export function PageActionsMenu({
   isDefault,
   onExpandParent,
 }: PageActionsMenuProps) {
+  const t = useTranslations("navigation.pageActions");
+  const tDelete = useTranslations("navigation.deletePage");
+  const tCommon = useTranslations("common");
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [childPageOpen, setChildPageOpen] = useState(false);
@@ -141,7 +149,7 @@ export function PageActionsMenu({
     e.preventDefault();
 
     if (!pendingExposure || !targetPageId) {
-      toast.error("Choose a page to insert the block into");
+      toast.error(t("choosePageToast"));
       return;
     }
 
@@ -161,7 +169,8 @@ export function PageActionsMenu({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover/page:opacity-100 transition-opacity"
+            aria-label={t("triggerAriaLabel")}
+            className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 opacity-0 transition-opacity group-hover/page:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -170,7 +179,7 @@ export function PageActionsMenu({
         <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuItem onClick={() => setChildPageOpen(true)}>
             <FilePlus className="h-4 w-4" />
-            Add Child Page
+            {t("addChildPage")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => handleSetExposure("navigation")}>
@@ -179,32 +188,32 @@ export function PageActionsMenu({
                 exposure === "navigation" ? "h-4 w-4" : "h-4 w-4 opacity-0"
               }
             />
-            Navigation Only
+            {t("navigationOnly")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleSetExposure("block")}>
             <Check
               className={exposure === "block" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
             />
-            Page Block Only
+            {t("pageBlockOnly")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleSetExposure("both")}>
             <Check
               className={exposure === "both" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
             />
-            Navigation and Block
+            {t("navigationAndBlock")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>
             <Pencil className="h-4 w-4" />
-            Rename
+            {t("rename")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setAccessOpen(true)}>
             <Lock className="h-4 w-4" />
-            Access
+            {t("access")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
             <Star className="h-4 w-4" />
-            {isDefault ? "Default Page" : "Set as Default"}
+            {isDefault ? t("defaultPage") : t("setAsDefault")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -212,7 +221,7 @@ export function PageActionsMenu({
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
-            Delete
+            {t("delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -240,43 +249,53 @@ export function PageActionsMenu({
         siteId={siteId}
       />
 
-      <ConfirmDialog
+      <DashboardConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Delete Page"
+        title={tDelete("title")}
         description={
           <>
-            Are you sure you want to delete &ldquo;{page.title}&rdquo;? This
-            will also delete all content and child pages. This action cannot be
-            undone.
-            {isDefault && (
-              <span className="block mt-2 text-amber-600 dark:text-amber-400">
-                This is the default page. A new default will be assigned
-                automatically.
+            {tDelete("description", { title: page.title })}
+            {isDefault ? (
+              <span className="mt-2 block text-amber-600 dark:text-amber-400">
+                {tDelete("defaultWarning")}
               </span>
-            )}
+            ) : null}
           </>
         }
-        confirmLabel="Delete"
+        confirmLabel={tDelete("confirm")}
+        cancelLabel={tCommon("cancel")}
         variant="destructive"
         onConfirm={handleDelete}
       />
 
-      <FormDialog
+      <DashboardFormDialog
         open={exposureDialogOpen}
         onOpenChange={handleExposureDialogOpenChange}
-        title="Choose Block Page"
-        description="Pick which page should receive the page block."
+        title={t("chooseBlockPageTitle")}
+        description={t("chooseBlockPageDescription")}
         onSubmit={handleConfirmExposureTarget}
         isSubmitting={false}
-        submitLabel="Insert Block"
-        submittingLabel="Inserting..."
+        submitDisabled={!targetPageId}
+        submitLabel={t("insertBlock")}
+        submittingLabel={t("inserting")}
+        cancelLabel={tCommon("cancel")}
+        bodyClassName="px-5 pb-3"
+        formClassName="space-y-2"
       >
         <div className="space-y-2">
-          <Label htmlFor="pageExposureTarget">Insert Into Page</Label>
+          <Label
+            htmlFor="pageExposureTarget"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("insertIntoPageLabel")}
+          </Label>
           <Select value={targetPageId} onValueChange={setTargetPageId}>
-            <SelectTrigger id="pageExposureTarget">
-              <SelectValue placeholder="Choose a page" />
+            <SelectTrigger
+              id="pageExposureTarget"
+              className="rounded-[0.95rem] border-sidebar-border/80 bg-background/70"
+            >
+              <SelectValue placeholder={t("choosePagePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {targetOptions.map((candidate) => (
@@ -287,7 +306,7 @@ export function PageActionsMenu({
             </SelectContent>
           </Select>
         </div>
-      </FormDialog>
+      </DashboardFormDialog>
     </>
   );
 }

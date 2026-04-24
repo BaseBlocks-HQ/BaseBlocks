@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  DashboardConfirmDialog,
+  DashboardDialogShell,
+  dashboardDialogPrimaryFieldLabelClassName,
+  dashboardDialogPrimaryInlineInputClassName,
+} from "@/components/dialogs";
 import { useFileUpload } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
@@ -9,13 +15,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@baseblocks/ui/dialog";
+import { DialogFooter } from "@baseblocks/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
 import {
   Eye,
@@ -33,6 +34,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useReducer } from "react";
 import { toast } from "sonner";
 import type {
@@ -139,6 +141,7 @@ function FileUploadState({
   onFilesAccepted: (files: File[]) => void;
   uploadProgress: number;
 }) {
+  const t = useTranslations("elements.file");
   return (
     <DropZone
       onFilesAccepted={onFilesAccepted}
@@ -157,8 +160,8 @@ function FileUploadState({
           <div className="min-w-0">
             <p className="truncate font-medium">
               {isUploading
-                ? `Uploading file... ${uploadProgress}%`
-                : "Upload file"}
+                ? t("uploading", { progress: uploadProgress })
+                : t("uploadFile")}
             </p>
           </div>
         </div>
@@ -168,7 +171,7 @@ function FileUploadState({
           ) : (
             <FileUp className="mr-2 h-4 w-4" />
           )}
-          Upload
+          {t("upload")}
         </span>
       </div>
     </DropZone>
@@ -184,6 +187,7 @@ function FileItemMenu({
   onPreview: () => void;
   onRename: () => void;
 }) {
+  const t = useTranslations("elements.file");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -199,11 +203,11 @@ function FileItemMenu({
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem onClick={onPreview}>
           <Eye className="mr-2 h-4 w-4" />
-          Preview
+          {t("preview")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onRename}>
           <Pencil className="mr-2 h-4 w-4" />
-          Rename
+          {t("rename")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -211,7 +215,7 @@ function FileItemMenu({
           className="text-destructive focus:text-destructive"
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          {t("delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -239,53 +243,66 @@ function FileDialogs({
   renameDialogOpen: boolean;
   renameValue: string;
 }) {
+  const t = useTranslations("elements.file");
+  const tCommon = useTranslations("common");
+
   return (
     <>
-      <Dialog
+      <DashboardDialogShell
         open={renameDialogOpen}
-        onOpenChange={(open) => !open && onCloseRename()}
+        onOpenChange={(next) => {
+          if (!next) onCloseRename();
+        }}
+        title={t("renameTitle")}
+        contentClassName="sm:max-w-md"
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename file</DialogTitle>
-          </DialogHeader>
+        <div>
+          <Label
+            htmlFor="file-rename-filename"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("renameFieldLabel")}
+          </Label>
           <Input
+            id="file-rename-filename"
             value={renameValue}
             onChange={(event) => onRenameValueChange(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && onConfirmRename()}
+            className={dashboardDialogPrimaryInlineInputClassName}
           />
-          <DialogFooter>
-            <Button variant="outline" onClick={onCloseRename}>
-              Cancel
-            </Button>
-            <Button onClick={onConfirmRename} disabled={!renameValue.trim()}>
-              Rename
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+        <DialogFooter className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCloseRename}
+            className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+          >
+            {tCommon("cancel")}
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirmRename}
+            disabled={!renameValue.trim()}
+            className="h-8 rounded-full px-4 text-sm"
+          >
+            {t("renameConfirm")}
+          </Button>
+        </DialogFooter>
+      </DashboardDialogShell>
 
-      <Dialog
+      <DashboardConfirmDialog
         open={deleteDialogOpen}
-        onOpenChange={(open) => !open && onCloseDelete()}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete file?</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete "{filename}"?
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={onCloseDelete}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={onConfirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(next) => {
+          if (!next) onCloseDelete();
+        }}
+        title={t("deleteTitle")}
+        description={t("deleteDescription", { filename })}
+        confirmLabel={t("delete")}
+        cancelLabel={tCommon("cancel")}
+        variant="destructive"
+        onConfirm={onConfirmDelete}
+      />
     </>
   );
 }
@@ -372,6 +389,7 @@ function FileEditor({
   onSaveStatusChange,
   onUpdate,
 }: ElementEditorProps<"file">) {
+  const t = useTranslations("elements.file");
   const { siteId } = useEditorSite();
   const { openFile } = useMediaViewer();
   const { uploadFile, isAnyUploading, totalProgress } = useFileUpload();
@@ -436,7 +454,7 @@ function FileEditor({
     };
 
     await onUpdate(getFileContent(nextFile));
-    toast.success("Uploaded");
+    toast.success(t("toastUploaded"));
     setFileSaveStatus(onSaveStatusChange, "saved");
   };
 
@@ -454,10 +472,10 @@ function FileEditor({
       });
       await onUpdate(getFileContent({ ...resolvedFile, filename: nextName }));
       dispatch({ type: "closeRenameDialog" });
-      toast.success("Renamed");
+      toast.success(t("toastRenamed"));
       setFileSaveStatus(onSaveStatusChange, "saved");
     } catch {
-      toast.error("Failed to rename");
+      toast.error(t("toastRenameFailed"));
       setFileSaveStatus(onSaveStatusChange, "idle");
     }
   };
@@ -470,10 +488,10 @@ function FileEditor({
       await removeDocument({ documentId: resolvedFile._id as Id<"documents"> });
       await onUpdate({});
       dispatch({ type: "closeDeleteDialog" });
-      toast.success("Deleted");
+      toast.success(t("toastDeleted"));
       setFileSaveStatus(onSaveStatusChange, "saved");
     } catch {
-      toast.error("Failed to delete");
+      toast.error(t("toastDeleteFailed"));
       setFileSaveStatus(onSaveStatusChange, "idle");
     }
   };

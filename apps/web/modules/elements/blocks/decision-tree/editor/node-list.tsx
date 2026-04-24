@@ -26,6 +26,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
 import { useRef, useState } from "react";
 import { MiddleTruncate } from "../viewer/middle-truncate";
@@ -55,6 +56,7 @@ export function NodeList({
   onRemoveNode,
   onReorderNodes,
 }: NodeListProps) {
+  const t = useTranslations("elements.decisionTree");
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -278,7 +280,7 @@ export function NodeList({
                               }}
                             >
                               <Plus className="size-4 mr-2" />
-                              Add parent
+                              {t("menuAddParent")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -289,7 +291,7 @@ export function NodeList({
                               }}
                             >
                               <Pencil className="size-4 mr-2" />
-                              Rename
+                              {t("menuRename")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
@@ -300,7 +302,7 @@ export function NodeList({
                               }}
                             >
                               <Trash2 className="size-4 mr-2" />
-                              Delete
+                              {t("menuDelete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -318,11 +320,11 @@ export function NodeList({
               <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
                 <GitFork className="size-5 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground text-sm text-center font-medium">
-                No options yet
+              <p className="text-center text-sm font-medium text-muted-foreground">
+                {t("noOptionsTitle")}
               </p>
-              <p className="text-muted-foreground/70 text-xs text-center">
-                Add options for users to navigate through
+              <p className="text-center text-xs text-muted-foreground/70">
+                {t("noOptionsSubtitle")}
               </p>
             </div>
           )}
@@ -332,7 +334,7 @@ export function NodeList({
               <Input
                 ref={handleAddInputRef}
                 value={newName}
-                placeholder="Option name..."
+                placeholder={t("optionNamePlaceholder")}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(event) =>
                   handleInputKeyDown(event, handleAdd, () => {
@@ -373,7 +375,7 @@ export function NodeList({
               }}
             >
               <Plus className="size-4 mr-2" />
-              Add Option
+              {t("addOption")}
             </Button>
           )}
         </div>

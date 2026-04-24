@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Deployment history lives in the site editor only (not the team dashboard).
+ * Opened from the editor header ⋯ menu → “Deployment history” when the site is published.
+ * Renders as a Sheet from the right; rollback uses `RollbackDialog` (dashboard shell).
+ */
 import type { DeploymentData } from "@/modules/shared/types";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
@@ -104,71 +109,73 @@ export function DeploymentHistoryPanel({
           </SheetHeader>
 
           <ScrollArea className="mt-4 h-[calc(100vh-8rem)]">
-            {deployments === undefined ? (
-              <div className="space-y-3">
-                {loadingItems.map((item) => (
-                  <div
-                    key={item}
-                    className="h-20 animate-pulse rounded-xl bg-sidebar-accent/40"
-                  />
-                ))}
-              </div>
-            ) : deployments.length === 0 ? (
-              <div className="py-12 text-center text-sidebar-foreground/60">
-                <History className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                <p>{t("empty")}</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {deployments.map((deployment) => (
-                  <div
-                    key={deployment.id}
-                    className="space-y-2 rounded-xl border border-sidebar-border/70 bg-background/50 p-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        v{deployment.version}
-                      </span>
-                      {statusBadge(deployment.status)}
+            <div className="px-4 pb-6">
+              {deployments === undefined ? (
+                <div className="space-y-3">
+                  {loadingItems.map((item) => (
+                    <div
+                      key={item}
+                      className="h-20 animate-pulse rounded-xl bg-sidebar-accent/40"
+                    />
+                  ))}
+                </div>
+              ) : deployments.length === 0 ? (
+                <div className="py-12 text-center text-sidebar-foreground/60">
+                  <History className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                  <p>{t("empty")}</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {deployments.map((deployment) => (
+                    <div
+                      key={deployment.id}
+                      className="space-y-2 rounded-xl border border-sidebar-border/70 bg-background/50 p-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          v{deployment.version}
+                        </span>
+                        {statusBadge(deployment.status)}
+                      </div>
+
+                      {deployment.notes ? (
+                        <p className="line-clamp-2 text-sm text-sidebar-foreground/60">
+                          {deployment.notes}
+                        </p>
+                      ) : null}
+
+                      <div className="flex items-center justify-between text-xs text-sidebar-foreground/55">
+                        <span>
+                          {t("pagesLayouts", {
+                            pages: deployment.summary.pagesDeployed,
+                            layouts: deployment.summary.layoutsDeployed,
+                          })}
+                        </span>
+                        <span>{formatDate(deployment.deployedAt)}</span>
+                      </div>
+
+                      {deployment.status !== "active" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-full gap-1.5 rounded-full text-xs"
+                          onClick={() =>
+                            setRollbackTarget({
+                              id: deployment.id,
+                              version: deployment.version,
+                              notes: deployment.notes,
+                            })
+                          }
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          {t("rollbackCta")}
+                        </Button>
+                      ) : null}
                     </div>
-
-                    {deployment.notes ? (
-                      <p className="line-clamp-2 text-sm text-sidebar-foreground/60">
-                        {deployment.notes}
-                      </p>
-                    ) : null}
-
-                    <div className="flex items-center justify-between text-xs text-sidebar-foreground/55">
-                      <span>
-                        {t("pagesLayouts", {
-                          pages: deployment.summary.pagesDeployed,
-                          layouts: deployment.summary.layoutsDeployed,
-                        })}
-                      </span>
-                      <span>{formatDate(deployment.deployedAt)}</span>
-                    </div>
-
-                    {deployment.status !== "active" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-full gap-1.5 rounded-full text-xs"
-                        onClick={() =>
-                          setRollbackTarget({
-                            id: deployment.id,
-                            version: deployment.version,
-                            notes: deployment.notes,
-                          })
-                        }
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                        {t("rollbackCta")}
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </ScrollArea>
         </SheetContent>
       </Sheet>

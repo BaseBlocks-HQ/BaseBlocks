@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@baseblocks/ui/select";
 import { ChevronLeft, ChevronRight, MousePointerClick } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
@@ -70,10 +71,11 @@ function TreeTabsBar({
   tabsMode: "row" | "dropdown";
   trees: DecisionTree[];
 }) {
+  const t = useTranslations("elements.decisionTree");
   return (
     <EditableTabs
       activeId={activeTreeId}
-      addLabel="Add tree"
+      addLabel={t("addTree")}
       endContent={
         !isMobile ? (
           <Select
@@ -86,8 +88,8 @@ function TreeTabsBar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="row">Horizontal Row</SelectItem>
-              <SelectItem value="dropdown">Dropdown</SelectItem>
+              <SelectItem value="row">{t("tabsHorizontal")}</SelectItem>
+              <SelectItem value="dropdown">{t("tabsDropdown")}</SelectItem>
             </SelectContent>
           </Select>
         ) : undefined
@@ -97,8 +99,8 @@ function TreeTabsBar({
       onAdd={onAddTree}
       onRemove={onRemoveTree}
       onRename={onRenameTree}
-      removeLabel="Remove tree"
-      renameLabel="Rename tree"
+      removeLabel={t("removeTree")}
+      renameLabel={t("renameTree")}
       tabsMode={tabsMode}
     />
   );
@@ -113,6 +115,7 @@ function TreeBreadcrumbNav({
   onNavigateToIndex: (index: number) => void;
   path: string[];
 }) {
+  const t = useTranslations("elements.decisionTree");
   return (
     <div className="flex items-center gap-1.5 border-b px-3 py-2 bg-muted/20">
       {path.length > 0 && (
@@ -133,10 +136,10 @@ function TreeBreadcrumbNav({
                 className="cursor-pointer text-xs"
                 onClick={() => onNavigateToIndex(0)}
               >
-                Root
+                {t("root")}
               </BreadcrumbLink>
             ) : (
-              <BreadcrumbPage className="text-xs">Root</BreadcrumbPage>
+              <BreadcrumbPage className="text-xs">{t("root")}</BreadcrumbPage>
             )}
           </BreadcrumbItem>
           {path.length >= 3 ? (
@@ -149,7 +152,7 @@ function TreeBreadcrumbNav({
                   <DropdownMenuTrigger asChild>
                     <Button size="icon" variant="ghost" className="size-6">
                       <BreadcrumbEllipsis className="size-4" />
-                      <span className="sr-only">Show more</span>
+                      <span className="sr-only">{t("breadcrumbShowMore")}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -205,6 +208,7 @@ function TreeBreadcrumbNav({
 }
 
 function EmptyNodeDetailState() {
+  const t = useTranslations("elements.decisionTree");
   return (
     <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
       <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
@@ -212,10 +216,10 @@ function EmptyNodeDetailState() {
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-muted-foreground">
-          Navigate into an option
+          {t("emptyDetailTitle")}
         </p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          Select an option to edit its content
+        <p className="mt-1 text-xs text-muted-foreground/70">
+          {t("emptyDetailSubtitle")}
         </p>
       </div>
     </div>
@@ -286,6 +290,7 @@ export function DecisionTreeEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
+  const t = useTranslations("elements.decisionTree");
   const isMobile = useIsMobile();
   const [trees, setTrees] = useState<DecisionTree[]>(() => content.trees ?? []);
   const [activeTreeId, setActiveTreeId] = useState<string>(
@@ -332,7 +337,7 @@ export function DecisionTreeEditor({
   const addTree = () => {
     const newTree: DecisionTree = {
       id: generateTreeId(),
-      label: `Tree ${trees.length + 1}`,
+      label: t("defaultTreeLabel", { number: trees.length + 1 }),
       nodes: [],
     };
     setActiveTreeId(newTree.id);
@@ -430,7 +435,7 @@ export function DecisionTreeEditor({
   };
 
   const getNodeName = (nodeId: string) =>
-    activeTree.nodes.find((n) => n.id === nodeId)?.name ?? "...";
+    activeTree.nodes.find((n) => n.id === nodeId)?.name ?? t("ellipsisName");
 
   const currentNode = currentParentId
     ? (activeTree.nodes.find((n) => n.id === currentParentId) ?? null)

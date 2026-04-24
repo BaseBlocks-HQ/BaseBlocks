@@ -1,13 +1,16 @@
 "use client";
 
-import { DashboardDialogShell } from "@/components/dialogs";
+import {
+  DashboardDialogShell,
+  dashboardDialogPrimaryFieldLabelClassName,
+} from "@/components/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import { DialogFooter } from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
 import { Textarea } from "@baseblocks/ui/textarea";
-import { Rocket } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { IconRocket } from "nucleo-glass";
 import { useState } from "react";
 
 interface DeployDialogProps {
@@ -47,16 +50,20 @@ export function DeployDialog({
       onOpenChange={onOpenChange}
       title={
         <span className="flex items-center gap-2">
-          <Rocket className="h-5 w-5 shrink-0" />
+          <IconRocket className="h-5 w-5 shrink-0" aria-hidden />
           {t("title")}
         </span>
       }
-      description={t("description")}
       contentClassName="sm:max-w-[32rem]"
     >
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label htmlFor="deploy-notes">{t("notesLabel")}</Label>
+          <Label
+            htmlFor="deploy-notes"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("notesLabel")}
+          </Label>
           <Textarea
             id="deploy-notes"
             value={notes}

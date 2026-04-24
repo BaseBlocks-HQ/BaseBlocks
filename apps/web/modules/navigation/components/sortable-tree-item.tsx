@@ -9,6 +9,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
 import { IconFile, IconHouse } from "nucleo-glass";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import type { FlattenedPage } from "../tree";
 import { INDENT_WIDTH, isValidDrop } from "../tree";
@@ -43,6 +44,7 @@ export function SortableTreeItem({
   onToggleExpand,
   actionsMenu,
 }: SortableTreeItemProps) {
+  const t = useTranslations("navigation.tree");
   const { activeId, projection, dropZone } = useTreeDndContext();
 
   const {
@@ -151,7 +153,7 @@ export function SortableTreeItem({
         {isRestricted && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
         {isDefault && (
           <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">
-            Default
+            {t("defaultBadge")}
           </span>
         )}
       </button>

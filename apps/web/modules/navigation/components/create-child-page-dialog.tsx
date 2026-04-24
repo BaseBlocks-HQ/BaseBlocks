@@ -1,12 +1,22 @@
 "use client";
-import { FormDialog } from "@/components/dialogs/form-dialog";
+
+import {
+  DashboardFormDialog,
+  dashboardDialogFormErrorClassName,
+  dashboardDialogPrimaryFieldLabelClassName,
+  dashboardDialogPrimaryInlineInputClassName,
+  dashboardDialogSecondaryFieldLabelClassName,
+  dashboardDialogSecondaryInlineInputClassName,
+} from "@/components/dialogs";
 import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface CreateChildPageDialogProps {
   siteId: string;
@@ -25,6 +35,9 @@ export function CreateChildPageDialog({
   onOpenChange,
   onSuccess,
 }: CreateChildPageDialogProps) {
+  const t = useTranslations("navigation.createChildPage");
+  const tCommon = useTranslations("common");
+  const tPageDialog = useTranslations("dialogs.createPage");
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,31 +61,30 @@ export function CreateChildPageDialog({
     setError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-    void createPage({
-      siteId: siteId as Id<"sites">,
-      title,
-      slug: slugValue,
-      parentId: parentId as Id<"pages">,
-    })
-      .then(() => {
-        onOpenChange(false);
-        setSlugLockedByUser(false);
-        setTitle("");
-        setSlug("");
-        onSuccess?.();
-      })
-      .catch((err) => {
-        const message =
-          err instanceof Error ? err.message : "Failed to create page";
-        setError(message);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+    try {
+      await createPage({
+        siteId: siteId as Id<"sites">,
+        title,
+        slug: slugValue,
+        parentId: parentId as Id<"pages">,
       });
+      onOpenChange(false);
+      setSlugLockedByUser(false);
+      setTitle("");
+      setSlug("");
+      onSuccess?.();
+      toast.success(tPageDialog("pageCreated"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("createFailed");
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -86,44 +98,63 @@ export function CreateChildPageDialog({
   };
 
   return (
-    <FormDialog
+    <DashboardFormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title="Create Child Page"
-      description={`Add a new page under "${parentTitle}"`}
+      title={t("title")}
+      description={t("description", { parentTitle })}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
-      submitLabel="Create Page"
-      submittingLabel="Creating..."
+      submitDisabled={!title.trim()}
+      submitLabel={t("create")}
+      submittingLabel={t("creating")}
+      cancelLabel={tCommon("cancel")}
+      bodyClassName="px-5 pb-3"
+      formClassName="space-y-2"
     >
-      <div className="space-y-2">
-        <Label htmlFor="childPageTitle">Page Title</Label>
-        <Input
-          id="childPageTitle"
-          placeholder="Getting Started"
-          value={title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          required
-        />
+      <div className="space-y-2.5">
+        <div>
+          <Label
+            htmlFor="childPageTitle"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("titleLabel")}
+          </Label>
+          <Input
+            id="childPageTitle"
+            placeholder={t("titlePlaceholder")}
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            aria-invalid={!!error}
+            className={dashboardDialogPrimaryInlineInputClassName}
+          />
+        </div>
+        <div>
+          <Label
+            htmlFor="childPageSlug"
+            className={dashboardDialogSecondaryFieldLabelClassName}
+          >
+            {t("slugLabel")}
+          </Label>
+          <Input
+            id="childPageSlug"
+            placeholder={t("slugPlaceholder")}
+            value={slugValue}
+            onChange={(e) => {
+              setSlugLockedByUser(true);
+              setSlug(e.target.value.toLowerCase());
+              setError("");
+            }}
+            aria-invalid={!!error}
+            pattern={SLUG_PATTERN}
+            className={dashboardDialogSecondaryInlineInputClassName}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="childPageSlug">URL Slug</Label>
-        <Input
-          id="childPageSlug"
-          placeholder="getting-started"
-          value={slugValue}
-          onChange={(e) => {
-            setSlugLockedByUser(true);
-            setSlug(e.target.value.toLowerCase());
-            setError("");
-          }}
-          required
-          pattern={SLUG_PATTERN}
-        />
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </FormDialog>
+      {error ? (
+        <p className={dashboardDialogFormErrorClassName}>{error}</p>
+      ) : null}
+    </DashboardFormDialog>
   );
 }

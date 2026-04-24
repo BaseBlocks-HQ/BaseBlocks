@@ -21,14 +21,10 @@ import type {
   LayoutType,
   SpacerLayoutHeight,
 } from "@baseblocks/types";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@baseblocks/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
-import { PublicPagePanel } from "./public-page-panel";
+import { SplitViewShell } from "../shared/components/split-view-shell";
+import { PublicPageDetailPanel } from "./public-page-detail-panel";
 import { usePublicPagePanel } from "./public-page-panel-context";
 
 type LayoutDoc = Doc<"layouts">;
@@ -407,42 +403,37 @@ function PublicContentInner({
   );
   const hasSidebar = sidebarLayouts.length > 0;
 
-  // When viewing a page in the side panel, use resizable panels with their own scroll
   if (showPagePanel) {
     return (
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-        <ResizablePanelGroup orientation="horizontal" className="h-full">
-          {/* Main content area */}
-          {!isFullscreen && (
-            <>
-              <ResizablePanel defaultSize={58} minSize={30}>
-                <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
-                  <PublicMainContent
-                    pageTitle={pageData.title}
-                    pageTabs={pageTabs}
-                    activeTabId={activeTabId}
-                    hasTabs={hasTabs}
-                    hasSidebar={hasSidebar}
-                    mainLayouts={mainLayouts}
-                    sidebarLayouts={sidebarLayouts}
-                    onTabChange={setActiveTabId}
-                    contentRef={contentRef}
-                  />
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-          {/* Page panel */}
-          <ResizablePanel defaultSize={isFullscreen ? 100 : 42} minSize={30}>
-            <div className="h-full w-full min-w-0 overflow-hidden border-l">
-              <PublicPagePanel
-                isFullscreen={isFullscreen}
-                onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+        <SplitViewShell
+          className="h-full"
+          detail={
+            <PublicPageDetailPanel
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+            />
+          }
+          detailCollapsedOnMobile
+          detailExpanded={isFullscreen}
+          detailPanelClassName="pr-2 py-2 md:pr-3 md:py-3 lg:pr-4 lg:py-4"
+          detailSurfaceClassName="rounded-xl bg-background"
+          main={
+            <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
+              <PublicMainContent
+                pageTitle={pageData.title}
+                pageTabs={pageTabs}
+                activeTabId={activeTabId}
+                hasTabs={hasTabs}
+                hasSidebar={hasSidebar}
+                mainLayouts={mainLayouts}
+                sidebarLayouts={sidebarLayouts}
+                onTabChange={setActiveTabId}
+                contentRef={contentRef}
               />
             </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          }
+        />
       </div>
     );
   }

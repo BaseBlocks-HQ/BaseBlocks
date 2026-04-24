@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 
@@ -34,6 +35,7 @@ export function FlowchartEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"flowchart">) {
+  const t = useTranslations("elements.flowchart");
   const [diagrams, setDiagrams] = useState<FlowchartDiagram[]>(() =>
     normalizeDiagrams(content),
   );
@@ -82,7 +84,7 @@ export function FlowchartEditor({
     <div className="rounded-lg border bg-card transition-all hover:ring-2 hover:ring-ring/20">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <p className="text-xs font-medium text-muted-foreground">
-          Diagram Tabs
+          {t("diagramTabs")}
         </p>
         <Select
           value={tabsMode}
@@ -94,8 +96,8 @@ export function FlowchartEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="row">Horizontal Row</SelectItem>
-            <SelectItem value="dropdown">Dropdown</SelectItem>
+            <SelectItem value="row">{t("tabsHorizontal")}</SelectItem>
+            <SelectItem value="dropdown">{t("tabsDropdown")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

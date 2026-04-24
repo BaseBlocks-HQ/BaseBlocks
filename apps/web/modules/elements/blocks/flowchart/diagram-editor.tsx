@@ -16,6 +16,7 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { THEMES } from "beautiful-mermaid";
 import { ChevronDown, ChevronRight, Palette, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 
@@ -60,6 +61,7 @@ export function DiagramEditor({
   theme,
   onThemeChange,
 }: DiagramEditorProps) {
+  const t = useTranslations("elements.flowchart");
   const [activeTabId, setActiveTabId] = useState<string>(diagrams[0]?.id ?? "");
   const [codeVisible, setCodeVisible] = useState(true);
   const resolvedActiveTabId = diagrams.some(
@@ -82,7 +84,7 @@ export function DiagramEditor({
   const addDiagram = () => {
     const newDiagram: FlowchartDiagram = {
       id: generateId(),
-      label: `Diagram ${diagrams.length + 1}`,
+      label: t("diagramNumber", { number: diagrams.length + 1 }),
       mermaidCode: "",
     };
     setActiveTabId(newDiagram.id);
@@ -103,10 +105,10 @@ export function DiagramEditor({
   if (diagrams.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
-        <p className="text-sm">No diagrams yet</p>
+        <p className="text-sm">{t("noDiagrams")}</p>
         <Button variant="outline" size="sm" onClick={addDiagram}>
           <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Add Diagram
+          {t("addDiagram")}
         </Button>
       </div>
     );
@@ -118,7 +120,7 @@ export function DiagramEditor({
     <div className="space-y-0">
       <EditableTabs
         activeId={currentDiagram.id}
-        addLabel="Add diagram"
+        addLabel={t("addDiagramTab")}
         items={diagrams.map((diagram) => ({
           id: diagram.id,
           label: diagram.label,
@@ -133,8 +135,8 @@ export function DiagramEditor({
             ),
           );
         }}
-        removeLabel="Remove diagram"
-        renameLabel="Rename diagram"
+        removeLabel={t("removeDiagramTab")}
+        renameLabel={t("renameDiagramTab")}
         tabsMode={tabsMode}
       />
 
@@ -147,8 +149,8 @@ export function DiagramEditor({
             theme={theme}
           />
         ) : (
-          <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
-            Write mermaid code below to see a preview
+          <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
+            {t("previewPlaceholder")}
           </div>
         )}
       </div>
@@ -166,7 +168,7 @@ export function DiagramEditor({
             ) : (
               <ChevronRight className="h-3 w-3" />
             )}
-            Mermaid Code
+            {t("mermaidCode")}
           </button>
 
           {onThemeChange && (
@@ -190,7 +192,7 @@ export function DiagramEditor({
                   ) : (
                     <Palette className="h-3 w-3" />
                   )}
-                  {theme ? themeLabel(theme) : "Theme"}
+                  {theme ? themeLabel(theme) : t("theme")}
                   <ChevronDown className="h-3 w-3 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
@@ -200,7 +202,7 @@ export function DiagramEditor({
                   onValueChange={(v) => onThemeChange(v || undefined)}
                 >
                   <DropdownMenuRadioItem value="">
-                    Auto (light/dark)
+                    {t("themeAuto")}
                   </DropdownMenuRadioItem>
                   <DropdownMenuSeparator />
                   {THEME_ENTRIES.map(([key, colors]) => (

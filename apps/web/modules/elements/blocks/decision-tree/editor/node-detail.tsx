@@ -13,6 +13,7 @@ import { Label } from "@baseblocks/ui/label";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { getNodeDocument } from "../lib";
@@ -28,6 +29,7 @@ export function NodeDetail({
   onUpdateNodeName,
   onUpdateDocument,
 }: NodeDetailProps) {
+  const t = useTranslations("elements.decisionTree");
   const [localName, setLocalName] = useState(node.name);
 
   const debouncedSaveName = useDebounceCallback((name: string) => {
@@ -37,10 +39,12 @@ export function NodeDetail({
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b space-y-3">
-        <h3 className="text-sm font-medium text-primary">Detail Panel</h3>
+        <h3 className="text-sm font-medium text-primary">
+          {t("detailPanelTitle")}
+        </h3>
         <div>
           <Label htmlFor="node-name" className="text-xs text-muted-foreground">
-            Option Name
+            {t("optionNameLabel")}
           </Label>
           <Input
             id="node-name"
@@ -72,6 +76,7 @@ function NodeBlockNoteEditor({
   document: unknown[];
   onChange: (document: unknown[]) => void;
 }) {
+  const t = useTranslations("elements.decisionTree");
   const { resolvedTheme } = useTheme();
   const { siteId } = useEditorSite();
   const { uploadSiteAsset } = useSiteAssetUpload();
@@ -85,7 +90,7 @@ function NodeBlockNoteEditor({
     uploadFile: async (file) => {
       const asset = await uploadSiteAsset(file, siteId as Id<"sites">);
       if (!asset) {
-        throw new Error("Upload failed");
+        throw new Error(t("uploadFailed"));
       }
       return asset.url;
     },

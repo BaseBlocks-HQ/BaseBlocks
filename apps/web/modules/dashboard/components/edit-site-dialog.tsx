@@ -1,6 +1,11 @@
 "use client";
 
-import { DashboardFormDialog } from "@/components/dialogs";
+import {
+  DashboardFormDialog,
+  dashboardDialogFormErrorClassName,
+  dashboardDialogPrimaryFieldLabelClassName,
+  dashboardDialogPrimaryInlineInputClassName,
+} from "@/components/dialogs";
 import { storageClient } from "@/lib/storage/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -21,9 +26,6 @@ interface EditSiteDialogProps {
     logoAssetId?: string;
   };
 }
-
-const siteNameInputClassName =
-  "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent";
 
 export function EditSiteDialog({
   open,
@@ -219,7 +221,7 @@ export function EditSiteDialog({
         <div>
           <Label
             htmlFor="editSiteName"
-            className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+            className={dashboardDialogPrimaryFieldLabelClassName}
           >
             {t("sites.siteName")}
           </Label>
@@ -235,7 +237,7 @@ export function EditSiteDialog({
               }))
             }
             aria-invalid={!!dialogState.error}
-            className={siteNameInputClassName}
+            className={dashboardDialogPrimaryInlineInputClassName}
           />
         </div>
 
@@ -249,9 +251,7 @@ export function EditSiteDialog({
       </div>
 
       {dialogState.error ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {dialogState.error}
-        </p>
+        <p className={dashboardDialogFormErrorClassName}>{dialogState.error}</p>
       ) : null}
     </DashboardFormDialog>
   );

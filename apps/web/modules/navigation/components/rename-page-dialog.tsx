@@ -1,6 +1,13 @@
 "use client";
 
-import { FormDialog } from "@/components/dialogs/form-dialog";
+import {
+  DashboardFormDialog,
+  dashboardDialogFormErrorClassName,
+  dashboardDialogPrimaryFieldLabelClassName,
+  dashboardDialogPrimaryInlineInputClassName,
+  dashboardDialogSecondaryFieldLabelClassName,
+  dashboardDialogSecondaryInlineInputClassName,
+} from "@/components/dialogs";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -8,7 +15,9 @@ import type { PageListItem } from "@baseblocks/types";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface RenamePageDialogProps {
   page: PageListItem;
@@ -21,6 +30,8 @@ export function RenamePageDialog({
   open,
   onOpenChange,
 }: RenamePageDialogProps) {
+  const t = useTranslations("navigation.renamePage");
+  const tCommon = useTranslations("common");
   const [title, setTitle] = useState(page.title);
   const [slug, setSlug] = useState(page.slug);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +54,7 @@ export function RenamePageDialog({
     onOpenChange(newOpen);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
@@ -57,49 +68,68 @@ export function RenamePageDialog({
       onOpenChange(false);
       setIsSubmitting(false);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to rename page";
+      const message = err instanceof Error ? err.message : t("renameFailed");
       setError(message);
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
 
   return (
-    <FormDialog
+    <DashboardFormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title="Rename Page"
-      description="Update the title and URL slug for this page"
+      title={t("title")}
+      description={t("description")}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
-      submitLabel="Save Changes"
-      submittingLabel="Saving..."
+      submitDisabled={!title.trim()}
+      submitLabel={t("save")}
+      submittingLabel={t("saving")}
+      cancelLabel={tCommon("cancel")}
+      bodyClassName="px-5 pb-3"
+      formClassName="space-y-2"
     >
-      <div className="space-y-2">
-        <Label htmlFor="renameTitle">Page Title</Label>
-        <Input
-          id="renameTitle"
-          value={title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          required
-        />
+      <div className="space-y-2.5">
+        <div>
+          <Label
+            htmlFor="renameTitle"
+            className={dashboardDialogPrimaryFieldLabelClassName}
+          >
+            {t("titleLabel")}
+          </Label>
+          <Input
+            id="renameTitle"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            aria-invalid={!!error}
+            className={dashboardDialogPrimaryInlineInputClassName}
+          />
+        </div>
+        <div>
+          <Label
+            htmlFor="renameSlug"
+            className={dashboardDialogSecondaryFieldLabelClassName}
+          >
+            {t("slugLabel")}
+          </Label>
+          <Input
+            id="renameSlug"
+            value={slug}
+            onChange={(e) => {
+              setSlug(e.target.value.toLowerCase());
+              setError("");
+            }}
+            aria-invalid={!!error}
+            pattern={SLUG_PATTERN}
+            className={dashboardDialogSecondaryInlineInputClassName}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="renameSlug">URL Slug</Label>
-        <Input
-          id="renameSlug"
-          value={slug}
-          onChange={(e) => {
-            setSlug(e.target.value.toLowerCase());
-            setError("");
-          }}
-          required
-          pattern={SLUG_PATTERN}
-        />
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-    </FormDialog>
+      {error ? (
+        <p className={dashboardDialogFormErrorClassName}>{error}</p>
+      ) : null}
+    </DashboardFormDialog>
   );
 }

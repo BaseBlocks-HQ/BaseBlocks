@@ -1,11 +1,11 @@
 "use client";
 
 import { useLayouts, usePage } from "@/lib/data";
+import { EditorPageDetailPanel } from "@/modules/editor/components/editor-page-detail-panel";
 import { PageEditor } from "@/modules/editor/components/page-editor";
 import { useEditorUi } from "@/modules/shared/contexts/editor-context";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type { LayoutType } from "@baseblocks/types";
-import { PageBlockEditPanel } from "./page-block-edit-panel";
 
 /** Fetches page + layouts data from Convex and renders PageEditor */
 export function ConnectedPageEditor({
@@ -22,9 +22,7 @@ export function ConnectedPageEditor({
 
   const pageData: PageData | undefined = rawPage
     ? { title: rawPage.title, pageTabs: rawPage.pageTabs ?? [] }
-    : rawPage === null
-      ? undefined
-      : undefined;
+    : undefined;
 
   const layouts: LayoutDoc[] | undefined = rawLayouts?.map((l) => ({
     _id: l._id as string,
@@ -55,7 +53,7 @@ export function ConnectedPageEditor({
 }
 
 /** Fetches page title from Convex and renders the page block edit panel. */
-export function ConnectedPageBlockEditPanel({
+export function ConnectedEditorPageDetailPanel({
   isFullscreen,
   onToggleFullscreen,
 }: {
@@ -66,7 +64,7 @@ export function ConnectedPageBlockEditPanel({
   const page = usePage(editingPage?.pageId);
 
   return (
-    <PageBlockEditPanel
+    <EditorPageDetailPanel
       pageTitle={page?.title}
       renderPageEditor={(pageId) => (
         <ConnectedPageEditor pageId={pageId} nested />
