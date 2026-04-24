@@ -6,6 +6,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent, MouseEvent } from "react";
 
 interface PageTabBarProps {
@@ -72,6 +73,7 @@ export function PageTabBar({
   onFinishRenameTab,
 }: PageTabBarProps) {
   const { clearSelection } = useEditorUi();
+  const t = useTranslations("editor.pageTabBar");
 
   return (
     <div
@@ -128,7 +130,7 @@ export function PageTabBar({
                     <span className="select-none">{tab.label}</span>
                     <div className="hidden group-hover/tab:flex items-center gap-0.5">
                       <TabIconButton
-                        aria-label="Rename tab"
+                        aria-label={t("renameTab")}
                         onClick={(e) => {
                           e.stopPropagation();
                           onStartRenameTab(tab);
@@ -145,7 +147,7 @@ export function PageTabBar({
                       </TabIconButton>
                       {canRemove && (
                         <TabIconButton
-                          aria-label="Remove tab"
+                          aria-label={t("removeTab")}
                           destructive
                           onClick={(e) => {
                             e.stopPropagation();
@@ -176,6 +178,7 @@ export function PageTabBar({
         size="icon"
         className="h-6 w-6 text-muted-foreground hover:text-foreground"
         onClick={onAddTab}
+        aria-label={t("addTab")}
       >
         <Plus className="h-3.5 w-3.5" />
       </Button>

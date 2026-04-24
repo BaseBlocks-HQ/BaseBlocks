@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@baseblocks/ui/sheet";
 import { History, RotateCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RollbackDialog } from "./rollback-dialog";
@@ -29,6 +30,7 @@ export function DeploymentHistoryPanel({
   deployments,
   onRollback,
 }: DeploymentHistoryPanelProps) {
+  const t = useTranslations("editor.deploymentHistory");
   const loadingItems = ["pending-a", "pending-b", "pending-c"];
   const [rollbackTarget, setRollbackTarget] = useState<{
     id: string;
@@ -40,10 +42,10 @@ export function DeploymentHistoryPanel({
     if (!rollbackTarget) return;
     try {
       await onRollback(rollbackTarget.id);
-      toast.success(`Rolled back to v${rollbackTarget.version}`);
+      toast.success(t("toastSuccess", { version: rollbackTarget.version }));
       setRollbackTarget(null);
     } catch (_error) {
-      toast.error("Failed to rollback");
+      toast.error(t("toastFailed"));
     }
   };
 
@@ -55,10 +57,10 @@ export function DeploymentHistoryPanel({
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t("relativeJustNow");
+    if (diffMins < 60) return t("relativeMinutes", { count: diffMins });
+    if (diffHours < 24) return t("relativeHours", { count: diffHours });
+    if (diffDays < 7) return t("relativeDays", { count: diffDays });
     return date.toLocaleDateString();
   };
 
@@ -66,23 +68,23 @@ export function DeploymentHistoryPanel({
     switch (status) {
       case "active":
         return (
-          <Badge className="bg-green-600 hover:bg-green-700 text-xs">
-            Active
+          <Badge className="bg-green-600 text-xs hover:bg-green-700">
+            {t("statusActive")}
           </Badge>
         );
       case "superseded":
         return (
           <Badge variant="secondary" className="text-xs">
-            Superseded
+            {t("statusSuperseded")}
           </Badge>
         );
       case "rolled-back":
         return (
           <Badge
             variant="outline"
-            className="text-xs text-amber-600 border-amber-300"
+            className="border-amber-300 text-xs text-amber-600"
           >
-            Rolled back
+            {t("statusRolledBack")}
           </Badge>
         );
       default:
@@ -93,62 +95,64 @@ export function DeploymentHistoryPanel({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-md">
+        <SheetContent className="w-full border-l border-sidebar-border bg-sidebar text-sidebar-foreground sm:max-w-md">
           <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
+            <SheetTitle className="flex items-center gap-2 text-base font-semibold">
               <History className="h-5 w-5" />
-              Deployment History
+              {t("title")}
             </SheetTitle>
           </SheetHeader>
 
-          <ScrollArea className="h-[calc(100vh-8rem)] mt-4">
+          <ScrollArea className="mt-4 h-[calc(100vh-8rem)]">
             {deployments === undefined ? (
               <div className="space-y-3">
                 {loadingItems.map((item) => (
                   <div
                     key={item}
-                    className="h-20 rounded-lg bg-muted animate-pulse"
+                    className="h-20 animate-pulse rounded-xl bg-sidebar-accent/40"
                   />
                 ))}
               </div>
             ) : deployments.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No deployments yet</p>
+              <div className="py-12 text-center text-sidebar-foreground/60">
+                <History className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                <p>{t("empty")}</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {deployments.map((deployment) => (
                   <div
                     key={deployment.id}
-                    className="rounded-lg border p-3 space-y-2"
+                    className="space-y-2 rounded-xl border border-sidebar-border/70 bg-background/50 p-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">
+                      <span className="text-sm font-medium">
                         v{deployment.version}
                       </span>
                       {statusBadge(deployment.status)}
                     </div>
 
-                    {deployment.notes && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                    {deployment.notes ? (
+                      <p className="line-clamp-2 text-sm text-sidebar-foreground/60">
                         {deployment.notes}
                       </p>
-                    )}
+                    ) : null}
 
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between text-xs text-sidebar-foreground/55">
                       <span>
-                        {deployment.summary.pagesDeployed} pages,{" "}
-                        {deployment.summary.layoutsDeployed} layouts
+                        {t("pagesLayouts", {
+                          pages: deployment.summary.pagesDeployed,
+                          layouts: deployment.summary.layoutsDeployed,
+                        })}
                       </span>
                       <span>{formatDate(deployment.deployedAt)}</span>
                     </div>
 
-                    {deployment.status !== "active" && (
+                    {deployment.status !== "active" ? (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full gap-1.5 text-xs"
+                        className="h-8 w-full gap-1.5 rounded-full text-xs"
                         onClick={() =>
                           setRollbackTarget({
                             id: deployment.id,
@@ -158,9 +162,9 @@ export function DeploymentHistoryPanel({
                         }
                       >
                         <RotateCcw className="h-3 w-3" />
-                        Rollback to this version
+                        {t("rollbackCta")}
                       </Button>
-                    )}
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -169,17 +173,17 @@ export function DeploymentHistoryPanel({
         </SheetContent>
       </Sheet>
 
-      {rollbackTarget && (
+      {rollbackTarget ? (
         <RollbackDialog
           open={!!rollbackTarget}
-          onOpenChange={(open) => {
-            if (!open) setRollbackTarget(null);
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setRollbackTarget(null);
           }}
           targetVersion={rollbackTarget.version}
           targetNotes={rollbackTarget.notes}
           onRollback={handleRollback}
         />
-      )}
+      ) : null}
     </>
   );
 }

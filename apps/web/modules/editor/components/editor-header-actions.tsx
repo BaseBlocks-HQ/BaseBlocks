@@ -29,6 +29,7 @@ import {
   MoreHorizontal,
   Share2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { IconRocket, IconWindow2 } from "nucleo-glass";
 
 function openSite(teamSlug: string, siteSlug: string) {
@@ -54,7 +55,6 @@ interface EditorHeaderRightSectionProps {
   onOpenShare: () => void;
   onOpenDeploy: () => void;
   onOpenHistory: () => void;
-  t: (key: string) => string;
 }
 
 export function EditorHeaderLeftSection({
@@ -64,12 +64,13 @@ export function EditorHeaderLeftSection({
   siteLogoUrl,
   teamSlug,
 }: EditorHeaderLeftSectionProps) {
+  const t = useTranslations("editor.header");
   return (
     <div className="flex min-w-0 items-center gap-2">
       <Link href={getTeamDashboardPath(teamSlug)}>
         <Button variant="ghost" size="icon-sm">
           <ArrowLeft className="h-4 w-4" />
-          <span className="sr-only">Back to dashboard</span>
+          <span className="sr-only">{t("backToDashboard")}</span>
         </Button>
       </Link>
       <EditorSiteSwitcher
@@ -81,7 +82,7 @@ export function EditorHeaderLeftSection({
       {!canEdit && (
         <Badge variant="secondary" className="gap-1">
           <Eye className="h-3 w-3" />
-          View Only
+          {t("viewOnlyBadge")}
         </Badge>
       )}
     </div>
@@ -99,7 +100,6 @@ export function EditorHeaderRightSection({
   onOpenShare,
   onOpenDeploy,
   onOpenHistory,
-  t,
 }: EditorHeaderRightSectionProps) {
   return (
     <div className="flex items-center gap-1">
@@ -114,7 +114,6 @@ export function EditorHeaderRightSection({
             sitePublished={sitePublished}
             teamSlug={teamSlug}
             siteSlug={siteSlug}
-            t={t}
           />
           <Separator orientation="vertical" className="mx-1.5 h-5" />
           <DeployCta
@@ -123,7 +122,6 @@ export function EditorHeaderRightSection({
             onDeploy={onOpenDeploy}
             onPublish={onPublish}
             onUnpublish={onUnpublish}
-            t={t}
           />
         </>
       ) : (
@@ -131,7 +129,6 @@ export function EditorHeaderRightSection({
           sitePublished={sitePublished}
           teamSlug={teamSlug}
           siteSlug={siteSlug}
-          t={t}
         />
       )}
     </div>
@@ -142,13 +139,13 @@ function ViewSiteButton({
   sitePublished,
   teamSlug,
   siteSlug,
-  t,
 }: {
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
-  t: (key: string) => string;
 }) {
+  const t = useTranslations("editor");
+  const tHeader = useTranslations("editor.header");
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -156,20 +153,22 @@ function ViewSiteButton({
           <Button
             variant="ghost"
             size="sm"
-            aria-label={t("editor.viewSite")}
+            aria-label={t("viewSite")}
             className="gap-1.5 max-sm:size-8 max-sm:px-0"
             disabled={!sitePublished}
             onClick={() => openSite(teamSlug, siteSlug)}
           >
             <IconWindow2 className="h-4 w-4 shrink-0" />
             <span className="max-sm:sr-only sm:not-sr-only">
-              {t("editor.viewSite")}
+              {t("viewSite")}
             </span>
           </Button>
         </span>
       </TooltipTrigger>
       <TooltipContent>
-        {sitePublished ? "Open published site" : "Publish your site first"}
+        {sitePublished
+          ? tHeader("viewPublishedTooltipWhenPublished")
+          : tHeader("viewPublishedTooltipWhenDraft")}
       </TooltipContent>
     </Tooltip>
   );
@@ -184,6 +183,7 @@ function EditorHeaderMenuButton({
   onOpenShare: () => void;
   onOpenHistory: () => void;
 }) {
+  const t = useTranslations("editor.header");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -194,14 +194,14 @@ function EditorHeaderMenuButton({
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onOpenShare}>
           <Share2 />
-          Share
+          {t("share")}
         </DropdownMenuItem>
-        {sitePublished && (
+        {sitePublished ? (
           <DropdownMenuItem onClick={onOpenHistory}>
             <History />
-            Deployment History
+            {t("deploymentHistory")}
           </DropdownMenuItem>
-        )}
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -213,15 +213,15 @@ function DeployCta({
   onDeploy,
   onPublish,
   onUnpublish,
-  t,
 }: {
   hasUndeployedChanges: boolean;
   sitePublished: boolean;
   onDeploy: () => void;
   onPublish: () => void;
   onUnpublish?: () => void;
-  t: (key: string) => string;
 }) {
+  const t = useTranslations("editor");
+  const tHeader = useTranslations("editor.header");
   if (hasUndeployedChanges) {
     return (
       <Button
@@ -230,8 +230,8 @@ function DeployCta({
         className="gap-1.5 bg-amber-600 hover:bg-amber-700"
       >
         <IconRocket className="h-4 w-4 shrink-0" />
-        <span className="hidden md:inline">Deploy Changes</span>
-        <span className="md:hidden">Deploy</span>
+        <span className="hidden md:inline">{tHeader("deployChanges")}</span>
+        <span className="md:hidden">{tHeader("deployShort")}</span>
       </Button>
     );
   }
@@ -242,17 +242,17 @@ function DeployCta({
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1.5">
             <Check className="h-3.5 w-3.5 text-emerald-500" />
-            Published
+            {tHeader("publishedStatus")}
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {onUnpublish && (
+          {onUnpublish ? (
             <DropdownMenuItem onClick={onUnpublish} variant="destructive">
               <EyeOff />
-              {t("editor.unpublish")}
+              {t("unpublish")}
             </DropdownMenuItem>
-          )}
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -261,7 +261,7 @@ function DeployCta({
   return (
     <Button size="sm" onClick={onPublish}>
       <Globe className="h-4 w-4" />
-      {t("editor.publish")}
+      {t("publish")}
     </Button>
   );
 }

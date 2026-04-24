@@ -15,7 +15,9 @@ import type {
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { editorLayoutStackClassName } from "./layouts/editor-spacing";
 import { SortableLayout } from "./layouts/sortable-layout";
 import { PageTabBar } from "./page-tab-bar";
 
@@ -39,6 +41,8 @@ function EmptyLayoutsState({
   hasTabs: boolean;
   onAddLayout: (layoutType: "single" | "columns") => void;
 }) {
+  const t = useTranslations("editor.pageEditor");
+  const tLayouts = useTranslations("editor.layouts");
   return (
     <div
       className="text-center py-12 border border-dashed rounded-lg bg-muted/20"
@@ -47,7 +51,7 @@ function EmptyLayoutsState({
       onKeyDown={(e) => e.stopPropagation()}
     >
       <p className="text-muted-foreground text-sm mb-3">
-        {hasTabs ? "Add a layout to this tab" : "Add a layout to get started"}
+        {hasTabs ? t("emptyWithTabs") : t("emptyNoTabs")}
       </p>
       <div className="flex justify-center gap-2">
         <Button
@@ -56,7 +60,7 @@ function EmptyLayoutsState({
           onClick={() => onAddLayout("single")}
         >
           <Plus className="h-3 w-3 mr-1.5" />
-          Single
+          {tLayouts("single")}
         </Button>
         <Button
           variant="outline"
@@ -64,7 +68,7 @@ function EmptyLayoutsState({
           onClick={() => onAddLayout("columns")}
         >
           <Plus className="h-3 w-3 mr-1.5" />
-          Columns
+          {tLayouts("columns")}
         </Button>
       </div>
     </div>
@@ -95,7 +99,7 @@ function LayoutsContent({
   if (hasSidebar) {
     return (
       <div className="flex gap-8">
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className={cn("min-w-0 flex-1", editorLayoutStackClassName)}>
           {mainLayouts.length > 0 ? (
             <DndProvider
               items={mainLayoutIds}
@@ -107,7 +111,7 @@ function LayoutsContent({
             emptyState
           )}
         </div>
-        <aside className="w-72 flex-shrink-0 space-y-6">
+        <aside className={cn("w-72 flex-shrink-0", editorLayoutStackClassName)}>
           <DndProvider
             items={sidebarLayoutIds}
             onDragEnd={handleSidebarLayoutDragEnd}
@@ -120,7 +124,7 @@ function LayoutsContent({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={editorLayoutStackClassName}>
       {layouts.length > 0 ? (
         <DndProvider items={mainLayoutIds} onDragEnd={handleMainLayoutDragEnd}>
           {layouts}
@@ -148,6 +152,7 @@ export function PageEditor({
   onSelectionChange,
   nested,
 }: PageEditorProps) {
+  const tPage = useTranslations("editor.pageEditor");
   const {
     selection,
     selectLayout,
@@ -304,7 +309,7 @@ export function PageEditor({
   }
 
   if (!pageData) {
-    return <p className="text-muted-foreground">Page not found</p>;
+    return <p className="text-muted-foreground">{tPage("pageNotFound")}</p>;
   }
 
   return (

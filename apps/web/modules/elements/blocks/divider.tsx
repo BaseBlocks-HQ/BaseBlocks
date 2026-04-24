@@ -10,7 +10,7 @@ import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 function DividerEditor(_props: ElementEditorProps<"divider">) {
   return (
-    <div className="relative py-4 group">
+    <div className="group relative py-2">
       <hr className="border-border transition-colors group-hover:border-muted-foreground/50" />
     </div>
   );

@@ -13,7 +13,8 @@ import type {
 } from "@baseblocks/types/elements";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { PanelTop } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EditorFlyoutSurface } from "../editor-flyout-surface";
 import { CategoryMenu } from "./category-menu";
 import { ElementCard } from "./element-card";
@@ -47,6 +48,7 @@ export function ElementPicker({
   onAddBlock,
   onEnableTabs,
 }: ElementPickerProps) {
+  const tPicker = useTranslations("editor.picker");
   const [activeCategory, setActiveCategory] = useState<ElementCategory | null>(
     null,
   );
@@ -58,16 +60,18 @@ export function ElementPicker({
     ? getElementsByCategory(activeCategory)
     : [];
 
-  // Get category title
-  const CATEGORY_TITLES: Record<ElementCategory, string> = {
-    site: "Site Settings",
-    customization: "Customization",
-    navigation: "Navigation",
-    layouts: "Layouts",
-    blocks: "Blocks",
-  };
+  const categoryTitles = useMemo(
+    (): Record<ElementCategory, string> => ({
+      site: tPicker("categories.site"),
+      customization: tPicker("categories.customization"),
+      navigation: tPicker("categories.navigation"),
+      layouts: tPicker("categories.layouts"),
+      blocks: tPicker("categories.blocks"),
+    }),
+    [tPicker],
+  );
   const categoryTitle = activeCategory
-    ? (CATEGORY_TITLES[activeCategory] ?? "")
+    ? (categoryTitles[activeCategory] ?? "")
     : "";
 
   const handleMouseEnter = (category: ElementCategory) => {

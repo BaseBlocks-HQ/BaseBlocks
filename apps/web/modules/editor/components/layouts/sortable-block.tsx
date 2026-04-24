@@ -20,11 +20,14 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, GripVertical, Settings2, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createElement, useState } from "react";
 import { toast } from "sonner";
-
-// Same zone height as layout-renderer — keeps vertical rhythm consistent.
-const CONTROL_ZONE = "pt-6";
+import { editorFlyoutSurfaceClassName } from "../editor-flyout-surface";
+import {
+  editorControlRowClassName,
+  editorControlZoneStyle,
+} from "./editor-spacing";
 
 interface SortableBlockProps {
   id: string;
@@ -51,6 +54,7 @@ export function SortableBlock({
   onUpdate,
   onRemove,
 }: SortableBlockProps) {
+  const tToast = useTranslations("editor.toasts");
   const [configOpen, setConfigOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const editorSite = useEditorSiteOptional();
@@ -67,6 +71,7 @@ export function SortableBlock({
   } = useSortable({ id });
 
   const style = {
+    ...editorControlZoneStyle,
     transform: CSS.Transform.toString(transform),
     transition,
   };
@@ -93,7 +98,7 @@ export function SortableBlock({
       ref={setNodeRef}
       style={style}
       role="presentation"
-      className={cn("relative min-w-0", CONTROL_ZONE)}
+      className="relative min-w-0"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={(e) => {
@@ -102,9 +107,9 @@ export function SortableBlock({
         onSelect();
       }}
     >
-      {/* Controls live in the top padding zone — content never shifts */}
+      {/* Controls live in the reserved top zone — content never shifts. */}
       {showControls && (
-        <div className="absolute top-0.5 left-0 flex items-center gap-0.5">
+        <div className={editorControlRowClassName}>
           <button
             ref={setActivatorNodeRef}
             type="button"
@@ -139,7 +144,10 @@ export function SortableBlock({
                   <PopoverContent
                     side="bottom"
                     align="start"
-                    className="w-64"
+                    className={cn(
+                      editorFlyoutSurfaceClassName,
+                      "max-h-[min(70vh,32rem)] overflow-y-auto p-3",
+                    )}
                     onClick={(e) => e.stopPropagation()}
                     onPointerDownOutside={(e) => {
                       const target = e.target as HTMLElement;
@@ -167,7 +175,7 @@ export function SortableBlock({
                       type: block.type,
                       content: block.content,
                     });
-                    toast.success("Block copied");
+                    toast.success(tToast("blockCopied"));
                   }}
                 >
                   <Copy className="h-3.5 w-3.5" />

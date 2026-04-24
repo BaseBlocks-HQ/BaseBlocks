@@ -1,15 +1,10 @@
 "use client";
 
+import { DashboardDialogShell } from "@/components/dialogs";
 import { Button } from "@baseblocks/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@baseblocks/ui/dialog";
+import { DialogFooter } from "@baseblocks/ui/dialog";
 import { RotateCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface RollbackDialogProps {
@@ -27,6 +22,8 @@ export function RollbackDialog({
   targetNotes,
   onRollback,
 }: RollbackDialogProps) {
+  const t = useTranslations("editor.rollback");
+  const tCommon = useTranslations("common");
   const [isRollingBack, setIsRollingBack] = useState(false);
 
   const handleRollback = async () => {
@@ -40,52 +37,59 @@ export function RollbackDialog({
     }
   };
 
+  const description = (
+    <>
+      <span>{t("description", { version: targetVersion })}</span>
+      {targetNotes ? (
+        <span className="mt-1 block text-sidebar-foreground/80">
+          {t("notesQuote", { notes: targetNotes })}
+        </span>
+      ) : null}
+    </>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <RotateCcw className="h-5 w-5" />
-            Rollback to v{targetVersion}
-          </DialogTitle>
-          <DialogDescription>
-            This will restore the live site to the state it was in at version{" "}
-            {targetVersion}.
-            {targetNotes && (
-              <span className="block mt-1 text-foreground/70">
-                &ldquo;{targetNotes}&rdquo;
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+    <DashboardDialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title={
+        <span className="flex items-center gap-2">
+          <RotateCcw className="h-5 w-5 shrink-0" />
+          {t("title", { version: targetVersion })}
+        </span>
+      }
+      description={description}
+      contentClassName="sm:max-w-[32rem]"
+    >
+      <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-3 text-sm dark:border-amber-800/80 dark:bg-amber-950/40">
+        <p className="font-medium text-amber-900 dark:text-amber-100">
+          {t("warningTitle")}
+        </p>
+        <p className="mt-1 text-amber-800 dark:text-amber-200/90">
+          {t("warningBody")}
+        </p>
+      </div>
 
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 text-sm">
-          <p className="font-medium text-amber-800 dark:text-amber-200">
-            This will change what visitors see on the live site.
-          </p>
-          <p className="mt-1 text-amber-700 dark:text-amber-300">
-            Your draft content will not be affected &mdash; only the published
-            version will change.
-          </p>
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isRollingBack}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleRollback}
-            disabled={isRollingBack}
-          >
-            {isRollingBack ? "Rolling back..." : "Rollback"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <DialogFooter className="pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isRollingBack}
+          className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+        >
+          {tCommon("cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={handleRollback}
+          disabled={isRollingBack}
+          className="h-8 rounded-full px-4 text-sm"
+        >
+          {isRollingBack ? t("rollingBack") : t("rollback")}
+        </Button>
+      </DialogFooter>
+    </DashboardDialogShell>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormDialog } from "@/components/dialogs/form-dialog";
+import { DashboardFormDialog } from "@/components/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
@@ -10,6 +10,7 @@ import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +20,9 @@ interface CreatePageDialogProps {
 }
 
 export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
+  const t = useTranslations("dialogs.createPage");
+  const tCommon = useTranslations("common");
+
   const [dialogState, setDialogState] = useState({
     open: false,
     title: "",
@@ -53,20 +57,17 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   };
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setSlugLockedByUser(false);
+    }
     setDialogState((current) => ({
       ...current,
       open: newOpen,
+      error: newOpen ? current.error : "",
     }));
-    if (!newOpen) {
-      setSlugLockedByUser(false);
-      setDialogState((current) => ({
-        ...current,
-        error: "",
-      }));
-    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDialogState((current) => ({
       ...current,
@@ -90,10 +91,9 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         isSubmitting: false,
         error: "",
       });
-      toast.success("Page created");
+      toast.success(t("pageCreated"));
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create page";
+      const message = err instanceof Error ? err.message : t("createFailed");
       haptic.trigger("error");
       setDialogState((current) => ({
         ...current,
@@ -105,11 +105,11 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   };
 
   return (
-    <FormDialog
+    <DashboardFormDialog
       open={dialogState.open}
       onOpenChange={handleOpenChange}
-      title="Create New Page"
-      description="Add a new page to your site"
+      title={t("title")}
+      description={t("description")}
       trigger={
         <Button variant="ghost" size="icon" className="h-6 w-6">
           <Plus className="h-4 w-4" />
@@ -117,14 +117,16 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       }
       onSubmit={handleSubmit}
       isSubmitting={dialogState.isSubmitting}
-      submitLabel="Create Page"
-      submittingLabel="Creating..."
+      submitDisabled={!dialogState.title.trim()}
+      submitLabel={t("create")}
+      submittingLabel={t("creating")}
+      cancelLabel={tCommon("cancel")}
     >
       <div className="space-y-2">
-        <Label htmlFor="pageTitle">Page Title</Label>
+        <Label htmlFor="pageTitle">{t("titleLabel")}</Label>
         <Input
           id="pageTitle"
-          placeholder="Getting Started"
+          placeholder={t("titlePlaceholder")}
           value={dialogState.title}
           onChange={(e) => handleTitleChange(e.target.value)}
           required
@@ -132,10 +134,10 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="pageSlug">URL Slug</Label>
+        <Label htmlFor="pageSlug">{t("slugLabel")}</Label>
         <Input
           id="pageSlug"
-          placeholder="getting-started"
+          placeholder={t("slugPlaceholder")}
           value={slugValue}
           onChange={(e) => {
             setSlugLockedByUser(true);
@@ -150,9 +152,9 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         />
       </div>
 
-      {dialogState.error && (
+      {dialogState.error ? (
         <p className="text-sm text-destructive">{dialogState.error}</p>
-      )}
-    </FormDialog>
+      ) : null}
+    </DashboardFormDialog>
   );
 }

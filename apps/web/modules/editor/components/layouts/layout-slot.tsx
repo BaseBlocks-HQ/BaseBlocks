@@ -11,6 +11,12 @@ import type {
 } from "@baseblocks/types";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ClipboardPaste, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  editorBlockStackClassName,
+  editorSlotActionButtonClassName,
+  editorSlotActionRowClassName,
+} from "./editor-spacing";
 import { SortableBlock } from "./sortable-block";
 
 interface LayoutSlotProps {
@@ -42,6 +48,7 @@ export function LayoutSlot({
   onRemoveBlock,
   onMoveBlock,
 }: LayoutSlotProps) {
+  const t = useTranslations("editor.layoutSlot");
   const isEmpty = slot.blocks.length === 0;
   const blockIds = slot.blocks.map((b) => b.id);
   const editorSite = useEditorSiteOptional();
@@ -95,7 +102,7 @@ export function LayoutSlot({
             }}
           >
             <Plus className="h-3 w-3" />
-            Add block
+            {t("addBlock")}
           </button>
           {canPasteBlock && (
             <button
@@ -107,12 +114,12 @@ export function LayoutSlot({
               }}
             >
               <ClipboardPaste className="h-3 w-3" />
-              Paste block
+              {t("pasteBlock")}
             </button>
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-2 p-1">
+        <div className={editorBlockStackClassName}>
           <DndProvider items={blockIds} onDragEnd={handleBlockDragEnd}>
             {slot.blocks.map((block) => (
               <SortableBlock
@@ -129,15 +136,10 @@ export function LayoutSlot({
             ))}
           </DndProvider>
 
-          <div className="mt-1 flex gap-1">
+          <div className={editorSlotActionRowClassName}>
             <button
               type="button"
-              className={cn(
-                "flex-1 py-1 text-xs text-muted-foreground",
-                "flex items-center justify-center gap-1",
-                "rounded border border-dashed border-transparent",
-                "hover:border-muted-foreground/30 hover:text-foreground transition-colors",
-              )}
+              className={editorSlotActionButtonClassName}
               onClick={(e) => {
                 e.stopPropagation();
                 onAddBlock();
@@ -148,19 +150,14 @@ export function LayoutSlot({
             {canPasteBlock && (
               <button
                 type="button"
-                className={cn(
-                  "flex-1 py-1 text-xs text-muted-foreground",
-                  "flex items-center justify-center gap-1",
-                  "rounded border border-dashed border-transparent",
-                  "hover:border-muted-foreground/30 hover:text-foreground transition-colors",
-                )}
+                className={editorSlotActionButtonClassName}
                 onClick={(e) => {
                   e.stopPropagation();
                   onPasteBlock?.();
                 }}
               >
                 <ClipboardPaste className="h-3 w-3" />
-                Paste
+                {t("paste")}
               </button>
             )}
           </div>

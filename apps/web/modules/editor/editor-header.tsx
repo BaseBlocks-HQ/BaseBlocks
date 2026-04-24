@@ -4,7 +4,6 @@ import { PublicHeaderBlur } from "@/components/public/public-header-blur";
 import { cn } from "@/lib/utils";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DeployDialog } from "./components/deploy-dialog";
 import { DeploymentHistoryPanel } from "./components/deployment-history-panel";
@@ -38,7 +37,6 @@ export function EditorHeader({
   onPublish,
   onUnpublish,
 }: EditorHeaderProps) {
-  const t = useTranslations();
   const { canEdit, hasUndeployedChanges } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [deployDialogOpen, setDeployDialogOpen] = useState(false);
@@ -90,7 +88,6 @@ export function EditorHeader({
                 onOpenShare={() => setShareDialogOpen(true)}
                 onOpenDeploy={() => setDeployDialogOpen(true)}
                 onOpenHistory={() => setHistoryOpen(true)}
-                t={t}
               />
             </div>
           </div>

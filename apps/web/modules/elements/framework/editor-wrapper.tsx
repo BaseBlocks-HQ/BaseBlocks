@@ -3,6 +3,7 @@
 import { getElementEditor } from "@/modules/elements/framework/registry";
 import type { SaveStatus } from "@baseblocks/types";
 import type { AnyContent, ElementType } from "@baseblocks/types/elements";
+import { useTranslations } from "next-intl";
 import { createElement } from "react";
 
 interface ElementEditorWrapperProps {
@@ -28,12 +29,13 @@ export function ElementEditorWrapper({
   onRemove,
   onSaveStatusChange,
 }: ElementEditorWrapperProps) {
+  const t = useTranslations("editor.elementWrapper");
   const Editor = getElementEditor(type);
 
   if (!Editor) {
     return (
-      <div className="p-4 border rounded text-muted-foreground">
-        Element type: {type} (no editor available)
+      <div className="rounded-xl border border-dashed border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
+        {t("noEditor", { type })}
       </div>
     );
   }

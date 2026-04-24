@@ -151,6 +151,127 @@
       "grid": "Grille",
       "vertical": "Barre latérale",
       "spacer": "Espacement"
+    },
+    "header": {
+      "backToDashboard": "Retour au tableau de bord",
+      "viewOnlyBadge": "Lecture seule",
+      "viewPublishedTooltipWhenPublished": "Ouvrir le site publie",
+      "viewPublishedTooltipWhenDraft": "Publiez d'abord votre site",
+      "share": "Partager",
+      "deploymentHistory": "Historique des deploiements",
+      "deployChanges": "Deployer les modifications",
+      "deployShort": "Deployer",
+      "publishedStatus": "Publie"
+    },
+    "picker": {
+      "categories": {
+        "site": "Parametres du site",
+        "customization": "Personnalisation",
+        "navigation": "Navigation",
+        "layouts": "Mises en page",
+        "blocks": "Blocs"
+      },
+      "soon": "Bientot"
+    },
+    "pageEditor": {
+      "emptyWithTabs": "Ajoutez une mise en page a cet onglet",
+      "emptyNoTabs": "Ajoutez une mise en page pour commencer",
+      "pageNotFound": "Page introuvable"
+    },
+    "pageTabBar": {
+      "renameTab": "Renommer l'onglet",
+      "removeTab": "Supprimer l'onglet",
+      "addTab": "Ajouter un onglet"
+    },
+    "pagePanel": {
+      "renameFailed": "Echec du renommage de la page",
+      "titlePlaceholder": "Titre de la page…",
+      "exitFullscreen": "Quitter le plein ecran",
+      "fullscreen": "Plein ecran",
+      "closeEditor": "Fermer l'editeur de page"
+    },
+    "layoutSlot": {
+      "addBlock": "Ajouter un bloc",
+      "pasteBlock": "Coller le bloc",
+      "paste": "Coller"
+    },
+    "toasts": {
+      "blockCopied": "Bloc copie"
+    },
+    "deploy": {
+      "title": "Deployer les modifications",
+      "description": "Cela publiera toutes les modifications brouillon sur le site en ligne. Les pages, mises en page, blocs, navigation et parametres du site seront mis a jour.",
+      "notesLabel": "Notes (facultatif)",
+      "notesPlaceholder": "Decrivez ce qui a change…",
+      "deployNow": "Deployer maintenant",
+      "deploying": "Deploiement…"
+    },
+    "share": {
+      "title": "Parametres de partage",
+      "description": "Controlez qui peut voir votre site publie.",
+      "visibilityPublicLabel": "Public",
+      "visibilityPublicDescription": "Tout le monde peut voir ce site",
+      "visibilityLinkOnlyLabel": "Non reference",
+      "visibilityLinkOnlyDescription": "Seules les personnes avec le lien peuvent voir",
+      "visibilityPasswordLabel": "Protege par mot de passe",
+      "visibilityPasswordDescription": "Un code d'acces est requis pour voir",
+      "visibilityPrivateLabel": "Prive",
+      "visibilityPrivateDescription": "Seuls les membres de l'equipe peuvent voir",
+      "accessCodeLabel": "Code d'acces",
+      "codePlaceholder": "------",
+      "autoRotateLabel": "Rotation automatique toutes les",
+      "sessionLastsLabel": "La session dure",
+      "rotation1h": "1 heure",
+      "rotation6h": "6 heures",
+      "rotation24h": "24 heures",
+      "rotation7d": "7 jours",
+      "session1d": "1 jour",
+      "session7d": "7 jours",
+      "session30d": "30 jours",
+      "expired": "Expire",
+      "expiresInMinutes": "Expire dans {minutes} minutes",
+      "expiresInHoursMinutes": "Expire dans {hours}h {minutes}m",
+      "expiresInDays": "{count, plural, one {Expire dans # jour} other {Expire dans # jours}}",
+      "toastVisibilityUpdated": "Visibilite mise a jour",
+      "toastVisibilityFailed": "Echec de la mise a jour de la visibilite",
+      "toastRotationUpdated": "Intervalle de rotation mis a jour",
+      "toastRotationFailed": "Echec de la mise a jour de l'intervalle",
+      "toastSessionUpdated": "Duree de session mise a jour",
+      "toastSessionFailed": "Echec de la mise a jour de la duree",
+      "toastCodeRegenerated": "Code d'acces regenere",
+      "toastCodeRegenerateFailed": "Echec de la regeneration du code",
+      "toastLinkCopied": "Lien copie dans le presse-papiers",
+      "toastCodeCopied": "Code copie dans le presse-papiers",
+      "copyLink": "Copier le lien",
+      "copied": "Copie !",
+      "viewSite": "Voir le site"
+    },
+    "rollback": {
+      "title": "Revenir a la v{version}",
+      "description": "Cela restaure le site en ligne a l'etat de la version {version}.",
+      "notesQuote": "« {notes} »",
+      "warningTitle": "Cela modifie ce que les visiteurs voient sur le site en ligne.",
+      "warningBody": "Votre brouillon n'est pas affecte — seule la version publiee change.",
+      "rollingBack": "Retour en arriere…",
+      "rollback": "Revenir"
+    },
+    "deploymentHistory": {
+      "title": "Historique des deploiements",
+      "empty": "Aucun deploiement pour le moment",
+      "pagesLayouts": "{pages} pages, {layouts} mises en page",
+      "rollbackCta": "Revenir a cette version",
+      "toastSuccess": "Retour a la v{version}",
+      "toastFailed": "Echec du retour en arriere",
+      "relativeJustNow": "A l'instant",
+      "relativeMinutes": "Il y a {count} min",
+      "relativeHours": "Il y a {count} h",
+      "relativeDays": "Il y a {count} j",
+      "statusActive": "Actif",
+      "statusSuperseded": "Remplace",
+      "statusRolledBack": "Annule"
+    },
+    "elementWrapper": {
+      "noEditor": "Aucun editeur n'est disponible pour ce type de bloc ({type})."
     }
   },
   "onboarding": {
@@ -189,8 +310,14 @@
       "description": "Ajoutez une nouvelle page a votre site",
       "nameLabel": "Nom de la page",
       "namePlaceholder": "Ma page",
+      "titleLabel": "Titre de la page",
+      "titlePlaceholder": "Pour commencer",
+      "slugLabel": "Slug d'URL",
+      "slugPlaceholder": "pour-commencer",
       "creating": "Creation...",
-      "create": "Creer la page"
+      "create": "Creer la page",
+      "pageCreated": "Page creee",
+      "createFailed": "Echec de la creation de la page"
     },
     "createFolder": {
       "title": "Creer un nouveau dossier",

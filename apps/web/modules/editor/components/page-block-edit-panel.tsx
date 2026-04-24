@@ -8,6 +8,7 @@ import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Maximize2, Minimize2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,6 +25,7 @@ export function PageBlockEditPanel({
   isFullscreen,
   onToggleFullscreen,
 }: PageBlockEditPanelProps) {
+  const t = useTranslations("editor.pagePanel");
   const { editingPage, closePageEditor } = useEditorUi();
   const { pages: pageMutations } = useEditorMutations();
   const [title, setTitle] = useState(pageTitle ?? "");
@@ -36,7 +38,7 @@ export function PageBlockEditPanel({
         title: newTitle.trim(),
       });
     } catch (_error) {
-      toast.error("Failed to rename page");
+      toast.error(t("renameFailed"));
     }
   }, 500);
 
@@ -54,7 +56,7 @@ export function PageBlockEditPanel({
         <Input
           value={title}
           onChange={handleTitleChange}
-          placeholder="Page title..."
+          placeholder={t("titlePlaceholder")}
           className="h-8 text-sm font-medium flex-1 border-none shadow-none focus-visible:ring-0 px-1"
         />
         <div className="flex items-center gap-1 shrink-0">
@@ -65,7 +67,7 @@ export function PageBlockEditPanel({
               size="icon"
               className="h-7 w-7"
               onClick={onToggleFullscreen}
-              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />
@@ -79,6 +81,7 @@ export function PageBlockEditPanel({
             size="icon"
             className="h-7 w-7"
             onClick={closePageEditor}
+            aria-label={t("closeEditor")}
           >
             <X className="h-4 w-4" />
           </Button>

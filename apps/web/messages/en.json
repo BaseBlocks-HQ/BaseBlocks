@@ -151,6 +151,127 @@
       "grid": "Grid",
       "vertical": "Sidebar",
       "spacer": "Spacer"
+    },
+    "header": {
+      "backToDashboard": "Back to dashboard",
+      "viewOnlyBadge": "View only",
+      "viewPublishedTooltipWhenPublished": "Open published site",
+      "viewPublishedTooltipWhenDraft": "Publish your site first",
+      "share": "Share",
+      "deploymentHistory": "Deployment history",
+      "deployChanges": "Deploy changes",
+      "deployShort": "Deploy",
+      "publishedStatus": "Published"
+    },
+    "picker": {
+      "categories": {
+        "site": "Site settings",
+        "customization": "Customization",
+        "navigation": "Navigation",
+        "layouts": "Layouts",
+        "blocks": "Blocks"
+      },
+      "soon": "Soon"
+    },
+    "pageEditor": {
+      "emptyWithTabs": "Add a layout to this tab",
+      "emptyNoTabs": "Add a layout to get started",
+      "pageNotFound": "Page not found"
+    },
+    "pageTabBar": {
+      "renameTab": "Rename tab",
+      "removeTab": "Remove tab",
+      "addTab": "Add tab"
+    },
+    "pagePanel": {
+      "renameFailed": "Failed to rename page",
+      "titlePlaceholder": "Page title…",
+      "exitFullscreen": "Exit fullscreen",
+      "fullscreen": "Fullscreen",
+      "closeEditor": "Close page editor"
+    },
+    "layoutSlot": {
+      "addBlock": "Add block",
+      "pasteBlock": "Paste block",
+      "paste": "Paste"
+    },
+    "toasts": {
+      "blockCopied": "Block copied"
+    },
+    "deploy": {
+      "title": "Deploy changes",
+      "description": "This will publish all draft changes to the live site. Pages, layouts, blocks, navigation, and site settings will all be updated.",
+      "notesLabel": "Notes (optional)",
+      "notesPlaceholder": "Describe what changed…",
+      "deployNow": "Deploy now",
+      "deploying": "Deploying…"
+    },
+    "share": {
+      "title": "Share settings",
+      "description": "Control who can view your published site.",
+      "visibilityPublicLabel": "Public",
+      "visibilityPublicDescription": "Anyone can view this site",
+      "visibilityLinkOnlyLabel": "Unlisted",
+      "visibilityLinkOnlyDescription": "Only people with the link can view",
+      "visibilityPasswordLabel": "Password protected",
+      "visibilityPasswordDescription": "Requires an access code to view",
+      "visibilityPrivateLabel": "Private",
+      "visibilityPrivateDescription": "Only team members can view",
+      "accessCodeLabel": "Access code",
+      "codePlaceholder": "------",
+      "autoRotateLabel": "Auto-rotate every",
+      "sessionLastsLabel": "Session lasts",
+      "rotation1h": "1 hour",
+      "rotation6h": "6 hours",
+      "rotation24h": "24 hours",
+      "rotation7d": "7 days",
+      "session1d": "1 day",
+      "session7d": "7 days",
+      "session30d": "30 days",
+      "expired": "Expired",
+      "expiresInMinutes": "Expires in {minutes} minutes",
+      "expiresInHoursMinutes": "Expires in {hours}h {minutes}m",
+      "expiresInDays": "{count, plural, one {Expires in # day} other {Expires in # days}}",
+      "toastVisibilityUpdated": "Visibility updated",
+      "toastVisibilityFailed": "Failed to update visibility",
+      "toastRotationUpdated": "Rotation interval updated",
+      "toastRotationFailed": "Failed to update rotation interval",
+      "toastSessionUpdated": "Session duration updated",
+      "toastSessionFailed": "Failed to update session duration",
+      "toastCodeRegenerated": "Access code regenerated",
+      "toastCodeRegenerateFailed": "Failed to regenerate access code",
+      "toastLinkCopied": "Link copied to clipboard",
+      "toastCodeCopied": "Access code copied to clipboard",
+      "copyLink": "Copy link",
+      "copied": "Copied!",
+      "viewSite": "View site"
+    },
+    "rollback": {
+      "title": "Rollback to v{version}",
+      "description": "This will restore the live site to the state it was in at version {version}.",
+      "notesQuote": "“{notes}”",
+      "warningTitle": "This will change what visitors see on the live site.",
+      "warningBody": "Your draft content will not be affected — only the published version will change.",
+      "rollingBack": "Rolling back…",
+      "rollback": "Rollback"
+    },
+    "deploymentHistory": {
+      "title": "Deployment history",
+      "empty": "No deployments yet",
+      "pagesLayouts": "{pages} pages, {layouts} layouts",
+      "rollbackCta": "Rollback to this version",
+      "toastSuccess": "Rolled back to v{version}",
+      "toastFailed": "Failed to rollback",
+      "relativeJustNow": "Just now",
+      "relativeMinutes": "{count}m ago",
+      "relativeHours": "{count}h ago",
+      "relativeDays": "{count}d ago",
+      "statusActive": "Active",
+      "statusSuperseded": "Superseded",
+      "statusRolledBack": "Rolled back"
+    },
+    "elementWrapper": {
+      "noEditor": "No editor is available for this block type ({type})."
     }
   },
   "onboarding": {
@@ -189,8 +310,14 @@
       "description": "Add a new page to your site",
       "nameLabel": "Page name",
       "namePlaceholder": "My page",
+      "titleLabel": "Page title",
+      "titlePlaceholder": "Getting started",
+      "slugLabel": "URL slug",
+      "slugPlaceholder": "getting-started",
       "creating": "Creating...",
-      "create": "Create page"
+      "create": "Create page",
+      "pageCreated": "Page created",
+      "createFailed": "Failed to create page"
     },
     "createFolder": {
       "title": "Create new folder",

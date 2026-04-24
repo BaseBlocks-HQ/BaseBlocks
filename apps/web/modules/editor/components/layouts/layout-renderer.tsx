@@ -13,6 +13,10 @@ import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import { type ButtonHTMLAttributes, type Ref, useState } from "react";
+import {
+  editorControlRowClassName,
+  editorControlZoneStyle,
+} from "./editor-spacing";
 import { LayoutSlot } from "./layout-slot";
 
 export interface LayoutRendererProps {
@@ -39,11 +43,6 @@ export interface LayoutRendererProps {
   dragHandleProps?: ButtonHTMLAttributes<HTMLButtonElement>;
   isDragging?: boolean;
 }
-
-// The control zone is the top-padding that permanently reserves space for the
-// controls row. Controls are absolutely positioned within it so content never
-// shifts on hover/selection.
-const CONTROL_ZONE = "pt-6"; // 24px reserves room for the 24px controls row
 
 export function LayoutRenderer({
   layout,
@@ -77,9 +76,9 @@ export function LayoutRenderer({
   return (
     <div
       role="presentation"
+      style={editorControlZoneStyle}
       className={cn(
         "relative rounded-md transition-colors",
-        CONTROL_ZONE,
         isDragging && "ring-2 ring-primary/30",
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -90,9 +89,9 @@ export function LayoutRenderer({
         onSelectLayout();
       }}
     >
-      {/* Controls live in the top padding zone — content never shifts */}
+      {/* Controls live in the reserved top zone — content never shifts. */}
       {showControls && (
-        <div className="absolute top-0.5 left-0 flex items-center gap-0.5">
+        <div className={editorControlRowClassName}>
           <button
             ref={dragHandleRef}
             type="button"

@@ -4,6 +4,7 @@ import type { ElementCategory } from "@baseblocks/types/elements";
 import { getSortedCategories } from "@baseblocks/types/elements";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   IconColorPalette,
   IconGear,
@@ -31,6 +32,7 @@ function CategoryMenuItem({
   disabled,
   isEmpty,
 }: CategoryMenuItemProps) {
+  const t = useTranslations("editor.picker");
   return (
     <button
       className={cn(
@@ -45,7 +47,9 @@ function CategoryMenuItem({
     >
       <span className="text-muted-foreground">{icon}</span>
       <span className="flex-1">{label}</span>
-      {isEmpty && <span className="text-xs text-muted-foreground">Soon</span>}
+      {isEmpty ? (
+        <span className="text-xs text-muted-foreground">{t("soon")}</span>
+      ) : null}
       {!isEmpty && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
     </button>
   );
