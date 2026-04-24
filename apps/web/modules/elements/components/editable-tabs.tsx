@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,8 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { Check, Pencil, Plus, X } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
+import { Pencil, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 interface EditableTabItem {
   id: string;
@@ -31,6 +33,37 @@ interface EditableTabsProps {
   tabsMode: "dropdown" | "row";
 }
 
+/** Matches {@link PageTabBar} icon affordances inside tab triggers */
+function TabIconButton({
+  "aria-label": ariaLabel,
+  destructive = false,
+  onClick,
+  onKeyDown,
+  children,
+}: {
+  "aria-label": string;
+  destructive?: boolean;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      className={[
+        "flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm",
+        "text-muted-foreground/50",
+        destructive ? "hover:text-destructive" : "hover:text-foreground",
+      ].join(" ")}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function EditableTabs({
   activeId,
   addLabel,
@@ -48,6 +81,11 @@ export function EditableTabs({
   const [editingLabel, setEditingLabel] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const resolvedActiveId =
+    items.find((item) => item.id === activeId)?.id ?? items[0]?.id ?? "";
+  const activeItem =
+    items.find((item) => item.id === resolvedActiveId) ?? items[0];
+
   useEffect(() => {
     if (!editingId || !inputRef.current) {
       return;
@@ -56,8 +94,6 @@ export function EditableTabs({
     inputRef.current.focus();
     inputRef.current.select();
   }, [editingId]);
-
-  const activeItem = items.find((item) => item.id === activeId) ?? items[0];
 
   const startRename = (id: string) => {
     const item = items.find((entry) => entry.id === id);
@@ -78,157 +114,179 @@ export function EditableTabs({
     setEditingId(null);
   };
 
-  const renderEditableInput = (className: string, buttonClassName: string) => (
-    <div className="flex items-center gap-1 min-w-0 flex-1">
-      <input
-        ref={inputRef}
-        value={editingLabel}
-        onBlur={commitRename}
-        onChange={(event) => setEditingLabel(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            commitRename();
-          }
-          if (event.key === "Escape") {
-            setEditingId(null);
-          }
-        }}
-        className={className}
-      />
-      <button
-        type="button"
-        onClick={commitRename}
-        className={buttonClassName}
-        aria-label={renameLabel}
-      >
-        <Check className="h-3 w-3" />
-      </button>
-    </div>
-  );
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30 min-w-0">
-      {tabsMode === "dropdown" ? (
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {editingId === activeItem?.id ? (
-            renderEditableInput(
-              "h-8 flex-1 rounded-md border bg-background px-2 text-xs",
-              "p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground",
-            )
-          ) : (
-            <Select value={activeItem?.id} onValueChange={onActiveChange}>
-              <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {items.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+    <div className="flex min-w-0 items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+      <div
+        className={
+          tabsMode === "dropdown"
+            ? "flex min-w-0 flex-1 items-center gap-2"
+            : "group/tabbar flex min-w-0 flex-1 items-center justify-start gap-2"
+        }
+      >
+        {tabsMode === "dropdown" ? (
+          <>
+            {editingId === activeItem?.id ? (
+              <Input
+                ref={inputRef}
+                value={editingLabel}
+                onChange={(e) => setEditingLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitRename();
+                  if (e.key === "Escape") setEditingId(null);
+                }}
+                className="h-8 min-w-0 flex-1 text-xs"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <Select value={activeItem?.id} onValueChange={onActiveChange}>
+                <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {items.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-          {activeItem && (
-            <>
-              <button
-                type="button"
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                onClick={() => startRename(activeItem.id)}
-                title={renameLabel}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              {onRemove && (
+            {activeItem && editingId !== activeItem.id && (
+              <>
                 <button
                   type="button"
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                  onClick={() => onRemove(activeItem.id)}
-                  title={removeLabel}
+                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  onClick={() => startRename(activeItem.id)}
+                  title={renameLabel}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Pencil className="h-3.5 w-3.5" />
                 </button>
-              )}
-            </>
-          )}
+                {onRemove && (
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    onClick={() => onRemove(activeItem.id)}
+                    title={removeLabel}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </>
+            )}
 
-          <button
-            type="button"
-            onClick={onAdd}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-            title={addLabel}
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1 overflow-x-auto min-w-0 flex-1">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className={cn(
-                "group/tab flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors shrink-0",
-                item.id === activeId
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-              )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={onAdd}
+              aria-label={addLabel}
             >
-              {editingId === item.id ? (
-                renderEditableInput(
-                  "bg-transparent border-none outline-none w-20 text-xs text-inherit",
-                  "p-0.5 rounded hover:bg-foreground/10",
-                )
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="max-w-[10rem] truncate text-left"
-                    onClick={() => onActiveChange(item.id)}
-                    onDoubleClick={() => startRename(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                  <button
-                    type="button"
-                    className="hidden group-hover/tab:flex p-0.5 rounded hover:bg-foreground/10"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      startRename(item.id);
-                    }}
-                    aria-label={renameLabel}
-                  >
-                    <Pencil className="h-2.5 w-2.5" />
-                  </button>
-                  {onRemove && (
-                    <button
-                      type="button"
-                      className="hidden group-hover/tab:flex p-0.5 rounded hover:bg-foreground/10"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onRemove(item.id);
-                      }}
-                      aria-label={removeLabel}
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="max-w-full min-w-0 overflow-x-auto overflow-y-hidden">
+              <Tabs
+                value={resolvedActiveId}
+                onValueChange={onActiveChange}
+                className="!flex-row gap-0"
+              >
+                <TabsList className="justify-start">
+                  {items.map((item) => (
+                    <TabsTrigger
+                      key={item.id}
+                      value={item.id}
+                      className="group/tab flex max-w-[12rem] shrink-0 flex-none items-center gap-1.5 px-3"
                     >
-                      <X className="h-2.5 w-2.5" />
-                    </button>
-                  )}
-                </>
-              )}
+                      {editingId === item.id ? (
+                        <Input
+                          ref={inputRef}
+                          value={editingLabel}
+                          onChange={(e) => setEditingLabel(e.target.value)}
+                          onBlur={commitRename}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitRename();
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          className="h-5 w-20 border-none px-1 py-0 text-sm shadow-none focus-visible:ring-1"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <>
+                          <span
+                            className="max-w-[10rem] select-none truncate"
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              startRename(item.id);
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                          <div className="hidden items-center gap-0.5 group-hover/tab:flex">
+                            <TabIconButton
+                              aria-label={renameLabel}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startRename(item.id);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  startRename(item.id);
+                                }
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </TabIconButton>
+                            {onRemove && (
+                              <TabIconButton
+                                aria-label={removeLabel}
+                                destructive
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onRemove(item.id);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onRemove(item.id);
+                                  }
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </TabIconButton>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
-            onClick={onAdd}
-            aria-label={addLabel}
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={onAdd}
+              aria-label={addLabel}
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        )}
+      </div>
 
       {endContent}
     </div>

@@ -384,7 +384,6 @@
       "toastDeleteFailed": "Failed to delete"
     },
     "flowchart": {
-      "diagramTabs": "Diagram tabs",
       "tabsHorizontal": "Horizontal row",
       "tabsDropdown": "Dropdown",
       "noDiagrams": "No diagrams yet",

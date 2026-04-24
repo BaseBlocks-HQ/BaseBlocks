@@ -14,8 +14,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@baseblocks/ui/select";
 import { THEMES } from "beautiful-mermaid";
-import { ChevronDown, ChevronRight, Palette, Plus } from "lucide-react";
+import { ChevronDown, Palette, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
@@ -50,6 +58,8 @@ interface DiagramEditorProps {
   theme?: string;
   /** Called when user picks a theme */
   onThemeChange?: (theme: string | undefined) => void;
+  /** Layout of diagram tabs (row vs dropdown); control shown in tab bar when set */
+  onTabsModeChange?: (mode: "row" | "dropdown") => void;
 }
 
 export function DiagramEditor({
@@ -60,10 +70,11 @@ export function DiagramEditor({
   tabsMode = "row",
   theme,
   onThemeChange,
+  onTabsModeChange,
 }: DiagramEditorProps) {
   const t = useTranslations("elements.flowchart");
+  const isMobile = useIsMobile();
   const [activeTabId, setActiveTabId] = useState<string>(diagrams[0]?.id ?? "");
-  const [codeVisible, setCodeVisible] = useState(true);
   const resolvedActiveTabId = diagrams.some(
     (diagram) => diagram.id === activeTabId,
   )
@@ -116,11 +127,90 @@ export function DiagramEditor({
 
   const currentDiagram = activeDiagram ?? diagrams[0]!;
 
+  const themeMenu = onThemeChange ? (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={`h-8 shrink-0 gap-1.5 px-2 text-xs ${
+            theme
+              ? "text-primary hover:text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {theme && THEMES[theme] ? (
+            <span
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10"
+              style={{
+                background: `linear-gradient(135deg, ${THEMES[theme].bg} 50%, ${THEMES[theme].accent ?? THEMES[theme].fg} 50%)`,
+              }}
+            />
+          ) : (
+            <Palette className="h-3 w-3 shrink-0" />
+          )}
+          <span className="max-w-[7rem] truncate sm:max-w-[10rem]">
+            {theme ? themeLabel(theme) : t("theme")}
+          </span>
+          <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuRadioGroup
+          value={theme ?? ""}
+          onValueChange={(v) => onThemeChange(v || undefined)}
+        >
+          <DropdownMenuRadioItem value="">
+            {t("themeAuto")}
+          </DropdownMenuRadioItem>
+          <DropdownMenuSeparator />
+          {THEME_ENTRIES.map(([key, colors]) => (
+            <DropdownMenuRadioItem key={key} value={key} className="gap-2">
+              <span
+                className="inline-block h-3 w-3 shrink-0 rounded-full border border-black/10"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.bg} 50%, ${colors.accent ?? colors.fg} 50%)`,
+                }}
+              />
+              {themeLabel(key)}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ) : null;
+
+  const tabsLayoutSelect =
+    !isMobile && onTabsModeChange ? (
+      <Select
+        value={tabsMode}
+        onValueChange={(value) => onTabsModeChange(value as "row" | "dropdown")}
+      >
+        <SelectTrigger className="h-8 w-[160px] shrink-0 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="row">{t("tabsHorizontal")}</SelectItem>
+          <SelectItem value="dropdown">{t("tabsDropdown")}</SelectItem>
+        </SelectContent>
+      </Select>
+    ) : null;
+
+  const headerEnd =
+    themeMenu || tabsLayoutSelect ? (
+      <div className="flex shrink-0 items-center gap-1.5">
+        {themeMenu}
+        {tabsLayoutSelect}
+      </div>
+    ) : undefined;
+
   return (
-    <div className="space-y-0">
+    <div className="flex min-h-0 flex-col space-y-0">
       <EditableTabs
         activeId={currentDiagram.id}
         addLabel={t("addDiagramTab")}
+        endContent={headerEnd}
         items={diagrams.map((diagram) => ({
           id: diagram.id,
           label: diagram.label,
@@ -140,105 +230,32 @@ export function DiagramEditor({
         tabsMode={tabsMode}
       />
 
-      {/* Preview */}
-      <div className="min-h-[80px] border-t min-w-0 overflow-hidden">
-        {activeDiagram?.mermaidCode?.trim() ? (
-          <MermaidDiagram
-            code={activeDiagram.mermaidCode}
-            contained={contained}
-            theme={theme}
-          />
-        ) : (
-          <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
-            {t("previewPlaceholder")}
-          </div>
-        )}
-      </div>
-
-      {/* Code editor + theme */}
-      <div className="border-t">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setCodeVisible(!codeVisible)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            {codeVisible ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
+      <div className="flex min-w-0 flex-1 flex-col border-t md:min-h-[min(24rem,50vh)] md:flex-row md:items-stretch">
+        <div className="flex h-52 shrink-0 flex-col border-b bg-muted/15 md:h-auto md:min-h-0 md:w-[min(42%,28rem)] md:min-w-[220px] md:max-w-xl md:border-b-0 md:border-r">
+          <div className="shrink-0 border-b px-3 py-2 text-xs font-medium text-muted-foreground">
             {t("mermaidCode")}
-          </button>
-
-          {onThemeChange && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 mr-3 text-xs rounded-md transition-colors ${
-                    theme
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {theme && THEMES[theme] ? (
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 shrink-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${THEMES[theme].bg} 50%, ${THEMES[theme].accent ?? THEMES[theme].fg} 50%)`,
-                      }}
-                    />
-                  ) : (
-                    <Palette className="h-3 w-3" />
-                  )}
-                  {theme ? themeLabel(theme) : t("theme")}
-                  <ChevronDown className="h-3 w-3 opacity-50" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuRadioGroup
-                  value={theme ?? ""}
-                  onValueChange={(v) => onThemeChange(v || undefined)}
-                >
-                  <DropdownMenuRadioItem value="">
-                    {t("themeAuto")}
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuSeparator />
-                  {THEME_ENTRIES.map(([key, colors]) => (
-                    <DropdownMenuRadioItem
-                      key={key}
-                      value={key}
-                      className="gap-2"
-                    >
-                      <span
-                        className="inline-block h-3 w-3 rounded-full border border-black/10 shrink-0"
-                        style={{
-                          background: `linear-gradient(135deg, ${colors.bg} 50%, ${colors.accent ?? colors.fg} 50%)`,
-                        }}
-                      />
-                      {themeLabel(key)}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          </div>
+          <textarea
+            value={activeDiagram?.mermaidCode ?? ""}
+            onChange={(e) => updateCode(e.target.value)}
+            className="min-h-0 flex-1 resize-none border-0 bg-transparent p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            placeholder={PLACEHOLDER}
+            spellCheck={false}
+          />
+        </div>
+        <div className="flex min-h-[14rem] min-w-0 flex-1 flex-col overflow-hidden bg-background md:min-h-0">
+          {activeDiagram?.mermaidCode?.trim() ? (
+            <MermaidDiagram
+              code={activeDiagram.mermaidCode}
+              contained={contained}
+              theme={theme}
+            />
+          ) : (
+            <div className="flex h-full min-h-[12rem] items-center justify-center px-4 text-sm text-muted-foreground">
+              {t("previewPlaceholder")}
+            </div>
           )}
         </div>
-
-        {codeVisible && (
-          <div className="px-4 pb-4">
-            <textarea
-              value={activeDiagram?.mermaidCode ?? ""}
-              onChange={(e) => updateCode(e.target.value)}
-              className="w-full resize-y border rounded-md bg-muted/50 p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              style={{ minHeight: "100px", maxHeight: "400px" }}
-              placeholder={PLACEHOLDER}
-              spellCheck={false}
-              rows={4}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

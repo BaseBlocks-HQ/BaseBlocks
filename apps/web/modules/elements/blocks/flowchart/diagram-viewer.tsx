@@ -1,13 +1,7 @@
 "use client";
 
+import { ViewerTabsBar } from "@/modules/elements/components/viewer-tabs-bar";
 import type { FlowchartDiagram } from "@baseblocks/types/elements/blocks";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 
@@ -32,41 +26,15 @@ export function DiagramViewer({
   const showTabs = diagrams.length > 1;
 
   return (
-    <div className="space-y-2 w-full min-w-0 max-w-full">
-      {showTabs &&
-        (tabsMode === "dropdown" ? (
-          <div className="px-1 min-w-0">
-            <Select value={active.id} onValueChange={setActiveId}>
-              <SelectTrigger className="h-9 w-full sm:w-[260px]">
-                <SelectValue placeholder="Select diagram" />
-              </SelectTrigger>
-              <SelectContent>
-                {diagrams.map((diagram) => (
-                  <SelectItem key={diagram.id} value={diagram.id}>
-                    {diagram.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1 px-1 py-1 overflow-x-auto min-w-0">
-            {diagrams.map((diagram) => (
-              <button
-                key={diagram.id}
-                type="button"
-                onClick={() => setActiveId(diagram.id)}
-                className={`max-w-[12rem] truncate rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                  diagram.id === active.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
-              >
-                {diagram.label}
-              </button>
-            ))}
-          </div>
-        ))}
+    <div className="w-full min-w-0 max-w-full space-y-0">
+      {showTabs && (
+        <ViewerTabsBar
+          activeId={active.id}
+          items={diagrams.map((d) => ({ id: d.id, label: d.label }))}
+          onActiveChange={setActiveId}
+          tabsMode={tabsMode}
+        />
+      )}
       <MermaidDiagram
         code={active.mermaidCode}
         contained={contained}

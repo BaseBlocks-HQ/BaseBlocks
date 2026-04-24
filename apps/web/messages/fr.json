@@ -384,7 +384,6 @@
       "toastDeleteFailed": "Echec de la suppression"
     },
     "flowchart": {
-      "diagramTabs": "Onglets du diagramme",
       "tabsHorizontal": "Rangee horizontale",
       "tabsDropdown": "Menu deroulant",
       "noDiagrams": "Aucun diagramme",
