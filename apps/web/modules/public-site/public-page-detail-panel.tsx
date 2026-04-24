@@ -8,7 +8,7 @@ import { DetailPanelHeaderChrome } from "@/modules/shared/components/detail-pane
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
-import { Download, Maximize2, Minimize2, X } from "lucide-react";
+import { Maximize2, Minimize2, X } from "lucide-react";
 import { PublicContent } from "./public-content";
 import { usePublicPagePanel } from "./public-page-panel-context";
 
@@ -36,29 +36,21 @@ export function PublicPageDetailPanel({
 
   return (
     <DetailPanelFrame
-      bodyClassName="px-3 pb-3 pt-12 md:px-4 md:pb-4"
+      bodyClassName="px-3 pb-3 pt-14 md:px-4 md:pb-4"
       headerOverlay
       header={
         <DetailPanelHeaderChrome>
-          <div className="flex h-10 items-center justify-between gap-2 px-1.5">
-            <div className="min-w-0 flex-1 px-2">
+          <div className="flex h-14 items-center justify-between gap-3 px-4">
+            <div className="min-w-0 flex-1">
               <h2 className="truncate text-sm font-medium leading-tight">
                 {page?.title ?? "Loading..."}
               </h2>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-2">
               <PageExportMenu
                 align="end"
                 mode="published"
                 pageId={viewingPage.pageId}
-                trigger={
-                  <ViewerToolbarIconButton
-                    label="Export as Word"
-                    onClick={() => {}}
-                  >
-                    <Download className="h-4 w-4" />
-                  </ViewerToolbarIconButton>
-                }
               />
               {onToggleFullscreen ? (
                 <ViewerToolbarIconButton

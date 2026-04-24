@@ -29,7 +29,7 @@ export function DetailPanelFrame({
       <div
         className={cn(
           headerOverlay
-            ? "pointer-events-none absolute inset-x-0 top-0 z-10 px-2 pt-2 md:px-3 md:pt-3"
+            ? "pointer-events-none absolute inset-x-0 top-0 z-10"
             : "px-3 py-3 md:px-4",
           headerClassName,
         )}
