@@ -3,6 +3,7 @@
 import { EditorSkeleton } from "@/components/skeletons";
 import { usePages } from "@/lib/data/use-page";
 import { useSite } from "@/lib/data/use-site";
+import { cn } from "@/lib/utils";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
@@ -369,7 +370,14 @@ function SiteEditorInner({
                 }
                 detailCollapsedOnMobile
                 detailExpanded={isFullscreen}
-                detailPanelClassName="pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4"
+                detailPanelClassName={cn(
+                  "pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
+                  // Fullscreen hides the main column; mirror editor canvas inset so the
+                  // panel clears the floating rail (split view previously got that from main).
+                  isFullscreen &&
+                    !isMobile &&
+                    "pl-20 md:pl-24 lg:pl-28",
+                )}
                 detailSurfaceClassName="rounded-xl bg-background"
                 main={editorCanvas}
                 mainPanelClassName="pr-2 md:pr-3 lg:pr-4"
