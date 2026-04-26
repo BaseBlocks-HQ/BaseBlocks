@@ -146,30 +146,30 @@ function FileUploadState({
     <DropZone
       onFilesAccepted={onFilesAccepted}
       disabled={isUploading}
-      className="rounded-lg border border-solid bg-card p-2 transition-colors hover:border-primary/30 hover:bg-primary/5"
+      className="rounded-md border border-solid bg-card/70 p-1.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
             {isUploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <FileUp className="h-5 w-5" />
+              <FileUp className="h-4 w-4" />
             )}
           </div>
           <div className="min-w-0">
-            <p className="truncate font-medium">
+            <p className="truncate text-sm font-medium">
               {isUploading
                 ? t("uploading", { progress: uploadProgress })
                 : t("uploadFile")}
             </p>
           </div>
         </div>
-        <span className="inline-flex h-8 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground">
+        <span className="inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground">
           {isUploading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <FileUp className="mr-2 h-4 w-4" />
+            <FileUp className="h-3.5 w-3.5" />
           )}
           {t("upload")}
         </span>
@@ -194,7 +194,7 @@ function FileItemMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-7 w-7"
           onClick={(event) => event.stopPropagation()}
         >
           <MoreHorizontal className="h-4 w-4" />
@@ -317,25 +317,25 @@ function SingleFileRow({
   onOpen?: () => void;
 }) {
   return (
-    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg border bg-card p-2 transition-colors hover:border-primary/30 hover:bg-primary/5">
+    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border bg-card/70 p-1.5 transition-colors hover:border-primary/30 hover:bg-primary/5">
       <button
         type="button"
         onClick={onOpen}
-        className="grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 text-left"
+        className="grid min-w-0 grid-cols-[32px_minmax(0,1fr)] items-center gap-2.5 text-left"
       >
         <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg bg-muted/70",
+            "flex h-8 w-8 items-center justify-center rounded-md bg-muted/70",
             getFileTypeColor(file.contentType),
           )}
         >
-          <FileIcon contentType={file.contentType} className="h-5 w-5" />
+          <FileIcon contentType={file.contentType} className="h-4 w-4" />
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-medium">
+          <span className="block truncate text-sm font-medium leading-tight">
             {file.filename}
           </span>
-          <span className="block truncate text-xs text-muted-foreground tabular-nums">
+          <span className="mt-0.5 block truncate text-[11px] leading-tight text-muted-foreground/80 tabular-nums">
             {formatFileMeta(file)}
           </span>
         </span>
