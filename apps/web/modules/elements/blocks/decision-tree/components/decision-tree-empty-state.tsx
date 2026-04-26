@@ -10,18 +10,13 @@ import {
 
 export function DecisionTreeEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
-      <div className="size-12 rounded-full bg-muted/60 flex items-center justify-center">
-        <GitFork className="size-6 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+      <div className="flex size-10 items-center justify-center rounded-full bg-muted/50">
+        <GitFork className="size-4 text-muted-foreground" />
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-muted-foreground">
-          No options configured
-        </p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          This decision tree doesn&apos;t have any options yet
-        </p>
-      </div>
+      <p className="max-w-[18rem] text-sm text-muted-foreground">
+        This decision tree doesn&apos;t have any options yet
+      </p>
     </div>
   );
 }
@@ -32,21 +27,18 @@ export function DecisionTreeEndState({
   onStartOver: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-10 px-4">
-      <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
-        <CheckCircle2 className="size-5 text-primary" />
+    <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+      <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+        <CheckCircle2 className="size-4 text-primary" />
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium">End of path</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          No more options available
-        </p>
-      </div>
+      <p className="max-w-[18rem] text-sm text-muted-foreground">
+        No more options available
+      </p>
       <Button
         variant="outline"
         size="sm"
         onClick={onStartOver}
-        className="mt-1"
+        className="mt-1 rounded-xl"
       >
         <RotateCcw className="size-3.5 mr-1.5" />
         Start over
@@ -57,18 +49,13 @@ export function DecisionTreeEndState({
 
 export function DecisionTreeDetailPrompt() {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
-      <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
-        <MousePointerClick className="size-5 text-muted-foreground" />
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="flex size-9 items-center justify-center rounded-full bg-muted/50">
+        <MousePointerClick className="size-4 text-muted-foreground" />
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-muted-foreground">
-          Select an option
-        </p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          Choose from the list to view details
-        </p>
-      </div>
+      <p className="max-w-[16rem] text-sm text-muted-foreground">
+        Choose from the list to view details
+      </p>
     </div>
   );
 }

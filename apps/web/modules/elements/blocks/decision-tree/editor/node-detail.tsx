@@ -10,6 +10,7 @@ import type { DecisionTreeNode } from "@baseblocks/types/elements";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -37,13 +38,13 @@ export function NodeDetail({
   }, 500);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b space-y-3">
-        <h3 className="text-sm font-medium text-primary">
-          {t("detailPanelTitle")}
-        </h3>
+    <div className="flex h-full flex-col">
+      <div className="space-y-2 px-2.5 py-2">
         <div>
-          <Label htmlFor="node-name" className="text-xs text-muted-foreground">
+          <Label
+            htmlFor="node-name"
+            className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          >
             {t("optionNameLabel")}
           </Label>
           <Input
@@ -53,18 +54,18 @@ export function NodeDetail({
               setLocalName(e.target.value);
               debouncedSaveName(e.target.value);
             }}
-            className="mt-1 text-lg font-semibold"
+            className="mt-1 h-10 rounded-lg border-border/70 text-base font-semibold shadow-none"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <ScrollArea className="min-h-0 flex-1">
         <NodeBlockNoteEditor
           key={node.id}
           document={getNodeDocument(node)}
           onChange={(doc) => onUpdateDocument(node.id, doc)}
         />
-      </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -100,7 +101,7 @@ function NodeBlockNoteEditor({
     // Stop keyboard events from bubbling to parent DnD and node-list handlers
     <div
       role="presentation"
-      className="[&_.bn-container]:!border-none [&_.bn-editor]:!pl-12 [&_.bn-editor]:!pr-4 [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent"
+      className="[&_.bn-container]:!border-none [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent [&_.bn-editor]:!pl-5 [&_.bn-editor]:!pr-2.5 [&_.bn-editor]:!pt-2.5"
       onKeyDown={(e) => e.stopPropagation()}
     >
       <BlockNoteView

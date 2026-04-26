@@ -1,23 +1,28 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { THEMES, renderMermaid } from "beautiful-mermaid";
+import { THEMES, renderMermaidSVG } from "beautiful-mermaid";
 import DOMPurify from "dompurify";
 import {
+  AlertCircle,
   LocateFixed,
   Maximize2,
   Minimize2,
+  Workflow,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState } from "react";
-import useSWR from "swr";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface MermaidDiagramProps {
   code: string;
   /** When true, the diagram stays within its parent container instead of stretching edge-to-edge */
   contained?: boolean;
+  /** When true, the canvas fills its parent height instead of using a fixed contained height. */
+  fillHeight?: boolean;
+  /** When true, render without an extra inner frame because the parent already provides one. */
+  embedded?: boolean;
   /** beautiful-mermaid theme preset key. Unset = auto light/dark. */
   theme?: string;
 }
@@ -26,15 +31,15 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 20;
 const ZOOM_FACTOR = 0.04;
 
-async function renderMermaidSvg([code, resolvedTheme, theme]: [
-  string,
-  string,
-  string | undefined,
-]) {
+function renderMermaidSvg(
+  code: string,
+  resolvedTheme: string,
+  theme: string | undefined,
+) {
   const isDark = resolvedTheme === "dark";
   const preset = theme ? THEMES[theme] : undefined;
 
-  return renderMermaid(code, {
+  return renderMermaidSVG(code, {
     bg: preset?.bg ?? (isDark ? "#09090b" : "#ffffff"),
     fg: preset?.fg ?? (isDark ? "#fafafa" : "#18181b"),
     line: preset?.line,
@@ -49,23 +54,54 @@ async function renderMermaidSvg([code, resolvedTheme, theme]: [
   });
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = error.message;
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return "Invalid diagram syntax";
+}
+
 export function MermaidDiagram({
   code,
   contained,
+  fillHeight = false,
+  embedded = false,
   theme,
 }: MermaidDiagramProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { resolvedTheme } = useTheme();
-  const swrKey = code.trim()
-    ? ([code, resolvedTheme ?? "light", theme] as [
-        string,
-        string,
-        string | undefined,
-      ])
-    : null;
-  const { data: svg, error, isLoading } = useSWR(swrKey, renderMermaidSvg);
-  const errorMessage =
-    error instanceof Error ? error.message : "Invalid diagram syntax";
+  const renderState = useMemo(() => {
+    const trimmedCode = code.trim();
+    if (!trimmedCode) {
+      return { svg: null, errorMessage: null };
+    }
+
+    try {
+      return {
+        svg: renderMermaidSvg(trimmedCode, resolvedTheme ?? "light", theme),
+        errorMessage: null,
+      };
+    } catch (error) {
+      return {
+        svg: null,
+        errorMessage: getErrorMessage(error),
+      };
+    }
+  }, [code, resolvedTheme, theme]);
+  const svg = renderState.svg;
+  const errorMessage = renderState.errorMessage;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -225,27 +261,60 @@ export function MermaidDiagram({
 
   const canvasHeight = isFullscreen
     ? "h-[calc(100vh-4rem)]"
-    : contained
-      ? "h-[260px] md:h-[320px]"
-      : "h-[75vh]";
+    : fillHeight
+      ? "h-full"
+      : contained
+        ? "h-[240px] md:h-[300px]"
+        : "h-[75vh]";
 
   const emptyCanvas = (msg: string) => (
-    <div ref={wrapperRef} className="relative w-full max-w-full min-w-0">
+    <div
+      ref={wrapperRef}
+      className={cn(
+        "relative w-full max-w-full min-w-0",
+        fillHeight && "h-full",
+      )}
+    >
       <div
-        className={`flex items-center justify-center ${canvasHeight} text-muted-foreground text-sm border-y border-border bg-muted/30 dark:bg-muted/20`}
+        className={cn(
+          `flex flex-col items-center justify-center gap-3 ${canvasHeight} px-6 text-center`,
+          embedded
+            ? "bg-transparent"
+            : "rounded-[18px] border border-border/60 bg-muted/25 dark:bg-muted/15",
+        )}
       >
-        {msg}
+        <div className="flex size-10 items-center justify-center rounded-full bg-background/80 shadow-xs">
+          <Workflow className="size-4 text-muted-foreground" />
+        </div>
+        <p className="text-sm text-muted-foreground">{msg}</p>
       </div>
     </div>
   );
 
-  if (!code.trim()) return emptyCanvas("No diagram code yet");
-  if (isLoading && !svg) return emptyCanvas("Rendering diagram...");
+  if (!code.trim()) return emptyCanvas("Write Mermaid code to preview it");
 
   if (errorMessage) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive min-h-[200px] flex items-center">
-        {errorMessage}
+      <div
+        className={cn(
+          "flex items-center justify-center px-6 text-center",
+          fillHeight ? "h-full" : "min-h-[200px]",
+          embedded
+            ? "bg-transparent"
+            : "rounded-[18px] border border-destructive/20 bg-destructive/[0.035]",
+        )}
+      >
+        <div className="flex max-w-[22rem] flex-col items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/8">
+            <AlertCircle className="size-4 text-destructive" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">
+              Diagram syntax error
+            </p>
+            <p className="text-sm text-muted-foreground">{errorMessage}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -257,16 +326,16 @@ export function MermaidDiagram({
       ref={wrapperRef}
       className={cn(
         "relative group/diagram w-full max-w-full min-w-0",
+        fillHeight && "h-full",
         isFullscreen &&
-          "fixed inset-4 z-[80] rounded-xl border bg-background shadow-2xl",
+          "fixed inset-4 z-[80] rounded-[20px] border border-border/70 bg-background shadow-2xl",
       )}
     >
-      {/* Zoom controls */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm p-1 opacity-100 md:opacity-0 md:group-hover/diagram:opacity-100 transition-opacity">
+      <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-0.5 rounded-xl border border-border/70 bg-background/88 p-1 shadow-sm backdrop-blur-sm opacity-100 transition-opacity md:opacity-0 md:group-hover/diagram:opacity-100">
         <button
           type="button"
           onClick={() => zoomBy(1.4)}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ZoomIn className="h-4 w-4" />
         </button>
@@ -276,7 +345,7 @@ export function MermaidDiagram({
         <button
           type="button"
           onClick={() => zoomBy(1 / 1.4)}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ZoomOut className="h-4 w-4" />
         </button>
@@ -284,7 +353,7 @@ export function MermaidDiagram({
         <button
           type="button"
           onClick={fitToView}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title="Reset view"
         >
           <LocateFixed className="h-4 w-4" />
@@ -293,7 +362,7 @@ export function MermaidDiagram({
         <button
           type="button"
           onClick={() => setIsFullscreen((prev) => !prev)}
-          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           title={isFullscreen ? "Exit fullscreen" : "Open fullscreen"}
         >
           {isFullscreen ? (
@@ -304,12 +373,17 @@ export function MermaidDiagram({
         </button>
       </div>
 
-      {/* Canvas */}
       <div
         ref={containerRef}
-        className={`relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} border-y border-border cursor-grab active:cursor-grabbing touch-none select-none ${theme ? "" : "bg-muted/30 dark:bg-muted/20"}`}
+        className={cn(
+          `relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} cursor-grab touch-none select-none active:cursor-grabbing`,
+          embedded
+            ? "bg-transparent"
+            : "rounded-[18px] border border-border/60",
+          !theme && !embedded && "bg-muted/25 dark:bg-muted/15",
+        )}
         style={{
-          ...(theme && THEMES[theme]
+          ...(theme && !embedded && THEMES[theme]
             ? { backgroundColor: THEMES[theme].bg }
             : {}),
           backgroundImage:

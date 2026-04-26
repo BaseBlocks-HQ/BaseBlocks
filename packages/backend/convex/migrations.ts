@@ -974,7 +974,7 @@ function convertContentBlocksToDocument(
       case "code":
         doc.push({
           type: "codeBlock",
-          props: { language: block.content?.language || "typescript" },
+          props: { language: block.content?.language || "plaintext" },
           content: block.content?.text || "",
         });
         break;

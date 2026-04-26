@@ -1,6 +1,7 @@
 "use client";
 
 import { EditableTabs } from "@/modules/elements/components/editable-tabs";
+import { TabsModeToggle } from "@/modules/elements/components/tabs-mode-toggle";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import type {
@@ -8,39 +9,17 @@ import type {
   DecisionTreeContent,
   DecisionTreeNode,
 } from "@baseblocks/types/elements";
-import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@baseblocks/ui/breadcrumb";
-import { Button } from "@baseblocks/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
-import { ChevronLeft, ChevronRight, MousePointerClick } from "lucide-react";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { MousePointerClick } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
+import { DecisionTreeBreadcrumbNav } from "./components/decision-tree-breadcrumb";
 import { NodeDetail } from "./editor/node-detail";
 import { NodeList } from "./editor/node-list";
 import { useTreeNavigation } from "./editor/use-tree-navigation";
@@ -78,20 +57,12 @@ function TreeTabsBar({
       addLabel={t("addTree")}
       endContent={
         !isMobile ? (
-          <Select
-            value={tabsMode}
-            onValueChange={(value) =>
-              onTabsModeChange(value as "row" | "dropdown")
-            }
-          >
-            <SelectTrigger className="h-8 w-[160px] text-xs shrink-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="row">{t("tabsHorizontal")}</SelectItem>
-              <SelectItem value="dropdown">{t("tabsDropdown")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <TabsModeToggle
+            mode={tabsMode}
+            horizontalLabel={t("tabsHorizontal")}
+            dropdownLabel={t("tabsDropdown")}
+            onChange={onTabsModeChange}
+          />
         ) : undefined
       }
       items={trees.map((tree) => ({ id: tree.id, label: tree.label }))}
@@ -106,122 +77,16 @@ function TreeTabsBar({
   );
 }
 
-function TreeBreadcrumbNav({
-  getNodeName,
-  onNavigateToIndex,
-  path,
-}: {
-  getNodeName: (nodeId: string) => string;
-  onNavigateToIndex: (index: number) => void;
-  path: string[];
-}) {
-  const t = useTranslations("elements.decisionTree");
-  return (
-    <div className="flex items-center gap-1.5 border-b px-3 py-2 bg-muted/20">
-      {path.length > 0 && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-6 shrink-0"
-          onClick={() => onNavigateToIndex(path.length - 1)}
-        >
-          <ChevronLeft className="size-3.5" />
-        </Button>
-      )}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            {path.length > 0 ? (
-              <BreadcrumbLink
-                className="cursor-pointer text-xs"
-                onClick={() => onNavigateToIndex(0)}
-              >
-                {t("root")}
-              </BreadcrumbLink>
-            ) : (
-              <BreadcrumbPage className="text-xs">{t("root")}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
-          {path.length >= 3 ? (
-            <>
-              <BreadcrumbSeparator>
-                <ChevronRight className="size-3" />
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="icon" variant="ghost" className="size-6">
-                      <BreadcrumbEllipsis className="size-4" />
-                      <span className="sr-only">{t("breadcrumbShowMore")}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuGroup>
-                      {path.slice(0, -1).map((nodeId, index) => (
-                        <DropdownMenuItem
-                          key={nodeId}
-                          onClick={() => onNavigateToIndex(index + 1)}
-                        >
-                          {getNodeName(nodeId)}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator>
-                <ChevronRight className="size-3" />
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <BreadcrumbPage className="text-xs truncate max-w-[120px]">
-                  {getNodeName(path.at(-1) ?? "")}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          ) : (
-            path.map((nodeId, index) => (
-              <span key={nodeId} className="contents">
-                <BreadcrumbSeparator>
-                  <ChevronRight className="size-3" />
-                </BreadcrumbSeparator>
-                <BreadcrumbItem>
-                  {index === path.length - 1 ? (
-                    <BreadcrumbPage className="text-xs truncate max-w-[120px]">
-                      {getNodeName(nodeId)}
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      className="cursor-pointer text-xs truncate max-w-[120px]"
-                      onClick={() => onNavigateToIndex(index + 1)}
-                    >
-                      {getNodeName(nodeId)}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </span>
-            ))
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-    </div>
-  );
-}
-
 function EmptyNodeDetailState() {
   const t = useTranslations("elements.decisionTree");
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
-      <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
-        <MousePointerClick className="size-5 text-muted-foreground" />
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="flex size-9 items-center justify-center rounded-full bg-muted/50">
+        <MousePointerClick className="size-4 text-muted-foreground" />
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-muted-foreground">
-          {t("emptyDetailTitle")}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">
-          {t("emptyDetailSubtitle")}
-        </p>
-      </div>
+      <p className="max-w-[18rem] text-sm text-muted-foreground">
+        {t("emptyDetailSubtitle")}
+      </p>
     </div>
   );
 }
@@ -243,39 +108,45 @@ function DecisionTreeWorkspace({
 }) {
   if (isMobile) {
     return (
-      <div className="flex flex-col border rounded-lg overflow-hidden">
+      <div className="flex flex-col overflow-hidden rounded-[20px] border border-border/70 bg-muted/10 shadow-xs">
         {treeTabs}
-        {breadcrumbNav}
-
-        <div className="overflow-y-auto" style={{ maxHeight: "70vh" }}>
-          <div className="border-b">{nodeListPanel}</div>
-          {currentNode && <div>{nodeDetailPanel}</div>}
-        </div>
+        <ScrollArea className="max-h-[70vh]">
+          <div className="space-y-1 p-1">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+              {breadcrumbNav}
+              <div className="min-h-0 flex-1">{nodeListPanel}</div>
+            </div>
+            {currentNode ? (
+              <div className="overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+                {nodeDetailPanel}
+              </div>
+            ) : null}
+          </div>
+        </ScrollArea>
       </div>
     );
   }
 
   return (
     <div
-      className="flex flex-col border rounded-lg overflow-hidden"
+      className="flex flex-col overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs"
       style={{ height: "500px" }}
     >
       {treeTabs}
-      {breadcrumbNav}
-
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden px-1 pb-1 pt-0.5">
         <ResizablePanelGroup
           orientation="horizontal"
           className="h-full min-w-0"
         >
           <ResizablePanel defaultSize={40} minSize={25}>
-            <div className="h-full min-w-0 border-r overflow-hidden">
-              {nodeListPanel}
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+              {breadcrumbNav}
+              <div className="min-h-0 flex-1">{nodeListPanel}</div>
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle className="w-1 cursor-col-resize bg-transparent after:hidden focus-visible:ring-0" />
           <ResizablePanel defaultSize={60} minSize={35}>
-            <div className="h-full min-w-0 overflow-hidden">
+            <div className="h-full min-w-0 overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
               {nodeDetailPanel}
             </div>
           </ResizablePanel>
@@ -459,13 +330,14 @@ export function DecisionTreeEditor({
     />
   );
 
-  const breadcrumbNav = (
-    <TreeBreadcrumbNav
-      getNodeName={getNodeName}
-      onNavigateToIndex={navigateToIndex}
-      path={path}
-    />
-  );
+  const breadcrumbNav =
+    path.length > 0 ? (
+      <DecisionTreeBreadcrumbNav
+        getNodeName={getNodeName}
+        onNavigateToIndex={navigateToIndex}
+        path={path}
+      />
+    ) : null;
 
   const nodeListPanel = (
     <NodeList

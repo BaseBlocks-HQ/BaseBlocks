@@ -7,9 +7,7 @@ import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import { DropZone } from "@/modules/shared/file-ui";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
-import { Input } from "@baseblocks/ui/input";
-import { Label } from "@baseblocks/ui/label";
-import { ImageIcon, Loader2, Pencil, Trash2, Upload } from "lucide-react";
+import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { Resizable } from "re-resizable";
 import { useEffect, useReducer, useRef } from "react";
@@ -48,32 +46,16 @@ function constrainImageDimensions(
 }
 
 interface ImageEditorState {
-  alt: string;
-  caption: string;
-  isEditingMeta: boolean;
   isResizing: boolean;
   maxWidth: number;
 }
 
 type ImageEditorAction =
-  | { type: "beginMetaEdit" }
-  | { type: "cancelMeta"; alt: string; caption: string }
-  | { type: "clearMeta" }
-  | { type: "saveMeta" }
-  | { type: "setAlt"; value: string }
-  | { type: "setCaption"; value: string }
   | { type: "setMaxWidth"; value: number }
-  | { type: "setResizing"; value: boolean }
-  | { type: "syncMeta"; alt: string; caption: string };
+  | { type: "setResizing"; value: boolean };
 
-function createImageEditorState(content: {
-  alt?: string;
-  caption?: string;
-}): ImageEditorState {
+function createImageEditorState(): ImageEditorState {
   return {
-    alt: content.alt ?? "",
-    caption: content.caption ?? "",
-    isEditingMeta: false,
     isResizing: false,
     maxWidth: 800,
   };
@@ -84,42 +66,10 @@ function imageEditorReducer(
   action: ImageEditorAction,
 ): ImageEditorState {
   switch (action.type) {
-    case "beginMetaEdit":
-      return { ...state, isEditingMeta: true };
-    case "cancelMeta":
-      return {
-        ...state,
-        alt: action.alt,
-        caption: action.caption,
-        isEditingMeta: false,
-      };
-    case "clearMeta":
-      return {
-        ...state,
-        alt: "",
-        caption: "",
-        isEditingMeta: false,
-      };
-    case "saveMeta":
-      return { ...state, isEditingMeta: false };
-    case "setAlt":
-      return { ...state, alt: action.value };
-    case "setCaption":
-      return { ...state, caption: action.value };
     case "setMaxWidth":
       return { ...state, maxWidth: action.value };
     case "setResizing":
       return { ...state, isResizing: action.value };
-    case "syncMeta":
-      if (state.isEditingMeta) {
-        return state;
-      }
-
-      return {
-        ...state,
-        alt: action.alt,
-        caption: action.caption,
-      };
     default:
       return state;
   }
@@ -176,71 +126,14 @@ function ImageUploadState({
   );
 }
 
-function ImageMetadataPanel({
-  alt,
-  caption,
-  id,
-  onAltChange,
-  onCancel,
-  onCaptionChange,
-  onSave,
-}: {
-  alt: string;
-  caption: string;
-  id: string;
-  onAltChange: (value: string) => void;
-  onCancel: () => void;
-  onCaptionChange: (value: string) => void;
-  onSave: () => void;
-}) {
-  return (
-    <div className="mt-3 p-3 bg-muted/50 rounded-lg border space-y-3">
-      <div className="space-y-1.5">
-        <Label htmlFor={`${id}-alt`} className="text-xs">
-          Alt text
-        </Label>
-        <Input
-          id={`${id}-alt`}
-          value={alt}
-          onChange={(event) => onAltChange(event.target.value)}
-          placeholder="Describe the image for accessibility"
-          className="text-sm"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor={`${id}-caption`} className="text-xs">
-          Caption
-        </Label>
-        <Input
-          id={`${id}-caption`}
-          value={caption}
-          onChange={(event) => onCaptionChange(event.target.value)}
-          placeholder="Optional caption to display below image"
-          className="text-sm"
-        />
-      </div>
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button size="sm" onClick={onSave}>
-          Save
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 function ImagePreview({
   content,
   fileInputRef,
   imageUrl,
-  isEditingMeta,
   isResizing,
   isSelected,
   isUploading,
   maxWidth,
-  onEditMetadata,
   onFilesAccepted,
   onRemoveImage,
   onResizeStart,
@@ -249,12 +142,10 @@ function ImagePreview({
   content: ElementEditorProps<"image">["content"];
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   imageUrl: string;
-  isEditingMeta: boolean;
   isResizing: boolean;
   isSelected: boolean;
   isUploading: boolean;
   maxWidth: number;
-  onEditMetadata: () => void;
   onFilesAccepted: (files: File[]) => void;
   onRemoveImage: () => void;
   onResizeStart: () => void;
@@ -349,10 +240,6 @@ function ImagePreview({
               )}
               Replace
             </Button>
-            <Button variant="secondary" size="sm" onClick={onEditMetadata}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
             <Button variant="destructive" size="sm" onClick={onRemoveImage}>
               <Trash2 className="h-4 w-4 mr-1" />
               Remove
@@ -361,7 +248,7 @@ function ImagePreview({
         )}
       </Resizable>
 
-      {content.caption && !isEditingMeta && (
+      {content.caption && (
         <figcaption className="mt-2 text-sm text-muted-foreground text-center">
           {content.caption}
         </figcaption>
@@ -371,7 +258,6 @@ function ImagePreview({
 }
 
 export function ImageEditor({
-  id,
   content,
   isSelected,
   onUpdate,
@@ -383,7 +269,7 @@ export function ImageEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, dispatch] = useReducer(
     imageEditorReducer,
-    content,
+    undefined,
     createImageEditorState,
   );
 
@@ -411,14 +297,6 @@ export function ImageEditor({
     observer.observe(container.parentElement);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    dispatch({
-      type: "syncMeta",
-      alt: content.alt ?? "",
-      caption: content.caption ?? "",
-    });
-  }, [content.alt, content.caption]);
 
   const getMaxWidth = () => {
     if (containerRef.current?.parentElement) {
@@ -471,27 +349,7 @@ export function ImageEditor({
       alt: "",
       caption: "",
     });
-    dispatch({ type: "clearMeta" });
     onSaveStatusChange?.("saved");
-  };
-
-  const handleSaveMeta = async () => {
-    onSaveStatusChange?.("saving");
-    await onUpdate({
-      ...content,
-      alt: state.alt,
-      caption: state.caption,
-    });
-    dispatch({ type: "saveMeta" });
-    onSaveStatusChange?.("saved");
-  };
-
-  const handleCancelMeta = () => {
-    dispatch({
-      type: "cancelMeta",
-      alt: content.alt ?? "",
-      caption: content.caption ?? "",
-    });
   };
 
   const handleResizeStop = async (
@@ -535,29 +393,15 @@ export function ImageEditor({
         content={content}
         fileInputRef={fileInputRef}
         imageUrl={imageUrl}
-        isEditingMeta={state.isEditingMeta}
         isResizing={state.isResizing}
         isSelected={Boolean(isSelected)}
         isUploading={isUploading}
         maxWidth={state.maxWidth}
-        onEditMetadata={() => dispatch({ type: "beginMetaEdit" })}
         onFilesAccepted={handleFilesAccepted}
         onRemoveImage={handleRemoveImage}
         onResizeStart={() => dispatch({ type: "setResizing", value: true })}
         onResizeStop={handleResizeStop}
       />
-
-      {state.isEditingMeta && (
-        <ImageMetadataPanel
-          alt={state.alt}
-          caption={state.caption}
-          id={id}
-          onAltChange={(value) => dispatch({ type: "setAlt", value })}
-          onCancel={handleCancelMeta}
-          onCaptionChange={(value) => dispatch({ type: "setCaption", value })}
-          onSave={handleSaveMeta}
-        />
-      )}
     </div>
   );
 }

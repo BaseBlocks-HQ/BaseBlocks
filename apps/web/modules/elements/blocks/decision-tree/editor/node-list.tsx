@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Check,
   ChevronRight,
@@ -172,8 +173,8 @@ export function NodeList({
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <div className="min-w-0 space-y-1.5 p-3">
+      <ScrollArea className="min-h-0 min-w-0 flex-1">
+        <div className="min-w-0 space-y-0.5 p-1.5">
           <DndProvider
             items={nodeIds}
             onDragEnd={handleDragEnd}
@@ -181,7 +182,7 @@ export function NodeList({
               const node = childNodes.find((n) => n.id === activeId);
               if (!node) return null;
               return (
-                <div className="flex items-center gap-2 rounded-lg border bg-background px-4 py-3 shadow-lg opacity-90">
+                <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-lg opacity-95">
                   <span className="text-sm font-medium truncate">
                     {node.name}
                   </span>
@@ -198,13 +199,13 @@ export function NodeList({
                 {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled by inner interactive buttons */}
                 <div
                   role="presentation"
-                  className="group flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-transparent px-4 py-3 cursor-pointer transition-colors hover:bg-primary/5 hover:border-primary/20"
+                  className="group flex w-full min-w-0 cursor-pointer items-center gap-1 overflow-hidden rounded-lg border border-transparent px-2 py-1.5 transition-colors hover:border-border/70 hover:bg-accent/40"
                   onClick={() => {
                     onNavigateInto(node.id);
                   }}
                 >
                   {editingId === node.id || autoEditNodeId === node.id ? (
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-1">
                       <Input
                         ref={(input) => handleEditInputRef(input, node)}
                         value={editingId === node.id ? editingName : node.name}
@@ -222,13 +223,13 @@ export function NodeList({
                             handleCancelEdit,
                           )
                         }
-                        className="h-8 text-sm"
+                        className="h-7 rounded-md text-sm"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-8 p-0 shrink-0"
+                        size="icon-xs"
+                        className="shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSaveEdit();
@@ -238,8 +239,8 @@ export function NodeList({
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-8 p-0 shrink-0"
+                        size="icon-xs"
+                        className="shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCancelEdit();
@@ -254,7 +255,7 @@ export function NodeList({
                         text={node.name}
                         className="w-0 flex-1 text-sm font-medium"
                       />
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex shrink-0 items-center gap-0">
                         <DropdownMenu
                           open={openMenuId === node.id}
                           onOpenChange={(open) =>
@@ -264,11 +265,11 @@ export function NodeList({
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="size-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity data-[state=open]:opacity-100"
+                              size="icon-xs"
+                              className="opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <MoreHorizontal className="size-3.5" />
+                              <MoreHorizontal className="size-3" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
@@ -306,7 +307,7 @@ export function NodeList({
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary" />
+                        <ChevronRight className="size-3.5 text-muted-foreground/80 transition-colors group-hover:text-foreground" />
                       </div>
                     </>
                   )}
@@ -316,69 +317,62 @@ export function NodeList({
           </DndProvider>
 
           {childNodes.length === 0 && !isAdding && (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 px-4">
-              <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center">
-                <GitFork className="size-5 text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+              <div className="flex size-9 items-center justify-center rounded-full bg-muted/50">
+                <GitFork className="size-4 text-muted-foreground" />
               </div>
-              <p className="text-center text-sm font-medium text-muted-foreground">
-                {t("noOptionsTitle")}
-              </p>
-              <p className="text-center text-xs text-muted-foreground/70">
+              <p className="max-w-[16rem] text-sm text-muted-foreground">
                 {t("noOptionsSubtitle")}
               </p>
             </div>
           )}
+        </div>
+      </ScrollArea>
 
-          {isAdding ? (
-            <div className="flex min-w-0 items-center gap-2 p-1">
-              <Input
-                ref={handleAddInputRef}
-                value={newName}
-                placeholder={t("optionNamePlaceholder")}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(event) =>
-                  handleInputKeyDown(event, handleAdd, () => {
-                    setIsAdding(false);
-                    setNewName("");
-                  })
-                }
-                className="h-9 text-sm"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="size-9 p-0 shrink-0"
-                onClick={handleAdd}
-              >
-                <Check className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="size-9 p-0 shrink-0"
-                onClick={() => {
+      <div className="p-1.5">
+        {isAdding ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <Input
+              ref={handleAddInputRef}
+              value={newName}
+              placeholder={t("optionNamePlaceholder")}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(event) =>
+                handleInputKeyDown(event, handleAdd, () => {
                   setIsAdding(false);
                   setNewName("");
-                }}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-          ) : (
+                })
+              }
+              className="h-9 rounded-lg text-sm"
+            />
+            <Button variant="ghost" size="icon-sm" onClick={handleAdd}>
+              <Check className="size-4" />
+            </Button>
             <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-2"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => {
-                pendingAddInputFocusRef.current = true;
-                setIsAdding(true);
+                setIsAdding(false);
+                setNewName("");
               }}
             >
-              <Plus className="size-4 mr-2" />
-              {t("addOption")}
+              <X className="size-4" />
             </Button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start rounded-xl border-dashed text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              pendingAddInputFocusRef.current = true;
+              setIsAdding(true);
+            }}
+          >
+            <Plus className="size-4" />
+            {t("addOption")}
+          </Button>
+        )}
       </div>
     </div>
   );

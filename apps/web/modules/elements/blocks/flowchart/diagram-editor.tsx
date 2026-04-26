@@ -1,6 +1,7 @@
 "use client";
 
 import { EditableTabs } from "@/modules/elements/components/editable-tabs";
+import { TabsModeToggle } from "@/modules/elements/components/tabs-mode-toggle";
 import type {
   FlowchartDiagram,
   TabsDisplayMode,
@@ -16,12 +17,10 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
 import { THEMES } from "beautiful-mermaid";
 import { ChevronDown, Palette, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -134,7 +133,7 @@ export function DiagramEditor({
           type="button"
           variant="ghost"
           size="sm"
-          className={`h-8 shrink-0 gap-1.5 px-2 text-xs ${
+          className={`h-7 shrink-0 gap-1 px-2 text-[11px] ${
             theme
               ? "text-primary hover:text-primary"
               : "text-muted-foreground hover:text-foreground"
@@ -181,29 +180,47 @@ export function DiagramEditor({
     </DropdownMenu>
   ) : null;
 
-  const tabsLayoutSelect =
+  const tabsModeToggle =
     !isMobile && onTabsModeChange ? (
-      <Select
-        value={tabsMode}
-        onValueChange={(value) => onTabsModeChange(value as "row" | "dropdown")}
-      >
-        <SelectTrigger className="h-8 w-[160px] shrink-0 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="row">{t("tabsHorizontal")}</SelectItem>
-          <SelectItem value="dropdown">{t("tabsDropdown")}</SelectItem>
-        </SelectContent>
-      </Select>
+      <TabsModeToggle
+        mode={tabsMode}
+        horizontalLabel={t("tabsHorizontal")}
+        dropdownLabel={t("tabsDropdown")}
+        onChange={onTabsModeChange}
+      />
     ) : null;
 
   const headerEnd =
-    themeMenu || tabsLayoutSelect ? (
-      <div className="flex shrink-0 items-center gap-1.5">
+    themeMenu || tabsModeToggle ? (
+      <div className="flex shrink-0 items-center gap-1">
         {themeMenu}
-        {tabsLayoutSelect}
+        {tabsModeToggle}
       </div>
     ) : undefined;
+
+  const codePanel = (
+    <div className="flex h-full min-h-[13rem] flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+      <textarea
+        value={activeDiagram?.mermaidCode ?? ""}
+        onChange={(e) => updateCode(e.target.value)}
+        className="min-h-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2.5 font-mono text-sm leading-6 outline-none placeholder:text-muted-foreground/50 focus-visible:ring-0"
+        placeholder={PLACEHOLDER}
+        spellCheck={false}
+      />
+    </div>
+  );
+
+  const previewPanel = (
+    <div className="flex h-full min-h-[13rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+      <MermaidDiagram
+        code={activeDiagram?.mermaidCode ?? ""}
+        embedded
+        fillHeight
+        contained={contained}
+        theme={theme}
+      />
+    </div>
+  );
 
   return (
     <div className="flex min-h-0 flex-col space-y-0">
@@ -230,32 +247,26 @@ export function DiagramEditor({
         tabsMode={tabsMode}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col border-t md:min-h-[min(24rem,50vh)] md:flex-row md:items-stretch">
-        <div className="flex h-52 shrink-0 flex-col border-b bg-muted/15 md:h-auto md:min-h-0 md:w-[min(42%,28rem)] md:min-w-[220px] md:max-w-xl md:border-b-0 md:border-r">
-          <div className="shrink-0 border-b px-3 py-2 text-xs font-medium text-muted-foreground">
-            {t("mermaidCode")}
-          </div>
-          <textarea
-            value={activeDiagram?.mermaidCode ?? ""}
-            onChange={(e) => updateCode(e.target.value)}
-            className="min-h-0 flex-1 resize-none border-0 bg-transparent p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-            placeholder={PLACEHOLDER}
-            spellCheck={false}
-          />
-        </div>
-        <div className="flex min-h-[14rem] min-w-0 flex-1 flex-col overflow-hidden bg-background md:min-h-0">
-          {activeDiagram?.mermaidCode?.trim() ? (
-            <MermaidDiagram
-              code={activeDiagram.mermaidCode}
-              contained={contained}
-              theme={theme}
-            />
-          ) : (
-            <div className="flex h-full min-h-[12rem] items-center justify-center px-4 text-sm text-muted-foreground">
-              {t("previewPlaceholder")}
-            </div>
-          )}
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 border-t-0 bg-transparent px-1 pb-1 pt-0.5 md:min-h-[min(24rem,50vh)]">
+        {isMobile ? (
+          <>
+            {previewPanel}
+            {codePanel}
+          </>
+        ) : (
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="min-h-0 min-w-0 flex-1"
+          >
+            <ResizablePanel defaultSize={34} minSize={22}>
+              <div className="h-full min-w-0">{codePanel}</div>
+            </ResizablePanel>
+            <ResizableHandle className="w-1 cursor-col-resize bg-transparent after:hidden focus-visible:ring-0" />
+            <ResizablePanel defaultSize={66} minSize={38}>
+              <div className="h-full min-w-0">{previewPanel}</div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
     </div>
   );

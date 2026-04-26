@@ -26,7 +26,7 @@ export function DiagramViewer({
   const showTabs = diagrams.length > 1;
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-0">
+    <div className="w-full min-w-0 max-w-full space-y-0 overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs">
       {showTabs && (
         <ViewerTabsBar
           activeId={active.id}
@@ -35,11 +35,13 @@ export function DiagramViewer({
           tabsMode={tabsMode}
         />
       )}
-      <MermaidDiagram
-        code={active.mermaidCode}
-        contained={contained}
-        theme={theme}
-      />
+      <div className="p-1">
+        <MermaidDiagram
+          code={active.mermaidCode}
+          contained={contained}
+          theme={theme}
+        />
+      </div>
     </div>
   );
 }

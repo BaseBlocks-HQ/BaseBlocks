@@ -119,12 +119,12 @@ export function EditableTabs({
   }
 
   return (
-    <div className="flex min-w-0 items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+    <div className="flex min-w-0 items-center justify-between gap-1 px-1.5 py-1">
       <div
         className={
           tabsMode === "dropdown"
-            ? "flex min-w-0 flex-1 items-center gap-2"
-            : "group/tabbar flex min-w-0 flex-1 items-center justify-start gap-2"
+            ? "flex min-w-0 flex-1 items-center gap-1.5"
+            : "group/tabbar flex min-w-0 flex-1 items-center justify-start gap-1.5"
         }
       >
         {tabsMode === "dropdown" ? (
@@ -139,12 +139,12 @@ export function EditableTabs({
                   if (e.key === "Enter") commitRename();
                   if (e.key === "Escape") setEditingId(null);
                 }}
-                className="h-8 min-w-0 flex-1 text-xs"
+                className="h-7 min-w-0 flex-1 text-xs"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <Select value={activeItem?.id} onValueChange={onActiveChange}>
-                <SelectTrigger className="h-8 min-w-0 flex-1 text-xs">
+                <SelectTrigger className="h-7 w-fit min-w-[7rem] max-w-[14rem] text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,7 +161,7 @@ export function EditableTabs({
               <>
                 <button
                   type="button"
-                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   onClick={() => startRename(activeItem.id)}
                   title={renameLabel}
                 >
@@ -170,7 +170,7 @@ export function EditableTabs({
                 {onRemove && (
                   <button
                     type="button"
-                    className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     onClick={() => onRemove(activeItem.id)}
                     title={removeLabel}
                   >
@@ -183,8 +183,8 @@ export function EditableTabs({
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              size="icon-xs"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
               onClick={onAdd}
               aria-label={addLabel}
             >
@@ -204,7 +204,7 @@ export function EditableTabs({
                     <TabsTrigger
                       key={item.id}
                       value={item.id}
-                      className="group/tab flex max-w-[12rem] shrink-0 flex-none items-center gap-1.5 px-3"
+                      className="group/tab flex max-w-[12rem] shrink-0 flex-none items-center gap-1.5 px-2.5"
                     >
                       {editingId === item.id ? (
                         <Input
@@ -277,8 +277,8 @@ export function EditableTabs({
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+              size="icon-xs"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
               onClick={onAdd}
               aria-label={addLabel}
             >

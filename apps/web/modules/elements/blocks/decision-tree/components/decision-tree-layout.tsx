@@ -16,7 +16,7 @@ function DecisionTreeShell({
   children,
 }: DecisionTreeShellProps) {
   return (
-    <div className="w-full min-w-0 border rounded-lg overflow-hidden">
+    <div className="not-prose w-full min-w-0 overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs">
       {selector}
       {navigationBar}
       {children}
@@ -37,16 +37,16 @@ export function DecisionTreeMobileDetail({
 }) {
   return (
     <DecisionTreeShell selector={selector}>
-      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+      <div className="flex items-center gap-1.5 px-2 py-1">
         <Button
           variant="ghost"
-          size="icon"
-          className="size-7 shrink-0"
+          size="icon-xs"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
           onClick={onBack}
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="text-sm font-medium truncate">{title}</span>
+        <span className="truncate text-sm font-medium">{title}</span>
       </div>
       {children}
     </DecisionTreeShell>
@@ -60,7 +60,7 @@ export function DecisionTreeOptionsPanel({
 }: DecisionTreeShellProps) {
   return (
     <DecisionTreeShell selector={selector} navigationBar={navigationBar}>
-      <div className="p-3">{children}</div>
+      <div className="p-1.5">{children}</div>
     </DecisionTreeShell>
   );
 }
@@ -74,8 +74,8 @@ export function DecisionTreeCenteredPanel({
 }) {
   return (
     <DecisionTreeShell selector={selector}>
-      <div className="flex items-center justify-center py-8">
-        <div className="w-full max-w-lg px-4">{children}</div>
+      <div className="flex items-center justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-2xl">{children}</div>
       </div>
     </DecisionTreeShell>
   );
@@ -94,11 +94,13 @@ export function DecisionTreeSplitPanel({
 }) {
   return (
     <DecisionTreeShell selector={selector} navigationBar={navigationBar}>
-      <div className="flex min-h-[300px]">
-        <div className="w-[280px] shrink-0 border-r overflow-y-auto">
+      <div className="flex min-h-[340px] flex-col gap-1.5 p-1.5 lg:min-h-[360px] lg:flex-row">
+        <div className="overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs lg:w-[288px] lg:shrink-0">
           {options}
         </div>
-        <div className="flex-1 min-w-0 overflow-y-auto">{detail}</div>
+        <div className="min-w-0 flex-1 overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+          {detail}
+        </div>
       </div>
     </DecisionTreeShell>
   );

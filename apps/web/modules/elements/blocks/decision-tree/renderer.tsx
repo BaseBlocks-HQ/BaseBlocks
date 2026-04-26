@@ -2,11 +2,10 @@
 
 import type { ElementRendererProps } from "@/modules/elements/framework/registry";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
-import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
-import { ChevronLeft } from "lucide-react";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useState } from "react";
-import { DecisionTreeBreadcrumb } from "./components/decision-tree-breadcrumb";
+import { DecisionTreeBreadcrumbNav } from "./components/decision-tree-breadcrumb";
 import {
   DecisionTreeDetailPrompt,
   DecisionTreeEmptyState,
@@ -42,7 +41,6 @@ export function DecisionTreeRenderer({
     selectedNodeId,
     selectNode,
     navigateInto,
-    navigateBack,
     navigateToIndex,
   } = useTreeNavigation();
 
@@ -96,22 +94,36 @@ export function DecisionTreeRenderer({
 
   const navigationBar =
     path.length > 0 ? (
-      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7 shrink-0"
-          onClick={navigateBack}
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-        <DecisionTreeBreadcrumb
-          path={path}
-          getNodeName={getNodeName}
-          onNavigateToIndex={navigateToIndex}
-        />
-      </div>
+      <DecisionTreeBreadcrumbNav
+        path={path}
+        getNodeName={getNodeName}
+        onNavigateToIndex={navigateToIndex}
+      />
     ) : null;
+
+  const optionsContent =
+    visibleNodes.length > 0 ? (
+      <OptionList
+        nodes={visibleNodes}
+        allNodes={nodes}
+        onSelect={handleSelectNode}
+        selectedNodeId={selectedNodeId}
+        compact={!isInitialState || !isMobile}
+      />
+    ) : isInitialState ? (
+      <DecisionTreeEmptyState />
+    ) : (
+      <DecisionTreeEndState onStartOver={handleStartOver} />
+    );
+
+  const stackedOptionsPanel = (
+    <div className="flex h-full min-h-0 flex-col">
+      {navigationBar}
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="p-1">{optionsContent}</div>
+      </ScrollArea>
+    </div>
+  );
 
   if (isMobile) {
     if (showMobileDetail) {
@@ -127,22 +139,8 @@ export function DecisionTreeRenderer({
     }
 
     return (
-      <DecisionTreeOptionsPanel
-        selector={selector}
-        navigationBar={navigationBar}
-      >
-        {visibleNodes.length > 0 ? (
-          <OptionList
-            nodes={visibleNodes}
-            allNodes={nodes}
-            onSelect={handleSelectNode}
-            selectedNodeId={selectedNodeId}
-          />
-        ) : isInitialState ? (
-          <DecisionTreeEmptyState />
-        ) : (
-          <DecisionTreeEndState onStartOver={handleStartOver} />
-        )}
+      <DecisionTreeOptionsPanel selector={selector} navigationBar={undefined}>
+        {stackedOptionsPanel}
       </DecisionTreeOptionsPanel>
     );
   }
@@ -155,6 +153,7 @@ export function DecisionTreeRenderer({
             nodes={visibleNodes}
             allNodes={nodes}
             onSelect={handleSelectNode}
+            compact
           />
         ) : (
           <DecisionTreeEmptyState />
@@ -166,20 +165,8 @@ export function DecisionTreeRenderer({
   return (
     <DecisionTreeSplitPanel
       selector={selector}
-      navigationBar={navigationBar}
-      options={
-        visibleNodes.length > 0 ? (
-          <OptionList
-            nodes={visibleNodes}
-            allNodes={nodes}
-            onSelect={handleSelectNode}
-            selectedNodeId={selectedNodeId}
-            compact
-          />
-        ) : (
-          <DecisionTreeEndState onStartOver={handleStartOver} />
-        )
-      }
+      navigationBar={undefined}
+      options={stackedOptionsPanel}
       detail={
         hasDetailContent && detailNode ? (
           <DetailPanel node={detailNode} />

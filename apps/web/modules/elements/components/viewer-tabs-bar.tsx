@@ -44,13 +44,13 @@ export function ViewerTabsBar({
     <div
       className={
         tabsMode === "dropdown"
-          ? "flex w-full min-w-0 border-b bg-muted/30 px-3 py-2"
-          : "flex min-w-0 items-center justify-start border-b bg-muted/30 px-3 py-2"
+          ? "flex w-full min-w-0 px-1.5 py-1"
+          : "flex min-w-0 items-center justify-start px-1.5 py-1"
       }
     >
       {tabsMode === "dropdown" ? (
         <Select value={activeItem?.id} onValueChange={onActiveChange}>
-          <SelectTrigger className="h-8 w-full min-w-0 text-xs">
+          <SelectTrigger className="h-7 w-fit min-w-[7rem] max-w-[14rem] text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -73,7 +73,7 @@ export function ViewerTabsBar({
                 <TabsTrigger
                   key={item.id}
                   value={item.id}
-                  className="max-w-[12rem] shrink-0 flex-none px-3"
+                  className="max-w-[12rem] shrink-0 flex-none px-2.5"
                 >
                   <span className="select-none truncate">{item.label}</span>
                 </TabsTrigger>

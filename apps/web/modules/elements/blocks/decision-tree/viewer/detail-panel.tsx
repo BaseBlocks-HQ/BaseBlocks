@@ -4,6 +4,7 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
 import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -18,16 +19,14 @@ export function DetailPanel({ node }: DetailPanelProps) {
   const document = getNodeDocument(node);
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="px-5 py-5 space-y-4 sm:px-6 sm:py-6 sm:space-y-5">
-        <h2 className="text-xl font-bold text-primary sm:text-2xl">
-          {node.name}
-        </h2>
+    <ScrollArea className="h-full">
+      <div className="w-full space-y-2 px-4 py-3 sm:px-5 sm:py-4">
+        <h2 className="text-lg font-semibold text-foreground">{node.name}</h2>
         {document.length > 0 && (
           <DetailContent key={node.id} document={document} />
         )}
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 

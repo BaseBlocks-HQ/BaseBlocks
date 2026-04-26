@@ -154,7 +154,7 @@ export const DEFAULT_BLOCK_CONTENT: Record<BlockType, BlockContentUnion> = {
   heading: { text: "", level: 2 },
   paragraph: { text: "" },
   callout: { text: "", variant: "info" },
-  code: { text: "", language: "typescript" },
+  code: { text: "", language: "plaintext" },
   divider: {},
   "block-spacer": { height: "medium" },
   file: {},

@@ -1,8 +1,28 @@
 "use client";
+
+import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
-import { Code } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@baseblocks/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@baseblocks/ui/select";
+import { cssLanguage } from "@codemirror/lang-css";
+import { htmlLanguage } from "@codemirror/lang-html";
+import { javascript } from "@codemirror/lang-javascript";
+import { jsonLanguage } from "@codemirror/lang-json";
+import { markdownLanguage } from "@codemirror/lang-markdown";
+import { LanguageSupport } from "@codemirror/language";
+import { oneDark } from "@codemirror/theme-one-dark";
+import CodeMirror from "@uiw/react-codemirror";
+import { Check, ClipboardCopy, Code } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type {
   ElementEditorProps,
   ElementRendererProps,
@@ -12,13 +32,98 @@ import { themedPickerImagePreview } from "../framework/themed-picker-image";
 
 type TokenKind = "comment" | "string" | "keyword" | "number" | "plain";
 
-const KEYWORD_PATTERN =
-  /\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|class|new|import|export|from|try|catch|finally|throw|await|async|type|interface)\b/;
-const STRING_PATTERN = /^(['"`])(?:\\.|(?!\1).)*\1/;
-const NUMBER_PATTERN = /^\b\d+(\.\d+)?\b/;
+type CodeLanguageOption = {
+  label: string;
+  value: string;
+};
 
-function tokenizeLine(line: string): Array<{ value: string; kind: TokenKind }> {
-  const tokens: Array<{ value: string; kind: TokenKind }> = [];
+const CODE_EDITOR_MIN_HEIGHT = "192px";
+
+const CODE_LANGUAGE_OPTIONS: CodeLanguageOption[] = [
+  { value: "plaintext", label: "Plain text" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "tsx", label: "TSX" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "jsx", label: "JSX" },
+  { value: "json", label: "JSON" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "markdown", label: "Markdown" },
+];
+
+const KEYWORD_PATTERN =
+  /\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|class|new|import|export|from|try|catch|finally|throw|await|async|type|interface|extends|implements|enum|public|private|protected|static)\b/;
+const STRING_PATTERN = /^(['"`])(?:\\.|(?!\1).)*\1/;
+const NUMBER_PATTERN = /^\d+(?:\.\d+)?\b/;
+
+const codeEditorClassName =
+  "[&_.cm-editor]:border-0 [&_.cm-editor]:bg-transparent [&_.cm-editor]:outline-none [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:px-0 [&_.cm-scroller]:pt-4 [&_.cm-scroller]:pb-10 [&_.cm-scroller]:font-mono [&_.cm-gutters]:border-0 [&_.cm-gutters]:bg-transparent [&_.cm-gutters]:pr-2 [&_.cm-gutter]:font-mono [&_.cm-gutter]:text-sm [&_.cm-gutter]:leading-6 [&_.cm-gutterElement]:font-mono [&_.cm-gutterElement]:text-sm [&_.cm-gutterElement]:leading-6 [&_.cm-gutterElement]:text-muted-foreground/70 [&_.cm-content]:min-h-[192px] [&_.cm-content]:font-mono [&_.cm-content]:text-sm [&_.cm-content]:leading-6 [&_.cm-line]:px-4 [&_.cm-line]:leading-6 [&_.cm-activeLine]:bg-transparent [&_.cm-activeLineGutter]:bg-transparent [&_.cm-selectionBackground]:!bg-primary/20 [&_.cm-cursor]:border-l-foreground";
+
+const codeOverlayControlClassName = "absolute right-2 bottom-2 z-10";
+
+const codeOverlaySurfaceClassName =
+  "border-border/70 bg-background/90 shadow-sm backdrop-blur";
+
+export function normalizeCodeText(text: string | undefined): string {
+  return (text ?? "").replace(/\r\n?/g, "\n");
+}
+
+export function getCodeLineCount(text: string): number {
+  return text === "" ? 1 : text.split("\n").length;
+}
+
+export function getCodeLanguageValue(language: string | undefined): string {
+  const normalized = language?.trim().toLowerCase();
+  return normalized && normalized.length > 0 ? normalized : "plaintext";
+}
+
+export function getDisplayLanguage(language: string | undefined): string {
+  const normalized = getCodeLanguageValue(language);
+  const matchedOption = CODE_LANGUAGE_OPTIONS.find(
+    (option) => option.value === normalized,
+  );
+
+  if (matchedOption) {
+    return matchedOption.label;
+  }
+
+  return normalized
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function getLanguageExtension(language: string): LanguageSupport | null {
+  switch (language) {
+    case "typescript":
+    case "ts":
+      return javascript({ typescript: true });
+    case "tsx":
+      return javascript({ jsx: true, typescript: true });
+    case "javascript":
+    case "js":
+      return javascript();
+    case "jsx":
+      return javascript({ jsx: true });
+    case "json":
+      return new LanguageSupport(jsonLanguage);
+    case "html":
+      return new LanguageSupport(htmlLanguage);
+    case "css":
+      return new LanguageSupport(cssLanguage);
+    case "markdown":
+    case "md":
+      return new LanguageSupport(markdownLanguage);
+    default:
+      return null;
+  }
+}
+
+export function tokenizeCodeLine(
+  line: string,
+): Array<{ kind: TokenKind; value: string }> {
+  const tokens: Array<{ kind: TokenKind; value: string }> = [];
   let rest = line;
 
   while (rest.length > 0) {
@@ -43,7 +148,7 @@ function tokenizeLine(line: string): Array<{ value: string; kind: TokenKind }> {
     }
 
     const numberMatch = rest.match(NUMBER_PATTERN);
-    if (numberMatch) {
+    if (numberMatch?.index === 0) {
       tokens.push({ value: numberMatch[0], kind: "number" });
       rest = rest.slice(numberMatch[0].length);
       continue;
@@ -55,27 +160,12 @@ function tokenizeLine(line: string): Array<{ value: string; kind: TokenKind }> {
       continue;
     }
 
-    const [firstChar = ""] = rest;
-    tokens.push({ value: firstChar, kind: "plain" });
+    const [firstCharacter = ""] = rest;
+    tokens.push({ value: firstCharacter, kind: "plain" });
     rest = rest.slice(1);
   }
 
   return tokens;
-}
-
-function tokenClassName(kind: TokenKind) {
-  switch (kind) {
-    case "comment":
-      return "text-zinc-500 dark:text-zinc-400";
-    case "string":
-      return "text-emerald-700 dark:text-emerald-300";
-    case "keyword":
-      return "text-indigo-700 dark:text-indigo-300";
-    case "number":
-      return "text-amber-700 dark:text-amber-300";
-    default:
-      return "text-foreground";
-  }
 }
 
 function CodeEditor({
@@ -83,91 +173,159 @@ function CodeEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"code">) {
-  const [localText, setLocalText] = useState(content.text || "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { resolvedTheme } = useTheme();
   const save = useAutoSave(onUpdate, onSaveStatusChange);
+  const [localText, setLocalText] = useState(() =>
+    normalizeCodeText(content.text),
+  );
+  const [localLanguage, setLocalLanguage] = useState(() =>
+    getCodeLanguageValue(content.language),
+  );
 
-  const autoResize = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, []);
+  const editorExtensions = useMemo(() => {
+    const languageExtension = getLanguageExtension(localLanguage);
+    return languageExtension ? [languageExtension] : [];
+  }, [localLanguage]);
 
-  useEffect(() => {
-    requestAnimationFrame(autoResize);
-  }, [autoResize, localText]);
+  const knownLanguage = CODE_LANGUAGE_OPTIONS.some(
+    (option) => option.value === localLanguage,
+  );
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setLocalText(newText);
-    onSaveStatusChange?.("pending");
-    save({ ...content, text: newText });
-  };
+  const saveContent = useCallback(
+    (nextText: string, nextLanguage: string) => {
+      const normalizedText = normalizeCodeText(nextText);
+      setLocalText(normalizedText);
+      setLocalLanguage(nextLanguage);
+      onSaveStatusChange?.("pending");
+      save({ ...content, text: normalizedText, language: nextLanguage });
+    },
+    [content, onSaveStatusChange, save],
+  );
 
   return (
-    <div className="bg-muted text-foreground rounded-lg p-4 font-mono text-sm transition-colors">
-      <div className="relative">
-        <pre
-          aria-hidden
-          className="pointer-events-none whitespace-pre-wrap break-words pr-1"
-        >
-          <code className="text-sm font-mono">
-            {(localText || " ").split("\n").map((line, lineIndex) => {
-              const tokens = tokenizeLine(line);
-              return (
-                <span className="block" key={`editor-line-${lineIndex}`}>
-                  {tokens.map((token, tokenIndex) => (
-                    <span
-                      className={tokenClassName(token.kind)}
-                      key={`editor-token-${lineIndex}-${tokenIndex}`}
-                    >
-                      {token.value}
-                    </span>
-                  ))}
-                </span>
-              );
-            })}
-          </code>
-        </pre>
-      <textarea
-        ref={textareaRef}
+    <div className="not-prose relative overflow-hidden rounded-xl border border-border/70 bg-muted/35 shadow-sm">
+      <CodeMirror
         value={localText}
-        onChange={handleChange}
-        className="absolute inset-0 w-full resize-none border-none bg-transparent text-transparent caret-foreground focus:outline-none overflow-hidden placeholder:text-muted-foreground"
-        placeholder="// Code here..."
-        spellCheck={false}
-        rows={1}
+        minHeight={CODE_EDITOR_MIN_HEIGHT}
+        theme={resolvedTheme === "dark" ? oneDark : "light"}
+        extensions={editorExtensions}
+        indentWithTab
+        placeholder="// Add code here"
+        basicSetup={{
+          lineNumbers: true,
+          foldGutter: false,
+          dropCursor: false,
+          allowMultipleSelections: false,
+          autocompletion: false,
+          highlightActiveLine: false,
+          highlightActiveLineGutter: false,
+          highlightSelectionMatches: false,
+          searchKeymap: false,
+          foldKeymap: false,
+          completionKeymap: false,
+          lintKeymap: false,
+          tabSize: 2,
+        }}
+        className={cn(codeEditorClassName)}
+        onChange={(value) => saveContent(value, localLanguage)}
       />
+      <div className={codeOverlayControlClassName}>
+        <Select
+          value={localLanguage}
+          onValueChange={(nextLanguage) => saveContent(localText, nextLanguage)}
+        >
+          <SelectTrigger
+            size="sm"
+            className={cn(
+              "h-8 rounded-lg text-xs",
+              codeOverlaySurfaceClassName,
+            )}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {!knownLanguage ? (
+              <SelectItem value={localLanguage}>
+                {getDisplayLanguage(localLanguage)}
+              </SelectItem>
+            ) : null}
+            {CODE_LANGUAGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
 }
 
 function CodeRenderer({ content }: ElementRendererProps<"code">) {
-  const lines = (content.text || "").split("\n");
+  const { resolvedTheme } = useTheme();
+  const [isCopied, setIsCopied] = useState(false);
+  const text = normalizeCodeText(content.text);
+  const language = getCodeLanguageValue(content.language);
+
+  const editorExtensions = useMemo(() => {
+    const languageExtension = getLanguageExtension(language);
+    return languageExtension ? [languageExtension] : [];
+  }, [language]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 1500);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
+  };
 
   return (
-    <pre className="my-4 p-4 bg-muted rounded-lg overflow-x-auto">
-      <code className="text-sm font-mono whitespace-pre-wrap text-foreground">
-        {lines.map((line, lineIndex) => {
-          const tokens = tokenizeLine(line);
-          return (
-            <span className="block" key={`line-${lineIndex}`}>
-              {tokens.map((token, tokenIndex) => (
-                <span
-                  className={tokenClassName(token.kind)}
-                  key={`token-${lineIndex}-${tokenIndex}`}
-                >
-                  {token.value}
-                </span>
-              ))}
-            </span>
-          );
-        })}
-      </code>
-    </pre>
+    <div className="not-prose relative my-4 overflow-hidden rounded-xl border border-border/70 bg-muted/35 shadow-sm">
+      <CodeMirror
+        value={text}
+        minHeight={CODE_EDITOR_MIN_HEIGHT}
+        theme={resolvedTheme === "dark" ? oneDark : "light"}
+        extensions={editorExtensions}
+        basicSetup={{
+          lineNumbers: true,
+          foldGutter: false,
+          dropCursor: false,
+          allowMultipleSelections: false,
+          autocompletion: false,
+          highlightActiveLine: false,
+          highlightActiveLineGutter: false,
+          highlightSelectionMatches: false,
+          searchKeymap: false,
+          foldKeymap: false,
+          completionKeymap: false,
+          lintKeymap: false,
+          tabSize: 2,
+        }}
+        editable={false}
+        readOnly
+        className={cn(codeEditorClassName)}
+      />
+      <div className={codeOverlayControlClassName}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={handleCopy}
+          className={cn("rounded-lg", codeOverlaySurfaceClassName)}
+          aria-label={isCopied ? "Copied" : "Copy code"}
+        >
+          {isCopied ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <ClipboardCopy className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
 
