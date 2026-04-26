@@ -11,7 +11,6 @@ import type {
   LibraryExplorerOptions,
   LibraryFile,
 } from "@/modules/library/types";
-import { SplitViewPanel } from "@/modules/shared/components/split-view-panel";
 import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { Skeleton } from "@baseblocks/ui/skeleton";
@@ -298,12 +297,6 @@ export function LibraryExplorer({
       uploadDisabled={uploadState?.isAnyUploading}
     />
   );
-  const treePanel = (
-    <SplitViewPanel className="rounded-[1.5rem] bg-background/70">
-      {tree}
-    </SplitViewPanel>
-  );
-
   const fileViewer = openFile ? (
     <SplitViewShell
       className="min-h-0 flex-1"
@@ -318,15 +311,16 @@ export function LibraryExplorer({
       }
       detailCollapsedOnMobile
       detailDefaultSize={64}
-      detailSurfaceClassName="rounded-[1.5rem] bg-background"
-      insetClassName="gap-3 p-3"
-      main={treePanel}
+      detailSurfaceClassName="rounded-none border-0 bg-transparent shadow-none backdrop-blur-none"
+      main={tree}
       mainDefaultSize={36}
+      mainPanelClassName="border-r"
       minDetailSize={38}
       minMainSize={24}
+      visibleHandle
     />
   ) : (
-    <div className="min-h-0 flex-1 p-3">{treePanel}</div>
+    <div className="min-h-0 flex-1">{tree}</div>
   );
   return (
     <>
@@ -337,7 +331,7 @@ export function LibraryExplorer({
         uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(
-          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-[2rem] border border-solid border-border/70 bg-card/95 shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_24px_60px_hsl(var(--foreground)/0.08)] transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-primary/25 hover:bg-card",
+          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
           options.embedded ? "h-[32rem]" : "h-full flex-1",
           className,
         )}

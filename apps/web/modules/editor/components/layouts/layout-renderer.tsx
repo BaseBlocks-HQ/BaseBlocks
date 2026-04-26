@@ -13,6 +13,7 @@ import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import { type ButtonHTMLAttributes, type Ref, useState } from "react";
+import { getEditorLayoutSurfaceClassName } from "./editor-chrome";
 import {
   editorControlRowClassName,
   editorControlZoneStyle,
@@ -66,6 +67,7 @@ export function LayoutRenderer({
   const [isHovered, setIsHovered] = useState(false);
   const gridStyle = getLayoutGridStyle(layout.type, layout.settings);
   const spacerHeight = layout.settings.spacerHeight ?? "medium";
+  const hasSelectedChild = selectedSlotId !== null;
 
   const showControls = !selectedBlockId && (isHovered || isSelected);
 
@@ -123,7 +125,13 @@ export function LayoutRenderer({
         </div>
       )}
 
-      <div className="rounded-md transition-colors hover:bg-muted/20">
+      <div
+        className={getEditorLayoutSurfaceClassName({
+          isHovered,
+          isSelected,
+          hasSelectedChild,
+        })}
+      >
         {layout.type === "spacer" ? (
           <div
             className={cn(

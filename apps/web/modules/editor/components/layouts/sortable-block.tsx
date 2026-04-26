@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { createElement, useState } from "react";
 import { toast } from "sonner";
 import { editorFlyoutSurfaceClassName } from "../editor-flyout-surface";
+import { getEditorBlockSurfaceClassName } from "./editor-chrome";
 import {
   editorControlRowClassName,
   editorControlZoneStyle,
@@ -197,16 +198,23 @@ export function SortableBlock({
         </div>
       )}
 
-      <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
-        <ElementEditorWrapper
-          id={block.id}
-          type={block.type as ElementType}
-          content={block.content}
-          isSelected={isSelected}
-          onUpdate={onUpdate}
-          onRemove={onRemove}
-        />
-      </LayoutContextProvider>
+      <div
+        className={getEditorBlockSurfaceClassName({
+          isSelected,
+          type: blockType,
+        })}
+      >
+        <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
+          <ElementEditorWrapper
+            id={block.id}
+            type={block.type as ElementType}
+            content={block.content}
+            isSelected={isSelected}
+            onUpdate={onUpdate}
+            onRemove={onRemove}
+          />
+        </LayoutContextProvider>
+      </div>
     </div>
   );
 }
