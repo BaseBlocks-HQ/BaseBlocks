@@ -30,7 +30,7 @@ function CalloutEditor({
 
   useEffect(() => {
     requestAnimationFrame(autoResize);
-  }, [autoResize]);
+  }, [autoResize, localText]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
@@ -40,7 +40,7 @@ function CalloutEditor({
   };
 
   return (
-    <div className="bg-muted border border-primary/30 rounded-lg p-4 transition-colors hover:border-primary/50">
+    <div className="bg-muted rounded-lg p-4 transition-colors">
       <textarea
         ref={textareaRef}
         value={localText}
@@ -55,8 +55,8 @@ function CalloutEditor({
 
 function CalloutRenderer({ content }: ElementRendererProps<"callout">) {
   return (
-    <div className="my-4 bg-muted border-l-4 border-primary rounded-lg p-4">
-      <p className="whitespace-pre-wrap">{content.text}</p>
+    <div className="my-4 bg-muted rounded-lg p-4">
+      <p className="whitespace-pre-wrap text-foreground">{content.text}</p>
     </div>
   );
 }
