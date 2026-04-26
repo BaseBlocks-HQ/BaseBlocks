@@ -10,9 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Earth } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { IconLocation } from "nucleo-glass";
 
 const languageNames: Record<Locale, string> = {
   fr: "Français",
@@ -53,7 +52,7 @@ export function LanguageSwitcher({
             type="button"
             variant="ghost"
           >
-            <IconLocation className="h-4 w-4 shrink-0" />
+            <Earth className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             <span className="min-w-0 flex-1 truncate text-left text-foreground">
               {languageNames[locale]}
             </span>
@@ -61,12 +60,15 @@ export function LanguageSwitcher({
           </Button>
         ) : (
           <Button
-            className={cn(triggerClassName)}
+            className={cn(
+              "text-muted-foreground hover:text-foreground",
+              triggerClassName,
+            )}
             size="icon"
             title={t("select")}
             variant="ghost"
           >
-            <IconLocation className="h-4 w-4" />
+            <Earth className="h-4 w-4" strokeWidth={1.75} />
             <span className="sr-only">{t("select")}</span>
           </Button>
         )}

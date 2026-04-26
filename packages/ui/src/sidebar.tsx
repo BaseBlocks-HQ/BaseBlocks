@@ -2,7 +2,6 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "./button";
@@ -31,6 +30,42 @@ const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+
+/** Softer than Lucide `panel-left`: inset divider bar, not edge-to-edge; thinner stroke. */
+function SidebarPanelToggleIcon({
+  className,
+  ...props
+}: React.ComponentProps<"svg">) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={cn("size-[1.1rem] shrink-0", className)}
+      {...props}
+    >
+      <rect
+        x="4.5"
+        y="5"
+        width="15"
+        height="14"
+        rx="3.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="7.75"
+        y1="8.25"
+        x2="7.75"
+        y2="15.75"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
 
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
@@ -279,14 +314,17 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-7", className)}
+      className={cn(
+        "size-7 text-muted-foreground hover:text-foreground",
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <SidebarPanelToggleIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

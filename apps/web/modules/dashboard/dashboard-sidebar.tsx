@@ -10,7 +10,12 @@ import {
 } from "@/lib/routes/team-routes";
 import { AccountSettings } from "@/modules/dashboard/components/account-settings";
 import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
+import {
+  HouseNoDoorIcon,
+  SIDEBAR_ICON_STROKE,
+} from "@/modules/dashboard/sidebar-lucide";
 import { useTeamAccess } from "@/modules/team/team-access";
+import { ThemeDarkIcon, ThemeLightIcon } from "@/components/theme-icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -18,7 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -36,19 +40,19 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  Bolt,
+  Building,
+  Check,
+  ChevronsUpDown,
+  Earth,
+  FolderPlus,
+  LogOut,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import {
-  IconBrightnessIncrease,
-  IconCirclePowerOff,
-  IconCloudBolt,
-  IconFolder,
-  IconGear,
-  IconHouse,
-  IconLocation,
-  IconUsers,
-} from "nucleo-glass";
 import { useState } from "react";
 
 const sidebarFloatingInnerClass =
@@ -78,23 +82,30 @@ export function DashboardSidebar() {
 
   const teamMembersPath = getTeamMembersPath(team.slug);
 
-  const navItems = [
+  type NavIcon = LucideIcon | typeof HouseNoDoorIcon;
+
+  const navItems: {
+    title: string;
+    href: string;
+    icon: NavIcon;
+    isActive: boolean;
+  }[] = [
     {
       title: t("navigation.dashboard"),
       href: getTeamDashboardPath(team.slug),
-      icon: IconHouse,
+      icon: HouseNoDoorIcon,
       isActive: pathname === getTeamDashboardPath(team.slug),
     },
     {
       title: t("libraries.title"),
       href: getTeamLibrariesPath(team.slug),
-      icon: IconFolder,
+      icon: FolderPlus,
       isActive: pathname.startsWith(getTeamLibrariesPath(team.slug)),
     },
     {
       title: t("team.title"),
       href: teamMembersPath,
-      icon: IconUsers,
+      icon: UsersRound,
       isActive: pathname.startsWith(teamMembersPath),
     },
   ];
@@ -107,7 +118,7 @@ export function DashboardSidebar() {
         : t("common.themeLight");
 
   const ThemeIcon =
-    resolvedTheme === "dark" ? IconCloudBolt : IconBrightnessIncrease;
+    resolvedTheme === "dark" ? ThemeDarkIcon : ThemeLightIcon;
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -148,7 +159,13 @@ export function DashboardSidebar() {
                       variant="ghost"
                     >
                       <Link href={item.href} title={item.title}>
-                        <item.icon className="h-4 w-4 shrink-0" />
+                        <item.icon
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            item.isActive ? undefined : "text-sidebar-foreground/55",
+                          )}
+                          strokeWidth={SIDEBAR_ICON_STROKE}
+                        />
                         <span className="truncate">{item.title}</span>
                       </Link>
                     </Button>
@@ -177,10 +194,16 @@ export function DashboardSidebar() {
                     type="button"
                   >
                     <span className="flex min-w-0 items-center gap-2.5">
-                      <IconUsers className="h-4 w-4 shrink-0" />
+                      <Building
+                        className="h-4 w-4 shrink-0 text-sidebar-foreground/55"
+                        strokeWidth={SIDEBAR_ICON_STROKE}
+                      />
                       <span className="truncate">{team.name}</span>
                     </span>
-                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
+                    <ChevronsUpDown
+                      className="h-4 w-4 shrink-0 text-sidebar-foreground/50"
+                      strokeWidth={SIDEBAR_ICON_STROKE}
+                    />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-60 rounded-xl">
@@ -202,7 +225,10 @@ export function DashboardSidebar() {
                           </span>
                         </div>
                         {workspace._id === team._id && (
-                          <Check className="h-4 w-4" />
+                          <Check
+                            className="h-4 w-4"
+                            strokeWidth={SIDEBAR_ICON_STROKE}
+                          />
                         )}
                       </div>
                     </DropdownMenuItem>
@@ -231,7 +257,10 @@ export function DashboardSidebar() {
                       {profileLabel}
                     </span>
                   </span>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
+                  <ChevronsUpDown
+                    className="h-4 w-4 shrink-0 text-sidebar-foreground/50"
+                    strokeWidth={SIDEBAR_ICON_STROKE}
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 rounded-xl">
@@ -257,12 +286,14 @@ export function DashboardSidebar() {
                     </div>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
 
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="w-full gap-2">
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <IconLocation className="h-4 w-4 shrink-0" />
+                      <Earth
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                        strokeWidth={SIDEBAR_ICON_STROKE}
+                      />
                       <span>{t("language.menuLabel")}</span>
                     </span>
                     <span className="w-[7rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
@@ -278,7 +309,10 @@ export function DashboardSidebar() {
                       >
                         <span className="mr-1">{languageNames[loc]}</span>
                         {locale === loc ? (
-                          <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                          <Check
+                            className="ml-auto h-4 w-4 text-muted-foreground"
+                            strokeWidth={SIDEBAR_ICON_STROKE}
+                          />
                         ) : null}
                       </DropdownMenuItem>
                     ))}
@@ -288,7 +322,7 @@ export function DashboardSidebar() {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="w-full gap-2">
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <ThemeIcon className="h-4 w-4 shrink-0" />
+                      <ThemeIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span>{t("common.themeMenu")}</span>
                     </span>
                     <span className="w-[7rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
@@ -308,15 +342,20 @@ export function DashboardSidebar() {
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
-                <DropdownMenuSeparator />
 
                 <DropdownMenuItem onSelect={() => setAccountSettingsOpen(true)}>
-                  <IconGear className="h-4 w-4 shrink-0" />
+                  <Bolt
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    strokeWidth={SIDEBAR_ICON_STROKE}
+                  />
                   <span>{t("common.settings")}</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                  <IconCirclePowerOff className="h-4 w-4 shrink-0" />
+                  <LogOut
+                    className="h-4 w-4 shrink-0"
+                    strokeWidth={SIDEBAR_ICON_STROKE}
+                  />
                   <span>{t("common.signOut")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

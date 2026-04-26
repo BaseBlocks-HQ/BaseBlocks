@@ -7,6 +7,7 @@ import {
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";
+import { SIDEBAR_ICON_STROKE } from "@/modules/dashboard/sidebar-lucide";
 import { api } from "@baseblocks/backend";
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
@@ -14,9 +15,8 @@ import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconInbox } from "nucleo-glass";
 import { useCallback, useEffect, useReducer, useState } from "react";
 
 interface ReceivedInvitation {
@@ -264,7 +264,10 @@ export function InvitationInbox({
 
       {!isLoading && invitations.length === 0 ? (
         <div className="py-6 text-center">
-          <IconInbox className="mx-auto mb-2 h-10 w-10 text-sidebar-foreground/35" />
+          <Inbox
+            className="mx-auto mb-2 h-10 w-10 text-sidebar-foreground/35"
+            strokeWidth={SIDEBAR_ICON_STROKE}
+          />
           <p className="text-sm text-sidebar-foreground/55">
             {t("noInvitations")}
           </p>
@@ -345,7 +348,10 @@ export function InvitationInbox({
 
   const headerTitle = (
     <span className="flex items-center gap-2">
-      <IconInbox className="h-5 w-5 shrink-0" />
+      <Inbox
+        className="h-5 w-5 shrink-0 text-muted-foreground"
+        strokeWidth={SIDEBAR_ICON_STROKE}
+      />
       <span>{t("title")}</span>
       {isLoading ? (
         <Loader2 className="h-4 w-4 shrink-0 animate-spin text-sidebar-foreground/50" />
@@ -357,7 +363,10 @@ export function InvitationInbox({
     return (
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <IconInbox className="h-5 w-5" />
+          <Inbox
+            className="h-5 w-5 text-muted-foreground"
+            strokeWidth={SIDEBAR_ICON_STROKE}
+          />
           <h3 className="font-medium">{t("title")}</h3>
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -407,7 +416,10 @@ export function InvitationInbox({
                 fullWidthTriggerClassName,
               )}
             >
-              <IconInbox className="h-4 w-4" />
+              <Inbox
+                className="h-4 w-4 text-muted-foreground"
+                strokeWidth={SIDEBAR_ICON_STROKE}
+              />
               <span>{t("title")}</span>
               {invitations.length > 0 ? (
                 <Badge
@@ -425,7 +437,10 @@ export function InvitationInbox({
               size="icon"
               className="relative"
             >
-              <IconInbox className="h-4 w-4" />
+              <Inbox
+                className="h-4 w-4 text-muted-foreground"
+                strokeWidth={SIDEBAR_ICON_STROKE}
+              />
               {invitations.length > 0 ? (
                 <Badge
                   variant="destructive"

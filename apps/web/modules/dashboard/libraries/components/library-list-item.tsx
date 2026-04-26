@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Folder, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { FolderPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface LibraryWithCount {
@@ -51,8 +51,8 @@ export function LibraryListItem({
 
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Folder className="h-[18px] w-[18px]" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <FolderPlus className="h-[18px] w-[18px]" strokeWidth={1.75} />
           </div>
 
           {canManageLibraries && (
