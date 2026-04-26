@@ -32,6 +32,7 @@ import {
   Mail,
   Phone,
   Plus,
+  Search,
   Text,
   Trash2,
   Upload,
@@ -67,21 +68,28 @@ export function DirectoryEditor({
     () => content,
   );
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
 
   const pageSize = localContent.settings.pageSize;
+  const filteredRows = (() => {
+    if (!searchQuery.trim()) return localContent.rows;
+    const query = searchQuery.toLowerCase();
+    return localContent.rows.filter((row) =>
+      localContent.columns.some((col) =>
+        (row.cells[col.id] ?? "").toLowerCase().includes(query),
+      ),
+    );
+  })();
   const totalPages = Math.max(
     1,
-    Math.ceil(localContent.rows.length / pageSize),
+    Math.ceil(filteredRows.length / pageSize),
   );
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
-  const paginatedRows = localContent.rows.slice(
-    startIndex,
-    startIndex + pageSize,
-  );
+  const paginatedRows = filteredRows.slice(startIndex, startIndex + pageSize);
 
   const updateContent = (newContent: DirectoryContent) => {
     setLocalContent(newContent);
@@ -252,6 +260,20 @@ export function DirectoryEditor({
           Import CSV
         </Button>
       </div>
+      {localContent.settings.showSearch && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Search directory..."
+            className="pl-9"
+          />
+        </div>
+      )}
       <div className="rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
@@ -332,33 +354,44 @@ export function DirectoryEditor({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedRows.map((row) => (
-              <TableRow key={row.id}>
-                {localContent.columns.map((col) => (
-                  <TableCell key={col.id} className="p-1">
-                    <Input
-                      value={row.cells[col.id] ?? ""}
-                      onChange={(e) =>
-                        updateCell(row.id, col.id, e.target.value)
-                      }
-                      placeholder={COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]}
-                      type={col.type === "email" ? "email" : "text"}
-                      className="h-8 text-sm border-transparent bg-transparent shadow-none focus-visible:border-input focus-visible:bg-background"
-                    />
-                  </TableCell>
-                ))}
-                <TableCell className="w-10 p-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeRow(row.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+            {paginatedRows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={localContent.columns.length + 1}
+                  className="py-6 text-center text-muted-foreground"
+                >
+                  {searchQuery ? "No results found." : "No rows yet."}
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paginatedRows.map((row) => (
+                <TableRow key={row.id}>
+                  {localContent.columns.map((col) => (
+                    <TableCell key={col.id} className="p-1">
+                      <Input
+                        value={row.cells[col.id] ?? ""}
+                        onChange={(e) =>
+                          updateCell(row.id, col.id, e.target.value)
+                        }
+                        placeholder={COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]}
+                        type={col.type === "email" ? "email" : "text"}
+                        className="h-8 text-sm border-transparent bg-transparent shadow-none focus-visible:border-input focus-visible:bg-background"
+                      />
+                    </TableCell>
+                  ))}
+                  <TableCell className="w-10 p-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeRow(row.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -369,7 +402,7 @@ export function DirectoryEditor({
         className="hidden"
         onChange={handleCSVImport}
       />
-      {localContent.rows.length > pageSize && (
+      {filteredRows.length > pageSize && (
         <div className="flex items-center justify-between px-1">
           <Button
             variant="outline"
