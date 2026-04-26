@@ -252,7 +252,7 @@ function SiteEditorInner({
       <div
         className={
           showPagePanel
-            ? "px-4 pb-6 pt-18 pl-20 md:px-6 md:pb-8 md:pt-18 md:pl-24 lg:px-8 lg:pl-28"
+            ? "pr-2 pb-6 pt-18 pl-20 md:pr-2 md:pb-8 md:pt-18 md:pl-24 lg:pr-2 lg:pl-28"
             : "p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
         }
       >
@@ -378,7 +378,7 @@ function SiteEditorInner({
                 )}
                 detailSurfaceClassName="rounded-xl bg-background"
                 main={editorCanvas}
-                mainPanelClassName="pr-2 md:pr-3 lg:pr-4"
+                mainPanelClassName="pr-2 md:pr-2 lg:pr-2"
               />
             ) : (
               editorCanvas

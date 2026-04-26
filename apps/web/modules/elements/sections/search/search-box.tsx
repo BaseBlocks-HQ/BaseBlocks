@@ -9,6 +9,7 @@ import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounce } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useQuery } from "convex/react";
 import {
   ChevronRight,
@@ -344,111 +345,113 @@ export function SearchBox({
 
       {/* Floating dropdown results */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background text-foreground border rounded-lg shadow-lg max-h-[400px] overflow-y-auto">
-          {isSearching ? (
-            <div className="p-4 text-center text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-              Searching...
-            </div>
-          ) : hasResults && searchResults ? (
-            <div className="divide-y">
-              {searchResults.map((result) => {
-                const isPage = result.contentType === "page";
-                const isContentMatch = result.matchType === "content";
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-background text-foreground shadow-lg">
+          <ScrollArea className="max-h-[400px]">
+            {isSearching ? (
+              <div className="p-4 text-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                Searching...
+              </div>
+            ) : hasResults && searchResults ? (
+              <div className="divide-y">
+                {searchResults.map((result) => {
+                  const isPage = result.contentType === "page";
+                  const isContentMatch = result.matchType === "content";
 
-                return (
-                  <button
-                    type="button"
-                    key={result._id}
-                    className="w-full p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => handleResultClick(result)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {showFileType &&
-                          (isPage ? (
-                            <NotebookText className="h-4 w-4 text-indigo-500" />
-                          ) : (
-                            getFileIcon(result.metadata.fileContentType)
-                          ))}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate text-sm text-foreground">
-                            {result.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {isPage ? (
-                              <span className="text-indigo-600 dark:text-indigo-400">
-                                Page
-                              </span>
+                  return (
+                    <button
+                      type="button"
+                      key={result._id}
+                      className="w-full p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => handleResultClick(result)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {showFileType &&
+                            (isPage ? (
+                              <NotebookText className="h-4 w-4 text-indigo-500" />
                             ) : (
-                              <>
-                                {result.metadata.size &&
-                                  formatFileSize(result.metadata.size)}
-                              </>
-                            )}
-                            {isContentMatch && (
-                              <span className="ml-2 text-primary">
-                                • Content match
-                              </span>
-                            )}
-                          </p>
+                              getFileIcon(result.metadata.fileContentType)
+                            ))}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate text-sm text-foreground">
+                              {result.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {isPage ? (
+                                <span className="text-indigo-600 dark:text-indigo-400">
+                                  Page
+                                </span>
+                              ) : (
+                                <>
+                                  {result.metadata.size &&
+                                    formatFileSize(result.metadata.size)}
+                                </>
+                              )}
+                              {isContentMatch && (
+                                <span className="ml-2 text-primary">
+                                  • Content match
+                                </span>
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      {isPage ? (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      ) : (
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleResultClick(result);
-                            }}
-                            title="Preview"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {result.metadata.downloadUrl && (
+                        {isPage ? (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDownload(
-                                  result.metadata.downloadUrl!,
-                                  result.metadata.filename || result.title,
-                                );
+                                handleResultClick(result);
                               }}
-                              title="Download"
+                              title="Preview"
                             >
-                              <Download className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
+                            {result.metadata.downloadUrl && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownload(
+                                    result.metadata.downloadUrl!,
+                                    result.metadata.filename || result.title,
+                                  );
+                                }}
+                                title="Download"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {/* Show snippet for content matches */}
+                      {isContentMatch && result.snippet && (
+                        <div className="mt-2 pl-7">
+                          <HighlightedSnippet
+                            snippet={result.snippet}
+                            matchStart={result.snippetMatchStart ?? -1}
+                            matchEnd={result.snippetMatchEnd ?? -1}
+                          />
                         </div>
                       )}
-                    </div>
-                    {/* Show snippet for content matches */}
-                    {isContentMatch && result.snippet && (
-                      <div className="mt-2 pl-7">
-                        <HighlightedSnippet
-                          snippet={result.snippet}
-                          matchStart={result.snippetMatchStart ?? -1}
-                          matchEnd={result.snippetMatchEnd ?? -1}
-                        />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="p-4 text-center text-muted-foreground text-sm">
-              No results found for "{debouncedQuery}"
-            </div>
-          )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-muted-foreground text-sm">
+                No results found for "{debouncedQuery}"
+              </div>
+            )}
+          </ScrollArea>
         </div>
       )}
     </div>

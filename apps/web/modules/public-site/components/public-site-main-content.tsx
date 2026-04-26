@@ -49,7 +49,7 @@ export function PublicSiteMainContent({
         />
       )}
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {currentPage === undefined ? (
           <div className="p-8">
             <ContentSkeleton />

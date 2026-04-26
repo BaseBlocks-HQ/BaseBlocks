@@ -11,6 +11,7 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 interface PublicSiteSidebarProps {
@@ -68,27 +69,29 @@ export function PublicSiteSidebar({
         )}
         <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
-      <SidebarContent className="p-4 border-r border-t">
-        <nav className="space-y-1">
-          {pages === undefined ? (
-            <>
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-            </>
-          ) : (
-            pages.map((page) => (
-              <NavItem
-                key={page._id}
-                page={page}
-                currentPath={currentPath}
-                mode="public"
-                ancestorIds={ancestorIds}
-                defaultExpanded={sidebarDefaultExpanded}
-              />
-            ))
-          )}
-        </nav>
+      <SidebarContent className="overflow-hidden border-r border-t p-0">
+        <ScrollArea className="h-full">
+          <nav className="space-y-1 p-4">
+            {pages === undefined ? (
+              <>
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </>
+            ) : (
+              pages.map((page) => (
+                <NavItem
+                  key={page._id}
+                  page={page}
+                  currentPath={currentPath}
+                  mode="public"
+                  ancestorIds={ancestorIds}
+                  defaultExpanded={sidebarDefaultExpanded}
+                />
+              ))
+            )}
+          </nav>
+        </ScrollArea>
       </SidebarContent>
     </Sidebar>
   );

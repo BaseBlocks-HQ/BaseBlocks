@@ -21,6 +21,7 @@ import type {
   LayoutType,
   SpacerLayoutHeight,
 } from "@baseblocks/types";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { SplitViewShell } from "../shared/components/split-view-shell";
@@ -209,6 +210,7 @@ function PublicMainContent({
   sidebarLayouts,
   onTabChange,
   contentRef,
+  contentClassName,
 }: {
   pageTitle: string;
   pageTabs: Array<{ id: string; label: string }>;
@@ -219,9 +221,10 @@ function PublicMainContent({
   sidebarLayouts: LayoutDoc[];
   onTabChange: (tabId: string) => void;
   contentRef?: RefObject<HTMLDivElement | null>;
+  contentClassName?: string;
 }) {
   return (
-    <div ref={contentRef} className="p-4 md:p-8">
+    <div ref={contentRef} className={cn("p-4 md:p-8", contentClassName)}>
       <article
         className={cn("mx-auto", hasSidebar ? "max-w-6xl" : "max-w-4xl")}
       >
@@ -416,22 +419,26 @@ function PublicContentInner({
           }
           detailCollapsedOnMobile
           detailExpanded={isFullscreen}
-          detailPanelClassName="pr-2 py-2 md:pr-3 md:py-3 lg:pr-4 lg:py-4"
+          detailPanelClassName="pr-2 pb-2 pt-2 md:pr-3 md:pb-3 md:pt-3 lg:pr-4 lg:pb-4 lg:pt-4"
           detailSurfaceClassName="rounded-xl bg-background"
+          mainPanelClassName="pr-2 md:pr-2 lg:pr-2"
           main={
-            <div className="h-full w-full min-w-0 overflow-y-auto overflow-x-hidden">
-              <PublicMainContent
-                pageTitle={pageData.title}
-                pageTabs={pageTabs}
-                activeTabId={activeTabId}
-                hasTabs={hasTabs}
-                hasSidebar={hasSidebar}
-                mainLayouts={mainLayouts}
-                sidebarLayouts={sidebarLayouts}
-                onTabChange={setActiveTabId}
-                contentRef={contentRef}
-              />
-            </div>
+            <ScrollArea className="h-full min-h-0 w-full min-w-0">
+              <div className="overflow-x-hidden">
+                <PublicMainContent
+                  pageTitle={pageData.title}
+                  pageTabs={pageTabs}
+                  activeTabId={activeTabId}
+                  hasTabs={hasTabs}
+                  hasSidebar={hasSidebar}
+                  mainLayouts={mainLayouts}
+                  sidebarLayouts={sidebarLayouts}
+                  onTabChange={setActiveTabId}
+                  contentRef={contentRef}
+                  contentClassName="pr-3 md:pr-3 lg:pr-3"
+                />
+              </div>
+            </ScrollArea>
           }
         />
       </div>
@@ -440,17 +447,21 @@ function PublicContentInner({
 
   // Normal view - no wrapper, parent handles scroll
   return (
-    <PublicMainContent
-      pageTitle={pageData.title}
-      pageTabs={pageTabs}
-      activeTabId={activeTabId}
-      hasTabs={hasTabs}
-      hasSidebar={hasSidebar}
-      mainLayouts={mainLayouts}
-      sidebarLayouts={sidebarLayouts}
-      onTabChange={setActiveTabId}
-      contentRef={contentRef}
-    />
+    <ScrollArea className="h-full min-h-0 w-full min-w-0">
+      <div className="overflow-x-hidden">
+        <PublicMainContent
+          pageTitle={pageData.title}
+          pageTabs={pageTabs}
+          activeTabId={activeTabId}
+          hasTabs={hasTabs}
+          hasSidebar={hasSidebar}
+          mainLayouts={mainLayouts}
+          sidebarLayouts={sidebarLayouts}
+          onTabChange={setActiveTabId}
+          contentRef={contentRef}
+        />
+      </div>
+    </ScrollArea>
   );
 }
 
