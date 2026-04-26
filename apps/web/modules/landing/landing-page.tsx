@@ -23,6 +23,7 @@ import {
 } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
 import { FeaturesSection } from "./components/features-section";
 import { FooterSection } from "./components/footer-section";
@@ -122,13 +123,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
 
   return (
     <LazyMotion features={domMax} strict>
-      <div
-        className={
-          expanded
-            ? "min-h-screen bg-background"
-            : "h-screen overflow-hidden bg-background"
-        }
-      >
+      <div className="h-screen bg-background">
         <LayoutGroup>
           <IntroOverlay
             expanded={expanded}
@@ -138,30 +133,32 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
           />
 
           {expanded && (
-            <>
-              <LandingHeader
-                isAuthenticated={isAuthenticated}
-                commonTranslations={commonTranslations}
-                navigationTranslations={navigationTranslations}
-              />
-              <HeroSection
-                authCta={authCta}
-                docsCta={docsCta}
-                landingTranslations={landingTranslations}
-              />
-              <FeaturesSection landingTranslations={landingTranslations} />
-              <StepsSection
-                isDarkTheme={isDarkTheme}
-                gridColor={stepsGridColor}
-                gridOpacity={stepsGridOpacity}
-                landingTranslations={landingTranslations}
-              />
-              <FooterSection
-                authCta={authCta}
-                docsCta={docsCta}
-                landingTranslations={landingTranslations}
-              />
-            </>
+            <ScrollArea className="h-full">
+              <div className="min-h-screen">
+                <LandingHeader
+                  isAuthenticated={isAuthenticated}
+                  commonTranslations={commonTranslations}
+                  navigationTranslations={navigationTranslations}
+                />
+                <HeroSection
+                  authCta={authCta}
+                  docsCta={docsCta}
+                  landingTranslations={landingTranslations}
+                />
+                <FeaturesSection landingTranslations={landingTranslations} />
+                <StepsSection
+                  isDarkTheme={isDarkTheme}
+                  gridColor={stepsGridColor}
+                  gridOpacity={stepsGridOpacity}
+                  landingTranslations={landingTranslations}
+                />
+                <FooterSection
+                  authCta={authCta}
+                  docsCta={docsCta}
+                  landingTranslations={landingTranslations}
+                />
+              </div>
+            </ScrollArea>
           )}
         </LayoutGroup>
       </div>

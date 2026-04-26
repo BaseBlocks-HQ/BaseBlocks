@@ -1,11 +1,5 @@
 import { landingFonts, landingSteps } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@baseblocks/ui/dialog";
 import Image from "next/image";
 import { FlickeringGrid } from "./flickering-grid";
 import { Reveal } from "./reveal";
@@ -26,7 +20,7 @@ export function StepsSection({
   return (
     <section
       id="how-it-works"
-      className="relative scroll-mt-20 overflow-hidden border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
+      className="relative isolate scroll-mt-20 overflow-hidden border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
     >
       <FlickeringGrid
         className="absolute inset-0 z-0"
@@ -89,39 +83,15 @@ export function StepsSection({
                       </p>
                     </div>
                     <div className={index % 2 === 1 ? "lg:order-1" : ""}>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <button
-                            type="button"
-                            className="group relative aspect-[16/9] w-full cursor-zoom-in overflow-hidden rounded-2xl border border-border/60 bg-background/70 text-left shadow-sm transition-colors hover:border-amber-500/30 dark:border-white/[0.08] dark:bg-background/50 dark:hover:border-amber-400/25"
-                            aria-label={`Open ${landingTranslations(step.imageAltKey)} image`}
-                          >
-                            <Image
-                              src={stepImage}
-                              alt={landingTranslations(step.imageAltKey)}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-[1.015]"
-                              sizes="(max-width: 1024px) 100vw, 50vw"
-                            />
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent
-                          onOpenAutoFocus={(event) => event.preventDefault()}
-                          className="z-[80] !w-auto !max-w-[96vw] overflow-visible border-none bg-transparent p-0 shadow-none sm:!max-w-[96vw]"
-                        >
-                          <DialogTitle className="sr-only">
-                            {landingTranslations(step.imageAltKey)}
-                          </DialogTitle>
-                          <Image
-                            src={stepImage}
-                            alt={landingTranslations(step.imageAltKey)}
-                            className="block h-auto max-h-[92vh] w-auto max-w-[96vw] rounded-2xl border border-border/70 bg-background object-contain shadow-2xl shadow-black/35 dark:border-white/[0.1]"
-                            sizes="96vw"
-                            width={3420}
-                            height={1950}
-                          />
-                        </DialogContent>
-                      </Dialog>
+                      <div className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-background/70 text-left shadow-sm dark:border-white/[0.08] dark:bg-background/50">
+                        <Image
+                          src={stepImage}
+                          alt={landingTranslations(step.imageAltKey)}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 50vw"
+                        />
+                      </div>
                     </div>
                   </div>
                 );

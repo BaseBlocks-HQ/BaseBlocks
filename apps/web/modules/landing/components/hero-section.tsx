@@ -1,7 +1,6 @@
 import { landingFonts } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
 import { Button } from "@baseblocks/ui/button";
-import { Github } from "lucide-react";
 import type { ReactNode } from "react";
 import { BlurIn } from "./blur-in";
 import { EditorMockup } from "./editor-mockup";
@@ -17,9 +16,9 @@ export function HeroSection({
   landingTranslations,
 }: HeroSectionProps) {
   return (
-    <section className="relative z-10 overflow-x-clip pt-28 pb-20 sm:pt-24 sm:pb-28">
-      <div className="relative z-10 mx-auto max-w-6xl px-6">
-        <div className="relative z-10 lg:max-w-[42%]">
+    <section className="relative isolate overflow-x-clip pt-28 pb-20 sm:pt-24 sm:pb-28">
+      <div className="relative mx-auto max-w-6xl px-6">
+        <div className="relative lg:max-w-[42%]">
           <BlurIn delay={0.2}>
             <h1
               className="leading-[0.98] tracking-tight"
@@ -54,20 +53,6 @@ export function HeroSection({
             <div className="mt-8 flex flex-wrap gap-3">
               {authCta}
               {docsCta}
-              <a
-                href="https://github.com/naaiyy/BaseBlocks"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 bg-background dark:bg-background dark:hover:bg-accent"
-                >
-                  <Github className="h-4 w-4" />
-                  {landingTranslations("viewOnGithub")}
-                </Button>
-              </a>
             </div>
           </BlurIn>
         </div>

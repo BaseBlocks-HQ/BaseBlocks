@@ -747,7 +747,9 @@ export function EditorFloatingRail({
             orientation={isMobile ? "vertical" : "horizontal"}
             className={cn(
               "bg-border/80",
-              isMobile ? "mx-0.5 h-7 w-px self-center" : "mx-1 mt-2 w-auto",
+              isMobile
+                ? "mx-0.5 h-7 w-px self-center"
+                : "mt-2 h-px w-7 self-center",
             )}
           />
           <RailUndoRedoControls horizontal={isMobile} />
