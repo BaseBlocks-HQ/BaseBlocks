@@ -83,10 +83,7 @@ export function DirectoryEditor({
       ),
     );
   })();
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredRows.length / pageSize),
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const paginatedRows = filteredRows.slice(startIndex, startIndex + pageSize);
@@ -373,7 +370,9 @@ export function DirectoryEditor({
                         onChange={(e) =>
                           updateCell(row.id, col.id, e.target.value)
                         }
-                        placeholder={COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]}
+                        placeholder={
+                          COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]
+                        }
                         type={col.type === "email" ? "email" : "text"}
                         className="h-8 text-sm border-transparent bg-transparent shadow-none focus-visible:border-input focus-visible:bg-background"
                       />

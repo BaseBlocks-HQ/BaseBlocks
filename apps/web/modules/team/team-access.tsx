@@ -1,14 +1,13 @@
 "use client";
 
-import { useAuthenticatedShell } from "@/lib/auth-shell/provider";
-import { authClient } from "@/lib/auth/client";
+import type { WorkspaceUser } from "@/lib/workspace/server";
 import type { Id } from "@baseblocks/backend";
 import {
   type TeamCapabilities,
   type TeamRole,
   getTeamCapabilities,
 } from "@baseblocks/types";
-import { type ReactNode, createContext, use, useEffect } from "react";
+import { type ReactNode, createContext, use } from "react";
 
 export type TeamRecord = {
   _id: Id<"teams">;
@@ -29,6 +28,7 @@ interface TeamAccessValue {
   role: TeamRole;
   team: TeamRecord;
   teams: TeamRecord[];
+  user: WorkspaceUser | null;
 }
 
 const TeamAccessContext = createContext<TeamAccessValue | null>(null);
@@ -36,36 +36,16 @@ const TeamAccessContext = createContext<TeamAccessValue | null>(null);
 interface TeamAccessProviderProps {
   children: ReactNode;
   team: TeamRecord;
+  teams: TeamRecord[];
+  user: WorkspaceUser | null;
 }
 
 export function TeamAccessProvider({
   children,
   team,
+  teams,
+  user,
 }: TeamAccessProviderProps) {
-  const { data: session, isPending: isSessionPending } =
-    authClient.useSession();
-  const activeOrganizationId = session?.session?.activeOrganizationId;
-  const { teams } = useAuthenticatedShell();
-
-  useEffect(() => {
-    if (isSessionPending) return;
-    if (!session?.session) return;
-    if (!team?.organizationId) return;
-
-    if (activeOrganizationId === team.organizationId) return;
-
-    authClient.organization
-      .setActive({
-        organizationId: team.organizationId,
-      })
-      .catch(() => null);
-  }, [
-    activeOrganizationId,
-    isSessionPending,
-    session?.session,
-    team?.organizationId,
-  ]);
-
   const capabilities = getTeamCapabilities(team.memberRole);
 
   return (
@@ -75,6 +55,7 @@ export function TeamAccessProvider({
         role: team.memberRole,
         team,
         teams,
+        user,
       }}
     >
       {children}

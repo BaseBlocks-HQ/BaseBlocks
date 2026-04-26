@@ -30,12 +30,13 @@ function CalloutEditor({
 
   useEffect(() => {
     requestAnimationFrame(autoResize);
-  }, [autoResize, localText]);
+  }, [autoResize]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setLocalText(newText);
     onSaveStatusChange?.("pending");
+    requestAnimationFrame(autoResize);
     save({ ...content, text: newText });
   };
 

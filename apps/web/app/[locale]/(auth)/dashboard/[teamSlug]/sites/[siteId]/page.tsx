@@ -19,14 +19,22 @@ export default async function TeamSiteEditorPage({ params }: Props) {
     redirect("/dashboard");
   }
 
-  const [site, pages] = await Promise.all([
-    client.query(api.sites.queries.get, { siteId: siteId as never }),
-    client.query(api.pages.queries.list, { siteId: siteId as never }),
-  ]);
+  const editorData = await client.query(
+    api.sites.queries.getEditorInitialData,
+    {
+      siteId: siteId as never,
+    },
+  );
 
-  if (!site || site.teamId !== requestedWorkspace._id) {
+  if (!editorData || editorData.site.teamId !== requestedWorkspace._id) {
     redirect(getTeamDashboardPath(requestedWorkspace.slug));
   }
 
-  return <SiteEditor siteId={siteId} initialSite={site} initialPages={pages} />;
+  return (
+    <SiteEditor
+      siteId={siteId}
+      initialSite={editorData.site}
+      initialPages={editorData.pages}
+    />
+  );
 }

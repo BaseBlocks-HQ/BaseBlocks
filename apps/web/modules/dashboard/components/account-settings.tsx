@@ -2,6 +2,7 @@
 
 import { DashboardDialogShell } from "@/components/dialogs";
 import { authClient } from "@/lib/auth/client";
+import type { WorkspaceUser } from "@/lib/workspace/server";
 import { api } from "@baseblocks/backend";
 import {
   AlertDialog,
@@ -29,6 +30,7 @@ export function AccountSettings({
   onOpenChange,
   showTrigger = true,
   triggerClassName,
+  user,
 }: {
   asChild?: boolean;
   children?: ReactNode;
@@ -36,11 +38,10 @@ export function AccountSettings({
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
   triggerClassName?: string;
+  user?: WorkspaceUser | null;
 } = {}) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
 
   const [internalOpen, setInternalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -131,9 +132,9 @@ export function AccountSettings({
       >
         <div className="flex gap-3.5">
           <Avatar className="h-11 w-11 shrink-0 ring-1 ring-sidebar-border/50 ring-offset-2 ring-offset-sidebar">
-            {user?.image && <AvatarImage alt="" src={user.image} />}
+            {user?.imageUrl && <AvatarImage alt="" src={user.imageUrl} />}
             <AvatarFallback className="text-xs font-medium">
-              {getInitials(user?.name, user?.email)}
+              {getInitials(user?.name ?? undefined, user?.email ?? undefined)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 space-y-0.5 pt-0.5">

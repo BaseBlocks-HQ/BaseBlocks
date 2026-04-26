@@ -72,10 +72,8 @@ export function DashboardSidebar() {
   const router = useRouter();
   const t = useTranslations();
   const locale = useLocale() as Locale;
-  const { data: session } = authClient.useSession();
   const { setTheme, theme, resolvedTheme } = useTheme();
-  const { team, teams } = useTeamAccess();
-  const user = session?.user;
+  const { team, teams, user } = useTeamAccess();
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
   const teamMembersPath = getTeamMembersPath(team.slug);
@@ -222,7 +220,9 @@ export function DashboardSidebar() {
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
                     <Avatar className="h-6 w-6 rounded-full">
-                      {user?.image ? <AvatarImage src={user.image} /> : null}
+                      {user?.imageUrl ? (
+                        <AvatarImage src={user.imageUrl} />
+                      ) : null}
                       <AvatarFallback className="text-[10px]">
                         {profileFallback}
                       </AvatarFallback>
@@ -238,7 +238,9 @@ export function DashboardSidebar() {
                 <DropdownMenuLabel className="px-2 py-2">
                   <div className="flex min-w-0 items-center gap-2.5">
                     <Avatar className="h-7 w-7 rounded-full">
-                      {user?.image ? <AvatarImage src={user.image} /> : null}
+                      {user?.imageUrl ? (
+                        <AvatarImage src={user.imageUrl} />
+                      ) : null}
                       <AvatarFallback className="text-[10px]">
                         {profileFallback}
                       </AvatarFallback>
@@ -326,6 +328,7 @@ export function DashboardSidebar() {
         open={accountSettingsOpen}
         onOpenChange={setAccountSettingsOpen}
         showTrigger={false}
+        user={user}
       />
     </Sidebar>
   );

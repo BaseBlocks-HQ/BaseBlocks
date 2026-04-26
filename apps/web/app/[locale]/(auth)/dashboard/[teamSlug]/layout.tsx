@@ -12,7 +12,7 @@ export default async function TeamLayout({
   params,
 }: TeamLayoutProps) {
   const { teamSlug } = await params;
-  const { requestedWorkspace, teams } =
+  const { requestedWorkspace, teams, user } =
     await getWorkspaceBoundaryState(teamSlug);
 
   if (teams.length === 0) {
@@ -24,7 +24,7 @@ export default async function TeamLayout({
   }
 
   return (
-    <TeamAccessProvider team={requestedWorkspace}>
+    <TeamAccessProvider team={requestedWorkspace} teams={teams} user={user}>
       {children}
     </TeamAccessProvider>
   );

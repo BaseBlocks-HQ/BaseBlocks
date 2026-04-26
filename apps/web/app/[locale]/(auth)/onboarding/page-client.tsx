@@ -24,7 +24,6 @@ import { useState } from "react";
 
 export function OnboardingPageClient() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
   const [teamName, setTeamName] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,12 +41,6 @@ export function OnboardingPageClient() {
     event.preventDefault();
     setError("");
     setIsSubmitting(true);
-
-    if (!session?.user) {
-      setError("Not authenticated");
-      setIsSubmitting(false);
-      return;
-    }
 
     void authClient.organization
       .create({

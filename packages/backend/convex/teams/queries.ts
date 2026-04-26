@@ -1,9 +1,19 @@
 import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import { components } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthContextOrNull } from "../auth";
+
+function getWorkspaceUser(
+  auth: NonNullable<Awaited<ReturnType<typeof getAuthContextOrNull>>>,
+) {
+  return {
+    email: auth.email ?? null,
+    id: auth.userId,
+    imageUrl: auth.imageUrl ?? null,
+    name: auth.name ?? null,
+  };
+}
 
 async function getWorkspaceTeams(
   ctx: GenericQueryCtx<DataModel>,
@@ -37,32 +47,6 @@ async function getWorkspaceTeams(
   );
 }
 
-async function getActiveOrganizationId(
-  ctx: GenericQueryCtx<DataModel>,
-): Promise<string | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity?.sessionId) {
-    return null;
-  }
-
-  const session = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
-    model: "session",
-    where: [
-      {
-        field: "_id",
-        value: identity.sessionId as string,
-      },
-      {
-        field: "expiresAt",
-        operator: "gt",
-        value: Date.now(),
-      },
-    ],
-  })) as { activeOrganizationId?: string | null } | null;
-
-  return session?.activeOrganizationId ?? null;
-}
-
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
@@ -94,6 +78,7 @@ export const getWorkspaceBoundary = query({
         activeWorkspace: null,
         requestedWorkspace: null,
         teams: [],
+        user: null,
       };
     }
 
@@ -103,23 +88,21 @@ export const getWorkspaceBoundary = query({
         activeWorkspace: null,
         requestedWorkspace: null,
         teams: [],
+        user: getWorkspaceUser(auth),
       };
     }
-
-    const activeOrganizationId = await getActiveOrganizationId(ctx);
-    const activeWorkspace =
-      teams.find((team) => team.organizationId === activeOrganizationId) ??
-      teams[0] ??
-      null;
 
     const requestedWorkspace = teamSlug
       ? (teams.find((team) => team.slug === teamSlug) ?? null)
       : null;
 
+    const activeWorkspace = requestedWorkspace ?? teams[0] ?? null;
+
     return {
       activeWorkspace,
       requestedWorkspace,
       teams,
+      user: getWorkspaceUser(auth),
     };
   },
 });

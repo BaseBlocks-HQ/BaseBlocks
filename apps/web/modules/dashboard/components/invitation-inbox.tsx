@@ -227,12 +227,20 @@ export function InvitationInbox({
   };
 
   useEffect(() => {
+    if (!onboardingMode) {
+      return;
+    }
+
     void loadInvitations();
-  }, [loadInvitations]);
+  }, [loadInvitations, onboardingMode]);
 
   useEffect(() => {
     if (!onboardingMode && !open) {
       return;
+    }
+
+    if (!onboardingMode) {
+      void loadInvitations();
     }
 
     const interval = setInterval(() => {

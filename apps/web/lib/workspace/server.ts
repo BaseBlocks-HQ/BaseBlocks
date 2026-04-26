@@ -1,26 +1,44 @@
-import { getAuthenticatedShellContext } from "@/lib/auth-shell/server";
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
 import type { TeamRecord } from "@/modules/team/team-access";
+import { api } from "@baseblocks/backend";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 interface WorkspaceBoundaryState {
   activeWorkspace: TeamRecord | null;
   requestedWorkspace: TeamRecord | null;
   teams: TeamRecord[];
+  user: WorkspaceUser | null;
 }
 
-export async function getWorkspaceBoundaryContext(teamSlug?: string): Promise<{
-  client: NonNullable<
-    Awaited<ReturnType<typeof getAuthenticatedShellContext>>["client"]
-  >;
-  state: WorkspaceBoundaryState;
-}> {
-  const { client, token, state } = await getAuthenticatedShellContext(teamSlug);
-  if (!token || !client) {
-    redirect("/login");
-  }
-
-  return { client, state };
+export interface WorkspaceUser {
+  email: string | null;
+  id: string;
+  imageUrl: string | null;
+  name: string | null;
 }
+
+export const getWorkspaceBoundaryContext = cache(
+  async (
+    teamSlug?: string,
+  ): Promise<{
+    client: ReturnType<typeof getServerConvexClient>;
+    state: WorkspaceBoundaryState;
+  }> => {
+    const token = await getToken();
+    if (!token) {
+      redirect("/login");
+    }
+
+    const client = getServerConvexClient(token);
+    const state = await client.query(api.teams.queries.getWorkspaceBoundary, {
+      ...(teamSlug ? { teamSlug } : {}),
+    });
+
+    return { client, state };
+  },
+);
 
 export async function getWorkspaceBoundaryState(
   teamSlug?: string,

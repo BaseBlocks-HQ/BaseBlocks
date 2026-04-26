@@ -4,7 +4,6 @@ import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 import authSchema from "./authComponent/schema";
 import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
@@ -19,7 +18,6 @@ const authBaseUrl = useCrossDomainAuth
       "SITE_URL",
     )
   : primaryAppUrl;
-
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
   {
@@ -78,42 +76,3 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth(createAuthOptions(ctx));
 
 export const { getAuthUser } = authComponent.clientApi();
-
-export const safeGetAuthUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const session = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: "session",
-      where: [
-        {
-          field: "_id",
-          value: identity.sessionId as string,
-        },
-        {
-          field: "expiresAt",
-          operator: "gt",
-          value: Date.now(),
-        },
-      ],
-    });
-
-    if (!session) {
-      return null;
-    }
-
-    return await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: "user",
-      where: [
-        {
-          field: "_id",
-          value: identity.subject,
-        },
-      ],
-    });
-  },
-});

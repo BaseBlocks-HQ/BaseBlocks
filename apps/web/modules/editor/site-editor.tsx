@@ -457,7 +457,7 @@ export function SiteEditor({
   initialSite,
   siteId,
 }: SiteEditorProps) {
-  const elementsLoaded = useElementsLoader();
+  useElementsLoader();
   const { capabilities } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();
   const siteQuery = useSite(siteId);
@@ -477,10 +477,6 @@ export function SiteEditor({
     isAdmin: capabilities.canManageTeam,
     isLoading: site === undefined,
   };
-
-  if (!elementsLoaded) {
-    return <EditorSkeleton />;
-  }
 
   return (
     <Suspense fallback={<EditorSkeleton />}>

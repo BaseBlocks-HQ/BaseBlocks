@@ -9,11 +9,11 @@ import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type SocialProvider = "google" | "github" | "microsoft";
 const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
+
 
 interface SignInWithProviderArgs {
   callbackURL: string;
@@ -41,6 +41,35 @@ async function signInWithProvider({
 }
 
 export function LoginPageClient() {
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+
+  return (
+    <>
+      {authRedirectMode === "cross-domain" && (
+        <CrossDomainAuthRedirect redirectTo={redirectTo} />
+      )}
+      <LoginForm redirectTo={redirectTo} />
+    </>
+  );
+}
+
+function CrossDomainAuthRedirect({ redirectTo }: { redirectTo: string }) {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    router.replace(redirectTo);
+  }, [redirectTo, router, session]);
+
+  return null;
+}
+
+function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [error, setError] = useState<string | null>(null);
   const [activeProvider, setActiveProvider] = useState<SocialProvider | null>(
     null,
@@ -48,17 +77,6 @@ export function LoginPageClient() {
   const t = useTranslations();
   const haptic = useHaptic();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
-  const { data: session } = authClient.useSession();
-
-  useEffect(() => {
-    if (!session || authRedirectMode !== "cross-domain") {
-      return;
-    }
-
-    router.replace(redirectTo);
-  }, [redirectTo, router, session]);
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
     haptic.trigger("heavy");
