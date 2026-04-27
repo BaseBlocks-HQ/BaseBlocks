@@ -1,4 +1,3 @@
-import type { ElementType } from "@baseblocks/types";
 import { cn } from "@baseblocks/ui/lib/utils";
 
 export function getEditorLayoutSurfaceClassName({
@@ -24,18 +23,11 @@ export function getEditorLayoutSurfaceClassName({
 
 export function getEditorBlockSurfaceClassName({
   isSelected,
-  type,
 }: {
   isSelected: boolean;
-  type: ElementType;
 }) {
-  const usesTransparentSelectionSurface = type === "heading";
-
   return cn(
     "rounded-md transition-[background-color,box-shadow] duration-150 ease-out",
-    isSelected &&
-      (usesTransparentSelectionSurface
-        ? "shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.18)]"
-        : "bg-background/80 shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.22)]"),
+    isSelected && "shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.2)]",
   );
 }

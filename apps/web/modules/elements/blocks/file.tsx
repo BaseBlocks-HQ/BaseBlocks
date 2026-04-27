@@ -146,7 +146,7 @@ function FileUploadState({
     <DropZone
       onFilesAccepted={onFilesAccepted}
       disabled={isUploading}
-      className="rounded-md border border-solid bg-card/70 p-1.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+      className="rounded-md border border-solid bg-card/70 p-1.5"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -317,7 +317,7 @@ function SingleFileRow({
   onOpen?: () => void;
 }) {
   return (
-    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border bg-card/70 p-1.5 transition-colors hover:border-primary/30 hover:bg-primary/5">
+    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border bg-card/70 p-1.5">
       <button
         type="button"
         onClick={onOpen}

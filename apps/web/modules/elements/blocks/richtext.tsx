@@ -167,7 +167,7 @@ function RichTextEditor({
   return (
     <div
       className={cn(
-        "rounded-md transition-colors hover:bg-muted/50",
+        "rounded-md",
         "[&_.bn-container]:!border-none [&_.bn-container]:!bg-transparent",
         "[&_.bn-editor]:!bg-transparent",
         // BlockNote default is padding-inline: 54px for + and drag handle; one handle needs less gutter.

@@ -32,7 +32,7 @@ function PageEditor({ content }: ElementEditorProps<"page">) {
   }
 
   return (
-    <div className="flex w-full items-center gap-2 rounded-md border bg-card/70 p-1.5 transition-colors hover:border-primary/30 hover:bg-primary/5">
+    <div className="flex w-full items-center gap-2 rounded-md border bg-card/70 p-1.5">
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"

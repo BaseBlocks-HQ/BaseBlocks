@@ -82,7 +82,7 @@ function SpacerEditor({
         "border border-dashed border-muted-foreground/30 rounded-md",
         "flex items-center justify-center gap-2 sm:gap-3",
         "transition-colors",
-        "hover:border-muted-foreground/50 hover:bg-muted/30",
+        "hover:border-muted-foreground/50",
       )}
       style={{ height: `${SPACER_HEIGHTS[height]}px` }}
     >

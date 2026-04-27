@@ -36,7 +36,7 @@ function ParagraphEditor({
   const isEmpty = !localText.trim();
 
   return (
-    <div className="rounded-md px-2 py-2 transition-colors hover:bg-muted/50 relative">
+    <div className="relative rounded-md px-2 py-2">
       <ContentEditable
         html={localText.trim() ? localText : ""}
         onChange={handleChange}

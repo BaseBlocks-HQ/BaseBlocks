@@ -201,7 +201,6 @@ export function SortableBlock({
       <div
         className={getEditorBlockSurfaceClassName({
           isSelected,
-          type: blockType,
         })}
       >
         <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
