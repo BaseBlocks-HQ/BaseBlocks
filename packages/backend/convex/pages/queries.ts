@@ -8,6 +8,104 @@ import {
 } from "../lib/pageAccess";
 import { buildPageTree } from "../lib/tree";
 
+function projectPublishedPage(
+  page: {
+    _id: string;
+    title: string;
+    slug: string;
+    icon?: string;
+    parentId?: string;
+    pageTabs?: { id: string; label: string }[];
+    publishedTitle?: string;
+    publishedSlug?: string;
+    publishedIcon?: string;
+    publishedParentId?: string;
+    publishedPageTabs?: { id: string; label: string }[];
+  },
+) {
+  return {
+    _id: page._id,
+    title: page.publishedTitle ?? page.title,
+    slug: page.publishedSlug ?? page.slug,
+    icon: page.publishedIcon ?? page.icon,
+    parentId: page.publishedParentId ?? page.parentId,
+    pageTabs: page.publishedPageTabs ?? page.pageTabs,
+  };
+}
+
+function resolvePublishedPageByPath<
+  T extends {
+    _id: string;
+    title: string;
+    slug: string;
+    icon?: string;
+    parentId?: string;
+    order: number;
+    publishedTitle?: string;
+    publishedSlug?: string;
+    publishedIcon?: string;
+    publishedParentId?: string;
+    publishedOrder?: number;
+    pageTabs?: { id: string; label: string }[];
+    publishedPageTabs?: { id: string; label: string }[];
+  },
+>(
+  deployedPages: T[],
+  site: { defaultPageId?: string; publishedDefaultPageId?: string },
+  path: string[],
+): T | null {
+  if (path.length === 0) {
+    const resolvedDefaultPageId =
+      site.defaultPageId ?? site.publishedDefaultPageId;
+
+    if (resolvedDefaultPageId) {
+      const defaultPage = deployedPages.find((p) => p._id === resolvedDefaultPageId);
+      if (defaultPage) {
+        return defaultPage;
+      }
+    }
+
+    const rootPages = deployedPages
+      .filter((p) => !(p.publishedParentId ?? p.parentId))
+      .sort(
+        (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
+      );
+
+    return rootPages[0] ?? null;
+  }
+
+  let parentId: string | undefined = undefined;
+
+  for (let i = 0; i < path.length; i++) {
+    const slug = path[i]!;
+    const isLast = i === path.length - 1;
+
+    const page = deployedPages.find(
+      (p) =>
+        (p.publishedSlug ?? p.slug) === slug &&
+        (p.publishedParentId ?? p.parentId) === parentId,
+    );
+
+    if (!page) {
+      if (path.length === 1) {
+        return (
+          deployedPages.find((p) => (p.publishedSlug ?? p.slug) === path[0]!) ??
+          null
+        );
+      }
+      return null;
+    }
+
+    if (isLast) {
+      return page;
+    }
+
+    parentId = page._id;
+  }
+
+  return null;
+}
+
 // List pages for a site (authenticated — editor only)
 export const list = query({
   args: { siteId: v.id("sites") },
@@ -412,66 +510,43 @@ export const getByPathPublished = query({
       site,
       sessionTokens,
     );
+    const page = resolvePublishedPageByPath(deployedPages, site, path);
+    return page ? projectPublishedPage(page) : null;
+  },
+});
 
-    // Empty path: resolve via site's defaultPageId, then fall back to first root page
+export const getByPathPublishedStatus = query({
+  args: {
+    siteId: v.id("sites"),
+    path: v.array(v.string()),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { siteId, path, sessionTokens }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site || !site.isPublished) {
+      return { status: "missing" as const };
+    }
+
     if (path.length === 0) {
-      const resolvedDefaultPageId =
-        site.defaultPageId ?? site.publishedDefaultPageId;
-
-      if (resolvedDefaultPageId) {
-        const defaultPage = deployedPages.find(
-          (p) => p._id === resolvedDefaultPageId,
-        );
-        if (defaultPage) {
-          return projectPublishedPage(defaultPage);
-        }
-      }
-
-      // Fallback: first deployed root page by order
-      const rootPages = deployedPages
-        .filter((p) => !(p.publishedParentId ?? p.parentId))
-        .sort(
-          (a, b) =>
-            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-        );
-
-      const firstPage = rootPages[0];
-      return firstPage ? projectPublishedPage(firstPage) : null;
+      return { status: "accessible" as const };
     }
 
-    // Walk the path from root to leaf using published fields
-    let parentId: string | undefined = undefined;
+    const [accessiblePages, allDeployedPages] = await Promise.all([
+      getAccessiblePublishedPages(ctx, site, sessionTokens),
+      ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", site._id))
+        .collect()
+        .then((pages) => pages.filter((page) => page.isDeployed)),
+    ]);
 
-    for (let i = 0; i < path.length; i++) {
-      const slug = path[i]!;
-      const isLast = i === path.length - 1;
-
-      const page = deployedPages.find(
-        (p) =>
-          (p.publishedSlug ?? p.slug) === slug &&
-          (p.publishedParentId ?? p.parentId) === parentId,
-      );
-
-      if (!page) {
-        // Fallback: try single-slug lookup for backwards compatibility
-        if (path.length === 1) {
-          return (
-            deployedPages.find(
-              (p) => (p.publishedSlug ?? p.slug) === path[0]!,
-            ) ?? null
-          );
-        }
-        return null;
-      }
-
-      if (isLast) {
-        return projectPublishedPage(page);
-      }
-
-      parentId = page._id;
+    const accessiblePage = resolvePublishedPageByPath(accessiblePages, site, path);
+    if (accessiblePage) {
+      return { status: "accessible" as const };
     }
 
-    return null;
+    const existingPage = resolvePublishedPageByPath(allDeployedPages, site, path);
+    return { status: existingPage ? ("forbidden" as const) : ("missing" as const) };
   },
 });
 
@@ -540,31 +615,3 @@ export const listDeployedPaths = query({
     }));
   },
 });
-
-// Helper: project a page document to use published fields as primary
-function projectPublishedPage(page: {
-  _id: string;
-  title: string;
-  slug: string;
-  icon?: string;
-  order: number;
-  parentId?: string;
-  pageTabs?: Array<{ id: string; label: string }>;
-  publishedTitle?: string;
-  publishedSlug?: string;
-  publishedIcon?: string;
-  publishedOrder?: number;
-  publishedParentId?: string;
-  publishedPageTabs?: Array<{ id: string; label: string }>;
-  [key: string]: unknown;
-}) {
-  return {
-    ...page,
-    title: page.publishedTitle ?? page.title,
-    slug: page.publishedSlug ?? page.slug,
-    icon: page.publishedIcon ?? page.icon,
-    order: page.publishedOrder ?? page.order,
-    parentId: page.publishedParentId ?? page.parentId,
-    pageTabs: page.publishedPageTabs ?? page.pageTabs,
-  };
-}

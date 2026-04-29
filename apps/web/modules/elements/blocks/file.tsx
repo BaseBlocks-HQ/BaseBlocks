@@ -6,9 +6,15 @@ import {
   dashboardDialogPrimaryFieldLabelClassName,
   dashboardDialogPrimaryInlineInputClassName,
 } from "@/components/dialogs";
+import {
+  FILE_SEARCH_PARAM,
+  buildFileDeepLinkPath,
+  toAbsoluteBrowserUrl,
+} from "@/lib/file-deep-link";
 import { useFileUpload } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
+import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import { DropZone, FileIcon, getFileTypeColor } from "@/modules/shared/file-ui";
 import { api } from "@baseblocks/backend";
@@ -26,16 +32,10 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Eye,
-  FileUp,
-  Loader2,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Eye, FileUp, Link as LinkIcon, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useReducer } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import type {
   ElementEditorProps,
@@ -179,13 +179,19 @@ function FileUploadState({
 }
 
 function FileItemMenu({
+  onCopyLink,
   onDelete,
-  onPreview,
+  onOpen,
   onRename,
+  onPreview,
+  readOnly = false,
 }: {
-  onDelete: () => void;
-  onPreview: () => void;
-  onRename: () => void;
+  onCopyLink?: () => void;
+  onDelete?: () => void;
+  onOpen?: () => void;
+  onPreview?: () => void;
+  onRename?: () => void;
+  readOnly?: boolean;
 }) {
   const t = useTranslations("elements.file");
   return (
@@ -201,22 +207,40 @@ function FileItemMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onClick={onPreview}>
-          <Eye className="mr-2 h-4 w-4" />
-          {t("preview")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onRename}>
-          <Pencil className="mr-2 h-4 w-4" />
-          {t("rename")}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={onDelete}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          {t("delete")}
-        </DropdownMenuItem>
+        {onOpen ? (
+          <DropdownMenuItem onClick={onOpen}>
+            <Eye className="mr-2 h-4 w-4" />
+            Open
+          </DropdownMenuItem>
+        ) : null}
+        {!onOpen && onPreview ? (
+          <DropdownMenuItem onClick={onPreview}>
+            <Eye className="mr-2 h-4 w-4" />
+            {t("preview")}
+          </DropdownMenuItem>
+        ) : null}
+        {onCopyLink ? (
+          <DropdownMenuItem onClick={onCopyLink}>
+            <LinkIcon className="mr-2 h-4 w-4" />
+            Copy link
+          </DropdownMenuItem>
+        ) : null}
+        {!readOnly && onRename ? (
+          <DropdownMenuItem onClick={onRename}>
+            <Pencil className="mr-2 h-4 w-4" />
+            {t("rename")}
+          </DropdownMenuItem>
+        ) : null}
+        {!readOnly && onDelete ? <DropdownMenuSeparator /> : null}
+        {!readOnly && onDelete ? (
+          <DropdownMenuItem
+            onClick={onDelete}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {t("delete")}
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -392,6 +416,9 @@ function FileEditor({
   const t = useTranslations("elements.file");
   const { siteId } = useEditorSite();
   const { openFile } = useMediaViewer();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { uploadFile, isAnyUploading, totalProgress } = useFileUpload();
   const renameDocument = useMutation(api.documents.mutations.rename);
   const removeDocument = useMutation(api.documents.mutations.remove);
@@ -402,6 +429,8 @@ function FileEditor({
       : "skip",
   );
   const [state, dispatch] = useReducer(fileEditorReducer, emptyFileEditorState);
+  const openedFromLinkRef = useRef<string | null>(null);
+  const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
 
   const snapshot = getContentSnapshot(content);
   const resolvedFile =
@@ -420,12 +449,34 @@ function FileEditor({
   const isUploading = isAnyUploading;
   const uploadProgress = totalProgress?.percentage ?? 0;
 
+  useEffect(() => {
+    if (!resolvedFile) return;
+    if (selectedFileId !== resolvedFile._id) return;
+    if (openedFromLinkRef.current === selectedFileId) return;
+
+    openFile({
+      url: resolvedFile.downloadUrl,
+      filename: resolvedFile.filename,
+      contentType: resolvedFile.contentType,
+      size: resolvedFile.size,
+      deepLinkId: resolvedFile._id,
+    });
+    openedFromLinkRef.current = selectedFileId;
+  }, [openFile, resolvedFile, selectedFileId]);
+
   const previewFile = (file: FileData) => {
+    const nextUrl = buildFileDeepLinkPath(
+      pathname,
+      searchParams.toString(),
+      file._id,
+    );
+    router.replace(nextUrl, { scroll: false });
     openFile({
       url: file.downloadUrl,
       filename: file.filename,
       contentType: file.contentType,
       size: file.size,
+      deepLinkId: file._id,
     });
   };
 
@@ -513,6 +564,15 @@ function FileEditor({
         onOpen={() => previewFile(resolvedFile)}
         actions={
           <FileItemMenu
+            onCopyLink={() => {
+              const sharePath = buildFileDeepLinkPath(
+                pathname,
+                searchParams.toString(),
+                resolvedFile._id,
+              );
+              void navigator.clipboard.writeText(toAbsoluteBrowserUrl(sharePath));
+              toast.success("Link copied");
+            }}
             onDelete={() => dispatch({ type: "openDeleteDialog" })}
             onPreview={() => previewFile(resolvedFile)}
             onRename={() =>
@@ -543,22 +603,82 @@ function FileEditor({
 
 function FileRenderer({ content }: ElementRendererProps<"file">) {
   const { openFile } = useMediaViewer();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const publicSiteContext = usePublicSiteContextOptional();
   const file = getContentSnapshot(content);
+  const openedFromLinkRef = useRef<string | null>(null);
+  const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
+
+  useEffect(() => {
+    if (!file) return;
+    if (!publicSiteContext) return;
+    if (selectedFileId !== file._id) return;
+    if (openedFromLinkRef.current === selectedFileId) return;
+
+    openFile({
+      url: file.downloadUrl,
+      filename: file.filename,
+      contentType: file.contentType,
+      size: file.size,
+      deepLinkId: file._id,
+    });
+    openedFromLinkRef.current = selectedFileId;
+  }, [
+    file?._id,
+    file?.contentType,
+    file?.downloadUrl,
+    file?.filename,
+    file?.size,
+    openFile,
+    publicSiteContext,
+    selectedFileId,
+  ]);
 
   if (!file) {
     return null;
   }
 
+  const handleOpen = () => {
+    if (publicSiteContext) {
+      const nextUrl = buildFileDeepLinkPath(
+        pathname,
+        searchParams.toString(),
+        file._id,
+      );
+      router.replace(nextUrl, { scroll: false });
+    }
+
+    openFile({
+      url: file.downloadUrl,
+      filename: file.filename,
+      contentType: file.contentType,
+      size: file.size,
+      deepLinkId: publicSiteContext ? file._id : undefined,
+    });
+  };
+
+  const handleCopyLink = async () => {
+    const sharePath = buildFileDeepLinkPath(
+      pathname,
+      searchParams.toString(),
+      file._id,
+    );
+    await navigator.clipboard.writeText(toAbsoluteBrowserUrl(sharePath));
+    toast.success("Link copied");
+  };
+
   return (
     <SingleFileRow
       file={file}
-      onOpen={() =>
-        openFile({
-          url: file.downloadUrl,
-          filename: file.filename,
-          contentType: file.contentType,
-          size: file.size,
-        })
+      onOpen={handleOpen}
+      actions={
+        <FileItemMenu
+          onOpen={handleOpen}
+          onCopyLink={() => void handleCopyLink()}
+          readOnly={publicSiteContext !== undefined}
+        />
       }
     />
   );

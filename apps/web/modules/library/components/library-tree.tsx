@@ -1,5 +1,6 @@
 "use client";
 
+import { toAbsoluteBrowserUrl } from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
 import {
   type LibraryTreeViewMode,
@@ -24,6 +25,7 @@ import {
   FolderPlus,
   ListTree,
   Pencil,
+  Link as LinkIcon,
   Search,
   Trash2,
   Upload,
@@ -106,6 +108,7 @@ export function LibraryTree({
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
+  onCopyLink,
   onUploadFiles,
   paths,
   title,
@@ -126,6 +129,7 @@ export function LibraryTree({
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
+  onCopyLink: (entity: LibraryEntity) => Promise<void> | void;
   onUploadFiles: () => void;
   paths: string[];
   title?: string;
@@ -149,6 +153,7 @@ export function LibraryTree({
       onMoveEntity={onMoveEntity}
       onOpenEntity={onOpenEntity}
       onRenameEntity={onRenameEntity}
+      onCopyLink={onCopyLink}
       onToggleMode={() =>
         setMode((value) => (value === "tree" ? "flat" : "tree"))
       }
@@ -174,6 +179,7 @@ function LibraryTreeModel({
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
+  onCopyLink,
   onToggleMode,
   onUploadFiles,
   paths,
@@ -196,6 +202,7 @@ function LibraryTreeModel({
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
+  onCopyLink: (entity: LibraryEntity) => Promise<void> | void;
   onToggleMode: () => void;
   onUploadFiles: () => void;
   paths: string[];
@@ -434,6 +441,7 @@ function LibraryTreeModel({
             canManage={canManage}
             context={context}
             entity={entity}
+            onCopyLink={() => onCopyLink(entity)}
             onDelete={() => onDeleteEntity(entity)}
             onDownload={() => onDownloadFile(entity)}
             onMove={() => onMoveEntity(entity)}
@@ -573,6 +581,7 @@ function LibraryTreeContextMenu({
   canManage,
   context,
   entity,
+  onCopyLink,
   onDelete,
   onDownload,
   onMove,
@@ -583,6 +592,7 @@ function LibraryTreeContextMenu({
   canManage: boolean;
   context: ContextMenuOpenContext;
   entity: LibraryEntity;
+  onCopyLink: () => Promise<void> | void;
   onDelete: () => void;
   onDownload: () => void;
   onMove: () => void;
@@ -623,6 +633,14 @@ function LibraryTreeContextMenu({
           onClick={() => runAction(onDownload)}
         >
           Download
+        </MenuItem>
+      ) : null}
+      {entity.kind === "file" ? (
+        <MenuItem
+          icon={<LinkIcon className="h-3.5 w-3.5" />}
+          onClick={() => void runAction(() => void onCopyLink())}
+        >
+          Copy link
         </MenuItem>
       ) : null}
       {canManage ? (

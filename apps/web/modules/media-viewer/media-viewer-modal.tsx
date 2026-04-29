@@ -1,5 +1,8 @@
 "use client";
 
+import {
+  buildFileDeepLinkPath,
+} from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -17,6 +20,7 @@ import {
   Music,
   X,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { useMediaViewer } from "./context";
 import { getMediaFileType } from "./types";
@@ -49,6 +53,9 @@ function getFileTypeIcon(contentType: string) {
 }
 
 export function MediaViewerModal() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     currentFile,
     isOpen,
@@ -63,9 +70,20 @@ export function MediaViewerModal() {
     currentIndex,
   } = useMediaViewer();
 
+  const handleClose = () => {
+    if (currentFile?.deepLinkId) {
+      const nextUrl = buildFileDeepLinkPath(
+        pathname,
+        searchParams.toString(),
+        null,
+      );
+      router.replace(nextUrl, { scroll: false });
+    }
+    closeFile();
+  };
+
   // State to hold viewer-specific controls — reset on viewer remount via key={currentFile.url}
   const [viewerControls, setViewerControls] = useState<ReactNode>(null);
-
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -76,7 +94,7 @@ export function MediaViewerModal() {
           if (isFullscreen) {
             toggleFullscreen();
           } else {
-            closeFile();
+            handleClose();
           }
           break;
         case "ArrowRight":
@@ -94,6 +112,7 @@ export function MediaViewerModal() {
     isOpen,
     isFullscreen,
     closeFile,
+    handleClose,
     toggleFullscreen,
     goToNext,
     goToPrevious,
@@ -239,9 +258,9 @@ export function MediaViewerModal() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={closeFile}
-            title="Close (Esc)"
-          >
+              onClick={handleClose}
+              title="Close (Esc)"
+            >
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -286,7 +305,7 @@ export function MediaViewerModal() {
         <ViewerComponent
           key={currentFile.url}
           file={currentFile}
-          onClose={closeFile}
+          onClose={handleClose}
           renderControls={handleRenderControls}
         />
       </main>

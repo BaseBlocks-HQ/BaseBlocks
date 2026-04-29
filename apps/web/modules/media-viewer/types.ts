@@ -19,6 +19,8 @@ export interface MediaFile {
   filename: string;
   contentType: string;
   size?: number;
+  /** Optional document id used to build a shareable page deep link */
+  deepLinkId?: string;
   /** Optional search term for highlighting in document viewers */
   searchTerm?: string;
   /** Whether to show download button (defaults to true) */

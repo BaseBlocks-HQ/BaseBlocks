@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  FILE_SEARCH_PARAM,
+  buildFileDeepLinkPath,
+  toAbsoluteBrowserUrl,
+} from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
 import { buildLibraryEntityMap } from "@/modules/library/model/library-paths";
 import type {
@@ -15,7 +20,8 @@ import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useTranslations } from "next-intl";
-import { useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
 import { LibraryFileViewer } from "./library-file-viewer";
@@ -51,6 +57,9 @@ export function LibraryExplorer({
   };
 }) {
   const tExplorer = useTranslations("libraries.explorer");
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentFolderId, setCurrentFolderId] = useState<FolderId | null>(null);
   const [openFilePath, setOpenFilePath] = useState<string | null>(null);
   const [treeDrawerOpen, setTreeDrawerOpen] = useState(false);
@@ -69,14 +78,50 @@ export function LibraryExplorer({
   );
   const openEntity = openFilePath ? model.entities.get(openFilePath) : null;
   const openFile = openEntity?.kind === "file" ? openEntity.file : null;
+  const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
+
+  useEffect(() => {
+    if (!selectedFileId) return;
+
+    for (const entity of model.entities.values()) {
+      if (entity.kind === "file" && entity.file._id === selectedFileId) {
+        setOpenFilePath(entity.path);
+        setCurrentFolderId(entity.file.folderId ?? null);
+        return;
+      }
+    }
+  }, [model.entities, selectedFileId]);
+
+  const syncFileUrl = (documentId: string | null) => {
+    const nextUrl = buildFileDeepLinkPath(
+      pathname,
+      searchParams.toString(),
+      documentId,
+    );
+    router.replace(nextUrl, { scroll: false });
+  };
+
+  const copyEntityLink = async (entity: LibraryEntity) => {
+    if (entity.kind !== "file") return;
+
+    const sharePath = buildFileDeepLinkPath(
+      pathname,
+      searchParams.toString(),
+      entity.file._id,
+    );
+    await navigator.clipboard.writeText(toAbsoluteBrowserUrl(sharePath));
+    toast.success("Link copied");
+  };
 
   const openEntityInExplorer = (entity: LibraryEntity) => {
     if (entity.kind === "folder") {
       setCurrentFolderId(entity.folder._id);
       setOpenFilePath(null);
+      syncFileUrl(null);
     } else {
       setOpenFilePath(entity.path);
       setCurrentFolderId(entity.file.folderId ?? null);
+      syncFileUrl(entity.file._id);
     }
     setTreeDrawerOpen(false);
   };
@@ -277,6 +322,7 @@ export function LibraryExplorer({
       onDownloadFile={(entity) => {
         if (entity.kind === "file") downloadFile(entity.file);
       }}
+      onCopyLink={(entity) => void copyEntityLink(entity)}
       onDropEntities={
         canManage && actions.moveFile && actions.moveFolder
           ? (entities, targetFolderId) =>
@@ -305,7 +351,10 @@ export function LibraryExplorer({
           key={openFile._id}
           allowDownloads={options.allowDownloads}
           file={openFile}
-          onClose={() => setOpenFilePath(null)}
+          onClose={() => {
+            setOpenFilePath(null);
+            syncFileUrl(null);
+          }}
           onOpenTree={() => setTreeDrawerOpen(true)}
         />
       }

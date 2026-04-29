@@ -182,7 +182,6 @@ export async function getAccessiblePublishedPages(
       if (!canViewerAccessPublishedPage(child, viewer)) {
         continue;
       }
-
       accessiblePages.push(child);
       visit(child._id);
     }

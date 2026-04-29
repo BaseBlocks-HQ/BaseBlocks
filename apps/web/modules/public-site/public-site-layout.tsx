@@ -65,6 +65,14 @@ export function PublicSiteLayout({
     path: pagePath,
     sessionTokens,
   });
+  const currentPageStatus = useQuery(
+    api.pages.queries.getByPathPublishedStatus,
+    {
+      siteId: site._id,
+      path: pagePath,
+      sessionTokens,
+    },
+  );
 
   const ancestors = useQuery(
     api.pages.queries.getAncestors,
@@ -75,7 +83,7 @@ export function PublicSiteLayout({
   const currentPathString =
     pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
 
-  if (currentPage === null && pages && pages.length > 0) {
+  if (pagePath.length === 0 && currentPage === null && pages && pages.length > 0) {
     const firstPage = pages[0];
     if (firstPage) {
       redirect(getPageLink(site.slug, firstPage.slug));
@@ -148,6 +156,7 @@ export function PublicSiteLayout({
               }
             : currentPage
         }
+        currentPageStatus={currentPageStatus?.status}
         pages={pages}
         currentPath={currentPathString}
         navigationStyle={navigationStyle}

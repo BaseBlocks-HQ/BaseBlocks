@@ -1,9 +1,13 @@
-"use client";
-
-import { convex } from "@/lib/convex/client";
-import { ConvexProvider } from "convex/react";
+import { getToken } from "@/lib/auth/server";
+import { ConvexClientProvider } from "@/lib/convex/provider";
 import type { ReactNode } from "react";
 
-export default function PublicLayout({ children }: { children: ReactNode }) {
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+export default async function PublicLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const token = await getToken();
+
+  return <ConvexClientProvider initialToken={token}>{children}</ConvexClientProvider>;
 }

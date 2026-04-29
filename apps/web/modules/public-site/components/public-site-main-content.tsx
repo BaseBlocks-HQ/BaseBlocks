@@ -6,7 +6,9 @@ import { SubNavBar } from "@/modules/navigation";
 import { BreadcrumbBar } from "@/modules/navigation";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/types";
+import { Button } from "@baseblocks/ui/button";
 import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
+import Link from "next/link";
 import { PublicContent } from "../public-content";
 
 interface CurrentPage {
@@ -16,6 +18,7 @@ interface CurrentPage {
 
 interface PublicSiteMainContentProps {
   currentPage: CurrentPage | null | undefined;
+  currentPageStatus?: "accessible" | "forbidden" | "missing";
   pages?: PageWithChildren[];
   currentPath: string;
   navigationStyle: NavigationStyle;
@@ -24,6 +27,7 @@ interface PublicSiteMainContentProps {
 
 export function PublicSiteMainContent({
   currentPage,
+  currentPageStatus,
   pages,
   currentPath,
   navigationStyle,
@@ -55,8 +59,26 @@ export function PublicSiteMainContent({
             <ContentSkeleton />
           </div>
         ) : currentPage === null ? (
-          <div className="max-w-3xl mx-auto text-center py-12 p-8">
-            <p className="text-muted-foreground">Page not found</p>
+          <div className="flex flex-1 items-center justify-center p-8">
+            {currentPageStatus === "forbidden" ? (
+              <div className="mx-auto max-w-md space-y-4 text-center">
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  This page is restricted
+                </h2>
+                <p className="text-muted-foreground">
+                  Sign in to access this page.
+                </p>
+                <Button asChild>
+                  <Link href="/login" target="_blank" rel="noreferrer">
+                    Log in
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="mx-auto max-w-md text-center">
+                <p className="text-muted-foreground">Page not found</p>
+              </div>
+            )}
           </div>
         ) : (
           <PublicContent pageId={currentPage._id as Id<"pages">} />
