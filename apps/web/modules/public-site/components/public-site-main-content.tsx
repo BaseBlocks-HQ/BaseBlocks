@@ -66,7 +66,7 @@ export function PublicSiteMainContent({
                   This page is restricted
                 </h2>
                 <p className="text-muted-foreground">
-                  Sign in to access this page.
+                  You must have access to view this page.
                 </p>
                 <Button asChild>
                   <Link href="/login" target="_blank" rel="noreferrer">
