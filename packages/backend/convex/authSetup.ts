@@ -10,6 +10,7 @@ import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
 
 const authOrigins = parseAuthOrigins(process.env.APP_URL);
 const primaryAppUrl = authOrigins[0]!;
+const primaryAppHostname = new URL(primaryAppUrl).hostname;
 const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
 const useCrossDomainAuth = authRedirectMode === "cross-domain";
 const authBaseUrl = useCrossDomainAuth
@@ -18,6 +19,15 @@ const authBaseUrl = useCrossDomainAuth
       "SITE_URL",
     )
   : primaryAppUrl;
+const crossSubdomainCookieDomain =
+  primaryAppHostname === "localhost" ||
+  primaryAppHostname === "127.0.0.1" ||
+  primaryAppHostname.endsWith(".vercel.app")
+    ? undefined
+    : primaryAppHostname;
+const trustedOrigins = crossSubdomainCookieDomain
+  ? [...authOrigins, `https://*.${crossSubdomainCookieDomain}`]
+  : authOrigins;
 export const authComponent = createClient<DataModel, never>(
   components.betterAuth,
   {
@@ -31,8 +41,16 @@ export const authComponent = createClient<DataModel, never>(
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
     baseURL: authBaseUrl,
-    trustedOrigins: authOrigins,
+    trustedOrigins,
     database: authComponent.adapter(ctx),
+    advanced: crossSubdomainCookieDomain
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: crossSubdomainCookieDomain,
+          },
+        }
+      : undefined,
     emailAndPassword: {
       enabled: false,
     },
