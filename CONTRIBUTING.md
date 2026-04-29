@@ -59,6 +59,14 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
      - `http://localhost:3001/api/auth/callback/google`
      - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
 
+   Production note: published subdomains on `*.baseblocks.dev` rely on Better
+   Auth shared cookies on `.baseblocks.dev` so authenticated audience-restricted
+   pages work on the real published site while auth remains in `same-origin`
+   mode. That configuration lives in
+   `packages/backend/convex/authSetup.ts` via
+   `advanced.crossSubDomainCookies`. This applies to BaseBlocks subdomains only,
+   not arbitrary custom domains.
+
 4. **Start the dev server**
 
    ```bash

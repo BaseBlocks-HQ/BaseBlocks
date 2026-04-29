@@ -176,6 +176,14 @@ origin is the currently active app origin (`APP_URL`), not the Convex
 `SITE_URL`. `SITE_URL` only becomes the callback origin if you explicitly switch
 to `AUTH_REDIRECT_MODE=cross-domain`.
 
+Production note: published subdomains like `team.baseblocks.dev` use Better
+Auth shared cookies on `.baseblocks.dev`, configured in
+`packages/backend/convex/authSetup.ts` via
+`advanced.crossSubDomainCookies`. That is what allows authenticated
+audience-restricted pages to work on `*.baseblocks.dev` while keeping the app in
+`same-origin` auth mode. This does not solve arbitrary custom domains; custom
+domain auth will require a separate design.
+
 - Google JavaScript origins:
   - `http://localhost:3001`
   - `https://your-machine.your-tailnet.ts.net`
