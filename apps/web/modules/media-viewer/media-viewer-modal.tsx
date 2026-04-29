@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  buildFileDeepLinkPath,
-} from "@/lib/file-deep-link";
+import { buildFileDeepLinkPath } from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -258,9 +256,9 @@ export function MediaViewerModal() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-              onClick={handleClose}
-              title="Close (Esc)"
-            >
+            onClick={handleClose}
+            title="Close (Esc)"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>

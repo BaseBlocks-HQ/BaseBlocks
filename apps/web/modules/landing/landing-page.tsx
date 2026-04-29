@@ -11,6 +11,7 @@ import {
   stepSizes,
 } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { ArrowRight } from "lucide-react";
 import {
   LayoutGroup,
@@ -23,7 +24,6 @@ import {
 } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
 import { FeaturesSection } from "./components/features-section";
 import { FooterSection } from "./components/footer-section";

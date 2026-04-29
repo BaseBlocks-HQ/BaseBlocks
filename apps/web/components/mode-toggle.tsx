@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { ThemeDarkIcon, ThemeLightIcon } from "@/components/theme-icons";
+import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -53,7 +53,10 @@ export function ModeToggle({
           </Button>
         ) : (
           <Button
-            className={cn("relative text-muted-foreground hover:text-foreground", className)}
+            className={cn(
+              "relative text-muted-foreground hover:text-foreground",
+              className,
+            )}
             size="icon"
             variant="ghost"
           >

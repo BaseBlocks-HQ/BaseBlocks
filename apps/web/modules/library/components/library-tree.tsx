@@ -1,6 +1,4 @@
 "use client";
-
-import { toAbsoluteBrowserUrl } from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
 import {
   type LibraryTreeViewMode,
@@ -23,9 +21,9 @@ import {
   FolderInput,
   FolderOpen,
   FolderPlus,
+  Link as LinkIcon,
   ListTree,
   Pencil,
-  Link as LinkIcon,
   Search,
   Trash2,
   Upload,

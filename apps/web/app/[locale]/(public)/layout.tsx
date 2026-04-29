@@ -9,5 +9,7 @@ export default async function PublicLayout({
 }) {
   const token = await getToken();
 
-  return <ConvexClientProvider initialToken={token}>{children}</ConvexClientProvider>;
+  return (
+    <ConvexClientProvider initialToken={token}>{children}</ConvexClientProvider>
+  );
 }

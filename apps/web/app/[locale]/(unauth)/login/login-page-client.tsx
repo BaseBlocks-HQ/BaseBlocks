@@ -14,7 +14,6 @@ import { useEffect, useState } from "react";
 type SocialProvider = "google" | "github" | "microsoft";
 const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
 
-
 interface SignInWithProviderArgs {
   callbackURL: string;
   fallbackError: string;
@@ -76,7 +75,6 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
   );
   const t = useTranslations();
   const haptic = useHaptic();
-  const router = useRouter();
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
     haptic.trigger("heavy");

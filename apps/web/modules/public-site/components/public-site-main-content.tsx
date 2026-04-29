@@ -6,8 +6,8 @@ import { SubNavBar } from "@/modules/navigation";
 import { BreadcrumbBar } from "@/modules/navigation";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/types";
-import { Button } from "@baseblocks/ui/button";
 import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
+import { Button } from "@baseblocks/ui/button";
 import Link from "next/link";
 import { PublicContent } from "../public-content";
 

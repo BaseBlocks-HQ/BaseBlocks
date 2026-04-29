@@ -32,10 +32,18 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
-import { Eye, FileUp, Link as LinkIcon, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Eye,
+  FileUp,
+  Link as LinkIcon,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { type ReactNode, useEffect, useReducer, useRef } from "react";
 import { toast } from "sonner";
 import type {
   ElementEditorProps,
@@ -570,7 +578,9 @@ function FileEditor({
                 searchParams.toString(),
                 resolvedFile._id,
               );
-              void navigator.clipboard.writeText(toAbsoluteBrowserUrl(sharePath));
+              void navigator.clipboard.writeText(
+                toAbsoluteBrowserUrl(sharePath),
+              );
               toast.success("Link copied");
             }}
             onDelete={() => dispatch({ type: "openDeleteDialog" })}

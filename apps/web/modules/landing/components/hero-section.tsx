@@ -1,6 +1,5 @@
 import { landingFonts } from "@/modules/landing/constants";
 import type { TranslateFn } from "@/modules/landing/types";
-import { Button } from "@baseblocks/ui/button";
 import type { ReactNode } from "react";
 import { BlurIn } from "./blur-in";
 import { EditorMockup } from "./editor-mockup";

@@ -5,13 +5,13 @@ import { cn } from "@/lib/utils";
 import { NavItem } from "@/modules/navigation";
 import type { PageWithChildren } from "@baseblocks/types";
 import type { SiteCustomization } from "@baseblocks/types/elements/customization";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 
 interface PublicSiteSidebarProps {

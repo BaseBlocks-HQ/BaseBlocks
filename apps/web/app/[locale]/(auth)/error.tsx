@@ -4,7 +4,7 @@ import { Button } from "@baseblocks/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function AppError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

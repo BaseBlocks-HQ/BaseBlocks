@@ -11,6 +11,7 @@ import type {
 import { ConvexError, v } from "convex/values";
 import type { DataModel, Id } from "./_generated/dataModel";
 import { internalQuery, query } from "./_generated/server";
+import { authComponent } from "./authSetup";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
 type ActionAuthCtx = GenericActionCtx<DataModel>;
@@ -109,6 +110,8 @@ export const getFullAuthContext = query({
     };
   },
 });
+
+export const { getAuthUser } = authComponent.clientApi();
 
 type MemberInfo = {
   _id: Id<"members">;

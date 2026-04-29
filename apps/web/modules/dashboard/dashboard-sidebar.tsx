@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeDarkIcon, ThemeLightIcon } from "@/components/theme-icons";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { type Locale, routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
@@ -15,7 +16,6 @@ import {
   SIDEBAR_ICON_STROKE,
 } from "@/modules/dashboard/sidebar-lucide";
 import { useTeamAccess } from "@/modules/team/team-access";
-import { ThemeDarkIcon, ThemeLightIcon } from "@/components/theme-icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -48,8 +48,8 @@ import {
   Earth,
   FolderPlus,
   LogOut,
-  UsersRound,
   type LucideIcon,
+  UsersRound,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -117,8 +117,7 @@ export function DashboardSidebar() {
         ? t("common.themeDark")
         : t("common.themeLight");
 
-  const ThemeIcon =
-    resolvedTheme === "dark" ? ThemeDarkIcon : ThemeLightIcon;
+  const ThemeIcon = resolvedTheme === "dark" ? ThemeDarkIcon : ThemeLightIcon;
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -162,7 +161,9 @@ export function DashboardSidebar() {
                         <item.icon
                           className={cn(
                             "h-4 w-4 shrink-0",
-                            item.isActive ? undefined : "text-sidebar-foreground/55",
+                            item.isActive
+                              ? undefined
+                              : "text-sidebar-foreground/55",
                           )}
                           strokeWidth={SIDEBAR_ICON_STROKE}
                         />
@@ -341,7 +342,6 @@ export function DashboardSidebar() {
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-
 
                 <DropdownMenuItem onSelect={() => setAccountSettingsOpen(true)}>
                   <Bolt

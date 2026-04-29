@@ -4,13 +4,7 @@ import type { LibraryFile } from "@/modules/library/types";
 import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewer-toolbar-icon-button";
 import type { MediaFile } from "@/modules/media-viewer/types";
 import { getViewer } from "@/modules/media-viewer/viewers";
-import {
-  ExternalLink,
-  Maximize2,
-  Minimize2,
-  PanelLeft,
-  X,
-} from "lucide-react";
+import { ExternalLink, Maximize2, Minimize2, PanelLeft, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
 export function LibraryFileViewer({

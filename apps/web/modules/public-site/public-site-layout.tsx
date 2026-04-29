@@ -83,7 +83,12 @@ export function PublicSiteLayout({
   const currentPathString =
     pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
 
-  if (pagePath.length === 0 && currentPage === null && pages && pages.length > 0) {
+  if (
+    pagePath.length === 0 &&
+    currentPage === null &&
+    pages &&
+    pages.length > 0
+  ) {
     const firstPage = pages[0];
     if (firstPage) {
       redirect(getPageLink(site.slug, firstPage.slug));

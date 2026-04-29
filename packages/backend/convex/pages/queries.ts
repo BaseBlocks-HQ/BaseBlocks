@@ -8,21 +8,19 @@ import {
 } from "../lib/pageAccess";
 import { buildPageTree } from "../lib/tree";
 
-function projectPublishedPage(
-  page: {
-    _id: string;
-    title: string;
-    slug: string;
-    icon?: string;
-    parentId?: string;
-    pageTabs?: { id: string; label: string }[];
-    publishedTitle?: string;
-    publishedSlug?: string;
-    publishedIcon?: string;
-    publishedParentId?: string;
-    publishedPageTabs?: { id: string; label: string }[];
-  },
-) {
+function projectPublishedPage(page: {
+  _id: string;
+  title: string;
+  slug: string;
+  icon?: string;
+  parentId?: string;
+  pageTabs?: { id: string; label: string }[];
+  publishedTitle?: string;
+  publishedSlug?: string;
+  publishedIcon?: string;
+  publishedParentId?: string;
+  publishedPageTabs?: { id: string; label: string }[];
+}) {
   return {
     _id: page._id,
     title: page.publishedTitle ?? page.title,
@@ -59,7 +57,9 @@ function resolvePublishedPageByPath<
       site.defaultPageId ?? site.publishedDefaultPageId;
 
     if (resolvedDefaultPageId) {
-      const defaultPage = deployedPages.find((p) => p._id === resolvedDefaultPageId);
+      const defaultPage = deployedPages.find(
+        (p) => p._id === resolvedDefaultPageId,
+      );
       if (defaultPage) {
         return defaultPage;
       }
@@ -540,13 +540,23 @@ export const getByPathPublishedStatus = query({
         .then((pages) => pages.filter((page) => page.isDeployed)),
     ]);
 
-    const accessiblePage = resolvePublishedPageByPath(accessiblePages, site, path);
+    const accessiblePage = resolvePublishedPageByPath(
+      accessiblePages,
+      site,
+      path,
+    );
     if (accessiblePage) {
       return { status: "accessible" as const };
     }
 
-    const existingPage = resolvePublishedPageByPath(allDeployedPages, site, path);
-    return { status: existingPage ? ("forbidden" as const) : ("missing" as const) };
+    const existingPage = resolvePublishedPageByPath(
+      allDeployedPages,
+      site,
+      path,
+    );
+    return {
+      status: existingPage ? ("forbidden" as const) : ("missing" as const),
+    };
   },
 });
 
