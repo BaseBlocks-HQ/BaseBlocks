@@ -2,7 +2,7 @@
 
 import { authClient } from "@/lib/auth/client";
 import { isAuthError } from "@/lib/utils";
-import { api } from "@baseblocks/backend/convex/_generated/api";
+import { api } from "@baseblocks/backend";
 import { AuthBoundary } from "@convex-dev/better-auth/react";
 import { useRouter } from "next/navigation";
 import type { PropsWithChildren } from "react";
@@ -13,7 +13,7 @@ export function ClientAuthBoundary({ children }: PropsWithChildren) {
     <AuthBoundary
       authClient={authClient}
       onUnauth={() => router.replace("/login")}
-      getAuthUserFn={api.authSetup.getAuthUser}
+      getAuthUserFn={api.auth.getFullAuthContext}
       isAuthError={isAuthError}
     >
       {children}
