@@ -43,6 +43,7 @@ export function NavItem({
   defaultExpanded,
 }: NavItemProps) {
   const hasChildren = page.children && page.children.length > 0;
+  const indentStep = mode === "public" ? 9 : 12;
 
   // Build the full path for this page
   const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
@@ -179,12 +180,12 @@ export function NavItem({
     <>
       <Link
         href={getPageLink(siteSlug, fullPath)}
-        className={`flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors ${
+        className={`flex items-center gap-1 px-1 py-1 rounded-md text-sm transition-colors ${
           isActive
             ? "bg-primary/10 text-primary font-medium"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
-        style={{ paddingLeft: `${(depth + 1) * 12}px` }}
+        style={{ paddingLeft: `${(depth + 1) * indentStep}px` }}
       >
         {/* Expand/collapse toggle - inside the link like in editor */}
         {hasChildren ? (
@@ -192,16 +193,16 @@ export function NavItem({
             type="button"
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
             onClick={handleToggleExpand}
-            className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="h-3 w-3 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             {isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-2.5 w-2.5" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-2.5 w-2.5" />
             )}
           </button>
         ) : (
-          <span className="w-4" />
+          <span className="w-3" />
         )}
         <IconFile className="h-4 w-4" />
         {page.title}

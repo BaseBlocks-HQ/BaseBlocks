@@ -69,12 +69,12 @@ export function PublicSiteSidebar({
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
         <ScrollArea className="h-full">
-          <nav className="space-y-1 p-4">
+          <nav className="space-y-0.5 p-2.5">
             {pages === undefined ? (
               <>
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
               </>
             ) : (
               pages.map((page) => (

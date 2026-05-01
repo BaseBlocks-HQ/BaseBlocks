@@ -84,11 +84,6 @@ export function PublicSiteMainContent({
           <PublicContent pageId={currentPage._id as Id<"pages">} />
         )}
 
-        <footer className="border-t mt-auto flex-shrink-0">
-          <div className="container mx-auto flex h-12 items-center justify-center px-4 text-sm text-muted-foreground">
-            Powered by BaseBlocks
-          </div>
-        </footer>
       </div>
     </>
   );
