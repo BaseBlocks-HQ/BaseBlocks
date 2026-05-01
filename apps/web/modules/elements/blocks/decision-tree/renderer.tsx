@@ -119,8 +119,8 @@ export function DecisionTreeRenderer({
   const stackedOptionsPanel = (
     <div className="flex h-full min-h-0 flex-col">
       {navigationBar}
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="p-1">{optionsContent}</div>
+      <ScrollArea className="min-h-0 min-w-0 flex-1">
+        <div className="max-w-full min-w-0 p-1">{optionsContent}</div>
       </ScrollArea>
     </div>
   );

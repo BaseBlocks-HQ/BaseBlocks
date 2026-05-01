@@ -1,8 +1,17 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
+
+const splitCard =
+  "overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs";
 
 interface DecisionTreeShellProps {
   selector: ReactNode;
@@ -94,13 +103,38 @@ export function DecisionTreeSplitPanel({
 }) {
   return (
     <DecisionTreeShell selector={selector} navigationBar={navigationBar}>
-      <div className="flex min-h-[340px] flex-col gap-1.5 p-1.5 lg:min-h-[360px] lg:flex-row">
-        <div className="overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs lg:w-[288px] lg:shrink-0">
-          {options}
+      <div className="p-1.5">
+        <div className="flex min-h-[340px] min-w-0 flex-col gap-1.5 lg:hidden">
+          <div className={splitCard}>{options}</div>
+          <div className={cn(splitCard, "min-h-0 min-w-0 flex-1")}>
+            {detail}
+          </div>
         </div>
-        <div className="min-w-0 flex-1 overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
-          {detail}
-        </div>
+
+        {/* Desktop: mirrors decision tree editor (tree-editor.tsx ResizablePanelGroup) */}
+        <ResizablePanelGroup
+          className="hidden min-h-[360px] min-w-0 lg:flex"
+          orientation="horizontal"
+        >
+          <ResizablePanel defaultSize={40} minSize={25}>
+            <div
+              className={cn(splitCard, "flex h-full min-h-0 min-w-0 flex-col")}
+            >
+              {options}
+            </div>
+          </ResizablePanel>
+          <ResizableHandle className="w-1 cursor-col-resize bg-transparent after:hidden focus-visible:ring-0" />
+          <ResizablePanel defaultSize={60} minSize={35}>
+            <div
+              className={cn(
+                splitCard,
+                "h-full min-h-0 min-w-0 overflow-hidden",
+              )}
+            >
+              {detail}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </DecisionTreeShell>
   );

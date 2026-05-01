@@ -47,12 +47,10 @@ export function PublicSiteSidebar({
   const showSiteName = site.settings.showSiteName !== false;
 
   return (
-    <Sidebar className="!border-r-0">
+    <Sidebar>
       <SidebarHeader
         className={cn(
           "h-14 px-4 flex flex-row items-center gap-2",
-          !site.settings.customization?.headerColor &&
-            "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         )}
         style={
           site.settings.customization?.headerColor
@@ -69,7 +67,7 @@ export function PublicSiteSidebar({
         )}
         <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
-      <SidebarContent className="overflow-hidden border-r border-t p-0">
+      <SidebarContent className="overflow-hidden p-0">
         <ScrollArea className="h-full">
           <nav className="space-y-1 p-4">
             {pages === undefined ? (

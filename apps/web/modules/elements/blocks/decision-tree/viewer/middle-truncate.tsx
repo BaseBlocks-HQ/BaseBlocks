@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 function getTextWidth(text: string, font: string): number {
   const canvas = document.createElement("canvas");
@@ -16,7 +16,8 @@ function computeMiddleTruncation(
   availableWidth: number,
   font: string,
 ): string {
-  if (availableWidth <= 0) return text;
+  // Avoid returning full text at 0 width — it inflates min-content inside flex + Radix ScrollArea (display:table inner).
+  if (availableWidth <= 0) return "";
 
   const ellipsis = "…";
   if (getTextWidth(text, font) <= availableWidth) return text;
@@ -57,9 +58,9 @@ interface MiddleTruncateProps {
 
 export function MiddleTruncate({ text, className }: MiddleTruncateProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
-  const [display, setDisplay] = useState(text);
+  const [display, setDisplay] = useState("");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
@@ -70,10 +71,18 @@ export function MiddleTruncate({ text, className }: MiddleTruncateProps) {
       setDisplay(computeMiddleTruncation(text, el.offsetWidth, font));
     }
 
+    let cancelled = false;
+    document.fonts?.ready?.then(() => {
+      if (!cancelled) update();
+    });
+
     const observer = new ResizeObserver(update);
     observer.observe(el);
     update();
-    return () => observer.disconnect();
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
   }, [text]);
 
   return (

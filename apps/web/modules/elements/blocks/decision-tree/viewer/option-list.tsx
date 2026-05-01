@@ -41,7 +41,7 @@ export function OptionList({
             key={node.id}
             type="button"
             className={cn(
-              "group flex w-full items-center justify-between text-left transition-colors duration-150 active:scale-[0.98]",
+              "group flex w-full min-w-0 items-center justify-between overflow-hidden text-left transition-colors duration-150 active:scale-[0.98]",
               compact
                 ? "rounded-lg border px-2.5 py-2 text-sm"
                 : "rounded-xl border px-3 py-2.5 text-sm sm:px-3.5 sm:py-3",
@@ -54,7 +54,7 @@ export function OptionList({
             <MiddleTruncate
               text={node.name}
               className={cn(
-                "flex-1 font-medium",
+                "w-0 min-w-0 flex-1 font-medium",
                 compact ? "text-sm" : "text-sm sm:text-[15px]",
               )}
             />
