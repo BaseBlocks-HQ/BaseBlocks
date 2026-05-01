@@ -280,7 +280,7 @@ export function MermaidDiagram({
           `flex flex-col items-center justify-center gap-3 ${canvasHeight} px-6 text-center`,
           embedded
             ? "bg-transparent"
-            : "rounded-[18px] border border-border/60 bg-muted/25 dark:bg-muted/15",
+            : "rounded-md border border-border/60 bg-muted/25 dark:bg-muted/15",
         )}
       >
         <div className="flex size-10 items-center justify-center rounded-full bg-background/80 shadow-xs">
@@ -301,7 +301,7 @@ export function MermaidDiagram({
           fillHeight ? "h-full" : "min-h-[200px]",
           embedded
             ? "bg-transparent"
-            : "rounded-[18px] border border-destructive/20 bg-destructive/[0.035]",
+            : "rounded-md border border-destructive/20 bg-destructive/[0.035]",
         )}
       >
         <div className="flex max-w-[22rem] flex-col items-center gap-3">
@@ -328,7 +328,7 @@ export function MermaidDiagram({
         "relative group/diagram w-full max-w-full min-w-0",
         fillHeight && "h-full",
         isFullscreen &&
-          "fixed inset-4 z-[80] rounded-[20px] border border-border/70 bg-background shadow-2xl",
+          "fixed inset-4 z-[80] rounded-lg border border-border/70 bg-background shadow-2xl",
       )}
     >
       <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-0.5 rounded-xl border border-border/70 bg-background/88 p-1 shadow-sm backdrop-blur-sm opacity-100 transition-opacity md:opacity-0 md:group-hover/diagram:opacity-100">
@@ -379,7 +379,7 @@ export function MermaidDiagram({
           `relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} cursor-grab touch-none select-none active:cursor-grabbing`,
           embedded
             ? "bg-transparent"
-            : "rounded-[18px] border border-border/60",
+            : "rounded-md border border-border/60",
           !theme && !embedded && "bg-muted/25 dark:bg-muted/15",
         )}
         style={{

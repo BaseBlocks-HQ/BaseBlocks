@@ -108,16 +108,16 @@ function DecisionTreeWorkspace({
 }) {
   if (isMobile) {
     return (
-      <div className="flex flex-col overflow-hidden rounded-[20px] border border-border/70 bg-muted/10 shadow-xs">
+      <div className="flex flex-col overflow-hidden rounded-lg border border-border/70 bg-muted/10 shadow-xs">
         {treeTabs}
         <ScrollArea className="max-h-[70vh]">
           <div className="space-y-1 p-1">
-            <div className="flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+            <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
               {breadcrumbNav}
               <div className="min-h-0 flex-1">{nodeListPanel}</div>
             </div>
             {currentNode ? (
-              <div className="overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+              <div className="overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
                 {nodeDetailPanel}
               </div>
             ) : null}
@@ -129,7 +129,7 @@ function DecisionTreeWorkspace({
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs"
+      className="flex flex-col overflow-hidden rounded-lg border border-border/70 bg-transparent shadow-xs"
       style={{ height: "500px" }}
     >
       {treeTabs}
@@ -139,14 +139,14 @@ function DecisionTreeWorkspace({
           className="h-full min-w-0"
         >
           <ResizablePanel defaultSize={40} minSize={25}>
-            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
               {breadcrumbNav}
               <div className="min-h-0 flex-1">{nodeListPanel}</div>
             </div>
           </ResizablePanel>
           <ResizableHandle className="w-1 cursor-col-resize bg-transparent after:hidden focus-visible:ring-0" />
           <ResizablePanel defaultSize={60} minSize={35}>
-            <div className="h-full min-w-0 overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+            <div className="h-full min-w-0 overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
               {nodeDetailPanel}
             </div>
           </ResizablePanel>

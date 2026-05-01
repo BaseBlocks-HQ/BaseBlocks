@@ -199,7 +199,7 @@ export function DiagramEditor({
     ) : undefined;
 
   const codePanel = (
-    <div className="flex h-full min-h-[13rem] flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+    <div className="flex h-full min-h-[13rem] flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
       <textarea
         value={activeDiagram?.mermaidCode ?? ""}
         onChange={(e) => updateCode(e.target.value)}
@@ -211,7 +211,7 @@ export function DiagramEditor({
   );
 
   const previewPanel = (
-    <div className="flex h-full min-h-[13rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+    <div className="flex h-full min-h-[13rem] min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
       <MermaidDiagram
         code={activeDiagram?.mermaidCode ?? ""}
         embedded

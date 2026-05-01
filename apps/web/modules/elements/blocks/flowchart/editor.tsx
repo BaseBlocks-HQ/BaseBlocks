@@ -72,7 +72,7 @@ export function FlowchartEditor({
   };
 
   return (
-    <div className="overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs">
+    <div className="overflow-hidden rounded-lg border border-border/70 bg-transparent shadow-xs">
       <DiagramEditor
         diagrams={diagrams}
         onChange={handleChange}

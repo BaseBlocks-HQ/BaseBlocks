@@ -16,7 +16,7 @@ function DecisionTreeShell({
   children,
 }: DecisionTreeShellProps) {
   return (
-    <div className="not-prose w-full min-w-0 overflow-hidden rounded-[20px] border border-border/70 bg-transparent shadow-xs">
+    <div className="not-prose w-full min-w-0 overflow-hidden rounded-lg border border-border/70 bg-transparent shadow-xs">
       {selector}
       {navigationBar}
       {children}
@@ -95,10 +95,10 @@ export function DecisionTreeSplitPanel({
   return (
     <DecisionTreeShell selector={selector} navigationBar={navigationBar}>
       <div className="flex min-h-[340px] flex-col gap-1.5 p-1.5 lg:min-h-[360px] lg:flex-row">
-        <div className="overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs lg:w-[288px] lg:shrink-0">
+        <div className="overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs lg:w-[288px] lg:shrink-0">
           {options}
         </div>
-        <div className="min-w-0 flex-1 overflow-hidden rounded-[18px] border border-border/60 bg-background/85 shadow-xs">
+        <div className="min-w-0 flex-1 overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
           {detail}
         </div>
       </div>
