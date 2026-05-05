@@ -45,6 +45,7 @@ export function PublicSiteSidebar({
 }: PublicSiteSidebarProps) {
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
+  const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   return (
     <Sidebar>
@@ -65,7 +66,12 @@ export function PublicSiteSidebar({
         {showSiteName && (
           <span className="font-semibold truncate">{site.name}</span>
         )}
-        <SidebarTrigger className="ml-auto" />
+        <SidebarTrigger
+          className={cn(
+            "ml-auto",
+            hasCustomHeaderColor && "text-current hover:bg-current/10",
+          )}
+        />
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
         <ScrollArea className="h-full">

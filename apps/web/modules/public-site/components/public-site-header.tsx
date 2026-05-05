@@ -64,7 +64,13 @@ export function PublicSiteHeader({
     >
       <div className="flex h-14 items-center px-4">
         {showSidebar ? (
-          <CollapsedSidebarTrigger />
+          <CollapsedSidebarTrigger
+            triggerClassName={
+              hasCustomHeaderColor
+                ? "text-current hover:bg-current/10"
+                : undefined
+            }
+          />
         ) : (
           <div className="flex items-center gap-2">
             {showLogo && <SiteLogo site={site} team={team} />}
@@ -131,12 +137,16 @@ export function GradientStripe({
   );
 }
 
-function CollapsedSidebarTrigger() {
+function CollapsedSidebarTrigger({
+  triggerClassName,
+}: {
+  triggerClassName?: string;
+}) {
   const { open } = useSidebar();
 
   if (open) {
     return null;
   }
 
-  return <SidebarTrigger />;
+  return <SidebarTrigger className={triggerClassName} />;
 }
