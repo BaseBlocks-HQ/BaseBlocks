@@ -55,3 +55,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
+
+/* Tailwind 4 logical inset utilities don't currently cover this exact negative
+   token in our build pipeline, but newer Fumadocs UI applies it internally. */
+@utility -inset-s-4 {
+  inset-inline-start: calc(var(--spacing) * -4);
+}

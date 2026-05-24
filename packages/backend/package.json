@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",
-    "@types/bun": "latest"
+    "@types/bun": "1.3.14"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -28,10 +28,9 @@
   "dependencies": {
     "@baseblocks/storage": "workspace:*",
     "@baseblocks/types": "workspace:*",
-    "@convex-dev/better-auth": "^0.10.10",
-    "@convex-dev/migrations": "^0.3.1",
-    "better-auth": "^1.4.18",
-    "convex": "^1.35.1",
-    "convex-helpers": "^0.1.111"
+    "@convex-dev/better-auth": "^0.12.2",
+    "@convex-dev/migrations": "^0.3.4",
+    "better-auth": "^1.6.11",
+    "convex": "^1.39.1"
   }
 }

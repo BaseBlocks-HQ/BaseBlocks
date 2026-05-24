@@ -2,5 +2,8 @@
   "name": "@baseblocks/tsconfig",
   "version": "0.0.0",
   "private": true,
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "next": "^16.2.6"
+  }
 }

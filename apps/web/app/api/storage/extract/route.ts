@@ -87,7 +87,6 @@ async function extractPdfText(bytes: Uint8Array) {
   const document = await pdfjs.getDocument({
     data: bytes,
     disableFontFace: true,
-    isEvalSupported: false,
     useWorkerFetch: false,
   }).promise;
 

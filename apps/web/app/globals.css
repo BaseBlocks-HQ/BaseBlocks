@@ -1,6 +1,7 @@
 @import "@baseblocks/tailwind-config/theme.css";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
+@source "../../../node_modules/fumadocs-ui/dist/**/*.js";
 
 :root {
   --radius: 0.625rem;
