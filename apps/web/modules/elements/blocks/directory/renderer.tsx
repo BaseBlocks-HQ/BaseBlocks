@@ -26,6 +26,32 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+function getPaginatedItems<T>(
+  items: T[],
+  pageSize: number,
+  currentPage: number,
+) {
+  if (pageSize <= 0) {
+    return {
+      pageSize: Math.max(items.length, 1),
+      totalPages: 1,
+      safeCurrentPage: 1,
+      paginatedItems: items,
+    };
+  }
+
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+
+  return {
+    pageSize,
+    totalPages,
+    safeCurrentPage,
+    paginatedItems: items.slice(startIndex, startIndex + pageSize),
+  };
+}
+
 function formatPhoneNumber(raw: string): string {
   // Preserve user-entered formatting to avoid country-specific assumptions.
   return raw.trim();
@@ -61,20 +87,24 @@ function CellContent({
       return (
         <a
           href={`mailto:${value}`}
-          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+          className="inline-flex max-w-full items-start gap-1.5 text-primary hover:underline underline-offset-2"
         >
           <Mail className="h-3.5 w-3.5 shrink-0 opacity-60" />
-          {value}
+          <span className="min-w-0 max-w-[9rem] break-words whitespace-normal leading-snug">
+            {value}
+          </span>
         </a>
       );
     case "phone":
       return (
         <a
           href={getPhoneHref(value)}
-          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+          className="inline-flex max-w-full items-start gap-1.5 text-primary hover:underline underline-offset-2"
         >
           <Phone className="h-3.5 w-3.5 shrink-0 opacity-60" />
-          {formatPhoneNumber(value)}
+          <span className="min-w-0 max-w-[9rem] break-words whitespace-normal leading-snug">
+            {formatPhoneNumber(value)}
+          </span>
         </a>
       );
     case "url":
@@ -83,14 +113,20 @@ function CellContent({
           href={normalizeUrl(value)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-primary hover:underline underline-offset-2"
+          className="inline-flex max-w-full items-start gap-1.5 text-primary hover:underline underline-offset-2"
         >
-          {value.replace(/^https?:\/\/(www\.)?/i, "")}
+          <span className="min-w-0 max-w-[9rem] break-all whitespace-normal leading-snug">
+            {value.replace(/^https?:\/\/(www\.)?/i, "")}
+          </span>
           <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
         </a>
       );
     default:
-      return <>{value}</>;
+      return (
+        <span className="block max-w-[9rem] break-words whitespace-normal leading-snug">
+          {value}
+        </span>
+      );
   }
 }
 
@@ -112,15 +148,15 @@ export function DirectoryRenderer({
     );
   })();
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredRows.length / settings.pageSize),
-  );
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (safeCurrentPage - 1) * settings.pageSize;
-  const paginatedRows = filteredRows.slice(
-    startIndex,
-    startIndex + settings.pageSize,
+  const {
+    pageSize,
+    totalPages,
+    safeCurrentPage,
+    paginatedItems: paginatedRows,
+  } = getPaginatedItems(
+    filteredRows,
+    settings.pageSize,
+    currentPage,
   );
 
   // Reset to page 1 when search changes
@@ -168,13 +204,22 @@ export function DirectoryRenderer({
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">
-        <Table>
+        <Table className="w-full table-auto">
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               {columns.map((col) => (
-                <TableHead key={col.id}>{col.header}</TableHead>
+                <TableHead
+                  key={col.id}
+                  className="h-auto py-3 align-middle whitespace-normal border-r last:border-r-0"
+                >
+                  <span className="block max-w-[9rem] break-words whitespace-normal leading-normal">
+                    {col.header}
+                  </span>
+                </TableHead>
               ))}
-              {showCopyColumn && <TableHead className="w-10" />}
+              {showCopyColumn && (
+                <TableHead className="h-auto w-10 py-3 align-middle border-r-0" />
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -197,7 +242,8 @@ export function DirectoryRenderer({
                       <TableCell
                         key={col.id}
                         className={cn(
-                          settings.copyMode === "cell" && "group relative",
+                          "align-top whitespace-normal border-r last:border-r-0",
+                          settings.copyMode === "cell" && "group relative pr-8",
                         )}
                       >
                         <CellContent value={cellValue} columnType={col.type} />
@@ -218,7 +264,7 @@ export function DirectoryRenderer({
                     );
                   })}
                   {showCopyColumn && (
-                    <TableCell className="w-10">
+                    <TableCell className="w-10 align-middle border-r-0">
                       <button
                         type="button"
                         onClick={() => copyRow(row.id)}
@@ -240,7 +286,7 @@ export function DirectoryRenderer({
       </div>
 
       {/* Pagination */}
-      {filteredRows.length > settings.pageSize && (
+      {settings.pageSize > 0 && filteredRows.length > pageSize && (
         <div className="flex items-center justify-between px-1">
           <Button
             variant="outline"

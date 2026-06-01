@@ -10,6 +10,7 @@ import type {
 } from "@baseblocks/types/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
   SelectContent,
@@ -26,9 +27,30 @@ import {
   TableRow,
 } from "@baseblocks/ui/table";
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ChevronLeft,
   ChevronRight,
   Globe,
+  GripVertical,
   Mail,
   Phone,
   Plus,
@@ -38,8 +60,218 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { csvToDirectoryContent, parseCSV } from "./csv-utils";
+
+const COLUMN_DRAG_PREFIX = "column:";
+const ROW_DRAG_PREFIX = "row:";
+
+function getPaginatedItems<T>(
+  items: T[],
+  pageSize: number,
+  currentPage: number,
+) {
+  if (pageSize <= 0) {
+    return {
+      pageSize: Math.max(items.length, 1),
+      totalPages: 1,
+      safeCurrentPage: 1,
+      paginatedItems: items,
+    };
+  }
+
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+
+  return {
+    pageSize,
+    totalPages,
+    safeCurrentPage,
+    paginatedItems: items.slice(startIndex, startIndex + pageSize),
+  };
+}
+
+function DragHandleButton({
+  attributes,
+  listeners,
+  className,
+}: {
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted cursor-grab active:cursor-grabbing",
+        className,
+      )}
+      aria-label="Drag to reorder"
+    >
+      <GripVertical className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+function SortableColumnHead({
+  column,
+  isEditing,
+  onStartEdit,
+  onStopEdit,
+  onUpdateHeader,
+  onUpdateType,
+  onRemove,
+}: {
+  column: DirectoryColumn;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onStopEdit: () => void;
+  onUpdateHeader: (header: string) => void;
+  onUpdateType: (type: DirectoryColumnType) => void;
+  onRemove: () => void;
+}) {
+  const sortable = useSortable({
+    id: `${COLUMN_DRAG_PREFIX}${column.id}`,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+  };
+
+  const colType = column.type ?? "text";
+  const TypeIcon =
+    COLUMN_TYPE_OPTIONS.find((option) => option.value === colType)?.icon ?? Text;
+
+  return (
+    <TableHead
+      ref={sortable.setNodeRef}
+      style={style}
+      className={cn(
+        "relative h-10 min-w-[12rem] align-middle",
+        sortable.isDragging && "z-10 bg-background opacity-80 shadow-sm",
+      )}
+    >
+      <div className="flex h-8 items-center gap-1">
+        <DragHandleButton
+          attributes={sortable.attributes}
+          listeners={sortable.listeners}
+          className="h-7 w-7 shrink-0"
+        />
+        {isEditing ? (
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <Input
+              value={column.header}
+              onChange={(e) => onUpdateHeader(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") onStopEdit();
+              }}
+              className="h-7 text-xs font-medium"
+            />
+            <Select
+              value={colType}
+              onValueChange={(value) => onUpdateType(value as DirectoryColumnType)}
+            >
+              <SelectTrigger className="h-7 w-[90px] shrink-0 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COLUMN_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <span className="flex items-center gap-1.5">
+                      <option.icon className="h-3 w-3" />
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div className="group flex min-w-0 flex-1 items-center gap-1">
+            <TypeIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <button
+              type="button"
+              className="min-w-0 flex-1 cursor-pointer truncate text-left"
+              onClick={onStartEdit}
+              title={column.header || "Untitled"}
+            >
+              {column.header || "Untitled"}
+            </button>
+            <button
+              type="button"
+              className="shrink-0 rounded p-0.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+              onClick={onRemove}
+            >
+              <X className="h-3 w-3 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+      </div>
+    </TableHead>
+  );
+}
+
+function SortableDirectoryRow({
+  row,
+  columns,
+  onUpdateCell,
+  onRemoveRow,
+}: {
+  row: DirectoryRow;
+  columns: DirectoryColumn[];
+  onUpdateCell: (colId: string, value: string) => void;
+  onRemoveRow: () => void;
+}) {
+  const sortable = useSortable({
+    id: `${ROW_DRAG_PREFIX}${row.id}`,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+  };
+
+  return (
+    <TableRow
+      ref={sortable.setNodeRef}
+      style={style}
+      className={cn(sortable.isDragging && "z-10 bg-background opacity-80 shadow-sm")}
+    >
+      <TableCell className="w-10 p-1 align-top">
+        <DragHandleButton
+          attributes={sortable.attributes}
+          listeners={sortable.listeners}
+        />
+      </TableCell>
+      {columns.map((col) => (
+        <TableCell key={col.id} className="min-w-[12rem] p-1 align-top whitespace-normal">
+          <Input
+            value={row.cells[col.id] ?? ""}
+            onChange={(e) => onUpdateCell(col.id, e.target.value)}
+            placeholder={COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]}
+            type={col.type === "email" ? "email" : "text"}
+            className="h-8 border-transparent bg-transparent text-sm shadow-none focus-visible:border-input focus-visible:bg-background"
+          />
+        </TableCell>
+      ))}
+      <TableCell className="w-10 p-1 align-top">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+          onClick={onRemoveRow}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 const COLUMN_TYPE_OPTIONS: {
   value: DirectoryColumnType;
@@ -70,10 +302,19 @@ export function DirectoryEditor({
   const [editingHeaderId, setEditingHeaderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeDragKind, setActiveDragKind] = useState<"column" | "row" | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const save = useAutoSave(onUpdate, onSaveStatusChange);
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor),
+  );
 
-  const pageSize = localContent.settings.pageSize;
   const filteredRows = (() => {
     if (!searchQuery.trim()) return localContent.rows;
     const query = searchQuery.toLowerCase();
@@ -83,10 +324,16 @@ export function DirectoryEditor({
       ),
     );
   })();
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (safeCurrentPage - 1) * pageSize;
-  const paginatedRows = filteredRows.slice(startIndex, startIndex + pageSize);
+  const { pageSize, totalPages, safeCurrentPage, paginatedItems: paginatedRows } =
+    getPaginatedItems(
+      filteredRows,
+      localContent.settings.pageSize,
+      currentPage,
+    );
+
+  useEffect(() => {
+    setLocalContent(content);
+  }, [content]);
 
   const updateContent = (newContent: DirectoryContent) => {
     setLocalContent(newContent);
@@ -105,6 +352,18 @@ export function DirectoryEditor({
       columns: [...localContent.columns, newCol],
     });
     setEditingHeaderId(newCol.id);
+  };
+
+  const reorderColumns = (activeId: string, overId: string) => {
+    const oldIndex = localContent.columns.findIndex((col) => col.id === activeId);
+    const newIndex = localContent.columns.findIndex((col) => col.id === overId);
+
+    if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+
+    updateContent({
+      ...localContent,
+      columns: arrayMove(localContent.columns, oldIndex, newIndex),
+    });
   };
 
   const removeColumn = (colId: string) => {
@@ -145,7 +404,10 @@ export function DirectoryEditor({
       cells: {},
     };
     const newRowCount = localContent.rows.length + 1;
-    const newLastPage = Math.ceil(newRowCount / pageSize);
+    const newLastPage =
+      localContent.settings.pageSize <= 0
+        ? 1
+        : Math.ceil(newRowCount / localContent.settings.pageSize);
     updateContent({
       ...localContent,
       rows: [...localContent.rows, newRow],
@@ -155,9 +417,27 @@ export function DirectoryEditor({
 
   const removeRow = (rowId: string) => {
     const newRows = localContent.rows.filter((r) => r.id !== rowId);
-    const newTotalPages = Math.max(1, Math.ceil(newRows.length / pageSize));
+    const newTotalPages =
+      localContent.settings.pageSize <= 0
+        ? 1
+        : Math.max(
+            1,
+            Math.ceil(newRows.length / localContent.settings.pageSize),
+          );
     if (safeCurrentPage > newTotalPages) setCurrentPage(newTotalPages);
     updateContent({ ...localContent, rows: newRows });
+  };
+
+  const reorderRows = (activeId: string, overId: string) => {
+    const oldIndex = localContent.rows.findIndex((row) => row.id === activeId);
+    const newIndex = localContent.rows.findIndex((row) => row.id === overId);
+
+    if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+
+    updateContent({
+      ...localContent,
+      rows: arrayMove(localContent.rows, oldIndex, newIndex),
+    });
   };
 
   const updateCell = (rowId: string, colId: string, value: string) => {
@@ -202,6 +482,58 @@ export function DirectoryEditor({
       updateContent(newContent);
     };
     reader.readAsText(file);
+  };
+
+  const handleColumnDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    reorderColumns(
+      String(active.id).replace(COLUMN_DRAG_PREFIX, ""),
+      String(over.id).replace(COLUMN_DRAG_PREFIX, ""),
+    );
+  };
+
+  const handleRowDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    reorderRows(
+      String(active.id).replace(ROW_DRAG_PREFIX, ""),
+      String(over.id).replace(ROW_DRAG_PREFIX, ""),
+    );
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const activeId = String(event.active.id);
+
+    if (activeId.startsWith(COLUMN_DRAG_PREFIX)) {
+      setActiveDragKind("column");
+      return;
+    }
+
+    if (activeId.startsWith(ROW_DRAG_PREFIX)) {
+      setActiveDragKind("row");
+      return;
+    }
+
+    setActiveDragKind(null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+
+    if (activeId.startsWith(COLUMN_DRAG_PREFIX)) {
+      handleColumnDragEnd(event);
+    } else if (activeId.startsWith(ROW_DRAG_PREFIX)) {
+      handleRowDragEnd(event);
+    }
+
+    setActiveDragKind(null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveDragKind(null);
   };
 
   // Empty state
@@ -272,127 +604,89 @@ export function DirectoryEditor({
         </div>
       )}
       <div className="rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {localContent.columns.map((col) => {
-                const colType = col.type ?? "text";
-                const TypeIcon =
-                  COLUMN_TYPE_OPTIONS.find((o) => o.value === colType)?.icon ??
-                  Text;
-                return (
-                  <TableHead key={col.id} className="relative group">
-                    {editingHeaderId === col.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          value={col.header}
-                          onChange={(e) =>
-                            updateColumnHeader(col.id, e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === "Escape")
-                              setEditingHeaderId(null);
-                          }}
-                          className="h-7 text-xs font-medium"
-                        />
-                        <Select
-                          value={colType}
-                          onValueChange={(v) =>
-                            updateColumnType(col.id, v as DirectoryColumnType)
-                          }
-                        >
-                          <SelectTrigger className="h-7 w-[90px] text-xs shrink-0">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COLUMN_TYPE_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                <span className="flex items-center gap-1.5">
-                                  <opt.icon className="h-3 w-3" />
-                                  {opt.label}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <TypeIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        <button
-                          type="button"
-                          className="cursor-pointer text-left flex-1 min-w-0 truncate"
-                          onClick={() => setEditingHeaderId(col.id)}
-                        >
-                          {col.header || "Untitled"}
-                        </button>
-                        <button
-                          type="button"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-0.5 rounded hover:bg-muted"
-                          onClick={() => removeColumn(col.id)}
-                        >
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                      </div>
-                    )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={
+            activeDragKind === "column"
+              ? [restrictToHorizontalAxis]
+              : activeDragKind === "row"
+                ? [restrictToVerticalAxis]
+                : undefined
+          }
+          autoScroll={false}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <Table className="table-auto">
+            <TableHeader>
+              <SortableContext
+                items={localContent.columns.map((col) => `${COLUMN_DRAG_PREFIX}${col.id}`)}
+                strategy={horizontalListSortingStrategy}
+              >
+                <TableRow>
+                  <TableHead className="h-10 w-10 align-middle">
+                    <div className="flex h-8 items-center justify-center" />
                   </TableHead>
-                );
-              })}
-              <TableHead className="w-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={addColumn}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedRows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={localContent.columns.length + 1}
-                  className="py-6 text-center text-muted-foreground"
-                >
-                  {searchQuery ? "No results found." : "No rows yet."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedRows.map((row) => (
-                <TableRow key={row.id}>
                   {localContent.columns.map((col) => (
-                    <TableCell key={col.id} className="p-1">
-                      <Input
-                        value={row.cells[col.id] ?? ""}
-                        onChange={(e) =>
-                          updateCell(row.id, col.id, e.target.value)
-                        }
-                        placeholder={
-                          COLUMN_TYPE_PLACEHOLDERS[col.type ?? "text"]
-                        }
-                        type={col.type === "email" ? "email" : "text"}
-                        className="h-8 text-sm border-transparent bg-transparent shadow-none focus-visible:border-input focus-visible:bg-background"
-                      />
-                    </TableCell>
+                    <SortableColumnHead
+                      key={col.id}
+                      column={col}
+                      isEditing={editingHeaderId === col.id}
+                      onStartEdit={() => setEditingHeaderId(col.id)}
+                      onStopEdit={() => setEditingHeaderId(null)}
+                      onUpdateHeader={(header) => updateColumnHeader(col.id, header)}
+                      onUpdateType={(type) => updateColumnType(col.id, type)}
+                      onRemove={() => removeColumn(col.id)}
+                    />
                   ))}
-                  <TableCell className="w-10 p-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeRow(row.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
+                  <TableHead className="h-10 w-10 align-middle">
+                    <div className="flex h-8 items-center justify-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={addColumn}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </SortableContext>
+            </TableHeader>
+            <TableBody>
+              <SortableContext
+                items={paginatedRows.map((row) => `${ROW_DRAG_PREFIX}${row.id}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {paginatedRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={localContent.columns.length + 2}
+                      className="py-6 text-center text-muted-foreground"
+                    >
+                      {searchQuery ? "No results found." : "No rows yet."}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedRows.map((row) => (
+                    <SortableDirectoryRow
+                      key={row.id}
+                      row={row}
+                      columns={localContent.columns}
+                      onUpdateCell={(colId, value) =>
+                        updateCell(row.id, colId, value)
+                      }
+                      onRemoveRow={() => removeRow(row.id)}
+                    />
+                  ))
+                )}
+              </SortableContext>
+            </TableBody>
+          </Table>
+        </DndContext>
       </div>
       <input
         ref={fileInputRef}
@@ -401,7 +695,7 @@ export function DirectoryEditor({
         className="hidden"
         onChange={handleCSVImport}
       />
-      {filteredRows.length > pageSize && (
+      {localContent.settings.pageSize > 0 && filteredRows.length > pageSize && (
         <div className="flex items-center justify-between px-1">
           <Button
             variant="outline"

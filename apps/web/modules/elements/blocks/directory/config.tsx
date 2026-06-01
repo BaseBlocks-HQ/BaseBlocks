@@ -63,8 +63,14 @@ export function DirectoryConfigPanel({
       <div className="space-y-2">
         <Label className="text-sm">Page Size</Label>
         <Select
-          value={String(content.settings.pageSize)}
-          onValueChange={(value) => updateSettings({ pageSize: Number(value) })}
+          value={
+            content.settings.pageSize <= 0
+              ? "all"
+              : String(content.settings.pageSize)
+          }
+          onValueChange={(value) =>
+            updateSettings({ pageSize: value === "all" ? 0 : Number(value) })
+          }
         >
           <SelectTrigger className="h-8 text-sm">
             <SelectValue />
@@ -74,6 +80,7 @@ export function DirectoryConfigPanel({
             <SelectItem value="10">10 rows</SelectItem>
             <SelectItem value="20">20 rows</SelectItem>
             <SelectItem value="50">50 rows</SelectItem>
+            <SelectItem value="all">All rows</SelectItem>
           </SelectContent>
         </Select>
       </div>
