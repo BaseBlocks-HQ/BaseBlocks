@@ -41,7 +41,10 @@ const connectSrc = [
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-site" },
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
@@ -72,6 +75,7 @@ const securityHeaders = [
 const nextConfig = {
   allowedDevOrigins: ["*.localhost"],
   serverExternalPackages: ["@napi-rs/canvas", "officeparser"],
+  poweredByHeader: false,
   reactCompiler: true,
   images: {
     formats: ["image/avif", "image/webp"],
