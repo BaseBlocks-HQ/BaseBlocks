@@ -12,11 +12,13 @@ interface PublicHeaderProps {
   className?: string;
   contentClassName?: string;
   docsLabel: string;
+  legalLabel?: string;
   homepageLinkLabel?: string;
   mobileChromeMode?: "default" | "overlay";
   mobileActions?: ReactNode;
   showDocsLink?: boolean;
   showHomepageLink?: boolean;
+  showLegalLink?: boolean;
 }
 
 export function PublicHeader({
@@ -24,11 +26,13 @@ export function PublicHeader({
   className,
   contentClassName,
   docsLabel,
+  legalLabel = "Legal",
   homepageLinkLabel,
   mobileChromeMode = "default",
   mobileActions,
   showDocsLink = true,
   showHomepageLink = false,
+  showLegalLink = true,
 }: PublicHeaderProps) {
   const isMobileOverlay = mobileChromeMode === "overlay";
 
@@ -121,6 +125,13 @@ export function PublicHeader({
                 <Link href="/docs">
                   <Button variant="outline" size="sm">
                     {docsLabel}
+                  </Button>
+                </Link>
+              ) : null}
+              {showLegalLink ? (
+                <Link href="/legal">
+                  <Button variant="outline" size="sm">
+                    {legalLabel}
                   </Button>
                 </Link>
               ) : null}

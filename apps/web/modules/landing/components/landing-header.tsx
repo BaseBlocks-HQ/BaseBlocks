@@ -29,6 +29,7 @@ export function LandingHeader({
       authAction={authAction}
       mobileChromeMode="overlay"
       docsLabel={navigationTranslations("docs")}
+      legalLabel={navigationTranslations("legal")}
     />
   );
 }

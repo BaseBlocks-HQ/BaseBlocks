@@ -284,7 +284,7 @@ export function BeamTableOfContents() {
   return (
     <div
       id="nd-toc"
-      className="sticky top-(--fd-docs-row-1) hidden h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] w-(--fd-toc-width) flex-col pt-12 pe-4 pb-2 [grid-area:toc] xl:flex md:top-(--fd-docs-row-2) md:h-[calc(var(--fd-docs-height)-var(--fd-docs-row-2))]"
+      className="sticky top-(--fd-docs-row-1) h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] w-(--fd-toc-width) flex-col pt-12 pe-4 pb-2 [grid-area:toc] xl:layout:[--fd-toc-width:268px] max-xl:hidden"
     >
       <h3
         id="toc-title"
