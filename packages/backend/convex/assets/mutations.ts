@@ -1,12 +1,40 @@
-import {
-  getStorageBucketNameFromEnv,
-  getStorageProviderNameFromEnv,
-} from "@baseblocks/storage";
+import { isSupportedUploadMimeType } from "@baseblocks/types";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireSiteManager } from "../auth";
+import {
+  getFilesBucketName,
+  getFilesMaxUploadSize,
+  getFilesProviderName,
+} from "../files/config";
+import { parseFileKey } from "../files/keys";
 import { resolveSiteContext } from "../lib/resolvers";
-import { buildAssetUrl } from "../storage/paths";
+import { buildAssetUrl } from "./urls";
+
+function validateSiteAssetUpload(args: {
+  siteId: string;
+  objectKey: string;
+  contentType: string;
+  size: number;
+}) {
+  const parsed = parseFileKey(args.objectKey);
+  if (
+    !parsed ||
+    parsed.siteId !== args.siteId ||
+    parsed.kind !== "assets"
+  ) {
+    throw new ConvexError("Invalid asset key");
+  }
+
+  if (!isSupportedUploadMimeType(args.contentType)) {
+    throw new ConvexError("File type not allowed");
+  }
+
+  const maxUploadSize = getFilesMaxUploadSize();
+  if (maxUploadSize !== null && args.size > maxUploadSize) {
+    throw new ConvexError("File is too large");
+  }
+}
 
 export const createSiteAsset = mutation({
   args: {
@@ -21,6 +49,8 @@ export const createSiteAsset = mutation({
     ctx,
     { siteId, objectKey, filename, contentType, size, checksum },
   ) => {
+    validateSiteAssetUpload({ siteId, objectKey, contentType, size });
+
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) {
       throw new ConvexError("Site not found");
@@ -32,8 +62,8 @@ export const createSiteAsset = mutation({
       siteId,
       kind: "siteAsset",
       visibility: "public",
-      provider: getStorageProviderNameFromEnv(),
-      bucket: getStorageBucketNameFromEnv(),
+      provider: getFilesProviderName(),
+      bucket: getFilesBucketName(),
       objectKey,
       filename,
       contentType,

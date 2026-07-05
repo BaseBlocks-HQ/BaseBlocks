@@ -1,7 +1,7 @@
 "use client";
 
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { useFileUpload } from "@/lib/storage/hooks";
+import { useFileUpload } from "@/lib/files/hooks";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useAction, useMutation, useQuery } from "convex/react";

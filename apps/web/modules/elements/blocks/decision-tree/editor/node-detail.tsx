@@ -3,7 +3,7 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
-import { useSiteAssetUpload } from "@/lib/storage";
+import { useSiteAssetUpload } from "@/lib/files";
 import { useEditorSite } from "@/modules/shared/contexts/editor-site-context";
 import type { Id } from "@baseblocks/backend";
 import type { DecisionTreeNode } from "@baseblocks/types/elements";

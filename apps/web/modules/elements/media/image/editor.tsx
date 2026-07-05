@@ -1,6 +1,6 @@
 "use client";
 
-import { useImageUpload } from "@/lib/storage";
+import { useImageUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";

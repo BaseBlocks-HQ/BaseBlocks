@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/auth/server";
 import { getAuthorizedAsset, getServerConvexClient } from "@/lib/convex/server";
+import { getFileUrl } from "@/lib/files/server";
 import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
-import { createSignedDownloadUrl } from "@/lib/storage/server";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -29,12 +29,9 @@ export async function GET(
     }
 
     const download = request.nextUrl.searchParams.get("download") === "1";
-    const signedUrl = await createSignedDownloadUrl({
-      bucket: asset.bucket,
-      objectKey: asset.objectKey,
-      filename: asset.filename,
-      download,
-      expiresInSeconds: 60 * 60,
+    const signedUrl = await getFileUrl({
+      key: asset.objectKey,
+      expiresIn: 60 * 60,
     });
 
     // Proxy server-side to avoid CORS/Referer blocks when the browser fetches

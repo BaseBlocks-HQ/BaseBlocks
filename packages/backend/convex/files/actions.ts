@@ -1,7 +1,6 @@
 import { type FunctionReference, makeFunctionReference } from "convex/server";
 
 type DeleteObjectArgs = {
-  bucket: string;
   objectKey: string;
 };
 
@@ -13,7 +12,7 @@ export const deleteObjectAction = makeFunctionReference<
   "action",
   DeleteObjectArgs,
   DeleteObjectResult
->("storage/deleteObject:deleteObject") as unknown as FunctionReference<
+>("files/deleteObject:deleteObject") as unknown as FunctionReference<
   "action",
   "internal",
   DeleteObjectArgs,

@@ -2,11 +2,9 @@
 minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   "@baseblocks/backend",
-  "@baseblocks/storage",
   "@baseblocks/tsconfig",
   "@baseblocks/types",
   "@baseblocks/ui",
-  "@baseblocks/upload-service",
   "@baseblocks/web",
   "fumadocs-core",
   "fumadocs-mdx",

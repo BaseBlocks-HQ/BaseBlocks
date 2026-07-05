@@ -1,6 +1,6 @@
 "use client";
 
-import { useImageUpload } from "@/lib/storage";
+import { useImageUpload } from "@/lib/files";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";

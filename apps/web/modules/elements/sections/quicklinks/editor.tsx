@@ -1,6 +1,6 @@
 "use client";
 
-import { storageClient } from "@/lib/storage/client";
+import { filesClient } from "@/lib/files/client";
 import { cn } from "@/lib/utils";
 import { useLayoutContext } from "@/modules/elements/framework/layout-context";
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
@@ -417,10 +417,9 @@ export function QuicklinksEditor({
 
   const handleImageUpload = async (file: File, linkId: string) => {
     dispatch({ type: "setUploadingLinkId", value: linkId });
-    const contentType = file.type || "application/octet-stream";
     let objectKey: string | null = null;
 
-    const uploadedUrl = await storageClient
+    const uploadedUrl = await filesClient
       .upload(file, {
         siteId,
         purpose: "siteAsset",
@@ -429,16 +428,17 @@ export function QuicklinksEditor({
         objectKey = uploadResult.objectKey;
         const { url } = await createSiteAsset({
           siteId: siteId as never,
-          objectKey,
+          objectKey: uploadResult.objectKey,
           filename: file.name,
-          contentType,
-          size: file.size,
+          contentType: uploadResult.contentType,
+          size: uploadResult.size,
+          checksum: uploadResult.checksum,
         });
         return url;
       })
       .catch(async () => {
         if (objectKey) {
-          await storageClient.cleanup({
+          await filesClient.cleanup({
             siteId,
             purpose: "siteAsset",
             objectKey,

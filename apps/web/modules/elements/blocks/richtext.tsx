@@ -3,7 +3,7 @@
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 
-import { useSiteAssetUpload } from "@/lib/storage";
+import { useSiteAssetUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
 import { useEditorSite } from "@/modules/shared/contexts/editor-site-context";

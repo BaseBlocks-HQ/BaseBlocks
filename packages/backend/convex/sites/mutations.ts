@@ -3,7 +3,7 @@ import { mutation } from "../_generated/server";
 import { requirePublisher, requireSiteManager } from "../auth";
 import { deleteDocumentRows } from "../documents/lib";
 import { markSiteModified } from "../lib/markModified";
-import { deleteObjectAction } from "../storage/actions";
+import { deleteObjectAction } from "../files/actions";
 
 // Create a new site
 export const create = mutation({
@@ -146,7 +146,6 @@ export const update = mutation({
       await ctx.db.delete(site.logoAssetId);
       if (oldAsset) {
         await ctx.scheduler.runAfter(0, deleteObjectAction, {
-          bucket: oldAsset.bucket,
           objectKey: oldAsset.objectKey,
         });
       }
@@ -164,7 +163,6 @@ export const update = mutation({
       await ctx.db.delete(site.logoAssetId);
       if (oldAsset) {
         await ctx.scheduler.runAfter(0, deleteObjectAction, {
-          bucket: oldAsset.bucket,
           objectKey: oldAsset.objectKey,
         });
       }
@@ -434,7 +432,6 @@ export const remove = mutation({
     for (const asset of siteAssets) {
       await ctx.db.delete(asset._id);
       await ctx.scheduler.runAfter(0, deleteObjectAction, {
-        bucket: asset.bucket,
         objectKey: asset.objectKey,
       });
     }

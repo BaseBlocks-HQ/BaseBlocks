@@ -72,7 +72,6 @@ export const extractAndUpdate = internalAction({
             "X-Baseblocks-Extraction-Secret": requireExtractionApiSecret(),
           },
           body: JSON.stringify({
-            bucket: document.bucket,
             objectKey: document.objectKey,
             contentType: document.contentType,
           }),

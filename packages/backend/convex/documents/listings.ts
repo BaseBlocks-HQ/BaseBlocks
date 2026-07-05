@@ -1,6 +1,6 @@
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { buildDocumentDownloadUrl } from "../storage/paths";
+import { buildDocumentDownloadUrl } from "../assets/urls";
 
 type DocumentListingSource = Pick<
   Doc<"documents">,

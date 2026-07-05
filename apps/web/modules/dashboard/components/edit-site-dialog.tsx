@@ -6,7 +6,7 @@ import {
   dashboardDialogPrimaryFieldLabelClassName,
   dashboardDialogPrimaryInlineInputClassName,
 } from "@/components/dialogs";
-import { storageClient } from "@/lib/storage/client";
+import { filesClient } from "@/lib/files/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Input } from "@baseblocks/ui/input";
@@ -105,25 +105,19 @@ export function EditSiteDialog({
     let objectKey: string | null = null;
 
     try {
-      const uploadResult = await storageClient.upload(file, {
+      const uploadResult = await filesClient.upload(file, {
         siteId: site._id,
         purpose: "siteAsset",
       });
       objectKey = uploadResult.objectKey;
 
-      const verified = await storageClient.finalize({
-        siteId: site._id,
-        purpose: "siteAsset",
-        objectKey,
-      });
-
       const { assetId, url } = await createSiteAsset({
         siteId: site._id as Id<"sites">,
-        objectKey: verified.objectKey,
+        objectKey: uploadResult.objectKey,
         filename: file.name,
-        contentType: verified.contentType,
-        size: verified.size,
-        checksum: verified.checksum,
+        contentType: uploadResult.contentType,
+        size: uploadResult.size,
+        checksum: uploadResult.checksum,
       });
 
       setDialogState((current) => ({
@@ -136,7 +130,7 @@ export function EditSiteDialog({
       resetFileInput();
     } catch (err) {
       if (objectKey) {
-        await storageClient.cleanup({
+        await filesClient.cleanup({
           siteId: site._id,
           purpose: "siteAsset",
           objectKey,

@@ -8,10 +8,10 @@ import type { Doc } from "../_generated/dataModel";
  *   1. Remove the searchableContent index entry.
  *   2. Delete the assets row.
  *   3. Delete the document row.
- *   4. Schedule the S3 object deletion (runs after the transaction commits).
+ *   4. Schedule the object deletion (runs after the transaction commits).
  */
 import type { MutationCtx } from "../_generated/server";
-import { deleteObjectAction } from "../storage/actions";
+import { deleteObjectAction } from "../files/actions";
 import { deleteDocumentListing } from "./listings";
 
 export async function deleteDocumentRows(
@@ -43,10 +43,9 @@ export async function deleteDocumentRows(
   // 4b. Delete the lightweight listing entry
   await deleteDocumentListing(ctx, document._id);
 
-  // 5. Schedule S3 deletion (fire-and-forget, after DB commit)
+  // 5. Schedule file deletion (fire-and-forget, after DB commit)
   if (asset) {
     await ctx.scheduler.runAfter(0, deleteObjectAction, {
-      bucket: asset.bucket,
       objectKey: asset.objectKey,
     });
   }

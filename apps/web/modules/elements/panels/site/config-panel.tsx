@@ -1,7 +1,7 @@
 "use client";
 
 import { useSite } from "@/lib/data";
-import { useImageUpload } from "@/lib/storage";
+import { useImageUpload } from "@/lib/files";
 import {
   CollapsibleSettingsSection,
   PanelSettingRow,

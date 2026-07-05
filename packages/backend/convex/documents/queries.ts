@@ -5,7 +5,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../auth";
 import { getActiveLibraryIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
-import { buildDocumentDownloadUrl } from "../storage/paths";
+import { buildDocumentDownloadUrl } from "../assets/urls";
 import { mapDocumentListing } from "./listings";
 
 function mapDocument(doc: Doc<"documents">) {

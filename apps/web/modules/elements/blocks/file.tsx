@@ -11,7 +11,7 @@ import {
   buildFileDeepLinkPath,
   toAbsoluteBrowserUrl,
 } from "@/lib/file-deep-link";
-import { useFileUpload } from "@/lib/storage";
+import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
 import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";

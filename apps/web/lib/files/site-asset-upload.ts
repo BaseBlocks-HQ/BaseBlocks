@@ -4,7 +4,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { type UploadProgress, storageClient } from "./client";
+import { type UploadProgress, filesClient } from "./client";
 
 export interface SiteAssetUploadState {
   isUploading: boolean;
@@ -38,7 +38,7 @@ export function useSiteAssetUpload() {
         error: null,
       });
 
-      const uploadResult = await storageClient.upload(file, {
+      const uploadResult = await filesClient.upload(file, {
         siteId,
         purpose: "siteAsset",
         onProgress: (progress) => {
@@ -47,19 +47,13 @@ export function useSiteAssetUpload() {
       });
       objectKey = uploadResult.objectKey;
 
-      const verified = await storageClient.finalize({
-        siteId,
-        purpose: "siteAsset",
-        objectKey,
-      });
-
       const { url } = await createSiteAsset({
         siteId,
-        objectKey: verified.objectKey,
+        objectKey: uploadResult.objectKey,
         filename: file.name,
-        contentType: verified.contentType,
-        size: verified.size,
-        checksum: verified.checksum,
+        contentType: uploadResult.contentType,
+        size: uploadResult.size,
+        checksum: uploadResult.checksum,
       });
 
       setUploadState({
@@ -70,11 +64,11 @@ export function useSiteAssetUpload() {
 
       return {
         url,
-        contentType: verified.contentType,
+        contentType: uploadResult.contentType,
       };
     } catch (err) {
       if (objectKey) {
-        await storageClient.cleanup({
+        await filesClient.cleanup({
           siteId,
           purpose: "siteAsset",
           objectKey,

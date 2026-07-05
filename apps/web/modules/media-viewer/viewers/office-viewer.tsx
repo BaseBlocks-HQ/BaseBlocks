@@ -9,8 +9,8 @@ import type { ViewerProps } from "../types";
  * Office document viewer using Microsoft Office Online Viewer
  *
  * Note: This uses Microsoft's public document viewer which requires the document
- * to be publicly accessible via URL. The download proxy at /api/storage/download
- * is public and accessible without authentication.
+ * to be publicly accessible via URL. Public document routes proxy authorized
+ * files through product-level storage URLs.
  *
  * IMPORTANT: This does NOT work on localhost - Microsoft's servers need to fetch
  * the document from a public URL on the internet.

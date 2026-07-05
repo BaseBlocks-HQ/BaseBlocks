@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { readObjectBytes } from "@/lib/storage/server";
+import { readFileBytes } from "@/lib/files/server";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -175,23 +175,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as {
-      bucket?: string;
       objectKey?: string;
       contentType?: string;
     };
 
-    if (!body.bucket || !body.objectKey || !body.contentType) {
+    if (!body.objectKey || !body.contentType) {
       return NextResponse.json(
-        { error: "Missing bucket, objectKey, or contentType" },
+        { error: "Missing objectKey or contentType" },
         { status: 400 },
       );
     }
 
     const normalizedType = body.contentType.split(";")[0]?.trim().toLowerCase();
-    const bytes = await readObjectBytes({
-      bucket: body.bucket,
-      objectKey: body.objectKey,
-    });
+    const bytes = await readFileBytes(body.objectKey);
 
     if (
       normalizedType === "text/plain" ||

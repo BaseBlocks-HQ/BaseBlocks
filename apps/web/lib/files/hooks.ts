@@ -4,7 +4,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useAction, useMutation } from "convex/react";
 import { useState } from "react";
-import { type UploadProgress, storageClient } from "./client";
+import { type UploadProgress, filesClient } from "./client";
 import { isExtractable } from "./extraction";
 
 export interface UploadState {
@@ -21,10 +21,6 @@ interface UploadOptions {
   onError?: (error: Error) => void;
 }
 
-/**
- * Hook for uploading files to Library
- *
- */
 export function useFileUpload() {
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>(
     {},
@@ -64,7 +60,7 @@ export function useFileUpload() {
         error: null,
       });
 
-      const uploadResult = await storageClient.upload(file, {
+      const uploadResult = await filesClient.upload(file, {
         siteId: options.siteId,
         purpose: "document",
         onProgress: (progress) => {
@@ -73,35 +69,26 @@ export function useFileUpload() {
       });
       objectKey = uploadResult.objectKey;
 
-      // Server-verify the upload before writing to Convex
-      const verified = await storageClient.finalize({
-        siteId: options.siteId,
-        purpose: "document",
-        objectKey,
-      });
-
-      // Create document record in Convex with server-verified metadata
       let documentId: Id<"documents">;
-
       if (options.libraryId) {
         documentId = await createInLibrary({
           siteId: options.siteId,
           libraryId: options.libraryId,
           folderId: options.folderId,
-          objectKey: verified.objectKey,
+          objectKey: uploadResult.objectKey,
           filename: file.name,
-          contentType: verified.contentType,
-          size: verified.size,
-          checksum: verified.checksum,
+          contentType: uploadResult.contentType,
+          size: uploadResult.size,
+          checksum: uploadResult.checksum,
         });
       } else {
         documentId = await createDocument({
           siteId: options.siteId,
-          objectKey: verified.objectKey,
+          objectKey: uploadResult.objectKey,
           filename: file.name,
-          contentType: verified.contentType,
-          size: verified.size,
-          checksum: verified.checksum,
+          contentType: uploadResult.contentType,
+          size: uploadResult.size,
+          checksum: uploadResult.checksum,
         });
       }
 
@@ -111,7 +98,6 @@ export function useFileUpload() {
       });
       options.onSuccess?.(documentId);
 
-      // Trigger text extraction for supported file types (non-blocking)
       const contentType = file.type || "application/octet-stream";
       if (isExtractable(contentType) && triggerExtraction) {
         triggerExtraction({ documentId }).catch((_err: unknown) => {});
@@ -120,7 +106,7 @@ export function useFileUpload() {
       return documentId;
     } catch (err) {
       if (objectKey) {
-        await storageClient.cleanup({
+        await filesClient.cleanup({
           siteId: options.siteId,
           purpose: "document",
           objectKey,
@@ -138,10 +124,7 @@ export function useFileUpload() {
     files: File[],
     options: UploadOptions,
   ): Promise<(Id<"documents"> | null)[]> => {
-    const results = await Promise.all(
-      files.map((file) => uploadFile(file, options)),
-    );
-    return results;
+    return await Promise.all(files.map((file) => uploadFile(file, options)));
   };
 
   const clearUploadState = (fileId: string) => {
@@ -156,12 +139,10 @@ export function useFileUpload() {
     setUploadStates({});
   };
 
-  // Check if any files are uploading
   const isAnyUploading = Object.values(uploadStates).some(
     (state) => state.isUploading,
   );
 
-  // Get total progress across all uploads
   const totalProgress = Object.values(uploadStates).reduce(
     (acc, state) => {
       if (state.progress) {

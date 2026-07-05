@@ -1,5 +1,5 @@
 import type { Doc } from "../_generated/dataModel";
-import { buildDocumentDownloadUrl } from "../storage/paths";
+import { buildDocumentDownloadUrl } from "../assets/urls";
 
 type SearchMetadata = Doc<"searchableContent">["metadata"];
 

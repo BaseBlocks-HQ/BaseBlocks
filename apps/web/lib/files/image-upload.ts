@@ -9,12 +9,6 @@ interface ImageUploadResult {
   height?: number;
 }
 
-/**
- * Hook for uploading images directly to storage without creating document records.
- * Use this for images embedded in elements (like the image element).
- * For document library files, use useFileUpload instead.
- *
- */
 export function useImageUpload() {
   const { uploadSiteAsset, uploadState, clearError } = useSiteAssetUpload();
 
@@ -22,7 +16,6 @@ export function useImageUpload() {
     file: File,
     siteId: Id<"sites">,
   ): Promise<ImageUploadResult | null> => {
-    // Validate it's an image
     if (!file.type.startsWith("image/")) {
       return null;
     }
@@ -47,9 +40,6 @@ export function useImageUpload() {
   };
 }
 
-/**
- * Get image dimensions from a URL
- */
 function getImageDimensions(
   url: string,
 ): Promise<{ width: number; height: number } | Record<string, never>> {

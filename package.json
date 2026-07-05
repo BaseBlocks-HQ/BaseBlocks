@@ -7,7 +7,6 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "start": "cd apps/upload && bun run start",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "test": "bun test",

@@ -1,16 +1,44 @@
-import {
-  getStorageBucketNameFromEnv,
-  getStorageProviderNameFromEnv,
-} from "@baseblocks/storage";
+import { isSupportedUploadMimeType } from "@baseblocks/types";
 import { v } from "convex/values";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";
+import {
+  getFilesBucketName,
+  getFilesMaxUploadSize,
+  getFilesProviderName,
+} from "../files/config";
+import { parseFileKey } from "../files/keys";
 import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
 import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 import { resolveSiteContext } from "../lib/resolvers";
 import { deleteDocumentRows } from "./lib";
 import { upsertDocumentListing } from "./listings";
+
+function validateDocumentUpload(args: {
+  siteId: string;
+  objectKey: string;
+  contentType: string;
+  size: number;
+}) {
+  const parsed = parseFileKey(args.objectKey);
+  if (
+    !parsed ||
+    parsed.siteId !== args.siteId ||
+    parsed.kind !== "documents"
+  ) {
+    throw new Error("Invalid document key");
+  }
+
+  if (!isSupportedUploadMimeType(args.contentType)) {
+    throw new Error("File type not allowed");
+  }
+
+  const maxUploadSize = getFilesMaxUploadSize();
+  if (maxUploadSize !== null && args.size > maxUploadSize) {
+    throw new Error("File is too large");
+  }
+}
 
 async function createDocumentAsset(
   ctx: MutationCtx,
@@ -28,8 +56,8 @@ async function createDocumentAsset(
     siteId: args.siteId,
     kind: "document",
     visibility: "private",
-    provider: getStorageProviderNameFromEnv(),
-    bucket: getStorageBucketNameFromEnv(),
+    provider: getFilesProviderName(),
+    bucket: getFilesBucketName(),
     objectKey: args.objectKey,
     filename: args.filename,
     contentType: args.contentType,
@@ -95,6 +123,8 @@ export const create = mutation({
     ctx,
     { siteId, objectKey, filename, contentType, size, checksum },
   ) => {
+    validateDocumentUpload({ siteId, objectKey, contentType, size });
+
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
@@ -180,6 +210,8 @@ export const createInLibrary = mutation({
       checksum,
     },
   ) => {
+    validateDocumentUpload({ siteId, objectKey, contentType, size });
+
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 

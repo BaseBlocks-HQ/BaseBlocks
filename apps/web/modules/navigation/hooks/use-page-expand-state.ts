@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "baseblocks_expanded_pages";
+const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
 
 type SerializedState = Record<string, string[]>;
 
@@ -11,14 +11,14 @@ export function usePageExpandState(siteId: string) {
 
   useEffect(() => {
     try {
-      const item = localStorage.getItem(STORAGE_KEY);
+      const item = localStorage.getItem(EXPANDED_PAGES_KEY);
       if (item) setSerialized(JSON.parse(item));
     } catch {}
   }, []);
 
   const sync = (next: SerializedState) => {
     setSerialized(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(EXPANDED_PAGES_KEY, JSON.stringify(next));
   };
 
   const expandedPages = serialized[siteId]
