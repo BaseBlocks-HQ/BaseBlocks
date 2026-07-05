@@ -6,10 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "turbo run build",
-    "dev": "node scripts/dev-auth-mode.mjs local",
-    "dev:local": "node scripts/dev-auth-mode.mjs local",
-    "dev:mobile": "node scripts/dev-auth-mode.mjs mobile",
-    "dev:raw": "turbo run dev",
+    "dev": "turbo run dev",
     "start": "cd apps/upload && bun run start",
     "lint": "biome check --write .",
     "format": "biome format --write .",

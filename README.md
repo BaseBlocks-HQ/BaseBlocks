@@ -137,65 +137,21 @@ bun run dev
 
 This starts the Next.js app on `http://localhost:3001` and the Convex backend.
 
-### Local auth on desktop + mobile
-
-Use the same code path in both cases and switch only the active auth origin:
-
-```bash
-bun run dev
-```
-
-This is localhost-first auth for normal desktop development.
-
-```bash
-bun run dev:mobile
-```
-
-This is Tailscale-first auth for testing the same dev app on your phone. The
-runner auto-detects your Tailscale hostname from `tailscale status --json`.
-If you need to override it:
-
-```bash
-DEV_AUTH_MOBILE_ORIGIN=https://your-machine.your-tailnet.ts.net bun run dev:mobile
-```
-
-If you want your phone to reach the local Next dev server, expose it inside
-your tailnet:
-
-```bash
-tailscale serve --bg --https=443 http://127.0.0.1:3001
-```
-
-Then open `https://your-machine.your-tailnet.ts.net/login` on your phone.
-
-Provider dashboard settings for dev should include both localhost and your
-Tailscale hostname if you use both modes.
-
-By default this repo runs auth in `same-origin` mode, so the OAuth callback
-origin is the currently active app origin (`APP_URL`), not the Convex
-`SITE_URL`. `SITE_URL` only becomes the callback origin if you explicitly switch
-to `AUTH_REDIRECT_MODE=cross-domain`.
-
 Production note: published subdomains like `team.baseblocks.dev` use Better
 Auth shared cookies on `.baseblocks.dev`, configured in
 `packages/backend/convex/authSetup.ts` via
 `advanced.crossSubDomainCookies`. That is what allows authenticated
-audience-restricted pages to work on `*.baseblocks.dev` while keeping the app in
-`same-origin` auth mode. This does not solve arbitrary custom domains; custom
-domain auth will require a separate design.
+audience-restricted pages to work on `*.baseblocks.dev`. This does not solve
+arbitrary custom domains; custom domain auth will require a separate design.
 
 - Google JavaScript origins:
   - `http://localhost:3001`
-  - `https://your-machine.your-tailnet.ts.net`
 - Google redirect URIs:
   - `http://localhost:3001/api/auth/callback/google`
-  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
 - GitHub callback URLs:
   - `http://localhost:3001/api/auth/callback/github`
-  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/github`
 - Microsoft redirect URIs:
   - `http://localhost:3001/api/auth/callback/microsoft`
-  - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
 
 Microsoft sign-in caveat: if the callback returns to
 `?error=email_not_found`, the redirect URI is usually not the problem. Better

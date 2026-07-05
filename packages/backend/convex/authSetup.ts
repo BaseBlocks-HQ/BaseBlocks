@@ -1,24 +1,16 @@
 import { type GenericCtx, createClient } from "@convex-dev/better-auth";
-import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
+import { convex } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
 import authSchema from "./authComponent/schema";
-import { parseAuthOrigin, parseAuthOrigins } from "./authOrigins";
+import { parseAuthOrigins } from "./authOrigins";
 
 const authOrigins = parseAuthOrigins(process.env.APP_URL);
 const primaryAppUrl = authOrigins[0]!;
 const primaryAppHostname = new URL(primaryAppUrl).hostname;
-const authRedirectMode = process.env.AUTH_REDIRECT_MODE ?? "same-origin";
-const useCrossDomainAuth = authRedirectMode === "cross-domain";
-const authBaseUrl = useCrossDomainAuth
-  ? parseAuthOrigin(
-      process.env.SITE_URL ?? process.env.CONVEX_SITE_URL ?? "",
-      "SITE_URL",
-    )
-  : primaryAppUrl;
 const crossSubdomainCookieDomain =
   primaryAppHostname === "localhost" ||
   primaryAppHostname === "127.0.0.1" ||
@@ -40,7 +32,7 @@ export const authComponent = createClient<DataModel, never>(
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
   ({
-    baseURL: authBaseUrl,
+    baseURL: primaryAppUrl,
     trustedOrigins,
     database: authComponent.adapter(ctx),
     advanced: crossSubdomainCookieDomain
@@ -85,7 +77,6 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) =>
         allowUserToCreateOrganization: true,
         cancelPendingInvitationsOnReInvite: true,
       }),
-      ...(useCrossDomainAuth ? [crossDomain({ siteUrl: primaryAppUrl })] : []),
       convex({ authConfig }),
     ],
   }) satisfies BetterAuthOptions;

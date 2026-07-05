@@ -38,31 +38,21 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
    `APP_URL` is the comma-separated allowlist of exact app origins that are
    allowed to start sign-in and receive the final redirect.
 
-   By default this repo runs auth in `same-origin` mode, so the active app
-   origin is also the OAuth callback origin. Keep `localhost` for normal
-   desktop development and add a Tailscale hostname only when you want to test
-   on mobile:
-
    ```env
    SITE_URL=https://your-deployment.convex.site
-   APP_URL=http://localhost:3001,https://your-machine.your-tailnet.ts.net
+   APP_URL=http://localhost:3001
    ```
 
-   Register your OAuth providers against the active app origins, not
-   `SITE_URL`, unless you explicitly switch to `AUTH_REDIRECT_MODE=cross-domain`.
-   For Google:
+   Register your OAuth providers against the app origin. For Google:
 
    - App origins, where the provider uses them:
      - `http://localhost:3001`
-     - `https://your-machine.your-tailnet.ts.net`
    - Redirect URIs:
      - `http://localhost:3001/api/auth/callback/google`
-     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
 
    Production note: published subdomains on `*.baseblocks.dev` rely on Better
    Auth shared cookies on `.baseblocks.dev` so authenticated audience-restricted
-   pages work on the real published site while auth remains in `same-origin`
-   mode. That configuration lives in
+   pages work on the real published site. That configuration lives in
    `packages/backend/convex/authSetup.ts` via
    `advanced.crossSubDomainCookies`. This applies to BaseBlocks subdomains only,
    not arbitrary custom domains.
@@ -74,47 +64,6 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
    ```
 
    This starts both the Next.js app (port 3001) and Convex backend.
-
-5. **Use the right auth mode**
-
-   `bun run dev` and `bun run dev:local` keep localhost as the active auth
-   origin for desktop testing.
-
-   `bun run dev:mobile` switches the active auth origin to your Tailscale HTTPS
-   hostname so OAuth returns to your phone instead of localhost.
-
-   The mobile runner auto-detects the hostname from `tailscale status --json`.
-   If you need to override it:
-
-   ```bash
-   DEV_AUTH_MOBILE_ORIGIN=https://your-machine.your-tailnet.ts.net bun run dev:mobile
-   ```
-
-6. **Optional: expose dev auth to your phone with Tailscale**
-
-   ```bash
-   tailscale serve --bg --https=443 http://127.0.0.1:3001
-   ```
-
-   Use the resulting `https://<machine>.<tailnet>.ts.net` URL on your phone.
-
-7. **Register both dev callback origins in your OAuth providers**
-
-   If you use both localhost and Tailscale testing, add both to the provider
-   dashboard:
-
-   - Google JavaScript origins:
-     - `http://localhost:3001`
-     - `https://your-machine.your-tailnet.ts.net`
-   - Google redirect URIs:
-     - `http://localhost:3001/api/auth/callback/google`
-     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/google`
-   - GitHub callback URLs:
-     - `http://localhost:3001/api/auth/callback/github`
-     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/github`
-   - Microsoft redirect URIs:
-     - `http://localhost:3001/api/auth/callback/microsoft`
-     - `https://your-machine.your-tailnet.ts.net/api/auth/callback/microsoft`
 
    Microsoft caveat: if Microsoft auth succeeds for one account but another
    account returns to `?error=email_not_found`, the redirect URI is usually

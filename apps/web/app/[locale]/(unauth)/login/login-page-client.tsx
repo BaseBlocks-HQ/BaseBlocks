@@ -8,22 +8,15 @@ import { landingFonts } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 type SocialProvider = "google" | "github" | "microsoft";
-const authRedirectMode = process.env.NEXT_PUBLIC_AUTH_REDIRECT_MODE;
 
 interface SignInWithProviderArgs {
   callbackURL: string;
   fallbackError: string;
   provider: SocialProvider;
-}
-
-function getAuthCallbackUrl(redirectTo: string): string {
-  const url = new URL("/login", window.location.origin);
-  url.searchParams.set("redirectTo", redirectTo);
-  return url.toString();
 }
 
 async function signInWithProvider({
@@ -43,29 +36,7 @@ export function LoginPageClient() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
 
-  return (
-    <>
-      {authRedirectMode === "cross-domain" && (
-        <CrossDomainAuthRedirect redirectTo={redirectTo} />
-      )}
-      <LoginForm redirectTo={redirectTo} />
-    </>
-  );
-}
-
-function CrossDomainAuthRedirect({ redirectTo }: { redirectTo: string }) {
-  const router = useRouter();
-  const { data: session } = authClient.useSession();
-
-  useEffect(() => {
-    if (!session) {
-      return;
-    }
-
-    router.replace(redirectTo);
-  }, [redirectTo, router, session]);
-
-  return null;
+  return <LoginForm redirectTo={redirectTo} />;
 }
 
 function LoginForm({ redirectTo }: { redirectTo: string }) {
@@ -83,10 +54,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
 
     const errorMessage = await signInWithProvider({
       provider,
-      callbackURL:
-        authRedirectMode === "cross-domain"
-          ? getAuthCallbackUrl(redirectTo)
-          : redirectTo,
+      callbackURL: redirectTo,
       fallbackError: t("auth.signInFailed"),
     });
 
