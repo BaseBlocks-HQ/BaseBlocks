@@ -7,21 +7,27 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [
-      "**/node_modules/**",
-      "**/.next/**",
-      "**/dist/**",
-      "**/_generated/**",
-      "**/convex/_generated/**",
-      "apps/web/public/pdf.worker.min.mjs"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/dist",
+      "!**/_generated",
+      "!**/convex/_generated",
+      "!apps/web/public/pdf.worker.min.mjs"
     ]
   },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
   },
   "javascript": {
     "formatter": {
@@ -29,10 +35,18 @@
       "semicolons": "always"
     }
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
+      "complexity": {
+        "noImportantStyles": "off"
+      },
       "correctness": {
         "noUnusedImports": "warn",
         "noUnusedVariables": "warn",
@@ -40,22 +54,25 @@
         "useHookAtTopLevel": "error"
       },
       "style": {
+        "noDescendingSpecificity": "off",
         "noNonNullAssertion": "off"
       },
       "suspicious": {
         "noExplicitAny": "warn",
-        "noConsole": "warn",
-        "noConsoleLog": "warn"
+        "noConsole": "warn"
       },
       "a11y": {
+        "noStaticElementInteractions": "off",
         "noSvgWithoutTitle": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useSemanticElements": "off",
         "useButtonType": "off"
       }
     }
   },
   "overrides": [
     {
-      "include": ["**/next.config.*"],
+      "includes": ["**/next.config.*"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -65,7 +82,7 @@
       }
     },
     {
-      "include": ["**/page.{ts,tsx,js,jsx}", "**/layout.{ts,tsx,js,jsx}"],
+      "includes": ["**/page.{ts,tsx,js,jsx}", "**/layout.{ts,tsx,js,jsx}"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -76,10 +93,10 @@
     },
     // Architectural boundaries: packages/types must be standalone (no backend, ui, editor deps)
     {
-      "include": ["packages/types/**"],
+      "includes": ["packages/types/**"],
       "linter": {
         "rules": {
-          "nursery": {
+          "style": {
             "noRestrictedImports": {
               "level": "error",
               "options": {
@@ -101,10 +118,10 @@
     },
     // Architectural boundaries: packages/ui should not import backend or editor
     {
-      "include": ["packages/ui/**"],
+      "includes": ["packages/ui/**"],
       "linter": {
         "rules": {
-          "nursery": {
+          "style": {
             "noRestrictedImports": {
               "level": "error",
               "options": {
@@ -122,10 +139,10 @@
     },
     // Architectural boundaries: lib/ is lower-level than modules/
     {
-      "include": ["apps/web/lib/**"],
+      "includes": ["apps/web/lib/**"],
       "linter": {
         "rules": {
-          "nursery": {
+          "style": {
             "noRestrictedImports": {
               "level": "error",
               "options": {
@@ -147,10 +164,10 @@
     },
     // Architectural boundaries: shared components/ must not import from modules/
     {
-      "include": ["apps/web/components/**"],
+      "includes": ["apps/web/components/**"],
       "linter": {
         "rules": {
-          "nursery": {
+          "style": {
             "noRestrictedImports": {
               "level": "error",
               "options": {

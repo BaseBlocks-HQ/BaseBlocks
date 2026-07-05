@@ -3,7 +3,6 @@ minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   "@baseblocks/backend",
   "@baseblocks/storage",
-  "@baseblocks/tailwind-config",
   "@baseblocks/tsconfig",
   "@baseblocks/types",
   "@baseblocks/ui",
