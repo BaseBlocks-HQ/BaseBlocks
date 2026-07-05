@@ -170,7 +170,8 @@ export function PageActionsMenu({
             variant="ghost"
             size="icon"
             aria-label={t("triggerAriaLabel")}
-            className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 opacity-0 transition-opacity group-hover/page:opacity-100"
+            className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover/page:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />

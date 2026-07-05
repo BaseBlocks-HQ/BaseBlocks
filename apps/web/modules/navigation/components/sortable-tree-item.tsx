@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { DragHandle } from "@/modules/shared/dnd";
 import { isPageRestricted } from "@baseblocks/types";
 import type { PageListItem } from "@baseblocks/types";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
@@ -12,12 +11,15 @@ import { useTranslations } from "next-intl";
 import { IconFile, IconHouse } from "nucleo-glass";
 import type { ReactNode } from "react";
 import type { FlattenedPage } from "../tree";
-import { INDENT_WIDTH, isValidDrop } from "../tree";
+import { isValidDrop } from "../tree";
 import { useTreeDndContext } from "./tree-dnd-context";
 import { DropHighlight, DropLine } from "./tree-drop-indicator";
 
 const treeItemButtonClassName =
-  "peer/menu-button flex h-8 w-full items-center gap-2 overflow-hidden rounded-md p-2 pr-8 text-left text-sm outline-hidden ring-ring transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0";
+  "flex h-full w-full min-w-0 items-center gap-2 overflow-hidden rounded-md p-2 pr-1 text-left text-sm outline-hidden [&>svg]:size-4 [&>svg]:shrink-0";
+
+const treeItemRowClassName =
+  "peer/menu-button grid h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_1.75rem] items-center overflow-hidden rounded-md text-sm outline-hidden ring-ring transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent active:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground";
 
 interface SortableTreeItemProps {
   item: FlattenedPage;
@@ -55,7 +57,7 @@ export function SortableTreeItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, disabled: !canEdit });
 
   const style = {
     transform: isDragging ? undefined : CSS.Transform.toString(transform),
@@ -65,7 +67,6 @@ export function SortableTreeItem({
   const page = item.page;
   const isDefault = defaultPageId === page._id;
   const isGhost = isDragging;
-  const indentPadding = (item.depth + 1) * INDENT_WIDTH + 20;
   const isRestricted = isPageRestricted(page.accessPolicy);
   const isHiddenFromNavigation = page.showInNavigation === false;
 
@@ -81,8 +82,6 @@ export function SortableTreeItem({
   const showInsideHighlight =
     isDropTarget && dropZone === "inside" && !isSelfHover;
 
-  const lineDepth = projection?.depth ?? item.depth;
-
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleExpand();
@@ -92,73 +91,86 @@ export function SortableTreeItem({
     <SidebarMenuItem
       ref={setNodeRef}
       style={style}
-      className={cn("group/page relative")}
+      className={cn("group/page relative w-full min-w-0 overflow-hidden")}
     >
-      {showBeforeLine && <DropLine position="before" depth={lineDepth} />}
-      {showAfterLine && <DropLine position="after" depth={lineDepth} />}
+      {showBeforeLine && <DropLine position="before" />}
+      {showAfterLine && <DropLine position="after" />}
       {showInsideHighlight && <DropHighlight />}
 
-      <button
-        type="button"
+      <div
+        ref={setActivatorNodeRef}
         data-active={selectedPageId === page._id}
-        onClick={() => onSelect(page._id)}
-        className={cn(treeItemButtonClassName, isGhost && "opacity-30")}
-        style={{ paddingLeft: `${indentPadding}px` }}
+        className={cn(
+          treeItemRowClassName,
+          canEdit && "cursor-grab active:cursor-grabbing",
+          isGhost && "opacity-30",
+        )}
+        {...(canEdit ? listeners : {})}
       >
-        {canEdit && (
-          <div
-            ref={setActivatorNodeRef}
-            {...attributes}
-            {...listeners}
-            className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/page:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-            style={{ left: `${(item.depth + 1) * INDENT_WIDTH - 4}px` }}
-          >
-            <DragHandle className="h-5 w-5" />
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => onSelect(page._id)}
+          className={treeItemButtonClassName}
+          {...(canEdit ? attributes : {})}
+        >
+          {hasChildren ? (
+            <span className="relative h-4 w-4 shrink-0">
+              <span className="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity group-hover/page:opacity-0">
+                {isDefault ? (
+                  <IconHouse className="h-4 w-4 text-primary" />
+                ) : (
+                  <IconFile className="h-4 w-4" />
+                )}
+              </span>
+              {/* biome-ignore lint/a11y/useSemanticElements: nested inside the row button — can't nest <button> in <button> */}
+              <span
+                role="button"
+                tabIndex={0}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={handleToggleExpand}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onToggleExpand();
+                  }
+                }}
+                className="absolute inset-0 flex cursor-pointer items-center justify-center text-muted-foreground opacity-0 transition-colors transition-opacity hover:text-foreground group-hover/page:opacity-100"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+              </span>
+            </span>
+          ) : isDefault ? (
+            <IconHouse className="h-4 w-4 text-primary" />
+          ) : (
+            <IconFile className="h-4 w-4" />
+          )}
 
-        {hasChildren ? (
-          // biome-ignore lint/a11y/useSemanticElements: nested inside the row button — can't nest <button> in <button>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={handleToggleExpand}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onToggleExpand();
-              }
-            }}
-            className="h-4 w-4 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
-            )}
+          <span className="min-w-0 flex-1 truncate">{page.title}</span>
+          {isHiddenFromNavigation && (
+            <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          )}
+          {isRestricted && (
+            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          )}
+          {isDefault && (
+            <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+              {t("defaultBadge")}
+            </span>
+          )}
+        </button>
+
+        {!isGhost && actionsMenu ? (
+          <div className="relative z-10 flex h-8 w-7 min-w-0 items-center justify-center overflow-hidden">
+            {actionsMenu}
           </div>
         ) : (
-          <span className="w-4" />
+          <span className="h-8 w-7 min-w-0" />
         )}
-
-        {isDefault ? (
-          <IconHouse className="h-4 w-4 text-primary" />
-        ) : (
-          <IconFile className="h-4 w-4" />
-        )}
-        <span className="truncate">{page.title}</span>
-        {isHiddenFromNavigation && (
-          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-        {isRestricted && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-        {isDefault && (
-          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full ml-auto">
-            {t("defaultBadge")}
-          </span>
-        )}
-      </button>
-
-      {!isGhost && actionsMenu}
+      </div>
     </SidebarMenuItem>
   );
 }

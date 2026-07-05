@@ -1,18 +1,14 @@
-import { INDENT_WIDTH } from "../tree";
-
 interface DropLineProps {
   position: "before" | "after";
-  depth: number;
 }
 
 /** Horizontal line with circle dot — shown for before/after reorder zones. */
-export function DropLine({ position, depth }: DropLineProps) {
-  const left = (depth + 1) * INDENT_WIDTH + 20;
+export function DropLine({ position }: DropLineProps) {
   return (
     <div
       className="absolute right-2 h-[2px] bg-primary rounded-full pointer-events-none z-20"
       style={{
-        left: `${left}px`,
+        left: "0.5rem",
         ...(position === "before" ? { top: "-1px" } : { bottom: "-1px" }),
       }}
     >
