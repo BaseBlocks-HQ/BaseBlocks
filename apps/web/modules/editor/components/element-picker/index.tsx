@@ -1,10 +1,10 @@
 "use client";
 
-import { getElementsByCategory } from "@/modules/elements/framework/registry";
-import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
-import { CustomizationConfigPanel } from "@/modules/elements/panels/customization";
-import { NavigationConfigPanel } from "@/modules/elements/panels/navigation";
-import { SiteConfigPanel } from "@/modules/elements/panels/site";
+import { getElementsByCategory } from "@/modules/editor/elements/framework/registry";
+import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
+import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
+import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
+import { SiteConfigPanel } from "@/modules/editor/elements/panels/site";
 import type { Id } from "@baseblocks/backend";
 import type {
   ElementCategory,

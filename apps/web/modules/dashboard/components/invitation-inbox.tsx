@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  DashboardConfirmDialog,
-  DashboardDialogShell,
-} from "@/modules/shared/dialogs";
+import { DashboardConfirmDialog, DashboardDialogShell } from "@/core/dialogs";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";

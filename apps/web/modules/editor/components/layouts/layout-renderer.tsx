@@ -3,7 +3,7 @@
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
-} from "@/modules/shared/layouts";
+} from "@/modules/editor/layouts";
 import type {
   AnyContent,
   LayoutData,

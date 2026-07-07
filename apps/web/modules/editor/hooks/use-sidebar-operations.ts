@@ -1,11 +1,11 @@
 import { useHaptic } from "@/lib/use-haptic";
-import { getDefaultContent } from "@/modules/elements/framework/registry";
+import { getDefaultContent } from "@/modules/editor/elements/framework/registry";
 import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
 import {
   createBlock,
   createLayout,
   generateId,
-} from "@/modules/shared/layouts";
+} from "@/modules/editor/layouts";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type {

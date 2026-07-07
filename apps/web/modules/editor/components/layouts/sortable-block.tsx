@@ -2,12 +2,12 @@
 
 import { useBlockClipboardOptional } from "@/modules/editor/contexts/block-clipboard-context";
 import { isCopyableBlockType } from "@/modules/editor/lib/block-clipboard";
-import { ElementEditorWrapper } from "@/modules/elements/framework/editor-wrapper";
-import { LayoutContextProvider } from "@/modules/elements/framework/layout-context";
+import { ElementEditorWrapper } from "@/modules/editor/elements/framework/editor-wrapper";
+import { LayoutContextProvider } from "@/modules/editor/elements/framework/layout-context";
 import {
   getElementConfigPanel,
   hasElementConfigPanel,
-} from "@/modules/elements/framework/registry";
+} from "@/modules/editor/elements/framework/registry";
 import { useEditorSiteOptional } from "@/modules/editor/state";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/types";
 import { Button } from "@baseblocks/ui/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { generateId } from "@/modules/shared/layouts";
+import { generateId } from "@/modules/editor/layouts";
 import type { AnyContent } from "@baseblocks/types";
 
 export interface CopiedBlock {

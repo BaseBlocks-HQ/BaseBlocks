@@ -1,8 +1,8 @@
 "use client";
 
-import { DashboardConfirmDialog } from "@/modules/shared/dialogs";
+import { DashboardConfirmDialog } from "@/core/dialogs";
 import { useTeamSites } from "@/lib/data/use-site";
-import { useTeamAccess } from "@/modules/team/team-access";
+import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
 import { cn } from "@baseblocks/ui/lib/utils";

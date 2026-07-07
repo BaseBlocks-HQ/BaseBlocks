@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  ThemeDarkIcon,
-  ThemeLightIcon,
-} from "@/modules/shared/components/theme-icons";
+import { ThemeDarkIcon, ThemeLightIcon } from "@/core/theme/theme-icons";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { type Locale, routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
@@ -18,7 +15,7 @@ import {
   HouseNoDoorIcon,
   SIDEBAR_ICON_STROKE,
 } from "@/modules/dashboard/sidebar-lucide";
-import { useTeamAccess } from "@/modules/team/team-access";
+import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
 import {

@@ -1,7 +1,7 @@
 "use client";
 
-import type { AnyRegistryEntry } from "@/modules/elements/framework/registry";
-import { CollapsibleSettingsSection } from "@/modules/elements/panels/shared/editor-panel-primitives";
+import type { AnyRegistryEntry } from "@/modules/editor/elements/framework/registry";
+import { CollapsibleSettingsSection } from "@/modules/editor/elements/panels/shared/editor-panel-primitives";
 import { ElementCard } from "./element-card";
 
 interface ElementGridProps {

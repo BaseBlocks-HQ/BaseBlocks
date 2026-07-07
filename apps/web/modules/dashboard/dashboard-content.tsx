@@ -1,7 +1,7 @@
 "use client";
 
 import { useTeamSites } from "@/lib/data/use-site";
-import { useTeamAccess } from "@/modules/team/team-access";
+import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useConvexAuth } from "convex/react";
 import { useTranslations } from "next-intl";

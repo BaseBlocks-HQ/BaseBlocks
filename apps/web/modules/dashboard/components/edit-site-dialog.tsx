@@ -5,7 +5,7 @@ import {
   dashboardDialogFormErrorClassName,
   dashboardDialogPrimaryFieldLabelClassName,
   dashboardDialogPrimaryInlineInputClassName,
-} from "@/modules/shared/dialogs";
+} from "@/core/dialogs";
 import { filesClient } from "@/lib/files/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

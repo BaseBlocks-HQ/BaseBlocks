@@ -1,5 +1,5 @@
 import { getWorkspaceBoundaryState } from "@/lib/workspace/server";
-import { TeamAccessProvider } from "@/modules/team/team-access";
+import { TeamAccessProvider } from "@/modules/dashboard/team/team-access";
 import { redirect } from "next/navigation";
 
 interface TeamLayoutProps {

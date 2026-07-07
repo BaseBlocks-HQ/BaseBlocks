@@ -1,7 +1,10 @@
-import { ThemeProvider } from "@/modules/shared/providers/theme-provider";
+import { ThemeProvider } from "@/core/theme/theme-provider";
 import { type Locale, routing } from "@/i18n/routing";
 import { docsI18n } from "@/lib/source";
-import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";
+import {
+  MediaViewerModal,
+  MediaViewerProvider,
+} from "@/modules/editor/media-viewer";
 import { Toaster } from "@baseblocks/ui/sonner";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { MotionConfig } from "motion/react";

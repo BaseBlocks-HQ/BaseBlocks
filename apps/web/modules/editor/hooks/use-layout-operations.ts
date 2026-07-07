@@ -3,8 +3,8 @@
 import { useBlockOperations } from "@/modules/editor/hooks/use-block-operations";
 import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
-import { arrayMove } from "@/modules/shared/dnd";
-import { createLayout } from "@/modules/shared/layouts";
+import { arrayMove } from "@/modules/editor/dnd";
+import { createLayout } from "@/modules/editor/layouts";
 import type { LayoutData, LayoutSettings, LayoutType } from "@baseblocks/types";
 
 interface UseLayoutOperationsArgs {

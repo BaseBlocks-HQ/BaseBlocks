@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardFormDialog } from "@/modules/shared/dialogs";
+import { DashboardFormDialog } from "@/core/dialogs";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

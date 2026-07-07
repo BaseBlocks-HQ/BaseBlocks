@@ -8,7 +8,7 @@ import {
   type EditorSiteSwitcherSite,
   getEditorSiteSwitcherSites,
 } from "@/modules/editor/lib/editor-site-switcher";
-import { useTeamAccess } from "@/modules/team/team-access";
+import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

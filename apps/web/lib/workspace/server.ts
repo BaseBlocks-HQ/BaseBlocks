@@ -1,6 +1,6 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
-import type { TeamRecord } from "@/modules/team/team-access";
+import type { TeamRecord } from "@/modules/dashboard/team/team-access";
 import { api } from "@baseblocks/backend";
 import { redirect } from "next/navigation";
 import { cache } from "react";

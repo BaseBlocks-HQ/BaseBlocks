@@ -1,7 +1,7 @@
 "use client";
 
-import { DashboardDialogShell } from "@/modules/shared/dialogs";
-import type { AccessCodeData, SharingSettings } from "@/modules/shared/types";
+import { DashboardDialogShell } from "@/core/dialogs";
+import type { AccessCodeData, SharingSettings } from "@/core/types/editor";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

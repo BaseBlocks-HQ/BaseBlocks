@@ -4,8 +4,8 @@ import { Link } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
-import { SortablePageTree } from "@/modules/navigation";
-import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
+import { SortablePageTree } from "@/modules/editor/navigation";
+import { usePageExpandState } from "@/modules/editor/navigation/hooks/use-page-expand-state";
 import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import type {

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  ThemeDarkIcon,
-  ThemeLightIcon,
-} from "@/modules/shared/components/theme-icons";
+import { ThemeDarkIcon, ThemeLightIcon } from "@/core/theme/theme-icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import {

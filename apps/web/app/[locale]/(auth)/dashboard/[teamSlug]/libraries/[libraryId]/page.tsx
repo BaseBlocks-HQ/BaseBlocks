@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
-import { DashboardLibraryDetail } from "@/modules/library";
+import { DashboardLibraryDetail } from "@/modules/dashboard/library";
 import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 

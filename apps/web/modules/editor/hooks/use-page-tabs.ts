@@ -2,8 +2,8 @@
 
 import { useEditorUndo } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
-import { generateId } from "@/modules/shared/layouts";
-import type { PageTab } from "@/modules/shared/types";
+import { generateId } from "@/modules/editor/layouts";
+import type { PageTab } from "@/core/types/editor";
 import { useRef, useState } from "react";
 
 interface UsePageTabsArgs {

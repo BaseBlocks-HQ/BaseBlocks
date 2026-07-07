@@ -1,6 +1,6 @@
 "use client";
 
-import type { EditorPermissions, SiteData } from "@/modules/shared/types";
+import type { EditorPermissions, SiteData } from "@/core/types/editor";
 import type { LayoutSettings } from "@baseblocks/types";
 import { type ReactNode, createContext, use, useState } from "react";
 import type { UndoCommand } from "./undo";

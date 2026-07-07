@@ -3,7 +3,7 @@
 import { useBlockClipboardOptional } from "@/modules/editor/contexts/block-clipboard-context";
 import { canPasteCopiedBlock } from "@/modules/editor/lib/block-clipboard";
 import { useEditorSiteOptional } from "@/modules/editor/state";
-import { DndProvider, type DragEndEvent } from "@/modules/shared/dnd";
+import { DndProvider, type DragEndEvent } from "@/modules/editor/dnd";
 import type {
   AnyContent,
   LayoutSlot as LayoutSlotType,

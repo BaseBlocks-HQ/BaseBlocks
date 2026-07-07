@@ -7,16 +7,16 @@ import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
 import { BlockClipboardProvider } from "@/modules/editor/contexts/block-clipboard-context";
-import { useSiteCustomization } from "@/modules/elements/panels/customization/use-site-customization";
-import { PublicPageDetailPanel } from "@/modules/public-site/public-page-detail-panel";
+import { useSiteCustomization } from "@/modules/editor/elements/panels/customization/use-site-customization";
+import { PublicPageDetailPanel } from "@/modules/marketing/public-site/public-page-detail-panel";
 import {
   PublicPagePanelProvider,
   usePublicPagePanel,
-} from "@/modules/public-site/public-page-panel-context";
-import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
+} from "@/modules/marketing/public-site/public-page-panel-context";
+import { SplitViewShell } from "@/core/split-view/shell";
 import { EditorProvider } from "@/modules/editor/state";
 import { useEditorUi } from "@/modules/editor/state";
-import { useTeamAccess } from "@/modules/team/team-access";
+import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
@@ -42,10 +42,10 @@ interface SiteEditorProps {
 }
 
 const elementModuleLoaders = [
-  () => import("@/modules/elements/layouts"),
-  () => import("@/modules/elements/blocks"),
-  () => import("@/modules/elements/sections"),
-  () => import("@/modules/elements/media"),
+  () => import("@/modules/editor/elements/layouts"),
+  () => import("@/modules/editor/elements/blocks"),
+  () => import("@/modules/editor/elements/sections"),
+  () => import("@/modules/editor/elements/media"),
 ];
 
 /**

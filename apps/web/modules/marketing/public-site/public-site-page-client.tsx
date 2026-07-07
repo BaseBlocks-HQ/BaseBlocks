@@ -1,0 +1,63 @@
+"use client";
+
+import { PublicSiteSkeleton } from "@/modules/marketing/public-site/components/public-site-skeleton";
+import {
+  AccessGate,
+  PublicSiteLayout,
+  SiteNotFound,
+  SiteNotPublished,
+  SitePrivate,
+} from "@/modules/marketing/public-site";
+import { api } from "@baseblocks/backend";
+import { useQuery } from "convex/react";
+
+type Props = {
+  subdomain: string;
+  path: string[];
+};
+
+/**
+ * Public site page - displays published content
+ * All logic is encapsulated in PublicSiteLayout component
+ */
+export function PublicSitePageClient({ subdomain, path }: Props) {
+  // path[0] is the site slug, path[1:] is the page path
+  const siteSlug = path[0] || "";
+  // Empty array = "show the default page", backend resolves via defaultPageId
+  const pagePath = path.length > 1 ? path.slice(1) : [];
+
+  const site = useQuery(api.sites.queries.getBySlug, {
+    teamSlug: subdomain,
+    siteSlug,
+  });
+  const team = useQuery(api.teams.queries.getBySlug, {
+    slug: subdomain,
+  });
+
+  if (site === undefined || team === undefined) {
+    return <PublicSiteSkeleton />;
+  }
+
+  if (!site || !team) {
+    return <SiteNotFound subdomain={subdomain} />;
+  }
+
+  if (!site.isPublished) {
+    return <SiteNotPublished />;
+  }
+
+  const visibility = site.visibility ?? "public";
+  if (visibility === "private") {
+    return <SitePrivate siteName={site.name} />;
+  }
+
+  if (visibility === "password") {
+    return (
+      <AccessGate siteId={site._id} siteName={site.name}>
+        <PublicSiteLayout site={site} team={team} pagePath={pagePath} />
+      </AccessGate>
+    );
+  }
+
+  return <PublicSiteLayout site={site} team={team} pagePath={pagePath} />;
+}

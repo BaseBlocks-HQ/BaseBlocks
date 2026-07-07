@@ -1,9 +1,9 @@
 "use client";
 
-import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewer-toolbar-icon-button";
-import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
-import { DetailPanelFrame } from "@/modules/shared/components/detail-panel-frame";
-import { DetailPanelHeaderChrome } from "@/modules/shared/components/detail-panel-header-chrome";
+import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
+import { PageExportMenu } from "@/modules/editor/page-export/components/page-export-menu";
+import { DetailPanelFrame } from "@/core/detail-panel/frame";
+import { DetailPanelHeaderChrome } from "@/core/detail-panel/header-chrome";
 import { useEditorUi } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";

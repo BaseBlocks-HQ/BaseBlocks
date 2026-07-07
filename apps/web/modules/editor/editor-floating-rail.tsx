@@ -3,13 +3,13 @@
 import {
   type AnyRegistryEntry,
   getElementsByCategory,
-} from "@/modules/elements/framework/registry";
-import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
-import { CustomizationConfigPanel } from "@/modules/elements/panels/customization";
-import { NavigationConfigPanel } from "@/modules/elements/panels/navigation";
-import { SiteConfigPanel } from "@/modules/elements/panels/site";
-import { SortablePageTree } from "@/modules/navigation";
-import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
+} from "@/modules/editor/elements/framework/registry";
+import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
+import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
+import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
+import { SiteConfigPanel } from "@/modules/editor/elements/panels/site";
+import { SortablePageTree } from "@/modules/editor/navigation";
+import { usePageExpandState } from "@/modules/editor/navigation/hooks/use-page-expand-state";
 import {
   useEditorSite,
   useEditorUi,
