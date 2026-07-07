@@ -1,4 +1,4 @@
-import type { PageListItem } from "@baseblocks/types";
+import type { PageListItem } from "@baseblocks/domain";
 import type { TreeProjection } from "./types";
 
 /** Apply a move operation to the pages array (for optimistic updates). */

@@ -29,7 +29,7 @@ export const blockType = v.union(
  * Content is polymorphic per block type (heading has {text, level}, image has
  * {url, alt, caption, ...}, etc.). A full discriminated union for all block
  * types would be massive and brittle. Content shape validation happens at the
- * TypeScript/frontend layer via @baseblocks/types/elements. Uses v.any() here.
+ * TypeScript/frontend layer via @baseblocks/domain/elements. Uses v.any() here.
  */
 export const blockContent = v.any();
 

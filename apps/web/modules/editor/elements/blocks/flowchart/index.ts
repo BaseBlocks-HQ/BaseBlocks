@@ -3,7 +3,7 @@
  * Mermaid diagram rendering with live preview
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import { Workflow } from "lucide-react";
 import { registerElement } from "../../framework/registry";
 import { themedPickerImagePreview } from "../../framework/themed-picker-image";

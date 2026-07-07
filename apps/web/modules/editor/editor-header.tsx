@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicHeaderBlur } from "@/modules/marketing/components/public-header-blur";
+import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { cn } from "@/lib/utils";
 import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
@@ -66,7 +66,7 @@ export function EditorHeader({
         )}
       >
         <div className="relative isolate">
-          <PublicHeaderBlur />
+          <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
           <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
           <div className="relative flex h-14 items-center justify-between px-4">
             <div className="relative flex w-full items-center justify-between gap-4">

@@ -3,7 +3,7 @@
 import { useMembers } from "@/lib/data/use-team";
 import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import type { Id } from "@baseblocks/backend";
-import type { TeamRole } from "@baseblocks/types";
+import type { TeamRole } from "@baseblocks/domain";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";

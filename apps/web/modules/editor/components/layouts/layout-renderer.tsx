@@ -8,7 +8,7 @@ import type {
   AnyContent,
   LayoutData,
   SpacerLayoutHeight,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";

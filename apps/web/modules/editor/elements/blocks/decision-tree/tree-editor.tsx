@@ -8,7 +8,7 @@ import type {
   DecisionTree,
   DecisionTreeContent,
   DecisionTreeNode,
-} from "@baseblocks/types/elements";
+} from "@baseblocks/domain/elements";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,

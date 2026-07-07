@@ -3,7 +3,7 @@
 import { useEditorSiteOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { PageListItem } from "@baseblocks/types";
+import type { PageListItem } from "@baseblocks/domain";
 import type { DragEndEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
 import { IconFile, IconHouse } from "nucleo-glass";

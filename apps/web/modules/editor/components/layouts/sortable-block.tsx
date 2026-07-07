@@ -9,7 +9,7 @@ import {
   hasElementConfigPanel,
 } from "@/modules/editor/elements/framework/registry";
 import { useEditorSiteOptional } from "@/modules/editor/state";
-import type { AnyContent, ElementType, LayoutType } from "@baseblocks/types";
+import type { AnyContent, ElementType, LayoutType } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {

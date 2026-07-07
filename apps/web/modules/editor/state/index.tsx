@@ -1,7 +1,7 @@
 "use client";
 
-import type { EditorPermissions, SiteData } from "@/core/types/editor";
-import type { LayoutSettings } from "@baseblocks/types";
+import type { EditorPermissions, SiteData } from "@/modules/editor/types";
+import type { LayoutSettings } from "@baseblocks/domain";
 import { type ReactNode, createContext, use, useState } from "react";
 import type { UndoCommand } from "./undo";
 import { useUndoKeyboardShortcuts, useUndoManager } from "./undo";

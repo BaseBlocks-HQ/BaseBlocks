@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { isPageRestricted } from "@baseblocks/types";
-import type { PageListItem } from "@baseblocks/types";
+import { isPageRestricted } from "@baseblocks/domain";
+import type { PageListItem } from "@baseblocks/domain";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

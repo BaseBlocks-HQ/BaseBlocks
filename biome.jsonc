@@ -91,9 +91,9 @@
         }
       }
     },
-    // Architectural boundaries: packages/types must be standalone (no backend, ui, editor deps)
+    // Architectural boundaries: packages/domain must be standalone (no backend, ui, editor deps)
     {
-      "includes": ["packages/types/**"],
+      "includes": ["packages/domain/**"],
       "linter": {
         "rules": {
           "style": {
@@ -101,14 +101,14 @@
               "level": "error",
               "options": {
                 "paths": {
-                  "@baseblocks/backend": "types must remain standalone — no backend imports",
-                  "@baseblocks/ui": "types must remain standalone — no UI imports",
-                  "@baseblocks/editor": "types must remain standalone — no editor imports",
-                  "convex": "types must remain standalone — no Convex imports",
-                  "convex/values": "types must remain standalone — no Convex imports",
-                  "convex/server": "types must remain standalone — no Convex imports",
-                  "react": "types must remain standalone — no React imports",
-                  "sonner": "types must remain standalone — no runtime imports"
+                  "@baseblocks/backend": "domain must remain standalone — no backend imports",
+                  "@baseblocks/ui": "domain must remain standalone — no UI imports",
+                  "@baseblocks/editor": "domain must remain standalone — no editor imports",
+                  "convex": "domain must remain standalone — no Convex imports",
+                  "convex/values": "domain must remain standalone — no Convex imports",
+                  "convex/server": "domain must remain standalone — no Convex imports",
+                  "react": "domain must remain standalone — no React imports",
+                  "sonner": "domain must remain standalone — no runtime imports"
                 }
               }
             }

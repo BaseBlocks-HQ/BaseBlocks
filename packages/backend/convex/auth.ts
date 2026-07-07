@@ -2,7 +2,7 @@ import {
   type TeamCapability,
   type TeamRole,
   hasTeamCapability,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import type {
   GenericActionCtx,
   GenericMutationCtx,

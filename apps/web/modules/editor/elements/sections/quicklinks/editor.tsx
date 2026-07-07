@@ -6,7 +6,7 @@ import { useLayoutContext } from "@/modules/editor/elements/framework/layout-con
 import type { ElementEditorProps } from "@/modules/editor/elements/framework/registry";
 import { useEditorSite } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
-import type { QuicklinkItem, QuicklinkType } from "@baseblocks/types/elements";
+import type { QuicklinkItem, QuicklinkType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";

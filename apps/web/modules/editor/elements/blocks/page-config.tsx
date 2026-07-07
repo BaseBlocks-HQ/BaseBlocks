@@ -5,7 +5,7 @@ import { useEditorUi } from "@/modules/editor/state";
 import { useEditorSite } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { PageBlockContent } from "@baseblocks/types/elements";
+import type { PageBlockContent } from "@baseblocks/domain/elements";
 import { Label } from "@baseblocks/ui/label";
 import {
   Select,

@@ -1,5 +1,5 @@
 {
-  "name": "@baseblocks/types",
+  "name": "@baseblocks/domain",
   "version": "0.0.0",
   "private": true,
   "sideEffects": false,

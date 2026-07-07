@@ -1,4 +1,4 @@
-import type { PageListItem } from "@baseblocks/types";
+import type { PageListItem } from "@baseblocks/domain";
 import type { TreeProjection } from "./types";
 
 /** Check if the dragged item can be dropped at the projected location. */

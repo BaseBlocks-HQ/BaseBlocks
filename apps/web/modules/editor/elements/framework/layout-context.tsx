@@ -1,6 +1,6 @@
 "use client";
 
-import type { LayoutType } from "@baseblocks/types";
+import type { LayoutType } from "@baseblocks/domain";
 import { type ReactNode, createContext, use } from "react";
 
 interface LayoutContextValue {

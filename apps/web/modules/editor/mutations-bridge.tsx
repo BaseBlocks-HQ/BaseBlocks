@@ -6,7 +6,7 @@ import {
 } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { LayoutType } from "@baseblocks/types";
+import type { LayoutType } from "@baseblocks/domain";
 import { useMutation } from "convex/react";
 
 /**

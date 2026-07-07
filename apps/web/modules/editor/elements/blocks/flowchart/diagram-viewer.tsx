@@ -1,7 +1,7 @@
 "use client";
 
 import { ViewerTabsBar } from "@/modules/editor/elements/components/viewer-tabs-bar";
-import type { FlowchartDiagram } from "@baseblocks/types/elements/blocks";
+import type { FlowchartDiagram } from "@baseblocks/domain/elements/blocks";
 import { useState } from "react";
 import { MermaidDiagram } from "./mermaid-diagram";
 

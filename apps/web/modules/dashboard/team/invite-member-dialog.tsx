@@ -1,9 +1,17 @@
 "use client";
 
-import { DashboardFormDialog } from "@/core/dialogs";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -136,109 +144,133 @@ export function InviteMemberDialog({
   };
 
   return (
-    <DashboardFormDialog
-      open={dialogState.open}
-      onOpenChange={handleOpenChange}
-      title={t("invite.title")}
-      description={t("invite.description")}
-      trigger={
+    <Dialog open={dialogState.open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         <Button type="button" className="gap-2">
           <UserPlus className="h-4 w-4" />
           {t("inviteMember")}
         </Button>
-      }
-      onSubmit={handleSubmit}
-      isSubmitting={dialogState.isInviting}
-      submitDisabled={!dialogState.email.trim() || dialogState.success}
-      submitLabel={t("invite.invite")}
-      submittingLabel={t("invite.inviting")}
-      cancelLabel={tCommon("cancel")}
-      bodyClassName="px-5 pb-4"
-      formClassName="space-y-4"
-      footerClassName="pt-2"
-    >
-      <div>
-        <Label
-          htmlFor="invite-member-email"
-          className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+      </DialogTrigger>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {t("invite.title")}
+          </DialogTitle>
+          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
+            {t("invite.description")}
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={cn("px-5 pb-3", "space-y-4 pb-4")}
         >
-          {t("member.email")}
-        </Label>
-        <Input
-          id="invite-member-email"
-          type="email"
-          autoComplete="email"
-          placeholder={t("invite.emailPlaceholder")}
-          value={dialogState.email}
-          onChange={(e) =>
-            setDialogState((current) => ({
-              ...current,
-              email: e.target.value,
-              error: null,
-            }))
-          }
-          aria-invalid={!!dialogState.error}
-          className={teamEmailInputClassName}
-        />
-      </div>
-
-      <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
-        <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
-          {t("invite.selectRole")}
-        </Label>
-        <Select
-          value={dialogState.role}
-          onValueChange={(value) =>
-            setDialogState((current) => ({
-              ...current,
-              role: value as "admin" | "member",
-            }))
-          }
-        >
-          <SelectTrigger className={teamSelectTriggerClassName}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-            <SelectItem
-              value="admin"
-              className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+          <div>
+            <Label
+              htmlFor="invite-member-email"
+              className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
             >
-              {t("roles.admin")}
-            </SelectItem>
-            <SelectItem
-              value="member"
-              className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              {t("member.email")}
+            </Label>
+            <Input
+              id="invite-member-email"
+              type="email"
+              autoComplete="email"
+              placeholder={t("invite.emailPlaceholder")}
+              value={dialogState.email}
+              onChange={(e) =>
+                setDialogState((current) => ({
+                  ...current,
+                  email: e.target.value,
+                  error: null,
+                }))
+              }
+              aria-invalid={!!dialogState.error}
+              className={teamEmailInputClassName}
+            />
+          </div>
+
+          <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+            <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
+              {t("invite.selectRole")}
+            </Label>
+            <Select
+              value={dialogState.role}
+              onValueChange={(value) =>
+                setDialogState((current) => ({
+                  ...current,
+                  role: value as "admin" | "member",
+                }))
+              }
             >
-              {t("roles.editor")}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
-          {dialogState.role === "admin"
-            ? t("roleDescriptions.admin")
-            : t("roleDescriptions.editor")}
-        </p>
-      </div>
+              <SelectTrigger className={teamSelectTriggerClassName}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                <SelectItem
+                  value="admin"
+                  className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                >
+                  {t("roles.admin")}
+                </SelectItem>
+                <SelectItem
+                  value="member"
+                  className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                >
+                  {t("roles.editor")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
+              {dialogState.role === "admin"
+                ? t("roleDescriptions.admin")
+                : t("roleDescriptions.editor")}
+            </p>
+          </div>
 
-      {dialogState.error ? (
-        <p
-          className={cn(
-            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          )}
-        >
-          {dialogState.error}
-        </p>
-      ) : null}
+          {dialogState.error ? (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {dialogState.error}
+            </p>
+          ) : null}
 
-      {dialogState.success ? (
-        <p
-          className={cn(
-            "rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400",
-          )}
-        >
-          {t("invite.success")}
-        </p>
-      ) : null}
-    </DashboardFormDialog>
+          {dialogState.success ? (
+            <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400">
+              {t("invite.success")}
+            </p>
+          ) : null}
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={dialogState.isInviting}
+              className={
+                "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              }
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                dialogState.isInviting ||
+                !dialogState.email.trim() ||
+                dialogState.success
+              }
+              className={"h-8 rounded-full px-4 text-sm"}
+            >
+              {dialogState.isInviting
+                ? t("invite.inviting")
+                : t("invite.invite")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

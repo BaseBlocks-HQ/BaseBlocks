@@ -1,8 +1,8 @@
 "use client";
 
 import { getElementEditor } from "@/modules/editor/elements/framework/registry";
-import type { SaveStatus } from "@baseblocks/types";
-import type { AnyContent, ElementType } from "@baseblocks/types/elements";
+import type { SaveStatus } from "@baseblocks/domain";
+import type { AnyContent, ElementType } from "@baseblocks/domain/elements";
 import { useTranslations } from "next-intl";
 import { createElement } from "react";
 

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/editor/elements/hooks/use-auto-save";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   Select,

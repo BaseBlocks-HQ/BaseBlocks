@@ -1,30 +1,9 @@
-export type BorderRadiusPreset = "none" | "small" | "medium" | "large" | "full";
-
-export interface SiteCustomization {
-  accentColor?: string; // Hex color (e.g., "#0066FF") — primary buttons, links, focus
-  accentColorDark?: string; // Optional dark mode variant
-  headerColor?: string; // Header background color
-  headerColorDark?: string; // Header dark mode variant
-  secondaryColor?: string; // Accent/gradient secondary color
-  secondaryColorDark?: string; // Secondary dark mode variant
-  tertiaryColor?: string; // Third gradient color
-  tertiaryColorDark?: string; // Third dark mode variant
-  showHeaderGradient?: boolean; // Gradient stripe under header
-  borderRadius?: BorderRadiusPreset;
-}
-
-export const DEFAULT_CUSTOMIZATION: Required<
-  Pick<SiteCustomization, "accentColor" | "accentColorDark" | "borderRadius">
-> = {
-  accentColor: "#0066FF", // Blue
-  accentColorDark: "#3B82F6", // Lighter blue for dark mode
-  borderRadius: "medium",
-};
+import type { BorderRadiusPreset } from "@baseblocks/domain/elements/customization";
 
 export interface RadiusPresetInfo {
   value: BorderRadiusPreset;
   label: string;
-  cssValue: string; // CSS rem value
+  cssValue: string;
 }
 
 export const BORDER_RADIUS_PRESETS: RadiusPresetInfo[] = [
@@ -36,9 +15,9 @@ export const BORDER_RADIUS_PRESETS: RadiusPresetInfo[] = [
 ];
 
 export interface ColorPreset {
-  value: string; // Hex color
+  value: string;
   label: string;
-  darkValue?: string; // Optional dark mode variant
+  darkValue?: string;
 }
 
 export const COLOR_PRESETS: ColorPreset[] = [
@@ -54,12 +33,6 @@ export const COLOR_PRESETS: ColorPreset[] = [
   { value: "#14B8A6", label: "Teal", darkValue: "#2DD4BF" },
   { value: "#64748B", label: "Slate", darkValue: "#94A3B8" },
 ];
-
-export function getRadiusCssValue(preset: BorderRadiusPreset): string {
-  return (
-    BORDER_RADIUS_PRESETS.find((p) => p.value === preset)?.cssValue ?? "0.5rem"
-  );
-}
 
 export function getDarkColorForPreset(hex: string): string | undefined {
   return COLOR_PRESETS.find((p) => p.value.toLowerCase() === hex.toLowerCase())

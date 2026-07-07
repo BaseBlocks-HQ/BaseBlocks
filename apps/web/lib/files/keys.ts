@@ -1,4 +1,4 @@
-import type { UploadPurpose } from "@baseblocks/types";
+import type { UploadPurpose } from "@baseblocks/domain";
 
 const unsafeFilenamePattern = /[^a-zA-Z0-9._-]+/g;
 

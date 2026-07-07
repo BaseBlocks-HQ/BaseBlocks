@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/editor/elements/hooks/use-auto-save";
 import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import type { Block } from "@blocknote/core";
 import { SideMenuExtension, SuggestionMenu } from "@blocknote/core/extensions";
 import { BlockNoteView } from "@blocknote/mantine";

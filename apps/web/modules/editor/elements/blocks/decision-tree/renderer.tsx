@@ -1,7 +1,7 @@
 "use client";
 
 import type { ElementRendererProps } from "@/modules/editor/elements/framework/registry";
-import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useState } from "react";

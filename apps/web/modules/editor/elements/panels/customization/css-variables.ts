@@ -3,8 +3,8 @@
  * Generates inline styles that scope customization to content areas
  */
 
-import type { SiteCustomization } from "@baseblocks/types/elements/customization";
-import { getDarkColorForPreset } from "@baseblocks/types/elements/customization";
+import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
+import { getDarkColorForPreset } from "./presets";
 import type { CSSProperties } from "react";
 import {
   darkTintColor,

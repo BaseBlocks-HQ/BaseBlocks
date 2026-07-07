@@ -3,7 +3,7 @@
  * Grid of linked cards with images
  */
 
-import { DEFAULT_SECTION_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_SECTION_CONTENT } from "@baseblocks/domain/elements";
 import { LayoutGrid } from "lucide-react";
 import { registerElement } from "../../framework/registry";
 import { themedPickerImagePreview } from "../../framework/themed-picker-image";

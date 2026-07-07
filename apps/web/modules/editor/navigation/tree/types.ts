@@ -1,4 +1,4 @@
-import type { PageListItem } from "@baseblocks/types";
+import type { PageListItem } from "@baseblocks/domain";
 
 export interface FlattenedPage {
   id: string;

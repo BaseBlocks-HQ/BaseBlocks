@@ -7,7 +7,7 @@ import {
   PanelSettingRow,
 } from "@/modules/editor/elements/panels/shared/editor-panel-primitives";
 import { useEditorUndoOptional } from "@/modules/editor/state";
-import { DropZone } from "@/core/file-ui";
+import { DropZone } from "@/modules/editor/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

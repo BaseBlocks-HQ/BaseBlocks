@@ -1,16 +1,13 @@
 "use client";
 
 import { getElementsByCategory } from "@/modules/editor/elements/framework/registry";
+import type { ElementCategory } from "@/modules/editor/elements/categories";
 import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
 import { SiteConfigPanel } from "@/modules/editor/elements/panels/site";
 import type { Id } from "@baseblocks/backend";
-import type {
-  ElementCategory,
-  ElementType,
-  LayoutType,
-} from "@baseblocks/types/elements";
+import type { ElementType, LayoutType } from "@baseblocks/domain/elements";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { PanelTop } from "lucide-react";
 import { useTranslations } from "next-intl";

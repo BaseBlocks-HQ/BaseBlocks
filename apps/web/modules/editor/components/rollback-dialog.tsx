@@ -1,8 +1,14 @@
 "use client";
 
-import { DashboardDialogShell } from "@/core/dialogs";
 import { Button } from "@baseblocks/ui/button";
-import { DialogFooter } from "@baseblocks/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -49,47 +55,56 @@ export function RollbackDialog({
   );
 
   return (
-    <DashboardDialogShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={
-        <span className="flex items-center gap-2">
-          <RotateCcw className="h-5 w-5 shrink-0" />
-          {t("title", { version: targetVersion })}
-        </span>
-      }
-      description={description}
-      contentClassName="sm:max-w-[32rem]"
-    >
-      <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-3 text-sm dark:border-amber-800/80 dark:bg-amber-950/40">
-        <p className="font-medium text-amber-900 dark:text-amber-100">
-          {t("warningTitle")}
-        </p>
-        <p className="mt-1 text-amber-800 dark:text-amber-200/90">
-          {t("warningBody")}
-        </p>
-      </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-[32rem]`}
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            <span className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 shrink-0" />
+              {t("title", { version: targetVersion })}
+            </span>
+          </DialogTitle>
+          <DialogDescription
+            asChild
+            className={"text-sm text-sidebar-foreground/60"}
+          >
+            <div>{description}</div>
+          </DialogDescription>
+        </DialogHeader>
+        <div className={"px-5 pb-3"}>
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-3 text-sm dark:border-amber-800/80 dark:bg-amber-950/40">
+            <p className="font-medium text-amber-900 dark:text-amber-100">
+              {t("warningTitle")}
+            </p>
+            <p className="mt-1 text-amber-800 dark:text-amber-200/90">
+              {t("warningBody")}
+            </p>
+          </div>
 
-      <DialogFooter className="pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isRollingBack}
-          className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-        >
-          {tCommon("cancel")}
-        </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={handleRollback}
-          disabled={isRollingBack}
-          className="h-8 rounded-full px-4 text-sm"
-        >
-          {isRollingBack ? t("rollingBack") : t("rollback")}
-        </Button>
-      </DialogFooter>
-    </DashboardDialogShell>
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isRollingBack}
+              className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleRollback}
+              disabled={isRollingBack}
+              className="h-8 rounded-full px-4 text-sm"
+            >
+              {isRollingBack ? t("rollingBack") : t("rollback")}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

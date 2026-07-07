@@ -1,4 +1,4 @@
-import { teamRoles } from "@baseblocks/types";
+import { teamRoles } from "@baseblocks/domain";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";

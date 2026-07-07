@@ -1,4 +1,4 @@
-import type { LayoutSettings, LayoutType } from "@baseblocks/types";
+import type { LayoutSettings, LayoutType } from "@baseblocks/domain";
 
 // ── Editor engine types ──────────────────────────────────────────────
 

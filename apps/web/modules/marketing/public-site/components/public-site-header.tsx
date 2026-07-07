@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import { SearchBox } from "@/modules/editor/elements/sections/search/search-box";
 import { TopNavMenu } from "@/modules/marketing/public-site/navigation";
 import type { Id } from "@baseblocks/backend";
-import type { PageWithChildren } from "@baseblocks/types";
-import type { SiteCustomization } from "@baseblocks/types/elements/customization";
-import type { NavigationStyle } from "@baseblocks/types/elements/navigation";
+import type { PageWithChildren } from "@baseblocks/domain";
+import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
+import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 
 interface PublicSiteHeaderProps {

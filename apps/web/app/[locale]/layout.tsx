@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/core/theme/theme-provider";
+import { ThemeProvider } from "@/app/providers/theme-provider";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@baseblocks/i18n";
 import { Toaster } from "@baseblocks/ui/sonner";

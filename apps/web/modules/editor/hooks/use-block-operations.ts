@@ -7,7 +7,7 @@ import {
 } from "@/modules/editor/lib/block-clipboard";
 import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
 import type { EditorMutations } from "@/modules/editor/state";
-import type { AnyContent, LayoutData } from "@baseblocks/types";
+import type { AnyContent, LayoutData } from "@baseblocks/domain";
 import { type MutableRefObject, useRef } from "react";
 import { toast } from "sonner";
 

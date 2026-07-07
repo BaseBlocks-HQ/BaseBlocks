@@ -13,7 +13,6 @@ import {
   PublicPagePanelProvider,
   usePublicPagePanel,
 } from "@/modules/marketing/public-site/public-page-panel-context";
-import { SplitViewShell } from "@/core/split-view/shell";
 import { EditorProvider } from "@/modules/editor/state";
 import { useEditorUi } from "@/modules/editor/state";
 import { useTeamAccess } from "@/modules/dashboard/team/team-access";
@@ -21,6 +20,11 @@ import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useConvexAuth, useMutation } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -33,6 +37,12 @@ import {
 import { EditorFloatingRail } from "./editor-floating-rail";
 import { EditorHeader } from "./editor-header";
 import { useSidebarOperations } from "./hooks/use-sidebar-operations";
+
+const pagePanelSurfaceClassName =
+  "flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_18px_40px_hsl(var(--foreground)/0.08)] backdrop-blur-xl";
+
+const hiddenSplitHandleClassName =
+  "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
 import { ConvexEditorMutationsProvider } from "./mutations-bridge";
 
 interface SiteEditorProps {
@@ -353,33 +363,69 @@ function SiteEditorInner({
             {...(isCustomized ? { "data-site-customized": "" } : {})}
           >
             {showPagePanel ? (
-              <SplitViewShell
-                className="h-full"
-                detail={
-                  activePageDetail?.kind === "editor" ? (
-                    <ConnectedEditorPageDetailPanel
-                      isFullscreen={isFullscreen}
-                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-                    />
-                  ) : (
-                    <PublicPageDetailPanel
-                      isFullscreen={isFullscreen}
-                      onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-                    />
-                  )
-                }
-                detailCollapsedOnMobile
-                detailExpanded={isFullscreen}
-                detailPanelClassName={cn(
-                  "pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
-                  // Fullscreen hides the main column; mirror editor canvas inset so the
-                  // panel clears the floating rail (split view previously got that from main).
-                  isFullscreen && !isMobile && "pl-20 md:pl-24 lg:pl-28",
-                )}
-                detailSurfaceClassName="rounded-xl bg-background"
-                main={editorCanvas}
-                mainPanelClassName="pr-2 md:pr-2 lg:pr-2"
-              />
+              isFullscreen || isMobile ? (
+                <div className="h-full min-h-0 min-w-0">
+                  <div
+                    className={cn(
+                      "h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
+                      isFullscreen && !isMobile && "pl-20 md:pl-24 lg:pl-28",
+                    )}
+                  >
+                    <section className={pagePanelSurfaceClassName}>
+                      {activePageDetail?.kind === "editor" ? (
+                        <ConnectedEditorPageDetailPanel
+                          isFullscreen={isFullscreen}
+                          onToggleFullscreen={() =>
+                            setIsFullscreen(!isFullscreen)
+                          }
+                        />
+                      ) : (
+                        <PublicPageDetailPanel
+                          isFullscreen={isFullscreen}
+                          onToggleFullscreen={() =>
+                            setIsFullscreen(!isFullscreen)
+                          }
+                        />
+                      )}
+                    </section>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full min-h-0 min-w-0">
+                  <ResizablePanelGroup
+                    className="h-full min-h-0 min-w-0"
+                    orientation="horizontal"
+                  >
+                    <ResizablePanel defaultSize={60} minSize={30}>
+                      <div className="h-full min-h-0 min-w-0 overflow-hidden pr-2 md:pr-2 lg:pr-2">
+                        {editorCanvas}
+                      </div>
+                    </ResizablePanel>
+                    <ResizableHandle className={hiddenSplitHandleClassName} />
+                    <ResizablePanel defaultSize={40} minSize={30}>
+                      <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4">
+                        <section className={pagePanelSurfaceClassName}>
+                          {activePageDetail?.kind === "editor" ? (
+                            <ConnectedEditorPageDetailPanel
+                              isFullscreen={isFullscreen}
+                              onToggleFullscreen={() =>
+                                setIsFullscreen(!isFullscreen)
+                              }
+                            />
+                          ) : (
+                            <PublicPageDetailPanel
+                              isFullscreen={isFullscreen}
+                              onToggleFullscreen={() =>
+                                setIsFullscreen(!isFullscreen)
+                              }
+                            />
+                          )}
+                        </section>
+                      </div>
+                    </ResizablePanel>
+                  </ResizablePanelGroup>
+                </div>
+              )
             ) : (
               editorCanvas
             )}

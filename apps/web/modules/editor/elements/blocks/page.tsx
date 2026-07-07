@@ -2,7 +2,7 @@
 import { usePage } from "@/lib/data";
 import { usePublicPagePanelOptional } from "@/modules/marketing/public-site/public-page-panel-context";
 import { useEditorUiOptional } from "@/modules/editor/state";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementEditorProps,

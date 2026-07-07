@@ -1,11 +1,17 @@
 "use client";
 
-import { DashboardDialogShell } from "@/core/dialogs";
-import type { AccessCodeData, SharingSettings } from "@/core/types/editor";
+import type { AccessCodeData, SharingSettings } from "@/modules/editor/types";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
-import { DialogFooter } from "@baseblocks/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
 import {
@@ -324,93 +330,103 @@ export function ShareDialog({
   };
 
   return (
-    <DashboardDialogShell
-      open={open}
-      onOpenChange={handleOpenChange}
-      title={t("title")}
-      description={t("description")}
-      contentClassName="sm:max-w-lg"
-    >
-      <div className="space-y-6 py-1">
-        <RadioGroup
-          value={visibility}
-          onValueChange={(v) => void handleVisibilityChange(v as Visibility)}
-        >
-          <VisibilityOptionCard
-            description={t("visibilityPublicDescription")}
-            icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-            id="public"
-            label={t("visibilityPublicLabel")}
-            value="public"
-          />
-          <VisibilityOptionCard
-            description={t("visibilityLinkOnlyDescription")}
-            icon={<Link className="h-4 w-4 text-muted-foreground" />}
-            id="link-only"
-            label={t("visibilityLinkOnlyLabel")}
-            value="link-only"
-          />
-          <VisibilityOptionCard
-            description={t("visibilityPasswordDescription")}
-            icon={<Lock className="h-4 w-4 text-muted-foreground" />}
-            id="password"
-            label={t("visibilityPasswordLabel")}
-            value="password"
-          />
-          <VisibilityOptionCard
-            description={t("visibilityPrivateDescription")}
-            icon={<EyeOff className="h-4 w-4 text-muted-foreground" />}
-            id="private"
-            label={t("visibilityPrivateLabel")}
-            value="private"
-          />
-        </RadioGroup>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-lg`}
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {t("title")}
+          </DialogTitle>
+          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
+            {t("description")}
+          </DialogDescription>
+        </DialogHeader>
+        <div className={"px-5 pb-3"}>
+          <div className="space-y-6 py-1">
+            <RadioGroup
+              value={visibility}
+              onValueChange={(v) =>
+                void handleVisibilityChange(v as Visibility)
+              }
+            >
+              <VisibilityOptionCard
+                description={t("visibilityPublicDescription")}
+                icon={<Globe className="h-4 w-4 text-muted-foreground" />}
+                id="public"
+                label={t("visibilityPublicLabel")}
+                value="public"
+              />
+              <VisibilityOptionCard
+                description={t("visibilityLinkOnlyDescription")}
+                icon={<Link className="h-4 w-4 text-muted-foreground" />}
+                id="link-only"
+                label={t("visibilityLinkOnlyLabel")}
+                value="link-only"
+              />
+              <VisibilityOptionCard
+                description={t("visibilityPasswordDescription")}
+                icon={<Lock className="h-4 w-4 text-muted-foreground" />}
+                id="password"
+                label={t("visibilityPasswordLabel")}
+                value="password"
+              />
+              <VisibilityOptionCard
+                description={t("visibilityPrivateDescription")}
+                icon={<EyeOff className="h-4 w-4 text-muted-foreground" />}
+                id="private"
+                label={t("visibilityPrivateLabel")}
+                value="private"
+              />
+            </RadioGroup>
 
-        {visibility === "password" ? (
-          <PasswordSettingsPanel
-            accessCode={accessCode}
-            codeCopied={codeCopied}
-            getExpirationText={getExpirationText}
-            handleRegenerateCode={handleRegenerateCode}
-            handleRotationChange={handleRotationChange}
-            handleSessionChange={handleSessionChange}
-            onCopyCode={copyCode}
-            rotationHours={String(settings?.accessCodeRotationHours ?? 24)}
-            rotationOptions={rotationOptions}
-            sessionDays={String(settings?.accessCodeSessionDays ?? 7)}
-            sessionOptions={sessionOptions}
-          />
-        ) : null}
-      </div>
+            {visibility === "password" ? (
+              <PasswordSettingsPanel
+                accessCode={accessCode}
+                codeCopied={codeCopied}
+                getExpirationText={getExpirationText}
+                handleRegenerateCode={handleRegenerateCode}
+                handleRotationChange={handleRotationChange}
+                handleSessionChange={handleSessionChange}
+                onCopyCode={copyCode}
+                rotationHours={String(settings?.accessCodeRotationHours ?? 24)}
+                rotationOptions={rotationOptions}
+                sessionDays={String(settings?.accessCodeSessionDays ?? 7)}
+                sessionOptions={sessionOptions}
+              />
+            ) : null}
+          </div>
 
-      <DialogFooter className="flex-col gap-2 pt-2 sm:flex-row">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-8 flex-1 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-          onClick={copyLink}
-        >
-          {copied ? (
-            <>
-              <Check className="mr-2 h-4 w-4" />
-              {t("copied")}
-            </>
-          ) : (
-            <>
-              <Copy className="mr-2 h-4 w-4" />
-              {t("copyLink")}
-            </>
-          )}
-        </Button>
-        <Button
-          type="button"
-          className="h-8 flex-1 rounded-full px-4 text-sm"
-          onClick={() => window.open(siteUrl, "_blank")}
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          {t("viewSite")}
-        </Button>
-      </DialogFooter>
-    </DashboardDialogShell>
+          <DialogFooter className="flex-col gap-2 pt-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-8 flex-1 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              onClick={copyLink}
+            >
+              {copied ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  {t("copied")}
+                </>
+              ) : (
+                <>
+                  <Copy className="mr-2 h-4 w-4" />
+                  {t("copyLink")}
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              className="h-8 flex-1 rounded-full px-4 text-sm"
+              onClick={() => window.open(siteUrl, "_blank")}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              {t("viewSite")}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

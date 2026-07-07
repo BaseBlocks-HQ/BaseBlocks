@@ -2,7 +2,7 @@
 
 import "@blocknote/mantine/style.css";
 
-import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";

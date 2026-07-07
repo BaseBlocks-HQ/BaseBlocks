@@ -2,7 +2,7 @@ import {
   canAccessPagePolicy,
   normalizePageAccessPolicy,
   publicPageAccessPolicy,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";

@@ -7,10 +7,7 @@ import { CollapsibleSettingsSection } from "@/modules/editor/elements/panels/sha
 import { useEditorUndoOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import {
-  NAVIGATION_STYLES,
-  type NavigationStyle,
-} from "@baseblocks/types/elements/navigation";
+import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
 import { useMutation } from "convex/react";
 import { LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +23,15 @@ const NAV_STYLE_ICONS: Record<NavigationStyle, LucideIcon> = {
   topnav: Menu,
   subnav: LayoutList,
 };
+
+const NAVIGATION_STYLES: Array<{
+  style: NavigationStyle;
+  label: string;
+}> = [
+  { style: "sidebar", label: "Sidebar" },
+  { style: "topnav", label: "Top Nav" },
+  { style: "subnav", label: "Tab Bar" },
+];
 
 const NAV_STYLE_PREVIEWS: Record<
   NavigationStyle,

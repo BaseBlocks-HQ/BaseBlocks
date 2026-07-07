@@ -3,7 +3,7 @@
  * Single image with caption support
  */
 
-import { DEFAULT_MEDIA_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_MEDIA_CONTENT } from "@baseblocks/domain/elements";
 import { Image } from "lucide-react";
 import { registerElement } from "../../framework/registry";
 import { themedPickerImagePreview } from "../../framework/themed-picker-image";

@@ -1,12 +1,6 @@
 "use client";
 
 import {
-  DashboardConfirmDialog,
-  DashboardDialogShell,
-  dashboardDialogPrimaryFieldLabelClassName,
-  dashboardDialogPrimaryInlineInputClassName,
-} from "@/core/dialogs";
-import {
   FILE_SEARCH_PARAM,
   buildFileDeepLinkPath,
   toAbsoluteBrowserUrl,
@@ -16,12 +10,28 @@ import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/editor/media-viewer";
 import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
 import { useEditorSite } from "@/modules/editor/state";
-import { DropZone, FileIcon, getFileTypeColor } from "@/core/file-ui";
+import { DropZone, FileIcon, getFileTypeColor } from "@/modules/editor/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
-import { DialogFooter } from "@baseblocks/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -280,61 +290,97 @@ function FileDialogs({
 
   return (
     <>
-      <DashboardDialogShell
+      <Dialog
         open={renameDialogOpen}
         onOpenChange={(next) => {
           if (!next) onCloseRename();
         }}
-        title={t("renameTitle")}
-        contentClassName="sm:max-w-md"
       >
-        <div>
-          <Label
-            htmlFor="file-rename-filename"
-            className={dashboardDialogPrimaryFieldLabelClassName}
-          >
-            {t("renameFieldLabel")}
-          </Label>
-          <Input
-            id="file-rename-filename"
-            value={renameValue}
-            onChange={(event) => onRenameValueChange(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && onConfirmRename()}
-            className={dashboardDialogPrimaryInlineInputClassName}
-          />
-        </div>
-        <DialogFooter className="pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCloseRename}
-            className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-          >
-            {tCommon("cancel")}
-          </Button>
-          <Button
-            type="button"
-            onClick={onConfirmRename}
-            disabled={!renameValue.trim()}
-            className="h-8 rounded-full px-4 text-sm"
-          >
-            {t("renameConfirm")}
-          </Button>
-        </DialogFooter>
-      </DashboardDialogShell>
+        <DialogContent
+          className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-md`}
+        >
+          <DialogHeader className={"px-5 pt-4 pb-0"}>
+            <DialogTitle className={"text-base font-semibold"}>
+              {t("renameTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className={"px-5 pb-3"}>
+            <div>
+              <Label
+                htmlFor="file-rename-filename"
+                className={
+                  "mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+                }
+              >
+                {t("renameFieldLabel")}
+              </Label>
+              <Input
+                id="file-rename-filename"
+                value={renameValue}
+                onChange={(event) => onRenameValueChange(event.target.value)}
+                onKeyDown={(event) =>
+                  event.key === "Enter" && onConfirmRename()
+                }
+                className={
+                  "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent"
+                }
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCloseRename}
+                className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="button"
+                onClick={onConfirmRename}
+                disabled={!renameValue.trim()}
+                className="h-8 rounded-full px-4 text-sm"
+              >
+                {t("renameConfirm")}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      <DashboardConfirmDialog
+      <AlertDialog
         open={deleteDialogOpen}
         onOpenChange={(next) => {
           if (!next) onCloseDelete();
         }}
-        title={t("deleteTitle")}
-        description={t("deleteDescription", { filename })}
-        confirmLabel={t("delete")}
-        cancelLabel={tCommon("cancel")}
-        variant="destructive"
-        onConfirm={onConfirmDelete}
-      />
+      >
+        <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+          <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+            <AlertDialogTitle className="text-base font-semibold text-balance">
+              {t("deleteTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
+              {t("deleteDescription", { filename })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+            <AlertDialogCancel
+              size="sm"
+              className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              size="sm"
+              className="rounded-full px-4 text-sm"
+              onClick={onConfirmDelete}
+            >
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -1,11 +1,28 @@
 "use client";
 
-import { DashboardConfirmDialog, DashboardFormDialog } from "@/core/dialogs";
 import type {
   FolderId,
   LibraryDialogTarget,
   LibraryFolder,
 } from "@/modules/dashboard/library/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
+import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -88,48 +105,73 @@ export function RenameItemDialog({
     target?.kind === "file" ? t("renameFileTitle") : t("renameFolderTitle");
 
   return (
-    <DashboardFormDialog
-      open={Boolean(target)}
-      onOpenChange={handleOpenChange}
-      title={title}
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      submitLabel={t("renameAction")}
-      submittingLabel={tCommon("loading")}
-      cancelLabel={tCommon("cancel")}
-      bodyClassName="px-5 pb-4"
-      formClassName="space-y-4"
-      footerClassName="pt-2"
-    >
-      <div>
-        <Label
-          htmlFor="rename-library-item"
-          className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+    <Dialog open={Boolean(target)} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={cn("px-5 pb-3", "space-y-4 pb-4")}
         >
-          {t("itemNameLabel")}
-        </Label>
-        <Input
-          id="rename-library-item"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError("");
-          }}
-          aria-invalid={!!error}
-          className={libraryNameInputClassName}
-          autoFocus
-        />
-      </div>
-      {error ? (
-        <p
-          className={cn(
-            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          )}
-        >
-          {error}
-        </p>
-      ) : null}
-    </DashboardFormDialog>
+          <div>
+            <Label
+              htmlFor="rename-library-item"
+              className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+            >
+              {t("itemNameLabel")}
+            </Label>
+            <Input
+              id="rename-library-item"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
+              aria-invalid={!!error}
+              className={libraryNameInputClassName}
+              autoFocus
+            />
+          </div>
+          {error ? (
+            <p
+              className={
+                "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              }
+            >
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+              className={
+                "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              }
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className={"h-8 rounded-full px-4 text-sm"}
+            >
+              {isSubmitting ? tCommon("loading") : t("renameAction")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -165,17 +207,38 @@ export function DeleteItemDialog({
     target?.kind === "file" ? t("deleteFileTitle") : t("deleteFolderTitle");
 
   return (
-    <DashboardConfirmDialog
+    <AlertDialog
       open={Boolean(target)}
       onOpenChange={(open) => !open && onOpenChange(false)}
-      title={title}
-      description={t("deleteItemDescription", { name: target?.name ?? "" })}
-      cancelLabel={tCommon("cancel")}
-      confirmLabel={isDeleting ? tCommon("loading") : tCommon("delete")}
-      confirmDisabled={isDeleting}
-      variant="destructive"
-      onConfirm={handleConfirm}
-    />
+    >
+      <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+        <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+          <AlertDialogTitle className="text-base font-semibold text-balance">
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
+            {t("deleteItemDescription", { name: target?.name ?? "" })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+          <AlertDialogCancel
+            size="sm"
+            className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            {tCommon("cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            size="sm"
+            disabled={isDeleting}
+            className="rounded-full px-4 text-sm"
+            onClick={handleConfirm}
+          >
+            {isDeleting ? tCommon("loading") : tCommon("delete")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -234,49 +297,74 @@ export function CreateFolderDialog({
   };
 
   return (
-    <DashboardFormDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      title={t("newFolderTitle")}
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      submitLabel={t("createFolderAction")}
-      submittingLabel={tCommon("loading")}
-      cancelLabel={tCommon("cancel")}
-      bodyClassName="px-5 pb-4"
-      formClassName="space-y-4"
-      footerClassName="pt-2"
-    >
-      <div>
-        <Label
-          htmlFor="create-library-folder"
-          className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {t("newFolderTitle")}
+          </DialogTitle>
+        </DialogHeader>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={cn("px-5 pb-3", "space-y-4 pb-4")}
         >
-          {t("itemNameLabel")}
-        </Label>
-        <Input
-          id="create-library-folder"
-          placeholder={t("folderNamePlaceholder")}
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setError("");
-          }}
-          aria-invalid={!!error}
-          className={libraryNameInputClassName}
-          autoFocus
-        />
-      </div>
-      {error ? (
-        <p
-          className={cn(
-            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          )}
-        >
-          {error}
-        </p>
-      ) : null}
-    </DashboardFormDialog>
+          <div>
+            <Label
+              htmlFor="create-library-folder"
+              className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+            >
+              {t("itemNameLabel")}
+            </Label>
+            <Input
+              id="create-library-folder"
+              placeholder={t("folderNamePlaceholder")}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
+              aria-invalid={!!error}
+              className={libraryNameInputClassName}
+              autoFocus
+            />
+          </div>
+          {error ? (
+            <p
+              className={
+                "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              }
+            >
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+              className={
+                "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              }
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className={"h-8 rounded-full px-4 text-sm"}
+            >
+              {isSubmitting ? tCommon("loading") : t("createFolderAction")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -344,65 +432,90 @@ export function MoveItemDialog({
     target?.kind === "file" ? t("moveFileTitle") : t("moveFolderTitle");
 
   return (
-    <DashboardFormDialog
-      open={Boolean(target)}
-      onOpenChange={handleOpenChange}
-      title={title}
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      submitLabel={t("moveAction")}
-      submittingLabel={tCommon("loading")}
-      cancelLabel={tCommon("cancel")}
-      bodyClassName="px-5 pb-4"
-      formClassName="space-y-4"
-      footerClassName="pt-2"
-    >
-      <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
-        <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
-          {t("destinationLabel")}
-        </Label>
-        <Select
-          value={targetFolderId}
-          onValueChange={(value) => {
-            setTargetFolderId(value);
-            setError("");
-          }}
+    <Dialog open={Boolean(target)} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={cn("px-5 pb-3", "space-y-4 pb-4")}
         >
-          <SelectTrigger
-            aria-invalid={!!error}
-            className={librarySelectTriggerClassName}
-          >
-            <SelectValue placeholder={t("chooseFolderPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-            <SelectItem
-              value={rootFolderValue}
-              className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+          <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+            <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
+              {t("destinationLabel")}
+            </Label>
+            <Select
+              value={targetFolderId}
+              onValueChange={(value) => {
+                setTargetFolderId(value);
+                setError("");
+              }}
             >
-              {t("libraryRoot")}
-            </SelectItem>
-            {folderOptions.map((folder) => (
-              <SelectItem
-                key={folder._id}
-                value={folder._id}
-                className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+              <SelectTrigger
+                aria-invalid={!!error}
+                className={librarySelectTriggerClassName}
               >
-                {getFolderOptionLabel(folder, folders)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {error ? (
-        <p
-          className={cn(
-            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          )}
-        >
-          {error}
-        </p>
-      ) : null}
-    </DashboardFormDialog>
+                <SelectValue placeholder={t("chooseFolderPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                <SelectItem
+                  value={rootFolderValue}
+                  className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                >
+                  {t("libraryRoot")}
+                </SelectItem>
+                {folderOptions.map((folder) => (
+                  <SelectItem
+                    key={folder._id}
+                    value={folder._id}
+                    className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                  >
+                    {getFolderOptionLabel(folder, folders)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {error ? (
+            <p
+              className={
+                "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              }
+            >
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+              className={
+                "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              }
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className={"h-8 rounded-full px-4 text-sm"}
+            >
+              {isSubmitting ? tCommon("loading") : t("moveAction")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

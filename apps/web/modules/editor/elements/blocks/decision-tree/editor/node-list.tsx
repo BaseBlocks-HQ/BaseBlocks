@@ -6,7 +6,7 @@ import {
   arrayMove,
 } from "@/modules/editor/dnd";
 import { SortableItem } from "@/modules/editor/dnd";
-import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

@@ -7,7 +7,7 @@ import type {
   DirectoryColumnType,
   DirectoryContent,
   DirectoryRow,
-} from "@baseblocks/types/elements";
+} from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";

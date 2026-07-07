@@ -5,7 +5,7 @@
  * Opened from the editor header ⋯ menu → “Deployment history” when the site is published.
  * Renders as a Sheet from the right; rollback uses `RollbackDialog` (dashboard shell).
  */
-import type { DeploymentData } from "@/core/types/editor";
+import type { DeploymentData } from "@/modules/editor/types";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";

@@ -13,7 +13,7 @@ import type {
   ElementType,
   LayoutBlockType,
   LayoutType,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { useMutation } from "convex/react";
 import { toast } from "sonner";
 

@@ -118,7 +118,7 @@ The `apps/web/` app follows a **module-based** architecture:
 
 Biome enforces import boundaries at lint time:
 
-- `packages/types` must remain standalone (no backend, UI, or React imports)
+- `packages/domain` must remain standalone (no backend, UI, or React imports)
 - `packages/ui` must not import from backend or editor
 - `lib/` must not import from `modules/` (lib is a lower layer)
 - `components/` must not import from `modules/` (shared components are a lower layer)

@@ -63,6 +63,7 @@ const securityHeaders = [
 const nextConfig = {
   allowedDevOrigins: [
     "*.localhost",
+    "*.trycloudflare.com",
     "192.168.1.180",
     "100.108.121.25",
     "naaiyys.tail2c844a.ts.net",

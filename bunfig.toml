@@ -4,7 +4,7 @@ minimumReleaseAgeExcludes = [
   "@baseblocks/backend",
   "@baseblocks/i18n",
   "@baseblocks/tsconfig",
-  "@baseblocks/types",
+  "@baseblocks/domain",
   "@baseblocks/ui",
   "@baseblocks/web",
   "fumadocs-core",

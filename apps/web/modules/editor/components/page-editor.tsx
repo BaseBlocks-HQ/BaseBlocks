@@ -4,14 +4,14 @@ import { useLayoutOperations } from "@/modules/editor/hooks/use-layout-operation
 import { usePageTabs } from "@/modules/editor/hooks/use-page-tabs";
 import { useEditorUi } from "@/modules/editor/state";
 import { DndProvider } from "@/modules/editor/dnd";
-import type { LayoutDoc, PageData } from "@/core/types/editor";
+import type { LayoutDoc, PageData } from "@/modules/editor/types";
 import type {
   AnyContent,
   LayoutBlockType,
   LayoutData,
   LayoutSettings,
   LayoutType,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Plus } from "lucide-react";

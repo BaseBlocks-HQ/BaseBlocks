@@ -20,11 +20,16 @@ import type {
   LayoutSettings,
   LayoutType,
   SpacerLayoutHeight,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
-import { SplitViewShell } from "@/core/split-view/shell";
 import { PublicPageDetailPanel } from "./public-page-detail-panel";
 import { usePublicPagePanel } from "./public-page-panel-context";
 
@@ -42,6 +47,12 @@ interface PublicContentProps {
 const SEARCH_HIGHLIGHT_SELECTOR = 'mark[data-search-highlight="true"]';
 const SEARCH_HIGHLIGHT_CLASS_NAME =
   "bg-yellow-200 dark:bg-yellow-800 text-foreground px-0.5 rounded";
+
+const publicPagePanelSurfaceClassName =
+  "flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_18px_40px_hsl(var(--foreground)/0.08)] backdrop-blur-xl";
+
+const hiddenSplitHandleClassName =
+  "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
 
 function clearSearchHighlights(root: HTMLElement) {
   const highlights = root.querySelectorAll(SEARCH_HIGHLIGHT_SELECTOR);
@@ -273,6 +284,7 @@ function PublicContentInner({
   const layoutsData = usePublishedLayouts(pageId);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastAutoScrolledKeyRef = useRef<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -407,40 +419,63 @@ function PublicContentInner({
   const hasSidebar = sidebarLayouts.length > 0;
 
   if (showPagePanel) {
+    const pagePanel = (
+      <PublicPageDetailPanel
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+      />
+    );
+    const mainContent = (
+      <ScrollArea className="h-full min-h-0 w-full min-w-0">
+        <div className="overflow-x-hidden">
+          <PublicMainContent
+            pageTitle={pageData.title}
+            pageTabs={pageTabs}
+            activeTabId={activeTabId}
+            hasTabs={hasTabs}
+            hasSidebar={hasSidebar}
+            mainLayouts={mainLayouts}
+            sidebarLayouts={sidebarLayouts}
+            onTabChange={setActiveTabId}
+            contentRef={contentRef}
+            contentClassName="pr-3 md:pr-3 lg:pr-3"
+          />
+        </div>
+      </ScrollArea>
+    );
+
     return (
       <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-        <SplitViewShell
-          className="h-full"
-          detail={
-            <PublicPageDetailPanel
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-            />
-          }
-          detailCollapsedOnMobile
-          detailExpanded={isFullscreen}
-          detailPanelClassName="pr-2 pb-2 pt-2 md:pr-3 md:pb-3 md:pt-3 lg:pr-4 lg:pb-4 lg:pt-4"
-          detailSurfaceClassName="rounded-xl bg-background"
-          mainPanelClassName="pr-2 md:pr-2 lg:pr-2"
-          main={
-            <ScrollArea className="h-full min-h-0 w-full min-w-0">
-              <div className="overflow-x-hidden">
-                <PublicMainContent
-                  pageTitle={pageData.title}
-                  pageTabs={pageTabs}
-                  activeTabId={activeTabId}
-                  hasTabs={hasTabs}
-                  hasSidebar={hasSidebar}
-                  mainLayouts={mainLayouts}
-                  sidebarLayouts={sidebarLayouts}
-                  onTabChange={setActiveTabId}
-                  contentRef={contentRef}
-                  contentClassName="pr-3 md:pr-3 lg:pr-3"
-                />
-              </div>
-            </ScrollArea>
-          }
-        />
+        {isFullscreen || isMobile ? (
+          <div className="h-full min-h-0 min-w-0">
+            <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-2 md:pr-3 md:pb-3 md:pt-3 lg:pr-4 lg:pb-4 lg:pt-4">
+              <section className={publicPagePanelSurfaceClassName}>
+                {pagePanel}
+              </section>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full min-h-0 min-w-0">
+            <ResizablePanelGroup
+              className="h-full min-h-0 min-w-0"
+              orientation="horizontal"
+            >
+              <ResizablePanel defaultSize={60} minSize={30}>
+                <div className="h-full min-h-0 min-w-0 overflow-hidden pr-2 md:pr-2 lg:pr-2">
+                  {mainContent}
+                </div>
+              </ResizablePanel>
+              <ResizableHandle className={hiddenSplitHandleClassName} />
+              <ResizablePanel defaultSize={40} minSize={30}>
+                <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-2 md:pr-3 md:pb-3 md:pt-3 lg:pr-4 lg:pb-4 lg:pt-4">
+                  <section className={publicPagePanelSurfaceClassName}>
+                    {pagePanel}
+                  </section>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        )}
       </div>
     );
   }

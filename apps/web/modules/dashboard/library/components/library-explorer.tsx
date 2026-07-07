@@ -16,8 +16,13 @@ import type {
   LibraryExplorerOptions,
   LibraryFile,
 } from "@/modules/dashboard/library/types";
-import { SplitViewShell } from "@/core/split-view/shell";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
 import { Skeleton } from "@baseblocks/ui/skeleton";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -39,6 +44,9 @@ const skeletonRows = [
   "library-skeleton-row-8",
 ];
 
+const librarySplitHandleClassName =
+  "group/split-handle relative z-20 -mx-1 flex !w-2 shrink-0 items-stretch justify-center bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 before:pointer-events-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-border/80 before:transition-colors before:duration-150 hover:before:bg-ring/55 data-[resize-handle-state=drag]:before:bg-ring after:pointer-events-none after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 after:bg-transparent";
+
 export function LibraryExplorer({
   actions,
   className,
@@ -57,6 +65,7 @@ export function LibraryExplorer({
   };
 }) {
   const tExplorer = useTranslations("libraries.explorer");
+  const isMobile = useIsMobile();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -343,31 +352,34 @@ export function LibraryExplorer({
       uploadDisabled={uploadState?.isAnyUploading}
     />
   );
-  const fileViewer = openFile ? (
-    <SplitViewShell
-      className="min-h-0 flex-1"
-      detail={
-        <LibraryFileViewer
-          key={openFile._id}
-          allowDownloads={options.allowDownloads}
-          file={openFile}
-          onClose={() => {
-            setOpenFilePath(null);
-            syncFileUrl(null);
-          }}
-          onOpenTree={() => setTreeDrawerOpen(true)}
-        />
-      }
-      detailCollapsedOnMobile
-      detailDefaultSize={64}
-      detailSurfaceClassName="rounded-none border-0 bg-transparent shadow-none backdrop-blur-none"
-      main={tree}
-      mainDefaultSize={36}
-      mainPanelClassName="border-r"
-      minDetailSize={38}
-      minMainSize={24}
-      visibleHandle
+  const fileViewerContent = openFile ? (
+    <LibraryFileViewer
+      key={openFile._id}
+      allowDownloads={options.allowDownloads}
+      file={openFile}
+      onClose={() => {
+        setOpenFilePath(null);
+        syncFileUrl(null);
+      }}
+      onOpenTree={() => setTreeDrawerOpen(true)}
     />
+  ) : null;
+  const fileViewer = openFile ? (
+    isMobile ? (
+      <div className="min-h-0 flex-1">{fileViewerContent}</div>
+    ) : (
+      <ResizablePanelGroup className="min-h-0 flex-1" orientation="horizontal">
+        <ResizablePanel defaultSize={36} minSize={24}>
+          <div className="h-full min-h-0 min-w-0 overflow-hidden border-r">
+            {tree}
+          </div>
+        </ResizablePanel>
+        <ResizableHandle className={librarySplitHandleClassName} />
+        <ResizablePanel defaultSize={64} minSize={38}>
+          <div className="h-full min-h-0 min-w-0">{fileViewerContent}</div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    )
   ) : (
     <div className="min-h-0 flex-1">{tree}</div>
   );

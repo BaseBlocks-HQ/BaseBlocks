@@ -1,4 +1,4 @@
-import { teamRoles } from "@baseblocks/types";
+import { teamRoles } from "@baseblocks/domain";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";

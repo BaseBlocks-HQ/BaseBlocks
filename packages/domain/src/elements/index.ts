@@ -1,23 +1,11 @@
 export type {
-  ElementCategory,
-  CategoryInfo,
-} from "./categories";
-export {
-  CATEGORIES,
-  getCategoryInfo,
-  getSortedCategories,
-} from "./categories";
-
-export type {
   LayoutType,
   SpacerLayoutHeight,
   LayoutSettings,
-  LayoutTypeInfo,
 } from "../layouts";
 export {
   LAYOUT_SLOT_COUNTS,
   DEFAULT_LAYOUT_SETTINGS,
-  LAYOUT_TYPES,
 } from "../layouts";
 
 export type {
@@ -61,28 +49,13 @@ export { DEFAULT_SECTION_CONTENT } from "./sections";
 export type {
   NavigationStyle,
   NavigationItem,
-  NavigationConfig,
-  NavigationStyleInfo,
-} from "./navigation";
-export {
-  DEFAULT_NAVIGATION_CONFIG,
-  NAVIGATION_STYLES,
-  getNavigationStyleInfo,
 } from "./navigation";
 
 export type {
   BorderRadiusPreset,
   SiteCustomization,
-  RadiusPresetInfo,
-  ColorPreset,
 } from "./customization";
-export {
-  DEFAULT_CUSTOMIZATION,
-  BORDER_RADIUS_PRESETS,
-  COLOR_PRESETS,
-  getRadiusCssValue,
-  getDarkColorForPreset,
-} from "./customization";
+export { DEFAULT_CUSTOMIZATION } from "./customization";
 
 export type { MediaType, ImageContent, MediaContentUnion } from "./media";
 export { DEFAULT_MEDIA_CONTENT } from "./media";

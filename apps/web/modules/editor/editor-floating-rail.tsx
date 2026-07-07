@@ -4,6 +4,7 @@ import {
   type AnyRegistryEntry,
   getElementsByCategory,
 } from "@/modules/editor/elements/framework/registry";
+import type { ElementCategory } from "@/modules/editor/elements/categories";
 import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
@@ -20,8 +21,8 @@ import type {
   LayoutBlockType,
   LayoutType,
   PageListItem,
-} from "@baseblocks/types";
-import type { ElementCategory, ElementType } from "@baseblocks/types/elements";
+} from "@baseblocks/domain";
+import type { ElementType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";

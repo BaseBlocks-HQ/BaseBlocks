@@ -1,11 +1,28 @@
 "use client";
 
-import { DashboardConfirmDialog, DashboardFormDialog } from "@/core/dialogs";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { TeamRole } from "@baseblocks/types";
+import type { TeamRole } from "@baseblocks/domain";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -216,94 +233,142 @@ export function MemberActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DashboardFormDialog
+      <Dialog
         open={uiState.showRoleDialog}
         onOpenChange={handleRoleDialogOpenChange}
-        title={t("actions.changeRole")}
-        description={t("actions.changeRoleDescription", {
-          name: memberLabel,
-        })}
-        onSubmit={handleRoleSubmit}
-        isSubmitting={uiState.isChangingRole}
-        submitDisabled={uiState.newRole === member.role}
-        submitLabel={tCommon("save")}
-        submittingLabel={tCommon("loading")}
-        cancelLabel={tCommon("cancel")}
-        bodyClassName="px-5 pb-4"
-        formClassName="space-y-4"
-        footerClassName="pt-2"
       >
-        <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
-          <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
-            {t("member.role")}
-          </Label>
-          <Select
-            value={uiState.newRole}
-            onValueChange={(value) =>
-              setUiState((current) => ({
-                ...current,
-                newRole: value as TeamRole,
-                error: null,
-              }))
-            }
+        <DialogContent
+          className={
+            "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+          }
+        >
+          <DialogHeader className={"px-5 pt-4 pb-0"}>
+            <DialogTitle className={"text-base font-semibold"}>
+              {t("actions.changeRole")}
+            </DialogTitle>
+            <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
+              {t("actions.changeRoleDescription", {
+                name: memberLabel,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            noValidate
+            onSubmit={handleRoleSubmit}
+            className={cn("px-5 pb-3", "space-y-4 pb-4")}
           >
-            <SelectTrigger className={teamSelectTriggerClassName}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-              <SelectItem
-                value="admin"
-                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+            <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+              <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
+                {t("member.role")}
+              </Label>
+              <Select
+                value={uiState.newRole}
+                onValueChange={(value) =>
+                  setUiState((current) => ({
+                    ...current,
+                    newRole: value as TeamRole,
+                    error: null,
+                  }))
+                }
               >
-                {t("roles.admin")}
-              </SelectItem>
-              <SelectItem
-                value="editor"
-                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-              >
-                {t("roles.editor")}
-              </SelectItem>
-              <SelectItem
-                value="viewer"
-                className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-              >
-                {t("roles.viewer")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
-            {uiState.newRole === "admin"
-              ? t("roleDescriptions.admin")
-              : uiState.newRole === "editor"
-                ? t("roleDescriptions.editor")
-                : t("roleDescriptions.viewer")}
-          </p>
-        </div>
+                <SelectTrigger className={teamSelectTriggerClassName}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                  <SelectItem
+                    value="admin"
+                    className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                  >
+                    {t("roles.admin")}
+                  </SelectItem>
+                  <SelectItem
+                    value="editor"
+                    className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                  >
+                    {t("roles.editor")}
+                  </SelectItem>
+                  <SelectItem
+                    value="viewer"
+                    className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                  >
+                    {t("roles.viewer")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
+                {uiState.newRole === "admin"
+                  ? t("roleDescriptions.admin")
+                  : uiState.newRole === "editor"
+                    ? t("roleDescriptions.editor")
+                    : t("roleDescriptions.viewer")}
+              </p>
+            </div>
 
-        {uiState.error ? (
-          <p
-            className={cn(
-              "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-            )}
-          >
-            {uiState.error}
-          </p>
-        ) : null}
-      </DashboardFormDialog>
+            {uiState.error ? (
+              <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {uiState.error}
+              </p>
+            ) : null}
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleRoleDialogOpenChange(false)}
+                disabled={uiState.isChangingRole}
+                className={
+                  "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+                }
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  uiState.isChangingRole || uiState.newRole === member.role
+                }
+                className={"h-8 rounded-full px-4 text-sm"}
+              >
+                {uiState.isChangingRole ? tCommon("loading") : tCommon("save")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      <DashboardConfirmDialog
+      <AlertDialog
         open={uiState.showRemoveDialog}
         onOpenChange={handleRemoveDialogOpenChange}
-        title={t("actions.removeMember")}
-        description={t("actions.confirmRemove", { name: memberLabel })}
-        cancelLabel={tCommon("cancel")}
-        confirmLabel={
-          uiState.isRemoving ? t("actions.removing") : t("actions.removeMember")
-        }
-        confirmDisabled={uiState.isRemoving}
-        variant="destructive"
-        onConfirm={handleRemove}
-      />
+      >
+        <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+          <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+            <AlertDialogTitle className="text-base font-semibold text-balance">
+              {t("actions.removeMember")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
+              {t("actions.confirmRemove", { name: memberLabel })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+            <AlertDialogCancel
+              size="sm"
+              className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              size="sm"
+              disabled={uiState.isRemoving}
+              className="rounded-full px-4 text-sm"
+              onClick={handleRemove}
+            >
+              {uiState.isRemoving
+                ? t("actions.removing")
+                : t("actions.removeMember")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

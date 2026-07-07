@@ -1,11 +1,11 @@
 import { BrandLogoMark } from "@/modules/marketing/components/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { landingFonts } from "@/modules/marketing/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { Github, House } from "lucide-react";
 import type { ReactNode } from "react";
-import { PublicHeaderBlur } from "./public-header-blur";
 
 interface PublicHeaderProps {
   authAction: ReactNode;
@@ -48,7 +48,7 @@ export function PublicHeader({
     >
       <div className="relative isolate">
         <div className={cn(isMobileOverlay && "max-sm:hidden")}>
-          <PublicHeaderBlur />
+          <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
         </div>
         <div
           className={cn(

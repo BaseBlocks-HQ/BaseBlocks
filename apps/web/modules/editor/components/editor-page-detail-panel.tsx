@@ -1,12 +1,12 @@
 "use client";
 
+import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
 import { PageExportMenu } from "@/modules/editor/page-export/components/page-export-menu";
-import { DetailPanelFrame } from "@/core/detail-panel/frame";
-import { DetailPanelHeaderChrome } from "@/core/detail-panel/header-chrome";
 import { useEditorUi } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
+import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
@@ -17,6 +17,37 @@ interface EditorPageDetailPanelProps {
   onToggleFullscreen?: () => void;
   pageTitle?: string;
   renderPageEditor: (pageId: string) => ReactNode;
+}
+
+function EditorPagePanelFrame({
+  header,
+  children,
+}: {
+  header: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
+        <div className="pointer-events-auto">{header}</div>
+      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="min-h-full px-3 pb-3 pt-14 md:px-4 md:pb-4">
+          {children}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+function EditorPagePanelHeader({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate overflow-hidden">
+      <BlurStack className="inset-x-0 top-0 h-14" direction="down" />
+      <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+      <div className="relative">{children}</div>
+    </div>
+  );
 }
 
 export function EditorPageDetailPanel({
@@ -60,11 +91,9 @@ export function EditorPageDetailPanel({
   }
 
   return (
-    <DetailPanelFrame
-      bodyClassName="px-3 pb-3 pt-14 md:px-4 md:pb-4"
-      headerOverlay
+    <EditorPagePanelFrame
       header={
-        <DetailPanelHeaderChrome>
+        <EditorPagePanelHeader>
           <div className="flex h-14 items-center justify-between gap-3 px-4">
             <div className="min-w-0 flex-1">
               <input
@@ -101,10 +130,10 @@ export function EditorPageDetailPanel({
               </ViewerToolbarIconButton>
             </div>
           </div>
-        </DetailPanelHeaderChrome>
+        </EditorPagePanelHeader>
       }
     >
       {renderPageEditor(editingPage.pageId)}
-    </DetailPanelFrame>
+    </EditorPagePanelFrame>
   );
 }

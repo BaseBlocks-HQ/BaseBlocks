@@ -19,8 +19,8 @@
         "@aws-sdk/s3-presigned-post": "^3.1078.0",
         "@aws-sdk/s3-request-presigner": "^3.1078.0",
         "@baseblocks/backend": "workspace:*",
+        "@baseblocks/domain": "workspace:*",
         "@baseblocks/i18n": "workspace:*",
-        "@baseblocks/types": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@blocknote/core": "^0.46.2",
         "@blocknote/mantine": "^0.46.2",
@@ -94,7 +94,7 @@
         "@aws-sdk/lib-storage": "^3.1078.0",
         "@aws-sdk/s3-presigned-post": "^3.1078.0",
         "@aws-sdk/s3-request-presigner": "^3.1078.0",
-        "@baseblocks/types": "workspace:*",
+        "@baseblocks/domain": "workspace:*",
         "@convex-dev/better-auth": "^0.12.2",
         "@convex-dev/migrations": "^0.3.4",
         "better-auth": "^1.6.11",
@@ -109,20 +109,20 @@
         "typescript": "^5",
       },
     },
+    "packages/domain": {
+      "name": "@baseblocks/domain",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@baseblocks/tsconfig": "workspace:*",
+        "@types/node": "^25.9.1",
+        "typescript": "5.9.2",
+      },
+    },
     "packages/i18n": {
       "name": "@baseblocks/i18n",
       "version": "0.0.0",
       "devDependencies": {
         "@baseblocks/tsconfig": "workspace:*",
-        "typescript": "5.9.2",
-      },
-    },
-    "packages/types": {
-      "name": "@baseblocks/types",
-      "version": "0.0.0",
-      "devDependencies": {
-        "@baseblocks/tsconfig": "workspace:*",
-        "@types/node": "^25.9.1",
         "typescript": "5.9.2",
       },
     },
@@ -249,11 +249,11 @@
 
     "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
 
+    "@baseblocks/domain": ["@baseblocks/domain@workspace:packages/domain"],
+
     "@baseblocks/i18n": ["@baseblocks/i18n@workspace:packages/i18n"],
 
     "@baseblocks/tsconfig": ["@baseblocks/tsconfig@workspace:tooling/tsconfig"],
-
-    "@baseblocks/types": ["@baseblocks/types@workspace:packages/types"],
 
     "@baseblocks/ui": ["@baseblocks/ui@workspace:packages/ui"],
 

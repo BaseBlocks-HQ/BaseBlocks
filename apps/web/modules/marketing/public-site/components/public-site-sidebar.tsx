@@ -3,8 +3,8 @@
 import { SiteLogo } from "@/modules/marketing/public-site/components/site-logo";
 import { cn } from "@/lib/utils";
 import { NavItem } from "@/modules/marketing/public-site/navigation";
-import type { PageWithChildren } from "@baseblocks/types";
-import type { SiteCustomization } from "@baseblocks/types/elements/customization";
+import type { PageWithChildren } from "@baseblocks/domain";
+import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,

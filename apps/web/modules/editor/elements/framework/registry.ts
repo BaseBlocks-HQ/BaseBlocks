@@ -6,11 +6,11 @@
 import type {
   AnyContent,
   ContentFor,
-  ElementCategory,
   ElementType,
   LayoutType,
   SaveStatus,
-} from "@baseblocks/types/elements";
+} from "@baseblocks/domain/elements";
+import type { ElementCategory } from "@/modules/editor/elements/categories";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 

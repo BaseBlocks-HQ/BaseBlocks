@@ -3,7 +3,7 @@
 import { getPageLink } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import { usePublicSiteContext } from "@/modules/marketing/public-site/public-site-context";
-import type { PageWithChildren } from "@baseblocks/types";
+import type { PageWithChildren } from "@baseblocks/domain";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";

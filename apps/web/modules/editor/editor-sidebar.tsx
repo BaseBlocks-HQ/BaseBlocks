@@ -12,8 +12,8 @@ import type {
   LayoutBlockType,
   LayoutType,
   PageListItem,
-} from "@baseblocks/types";
-import type { ElementType } from "@baseblocks/types/elements";
+} from "@baseblocks/domain";
+import type { ElementType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   Sidebar,

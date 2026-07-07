@@ -5,7 +5,7 @@ import { TabsModeToggle } from "@/modules/editor/elements/components/tabs-mode-t
 import type {
   FlowchartDiagram,
   TabsDisplayMode,
-} from "@baseblocks/types/elements/blocks";
+} from "@baseblocks/domain/elements/blocks";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

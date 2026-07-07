@@ -1,7 +1,7 @@
 import type {
   DecisionTreeContentBlock,
   DecisionTreeNode,
-} from "@baseblocks/types/elements";
+} from "@baseblocks/domain/elements";
 
 export function createDecisionTreeNodeId() {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;

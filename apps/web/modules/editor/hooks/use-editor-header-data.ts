@@ -5,7 +5,7 @@ import type {
   AccessCodeData,
   DeploymentData,
   SharingSettings,
-} from "@/core/types/editor";
+} from "@/modules/editor/types";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useMutation, useQuery } from "convex/react";

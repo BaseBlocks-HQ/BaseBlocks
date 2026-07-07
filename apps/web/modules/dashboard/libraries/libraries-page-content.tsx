@@ -1,10 +1,19 @@
 "use client";
 
-import { DashboardConfirmDialog } from "@/core/dialogs";
 import { useTeamSites } from "@/lib/data/use-site";
 import { useTeamAccess } from "@/modules/dashboard/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc } from "@baseblocks/backend";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Skeleton } from "@baseblocks/ui/skeleton";
@@ -175,21 +184,40 @@ export function LibrariesPageContent() {
           )}
 
           {capabilities.canManageLibraries && (
-            <DashboardConfirmDialog
+            <AlertDialog
               open={!!deletingLibrary}
               onOpenChange={(open) => !open && setDeletingLibrary(null)}
-              title={t("libraries.deleteTitle")}
-              description={t("libraries.deleteDescription", {
-                name: deletingLibrary?.name ?? "",
-              })}
-              cancelLabel={t("common.cancel")}
-              confirmLabel={
-                isDeleting ? t("common.loading") : t("common.delete")
-              }
-              confirmDisabled={isDeleting}
-              variant="destructive"
-              onConfirm={handleDelete}
-            />
+            >
+              <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+                <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+                  <AlertDialogTitle className="text-base font-semibold text-balance">
+                    {t("libraries.deleteTitle")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
+                    {t("libraries.deleteDescription", {
+                      name: deletingLibrary?.name ?? "",
+                    })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+                  <AlertDialogCancel
+                    size="sm"
+                    className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  >
+                    {t("common.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    size="sm"
+                    disabled={isDeleting}
+                    className="rounded-full px-4 text-sm"
+                    onClick={handleDelete}
+                  >
+                    {isDeleting ? t("common.loading") : t("common.delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </ScrollArea>

@@ -3,7 +3,7 @@
  * Interactive hierarchical decision tree with navigable options and rich content
  */
 
-import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import { GitFork } from "lucide-react";
 import { registerElement } from "../../framework/registry";
 import { themedPickerImagePreview } from "../../framework/themed-picker-image";

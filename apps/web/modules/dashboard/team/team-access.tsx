@@ -6,7 +6,7 @@ import {
   type TeamCapabilities,
   type TeamRole,
   getTeamCapabilities,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { type ReactNode, createContext, use } from "react";
 
 export type TeamRecord = {

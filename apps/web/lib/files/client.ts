@@ -4,7 +4,7 @@ import {
   isSupportedUploadMimeType,
   resolveUploadMimeType,
   type UploadPurpose,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import type { SignedUpload } from "files-sdk";
 import { createFilesClient } from "files-sdk/client";
 import { createFileKey } from "./keys";

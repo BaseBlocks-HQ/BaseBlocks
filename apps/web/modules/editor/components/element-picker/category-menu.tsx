@@ -1,7 +1,9 @@
 "use client";
 
-import type { ElementCategory } from "@baseblocks/types/elements";
-import { getSortedCategories } from "@baseblocks/types/elements";
+import {
+  type ElementCategory,
+  getSortedCategories,
+} from "@/modules/editor/elements/categories";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";

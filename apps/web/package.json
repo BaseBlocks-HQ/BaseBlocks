@@ -17,7 +17,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1078.0",
     "@baseblocks/backend": "workspace:*",
     "@baseblocks/i18n": "workspace:*",
-    "@baseblocks/types": "workspace:*",
+    "@baseblocks/domain": "workspace:*",
     "@baseblocks/ui": "workspace:*",
     "@blocknote/core": "^0.46.2",
     "@blocknote/mantine": "^0.46.2",

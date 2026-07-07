@@ -1,16 +1,29 @@
 "use client";
 
-import {
-  DashboardConfirmDialog,
-  DashboardFormDialog,
-  dashboardDialogPrimaryFieldLabelClassName,
-} from "@/core/dialogs";
 import { usePages } from "@/lib/data";
 import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { PageListItem } from "@baseblocks/types";
+import type { PageListItem } from "@baseblocks/domain";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -247,64 +260,114 @@ export function PageActionsMenu({
         siteId={siteId}
       />
 
-      <DashboardConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title={tDelete("title")}
-        description={
-          <>
-            {tDelete("description", { title: page.title })}
-            {isDefault ? (
-              <span className="mt-2 block text-amber-600 dark:text-amber-400">
-                {tDelete("defaultWarning")}
-              </span>
-            ) : null}
-          </>
-        }
-        confirmLabel={tDelete("confirm")}
-        cancelLabel={tCommon("cancel")}
-        variant="destructive"
-        onConfirm={handleDelete}
-      />
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+          <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+            <AlertDialogTitle className="text-base font-semibold text-balance">
+              {tDelete("title")}
+            </AlertDialogTitle>
+            <AlertDialogDescription
+              asChild
+              className="text-sm text-sidebar-foreground/60"
+            >
+              <div className="text-pretty">
+                {tDelete("description", { title: page.title })}
+                {isDefault ? (
+                  <span className="mt-2 block text-amber-600 dark:text-amber-400">
+                    {tDelete("defaultWarning")}
+                  </span>
+                ) : null}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+            <AlertDialogCancel
+              size="sm"
+              className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              size="sm"
+              className="rounded-full px-4 text-sm"
+              onClick={handleDelete}
+            >
+              {tDelete("confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <DashboardFormDialog
+      <Dialog
         open={exposureDialogOpen}
         onOpenChange={handleExposureDialogOpenChange}
-        title={t("chooseBlockPageTitle")}
-        description={t("chooseBlockPageDescription")}
-        onSubmit={handleConfirmExposureTarget}
-        isSubmitting={false}
-        submitDisabled={!targetPageId}
-        submitLabel={t("insertBlock")}
-        submittingLabel={t("inserting")}
-        cancelLabel={tCommon("cancel")}
-        bodyClassName="px-5 pb-3"
-        formClassName="space-y-2"
       >
-        <div className="space-y-2">
-          <Label
-            htmlFor="pageExposureTarget"
-            className={dashboardDialogPrimaryFieldLabelClassName}
+        <DialogContent
+          className={
+            "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+          }
+        >
+          <DialogHeader className={"px-5 pt-4 pb-0"}>
+            <DialogTitle className={"text-base font-semibold"}>
+              {t("chooseBlockPageTitle")}
+            </DialogTitle>
+            <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
+              {t("chooseBlockPageDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            noValidate
+            onSubmit={handleConfirmExposureTarget}
+            className={"px-5 pb-3"}
           >
-            {t("insertIntoPageLabel")}
-          </Label>
-          <Select value={targetPageId} onValueChange={setTargetPageId}>
-            <SelectTrigger
-              id="pageExposureTarget"
-              className="rounded-[0.95rem] border-sidebar-border/80 bg-background/70"
-            >
-              <SelectValue placeholder={t("choosePagePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              {targetOptions.map((candidate) => (
-                <SelectItem key={candidate._id} value={candidate._id}>
-                  {candidate.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </DashboardFormDialog>
+            <div className="space-y-2">
+              <Label
+                htmlFor="pageExposureTarget"
+                className={
+                  "mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+                }
+              >
+                {t("insertIntoPageLabel")}
+              </Label>
+              <Select value={targetPageId} onValueChange={setTargetPageId}>
+                <SelectTrigger
+                  id="pageExposureTarget"
+                  className="rounded-[0.95rem] border-sidebar-border/80 bg-background/70"
+                >
+                  <SelectValue placeholder={t("choosePagePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {targetOptions.map((candidate) => (
+                    <SelectItem key={candidate._id} value={candidate._id}>
+                      {candidate.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleExposureDialogOpenChange(false)}
+                className={
+                  "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+                }
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={!targetPageId}
+                className={"h-8 rounded-full px-4 text-sm"}
+              >
+                {t("insertBlock")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

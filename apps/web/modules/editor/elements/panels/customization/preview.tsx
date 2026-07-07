@@ -1,6 +1,6 @@
 "use client";
 
-import type { SiteCustomization } from "@baseblocks/types/elements/customization";
+import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { hasCustomization } from "./lib";
 import { useCustomizationStyles } from "./use-site-customization";

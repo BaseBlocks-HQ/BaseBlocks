@@ -1,6 +1,6 @@
 import { useSite } from "@/lib/data";
 import type { Id } from "@baseblocks/backend";
-import type { SiteCustomization } from "@baseblocks/types/elements/customization";
+import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
 import type { CSSProperties } from "react";
 import { generateCustomizationStyles, hasCustomization } from "./lib";
 

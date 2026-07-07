@@ -5,7 +5,7 @@ import "@blocknote/mantine/style.css";
 import { useSiteAssetUpload } from "@/lib/files";
 import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
-import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";

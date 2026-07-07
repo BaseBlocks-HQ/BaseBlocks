@@ -1,7 +1,7 @@
 import {
   isSupportedUploadMimeType,
   resolveUploadMimeType,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { v } from "convex/values";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";

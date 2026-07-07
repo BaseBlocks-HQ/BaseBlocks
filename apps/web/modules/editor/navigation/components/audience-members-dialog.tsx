@@ -1,12 +1,18 @@
 "use client";
 
-import { DashboardDialogShell } from "@/core/dialogs";
 import { useAudienceMemberAssignments, useMembers } from "@/lib/data";
 import { useSite } from "@/lib/data/use-site";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Checkbox } from "@baseblocks/ui/checkbox";
-import { DialogFooter } from "@baseblocks/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
@@ -116,73 +122,81 @@ function AudienceMembersDialogContent({
     : t("titleFallback");
 
   return (
-    <DashboardDialogShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      description={t("description")}
-      contentClassName="sm:max-w-lg"
-    >
-      <ScrollArea className="max-h-80">
-        <div className="space-y-3 pr-3">
-          {members === undefined || assignments === undefined ? (
-            <div className="flex items-center justify-center py-6 text-sm text-sidebar-foreground/60">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t("loading")}
-            </div>
-          ) : members.length === 0 ? (
-            <p className="text-sm text-sidebar-foreground/60">
-              {t("emptyTeam")}
-            </p>
-          ) : (
-            members.map((member) => (
-              <Label
-                key={member._id}
-                className="flex items-start gap-3 rounded-xl border border-sidebar-border/60 bg-background/40 p-3"
-              >
-                <Checkbox
-                  checked={selectedUserIds.includes(member.userId)}
-                  onCheckedChange={() => toggleUserId(member.userId)}
-                />
-                <div className="min-w-0">
-                  <p className="font-medium">
-                    {member.name?.trim() || member.email}
-                  </p>
-                  <p className="truncate text-sm text-sidebar-foreground/55">
-                    {member.email}
-                  </p>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-lg`}
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {title}
+          </DialogTitle>
+          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
+            {t("description")}
+          </DialogDescription>
+        </DialogHeader>
+        <div className={"px-5 pb-3"}>
+          <ScrollArea className="max-h-80">
+            <div className="space-y-3 pr-3">
+              {members === undefined || assignments === undefined ? (
+                <div className="flex items-center justify-center py-6 text-sm text-sidebar-foreground/60">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("loading")}
                 </div>
-              </Label>
-            ))
-          )}
-        </div>
-      </ScrollArea>
+              ) : members.length === 0 ? (
+                <p className="text-sm text-sidebar-foreground/60">
+                  {t("emptyTeam")}
+                </p>
+              ) : (
+                members.map((member) => (
+                  <Label
+                    key={member._id}
+                    className="flex items-start gap-3 rounded-xl border border-sidebar-border/60 bg-background/40 p-3"
+                  >
+                    <Checkbox
+                      checked={selectedUserIds.includes(member.userId)}
+                      onCheckedChange={() => toggleUserId(member.userId)}
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        {member.name?.trim() || member.email}
+                      </p>
+                      <p className="truncate text-sm text-sidebar-foreground/55">
+                        {member.email}
+                      </p>
+                    </div>
+                  </Label>
+                ))
+              )}
+            </div>
+          </ScrollArea>
 
-      <DialogFooter className="pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-        >
-          {tCommon("cancel")}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving || !audienceId}
-          className="h-8 rounded-full px-4 text-sm"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {t("saving")}
-            </>
-          ) : (
-            t("saveMembers")
-          )}
-        </Button>
-      </DialogFooter>
-    </DashboardDialogShell>
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || !audienceId}
+              className="h-8 rounded-full px-4 text-sm"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("saving")}
+                </>
+              ) : (
+                t("saveMembers")
+              )}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

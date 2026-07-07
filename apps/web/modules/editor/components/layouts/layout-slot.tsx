@@ -8,7 +8,7 @@ import type {
   AnyContent,
   LayoutSlot as LayoutSlotType,
   LayoutType,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ClipboardPaste, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";

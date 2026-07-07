@@ -1,9 +1,16 @@
 "use client";
 
-import { DashboardFormDialog } from "@/core/dialogs";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -103,7 +110,7 @@ export function CreateLibraryDialog({
   };
 
   return (
-    <DashboardFormDialog
+    <Dialog
       open={dialogState.open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -117,90 +124,120 @@ export function CreateLibraryDialog({
           error: "",
         }));
       }}
-      title={t("libraries.createTitle")}
-      trigger={
+    >
+      <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
           {t("libraries.create")}
         </Button>
-      }
-      onSubmit={handleSubmit}
-      isSubmitting={dialogState.isSubmitting}
-      submitLabel={t("libraries.create")}
-      submittingLabel={t("common.loading")}
-      cancelLabel={t("common.cancel")}
-      bodyClassName="px-5 pb-4"
-      formClassName="space-y-4"
-      footerClassName="pt-2"
-    >
-      <div className="space-y-3">
-        <div>
-          <Label
-            htmlFor="libraryName"
-            className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
-          >
-            {t("libraries.nameLabel")}
-          </Label>
-          <Input
-            id="libraryName"
-            placeholder={t("libraries.namePlaceholder")}
-            value={dialogState.name}
-            onChange={(e) =>
-              setDialogState((current) => ({
-                ...current,
-                name: e.target.value,
-                error: "",
-              }))
-            }
-            aria-invalid={!!dialogState.error}
-            className={libraryNameInputClassName}
-          />
-        </div>
-
-        <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
-          <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
-            {t("libraries.siteLabel")}
-          </Label>
-          <Select
-            value={dialogState.siteId}
-            onValueChange={(siteId) =>
-              setDialogState((current) => ({
-                ...current,
-                siteId,
-                error: "",
-              }))
-            }
-          >
-            <SelectTrigger
-              aria-invalid={!!dialogState.error}
-              className={librarySelectTriggerClassName}
-            >
-              <SelectValue placeholder={t("libraries.selectSite")} />
-            </SelectTrigger>
-            <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-              {sites.map((site) => (
-                <SelectItem
-                  key={site._id}
-                  value={site._id}
-                  className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
-                >
-                  {site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {dialogState.error && (
-        <p
-          className={cn(
-            "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive",
-          )}
+      </DialogTrigger>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {t("libraries.createTitle")}
+          </DialogTitle>
+        </DialogHeader>
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          className={cn("px-5 pb-3", "space-y-4 pb-4")}
         >
-          {dialogState.error}
-        </p>
-      )}
-    </DashboardFormDialog>
+          <div className="space-y-3">
+            <div>
+              <Label
+                htmlFor="libraryName"
+                className="mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+              >
+                {t("libraries.nameLabel")}
+              </Label>
+              <Input
+                id="libraryName"
+                placeholder={t("libraries.namePlaceholder")}
+                value={dialogState.name}
+                onChange={(e) =>
+                  setDialogState((current) => ({
+                    ...current,
+                    name: e.target.value,
+                    error: "",
+                  }))
+                }
+                aria-invalid={!!dialogState.error}
+                className={libraryNameInputClassName}
+              />
+            </div>
+
+            <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+              <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
+                {t("libraries.siteLabel")}
+              </Label>
+              <Select
+                value={dialogState.siteId}
+                onValueChange={(siteId) =>
+                  setDialogState((current) => ({
+                    ...current,
+                    siteId,
+                    error: "",
+                  }))
+                }
+              >
+                <SelectTrigger
+                  aria-invalid={!!dialogState.error}
+                  className={librarySelectTriggerClassName}
+                >
+                  <SelectValue placeholder={t("libraries.selectSite")} />
+                </SelectTrigger>
+                <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                  {sites.map((site) => (
+                    <SelectItem
+                      key={site._id}
+                      value={site._id}
+                      className="rounded-[0.7rem] focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
+                    >
+                      {site.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {dialogState.error ? (
+            <p
+              className={
+                "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              }
+            >
+              {dialogState.error}
+            </p>
+          ) : null}
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetForm}
+              disabled={dialogState.isSubmitting}
+              className={
+                "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              }
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={dialogState.isSubmitting}
+              className={"h-8 rounded-full px-4 text-sm"}
+            >
+              {dialogState.isSubmitting
+                ? t("common.loading")
+                : t("libraries.create")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

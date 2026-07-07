@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { ElementRendererProps } from "@/modules/editor/elements/framework/registry";
-import type { DirectoryColumnType } from "@baseblocks/types/elements";
+import type { DirectoryColumnType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import {

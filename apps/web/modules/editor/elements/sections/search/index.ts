@@ -3,7 +3,7 @@
  * Document search functionality
  */
 
-import { DEFAULT_SECTION_CONTENT } from "@baseblocks/types/elements";
+import { DEFAULT_SECTION_CONTENT } from "@baseblocks/domain/elements";
 import { Search } from "lucide-react";
 import { registerElement } from "../../framework/registry";
 import { themedPickerImagePreview } from "../../framework/themed-picker-image";

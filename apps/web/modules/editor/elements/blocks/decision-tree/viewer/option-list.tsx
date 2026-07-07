@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { DecisionTreeNode } from "@baseblocks/types/elements";
+import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { ChevronRight } from "lucide-react";
 import { MiddleTruncate } from "./middle-truncate";
 

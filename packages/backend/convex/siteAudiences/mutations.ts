@@ -1,4 +1,4 @@
-import { normalizePageAccessPolicy } from "@baseblocks/types";
+import { normalizePageAccessPolicy } from "@baseblocks/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";

@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardDialogShell } from "@/core/dialogs";
 import { authClient } from "@/lib/auth/client";
 import type { WorkspaceUser } from "@/lib/workspace/server";
 import { api } from "@baseblocks/backend";
@@ -15,6 +14,13 @@ import {
 } from "@baseblocks/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { Loader2, Trash2 } from "lucide-react";
@@ -120,45 +126,51 @@ export function AccountSettings({
 
   return (
     <>
-      <DashboardDialogShell
-        open={open}
-        onOpenChange={setOpen}
-        title={t("title")}
-        contentClassName="sm:max-w-sm"
-        headerClassName="px-5 pb-1 pt-4"
-        titleClassName="text-sm font-medium tracking-tight text-sidebar-foreground"
-        bodyClassName="flex flex-col gap-0 px-5 pb-4 pt-0"
-        trigger={trigger || undefined}
-      >
-        <div className="flex gap-3.5">
-          <Avatar className="h-11 w-11 shrink-0 ring-1 ring-sidebar-border/50 ring-offset-2 ring-offset-sidebar">
-            {user?.imageUrl && <AvatarImage alt="" src={user.imageUrl} />}
-            <AvatarFallback className="text-xs font-medium">
-              {getInitials(user?.name ?? undefined, user?.email ?? undefined)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 space-y-0.5 pt-0.5">
-            <p className="text-balance text-[0.9375rem] font-medium leading-snug tracking-tight text-sidebar-foreground">
-              {user?.name || t("anonymous")}
-            </p>
-            {user?.email ? (
-              <p className="truncate text-pretty text-xs leading-relaxed text-sidebar-foreground/50">
-                {user.email}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="destructive"
-          onClick={openDeleteConfirm}
-          className="mt-8 h-9 w-full shrink-0 rounded-full px-4 text-sm"
+      <Dialog open={open} onOpenChange={setOpen}>
+        {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+        <DialogContent
+          className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-sm`}
         >
-          <Trash2 className="mr-2 h-4 w-4 shrink-0" aria-hidden />
-          {t("deleteAccount")}
-        </Button>
-      </DashboardDialogShell>
+          <DialogHeader className={`px-5 pt-4 pb-0 pb-1`}>
+            <DialogTitle className="text-sm font-medium tracking-tight text-sidebar-foreground">
+              {t("title")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-0 px-5 pb-4 pt-0">
+            <div className="flex gap-3.5">
+              <Avatar className="h-11 w-11 shrink-0 ring-1 ring-sidebar-border/50 ring-offset-2 ring-offset-sidebar">
+                {user?.imageUrl && <AvatarImage alt="" src={user.imageUrl} />}
+                <AvatarFallback className="text-xs font-medium">
+                  {getInitials(
+                    user?.name ?? undefined,
+                    user?.email ?? undefined,
+                  )}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1 space-y-0.5 pt-0.5">
+                <p className="text-balance text-[0.9375rem] font-medium leading-snug tracking-tight text-sidebar-foreground">
+                  {user?.name || t("anonymous")}
+                </p>
+                {user?.email ? (
+                  <p className="truncate text-pretty text-xs leading-relaxed text-sidebar-foreground/50">
+                    {user.email}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={openDeleteConfirm}
+              className="mt-8 h-9 w-full shrink-0 rounded-full px-4 text-sm"
+            >
+              <Trash2 className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+              {t("deleteAccount")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={deleteConfirmOpen}

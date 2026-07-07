@@ -1,17 +1,18 @@
 "use client";
 
-import {
-  DashboardFormDialog,
-  dashboardDialogFormErrorClassName,
-  dashboardDialogPrimaryFieldLabelClassName,
-  dashboardDialogPrimaryInlineInputClassName,
-  dashboardDialogSecondaryFieldLabelClassName,
-  dashboardDialogSecondaryInlineInputClassName,
-} from "@/core/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -186,11 +187,8 @@ export function CreateSiteDialog({
   };
 
   return (
-    <DashboardFormDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      title={t("dialogs.createSite.title")}
-      trigger={
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         <button
           className={cn(
             nestedCardRadiusClass,
@@ -211,53 +209,96 @@ export function CreateSiteDialog({
             {t("dashboard.createSite")}
           </span>
         </button>
-      }
-      onSubmit={handleSubmit}
-      isSubmitting={formState.isSubmitting}
-      submitLabel={t("dialogs.createSite.create")}
-      submittingLabel={t("dialogs.createSite.creating")}
-      cancelLabel={t("common.cancel")}
-      bodyClassName="px-5 pb-3"
-      formClassName="space-y-2"
-    >
-      <div className="space-y-2.5">
-        <div>
-          <Label
-            htmlFor="siteName"
-            className={dashboardDialogPrimaryFieldLabelClassName}
-          >
-            {t("dialogs.createSite.nameLabel")}
-          </Label>
-          <Input
-            id="siteName"
-            placeholder={t("dialogs.createSite.namePlaceholder")}
-            value={formState.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            aria-invalid={!!formState.error}
-            className={dashboardDialogPrimaryInlineInputClassName}
-          />
-        </div>
-        <div>
-          <Label
-            htmlFor="siteSlug"
-            className={dashboardDialogSecondaryFieldLabelClassName}
-          >
-            {t("dialogs.createSite.slugLabel")}
-          </Label>
-          <Input
-            id="siteSlug"
-            placeholder={t("dialogs.createSite.slugPlaceholder")}
-            value={formState.slug}
-            onChange={(e) => handleSlugChange(e.target.value)}
-            aria-invalid={!!formState.error}
-            className={dashboardDialogSecondaryInlineInputClassName}
-          />
-        </div>
-      </div>
+      </DialogTrigger>
+      <DialogContent
+        className={
+          "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        }
+      >
+        <DialogHeader className={"px-5 pt-4 pb-0"}>
+          <DialogTitle className={"text-base font-semibold"}>
+            {t("dialogs.createSite.title")}
+          </DialogTitle>
+        </DialogHeader>
+        <form noValidate onSubmit={handleSubmit} className={"px-5 pb-3"}>
+          <div className="space-y-2">
+            <div className="space-y-2.5">
+              <div>
+                <Label
+                  htmlFor="siteName"
+                  className={
+                    "mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
+                  }
+                >
+                  {t("dialogs.createSite.nameLabel")}
+                </Label>
+                <Input
+                  id="siteName"
+                  placeholder={t("dialogs.createSite.namePlaceholder")}
+                  value={formState.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  aria-invalid={!!formState.error}
+                  className={
+                    "h-auto border-0 bg-transparent px-0 py-0.5 text-[1.4rem] font-semibold leading-tight tracking-tight text-sidebar-foreground shadow-none placeholder:text-sidebar-foreground/40 focus-visible:ring-0 md:!text-[1.4rem] dark:bg-transparent"
+                  }
+                />
+              </div>
+              <div>
+                <Label
+                  htmlFor="siteSlug"
+                  className={
+                    "mb-0.5 block text-[11px] font-medium tracking-wide text-sidebar-foreground/45"
+                  }
+                >
+                  {t("dialogs.createSite.slugLabel")}
+                </Label>
+                <Input
+                  id="siteSlug"
+                  placeholder={t("dialogs.createSite.slugPlaceholder")}
+                  value={formState.slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  aria-invalid={!!formState.error}
+                  className={
+                    "h-auto border-0 bg-transparent px-0 py-0.5 text-[0.95rem] leading-snug text-sidebar-foreground/80 shadow-none placeholder:text-sidebar-foreground/35 focus-visible:ring-0 md:!text-[0.95rem] dark:bg-transparent"
+                  }
+                />
+              </div>
+            </div>
 
-      {formState.error ? (
-        <p className={dashboardDialogFormErrorClassName}>{formState.error}</p>
-      ) : null}
-    </DashboardFormDialog>
+            {formState.error ? (
+              <p
+                className={
+                  "rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                }
+              >
+                {formState.error}
+              </p>
+            ) : null}
+            <DialogFooter className="pt-0.5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={formState.isSubmitting}
+                className={
+                  "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+                }
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={formState.isSubmitting}
+                className={"h-8 rounded-full px-4 text-sm"}
+              >
+                {formState.isSubmitting
+                  ? t("dialogs.createSite.creating")
+                  : t("dialogs.createSite.create")}
+              </Button>
+            </DialogFooter>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

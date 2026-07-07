@@ -5,7 +5,7 @@ import { useAutoSave } from "@/modules/editor/elements/hooks/use-auto-save";
 import {
   type BlockSpacerContent,
   DEFAULT_BLOCK_CONTENT,
-} from "@baseblocks/types/elements";
+} from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

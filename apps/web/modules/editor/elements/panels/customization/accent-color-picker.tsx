@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { COLOR_PRESETS } from "@baseblocks/types/elements/customization";
+import { COLOR_PRESETS } from "./presets";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

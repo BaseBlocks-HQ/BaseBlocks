@@ -3,7 +3,7 @@
 import { getPageLink } from "@/lib/url";
 import { usePageExpandState } from "@/modules/marketing/public-site/navigation/hooks/use-page-expand-state";
 import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
-import type { PageWithChildren } from "@baseblocks/types";
+import type { PageWithChildren } from "@baseblocks/domain";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";

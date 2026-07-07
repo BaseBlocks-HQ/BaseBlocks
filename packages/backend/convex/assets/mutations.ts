@@ -1,7 +1,7 @@
 import {
   isSupportedUploadMimeType,
   resolveUploadMimeType,
-} from "@baseblocks/types";
+} from "@baseblocks/domain";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireSiteManager } from "../auth";

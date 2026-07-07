@@ -25,17 +25,12 @@ export type {
   LayoutSlot,
   LayoutSettings,
   LayoutData,
-  LayoutTypeInfo,
   SpacerLayoutHeight,
 } from "./layouts";
 export {
   LAYOUT_SLOT_COUNTS,
   DEFAULT_LAYOUT_SETTINGS,
-  LAYOUT_TYPES,
 } from "./layouts";
-
-export type { ElementCategory, CategoryInfo } from "./elements";
-export { CATEGORIES, getCategoryInfo, getSortedCategories } from "./elements";
 
 export type {
   ElementType,
@@ -74,13 +69,6 @@ export { DEFAULT_SECTION_CONTENT } from "./elements";
 export type {
   NavigationStyle,
   NavigationItem,
-  NavigationConfig,
-  NavigationStyleInfo,
-} from "./elements";
-export {
-  DEFAULT_NAVIGATION_CONFIG,
-  NAVIGATION_STYLES,
-  getNavigationStyleInfo,
 } from "./elements";
 
 export type { MediaType, ImageContent, MediaContentUnion } from "./elements";

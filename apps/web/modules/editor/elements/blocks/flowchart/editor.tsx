@@ -5,7 +5,7 @@ import { useAutoSave } from "@/modules/editor/elements/hooks/use-auto-save";
 import type {
   FlowchartContent,
   FlowchartDiagram,
-} from "@baseblocks/types/elements/blocks";
+} from "@baseblocks/domain/elements/blocks";
 import { useRef, useState } from "react";
 import { DiagramEditor, generateDiagramId } from "./diagram-editor";
 

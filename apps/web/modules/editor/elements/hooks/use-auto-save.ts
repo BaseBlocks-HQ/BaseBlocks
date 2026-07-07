@@ -1,6 +1,6 @@
 "use client";
 
-import type { SaveStatus } from "@baseblocks/types";
+import type { SaveStatus } from "@baseblocks/domain";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { toast } from "sonner";
 

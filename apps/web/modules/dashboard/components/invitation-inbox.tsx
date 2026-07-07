@@ -1,14 +1,30 @@
 "use client";
 
-import { DashboardConfirmDialog, DashboardDialogShell } from "@/core/dialogs";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";
 import { SIDEBAR_ICON_STROKE } from "@/modules/dashboard/sidebar-lucide";
 import { api } from "@baseblocks/backend";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@baseblocks/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation } from "convex/react";
@@ -378,7 +394,7 @@ export function InvitationInbox({
           ) : null}
         </div>
         {invitationContent}
-        <DashboardConfirmDialog
+        <DeclineInvitationDialog
           open={!!declineTarget}
           onOpenChange={(next) => !next && setDeclineTarget(null)}
           title={t("declineTitle")}
@@ -388,7 +404,6 @@ export function InvitationInbox({
           cancelLabel={tCommon("cancel")}
           confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
           confirmDisabled={isDeclining}
-          variant="default"
           onConfirm={confirmDecline}
         />
       </div>
@@ -397,14 +412,9 @@ export function InvitationInbox({
 
   return (
     <>
-      <DashboardDialogShell
-        open={open}
-        onOpenChange={setOpen}
-        title={headerTitle}
-        contentClassName="sm:max-w-md"
-        bodyClassName="px-5 pb-4 pt-1"
-        trigger={
-          fullWidth ? (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          {fullWidth ? (
             <Button
               type="button"
               variant="ghost"
@@ -447,13 +457,21 @@ export function InvitationInbox({
                 </Badge>
               ) : null}
             </Button>
-          )
-        }
-      >
-        {invitationContent}
-      </DashboardDialogShell>
+          )}
+        </DialogTrigger>
+        <DialogContent
+          className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-md`}
+        >
+          <DialogHeader className={"px-5 pt-4 pb-0"}>
+            <DialogTitle className="text-base font-semibold">
+              {headerTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className={`px-5 pb-3 pt-1 pb-4`}>{invitationContent}</div>
+        </DialogContent>
+      </Dialog>
 
-      <DashboardConfirmDialog
+      <DeclineInvitationDialog
         open={!!declineTarget}
         onOpenChange={(next) => !next && setDeclineTarget(null)}
         title={t("declineTitle")}
@@ -463,9 +481,59 @@ export function InvitationInbox({
         cancelLabel={tCommon("cancel")}
         confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
         confirmDisabled={isDeclining}
-        variant="default"
         onConfirm={confirmDecline}
       />
     </>
+  );
+}
+
+function DeclineInvitationDialog({
+  cancelLabel,
+  confirmDisabled,
+  confirmLabel,
+  description,
+  onConfirm,
+  onOpenChange,
+  open,
+  title,
+}: {
+  cancelLabel: string;
+  confirmDisabled: boolean;
+  confirmLabel: string;
+  description: string;
+  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  title: string;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
+        <AlertDialogHeader className="px-5 pt-5 pb-0 text-left sm:text-left">
+          <AlertDialogTitle className="text-base font-semibold text-balance">
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="px-5 pt-3 pb-4 sm:justify-end">
+          <AlertDialogCancel
+            size="sm"
+            className="rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            {cancelLabel}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            size="sm"
+            disabled={confirmDisabled}
+            className="rounded-full px-4 text-sm"
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

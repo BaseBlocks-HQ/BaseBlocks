@@ -1,5 +1,5 @@
 import { getElementRenderer } from "@/modules/editor/elements/framework/registry";
-import type { AnyContent, ElementType } from "@baseblocks/types/elements";
+import type { AnyContent, ElementType } from "@baseblocks/domain/elements";
 import { createElement } from "react";
 
 interface ElementRendererWrapperProps {
