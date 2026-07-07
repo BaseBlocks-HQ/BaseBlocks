@@ -3,7 +3,7 @@
 import { useLayouts, usePage } from "@/lib/data";
 import { EditorPageDetailPanel } from "@/modules/editor/components/editor-page-detail-panel";
 import { PageEditor } from "@/modules/editor/components/page-editor";
-import { useEditorUi } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/editor/state";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type { LayoutType } from "@baseblocks/types";
 

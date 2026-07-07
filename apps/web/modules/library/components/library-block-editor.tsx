@@ -3,9 +3,9 @@
 import {
   useAuthenticatedLibraryData,
   useLibraryActions,
-} from "@/modules/library/data/use-library-data";
+} from "@/modules/library/data";
 import type { LibraryId } from "@/modules/library/types";
-import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

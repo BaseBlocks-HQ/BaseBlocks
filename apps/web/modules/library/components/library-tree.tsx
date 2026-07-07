@@ -7,7 +7,7 @@ import {
   buildLibraryTreeViewLookup,
   getLibraryTreeViewLookupPath,
   getLibraryTreeViewNameFromPath,
-} from "@/modules/library/model/library-tree-view";
+} from "@/modules/library/model";
 import type { FolderId, LibraryEntity } from "@/modules/library/types";
 import type {
   ContextMenuOpenContext,

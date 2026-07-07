@@ -1,6 +1,6 @@
 "use client";
 
-import { usePublicLibraryData } from "@/modules/library/data/use-library-data";
+import { usePublicLibraryData } from "@/modules/library/data";
 import type { LibraryId } from "@/modules/library/types";
 import { LibraryExplorer } from "./library-explorer";
 

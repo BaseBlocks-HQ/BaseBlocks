@@ -6,7 +6,7 @@ import {
   toAbsoluteBrowserUrl,
 } from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
-import { buildLibraryEntityMap } from "@/modules/library/model/library-paths";
+import { buildLibraryEntityMap } from "@/modules/library/model";
 import type {
   FolderId,
   LibraryDialogTarget,

@@ -6,10 +6,15 @@
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { TableIcon } from "lucide-react";
 import { registerElement } from "../../framework/registry";
+import { themedPickerImagePreview } from "../../framework/themed-picker-image";
 import { DirectoryConfigPanel } from "./config";
 import { DirectoryEditor } from "./editor";
-import { DirectoryPreview } from "./preview";
 import { DirectoryRenderer } from "./renderer";
+
+const preview = themedPickerImagePreview(
+  "/editor/picker/blocks/directory-light.png",
+  "/editor/picker/blocks/directory-dark.png",
+);
 
 registerElement({
   type: "directory",
@@ -20,7 +25,7 @@ registerElement({
   keywords: ["directory", "table", "data", "list", "grid", "spreadsheet"],
   editor: DirectoryEditor,
   renderer: DirectoryRenderer,
-  preview: DirectoryPreview,
+  preview,
   configPanel: DirectoryConfigPanel,
   defaultContent: DEFAULT_BLOCK_CONTENT.directory,
 });

@@ -4,8 +4,8 @@ import { ViewerToolbarIconButton } from "@/modules/media-viewer/components/viewe
 import { PageExportMenu } from "@/modules/page-export/components/page-export-menu";
 import { DetailPanelFrame } from "@/modules/shared/components/detail-panel-frame";
 import { DetailPanelHeaderChrome } from "@/modules/shared/components/detail-panel-header-chrome";
-import { useEditorUi } from "@/modules/shared/contexts/editor-context";
-import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
+import { useEditorUi } from "@/modules/editor/state";
+import { useEditorMutations } from "@/modules/editor/state";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useTranslations } from "next-intl";

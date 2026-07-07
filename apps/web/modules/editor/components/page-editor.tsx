@@ -2,7 +2,7 @@
 
 import { useLayoutOperations } from "@/modules/editor/hooks/use-layout-operations";
 import { usePageTabs } from "@/modules/editor/hooks/use-page-tabs";
-import { useEditorUi } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/editor/state";
 import { DndProvider } from "@/modules/shared/dnd";
 import type { LayoutDoc, PageData } from "@/modules/shared/types";
 import type {

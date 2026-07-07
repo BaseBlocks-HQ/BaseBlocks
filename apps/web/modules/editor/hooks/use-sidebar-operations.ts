@@ -1,9 +1,6 @@
 import { useHaptic } from "@/lib/use-haptic";
 import { getDefaultContent } from "@/modules/elements/framework/registry";
-import {
-  useEditorUi,
-  useEditorUndo,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
 import {
   createBlock,
   createLayout,

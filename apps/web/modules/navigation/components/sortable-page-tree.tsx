@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorSiteOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorSiteOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";

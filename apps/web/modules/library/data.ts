@@ -12,7 +12,7 @@ import type {
   LibraryFile,
   LibraryId,
   SiteId,
-} from "../types";
+} from "./types";
 
 export function useAuthenticatedLibraryData(
   libraryId: LibraryId | null,

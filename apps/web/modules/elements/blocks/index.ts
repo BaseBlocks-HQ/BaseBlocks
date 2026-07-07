@@ -5,12 +5,8 @@
  * Complex blocks (directory, flowchart, decision-tree) keep their own directories.
  */
 
-import "./heading";
-import "./paragraph";
-import "./callout";
+import "./basic";
 import "./code";
-import "./divider";
-import "./spacer";
 import "./file";
 
 import "./richtext";

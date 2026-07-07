@@ -6,10 +6,7 @@ import { getDisplayDomain } from "@/lib/url";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { SortablePageTree } from "@/modules/navigation";
 import { usePageExpandState } from "@/modules/navigation/hooks/use-page-expand-state";
-import {
-  useEditorSite,
-  useEditorUi,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import type {
   LayoutBlockType,

@@ -7,7 +7,7 @@ import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import {
   useAuthenticatedLibraryData,
   useLibraryActions,
-} from "@/modules/library/data/use-library-data";
+} from "@/modules/library/data";
 import type { LibraryId } from "@/modules/library/types";
 import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";

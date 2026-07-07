@@ -1,7 +1,7 @@
 "use client";
 
 import type { ElementEditorProps } from "@/modules/elements/framework/registry";
-import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import { SearchBox } from "./search-box";
 

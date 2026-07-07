@@ -1,11 +1,8 @@
 "use client";
 
 import { useBlockOperations } from "@/modules/editor/hooks/use-block-operations";
-import {
-  useEditorUi,
-  useEditorUndo,
-} from "@/modules/shared/contexts/editor-context";
-import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
+import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
+import { useEditorMutations } from "@/modules/editor/state";
 import { arrayMove } from "@/modules/shared/dnd";
 import { createLayout } from "@/modules/shared/layouts";
 import type { LayoutData, LayoutSettings, LayoutType } from "@baseblocks/types";

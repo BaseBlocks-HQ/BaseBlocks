@@ -13,8 +13,7 @@ import { ChevronDown, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CreateLibraryDialog } from "./components/create-library-dialog";
-import { LibraryList } from "./components/library-list";
-import type { LibraryWithCount } from "./components/library-list-item";
+import { LibraryList, type LibraryWithCount } from "./components/library-list";
 import { LibrarySettingsDialog } from "./components/library-settings-dialog";
 
 export function LibrariesPageContent() {

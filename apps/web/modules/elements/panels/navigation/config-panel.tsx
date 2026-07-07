@@ -4,7 +4,7 @@ import { useSite } from "@/lib/data";
 import { ElementCard } from "@/modules/editor/components/element-picker/element-card";
 import { themedPickerImagePreview } from "@/modules/elements/framework/themed-picker-image";
 import { CollapsibleSettingsSection } from "@/modules/elements/panels/shared/editor-panel-primitives";
-import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndoOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {

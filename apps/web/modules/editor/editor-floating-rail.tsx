@@ -14,7 +14,7 @@ import {
   useEditorSite,
   useEditorUi,
   useEditorUndo,
-} from "@/modules/shared/contexts/editor-context";
+} from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import type {
   LayoutBlockType,

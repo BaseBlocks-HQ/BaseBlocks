@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorUi } from "@/modules/shared/contexts/editor-context";
+import { useEditorUi } from "@/modules/editor/state";
 import type { PageTab } from "@/modules/shared/types";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";

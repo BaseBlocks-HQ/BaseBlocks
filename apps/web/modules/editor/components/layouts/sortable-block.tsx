@@ -8,7 +8,7 @@ import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/elements/framework/registry";
-import { useEditorSiteOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorSiteOptional } from "@/modules/editor/state";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/types";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";

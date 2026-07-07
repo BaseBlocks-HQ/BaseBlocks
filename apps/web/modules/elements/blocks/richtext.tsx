@@ -5,7 +5,7 @@ import "@blocknote/mantine/style.css";
 import { useSiteAssetUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import { useAutoSave } from "@/modules/elements/hooks/use-auto-save";
-import { useEditorSite } from "@/modules/shared/contexts/editor-site-context";
+import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import type { Block } from "@blocknote/core";

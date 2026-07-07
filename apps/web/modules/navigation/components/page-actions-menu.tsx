@@ -6,10 +6,7 @@ import {
   dashboardDialogPrimaryFieldLabelClassName,
 } from "@/modules/shared/dialogs";
 import { usePages } from "@/lib/data";
-import {
-  useEditorSite,
-  useEditorUi,
-} from "@/modules/shared/contexts/editor-context";
+import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/types";

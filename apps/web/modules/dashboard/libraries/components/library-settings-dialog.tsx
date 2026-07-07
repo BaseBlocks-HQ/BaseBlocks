@@ -8,7 +8,7 @@ import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import type { LibraryWithCount } from "./library-list-item";
+import type { LibraryWithCount } from "./library-list";
 
 interface LibrarySettingsDialogProps {
   library: LibraryWithCount | null;

@@ -6,12 +6,17 @@
 import { DEFAULT_SECTION_CONTENT } from "@baseblocks/types/elements";
 import { Library } from "lucide-react";
 import { registerElement } from "../../framework/registry";
+import { themedPickerImagePreview } from "../../framework/themed-picker-image";
 import { LibraryConfigPanel } from "./config";
 import { LibraryEditor } from "./editor";
-import { LibraryPreview } from "./preview";
 import { LibraryRenderer } from "./renderer";
 
-export { LibraryEditor, LibraryRenderer, LibraryPreview, LibraryConfigPanel };
+const preview = themedPickerImagePreview(
+  "/editor/picker/blocks/library-light.png",
+  "/editor/picker/blocks/library-dark.png",
+);
+
+export { LibraryEditor, LibraryRenderer, LibraryConfigPanel };
 
 registerElement({
   type: "library",
@@ -22,7 +27,7 @@ registerElement({
   keywords: ["library", "documents", "files", "folder", "storage"],
   editor: LibraryEditor,
   renderer: LibraryRenderer,
-  preview: LibraryPreview,
+  preview,
   configPanel: LibraryConfigPanel,
   defaultContent: DEFAULT_SECTION_CONTENT.library,
 });

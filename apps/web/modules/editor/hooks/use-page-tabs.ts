@@ -1,7 +1,7 @@
 "use client";
 
-import { useEditorUndo } from "@/modules/shared/contexts/editor-context";
-import { useEditorMutations } from "@/modules/shared/contexts/editor-mutations";
+import { useEditorUndo } from "@/modules/editor/state";
+import { useEditorMutations } from "@/modules/editor/state";
 import { generateId } from "@/modules/shared/layouts";
 import type { PageTab } from "@/modules/shared/types";
 import { useRef, useState } from "react";

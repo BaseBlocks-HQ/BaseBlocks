@@ -1,7 +1,7 @@
 "use client";
 import { usePage } from "@/lib/data";
 import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
-import { useEditorUiOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUiOptional } from "@/modules/editor/state";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { ChevronRight, FileText } from "lucide-react";
 import type {

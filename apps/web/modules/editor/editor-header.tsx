@@ -2,7 +2,7 @@
 
 import { PublicHeaderBlur } from "@/modules/marketing/components/public-header-blur";
 import { cn } from "@/lib/utils";
-import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import { useState } from "react";
 import { DeployDialog } from "./components/deploy-dialog";

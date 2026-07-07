@@ -5,7 +5,7 @@ import {
   CollapsibleSettingsSection,
   PanelSettingRow,
 } from "@/modules/elements/panels/shared/editor-panel-primitives";
-import { useEditorUndoOptional } from "@/modules/shared/contexts/editor-context";
+import { useEditorUndoOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type {

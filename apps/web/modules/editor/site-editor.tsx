@@ -14,8 +14,8 @@ import {
   usePublicPagePanel,
 } from "@/modules/public-site/public-page-panel-context";
 import { SplitViewShell } from "@/modules/shared/components/split-view-shell";
-import { EditorProvider } from "@/modules/shared/contexts/editor-context";
-import { useEditorUi } from "@/modules/shared/contexts/editor-context";
+import { EditorProvider } from "@/modules/editor/state";
+import { useEditorUi } from "@/modules/editor/state";
 import { useTeamAccess } from "@/modules/team/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";

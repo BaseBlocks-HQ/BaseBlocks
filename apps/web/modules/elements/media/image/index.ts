@@ -6,11 +6,16 @@
 import { DEFAULT_MEDIA_CONTENT } from "@baseblocks/types/elements";
 import { Image } from "lucide-react";
 import { registerElement } from "../../framework/registry";
+import { themedPickerImagePreview } from "../../framework/themed-picker-image";
 import { ImageEditor } from "./editor";
-import { ImagePreview } from "./preview";
 import { ImageRenderer } from "./renderer";
 
-export { ImageEditor, ImageRenderer, ImagePreview };
+const preview = themedPickerImagePreview(
+  "/editor/picker/blocks/image-light.png",
+  "/editor/picker/blocks/image-dark.png",
+);
+
+export { ImageEditor, ImageRenderer };
 
 registerElement({
   type: "image",
@@ -21,6 +26,6 @@ registerElement({
   keywords: ["image", "picture", "photo", "graphic"],
   editor: ImageEditor,
   renderer: ImageRenderer,
-  preview: ImagePreview,
+  preview,
   defaultContent: DEFAULT_MEDIA_CONTENT.image,
 });

@@ -6,9 +6,14 @@
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { Workflow } from "lucide-react";
 import { registerElement } from "../../framework/registry";
+import { themedPickerImagePreview } from "../../framework/themed-picker-image";
 import { FlowchartEditor } from "./editor";
-import { FlowchartPreview } from "./preview";
 import { FlowchartRenderer } from "./renderer";
+
+const preview = themedPickerImagePreview(
+  "/editor/picker/blocks/flowchart-light.png",
+  "/editor/picker/blocks/flowchart-dark.png",
+);
 
 registerElement({
   type: "flowchart",
@@ -26,6 +31,6 @@ registerElement({
   ],
   editor: FlowchartEditor,
   renderer: FlowchartRenderer,
-  preview: FlowchartPreview,
+  preview,
   defaultContent: DEFAULT_BLOCK_CONTENT.flowchart,
 });

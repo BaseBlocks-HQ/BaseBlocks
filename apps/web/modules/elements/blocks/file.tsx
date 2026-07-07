@@ -15,7 +15,7 @@ import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import { useMediaViewer } from "@/modules/media-viewer";
 import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
-import { useEditorSite } from "@/modules/shared/contexts/editor-context";
+import { useEditorSite } from "@/modules/editor/state";
 import { DropZone, FileIcon, getFileTypeColor } from "@/modules/shared/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

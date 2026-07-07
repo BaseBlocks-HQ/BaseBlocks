@@ -6,9 +6,14 @@
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/types/elements";
 import { GitFork } from "lucide-react";
 import { registerElement } from "../../framework/registry";
-import { DecisionTreePreview } from "./preview";
+import { themedPickerImagePreview } from "../../framework/themed-picker-image";
 import { DecisionTreeRenderer } from "./renderer";
 import { DecisionTreeEditor } from "./tree-editor";
+
+const preview = themedPickerImagePreview(
+  "/editor/picker/blocks/decision-tree-light.png",
+  "/editor/picker/blocks/decision-tree-dark.png",
+);
 
 registerElement({
   type: "decision-tree",
@@ -29,6 +34,6 @@ registerElement({
   ],
   editor: DecisionTreeEditor,
   renderer: DecisionTreeRenderer,
-  preview: DecisionTreePreview,
+  preview,
   defaultContent: DEFAULT_BLOCK_CONTENT["decision-tree"],
 });
