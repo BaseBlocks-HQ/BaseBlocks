@@ -1,28 +1,14 @@
-import { BeamTableOfContents } from "@/modules/marketing/docs/components/beam-table-of-contents";
-import { getDocsMdxComponents } from "@/modules/marketing/docs/components/docs-mdx-components";
-import { DocsPageHero } from "@/modules/marketing/docs/components/docs-page-hero";
+import {
+  DocsContentPage,
+  type DocsContentData,
+} from "@/modules/marketing/docs/components/docs-content-page";
 import { type Locale, routing } from "@/i18n/routing";
 import { getLegalSource } from "@/lib/legal-source";
-import type { TOCItemType } from "fumadocs-core/toc";
-import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from "fumadocs-ui/layouts/docs/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { ComponentType } from "react";
 
 type PageProps = {
   params: Promise<{ locale: string; slug?: string[] }>;
-};
-
-type LegalContentData = {
-  body: ComponentType<{ components?: ReturnType<typeof getDocsMdxComponents> }>;
-  toc?: TOCItemType[];
-  title?: string;
-  description?: string;
 };
 
 export const dynamicParams = false;
@@ -72,34 +58,7 @@ export default async function LegalPageRoute({ params }: PageProps) {
     notFound();
   }
 
-  const pageData = page.data as typeof page.data & LegalContentData;
-  const MdxContent = pageData.body;
-  const isTopLevelPage = !slug || slug.length === 0;
-  const mdxComponents = getDocsMdxComponents();
+  const pageData = page.data as typeof page.data & DocsContentData;
 
-  return (
-    <DocsPage
-      tableOfContent={{
-        component: <BeamTableOfContents />,
-      }}
-      toc={pageData.toc}
-    >
-      {isTopLevelPage ? (
-        <DocsPageHero
-          description={pageData.description}
-          title={pageData.title ?? "Legal"}
-        />
-      ) : (
-        <>
-          <DocsTitle className="bb-docs-title">{pageData.title}</DocsTitle>
-          <DocsDescription className="bb-docs-description">
-            {pageData.description}
-          </DocsDescription>
-        </>
-      )}
-      <DocsBody>
-        <MdxContent components={mdxComponents} />
-      </DocsBody>
-    </DocsPage>
-  );
+  return <DocsContentPage content={pageData} fallbackTitle="Legal" />;
 }

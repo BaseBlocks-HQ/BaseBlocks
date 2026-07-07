@@ -1,14 +1,7 @@
-import { DocsMobileHeaderActions } from "@/modules/marketing/docs/components/docs-mobile-header-actions";
-import { DocsSidebarHaptics } from "@/modules/marketing/docs/components/docs-sidebar-haptics";
-import { PublicHeader } from "@/modules/marketing/components/public-header";
-import { Link } from "@/i18n/navigation";
-import { isAuthenticated } from "@/lib/auth/server";
 import { source } from "@/lib/source";
-import { Button } from "@baseblocks/ui/button";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { LayoutDashboard, LogIn } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { RootProvider } from "fumadocs-ui/provider/next";
 import type { ReactNode } from "react";
 
 type LayoutProps = {
@@ -21,42 +14,22 @@ export default async function DocsSectionLayout({
   params,
 }: LayoutProps) {
   const { locale } = await params;
-  const [authed, commonTranslations, navigationTranslations] =
-    await Promise.all([
-      isAuthenticated(),
-      getTranslations({ locale, namespace: "common" }),
-      getTranslations({ locale, namespace: "navigation" }),
-    ]);
-
-  const authAction = authed ? (
-    <Link href="/dashboard">
-      <Button size="sm" className="max-sm:size-8 max-sm:px-0">
-        <LayoutDashboard className="h-4 w-4 shrink-0 sm:hidden" />
-        <span className="max-sm:sr-only">
-          {navigationTranslations("dashboard")}
-        </span>
-      </Button>
-    </Link>
-  ) : (
-    <Link href="/login">
-      <Button size="sm" className="max-sm:size-8 max-sm:px-0">
-        <LogIn className="h-4 w-4 shrink-0 sm:hidden" />
-        <span className="max-sm:sr-only">{commonTranslations("signIn")}</span>
-      </Button>
-    </Link>
-  );
 
   return (
-    <>
-      <DocsSidebarHaptics />
+    <RootProvider
+      i18n={{
+        locale,
+        locales: [
+          { locale: "en", name: "English" },
+          { locale: "fr", name: "Français" },
+        ],
+      }}
+      theme={{ enabled: false }}
+    >
       <DocsLayout
-        containerProps={{
-          className: "bb-docs-shell",
-        }}
+        containerProps={{ className: "bb-docs-shell" }}
         themeSwitch={{ enabled: false }}
-        sidebar={{
-          footer: null,
-        }}
+        sidebar={{ footer: null }}
         links={[
           {
             type: "custom" as const,
@@ -71,19 +44,6 @@ export default async function DocsSectionLayout({
           },
         ]}
         nav={{
-          component: (
-            <PublicHeader
-              authAction={authAction}
-              className="[grid-area:header] z-30 layout:[--fd-header-height:var(--bb-header-height)]"
-              contentClassName="mx-0 max-w-none px-6 xl:px-8"
-              docsLabel={navigationTranslations("docs")}
-              legalLabel={navigationTranslations("legal")}
-              mobileActions={<DocsMobileHeaderActions />}
-              showDocsLink={false}
-              showHomepageLink={true}
-              homepageLinkLabel={navigationTranslations("home")}
-            />
-          ),
           enabled: true,
           title: "BaseBlocks",
           url: `/${locale}`,
@@ -92,6 +52,6 @@ export default async function DocsSectionLayout({
       >
         {children}
       </DocsLayout>
-    </>
+    </RootProvider>
   );
 }

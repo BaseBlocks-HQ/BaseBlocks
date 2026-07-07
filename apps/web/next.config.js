@@ -61,7 +61,12 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["*.localhost"],
+  allowedDevOrigins: [
+    "*.localhost",
+    "192.168.1.180",
+    "100.108.121.25",
+    "naaiyys.tail2c844a.ts.net",
+  ],
   serverExternalPackages: [],
   poweredByHeader: false,
   reactCompiler: true,

@@ -77,13 +77,19 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
         : "";
     }
 
-    if (value > lastStep) {
+    if (value >= lastStep - 0.02) {
       setExpanded(true);
     }
   });
 
   useEffect(() => {
-    progress.set(lastStep);
+    progress.set(lastStep + 0.1);
+
+    const revealFallback = window.setTimeout(() => {
+      setExpanded(true);
+    }, 2500);
+
+    return () => window.clearTimeout(revealFallback);
   }, [progress]);
 
   const authCta = isAuthenticated ? (

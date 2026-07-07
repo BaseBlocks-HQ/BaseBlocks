@@ -1,33 +1,14 @@
-import { BeamTableOfContents } from "@/modules/marketing/docs/components/beam-table-of-contents";
-import { getDocsMdxComponents } from "@/modules/marketing/docs/components/docs-mdx-components";
-import { DocsPageHero } from "@/modules/marketing/docs/components/docs-page-hero";
-import { source } from "@/lib/source";
-import type { TOCItemType } from "fumadocs-core/toc";
 import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from "fumadocs-ui/layouts/docs/page";
+  DocsContentPage,
+  type DocsContentData,
+} from "@/modules/marketing/docs/components/docs-content-page";
+import { source } from "@/lib/source";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { ComponentType } from "react";
 
 type PageProps = {
   params: Promise<{ locale: string; slug?: string[] }>;
 };
-
-type DocsContentData = {
-  body: ComponentType<{ components?: ReturnType<typeof getDocsMdxComponents> }>;
-  toc?: TOCItemType[];
-  title?: string;
-  description?: string;
-};
-
-// Failure modes:
-// - Unknown locale/slug pair resolves to no document
-// - Missing frontmatter leaves title or description empty
-// - Generated static params drift from the route segment names
 
 export function generateStaticParams() {
   return source.generateParams("slug", "locale");
@@ -58,33 +39,6 @@ export default async function DocsPageRoute({ params }: PageProps) {
   }
 
   const pageData = page.data as typeof page.data & DocsContentData;
-  const MdxContent = pageData.body;
-  const isTopLevelPage = !slug || slug.length <= 1;
-  const mdxComponents = getDocsMdxComponents();
 
-  return (
-    <DocsPage
-      tableOfContent={{
-        component: <BeamTableOfContents />,
-      }}
-      toc={pageData.toc}
-    >
-      {isTopLevelPage ? (
-        <DocsPageHero
-          description={pageData.description}
-          title={pageData.title ?? "Documentation"}
-        />
-      ) : (
-        <>
-          <DocsTitle className="bb-docs-title">{pageData.title}</DocsTitle>
-          <DocsDescription className="bb-docs-description">
-            {pageData.description}
-          </DocsDescription>
-        </>
-      )}
-      <DocsBody>
-        <MdxContent components={mdxComponents} />
-      </DocsBody>
-    </DocsPage>
-  );
+  return <DocsContentPage content={pageData} fallbackTitle="Documentation" />;
 }

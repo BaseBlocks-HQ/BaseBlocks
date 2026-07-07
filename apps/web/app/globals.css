@@ -298,33 +298,6 @@
   backdrop-filter: none;
 }
 
-.bb-docs-shell #nd-page {
-  position: relative;
-}
-
-.bb-docs-hero {
-  background: var(--color-fd-card);
-  border-color: var(--color-fd-border);
-  box-shadow: none;
-}
-
-.dark .bb-docs-hero {
-  background: var(--color-fd-card);
-  border-color: var(--color-fd-border);
-  box-shadow: none;
-}
-
-.bb-docs-title {
-  font-family: var(--font-geist-pixel-grid);
-  font-size: clamp(2.1rem, 4.2vw, 3.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
-}
-
-.bb-docs-description {
-  max-width: 46rem;
-}
-
 .bb-docs-shell #nd-page .prose h2 {
   font-family: var(--font-geist-pixel-square);
   font-size: 0.92rem;
