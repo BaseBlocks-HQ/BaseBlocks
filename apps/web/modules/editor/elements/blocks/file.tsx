@@ -7,7 +7,7 @@ import {
 } from "@/lib/file-deep-link";
 import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
-import { DropZone, FileIcon, getFileTypeColor } from "@/modules/files/ui";
+import { DropZone, FileIcon, getFileTypeColor } from "@/modules/files/file-ui";
 import {
   FilePreview as FilePreviewPanel,
   type PreviewFile,

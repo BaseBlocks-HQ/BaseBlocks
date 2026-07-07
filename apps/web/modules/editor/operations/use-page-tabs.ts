@@ -2,7 +2,7 @@
 
 import { useEditorUndo } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
-import { generateId } from "@/modules/editor/layouts";
+import { generateId } from "@/modules/editor/layout";
 import type { PageTab } from "@/modules/editor/app/types";
 import { useRef, useState } from "react";
 

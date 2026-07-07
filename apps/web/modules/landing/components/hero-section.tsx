@@ -1,5 +1,5 @@
 import { landingFonts } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/types";
+import type { TranslateFn } from "@/modules/landing/constants";
 import type { ReactNode } from "react";
 import { HeroEditorPreview } from "./hero-editor-preview";
 import { Reveal } from "./reveal";

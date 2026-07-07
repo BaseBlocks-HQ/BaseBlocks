@@ -1,5 +1,5 @@
 import { landingFonts, landingSteps } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/types";
+import type { TranslateFn } from "@/modules/landing/constants";
 import Image from "next/image";
 import { FlickeringGrid } from "./flickering-grid";
 import { Reveal } from "./reveal";

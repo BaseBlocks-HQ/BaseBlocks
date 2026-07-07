@@ -7,7 +7,30 @@ import {
   IconSquarePointer,
   IconUsers,
 } from "nucleo-glass";
-import type { LandingFeature, LandingStep } from "./types";
+import type { ComponentType, SVGProps } from "react";
+
+export type TranslateFn = (key: string) => string;
+
+type LandingIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+interface LandingFeature {
+  icon: LandingIcon;
+  titleKey: string;
+  descKey: string;
+  num: string;
+  iconClassName: string;
+}
+
+interface LandingStep {
+  num: string;
+  titleKey: string;
+  descKey: string;
+  imageAltKey: string;
+  image: {
+    light: string;
+    dark: string;
+  };
+}
 
 type FontVariant = "square" | "grid" | "triangle" | "circle" | "sans" | "mono";
 

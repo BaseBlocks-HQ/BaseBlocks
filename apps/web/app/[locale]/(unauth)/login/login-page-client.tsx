@@ -1,6 +1,6 @@
 "use client";
 
-import { BrandLogoMark } from "@/modules/public-chrome/brand-logo";
+import { BrandLogoMark } from "@/modules/public-site/chrome/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";

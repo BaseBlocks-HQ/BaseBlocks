@@ -1,7 +1,7 @@
 "use client";
 
-import { InlineEditableText } from "@/modules/dashboard/libraries/inline-editable-text";
 import { Link, useRouter } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import {
   useAuthenticatedLibraryData,
@@ -31,9 +31,119 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
+
+function InlineEditableText({
+  disabled = false,
+  emptyLabel = "Untitled",
+  inputClassName,
+  onSubmit,
+  textClassName,
+  value,
+}: {
+  disabled?: boolean;
+  emptyLabel?: string;
+  inputClassName?: string;
+  onSubmit: (value: string) => Promise<void> | void;
+  textClassName?: string;
+  value: string;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isEditing) setDraft(value);
+  }, [isEditing, value]);
+
+  useEffect(() => {
+    if (!isEditing || !inputRef.current) return;
+    inputRef.current.focus();
+    inputRef.current.select();
+  }, [isEditing]);
+
+  const cancelEditing = () => {
+    setDraft(value);
+    setIsEditing(false);
+  };
+
+  const submitEditing = async () => {
+    if (!isEditing) return;
+
+    const nextValue = draft.trim();
+    if (!nextValue) {
+      cancelEditing();
+      return;
+    }
+
+    if (nextValue === value.trim()) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(nextValue);
+      setIsEditing(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        aria-label="Edit title"
+        className={cn(
+          "min-w-0 bg-transparent p-0 text-inherit outline-none ring-0 placeholder:text-muted-foreground/60",
+          inputClassName,
+          textClassName,
+        )}
+        disabled={isSubmitting}
+        onBlur={() => void submitEditing()}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            void submitEditing();
+          }
+
+          if (event.key === "Escape") {
+            event.preventDefault();
+            cancelEditing();
+          }
+        }}
+        spellCheck={false}
+        value={draft}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        "min-w-0 rounded-md text-left outline-none transition-colors hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2",
+        disabled && "cursor-default hover:text-inherit focus-visible:ring-0",
+        textClassName,
+      )}
+      disabled={disabled || isSubmitting}
+      onClick={() => {
+        if (disabled || isSubmitting) return;
+        setDraft(value);
+        setIsEditing(true);
+      }}
+    >
+      <span className="block truncate">
+        {value.trim() ? value : emptyLabel}
+      </span>
+    </button>
+  );
+}
 
 export function LibraryDetailPage({ libraryId }: { libraryId: LibraryId }) {
   const router = useRouter();

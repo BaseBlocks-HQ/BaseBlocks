@@ -1,6 +1,6 @@
-import { BrandLogoMark } from "@/modules/public-chrome/brand-logo";
-import { LanguageSwitcher } from "@/modules/public-chrome/language-switcher";
-import { ModeToggle } from "@/modules/public-chrome/mode-toggle";
+import { BrandLogoMark } from "@/modules/public-site/chrome/brand-logo";
+import { LanguageSwitcher } from "@/modules/public-site/chrome/language-switcher";
+import { ModeToggle } from "@/modules/public-site/chrome/mode-toggle";
 import { cn } from "@/lib/utils";
 import { landingFonts } from "@/modules/landing/constants";
 import { Github } from "lucide-react";

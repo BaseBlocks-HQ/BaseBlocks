@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
-} from "@/modules/editor/layouts";
+} from "@/modules/editor/layout";
 import type { Doc } from "@baseblocks/backend";
 import type {
   AnyContent,

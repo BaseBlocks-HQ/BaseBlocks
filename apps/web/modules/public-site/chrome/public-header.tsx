@@ -1,4 +1,4 @@
-import { BrandLogoMark } from "@/modules/public-chrome/brand-logo";
+import { BrandLogoMark } from "@/modules/public-site/chrome/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { BlurStack } from "@baseblocks/ui/blur-stack";

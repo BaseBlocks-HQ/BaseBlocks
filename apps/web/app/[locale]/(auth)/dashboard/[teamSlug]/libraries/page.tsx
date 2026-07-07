@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
-import { LibrariesPage } from "@/modules/dashboard/libraries/libraries-page";
+import { LibrariesPage } from "@/modules/document-library/pages/libraries-page";
 
 export default function TeamLibrariesPage() {
   return (

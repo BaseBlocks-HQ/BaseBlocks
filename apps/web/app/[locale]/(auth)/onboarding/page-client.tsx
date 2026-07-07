@@ -1,6 +1,6 @@
 "use client";
 
-import { LanguageSwitcher } from "@/modules/public-chrome/language-switcher";
+import { LanguageSwitcher } from "@/modules/public-site/chrome/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";

@@ -1,7 +1,9 @@
 "use client";
 
-import type { PageExportMode } from "@/modules/editor/page-export/lib/page-export";
-import { downloadPageExport } from "@/modules/editor/page-export/lib/page-export-link";
+import type {
+  PageExportFormat,
+  PageExportMode,
+} from "@/modules/editor/page-export/page-export";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +19,32 @@ interface PageExportMenuProps {
   mode: PageExportMode;
   align?: "start" | "center" | "end";
   trigger?: ReactNode;
+}
+
+function getPageExportHref(args: {
+  pageId: string;
+  format: PageExportFormat;
+  mode: PageExportMode;
+}) {
+  const searchParams = new URLSearchParams({
+    format: args.format,
+    mode: args.mode,
+  });
+
+  return `/api/pages/${args.pageId}/export?${searchParams.toString()}`;
+}
+
+function downloadPageExport(args: {
+  pageId: string;
+  format: PageExportFormat;
+  mode: PageExportMode;
+}) {
+  const link = document.createElement("a");
+  link.href = getPageExportHref(args);
+  link.rel = "noopener noreferrer";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 export function PageExportMenu({

@@ -1,6 +1,6 @@
 "use client";
 
-import { ModeToggle } from "@/modules/public-chrome/mode-toggle";
+import { ModeToggle } from "@/modules/public-site/chrome/mode-toggle";
 import { SiteLogo } from "@/modules/public-site/components/site-logo";
 import { cn } from "@/lib/utils";
 import { SearchBox } from "@/modules/editor/elements/sections/search/search-box";

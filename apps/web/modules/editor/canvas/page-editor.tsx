@@ -3,7 +3,7 @@
 import { useLayoutOperations } from "@/modules/editor/operations/use-layout-operations";
 import { usePageTabs } from "@/modules/editor/operations/use-page-tabs";
 import { useEditorUi } from "@/modules/editor/state";
-import { DndProvider } from "@/modules/editor/dnd";
+import { DndProvider } from "@/modules/editor/dnd/dnd-provider";
 import type { LayoutDoc, PageData } from "@/modules/editor/app/types";
 import type {
   AnyContent,

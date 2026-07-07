@@ -1,6 +1,6 @@
-import { PublicHeader } from "@/modules/public-chrome/public-header";
+import { PublicHeader } from "@/modules/public-site/chrome/public-header";
 import { Link } from "@/i18n/navigation";
-import type { TranslateFn } from "@/modules/landing/types";
+import type { TranslateFn } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 
 interface LandingHeaderProps {
