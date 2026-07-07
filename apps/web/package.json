@@ -16,6 +16,7 @@
     "@aws-sdk/s3-presigned-post": "^3.1078.0",
     "@aws-sdk/s3-request-presigner": "^3.1078.0",
     "@baseblocks/backend": "workspace:*",
+    "@baseblocks/i18n": "workspace:*",
     "@baseblocks/types": "workspace:*",
     "@baseblocks/ui": "workspace:*",
     "@blocknote/core": "^0.46.2",

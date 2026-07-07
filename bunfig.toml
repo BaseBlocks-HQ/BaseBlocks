@@ -2,6 +2,7 @@
 minimumReleaseAge = 259200
 minimumReleaseAgeExcludes = [
   "@baseblocks/backend",
+  "@baseblocks/i18n",
   "@baseblocks/tsconfig",
   "@baseblocks/types",
   "@baseblocks/ui",

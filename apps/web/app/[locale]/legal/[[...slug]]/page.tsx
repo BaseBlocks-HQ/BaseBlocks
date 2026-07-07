@@ -2,8 +2,9 @@ import {
   DocsContentPage,
   type DocsContentData,
 } from "@/modules/marketing/docs/components/docs-content-page";
-import { type Locale, routing } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
 import { getLegalSource } from "@/lib/legal-source";
+import type { Locale } from "@baseblocks/i18n";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

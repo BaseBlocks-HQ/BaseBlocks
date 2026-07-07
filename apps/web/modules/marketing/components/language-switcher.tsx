@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { type Locale, routing } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
 import { Button } from "@baseblocks/ui/button";
+import type { Locale } from "@baseblocks/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,

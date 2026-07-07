@@ -1,4 +1,4 @@
-import type { Locale } from "@/i18n/routing";
+import type { Locale } from "@baseblocks/i18n";
 import { legalEn, legalFr } from "collections/server";
 import { loader } from "fumadocs-core/source";
 

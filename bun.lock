@@ -19,6 +19,7 @@
         "@aws-sdk/s3-presigned-post": "^3.1078.0",
         "@aws-sdk/s3-request-presigner": "^3.1078.0",
         "@baseblocks/backend": "workspace:*",
+        "@baseblocks/i18n": "workspace:*",
         "@baseblocks/types": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@blocknote/core": "^0.46.2",
@@ -106,6 +107,14 @@
       },
       "peerDependencies": {
         "typescript": "^5",
+      },
+    },
+    "packages/i18n": {
+      "name": "@baseblocks/i18n",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@baseblocks/tsconfig": "workspace:*",
+        "typescript": "5.9.2",
       },
     },
     "packages/types": {
@@ -239,6 +248,8 @@
     "@babel/types": ["@babel/types@7.29.0", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A=="],
 
     "@baseblocks/backend": ["@baseblocks/backend@workspace:packages/backend"],
+
+    "@baseblocks/i18n": ["@baseblocks/i18n@workspace:packages/i18n"],
 
     "@baseblocks/tsconfig": ["@baseblocks/tsconfig@workspace:tooling/tsconfig"],
 

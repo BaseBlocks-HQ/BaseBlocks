@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/core/theme/theme-provider";
-import { type Locale, routing } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
+import type { Locale } from "@baseblocks/i18n";
 import { Toaster } from "@baseblocks/ui/sonner";
 import { MotionConfig } from "motion/react";
 import type { Metadata, ResolvingMetadata } from "next";

@@ -1,8 +1,6 @@
-import type en from "./messages/en.json";
-
-type Messages = typeof en;
+import type { AppMessages } from "@baseblocks/i18n";
 
 declare global {
   // Use type safe message keys with `next-intl`
-  type IntlMessages = Messages;
+  type IntlMessages = AppMessages;
 }
