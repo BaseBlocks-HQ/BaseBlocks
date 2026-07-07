@@ -2,7 +2,7 @@
 
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { cn } from "@/lib/utils";
-import { useMediaViewer } from "@/modules/editor/media-viewer";
+import { FilePreview, type PreviewFile } from "@/modules/editor/file-preview";
 import { usePublicPagePanelOptional } from "@/modules/marketing/public-site/public-page-panel-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -176,9 +176,9 @@ export function SearchBox({
 }: SearchBoxProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const { openFile } = useMediaViewer();
   const pagePanel = usePublicPagePanelOptional();
   const sessionTokens = getStoredAccessSessionTokens();
 
@@ -289,7 +289,7 @@ export function SearchBox({
     }
 
     if (result.metadata.downloadUrl) {
-      openFile({
+      setPreviewFile({
         url: result.metadata.downloadUrl,
         filename: result.metadata.filename || result.title,
         contentType:
@@ -452,6 +452,7 @@ export function SearchBox({
           </ScrollArea>
         </div>
       )}
+      <FilePreview file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

@@ -10,7 +10,7 @@
  */
 
 import dynamic from "next/dynamic";
-import type { ViewerConfig } from "../types";
+import type { PreviewViewerConfig } from "../types";
 import { AudioViewer } from "./audio-viewer";
 import { ImageViewer } from "./image-viewer";
 import { TextViewer } from "./text-viewer";
@@ -27,7 +27,7 @@ const PdfViewer = dynamic(
  * Registry of all available viewers
  * Order matters - first matching viewer will be used
  */
-const viewerRegistry: ViewerConfig[] = [
+const viewerRegistry: PreviewViewerConfig[] = [
   {
     type: "pdf",
     label: "PDF Viewer",
@@ -68,7 +68,7 @@ const viewerRegistry: ViewerConfig[] = [
 /**
  * Get the appropriate viewer for a content type
  */
-export function getViewer(contentType: string): ViewerConfig {
+export function getViewer(contentType: string): PreviewViewerConfig {
   const viewer = viewerRegistry.find((v) => v.canHandle(contentType));
 
   if (viewer) {

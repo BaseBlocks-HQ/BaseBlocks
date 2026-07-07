@@ -1,11 +1,11 @@
 /**
- * Media Viewer Types
+ * File Preview Types
  *
- * Extensible type system for the media viewer component.
- * Add new viewer types by extending MediaFileType and implementing ViewerComponent.
+ * Extensible type system for file preview rendering.
+ * Add new viewer types by extending PreviewFileType and implementing ViewerComponent.
  */
 
-export type MediaFileType =
+export type PreviewFileType =
   | "pdf"
   | "image"
   | "video"
@@ -13,7 +13,7 @@ export type MediaFileType =
   | "text"
   | "unknown";
 
-export interface MediaFile {
+export interface PreviewFile {
   url: string;
   filename: string;
   contentType: string;
@@ -27,7 +27,7 @@ export interface MediaFile {
 }
 
 export interface ViewerProps {
-  file: MediaFile;
+  file: PreviewFile;
   onClose: () => void;
   /** Callback to render viewer-specific controls in the unified toolbar */
   renderControls?: (controls: React.ReactNode) => void;
@@ -37,9 +37,9 @@ export interface ViewerProps {
  * Viewer component registry type
  * Each viewer is responsible for rendering a specific file type
  */
-export interface ViewerConfig {
+export interface PreviewViewerConfig {
   /** File type this viewer handles */
-  type: MediaFileType;
+  type: PreviewFileType;
   /** Human-readable name */
   label: string;
   /** Check if this viewer can handle the given content type */
@@ -49,9 +49,9 @@ export interface ViewerConfig {
 }
 
 /**
- * Determine the media file type from content type
+ * Determine the preview type from content type
  */
-export function getMediaFileType(contentType: string): MediaFileType {
+export function getPreviewFileType(contentType: string): PreviewFileType {
   const ct = contentType.toLowerCase();
 
   // PDF

@@ -7,10 +7,13 @@ import {
 } from "@/lib/file-deep-link";
 import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
-import { useMediaViewer } from "@/modules/editor/media-viewer";
-import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
-import { useEditorSite } from "@/modules/editor/state";
 import { DropZone, FileIcon, getFileTypeColor } from "@/modules/editor/file-ui";
+import {
+  FilePreview as FilePreviewPanel,
+  type PreviewFile,
+} from "@/modules/editor/file-preview";
+import { useEditorSite } from "@/modules/editor/state";
+import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
@@ -53,7 +56,14 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useReducer, useRef } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import type {
   ElementEditorProps,
@@ -147,6 +157,16 @@ function getFileContent(file: FileData) {
     contentType: file.contentType,
     size: file.size,
     createdAt: file.createdAt,
+  };
+}
+
+function toPreviewFile(file: FileData, deepLinkId?: string): PreviewFile {
+  return {
+    url: file.downloadUrl,
+    filename: file.filename,
+    contentType: file.contentType,
+    size: file.size,
+    deepLinkId,
   };
 }
 
@@ -469,7 +489,6 @@ function FileEditor({
 }: ElementEditorProps<"file">) {
   const t = useTranslations("elements.file");
   const { siteId } = useEditorSite();
-  const { openFile } = useMediaViewer();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -483,6 +502,7 @@ function FileEditor({
       : "skip",
   );
   const [state, dispatch] = useReducer(fileEditorReducer, emptyFileEditorState);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const openedFromLinkRef = useRef<string | null>(null);
   const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
 
@@ -508,31 +528,31 @@ function FileEditor({
     if (selectedFileId !== resolvedFile._id) return;
     if (openedFromLinkRef.current === selectedFileId) return;
 
-    openFile({
-      url: resolvedFile.downloadUrl,
-      filename: resolvedFile.filename,
-      contentType: resolvedFile.contentType,
-      size: resolvedFile.size,
-      deepLinkId: resolvedFile._id,
-    });
+    setPreviewFile(toPreviewFile(resolvedFile, resolvedFile._id));
     openedFromLinkRef.current = selectedFileId;
-  }, [openFile, resolvedFile, selectedFileId]);
+  }, [resolvedFile, selectedFileId]);
 
-  const previewFile = (file: FileData) => {
+  const openPreview = (file: FileData) => {
     const nextUrl = buildFileDeepLinkPath(
       pathname,
       searchParams.toString(),
       file._id,
     );
     router.replace(nextUrl, { scroll: false });
-    openFile({
-      url: file.downloadUrl,
-      filename: file.filename,
-      contentType: file.contentType,
-      size: file.size,
-      deepLinkId: file._id,
-    });
+    setPreviewFile(toPreviewFile(file, file._id));
   };
+
+  const closePreview = useCallback(() => {
+    if (previewFile?.deepLinkId) {
+      const nextUrl = buildFileDeepLinkPath(
+        pathname,
+        searchParams.toString(),
+        null,
+      );
+      router.replace(nextUrl, { scroll: false });
+    }
+    setPreviewFile(null);
+  }, [pathname, previewFile?.deepLinkId, router, searchParams]);
 
   const handleFilesAccepted = async (files: File[]) => {
     const file = files[0];
@@ -615,7 +635,7 @@ function FileEditor({
     <>
       <SingleFileRow
         file={resolvedFile}
-        onOpen={() => previewFile(resolvedFile)}
+        onOpen={() => openPreview(resolvedFile)}
         actions={
           <FileItemMenu
             onCopyLink={() => {
@@ -630,7 +650,7 @@ function FileEditor({
               toast.success("Link copied");
             }}
             onDelete={() => dispatch({ type: "openDeleteDialog" })}
-            onPreview={() => previewFile(resolvedFile)}
+            onPreview={() => openPreview(resolvedFile)}
             onRename={() =>
               dispatch({
                 type: "openRenameDialog",
@@ -640,6 +660,7 @@ function FileEditor({
           />
         }
       />
+      <FilePreviewPanel file={previewFile} onClose={closePreview} />
       <FileDialogs
         deleteDialogOpen={state.deleteDialogOpen}
         filename={resolvedFile.filename}
@@ -658,14 +679,26 @@ function FileEditor({
 }
 
 function FileRenderer({ content }: ElementRendererProps<"file">) {
-  const { openFile } = useMediaViewer();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const publicSiteContext = usePublicSiteContextOptional();
   const file = getContentSnapshot(content);
+  const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const openedFromLinkRef = useRef<string | null>(null);
   const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
+
+  const closePreview = useCallback(() => {
+    if (previewFile?.deepLinkId) {
+      const nextUrl = buildFileDeepLinkPath(
+        pathname,
+        searchParams.toString(),
+        null,
+      );
+      router.replace(nextUrl, { scroll: false });
+    }
+    setPreviewFile(null);
+  }, [pathname, previewFile?.deepLinkId, router, searchParams]);
 
   useEffect(() => {
     if (!file) return;
@@ -673,24 +706,9 @@ function FileRenderer({ content }: ElementRendererProps<"file">) {
     if (selectedFileId !== file._id) return;
     if (openedFromLinkRef.current === selectedFileId) return;
 
-    openFile({
-      url: file.downloadUrl,
-      filename: file.filename,
-      contentType: file.contentType,
-      size: file.size,
-      deepLinkId: file._id,
-    });
+    setPreviewFile(toPreviewFile(file, file._id));
     openedFromLinkRef.current = selectedFileId;
-  }, [
-    file?._id,
-    file?.contentType,
-    file?.downloadUrl,
-    file?.filename,
-    file?.size,
-    openFile,
-    publicSiteContext,
-    selectedFileId,
-  ]);
+  }, [file, publicSiteContext, selectedFileId]);
 
   if (!file) {
     return null;
@@ -706,13 +724,9 @@ function FileRenderer({ content }: ElementRendererProps<"file">) {
       router.replace(nextUrl, { scroll: false });
     }
 
-    openFile({
-      url: file.downloadUrl,
-      filename: file.filename,
-      contentType: file.contentType,
-      size: file.size,
-      deepLinkId: publicSiteContext ? file._id : undefined,
-    });
+    setPreviewFile(
+      toPreviewFile(file, publicSiteContext ? file._id : undefined),
+    );
   };
 
   const handleCopyLink = async () => {
@@ -726,17 +740,20 @@ function FileRenderer({ content }: ElementRendererProps<"file">) {
   };
 
   return (
-    <SingleFileRow
-      file={file}
-      onOpen={handleOpen}
-      actions={
-        <FileItemMenu
-          onOpen={handleOpen}
-          onCopyLink={() => void handleCopyLink()}
-          readOnly={publicSiteContext !== undefined}
-        />
-      }
-    />
+    <>
+      <SingleFileRow
+        file={file}
+        onOpen={handleOpen}
+        actions={
+          <FileItemMenu
+            onOpen={handleOpen}
+            onCopyLink={() => void handleCopyLink()}
+            readOnly={publicSiteContext !== undefined}
+          />
+        }
+      />
+      <FilePreviewPanel file={previewFile} onClose={closePreview} />
+    </>
   );
 }
 

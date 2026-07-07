@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
+import { ViewerToolbarIconButton } from "@/modules/editor/file-preview/components/viewer-toolbar-icon-button";
 import { Maximize2, Minimize2, RotateCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { ViewerProps } from "../types";

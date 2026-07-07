@@ -1,7 +1,7 @@
 "use client";
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
-import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
+import { ViewerToolbarIconButton } from "@/modules/editor/file-preview/components/viewer-toolbar-icon-button";
 import { PageExportMenu } from "@/modules/editor/page-export/components/page-export-menu";
 import { useEditorUi } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";

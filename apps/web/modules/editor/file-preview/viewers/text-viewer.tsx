@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
+import { ViewerToolbarIconButton } from "@/modules/editor/file-preview/components/viewer-toolbar-icon-button";
 import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Copy, Search, WrapText, X } from "lucide-react";
@@ -27,8 +27,11 @@ export function TextViewer({ file, renderControls }: ViewerProps) {
   const firstMatchRef = useRef<HTMLElement | null>(null);
   const hasScrolledToMatch = useRef(false);
   const { data: content, error, isLoading } = useSWR(file.url, loadTextContent);
-  const errorMessage =
-    error instanceof Error ? error.message : "Failed to load text content";
+  const errorMessage = error
+    ? error instanceof Error
+      ? error.message
+      : "Failed to load text content"
+    : null;
 
   const handleCopy = useCallback(async () => {
     if (!content) return;

@@ -1,9 +1,9 @@
 "use client";
 import { cn } from "@/lib/utils";
 import type { LibraryFile } from "@/modules/dashboard/library/types";
-import { ViewerToolbarIconButton } from "@/modules/editor/media-viewer/components/viewer-toolbar-icon-button";
-import type { MediaFile } from "@/modules/editor/media-viewer/types";
-import { getViewer } from "@/modules/editor/media-viewer/viewers";
+import { ViewerToolbarIconButton } from "@/modules/editor/file-preview/components/viewer-toolbar-icon-button";
+import type { PreviewFile } from "@/modules/editor/file-preview/types";
+import { getViewer } from "@/modules/editor/file-preview/viewers";
 import { ExternalLink, Maximize2, Minimize2, PanelLeft, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
@@ -20,7 +20,7 @@ export function LibraryFileViewer({
 }) {
   const [viewerControls, setViewerControls] = useState<ReactNode>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const mediaFile: MediaFile = {
+  const previewFile: PreviewFile = {
     url: file.downloadUrl,
     filename: file.filename,
     contentType: file.contentType,
@@ -79,7 +79,7 @@ export function LibraryFileViewer({
       <main className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">
         <Viewer
           key={file._id}
-          file={mediaFile}
+          file={previewFile}
           onClose={onClose}
           renderControls={setViewerControls}
         />

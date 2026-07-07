@@ -1,5 +1,5 @@
 /**
- * Media Viewer Utilities
+ * File Preview Utilities
  *
  * Helper functions for handling file URLs and blob creation
  */
