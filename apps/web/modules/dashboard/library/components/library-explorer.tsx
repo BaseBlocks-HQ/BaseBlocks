@@ -23,7 +23,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
-import { Skeleton } from "@baseblocks/ui/skeleton";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,17 +32,6 @@ import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
 import { LibraryFileViewer } from "./library-file-viewer";
 import { LibraryTree } from "./library-tree";
 import { UploadDropzone } from "./upload-dropzone";
-
-const skeletonRows = [
-  "library-skeleton-row-1",
-  "library-skeleton-row-2",
-  "library-skeleton-row-3",
-  "library-skeleton-row-4",
-  "library-skeleton-row-5",
-  "library-skeleton-row-6",
-  "library-skeleton-row-7",
-  "library-skeleton-row-8",
-];
 
 const librarySplitHandleClassName =
   "group/split-handle relative z-20 -mx-1 flex !w-2 shrink-0 items-stretch justify-center bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 before:pointer-events-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-border/80 before:transition-colors before:duration-150 hover:before:bg-ring/55 data-[resize-handle-state=drag]:before:bg-ring after:pointer-events-none after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 after:bg-transparent";
@@ -299,7 +288,7 @@ export function LibraryExplorer({
   };
 
   if (data.isLoading) {
-    return <LibraryExplorerSkeleton className={className} />;
+    return <LibraryExplorerLoading className={className} />;
   }
 
   if (!data.library) {
@@ -433,24 +422,15 @@ export function LibraryExplorer({
   );
 }
 
-function LibraryExplorerSkeleton({ className }: { className?: string }) {
+function LibraryExplorerLoading({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex min-h-[28rem] flex-col overflow-hidden rounded-lg border bg-background",
+        "flex min-h-[28rem] items-center justify-center rounded-lg border bg-background",
         className,
       )}
     >
-      <div className="flex min-h-12 items-center gap-3 border-b px-3">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-        <Skeleton className="h-8 w-8 rounded-md" />
-      </div>
-      <div className="space-y-2 p-3">
-        {skeletonRows.map((id) => (
-          <Skeleton key={id} className="h-11 w-full rounded-md" />
-        ))}
-      </div>
+      <Spinner className="size-6 text-muted-foreground" />
     </div>
   );
 }

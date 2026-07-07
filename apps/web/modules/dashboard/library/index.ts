@@ -1,6 +1,7 @@
 export { LibraryExplorer } from "./components/library-explorer";
 export { LibraryBlockEditor } from "./components/library-block-editor";
 export { DashboardLibraryDetail } from "./components/dashboard-library-detail";
+export { LibrariesPageContent } from "./components/libraries-page-content";
 export type {
   LibraryExplorerActions,
   LibraryExplorerData,

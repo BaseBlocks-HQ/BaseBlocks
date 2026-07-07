@@ -3,7 +3,6 @@
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";
-import { SIDEBAR_ICON_STROKE } from "@/modules/dashboard/sidebar-lucide";
 import { api } from "@baseblocks/backend";
 import {
   AlertDialog,
@@ -31,6 +30,8 @@ import { useMutation } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useReducer, useState } from "react";
+
+const SIDEBAR_ICON_STROKE = 1.75;
 
 interface ReceivedInvitation {
   id: string;

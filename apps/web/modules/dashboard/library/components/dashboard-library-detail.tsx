@@ -27,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Skeleton } from "@baseblocks/ui/skeleton";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -59,14 +59,8 @@ export function DashboardLibraryDetail({
 
   if (data.isLoading || site === undefined) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6">
-        <div className="mx-auto flex min-h-0 w-full max-w-[72rem] flex-1 flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-7 w-48" />
-          </div>
-          <Skeleton className="min-h-[32rem] flex-1 rounded-lg" />
-        </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-6 sm:px-6">
+        <Spinner className="size-6 text-muted-foreground" />
       </div>
     );
   }

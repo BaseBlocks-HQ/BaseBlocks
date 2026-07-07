@@ -2,10 +2,15 @@
 
 import { useTeamSites } from "@/lib/data/use-site";
 import { useTeamAccess } from "@/modules/dashboard/team/team-access";
+import type { Id } from "@baseblocks/backend";
+import { Card, CardContent } from "@baseblocks/ui/card";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useConvexAuth } from "convex/react";
+import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { SitesGrid } from "./components/sites-grid";
+import { CreateSiteDialog } from "./components/create-site-dialog";
+import { SiteCard } from "./components/site-card";
 
 interface DashboardContentProps {
   initialSites?: Array<{
@@ -21,6 +26,66 @@ interface DashboardContentProps {
       slug: string;
     } | null;
   }>;
+}
+
+const sitesGridClassName =
+  "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
+
+function SitesSection({
+  canManageSites,
+  sites,
+  teamId,
+  teamSlug,
+}: {
+  canManageSites: boolean;
+  sites: DashboardContentProps["initialSites"];
+  teamId: Id<"teams">;
+  teamSlug: string;
+}) {
+  const t = useTranslations("dashboard");
+
+  if (sites === undefined) {
+    return (
+      <div className="flex min-h-48 items-center justify-center">
+        <Spinner className="size-6 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (sites.length === 0) {
+    return (
+      <div className="flex flex-col items-stretch gap-8">
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
+            <p className="text-sm text-muted-foreground">
+              {t("noSitesDescription")}
+            </p>
+          </CardContent>
+        </Card>
+        {canManageSites && (
+          <div className={sitesGridClassName}>
+            <CreateSiteDialog teamId={teamId} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={sitesGridClassName}>
+      {canManageSites && <CreateSiteDialog teamId={teamId} />}
+      {sites.map((site) => (
+        <SiteCard
+          key={site._id}
+          canManageSites={canManageSites}
+          site={site}
+          teamSlug={teamSlug}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function DashboardContent({ initialSites }: DashboardContentProps) {
@@ -39,7 +104,7 @@ export function DashboardContent({ initialSites }: DashboardContentProps) {
             <h1 className="text-2xl font-bold">{t("dashboard.yourSites")}</h1>
           </div>
 
-          <SitesGrid
+          <SitesSection
             canManageSites={capabilities.canManageSites}
             sites={sites}
             teamId={team._id}
