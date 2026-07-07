@@ -1,6 +1,6 @@
-import { BeamTableOfContents } from "@/components/BeamTableOfContents";
-import { getDocsMdxComponents } from "@/components/docs/docs-mdx-components";
-import { DocsPageHero } from "@/components/docs/docs-page-hero";
+import { BeamTableOfContents } from "@/modules/marketing/docs/components/beam-table-of-contents";
+import { getDocsMdxComponents } from "@/modules/marketing/docs/components/docs-mdx-components";
+import { DocsPageHero } from "@/modules/marketing/docs/components/docs-page-hero";
 import { type Locale, routing } from "@/i18n/routing";
 import { getLegalSource } from "@/lib/legal-source";
 import type { TOCItemType } from "fumadocs-core/toc";
@@ -29,10 +29,12 @@ export const dynamicParams = false;
 
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
-    getLegalSource(locale).generateParams("slug").map((page) => ({
-      locale,
-      ...page,
-    })),
+    getLegalSource(locale)
+      .generateParams("slug")
+      .map((page) => ({
+        locale,
+        ...page,
+      })),
   );
 }
 

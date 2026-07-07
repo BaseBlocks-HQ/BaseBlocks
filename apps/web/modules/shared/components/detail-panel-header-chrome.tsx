@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicHeaderBlur } from "@/components/public/public-header-blur";
+import { PublicHeaderBlur } from "@/modules/marketing/components/public-header-blur";
 
 export function DetailPanelHeaderChrome({
   children,

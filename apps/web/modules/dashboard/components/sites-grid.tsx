@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteCardSkeleton } from "@/components/skeletons";
+import { SiteCardSkeleton } from "@/modules/dashboard/components/dashboard-skeleton";
 import type { Id } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { Globe } from "lucide-react";

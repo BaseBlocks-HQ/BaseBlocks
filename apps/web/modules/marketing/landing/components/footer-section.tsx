@@ -1,5 +1,5 @@
-import { PublicFooter } from "@/components/public/public-footer";
-import type { TranslateFn } from "@/modules/landing/types";
+import { PublicFooter } from "@/modules/marketing/components/public-footer";
+import type { TranslateFn } from "@/modules/marketing/landing/types";
 import type { ReactNode } from "react";
 import { Reveal } from "./reveal";
 

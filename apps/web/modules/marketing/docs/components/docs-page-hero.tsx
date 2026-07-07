@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { landingFonts } from "@/modules/landing/constants";
+import { landingFonts } from "@/modules/marketing/landing/constants";
 
 type DocsPageHeroProps = {
   description?: string;

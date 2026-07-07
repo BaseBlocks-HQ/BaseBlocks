@@ -9,7 +9,7 @@ import {
   morphSpring,
   stepIndices,
   stepSizes,
-} from "@/modules/landing/constants";
+} from "@/modules/marketing/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { ArrowRight } from "lucide-react";

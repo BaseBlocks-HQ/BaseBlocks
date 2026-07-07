@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardFormDialog } from "@/components/dialogs";
+import { DashboardFormDialog } from "@/modules/shared/dialogs";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";
 import { Button } from "@baseblocks/ui/button";

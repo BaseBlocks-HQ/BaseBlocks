@@ -91,11 +91,7 @@ function CurrentSiteButton({
   );
 }
 
-function SiteMenuItem({
-  site,
-}: {
-  site: EditorSiteSwitcherSite;
-}) {
+function SiteMenuItem({ site }: { site: EditorSiteSwitcherSite }) {
   return (
     <div className="flex w-full min-w-0 items-start gap-2">
       <div className="rounded-[0.75rem] bg-muted/55 p-px shadow-[inset_0_1px_0_hsl(var(--background)/0.45)] ring-1 ring-border/60">

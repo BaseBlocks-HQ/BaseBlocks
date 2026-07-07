@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardDialogShell } from "@/components/dialogs";
+import { DashboardDialogShell } from "@/modules/shared/dialogs";
 import { useAudienceMemberAssignments, useMembers } from "@/lib/data";
 import { useSite } from "@/lib/data/use-site";
 import { api } from "@baseblocks/backend";

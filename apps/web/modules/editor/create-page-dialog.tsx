@@ -7,7 +7,7 @@ import {
   dashboardDialogPrimaryInlineInputClassName,
   dashboardDialogSecondaryFieldLabelClassName,
   dashboardDialogSecondaryInlineInputClassName,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@/lib/validation";
 import { api } from "@baseblocks/backend";

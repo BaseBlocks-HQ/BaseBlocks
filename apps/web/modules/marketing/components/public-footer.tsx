@@ -1,8 +1,8 @@
-import { BrandLogoMark } from "@/components/brand-logo";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { ModeToggle } from "@/components/mode-toggle";
+import { BrandLogoMark } from "@/modules/marketing/components/brand-logo";
+import { LanguageSwitcher } from "@/modules/marketing/components/language-switcher";
+import { ModeToggle } from "@/modules/marketing/components/mode-toggle";
 import { cn } from "@/lib/utils";
-import { landingFonts } from "@/modules/landing/constants";
+import { landingFonts } from "@/modules/marketing/landing/constants";
 import { Github } from "lucide-react";
 import type { ReactNode } from "react";
 

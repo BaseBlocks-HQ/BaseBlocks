@@ -3,7 +3,7 @@
 import {
   DashboardConfirmDialog,
   DashboardDialogShell,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { useSiteAudiences } from "@/lib/data";
 import { api } from "@baseblocks/backend";
 import { normalizePageAccessPolicy } from "@baseblocks/types";

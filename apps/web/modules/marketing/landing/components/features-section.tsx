@@ -1,5 +1,8 @@
-import { landingFeatures, landingFonts } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/types";
+import {
+  landingFeatures,
+  landingFonts,
+} from "@/modules/marketing/landing/constants";
+import type { TranslateFn } from "@/modules/marketing/landing/types";
 import { Reveal } from "./reveal";
 
 interface FeaturesSectionProps {

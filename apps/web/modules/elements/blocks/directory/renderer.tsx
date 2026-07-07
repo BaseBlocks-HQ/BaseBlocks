@@ -153,11 +153,7 @@ export function DirectoryRenderer({
     totalPages,
     safeCurrentPage,
     paginatedItems: paginatedRows,
-  } = getPaginatedItems(
-    filteredRows,
-    settings.pageSize,
-    currentPage,
-  );
+  } = getPaginatedItems(filteredRows, settings.pageSize, currentPage);
 
   // Reset to page 1 when search changes
   const handleSearch = (value: string) => {

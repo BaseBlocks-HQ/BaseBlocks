@@ -1,6 +1,6 @@
 "use client";
 
-import { landingEditorPreviewImages } from "@/modules/landing/constants";
+import { landingEditorPreviewImages } from "@/modules/marketing/landing/constants";
 import Image from "next/image";
 
 export function EditorMockup() {

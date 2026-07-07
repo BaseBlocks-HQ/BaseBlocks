@@ -1,7 +1,7 @@
-import { BrandLogoMark } from "@/components/brand-logo";
+import { BrandLogoMark } from "@/modules/marketing/components/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { landingFonts } from "@/modules/landing/constants";
+import { landingFonts } from "@/modules/marketing/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { Github, House } from "lucide-react";
 import type { ReactNode } from "react";

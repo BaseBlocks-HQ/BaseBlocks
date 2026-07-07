@@ -3,7 +3,7 @@
 import {
   DashboardDialogShell,
   dashboardDialogPrimaryFieldLabelClassName,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { useHaptic } from "@/lib/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import { DialogFooter } from "@baseblocks/ui/dialog";

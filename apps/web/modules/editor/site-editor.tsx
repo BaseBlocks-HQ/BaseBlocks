@@ -1,6 +1,6 @@
 "use client";
 
-import { EditorSkeleton } from "@/components/skeletons";
+import { EditorSkeleton } from "@/modules/editor/components/editor-skeleton";
 import { usePages } from "@/lib/data/use-page";
 import { useSite } from "@/lib/data/use-site";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";

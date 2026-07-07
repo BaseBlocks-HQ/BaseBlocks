@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardConfirmDialog } from "@/components/dialogs";
+import { DashboardConfirmDialog } from "@/modules/shared/dialogs";
 import { Link } from "@/i18n/navigation";
 import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl } from "@/lib/url";

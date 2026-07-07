@@ -7,7 +7,7 @@ import {
   dashboardDialogPrimaryInlineInputClassName,
   dashboardDialogSecondaryFieldLabelClassName,
   dashboardDialogSecondaryInlineInputClassName,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

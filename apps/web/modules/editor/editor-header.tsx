@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicHeaderBlur } from "@/components/public/public-header-blur";
+import { PublicHeaderBlur } from "@/modules/marketing/components/public-header-blur";
 import { cn } from "@/lib/utils";
 import { useEditorSite } from "@/modules/shared/contexts/editor-context";
 import type { Id } from "@baseblocks/backend";

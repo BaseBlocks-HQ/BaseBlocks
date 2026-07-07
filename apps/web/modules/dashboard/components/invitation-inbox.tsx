@@ -3,7 +3,7 @@
 import {
   DashboardConfirmDialog,
   DashboardDialogShell,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getAuthClientDataOrThrow } from "@/lib/auth/result";

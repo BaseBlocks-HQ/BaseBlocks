@@ -4,7 +4,7 @@ import {
   DashboardConfirmDialog,
   DashboardFormDialog,
   dashboardDialogPrimaryFieldLabelClassName,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { usePages } from "@/lib/data";
 import {
   useEditorSite,

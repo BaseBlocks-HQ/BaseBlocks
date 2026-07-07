@@ -1,4 +1,4 @@
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/modules/shared/providers/theme-provider";
 import { type Locale, routing } from "@/i18n/routing";
 import { docsI18n } from "@/lib/source";
 import { MediaViewerModal, MediaViewerProvider } from "@/modules/media-viewer";

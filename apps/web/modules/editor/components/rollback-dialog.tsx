@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardDialogShell } from "@/components/dialogs";
+import { DashboardDialogShell } from "@/modules/shared/dialogs";
 import { Button } from "@baseblocks/ui/button";
 import { DialogFooter } from "@baseblocks/ui/dialog";
 import { RotateCcw } from "lucide-react";

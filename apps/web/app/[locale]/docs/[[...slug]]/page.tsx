@@ -1,6 +1,6 @@
-import { BeamTableOfContents } from "@/components/BeamTableOfContents";
-import { getDocsMdxComponents } from "@/components/docs/docs-mdx-components";
-import { DocsPageHero } from "@/components/docs/docs-page-hero";
+import { BeamTableOfContents } from "@/modules/marketing/docs/components/beam-table-of-contents";
+import { getDocsMdxComponents } from "@/modules/marketing/docs/components/docs-mdx-components";
+import { DocsPageHero } from "@/modules/marketing/docs/components/docs-page-hero";
 import { source } from "@/lib/source";
 import type { TOCItemType } from "fumadocs-core/toc";
 import {

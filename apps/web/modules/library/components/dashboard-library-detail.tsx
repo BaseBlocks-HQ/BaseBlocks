@@ -1,7 +1,7 @@
 "use client";
 
-import { DashboardConfirmDialog } from "@/components/dialogs";
-import { InlineEditableText } from "@/components/inline-editable-text";
+import { DashboardConfirmDialog } from "@/modules/shared/dialogs";
+import { InlineEditableText } from "@/modules/shared/components/inline-editable-text";
 import { Link, useRouter } from "@/i18n/navigation";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
 import {

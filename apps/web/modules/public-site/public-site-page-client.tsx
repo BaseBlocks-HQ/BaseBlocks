@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicSiteSkeleton } from "@/components/skeletons";
+import { PublicSiteSkeleton } from "@/modules/public-site/components/public-site-skeleton";
 import {
   AccessGate,
   PublicSiteLayout,

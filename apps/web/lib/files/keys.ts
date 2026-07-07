@@ -34,14 +34,12 @@ export function createFileKey(args: {
   return `sites/${args.siteId}/${toFilesKind(args.purpose)}/${fileId}/${sanitizeFilename(args.filename)}`;
 }
 
-export function parseFileKey(key: string):
-  | {
-      siteId: string;
-      kind: "documents" | "assets";
-      fileId: string;
-      filename: string;
-    }
-  | null {
+export function parseFileKey(key: string): {
+  siteId: string;
+  kind: "documents" | "assets";
+  fileId: string;
+  filename: string;
+} | null {
   const parts = key.split("/");
   if (
     parts.length !== 5 ||

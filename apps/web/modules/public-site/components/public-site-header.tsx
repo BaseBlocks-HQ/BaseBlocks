@@ -1,7 +1,7 @@
 "use client";
 
-import { ModeToggle } from "@/components/mode-toggle";
-import { SiteLogo } from "@/components/site-logo";
+import { ModeToggle } from "@/modules/marketing/components/mode-toggle";
+import { SiteLogo } from "@/modules/public-site/components/site-logo";
 import { cn } from "@/lib/utils";
 import { SearchBox } from "@/modules/elements/sections/search/search-box";
 import { TopNavMenu } from "@/modules/navigation";

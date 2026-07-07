@@ -1,6 +1,6 @@
-import { PublicHeader } from "@/components/public/public-header";
+import { PublicHeader } from "@/modules/marketing/components/public-header";
 import { Link } from "@/i18n/navigation";
-import type { TranslateFn } from "@/modules/landing/types";
+import type { TranslateFn } from "@/modules/marketing/landing/types";
 import { Button } from "@baseblocks/ui/button";
 
 interface LandingHeaderProps {

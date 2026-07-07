@@ -1,6 +1,6 @@
 "use client";
 
-import { DashboardDialogShell } from "@/components/dialogs";
+import { DashboardDialogShell } from "@/modules/shared/dialogs";
 import { authClient } from "@/lib/auth/client";
 import type { WorkspaceUser } from "@/lib/workspace/server";
 import { api } from "@baseblocks/backend";

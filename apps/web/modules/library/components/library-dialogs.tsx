@@ -3,7 +3,7 @@
 import {
   DashboardConfirmDialog,
   DashboardFormDialog,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import type {
   FolderId,
   LibraryDialogTarget,

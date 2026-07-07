@@ -1,6 +1,6 @@
 "use client";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { LanguageSwitcher } from "@/modules/marketing/components/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";

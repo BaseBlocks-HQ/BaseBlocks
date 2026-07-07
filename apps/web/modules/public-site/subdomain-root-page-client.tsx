@@ -1,6 +1,6 @@
 "use client";
 
-import { PublicSiteSkeleton } from "@/components/skeletons";
+import { PublicSiteSkeleton } from "@/modules/public-site/components/public-site-skeleton";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
 import { AccessGate, SitePrivate } from "@/modules/public-site";
@@ -62,7 +62,10 @@ export function SubdomainRootPageClient({ subdomain }: Props) {
 function RedirectToDefaultPage({
   siteSlug,
   defaultPageSlug,
-}: { siteSlug: string; defaultPageSlug?: string }) {
+}: {
+  siteSlug: string;
+  defaultPageSlug?: string;
+}) {
   redirect(getPageLink(siteSlug, defaultPageSlug ?? "home"));
 
   return (

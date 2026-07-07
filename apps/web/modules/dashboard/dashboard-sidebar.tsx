@@ -1,6 +1,9 @@
 "use client";
 
-import { ThemeDarkIcon, ThemeLightIcon } from "@/components/theme-icons";
+import {
+  ThemeDarkIcon,
+  ThemeLightIcon,
+} from "@/modules/shared/components/theme-icons";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { type Locale, routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";

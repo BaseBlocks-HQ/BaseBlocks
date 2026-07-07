@@ -14,7 +14,9 @@ import { useMutation } from "convex/react";
  */
 export function ConvexEditorMutationsProvider({
   children,
-}: { children: React.ReactNode }) {
+}: {
+  children: React.ReactNode;
+}) {
   const createLayoutMut = useMutation(api.layouts.mutations.create);
   const removeLayoutMut = useMutation(api.layouts.mutations.remove);
   const reorderLayoutsMut = useMutation(api.layouts.mutations.reorder);

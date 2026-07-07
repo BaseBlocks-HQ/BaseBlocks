@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteLogo } from "@/components/site-logo";
+import { SiteLogo } from "@/modules/public-site/components/site-logo";
 import { cn } from "@/lib/utils";
 import { NavItem } from "@/modules/navigation";
 import type { PageWithChildren } from "@baseblocks/types";
@@ -50,9 +50,7 @@ export function PublicSiteSidebar({
   return (
     <Sidebar>
       <SidebarHeader
-        className={cn(
-          "h-14 px-4 flex flex-row items-center gap-2",
-        )}
+        className={cn("h-14 px-4 flex flex-row items-center gap-2")}
         style={
           site.settings.customization?.headerColor
             ? {

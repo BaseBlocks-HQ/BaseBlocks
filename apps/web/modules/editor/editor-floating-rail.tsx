@@ -220,7 +220,9 @@ function FloatingRailButton({
 
 function RailUndoRedoControls({
   horizontal = false,
-}: { horizontal?: boolean }) {
+}: {
+  horizontal?: boolean;
+}) {
   const { currentPageId } = useEditorUi();
   const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
 

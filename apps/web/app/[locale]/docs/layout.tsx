@@ -1,6 +1,6 @@
-import { DocsMobileHeaderActions } from "@/components/docs/docs-mobile-header-actions";
-import { DocsSidebarHaptics } from "@/components/docs/docs-sidebar-haptics";
-import { PublicHeader } from "@/components/public/public-header";
+import { DocsMobileHeaderActions } from "@/modules/marketing/docs/components/docs-mobile-header-actions";
+import { DocsSidebarHaptics } from "@/modules/marketing/docs/components/docs-sidebar-haptics";
+import { PublicHeader } from "@/modules/marketing/components/public-header";
 import { Link } from "@/i18n/navigation";
 import { isAuthenticated } from "@/lib/auth/server";
 import { source } from "@/lib/source";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ContentSkeleton } from "@/components/skeletons";
+import { ContentSkeleton } from "@/modules/public-site/components/content-skeleton";
 import { cn } from "@/lib/utils";
 import { SubNavBar } from "@/modules/navigation";
 import { BreadcrumbBar } from "@/modules/navigation";
@@ -83,7 +83,6 @@ export function PublicSiteMainContent({
         ) : (
           <PublicContent pageId={currentPage._id as Id<"pages">} />
         )}
-
       </div>
     </>
   );

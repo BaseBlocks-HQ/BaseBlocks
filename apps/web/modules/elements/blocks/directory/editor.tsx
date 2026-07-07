@@ -37,7 +37,10 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  restrictToHorizontalAxis,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
 import {
   SortableContext,
   arrayMove,
@@ -145,7 +148,8 @@ function SortableColumnHead({
 
   const colType = column.type ?? "text";
   const TypeIcon =
-    COLUMN_TYPE_OPTIONS.find((option) => option.value === colType)?.icon ?? Text;
+    COLUMN_TYPE_OPTIONS.find((option) => option.value === colType)?.icon ??
+    Text;
 
   return (
     <TableHead
@@ -174,7 +178,9 @@ function SortableColumnHead({
             />
             <Select
               value={colType}
-              onValueChange={(value) => onUpdateType(value as DirectoryColumnType)}
+              onValueChange={(value) =>
+                onUpdateType(value as DirectoryColumnType)
+              }
             >
               <SelectTrigger className="h-7 w-[90px] shrink-0 text-xs">
                 <SelectValue />
@@ -240,7 +246,9 @@ function SortableDirectoryRow({
     <TableRow
       ref={sortable.setNodeRef}
       style={style}
-      className={cn(sortable.isDragging && "z-10 bg-background opacity-80 shadow-sm")}
+      className={cn(
+        sortable.isDragging && "z-10 bg-background opacity-80 shadow-sm",
+      )}
     >
       <TableCell className="w-10 p-1 align-top">
         <DragHandleButton
@@ -249,7 +257,10 @@ function SortableDirectoryRow({
         />
       </TableCell>
       {columns.map((col) => (
-        <TableCell key={col.id} className="min-w-[12rem] p-1 align-top whitespace-normal">
+        <TableCell
+          key={col.id}
+          className="min-w-[12rem] p-1 align-top whitespace-normal"
+        >
           <Input
             value={row.cells[col.id] ?? ""}
             onChange={(e) => onUpdateCell(col.id, e.target.value)}
@@ -324,12 +335,16 @@ export function DirectoryEditor({
       ),
     );
   })();
-  const { pageSize, totalPages, safeCurrentPage, paginatedItems: paginatedRows } =
-    getPaginatedItems(
-      filteredRows,
-      localContent.settings.pageSize,
-      currentPage,
-    );
+  const {
+    pageSize,
+    totalPages,
+    safeCurrentPage,
+    paginatedItems: paginatedRows,
+  } = getPaginatedItems(
+    filteredRows,
+    localContent.settings.pageSize,
+    currentPage,
+  );
 
   useEffect(() => {
     setLocalContent(content);
@@ -355,7 +370,9 @@ export function DirectoryEditor({
   };
 
   const reorderColumns = (activeId: string, overId: string) => {
-    const oldIndex = localContent.columns.findIndex((col) => col.id === activeId);
+    const oldIndex = localContent.columns.findIndex(
+      (col) => col.id === activeId,
+    );
     const newIndex = localContent.columns.findIndex((col) => col.id === overId);
 
     if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
@@ -622,7 +639,9 @@ export function DirectoryEditor({
           <Table className="table-auto">
             <TableHeader>
               <SortableContext
-                items={localContent.columns.map((col) => `${COLUMN_DRAG_PREFIX}${col.id}`)}
+                items={localContent.columns.map(
+                  (col) => `${COLUMN_DRAG_PREFIX}${col.id}`,
+                )}
                 strategy={horizontalListSortingStrategy}
               >
                 <TableRow>
@@ -636,7 +655,9 @@ export function DirectoryEditor({
                       isEditing={editingHeaderId === col.id}
                       onStartEdit={() => setEditingHeaderId(col.id)}
                       onStopEdit={() => setEditingHeaderId(null)}
-                      onUpdateHeader={(header) => updateColumnHeader(col.id, header)}
+                      onUpdateHeader={(header) =>
+                        updateColumnHeader(col.id, header)
+                      }
                       onUpdateType={(type) => updateColumnType(col.id, type)}
                       onRemove={() => removeColumn(col.id)}
                     />
@@ -658,7 +679,9 @@ export function DirectoryEditor({
             </TableHeader>
             <TableBody>
               <SortableContext
-                items={paginatedRows.map((row) => `${ROW_DRAG_PREFIX}${row.id}`)}
+                items={paginatedRows.map(
+                  (row) => `${ROW_DRAG_PREFIX}${row.id}`,
+                )}
                 strategy={verticalListSortingStrategy}
               >
                 {paginatedRows.length === 0 ? (

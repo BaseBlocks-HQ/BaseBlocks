@@ -5,7 +5,7 @@ import {
   DashboardDialogShell,
   dashboardDialogPrimaryFieldLabelClassName,
   dashboardDialogPrimaryInlineInputClassName,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import {
   FILE_SEARCH_PARAM,
   buildFileDeepLinkPath,

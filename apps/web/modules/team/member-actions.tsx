@@ -3,7 +3,7 @@
 import {
   DashboardConfirmDialog,
   DashboardFormDialog,
-} from "@/components/dialogs";
+} from "@/modules/shared/dialogs";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

@@ -1,5 +1,5 @@
-import { landingFonts } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/types";
+import { landingFonts } from "@/modules/marketing/landing/constants";
+import type { TranslateFn } from "@/modules/marketing/landing/types";
 import type { ReactNode } from "react";
 import { BlurIn } from "./blur-in";
 import { EditorMockup } from "./editor-mockup";

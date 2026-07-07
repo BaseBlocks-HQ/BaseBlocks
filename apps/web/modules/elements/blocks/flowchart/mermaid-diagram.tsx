@@ -377,9 +377,7 @@ export function MermaidDiagram({
         ref={containerRef}
         className={cn(
           `relative w-full max-w-full min-w-0 overflow-hidden ${canvasHeight} cursor-grab touch-none select-none active:cursor-grabbing`,
-          embedded
-            ? "bg-transparent"
-            : "rounded-md border border-border/60",
+          embedded ? "bg-transparent" : "rounded-md border border-border/60",
           !theme && !embedded && "bg-muted/25 dark:bg-muted/15",
         )}
         style={{
