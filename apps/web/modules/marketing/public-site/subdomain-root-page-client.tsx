@@ -1,11 +1,10 @@
 "use client";
 
-import { PublicSiteSkeleton } from "@/modules/marketing/public-site/components/public-site-skeleton";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
 import { AccessGate, SitePrivate } from "@/modules/marketing/public-site";
 import { api } from "@baseblocks/backend";
-import { Skeleton } from "@baseblocks/ui/skeleton";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { redirect } from "next/navigation";
 
@@ -56,7 +55,7 @@ export function SubdomainRootPageClient({ subdomain }: Props) {
     }
   }
 
-  return <PublicSiteSkeleton />;
+  return <PublicSiteLoading />;
 }
 
 function RedirectToDefaultPage({
@@ -70,7 +69,15 @@ function RedirectToDefaultPage({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <Skeleton className="h-8 w-48" />
+      <Spinner className="size-6 text-muted-foreground" />
+    </div>
+  );
+}
+
+function PublicSiteLoading() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background">
+      <Spinner className="size-6 text-muted-foreground" />
     </div>
   );
 }

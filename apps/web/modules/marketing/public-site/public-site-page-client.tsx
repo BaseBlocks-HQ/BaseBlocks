@@ -1,6 +1,5 @@
 "use client";
 
-import { PublicSiteSkeleton } from "@/modules/marketing/public-site/components/public-site-skeleton";
 import {
   AccessGate,
   PublicSiteLayout,
@@ -9,6 +8,7 @@ import {
   SitePrivate,
 } from "@/modules/marketing/public-site";
 import { api } from "@baseblocks/backend";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 
 type Props = {
@@ -35,7 +35,7 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
   });
 
   if (site === undefined || team === undefined) {
-    return <PublicSiteSkeleton />;
+    return <PublicSiteLoading />;
   }
 
   if (!site || !team) {
@@ -60,4 +60,12 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
   }
 
   return <PublicSiteLayout site={site} team={team} pagePath={pagePath} />;
+}
+
+function PublicSiteLoading() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background">
+      <Spinner className="size-6 text-muted-foreground" />
+    </div>
+  );
 }

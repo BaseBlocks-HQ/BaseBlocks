@@ -14,25 +14,13 @@ import type {
 } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { editorLayoutStackClassName } from "./layouts/editor-spacing";
 import { SortableLayout } from "./layouts/sortable-layout";
 import { PageTabBar } from "./page-tab-bar";
-
-function ContentSkeleton() {
-  return (
-    <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
-      <div className="w-full max-w-2xl animate-pulse space-y-4">
-        <div className="h-8 w-1/2 rounded bg-muted sm:w-1/3" />
-        <div className="h-4 w-full rounded bg-muted" />
-        <div className="h-4 w-2/3 rounded bg-muted" />
-        <div className="h-32 w-full rounded bg-muted" />
-      </div>
-    </div>
-  );
-}
 
 function EmptyLayoutsState({
   hasTabs,
@@ -305,7 +293,11 @@ export function PageEditor({
   );
 
   if (pageData === undefined || layoutsData === undefined) {
-    return <ContentSkeleton />;
+    return (
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
+        <Spinner className="size-6 text-muted-foreground" />
+      </div>
+    );
   }
 
   if (!pageData) {

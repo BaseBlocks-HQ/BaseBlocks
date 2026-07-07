@@ -1,6 +1,5 @@
 "use client";
 
-import { EditorSkeleton } from "@/modules/editor/components/editor-skeleton";
 import { usePages } from "@/lib/data/use-page";
 import { useSite } from "@/lib/data/use-site";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
@@ -26,6 +25,7 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useConvexAuth, useMutation } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -230,7 +230,7 @@ function SiteEditorInner({
     });
 
   if (site === undefined || pages === undefined) {
-    return <EditorSkeleton />;
+    return <EditorLoading />;
   }
 
   if (!site || site.teamId !== team._id) {
@@ -525,7 +525,7 @@ export function SiteEditor({
   };
 
   return (
-    <Suspense fallback={<EditorSkeleton />}>
+    <Suspense fallback={<EditorLoading />}>
       <SiteEditorShell
         initialPages={initialPages}
         initialSite={initialSite}
@@ -534,5 +534,13 @@ export function SiteEditor({
         siteId={siteId}
       />
     </Suspense>
+  );
+}
+
+function EditorLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Spinner className="size-6 text-muted-foreground" />
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { ContentSkeleton } from "@/modules/marketing/public-site/components/content-skeleton";
 import { cn } from "@/lib/utils";
 import { SubNavBar } from "@/modules/marketing/public-site/navigation";
 import { BreadcrumbBar } from "@/modules/marketing/public-site/navigation";
@@ -8,6 +7,7 @@ import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
 import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
 import { Button } from "@baseblocks/ui/button";
+import { Spinner } from "@baseblocks/ui/spinner";
 import Link from "next/link";
 import { PublicContent } from "../public-content";
 
@@ -55,8 +55,8 @@ export function PublicSiteMainContent({
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {currentPage === undefined ? (
-          <div className="p-8">
-            <ContentSkeleton />
+          <div className="flex flex-1 items-center justify-center p-8">
+            <Spinner className="size-6 text-muted-foreground" />
           </div>
         ) : currentPage === null ? (
           <div className="flex flex-1 items-center justify-center p-8">

@@ -6,7 +6,6 @@ import "@/modules/editor/elements/layouts";
 import "@/modules/editor/elements/blocks";
 import "@/modules/editor/elements/sections";
 import "@/modules/editor/elements/media";
-import { ContentSkeleton } from "@/modules/marketing/public-site/components/content-skeleton";
 import { usePage, usePublishedLayouts } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +27,7 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { PublicPageDetailPanel } from "./public-page-detail-panel";
@@ -390,8 +390,8 @@ function PublicContentInner({
 
   if (pageData === undefined || layoutsData === undefined) {
     return (
-      <div className="p-8">
-        <ContentSkeleton />
+      <div className="flex min-h-48 items-center justify-center p-8">
+        <Spinner className="size-6 text-muted-foreground" />
       </div>
     );
   }
