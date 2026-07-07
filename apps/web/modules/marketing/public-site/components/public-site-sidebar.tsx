@@ -12,7 +12,7 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
-import { Skeleton } from "@baseblocks/ui/skeleton";
+import { Spinner } from "@baseblocks/ui/spinner";
 
 interface PublicSiteSidebarProps {
   site: {
@@ -75,11 +75,9 @@ export function PublicSiteSidebar({
         <ScrollArea className="h-full">
           <nav className="space-y-0.5 p-2.5">
             {pages === undefined ? (
-              <>
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-full" />
-              </>
+              <div className="flex min-h-24 items-center justify-center">
+                <Spinner className="size-5 text-muted-foreground" />
+              </div>
             ) : (
               pages.map((page) => (
                 <NavItem

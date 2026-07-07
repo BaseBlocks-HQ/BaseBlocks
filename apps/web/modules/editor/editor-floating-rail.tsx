@@ -4,13 +4,13 @@ import {
   type AnyRegistryEntry,
   getElementsByCategory,
 } from "@/modules/editor/elements/framework/registry";
+import { usePageExpandState } from "@/lib/use-page-expand-state";
 import type { ElementCategory } from "@/modules/editor/elements/categories";
 import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
 import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
 import { SiteConfigPanel } from "@/modules/editor/elements/panels/site";
 import { SortablePageTree } from "@/modules/editor/navigation";
-import { usePageExpandState } from "@/modules/editor/navigation/hooks/use-page-expand-state";
 import {
   useEditorSite,
   useEditorUi,
@@ -75,6 +75,8 @@ interface EditorFloatingRailProps {
 }
 
 type RailPanelId = "pages" | ElementCategory;
+
+const EXPANDED_PAGES_KEY = "baseblocks_editor_expanded_pages";
 
 const CATEGORY_TITLES: Record<ElementCategory, string> = {
   site: "Site Settings",
@@ -512,6 +514,7 @@ export function EditorFloatingRail({
   const railWrapperRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
+    EXPANDED_PAGES_KEY,
     site._id,
   );
 

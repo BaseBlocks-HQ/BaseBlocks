@@ -196,7 +196,6 @@ export function NodeList({
                 id={node.id}
                 className="min-w-0 w-full"
               >
-                {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard navigation handled by inner interactive buttons */}
                 <div
                   role="presentation"
                   className="group flex w-full min-w-0 cursor-pointer items-center gap-1 overflow-hidden rounded-lg border border-transparent px-2 py-1.5 transition-colors hover:border-border/70 hover:bg-accent/40"

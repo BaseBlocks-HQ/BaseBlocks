@@ -2,23 +2,21 @@
 
 import { useEffect, useState } from "react";
 
-const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
-
 type SerializedState = Record<string, string[]>;
 
-export function usePageExpandState(siteId: string) {
+export function usePageExpandState(storageKey: string, siteId: string) {
   const [serialized, setSerialized] = useState<SerializedState>({});
 
   useEffect(() => {
     try {
-      const item = localStorage.getItem(EXPANDED_PAGES_KEY);
+      const item = localStorage.getItem(storageKey);
       if (item) setSerialized(JSON.parse(item));
     } catch {}
-  }, []);
+  }, [storageKey]);
 
   const sync = (next: SerializedState) => {
     setSerialized(next);
-    localStorage.setItem(EXPANDED_PAGES_KEY, JSON.stringify(next));
+    localStorage.setItem(storageKey, JSON.stringify(next));
   };
 
   const expandedPages = serialized[siteId]
@@ -29,30 +27,22 @@ export function usePageExpandState(siteId: string) {
 
   const toggleExpand = (pageId: string) => {
     const current = new Set(serialized[siteId] || []);
-    if (current.has(pageId)) {
-      current.delete(pageId);
-    } else {
-      current.add(pageId);
-    }
+    if (current.has(pageId)) current.delete(pageId);
+    else current.add(pageId);
     sync({ ...serialized, [siteId]: Array.from(current) });
   };
 
   const expandPath = (pageIds: string[]) => {
     if (pageIds.length === 0) return;
     const current = new Set(serialized[siteId] || []);
-    for (const pageId of pageIds) {
-      current.add(pageId);
-    }
+    for (const pageId of pageIds) current.add(pageId);
     sync({ ...serialized, [siteId]: Array.from(current) });
   };
 
   const setExpanded = (pageId: string, expanded: boolean) => {
     const current = new Set(serialized[siteId] || []);
-    if (expanded) {
-      current.add(pageId);
-    } else {
-      current.delete(pageId);
-    }
+    if (expanded) current.add(pageId);
+    else current.delete(pageId);
     sync({ ...serialized, [siteId]: Array.from(current) });
   };
 

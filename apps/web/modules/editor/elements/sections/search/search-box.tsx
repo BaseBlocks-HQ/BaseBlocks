@@ -383,10 +383,8 @@ export function SearchBox({
                                   Page
                                 </span>
                               ) : (
-                                <>
-                                  {result.metadata.size &&
-                                    formatFileSize(result.metadata.size)}
-                                </>
+                                result.metadata.size &&
+                                formatFileSize(result.metadata.size)
                               )}
                               {isContentMatch && (
                                 <span className="ml-2 text-primary">

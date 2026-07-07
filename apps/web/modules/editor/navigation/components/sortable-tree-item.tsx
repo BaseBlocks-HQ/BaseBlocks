@@ -122,7 +122,6 @@ export function SortableTreeItem({
                   <IconFile className="h-4 w-4" />
                 )}
               </span>
-              {/* biome-ignore lint/a11y/useSemanticElements: nested inside the row button — can't nest <button> in <button> */}
               <span
                 role="button"
                 tabIndex={0}

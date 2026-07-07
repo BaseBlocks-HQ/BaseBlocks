@@ -1,7 +1,7 @@
 "use client";
 
 import { getPageLink } from "@/lib/url";
-import { usePageExpandState } from "@/modules/marketing/public-site/navigation/hooks/use-page-expand-state";
+import { usePageExpandState } from "@/lib/use-page-expand-state";
 import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
 import type { PageWithChildren } from "@baseblocks/domain";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
@@ -11,6 +11,7 @@ import { IconFile, IconHouse } from "nucleo-glass";
 import { useEffect } from "react";
 
 const EMPTY_ANCESTOR_IDS: string[] = [];
+const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
 
 interface NavItemProps {
   page: PageWithChildren;
@@ -70,7 +71,7 @@ export function NavItem({
     isExpanded: isExpandedFromStorage,
     toggleExpand,
     setExpanded,
-  } = usePageExpandState(siteId);
+  } = usePageExpandState(EXPANDED_PAGES_KEY, siteId);
   const isExpanded = isExpandedFromStorage(page._id);
 
   // Auto-expand when ancestorIds change (e.g., navigation to a nested page)

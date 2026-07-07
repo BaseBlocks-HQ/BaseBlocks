@@ -3,9 +3,9 @@
 import { Link } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getDisplayDomain } from "@/lib/url";
+import { usePageExpandState } from "@/lib/use-page-expand-state";
 import { ElementPicker } from "@/modules/editor/components/element-picker";
 import { SortablePageTree } from "@/modules/editor/navigation";
-import { usePageExpandState } from "@/modules/editor/navigation/hooks/use-page-expand-state";
 import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";
 import type {
@@ -30,6 +30,8 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
+
+const EXPANDED_PAGES_KEY = "baseblocks_editor_expanded_pages";
 
 interface EditorSidebarProps {
   site: {
@@ -67,6 +69,7 @@ export function EditorSidebar({
   const { selection, clearSelection } = useEditorUi();
   const [manualActiveTab, setManualActiveTab] = useState("pages");
   const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
+    EXPANDED_PAGES_KEY,
     site._id,
   );
 
