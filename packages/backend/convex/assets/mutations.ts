@@ -1,4 +1,7 @@
-import { isSupportedUploadMimeType } from "@baseblocks/types";
+import {
+  isSupportedUploadMimeType,
+  resolveUploadMimeType,
+} from "@baseblocks/types";
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireSiteManager } from "../auth";
@@ -16,17 +19,18 @@ function validateSiteAssetUpload(args: {
   objectKey: string;
   contentType: string;
   size: number;
-}) {
+}): string {
   const parsed = parseFileKey(args.objectKey);
-  if (
-    !parsed ||
-    parsed.siteId !== args.siteId ||
-    parsed.kind !== "assets"
-  ) {
+  if (!parsed || parsed.siteId !== args.siteId || parsed.kind !== "assets") {
     throw new ConvexError("Invalid asset key");
   }
 
-  if (!isSupportedUploadMimeType(args.contentType)) {
+  const contentType = resolveUploadMimeType({
+    filename: parsed.filename,
+    contentType: args.contentType,
+  });
+
+  if (!isSupportedUploadMimeType(contentType)) {
     throw new ConvexError("File type not allowed");
   }
 
@@ -34,6 +38,8 @@ function validateSiteAssetUpload(args: {
   if (maxUploadSize !== null && args.size > maxUploadSize) {
     throw new ConvexError("File is too large");
   }
+
+  return contentType;
 }
 
 export const createSiteAsset = mutation({
@@ -49,7 +55,12 @@ export const createSiteAsset = mutation({
     ctx,
     { siteId, objectKey, filename, contentType, size, checksum },
   ) => {
-    validateSiteAssetUpload({ siteId, objectKey, contentType, size });
+    const normalizedContentType = validateSiteAssetUpload({
+      siteId,
+      objectKey,
+      contentType,
+      size,
+    });
 
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) {
@@ -66,7 +77,7 @@ export const createSiteAsset = mutation({
       bucket: getFilesBucketName(),
       objectKey,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
       checksum,
       uploadedBy: auth.userId,

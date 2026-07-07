@@ -2,10 +2,9 @@
 
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import { useAction, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { useState } from "react";
 import { type UploadProgress, filesClient } from "./client";
-import { isExtractable } from "./extraction";
 
 export interface UploadState {
   isUploading: boolean;
@@ -28,9 +27,6 @@ export function useFileUpload() {
 
   const createDocument = useMutation(api.documents.mutations.create);
   const createInLibrary = useMutation(api.documents.mutations.createInLibrary);
-  const triggerExtraction = useAction(
-    api.actions?.extractDocument?.triggerExtraction,
-  );
 
   const updateUploadState = (fileId: string, update: Partial<UploadState>) => {
     setUploadStates((prev) => ({
@@ -97,11 +93,6 @@ export function useFileUpload() {
         progress: { loaded: file.size, total: file.size, percentage: 100 },
       });
       options.onSuccess?.(documentId);
-
-      const contentType = file.type || "application/octet-stream";
-      if (isExtractable(contentType) && triggerExtraction) {
-        triggerExtraction({ documentId }).catch((_err: unknown) => {});
-      }
 
       return documentId;
     } catch (err) {

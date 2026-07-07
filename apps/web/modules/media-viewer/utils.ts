@@ -34,30 +34,6 @@ function revokeBlobUrl(url: string): void {
 }
 
 /**
- * Check if a content type is an Office document
- */
-function isOfficeDocument(contentType?: string): boolean {
-  if (!contentType) return false;
-  const type = contentType.toLowerCase();
-  return (
-    type.includes("officedocument") ||
-    type.includes("msword") ||
-    type.includes("ms-excel") ||
-    type.includes("ms-powerpoint") ||
-    type.includes("opendocument")
-  );
-}
-
-/**
- * Convert a relative URL to an absolute public URL
- */
-function toAbsoluteUrl(url: string): string {
-  if (typeof window === "undefined") return url;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${window.location.origin}${url}`;
-}
-
-/**
  * Open a file in a new tab by creating a blob URL
  * This works around Content-Disposition: attachment headers
  */
@@ -66,15 +42,6 @@ export async function openInNewTab(
   contentType?: string,
 ): Promise<void> {
   try {
-    // For Office documents, open in Microsoft Office Online viewer
-    // Use absolute URL since Microsoft's viewer needs to access the file externally
-    if (isOfficeDocument(contentType)) {
-      const absoluteUrl = toAbsoluteUrl(url);
-      const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(absoluteUrl)}`;
-      window.open(viewerUrl, "_blank");
-      return;
-    }
-
     const blobUrl = await createBlobUrl(url, contentType);
     const newWindow = window.open(blobUrl, "_blank");
 

@@ -1,4 +1,7 @@
-import { isSupportedUploadMimeType } from "@baseblocks/types";
+import {
+  isSupportedUploadMimeType,
+  resolveUploadMimeType,
+} from "@baseblocks/types";
 import { v } from "convex/values";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";
@@ -9,7 +12,6 @@ import {
 } from "../files/config";
 import { parseFileKey } from "../files/keys";
 import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
-import { isExtractable } from "../lib/extractable";
 import { markSiteModified } from "../lib/markModified";
 import { resolveSiteContext } from "../lib/resolvers";
 import { deleteDocumentRows } from "./lib";
@@ -20,17 +22,18 @@ function validateDocumentUpload(args: {
   objectKey: string;
   contentType: string;
   size: number;
-}) {
+}): string {
   const parsed = parseFileKey(args.objectKey);
-  if (
-    !parsed ||
-    parsed.siteId !== args.siteId ||
-    parsed.kind !== "documents"
-  ) {
+  if (!parsed || parsed.siteId !== args.siteId || parsed.kind !== "documents") {
     throw new Error("Invalid document key");
   }
 
-  if (!isSupportedUploadMimeType(args.contentType)) {
+  const contentType = resolveUploadMimeType({
+    filename: parsed.filename,
+    contentType: args.contentType,
+  });
+
+  if (!isSupportedUploadMimeType(contentType)) {
     throw new Error("File type not allowed");
   }
 
@@ -38,6 +41,8 @@ function validateDocumentUpload(args: {
   if (maxUploadSize !== null && args.size > maxUploadSize) {
     throw new Error("File is too large");
   }
+
+  return contentType;
 }
 
 async function createDocumentAsset(
@@ -78,7 +83,6 @@ async function patchDocumentSearchEntry(
     contentType: string;
     size: number;
     libraryId?: string;
-    extractedText?: string;
   },
 ) {
   const entry = await ctx.db
@@ -94,9 +98,7 @@ async function patchDocumentSearchEntry(
 
   await ctx.db.patch(entry._id, {
     title: document.filename,
-    extractedText: document.extractedText?.trim()
-      ? document.extractedText
-      : document.filename,
+    extractedText: document.filename,
     metadata: buildDocumentSearchMetadata({
       documentId: document._id,
       assetId: document.assetId,
@@ -123,7 +125,12 @@ export const create = mutation({
     ctx,
     { siteId, objectKey, filename, contentType, size, checksum },
   ) => {
-    validateDocumentUpload({ siteId, objectKey, contentType, size });
+    const normalizedContentType = validateDocumentUpload({
+      siteId,
+      objectKey,
+      contentType,
+      size,
+    });
 
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
@@ -134,19 +141,17 @@ export const create = mutation({
       uploadedBy: auth.userId,
       objectKey,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
       checksum,
     });
 
-    const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
       assetId,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
-      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
@@ -162,7 +167,7 @@ export const create = mutation({
         documentId,
         assetId,
         filename,
-        contentType,
+        contentType: normalizedContentType,
         size,
       }),
       updatedAt: Date.now(),
@@ -173,9 +178,8 @@ export const create = mutation({
       siteId,
       assetId,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
-      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
@@ -210,7 +214,12 @@ export const createInLibrary = mutation({
       checksum,
     },
   ) => {
-    validateDocumentUpload({ siteId, objectKey, contentType, size });
+    const normalizedContentType = validateDocumentUpload({
+      siteId,
+      objectKey,
+      contentType,
+      size,
+    });
 
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
@@ -236,21 +245,19 @@ export const createInLibrary = mutation({
       uploadedBy: auth.userId,
       objectKey,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
       checksum,
     });
 
-    const extractable = isExtractable(contentType);
     const documentId = await ctx.db.insert("documents", {
       siteId,
       libraryId,
       folderId,
       assetId,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
-      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
@@ -266,7 +273,7 @@ export const createInLibrary = mutation({
         documentId,
         assetId,
         filename,
-        contentType,
+        contentType: normalizedContentType,
         size,
         libraryId,
       }),
@@ -280,9 +287,8 @@ export const createInLibrary = mutation({
       folderId,
       assetId,
       filename,
-      contentType,
+      contentType: normalizedContentType,
       size,
-      extractionStatus: extractable ? "pending" : "unsupported",
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
@@ -343,33 +349,6 @@ export const rename = mutation({
     await ctx.db.patch(documentId, { filename });
     await upsertDocumentListing(ctx, { ...document, filename });
     await patchDocumentSearchEntry(ctx, { ...document, filename });
-    return documentId;
-  },
-});
-
-// Update document metadata (e.g., after text extraction)
-export const updateMetadata = mutation({
-  args: {
-    documentId: v.id("documents"),
-    extractedText: v.optional(v.string()),
-    pageCount: v.optional(v.number()),
-  },
-  handler: async (ctx, { documentId, extractedText, pageCount }) => {
-    const document = await ctx.db.get(documentId);
-    if (!document) throw new Error("Document not found");
-
-    const siteCtx = await resolveSiteContext(ctx, document.siteId);
-    if (!siteCtx) throw new Error("Site not found");
-
-    await requireLibraryManager(ctx, siteCtx.teamId);
-
-    const updates: Record<string, unknown> = {};
-    if (extractedText !== undefined) updates.extractedText = extractedText;
-    if (pageCount !== undefined) updates.pageCount = pageCount;
-
-    await ctx.db.patch(documentId, updates);
-    await upsertDocumentListing(ctx, { ...document, ...updates });
-    await patchDocumentSearchEntry(ctx, { ...document, ...updates });
     return documentId;
   },
 });

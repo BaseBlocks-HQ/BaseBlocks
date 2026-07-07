@@ -92,63 +92,13 @@ async function isPublishedFileBlockDocument(
 }
 
 /**
- * Extract a text snippet around the first occurrence of a search term
- * Returns the snippet with the match position for highlighting
- */
-function extractSnippet(
-  text: string | undefined,
-  searchTerm: string,
-  contextLength = 80,
-): { snippet: string; matchStart: number; matchEnd: number } | null {
-  if (!text) return null;
-
-  const lowerText = text.toLowerCase();
-  const lowerTerm = searchTerm.toLowerCase();
-  const matchIndex = lowerText.indexOf(lowerTerm);
-
-  if (matchIndex === -1) return null;
-
-  // Calculate snippet boundaries
-  const start = Math.max(0, matchIndex - contextLength);
-  const end = Math.min(
-    text.length,
-    matchIndex + searchTerm.length + contextLength,
-  );
-
-  // Extract snippet and adjust match position
-  let snippet = text.slice(start, end);
-  const matchStart = matchIndex - start;
-  const matchEnd = matchStart + searchTerm.length;
-
-  // Add ellipsis if truncated
-  if (start > 0) {
-    snippet = `...${snippet}`;
-  }
-  if (end < text.length) {
-    snippet = `${snippet}...`;
-  }
-
-  return {
-    snippet,
-    matchStart: start > 0 ? matchStart + 3 : matchStart, // Account for "..."
-    matchEnd: start > 0 ? matchEnd + 3 : matchEnd,
-  };
-}
-
-/**
- * Format search result with snippet
+ * Format search result.
  */
 function formatSearchResult(
-  doc: Doc<"documents">,
   listing: Doc<"documentListings">,
-  matchType: "content" | "filename",
-  searchTerm: string,
+  matchType: "filename",
 ) {
   const visibleDocument = mapDocumentListing(listing);
-  const snippetData =
-    matchType === "content"
-      ? extractSnippet(doc.extractedText, searchTerm)
-      : null;
 
   return {
     _id: visibleDocument._id,
@@ -158,9 +108,9 @@ function formatSearchResult(
     downloadUrl: visibleDocument.downloadUrl,
     libraryId: visibleDocument.libraryId,
     matchType,
-    snippet: snippetData?.snippet ?? null,
-    snippetMatchStart: snippetData?.matchStart ?? null,
-    snippetMatchEnd: snippetData?.matchEnd ?? null,
+    snippet: null,
+    snippetMatchStart: null,
+    snippetMatchEnd: null,
   };
 }
 
@@ -175,15 +125,6 @@ async function performSearch(
   limit: number,
   activeLibraryIds?: string[],
 ) {
-  // 1. Search by content (full-text search)
-  const contentResults = await ctx.db
-    .query("documents")
-    .withSearchIndex("search_content", (q) =>
-      q.search("extractedText", searchTerm).eq("siteId", siteId),
-    )
-    .take(limit * 2); // Fetch more to account for filtering
-
-  // 2. Search by filename (using search index for better performance)
   const filenameResults = await ctx.db
     .query("documents")
     .withSearchIndex("search_filename", (q) =>
@@ -191,7 +132,6 @@ async function performSearch(
     )
     .take(limit * 2);
 
-  // 3. Merge and deduplicate, prioritizing content matches
   const seen = new Set<string>();
   const combined: ReturnType<typeof formatSearchResult>[] = [];
 
@@ -203,23 +143,12 @@ async function performSearch(
     return activeLibraryIds.includes(listing.libraryId) ? listing : null;
   };
 
-  // Content matches first (higher relevance)
-  for (const doc of contentResults) {
-    if (!seen.has(doc._id)) {
-      const listing = await getVisibleListing(doc);
-      if (!listing) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, listing, "content", searchTerm));
-    }
-  }
-
-  // Then filename matches
   for (const doc of filenameResults) {
     if (!seen.has(doc._id)) {
       const listing = await getVisibleListing(doc);
       if (!listing) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, listing, "filename", searchTerm));
+      combined.push(formatSearchResult(listing, "filename"));
     }
   }
 
@@ -397,57 +326,6 @@ export const listByFolderPublic = query({
   },
 });
 
-export const getExtractionStats = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return null;
-
-    await requireMember(ctx, site.teamId);
-
-    const allDocs = await listDocumentsForSite(ctx, siteId);
-
-    // Count by status
-    const stats = {
-      total: allDocs.length,
-      pending: 0,
-      processing: 0,
-      completed: 0,
-      failed: 0,
-      unsupported: 0,
-    };
-
-    for (const doc of allDocs) {
-      const status = doc.extractionStatus || "pending";
-      if (status in stats) {
-        stats[status as keyof typeof stats]++;
-      }
-    }
-
-    return stats;
-  },
-});
-
-export const listFailedExtraction = query({
-  args: {
-    siteId: v.id("sites"),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { siteId, limit = 50 }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    await requireMember(ctx, site.teamId);
-    return await ctx.db
-      .query("documentListings")
-      .withIndex("by_site_extraction_status", (q) =>
-        q.eq("siteId", siteId).eq("extractionStatus", "failed"),
-      )
-      .take(limit)
-      .then((docs) => docs.map(mapDocumentListing));
-  },
-});
-
 export const searchByLibrary = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -466,15 +344,6 @@ export const searchByLibrary = query({
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
-    // Search by content
-    const contentResults = await ctx.db
-      .query("documents")
-      .withSearchIndex("search_content", (q) =>
-        q.search("extractedText", trimmed).eq("siteId", site._id),
-      )
-      .take(limit * 2);
-
-    // Search by filename
     const filenameResults = await ctx.db
       .query("documents")
       .withSearchIndex("search_filename", (q) =>
@@ -482,24 +351,15 @@ export const searchByLibrary = query({
       )
       .take(limit * 2);
 
-    // Merge and filter by library
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
-
-    for (const doc of contentResults) {
-      if (seen.has(doc._id)) continue;
-      const listing = await getDocumentListing(ctx, doc._id);
-      if (!listing || listing.libraryId !== libraryId) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, listing, "content", trimmed));
-    }
 
     for (const doc of filenameResults) {
       if (seen.has(doc._id)) continue;
       const listing = await getDocumentListing(ctx, doc._id);
       if (!listing || listing.libraryId !== libraryId) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, listing, "filename", trimmed));
+      combined.push(formatSearchResult(listing, "filename"));
     }
 
     return combined.slice(0, limit);

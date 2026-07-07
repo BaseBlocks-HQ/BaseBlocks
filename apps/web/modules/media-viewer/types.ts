@@ -10,7 +10,6 @@ export type MediaFileType =
   | "image"
   | "video"
   | "audio"
-  | "office"
   | "text"
   | "unknown";
 
@@ -73,17 +72,6 @@ export function getMediaFileType(contentType: string): MediaFileType {
   // Audio
   if (ct.startsWith("audio/")) {
     return "audio";
-  }
-
-  // Office documents
-  if (
-    ct.includes("officedocument") ||
-    ct.includes("msword") ||
-    ct.includes("ms-excel") ||
-    ct.includes("ms-powerpoint") ||
-    ct.includes("opendocument")
-  ) {
-    return "office";
   }
 
   // Text-based files

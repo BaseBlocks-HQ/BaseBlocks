@@ -32,6 +32,7 @@ export function UploadDropzone({
       maxSize: maxFileSize,
       multiple: true,
       noClick: true,
+      useFsAccessApi: false,
       onDrop: (acceptedFiles) => {
         if (acceptedFiles.length > 0) onFilesAccepted?.(acceptedFiles);
       },

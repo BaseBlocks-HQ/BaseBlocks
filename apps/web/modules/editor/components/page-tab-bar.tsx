@@ -28,8 +28,8 @@ interface PageTabBarProps {
 interface TabIconButtonProps {
   "aria-label": string;
   destructive?: boolean;
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
+  onClick: (e: MouseEvent<HTMLSpanElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLSpanElement>) => void;
   children: React.ReactNode;
 }
 
@@ -41,8 +41,9 @@ function TabIconButton({
   children,
 }: TabIconButtonProps) {
   return (
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={-1}
       aria-label={ariaLabel}
       className={[
         "h-4 w-4 rounded-sm flex items-center justify-center cursor-pointer",
@@ -53,7 +54,7 @@ function TabIconButton({
       onKeyDown={onKeyDown}
     >
       {children}
-    </button>
+    </span>
   );
 }
 

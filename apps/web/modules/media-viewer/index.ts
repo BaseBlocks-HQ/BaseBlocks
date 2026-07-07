@@ -6,7 +6,6 @@
  * - PDFs (with browser native viewer)
  * - Videos (with playback controls)
  * - Audio (with playback controls)
- * - Office documents (via Microsoft/Google viewers)
  * - Text/code files (with syntax highlighting potential)
  *
  * Usage:

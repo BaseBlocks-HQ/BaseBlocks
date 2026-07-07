@@ -16,8 +16,6 @@ export interface LibraryFile {
   downloadUrl: string;
   createdAt: number;
   folderId?: FolderId;
-  extractionStatus?: string;
-  extractionError?: string;
 }
 
 export type LibraryEntity =
@@ -52,7 +50,6 @@ export interface LibraryExplorerActions {
   moveFolder?: (folderId: FolderId, parentId?: FolderId) => Promise<void>;
   renameFile?: (fileId: DocumentId, filename: string) => Promise<void>;
   renameFolder?: (folderId: FolderId, name: string) => Promise<void>;
-  retryExtraction?: (file: LibraryFile) => Promise<void>;
   uploadFiles?: (
     files: File[],
     folderId?: FolderId,

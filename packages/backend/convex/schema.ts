@@ -215,30 +215,12 @@ export default defineSchema({
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
-    extractedText: v.optional(v.string()),
-    pageCount: v.optional(v.number()),
-    wordCount: v.optional(v.number()),
-    extractionStatus: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("processing"),
-        v.literal("completed"),
-        v.literal("failed"),
-        v.literal("unsupported"),
-      ),
-    ),
-    extractionError: v.optional(v.string()),
     uploadedBy: v.string(),
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
     .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"])
-    .index("by_extraction_status", ["siteId", "extractionStatus"])
-    .searchIndex("search_content", {
-      searchField: "extractedText",
-      filterFields: ["siteId"],
-    })
     .searchIndex("search_filename", {
       searchField: "filename",
       filterFields: ["siteId"],
@@ -253,18 +235,6 @@ export default defineSchema({
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
-    pageCount: v.optional(v.number()),
-    wordCount: v.optional(v.number()),
-    extractionStatus: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("processing"),
-        v.literal("completed"),
-        v.literal("failed"),
-        v.literal("unsupported"),
-      ),
-    ),
-    extractionError: v.optional(v.string()),
     uploadedBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -272,8 +242,7 @@ export default defineSchema({
     .index("by_document", ["documentId"])
     .index("by_site", ["siteId"])
     .index("by_library", ["libraryId"])
-    .index("by_folder", ["libraryId", "folderId"])
-    .index("by_site_extraction_status", ["siteId", "extractionStatus"]),
+    .index("by_folder", ["libraryId", "folderId"]),
 
   searchableContent: defineTable({
     siteId: v.id("sites"),

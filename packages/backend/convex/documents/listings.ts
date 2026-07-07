@@ -12,10 +12,6 @@ type DocumentListingSource = Pick<
   | "filename"
   | "contentType"
   | "size"
-  | "pageCount"
-  | "wordCount"
-  | "extractionStatus"
-  | "extractionError"
   | "uploadedBy"
   | "createdAt"
 >;
@@ -32,10 +28,6 @@ export function buildDocumentListing(document: DocumentListingSource) {
     filename: document.filename,
     contentType: document.contentType,
     size: document.size,
-    pageCount: document.pageCount,
-    wordCount: document.wordCount,
-    extractionStatus: document.extractionStatus,
-    extractionError: document.extractionError,
     uploadedBy: document.uploadedBy,
     createdAt: document.createdAt,
     updatedAt: Date.now(),
@@ -53,10 +45,6 @@ export function mapDocumentListing(listing: DocumentListingDoc) {
     filename: listing.filename,
     contentType: listing.contentType,
     size: listing.size,
-    pageCount: listing.pageCount,
-    wordCount: listing.wordCount,
-    extractionStatus: listing.extractionStatus,
-    extractionError: listing.extractionError,
     uploadedBy: listing.uploadedBy,
     createdAt: listing.createdAt,
     downloadUrl: buildDocumentDownloadUrl(listing.documentId),

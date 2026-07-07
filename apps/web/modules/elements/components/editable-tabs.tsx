@@ -43,13 +43,14 @@ function TabIconButton({
 }: {
   "aria-label": string;
   destructive?: boolean;
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
-  onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
+  onClick: (e: MouseEvent<HTMLSpanElement>) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLSpanElement>) => void;
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={-1}
       aria-label={ariaLabel}
       className={[
         "flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm",
@@ -60,7 +61,7 @@ function TabIconButton({
       onKeyDown={onKeyDown}
     >
       {children}
-    </button>
+    </span>
   );
 }
 

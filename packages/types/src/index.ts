@@ -88,9 +88,9 @@ export { DEFAULT_MEDIA_CONTENT } from "./elements";
 
 export type { UploadPurpose } from "./storage";
 export {
-  extractableDocumentMimeTypes,
-  isExtractableDocumentMimeType,
+  getUploadMimeTypeForFilename,
   isSupportedUploadMimeType,
   normalizeMimeType,
+  resolveUploadMimeType,
   supportedUploadMimeTypes,
 } from "./storage";

@@ -8,7 +8,6 @@
  * @module
  */
 
-import type * as actions_extractDocument from "../actions/extractDocument.js";
 import type * as assets_mutations from "../assets/mutations.js";
 import type * as assets_queries from "../assets/queries.js";
 import type * as assets_urls from "../assets/urls.js";
@@ -22,7 +21,6 @@ import type * as documentFolders_mutations from "../documentFolders/mutations.js
 import type * as documentFolders_queries from "../documentFolders/queries.js";
 import type * as documentLibraries_mutations from "../documentLibraries/mutations.js";
 import type * as documentLibraries_queries from "../documentLibraries/queries.js";
-import type * as documents_internal from "../documents/internal.js";
 import type * as documents_lib from "../documents/lib.js";
 import type * as documents_listings from "../documents/listings.js";
 import type * as documents_mutations from "../documents/mutations.js";
@@ -37,7 +35,6 @@ import type * as layouts_queries from "../layouts/queries.js";
 import type * as layouts_validators from "../layouts/validators.js";
 import type * as lib_documentSearchMetadata from "../lib/documentSearchMetadata.js";
 import type * as lib_extractBlockNoteText from "../lib/extractBlockNoteText.js";
-import type * as lib_extractable from "../lib/extractable.js";
 import type * as lib_indexPageContent from "../lib/indexPageContent.js";
 import type * as lib_markModified from "../lib/markModified.js";
 import type * as lib_pageAccess from "../lib/pageAccess.js";
@@ -72,7 +69,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  "actions/extractDocument": typeof actions_extractDocument;
   "assets/mutations": typeof assets_mutations;
   "assets/queries": typeof assets_queries;
   "assets/urls": typeof assets_urls;
@@ -86,7 +82,6 @@ declare const fullApi: ApiFromModules<{
   "documentFolders/queries": typeof documentFolders_queries;
   "documentLibraries/mutations": typeof documentLibraries_mutations;
   "documentLibraries/queries": typeof documentLibraries_queries;
-  "documents/internal": typeof documents_internal;
   "documents/lib": typeof documents_lib;
   "documents/listings": typeof documents_listings;
   "documents/mutations": typeof documents_mutations;
@@ -101,7 +96,6 @@ declare const fullApi: ApiFromModules<{
   "layouts/validators": typeof layouts_validators;
   "lib/documentSearchMetadata": typeof lib_documentSearchMetadata;
   "lib/extractBlockNoteText": typeof lib_extractBlockNoteText;
-  "lib/extractable": typeof lib_extractable;
   "lib/indexPageContent": typeof lib_indexPageContent;
   "lib/markModified": typeof lib_markModified;
   "lib/pageAccess": typeof lib_pageAccess;

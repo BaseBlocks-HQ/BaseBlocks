@@ -3,8 +3,7 @@
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { useFileUpload } from "@/lib/files/hooks";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import type {
   DocumentId,
   FolderId,
@@ -84,9 +83,6 @@ export function useLibraryActions(args: {
   const renameDocument = useMutation(api.documents.mutations.rename);
   const moveDocument = useMutation(api.documents.mutations.move);
   const removeDocument = useMutation(api.documents.mutations.remove);
-  const retryExtractionAction = useAction(
-    api.actions.extractDocument.retryExtraction,
-  );
   const {
     uploadFiles,
     uploadStates,
@@ -125,11 +121,6 @@ export function useLibraryActions(args: {
     },
     renameFolder: async (folderId: FolderId, name: string) => {
       await updateFolder({ folderId, name });
-    },
-    retryExtraction: async (file: LibraryFile) => {
-      await retryExtractionAction({
-        documentId: file._id as Id<"documents">,
-      });
     },
     uploadFiles: async (files, folderId) => {
       if (!args.libraryId || !args.siteId) {

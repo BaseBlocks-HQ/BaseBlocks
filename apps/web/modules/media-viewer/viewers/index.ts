@@ -13,7 +13,6 @@ import dynamic from "next/dynamic";
 import type { ViewerConfig } from "../types";
 import { AudioViewer } from "./audio-viewer";
 import { ImageViewer } from "./image-viewer";
-import { OfficeViewer } from "./office-viewer";
 import { TextViewer } from "./text-viewer";
 import { UnknownViewer } from "./unknown-viewer";
 import { VideoViewer } from "./video-viewer";
@@ -52,17 +51,6 @@ const viewerRegistry: ViewerConfig[] = [
     label: "Audio Player",
     canHandle: (ct) => ct.startsWith("audio/"),
     component: AudioViewer,
-  },
-  {
-    type: "office",
-    label: "Office Viewer",
-    canHandle: (ct) =>
-      ct.includes("officedocument") ||
-      ct.includes("msword") ||
-      ct.includes("ms-excel") ||
-      ct.includes("ms-powerpoint") ||
-      ct.includes("opendocument"),
-    component: OfficeViewer,
   },
   {
     type: "text",

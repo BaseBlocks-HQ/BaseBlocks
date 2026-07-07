@@ -1,6 +1,10 @@
 "use client";
 
-import type { UploadPurpose } from "@baseblocks/types";
+import {
+  isSupportedUploadMimeType,
+  resolveUploadMimeType,
+  type UploadPurpose,
+} from "@baseblocks/types";
 import type { SignedUpload } from "files-sdk";
 import { createFilesClient } from "files-sdk/client";
 import { createFileKey } from "./keys";
@@ -89,7 +93,15 @@ class BaseBlocksFilesClient {
       throw new Error("File is too large");
     }
 
-    const contentType = file.type || "application/octet-stream";
+    const contentType = resolveUploadMimeType({
+      filename: file.name,
+      contentType: file.type,
+    });
+
+    if (!isSupportedUploadMimeType(contentType)) {
+      throw new Error("File type not allowed");
+    }
+
     const target = await this.files.signedUploadUrl(objectKey, {
       contentType,
       expiresIn: 60 * 10,

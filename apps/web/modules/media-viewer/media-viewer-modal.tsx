@@ -37,7 +37,6 @@ function getFileTypeIcon(contentType: string) {
   switch (type) {
     case "pdf":
     case "text":
-    case "office":
       return <FileText className="h-4 w-4" />;
     case "image":
       return <FileImage className="h-4 w-4" />;
