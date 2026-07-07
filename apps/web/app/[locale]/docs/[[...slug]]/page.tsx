@@ -1,7 +1,7 @@
 import {
   DocsContentPage,
   type DocsContentData,
-} from "@/modules/marketing/docs/components/docs-content-page";
+} from "@/modules/content-pages/docs-content-page";
 import { source } from "@/lib/source";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

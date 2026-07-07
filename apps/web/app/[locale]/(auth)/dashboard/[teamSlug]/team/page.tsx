@@ -1,12 +1,12 @@
 "use client";
 
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
-import { TeamContent } from "@/modules/dashboard/team/team-content";
+import { TeamPage } from "@/modules/team/team-page";
 
 export default function TeamMembersPage() {
   return (
     <DashboardLayout>
-      <TeamContent />
+      <TeamPage />
     </DashboardLayout>
   );
 }

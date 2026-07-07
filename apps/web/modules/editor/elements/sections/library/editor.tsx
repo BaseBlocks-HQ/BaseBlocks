@@ -1,7 +1,7 @@
 "use client";
 
 import type { ElementEditorProps } from "@/modules/editor/elements/framework/registry";
-import { LibraryBlockEditor } from "@/modules/dashboard/library";
+import { LibraryBlockEditor } from "@/modules/document-library";
 
 export function LibraryEditor({
   content,

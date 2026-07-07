@@ -1,15 +1,15 @@
 import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 
 export const docs = defineDocs({
-  dir: "modules/marketing/content/docs",
+  dir: "modules/content-pages/content/docs",
 });
 
 export const legalEn = defineDocs({
-  dir: "modules/marketing/content/legal/en",
+  dir: "modules/content-pages/content/legal/en",
 });
 
 export const legalFr = defineDocs({
-  dir: "modules/marketing/content/legal/fr",
+  dir: "modules/content-pages/content/legal/fr",
 });
 
 export default defineConfig();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSite } from "@/lib/data";
-import { ElementCard } from "@/modules/editor/components/element-picker/element-card";
+import { ElementCard } from "@/modules/editor/elements/picker/element-card";
 import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
 import { CollapsibleSettingsSection } from "@/modules/editor/elements/panels/shared/editor-panel-primitives";
 import { useEditorUndoOptional } from "@/modules/editor/state";

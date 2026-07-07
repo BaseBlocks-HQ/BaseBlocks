@@ -1,11 +1,11 @@
 "use client";
 
-import { LanguageSwitcher } from "@/modules/marketing/components/language-switcher";
+import { LanguageSwitcher } from "@/modules/public-chrome/language-switcher";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
-import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
+import { InvitationInbox } from "@/modules/workspace/invitation-inbox";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {

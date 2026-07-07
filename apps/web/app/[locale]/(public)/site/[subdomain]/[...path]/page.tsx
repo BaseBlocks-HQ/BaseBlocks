@@ -1,6 +1,6 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
-import { PublicSiteJsonLd } from "@/modules/marketing/public-site/json-ld";
-import { PublicSitePageClient } from "@/modules/marketing/public-site/public-site-page-client";
+import { PublicSiteJsonLd } from "@/modules/public-site/json-ld";
+import { PublicSitePageClient } from "@/modules/public-site/public-site-page-client";
 import type { Metadata } from "next";
 
 type Props = {

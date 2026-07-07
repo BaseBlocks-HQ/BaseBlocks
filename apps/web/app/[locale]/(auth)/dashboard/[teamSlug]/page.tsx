@@ -1,5 +1,5 @@
 import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
-import { DashboardContent } from "@/modules/dashboard/dashboard-content";
+import { SitesPage } from "@/modules/sites/sites-page";
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
 import { api } from "@baseblocks/backend";
 
@@ -26,7 +26,7 @@ export default async function TeamDashboardPage({
 
   return (
     <DashboardLayout>
-      <DashboardContent initialSites={initialSites} />
+      <SitesPage initialSites={initialSites} />
     </DashboardLayout>
   );
 }

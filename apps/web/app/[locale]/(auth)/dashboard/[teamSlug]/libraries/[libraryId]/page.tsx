@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
-import { DashboardLibraryDetail } from "@/modules/dashboard/library";
+import { LibraryDetailPage } from "@/modules/dashboard/libraries/library-detail-page";
 import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 
@@ -14,9 +14,7 @@ export default function TeamLibraryDetailPage({ params }: Props) {
 
   return (
     <DashboardLayout>
-      <DashboardLibraryDetail
-        libraryId={libraryId as Id<"documentLibraries">}
-      />
+      <LibraryDetailPage libraryId={libraryId as Id<"documentLibraries">} />
     </DashboardLayout>
   );
 }

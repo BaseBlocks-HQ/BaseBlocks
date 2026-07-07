@@ -9,9 +9,9 @@ import {
   getTeamLibrariesPath,
   getTeamMembersPath,
 } from "@/lib/routes/team-routes";
-import { AccountSettings } from "@/modules/dashboard/components/account-settings";
-import { InvitationInbox } from "@/modules/dashboard/components/invitation-inbox";
-import { useTeamAccess } from "@/modules/dashboard/team/team-access";
+import { AccountSettings } from "@/modules/workspace/account-settings";
+import { InvitationInbox } from "@/modules/workspace/invitation-inbox";
+import { useTeamAccess } from "@/modules/workspace/team-access";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import {
   DropdownMenu,

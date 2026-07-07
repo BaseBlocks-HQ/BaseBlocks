@@ -4,7 +4,7 @@ import { useImageUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ElementEditorProps } from "@/modules/editor/elements/framework/registry";
 import { useEditorSite } from "@/modules/editor/state";
-import { DropZone } from "@/modules/editor/file-ui";
+import { DropZone } from "@/modules/files/ui";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";

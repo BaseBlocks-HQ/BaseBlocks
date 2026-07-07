@@ -7,13 +7,13 @@ import {
 } from "@/lib/file-deep-link";
 import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
-import { DropZone, FileIcon, getFileTypeColor } from "@/modules/editor/file-ui";
+import { DropZone, FileIcon, getFileTypeColor } from "@/modules/files/ui";
 import {
   FilePreview as FilePreviewPanel,
   type PreviewFile,
-} from "@/modules/editor/file-preview";
+} from "@/modules/files/preview";
 import { useEditorSite } from "@/modules/editor/state";
-import { usePublicSiteContextOptional } from "@/modules/marketing/public-site/public-site-context";
+import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
