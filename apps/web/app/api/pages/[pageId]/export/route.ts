@@ -1,19 +1,14 @@
-import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
 import {
-  buildPageExportDocument,
+  buildPageExportText,
   createPageExportFilename,
   renderPageExportDocx,
-} from "@/modules/page-export/page-export";
+} from "./page-word-export";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function isExportMode(value: string | null): value is "draft" | "published" {
-  return value === "draft" || value === "published";
-}
 
 function isExportFormat(value: string | null): value is "docx" {
   return value === "docx";
@@ -25,15 +20,7 @@ export async function GET(
 ) {
   try {
     const { pageId } = await context.params;
-    const requestedMode = request.nextUrl.searchParams.get("mode");
     const requestedFormat = request.nextUrl.searchParams.get("format");
-
-    if (!isExportMode(requestedMode)) {
-      return NextResponse.json(
-        { error: "Unsupported export mode" },
-        { status: 400 },
-      );
-    }
 
     if (!isExportFormat(requestedFormat)) {
       return NextResponse.json(
@@ -42,47 +29,28 @@ export async function GET(
       );
     }
 
-    const token = await getToken();
-    const authedClient = getServerConvexClient(token);
     const publicClient = getServerConvexClient();
     const sessionTokens = getRequestAccessSessionTokens(request);
 
-    const isDraft = requestedMode === "draft";
-    if (isDraft && !token) {
-      return NextResponse.json(
-        { error: "Authentication required for draft exports" },
-        { status: 401 },
-      );
-    }
-
-    const page = isDraft
-      ? await authedClient.query(api.pages.queries.get, {
-          pageId: pageId as never,
-        })
-      : await publicClient.query(api.pages.queries.get, {
-          pageId: pageId as never,
-          sessionTokens,
-        });
+    const page = await publicClient.query(api.pages.queries.get, {
+      pageId: pageId as never,
+      sessionTokens,
+    });
 
     if (!page) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const layouts = isDraft
-      ? await authedClient.query(api.layouts.queries.list, {
-          pageId: pageId as never,
-        })
-      : await publicClient.query(api.layouts.queries.listPublished, {
-          pageId: pageId as never,
-          sessionTokens,
-        });
+    const layouts = await publicClient.query(
+      api.layouts.queries.listPublished,
+      {
+        pageId: pageId as never,
+        sessionTokens,
+      },
+    );
+    const pageTitle = page.publishedTitle ?? page.title;
 
-    const pageTitle =
-      requestedMode === "published"
-        ? (page.publishedTitle ?? page.title)
-        : page.title;
-
-    const exportDocument = buildPageExportDocument({
+    const exportDocument = buildPageExportText({
       pageTitle,
       layouts,
     });
