@@ -10,6 +10,23 @@ function countBlocks(blocks: unknown[]): number {
     count++;
     if (typeof block !== "object" || block === null) continue;
 
+    if ("blocks" in block && Array.isArray(block.blocks)) {
+      count += countBlocks(block.blocks);
+    }
+
+    if ("rows" in block && Array.isArray(block.rows)) {
+      for (const row of block.rows) {
+        if (
+          typeof row === "object" &&
+          row !== null &&
+          "blocks" in row &&
+          Array.isArray(row.blocks)
+        ) {
+          count += countBlocks(row.blocks);
+        }
+      }
+    }
+
     if ("columns" in block && Array.isArray(block.columns)) {
       for (const column of block.columns) {
         if (
@@ -20,6 +37,34 @@ function countBlocks(blocks: unknown[]): number {
         ) {
           count += countBlocks(column.blocks);
         }
+      }
+    }
+
+    if ("cells" in block && Array.isArray(block.cells)) {
+      for (const cell of block.cells) {
+        if (
+          typeof cell === "object" &&
+          cell !== null &&
+          "blocks" in cell &&
+          Array.isArray(cell.blocks)
+        ) {
+          count += countBlocks(cell.blocks);
+        }
+      }
+    }
+
+    const sidebarSlots = [
+      (block as { main?: unknown }).main,
+      (block as { aside?: unknown }).aside,
+    ];
+    for (const slot of sidebarSlots) {
+      if (
+        typeof slot === "object" &&
+        slot !== null &&
+        "blocks" in slot &&
+        Array.isArray((slot as { blocks?: unknown }).blocks)
+      ) {
+        count += countBlocks((slot as { blocks: unknown[] }).blocks);
       }
     }
 

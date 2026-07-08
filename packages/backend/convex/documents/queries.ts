@@ -87,6 +87,28 @@ async function isPublishedFileBlockDocument(
         return true;
       }
 
+      if (
+        "blocks" in block &&
+        Array.isArray(block.blocks) &&
+        hasFileBlock(block.blocks)
+      ) {
+        return true;
+      }
+
+      if ("rows" in block && Array.isArray(block.rows)) {
+        for (const row of block.rows) {
+          if (
+            typeof row === "object" &&
+            row !== null &&
+            "blocks" in row &&
+            Array.isArray(row.blocks) &&
+            hasFileBlock(row.blocks)
+          ) {
+            return true;
+          }
+        }
+      }
+
       if ("columns" in block && Array.isArray(block.columns)) {
         for (const column of block.columns) {
           if (
@@ -98,6 +120,36 @@ async function isPublishedFileBlockDocument(
           ) {
             return true;
           }
+        }
+      }
+
+      if ("cells" in block && Array.isArray(block.cells)) {
+        for (const cell of block.cells) {
+          if (
+            typeof cell === "object" &&
+            cell !== null &&
+            "blocks" in cell &&
+            Array.isArray(cell.blocks) &&
+            hasFileBlock(cell.blocks)
+          ) {
+            return true;
+          }
+        }
+      }
+
+      const sidebarSlots = [
+        (block as { main?: unknown }).main,
+        (block as { aside?: unknown }).aside,
+      ];
+      for (const slot of sidebarSlots) {
+        if (
+          typeof slot === "object" &&
+          slot !== null &&
+          "blocks" in slot &&
+          Array.isArray((slot as { blocks?: unknown }).blocks) &&
+          hasFileBlock((slot as { blocks: unknown[] }).blocks)
+        ) {
+          return true;
         }
       }
 
