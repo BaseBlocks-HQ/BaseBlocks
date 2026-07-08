@@ -1,6 +1,5 @@
 "use client";
 
-import { BrandLogoMark } from "@/modules/app-chrome/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";
@@ -69,7 +68,15 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
-            <BrandLogoMark className="size-6" priority />
+            <Image
+              src="/brand/baseblocks-logo.png"
+              alt=""
+              width={600}
+              height={600}
+              priority
+              sizes="24px"
+              className="size-6 shrink-0 object-contain"
+            />
             <span
               style={{ fontFamily: "var(--font-geist-pixel-square)" }}
               className="tracking-tight"

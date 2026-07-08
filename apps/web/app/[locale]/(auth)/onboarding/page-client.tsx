@@ -1,12 +1,13 @@
 "use client";
 
-import { LanguageSwitcher } from "@/modules/app-chrome/language-switcher";
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
 import { InvitationInbox } from "@/modules/workspace/invitation-inbox";
 import { api } from "@baseblocks/backend";
+import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";
 import {
   Card,
@@ -15,12 +16,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@baseblocks/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
 import { useMutation } from "convex/react";
-import { useTranslations } from "next-intl";
+import { Earth } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+
+const languageNames: Record<Locale, string> = {
+  fr: "Français",
+  en: "English",
+};
+
+const languageFlags: Record<Locale, string> = {
+  fr: "🇫🇷",
+  en: "🇺🇸",
+};
 
 export function OnboardingPageClient() {
   const router = useRouter();
@@ -31,6 +49,8 @@ export function OnboardingPageClient() {
   const t = useTranslations();
   const haptic = useHaptic();
   const createTeam = useMutation(api.teams.mutations.create);
+  const locale = useLocale() as Locale;
+  const pathname = usePathname();
 
   const handleTeamNameChange = (value: string) => {
     setTeamName(value);
@@ -76,7 +96,31 @@ export function OnboardingPageClient() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="absolute top-4 right-4">
-        <LanguageSwitcher />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="text-muted-foreground hover:text-foreground"
+              size="icon"
+              title={t("language.select")}
+              variant="ghost"
+            >
+              <Earth className="h-4 w-4" strokeWidth={1.75} />
+              <span className="sr-only">{t("language.select")}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {routing.locales.map((loc) => (
+              <DropdownMenuItem
+                key={loc}
+                onClick={() => router.replace(pathname, { locale: loc })}
+                className={locale === loc ? "bg-accent" : ""}
+              >
+                <span className="mr-2">{languageFlags[loc]}</span>
+                {languageNames[loc]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <Card className="w-full max-w-md">
         <CardHeader>

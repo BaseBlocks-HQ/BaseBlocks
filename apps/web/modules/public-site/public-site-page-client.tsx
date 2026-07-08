@@ -1,12 +1,10 @@
 "use client";
 
-import {
-  AccessGate,
-  PublicSiteLayout,
-  SiteNotFound,
-  SiteNotPublished,
-  SitePrivate,
-} from "@/modules/public-site";
+import { AccessGate } from "@/modules/public-site/access-gate";
+import { PublicSiteLayout } from "@/modules/public-site/public-site-layout";
+import { SiteNotFound } from "@/modules/public-site/site-not-found";
+import { SiteNotPublished } from "@/modules/public-site/site-not-published";
+import { SitePrivate } from "@/modules/public-site/site-private";
 import { api } from "@baseblocks/backend";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";

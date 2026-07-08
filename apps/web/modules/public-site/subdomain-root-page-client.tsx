@@ -2,7 +2,8 @@
 
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
-import { AccessGate, SitePrivate } from "@/modules/public-site";
+import { AccessGate } from "@/modules/public-site/access-gate";
+import { SitePrivate } from "@/modules/public-site/site-private";
 import { api } from "@baseblocks/backend";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";

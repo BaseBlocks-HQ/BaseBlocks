@@ -1,5 +1,5 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
-import { HeroEditorPreview } from "./hero-editor-preview";
 import { Reveal } from "./reveal";
 
 type TranslateFn = (key: string) => string;
@@ -69,7 +69,26 @@ export function HeroSection({
         delay={0.35}
         className="mt-14 px-6 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
       >
-        <HeroEditorPreview />
+        <div className="relative select-none">
+          <Image
+            src="/landing/hero-image-light.png"
+            alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
+            className="relative rounded-xl border border-neutral-200 shadow-2xl lg:rounded-r-none lg:border-r-0 dark:hidden dark:border-white/[0.1] dark:lg:border-r-0"
+            priority
+            sizes="(max-width: 1024px) 100vw, 58vw"
+            width={3420}
+            height={1950}
+          />
+          <Image
+            src="/landing/hero-image-dark.png"
+            alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
+            className="relative hidden rounded-xl border border-neutral-200 shadow-2xl lg:rounded-r-none lg:border-r-0 dark:block dark:border-white/[0.1] dark:lg:border-r-0"
+            priority
+            sizes="(max-width: 1024px) 100vw, 58vw"
+            width={3420}
+            height={1950}
+          />
+        </div>
       </Reveal>
     </section>
   );

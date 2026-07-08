@@ -1,7 +1,7 @@
 "use client";
 
 import type { ElementRendererProps } from "@/modules/editor/elements/framework/registry";
-import { usePublicSiteContextOptional } from "@/modules/public-site";
+import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
 import { SearchBox } from "./search-box";
 
 export function SearchRenderer({ content }: ElementRendererProps<"search">) {
