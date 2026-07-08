@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  useAuthenticatedLibraryData,
-  useLibraryActions,
-} from "@/modules/document-library/hooks";
-import type { LibraryId } from "@/modules/document-library/types";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
+import type { LibraryId } from "@/modules/document-library/tree-input";
 import type { ElementEditorProps } from "@/modules/site-elements/authoring/registry";
 import { useEditorSite } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
@@ -38,11 +34,10 @@ export function LibraryEditor({
   });
   const createLibrary = useMutation(api.documentLibraries.mutations.create);
   const [newLibraryName, setNewLibraryName] = useState("");
-  const data = useAuthenticatedLibraryData(resolvedLibraryId);
-  const actions = useLibraryActions({
-    libraryId: resolvedLibraryId,
-    siteId: resolvedSiteId,
-  });
+  const explorer = useQuery(
+    api.documentLibraries.queries.getExplorer,
+    resolvedLibraryId ? { libraryId: resolvedLibraryId } : "skip",
+  );
   const allowDownloads = content.allowDownloads !== false;
 
   const selectLibrary = (libraryId: string) =>
@@ -107,14 +102,10 @@ export function LibraryEditor({
 
   return (
     <LibraryExplorer
-      data={data}
-      actions={actions}
-      uploadState={actions}
-      options={{
-        access: "manage",
-        allowDownloads,
-        embedded: true,
-      }}
+      access="manage"
+      allowDownloads={allowDownloads}
+      embedded
+      explorer={explorer}
     />
   );
 }

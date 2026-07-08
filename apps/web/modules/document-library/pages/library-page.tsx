@@ -3,11 +3,8 @@
 import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
-import {
-  useAuthenticatedLibraryData,
-  useLibraryActions,
-} from "@/modules/document-library/hooks";
-import type { LibraryId } from "@/modules/document-library/types";
+import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
+import type { LibraryId } from "@/modules/document-library/tree-input";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import {
@@ -33,7 +30,6 @@ import { ArrowLeft, MoreHorizontal, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
 
 function InlineEditableText({
   disabled = false,
@@ -149,21 +145,15 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
   const router = useRouter();
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
-  const data = useAuthenticatedLibraryData(libraryId);
-  const site = useQuery(
-    api.sites.queries.get,
-    data.library ? { siteId: data.library.siteId } : "skip",
-  );
-  const actions = useLibraryActions({
+  const explorer = useQuery(api.documentLibraries.queries.getExplorer, {
     libraryId,
-    siteId: data.library?.siteId ?? null,
   });
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
   const updateLibrary = useMutation(api.documentLibraries.mutations.update);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (data.isLoading || site === undefined) {
+  if (explorer === undefined) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-6 sm:px-6">
         <Spinner className="size-6 text-muted-foreground" />
@@ -171,7 +161,7 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
     );
   }
 
-  if (!data.library || !site || site.teamId !== team._id) {
+  if (!explorer || explorer.site.teamId !== team._id) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-sm text-muted-foreground">
@@ -227,14 +217,14 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
                   inputClassName="h-auto border-none shadow-none"
                   onSubmit={handleRenameLibrary}
                   textClassName="max-w-full text-2xl font-bold"
-                  value={data.library.name}
+                  value={explorer.library.name}
                 />
                 <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums text-muted-foreground">
-                  {data.files.length.toLocaleString()}
+                  {explorer.files.length.toLocaleString()}
                 </span>
               </div>
               <p className="truncate text-sm text-muted-foreground">
-                {site.name}
+                {explorer.site.name}
               </p>
             </div>
           </div>
@@ -265,14 +255,10 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
         </header>
 
         <LibraryExplorer
-          data={data}
-          actions={capabilities.canManageLibraries ? actions : {}}
-          uploadState={capabilities.canManageLibraries ? actions : undefined}
-          options={{
-            access: capabilities.canManageLibraries ? "manage" : "read",
-            allowDownloads: true,
-          }}
+          access={capabilities.canManageLibraries ? "manage" : "read"}
+          allowDownloads
           className="flex-1"
+          explorer={explorer}
         />
       </div>
 
@@ -288,7 +274,7 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
               </AlertDialogTitle>
               <AlertDialogDescription className="text-sm text-sidebar-foreground/60">
                 {t("libraries.deleteDescription", {
-                  name: data.library.name,
+                  name: explorer.library.name,
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>

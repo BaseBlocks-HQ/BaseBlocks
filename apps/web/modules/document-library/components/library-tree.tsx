@@ -1,14 +1,12 @@
 "use client";
+
 import { cn } from "@/lib/utils";
 import {
-  type LibraryTreeViewMode,
-  buildDraftFolderViewPath,
-  buildLibraryTreeView,
-  buildLibraryTreeViewLookup,
-  getLibraryTreeViewLookupPath,
-  getLibraryTreeViewNameFromPath,
-} from "@/modules/document-library/tree-model";
-import type { FolderId, LibraryEntity } from "@/modules/document-library/types";
+  basenameFromTreePath,
+  folderTreePath,
+  type FolderId,
+  type LibraryEntity,
+} from "@/modules/document-library/tree-input";
 import type {
   ContextMenuOpenContext,
   FileTreeCompositionOptions,
@@ -22,19 +20,12 @@ import {
   FolderOpen,
   FolderPlus,
   Link as LinkIcon,
-  ListTree,
   Pencil,
   Search,
   Trash2,
   Upload,
 } from "lucide-react";
-import {
-  type MouseEvent as ReactMouseEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
@@ -97,8 +88,8 @@ export function LibraryTree({
   allowDownloads,
   canManage,
   currentFolderId,
-  currentFolderPath,
   entities,
+  onCopyLink,
   onCreateFolder,
   onDeleteEntity,
   onDownloadFile,
@@ -106,7 +97,6 @@ export function LibraryTree({
   onMoveEntity,
   onOpenEntity,
   onRenameEntity,
-  onCopyLink,
   onUploadFiles,
   paths,
   title,
@@ -115,8 +105,8 @@ export function LibraryTree({
   allowDownloads: boolean;
   canManage: boolean;
   currentFolderId: FolderId | null;
-  currentFolderPath: string | null;
   entities: Map<string, LibraryEntity>;
+  onCopyLink: (entity: LibraryEntity) => Promise<void> | void;
   onCreateFolder: (name: string, parentId?: FolderId) => Promise<void>;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
@@ -127,108 +117,16 @@ export function LibraryTree({
   onMoveEntity: (entity: LibraryEntity) => void;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
-  onCopyLink: (entity: LibraryEntity) => Promise<void> | void;
   onUploadFiles: () => void;
   paths: string[];
   title?: string;
   uploadDisabled?: boolean;
 }) {
-  const [mode, setMode] = useState<LibraryTreeViewMode>("tree");
-
-  return (
-    <LibraryTreeModel
-      key={mode}
-      allowDownloads={allowDownloads}
-      canManage={canManage}
-      currentFolderId={currentFolderId}
-      currentFolderPath={currentFolderPath}
-      entities={entities}
-      mode={mode}
-      onCreateFolder={onCreateFolder}
-      onDeleteEntity={onDeleteEntity}
-      onDownloadFile={onDownloadFile}
-      onDropEntities={onDropEntities}
-      onMoveEntity={onMoveEntity}
-      onOpenEntity={onOpenEntity}
-      onRenameEntity={onRenameEntity}
-      onCopyLink={onCopyLink}
-      onToggleMode={() =>
-        setMode((value) => (value === "tree" ? "flat" : "tree"))
-      }
-      onUploadFiles={onUploadFiles}
-      paths={paths}
-      title={title}
-      uploadDisabled={uploadDisabled}
-    />
-  );
-}
-
-function LibraryTreeModel({
-  allowDownloads,
-  canManage,
-  currentFolderId,
-  currentFolderPath,
-  entities,
-  mode,
-  onCreateFolder,
-  onDeleteEntity,
-  onDownloadFile,
-  onDropEntities,
-  onMoveEntity,
-  onOpenEntity,
-  onRenameEntity,
-  onCopyLink,
-  onToggleMode,
-  onUploadFiles,
-  paths,
-  title,
-  uploadDisabled,
-}: {
-  allowDownloads: boolean;
-  canManage: boolean;
-  currentFolderId: FolderId | null;
-  currentFolderPath: string | null;
-  entities: Map<string, LibraryEntity>;
-  mode: LibraryTreeViewMode;
-  onCreateFolder: (name: string, parentId?: FolderId) => Promise<void>;
-  onDeleteEntity: (entity: LibraryEntity) => void;
-  onDownloadFile: (entity: LibraryEntity) => void;
-  onDropEntities?: (
-    entities: LibraryEntity[],
-    targetFolderId: FolderId | undefined,
-  ) => Promise<void>;
-  onMoveEntity: (entity: LibraryEntity) => void;
-  onOpenEntity: (entity: LibraryEntity) => void;
-  onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
-  onCopyLink: (entity: LibraryEntity) => Promise<void> | void;
-  onToggleMode: () => void;
-  onUploadFiles: () => void;
-  paths: string[];
-  title?: string;
-  uploadDisabled?: boolean;
-}) {
-  const view = useMemo(
-    () =>
-      buildLibraryTreeView({
-        entitiesByTreePath: entities,
-        mode,
-        treePaths: paths,
-      }),
-    [entities, mode, paths],
-  );
-  const entityLookup = useMemo(
-    () => buildLibraryTreeViewLookup(view.entitiesByViewPath),
-    [view.entitiesByViewPath],
-  );
-  const entitiesRef = useRef(entityLookup);
+  const entitiesRef = useRef(entities);
   const modelRef = useRef<FileTreeModel | null>(null);
-  const onCreateFolderRef = useRef(onCreateFolder);
   const onDropEntitiesRef = useRef(onDropEntities);
   const onRenameEntityRef = useRef(onRenameEntity);
-  const pathsRef = useRef(view.paths);
-  const draftFoldersRef = useRef(
-    new Map<string, { parentId: FolderId | undefined }>(),
-  );
+  const pathsRef = useRef(paths);
 
   const { model } = useFileTree({
     composition: treeComposition,
@@ -263,45 +161,18 @@ function LibraryTreeModel({
     flattenEmptyDirectories: false,
     icons: { colored: true, set: "complete" },
     initialExpansion: "open",
-    paths: view.paths,
+    paths,
     renaming: canManage
       ? {
-          onError: (error) => {
-            toast.error(error);
-          },
+          onError: (error) => toast.error(error),
           onRename: ({ destinationPath, isFolder, sourcePath }) => {
-            const lookupPath = getLibraryTreeViewLookupPath(
-              sourcePath,
-              isFolder,
-            );
-            const nextName = getLibraryTreeViewNameFromPath(
-              destinationPath,
-              mode,
-            ).trim();
-            const draftFolder = draftFoldersRef.current.get(lookupPath);
-            const entity = entitiesRef.current.get(lookupPath);
+            const sourceLookupPath = isFolder
+              ? folderTreePath(sourcePath)
+              : sourcePath;
+            const entity = entitiesRef.current.get(sourceLookupPath);
+            const nextName = basenameFromTreePath(destinationPath).trim();
 
-            if (!nextName) {
-              modelRef.current?.resetPaths(pathsRef.current);
-              return;
-            }
-
-            if (draftFolder) {
-              draftFoldersRef.current.delete(lookupPath);
-              void onCreateFolderRef
-                .current(nextName, draftFolder.parentId)
-                .catch((error) => {
-                  modelRef.current?.resetPaths(pathsRef.current);
-                  toast.error(
-                    error instanceof Error
-                      ? error.message
-                      : "Folder creation failed",
-                  );
-                });
-              return;
-            }
-
-            if (!entity) {
+            if (!entity || !nextName) {
               modelRef.current?.resetPaths(pathsRef.current);
               return;
             }
@@ -317,30 +188,42 @@ function LibraryTreeModel({
       : false,
     search: true,
     searchBlurBehavior: "retain",
-    stickyFolders: mode === "tree",
+    stickyFolders: true,
     unsafeCSS: treeUnsafeCSS,
   });
   const search = useFileTreeSearch(model);
 
   useEffect(() => {
-    entitiesRef.current = entityLookup;
+    entitiesRef.current = entities;
     modelRef.current = model;
-    onCreateFolderRef.current = onCreateFolder;
     onDropEntitiesRef.current = onDropEntities;
     onRenameEntityRef.current = onRenameEntity;
-    pathsRef.current = view.paths;
-  }, [
-    entityLookup,
-    model,
-    onCreateFolder,
-    onDropEntities,
-    onRenameEntity,
-    view.paths,
-  ]);
+    pathsRef.current = paths;
+  }, [entities, model, onDropEntities, onRenameEntity, paths]);
 
   useEffect(() => {
-    model.resetPaths(view.paths);
-  }, [model, view.paths]);
+    model.resetPaths(paths);
+  }, [model, paths]);
+
+  const selectedParentId = () => {
+    const selectedPath = model.getSelectedPaths().at(-1);
+    const entity = selectedPath ? entities.get(selectedPath) : undefined;
+
+    if (entity?.kind === "folder") return entity.folder._id;
+    if (entity?.kind === "file") return entity.file.folderId;
+    return currentFolderId ?? undefined;
+  };
+
+  const createFolder = () => {
+    if (!canManage) return;
+    void onCreateFolder("Untitled folder", selectedParentId()).catch(
+      (error) => {
+        toast.error(
+          error instanceof Error ? error.message : "Folder creation failed",
+        );
+      },
+    );
+  };
 
   const openEntityFromEvent = (event: ReactMouseEvent<HTMLElement>) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -369,42 +252,8 @@ function LibraryTreeModel({
     const entityPath = row.dataset.itemPath ?? row.dataset.fileTreeStickyPath;
     if (!entityPath) return;
 
-    const entity = entityLookup.get(entityPath);
+    const entity = entities.get(entityPath);
     if (entity?.kind === "file") onOpenEntity(entity);
-  };
-
-  const createFolderInline = () => {
-    if (!canManage) return;
-
-    const selectedPath = model.getSelectedPaths().at(-1);
-    const selectedEntity = selectedPath
-      ? entityLookup.get(selectedPath)
-      : undefined;
-    const parentId =
-      selectedEntity?.kind === "folder"
-        ? selectedEntity.folder._id
-        : selectedEntity?.kind === "file"
-          ? selectedEntity.file.folderId
-          : (currentFolderId ?? undefined);
-    const parentActualPath =
-      selectedEntity?.kind === "folder"
-        ? selectedEntity.path
-        : selectedEntity?.kind === "file"
-          ? getParentActualPath(selectedEntity.path)
-          : currentFolderPath;
-    const draft = buildDraftFolderViewPath({
-      existingViewPaths: view.paths,
-      mode,
-      parentActualPath,
-    });
-
-    draftFoldersRef.current.set(draft.viewPath, { parentId });
-    model.add(draft.viewPath);
-
-    if (!model.startRenaming(draft.viewPath, { removeIfCanceled: true })) {
-      draftFoldersRef.current.delete(draft.viewPath);
-      model.resetPaths(pathsRef.current);
-    }
   };
 
   return (
@@ -414,9 +263,7 @@ function LibraryTreeModel({
       header={
         <LibraryTreeHeader
           canManage={canManage}
-          mode={mode}
-          onCreateFolder={createFolderInline}
-          onToggleMode={onToggleMode}
+          onCreateFolder={createFolder}
           onToggleSearch={() => {
             if (search.isOpen) search.close();
             else search.open();
@@ -430,7 +277,7 @@ function LibraryTreeModel({
       model={model}
       onClick={openEntityFromEvent}
       renderContextMenu={(item, context) => {
-        const entity = entityLookup.get(item.path);
+        const entity = entities.get(item.path);
         if (!entity) return null;
 
         return (
@@ -475,15 +322,14 @@ function resolveDropTargetFolderId(
     event.target.directoryPath ?? event.target.flattenedSegmentPath;
   if (!targetPath) return undefined;
 
-  const target = entities.get(targetPath);
+  const target =
+    entities.get(folderTreePath(targetPath)) ?? entities.get(targetPath);
   return target?.kind === "folder" ? target.folder._id : undefined;
 }
 
 function LibraryTreeHeader({
   canManage,
-  mode,
   onCreateFolder,
-  onToggleMode,
   onToggleSearch,
   onUploadFiles,
   searchOpen,
@@ -491,9 +337,7 @@ function LibraryTreeHeader({
   uploadDisabled,
 }: {
   canManage: boolean;
-  mode: LibraryTreeViewMode;
   onCreateFolder: () => void;
-  onToggleMode: () => void;
   onToggleSearch: () => void;
   onUploadFiles: () => void;
   searchOpen: boolean;
@@ -516,13 +360,6 @@ function LibraryTreeHeader({
           pressed={searchOpen}
         >
           <Search className="h-3.5 w-3.5" />
-        </TreeHeaderButton>
-        <TreeHeaderButton
-          label={mode === "tree" ? "Show flat list" : "Show tree list"}
-          onClick={onToggleMode}
-          pressed={mode === "flat"}
-        >
-          <ListTree className="h-3.5 w-3.5" />
         </TreeHeaderButton>
         {canManage ? (
           <>
@@ -695,9 +532,4 @@ function MenuItem({
       {children}
     </button>
   );
-}
-
-function getParentActualPath(path: string) {
-  const separatorIndex = path.lastIndexOf("/");
-  return separatorIndex === -1 ? null : path.slice(0, separatorIndex);
 }

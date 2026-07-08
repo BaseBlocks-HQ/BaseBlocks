@@ -1,15 +1,23 @@
 "use client";
 
+import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
-import { usePublicLibraryData } from "@/modules/document-library/hooks";
-import type { LibraryId } from "@/modules/document-library/types";
+import type { LibraryId } from "@/modules/document-library/tree-input";
 import type { ElementRendererProps } from "@/modules/site-elements/authoring/registry";
+import { api } from "@baseblocks/backend";
+import { useQuery } from "convex/react";
 
 export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
   const resolvedLibraryId = content.libraryId
     ? (content.libraryId as LibraryId)
     : null;
-  const data = usePublicLibraryData(resolvedLibraryId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const explorer = useQuery(
+    api.documentLibraries.queries.getPublicExplorer,
+    resolvedLibraryId
+      ? { libraryId: resolvedLibraryId, sessionTokens }
+      : "skip",
+  );
 
   if (!resolvedLibraryId) {
     return (
@@ -21,13 +29,10 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
 
   return (
     <LibraryExplorer
-      data={data}
-      actions={{}}
-      options={{
-        access: "read",
-        allowDownloads: content.allowDownloads !== false,
-        embedded: true,
-      }}
+      access="read"
+      allowDownloads={content.allowDownloads !== false}
+      embedded
+      explorer={explorer}
     />
   );
 }

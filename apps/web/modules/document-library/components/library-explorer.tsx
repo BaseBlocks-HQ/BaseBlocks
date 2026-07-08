@@ -11,16 +11,16 @@ import {
   ToolbarButton,
   type PreviewFile,
 } from "@/modules/file-preview";
-import { buildLibraryEntityMap } from "@/modules/document-library/tree-model";
 import type {
   FolderId,
   LibraryDialogTarget,
   LibraryEntity,
-  LibraryExplorerActions,
-  LibraryExplorerData,
-  LibraryExplorerOptions,
+  LibraryExplorerPayload,
   LibraryFile,
-} from "@/modules/document-library/types";
+} from "@/modules/document-library/tree-input";
+import { buildLibraryTreeInput } from "@/modules/document-library/tree-input";
+import { useFileUpload } from "@/lib/files/hooks";
+import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
@@ -29,6 +29,7 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
+import { useMutation } from "convex/react";
 import { Loader2, PanelLeft, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -148,21 +149,17 @@ function UploadDropzone({
 }
 
 export function LibraryExplorer({
-  actions,
   className,
-  data,
-  options,
-  uploadState,
+  explorer,
+  access,
+  allowDownloads,
+  embedded,
 }: {
-  actions: LibraryExplorerActions;
   className?: string;
-  data: LibraryExplorerData;
-  options: LibraryExplorerOptions;
-  /** When provided, disables upload controls and shows in-dropzone upload progress. */
-  uploadState?: {
-    isAnyUploading: boolean;
-    totalProgress?: { percentage: number } | null;
-  };
+  explorer: LibraryExplorerPayload | null | undefined;
+  access: "manage" | "read";
+  allowDownloads: boolean;
+  embedded?: boolean;
 }) {
   const tExplorer = useTranslations("libraries.explorer");
   const isMobile = useIsMobile();
@@ -179,27 +176,40 @@ export function LibraryExplorer({
     null,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const canManage = options.access === "manage";
-  const model = useMemo(
-    () => buildLibraryEntityMap(data.folders, data.files),
-    [data.folders, data.files],
+  const createFolderMutation = useMutation(
+    api.documentFolders.mutations.create,
   );
-  const openEntity = openFilePath ? model.entities.get(openFilePath) : null;
+  const updateFolder = useMutation(api.documentFolders.mutations.update);
+  const moveFolderMutation = useMutation(api.documentFolders.mutations.move);
+  const removeFolder = useMutation(api.documentFolders.mutations.remove);
+  const renameDocument = useMutation(api.documents.mutations.rename);
+  const moveDocument = useMutation(api.documents.mutations.move);
+  const removeDocument = useMutation(api.documents.mutations.remove);
+  const {
+    uploadFiles: uploadLibraryFiles,
+    isAnyUploading,
+    clearAllUploadStates,
+    totalProgress,
+  } = useFileUpload();
+
+  const canManage = access === "manage";
+  const model = useMemo(
+    () => buildLibraryTreeInput(explorer?.folders ?? [], explorer?.files ?? []),
+    [explorer?.folders, explorer?.files],
+  );
+  const openEntity = openFilePath ? model.entityByPath.get(openFilePath) : null;
   const openFile = openEntity?.kind === "file" ? openEntity.file : null;
   const selectedFileId = searchParams.get(FILE_SEARCH_PARAM);
 
   useEffect(() => {
     if (!selectedFileId) return;
 
-    for (const entity of model.entities.values()) {
-      if (entity.kind === "file" && entity.file._id === selectedFileId) {
-        setOpenFilePath(entity.path);
-        setCurrentFolderId(entity.file.folderId ?? null);
-        return;
-      }
+    const entity = model.entityByFileId.get(selectedFileId);
+    if (entity?.kind === "file") {
+      setOpenFilePath(entity.path);
+      setCurrentFolderId(entity.file.folderId ?? null);
     }
-  }, [model.entities, selectedFileId]);
+  }, [model.entityByFileId, selectedFileId]);
 
   const syncFileUrl = (documentId: string | null) => {
     const nextUrl = buildFileDeepLinkPath(
@@ -236,8 +246,7 @@ export function LibraryExplorer({
   };
 
   const uploadFiles = async (files: File[]) => {
-    const upload = actions.uploadFiles;
-    if (!upload || files.length === 0) return;
+    if (!canManage || !explorer || files.length === 0) return;
 
     const targetFolderId = currentFolderId ?? undefined;
     const count = files.length;
@@ -249,13 +258,23 @@ export function LibraryExplorer({
         : tExplorer("toastUploadingCount", { count }),
     );
 
-    const results = await upload(files, targetFolderId).catch((error) => {
-      toast.error(
-        error instanceof Error ? error.message : tExplorer("toastUploadFailed"),
-        { id: toastId },
-      );
-      return null;
-    });
+    const results = await uploadLibraryFiles(files, {
+      siteId: explorer.site._id,
+      libraryId: explorer.library._id,
+      folderId: targetFolderId,
+    })
+      .catch((error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : tExplorer("toastUploadFailed"),
+          { id: toastId },
+        );
+        return null;
+      })
+      .finally(() => {
+        clearAllUploadStates();
+      });
 
     if (!results) {
       return;
@@ -286,12 +305,12 @@ export function LibraryExplorer({
 
   const deleteItem = async (target: LibraryDialogTarget) => {
     if (target.kind === "folder") {
-      await actions.deleteFolder?.(target.id);
+      await removeFolder({ folderId: target.id });
       if (currentFolderId === target.id) {
         setCurrentFolderId(null);
       }
     } else {
-      await actions.deleteFile?.(target.id);
+      await removeDocument({ documentId: target.id });
       if (openEntity?.kind === "file" && openEntity.file._id === target.id) {
         setOpenFilePath(null);
       }
@@ -304,12 +323,15 @@ export function LibraryExplorer({
     targetFolderId: FolderId | undefined,
   ) => {
     if (target.kind === "folder") {
-      await actions.moveFolder?.(target.id, targetFolderId);
+      await moveFolderMutation({
+        folderId: target.id,
+        newParentId: targetFolderId,
+      });
       if (currentFolderId === target.id) {
         setCurrentFolderId(target.id);
       }
     } else {
-      await actions.moveFile?.(target.id, targetFolderId);
+      await moveDocument({ documentId: target.id, folderId: targetFolderId });
       if (openEntity?.kind === "file" && openEntity.file._id === target.id) {
         setCurrentFolderId(targetFolderId ?? null);
       }
@@ -318,7 +340,12 @@ export function LibraryExplorer({
   };
 
   const createFolder = async (name: string, parentId?: FolderId) => {
-    await actions.createFolder?.(name, parentId);
+    if (!explorer) return;
+    await createFolderMutation({
+      libraryId: explorer.library._id,
+      parentId,
+      name,
+    });
     toast.success(tExplorer("toastFolderCreated"));
   };
 
@@ -335,20 +362,20 @@ export function LibraryExplorer({
     let movedCount = 0;
     for (const entity of entities) {
       if (entity.kind === "folder") {
-        if (!actions.moveFolder) {
-          throw new Error("Moving folders is not available for this library");
-        }
         if ((entity.folder.parentId ?? undefined) === targetFolderId) continue;
-        await actions.moveFolder(entity.folder._id, targetFolderId);
+        await moveFolderMutation({
+          folderId: entity.folder._id,
+          newParentId: targetFolderId,
+        });
         if (currentFolderId === entity.folder._id) {
           setCurrentFolderId(entity.folder._id);
         }
       } else {
-        if (!actions.moveFile) {
-          throw new Error("Moving files is not available for this library");
-        }
         if ((entity.file.folderId ?? undefined) === targetFolderId) continue;
-        await actions.moveFile(entity.file._id, targetFolderId);
+        await moveDocument({
+          documentId: entity.file._id,
+          folderId: targetFolderId,
+        });
         if (
           openEntity?.kind === "file" &&
           openEntity.file._id === entity.file._id
@@ -375,9 +402,9 @@ export function LibraryExplorer({
 
   const renameEntity = async (entity: LibraryEntity, name: string) => {
     if (entity.kind === "folder") {
-      await actions.renameFolder?.(entity.folder._id, name);
+      await updateFolder({ folderId: entity.folder._id, name });
     } else {
-      await actions.renameFile?.(entity.file._id, name);
+      await renameDocument({ documentId: entity.file._id, filename: name });
     }
     toast.success(tExplorer("toastRenamed"));
   };
@@ -398,11 +425,11 @@ export function LibraryExplorer({
     );
   };
 
-  if (data.isLoading) {
+  if (explorer === undefined) {
     return <LibraryExplorerLoading className={className} />;
   }
 
-  if (!data.library) {
+  if (!explorer) {
     return (
       <div
         className={cn(
@@ -417,15 +444,10 @@ export function LibraryExplorer({
 
   const tree = (
     <LibraryTree
-      allowDownloads={options.allowDownloads}
+      allowDownloads={allowDownloads}
       canManage={canManage}
       currentFolderId={currentFolderId}
-      currentFolderPath={
-        currentFolderId
-          ? (model.folderPathById.get(currentFolderId) ?? null)
-          : null
-      }
-      entities={model.entitiesByTreePath}
+      entities={model.entityByPath}
       onCreateFolder={createFolder}
       onDeleteEntity={deleteEntity}
       onDownloadFile={(entity) => {
@@ -433,7 +455,7 @@ export function LibraryExplorer({
       }}
       onCopyLink={(entity) => void copyEntityLink(entity)}
       onDropEntities={
-        canManage && actions.moveFile && actions.moveFolder
+        canManage
           ? (entities, targetFolderId) =>
               dropEntities(entities, targetFolderId).catch((error) => {
                 toast.error(
@@ -443,13 +465,13 @@ export function LibraryExplorer({
               })
           : undefined
       }
-      paths={model.treePaths}
+      paths={model.paths}
       onOpenEntity={openEntityInExplorer}
       onMoveEntity={moveEntity}
       onRenameEntity={renameEntity}
       onUploadFiles={() => fileInputRef.current?.click()}
-      title={options.embedded ? data.library.name : undefined}
-      uploadDisabled={uploadState?.isAnyUploading}
+      title={embedded ? explorer.library.name : undefined}
+      uploadDisabled={isAnyUploading}
     />
   );
   const previewFile: PreviewFile | null = openFile
@@ -458,7 +480,7 @@ export function LibraryExplorer({
         filename: openFile.filename,
         contentType: openFile.contentType,
         size: openFile.size,
-        allowDownload: options.allowDownloads,
+        allowDownload: allowDownloads,
         deepLinkId: openFile._id,
       }
     : null;
@@ -503,14 +525,14 @@ export function LibraryExplorer({
   return (
     <>
       <UploadDropzone
-        disabled={!canManage || !actions.uploadFiles}
-        isUploading={uploadState?.isAnyUploading ?? false}
-        uploadPercent={uploadState?.totalProgress?.percentage ?? null}
+        disabled={!canManage || !explorer}
+        isUploading={isAnyUploading}
+        uploadPercent={totalProgress?.percentage ?? null}
         uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(
           "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
-          options.embedded ? "h-[32rem]" : "h-full flex-1",
+          embedded ? "h-[32rem]" : "h-full flex-1",
           className,
         )}
       >
@@ -541,7 +563,7 @@ export function LibraryExplorer({
         onConfirm={deleteItem}
       />
       <MoveItemDialog
-        folders={data.folders}
+        folders={explorer.folders}
         target={moveTarget}
         onOpenChange={(open) => !open && setMoveTarget(null)}
         onSubmit={moveItem}

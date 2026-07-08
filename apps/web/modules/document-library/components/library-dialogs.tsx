@@ -4,7 +4,7 @@ import type {
   FolderId,
   LibraryDialogTarget,
   LibraryFolder,
-} from "@/modules/document-library/types";
+} from "@/modules/document-library/tree-input";
 import {
   AlertDialog,
   AlertDialogAction,

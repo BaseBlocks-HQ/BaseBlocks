@@ -1,8 +1,102 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { type QueryCtx, query } from "../_generated/server";
 import { checkIsMember } from "../auth";
+import { mapDocumentListing } from "../documents/listings";
+import { getActiveLibraryIds } from "../lib/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
+
+const librarySummary = v.object({
+  _id: v.id("documentLibraries"),
+  name: v.string(),
+  siteId: v.id("sites"),
+});
+
+const librarySiteSummary = v.object({
+  _id: v.id("sites"),
+  name: v.string(),
+  teamId: v.id("teams"),
+});
+
+const libraryFolderSummary = v.object({
+  _id: v.id("documentFolders"),
+  libraryId: v.id("documentLibraries"),
+  parentId: v.optional(v.id("documentFolders")),
+  name: v.string(),
+  order: v.number(),
+});
+
+const libraryFileSummary = v.object({
+  _id: v.id("documents"),
+  filename: v.string(),
+  contentType: v.string(),
+  size: v.number(),
+  downloadUrl: v.string(),
+  folderId: v.optional(v.id("documentFolders")),
+});
+
+const explorerPayload = v.object({
+  library: librarySummary,
+  site: librarySiteSummary,
+  folders: v.array(libraryFolderSummary),
+  files: v.array(libraryFileSummary),
+});
+
+async function buildExplorerPayload(
+  ctx: QueryCtx,
+  library: {
+    _id: Id<"documentLibraries">;
+    name: string;
+    siteId: Id<"sites">;
+  },
+  site: {
+    _id: Id<"sites">;
+    name: string;
+    teamId: Id<"teams">;
+  },
+) {
+  const folders = await ctx.db
+    .query("documentFolders")
+    .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+    .collect();
+  const listings = await ctx.db
+    .query("documentListings")
+    .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+    .collect();
+
+  return {
+    library: {
+      _id: library._id,
+      name: library.name,
+      siteId: library.siteId,
+    },
+    site: {
+      _id: site._id,
+      name: site.name,
+      teamId: site.teamId,
+    },
+    folders: folders
+      .map((folder) => ({
+        _id: folder._id,
+        libraryId: folder.libraryId,
+        parentId: folder.parentId,
+        name: folder.name,
+        order: folder.order,
+      }))
+      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
+    files: listings
+      .map(mapDocumentListing)
+      .map((file) => ({
+        _id: file._id,
+        filename: file.filename,
+        contentType: file.contentType,
+        size: file.size,
+        downloadUrl: file.downloadUrl,
+        folderId: file.folderId,
+      }))
+      .sort((a, b) => a.filename.localeCompare(b.filename)),
+  };
+}
 
 export const list = query({
   args: { siteId: v.id("sites") },
@@ -34,6 +128,22 @@ export const get = query({
   },
 });
 
+export const getExplorer = query({
+  args: { libraryId: v.id("documentLibraries") },
+  returns: v.union(explorerPayload, v.null()),
+  handler: async (ctx, { libraryId }) => {
+    const library = await ctx.db.get(libraryId);
+    if (!library) return null;
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site) return null;
+
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
+
+    return await buildExplorerPayload(ctx, library, site);
+  },
+});
+
 export const getPublic = query({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -49,6 +159,28 @@ export const getPublic = query({
     }
 
     return library;
+  },
+});
+
+export const getPublicExplorer = query({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  returns: v.union(explorerPayload, v.null()),
+  handler: async (ctx, { libraryId, sessionTokens }) => {
+    const library = await ctx.db.get(libraryId);
+    if (!library) return null;
+
+    const site = await ctx.db.get(library.siteId);
+    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+      return null;
+    }
+
+    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
+    if (!activeLibraryIds.has(libraryId)) return null;
+
+    return await buildExplorerPayload(ctx, library, site);
   },
 });
 
