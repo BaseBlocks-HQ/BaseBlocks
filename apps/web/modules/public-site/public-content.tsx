@@ -8,6 +8,7 @@ import {
   getLayoutGridStyle,
   LayoutContextProvider,
 } from "@/modules/site-runtime/layout";
+import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { ElementRenderer } from "@/modules/site-runtime/rendering";
 import type { Doc } from "@baseblocks/backend";
 import type {
@@ -28,7 +29,6 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { PublicPageDetailPanel } from "./public-page-detail-panel";
-import { usePublicPagePanel } from "./public-page-panel-context";
 
 type LayoutDoc = Doc<"layouts">;
 type SlotDoc = LayoutDoc["slots"][number];
@@ -275,7 +275,7 @@ function PublicContentInner({
   nested,
   searchTerm,
 }: PublicContentProps) {
-  const { viewingPage, closePage } = usePublicPagePanel();
+  const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
   const pageData = usePage(pageId);
   const layoutsData = usePublishedLayouts(pageId);

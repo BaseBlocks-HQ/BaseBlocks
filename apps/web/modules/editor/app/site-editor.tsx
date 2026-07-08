@@ -8,10 +8,7 @@ import { cn } from "@/lib/utils";
 import { BlockClipboardProvider } from "@/modules/editor/clipboard/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
 import { PublicPageDetailPanel } from "@/modules/public-site/public-page-detail-panel";
-import {
-  PublicPagePanelProvider,
-  usePublicPagePanel,
-} from "@/modules/public-site/public-page-panel-context";
+import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { EditorProvider } from "@/modules/editor/state";
 import { useEditorUi } from "@/modules/editor/state";
 import { useTeamAccess } from "@/modules/workspace/team-access";
@@ -95,7 +92,7 @@ function SiteEditorInner({
   const selectedPageId = searchParams.get("page");
   const [, setSelectedSlotId] = useState<string | null>(null);
   const { selection, editingPage, closePageEditor } = useEditorUi();
-  const { viewingPage, closePage } = usePublicPagePanel();
+  const { viewingPage, closePage } = usePagePanelState();
 
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -485,13 +482,11 @@ function SiteEditorShell({
         }}
       >
         <BlockClipboardProvider>
-          <PublicPagePanelProvider>
-            <SiteEditorInner
-              initialPages={initialPages}
-              initialSite={initialSite}
-              siteId={siteId}
-            />
-          </PublicPagePanelProvider>
+          <SiteEditorInner
+            initialPages={initialPages}
+            initialSite={initialSite}
+            siteId={siteId}
+          />
         </BlockClipboardProvider>
       </EditorProvider>
     </ConvexEditorMutationsProvider>

@@ -11,7 +11,7 @@ import {
   type PreviewFile,
 } from "@/modules/file-preview";
 import { FileIcon, getFileTypeColor } from "@/modules/file-ui";
-import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
+import { useSiteRenderActions } from "@/modules/site-runtime/actions";
 import type { ElementRendererProps } from "@/modules/site-runtime/registry";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -179,7 +179,8 @@ export function FileRenderer({ content }: ElementRendererProps<"file">) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const publicSiteContext = usePublicSiteContextOptional();
+  const actions = useSiteRenderActions();
+  const hasFileDeepLinks = actions.fileDeepLinks === true;
   const file = getContentSnapshot(content);
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const openedFromLinkRef = useRef<string | null>(null);
@@ -199,20 +200,20 @@ export function FileRenderer({ content }: ElementRendererProps<"file">) {
 
   useEffect(() => {
     if (!file) return;
-    if (!publicSiteContext) return;
+    if (!hasFileDeepLinks) return;
     if (selectedFileId !== file._id) return;
     if (openedFromLinkRef.current === selectedFileId) return;
 
     setPreviewFile(toPreviewFile(file, file._id));
     openedFromLinkRef.current = selectedFileId;
-  }, [file, publicSiteContext, selectedFileId]);
+  }, [file, hasFileDeepLinks, selectedFileId]);
 
   if (!file) {
     return null;
   }
 
   const handleOpen = () => {
-    if (publicSiteContext) {
+    if (hasFileDeepLinks) {
       const nextUrl = buildFileDeepLinkPath(
         pathname,
         searchParams.toString(),
@@ -222,7 +223,7 @@ export function FileRenderer({ content }: ElementRendererProps<"file">) {
     }
 
     setPreviewFile(
-      toPreviewFile(file, publicSiteContext ? file._id : undefined),
+      toPreviewFile(file, hasFileDeepLinks ? file._id : undefined),
     );
   };
 

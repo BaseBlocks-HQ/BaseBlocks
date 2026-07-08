@@ -30,11 +30,7 @@ function getConvexClient(): ConvexHttpClient | null {
   return new ConvexHttpClient(convexUrl);
 }
 
-/**
- * Server component that renders JSON-LD structured data for public site pages.
- * Include this in your page.tsx server components.
- */
-export async function PublicSiteJsonLd({
+export async function PublicSiteSeo({
   teamSlug,
   siteSlug,
   pagePath = EMPTY_PATH,
@@ -64,24 +60,17 @@ export async function PublicSiteJsonLd({
     return null;
   }
 
-  if (!site) return null;
-
-  // No structured data for non-public sites — don't help search engines index unlisted content
-  if (site.visibility && site.visibility !== "public") return null;
+  if (!site || (site.visibility && site.visibility !== "public")) return null;
 
   const siteTitle = site.settings?.siteTitle?.trim() || site.name;
   const siteDescription = site.settings?.siteDescription?.trim() || undefined;
   const resolvedSiteSlug = siteSlug ?? site.slug;
-
-  // WebSite schema — always present
   const webSiteJsonLd = buildWebSiteJsonLd({
     siteTitle,
     siteDescription,
     teamSlug,
     siteSlug: resolvedSiteSlug,
   });
-
-  // BreadcrumbList schema — only when we have page path segments
   const breadcrumbJsonLd =
     pagePath.length > 0
       ? buildBreadcrumbJsonLd({
@@ -102,11 +91,11 @@ export async function PublicSiteJsonLd({
       <JsonLdScript
         data={webSiteJsonLd as unknown as Record<string, unknown>}
       />
-      {breadcrumbJsonLd && (
+      {breadcrumbJsonLd ? (
         <JsonLdScript
           data={breadcrumbJsonLd as unknown as Record<string, unknown>}
         />
-      )}
+      ) : null}
     </>
   );
 }

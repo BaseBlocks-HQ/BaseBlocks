@@ -1,12 +1,12 @@
 "use client";
 
 import { usePage } from "@/lib/data";
-import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
+import { useSiteRenderActions } from "@/modules/site-runtime/actions";
 import type { ElementRendererProps } from "@/modules/site-runtime/registry";
 import { ChevronRight, FileText } from "lucide-react";
 
 export function PageRenderer({ content }: ElementRendererProps<"page">) {
-  const pagePanel = usePublicPagePanelOptional();
+  const actions = useSiteRenderActions();
   const page = usePage(content.pageId);
 
   if (!content.pageId || !page) {
@@ -14,7 +14,7 @@ export function PageRenderer({ content }: ElementRendererProps<"page">) {
   }
 
   const handleClick = () => {
-    pagePanel?.openPage(content.pageId);
+    actions.openPage?.(content.pageId);
   };
 
   return (

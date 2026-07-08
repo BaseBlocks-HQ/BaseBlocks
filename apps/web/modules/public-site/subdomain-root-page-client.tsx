@@ -3,7 +3,7 @@
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { getPageLink } from "@/lib/url";
 import { AccessGate } from "@/modules/public-site/access-gate";
-import { SitePrivate } from "@/modules/public-site/site-private";
+import { PublicSiteState } from "@/modules/public-site/states";
 import { api } from "@baseblocks/backend";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
@@ -31,7 +31,9 @@ export function SubdomainRootPageClient({ subdomain }: Props) {
     const visibility = siteData.site.visibility ?? "public";
 
     if (visibility === "private") {
-      return <SitePrivate siteName={siteData.site.name} />;
+      return (
+        <PublicSiteState kind="site-private" siteName={siteData.site.name} />
+      );
     }
 
     if (visibility === "password") {
@@ -46,13 +48,7 @@ export function SubdomainRootPageClient({ subdomain }: Props) {
     }
 
     if (!siteData.defaultPage) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-6 text-center">
-          <p className="text-muted-foreground">
-            No accessible pages are available on this site yet.
-          </p>
-        </div>
-      );
+      return <PublicSiteState kind="empty" />;
     }
   }
 
@@ -76,9 +72,5 @@ function RedirectToDefaultPage({
 }
 
 function PublicSiteLoading() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-background">
-      <Spinner className="size-6 text-muted-foreground" />
-    </div>
-  );
+  return <PublicSiteState kind="loading" />;
 }

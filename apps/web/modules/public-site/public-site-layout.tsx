@@ -6,7 +6,9 @@ import { getPageLink } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
 import { SearchBox } from "@/modules/site-search";
+import { SiteRenderActionsProvider } from "@/modules/site-runtime/actions";
 import { useCustomizationStyles } from "@/modules/site-runtime/customization";
+import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
@@ -44,15 +46,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
-import {
-  PublicPagePanelProvider,
-  usePublicPagePanel,
-} from "./public-page-panel-context";
-import {
-  PublicSiteProvider,
-  usePublicSiteContext,
-  usePublicSiteContextOptional,
-} from "./public-site-context";
 import { PublicContent } from "./public-content";
 import { IconFile } from "nucleo-glass";
 
@@ -88,6 +81,7 @@ export function PublicSiteLayout({
   team,
   pagePath,
 }: PublicSiteLayoutProps) {
+  const pagePanel = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
   const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
     siteId: site._id,
@@ -176,6 +170,7 @@ export function PublicSiteLayout({
           team={team}
           pages={pages}
           currentPath={currentPathString}
+          onOpenPage={pagePanel.openPage}
         />
       )}
 
@@ -199,6 +194,7 @@ export function PublicSiteLayout({
         currentPageStatus={currentPageStatus?.status}
         pages={pages}
         currentPath={currentPathString}
+        siteSlug={site.slug}
         navigationStyle={navigationStyle}
         showBreadcrumbs={showBreadcrumbs}
       />
@@ -206,54 +202,60 @@ export function PublicSiteLayout({
   );
 
   return (
-    <PublicSiteProvider
-      siteId={site._id}
-      siteSlug={site.slug}
-      teamSlug={team.slug}
+    <SiteRenderActionsProvider
+      actions={{
+        siteId: site._id,
+        siteSlug: site.slug,
+        teamSlug: team.slug,
+        openPage: pagePanel.openPage,
+        publicSearch: true,
+        fileDeepLinks: true,
+      }}
     >
-      <PublicPagePanelProvider>
-        {showSidebar ? (
-          <SidebarProvider>
-            {site.settings.customization?.showHeaderGradient && showHeader && (
-              <div className="fixed top-14 left-0 right-0 z-30">
-                <GradientStripe customization={site.settings.customization} />
-              </div>
-            )}
-            <div
-              className="h-screen bg-background flex overflow-hidden w-full"
-              style={customizationStyles}
-              {...(isCustomized ? { "data-site-customized": "" } : {})}
-            >
-              <PublicSiteSidebar
-                site={site}
-                team={team}
-                pages={pages}
-                currentPath={currentPathString}
-                ancestorIds={ancestorIds}
-                sidebarDefaultExpanded={sidebarDefaultExpanded}
-              />
-
-              <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {mainContent}
-              </main>
+      {showSidebar ? (
+        <SidebarProvider>
+          {site.settings.customization?.showHeaderGradient && showHeader && (
+            <div className="fixed top-14 left-0 right-0 z-30">
+              <GradientStripe customization={site.settings.customization} />
             </div>
-          </SidebarProvider>
-        ) : (
+          )}
           <div
-            className="h-screen bg-background flex flex-col overflow-hidden"
+            className="h-screen bg-background flex overflow-hidden w-full"
             style={customizationStyles}
             {...(isCustomized ? { "data-site-customized": "" } : {})}
           >
-            {mainContent}
+            <PublicSiteSidebar
+              site={site}
+              team={team}
+              pages={pages}
+              currentPath={currentPathString}
+              ancestorIds={ancestorIds}
+              sidebarDefaultExpanded={sidebarDefaultExpanded}
+              siteId={site._id}
+              siteSlug={site.slug}
+            />
+
+            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+              {mainContent}
+            </main>
           </div>
-        )}
-      </PublicPagePanelProvider>
-    </PublicSiteProvider>
+        </SidebarProvider>
+      ) : (
+        <div
+          className="h-screen bg-background flex flex-col overflow-hidden"
+          style={customizationStyles}
+          {...(isCustomized ? { "data-site-customized": "" } : {})}
+        >
+          {mainContent}
+        </div>
+      )}
+    </SiteRenderActionsProvider>
   );
 }
 
 function PublicSiteHeader({
   currentPath,
+  onOpenPage,
   pages,
   site,
   team,
@@ -262,6 +264,7 @@ function PublicSiteHeader({
   team: PublicSiteLayoutProps["team"];
   pages?: PageWithChildren[];
   currentPath: string;
+  onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
 }) {
   const showSidebar = site.settings.navigationStyle === "sidebar";
   const showTopNav = site.settings.navigationStyle === "topnav";
@@ -269,7 +272,6 @@ function PublicSiteHeader({
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
-  const pagePanel = usePublicPagePanel();
   const themeButtonClassName = hasCustomHeaderColor
     ? "text-current hover:bg-current/10"
     : undefined;
@@ -308,7 +310,11 @@ function PublicSiteHeader({
 
         {showTopNav && pages && (
           <div className="flex-1 flex justify-center ml-8">
-            <TopNavMenu pages={pages} currentPath={currentPath} />
+            <TopNavMenu
+              pages={pages}
+              currentPath={currentPath}
+              siteSlug={site.slug}
+            />
           </div>
         )}
 
@@ -322,7 +328,7 @@ function PublicSiteHeader({
               className="w-64"
               headerMode={hasCustomHeaderColor}
               onOpenPageResult={(pageId, searchTerm) =>
-                pagePanel.openPage(pageId, { searchTerm })
+                onOpenPage(pageId, { searchTerm })
               }
             />
           )}
@@ -339,6 +345,8 @@ function PublicSiteSidebar({
   pages,
   sidebarDefaultExpanded,
   site,
+  siteId,
+  siteSlug,
   team,
 }: {
   site: PublicSiteLayoutProps["site"];
@@ -347,6 +355,8 @@ function PublicSiteSidebar({
   currentPath: string;
   ancestorIds: string[];
   sidebarDefaultExpanded: boolean;
+  siteId: Id<"sites">;
+  siteSlug: string;
 }) {
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
@@ -391,6 +401,8 @@ function PublicSiteSidebar({
                   currentPath={currentPath}
                   ancestorIds={ancestorIds}
                   defaultExpanded={sidebarDefaultExpanded}
+                  siteId={siteId}
+                  siteSlug={siteSlug}
                 />
               ))
             )}
@@ -408,6 +420,7 @@ function PublicSiteMainContent({
   navigationStyle,
   pages,
   showBreadcrumbs,
+  siteSlug,
 }: {
   currentPage: { _id: string; title: string } | null | undefined;
   currentPageStatus?: "accessible" | "forbidden" | "missing";
@@ -415,6 +428,7 @@ function PublicSiteMainContent({
   currentPath: string;
   navigationStyle: NavigationStyle;
   showBreadcrumbs: boolean;
+  siteSlug: string;
 }) {
   const showSubNav = navigationStyle === "subnav";
 
@@ -424,6 +438,7 @@ function PublicSiteMainContent({
         <SubNavBar
           pages={pages}
           currentPath={currentPath}
+          siteSlug={siteSlug}
           className="sticky top-14 z-30"
         />
       )}
@@ -432,6 +447,7 @@ function PublicSiteMainContent({
         <BreadcrumbBar
           pageId={currentPage._id as Id<"pages">}
           pageTitle={currentPage.title}
+          siteSlug={siteSlug}
           className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
         />
       )}
@@ -583,10 +599,12 @@ function TopNavMenu({
   className,
   currentPath,
   pages,
+  siteSlug,
 }: {
   pages: PageWithChildren[];
   currentPath?: string;
   className?: string;
+  siteSlug: string;
 }) {
   return (
     <nav className={cn("flex items-center gap-1", className)}>
@@ -595,6 +613,7 @@ function TopNavMenu({
           key={page._id}
           page={page}
           currentPath={currentPath}
+          siteSlug={siteSlug}
           variant="topnav"
         />
       ))}
@@ -606,10 +625,12 @@ function SubNavBar({
   className,
   currentPath,
   pages,
+  siteSlug,
 }: {
   pages: PageWithChildren[];
   currentPath?: string;
   className?: string;
+  siteSlug: string;
 }) {
   return (
     <nav
@@ -625,6 +646,7 @@ function SubNavBar({
               key={page._id}
               page={page}
               currentPath={currentPath}
+              siteSlug={siteSlug}
               variant="tabbar"
             />
           ))}
@@ -637,13 +659,14 @@ function SubNavBar({
 function HorizontalNavItem({
   currentPath,
   page,
+  siteSlug,
   variant,
 }: {
   page: PageWithChildren;
   currentPath?: string;
+  siteSlug: string;
   variant: "topnav" | "tabbar";
 }) {
-  const { siteSlug } = usePublicSiteContext();
   const hasChildren = page.children && page.children.length > 0;
   const fullPath = page.slug;
   const isActive = currentPath === fullPath;
@@ -732,7 +755,11 @@ function HorizontalNavItem({
           )}
         >
           <div className="w-[220px] rounded-md border bg-popover p-1 shadow-md animate-in fade-in-0 zoom-in-95">
-            <DropdownNavTree page={page} currentPath={currentPath} />
+            <DropdownNavTree
+              page={page}
+              currentPath={currentPath}
+              siteSlug={siteSlug}
+            />
           </div>
         </div>
       )}
@@ -745,13 +772,14 @@ function DropdownNavTree({
   depth = 0,
   page,
   pagePath,
+  siteSlug,
 }: {
   page: PageWithChildren;
   currentPath?: string;
   depth?: number;
   pagePath?: string;
+  siteSlug: string;
 }) {
-  const { siteSlug } = usePublicSiteContext();
   const hasChildren = page.children && page.children.length > 0;
   const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
   const isActive = currentPath === fullPath;
@@ -808,6 +836,7 @@ function DropdownNavTree({
             page={child}
             currentPath={currentPath}
             pagePath={fullPath}
+            siteSlug={siteSlug}
             depth={depth + 1}
           />
         ))}
@@ -825,6 +854,8 @@ function NavItem({
   depth = 0,
   page,
   pagePath,
+  siteId,
+  siteSlug,
 }: {
   page: PageWithChildren;
   currentPath?: string;
@@ -832,14 +863,13 @@ function NavItem({
   ancestorIds?: string[];
   pagePath?: string;
   defaultExpanded?: boolean;
+  siteId: Id<"sites">;
+  siteSlug: string;
 }) {
   const hasChildren = page.children && page.children.length > 0;
   const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
   const isActive = fullPath === currentPath;
   const shouldAutoExpand = ancestorIds.includes(page._id);
-  const publicSiteContext = usePublicSiteContextOptional();
-  const siteId = publicSiteContext?.siteId ?? "public";
-  const siteSlug = publicSiteContext?.siteSlug ?? "";
   const {
     isExpanded: isExpandedFromStorage,
     toggleExpand,
@@ -908,6 +938,8 @@ function NavItem({
             ancestorIds={ancestorIds}
             pagePath={fullPath}
             defaultExpanded={defaultExpanded}
+            siteId={siteId}
+            siteSlug={siteSlug}
           />
         ))}
     </>
@@ -918,12 +950,13 @@ function BreadcrumbBar({
   className,
   pageId,
   pageTitle,
+  siteSlug,
 }: {
   pageId: Id<"pages">;
   pageTitle: string;
   className?: string;
+  siteSlug: string;
 }) {
-  const { siteSlug } = usePublicSiteContext();
   const ancestors = usePageAncestors(pageId);
 
   const breadcrumbItems = (() => {

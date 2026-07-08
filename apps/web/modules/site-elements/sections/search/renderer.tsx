@@ -2,13 +2,11 @@
 
 import type { ElementRendererProps } from "@/modules/site-elements/authoring/registry";
 import { SearchBox } from "@/modules/site-search";
-import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
-import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
+import { useSiteRenderActions } from "@/modules/site-runtime/actions";
 
 export function SearchRenderer({ content }: ElementRendererProps<"search">) {
-  const publicSiteContext = usePublicSiteContextOptional();
-  const pagePanel = usePublicPagePanelOptional();
-  const siteId = publicSiteContext?.siteId;
+  const actions = useSiteRenderActions();
+  const siteId = actions.siteId;
 
   if (!siteId) {
     return (
@@ -24,9 +22,9 @@ export function SearchRenderer({ content }: ElementRendererProps<"search">) {
       placeholder={content.placeholder || "Search documents..."}
       maxResults={content.maxResults || 10}
       showFileType={content.showFileType !== false}
-      usePublicQuery={true}
+      usePublicQuery={actions.publicSearch === true}
       onOpenPageResult={(pageId, searchTerm) =>
-        pagePanel?.openPage(pageId, { searchTerm })
+        actions.openPage?.(pageId, { searchTerm })
       }
     />
   );

@@ -2,29 +2,13 @@
 
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, createContext, use } from "react";
 
-interface ViewingPage {
+export interface ViewingPage {
   pageId: string;
   searchTerm?: string;
 }
 
-interface PublicPagePanelContextValue {
-  viewingPage: ViewingPage | null;
-  openPage: (pageId: string, options?: { searchTerm?: string }) => void;
-  closePage: () => void;
-}
-
-const PublicPagePanelContext =
-  createContext<PublicPagePanelContextValue | null>(null);
-
-interface PublicPagePanelProviderProps {
-  children: ReactNode;
-}
-
-export function PublicPagePanelProvider({
-  children,
-}: PublicPagePanelProviderProps) {
+export function usePagePanelState() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,29 +49,5 @@ export function PublicPagePanelProvider({
       }
     : null;
 
-  return (
-    <PublicPagePanelContext.Provider
-      value={{
-        viewingPage,
-        openPage,
-        closePage,
-      }}
-    >
-      {children}
-    </PublicPagePanelContext.Provider>
-  );
-}
-
-export function usePublicPagePanel() {
-  const context = use(PublicPagePanelContext);
-  if (!context) {
-    throw new Error(
-      "usePublicPagePanel must be used within a PublicPagePanelProvider",
-    );
-  }
-  return context;
-}
-
-export function usePublicPagePanelOptional() {
-  return use(PublicPagePanelContext);
+  return { viewingPage, openPage, closePage };
 }

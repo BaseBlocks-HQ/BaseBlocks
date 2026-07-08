@@ -1,5 +1,5 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
-import { PublicSiteJsonLd } from "@/modules/public-site/json-ld";
+import { PublicSiteSeo } from "@/modules/public-site/seo";
 import { PublicSitePageClient } from "@/modules/public-site/public-site-page-client";
 import type { Metadata } from "next";
 
@@ -26,7 +26,7 @@ export default async function PublicSitePage({ params }: Props) {
 
   return (
     <>
-      <PublicSiteJsonLd
+      <PublicSiteSeo
         teamSlug={subdomain}
         siteSlug={siteSlug}
         pagePath={pagePath}

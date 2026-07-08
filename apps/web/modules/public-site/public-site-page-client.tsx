@@ -2,11 +2,8 @@
 
 import { AccessGate } from "@/modules/public-site/access-gate";
 import { PublicSiteLayout } from "@/modules/public-site/public-site-layout";
-import { SiteNotFound } from "@/modules/public-site/site-not-found";
-import { SiteNotPublished } from "@/modules/public-site/site-not-published";
-import { SitePrivate } from "@/modules/public-site/site-private";
+import { PublicSiteState } from "@/modules/public-site/states";
 import { api } from "@baseblocks/backend";
-import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 
 type Props = {
@@ -37,16 +34,16 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
   }
 
   if (!site || !team) {
-    return <SiteNotFound subdomain={subdomain} />;
+    return <PublicSiteState kind="site-not-found" subdomain={subdomain} />;
   }
 
   if (!site.isPublished) {
-    return <SiteNotPublished />;
+    return <PublicSiteState kind="site-not-published" siteName={site.name} />;
   }
 
   const visibility = site.visibility ?? "public";
   if (visibility === "private") {
-    return <SitePrivate siteName={site.name} />;
+    return <PublicSiteState kind="site-private" siteName={site.name} />;
   }
 
   if (visibility === "password") {
@@ -61,9 +58,5 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
 }
 
 function PublicSiteLoading() {
-  return (
-    <div className="flex min-h-dvh items-center justify-center bg-background">
-      <Spinner className="size-6 text-muted-foreground" />
-    </div>
-  );
+  return <PublicSiteState kind="loading" />;
 }

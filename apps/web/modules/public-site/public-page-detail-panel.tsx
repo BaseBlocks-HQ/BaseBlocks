@@ -4,6 +4,7 @@ import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { ToolbarButton } from "@/modules/file-preview";
 import { PageExportMenu } from "@/modules/page-export/page-export-menu";
+import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -11,7 +12,6 @@ import { useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { PublicContent } from "./public-content";
-import { usePublicPagePanel } from "./public-page-panel-context";
 
 interface PublicPageDetailPanelProps {
   isFullscreen?: boolean;
@@ -53,7 +53,7 @@ export function PublicPageDetailPanel({
   isFullscreen,
   onToggleFullscreen,
 }: PublicPageDetailPanelProps) {
-  const { closePage, viewingPage } = usePublicPagePanel();
+  const { closePage, viewingPage } = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
     api.pages.queries.get,
