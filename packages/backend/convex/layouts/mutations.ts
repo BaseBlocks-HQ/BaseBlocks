@@ -1,3 +1,4 @@
+import { createLayoutDraft } from "@baseblocks/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireContentEditor } from "../auth";
@@ -12,13 +13,17 @@ import {
   slotBlock,
 } from "./validators";
 
+function createEditorId(): string {
+  return Math.random().toString(36).slice(2, 12);
+}
+
 // Create a new layout
 export const create = mutation({
   args: {
     pageId: v.id("pages"),
     type: layoutType,
-    slots: v.array(layoutSlot),
-    settings: layoutSettings,
+    slots: v.optional(v.array(layoutSlot)),
+    settings: v.optional(layoutSettings),
     order: v.optional(v.number()),
     tabId: v.optional(v.string()),
   },
@@ -40,14 +45,21 @@ export const create = mutation({
         tabLayouts.reduce((max, l) => Math.max(max, l.order), -1) + 1;
     }
 
+    const draft = createLayoutDraft({
+      createId: createEditorId,
+      order: layoutOrder,
+      settingsOverrides: settings,
+      tabId,
+      type,
+    });
     const now = Date.now();
     const layoutId = await ctx.db.insert("layouts", {
       siteId: pageInfo.siteId,
       pageId,
       tabId,
       type,
-      slots,
-      settings,
+      slots: slots ?? draft.slots,
+      settings: draft.settings,
       order: layoutOrder,
       createdAt: now,
       updatedAt: now,
@@ -56,7 +68,10 @@ export const create = mutation({
     await ctx.db.patch(pageId, { updatedAt: now });
     await markSiteModified(ctx, pageInfo.siteId);
 
-    return layoutId;
+    return {
+      layoutId,
+      firstSlotId: (slots ?? draft.slots)[0]?.id,
+    };
   },
 });
 
@@ -416,12 +431,16 @@ export const addPageBlock = mutation({
     });
 
     // 2. Create default layout on child page
+    const childPageLayout = createLayoutDraft({
+      createId: createEditorId,
+      type: "single",
+    });
     await ctx.db.insert("layouts", {
       siteId: page.siteId,
       pageId: childPageId,
       type: "single",
-      slots: [{ id: "default-slot", position: 0, blocks: [] }],
-      settings: {},
+      slots: childPageLayout.slots,
+      settings: childPageLayout.settings,
       order: 0,
       createdAt: now,
       updatedAt: now,

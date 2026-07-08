@@ -1,6 +1,6 @@
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
-import { SiteEditor } from "@/modules/editor/app/site-editor";
+import { SiteEditor } from "@/modules/editor/shell/site-editor";
 import { api } from "@baseblocks/backend";
 import { redirect } from "next/navigation";
 

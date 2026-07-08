@@ -1,3 +1,4 @@
+import { createLayoutDraft } from "@baseblocks/domain";
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -10,6 +11,10 @@ import {
 } from "../lib/indexPageContent";
 import { markSiteModified } from "../lib/markModified";
 import { pageAccessPolicyValidator } from "../lib/pageAccess";
+
+function createEditorId(): string {
+  return Math.random().toString(36).slice(2, 12);
+}
 
 async function validateAudienceIdsForSite(
   ctx: Pick<GenericMutationCtx<DataModel>, "db">,
@@ -182,14 +187,19 @@ export const setExposure = mutation({
           : targetLayouts.find((layout) => layout.slots.length > 0);
 
       if (!targetLayout) {
+        const layoutDraft = createLayoutDraft({
+          createId: createEditorId,
+          type: "single",
+        });
+        const firstSlot = layoutDraft.slots[0];
+        if (!firstSlot) return;
         await ctx.db.insert("layouts", {
           siteId: page.siteId,
           pageId: targetPageId,
-          type: "single",
+          type: layoutDraft.type,
           slots: [
             {
-              id: "default-slot",
-              position: 0,
+              ...firstSlot,
               blocks: [
                 {
                   id: `page-${pageId}-${now}`,
@@ -199,7 +209,7 @@ export const setExposure = mutation({
               ],
             },
           ],
-          settings: {},
+          settings: layoutDraft.settings,
           order: 0,
           createdAt: now,
           updatedAt: now,

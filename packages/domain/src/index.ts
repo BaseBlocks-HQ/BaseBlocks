@@ -30,6 +30,10 @@ export type {
 export {
   LAYOUT_SLOT_COUNTS,
   DEFAULT_LAYOUT_SETTINGS,
+  createBlockDraft,
+  createLayoutDraft,
+  createLayoutSlots,
+  getLayoutSlotCount,
 } from "./layouts";
 
 export type {

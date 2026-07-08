@@ -74,3 +74,86 @@ export const DEFAULT_LAYOUT_SETTINGS: Record<LayoutType, LayoutSettings> = {
   spacer: { spacerHeight: "medium" },
   vertical: {}, // Sidebar layout - no special settings
 };
+
+export type CreateId = () => string;
+
+export function getLayoutSlotCount(
+  type: LayoutType,
+  settings: LayoutSettings = DEFAULT_LAYOUT_SETTINGS[type],
+): number {
+  switch (type) {
+    case "single":
+    case "vertical":
+      return 1;
+    case "rows":
+      return settings.rowCount ?? DEFAULT_LAYOUT_SETTINGS.rows.rowCount ?? 2;
+    case "columns":
+      return (
+        settings.columnCount ?? DEFAULT_LAYOUT_SETTINGS.columns.columnCount ?? 2
+      );
+    case "grid":
+      return (
+        (settings.gridColumns ??
+          DEFAULT_LAYOUT_SETTINGS.grid.gridColumns ??
+          2) *
+        (settings.gridRows ?? DEFAULT_LAYOUT_SETTINGS.grid.gridRows ?? 2)
+      );
+    case "spacer":
+      return 0;
+  }
+}
+
+export function createLayoutSlots(
+  type: LayoutType,
+  settings: LayoutSettings,
+  createId: CreateId,
+): LayoutSlot[] {
+  return Array.from(
+    { length: getLayoutSlotCount(type, settings) },
+    (_, position) => ({
+      id: createId(),
+      position,
+      blocks: [],
+    }),
+  );
+}
+
+export function createLayoutDraft({
+  createId,
+  order = 0,
+  settingsOverrides,
+  tabId,
+  type,
+}: {
+  createId: CreateId;
+  order?: number;
+  settingsOverrides?: Partial<LayoutSettings>;
+  tabId?: string;
+  type: LayoutType;
+}): LayoutData {
+  const settings = {
+    ...DEFAULT_LAYOUT_SETTINGS[type],
+    ...settingsOverrides,
+  };
+
+  return {
+    id: createId(),
+    type,
+    slots: createLayoutSlots(type, settings, createId),
+    settings,
+    order,
+    tabId,
+  };
+}
+
+export function createBlockDraft(
+  type: LayoutBlockType,
+  content: AnyContent,
+  createId: CreateId,
+): LayoutBlockData {
+  return {
+    id: createId(),
+    type,
+    content,
+  };
+}
