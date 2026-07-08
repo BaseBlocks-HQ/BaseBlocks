@@ -19,11 +19,11 @@ type PublicSiteStateKind =
 export function PublicSiteState({
   kind,
   siteName,
-  subdomain,
+  teamSlug,
 }: {
   kind: PublicSiteStateKind;
   siteName?: string;
-  subdomain?: string;
+  teamSlug?: string;
 }) {
   const t = useTranslations("errors");
 
@@ -76,7 +76,7 @@ export function PublicSiteState({
         <h1 className="text-4xl font-bold">{t("siteNotFound")}</h1>
         <p className="text-muted-foreground">
           {t("siteNotFoundDescription")}{" "}
-          {subdomain ? <strong>{getDisplayDomain(subdomain)}</strong> : null}
+          {teamSlug ? <strong>{getDisplayDomain(teamSlug)}</strong> : null}
         </p>
         <Button asChild>
           <Link href="/">BaseBlocks</Link>

@@ -10,13 +10,13 @@ import { useQuery } from "convex/react";
 import { redirect } from "next/navigation";
 
 type Props = {
-  subdomain: string;
+  teamSlug: string;
 };
 
-export function SubdomainRootPageClient({ subdomain }: Props) {
+export function PublicSiteRoot({ teamSlug }: Props) {
   const sessionTokens = getStoredAccessSessionTokens();
   const siteData = useQuery(api.sites.queries.getWithDefaultPage, {
-    teamSlug: subdomain,
+    teamSlug,
     sessionTokens,
   });
 

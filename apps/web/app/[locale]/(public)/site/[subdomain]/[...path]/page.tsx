@@ -1,6 +1,6 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { PublicSite } from "@/modules/public-site/public-site";
 import { PublicSiteSeo } from "@/modules/public-site/seo";
-import { PublicSitePageClient } from "@/modules/public-site/public-site-page-client";
 import type { Metadata } from "next";
 
 type Props = {
@@ -31,7 +31,7 @@ export default async function PublicSitePage({ params }: Props) {
         siteSlug={siteSlug}
         pagePath={pagePath}
       />
-      <PublicSitePageClient subdomain={subdomain} path={path} />
+      <PublicSite teamSlug={subdomain} path={path} />
     </>
   );
 }

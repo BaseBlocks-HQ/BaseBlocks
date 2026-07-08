@@ -11,9 +11,9 @@ import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { PublicContent } from "./public-content";
+import { PublicPageContent } from "./page-content";
 
-interface PublicPageDetailPanelProps {
+interface PublicPagePanelProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }
@@ -49,10 +49,10 @@ function PublicPagePanelHeader({ children }: { children: ReactNode }) {
   );
 }
 
-export function PublicPageDetailPanel({
+export function PublicPagePanel({
   isFullscreen,
   onToggleFullscreen,
-}: PublicPageDetailPanelProps) {
+}: PublicPagePanelProps) {
   const { closePage, viewingPage } = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
@@ -103,7 +103,7 @@ export function PublicPageDetailPanel({
         </PublicPagePanelHeader>
       }
     >
-      <PublicContent
+      <PublicPageContent
         nested
         pageId={viewingPage.pageId}
         searchTerm={viewingPage.searchTerm}

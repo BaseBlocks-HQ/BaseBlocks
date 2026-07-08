@@ -28,13 +28,13 @@ import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { type RefObject, useEffect, useRef, useState } from "react";
-import { PublicPageDetailPanel } from "./public-page-detail-panel";
+import { PublicPagePanel } from "./page-panel";
 
 type LayoutDoc = Doc<"layouts">;
 type SlotDoc = LayoutDoc["slots"][number];
 type BlockDoc = SlotDoc["blocks"][number];
 
-interface PublicContentProps {
+interface PublicPageContentProps {
   pageId: string;
   /** When true, page panel rendering is disabled to prevent infinite recursion */
   nested?: boolean;
@@ -270,11 +270,11 @@ function PublicMainContent({
   );
 }
 
-function PublicContentInner({
+function PublicPageContentInner({
   pageId,
   nested,
   searchTerm,
-}: PublicContentProps) {
+}: PublicPageContentProps) {
   const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
   const pageData = usePage(pageId);
@@ -417,7 +417,7 @@ function PublicContentInner({
 
   if (showPagePanel) {
     const pagePanel = (
-      <PublicPageDetailPanel
+      <PublicPagePanel
         isFullscreen={isFullscreen}
         onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
       />
@@ -497,13 +497,13 @@ function PublicContentInner({
   );
 }
 
-export function PublicContent({
+export function PublicPageContent({
   pageId,
   nested,
   searchTerm,
-}: PublicContentProps) {
+}: PublicPageContentProps) {
   return (
-    <PublicContentInner
+    <PublicPageContentInner
       pageId={pageId}
       nested={nested}
       searchTerm={searchTerm}

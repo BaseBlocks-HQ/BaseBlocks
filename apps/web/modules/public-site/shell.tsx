@@ -46,10 +46,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { PublicContent } from "./public-content";
+import { PublicPageContent } from "./page-content";
 import { IconFile } from "nucleo-glass";
 
-interface PublicSiteLayoutProps {
+interface PublicSiteShellProps {
   site: {
     _id: Id<"sites">;
     name: string;
@@ -76,11 +76,11 @@ interface PublicSiteLayoutProps {
   pagePath: string[];
 }
 
-export function PublicSiteLayout({
+export function PublicSiteShell({
   site,
   team,
   pagePath,
-}: PublicSiteLayoutProps) {
+}: PublicSiteShellProps) {
   const pagePanel = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
   const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
@@ -260,8 +260,8 @@ function PublicSiteHeader({
   site,
   team,
 }: {
-  site: PublicSiteLayoutProps["site"];
-  team: PublicSiteLayoutProps["team"];
+  site: PublicSiteShellProps["site"];
+  team: PublicSiteShellProps["team"];
   pages?: PageWithChildren[];
   currentPath: string;
   onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
@@ -349,8 +349,8 @@ function PublicSiteSidebar({
   siteSlug,
   team,
 }: {
-  site: PublicSiteLayoutProps["site"];
-  team: PublicSiteLayoutProps["team"];
+  site: PublicSiteShellProps["site"];
+  team: PublicSiteShellProps["team"];
   pages?: PageWithChildren[];
   currentPath: string;
   ancestorIds: string[];
@@ -480,7 +480,7 @@ function PublicSiteMainContent({
             )}
           </div>
         ) : (
-          <PublicContent pageId={currentPage._id as Id<"pages">} />
+          <PublicPageContent pageId={currentPage._id as Id<"pages">} />
         )}
       </div>
     </>

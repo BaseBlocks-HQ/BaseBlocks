@@ -1,6 +1,6 @@
 import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { PublicSiteRoot } from "@/modules/public-site/public-site-root";
 import { PublicSiteSeo } from "@/modules/public-site/seo";
-import { SubdomainRootPageClient } from "@/modules/public-site/subdomain-root-page-client";
 import type { Metadata } from "next";
 
 type Props = {
@@ -17,7 +17,7 @@ export default async function SubdomainRootPage({ params }: Props) {
   return (
     <>
       <PublicSiteSeo teamSlug={subdomain} />
-      <SubdomainRootPageClient subdomain={subdomain} />
+      <PublicSiteRoot teamSlug={subdomain} />
     </>
   );
 }

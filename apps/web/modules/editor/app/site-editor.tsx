@@ -7,7 +7,7 @@ import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
 import { BlockClipboardProvider } from "@/modules/editor/clipboard/block-clipboard-context";
 import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
-import { PublicPageDetailPanel } from "@/modules/public-site/public-page-detail-panel";
+import { PublicPagePanel } from "@/modules/public-site/page-panel";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { EditorProvider } from "@/modules/editor/state";
 import { useEditorUi } from "@/modules/editor/state";
@@ -377,7 +377,7 @@ function SiteEditorInner({
                           }
                         />
                       ) : (
-                        <PublicPageDetailPanel
+                        <PublicPagePanel
                           isFullscreen={isFullscreen}
                           onToggleFullscreen={() =>
                             setIsFullscreen(!isFullscreen)
@@ -410,7 +410,7 @@ function SiteEditorInner({
                               }
                             />
                           ) : (
-                            <PublicPageDetailPanel
+                            <PublicPagePanel
                               isFullscreen={isFullscreen}
                               onToggleFullscreen={() =>
                                 setIsFullscreen(!isFullscreen)

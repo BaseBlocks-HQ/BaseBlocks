@@ -1,32 +1,28 @@
 "use client";
 
 import { AccessGate } from "@/modules/public-site/access-gate";
-import { PublicSiteLayout } from "@/modules/public-site/public-site-layout";
+import { PublicSiteShell } from "@/modules/public-site/shell";
 import { PublicSiteState } from "@/modules/public-site/states";
 import { api } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 
 type Props = {
-  subdomain: string;
+  teamSlug: string;
   path: string[];
 };
 
-/**
- * Public site page - displays published content
- * All logic is encapsulated in PublicSiteLayout component
- */
-export function PublicSitePageClient({ subdomain, path }: Props) {
+export function PublicSite({ teamSlug, path }: Props) {
   // path[0] is the site slug, path[1:] is the page path
   const siteSlug = path[0] || "";
   // Empty array = "show the default page", backend resolves via defaultPageId
   const pagePath = path.length > 1 ? path.slice(1) : [];
 
   const site = useQuery(api.sites.queries.getBySlug, {
-    teamSlug: subdomain,
+    teamSlug,
     siteSlug,
   });
   const team = useQuery(api.teams.queries.getBySlug, {
-    slug: subdomain,
+    slug: teamSlug,
   });
 
   if (site === undefined || team === undefined) {
@@ -34,7 +30,7 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
   }
 
   if (!site || !team) {
-    return <PublicSiteState kind="site-not-found" subdomain={subdomain} />;
+    return <PublicSiteState kind="site-not-found" teamSlug={teamSlug} />;
   }
 
   if (!site.isPublished) {
@@ -49,12 +45,12 @@ export function PublicSitePageClient({ subdomain, path }: Props) {
   if (visibility === "password") {
     return (
       <AccessGate siteId={site._id} siteName={site.name}>
-        <PublicSiteLayout site={site} team={team} pagePath={pagePath} />
+        <PublicSiteShell site={site} team={team} pagePath={pagePath} />
       </AccessGate>
     );
   }
 
-  return <PublicSiteLayout site={site} team={team} pagePath={pagePath} />;
+  return <PublicSiteShell site={site} team={team} pagePath={pagePath} />;
 }
 
 function PublicSiteLoading() {
