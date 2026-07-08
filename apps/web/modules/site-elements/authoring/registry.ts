@@ -7,7 +7,6 @@ import type {
   AnyContent,
   ContentFor,
   ElementType,
-  LayoutType,
   SaveStatus,
 } from "@baseblocks/domain/elements";
 import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
@@ -51,23 +50,10 @@ export interface ElementRegistryEntry<T extends ElementType = ElementType> {
   defaultContent: AnyContent; // Using AnyContent for flexibility in registration
 }
 
-export interface LayoutRegistryEntry {
-  type: LayoutType;
-  category: "layouts";
-  label: string;
-  description: string;
-  icon: LucideIcon;
-  keywords?: string[];
-  preview?: ComponentType<ElementPreviewProps>;
-}
-
-export type AnyRegistryEntry =
-  | ElementRegistryEntry<ElementType>
-  | LayoutRegistryEntry;
+export type AnyRegistryEntry = ElementRegistryEntry<ElementType>;
 
 class ElementRegistry {
   private elements = new Map<ElementType, ElementRegistryEntry<ElementType>>();
-  private layouts = new Map<LayoutType, LayoutRegistryEntry>();
 
   register<T extends ElementType>(entry: ElementRegistryEntry<T>): void {
     this.elements.set(
@@ -76,30 +62,15 @@ class ElementRegistry {
     );
   }
 
-  registerLayout(entry: LayoutRegistryEntry): void {
-    this.layouts.set(entry.type, entry);
-  }
-
   get<T extends ElementType>(type: T): ElementRegistryEntry<T> | undefined {
     return this.elements.get(type) as ElementRegistryEntry<T> | undefined;
-  }
-
-  getLayout(type: LayoutType): LayoutRegistryEntry | undefined {
-    return this.layouts.get(type);
   }
 
   getAll(): ElementRegistryEntry<ElementType>[] {
     return Array.from(this.elements.values());
   }
 
-  getAllLayouts(): LayoutRegistryEntry[] {
-    return Array.from(this.layouts.values());
-  }
-
   getByCategory(category: ElementCategory): AnyRegistryEntry[] {
-    if (category === "layouts") {
-      return Array.from(this.layouts.values());
-    }
     return Array.from(this.elements.values()).filter(
       (entry) => entry.category === category,
     );
@@ -112,14 +83,8 @@ class ElementRegistry {
     return entry?.editor as ComponentType<ElementEditorProps<T>> | undefined;
   }
 
-  getPreview(
-    type: ElementType | LayoutType,
-  ): ComponentType<ElementPreviewProps> | undefined {
-    const elementEntry = this.elements.get(type as ElementType);
-    if (elementEntry) return elementEntry.preview;
-
-    const layoutEntry = this.layouts.get(type as LayoutType);
-    return layoutEntry?.preview;
+  getPreview(type: ElementType): ComponentType<ElementPreviewProps> | undefined {
+    return this.elements.get(type)?.preview;
   }
 
   getConfigPanel<T extends ElementType>(
@@ -136,22 +101,14 @@ class ElementRegistry {
     return !!entry?.configPanel;
   }
 
-  getLabel(type: ElementType | LayoutType): string {
-    const elementEntry = this.elements.get(type as ElementType);
+  getLabel(type: ElementType): string {
+    const elementEntry = this.elements.get(type);
     if (elementEntry) return elementEntry.label;
-
-    const layoutEntry = this.layouts.get(type as LayoutType);
-    if (layoutEntry) return layoutEntry.label;
-
     return type;
   }
 
-  getIcon(type: ElementType | LayoutType): LucideIcon | undefined {
-    const elementEntry = this.elements.get(type as ElementType);
-    if (elementEntry) return elementEntry.icon;
-
-    const layoutEntry = this.layouts.get(type as LayoutType);
-    return layoutEntry?.icon;
+  getIcon(type: ElementType): LucideIcon | undefined {
+    return this.elements.get(type)?.icon;
   }
 
   getDefaultContent<T extends ElementType>(type: T): ContentFor<T> | undefined {
@@ -159,19 +116,12 @@ class ElementRegistry {
     return entry?.defaultContent as ContentFor<T> | undefined;
   }
 
-  isRegistered(type: ElementType | LayoutType): boolean {
-    return (
-      this.elements.has(type as ElementType) ||
-      this.layouts.has(type as LayoutType)
-    );
+  isRegistered(type: ElementType): boolean {
+    return this.elements.has(type);
   }
 
   getRegisteredTypes(): ElementType[] {
     return Array.from(this.elements.keys());
-  }
-
-  getRegisteredLayoutTypes(): LayoutType[] {
-    return Array.from(this.layouts.keys());
   }
 
   search(query: string): AnyRegistryEntry[] {
@@ -179,16 +129,6 @@ class ElementRegistry {
     const results: AnyRegistryEntry[] = [];
 
     for (const entry of this.elements.values()) {
-      if (
-        entry.label.toLowerCase().includes(lowerQuery) ||
-        entry.description.toLowerCase().includes(lowerQuery) ||
-        entry.keywords?.some((kw) => kw.toLowerCase().includes(lowerQuery))
-      ) {
-        results.push(entry);
-      }
-    }
-
-    for (const entry of this.layouts.values()) {
       if (
         entry.label.toLowerCase().includes(lowerQuery) ||
         entry.description.toLowerCase().includes(lowerQuery) ||
@@ -207,9 +147,6 @@ const registry = new ElementRegistry();
 export const registerElement = <T extends ElementType>(
   entry: ElementRegistryEntry<T>,
 ) => registry.register(entry);
-
-export const registerLayout = (entry: LayoutRegistryEntry) =>
-  registry.registerLayout(entry);
 
 export const getElementsByCategory = (category: ElementCategory) =>
   registry.getByCategory(category);

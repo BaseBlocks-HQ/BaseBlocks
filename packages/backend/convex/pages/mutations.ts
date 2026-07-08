@@ -11,6 +11,8 @@ import {
 import { markSiteModified } from "../lib/markModified";
 import { pageAccessPolicyValidator } from "../lib/pageAccess";
 
+const pageBlock = v.any();
+
 async function validateAudienceIdsForSite(
   ctx: Pick<GenericMutationCtx<DataModel>, "db">,
   siteId: Id<"sites">,
@@ -76,6 +78,7 @@ export const create = mutation({
       order: maxOrder + 1,
       isPublished: false,
       showInNavigation,
+      content: { blocks: [] },
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -96,13 +99,9 @@ export const setExposure = mutation({
       v.literal("both"),
     ),
     targetPageId: v.optional(v.id("pages")),
-    targetLayoutId: v.optional(v.id("layouts")),
-    targetSlotId: v.optional(v.string()),
+    targetBlockId: v.optional(v.string()),
   },
-  handler: async (
-    ctx,
-    { pageId, exposure, targetPageId, targetLayoutId, targetSlotId },
-  ) => {
+  handler: async (ctx, { pageId, exposure, targetPageId }) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -112,42 +111,25 @@ export const setExposure = mutation({
     await requireContentEditor(ctx, site.teamId);
 
     const now = Date.now();
-    const layouts = await ctx.db
-      .query("layouts")
-      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-      .collect();
-
     const removeReferences = async () => {
-      for (const layout of layouts) {
-        let changed = false;
-        const nextSlots = layout.slots.map((slot) => {
-          const nextBlocks = slot.blocks.filter((block) => {
-            if (block.type !== "page") return true;
-            const linkedPageId = block.content?.pageId;
-            const shouldKeep = linkedPageId !== pageId;
-            if (!shouldKeep) {
-              changed = true;
-            }
-            return shouldKeep;
-          });
+      const pages = await ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
+        .collect();
 
-          if (nextBlocks.length === slot.blocks.length) {
-            return slot;
-          }
+      for (const candidate of pages) {
+        const currentBlocks = candidate.content?.blocks ?? [];
+        const nextBlocks = currentBlocks.filter(
+          (block: { type?: string; content?: { pageId?: string } }) =>
+            block.type !== "page" || block.content?.pageId !== pageId,
+        );
 
-          return {
-            ...slot,
-            blocks: nextBlocks,
-          };
-        });
+        if (nextBlocks.length === currentBlocks.length) continue;
 
-        if (!changed) continue;
-
-        await ctx.db.patch(layout._id, {
-          slots: nextSlots,
+        await ctx.db.patch(candidate._id, {
+          content: { blocks: nextBlocks },
           updatedAt: now,
         });
-        await ctx.db.patch(layout.pageId, { updatedAt: now });
       }
     };
 
@@ -157,84 +139,27 @@ export const setExposure = mutation({
       const targetPage = await ctx.db.get(targetPageId);
       if (!targetPage || targetPage.siteId !== page.siteId) return;
 
-      const targetLayouts = layouts
-        .filter((layout) => layout.pageId === targetPageId)
-        .sort((a, b) => a.order - b.order);
-
-      const existingReference = targetLayouts.some((layout) =>
-        layout.slots.some((slot) =>
-          slot.blocks.some(
-            (block) =>
-              block.type === "page" && block.content?.pageId === pageId,
-          ),
-        ),
+      const blocks = targetPage.content?.blocks ?? [];
+      const existingReference = blocks.some(
+        (block: { type?: string; content?: { pageId?: string } }) =>
+          block.type === "page" && block.content?.pageId === pageId,
       );
 
       if (existingReference) return;
 
-      const requestedLayout = targetLayoutId
-        ? targetLayouts.find((layout) => layout._id === targetLayoutId)
-        : undefined;
-
-      const targetLayout =
-        requestedLayout && requestedLayout.slots.length > 0
-          ? requestedLayout
-          : targetLayouts.find((layout) => layout.slots.length > 0);
-
-      if (!targetLayout) {
-        await ctx.db.insert("layouts", {
-          siteId: page.siteId,
-          pageId: targetPageId,
-          type: "single",
-          slots: [
+      await ctx.db.patch(targetPageId, {
+        content: {
+          blocks: [
+            ...blocks,
             {
-              id: "default-slot",
-              position: 0,
-              blocks: [
-                {
-                  id: `page-${pageId}-${now}`,
-                  type: "page",
-                  content: { pageId },
-                },
-              ],
+              id: `page-${pageId}-${now}`,
+              type: "page",
+              content: { pageId },
             },
           ],
-          settings: {},
-          order: 0,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await ctx.db.patch(targetPageId, { updatedAt: now });
-        return;
-      }
-
-      const targetSlot =
-        (targetSlotId
-          ? targetLayout.slots.find((slot) => slot.id === targetSlotId)
-          : undefined) ?? targetLayout.slots[0];
-      if (!targetSlot) return;
-
-      const nextSlots = targetLayout.slots.map((slot) =>
-        slot.id === targetSlot.id
-          ? {
-              ...slot,
-              blocks: [
-                ...slot.blocks,
-                {
-                  id: `page-${pageId}-${now}`,
-                  type: "page" as const,
-                  content: { pageId },
-                },
-              ],
-            }
-          : slot,
-      );
-
-      await ctx.db.patch(targetLayout._id, {
-        slots: nextSlots,
+        },
         updatedAt: now,
       });
-      await ctx.db.patch(targetPageId, { updatedAt: now });
     };
 
     if (exposure === "navigation") {
@@ -264,6 +189,127 @@ export const setExposure = mutation({
     });
     await markSiteModified(ctx, page.siteId);
     return { exposure };
+  },
+});
+
+export const appendBlock = mutation({
+  args: {
+    pageId: v.id("pages"),
+    block: pageBlock,
+  },
+  handler: async (ctx, { pageId, block }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    const now = Date.now();
+    const blocks = page.content?.blocks ?? [];
+    await ctx.db.patch(pageId, {
+      content: { blocks: [...blocks, block] },
+      updatedAt: now,
+    });
+    await markSiteModified(ctx, page.siteId);
+    await indexPageContent(ctx, pageId);
+
+    return block;
+  },
+});
+
+export const updateBlock = mutation({
+  args: {
+    pageId: v.id("pages"),
+    blockId: v.string(),
+    block: pageBlock,
+  },
+  handler: async (ctx, { pageId, blockId, block }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    const blocks = page.content?.blocks ?? [];
+    const now = Date.now();
+    await ctx.db.patch(pageId, {
+      content: {
+        blocks: blocks.map((current: { id?: string }) =>
+          current.id === blockId ? block : current,
+        ),
+      },
+      updatedAt: now,
+    });
+    await markSiteModified(ctx, page.siteId);
+    await indexPageContent(ctx, pageId);
+
+    return block;
+  },
+});
+
+export const removeBlock = mutation({
+  args: {
+    pageId: v.id("pages"),
+    blockId: v.string(),
+  },
+  handler: async (ctx, { pageId, blockId }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    const blocks = page.content?.blocks ?? [];
+    const now = Date.now();
+    await ctx.db.patch(pageId, {
+      content: {
+        blocks: blocks.filter((block: { id?: string }) => block.id !== blockId),
+      },
+      updatedAt: now,
+    });
+    await markSiteModified(ctx, page.siteId);
+    await indexPageContent(ctx, pageId);
+
+    return blockId;
+  },
+});
+
+export const reorderBlocks = mutation({
+  args: {
+    pageId: v.id("pages"),
+    blockIds: v.array(v.string()),
+  },
+  handler: async (ctx, { pageId, blockIds }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) throw new Error("Page not found");
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireContentEditor(ctx, site.teamId);
+
+    const blocks = page.content?.blocks ?? [];
+    const byId = new Map(blocks.map((block: { id?: string }) => [block.id, block]));
+    const ordered = blockIds
+      .map((id) => byId.get(id))
+      .filter((block): block is (typeof blocks)[number] => Boolean(block));
+    const missing = blocks.filter(
+      (block: { id?: string }) => !block.id || !blockIds.includes(block.id),
+    );
+
+    await ctx.db.patch(pageId, {
+      content: { blocks: [...ordered, ...missing] },
+      updatedAt: Date.now(),
+    });
+    await markSiteModified(ctx, page.siteId);
+
+    return blockIds;
   },
 });
 
@@ -394,16 +440,6 @@ async function deletePageRecursively(
   pageId: Id<"pages">,
   siteId: Id<"sites">,
 ) {
-  // Delete all layouts for this page
-  const layouts = await ctx.db
-    .query("layouts")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .collect();
-
-  for (const layout of layouts) {
-    await ctx.db.delete(layout._id);
-  }
-
   // Recursively delete child pages
   const children = await ctx.db
     .query("pages")
@@ -457,125 +493,6 @@ export const move = mutation({
       parentId: newParentId,
       order: newOrder,
       updatedAt: Date.now(),
-    });
-
-    await markSiteModified(ctx, page.siteId);
-
-    return pageId;
-  },
-});
-
-// Update page tabs configuration
-export const updatePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-    pageTabs: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          label: v.string(),
-        }),
-      ),
-    ),
-  },
-  handler: async (ctx, { pageId, pageTabs }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireContentEditor(ctx, site.teamId);
-
-    await ctx.db.patch(pageId, {
-      pageTabs,
-      updatedAt: Date.now(),
-    });
-
-    await markSiteModified(ctx, page.siteId);
-
-    return pageId;
-  },
-});
-
-// Enable page tabs - creates tabs and assigns all existing layouts to Tab 1
-export const enablePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-    tabs: v.array(
-      v.object({
-        id: v.string(),
-        label: v.string(),
-      }),
-    ),
-  },
-  handler: async (ctx, { pageId, tabs }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireContentEditor(ctx, site.teamId);
-
-    // Skip if tabs already enabled
-    if (page.pageTabs && page.pageTabs.length > 0) {
-      return pageId;
-    }
-
-    const existingLayouts = await ctx.db
-      .query("layouts")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    const now = Date.now();
-    const firstTabId = tabs[0]?.id;
-
-    // Assign all existing layouts to the first tab
-    if (firstTabId) {
-      for (const layout of existingLayouts) {
-        await ctx.db.patch(layout._id, { tabId: firstTabId, updatedAt: now });
-      }
-    }
-
-    await ctx.db.patch(pageId, {
-      pageTabs: tabs,
-      updatedAt: now,
-    });
-
-    await markSiteModified(ctx, page.siteId);
-
-    return pageId;
-  },
-});
-
-// Disable page tabs - removes pageTabs and clears tabId from all layouts
-export const disablePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-  },
-  handler: async (ctx, { pageId }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireContentEditor(ctx, site.teamId);
-
-    const layouts = await ctx.db
-      .query("layouts")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    const now = Date.now();
-    for (const layout of layouts) {
-      await ctx.db.patch(layout._id, { tabId: undefined, updatedAt: now });
-    }
-
-    await ctx.db.patch(pageId, {
-      pageTabs: undefined,
-      updatedAt: now,
     });
 
     await markSiteModified(ctx, page.siteId);

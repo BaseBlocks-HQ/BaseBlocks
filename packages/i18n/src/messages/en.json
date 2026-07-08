@@ -43,7 +43,7 @@
     "featuresTitle": "Everything you need, nothing you don't",
     "featuresSubtitle": "Powerful tools for building internal sites, without the enterprise complexity.",
     "visualEditorTitle": "Visual Editor",
-    "visualEditorDesc": "Drag-and-drop layouts with blocks for headings, text, images, code, and more. No code required.",
+    "visualEditorDesc": "Drag-and-drop pages with blocks for headings, text, images, code, structure, and more. No code required.",
     "draftDeployTitle": "Draft & Deploy",
     "draftDeployDesc": "Edit freely in drafts. Publish when ready. Rollback instantly if something goes wrong.",
     "documentLibrariesTitle": "Document Libraries",
@@ -51,7 +51,7 @@
     "teamWorkspacesTitle": "Team Workspaces",
     "teamWorkspacesDesc": "Multi-tenant architecture with branded subdomains and role-based access control.",
     "customThemesTitle": "Customizable Themes",
-    "customThemesDesc": "Accent colors, navigation styles, and layout options. Make every site feel like your own.",
+    "customThemesDesc": "Accent colors, navigation styles, and page options. Make every site feel like your own.",
     "openSourceTitle": "Open Source",
     "openSourceDesc": "MIT licensed. Self-host or use our cloud. Fork it, extend it, make it yours.",
     "stepsLabel": "How it works",
@@ -59,7 +59,7 @@
     "step1Title": "Create a workspace",
     "step1Desc": "Sign up and name your team. Your workspace is ready in seconds.",
     "step2Title": "Build your site",
-    "step2Desc": "Use the visual editor to craft pages with drag-and-drop blocks and layouts.",
+    "step2Desc": "Use the visual editor to craft pages with drag-and-drop blocks and structure.",
     "step3Title": "Share with your team",
     "step3Desc": "Publish to your subdomain. Control access with passwords, links, or roles.",
     "step1ImageAlt": "Workspace setup screen",
@@ -131,17 +131,14 @@
     "sidebar": {
       "pagesTab": "Pages",
       "componentsTab": "Components",
-      "layouts": "Layouts",
+      "structure": "Structure",
       "blocks": "Blocks",
       "selectPage": "Select a page to add components",
       "viewOnly": "You have view-only access. Contact an admin to request edit permissions."
     },
-    "layouts": {
-      "single": "Single",
-      "rows": "Rows",
+    "structure": {
       "columns": "Columns",
-      "grid": "Grid",
-      "vertical": "Sidebar",
+      "tabs": "Tabs",
       "spacer": "Spacer"
     },
     "header": {
@@ -160,14 +157,14 @@
         "site": "Site settings",
         "customization": "Customization",
         "navigation": "Navigation",
-        "layouts": "Layouts",
+        "structure": "Structure",
         "blocks": "Blocks"
       },
       "soon": "Soon"
     },
     "pageEditor": {
-      "emptyWithTabs": "Add a layout to this tab",
-      "emptyNoTabs": "Add a layout to get started",
+      "emptyWithTabs": "Add content to this tab",
+      "emptyNoTabs": "Add content to get started",
       "pageNotFound": "Page not found"
     },
     "pageTabBar": {
@@ -249,7 +246,7 @@
     "deploymentHistory": {
       "title": "Deployment history",
       "empty": "No deployments yet",
-      "pagesLayouts": "{pages} pages, {layouts} layouts",
+      "pagesBlocks": "{pages} pages, {blocks} blocks",
       "rollbackCta": "Rollback to this version",
       "toastSuccess": "Rolled back to v{version}",
       "toastFailed": "Failed to rollback",

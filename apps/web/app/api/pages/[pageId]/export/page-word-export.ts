@@ -2,14 +2,14 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 
 export type PageExportFormat = "docx";
 
-interface SerializableLayout {
-  order: number;
-  slots: Array<{
-    position: number;
-    blocks: Array<{
-      type: string;
-      content: unknown;
-    }>;
+export interface SerializableBlock {
+  type: string;
+  content?: unknown;
+  columns?: Array<{
+    blocks?: SerializableBlock[];
+  }>;
+  tabs?: Array<{
+    blocks?: SerializableBlock[];
   }>;
 }
 
@@ -119,21 +119,30 @@ function extractBlockText(type: string, content: unknown): string[] {
 
 export function buildPageExportText(args: {
   pageTitle: string;
-  layouts: SerializableLayout[];
+  blocks: SerializableBlock[];
 }) {
   const title = normalizeText(args.pageTitle) || "Untitled page";
   const lines: string[] = [];
 
-  const layouts = [...args.layouts].sort((a, b) => a.order - b.order);
-  for (const layout of layouts) {
-    const slots = [...layout.slots].sort((a, b) => a.position - b.position);
-
-    for (const slot of slots) {
-      for (const block of slot.blocks) {
-        lines.push(...extractBlockText(block.type, block.content));
+  const visit = (blocks: SerializableBlock[]) => {
+    for (const block of blocks) {
+      if (Array.isArray(block.columns)) {
+        for (const column of block.columns) {
+          visit(column.blocks ?? []);
+        }
       }
+
+      if (Array.isArray(block.tabs)) {
+        for (const tab of block.tabs) {
+          visit(tab.blocks ?? []);
+        }
+      }
+
+      lines.push(...extractBlockText(block.type, block.content));
     }
-  }
+  };
+
+  visit(args.blocks);
 
   return { title, lines };
 }

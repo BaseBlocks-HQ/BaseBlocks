@@ -86,7 +86,7 @@ export function PageActionsMenu({
   const [targetPageId, setTargetPageId] = useState("");
 
   const { isAdmin } = useEditorSite();
-  const { currentPageId, selection } = useEditorUi();
+  const { currentPageId } = useEditorUi();
   const pages = usePages(siteId);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
@@ -128,11 +128,6 @@ export function PageActionsMenu({
       pageId: page._id as Id<"pages">,
       exposure: nextExposure,
       targetPageId: inferredTargetPageId as Id<"pages"> | undefined,
-      targetLayoutId:
-        selection.layoutId && inferredTargetPageId
-          ? (selection.layoutId as Id<"layouts">)
-          : undefined,
-      targetSlotId: selection.slotId ?? undefined,
     });
   };
 

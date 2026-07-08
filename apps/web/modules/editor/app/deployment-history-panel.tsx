@@ -28,7 +28,7 @@ export interface DeploymentData {
   deployedAt: number;
   summary: {
     pagesDeployed: number;
-    layoutsDeployed: number;
+    blocksDeployed: number;
     settingsChanged: boolean;
   };
 }
@@ -158,9 +158,9 @@ export function DeploymentHistoryPanel({
 
                       <div className="flex items-center justify-between text-xs text-sidebar-foreground/55">
                         <span>
-                          {t("pagesLayouts", {
+                          {t("pagesBlocks", {
                             pages: deployment.summary.pagesDeployed,
-                            layouts: deployment.summary.layoutsDeployed,
+                            blocks: deployment.summary.blocksDeployed,
                           })}
                         </span>
                         <span>{formatDate(deployment.deployedAt)}</span>

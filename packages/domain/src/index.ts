@@ -1,5 +1,16 @@
 export type { PageListItem, PageWithChildren } from "./pages";
 export type {
+  ColumnsPageBlock,
+  ElementPageBlock,
+  PageBlock,
+  PageBlockColumn,
+  PageBlockType,
+  PageContent,
+  SpacerPageBlock,
+  TabsPageBlock,
+} from "./page-content";
+export { EMPTY_PAGE_CONTENT } from "./page-content";
+export type {
   PageAccessKind,
   PageAccessPolicy,
   SiteAudience,
@@ -17,20 +28,6 @@ export {
   pageAccessKinds,
   publicPageAccessPolicy,
 } from "./page-access";
-
-export type {
-  LayoutType,
-  LayoutBlockType,
-  LayoutBlockData,
-  LayoutSlot,
-  LayoutSettings,
-  LayoutData,
-  SpacerLayoutHeight,
-} from "./layouts";
-export {
-  LAYOUT_SLOT_COUNTS,
-  DEFAULT_LAYOUT_SETTINGS,
-} from "./layouts";
 
 export type {
   ElementType,
