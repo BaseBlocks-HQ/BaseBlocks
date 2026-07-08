@@ -2,7 +2,7 @@ export type ElementCategory =
   | "site"
   | "customization"
   | "navigation"
-  | "structure"
+  | "layouts"
   | "blocks";
 
 interface CategoryInfo {
@@ -15,7 +15,7 @@ const CATEGORIES: CategoryInfo[] = [
   { category: "site", label: "Site Settings", order: 0 },
   { category: "customization", label: "Customization", order: 1 },
   { category: "navigation", label: "Navigation", order: 2 },
-  { category: "structure", label: "Structure", order: 3 },
+  { category: "layouts", label: "Layouts", order: 3 },
   { category: "blocks", label: "Blocks", order: 4 },
 ];
 

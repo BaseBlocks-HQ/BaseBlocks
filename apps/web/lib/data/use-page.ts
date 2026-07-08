@@ -27,3 +27,18 @@ export function usePageAncestors(pageId: Id<"pages"> | string | undefined) {
     pageId ? { pageId: pageId as Id<"pages">, sessionTokens } : "skip",
   );
 }
+
+export function useLayouts(pageId: Id<"pages"> | string | undefined) {
+  return useQuery(
+    api.layouts.queries.list,
+    pageId ? { pageId: pageId as Id<"pages"> } : "skip",
+  );
+}
+
+export function usePublishedLayouts(pageId: Id<"pages"> | string | undefined) {
+  const sessionTokens = getStoredAccessSessionTokens();
+  return useQuery(
+    api.layouts.queries.listPublished,
+    pageId ? { pageId: pageId as Id<"pages">, sessionTokens } : "skip",
+  );
+}

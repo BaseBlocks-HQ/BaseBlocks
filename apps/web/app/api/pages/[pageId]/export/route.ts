@@ -4,7 +4,6 @@ import {
   buildPageExportText,
   createPageExportFilename,
   renderPageExportDocx,
-  type SerializableBlock,
 } from "./page-word-export";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
@@ -42,11 +41,18 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const pageTitle = page.title;
+    const layouts = await publicClient.query(
+      api.layouts.queries.listPublished,
+      {
+        pageId: pageId as never,
+        sessionTokens,
+      },
+    );
+    const pageTitle = page.publishedTitle ?? page.title;
 
     const exportDocument = buildPageExportText({
       pageTitle,
-      blocks: (page.content?.blocks ?? []) as SerializableBlock[],
+      layouts,
     });
 
     const body = await renderPageExportDocx(exportDocument);

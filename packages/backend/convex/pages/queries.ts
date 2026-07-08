@@ -14,12 +14,12 @@ function projectPublishedPage(page: {
   slug: string;
   icon?: string;
   parentId?: string;
-  content?: { blocks: unknown[] };
+  pageTabs?: { id: string; label: string }[];
   publishedTitle?: string;
   publishedSlug?: string;
   publishedIcon?: string;
   publishedParentId?: string;
-  publishedContent?: { blocks: unknown[] };
+  publishedPageTabs?: { id: string; label: string }[];
 }) {
   return {
     _id: page._id,
@@ -27,7 +27,7 @@ function projectPublishedPage(page: {
     slug: page.publishedSlug ?? page.slug,
     icon: page.publishedIcon ?? page.icon,
     parentId: page.publishedParentId ?? page.parentId,
-    content: page.publishedContent ?? page.content ?? { blocks: [] },
+    pageTabs: page.publishedPageTabs ?? page.pageTabs,
   };
 }
 
@@ -44,8 +44,8 @@ function resolvePublishedPageByPath<
     publishedIcon?: string;
     publishedParentId?: string;
     publishedOrder?: number;
-    content?: { blocks: unknown[] };
-    publishedContent?: { blocks: unknown[] };
+    pageTabs?: { id: string; label: string }[];
+    publishedPageTabs?: { id: string; label: string }[];
   },
 >(
   deployedPages: T[],
@@ -120,21 +120,20 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+
     const referencedPageIds = new Set<string>();
-    for (const page of pages) {
-      for (const block of page.content?.blocks ?? []) {
-        if (
-          typeof block === "object" &&
-          block !== null &&
-          "type" in block &&
-          block.type === "page" &&
-          "content" in block &&
-          typeof block.content === "object" &&
-          block.content !== null &&
-          "pageId" in block.content &&
-          typeof block.content.pageId === "string"
-        ) {
-          referencedPageIds.add(block.content.pageId);
+    for (const layout of layouts) {
+      for (const slot of layout.slots) {
+        for (const block of slot.blocks) {
+          if (block.type !== "page") continue;
+          const pageId = block.content?.pageId;
+          if (typeof pageId === "string") {
+            referencedPageIds.add(pageId);
+          }
         }
       }
     }
@@ -171,7 +170,7 @@ export const get = query({
     }
 
     if (await canViewerAccessPublishedPageById(ctx, pageId, sessionTokens)) {
-      return projectPublishedPage(page);
+      return page;
     }
 
     return null;
@@ -212,7 +211,7 @@ export const getBySlug = query({
       page.isDeployed &&
       (await canViewerAccessPublishedPageById(ctx, page._id, sessionTokens))
     ) {
-      return projectPublishedPage(page);
+      return page;
     }
 
     return null;
@@ -295,6 +294,7 @@ export const getTree = query({
         icon: page.icon,
         order: page.order,
         parentId: page.parentId,
+        pageTabs: page.pageTabs,
       })),
     );
   },
@@ -488,6 +488,7 @@ export const getTreePublished = query({
         icon: page.publishedIcon ?? page.icon,
         order: page.publishedOrder ?? page.order,
         parentId: page.publishedParentId ?? page.parentId,
+        pageTabs: page.publishedPageTabs ?? page.pageTabs,
       })),
     );
   },

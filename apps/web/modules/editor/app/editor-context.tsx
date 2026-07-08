@@ -18,12 +18,20 @@ export interface EditingPagePanel {
 }
 
 export interface EditorSelection {
+  layoutId: string | null;
+  slotId: string | null;
   blockId: string | null;
 }
 
 export interface EditorUiContextValue {
   selection: EditorSelection;
-  selectBlock: (blockId: string | null) => void;
+  selectLayout: (layoutId: string | null) => void;
+  selectSlot: (layoutId: string, slotId: string | null) => void;
+  selectBlock: (
+    layoutId: string,
+    slotId: string,
+    blockId: string | null,
+  ) => void;
   clearSelection: () => void;
   editingPage: EditingPagePanel | null;
   openPageEditor: (page: EditingPagePanel) => void;
@@ -64,6 +72,8 @@ export function EditorProvider({
   children,
 }: EditorProviderProps) {
   const [selection, setSelection] = useState<EditorSelection>({
+    layoutId: null,
+    slotId: null,
     blockId: null,
   });
   const [editingPage, setEditingPage] = useState<EditingPagePanel | null>(null);
@@ -80,8 +90,14 @@ export function EditorProvider({
 
   const uiValue: EditorUiContextValue = {
     selection,
-    selectBlock: (blockId) => setSelection({ blockId }),
-    clearSelection: () => setSelection({ blockId: null }),
+    selectLayout: (layoutId) =>
+      setSelection({ layoutId, slotId: null, blockId: null }),
+    selectSlot: (layoutId, slotId) =>
+      setSelection({ layoutId, slotId, blockId: null }),
+    selectBlock: (layoutId, slotId, blockId) =>
+      setSelection({ layoutId, slotId, blockId }),
+    clearSelection: () =>
+      setSelection({ layoutId: null, slotId: null, blockId: null }),
     editingPage: pagePanelState?.editingPage ?? editingPage,
     openPageEditor:
       pagePanelState?.openPageEditor ??

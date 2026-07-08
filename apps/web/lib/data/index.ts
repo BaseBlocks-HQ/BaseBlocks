@@ -1,4 +1,10 @@
-export { usePage, usePages, usePageAncestors } from "./use-page";
+export {
+  usePage,
+  usePages,
+  usePageAncestors,
+  useLayouts,
+  usePublishedLayouts,
+} from "./use-page";
 export { useSite, useTeamSites } from "./use-site";
 export {
   useAudienceMemberAssignments,

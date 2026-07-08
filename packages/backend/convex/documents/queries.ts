@@ -66,59 +66,29 @@ async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
 ) {
-  const pages = await ctx.db
-    .query("pages")
+  const layouts = await ctx.db
+    .query("layouts")
     .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
     .collect();
 
-  const hasFileBlock = (blocks: unknown[]): boolean => {
-    for (const block of blocks) {
-      if (typeof block !== "object" || block === null) continue;
+  for (const layout of layouts) {
+    if (!layout.isDeployed) {
+      continue;
+    }
 
-      if (
-        "type" in block &&
-        block.type === "file" &&
-        "content" in block &&
-        typeof block.content === "object" &&
-        block.content !== null &&
-        "documentId" in block.content &&
-        block.content.documentId === document._id
-      ) {
-        return true;
-      }
-
-      if ("columns" in block && Array.isArray(block.columns)) {
-        for (const column of block.columns) {
-          if (
-            typeof column === "object" &&
-            column !== null &&
-            "blocks" in column &&
-            Array.isArray(column.blocks) &&
-            hasFileBlock(column.blocks)
-          ) {
-            return true;
-          }
-        }
-      }
-
-      if ("tabs" in block && Array.isArray(block.tabs)) {
-        for (const tab of block.tabs) {
-          if (
-            typeof tab === "object" &&
-            tab !== null &&
-            "blocks" in tab &&
-            Array.isArray(tab.blocks) &&
-            hasFileBlock(tab.blocks)
-          ) {
-            return true;
-          }
+    for (const slot of layout.publishedSlots ?? []) {
+      for (const block of slot.blocks) {
+        if (
+          block.type === "file" &&
+          block.content?.documentId === document._id
+        ) {
+          return true;
         }
       }
     }
-    return false;
-  };
+  }
 
-  return pages.some((page) => hasFileBlock(page.publishedContent?.blocks ?? []));
+  return false;
 }
 
 /**

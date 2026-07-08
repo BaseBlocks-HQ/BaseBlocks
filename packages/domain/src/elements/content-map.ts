@@ -23,9 +23,11 @@ import type {
 
 import type { ImageContent, MediaType } from "./media";
 
+import type { LayoutSettings, LayoutType } from "../layouts";
+
 export type ElementType = BlockType | SectionType | MediaType;
 
-export type AllElementType = ElementType;
+export type AllElementType = LayoutType | ElementType;
 
 export type ContentTypeMap = {
   heading: HeadingContent;
@@ -46,6 +48,15 @@ export type ContentTypeMap = {
   quicklinks: QuicklinksContent;
 
   image: ImageContent;
+};
+
+export type LayoutSettingsMap = {
+  single: LayoutSettings;
+  rows: LayoutSettings;
+  columns: LayoutSettings;
+  grid: LayoutSettings;
+  spacer: LayoutSettings;
+  vertical: LayoutSettings;
 };
 
 export type ContentFor<T extends ElementType> = T extends keyof ContentTypeMap

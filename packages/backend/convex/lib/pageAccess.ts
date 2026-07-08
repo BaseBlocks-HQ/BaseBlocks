@@ -41,6 +41,8 @@ type PageForAccess = Pick<
   | "updatedAt"
   | "icon"
   | "publishedIcon"
+  | "pageTabs"
+  | "publishedPageTabs"
   | "accessPolicy"
   | "publishedAccessPolicy"
   | "isDeployed"

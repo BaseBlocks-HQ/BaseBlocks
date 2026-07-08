@@ -1,4 +1,14 @@
 export type {
+  LayoutType,
+  SpacerLayoutHeight,
+  LayoutSettings,
+} from "../layouts";
+export {
+  LAYOUT_SLOT_COUNTS,
+  DEFAULT_LAYOUT_SETTINGS,
+} from "../layouts";
+
+export type {
   BlockType,
   HeadingContent,
   ParagraphContent,
@@ -54,6 +64,7 @@ export type {
   ElementType,
   AllElementType,
   ContentTypeMap,
+  LayoutSettingsMap,
   ContentFor,
   AnyContent,
   TypedElementData,

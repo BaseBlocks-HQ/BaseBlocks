@@ -12,6 +12,7 @@ export type PageTreeNode = {
   icon?: string;
   order: number;
   parentId?: string;
+  pageTabs?: Array<{ id: string; label: string }>;
   children: PageTreeNode[];
 };
 
@@ -23,6 +24,7 @@ type ProjectedPage = {
   icon?: string;
   order: number;
   parentId?: string;
+  pageTabs?: Array<{ id: string; label: string }>;
 };
 
 /**

@@ -16,7 +16,7 @@ import {
   useEditorUi,
 } from "@/modules/editor/app/editor-context";
 import type { Id } from "@baseblocks/backend";
-import type { PageBlockType, PageListItem } from "@baseblocks/domain";
+import type { LayoutType, PageListItem } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { Columns2, MoreHorizontal, MoveVertical, PanelTop } from "lucide-react";
+import { MoreHorizontal, PanelTop } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -60,8 +60,11 @@ interface EditorFloatingRailProps {
   };
   pages: PageListItem[];
   selectedPageId?: string;
+  selectedSlotId?: string | null;
   onSelectPage: (pageId: string) => void;
-  onAddBlock?: (type: PageBlockType) => void;
+  onAddLayout?: (type: LayoutType) => void;
+  onAddBlock?: (type: ElementType) => void;
+  onEnableTabs?: () => void;
 }
 
 type RailPanelId = "pages" | ElementCategory;
@@ -72,7 +75,7 @@ const CATEGORY_TITLES: Record<ElementCategory, string> = {
   site: "Site Settings",
   customization: "Customization",
   navigation: "Navigation",
-  structure: "Structure",
+  layouts: "Layouts",
   blocks: "Blocks",
 };
 
@@ -80,7 +83,7 @@ const CATEGORY_ICONS: Record<ElementCategory, ReactNode> = {
   site: <IconGear className="h-5 w-5" />,
   customization: <IconColorPalette className="h-5 w-5" />,
   navigation: <IconSitemap className="h-5 w-5" />,
-  structure: <IconRectLayoutGrid className="h-5 w-5" />,
+  layouts: <IconRectLayoutGrid className="h-5 w-5" />,
   blocks: <IconSquareGrid2 className="h-5 w-5" />,
 };
 
@@ -95,9 +98,9 @@ const RAIL_ITEMS: Array<{
     icon: <IconFile className="h-5 w-5" />,
   },
   {
-    id: "structure",
-    label: CATEGORY_TITLES.structure,
-    icon: CATEGORY_ICONS.structure,
+    id: "layouts",
+    label: CATEGORY_TITLES.layouts,
+    icon: CATEGORY_ICONS.layouts,
   },
   {
     id: "blocks",
@@ -121,6 +124,7 @@ const RAIL_ITEMS: Array<{
   },
 ];
 
+const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
 const BUTTON_SLOT_MOBILE = 40;
 const RAIL_PADDING_MOBILE = 12;
 const FIXED_RIGHT_MOBILE = 85;
@@ -146,19 +150,9 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
 ];
 
 const TabsPreview = themedPickerImagePreview(
-  "/editor/picker/structure/tabs-light.png",
-  "/editor/picker/structure/tabs-dark.png",
+  "/editor/picker/layouts/tabs-light.png",
+  "/editor/picker/layouts/tabs-dark.png",
 );
-
-const STRUCTURE_ITEMS: Array<{
-  type: Extract<PageBlockType, "columns" | "tabs" | "spacer">;
-  label: string;
-  icon: typeof Columns2;
-}> = [
-  { type: "columns", label: "Columns", icon: Columns2 },
-  { type: "tabs", label: "Tabs", icon: PanelTop },
-  { type: "spacer", label: "Spacer", icon: MoveVertical },
-];
 
 const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "site",
@@ -294,6 +288,7 @@ function FloatingRailFlyout({
   activePanel,
   canEdit,
   navPages,
+  onEnableTabs,
   onSelectElement,
   onSelectPage,
   rootPages,
@@ -306,6 +301,7 @@ function FloatingRailFlyout({
   activePanel: RailPanelId;
   canEdit: boolean;
   navPages: PageListItem[];
+  onEnableTabs?: () => void;
   onSelectElement: (type: string) => void;
   onSelectPage: (pageId: string) => void;
   rootPages: PageListItem[];
@@ -415,35 +411,6 @@ function FloatingRailFlyout({
     );
   }
 
-  if (activePanel === "structure") {
-    return (
-      <EditorFlyoutSurface>
-        {!canEdit ? (
-          <div className="px-4 py-4 text-sm text-muted-foreground">
-            You have view-only access. Contact an admin to request edit
-            permissions.
-          </div>
-        ) : (
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            <div className="p-4">
-              <div className="space-y-2">
-                {STRUCTURE_ITEMS.map((item) => (
-                  <ElementCard
-                    key={item.type}
-                    label={item.label}
-                    icon={item.icon}
-                    preview={item.type === "tabs" ? TabsPreview : undefined}
-                    onClick={() => onSelectElement(item.type)}
-                  />
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        )}
-      </EditorFlyoutSurface>
-    );
-  }
-
   return (
     <EditorFlyoutSurface>
       {!canEdit ? (
@@ -458,6 +425,16 @@ function FloatingRailFlyout({
             entries={elements}
             onSelect={onSelectElement}
           />
+          {activePanel === "layouts" && onEnableTabs && (
+            <div className="px-4 pb-4">
+              <ElementCard
+                label="Tabs"
+                icon={PanelTop}
+                preview={TabsPreview}
+                onClick={onEnableTabs}
+              />
+            </div>
+          )}
         </ScrollArea>
       )}
     </EditorFlyoutSurface>
@@ -468,8 +445,11 @@ export function EditorFloatingRail({
   site,
   pages,
   selectedPageId,
+  selectedSlotId,
   onSelectPage,
+  onAddLayout,
   onAddBlock,
+  onEnableTabs,
 }: EditorFloatingRailProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
@@ -623,8 +603,17 @@ export function EditorFloatingRail({
   };
 
   const handleSelectElement = (type: string) => {
-    if (type === "columns" || type === "tabs" || type === "spacer") {
-      onAddBlock?.(type);
+    const layoutTypes = [
+      "single",
+      "rows",
+      "columns",
+      "grid",
+      "spacer",
+      "vertical",
+    ];
+
+    if (layoutTypes.includes(type)) {
+      onAddLayout?.(type as LayoutType);
       return;
     }
 
@@ -662,7 +651,24 @@ export function EditorFloatingRail({
           )}
         >
           {visibleItems.map((item) => {
-            const isDisabled = !canEdit && item.id !== "pages";
+            const categoryId: ElementCategory | null =
+              item.id === "pages" ? null : item.id;
+            const isDisabled =
+              !canEdit && item.id !== "pages"
+                ? true
+                : !!(
+                    categoryId &&
+                    SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
+                    !selectedSlotId
+                  );
+
+            const disabledTooltip =
+              isDisabled &&
+              categoryId &&
+              SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
+              !selectedSlotId
+                ? "Select a section on the page first"
+                : undefined;
 
             return (
               <FloatingRailButton
@@ -671,6 +677,7 @@ export function EditorFloatingRail({
                 disabled={isDisabled}
                 icon={item.icon}
                 label={item.label}
+                tooltip={disabledTooltip}
                 onClick={() => handleButtonClick(item.id)}
                 onFocus={() => openPanel(item.id)}
                 onMouseEnter={isMobile ? () => {} : () => openPanel(item.id)}
@@ -717,6 +724,7 @@ export function EditorFloatingRail({
             activePanel={activePanel}
             canEdit={canEdit}
             navPages={navPages}
+            onEnableTabs={onEnableTabs}
             onSelectElement={handleSelectElement}
             onSelectPage={handleSelectPage}
             rootPages={rootPages}

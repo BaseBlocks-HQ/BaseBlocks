@@ -52,26 +52,26 @@ export const getEditorInitialData = query({
     const isMember = await checkIsMember(ctx, site.teamId);
     if (!isMember) return null;
 
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const [pages, layouts] = await Promise.all([
+      ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+      ctx.db
+        .query("layouts")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+    ]);
 
     const referencedPageIds = new Set<string>();
-    for (const page of pages) {
-      for (const block of page.content?.blocks ?? []) {
-        if (
-          typeof block === "object" &&
-          block !== null &&
-          "type" in block &&
-          block.type === "page" &&
-          "content" in block &&
-          typeof block.content === "object" &&
-          block.content !== null &&
-          "pageId" in block.content &&
-          typeof block.content.pageId === "string"
-        ) {
-          referencedPageIds.add(block.content.pageId);
+    for (const layout of layouts) {
+      for (const slot of layout.slots) {
+        for (const block of slot.blocks) {
+          if (block.type !== "page") continue;
+          const pageId = block.content?.pageId;
+          if (typeof pageId === "string") {
+            referencedPageIds.add(pageId);
+          }
         }
       }
     }

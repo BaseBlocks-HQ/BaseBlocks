@@ -5,16 +5,22 @@ import { useSite } from "@/lib/data/use-site";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
+import { createBlock, createLayout, generateId } from "@/modules/editor/layout";
 import { EditorProvider } from "@/modules/editor/app/editor-context";
 import { useEditorUi } from "@/modules/editor/app/editor-context";
-import { createPageBlock } from "@/modules/editor/page-content";
 import { PublicPagePanel } from "@/modules/public-site/page-panel";
+import { getDefaultContent } from "@/modules/site-elements/authoring/registry";
 import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
-import type { PageBlockType } from "@baseblocks/domain";
+import type {
+  AnyContent,
+  ElementType,
+  LayoutBlockType,
+  LayoutType,
+} from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
@@ -46,6 +52,7 @@ interface SiteEditorProps {
 }
 
 const elementModuleLoaders = [
+  () => import("@/modules/site-elements/layouts"),
   () => import("@/modules/site-elements/blocks"),
   () => import("@/modules/site-elements/sections"),
   () => import("@/modules/site-elements/media"),
@@ -86,7 +93,9 @@ function SiteEditorInner({
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
-  const { editingPage, closePageEditor, selectBlock } = useEditorUi();
+  const [, setSelectedSlotId] = useState<string | null>(null);
+  const { selection, editingPage, closePageEditor, activeTabId, selectSlot } =
+    useEditorUi();
   const { viewingPage, closePage } = usePagePanelState();
 
   // Fullscreen state for page panel
@@ -195,6 +204,10 @@ function SiteEditorInner({
     }
   };
 
+  const handleSlotSelectionChange = (slotId: string | null) => {
+    setSelectedSlotId(slotId);
+  };
+
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
     const nextUrl = buildPathWithUpdatedSearchParams(
       pathname,
@@ -212,24 +225,86 @@ function SiteEditorInner({
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  const appendBlockMutation = useMutation(api.pages.mutations.appendBlock);
+  const createLayoutMutation = useMutation(api.layouts.mutations.create);
+  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
+  const addPageBlockMutation = useMutation(api.layouts.mutations.addPageBlock);
+  const enablePageTabsMutation = useMutation(
+    api.pages.mutations.enablePageTabs,
+  );
 
   const targetPageId = editingPage
     ? (editingPage.pageId as Id<"pages">)
     : selectedPage?._id;
 
-  const handleAddBlock = async (type: PageBlockType) => {
+  const handleAddLayout = async (type: LayoutType) => {
     if (!targetPageId) return;
 
-    const block = createPageBlock(type);
-    if (!block) return;
+    const layout = createLayout(type);
+    haptic.trigger("heavy");
+    const layoutId = await createLayoutMutation({
+      pageId: targetPageId,
+      type: layout.type,
+      slots: layout.slots,
+      settings: layout.settings,
+      tabId: editingPage ? undefined : (activeTabId ?? undefined),
+    });
+
+    const firstSlot = layout.slots[0];
+    if (firstSlot) {
+      setTimeout(() => {
+        selectSlot(layoutId as string, firstSlot.id);
+      }, 100);
+    }
+  };
+
+  const handleAddBlock = async (type: ElementType) => {
+    if (!selection.layoutId || !selection.slotId) return;
+
+    if (type === "page") {
+      const blockId = generateId();
+      try {
+        haptic.trigger("heavy");
+        await addPageBlockMutation({
+          layoutId: selection.layoutId as Id<"layouts">,
+          slotId: selection.slotId,
+          blockId,
+          title: "New Page",
+          slug: `page-${blockId.slice(0, 8)}`,
+        });
+      } catch (_error) {
+        haptic.trigger("error");
+        toast.error("Failed to create page");
+      }
+      return;
+    }
+
+    const content = getDefaultContent(type as ElementType);
+    if (!content) return;
+
+    const block = createBlock(type as LayoutBlockType, content);
+    haptic.trigger("heavy");
+    await addBlockMutation({
+      layoutId: selection.layoutId as Id<"layouts">,
+      slotId: selection.slotId,
+      block: {
+        id: block.id,
+        type: block.type,
+        content: block.content as AnyContent,
+      },
+    });
+  };
+
+  const handleEnableTabs = async () => {
+    if (!targetPageId) return;
 
     haptic.trigger("heavy");
-    await appendBlockMutation({
-      pageId: targetPageId as Id<"pages">,
-      block,
+    await enablePageTabsMutation({
+      pageId: targetPageId,
+      tabs: [
+        { id: generateId(), label: "Tab 1" },
+        { id: generateId(), label: "Tab 2" },
+      ],
     });
-    selectBlock(block.id);
   };
 
   if (site === undefined || pages === undefined) {
@@ -250,7 +325,10 @@ function SiteEditorInner({
   const showFloatingRail = !(isMobile && showPagePanel);
 
   const pageEditor = selectedPage ? (
-    <PageEditor pageId={selectedPage._id} />
+    <PageEditor
+      pageId={selectedPage._id}
+      onSelectionChange={handleSlotSelectionChange}
+    />
   ) : (
     <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
       Select a page to edit
@@ -285,8 +363,11 @@ function SiteEditorInner({
                 site={site}
                 pages={pages}
                 selectedPageId={selectedPage?._id}
+                selectedSlotId={selection.slotId}
                 onSelectPage={setSelectedPageId}
+                onAddLayout={handleAddLayout}
                 onAddBlock={handleAddBlock}
+                onEnableTabs={handleEnableTabs}
               />
             </div>
           ) : null}
@@ -310,7 +391,10 @@ function SiteEditorInner({
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
               {selectedPage ? (
-                <PageEditor pageId={selectedPage._id} />
+                <PageEditor
+                  pageId={selectedPage._id}
+                  onSelectionChange={handleSlotSelectionChange}
+                />
               ) : (
                 <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
                   Select a page to edit
@@ -342,8 +426,11 @@ function SiteEditorInner({
             site={site}
             pages={pages}
             selectedPageId={selectedPage?._id}
+            selectedSlotId={selection.slotId}
             onSelectPage={setSelectedPageId}
+            onAddLayout={handleAddLayout}
             onAddBlock={handleAddBlock}
+            onEnableTabs={handleEnableTabs}
           />
         </div>
 

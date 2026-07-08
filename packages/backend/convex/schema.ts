@@ -1,12 +1,9 @@
 import { teamRoles } from "@baseblocks/domain";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
 import { pageAccessPolicyValidator } from "./lib/pageAccess";
 import { siteSettings } from "./sites/validators";
-
-const pageContent = v.object({
-  blocks: v.array(v.any()),
-});
 
 export default defineSchema({
   teams: defineTable({
@@ -115,7 +112,14 @@ export default defineSchema({
     isPublished: v.boolean(),
     showInNavigation: v.optional(v.boolean()),
     accessPolicy: v.optional(pageAccessPolicyValidator),
-    content: pageContent,
+    pageTabs: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+        }),
+      ),
+    ),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -126,12 +130,44 @@ export default defineSchema({
     publishedOrder: v.optional(v.number()),
     publishedParentId: v.optional(v.id("pages")),
     publishedAccessPolicy: v.optional(pageAccessPolicyValidator),
-    publishedContent: v.optional(pageContent),
+    publishedPageTabs: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+        }),
+      ),
+    ),
     isDeployed: v.optional(v.boolean()),
   })
     .index("by_site", ["siteId"])
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
+
+  layouts: defineTable({
+    siteId: v.optional(v.id("sites")), // Denormalized for efficient site-wide queries
+    pageId: v.id("pages"),
+    tabId: v.optional(v.string()),
+    type: layoutType,
+    order: v.number(),
+    // Draft slots (what editor sees/edits)
+    slots: v.array(layoutSlot),
+    // Published slots (what public site sees, populated on deploy)
+    publishedSlots: v.optional(v.array(layoutSlot)),
+    // Layout settings
+    settings: layoutSettings,
+    // Published copies of layout structure (populated on deploy)
+    publishedType: v.optional(layoutType),
+    publishedOrder: v.optional(v.number()),
+    publishedSettings: v.optional(layoutSettings),
+    publishedTabId: v.optional(v.string()),
+    isDeployed: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"])
+    .index("by_page_tab", ["pageId", "tabId"]),
 
   documentLibraries: defineTable({
     siteId: v.id("sites"),
@@ -222,7 +258,9 @@ export default defineSchema({
       libraryId: v.optional(v.string()),
       assetId: v.optional(v.id("assets")),
       pageId: v.optional(v.id("pages")),
+      layoutId: v.optional(v.id("layouts")),
       blockId: v.optional(v.string()),
+      slotId: v.optional(v.string()),
       description: v.optional(v.string()),
     }),
     updatedAt: v.number(),
@@ -246,7 +284,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     summary: v.object({
       pagesDeployed: v.number(),
-      blocksDeployed: v.number(),
+      layoutsDeployed: v.number(),
       settingsChanged: v.boolean(),
     }),
     status: v.union(
@@ -261,7 +299,7 @@ export default defineSchema({
 
   // Deployment snapshots (chunked for 1MB limit)
   // data is polymorphic by chunkType: site-settings stores settings object,
-  // page-tree stores page metadata and content.
+  // page-tree stores page array, page-layouts stores layout array.
   // Typed at the query/mutation layer, not at schema level.
   deploymentSnapshots: defineTable({
     deploymentId: v.id("deployments"),
@@ -269,6 +307,7 @@ export default defineSchema({
     chunkType: v.union(
       v.literal("site-settings"),
       v.literal("page-tree"),
+      v.literal("page-layouts"),
     ),
     pageId: v.optional(v.id("pages")),
     data: v.any(),

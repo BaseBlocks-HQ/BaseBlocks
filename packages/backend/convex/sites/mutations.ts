@@ -5,43 +5,6 @@ import { deleteDocumentRows } from "../documents/lib";
 import { markSiteModified } from "../lib/markModified";
 import { deleteObjectAction } from "../files/actions";
 
-function countBlocks(blocks: unknown[]): number {
-  let count = 0;
-
-  for (const block of blocks) {
-    count++;
-    if (typeof block !== "object" || block === null) continue;
-
-    if ("columns" in block && Array.isArray(block.columns)) {
-      for (const column of block.columns) {
-        if (
-          typeof column === "object" &&
-          column !== null &&
-          "blocks" in column &&
-          Array.isArray(column.blocks)
-        ) {
-          count += countBlocks(column.blocks);
-        }
-      }
-    }
-
-    if ("tabs" in block && Array.isArray(block.tabs)) {
-      for (const tab of block.tabs) {
-        if (
-          typeof tab === "object" &&
-          tab !== null &&
-          "blocks" in tab &&
-          Array.isArray(tab.blocks)
-        ) {
-          count += countBlocks(tab.blocks);
-        }
-      }
-    }
-  }
-
-  return count;
-}
-
 // Create a new site
 export const create = mutation({
   args: {
@@ -93,7 +56,6 @@ export const create = mutation({
       slug: "home",
       order: 0,
       isPublished: true,
-      content: { blocks: [] },
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -244,10 +206,6 @@ export const publish = mutation({
         .query("pages")
         .withIndex("by_site", (q) => q.eq("siteId", siteId))
         .collect();
-      const blocksDeployed = pages.reduce(
-        (total, page) => total + countBlocks(page.content.blocks),
-        0,
-      );
 
       const newVersion = 1;
 
@@ -260,7 +218,7 @@ export const publish = mutation({
         notes: "Initial publish",
         summary: {
           pagesDeployed: pages.length,
-          blocksDeployed,
+          layoutsDeployed: 0,
           settingsChanged: true,
         },
         status: "active",
@@ -276,6 +234,9 @@ export const publish = mutation({
         lastDeployedBy: auth.userId,
         deploymentVersion: newVersion,
       });
+
+      // Snapshot and copy for pages + layouts
+      let totalLayouts = 0;
 
       await ctx.db.insert("deploymentSnapshots", {
         deploymentId,
@@ -297,7 +258,7 @@ export const publish = mutation({
         order: p.order,
         parentId: p.parentId,
         accessPolicy: p.accessPolicy,
-        content: p.content,
+        pageTabs: p.pageTabs,
       }));
 
       await ctx.db.insert("deploymentSnapshots", {
@@ -315,10 +276,50 @@ export const publish = mutation({
           publishedOrder: page.order,
           publishedParentId: page.parentId,
           publishedAccessPolicy: page.accessPolicy,
-          publishedContent: page.content,
+          publishedPageTabs: page.pageTabs,
           isDeployed: true,
         });
+
+        const layouts = await ctx.db
+          .query("layouts")
+          .withIndex("by_page", (q) => q.eq("pageId", page._id))
+          .collect();
+
+        await ctx.db.insert("deploymentSnapshots", {
+          deploymentId,
+          siteId,
+          chunkType: "page-layouts",
+          pageId: page._id,
+          data: layouts.map((l) => ({
+            _id: l._id,
+            type: l.type,
+            order: l.order,
+            tabId: l.tabId,
+            slots: l.slots,
+            settings: l.settings,
+          })),
+        });
+
+        for (const layout of layouts) {
+          await ctx.db.patch(layout._id, {
+            publishedSlots: layout.slots,
+            publishedType: layout.type,
+            publishedOrder: layout.order,
+            publishedSettings: layout.settings,
+            publishedTabId: layout.tabId,
+            isDeployed: true,
+          });
+          totalLayouts++;
+        }
       }
+
+      await ctx.db.patch(deploymentId, {
+        summary: {
+          pagesDeployed: pages.length,
+          layoutsDeployed: totalLayouts,
+          settingsChanged: true,
+        },
+      });
     }
 
     return siteId;
@@ -444,12 +445,19 @@ export const remove = mutation({
       await ctx.db.delete(entry._id);
     }
 
-    // 5. Delete all pages
+    // 5. Delete all pages and their layouts
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const page of pages) {
+      const layouts = await ctx.db
+        .query("layouts")
+        .withIndex("by_page", (q) => q.eq("pageId", page._id))
+        .collect();
+      for (const layout of layouts) {
+        await ctx.db.delete(layout._id);
+      }
       await ctx.db.delete(page._id);
     }
 

@@ -43,7 +43,7 @@
     "featuresTitle": "Tout ce qu'il faut, rien de superflu",
     "featuresSubtitle": "Des outils puissants pour créer des sites internes, sans la complexité entreprise.",
     "visualEditorTitle": "Éditeur visuel",
-    "visualEditorDesc": "Pages glisser-déposer avec des blocs pour titres, texte, images, code, structure et plus. Aucun code requis.",
+    "visualEditorDesc": "Mises en page glisser-déposer avec des blocs pour titres, texte, images, code et plus. Aucun code requis.",
     "draftDeployTitle": "Brouillon et déploiement",
     "draftDeployDesc": "Modifiez librement en brouillon. Publiez quand vous êtes prêt. Annulez instantanément en cas de problème.",
     "documentLibrariesTitle": "Bibliothèques de documents",
@@ -51,7 +51,7 @@
     "teamWorkspacesTitle": "Espaces d'équipe",
     "teamWorkspacesDesc": "Architecture multi-tenant avec sous-domaines personnalisés et contrôle d'accès basé sur les rôles.",
     "customThemesTitle": "Thèmes personnalisables",
-    "customThemesDesc": "Couleurs, styles de navigation et options de page. Chaque site à votre image.",
+    "customThemesDesc": "Couleurs, styles de navigation et options de mise en page. Chaque site à votre image.",
     "openSourceTitle": "Open source",
     "openSourceDesc": "Licence MIT. Auto-hébergez ou utilisez notre cloud. Forkez, étendez, appropriez-le.",
     "stepsLabel": "Comment ça marche",
@@ -59,7 +59,7 @@
     "step1Title": "Créez un espace de travail",
     "step1Desc": "Inscrivez-vous et nommez votre équipe. Votre espace est prêt en quelques secondes.",
     "step2Title": "Construisez votre site",
-    "step2Desc": "Utilisez l'éditeur visuel pour créer des pages avec des blocs et une structure glisser-déposer.",
+    "step2Desc": "Utilisez l'éditeur visuel pour créer des pages avec des blocs et mises en page glisser-déposer.",
     "step3Title": "Partagez avec votre équipe",
     "step3Desc": "Publiez sur votre sous-domaine. Contrôlez l'accès par mot de passe, lien ou rôles.",
     "step1ImageAlt": "Ecran de creation d'espace de travail",
@@ -131,14 +131,17 @@
     "sidebar": {
       "pagesTab": "Pages",
       "componentsTab": "Composants",
-      "structure": "Structure",
+      "layouts": "Dispositions",
       "blocks": "Blocs",
       "selectPage": "Selectionnez une page pour ajouter des composants",
       "viewOnly": "Vous avez un acces en lecture seule. Contactez un administrateur pour demander des droits de modification."
     },
-    "structure": {
+    "layouts": {
+      "single": "Simple",
+      "rows": "Lignes",
       "columns": "Colonnes",
-      "tabs": "Onglets",
+      "grid": "Grille",
+      "vertical": "Barre latérale",
       "spacer": "Espacement"
     },
     "header": {
@@ -157,14 +160,14 @@
         "site": "Parametres du site",
         "customization": "Personnalisation",
         "navigation": "Navigation",
-        "structure": "Structure",
+        "layouts": "Mises en page",
         "blocks": "Blocs"
       },
       "soon": "Bientot"
     },
     "pageEditor": {
-      "emptyWithTabs": "Ajoutez du contenu a cet onglet",
-      "emptyNoTabs": "Ajoutez du contenu pour commencer",
+      "emptyWithTabs": "Ajoutez une mise en page a cet onglet",
+      "emptyNoTabs": "Ajoutez une mise en page pour commencer",
       "pageNotFound": "Page introuvable"
     },
     "pageTabBar": {
@@ -246,7 +249,7 @@
     "deploymentHistory": {
       "title": "Historique des deploiements",
       "empty": "Aucun deploiement pour le moment",
-      "pagesBlocks": "{pages} pages, {blocks} blocs",
+      "pagesLayouts": "{pages} pages, {layouts} mises en page",
       "rollbackCta": "Revenir a cette version",
       "toastSuccess": "Retour a la v{version}",
       "toastFailed": "Echec du retour en arriere",
