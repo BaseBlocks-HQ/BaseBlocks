@@ -1,8 +1,7 @@
-import { BrandLogoMark } from "@/modules/public-site/chrome/brand-logo";
+import { BrandLogoMark } from "@/modules/app-chrome/brand-logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
-import { landingFonts } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { Github, House } from "lucide-react";
 import type { ReactNode } from "react";
@@ -79,7 +78,7 @@ export function PublicHeader({
                   <span
                     className="hidden tracking-tight min-[380px]:inline"
                     style={{
-                      fontFamily: landingFonts.square,
+                      fontFamily: "var(--font-geist-pixel-square)",
                       fontSize: "0.9375rem",
                       lineHeight: 1,
                     }}

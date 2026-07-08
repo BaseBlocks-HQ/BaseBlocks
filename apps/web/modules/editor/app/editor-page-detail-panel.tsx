@@ -1,7 +1,7 @@
 "use client";
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
-import { ViewerToolbarIconButton } from "@/modules/files/preview/components/viewer-toolbar-icon-button";
+import { ToolbarButton } from "@/modules/file-preview";
 import { PageExportMenu } from "@/modules/editor/page-export/page-export-menu";
 import { useEditorUi } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
@@ -110,7 +110,7 @@ export function EditorPageDetailPanel({
                 pageId={editingPage.pageId}
               />
               {onToggleFullscreen ? (
-                <ViewerToolbarIconButton
+                <ToolbarButton
                   onClick={onToggleFullscreen}
                   label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
                   pressed={isFullscreen}
@@ -120,14 +120,11 @@ export function EditorPageDetailPanel({
                   ) : (
                     <Maximize2 className="h-4 w-4" />
                   )}
-                </ViewerToolbarIconButton>
+                </ToolbarButton>
               ) : null}
-              <ViewerToolbarIconButton
-                onClick={closePageEditor}
-                label={t("closeEditor")}
-              >
+              <ToolbarButton onClick={closePageEditor} label={t("closeEditor")}>
                 <X className="h-4 w-4" />
-              </ViewerToolbarIconButton>
+              </ToolbarButton>
             </div>
           </div>
         </EditorPagePanelHeader>

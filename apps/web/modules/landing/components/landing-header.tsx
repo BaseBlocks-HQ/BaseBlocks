@@ -1,7 +1,8 @@
 import { PublicHeader } from "@/modules/public-site/chrome/public-header";
 import { Link } from "@/i18n/navigation";
-import type { TranslateFn } from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
+
+type TranslateFn = (key: string) => string;
 
 interface LandingHeaderProps {
   isAuthenticated: boolean;

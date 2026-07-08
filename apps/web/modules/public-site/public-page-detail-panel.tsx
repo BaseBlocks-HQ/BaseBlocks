@@ -2,7 +2,7 @@
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { ViewerToolbarIconButton } from "@/modules/files/preview/components/viewer-toolbar-icon-button";
+import { ToolbarButton } from "@/modules/file-preview";
 import { PageExportMenu } from "@/modules/editor/page-export/page-export-menu";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { api } from "@baseblocks/backend";
@@ -83,7 +83,7 @@ export function PublicPageDetailPanel({
                 pageId={viewingPage.pageId}
               />
               {onToggleFullscreen ? (
-                <ViewerToolbarIconButton
+                <ToolbarButton
                   onClick={onToggleFullscreen}
                   label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
                   pressed={isFullscreen}
@@ -93,11 +93,11 @@ export function PublicPageDetailPanel({
                   ) : (
                     <Maximize2 className="h-4 w-4" />
                   )}
-                </ViewerToolbarIconButton>
+                </ToolbarButton>
               ) : null}
-              <ViewerToolbarIconButton onClick={closePage} label="Close panel">
+              <ToolbarButton onClick={closePage} label="Close panel">
                 <X className="h-4 w-4" />
-              </ViewerToolbarIconButton>
+              </ToolbarButton>
             </div>
           </div>
         </PublicPagePanelHeader>

@@ -1,8 +1,7 @@
-import { BrandLogoMark } from "@/modules/public-site/chrome/brand-logo";
-import { LanguageSwitcher } from "@/modules/public-site/chrome/language-switcher";
-import { ModeToggle } from "@/modules/public-site/chrome/mode-toggle";
+import { BrandLogoMark } from "@/modules/app-chrome/brand-logo";
+import { LanguageSwitcher } from "@/modules/app-chrome/language-switcher";
+import { ModeToggle } from "@/modules/app-chrome/mode-toggle";
 import { cn } from "@/lib/utils";
-import { landingFonts } from "@/modules/landing/constants";
 import { Github } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -39,7 +38,7 @@ export function PublicFooter({
           <div className="py-24 sm:py-32">
             <h2
               className="max-w-xl text-3xl tracking-tight sm:text-4xl"
-              style={{ fontFamily: landingFonts.grid }}
+              style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
             >
               {ctaTitle}
             </h2>

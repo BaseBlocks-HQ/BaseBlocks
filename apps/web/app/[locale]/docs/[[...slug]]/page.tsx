@@ -1,7 +1,7 @@
 import {
-  DocsContentPage,
-  type DocsContentData,
-} from "@/modules/content-pages/docs-content-page";
+  MdxContentPage,
+  type MdxContentData,
+} from "@/modules/content-pages/mdx-content-page";
 import { source } from "@/lib/source";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -38,7 +38,7 @@ export default async function DocsPageRoute({ params }: PageProps) {
     notFound();
   }
 
-  const pageData = page.data as typeof page.data & DocsContentData;
+  const pageData = page.data as typeof page.data & MdxContentData;
 
-  return <DocsContentPage content={pageData} fallbackTitle="Documentation" />;
+  return <MdxContentPage content={pageData} fallbackTitle="Documentation" />;
 }

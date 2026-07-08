@@ -8,22 +8,22 @@ import {
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ComponentType } from "react";
 
-export type DocsContentData = {
+export type MdxContentData = {
   body: ComponentType<{ components?: typeof defaultMdxComponents }>;
   description?: string;
   title?: string;
   toc?: TOCItemType[];
 };
 
-type DocsContentPageProps = {
-  content: DocsContentData;
+type MdxContentPageProps = {
+  content: MdxContentData;
   fallbackTitle: string;
 };
 
-export function DocsContentPage({
+export function MdxContentPage({
   content,
   fallbackTitle,
-}: DocsContentPageProps) {
+}: MdxContentPageProps) {
   const MdxContent = content.body;
 
   return (

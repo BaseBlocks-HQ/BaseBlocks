@@ -1,5 +1,4 @@
 export { LibraryExplorer } from "./components/library-explorer";
-export { LibraryBlockEditor } from "./components/library-block-editor";
 export type {
   LibraryExplorerActions,
   LibraryExplorerData,

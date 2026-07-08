@@ -1,7 +1,7 @@
 import {
-  DocsContentPage,
-  type DocsContentData,
-} from "@/modules/content-pages/docs-content-page";
+  MdxContentPage,
+  type MdxContentData,
+} from "@/modules/content-pages/mdx-content-page";
 import { routing } from "@/i18n/routing";
 import { getLegalSource } from "@/lib/legal-source";
 import type { Locale } from "@baseblocks/i18n";
@@ -59,7 +59,7 @@ export default async function LegalPageRoute({ params }: PageProps) {
     notFound();
   }
 
-  const pageData = page.data as typeof page.data & DocsContentData;
+  const pageData = page.data as typeof page.data & MdxContentData;
 
-  return <DocsContentPage content={pageData} fallbackTitle="Legal" />;
+  return <MdxContentPage content={pageData} fallbackTitle="Legal" />;
 }

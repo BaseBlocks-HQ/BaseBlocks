@@ -7,11 +7,11 @@ import {
 } from "@/lib/file-deep-link";
 import { useFileUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
-import { DropZone, FileIcon, getFileTypeColor } from "@/modules/files/file-ui";
 import {
   FilePreview as FilePreviewPanel,
   type PreviewFile,
-} from "@/modules/files/preview";
+} from "@/modules/file-preview";
+import { DropZone, FileIcon, getFileTypeColor } from "@/modules/file-ui";
 import { useEditorSite } from "@/modules/editor/state";
 import { usePublicSiteContextOptional } from "@/modules/public-site/public-site-context";
 import { api } from "@baseblocks/backend";

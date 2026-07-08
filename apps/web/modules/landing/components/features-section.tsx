@@ -1,6 +1,68 @@
-import { landingFeatures, landingFonts } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/constants";
+import {
+  IconAppStack,
+  IconFolders,
+  IconRocket,
+  IconSitemap,
+  IconSquarePointer,
+  IconUsers,
+} from "nucleo-glass";
+import type { ComponentType, SVGProps } from "react";
 import { Reveal } from "./reveal";
+
+type TranslateFn = (key: string) => string;
+type LandingIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+const features: readonly {
+  icon: LandingIcon;
+  titleKey: string;
+  descKey: string;
+  num: string;
+  iconClassName: string;
+}[] = [
+  {
+    icon: IconAppStack,
+    titleKey: "visualEditorTitle",
+    descKey: "visualEditorDesc",
+    num: "01",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: IconRocket,
+    titleKey: "draftDeployTitle",
+    descKey: "draftDeployDesc",
+    num: "02",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: IconFolders,
+    titleKey: "documentLibrariesTitle",
+    descKey: "documentLibrariesDesc",
+    num: "03",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: IconUsers,
+    titleKey: "teamWorkspacesTitle",
+    descKey: "teamWorkspacesDesc",
+    num: "04",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: IconSquarePointer,
+    titleKey: "customThemesTitle",
+    descKey: "customThemesDesc",
+    num: "05",
+    iconClassName: "group-hover:scale-110",
+  },
+  {
+    icon: IconSitemap,
+    titleKey: "openSourceTitle",
+    descKey: "openSourceDesc",
+    num: "06",
+    iconClassName:
+      "[transform:scaleY(-1)] group-hover:[transform:scaleY(-1)_scale(1.1)]",
+  },
+];
 
 interface FeaturesSectionProps {
   landingTranslations: TranslateFn;
@@ -17,13 +79,13 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
           <div className="max-w-xl">
             <div
               className="mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400"
-              style={{ fontFamily: landingFonts.triangle }}
+              style={{ fontFamily: "var(--font-geist-pixel-triangle)" }}
             >
               {landingTranslations("featuresLabel").toUpperCase()}
             </div>
             <h2
               className="text-3xl tracking-tight sm:text-4xl"
-              style={{ fontFamily: landingFonts.grid }}
+              style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
             >
               {landingTranslations("featuresTitle")}
             </h2>
@@ -34,7 +96,7 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
         </Reveal>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {landingFeatures.map((feature, index) => (
+          {features.map((feature, index) => (
             <Reveal key={feature.titleKey} delay={0.06 * index}>
               <div className="group relative isolate h-full overflow-hidden rounded-xl border border-border/70 bg-background/95 p-6 shadow-sm shadow-black/[0.04] transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:border-white/[0.06] dark:bg-white/[0.02] dark:shadow-none dark:hover:border-amber-400/20">
                 <feature.icon
@@ -42,7 +104,7 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
                 />
                 <div
                   className="relative z-10 mb-3 text-[11px] text-muted-foreground/40"
-                  style={{ fontFamily: landingFonts.circle }}
+                  style={{ fontFamily: "var(--font-geist-pixel-circle)" }}
                 >
                   {feature.num}
                 </div>

@@ -1,8 +1,50 @@
-import { landingFonts, landingSteps } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/constants";
 import Image from "next/image";
 import { FlickeringGrid } from "./flickering-grid";
 import { Reveal } from "./reveal";
+
+type TranslateFn = (key: string) => string;
+
+const steps: readonly {
+  num: string;
+  titleKey: string;
+  descKey: string;
+  imageAltKey: string;
+  image: {
+    light: string;
+    dark: string;
+  };
+}[] = [
+  {
+    num: "01",
+    titleKey: "step1Title",
+    descKey: "step1Desc",
+    imageAltKey: "step1ImageAlt",
+    image: {
+      light: "/landing/steps/create-workspace-light.png",
+      dark: "/landing/steps/create-workspace-dark.png",
+    },
+  },
+  {
+    num: "02",
+    titleKey: "step2Title",
+    descKey: "step2Desc",
+    imageAltKey: "step2ImageAlt",
+    image: {
+      light: "/landing/steps/build-site-light.png",
+      dark: "/landing/steps/build-site-dark.png",
+    },
+  },
+  {
+    num: "03",
+    titleKey: "step3Title",
+    descKey: "step3Desc",
+    imageAltKey: "step3ImageAlt",
+    image: {
+      light: "/landing/steps/publish-team-light.png",
+      dark: "/landing/steps/publish-team-dark.png",
+    },
+  },
+];
 
 interface StepsSectionProps {
   isDarkTheme: boolean;
@@ -42,13 +84,13 @@ export function StepsSection({
           <div className="max-w-xl">
             <div
               className="mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400"
-              style={{ fontFamily: landingFonts.triangle }}
+              style={{ fontFamily: "var(--font-geist-pixel-triangle)" }}
             >
               {landingTranslations("stepsLabel").toUpperCase()}
             </div>
             <h2
               className="text-3xl tracking-tight sm:text-4xl"
-              style={{ fontFamily: landingFonts.grid }}
+              style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
             >
               {landingTranslations("stepsTitle")}
             </h2>
@@ -56,7 +98,7 @@ export function StepsSection({
         </Reveal>
 
         <div className="mt-16 space-y-6 sm:space-y-8">
-          {landingSteps.map((step, index) => (
+          {steps.map((step, index) => (
             <Reveal key={step.titleKey} delay={0.1 * index}>
               {(() => {
                 const stepImage = isDarkTheme
@@ -69,7 +111,7 @@ export function StepsSection({
                       <div
                         className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
                         style={{
-                          fontFamily: landingFonts.circle,
+                          fontFamily: "var(--font-geist-pixel-circle)",
                           lineHeight: 1,
                         }}
                       >

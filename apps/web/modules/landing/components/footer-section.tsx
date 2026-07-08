@@ -1,7 +1,8 @@
 import { PublicFooter } from "@/modules/public-site/chrome/public-footer";
-import type { TranslateFn } from "@/modules/landing/constants";
 import type { ReactNode } from "react";
 import { Reveal } from "./reveal";
+
+type TranslateFn = (key: string) => string;
 
 interface FooterSectionProps {
   authCta: ReactNode;

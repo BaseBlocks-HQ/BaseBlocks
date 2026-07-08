@@ -6,7 +6,12 @@ import {
   toAbsoluteBrowserUrl,
 } from "@/lib/file-deep-link";
 import { cn } from "@/lib/utils";
-import { buildLibraryEntityMap } from "@/modules/document-library/model";
+import {
+  FilePreview,
+  ToolbarButton,
+  type PreviewFile,
+} from "@/modules/file-preview";
+import { buildLibraryEntityMap } from "@/modules/document-library/tree-model";
 import type {
   FolderId,
   LibraryDialogTarget,
@@ -24,14 +29,13 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, PanelLeft, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { DeleteItemDialog, MoveItemDialog } from "./library-dialogs";
-import { LibraryFileViewer } from "./library-file-viewer";
 import { LibraryTree } from "./library-tree";
 
 const librarySplitHandleClassName =
@@ -448,16 +452,33 @@ export function LibraryExplorer({
       uploadDisabled={uploadState?.isAnyUploading}
     />
   );
-  const fileViewerContent = openFile ? (
-    <LibraryFileViewer
-      key={openFile._id}
-      allowDownloads={options.allowDownloads}
-      file={openFile}
-      onClose={() => {
-        setOpenFilePath(null);
-        syncFileUrl(null);
-      }}
-      onOpenTree={() => setTreeDrawerOpen(true)}
+  const previewFile: PreviewFile | null = openFile
+    ? {
+        url: openFile.downloadUrl,
+        filename: openFile.filename,
+        contentType: openFile.contentType,
+        size: openFile.size,
+        allowDownload: options.allowDownloads,
+        deepLinkId: openFile._id,
+      }
+    : null;
+  const closeFilePreview = () => {
+    setOpenFilePath(null);
+    syncFileUrl(null);
+  };
+  const fileViewerContent = previewFile ? (
+    <FilePreview
+      key={previewFile.deepLinkId ?? previewFile.url}
+      file={previewFile}
+      mode="embedded"
+      onClose={closeFilePreview}
+      leadingActions={
+        <div className="md:hidden">
+          <ToolbarButton label="Files" onClick={() => setTreeDrawerOpen(true)}>
+            <PanelLeft className="h-4 w-4" />
+          </ToolbarButton>
+        </div>
+      }
     />
   ) : null;
   const fileViewer = openFile ? (

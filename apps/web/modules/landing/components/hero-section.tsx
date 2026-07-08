@@ -1,8 +1,8 @@
-import { landingFonts } from "@/modules/landing/constants";
-import type { TranslateFn } from "@/modules/landing/constants";
 import type { ReactNode } from "react";
 import { HeroEditorPreview } from "./hero-editor-preview";
 import { Reveal } from "./reveal";
+
+type TranslateFn = (key: string) => string;
 interface HeroSectionProps {
   authCta: ReactNode;
   docsCta: ReactNode;
@@ -24,17 +24,25 @@ export function HeroSection({
               style={{ fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)" }}
               aria-label="Build sites your team will actually use"
             >
-              <span className="block" style={{ fontFamily: landingFonts.grid }}>
+              <span
+                className="block"
+                style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
+              >
                 BUILD SITES
               </span>
-              <span className="block" style={{ fontFamily: landingFonts.grid }}>
+              <span
+                className="block"
+                style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
+              >
                 YOUR TEAM WILL
               </span>
               <span className="block">
-                <span style={{ fontFamily: landingFonts.grid }}>ACTUALLY </span>
+                <span style={{ fontFamily: "var(--font-geist-pixel-grid)" }}>
+                  ACTUALLY{" "}
+                </span>
                 <span
                   className="text-amber-500 dark:text-amber-400"
-                  style={{ fontFamily: landingFonts.square }}
+                  style={{ fontFamily: "var(--font-geist-pixel-square)" }}
                 >
                   USE.
                 </span>

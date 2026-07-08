@@ -1,13 +1,17 @@
 "use client";
 
-import { landingEditorPreviewImages } from "@/modules/landing/constants";
 import Image from "next/image";
+
+const editorPreviewImages = {
+  light: "/landing/hero-image-light.png",
+  dark: "/landing/hero-image-dark.png",
+} as const;
 
 export function HeroEditorPreview() {
   return (
     <div className="relative select-none">
       <Image
-        src={landingEditorPreviewImages.light}
+        src={editorPreviewImages.light}
         alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
         className="relative rounded-xl border border-neutral-200 shadow-2xl lg:rounded-r-none lg:border-r-0 dark:hidden dark:border-white/[0.1] dark:lg:border-r-0"
         priority
@@ -16,7 +20,7 @@ export function HeroEditorPreview() {
         height={1950}
       />
       <Image
-        src={landingEditorPreviewImages.dark}
+        src={editorPreviewImages.dark}
         alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
         className="relative hidden rounded-xl border border-neutral-200 shadow-2xl lg:rounded-r-none lg:border-r-0 dark:block dark:border-white/[0.1] dark:lg:border-r-0"
         priority

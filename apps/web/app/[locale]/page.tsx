@@ -1,5 +1,5 @@
 import { isAuthenticated } from "@/lib/auth/server";
-import { LandingPage } from "@/modules/landing";
+import { LandingPage } from "@/modules/landing/landing-page";
 import type { Metadata } from "next";
 
 const OG_IMAGE = "https://baseblocks.dev/opengraph-image";

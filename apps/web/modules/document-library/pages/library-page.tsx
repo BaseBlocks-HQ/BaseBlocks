@@ -145,7 +145,7 @@ function InlineEditableText({
   );
 }
 
-export function LibraryDetailPage({ libraryId }: { libraryId: LibraryId }) {
+export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
   const router = useRouter();
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();

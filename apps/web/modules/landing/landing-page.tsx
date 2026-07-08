@@ -2,14 +2,6 @@
 
 import { Link } from "@/i18n/navigation";
 import { useHaptic } from "@/lib/use-haptic";
-import {
-  animationSteps,
-  landingFonts,
-  lastStep,
-  morphSpring,
-  stepIndices,
-  stepSizes,
-} from "@/modules/landing/constants";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { ArrowRight } from "lucide-react";
@@ -35,6 +27,43 @@ import { StepsSection } from "./components/steps-section";
 interface LandingPageProps {
   isAuthenticated: boolean;
 }
+
+type IntroFontVariant =
+  | "square"
+  | "grid"
+  | "triangle"
+  | "circle"
+  | "sans"
+  | "mono";
+
+const introFonts: Record<IntroFontVariant, string> = {
+  square: "var(--font-geist-pixel-square)",
+  grid: "var(--font-geist-pixel-grid)",
+  triangle: "var(--font-geist-pixel-triangle)",
+  circle: "var(--font-geist-pixel-circle)",
+  sans: "var(--font-geist-sans)",
+  mono: "var(--font-geist-mono)",
+};
+
+const animationSteps: ReadonlyArray<{
+  font: IntroFontVariant;
+  size: number;
+  amber?: true;
+}> = [
+  { font: "square", size: 10 },
+  { font: "grid", size: 8.2 },
+  { font: "sans", size: 6.8, amber: true },
+  { font: "triangle", size: 5.5 },
+  { font: "mono", size: 4.5 },
+  { font: "circle", size: 3.8 },
+  { font: "square", size: 3.2, amber: true },
+  { font: "square", size: 2.8 },
+];
+
+const lastStep = animationSteps.length - 1;
+const stepIndices = animationSteps.map((_, index) => index);
+const stepSizes = animationSteps.map((step) => step.size);
+const morphSpring = { stiffness: 30, damping: 15, mass: 3 } as const;
 
 export function LandingPage({ isAuthenticated }: LandingPageProps) {
   const { resolvedTheme } = useTheme();
@@ -69,7 +98,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
     if (currentStep) {
       titleRef.current.style.setProperty(
         "font-family",
-        landingFonts[currentStep.font],
+        introFonts[currentStep.font],
         "important",
       );
       titleRef.current.style.color = currentStep.amber
@@ -135,7 +164,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
             expanded={expanded}
             titleRef={titleRef}
             fontSizeRem={fontSizeRem}
-            brandFontFamily={landingFonts.square}
+            brandFontFamily="var(--font-geist-pixel-square)"
           />
 
           {expanded && (

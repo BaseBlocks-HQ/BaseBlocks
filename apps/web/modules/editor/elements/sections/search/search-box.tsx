@@ -2,7 +2,7 @@
 
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { cn } from "@/lib/utils";
-import { FilePreview, type PreviewFile } from "@/modules/files/preview";
+import { FilePreview, type PreviewFile } from "@/modules/file-preview";
 import { usePublicPagePanelOptional } from "@/modules/public-site/public-page-panel-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

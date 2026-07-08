@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
-import { LibraryDetailPage } from "@/modules/document-library/pages/library-detail-page";
+import { LibraryPage } from "@/modules/document-library/pages/library-page";
 import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 
@@ -9,12 +9,12 @@ interface Props {
   params: Promise<{ libraryId: string }>;
 }
 
-export default function TeamLibraryDetailPage({ params }: Props) {
+export default function TeamLibraryPage({ params }: Props) {
   const { libraryId } = use(params);
 
   return (
     <DashboardLayout>
-      <LibraryDetailPage libraryId={libraryId as Id<"documentLibraries">} />
+      <LibraryPage libraryId={libraryId as Id<"documentLibraries">} />
     </DashboardLayout>
   );
 }
