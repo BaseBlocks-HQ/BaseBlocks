@@ -5,7 +5,7 @@ import {
   useCustomizationStyles,
 } from "@/modules/site-runtime/customization";
 import type { Id } from "@baseblocks/backend";
-import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
+import type { SiteCustomization } from "@baseblocks/domain/site-settings";
 import type { CSSProperties } from "react";
 
 interface UseSiteCustomizationResult {

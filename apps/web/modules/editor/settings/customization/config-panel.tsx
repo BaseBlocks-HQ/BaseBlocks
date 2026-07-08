@@ -10,7 +10,7 @@ import type { Id } from "@baseblocks/backend";
 import type {
   BorderRadiusPreset,
   SiteCustomization,
-} from "@baseblocks/domain/elements/customization";
+} from "@baseblocks/domain/site-settings";
 import { getDarkColorForPreset } from "./presets";
 import { Switch } from "@baseblocks/ui/switch";
 import { useMutation } from "convex/react";

@@ -1,9 +1,9 @@
 "use client";
 
-import { EditableTabs } from "@/modules/site-elements/shared/editable-tabs";
-import { TabsModeToggle } from "@/modules/site-elements/shared/tabs-mode-toggle";
-import type { ElementEditorProps } from "@/modules/site-elements/manifest";
-import { useAutoSave } from "@/modules/site-elements/shared/use-auto-save";
+import { EditableTabs } from "@/modules/editor/shared/element-tabs";
+import { TabsModeToggle } from "@/modules/editor/shared/element-tabs";
+import type { ElementEditorProps } from "@/modules/site-elements/registry";
+import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
 import type {
   DecisionTree,
   DecisionTreeContent,
@@ -185,7 +185,6 @@ export function DecisionTreeEditor({
 
   const saveContent = (updatedTrees: DecisionTree[]) => {
     const newContent: DecisionTreeContent = {
-      nodes: updatedTrees[0]?.nodes ?? [],
       trees: updatedTrees,
       tabsMode: tabsModeRef.current,
     };

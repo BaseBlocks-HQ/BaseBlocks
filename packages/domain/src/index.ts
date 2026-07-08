@@ -38,7 +38,6 @@ export {
 
 export type {
   ElementType,
-  AllElementType,
   ContentTypeMap,
   ContentFor,
   AnyContent,
@@ -47,36 +46,42 @@ export type {
 } from "./elements";
 
 export type {
-  BlockType,
   HeadingContent,
   ParagraphContent,
   CalloutContent,
   CodeContent,
   DividerContent,
-  BlockSpacerContent,
+  SpacerContent,
   FileContent,
-  BlockContentUnion,
-} from "./elements";
-export { DEFAULT_BLOCK_CONTENT } from "./elements";
-
-export type {
-  SectionType,
+  RichTextContent,
+  PageContent,
+  DirectoryColumnType,
+  DirectoryColumn,
+  DirectoryRow,
+  DirectorySettings,
+  DirectoryContent,
+  FlowchartDiagram,
+  TabsDisplayMode,
+  FlowchartContent,
+  DecisionTreeNode,
+  DecisionTree,
+  DecisionTreeContent,
   SearchContent,
   LibraryContent,
   QuicklinkType,
   QuicklinkItem,
   QuicklinksContent,
-  SectionContentUnion,
+  ImageContent,
 } from "./elements";
-export { DEFAULT_SECTION_CONTENT } from "./elements";
+export { DEFAULT_ELEMENT_CONTENT } from "./elements";
 
 export type {
   NavigationStyle,
   NavigationItem,
-} from "./elements";
-
-export type { MediaType, ImageContent, MediaContentUnion } from "./elements";
-export { DEFAULT_MEDIA_CONTENT } from "./elements";
+  BorderRadiusPreset,
+  SiteCustomization,
+} from "./site-settings";
+export { DEFAULT_CUSTOMIZATION } from "./site-settings";
 
 export type { UploadPurpose } from "./storage";
 export {

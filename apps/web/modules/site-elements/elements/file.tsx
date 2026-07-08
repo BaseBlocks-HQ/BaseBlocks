@@ -63,7 +63,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import type { ElementEditorProps } from "../types";
+import type { ElementEditorProps } from "../registry";
 
 interface FileData {
   _id: string;

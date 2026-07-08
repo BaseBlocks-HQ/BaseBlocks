@@ -1,6 +1,6 @@
 "use client";
 
-import { ViewerTabsBar } from "@/modules/site-elements/shared/viewer-tabs-bar";
+import { ViewerTabsBar } from "@/modules/editor/shared/element-tabs";
 
 interface DecisionTreeTab {
   id: string;

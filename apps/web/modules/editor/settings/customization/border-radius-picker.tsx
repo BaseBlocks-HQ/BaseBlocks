@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { BorderRadiusPreset } from "@baseblocks/domain/elements/customization";
+import type { BorderRadiusPreset } from "@baseblocks/domain/site-settings";
 import { BORDER_RADIUS_PRESETS } from "./presets";
 import {
   DropdownMenu,

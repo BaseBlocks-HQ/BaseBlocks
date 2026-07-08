@@ -1,7 +1,7 @@
 "use client";
 
-import type { ElementEditorProps } from "@/modules/site-elements/manifest";
-import { useAutoSave } from "@/modules/site-elements/shared/use-auto-save";
+import type { ElementEditorProps } from "@/modules/site-elements/registry";
+import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
 import type {
   DirectoryColumn,
   DirectoryColumnType,

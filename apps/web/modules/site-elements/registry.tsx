@@ -1,10 +1,12 @@
 "use client";
 
-import type { ElementType, LayoutType } from "@baseblocks/domain/elements";
+import type { LayoutType } from "@baseblocks/domain";
 import {
-  DEFAULT_BLOCK_CONTENT,
-  DEFAULT_MEDIA_CONTENT,
-  DEFAULT_SECTION_CONTENT,
+  type AnyContent,
+  type ContentFor,
+  DEFAULT_ELEMENT_CONTENT,
+  type ElementType,
+  type SaveStatus,
 } from "@baseblocks/domain/elements";
 import {
   AlignLeft,
@@ -29,68 +31,119 @@ import {
 } from "lucide-react";
 import {
   CalloutEditor,
-  DividerEditor,
-  HeadingEditor,
-  ParagraphEditor,
-  SpacerEditor,
-} from "./elements/basic";
-import {
   CalloutRenderer,
+  DividerEditor,
   DividerRenderer,
+  HeadingEditor,
   HeadingRenderer,
+  ParagraphEditor,
   ParagraphRenderer,
+  SpacerEditor,
   SpacerRenderer,
-} from "./elements/basic-renderers";
+} from "./elements/basic";
 import { CodeEditor } from "./elements/code";
 import { CodeRenderer } from "./elements/code-renderer";
 import {
   DecisionTreeEditor,
-  DecisionTreeRenderer,
-} from "./elements/decision-tree";
-import {
-  DirectoryConfigPanel,
-  DirectoryEditor,
-  DirectoryRenderer,
-} from "./elements/directory";
+} from "./elements/decision-tree/tree-editor";
+import { DecisionTreeRenderer } from "./elements/decision-tree/renderer";
+import { DirectoryConfigPanel } from "./elements/directory/config";
+import { DirectoryEditor } from "./elements/directory/editor";
+import { DirectoryRenderer } from "./elements/directory/renderer";
 import { FileEditor } from "./elements/file";
 import { FileRenderer } from "./elements/file-renderer";
-import { FlowchartEditor, FlowchartRenderer } from "./elements/flowchart";
+import {
+  FlowchartEditor,
+  FlowchartRenderer,
+} from "./elements/flowchart/editor";
 import { ImageEditor, ImageRenderer } from "./elements/image";
 import {
   LibraryConfigPanel,
   LibraryEditor,
   LibraryRenderer,
 } from "./elements/library";
-import { PageEditor } from "./elements/page";
-import { PageConfigPanel } from "./elements/page-config";
-import { PageRenderer } from "./elements/page-renderer";
-import { QuicklinksEditor, QuicklinksRenderer } from "./elements/quicklinks";
-import { RichTextEditor } from "./elements/richtext";
-import { RichTextRenderer } from "./elements/richtext-renderer";
+import { PageConfigPanel, PageEditor, PageRenderer } from "./elements/page";
+import {
+  QuicklinksEditor,
+  QuicklinksRenderer,
+} from "./elements/quicklinks";
+import { RichTextEditor, RichTextRenderer } from "./elements/richtext";
 import {
   SearchConfigPanel,
   SearchEditor,
   SearchRenderer,
 } from "./elements/search";
-import { themedPickerImagePreview } from "./shared/picker-image-preview";
-import type {
-  AnyManifestEntry,
-  ElementCategory,
-  ElementManifestEntry,
-  LayoutManifestEntry,
-} from "./types";
+import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
 
-export type {
-  AnyManifestEntry,
-  AnyRegistryEntry,
-  ElementCategory,
-  ElementConfigPanelProps,
-  ElementEditorProps,
-  ElementManifestEntry,
-  ElementPreviewProps,
-  ElementRendererProps,
-  LayoutManifestEntry,
-} from "./types";
+import type { LucideIcon } from "lucide-react";
+import type { ComponentType } from "react";
+
+export interface ElementRendererProps<T extends ElementType = ElementType> {
+  id: string;
+  type: T;
+  content: ContentFor<T>;
+}
+
+export type ElementCategory =
+  | "site"
+  | "customization"
+  | "navigation"
+  | "layouts"
+  | "blocks";
+
+export interface ElementEditorProps<T extends ElementType = ElementType> {
+  id: string;
+  type: T;
+  content: ContentFor<T>;
+  isSelected?: boolean;
+  onUpdate: (content: ContentFor<T>) => void;
+  onRemove?: () => void;
+  onSaveStatusChange?: (status: SaveStatus) => void;
+}
+
+export interface ElementPreviewProps {
+  className?: string;
+}
+
+export interface ElementConfigPanelProps<T extends ElementType = ElementType> {
+  content: ContentFor<T>;
+  onUpdate: (content: ContentFor<T>) => void;
+  onRemove?: () => void;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: element registry stores heterogeneous editor components keyed by runtime element type.
+export type ElementEditorComponent = ComponentType<any>;
+// biome-ignore lint/suspicious/noExplicitAny: element registry stores heterogeneous renderer components keyed by runtime element type.
+export type ElementRendererComponent = ComponentType<any>;
+// biome-ignore lint/suspicious/noExplicitAny: element registry stores heterogeneous settings components keyed by runtime element type.
+export type ElementConfigPanelComponent = ComponentType<any>;
+
+export interface ElementManifestEntry<T extends ElementType = ElementType> {
+  type: T;
+  category: "blocks";
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  keywords?: string[];
+  editor: ElementEditorComponent;
+  renderer: ElementRendererComponent;
+  preview?: ComponentType<ElementPreviewProps>;
+  configPanel?: ElementConfigPanelComponent;
+  defaultContent: AnyContent;
+}
+
+export interface LayoutManifestEntry {
+  type: LayoutType;
+  category: "layouts";
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  keywords?: string[];
+  preview?: ComponentType<ElementPreviewProps>;
+}
+
+export type AnyManifestEntry = ElementManifestEntry | LayoutManifestEntry;
+export type AnyRegistryEntry = AnyManifestEntry;
 
 const blockPreview = (name: string) =>
   themedPickerImagePreview(
@@ -190,7 +243,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: HeadingEditor,
     renderer: HeadingRenderer,
     preview: blockPreview("heading"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.heading,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.heading,
   },
   {
     type: "paragraph",
@@ -202,7 +255,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: ParagraphEditor,
     renderer: ParagraphRenderer,
     preview: blockPreview("paragraph"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.paragraph,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.paragraph,
   },
   {
     type: "callout",
@@ -214,7 +267,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: CalloutEditor,
     renderer: CalloutRenderer,
     preview: blockPreview("callout"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.callout,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.callout,
   },
   {
     type: "divider",
@@ -226,10 +279,10 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: DividerEditor,
     renderer: DividerRenderer,
     preview: blockPreview("divider"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.divider,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.divider,
   },
   {
-    type: "block-spacer",
+    type: "spacer",
     category: "blocks",
     label: "Spacer",
     description: "Vertical spacing between content",
@@ -238,7 +291,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: SpacerEditor,
     renderer: SpacerRenderer,
     preview: blockPreview("spacer"),
-    defaultContent: DEFAULT_BLOCK_CONTENT["block-spacer"],
+    defaultContent: DEFAULT_ELEMENT_CONTENT.spacer,
   },
   {
     type: "code",
@@ -250,7 +303,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: CodeEditor,
     renderer: CodeRenderer,
     preview: blockPreview("code"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.code,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.code,
   },
   {
     type: "richtext",
@@ -262,7 +315,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: RichTextEditor,
     renderer: RichTextRenderer,
     preview: blockPreview("richtext"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.richtext,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.richtext,
   },
   {
     type: "file",
@@ -274,7 +327,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: FileEditor,
     renderer: FileRenderer,
     preview: blockPreview("file"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.file,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.file,
   },
   {
     type: "image",
@@ -286,7 +339,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: ImageEditor,
     renderer: ImageRenderer,
     preview: blockPreview("image"),
-    defaultContent: DEFAULT_MEDIA_CONTENT.image,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.image,
   },
   {
     type: "page",
@@ -299,7 +352,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     renderer: PageRenderer,
     preview: blockPreview("page"),
     configPanel: PageConfigPanel,
-    defaultContent: DEFAULT_BLOCK_CONTENT.page,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.page,
   },
   {
     type: "directory",
@@ -312,7 +365,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     renderer: DirectoryRenderer,
     preview: blockPreview("directory"),
     configPanel: DirectoryConfigPanel,
-    defaultContent: DEFAULT_BLOCK_CONTENT.directory,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.directory,
   },
   {
     type: "flowchart",
@@ -324,7 +377,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: FlowchartEditor,
     renderer: FlowchartRenderer,
     preview: blockPreview("flowchart"),
-    defaultContent: DEFAULT_BLOCK_CONTENT.flowchart,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.flowchart,
   },
   {
     type: "decision-tree",
@@ -337,7 +390,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: DecisionTreeEditor,
     renderer: DecisionTreeRenderer,
     preview: blockPreview("decision-tree"),
-    defaultContent: DEFAULT_BLOCK_CONTENT["decision-tree"],
+    defaultContent: DEFAULT_ELEMENT_CONTENT["decision-tree"],
   },
   {
     type: "search",
@@ -350,7 +403,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     renderer: SearchRenderer,
     preview: blockPreview("search"),
     configPanel: SearchConfigPanel,
-    defaultContent: DEFAULT_SECTION_CONTENT.search,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.search,
   },
   {
     type: "library",
@@ -363,7 +416,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     renderer: LibraryRenderer,
     preview: blockPreview("library"),
     configPanel: LibraryConfigPanel,
-    defaultContent: DEFAULT_SECTION_CONTENT.library,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.library,
   },
   {
     type: "quicklinks",
@@ -375,7 +428,7 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: QuicklinksEditor,
     renderer: QuicklinksRenderer,
     preview: blockPreview("quicklinks"),
-    defaultContent: DEFAULT_SECTION_CONTENT.quicklinks,
+    defaultContent: DEFAULT_ELEMENT_CONTENT.quicklinks,
   },
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementRendererProps } from "@/modules/site-elements/manifest";
+import type { ElementRendererProps } from "@/modules/site-elements/registry";
 import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";

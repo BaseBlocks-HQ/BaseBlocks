@@ -5,7 +5,7 @@ import { LayoutContextProvider } from "@/modules/site-runtime/layout";
 import {
   getElementConfigPanel,
   hasElementConfigPanel,
-} from "@/modules/site-elements/manifest";
+} from "@/modules/site-elements/registry";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";

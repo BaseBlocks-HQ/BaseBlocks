@@ -2,11 +2,11 @@
 
 import { useSite } from "@/lib/data";
 import { ElementCard } from "@/modules/editor/element-picker/element-card";
-import { themedPickerImagePreview } from "@/modules/site-elements/shared/picker-image-preview";
+import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
 import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
+import type { NavigationStyle } from "@baseblocks/domain/site-settings";
 import { useMutation } from "convex/react";
 import { LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";

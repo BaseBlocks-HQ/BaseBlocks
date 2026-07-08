@@ -2,7 +2,7 @@
 
 import { cn } from "@baseblocks/ui/lib/utils";
 import Image from "next/image";
-import type { ElementPreviewProps } from "../types";
+import type { ElementPreviewProps } from "@/modules/site-elements/registry";
 
 const shouldOptimizePickerImages = process.env.NODE_ENV === "production";
 

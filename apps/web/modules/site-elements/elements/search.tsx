@@ -1,10 +1,58 @@
 "use client";
 
-import type { ElementConfigPanelProps } from "@/modules/site-elements/manifest";
+import type { ElementEditorProps } from "@/modules/site-elements/registry";
+import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useSiteRenderActions } from "@/modules/site-runtime/actions";
+import { SearchBox } from "@/modules/site-search";
+import type { Id } from "@baseblocks/backend";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
 import { useState } from "react";
+import type {
+  ElementConfigPanelProps,
+  ElementRendererProps,
+} from "@/modules/site-elements/registry";
+
+export function SearchEditor({ content }: ElementEditorProps<"search">) {
+  const { siteId } = useEditorSite();
+
+  return (
+    <SearchBox
+      siteId={siteId as Id<"sites">}
+      placeholder={content.placeholder || "Search documents..."}
+      maxResults={content.maxResults || 10}
+      showFileType={content.showFileType ?? true}
+      usePublicQuery={false}
+    />
+  );
+}
+
+export function SearchRenderer({ content }: ElementRendererProps<"search">) {
+  const actions = useSiteRenderActions();
+  const siteId = actions.siteId;
+
+  if (!siteId) {
+    return (
+      <div className="text-muted-foreground text-sm">
+        Search is not available (no site context)
+      </div>
+    );
+  }
+
+  return (
+    <SearchBox
+      siteId={siteId}
+      placeholder={content.placeholder || "Search documents..."}
+      maxResults={content.maxResults || 10}
+      showFileType={content.showFileType !== false}
+      usePublicQuery={actions.publicSearch === true}
+      onOpenPageResult={(pageId, searchTerm) =>
+        actions.openPage?.(pageId, { searchTerm })
+      }
+    />
+  );
+}
 
 export function SearchConfigPanel({
   content,

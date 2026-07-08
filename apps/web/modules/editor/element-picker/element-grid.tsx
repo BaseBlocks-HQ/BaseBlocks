@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnyRegistryEntry } from "@/modules/site-elements/manifest";
+import type { AnyRegistryEntry } from "@/modules/site-elements/registry";
 import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
 import { ElementCard } from "./element-card";
 

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { EditorProvider } from "@/modules/editor/state/editor-context";
 import { useEditorUi } from "@/modules/editor/state/editor-context";
 import { PublicPagePanel } from "@/modules/public-site/page-panel";
-import { getDefaultContent } from "@/modules/site-elements/manifest";
+import { getDefaultContent } from "@/modules/site-elements/registry";
 import { useSiteCustomization } from "@/modules/editor/settings/customization/use-site-customization";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/modules/workspace/team-access";

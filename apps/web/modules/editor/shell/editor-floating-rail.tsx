@@ -3,10 +3,10 @@
 import {
   type AnyRegistryEntry,
   getElementsByCategory,
-} from "@/modules/site-elements/manifest";
+} from "@/modules/site-elements/registry";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import type { ElementCategory } from "@/modules/site-elements/manifest";
-import { themedPickerImagePreview } from "@/modules/site-elements/shared/picker-image-preview";
+import type { ElementCategory } from "@/modules/site-elements/registry";
+import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
 import { CustomizationConfigPanel } from "@/modules/editor/settings/customization/config-panel";
 import { NavigationConfigPanel } from "@/modules/editor/settings/navigation/config-panel";
 import { SiteConfigPanel } from "@/modules/editor/settings/site/config-panel";
@@ -137,7 +137,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
     title: "Writing",
     types: ["heading", "paragraph", "richtext", "callout", "code"],
   },
-  { title: "Structure", types: ["divider", "block-spacer"] },
+  { title: "Structure", types: ["divider", "spacer"] },
   { title: "Files", types: ["image", "file"] },
   {
     title: "Advanced",

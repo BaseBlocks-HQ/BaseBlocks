@@ -1,4 +1,4 @@
-import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
+import type { SiteCustomization } from "@baseblocks/domain/site-settings";
 import type { CSSProperties } from "react";
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {

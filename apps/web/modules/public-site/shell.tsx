@@ -12,8 +12,8 @@ import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
-import type { SiteCustomization } from "@baseblocks/domain/elements/customization";
-import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
+import type { SiteCustomization } from "@baseblocks/domain/site-settings";
+import type { NavigationStyle } from "@baseblocks/domain/site-settings";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -363,7 +363,7 @@ function PublicSiteSidebar({
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   return (
-    <Sidebar>
+    <Sidebar className="group-data-[side=left]:border-r-0 group-data-[side=right]:border-l-0">
       <SidebarHeader
         className="h-14 px-4 flex flex-row items-center gap-2"
         style={

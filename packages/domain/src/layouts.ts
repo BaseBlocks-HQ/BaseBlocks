@@ -16,7 +16,7 @@ export type LayoutBlockType =
   | "library"
   | "search"
   | "divider"
-  | "block-spacer"
+  | "spacer"
   | "callout"
   | "code"
   | "quicklinks";
@@ -95,8 +95,7 @@ export function getLayoutSlotCount(
       return (
         (settings.gridColumns ??
           DEFAULT_LAYOUT_SETTINGS.grid.gridColumns ??
-          2) *
-        (settings.gridRows ?? DEFAULT_LAYOUT_SETTINGS.grid.gridRows ?? 2)
+          2) * (settings.gridRows ?? DEFAULT_LAYOUT_SETTINGS.grid.gridRows ?? 2)
       );
     case "spacer":
       return 0;

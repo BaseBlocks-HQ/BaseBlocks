@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useAutoSave } from "@/modules/site-elements/shared/use-auto-save";
-import type { BlockSpacerContent } from "@baseblocks/domain/elements";
+import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
+import type { SpacerContent } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import {
   useState,
 } from "react";
 import ContentEditable from "react-contenteditable";
-import type { ElementEditorProps } from "../types";
+import type { ElementEditorProps, ElementRendererProps } from "../registry";
 
 function plainTextFromEditable(html: string, preserveLineBreaks = false) {
   return html
@@ -152,21 +152,21 @@ export function DividerEditor(_props: ElementEditorProps<"divider">) {
   );
 }
 
-const SPACER_HEIGHTS: Record<BlockSpacerContent["height"], number> = {
+const SPACER_HEIGHTS: Record<SpacerContent["height"], number> = {
   small: 32,
   medium: 64,
   large: 96,
   xlarge: 128,
 };
 
-const SIZE_LABELS: Record<BlockSpacerContent["height"], string> = {
+const SIZE_LABELS: Record<SpacerContent["height"], string> = {
   small: "S",
   medium: "M",
   large: "L",
   xlarge: "XL",
 };
 
-const SIZE_FULL_LABELS: Record<BlockSpacerContent["height"], string> = {
+const SIZE_FULL_LABELS: Record<SpacerContent["height"], string> = {
   small: "Small",
   medium: "Medium",
   large: "Large",
@@ -197,13 +197,13 @@ function useContainerWidth(ref: RefObject<HTMLElement | null>) {
 export function SpacerEditor({
   content,
   onUpdate,
-}: ElementEditorProps<"block-spacer">) {
+}: ElementEditorProps<"spacer">) {
   const height = content.height || "medium";
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
   const useDropdown = containerWidth > 0 && containerWidth < 200;
 
-  const handleHeightChange = (newHeight: BlockSpacerContent["height"]) => {
+  const handleHeightChange = (newHeight: SpacerContent["height"]) => {
     onUpdate({ height: newHeight });
   };
 
@@ -240,7 +240,7 @@ export function SpacerEditor({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="center">
             {(
-              Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
+              Object.keys(SPACER_HEIGHTS) as Array<SpacerContent["height"]>
             ).map((size) => (
               <DropdownMenuItem
                 key={size}
@@ -266,24 +266,84 @@ export function SpacerEditor({
         </DropdownMenu>
       ) : (
         <div className="flex gap-0.5 sm:gap-1">
-          {(
-            Object.keys(SPACER_HEIGHTS) as Array<BlockSpacerContent["height"]>
-          ).map((size) => (
-            <Button
-              key={size}
-              variant={height === size ? "default" : "outline"}
-              size="sm"
-              className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleHeightChange(size);
-              }}
-            >
-              {SIZE_LABELS[size]}
-            </Button>
-          ))}
+          {(Object.keys(SPACER_HEIGHTS) as Array<SpacerContent["height"]>).map(
+            (size) => (
+              <Button
+                key={size}
+                variant={height === size ? "default" : "outline"}
+                size="sm"
+                className="h-5 w-5 sm:h-6 sm:w-6 p-0 text-[10px] sm:text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleHeightChange(size);
+                }}
+              >
+                {SIZE_LABELS[size]}
+              </Button>
+            ),
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+export function HeadingRenderer({ content }: ElementRendererProps<"heading">) {
+  const level = content.level || 2;
+
+  switch (level) {
+    case 1:
+      return (
+        <h1 className="text-3xl font-semibold mt-6 mb-4">{content.text}</h1>
+      );
+    case 2:
+      return (
+        <h2 className="text-2xl font-semibold mt-6 mb-4">{content.text}</h2>
+      );
+    case 3:
+      return (
+        <h3 className="text-xl font-semibold mt-6 mb-4">{content.text}</h3>
+      );
+    case 4:
+      return (
+        <h4 className="text-lg font-semibold mt-6 mb-4">{content.text}</h4>
+      );
+    default:
+      return <h5 className="font-semibold mt-6 mb-4">{content.text}</h5>;
+  }
+}
+
+export function ParagraphRenderer({
+  content,
+}: ElementRendererProps<"paragraph">) {
+  return <p className="mb-4 leading-relaxed">{content.text}</p>;
+}
+
+export function CalloutRenderer({ content }: ElementRendererProps<"callout">) {
+  return (
+    <div className="my-4 bg-muted rounded-lg p-4">
+      <p className="whitespace-pre-wrap text-foreground">{content.text}</p>
+    </div>
+  );
+}
+
+export function DividerRenderer(_props: ElementRendererProps<"divider">) {
+  return <hr className="my-8" />;
+}
+
+const RENDERER_HEIGHTS = {
+  small: "h-8",
+  medium: "h-16",
+  large: "h-24",
+  xlarge: "h-32",
+} as const;
+
+export function SpacerRenderer({ content }: ElementRendererProps<"spacer">) {
+  const height = content.height || "medium";
+  return (
+    <div
+      className={cn("w-full", RENDERER_HEIGHTS[height])}
+      aria-hidden="true"
+    />
   );
 }

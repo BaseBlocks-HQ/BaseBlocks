@@ -1,23 +1,19 @@
 export type {
-  LayoutType,
-  SpacerLayoutHeight,
-  LayoutSettings,
-} from "../layouts";
-export {
-  LAYOUT_SLOT_COUNTS,
-  DEFAULT_LAYOUT_SETTINGS,
-} from "../layouts";
-
-export type {
-  BlockType,
+  ElementType,
+  ContentTypeMap,
+  ContentFor,
+  AnyContent,
+  TypedElementData,
+  SaveStatus,
   HeadingContent,
   ParagraphContent,
   CalloutContent,
   CodeContent,
   DividerContent,
-  BlockSpacerContent,
+  SpacerContent,
   FileContent,
-  PageBlockContent,
+  RichTextContent,
+  PageContent,
   DirectoryColumnType,
   DirectoryColumn,
   DirectoryRow,
@@ -26,48 +22,14 @@ export type {
   FlowchartDiagram,
   TabsDisplayMode,
   FlowchartContent,
-  DecisionTreeBlockType,
-  DecisionTreeContentBlock,
   DecisionTreeNode,
   DecisionTree,
   DecisionTreeContent,
-  BlockContentUnion,
-} from "./blocks";
-export { DEFAULT_BLOCK_CONTENT } from "./blocks";
-
-export type {
-  SectionType,
   SearchContent,
   LibraryContent,
   QuicklinkType,
   QuicklinkItem,
   QuicklinksContent,
-  SectionContentUnion,
-} from "./sections";
-export { DEFAULT_SECTION_CONTENT } from "./sections";
-
-export type {
-  NavigationStyle,
-  NavigationItem,
-} from "./navigation";
-
-export type {
-  BorderRadiusPreset,
-  SiteCustomization,
-} from "./customization";
-export { DEFAULT_CUSTOMIZATION } from "./customization";
-
-export type { MediaType, ImageContent, MediaContentUnion } from "./media";
-export { DEFAULT_MEDIA_CONTENT } from "./media";
-
-export type {
-  ElementType,
-  AllElementType,
-  ContentTypeMap,
-  LayoutSettingsMap,
-  ContentFor,
-  AnyContent,
-  TypedElementData,
-} from "./content-map";
-
-export type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
+  ImageContent,
+} from "./schema";
+export { DEFAULT_ELEMENT_CONTENT } from "./schema";

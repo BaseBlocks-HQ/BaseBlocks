@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useAutoSave } from "@/modules/site-elements/shared/use-auto-save";
+import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
 import {
   Select,
   SelectContent,
@@ -19,7 +19,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import CodeMirror from "@uiw/react-codemirror";
 import { useTheme } from "next-themes";
 import { useCallback, useMemo, useState } from "react";
-import type { ElementEditorProps } from "../types";
+import type { ElementEditorProps } from "../registry";
 
 type TokenKind = "comment" | "string" | "keyword" | "number" | "plain";
 

@@ -1,4 +1,4 @@
-import type { BorderRadiusPreset } from "@baseblocks/domain/elements/customization";
+import type { BorderRadiusPreset } from "@baseblocks/domain/site-settings";
 
 export interface RadiusPresetInfo {
   value: BorderRadiusPreset;

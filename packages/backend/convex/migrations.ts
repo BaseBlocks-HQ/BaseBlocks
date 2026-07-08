@@ -17,7 +17,7 @@ type LegacySearchableContentDoc = Doc<"searchableContent"> & {
 };
 
 // Legacy inline page block content before page blocks referenced real pages.
-interface LegacyInlinePageBlockContent {
+interface LegacyInlinePageContent {
   title?: string;
   description?: string;
   content?: unknown[];
@@ -36,7 +36,7 @@ export const indexLegacyPageBlocks = migrations.define({
     for (const slot of layout.slots) {
       for (const block of slot.blocks) {
         if ((block.type as string) === "subpage" && block.content) {
-          const content = block.content as LegacyInlinePageBlockContent;
+          const content = block.content as LegacyInlinePageContent;
           const sourceId = `${layout._id}:${slot.id}:${block.id}`;
 
           // Check if already indexed
@@ -227,7 +227,7 @@ export const runBootstrapLayouts = migrations.runner([
 // ============================================================
 
 // Old inline page block content shape (pre-migration)
-interface OldInlinePageBlockContent {
+interface OldInlinePageContent {
   title?: string;
   description?: string;
   content?: unknown[];
@@ -268,7 +268,7 @@ export const migrateLegacyInlinePageBlocks = migrations.define({
             block.content &&
             (block.content as { pageId?: unknown }).pageId === undefined
           ) {
-            const content = block.content as OldInlinePageBlockContent;
+            const content = block.content as OldInlinePageContent;
             const title = content.title || "Untitled";
             const baseSlug = titleToSlug(title);
 

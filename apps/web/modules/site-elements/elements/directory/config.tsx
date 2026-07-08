@@ -1,6 +1,6 @@
 "use client";
 
-import type { ElementConfigPanelProps } from "@/modules/site-elements/manifest";
+import type { ElementConfigPanelProps } from "@/modules/site-elements/registry";
 import type { DirectoryContent } from "@baseblocks/domain/elements";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";

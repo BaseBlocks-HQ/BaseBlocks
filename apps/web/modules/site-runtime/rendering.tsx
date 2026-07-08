@@ -1,11 +1,11 @@
 "use client";
 
-import { getElementRenderer } from "@/modules/site-elements/manifest";
-import type { ElementRendererProps } from "@/modules/site-elements/types";
+import { getElementRenderer } from "@/modules/site-elements/registry";
+import type { ElementRendererProps } from "@/modules/site-elements/registry";
 import type { AnyContent, ElementType } from "@baseblocks/domain/elements";
 import { createElement } from "react";
 
-export type { ElementRendererProps } from "@/modules/site-elements/types";
+export type { ElementRendererProps } from "@/modules/site-elements/registry";
 
 interface ElementRendererWrapperProps {
   id: string;

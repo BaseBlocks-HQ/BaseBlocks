@@ -11,7 +11,7 @@ export const blockType = v.union(
   v.literal("search"),
   v.literal("embed"),
   v.literal("divider"),
-  v.literal("block-spacer"),
+  v.literal("spacer"),
   v.literal("callout"),
   v.literal("code"),
   v.literal("table"),

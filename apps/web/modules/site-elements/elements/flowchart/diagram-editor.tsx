@@ -1,11 +1,11 @@
 "use client";
 
-import { EditableTabs } from "@/modules/site-elements/shared/editable-tabs";
-import { TabsModeToggle } from "@/modules/site-elements/shared/tabs-mode-toggle";
+import { EditableTabs } from "@/modules/editor/shared/element-tabs";
+import { TabsModeToggle } from "@/modules/editor/shared/element-tabs";
 import type {
   FlowchartDiagram,
   TabsDisplayMode,
-} from "@baseblocks/domain/elements/blocks";
+} from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

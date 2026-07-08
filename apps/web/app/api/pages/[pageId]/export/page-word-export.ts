@@ -98,7 +98,7 @@ function extractBlockText(type: string, content: unknown): string[] {
     return [];
   }
 
-  if (type === "divider" || type === "block-spacer") {
+  if (type === "divider" || type === "spacer") {
     return [];
   }
 

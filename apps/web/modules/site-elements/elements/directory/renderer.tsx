@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/site-elements/manifest";
+import type { ElementRendererProps } from "@/modules/site-elements/registry";
 import type { DirectoryColumnType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
