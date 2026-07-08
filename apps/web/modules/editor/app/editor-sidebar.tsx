@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getDisplayDomain } from "@/lib/url";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import { ElementPicker } from "@/modules/editor/elements/picker";
+import { ElementPicker } from "@/modules/site-elements/picker";
 import { SortablePageTree } from "@/modules/editor/page-tree";
 import { useEditorSite, useEditorUi } from "@/modules/editor/state";
 import type { Id } from "@baseblocks/backend";

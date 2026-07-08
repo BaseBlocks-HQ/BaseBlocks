@@ -3,7 +3,7 @@
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { ToolbarButton } from "@/modules/file-preview";
-import { PageExportMenu } from "@/modules/editor/page-export/page-export-menu";
+import { PageExportMenu } from "@/modules/page-export/page-export-menu";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

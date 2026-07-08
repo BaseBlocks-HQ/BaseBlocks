@@ -5,7 +5,7 @@ import {
   buildPageExportDocument,
   createPageExportFilename,
   renderPageExportDocx,
-} from "@/modules/editor/page-export/page-export";
+} from "@/modules/page-export/page-export";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 

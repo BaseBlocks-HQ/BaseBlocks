@@ -1,5 +1,5 @@
 import { useHaptic } from "@/lib/use-haptic";
-import { getDefaultContent } from "@/modules/editor/elements/framework/registry";
+import { getDefaultContent } from "@/modules/site-elements/authoring/registry";
 import { useEditorUi, useEditorUndo } from "@/modules/editor/state";
 import { createBlock, createLayout, generateId } from "@/modules/editor/layout";
 import { api } from "@baseblocks/backend";

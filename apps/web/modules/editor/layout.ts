@@ -8,6 +8,10 @@ import type {
   LayoutType,
 } from "@baseblocks/domain";
 import { DEFAULT_LAYOUT_SETTINGS } from "@baseblocks/domain";
+export {
+  SPACER_LAYOUT_HEIGHTS,
+  getLayoutGridStyle,
+} from "@/modules/site-runtime/layout";
 /**
  * Layout utility functions for creating and manipulating layouts
  */
@@ -86,49 +90,4 @@ export function createBlock(
     type,
     content,
   };
-}
-
-// Spacer height values in pixels
-export const SPACER_LAYOUT_HEIGHTS = {
-  small: 32,
-  medium: 64,
-  large: 96,
-  xlarge: 128,
-} as const;
-
-/**
- * Get CSS grid template for layout
- */
-export function getLayoutGridStyle(
-  type: LayoutType,
-  settings: LayoutSettings,
-): React.CSSProperties {
-  switch (type) {
-    case "single":
-      return { display: "block" };
-    case "rows":
-      return {
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-      };
-    case "columns":
-      return {
-        display: "grid",
-        gridTemplateColumns: `repeat(${settings.columnCount ?? 2}, minmax(0, 1fr))`,
-        gap: "1.5rem",
-      };
-    case "grid":
-      return {
-        display: "grid",
-        gridTemplateColumns: `repeat(${settings.gridColumns ?? 2}, minmax(0, 1fr))`,
-        gap: "1rem",
-      };
-    case "vertical":
-      return { display: "block" }; // Sidebar layout - single column
-    case "spacer":
-      return { display: "block" }; // Spacer is just a block element
-    default:
-      return { display: "block" };
-  }
 }

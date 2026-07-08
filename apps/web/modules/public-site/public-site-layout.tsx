@@ -5,8 +5,8 @@ import { usePageAncestors } from "@/lib/data";
 import { getPageLink } from "@/lib/url";
 import { cn } from "@/lib/utils";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import { useCustomizationStyles } from "@/modules/editor/elements/panels/customization/use-site-customization";
-import { SearchBox } from "@/modules/editor/elements/sections/search/search-box";
+import { SearchBox } from "@/modules/site-search";
+import { useCustomizationStyles } from "@/modules/site-runtime/customization";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
@@ -44,7 +44,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { PublicPagePanelProvider } from "./public-page-panel-context";
+import {
+  PublicPagePanelProvider,
+  usePublicPagePanel,
+} from "./public-page-panel-context";
 import {
   PublicSiteProvider,
   usePublicSiteContext,
@@ -266,6 +269,7 @@ function PublicSiteHeader({
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
   const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
+  const pagePanel = usePublicPagePanel();
   const themeButtonClassName = hasCustomHeaderColor
     ? "text-current hover:bg-current/10"
     : undefined;
@@ -317,6 +321,9 @@ function PublicSiteHeader({
               maxResults={5}
               className="w-64"
               headerMode={hasCustomHeaderColor}
+              onOpenPageResult={(pageId, searchTerm) =>
+                pagePanel.openPage(pageId, { searchTerm })
+              }
             />
           )}
           <PublicSiteThemeMenu className={themeButtonClassName} />

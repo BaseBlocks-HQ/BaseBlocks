@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import { useHaptic } from "@/lib/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
-import { InvitationInbox } from "@/modules/workspace/invitation-inbox";
+import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
 import { api } from "@baseblocks/backend";
 import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";

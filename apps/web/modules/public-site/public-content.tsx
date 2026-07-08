@@ -1,17 +1,14 @@
 "use client";
 
-import { LayoutContextProvider } from "@/modules/editor/elements/framework/layout-context";
-import { ElementRendererWrapper } from "@/modules/editor/elements/framework/renderer-wrapper";
-import "@/modules/editor/elements/layouts";
-import "@/modules/editor/elements/blocks";
-import "@/modules/editor/elements/sections";
-import "@/modules/editor/elements/media";
+import "@/modules/site-elements/runtime";
 import { usePage, usePublishedLayouts } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
-} from "@/modules/editor/layout";
+  LayoutContextProvider,
+} from "@/modules/site-runtime/layout";
+import { ElementRenderer } from "@/modules/site-runtime/rendering";
 import type { Doc } from "@baseblocks/backend";
 import type {
   AnyContent,
@@ -197,7 +194,7 @@ function renderPublishedLayout(layout: LayoutDoc) {
                 layoutType={layout.type as LayoutType}
                 layoutId={layout._id}
               >
-                <ElementRendererWrapper
+                <ElementRenderer
                   id={block.id}
                   type={block.type as ElementType}
                   content={block.content as AnyContent}

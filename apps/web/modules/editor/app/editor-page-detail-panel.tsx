@@ -2,7 +2,7 @@
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { ToolbarButton } from "@/modules/file-preview";
-import { PageExportMenu } from "@/modules/editor/page-export/page-export-menu";
+import { PageExportMenu } from "@/modules/page-export/page-export-menu";
 import { useEditorUi } from "@/modules/editor/state";
 import { useEditorMutations } from "@/modules/editor/state";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";

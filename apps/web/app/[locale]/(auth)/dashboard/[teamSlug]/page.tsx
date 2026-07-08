@@ -1,6 +1,6 @@
 import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
-import { SitesPage } from "@/modules/sites/sites-page";
-import { DashboardLayout } from "@/modules/dashboard/dashboard-layout";
+import { DashboardLayout } from "@/modules/dashboard/layout/dashboard-layout";
+import { SitesPage } from "@/modules/dashboard/sites/sites-page";
 import { api } from "@baseblocks/backend";
 
 interface TeamDashboardPageProps {

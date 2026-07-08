@@ -6,7 +6,7 @@ import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
 import { BlockClipboardProvider } from "@/modules/editor/clipboard/block-clipboard-context";
-import { useSiteCustomization } from "@/modules/editor/elements/panels/customization/use-site-customization";
+import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
 import { PublicPageDetailPanel } from "@/modules/public-site/public-page-detail-panel";
 import {
   PublicPagePanelProvider,
@@ -52,10 +52,10 @@ interface SiteEditorProps {
 }
 
 const elementModuleLoaders = [
-  () => import("@/modules/editor/elements/layouts"),
-  () => import("@/modules/editor/elements/blocks"),
-  () => import("@/modules/editor/elements/sections"),
-  () => import("@/modules/editor/elements/media"),
+  () => import("@/modules/site-elements/layouts"),
+  () => import("@/modules/site-elements/blocks"),
+  () => import("@/modules/site-elements/sections"),
+  () => import("@/modules/site-elements/media"),
 ];
 
 /**

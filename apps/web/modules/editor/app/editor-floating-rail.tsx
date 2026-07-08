@@ -3,13 +3,13 @@
 import {
   type AnyRegistryEntry,
   getElementsByCategory,
-} from "@/modules/editor/elements/framework/registry";
+} from "@/modules/site-elements/authoring/registry";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import type { ElementCategory } from "@/modules/editor/elements/categories";
-import { themedPickerImagePreview } from "@/modules/editor/elements/framework/themed-picker-image";
-import { CustomizationConfigPanel } from "@/modules/editor/elements/panels/customization";
-import { NavigationConfigPanel } from "@/modules/editor/elements/panels/navigation";
-import { SiteConfigPanel } from "@/modules/editor/elements/panels/site";
+import type { ElementCategory } from "@/modules/site-elements/categories";
+import { themedPickerImagePreview } from "@/modules/site-elements/authoring/themed-picker-image";
+import { CustomizationConfigPanel } from "@/modules/site-elements/panels/customization";
+import { NavigationConfigPanel } from "@/modules/site-elements/panels/navigation";
+import { SiteConfigPanel } from "@/modules/site-elements/panels/site";
 import { SortablePageTree } from "@/modules/editor/page-tree";
 import {
   useEditorSite,
@@ -56,8 +56,8 @@ import {
   useState,
 } from "react";
 import { EditorFlyoutSurface } from "./editor-flyout-surface";
-import { ElementCard } from "@/modules/editor/elements/picker/element-card";
-import { ElementGrid } from "@/modules/editor/elements/picker/element-grid";
+import { ElementCard } from "@/modules/site-elements/picker/element-card";
+import { ElementGrid } from "@/modules/site-elements/picker/element-grid";
 import { CreatePageDialog } from "./create-page-dialog";
 
 interface EditorFloatingRailProps {
