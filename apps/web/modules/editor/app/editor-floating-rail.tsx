@@ -33,16 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import {
-  Columns2,
-  Grid2X2,
-  MoreHorizontal,
-  MoveVertical,
-  PanelRight,
-  PanelTop,
-  Rows3,
-  Square,
-} from "lucide-react";
+import { Columns2, MoreHorizontal, MoveVertical, PanelTop } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -160,18 +151,11 @@ const TabsPreview = themedPickerImagePreview(
 );
 
 const STRUCTURE_ITEMS: Array<{
-  type: Extract<
-    PageBlockType,
-    "single" | "rows" | "columns" | "grid" | "sidebar" | "tabs" | "spacer"
-  >;
+  type: Extract<PageBlockType, "columns" | "tabs" | "spacer">;
   label: string;
   icon: typeof Columns2;
 }> = [
-  { type: "single", label: "Single", icon: Square },
-  { type: "rows", label: "Rows", icon: Rows3 },
   { type: "columns", label: "Columns", icon: Columns2 },
-  { type: "grid", label: "Grid", icon: Grid2X2 },
-  { type: "sidebar", label: "Sidebar", icon: PanelRight },
   { type: "tabs", label: "Tabs", icon: PanelTop },
   { type: "spacer", label: "Spacer", icon: MoveVertical },
 ];
@@ -639,15 +623,7 @@ export function EditorFloatingRail({
   };
 
   const handleSelectElement = (type: string) => {
-    if (
-      type === "single" ||
-      type === "rows" ||
-      type === "columns" ||
-      type === "grid" ||
-      type === "sidebar" ||
-      type === "tabs" ||
-      type === "spacer"
-    ) {
+    if (type === "columns" || type === "tabs" || type === "spacer") {
       onAddBlock?.(type);
       return;
     }

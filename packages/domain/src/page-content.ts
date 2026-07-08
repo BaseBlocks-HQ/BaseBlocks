@@ -1,14 +1,6 @@
 import type { AnyContent, ElementType } from "./elements";
 
-export type PageBlockType =
-  | ElementType
-  | "single"
-  | "rows"
-  | "columns"
-  | "grid"
-  | "sidebar"
-  | "tabs"
-  | "spacer";
+export type PageBlockType = ElementType | "columns" | "tabs" | "spacer";
 
 export interface BasePageBlock<T extends PageBlockType = PageBlockType> {
   id: string;
@@ -24,27 +16,8 @@ export interface PageBlockColumn {
   blocks: PageBlock[];
 }
 
-export interface SinglePageBlock extends BasePageBlock<"single"> {
-  blocks: PageBlock[];
-}
-
-export interface RowsPageBlock extends BasePageBlock<"rows"> {
-  rows: PageBlockColumn[];
-}
-
 export interface ColumnsPageBlock extends BasePageBlock<"columns"> {
   columns: PageBlockColumn[];
-}
-
-export interface GridPageBlock extends BasePageBlock<"grid"> {
-  columns: number;
-  cells: PageBlockColumn[];
-}
-
-export interface SidebarPageBlock extends BasePageBlock<"sidebar"> {
-  main: PageBlockColumn;
-  aside: PageBlockColumn;
-  side: "left" | "right";
 }
 
 export interface TabsPageBlock extends BasePageBlock<"tabs"> {
@@ -61,11 +34,7 @@ export interface SpacerPageBlock extends BasePageBlock<"spacer"> {
 
 export type PageBlock =
   | ElementPageBlock
-  | SinglePageBlock
-  | RowsPageBlock
   | ColumnsPageBlock
-  | GridPageBlock
-  | SidebarPageBlock
   | TabsPageBlock
   | SpacerPageBlock;
 

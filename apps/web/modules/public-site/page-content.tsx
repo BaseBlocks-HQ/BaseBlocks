@@ -148,30 +148,6 @@ function SpacerBlock({ block }: { block: SpacerPageBlock }) {
 function PublicBlock({ block }: { block: PageBlock }) {
   if (block.type === "spacer") return <SpacerBlock block={block} />;
 
-  if (block.type === "single") {
-    return (
-      <div className="space-y-8">
-        {block.blocks.map((child) => (
-          <PublicBlock key={child.id} block={child} />
-        ))}
-      </div>
-    );
-  }
-
-  if (block.type === "rows") {
-    return (
-      <div className="space-y-6">
-        {block.rows.map((row) => (
-          <div key={row.id} className="min-w-0 space-y-4">
-            {row.blocks.map((child) => (
-              <PublicBlock key={child.id} block={child} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   if (block.type === "columns") {
     return (
       <div className="grid gap-6 md:grid-cols-2">
@@ -182,58 +158,6 @@ function PublicBlock({ block }: { block: PageBlock }) {
             ))}
           </div>
         ))}
-      </div>
-    );
-  }
-
-  if (block.type === "grid") {
-    return (
-      <div
-        className="grid gap-6"
-        style={{
-          gridTemplateColumns: `repeat(${Math.max(1, block.columns)}, minmax(0, 1fr))`,
-        }}
-      >
-        {block.cells.map((cell) => (
-          <div key={cell.id} className="min-w-0 space-y-4">
-            {cell.blocks.map((child) => (
-              <PublicBlock key={child.id} block={child} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (block.type === "sidebar") {
-    const aside = (
-      <aside className="min-w-0 space-y-4">
-        {block.aside.blocks.map((child) => (
-          <PublicBlock key={child.id} block={child} />
-        ))}
-      </aside>
-    );
-    const main = (
-      <div className="min-w-0 space-y-4">
-        {block.main.blocks.map((child) => (
-          <PublicBlock key={child.id} block={child} />
-        ))}
-      </div>
-    );
-
-    return (
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        {block.side === "left" ? (
-          <>
-            {aside}
-            {main}
-          </>
-        ) : (
-          <>
-            {main}
-            {aside}
-          </>
-        )}
       </div>
     );
   }

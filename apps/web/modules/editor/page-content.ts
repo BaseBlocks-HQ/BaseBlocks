@@ -12,25 +12,6 @@ export function generateBlockId() {
 }
 
 export function createPageBlock(type: PageBlockType): PageBlock | null {
-  if (type === "single") {
-    return {
-      id: generateBlockId(),
-      type: "single",
-      blocks: [],
-    };
-  }
-
-  if (type === "rows") {
-    return {
-      id: generateBlockId(),
-      type: "rows",
-      rows: [
-        { id: generateBlockId(), blocks: [] },
-        { id: generateBlockId(), blocks: [] },
-      ],
-    };
-  }
-
   if (type === "columns") {
     return {
       id: generateBlockId(),
@@ -39,30 +20,6 @@ export function createPageBlock(type: PageBlockType): PageBlock | null {
         { id: generateBlockId(), blocks: [] },
         { id: generateBlockId(), blocks: [] },
       ],
-    };
-  }
-
-  if (type === "grid") {
-    return {
-      id: generateBlockId(),
-      type: "grid",
-      columns: 2,
-      cells: [
-        { id: generateBlockId(), blocks: [] },
-        { id: generateBlockId(), blocks: [] },
-        { id: generateBlockId(), blocks: [] },
-        { id: generateBlockId(), blocks: [] },
-      ],
-    };
-  }
-
-  if (type === "sidebar") {
-    return {
-      id: generateBlockId(),
-      type: "sidebar",
-      side: "right",
-      main: { id: generateBlockId(), blocks: [] },
-      aside: { id: generateBlockId(), blocks: [] },
     };
   }
 

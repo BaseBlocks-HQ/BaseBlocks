@@ -8,35 +8,13 @@ function extractTextFromBlocks(
   blocks: Array<{
     type?: string;
     content?: Record<string, unknown>;
-    blocks?: unknown;
-    rows?: unknown;
     columns?: unknown;
-    cells?: unknown;
-    main?: unknown;
-    aside?: unknown;
     tabs?: unknown;
   }>,
 ): string {
   const parts: string[] = [];
 
   for (const block of blocks) {
-    if (Array.isArray(block.blocks)) {
-      parts.push(extractTextFromBlocks(block.blocks));
-    }
-
-    if (Array.isArray(block.rows)) {
-      for (const row of block.rows) {
-        if (
-          typeof row === "object" &&
-          row !== null &&
-          "blocks" in row &&
-          Array.isArray(row.blocks)
-        ) {
-          parts.push(extractTextFromBlocks(row.blocks));
-        }
-      }
-    }
-
     if (Array.isArray(block.columns)) {
       for (const column of block.columns) {
         if (
@@ -47,30 +25,6 @@ function extractTextFromBlocks(
         ) {
           parts.push(extractTextFromBlocks(column.blocks));
         }
-      }
-    }
-
-    if (Array.isArray(block.cells)) {
-      for (const cell of block.cells) {
-        if (
-          typeof cell === "object" &&
-          cell !== null &&
-          "blocks" in cell &&
-          Array.isArray(cell.blocks)
-        ) {
-          parts.push(extractTextFromBlocks(cell.blocks));
-        }
-      }
-    }
-
-    for (const slot of [block.main, block.aside]) {
-      if (
-        typeof slot === "object" &&
-        slot !== null &&
-        "blocks" in slot &&
-        Array.isArray(slot.blocks)
-      ) {
-        parts.push(extractTextFromBlocks(slot.blocks));
       }
     }
 

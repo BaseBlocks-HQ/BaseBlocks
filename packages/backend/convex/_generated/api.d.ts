@@ -41,7 +41,6 @@ import type * as members_internal from "../members/internal.js";
 import type * as members_mutations from "../members/mutations.js";
 import type * as members_profileMerge from "../members/profileMerge.js";
 import type * as members_queries from "../members/queries.js";
-import type * as migrations from "../migrations.js";
 import type * as pages_mutations from "../pages/mutations.js";
 import type * as pages_queries from "../pages/queries.js";
 import type * as search_mutations from "../search/mutations.js";
@@ -99,7 +98,6 @@ declare const fullApi: ApiFromModules<{
   "members/mutations": typeof members_mutations;
   "members/profileMerge": typeof members_profileMerge;
   "members/queries": typeof members_queries;
-  migrations: typeof migrations;
   "pages/mutations": typeof pages_mutations;
   "pages/queries": typeof pages_queries;
   "search/mutations": typeof search_mutations;

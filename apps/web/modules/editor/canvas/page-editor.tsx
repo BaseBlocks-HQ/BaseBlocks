@@ -17,7 +17,6 @@ import type {
   ElementPageBlock,
   ElementType,
   PageBlock,
-  PageBlockColumn,
   SpacerPageBlock,
 } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
@@ -83,149 +82,6 @@ function SpacerEditor({
   );
 }
 
-function StructureSlotPreview({
-  blocks,
-  emptyLabel,
-}: {
-  blocks: PageBlock[];
-  emptyLabel: string;
-}) {
-  return (
-    <div className="min-h-20 rounded border border-dashed border-muted-foreground/20 p-3 text-sm text-muted-foreground">
-      {blocks.length === 0 ? (
-        emptyLabel
-      ) : (
-        <div className="space-y-3">
-          {blocks.map((child) => (
-            <BlockPreview key={child.id} block={child} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function StructureColumns({
-  slots,
-  emptyLabel,
-}: {
-  slots: PageBlockColumn[];
-  emptyLabel: string;
-}) {
-  return (
-    <div className="grid gap-4 rounded-md border border-dashed border-muted-foreground/30 p-3 md:grid-cols-2">
-      {slots.map((slot) => (
-        <StructureSlotPreview
-          key={slot.id}
-          blocks={slot.blocks}
-          emptyLabel={emptyLabel}
-        />
-      ))}
-    </div>
-  );
-}
-
-function BlockPreview({ block }: { block: PageBlock }) {
-  if (block.type === "spacer") {
-    return <SpacerEditor block={block} onUpdate={() => {}} />;
-  }
-
-  if (block.type === "single") {
-    return (
-      <StructureSlotPreview blocks={block.blocks} emptyLabel="Empty section" />
-    );
-  }
-
-  if (block.type === "rows") {
-    return <StructureColumns slots={block.rows} emptyLabel="Empty row" />;
-  }
-
-  if (block.type === "columns") {
-    return <StructureColumns slots={block.columns} emptyLabel="Empty column" />;
-  }
-
-  if (block.type === "grid") {
-    return (
-      <div
-        className="grid gap-3"
-        style={{
-          gridTemplateColumns: `repeat(${Math.max(1, block.columns)}, minmax(0, 1fr))`,
-        }}
-      >
-        {block.cells.map((cell) => (
-          <StructureSlotPreview
-            key={cell.id}
-            blocks={cell.blocks}
-            emptyLabel="Empty cell"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (block.type === "sidebar") {
-    const aside = (
-      <StructureSlotPreview
-        blocks={block.aside.blocks}
-        emptyLabel="Empty sidebar"
-      />
-    );
-    const main = (
-      <StructureSlotPreview blocks={block.main.blocks} emptyLabel="Empty main" />
-    );
-
-    return (
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
-        {block.side === "left" ? (
-          <>
-            {aside}
-            {main}
-          </>
-        ) : (
-          <>
-            {main}
-            {aside}
-          </>
-        )}
-      </div>
-    );
-  }
-
-  if (block.type === "tabs") {
-    return (
-      <div className="rounded-md border border-dashed border-muted-foreground/30 p-3">
-        <div className="mb-3 flex gap-2">
-          {block.tabs.map((tab) => (
-            <span
-              key={tab.id}
-              className="rounded-md bg-muted px-2 py-1 text-xs font-medium"
-            >
-              {tab.label}
-            </span>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {block.tabs.map((tab) => (
-            <StructureSlotPreview
-              key={tab.id}
-              blocks={tab.blocks}
-              emptyLabel={`Empty ${tab.label}`}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <ElementRenderer
-      id={block.id}
-      type={block.type as ElementType}
-      content={(block as ElementPageBlock).content}
-    />
-  );
-}
-
 function BlockBody({
   block,
   isSelected,
@@ -241,63 +97,26 @@ function BlockBody({
     return <SpacerEditor block={block} onUpdate={onUpdate} />;
   }
 
-  if (block.type === "single") {
-    return (
-      <StructureSlotPreview blocks={block.blocks} emptyLabel="Empty section" />
-    );
-  }
-
-  if (block.type === "rows") {
-    return <StructureColumns slots={block.rows} emptyLabel="Empty row" />;
-  }
-
   if (block.type === "columns") {
-    return <StructureColumns slots={block.columns} emptyLabel="Empty column" />;
-  }
-
-  if (block.type === "grid") {
     return (
-      <div
-        className="grid gap-3 rounded-md border border-dashed border-muted-foreground/30 p-3"
-        style={{
-          gridTemplateColumns: `repeat(${Math.max(1, block.columns)}, minmax(0, 1fr))`,
-        }}
-      >
-        {block.cells.map((cell) => (
-          <StructureSlotPreview
-            key={cell.id}
-            blocks={cell.blocks}
-            emptyLabel="Empty cell"
-          />
+      <div className="grid gap-4 rounded-md border border-dashed border-muted-foreground/30 p-3 md:grid-cols-2">
+        {block.columns.map((column) => (
+          <div
+            key={column.id}
+            className="min-h-20 rounded border border-dashed border-muted-foreground/20 p-3 text-sm text-muted-foreground"
+          >
+            {column.blocks.length === 0
+              ? "Empty column"
+              : column.blocks.map((child) => (
+                  <ElementRenderer
+                    key={child.id}
+                    id={child.id}
+                    type={child.type as ElementType}
+                    content={(child as ElementPageBlock).content}
+                  />
+                ))}
+          </div>
         ))}
-      </div>
-    );
-  }
-
-  if (block.type === "sidebar") {
-    const aside = (
-      <StructureSlotPreview
-        blocks={block.aside.blocks}
-        emptyLabel="Empty sidebar"
-      />
-    );
-    const main = (
-      <StructureSlotPreview blocks={block.main.blocks} emptyLabel="Empty main" />
-    );
-
-    return (
-      <div className="grid gap-3 rounded-md border border-dashed border-muted-foreground/30 p-3 md:grid-cols-[minmax(0,1fr)_14rem]">
-        {block.side === "left" ? (
-          <>
-            {aside}
-            {main}
-          </>
-        ) : (
-          <>
-            {main}
-            {aside}
-          </>
-        )}
       </div>
     );
   }
@@ -315,15 +134,10 @@ function BlockBody({
             </span>
           ))}
         </div>
-        <div className="space-y-3">
-          {block.tabs.map((tab) => (
-            <StructureSlotPreview
-              key={tab.id}
-              blocks={tab.blocks}
-              emptyLabel={`Empty ${tab.label}`}
-            />
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Tabs are now content blocks. Nested editing is the next layer, not a
+          layout-table concern.
+        </p>
       </div>
     );
   }
@@ -371,15 +185,7 @@ function SortablePageBlock({
     transition,
   };
 
-  const isElementBlock = ![
-    "single",
-    "rows",
-    "columns",
-    "grid",
-    "sidebar",
-    "tabs",
-    "spacer",
-  ].includes(block.type);
+  const isElementBlock = !["columns", "tabs", "spacer"].includes(block.type);
   const elementType = block.type as ElementType;
   const hasConfig = isElementBlock && hasElementConfigPanel(elementType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(elementType) : null;
