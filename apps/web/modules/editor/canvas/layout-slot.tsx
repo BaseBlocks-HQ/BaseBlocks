@@ -1,26 +1,21 @@
 "use client";
 
-import { useBlockClipboardOptional } from "@/modules/editor/clipboard/block-clipboard-context";
-import { canPasteCopiedBlock } from "@/modules/editor/clipboard/block-clipboard";
-import { useEditorSiteOptional } from "@/modules/editor/state";
-import {
-  DndProvider,
-  type DragEndEvent,
-} from "@/modules/editor/dnd/dnd-provider";
+import { useEditorSiteOptional } from "@/modules/editor/app/editor-context";
+import { DndProvider, type DragEndEvent } from "@/modules/editor/canvas/dnd";
 import type {
   AnyContent,
   LayoutSlot as LayoutSlotType,
   LayoutType,
 } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ClipboardPaste, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  editorBlockStackClassName,
-  editorSlotActionButtonClassName,
-  editorSlotActionRowClassName,
-} from "./editor-spacing";
 import { SortableBlock } from "./sortable-block";
+
+const editorBlockStackClassName = "flex flex-col gap-2";
+const editorSlotActionRowClassName = "flex gap-2 pt-2";
+const editorSlotActionButtonClassName =
+  "flex flex-1 items-center justify-center gap-1 rounded border border-dashed border-transparent px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-muted-foreground/30 hover:text-foreground min-h-8";
 
 interface LayoutSlotProps {
   slot: LayoutSlotType;
@@ -31,7 +26,6 @@ interface LayoutSlotProps {
   onSelect: () => void;
   onSelectBlock: (blockId: string) => void;
   onAddBlock: () => void;
-  onPasteBlock?: () => void;
   onUpdateBlock: (blockId: string, content: AnyContent) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlock?: (toSlotId: string, blockId: string, toIndex: number) => void;
@@ -46,7 +40,6 @@ export function LayoutSlot({
   onSelect,
   onSelectBlock,
   onAddBlock,
-  onPasteBlock,
   onUpdateBlock,
   onRemoveBlock,
   onMoveBlock,
@@ -55,11 +48,7 @@ export function LayoutSlot({
   const isEmpty = slot.blocks.length === 0;
   const blockIds = slot.blocks.map((b) => b.id);
   const editorSite = useEditorSiteOptional();
-  const clipboard = useBlockClipboardOptional();
   const canEdit = editorSite?.canEdit ?? true;
-  const copiedBlock = clipboard?.copiedBlock ?? null;
-  const canPasteBlock =
-    canEdit && canPasteCopiedBlock(copiedBlock) && !!onPasteBlock;
 
   const handleBlockDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -99,6 +88,7 @@ export function LayoutSlot({
           <button
             type="button"
             className="flex items-center justify-center h-full min-h-[48px] text-muted-foreground text-xs gap-1 hover:text-foreground transition-colors"
+            disabled={!canEdit}
             onClick={(e) => {
               e.stopPropagation();
               onAddBlock();
@@ -107,19 +97,6 @@ export function LayoutSlot({
             <Plus className="h-3 w-3" />
             {t("addBlock")}
           </button>
-          {canPasteBlock && (
-            <button
-              type="button"
-              className="flex items-center justify-center h-full min-h-[48px] text-muted-foreground text-xs gap-1 hover:text-foreground transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPasteBlock?.();
-              }}
-            >
-              <ClipboardPaste className="h-3 w-3" />
-              {t("pasteBlock")}
-            </button>
-          )}
         </div>
       ) : (
         <div className={editorBlockStackClassName}>
@@ -143,6 +120,7 @@ export function LayoutSlot({
             <button
               type="button"
               className={editorSlotActionButtonClassName}
+              disabled={!canEdit}
               onClick={(e) => {
                 e.stopPropagation();
                 onAddBlock();
@@ -150,19 +128,6 @@ export function LayoutSlot({
             >
               <Plus className="h-3 w-3" />
             </button>
-            {canPasteBlock && (
-              <button
-                type="button"
-                className={editorSlotActionButtonClassName}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPasteBlock?.();
-                }}
-              >
-                <ClipboardPaste className="h-3 w-3" />
-                {t("paste")}
-              </button>
-            )}
           </div>
         </div>
       )}

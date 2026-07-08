@@ -4,7 +4,6 @@ import { useSite } from "@/lib/data";
 import { ElementCard } from "@/modules/site-elements/picker/element-card";
 import { themedPickerImagePreview } from "@/modules/site-elements/authoring/themed-picker-image";
 import { CollapsibleSettingsSection } from "@/modules/site-elements/panels/shared/editor-panel-primitives";
-import { useEditorUndoOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { NavigationStyle } from "@baseblocks/domain/elements/navigation";
@@ -54,16 +53,9 @@ const NAV_STYLE_PREVIEWS: Record<
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const site = useSite(siteId);
   const updateSite = useMutation(api.sites.mutations.update);
-  const undoContext = useEditorUndoOptional();
 
   const updateNavigationStyle = async (style: NavigationStyle) => {
     if (!site) return;
-    const oldStyle = (site.settings.navigationStyle ||
-      "sidebar") as NavigationStyle;
-    const shouldTrackUndo = Boolean(
-      undoContext && !undoContext.isUndoRedoExecuting,
-    );
-    const activeUndoContext = shouldTrackUndo ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -72,24 +64,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
         },
       });
       toast.success("Navigation style updated");
-
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: "Change navigation style",
-          undo: async () => {
-            await updateSite({
-              siteId,
-              settings: { navigationStyle: oldStyle },
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              settings: { navigationStyle: style },
-            });
-          },
-        });
-      }
     } catch (_error) {
       toast.error("Failed to update navigation style");
     }

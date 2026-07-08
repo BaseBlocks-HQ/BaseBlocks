@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import { Button } from "@baseblocks/ui/button";
 import { cssLanguage } from "@codemirror/lang-css";
 import { htmlLanguage } from "@codemirror/lang-html";

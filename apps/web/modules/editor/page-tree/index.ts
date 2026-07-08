@@ -1,1 +1,1 @@
-export { SortablePageTree } from "./components/sortable-page-tree";
+export { PageTree } from "./components/page-tree";

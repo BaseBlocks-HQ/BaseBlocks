@@ -12,7 +12,7 @@ import {
 } from "@/modules/file-preview";
 import { FileIcon, getFileTypeColor } from "@/modules/file-ui";
 import { useSiteRenderActions } from "@/modules/site-runtime/actions";
-import type { ElementRendererProps } from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,

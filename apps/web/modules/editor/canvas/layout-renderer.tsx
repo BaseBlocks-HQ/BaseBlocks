@@ -13,12 +13,32 @@ import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { GripVertical, MoveVertical, Trash2 } from "lucide-react";
 import { type ButtonHTMLAttributes, type Ref, useState } from "react";
-import { getEditorLayoutSurfaceClassName } from "./editor-chrome";
-import {
-  editorControlRowClassName,
-  editorControlZoneStyle,
-} from "./editor-spacing";
 import { LayoutSlot } from "./layout-slot";
+
+const editorControlRowClassName =
+  "absolute top-0 left-0 flex items-center gap-0.5 pb-2";
+const editorControlZoneStyle = { paddingTop: "32px" };
+
+function getLayoutSurfaceClassName({
+  isHovered,
+  isSelected,
+  hasSelectedChild,
+}: {
+  isHovered: boolean;
+  isSelected: boolean;
+  hasSelectedChild: boolean;
+}) {
+  return cn(
+    "rounded-md border border-transparent transition-[background-color,border-color,box-shadow] duration-150 ease-out",
+    isHovered && !isSelected && "bg-muted/20 border-border/50",
+    isSelected &&
+      !hasSelectedChild &&
+      "bg-muted/25 border-ring/30 shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.12)]",
+    isSelected &&
+      hasSelectedChild &&
+      "bg-muted/15 border-ring/20 shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.08)]",
+  );
+}
 
 export interface LayoutRendererProps {
   layout: LayoutData;
@@ -29,7 +49,6 @@ export interface LayoutRendererProps {
   onSelectSlot: (slotId: string) => void;
   onSelectBlock: (slotId: string, blockId: string) => void;
   onAddBlock: (slotId: string) => void;
-  onPasteBlock?: (slotId: string) => void;
   onUpdateBlock: (slotId: string, blockId: string, content: AnyContent) => void;
   onRemoveBlock: (slotId: string, blockId: string) => void;
   onMoveBlock?: (
@@ -54,7 +73,6 @@ export function LayoutRenderer({
   onSelectSlot,
   onSelectBlock,
   onAddBlock,
-  onPasteBlock,
   onUpdateBlock,
   onRemoveBlock,
   onMoveBlock,
@@ -126,7 +144,7 @@ export function LayoutRenderer({
       )}
 
       <div
-        className={getEditorLayoutSurfaceClassName({
+        className={getLayoutSurfaceClassName({
           isHovered,
           isSelected,
           hasSelectedChild,
@@ -184,9 +202,6 @@ export function LayoutRenderer({
                 onSelect={() => onSelectSlot(slot.id)}
                 onSelectBlock={(blockId) => onSelectBlock(slot.id, blockId)}
                 onAddBlock={() => onAddBlock(slot.id)}
-                onPasteBlock={
-                  onPasteBlock ? () => onPasteBlock(slot.id) : undefined
-                }
                 onUpdateBlock={(blockId, content) =>
                   onUpdateBlock(slot.id, blockId, content)
                 }

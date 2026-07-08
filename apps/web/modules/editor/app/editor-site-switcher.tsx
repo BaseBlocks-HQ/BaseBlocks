@@ -4,10 +4,6 @@ import { Link } from "@/i18n/navigation";
 import { useTeamSites } from "@/lib/data/use-site";
 import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
 import { cn } from "@/lib/utils";
-import {
-  type EditorSiteSwitcherSite,
-  getEditorSiteSwitcherSites,
-} from "@/modules/editor/app/site-switcher-model";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -18,6 +14,14 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
 import Image from "next/image";
+
+interface EditorSiteSwitcherSite {
+  _id: string;
+  isPublished: boolean;
+  logoUrl?: string;
+  name: string;
+  slug: string;
+}
 
 interface EditorSiteSwitcherProps {
   currentSiteId: string;
@@ -123,6 +127,25 @@ function SiteMenuItem({ site }: { site: EditorSiteSwitcherSite }) {
   );
 }
 
+function getSwitcherSites(
+  sites: EditorSiteSwitcherSite[],
+  currentSiteId: string,
+) {
+  const sortedSites = [...sites].sort((left, right) =>
+    left.name.localeCompare(right.name, undefined, {
+      sensitivity: "base",
+    }),
+  );
+  const currentSiteIndex = sortedSites.findIndex(
+    (site) => site._id === currentSiteId,
+  );
+
+  if (currentSiteIndex <= 0) return sortedSites;
+
+  const [currentSite] = sortedSites.splice(currentSiteIndex, 1);
+  return currentSite ? [currentSite, ...sortedSites] : sortedSites;
+}
+
 export function EditorSiteSwitcher({
   currentSiteId,
   currentSiteLogoUrl,
@@ -131,7 +154,7 @@ export function EditorSiteSwitcher({
 }: EditorSiteSwitcherProps) {
   const { team } = useTeamAccess();
   const sites = useTeamSites(team._id);
-  const switcherSites = getEditorSiteSwitcherSites(sites ?? [], currentSiteId);
+  const switcherSites = getSwitcherSites(sites ?? [], currentSiteId);
   const hasOtherSites = switcherSites.length > 1;
 
   if (!hasOtherSites) {

@@ -10,20 +10,14 @@ import { themedPickerImagePreview } from "@/modules/site-elements/authoring/them
 import { CustomizationConfigPanel } from "@/modules/site-elements/panels/customization";
 import { NavigationConfigPanel } from "@/modules/site-elements/panels/navigation";
 import { SiteConfigPanel } from "@/modules/site-elements/panels/site";
-import { SortablePageTree } from "@/modules/editor/page-tree";
+import { PageTree } from "@/modules/editor/page-tree";
 import {
   useEditorSite,
   useEditorUi,
-  useEditorUndo,
-} from "@/modules/editor/state";
+} from "@/modules/editor/app/editor-context";
 import type { Id } from "@baseblocks/backend";
-import type {
-  LayoutBlockType,
-  LayoutType,
-  PageListItem,
-} from "@baseblocks/domain";
+import type { LayoutType, PageListItem } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
-import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
@@ -39,7 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { MoreHorizontal, PanelTop, Redo2, Undo2 } from "lucide-react";
+import { MoreHorizontal, PanelTop } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -55,7 +49,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { EditorFlyoutSurface } from "./editor-flyout-surface";
 import { ElementCard } from "@/modules/site-elements/picker/element-card";
 import { ElementGrid } from "@/modules/site-elements/picker/element-grid";
 import { CreatePageDialog } from "./create-page-dialog";
@@ -70,7 +63,7 @@ interface EditorFloatingRailProps {
   selectedSlotId?: string | null;
   onSelectPage: (pageId: string) => void;
   onAddLayout?: (type: LayoutType) => void;
-  onAddBlock?: (type: LayoutBlockType) => void;
+  onAddBlock?: (type: ElementType) => void;
   onEnableTabs?: () => void;
 }
 
@@ -136,6 +129,8 @@ const BUTTON_SLOT_MOBILE = 40;
 const RAIL_PADDING_MOBILE = 12;
 const FIXED_RIGHT_MOBILE = 85;
 const RAIL_MARGIN = 24;
+const editorFlyoutSurfaceClassName =
+  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md sm:w-[min(22rem,calc(100vw-6rem))]";
 
 const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
   {
@@ -221,59 +216,12 @@ function FloatingRailButton({
   );
 }
 
-function RailUndoRedoControls({
-  horizontal = false,
-}: {
-  horizontal?: boolean;
-}) {
-  const { currentPageId } = useEditorUi();
-  const { undo, redo, canUndo, canRedo, isUndoRedoExecuting } = useEditorUndo();
-
+function EditorFlyoutSurface({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   return (
-    <div
-      className={cn("flex gap-1", horizontal ? "flex-row" : "flex-col pt-2")}
-    >
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="h-9 w-9 rounded-[1.15rem] text-muted-foreground hover:bg-accent/55 hover:text-foreground sm:h-10 sm:w-10 sm:rounded-[1.35rem]"
-        title="Undo"
-        disabled={
-          isUndoRedoExecuting ||
-          (!canUndo(currentPageId ?? undefined) && !canUndo())
-        }
-        onClick={() => {
-          if (currentPageId && canUndo(currentPageId)) {
-            undo(currentPageId);
-            return;
-          }
-          undo();
-        }}
-      >
-        <Undo2 className="h-4 w-4" />
-        <span className="sr-only">Undo</span>
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="h-9 w-9 rounded-[1.15rem] text-muted-foreground hover:bg-accent/55 hover:text-foreground sm:h-10 sm:w-10 sm:rounded-[1.35rem]"
-        title="Redo"
-        disabled={
-          isUndoRedoExecuting ||
-          (!canRedo(currentPageId ?? undefined) && !canRedo())
-        }
-        onClick={() => {
-          if (currentPageId && canRedo(currentPageId)) {
-            redo(currentPageId);
-            return;
-          }
-          redo();
-        }}
-      >
-        <Redo2 className="h-4 w-4" />
-        <span className="sr-only">Redo</span>
-      </Button>
-    </div>
+    <div className={cn(editorFlyoutSurfaceClassName, className)} {...props} />
   );
 }
 
@@ -378,8 +326,7 @@ function FloatingRailFlyout({
           <div className="p-2">
             {rootPages.length > 0 ? (
               <SidebarMenu>
-                <SortablePageTree
-                  pages={rootPages}
+                <PageTree
                   allPages={navPages}
                   selectedPageId={selectedPageId}
                   siteId={site._id}
@@ -670,7 +617,7 @@ export function EditorFloatingRail({
       return;
     }
 
-    onAddBlock?.(type as LayoutBlockType);
+    onAddBlock?.(type as ElementType);
   };
 
   const clampedVisible = isMobile
@@ -749,16 +696,17 @@ export function EditorFloatingRail({
             />
           ) : null}
 
-          <Separator
-            orientation={isMobile ? "vertical" : "horizontal"}
-            className={cn(
-              "bg-border/80",
-              isMobile
-                ? "mx-0.5 h-7 w-px self-center"
-                : "mt-2 h-px w-7 self-center",
-            )}
-          />
-          <RailUndoRedoControls horizontal={isMobile} />
+          {overflowItems.length === 0 ? null : (
+            <Separator
+              orientation={isMobile ? "vertical" : "horizontal"}
+              className={cn(
+                "bg-border/80",
+                isMobile
+                  ? "mx-0.5 h-7 w-px self-center"
+                  : "mt-2 h-px w-7 self-center",
+              )}
+            />
+          )}
         </div>
       </div>
 

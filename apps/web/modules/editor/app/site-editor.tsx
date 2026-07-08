@@ -5,15 +5,22 @@ import { useSite } from "@/lib/data/use-site";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
-import { BlockClipboardProvider } from "@/modules/editor/clipboard/block-clipboard-context";
-import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
+import { createBlock, createLayout, generateId } from "@/modules/editor/layout";
+import { EditorProvider } from "@/modules/editor/app/editor-context";
+import { useEditorUi } from "@/modules/editor/app/editor-context";
 import { PublicPagePanel } from "@/modules/public-site/page-panel";
+import { getDefaultContent } from "@/modules/site-elements/authoring/registry";
+import { useSiteCustomization } from "@/modules/site-elements/panels/customization/use-site-customization";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
-import { EditorProvider } from "@/modules/editor/state";
-import { useEditorUi } from "@/modules/editor/state";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
+import type {
+  AnyContent,
+  ElementType,
+  LayoutBlockType,
+  LayoutType,
+} from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
@@ -26,21 +33,17 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { useConvexAuth, useMutation } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { PageEditor } from "@/modules/editor/canvas/page-editor";
 import { toast } from "sonner";
-import {
-  ConnectedEditorPageDetailPanel,
-  ConnectedPageEditor,
-} from "./connected-editors";
+import { EditorPageDetailPanel } from "./editor-page-detail-panel";
 import { EditorFloatingRail } from "./editor-floating-rail";
 import { EditorHeader } from "./editor-header";
-import { useSidebarOperations } from "@/modules/editor/operations/use-sidebar-operations";
 
 const pagePanelSurfaceClassName =
   "flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_18px_40px_hsl(var(--foreground)/0.08)] backdrop-blur-xl";
 
 const hiddenSplitHandleClassName =
   "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
-import { ConvexEditorMutationsProvider } from "./convex-editor-mutations";
 
 interface SiteEditorProps {
   siteId: string;
@@ -91,7 +94,8 @@ function SiteEditorInner({
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
   const [, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, editingPage, closePageEditor } = useEditorUi();
+  const { selection, editingPage, closePageEditor, activeTabId, selectSlot } =
+    useEditorUi();
   const { viewingPage, closePage } = usePagePanelState();
 
   // Fullscreen state for page panel
@@ -221,10 +225,87 @@ function SiteEditorInner({
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  const { handleAddLayout, handleAddBlock, handleEnableTabs } =
-    useSidebarOperations({
-      selectedPageId: selectedPage?._id,
+  const createLayoutMutation = useMutation(api.layouts.mutations.create);
+  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
+  const addPageBlockMutation = useMutation(api.layouts.mutations.addPageBlock);
+  const enablePageTabsMutation = useMutation(
+    api.pages.mutations.enablePageTabs,
+  );
+
+  const targetPageId = editingPage
+    ? (editingPage.pageId as Id<"pages">)
+    : selectedPage?._id;
+
+  const handleAddLayout = async (type: LayoutType) => {
+    if (!targetPageId) return;
+
+    const layout = createLayout(type);
+    haptic.trigger("heavy");
+    const layoutId = await createLayoutMutation({
+      pageId: targetPageId,
+      type: layout.type,
+      slots: layout.slots,
+      settings: layout.settings,
+      tabId: editingPage ? undefined : (activeTabId ?? undefined),
     });
+
+    const firstSlot = layout.slots[0];
+    if (firstSlot) {
+      setTimeout(() => {
+        selectSlot(layoutId as string, firstSlot.id);
+      }, 100);
+    }
+  };
+
+  const handleAddBlock = async (type: ElementType) => {
+    if (!selection.layoutId || !selection.slotId) return;
+
+    if (type === "page") {
+      const blockId = generateId();
+      try {
+        haptic.trigger("heavy");
+        await addPageBlockMutation({
+          layoutId: selection.layoutId as Id<"layouts">,
+          slotId: selection.slotId,
+          blockId,
+          title: "New Page",
+          slug: `page-${blockId.slice(0, 8)}`,
+        });
+      } catch (_error) {
+        haptic.trigger("error");
+        toast.error("Failed to create page");
+      }
+      return;
+    }
+
+    const content = getDefaultContent(type as ElementType);
+    if (!content) return;
+
+    const block = createBlock(type as LayoutBlockType, content);
+    haptic.trigger("heavy");
+    await addBlockMutation({
+      layoutId: selection.layoutId as Id<"layouts">,
+      slotId: selection.slotId,
+      block: {
+        id: block.id,
+        type: block.type,
+        content: block.content as AnyContent,
+      },
+    });
+  };
+
+  const handleEnableTabs = async () => {
+    if (!targetPageId) return;
+
+    haptic.trigger("heavy");
+    await enablePageTabsMutation({
+      pageId: targetPageId,
+      tabs: [
+        { id: generateId(), label: "Tab 1" },
+        { id: generateId(), label: "Tab 2" },
+      ],
+    });
+  };
 
   if (site === undefined || pages === undefined) {
     return <EditorLoading />;
@@ -244,7 +325,7 @@ function SiteEditorInner({
   const showFloatingRail = !(isMobile && showPagePanel);
 
   const pageEditor = selectedPage ? (
-    <ConnectedPageEditor
+    <PageEditor
       pageId={selectedPage._id}
       onSelectionChange={handleSlotSelectionChange}
     />
@@ -310,7 +391,7 @@ function SiteEditorInner({
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
               {selectedPage ? (
-                <ConnectedPageEditor
+                <PageEditor
                   pageId={selectedPage._id}
                   onSelectionChange={handleSlotSelectionChange}
                 />
@@ -370,7 +451,7 @@ function SiteEditorInner({
                   >
                     <section className={pagePanelSurfaceClassName}>
                       {activePageDetail?.kind === "editor" ? (
-                        <ConnectedEditorPageDetailPanel
+                        <EditorPageDetailPanel
                           isFullscreen={isFullscreen}
                           onToggleFullscreen={() =>
                             setIsFullscreen(!isFullscreen)
@@ -403,7 +484,7 @@ function SiteEditorInner({
                       <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4">
                         <section className={pagePanelSurfaceClassName}>
                           {activePageDetail?.kind === "editor" ? (
-                            <ConnectedEditorPageDetailPanel
+                            <EditorPageDetailPanel
                               isFullscreen={isFullscreen}
                               onToggleFullscreen={() =>
                                 setIsFullscreen(!isFullscreen)
@@ -466,30 +547,26 @@ function SiteEditorShell({
   };
 
   return (
-    <ConvexEditorMutationsProvider>
-      <EditorProvider
+    <EditorProvider
+      siteId={siteId}
+      site={siteData}
+      permissions={permissions}
+      pagePanelState={{
+        editingPage: editingPageId ? { pageId: editingPageId } : null,
+        openPageEditor: (page) => {
+          replaceEditorUrl({ editorPanelPage: page.pageId });
+        },
+        closePageEditor: () => {
+          replaceEditorUrl({ editorPanelPage: null });
+        },
+      }}
+    >
+      <SiteEditorInner
+        initialPages={initialPages}
+        initialSite={initialSite}
         siteId={siteId}
-        site={siteData}
-        permissions={permissions}
-        pagePanelState={{
-          editingPage: editingPageId ? { pageId: editingPageId } : null,
-          openPageEditor: (page) => {
-            replaceEditorUrl({ editorPanelPage: page.pageId });
-          },
-          closePageEditor: () => {
-            replaceEditorUrl({ editorPanelPage: null });
-          },
-        }}
-      >
-        <BlockClipboardProvider>
-          <SiteEditorInner
-            initialPages={initialPages}
-            initialSite={initialSite}
-            siteId={siteId}
-          />
-        </BlockClipboardProvider>
-      </EditorProvider>
-    </ConvexEditorMutationsProvider>
+      />
+    </EditorProvider>
   );
 }
 

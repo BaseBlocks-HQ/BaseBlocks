@@ -4,7 +4,7 @@ import { filesClient } from "@/lib/files/client";
 import { cn } from "@/lib/utils";
 import { useLayoutContext } from "@/modules/site-runtime/layout";
 import type { ElementEditorProps } from "@/modules/site-elements/authoring/registry";
-import { useEditorSite } from "@/modules/editor/state";
+import { useEditorSite } from "@/modules/editor/app/editor-context";
 import { api } from "@baseblocks/backend";
 import type { QuicklinkItem, QuicklinkType } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";

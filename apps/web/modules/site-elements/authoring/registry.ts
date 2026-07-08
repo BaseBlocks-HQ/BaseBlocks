@@ -10,15 +10,12 @@ import type {
   LayoutType,
   SaveStatus,
 } from "@baseblocks/domain/elements";
-import {
-  registerElementRenderer,
-  type ElementRendererProps,
-} from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import type { ElementCategory } from "@/modules/site-elements/categories";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type { ElementRendererProps } from "@/modules/site-runtime/registry";
+export type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 
 export interface ElementEditorProps<T extends ElementType = ElementType> {
   id: string;
@@ -77,9 +74,6 @@ class ElementRegistry {
       entry.type,
       entry as unknown as ElementRegistryEntry<ElementType>,
     );
-    if (entry.renderer) {
-      registerElementRenderer(entry.type, entry.renderer);
-    }
   }
 
   registerLayout(entry: LayoutRegistryEntry): void {

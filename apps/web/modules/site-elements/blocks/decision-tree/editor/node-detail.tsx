@@ -3,7 +3,7 @@
 import "@blocknote/mantine/style.css";
 
 import { useSiteAssetUpload } from "@/lib/files";
-import { useEditorSite } from "@/modules/editor/state";
+import { useEditorSite } from "@/modules/editor/app/editor-context";
 import type { Id } from "@baseblocks/backend";
 import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";

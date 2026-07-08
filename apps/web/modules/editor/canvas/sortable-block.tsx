@@ -1,14 +1,11 @@
 "use client";
 
-import { useBlockClipboardOptional } from "@/modules/editor/clipboard/block-clipboard-context";
-import { isCopyableBlockType } from "@/modules/editor/clipboard/block-clipboard";
 import { ElementEditorWrapper } from "@/modules/site-elements/authoring/editor-wrapper";
 import { LayoutContextProvider } from "@/modules/site-runtime/layout";
 import {
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/site-elements/authoring/registry";
-import { useEditorSiteOptional } from "@/modules/editor/state";
 import type { AnyContent, ElementType, LayoutType } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -19,16 +16,19 @@ import {
 } from "@baseblocks/ui/popover";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Copy, GripVertical, Settings2, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { GripVertical, Settings2, Trash2 } from "lucide-react";
 import { createElement, useState } from "react";
-import { toast } from "sonner";
-import { editorFlyoutSurfaceClassName } from "@/modules/editor/app/editor-flyout-surface";
-import { getEditorBlockSurfaceClassName } from "./editor-chrome";
-import {
-  editorControlRowClassName,
-  editorControlZoneStyle,
-} from "./editor-spacing";
+
+const editorControlRowClassName =
+  "absolute top-0 left-0 flex items-center gap-0.5 pb-2";
+const editorControlZoneStyle = { paddingTop: "32px" };
+
+function getBlockSurfaceClassName({ isSelected }: { isSelected: boolean }) {
+  return cn(
+    "rounded-md transition-[background-color,box-shadow] duration-150 ease-out",
+    isSelected && "shadow-[inset_0_0_0_1px_hsl(var(--ring)/0.2)]",
+  );
+}
 
 interface SortableBlockProps {
   id: string;
@@ -45,6 +45,9 @@ interface SortableBlockProps {
   onRemove: () => void;
 }
 
+const editorFlyoutSurfaceClassName =
+  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md sm:w-[min(22rem,calc(100vw-6rem))]";
+
 export function SortableBlock({
   id,
   block,
@@ -55,12 +58,8 @@ export function SortableBlock({
   onUpdate,
   onRemove,
 }: SortableBlockProps) {
-  const tToast = useTranslations("editor.toasts");
   const [configOpen, setConfigOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const editorSite = useEditorSiteOptional();
-  const clipboard = useBlockClipboardOptional();
-  const canEdit = editorSite?.canEdit ?? true;
   const {
     attributes,
     listeners,
@@ -80,7 +79,6 @@ export function SortableBlock({
   const blockType = block.type as ElementType;
   const hasConfig = hasElementConfigPanel(blockType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
-  const canCopyBlock = canEdit && isCopyableBlockType(block.type);
 
   const showControls = isHovered || isSelected;
 
@@ -165,23 +163,6 @@ export function SortableBlock({
                   </PopoverContent>
                 </Popover>
               )}
-              {canCopyBlock && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clipboard?.copyBlock({
-                      type: block.type,
-                      content: block.content,
-                    });
-                    toast.success(tToast("blockCopied"));
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -199,7 +180,7 @@ export function SortableBlock({
       )}
 
       <div
-        className={getEditorBlockSurfaceClassName({
+        className={getBlockSurfaceClassName({
           isSelected,
         })}
       >

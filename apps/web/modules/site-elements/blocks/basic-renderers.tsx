@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { ElementRendererProps } from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 
 export function HeadingRenderer({ content }: ElementRendererProps<"heading">) {
   const level = content.level || 2;

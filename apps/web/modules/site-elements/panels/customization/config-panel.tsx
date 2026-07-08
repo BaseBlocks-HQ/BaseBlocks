@@ -5,7 +5,6 @@ import {
   CollapsibleSettingsSection,
   PanelSettingRow,
 } from "@/modules/site-elements/panels/shared/editor-panel-primitives";
-import { useEditorUndoOptional } from "@/modules/editor/state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type {
@@ -33,7 +32,6 @@ export function CustomizationConfigPanel({
   const site = useSite(siteId);
   const updateSite = useMutation(api.sites.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
-  const undoContext = useEditorUndoOptional();
 
   const customization = site?.settings?.customization as
     | SiteCustomization
@@ -42,14 +40,7 @@ export function CustomizationConfigPanel({
   const saveCustomization = async (newCustomization: SiteCustomization) => {
     if (!site) return;
 
-    const oldCustomization = customization
-      ? structuredClone(customization)
-      : {};
     const newCopy = structuredClone(newCustomization);
-    const shouldTrackUndo = Boolean(
-      undoContext && !undoContext.isUndoRedoExecuting,
-    );
-    const activeUndoContext = shouldTrackUndo ? undoContext : null;
 
     setIsSaving(true);
     try {
@@ -60,23 +51,6 @@ export function CustomizationConfigPanel({
         },
       });
 
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: "Update customization",
-          undo: async () => {
-            await updateSite({
-              siteId,
-              settings: { customization: oldCustomization },
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              settings: { customization: newCopy },
-            });
-          },
-        });
-      }
       setIsSaving(false);
     } catch (_error) {
       toast.error("Failed to update customization");

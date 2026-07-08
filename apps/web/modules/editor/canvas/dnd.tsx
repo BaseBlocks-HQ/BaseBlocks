@@ -38,29 +38,16 @@ export function DndProvider({
   renderDragOverlay,
 }: DndProviderProps) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-
-  // Smooth drop animation
   const dropAnimation: DropAnimation = {
     sideEffects: defaultDropAnimationSideEffects({
-      styles: {
-        active: {
-          opacity: "0.5",
-        },
-      },
+      styles: { active: { opacity: "0.5" } },
     }),
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // 8px movement required to start drag
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 200, // 200ms hold to start drag on touch
-        tolerance: 5, // 5px movement tolerance during delay
-      },
+      activationConstraint: { delay: 200, tolerance: 5 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -77,17 +64,13 @@ export function DndProvider({
     onDragEnd(event);
   };
 
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
-
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
+      onDragCancel={() => setActiveId(null)}
     >
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
         {children}
@@ -99,5 +82,4 @@ export function DndProvider({
   );
 }
 
-export { arrayMove } from "@dnd-kit/sortable";
 export type { DragEndEvent };

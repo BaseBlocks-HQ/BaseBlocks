@@ -2,7 +2,7 @@
 
 import { usePage } from "@/lib/data";
 import { useSiteRenderActions } from "@/modules/site-runtime/actions";
-import type { ElementRendererProps } from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import { ChevronRight, FileText } from "lucide-react";
 
 export function PageRenderer({ content }: ElementRendererProps<"page">) {

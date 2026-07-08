@@ -2,7 +2,7 @@
 
 import "@blocknote/mantine/style.css";
 
-import type { ElementRendererProps } from "@/modules/site-runtime/registry";
+import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";

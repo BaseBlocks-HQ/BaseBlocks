@@ -2,18 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { isPageRestricted } from "@baseblocks/domain";
-import type { PageListItem } from "@baseblocks/domain";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconFile, IconHouse } from "nucleo-glass";
 import type { ReactNode } from "react";
-import type { FlattenedPage } from "../tree";
-import { isValidDrop } from "../tree";
-import { useTreeDndContext } from "./tree-dnd-context";
-import { DropHighlight, DropLine } from "./tree-drop-indicator";
+import type { FlattenedPage } from "../tree/flatten";
 
 const treeItemButtonClassName =
   "flex h-full w-full min-w-0 items-center gap-2 overflow-hidden rounded-md p-2 pr-1 text-left text-sm outline-hidden [&>svg]:size-4 [&>svg]:shrink-0";
@@ -21,97 +15,51 @@ const treeItemButtonClassName =
 const treeItemRowClassName =
   "peer/menu-button grid h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_1.75rem] items-center overflow-hidden rounded-md text-sm outline-hidden ring-ring transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent active:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground";
 
-interface SortableTreeItemProps {
+interface PageTreeItemProps {
   item: FlattenedPage;
-  allPages: PageListItem[];
   selectedPageId?: string;
   defaultPageId?: string;
   hasChildren: boolean;
   isExpanded: boolean;
-  canEdit: boolean;
   onSelect: (pageId: string) => void;
   onToggleExpand: () => void;
   actionsMenu?: ReactNode;
 }
 
-export function SortableTreeItem({
+export function PageTreeItem({
   item,
-  allPages,
   selectedPageId,
   defaultPageId,
   hasChildren,
   isExpanded,
-  canEdit,
   onSelect,
   onToggleExpand,
   actionsMenu,
-}: SortableTreeItemProps) {
+}: PageTreeItemProps) {
   const t = useTranslations("navigation.tree");
-  const { activeId, projection, dropZone } = useTreeDndContext();
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id, disabled: !canEdit });
-
-  const style = {
-    transform: isDragging ? undefined : CSS.Transform.toString(transform),
-    transition,
-  };
-
   const page = item.page;
   const isDefault = defaultPageId === page._id;
-  const isGhost = isDragging;
   const isRestricted = isPageRestricted(page.accessPolicy);
   const isHiddenFromNavigation = page.showInNavigation === false;
 
-  const isDropTarget =
-    activeId !== null &&
-    projection?.overId === item.id &&
-    isValidDrop(allPages, String(activeId), projection);
-
-  const isSelfHover = item.id === String(activeId);
-
-  const showBeforeLine = isDropTarget && dropZone === "before" && !isSelfHover;
-  const showAfterLine = isDropTarget && dropZone === "after";
-  const showInsideHighlight =
-    isDropTarget && dropZone === "inside" && !isSelfHover;
-
-  const handleToggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleExpand = (event: React.MouseEvent) => {
+    event.stopPropagation();
     onToggleExpand();
   };
 
   return (
     <SidebarMenuItem
-      ref={setNodeRef}
-      style={style}
       className={cn("group/page relative w-full min-w-0 overflow-hidden")}
+      style={{ paddingLeft: item.depth * 16 }}
     >
-      {showBeforeLine && <DropLine position="before" />}
-      {showAfterLine && <DropLine position="after" />}
-      {showInsideHighlight && <DropHighlight />}
-
       <div
-        ref={setActivatorNodeRef}
         data-active={selectedPageId === page._id}
-        className={cn(
-          treeItemRowClassName,
-          canEdit && "cursor-grab active:cursor-grabbing",
-          isGhost && "opacity-30",
-        )}
-        {...(canEdit ? listeners : {})}
+        className={treeItemRowClassName}
       >
         <button
           type="button"
           onClick={() => onSelect(page._id)}
           className={treeItemButtonClassName}
-          {...(canEdit ? attributes : {})}
         >
           {hasChildren ? (
             <span className="relative h-4 w-4 shrink-0">
@@ -125,11 +73,10 @@ export function SortableTreeItem({
               <span
                 role="button"
                 tabIndex={0}
-                onPointerDown={(e) => e.stopPropagation()}
                 onClick={handleToggleExpand}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
                     onToggleExpand();
                   }
                 }}
@@ -162,7 +109,7 @@ export function SortableTreeItem({
           )}
         </button>
 
-        {!isGhost && actionsMenu ? (
+        {actionsMenu ? (
           <div className="relative z-10 flex h-8 w-7 min-w-0 items-center justify-center overflow-hidden">
             {actionsMenu}
           </div>

@@ -1,9 +1,5 @@
 "use client";
 
-import type {
-  AccessCodeData,
-  SharingSettings,
-} from "@/modules/editor/app/types";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -40,6 +36,18 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type Visibility = "private" | "public" | "link-only" | "password";
+
+export interface SharingSettings {
+  visibility: string;
+  accessCodeRotationHours: number;
+  accessCodeSessionDays: number;
+}
+
+export interface AccessCodeData {
+  code: string;
+  expiresAt?: number;
+  isExpired: boolean;
+}
 
 interface ShareDialogProps {
   open: boolean;

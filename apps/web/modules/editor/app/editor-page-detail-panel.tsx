@@ -1,11 +1,15 @@
 "use client";
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
+import { usePage } from "@/lib/data";
 import { ToolbarButton } from "@/modules/file-preview";
-import { useEditorUi } from "@/modules/editor/state";
-import { useEditorMutations } from "@/modules/editor/state";
+import { useEditorUi } from "@/modules/editor/app/editor-context";
+import { PageEditor } from "@/modules/editor/canvas/page-editor";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
+import { useMutation } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
@@ -14,8 +18,6 @@ import { toast } from "sonner";
 interface EditorPageDetailPanelProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
-  pageTitle?: string;
-  renderPageEditor: (pageId: string) => ReactNode;
 }
 
 function EditorPagePanelFrame({
@@ -52,17 +54,16 @@ function EditorPagePanelHeader({ children }: { children: ReactNode }) {
 export function EditorPageDetailPanel({
   isFullscreen,
   onToggleFullscreen,
-  pageTitle,
-  renderPageEditor,
 }: EditorPageDetailPanelProps) {
   const t = useTranslations("editor.pagePanel");
   const { editingPage, closePageEditor } = useEditorUi();
-  const { pages: pageMutations } = useEditorMutations();
-  const [title, setTitle] = useState(pageTitle ?? "");
+  const page = usePage(editingPage?.pageId);
+  const updatePage = useMutation(api.pages.mutations.update);
+  const [title, setTitle] = useState(page?.title ?? "");
 
   useEffect(() => {
-    setTitle(pageTitle ?? "");
-  }, [pageTitle]);
+    setTitle(page?.title ?? "");
+  }, [page?.title]);
 
   const debouncedSave = useDebounceCallback(async (nextTitle: string) => {
     if (!editingPage?.pageId || !nextTitle.trim()) {
@@ -70,8 +71,8 @@ export function EditorPageDetailPanel({
     }
 
     try {
-      await pageMutations.update({
-        pageId: editingPage.pageId,
+      await updatePage({
+        pageId: editingPage.pageId as Id<"pages">,
         title: nextTitle.trim(),
       });
     } catch (_error) {
@@ -124,7 +125,7 @@ export function EditorPageDetailPanel({
         </EditorPagePanelHeader>
       }
     >
-      {renderPageEditor(editingPage.pageId)}
+      <PageEditor pageId={editingPage.pageId} nested />
     </EditorPagePanelFrame>
   );
 }

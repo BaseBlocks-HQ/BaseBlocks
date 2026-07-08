@@ -1,7 +1,10 @@
 "use client";
 
 import { usePages } from "@/lib/data";
-import { useEditorSite, useEditorUi } from "@/modules/editor/state";
+import {
+  useEditorSite,
+  useEditorUi,
+} from "@/modules/editor/app/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";

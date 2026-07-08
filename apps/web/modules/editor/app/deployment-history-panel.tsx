@@ -5,7 +5,6 @@
  * Opened from the editor header ⋯ menu → “Deployment history” when the site is published.
  * Renders as a Sheet from the right; rollback uses `RollbackDialog` (dashboard shell).
  */
-import type { DeploymentData } from "@/modules/editor/app/types";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
@@ -20,6 +19,19 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RollbackDialog } from "./rollback-dialog";
+
+export interface DeploymentData {
+  id: string;
+  version: number;
+  status: string;
+  notes?: string;
+  deployedAt: number;
+  summary: {
+    pagesDeployed: number;
+    layoutsDeployed: number;
+    settingsChanged: boolean;
+  };
+}
 
 interface DeploymentHistoryPanelProps {
   open: boolean;

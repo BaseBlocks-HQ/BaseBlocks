@@ -6,7 +6,6 @@ import {
   CollapsibleSettingsSection,
   PanelSettingRow,
 } from "@/modules/site-elements/panels/shared/editor-panel-primitives";
-import { useEditorUndoOptional } from "@/modules/editor/state";
 import { DropZone } from "@/modules/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -184,7 +183,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const updateSite = useMutation(api.sites.mutations.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const undoContext = useEditorUndoOptional();
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
 
@@ -193,11 +191,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
 
   const updateSettings = async (settingKey: string, value: boolean) => {
     if (!site) return;
-    const oldValue = (site.settings as Record<string, unknown>)[settingKey];
-    const shouldTrackUndo = Boolean(
-      undoContext && !undoContext.isUndoRedoExecuting,
-    );
-    const activeUndoContext = shouldTrackUndo ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -205,23 +198,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           [settingKey]: value,
         },
       });
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: `Toggle ${settingKey}`,
-          undo: async () => {
-            await updateSite({
-              siteId,
-              settings: { [settingKey]: oldValue as boolean },
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              settings: { [settingKey]: value },
-            });
-          },
-        });
-      }
     } catch (_error) {
       toast.error("Failed to update setting");
     }
@@ -236,7 +212,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       return;
     }
 
-    const oldLogoUrl = site?.logoUrl;
     const result = await uploadImage(file, siteId);
 
     if (result) {
@@ -245,25 +220,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         logoUrl: result.url,
       });
       toast.success("Logo uploaded");
-
-      if (undoContext && !undoContext.isUndoRedoExecuting) {
-        const newLogoUrl = result.url;
-        undoContext.pushCommand({
-          description: "Change logo",
-          undo: async () => {
-            await updateSite({
-              siteId,
-              logoUrl: oldLogoUrl ?? "",
-            });
-          },
-          redo: async () => {
-            await updateSite({
-              siteId,
-              logoUrl: newLogoUrl,
-            });
-          },
-        });
-      }
     } else if (uploadState.error) {
       toast.error(uploadState.error);
     }
@@ -275,10 +231,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       return;
     }
 
-    const oldName = site.name;
     const newName = localName;
-    const activeUndoContext =
-      undoContext && !undoContext.isUndoRedoExecuting ? undoContext : null;
     try {
       await updateSite({
         siteId,
@@ -286,18 +239,6 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       });
       setIsEditingName(false);
       toast.success("Site name updated");
-
-      if (activeUndoContext) {
-        activeUndoContext.pushCommand({
-          description: "Rename site",
-          undo: async () => {
-            await updateSite({ siteId, name: oldName });
-          },
-          redo: async () => {
-            await updateSite({ siteId, name: newName });
-          },
-        });
-      }
     } catch (_error) {
       toast.error("Failed to update name");
     }

@@ -12,7 +12,6 @@ import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { PanelTop } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { EditorFlyoutSurface } from "@/modules/editor/app/editor-flyout-surface";
 import { CategoryMenu } from "./category-menu";
 import { ElementCard } from "./element-card";
 import { ElementGrid } from "./element-grid";
@@ -37,6 +36,20 @@ const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
   "navigation",
   "customization",
 ];
+const pickerFlyoutSurfaceClassName =
+  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md sm:w-[min(22rem,calc(100vw-6rem))]";
+
+function PickerFlyoutSurface({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={`${pickerFlyoutSurfaceClassName} ${className}`}
+      {...props}
+    />
+  );
+}
 
 export function ElementPicker({
   siteId,
@@ -146,43 +159,43 @@ export function ElementPicker({
 
       {/* Flyout panel with site config */}
       {activeCategory === "site" && siteId && (
-        <EditorFlyoutSurface
+        <PickerFlyoutSurface
           className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <ScrollArea className="max-h-[calc(100vh-200px)]">
             <SiteConfigPanel siteId={siteId as Id<"sites">} />
           </ScrollArea>
-        </EditorFlyoutSurface>
+        </PickerFlyoutSurface>
       )}
 
       {/* Flyout panel with navigation config */}
       {activeCategory === "navigation" && siteId && (
-        <EditorFlyoutSurface
+        <PickerFlyoutSurface
           className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <ScrollArea className="max-h-[calc(100vh-200px)]">
             <NavigationConfigPanel siteId={siteId as Id<"sites">} />
           </ScrollArea>
-        </EditorFlyoutSurface>
+        </PickerFlyoutSurface>
       )}
 
       {/* Flyout panel with customization config */}
       {activeCategory === "customization" && siteId && (
-        <EditorFlyoutSurface
+        <PickerFlyoutSurface
           className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
           <ScrollArea className="max-h-[calc(100vh-200px)]">
             <CustomizationConfigPanel siteId={siteId as Id<"sites">} />
           </ScrollArea>
-        </EditorFlyoutSurface>
+        </PickerFlyoutSurface>
       )}
 
       {/* Flyout panel with elements */}
       {activeCategory && !showsConfigPanel && categoryElements.length > 0 && (
-        <EditorFlyoutSurface
+        <PickerFlyoutSurface
           className="absolute left-full top-0 z-50 ml-1 max-h-[calc(100vh-200px)]"
           onMouseEnter={() => handleMouseEnter(activeCategory)}
         >
@@ -204,7 +217,7 @@ export function ElementPicker({
               </div>
             )}
           </ScrollArea>
-        </EditorFlyoutSurface>
+        </PickerFlyoutSurface>
       )}
     </div>
   );

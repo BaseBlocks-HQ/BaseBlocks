@@ -1,5 +1,11 @@
 import type { PageListItem } from "@baseblocks/domain";
-import type { FlattenedPage } from "./types";
+
+export interface FlattenedPage {
+  id: string;
+  parentId: string | null;
+  depth: number;
+  page: PageListItem;
+}
 
 /**
  * Flatten a tree into a depth-first array.
@@ -31,22 +37,4 @@ export function flattenTree(
   }
 
   return result;
-}
-
-/**
- * Remove all descendants of the given IDs from a flat list.
- * Prevents children of the dragged item from being drop targets during drag.
- */
-export function removeChildrenOf(
-  items: FlattenedPage[],
-  ids: string[],
-): FlattenedPage[] {
-  const excluded = new Set(ids);
-  return items.filter((item) => {
-    if (item.parentId !== null && excluded.has(item.parentId)) {
-      excluded.add(item.id);
-      return false;
-    }
-    return true;
-  });
 }

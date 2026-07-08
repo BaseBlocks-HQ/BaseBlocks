@@ -1,13 +1,17 @@
 "use client";
 
-import { useEditorUi } from "@/modules/editor/state";
-import type { PageTab } from "@/modules/editor/app/types";
+import { useEditorUi } from "@/modules/editor/app/editor-context";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent, MouseEvent } from "react";
+
+export interface PageTab {
+  id: string;
+  label: string;
+}
 
 interface PageTabBarProps {
   pageTabs: PageTab[];

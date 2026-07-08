@@ -1,6 +1,6 @@
 "use client";
 import { usePage } from "@/lib/data";
-import { useEditorUiOptional } from "@/modules/editor/state";
+import { useEditorUiOptional } from "@/modules/editor/app/editor-context";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
 import { ChevronRight, FileText } from "lucide-react";
 import type { ElementEditorProps } from "../authoring/registry";

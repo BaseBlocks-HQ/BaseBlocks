@@ -12,7 +12,7 @@ import {
   type PreviewFile,
 } from "@/modules/file-preview";
 import { DropZone, FileIcon, getFileTypeColor } from "@/modules/file-ui";
-import { useEditorSite } from "@/modules/editor/state";
+import { useEditorSite } from "@/modules/editor/app/editor-context";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_BLOCK_CONTENT } from "@baseblocks/domain/elements";
