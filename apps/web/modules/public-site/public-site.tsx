@@ -17,11 +17,11 @@ export function PublicSite({ teamSlug, path }: Props) {
   // Empty array = "show the default page", backend resolves via defaultPageId
   const pagePath = path.length > 1 ? path.slice(1) : [];
 
-  const site = useQuery(api.sites.queries.getBySlug, {
+  const site = useQuery(api.sites.getBySlug, {
     teamSlug,
     siteSlug,
   });
-  const team = useQuery(api.teams.queries.getBySlug, {
+  const team = useQuery(api.teams.getBySlug, {
     slug: teamSlug,
   });
 

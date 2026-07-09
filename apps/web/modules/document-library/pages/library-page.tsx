@@ -145,11 +145,11 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
   const router = useRouter();
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
-  const explorer = useQuery(api.documentLibraries.queries.getExplorer, {
+  const explorer = useQuery(api.libraries.getExplorer, {
     libraryId,
   });
-  const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
-  const updateLibrary = useMutation(api.documentLibraries.mutations.update);
+  const deleteLibrary = useMutation(api.libraries.removeLibrary);
+  const updateLibrary = useMutation(api.libraries.updateLibrary);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 

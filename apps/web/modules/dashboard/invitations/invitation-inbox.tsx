@@ -130,7 +130,7 @@ export function InvitationInbox({
   const { invitations, isLoading, processingId, error } = state;
 
   const syncMember = useMutation(
-    api.members.mutations.syncMemberFromInvitation,
+    api.teams.syncMemberFromInvitation,
   );
 
   const roleLabel = (role: string) => {

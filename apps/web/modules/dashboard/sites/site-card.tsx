@@ -65,7 +65,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const t = useTranslations();
 
-  const deleteSite = useMutation(api.sites.mutations.remove);
+  const deleteSite = useMutation(api.sites.remove);
 
   const effectiveTeamSlug = site.team?.slug ?? teamSlug;
   const editorHref = getTeamSiteEditorPath(effectiveTeamSlug, site._id);

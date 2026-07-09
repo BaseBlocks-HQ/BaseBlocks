@@ -8,11 +8,6 @@ interface EditorPermissions {
   isLoading: boolean;
 }
 
-interface SiteData {
-  contentModifiedAt?: number;
-  lastDeployedAt?: number;
-}
-
 export interface EditingPagePanel {
   pageId: string;
 }
@@ -47,7 +42,6 @@ export interface EditorSiteContextValue {
   canEdit: boolean;
   isAdmin: boolean;
   isPermissionsLoading: boolean;
-  hasUndeployedChanges: boolean;
 }
 
 const EditorUiContext = createContext<EditorUiContextValue | null>(null);
@@ -55,7 +49,6 @@ const EditorSiteContext = createContext<EditorSiteContextValue | null>(null);
 
 interface EditorProviderProps {
   siteId: string;
-  site?: SiteData;
   permissions: EditorPermissions;
   pagePanelState?: Pick<
     EditorUiContextValue,
@@ -66,7 +59,6 @@ interface EditorProviderProps {
 
 export function EditorProvider({
   siteId,
-  site,
   permissions,
   pagePanelState,
   children,
@@ -81,10 +73,6 @@ export function EditorProvider({
     activeTabId: null as string | null,
     currentPageId: null as string | null,
   });
-
-  const hasUndeployedChanges = site
-    ? (site.contentModifiedAt ?? 0) > (site.lastDeployedAt ?? 0)
-    : false;
 
   const { canEdit, isAdmin, isLoading: isPermissionsLoading } = permissions;
 
@@ -124,7 +112,6 @@ export function EditorProvider({
         canEdit,
         isAdmin,
         isPermissionsLoading,
-        hasUndeployedChanges,
       }}
     >
       <EditorUiContext.Provider value={uiValue}>

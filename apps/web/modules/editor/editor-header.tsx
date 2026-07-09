@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
   ArrowLeft,
   Check,
@@ -30,25 +30,18 @@ import {
   Eye,
   EyeOff,
   Globe,
-  History,
   MoreHorizontal,
   Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconRocket, IconWindow2 } from "nucleo-glass";
+import { IconWindow2 } from "nucleo-glass";
 import { useState } from "react";
-import { DeployDialog } from "./publishing/deploy-dialog";
-import {
-  DeploymentHistoryPanel,
-  type DeploymentData,
-} from "./publishing/deployment-history-panel";
 import { EditorSiteSwitcher } from "./editor-site-switcher";
 import { ShareDialog } from "./publishing/share-dialog";
 import type {
   AccessCodeData,
   SharingSettings,
 } from "./publishing/share-dialog";
-import { toast } from "sonner";
 
 interface EditorHeaderProps {
   inFlow?: boolean;
@@ -73,24 +66,18 @@ export function EditorHeader({
   onPublish,
   onUnpublish,
 }: EditorHeaderProps) {
-  const { canEdit, hasUndeployedChanges } = useEditorSite();
+  const { canEdit } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [deployDialogOpen, setDeployDialogOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
 
   const {
     siteUrl,
     settings,
     accessCode,
-    deployments,
-    deploySite,
-    rollbackDeployment,
   } = useEditorHeaderData({
     shareOpen: shareDialogOpen,
     siteId,
     teamSlug,
     siteSlug,
-    historyOpen,
   });
 
   return (
@@ -115,15 +102,12 @@ export function EditorHeader({
               />
               <EditorHeaderRightSection
                 canEdit={canEdit}
-                hasUndeployedChanges={hasUndeployedChanges}
                 sitePublished={sitePublished}
                 teamSlug={teamSlug}
                 siteSlug={siteSlug}
                 onPublish={onPublish}
                 onUnpublish={onUnpublish}
                 onOpenShare={() => setShareDialogOpen(true)}
-                onOpenDeploy={() => setDeployDialogOpen(true)}
-                onOpenHistory={() => setHistoryOpen(true)}
               />
             </div>
           </div>
@@ -141,19 +125,6 @@ export function EditorHeader({
         accessCode={accessCode}
       />
 
-      <DeployDialog
-        open={deployDialogOpen}
-        onOpenChange={setDeployDialogOpen}
-        onDeploy={deploySite}
-      />
-
-      <DeploymentHistoryPanel
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        siteId={siteId}
-        deployments={deployments}
-        onRollback={rollbackDeployment}
-      />
     </>
   );
 }
@@ -163,7 +134,6 @@ interface UseEditorHeaderDataParams {
   siteId: Id<"sites">;
   teamSlug: string;
   siteSlug: string;
-  historyOpen: boolean;
 }
 
 function useEditorHeaderData({
@@ -171,24 +141,15 @@ function useEditorHeaderData({
   siteId,
   teamSlug,
   siteSlug,
-  historyOpen,
 }: UseEditorHeaderDataParams) {
-  const deployMut = useMutation(api.deployments.mutations.deploy);
-  const rollbackMut = useMutation(api.deployments.mutations.rollback);
-
   const sharingSettings = useQuery(
-    api.sharing.queries.getSettings,
+    api.sharing.getSettings,
     shareOpen ? { siteId } : "skip",
   );
   const rawAccessCode = useQuery(
-    api.sharing.queries.getAccessCode,
+    api.sharing.getAccessCode,
     shareOpen ? { siteId } : "skip",
   );
-  const rawDeployments = useQuery(
-    api.deployments.queries.list,
-    historyOpen ? { siteId, limit: 50 } : "skip",
-  );
-
   const settings: SharingSettings | undefined = sharingSettings
     ? {
         visibility: sharingSettings.visibility,
@@ -208,36 +169,10 @@ function useEditorHeaderData({
           }
         : null;
 
-  const deployments: DeploymentData[] | undefined = rawDeployments?.map(
-    (deployment) => ({
-      id: deployment._id as string,
-      version: deployment.version,
-      status: deployment.status,
-      notes: deployment.notes,
-      deployedAt: deployment.deployedAt,
-      summary: deployment.summary,
-    }),
-  );
-
   return {
     siteUrl: getSiteUrl(teamSlug, siteSlug),
     settings,
     accessCode,
-    deployments,
-    deploySite: async (notes?: string) => {
-      try {
-        await deployMut({ siteId, notes });
-        toast.success("Changes deployed successfully");
-      } catch (_error) {
-        toast.error("Failed to deploy changes");
-      }
-    },
-    rollbackDeployment: async (targetDeploymentId: string) => {
-      await rollbackMut({
-        siteId,
-        targetDeploymentId: targetDeploymentId as Id<"deployments">,
-      });
-    },
   };
 }
 
@@ -287,37 +222,29 @@ function EditorHeaderLeftSection({
 
 interface EditorHeaderRightSectionProps {
   canEdit: boolean;
-  hasUndeployedChanges: boolean;
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
   onPublish: () => void;
   onUnpublish?: () => void;
   onOpenShare: () => void;
-  onOpenDeploy: () => void;
-  onOpenHistory: () => void;
 }
 
 function EditorHeaderRightSection({
   canEdit,
-  hasUndeployedChanges,
   sitePublished,
   teamSlug,
   siteSlug,
   onPublish,
   onUnpublish,
   onOpenShare,
-  onOpenDeploy,
-  onOpenHistory,
 }: EditorHeaderRightSectionProps) {
   return (
     <div className="flex items-center gap-1">
       {canEdit ? (
         <>
           <EditorHeaderMenuButton
-            sitePublished={sitePublished}
             onOpenShare={onOpenShare}
-            onOpenHistory={onOpenHistory}
           />
           <ViewSiteButton
             sitePublished={sitePublished}
@@ -326,9 +253,7 @@ function EditorHeaderRightSection({
           />
           <Separator orientation="vertical" className="mx-1.5 h-5" />
           <DeployCta
-            hasUndeployedChanges={hasUndeployedChanges}
             sitePublished={sitePublished}
-            onDeploy={onOpenDeploy}
             onPublish={onPublish}
             onUnpublish={onUnpublish}
           />
@@ -384,13 +309,9 @@ function ViewSiteButton({
 }
 
 function EditorHeaderMenuButton({
-  sitePublished,
   onOpenShare,
-  onOpenHistory,
 }: {
-  sitePublished: boolean;
   onOpenShare: () => void;
-  onOpenHistory: () => void;
 }) {
   const t = useTranslations("editor.header");
   return (
@@ -405,46 +326,22 @@ function EditorHeaderMenuButton({
           <Share2 />
           {t("share")}
         </DropdownMenuItem>
-        {sitePublished ? (
-          <DropdownMenuItem onClick={onOpenHistory}>
-            <History />
-            {t("deploymentHistory")}
-          </DropdownMenuItem>
-        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
 function DeployCta({
-  hasUndeployedChanges,
   sitePublished,
-  onDeploy,
   onPublish,
   onUnpublish,
 }: {
-  hasUndeployedChanges: boolean;
   sitePublished: boolean;
-  onDeploy: () => void;
   onPublish: () => void;
   onUnpublish?: () => void;
 }) {
   const t = useTranslations("editor");
   const tHeader = useTranslations("editor.header");
-  if (hasUndeployedChanges) {
-    return (
-      <Button
-        size="sm"
-        onClick={onDeploy}
-        className="gap-1.5 bg-amber-600 hover:bg-amber-700"
-      >
-        <IconRocket className="h-4 w-4 shrink-0" />
-        <span className="hidden md:inline">{tHeader("deployChanges")}</span>
-        <span className="md:hidden">{tHeader("deployShort")}</span>
-      </Button>
-    );
-  }
-
   if (sitePublished) {
     return (
       <DropdownMenu>

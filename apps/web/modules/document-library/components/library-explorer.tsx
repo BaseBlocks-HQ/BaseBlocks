@@ -177,14 +177,14 @@ export function LibraryExplorer({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderMutation = useMutation(
-    api.documentFolders.mutations.create,
+    api.libraries.createFolder,
   );
-  const updateFolder = useMutation(api.documentFolders.mutations.update);
-  const moveFolderMutation = useMutation(api.documentFolders.mutations.move);
-  const removeFolder = useMutation(api.documentFolders.mutations.remove);
-  const renameDocument = useMutation(api.documents.mutations.rename);
-  const moveDocument = useMutation(api.documents.mutations.move);
-  const removeDocument = useMutation(api.documents.mutations.remove);
+  const updateFolder = useMutation(api.libraries.updateFolder);
+  const moveFolderMutation = useMutation(api.libraries.moveFolder);
+  const removeFolder = useMutation(api.libraries.removeFolder);
+  const renameDocument = useMutation(api.documents.rename);
+  const moveDocument = useMutation(api.documents.move);
+  const removeDocument = useMutation(api.documents.remove);
   const {
     uploadFiles: uploadLibraryFiles,
     isAnyUploading,

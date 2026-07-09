@@ -91,7 +91,7 @@ function SitesSection({
 export function SitesPage({ initialSites }: SitesPageProps) {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
-  const sitesQuery = useQuery(api.sites.queries.listByTeam, {
+  const sitesQuery = useQuery(api.sites.listByTeam, {
     teamId: team._id,
   });
   const { isLoading: isConvexLoading } = useConvexAuth();

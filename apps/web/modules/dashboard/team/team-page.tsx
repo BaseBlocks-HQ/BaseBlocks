@@ -35,7 +35,7 @@ export function TeamPage() {
   const t = useTranslations("team");
 
   const { capabilities, team } = useTeamAccess();
-  const members = useQuery(api.members.queries.list, {
+  const members = useQuery(api.teams.listMembers, {
     teamId: team._id,
   });
 

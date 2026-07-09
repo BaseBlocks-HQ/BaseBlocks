@@ -87,8 +87,8 @@ export function MemberActions({
     error: null,
   });
 
-  const removeMember = useMutation(api.members.mutations.removeMember);
-  const updateRoleMutation = useMutation(api.members.mutations.updateRole);
+  const removeMember = useMutation(api.teams.removeMember);
+  const updateRoleMutation = useMutation(api.teams.updateRole);
 
   const isCurrentUser = session?.user?.id === member.userId;
   const canModify = isCurrentUserAdmin && !isCurrentUser;

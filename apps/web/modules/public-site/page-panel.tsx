@@ -64,7 +64,7 @@ export function PublicPagePanel({
   const { closePage, viewingPage } = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
-    api.pages.queries.get,
+    api.pages.get,
     viewingPage?.pageId
       ? { pageId: viewingPage.pageId as Id<"pages">, sessionTokens }
       : "skip",

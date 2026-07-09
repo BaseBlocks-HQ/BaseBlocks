@@ -1,17 +1,152 @@
+// Flattened Convex domain module. Keep this file as the public API for this domain.
 import { createLayoutDraft } from "@baseblocks/domain";
+import { nanoid } from "nanoid";
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
-import { requireContentEditor } from "../auth";
-import { indexPageContent } from "../search/indexPageContent";
-import { markSiteModified } from "../sites/markModified";
-import { resolveLayoutContext, resolvePageContext } from "../sites/resolvers";
-import {
-  blockContent,
-  layoutSettings,
-  layoutSlot,
-  layoutType,
-  slotBlock,
-} from "./validators";
+import { query, mutation } from "./_generated/server";
+import { checkIsMember, requireContentEditor } from "./permissions";
+import { indexPageContent } from "./search";
+import { canViewerAccessPublishedPageById } from "./sharing";
+import { resolveLayoutContext, resolvePageContext } from "./sites";
+
+/** All block types supported in layout slots */
+export const blockType = v.union(
+  v.literal("heading"),
+  v.literal("paragraph"),
+  v.literal("image"),
+  v.literal("file"),
+  v.literal("document-list"),
+  v.literal("library"),
+  v.literal("search"),
+  v.literal("embed"),
+  v.literal("divider"),
+  v.literal("spacer"),
+  v.literal("callout"),
+  v.literal("code"),
+  v.literal("table"),
+  v.literal("quicklinks"),
+  v.literal("richtext"),
+  v.literal("page"),
+  v.literal("directory"),
+  v.literal("flowchart"),
+  v.literal("decision-tree"),
+);
+
+/**
+ * Block content validator.
+ *
+ * Content is polymorphic per block type (heading has {text, level}, image has
+ * {url, alt, caption, ...}, etc.). A full discriminated union for all block
+ * types would be massive and brittle. Content shape validation happens at the
+ * TypeScript/frontend layer via @baseblocks/domain/elements. Uses v.any() here.
+ */
+export const blockContent = v.any();
+
+/** A single block within a slot */
+export const slotBlock = v.object({
+  id: v.string(),
+  type: blockType,
+  content: blockContent,
+});
+
+/** A slot within a layout (contains positioned blocks) */
+export const layoutSlot = v.object({
+  id: v.string(),
+  position: v.number(),
+  blocks: v.array(slotBlock),
+});
+
+/** All layout container types */
+export const layoutType = v.union(
+  v.literal("single"),
+  v.literal("rows"),
+  v.literal("columns"),
+  v.literal("grid"),
+  v.literal("spacer"),
+  v.literal("vertical"),
+);
+
+/** Layout settings (grid/row/column/spacer configuration) */
+export const layoutSettings = v.object({
+  rowCount: v.optional(v.number()),
+  columnCount: v.optional(v.number()),
+  gridColumns: v.optional(v.number()),
+  gridRows: v.optional(v.number()),
+  spacerHeight: v.optional(
+    v.union(
+      v.literal("small"),
+      v.literal("medium"),
+      v.literal("large"),
+      v.literal("xlarge"),
+    ),
+  ),
+});
+
+// Get all layouts for a page (draft version - for editor, authenticated)
+export const list = query({
+  args: { pageId: v.id("pages") },
+  handler: async (ctx, { pageId }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) return [];
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) return [];
+
+    if (!(await checkIsMember(ctx, site.teamId))) return [];
+
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .collect();
+
+    // Sort by order
+    layouts.sort((a, b) => a.order - b.order);
+
+    return layouts;
+  },
+});
+
+// Get all layouts for a page (published version - for public site)
+export const listPublished = query({
+  args: {
+    pageId: v.id("pages"),
+    sessionTokens: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { pageId, sessionTokens }) => {
+    const canAccessPage = await canViewerAccessPublishedPageById(
+      ctx,
+      pageId,
+      sessionTokens,
+    );
+    if (!canAccessPage) {
+      return [];
+    }
+
+    const layouts = await ctx.db
+      .query("layouts")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .collect();
+    layouts.sort((a, b) => a.order - b.order);
+    return layouts;
+  },
+});
+
+// Get single layout (authenticated)
+export const get = query({
+  args: { layoutId: v.id("layouts") },
+  handler: async (ctx, { layoutId }) => {
+    const layout = await ctx.db.get(layoutId);
+    if (!layout) return null;
+
+    const page = await ctx.db.get(layout.pageId);
+    if (!page) return null;
+
+    const site = await ctx.db.get(page.siteId);
+    if (!site) return null;
+
+    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    return layout;
+  },
+});
 
 function createEditorId(): string {
   return Math.random().toString(36).slice(2, 12);
@@ -66,7 +201,6 @@ export const create = mutation({
     });
 
     await ctx.db.patch(pageId, { updatedAt: now });
-    await markSiteModified(ctx, pageInfo.siteId);
 
     return {
       layoutId,
@@ -96,7 +230,6 @@ export const updateSettings = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -123,7 +256,6 @@ export const updateSlots = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
     await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
@@ -165,7 +297,6 @@ export const addBlockToSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
     await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
@@ -204,7 +335,6 @@ export const updateBlockInSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
     await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
@@ -242,7 +372,6 @@ export const removeBlockFromSlot = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
     await indexPageContent(ctx, layout.pageId);
 
     return layoutId;
@@ -297,7 +426,6 @@ export const moveBlock = mutation({
         updatedAt: now,
       });
       await ctx.db.patch(layout.pageId, { updatedAt: now });
-      await markSiteModified(ctx, layoutInfo.siteId);
       return layoutId;
     }
 
@@ -323,7 +451,6 @@ export const moveBlock = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
 
     return layoutId;
   },
@@ -349,7 +476,6 @@ export const reorder = mutation({
     }
 
     await ctx.db.patch(pageId, { updatedAt: Date.now() });
-    await markSiteModified(ctx, pageInfo.siteId);
   },
 });
 
@@ -367,7 +493,6 @@ export const remove = mutation({
 
     await ctx.db.delete(layoutId);
     await ctx.db.patch(layout.pageId, { updatedAt: Date.now() });
-    await markSiteModified(ctx, layoutInfo.siteId);
   },
 });
 
@@ -465,7 +590,6 @@ export const addPageBlock = mutation({
 
     await ctx.db.patch(layoutId, { slots: updatedSlots, updatedAt: now });
     await ctx.db.patch(layout.pageId, { updatedAt: now });
-    await markSiteModified(ctx, layoutInfo.siteId);
     await indexPageContent(ctx, childPageId);
 
     return { childPageId };

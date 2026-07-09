@@ -63,8 +63,8 @@ function NavigationStyleCard({
 }
 
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
-  const site = useQuery(api.sites.queries.get, { siteId });
-  const updateSite = useMutation(api.sites.mutations.update);
+  const site = useQuery(api.sites.get, { siteId });
+  const updateSite = useMutation(api.sites.update);
 
   const updateNavigationStyle = async (style: NavigationStyle) => {
     if (!site) return;

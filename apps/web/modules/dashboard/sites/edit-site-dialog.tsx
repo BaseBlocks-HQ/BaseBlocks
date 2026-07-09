@@ -52,8 +52,8 @@ export function EditSiteDialog({
   const t = useTranslations();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
-  const updateSite = useMutation(api.sites.mutations.update);
+  const createSiteAsset = useMutation(api.files.createSiteAsset);
+  const updateSite = useMutation(api.sites.update);
 
   // Failure modes:
   // - Site name is empty

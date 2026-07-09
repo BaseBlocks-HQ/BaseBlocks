@@ -286,11 +286,11 @@ function PublicPageContentInner({
   const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
   const sessionTokens = getStoredAccessSessionTokens();
-  const pageData = useQuery(api.pages.queries.get, {
+  const pageData = useQuery(api.pages.get, {
     pageId: pageId as Id<"pages">,
     sessionTokens,
   });
-  const layoutsData = useQuery(api.layouts.queries.listPublished, {
+  const layoutsData = useQuery(api.layouts.listPublished, {
     pageId: pageId as Id<"pages">,
     sessionTokens,
   });

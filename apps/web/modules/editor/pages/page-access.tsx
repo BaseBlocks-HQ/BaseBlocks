@@ -77,15 +77,15 @@ function PageAccessDialogContent({
 }: PageAccessDialogProps) {
   const t = useTranslations("navigation.pageAccess");
   const tCommon = useTranslations("common");
-  const audiences = useQuery(api.siteAudiences.queries.list, {
+  const audiences = useQuery(api.sharing.listAudiences, {
     siteId: siteId as Id<"sites">,
   });
   const updateAccessPolicy = useMutation(
-    api.pages.mutations.updateAccessPolicy,
+    api.pages.updateAccessPolicy,
   );
-  const createAudience = useMutation(api.siteAudiences.mutations.create);
+  const createAudience = useMutation(api.sharing.createAudience);
   const deleteAudience = useMutation(
-    api.siteAudiences.mutations.deleteAudience,
+    api.sharing.deleteAudience,
   );
 
   const currentPolicy = useMemo(

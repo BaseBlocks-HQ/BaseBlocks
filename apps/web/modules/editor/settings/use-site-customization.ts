@@ -28,7 +28,7 @@ export function useSiteCustomization(
   siteId: Id<"sites"> | undefined,
 ): UseSiteCustomizationResult {
   const site = useQuery(
-    api.sites.queries.get,
+    api.sites.get,
     siteId ? { siteId } : "skip",
   );
 

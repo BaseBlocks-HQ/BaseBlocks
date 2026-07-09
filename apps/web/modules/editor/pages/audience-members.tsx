@@ -45,15 +45,15 @@ export function AudienceMembersDialog({
 }: AudienceMembersDialogProps) {
   const t = useTranslations("navigation.audienceMembers");
   const tCommon = useTranslations("common");
-  const site = useQuery(api.sites.queries.get, {
+  const site = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
   });
   const members = useQuery(
-    api.members.queries.list,
+    api.teams.listMembers,
     site?._id ? { teamId: site.teamId } : "skip",
   );
   const assignments = useQuery(
-    api.siteAudiences.queries.getMemberAssignments,
+    api.sharing.getAudienceMemberAssignments,
     audienceId
       ? { audienceId: audienceId as Id<"siteAudiences"> }
       : "skip",
@@ -95,7 +95,7 @@ function AudienceMembersDialogContent({
   t: TranslationFn;
   tCommon: TranslationFn;
 }) {
-  const setMembers = useMutation(api.siteAudiences.mutations.setMembers);
+  const setMembers = useMutation(api.sharing.setAudienceMembers);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
     assignments?.userIds ?? [],
   );

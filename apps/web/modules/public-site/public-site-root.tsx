@@ -15,7 +15,7 @@ type Props = {
 
 export function PublicSiteRoot({ teamSlug }: Props) {
   const sessionTokens = getStoredAccessSessionTokens();
-  const siteData = useQuery(api.sites.queries.getWithDefaultPage, {
+  const siteData = useQuery(api.sites.getWithDefaultPage, {
     teamSlug,
     sessionTokens,
   });

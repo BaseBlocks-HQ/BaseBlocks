@@ -112,13 +112,13 @@ export async function buildPublicSiteMetadata({
 
   try {
     if (siteSlug) {
-      site = (await client.query(api.sites.queries.getBySlug, {
+      site = (await client.query(api.sites.getBySlug, {
         teamSlug,
         siteSlug,
       })) as PublicSiteDoc | null;
 
       if (site) {
-        const page = (await client.query(api.pages.queries.getByPathPublished, {
+        const page = (await client.query(api.pages.getByPathPublished, {
           siteId: site._id,
           path: pagePath,
         })) as PublicPageDoc | null;
@@ -126,7 +126,7 @@ export async function buildPublicSiteMetadata({
       }
     } else {
       const siteData = (await client.query(
-        api.sites.queries.getWithDefaultPage,
+        api.sites.getWithDefaultPage,
         {
           teamSlug,
         },

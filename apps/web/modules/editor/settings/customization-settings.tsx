@@ -99,8 +99,8 @@ function getDarkColorForPreset(hex: string) {
 export function CustomizationConfigPanel({
   siteId,
 }: CustomizationConfigPanelProps) {
-  const site = useQuery(api.sites.queries.get, { siteId });
-  const updateSite = useMutation(api.sites.mutations.update);
+  const site = useQuery(api.sites.get, { siteId });
+  const updateSite = useMutation(api.sites.update);
   const [isSaving, setIsSaving] = useState(false);
 
   const customization = site?.settings?.customization as

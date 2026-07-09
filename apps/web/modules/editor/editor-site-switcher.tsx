@@ -155,7 +155,7 @@ export function EditorSiteSwitcher({
   teamSlug,
 }: EditorSiteSwitcherProps) {
   const { team } = useTeamAccess();
-  const sites = useQuery(api.sites.queries.listByTeam, {
+  const sites = useQuery(api.sites.listByTeam, {
     teamId: team._id as Id<"teams">,
   });
   const switcherSites = getSwitcherSites(sites ?? [], currentSiteId);

@@ -40,9 +40,9 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
 
   const [slugLockedByUser, setSlugLockedByUser] = useState(false);
 
-  const createPage = useMutation(api.pages.mutations.create);
+  const createPage = useMutation(api.pages.create);
   const pages = useQuery(
-    api.pages.queries.list,
+    api.pages.list,
     dialogState.open ? { siteId: siteId as Id<"sites"> } : "skip",
   );
   const usedSlugs = new Set(

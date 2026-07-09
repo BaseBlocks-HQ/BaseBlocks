@@ -17,7 +17,7 @@ export async function GET(
 
     let document = token
       ? await authedClient
-          .query(api.documents.queries.getDownloadAsset, {
+          .query(api.documents.getDownloadAsset, {
             documentId: documentId as never,
           })
           .catch(() => null)
@@ -25,7 +25,7 @@ export async function GET(
 
     if (!document) {
       document = await getServerConvexClient().query(
-        api.documents.queries.getPublicDownloadAsset,
+        api.documents.getPublicDownloadAsset,
         {
           documentId: documentId as never,
           sessionTokens,

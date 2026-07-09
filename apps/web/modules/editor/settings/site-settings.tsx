@@ -178,8 +178,8 @@ function SiteNameSection({
 }
 
 export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
-  const site = useQuery(api.sites.queries.get, { siteId });
-  const updateSite = useMutation(api.sites.mutations.update);
+  const site = useQuery(api.sites.get, { siteId });
+  const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localName, setLocalName] = useState("");

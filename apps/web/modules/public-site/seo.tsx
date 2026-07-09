@@ -46,12 +46,12 @@ export async function PublicSiteSeo({
 
   try {
     if (siteSlug) {
-      site = (await client.query(api.sites.queries.getBySlug, {
+      site = (await client.query(api.sites.getBySlug, {
         teamSlug,
         siteSlug,
       })) as SiteDoc | null;
     } else {
-      const data = (await client.query(api.sites.queries.getWithDefaultPage, {
+      const data = (await client.query(api.sites.getWithDefaultPage, {
         teamSlug,
       })) as SiteWithDefaultPage | null;
       site = data?.site ?? null;

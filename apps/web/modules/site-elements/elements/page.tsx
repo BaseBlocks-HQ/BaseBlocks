@@ -26,7 +26,7 @@ export function PageEditor({ content }: ElementEditorProps<"page">) {
   const editorUi = useEditorUiOptional();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
-    api.pages.queries.get,
+    api.pages.get,
     content.pageId
       ? { pageId: content.pageId as Id<"pages">, sessionTokens }
       : "skip",
@@ -72,7 +72,7 @@ export function PageRenderer({ content }: ElementRendererProps<"page">) {
   const actions = useSiteRenderActions();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
-    api.pages.queries.get,
+    api.pages.get,
     content.pageId
       ? { pageId: content.pageId as Id<"pages">, sessionTokens }
       : "skip",
@@ -111,8 +111,8 @@ export function PageConfigPanel({
 }: ElementConfigPanelProps<"page">) {
   const { siteId } = useEditorSite();
   const { currentPageId } = useEditorUi();
-  const setExposure = useMutation(api.pages.mutations.setExposure);
-  const pages = useQuery(api.pages.queries.list, {
+  const setExposure = useMutation(api.pages.setExposure);
+  const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
 

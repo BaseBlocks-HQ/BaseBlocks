@@ -2,7 +2,7 @@ import type { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
 
 export type LibraryExplorerPayload = NonNullable<
-  FunctionReturnType<typeof api.documentLibraries.queries.getExplorer>
+  FunctionReturnType<typeof api.libraries.getExplorer>
 >;
 export type LibraryFolder = LibraryExplorerPayload["folders"][number];
 export type LibraryFile = LibraryExplorerPayload["files"][number];

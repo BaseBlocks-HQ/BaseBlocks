@@ -18,7 +18,7 @@ export interface SiteAssetUploadResult {
 }
 
 export function useSiteAssetUpload() {
-  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
+  const createSiteAsset = useMutation(api.files.createSiteAsset);
   const [uploadState, setUploadState] = useState<SiteAssetUploadState>({
     isUploading: false,
     progress: null,

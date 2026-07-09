@@ -20,7 +20,7 @@ export default async function TeamDashboardPage({
     return null;
   }
 
-  const initialSites = await client.query(api.sites.queries.listByTeam, {
+  const initialSites = await client.query(api.sites.listByTeam, {
     teamId: requestedWorkspace._id,
   });
 

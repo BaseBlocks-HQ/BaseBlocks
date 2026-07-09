@@ -388,11 +388,11 @@ export function PageEditor({
 }: PageEditorProps) {
   const tPage = useTranslations("editor.pageEditor");
   const sessionTokens = getStoredAccessSessionTokens();
-  const rawPage = useQuery(api.pages.queries.get, {
+  const rawPage = useQuery(api.pages.get, {
     pageId: pageId as Id<"pages">,
     sessionTokens,
   });
-  const rawLayouts = useQuery(api.layouts.queries.list, {
+  const rawLayouts = useQuery(api.layouts.list, {
     pageId: pageId as Id<"pages">,
   });
   const pageData: PageData | undefined = rawPage
@@ -482,17 +482,17 @@ export function PageEditor({
 
   const mainLayoutIds = mainLayouts.map((s) => s.id);
   const sidebarLayoutIds = sidebarLayouts.map((s) => s.id);
-  const createLayout = useMutation(api.layouts.mutations.create);
-  const removeLayout = useMutation(api.layouts.mutations.remove);
-  const reorderLayouts = useMutation(api.layouts.mutations.reorder);
+  const createLayout = useMutation(api.layouts.create);
+  const removeLayout = useMutation(api.layouts.remove);
+  const reorderLayouts = useMutation(api.layouts.reorder);
   const updateLayoutSettings = useMutation(
-    api.layouts.mutations.updateSettings,
+    api.layouts.updateSettings,
   );
-  const updateBlock = useMutation(api.layouts.mutations.updateBlockInSlot);
-  const removeBlock = useMutation(api.layouts.mutations.removeBlockFromSlot);
-  const moveBlock = useMutation(api.layouts.mutations.moveBlock);
-  const updatePageTabs = useMutation(api.pages.mutations.updatePageTabs);
-  const disablePageTabs = useMutation(api.pages.mutations.disablePageTabs);
+  const updateBlock = useMutation(api.layouts.updateBlockInSlot);
+  const removeBlock = useMutation(api.layouts.removeBlockFromSlot);
+  const moveBlock = useMutation(api.layouts.moveBlock);
+  const updatePageTabs = useMutation(api.pages.updatePageTabs);
+  const disablePageTabs = useMutation(api.pages.disablePageTabs);
 
   const saveLayoutOrder = async (
     draggedIds: string[],

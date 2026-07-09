@@ -46,7 +46,7 @@ export function OnboardingPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
-  const createTeam = useMutation(api.teams.mutations.create);
+  const createTeam = useMutation(api.teams.create);
   const locale = useLocale() as Locale;
   const pathname = usePathname();
 

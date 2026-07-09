@@ -80,7 +80,7 @@ function CreateLibraryDialog({
     error: "",
   });
   const t = useTranslations();
-  const createLibrary = useMutation(api.documentLibraries.mutations.create);
+  const createLibrary = useMutation(api.libraries.createLibrary);
 
   const resetForm = () => {
     setDialogState({
@@ -264,7 +264,7 @@ function LibrarySettingsDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
-  const updateLibrary = useMutation(api.documentLibraries.mutations.update);
+  const updateLibrary = useMutation(api.libraries.updateLibrary);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -478,13 +478,13 @@ export function LibrariesPage() {
   const [collapsedSites, setCollapsedSites] = useState<Set<string>>(new Set());
 
   const { capabilities, team } = useTeamAccess();
-  const sites = useQuery(api.sites.queries.listByTeam, {
+  const sites = useQuery(api.sites.listByTeam, {
     teamId: team._id,
   });
-  const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
+  const deleteLibrary = useMutation(api.libraries.removeLibrary);
 
   const siteLibraries = useQuery(
-    api.documentLibraries.queries.listAllWithCounts,
+    api.libraries.listAllWithCounts,
     sites ? { teamId: team._id } : "skip",
   );
 

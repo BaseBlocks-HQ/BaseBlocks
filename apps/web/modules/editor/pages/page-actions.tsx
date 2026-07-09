@@ -80,15 +80,15 @@ export function PageActionsMenu({
 
   const { isAdmin } = useEditorSite();
   const { currentPageId, selection } = useEditorUi();
-  const pages = useQuery(api.pages.queries.list, {
+  const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
 
-  const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
-  const createPage = useMutation(api.pages.mutations.create);
-  const updatePage = useMutation(api.pages.mutations.update);
-  const removePage = useMutation(api.pages.mutations.remove);
-  const setExposure = useMutation(api.pages.mutations.setExposure);
+  const setDefaultPage = useMutation(api.sites.setDefaultPage);
+  const createPage = useMutation(api.pages.create);
+  const updatePage = useMutation(api.pages.update);
+  const removePage = useMutation(api.pages.remove);
+  const setExposure = useMutation(api.pages.setExposure);
 
   const exposure =
     page.showInNavigation !== false

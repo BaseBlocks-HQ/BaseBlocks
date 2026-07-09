@@ -5,7 +5,7 @@ import { join } from "node:path";
  *
  * Browsers always request /favicon.ico directly (regardless of <link> tags).
  * This route reads the Host header to determine the tenant, fetches their
- * custom favicon from Convex storage if one is configured, and falls back
+ * custom favicon from the configured Files SDK storage route, and falls back
  * to the default BaseBlocks favicon otherwise.
  */
 import { api } from "@baseblocks/backend";
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
   try {
     const client = new ConvexHttpClient(convexUrl);
-    const site = await client.query(api.sites.queries.getBySlug, {
+    const site = await client.query(api.sites.getBySlug, {
       teamSlug,
     });
 

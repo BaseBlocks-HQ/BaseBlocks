@@ -32,7 +32,7 @@ export const getWorkspaceBoundaryContext = cache(
     }
 
     const client = getServerConvexClient(token);
-    const state = await client.query(api.teams.queries.getWorkspaceBoundary, {
+    const state = await client.query(api.teams.getWorkspaceBoundary, {
       ...(teamSlug ? { teamSlug } : {}),
     });
 

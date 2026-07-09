@@ -36,13 +36,13 @@ export function LibraryEditor({
   const resolvedLibraryId = content.libraryId
     ? (content.libraryId as LibraryId)
     : null;
-  const libraries = useQuery(api.documentLibraries.queries.list, {
+  const libraries = useQuery(api.libraries.listLibraries, {
     siteId: resolvedSiteId,
   });
-  const createLibrary = useMutation(api.documentLibraries.mutations.create);
+  const createLibrary = useMutation(api.libraries.createLibrary);
   const [newLibraryName, setNewLibraryName] = useState("");
   const explorer = useQuery(
-    api.documentLibraries.queries.getExplorer,
+    api.libraries.getExplorer,
     resolvedLibraryId ? { libraryId: resolvedLibraryId } : "skip",
   );
   const allowDownloads = content.allowDownloads !== false;
@@ -123,7 +123,7 @@ export function LibraryRenderer({ content }: ElementRendererProps<"library">) {
     : null;
   const sessionTokens = getStoredAccessSessionTokens();
   const explorer = useQuery(
-    api.documentLibraries.queries.getPublicExplorer,
+    api.libraries.getPublicExplorer,
     resolvedLibraryId
       ? { libraryId: resolvedLibraryId, sessionTokens }
       : "skip",

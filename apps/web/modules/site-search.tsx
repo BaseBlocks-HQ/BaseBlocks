@@ -200,14 +200,14 @@ export function SearchBox({
 
   // Server full-text search queries
   const authResults = useQuery(
-    api.search.queries.searchAll,
+    api.search.searchAll,
     !usePublicQuery && shouldSearch
       ? { siteId, query: debouncedQuery, limit: maxResults }
       : "skip",
   ) as SearchResultItem[] | undefined;
 
   const publicResults = useQuery(
-    api.search.queries.searchAllPublic,
+    api.search.searchAllPublic,
     usePublicQuery && shouldSearch
       ? {
           siteId,
@@ -229,12 +229,12 @@ export function SearchBox({
     serverResults.length < maxResults;
 
   const authTitles = useQuery(
-    api.search.queries.listTitles,
+    api.search.listTitles,
     !usePublicQuery && shouldLoadTitles ? { siteId } : "skip",
   );
 
   const publicTitles = useQuery(
-    api.search.queries.listTitlesPublic,
+    api.search.listTitlesPublic,
     usePublicQuery && shouldLoadTitles ? { siteId, sessionTokens } : "skip",
   );
 

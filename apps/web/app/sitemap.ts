@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const publishedSites = (await client.query(
-      api.sites.queries.listPublishedSlugs,
+      api.sites.listPublishedSlugs,
       {},
     )) as PublishedSite[];
 
@@ -56,14 +56,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Fetch deployed pages for this site
       try {
         // We need the site ID — use getBySlug to resolve it
-        const siteDoc = (await client.query(api.sites.queries.getBySlug, {
+        const siteDoc = (await client.query(api.sites.getBySlug, {
           teamSlug: site.teamSlug,
           siteSlug: site.siteSlug,
         })) as { _id: Id<"sites"> } | null;
 
         if (siteDoc) {
           const pages = (await client.query(
-            api.pages.queries.listDeployedPaths,
+            api.pages.listDeployedPaths,
             { siteId: siteDoc._id },
           )) as DeployedPage[];
 

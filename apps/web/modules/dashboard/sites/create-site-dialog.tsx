@@ -105,7 +105,7 @@ export function CreateSiteDialog({
     initialFormState,
   );
 
-  const createSite = useMutation(api.sites.mutations.create);
+  const createSite = useMutation(api.sites.create);
 
   // Failure modes:
   // - Site name is empty

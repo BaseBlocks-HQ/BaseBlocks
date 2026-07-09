@@ -82,19 +82,19 @@ export function PublicSiteShell({
 }: PublicSiteShellProps) {
   const pagePanel = usePagePanelState();
   const sessionTokens = getStoredAccessSessionTokens();
-  const pagesRaw = useQuery(api.pages.queries.getTreePublished, {
+  const pagesRaw = useQuery(api.pages.getTreePublished, {
     siteId: site._id,
     sessionTokens,
   });
   const pages = pagesRaw as PageWithChildren[] | undefined;
 
-  const currentPage = useQuery(api.pages.queries.getByPathPublished, {
+  const currentPage = useQuery(api.pages.getByPathPublished, {
     siteId: site._id,
     path: pagePath,
     sessionTokens,
   });
   const currentPageStatus = useQuery(
-    api.pages.queries.getByPathPublishedStatus,
+    api.pages.getByPathPublishedStatus,
     {
       siteId: site._id,
       path: pagePath,
@@ -103,7 +103,7 @@ export function PublicSiteShell({
   );
 
   const ancestors = useQuery(
-    api.pages.queries.getAncestors,
+    api.pages.getAncestors,
     currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip",
   );
 
@@ -957,7 +957,7 @@ function BreadcrumbBar({
   siteSlug: string;
 }) {
   const sessionTokens = getStoredAccessSessionTokens();
-  const ancestors = useQuery(api.pages.queries.getAncestors, {
+  const ancestors = useQuery(api.pages.getAncestors, {
     pageId,
     sessionTokens,
   });

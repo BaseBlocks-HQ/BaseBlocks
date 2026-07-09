@@ -32,7 +32,7 @@ export async function GET(
     const publicClient = getServerConvexClient();
     const sessionTokens = getRequestAccessSessionTokens(request);
 
-    const page = await publicClient.query(api.pages.queries.get, {
+    const page = await publicClient.query(api.pages.get, {
       pageId: pageId as never,
       sessionTokens,
     });
@@ -42,7 +42,7 @@ export async function GET(
     }
 
     const layouts = await publicClient.query(
-      api.layouts.queries.listPublished,
+      api.layouts.listPublished,
       {
         pageId: pageId as never,
         sessionTokens,

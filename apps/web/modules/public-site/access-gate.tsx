@@ -47,14 +47,14 @@ export function AccessGate({ siteId, siteName, children }: AccessGateProps) {
   const [hasOptimisticAccess, setHasOptimisticAccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const verifyAccessCode = useMutation(api.sharing.mutations.verifyAccessCode);
+  const verifyAccessCode = useMutation(api.sharing.verifyAccessCode);
   const sessionCookieName = getAccessSessionCookieName(siteId);
 
   const storedToken =
     typeof document !== "undefined" ? getCookie(sessionCookieName) : null;
 
   const sessionResult = useQuery(
-    api.sharing.queries.validateSession,
+    api.sharing.validateSession,
     storedToken ? { siteId, sessionToken: storedToken } : "skip",
   );
 

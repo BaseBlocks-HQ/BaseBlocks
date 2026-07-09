@@ -20,7 +20,7 @@ export default async function TeamSiteEditorPage({ params }: Props) {
   }
 
   const editorData = await client.query(
-    api.sites.queries.getEditorInitialData,
+    api.sites.getEditorInitialData,
     {
       siteId: siteId as never,
     },

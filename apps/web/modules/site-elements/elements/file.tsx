@@ -486,10 +486,10 @@ export function FileEditor({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { uploadFile, isAnyUploading, totalProgress } = useFileUpload();
-  const renameDocument = useMutation(api.documents.mutations.rename);
-  const removeDocument = useMutation(api.documents.mutations.remove);
+  const renameDocument = useMutation(api.documents.rename);
+  const removeDocument = useMutation(api.documents.remove);
   const document = useQuery(
-    api.documents.queries.get,
+    api.documents.get,
     content.documentId
       ? { documentId: content.documentId as Id<"documents"> }
       : "skip",

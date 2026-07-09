@@ -66,7 +66,7 @@ export function AccountSettings({
   };
 
   const deleteMyAccountData = useMutation(
-    api.members.mutations.deleteMyAccountData,
+    api.teams.deleteMyAccountData,
   );
 
   const getInitials = (name?: string, email?: string) => {

@@ -44,7 +44,7 @@ function getRouter() {
       }
 
       const canUpload = await getServerConvexClient(token).query(
-        api.assets.queries.canUploadToSite,
+        api.files.canUploadToSite,
         {
           siteId: parsed.siteId as never,
         },

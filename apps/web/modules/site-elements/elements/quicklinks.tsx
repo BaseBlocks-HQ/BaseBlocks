@@ -373,7 +373,7 @@ export function QuicklinksEditor({
   onSaveStatusChange,
 }: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorSite();
-  const createSiteAsset = useMutation(api.assets.mutations.createSiteAsset);
+  const createSiteAsset = useMutation(api.files.createSiteAsset);
   const layoutContext = useLayoutContext();
   const isSidebar = layoutContext?.isSidebar ?? false;
   const [state, dispatch] = useReducer(

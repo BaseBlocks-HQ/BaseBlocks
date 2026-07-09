@@ -74,12 +74,12 @@ function PageEditorPanel({
   const { editingPage, closePageEditor } = useEditorUi();
   const sessionTokens = getStoredAccessSessionTokens();
   const page = useQuery(
-    api.pages.queries.get,
+    api.pages.get,
     editingPage?.pageId
       ? { pageId: editingPage.pageId as Id<"pages">, sessionTokens }
       : "skip",
   );
-  const updatePage = useMutation(api.pages.mutations.update);
+  const updatePage = useMutation(api.pages.update);
   const [title, setTitle] = useState(page?.title ?? "");
 
   useEffect(() => {
@@ -226,10 +226,10 @@ function SiteEditorInner({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingPage, closePageEditor, viewingPage, closePage]);
 
-  const siteQuery = useQuery(api.sites.queries.get, {
+  const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
   });
-  const pagesQuery = useQuery(api.pages.queries.list, {
+  const pagesQuery = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
   const site =
@@ -282,8 +282,8 @@ function SiteEditorInner({
     }
   }, [portalContainer, customizationStyles, isCustomized]);
 
-  const publishSite = useMutation(api.sites.mutations.publish);
-  const unpublishSite = useMutation(api.sites.mutations.unpublish);
+  const publishSite = useMutation(api.sites.publish);
+  const unpublishSite = useMutation(api.sites.unpublish);
 
   const handlePublish = async () => {
     try {
@@ -324,11 +324,11 @@ function SiteEditorInner({
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  const createLayoutMutation = useMutation(api.layouts.mutations.create);
-  const addBlockMutation = useMutation(api.layouts.mutations.addBlockToSlot);
-  const addPageBlockMutation = useMutation(api.layouts.mutations.addPageBlock);
+  const createLayoutMutation = useMutation(api.layouts.create);
+  const addBlockMutation = useMutation(api.layouts.addBlockToSlot);
+  const addPageBlockMutation = useMutation(api.layouts.addPageBlock);
   const enablePageTabsMutation = useMutation(
-    api.pages.mutations.enablePageTabs,
+    api.pages.enablePageTabs,
   );
 
   const targetPageId = editingPage
@@ -611,18 +611,12 @@ function SiteEditorShell({
   initialPages,
   initialSite,
   permissions,
-  siteData,
   siteId,
 }: SiteEditorProps & {
   permissions: {
     canEdit: boolean;
     isAdmin: boolean;
     isLoading: boolean;
-  };
-  siteData?: {
-    teamId?: string;
-    contentModifiedAt?: number;
-    lastDeployedAt?: number;
   };
 }) {
   const pathname = usePathname();
@@ -642,7 +636,6 @@ function SiteEditorShell({
   return (
     <EditorProvider
       siteId={siteId}
-      site={siteData}
       permissions={permissions}
       pagePanelState={{
         editingPage: editingPageId ? { pageId: editingPageId } : null,
@@ -670,19 +663,11 @@ export function SiteEditor({
 }: SiteEditorProps) {
   const { capabilities } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();
-  const siteQuery = useQuery(api.sites.queries.get, {
+  const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
   });
   const site =
     isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
-
-  const siteData = site
-    ? {
-        teamId: site.teamId as string,
-        contentModifiedAt: site.contentModifiedAt,
-        lastDeployedAt: site.lastDeployedAt,
-      }
-    : undefined;
 
   const permissions = {
     canEdit: capabilities.canEditContent,
@@ -696,7 +681,6 @@ export function SiteEditor({
         initialPages={initialPages}
         initialSite={initialSite}
         permissions={permissions}
-        siteData={siteData}
         siteId={siteId}
       />
     </Suspense>

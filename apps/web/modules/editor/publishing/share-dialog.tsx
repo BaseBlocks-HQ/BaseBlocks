@@ -231,13 +231,13 @@ export function ShareDialog({
   );
 
   const updateVisibilityMut = useMutation(
-    api.sharing.mutations.updateVisibility,
+    api.sharing.updateVisibility,
   );
   const updateAccessSettingsMut = useMutation(
-    api.sharing.mutations.updateAccessSettings,
+    api.sharing.updateAccessSettings,
   );
   const generateNewCodeMut = useMutation(
-    api.sharing.mutations.generateNewAccessCode,
+    api.sharing.generateNewAccessCode,
   );
 
   const visibility = settings?.visibility ?? "public";

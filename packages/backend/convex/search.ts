@@ -1,13 +1,189 @@
-import type { GenericQueryCtx } from "convex/server";
+// Flattened Convex domain module. Keep this file as the public API for this domain.
+import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Doc, Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
-import { checkIsMember } from "../auth";
-import { mapDocumentListing } from "../documents/listings";
-import { normalizeDocumentSearchMetadata } from "../documents/searchMetadata";
-import { getAccessiblePublishedPages } from "../sharing/pageAccess";
-import { getActiveLibraryIdsForPageIds } from "../sites/resolvers";
-import { canAccessPublishedSite } from "../sharing/access";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import { query } from "./_generated/server";
+import { checkIsMember } from "./permissions";
+import { buildDocumentDownloadUrl, normalizeDocumentSearchMetadata } from "./documents";
+import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
+import { getActiveLibraryIdsForPageIds } from "./sites";
+
+/**
+ * Extract plain text from BlockNote document format for search indexing
+ */
+export function extractBlockNoteText(blocks: unknown[] | undefined): string {
+  if (!blocks || !Array.isArray(blocks)) return "";
+
+  const extractText = (node: unknown): string => {
+    if (!node || typeof node !== "object") return "";
+
+    const obj = node as Record<string, unknown>;
+    let text = "";
+
+    // Extract direct text content
+    if (typeof obj.text === "string") {
+      text += `${obj.text} `;
+    }
+
+    // Handle BlockNote inline content (text with styles)
+    if (Array.isArray(obj.content)) {
+      for (const child of obj.content) {
+        if (typeof child === "string") {
+          text += `${child} `;
+        } else if (typeof child === "object" && child !== null) {
+          const childObj = child as Record<string, unknown>;
+          if (typeof childObj.text === "string") {
+            text += `${childObj.text} `;
+          }
+          // Recursively extract from nested content
+          text += extractText(child);
+        }
+      }
+    }
+
+    // Recursively extract from children array (nested blocks)
+    if (Array.isArray(obj.children)) {
+      for (const child of obj.children) {
+        text += extractText(child);
+      }
+    }
+
+    return text;
+  };
+
+  return blocks.map(extractText).join(" ").replace(/\s+/g, " ").trim();
+}
+
+type MutationCtx = GenericMutationCtx<DataModel>;
+
+/**
+ * Extract searchable text from all blocks across a page's layouts.
+ */
+function extractTextFromSlots(
+  slots: Array<{
+    blocks: Array<{ type: string; content: Record<string, unknown> }>;
+  }>,
+): string {
+  const parts: string[] = [];
+
+  for (const slot of slots) {
+    for (const block of slot.blocks) {
+      const c = block.content;
+      if (!c) continue;
+
+      switch (block.type) {
+        case "richtext":
+          if (Array.isArray(c.document)) {
+            parts.push(extractBlockNoteText(c.document));
+          }
+          break;
+        case "heading":
+        case "paragraph":
+          if (typeof c.text === "string") parts.push(c.text);
+          break;
+        case "callout":
+          if (typeof c.title === "string") parts.push(c.title);
+          if (typeof c.text === "string") parts.push(c.text);
+          break;
+        case "code":
+          if (typeof c.code === "string") parts.push(c.code);
+          break;
+        case "quicklinks":
+          if (Array.isArray(c.links)) {
+            for (const link of c.links) {
+              if (typeof link?.title === "string") parts.push(link.title);
+              if (typeof link?.description === "string")
+                parts.push(link.description);
+            }
+          }
+          break;
+        default:
+          // For other block types, try extracting common text fields
+          if (typeof c.text === "string") parts.push(c.text);
+          if (typeof c.title === "string") parts.push(c.title);
+          if (typeof c.description === "string") parts.push(c.description);
+          break;
+      }
+    }
+  }
+
+  return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Index or update a page's searchable content.
+ *
+ * Uses the page ID as the sourceId so search results stay attached to the
+ * page itself, regardless of how it is surfaced in navigation.
+ */
+export async function indexPageContent(
+  ctx: MutationCtx,
+  pageId: Id<"pages">,
+): Promise<void> {
+  const page = await ctx.db.get(pageId);
+  if (!page) return;
+
+  // Get all layouts for this page
+  const layouts = await ctx.db
+    .query("layouts")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .collect();
+
+  // Extract text from all layout slots
+  const extractedText = layouts
+    .map((l) => extractTextFromSlots(l.slots))
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const combinedText = `${page.title} ${extractedText}`.trim();
+  if (!combinedText) return;
+
+  // Upsert into searchableContent
+  const existing = await ctx.db
+    .query("searchableContent")
+    .withIndex("by_source", (q) =>
+      q.eq("contentType", "page").eq("sourceId", pageId),
+    )
+    .first();
+
+  const indexData = {
+    siteId: page.siteId,
+    contentType: "page" as const,
+    sourceId: pageId,
+    title: page.title,
+    extractedText: combinedText,
+    metadata: {
+      pageId: page._id,
+    },
+    updatedAt: Date.now(),
+  };
+
+  if (existing) {
+    await ctx.db.patch(existing._id, indexData);
+  } else {
+    await ctx.db.insert("searchableContent", indexData);
+  }
+}
+
+/**
+ * Remove a page's searchableContent entry.
+ */
+export async function removePageContentIndex(
+  ctx: MutationCtx,
+  pageId: Id<"pages">,
+): Promise<void> {
+  const existing = await ctx.db
+    .query("searchableContent")
+    .withIndex("by_source", (q) =>
+      q.eq("contentType", "page").eq("sourceId", pageId),
+    )
+    .first();
+
+  if (existing) {
+    await ctx.db.delete(existing._id);
+  }
+}
 
 /**
  * Extract a text snippet around the first occurrence of a search term
@@ -56,9 +232,8 @@ function formatSearchResult(
   doc: Doc<"searchableContent">,
   matchType: "title" | "content",
   searchTerm: string,
-  documentListing?: Doc<"documentListings"> | null,
+  document?: Doc<"documents"> | null,
 ) {
-  const listing = documentListing ? mapDocumentListing(documentListing) : null;
   const snippetData =
     matchType === "content"
       ? extractSnippet(doc.extractedText, searchTerm)
@@ -68,21 +243,21 @@ function formatSearchResult(
     _id: doc._id,
     contentType: doc.contentType,
     sourceId: doc.sourceId,
-    title: listing?.filename ?? doc.title,
+    title: document?.filename ?? doc.title,
     matchType,
     snippet: snippetData?.snippet ?? null,
     snippetMatchStart: snippetData?.matchStart ?? null,
     snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata: listing
+    metadata: document
       ? normalizeDocumentSearchMetadata({
-          sourceId: listing._id,
+          sourceId: document._id,
           metadata: {
-            assetId: listing.assetId,
-            filename: listing.filename,
-            fileContentType: listing.contentType,
-            size: listing.size,
-            downloadUrl: listing.downloadUrl,
-            libraryId: listing.libraryId,
+            assetId: document.assetId,
+            filename: document.filename,
+            fileContentType: document.contentType,
+            size: document.size,
+            downloadUrl: buildDocumentDownloadUrl(document._id),
+            libraryId: document.libraryId,
           },
         })
       : doc.contentType === "document"
@@ -94,35 +269,29 @@ function formatSearchResult(
   };
 }
 
-async function getDocumentListingForSearchResult(
+async function getDocumentForSearchResult(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   doc: Doc<"searchableContent">,
 ) {
   if (doc.contentType !== "document") return null;
-  return await ctx.db
-    .query("documentListings")
-    .withIndex("by_document", (q) =>
-      q.eq("documentId", doc.sourceId as Id<"documents">),
-    )
-    .first();
+  return await ctx.db.get(doc.sourceId as Id<"documents">);
 }
 
-function formatDocumentTitleResult(doc: Doc<"documentListings">) {
-  const listing = mapDocumentListing(doc);
+function formatDocumentTitleResult(document: Doc<"documents">) {
   return {
-    _id: `document:${listing._id}`,
+    _id: `document:${document._id}`,
     contentType: "document" as const,
-    sourceId: listing._id,
-    title: listing.filename,
+    sourceId: document._id,
+    title: document.filename,
     metadata: normalizeDocumentSearchMetadata({
-      sourceId: listing._id,
+      sourceId: document._id,
       metadata: {
-        assetId: listing.assetId,
-        filename: listing.filename,
-        fileContentType: listing.contentType,
-        size: listing.size,
-        downloadUrl: listing.downloadUrl,
-        libraryId: listing.libraryId,
+        assetId: document.assetId,
+        filename: document.filename,
+        fileContentType: document.contentType,
+        size: document.size,
+        downloadUrl: buildDocumentDownloadUrl(document._id),
+        libraryId: document.libraryId,
       },
     }),
   };
@@ -192,10 +361,10 @@ export const searchAll = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleDocumentListing = async (doc: Doc<"searchableContent">) => {
+    const getVisibleDocument = async (doc: Doc<"searchableContent">) => {
       if (!contentTypeMatches(doc, contentTypes)) return null;
       if (doc.contentType !== "document") return null;
-      return await getDocumentListingForSearchResult(ctx, doc);
+      return await getDocumentForSearchResult(ctx, doc);
     };
 
     const shouldIncludePage = (doc: Doc<"searchableContent">) => {
@@ -206,19 +375,19 @@ export const searchAll = query({
     // Content matches first (higher relevance)
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
-      const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludePage(doc)) continue;
+      const document = await getVisibleDocument(doc);
+      if (!document && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed, listing));
+      combined.push(formatSearchResult(doc, "content", trimmed, document));
     }
 
     // Then title matches
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
-      const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludePage(doc)) continue;
+      const document = await getVisibleDocument(doc);
+      if (!document && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed, listing));
+      combined.push(formatSearchResult(doc, "title", trimmed, document));
     }
 
     return combined.slice(0, limit);
@@ -283,14 +452,14 @@ export const searchAllPublic = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleDocumentListing = async (doc: Doc<"searchableContent">) => {
+    const getVisibleDocument = async (doc: Doc<"searchableContent">) => {
       if (!contentTypeMatches(doc, contentTypes)) return null;
       if (doc.contentType !== "document") return null;
-      const listing = await getDocumentListingForSearchResult(ctx, doc);
-      if (!listing?.libraryId || !activeLibraryIds.has(listing.libraryId)) {
+      const document = await getDocumentForSearchResult(ctx, doc);
+      if (!document?.libraryId || !activeLibraryIds.has(document.libraryId)) {
         return null;
       }
-      return listing;
+      return document;
     };
 
     const shouldIncludePage = (doc: Doc<"searchableContent">) => {
@@ -304,19 +473,19 @@ export const searchAllPublic = query({
     // Content matches first
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
-      const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludePage(doc)) continue;
+      const document = await getVisibleDocument(doc);
+      if (!document && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed, listing));
+      combined.push(formatSearchResult(doc, "content", trimmed, document));
     }
 
     // Then title matches
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
-      const listing = await getVisibleDocumentListing(doc);
-      if (!listing && !shouldIncludePage(doc)) continue;
+      const document = await getVisibleDocument(doc);
+      if (!document && !shouldIncludePage(doc)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed, listing));
+      combined.push(formatSearchResult(doc, "title", trimmed, document));
     }
 
     return combined.slice(0, limit);
@@ -339,7 +508,7 @@ export const listTitles = query({
 
     const [documents, pages] = await Promise.all([
       ctx.db
-        .query("documentListings")
+        .query("documents")
         .withIndex("by_site", (q) => q.eq("siteId", siteId))
         .collect(),
       ctx.db
@@ -382,7 +551,7 @@ export const listTitlesPublic = query({
     );
 
     const documents = await ctx.db
-      .query("documentListings")
+      .query("documents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 

@@ -13,7 +13,7 @@ export function ClientAuthBoundary({ children }: PropsWithChildren) {
     <AuthBoundary
       authClient={authClient}
       onUnauth={() => router.replace("/login")}
-      getAuthUserFn={api.auth.getFullAuthContext}
+      getAuthUserFn={api.permissions.getFullAuthContext}
       isAuthError={isAuthError}
     >
       {children}

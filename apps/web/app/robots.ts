@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     process.env.VERCEL_ENV === "production" ||
     process.env.NODE_ENV === "production";
 
-  // Block crawlers on preview/staging deployments
+  // Block crawlers on preview and staging hosts.
   if (!isProduction) {
     return {
       rules: { userAgent: "*", disallow: "/" },

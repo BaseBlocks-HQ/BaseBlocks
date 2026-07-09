@@ -1,260 +1,153 @@
-import {
-  type TeamCapability,
-  type TeamRole,
-  hasTeamCapability,
-} from "@baseblocks/domain";
-import type {
-  GenericActionCtx,
-  GenericMutationCtx,
-  GenericQueryCtx,
-} from "convex/server";
-import { ConvexError, v } from "convex/values";
-import type { DataModel, Id } from "./_generated/dataModel";
-import { internalQuery, query } from "./_generated/server";
+import { type GenericCtx, createClient } from "@convex-dev/better-auth";
+import { convex } from "@convex-dev/better-auth/plugins";
+import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
+import { organization } from "better-auth/plugins";
+import { components } from "./_generated/api";
+import type { DataModel } from "./_generated/dataModel";
+import authConfig from "./auth.config";
+import authSchema from "./authComponent/schema";
 
-type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
-type ActionAuthCtx = GenericActionCtx<DataModel>;
+const defaultAuthOrigin = "http://localhost:3001";
 
-export type ServerAuthContext = {
-  userId: string;
-  email?: string;
-  name?: string;
-  imageUrl?: string;
-};
+function parseAuthOrigin(origin: string, envName = "APP_URL"): string {
+  const trimmed = origin.trim();
+  if (!trimmed) {
+    throw new Error(`${envName} includes an empty origin`);
+  }
 
-async function parseIdentity(ctx: AuthCtx): Promise<ServerAuthContext | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch (error) {
+    throw new Error(`${envName} contains an invalid origin: ${trimmed}`, {
+      cause: error,
+    });
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw new Error(`${envName} origin must use http or https: ${trimmed}`);
+  }
+
+  if (parsed.pathname !== "/" || parsed.search || parsed.hash) {
+    throw new Error(
+      `${envName} must contain origins only, without paths or query strings: ${trimmed}`,
+    );
+  }
+
+  return parsed.origin;
+}
+
+function getAuthOrigins(): string[] {
+  const rawOrigins = (process.env.APP_URL ?? defaultAuthOrigin)
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (rawOrigins.length === 0) {
+    throw new Error("APP_URL must include at least one origin");
+  }
+
+  const seen = new Set<string>();
+  const origins: string[] = [];
+
+  for (const rawOrigin of rawOrigins) {
+    const origin = parseAuthOrigin(rawOrigin);
+    if (seen.has(origin)) continue;
+    seen.add(origin);
+    origins.push(origin);
+  }
+
+  return origins;
+}
+
+function getAuthUrlConfig() {
+  const authOrigins = getAuthOrigins();
+  const primaryAppUrl = authOrigins[0]!;
+  const primaryAppHostname = new URL(primaryAppUrl).hostname;
+  const crossSubdomainCookieDomain =
+    primaryAppHostname === "localhost" ||
+    primaryAppHostname === "127.0.0.1" ||
+    primaryAppHostname.endsWith(".vercel.app")
+      ? undefined
+      : primaryAppHostname;
 
   return {
-    userId: identity.subject,
-    email: identity.email ?? undefined,
-    name: identity.name ?? undefined,
-    imageUrl: identity.pictureUrl ?? undefined,
+    baseURL: primaryAppUrl,
+    trustedOrigins: crossSubdomainCookieDomain
+      ? [...authOrigins, `https://*.${crossSubdomainCookieDomain}`]
+      : authOrigins,
+    crossSubdomainCookieDomain,
   };
 }
 
-export async function getAuthContextOrNull(
-  ctx: AuthCtx,
-): Promise<ServerAuthContext | null> {
-  return parseIdentity(ctx);
-}
+export const authComponent = createClient<DataModel, never>(
+  components.betterAuth,
+  {
+    local: {
+      schema: authSchema as never,
+    },
+    verbose: false,
+  },
+);
 
-async function requireAuthContext(ctx: AuthCtx): Promise<ServerAuthContext> {
-  const auth = await getAuthContextOrNull(ctx);
-  if (!auth) {
-    throw new ConvexError("Not authenticated");
-  }
-  return auth;
-}
-
-export const getServerAuthContext = (
-  ctx: AuthCtx,
-): Promise<ServerAuthContext> => requireAuthContext(ctx);
-
-export const getAuthContext = getServerAuthContext;
-
-export async function getActionAuthContextOrNull(
-  ctx: ActionAuthCtx,
-): Promise<ServerAuthContext | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
+export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
+  const { baseURL, trustedOrigins, crossSubdomainCookieDomain } =
+    getAuthUrlConfig();
 
   return {
-    userId: identity.subject,
-    email: identity.email ?? undefined,
-    name: identity.name ?? undefined,
-    imageUrl: identity.pictureUrl ?? undefined,
-  };
-}
-
-export async function getActionAuthContext(
-  ctx: ActionAuthCtx,
-): Promise<ServerAuthContext> {
-  const auth = await getActionAuthContextOrNull(ctx);
-  if (!auth) {
-    throw new ConvexError("Not authenticated");
-  }
-  return auth;
-}
-
-export const getFullAuthContext = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-
-    if (!auth) {
-      return {
-        isAuthenticated: false,
-        hasOrganization: false,
-        user: null,
-      };
-    }
-
-    // Check if user has a team (member of any org)
-    const member = await ctx.db
-      .query("members")
-      .withIndex("by_user", (q) => q.eq("userId", auth.userId))
-      .first();
-
-    return {
-      isAuthenticated: true,
-      hasOrganization: !!member,
-      user: {
-        id: auth.userId,
-        email: auth.email,
-        name: auth.name,
-        imageUrl: auth.imageUrl,
+    baseURL,
+    trustedOrigins,
+    database: authComponent.adapter(ctx),
+    advanced: crossSubdomainCookieDomain
+      ? {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: crossSubdomainCookieDomain,
+          },
+        }
+      : undefined,
+    emailAndPassword: {
+      enabled: false,
+    },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "github", "microsoft"],
+        allowDifferentEmails: false,
       },
-    };
-  },
-});
-
-type MemberInfo = {
-  _id: Id<"members">;
-  role: TeamRole;
-  userId: string;
+    },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        prompt: "select_account",
+      },
+      github: {
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        prompt: "select_account",
+      },
+      microsoft: {
+        clientId: process.env.MICROSOFT_CLIENT_ID!,
+        clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+        tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+        authority: "https://login.microsoftonline.com",
+        prompt: "select_account",
+      },
+    },
+    plugins: [
+      organization({
+        allowUserToCreateOrganization: true,
+        cancelPendingInvitationsOnReInvite: true,
+      }),
+      convex({ authConfig }),
+    ],
+  } satisfies BetterAuthOptions;
 };
 
-type AuthWithMember = {
-  auth: ServerAuthContext;
-  member: MemberInfo;
-};
+export const options = createAuthOptions({} as GenericCtx<DataModel>);
 
-async function getMemberByUserId(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-  userId: string,
-): Promise<MemberInfo | null> {
-  const member = await ctx.db
-    .query("members")
-    .withIndex("by_team_user", (q) =>
-      q.eq("teamId", teamId).eq("userId", userId),
-    )
-    .first();
+export const createAuth = (ctx: GenericCtx<DataModel>) =>
+  betterAuth(createAuthOptions(ctx));
 
-  if (!member) return null;
-
-  return {
-    _id: member._id,
-    role: member.role,
-    userId: member.userId!,
-  };
-}
-
-export async function requireAdmin(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  return requireTeamCapability(ctx, teamId, "canManageTeam");
-}
-
-export async function requireTeamCapability(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-  capability: TeamCapability,
-): Promise<AuthWithMember> {
-  const auth = await requireAuthContext(ctx);
-  const member = await getMemberByUserId(ctx, teamId, auth.userId);
-
-  if (!member) {
-    throw new ConvexError("Not a member of this organization");
-  }
-
-  if (!hasTeamCapability(member.role, capability)) {
-    throw new ConvexError("Insufficient permissions for this action");
-  }
-
-  return { auth, member };
-}
-
-export async function requireContentEditor(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  return requireTeamCapability(ctx, teamId, "canEditContent");
-}
-
-export async function requireLibraryManager(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  return requireTeamCapability(ctx, teamId, "canManageLibraries");
-}
-
-export async function requirePublisher(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  return requireTeamCapability(ctx, teamId, "canPublish");
-}
-
-export async function requireSiteManager(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  return requireTeamCapability(ctx, teamId, "canManageSites");
-}
-
-export async function requireMember(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<AuthWithMember> {
-  const auth = await requireAuthContext(ctx);
-  const member = await getMemberByUserId(ctx, teamId, auth.userId);
-
-  if (!member) {
-    throw new ConvexError("Not a member of this organization");
-  }
-
-  return { auth, member };
-}
-
-export async function checkIsAdmin(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<boolean> {
-  return checkTeamCapability(ctx, teamId, "canManageTeam");
-}
-
-export async function checkTeamCapability(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-  capability: TeamCapability,
-): Promise<boolean> {
-  const auth = await getAuthContextOrNull(ctx);
-  if (!auth) return false;
-
-  const member = await getMemberByUserId(ctx, teamId, auth.userId);
-  return member ? hasTeamCapability(member.role, capability) : false;
-}
-
-export async function checkIsMember(
-  ctx: AuthCtx,
-  teamId: Id<"teams">,
-): Promise<boolean> {
-  const auth = await getAuthContextOrNull(ctx);
-  if (!auth) return false;
-
-  const member = await getMemberByUserId(ctx, teamId, auth.userId);
-  return !!member;
-}
-
-/**
- * Check if a user is a member of the team that owns a site.
- * Used by actions to verify authorization.
- */
-export const checkSiteMembership = internalQuery({
-  args: { siteId: v.id("sites"), userId: v.string() },
-  handler: async (ctx, { siteId, userId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return false;
-    const member = await ctx.db
-      .query("members")
-      .withIndex("by_team_user", (q) =>
-        q.eq("teamId", site.teamId).eq("userId", userId),
-      )
-      .first();
-    return !!member;
-  },
-});
+export const { getAuthUser } = authComponent.clientApi();

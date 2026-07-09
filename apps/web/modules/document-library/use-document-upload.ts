@@ -25,8 +25,8 @@ export function useFileUpload() {
     {},
   );
 
-  const createDocument = useMutation(api.documents.mutations.create);
-  const createInLibrary = useMutation(api.documents.mutations.createInLibrary);
+  const createDocument = useMutation(api.documents.create);
+  const createInLibrary = useMutation(api.documents.createInLibrary);
 
   const updateUploadState = (fileId: string, update: Partial<UploadState>) => {
     setUploadStates((prev) => ({

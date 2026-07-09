@@ -15,7 +15,7 @@ export async function GET(
     const sessionTokens = getRequestAccessSessionTokens(request);
     const authorizedAsset = token
       ? await getServerConvexClient(token)
-          .query(api.assets.queries.getAuthorizedAsset, {
+          .query(api.files.getAuthorizedAsset, {
             assetId: assetId as never,
           })
           .catch(() => null)
@@ -23,7 +23,7 @@ export async function GET(
 
     const asset =
       authorizedAsset ||
-      (await getServerConvexClient().query(api.assets.queries.getPublicAsset, {
+      (await getServerConvexClient().query(api.files.getPublicAsset, {
         assetId: assetId as never,
         sessionTokens,
       }));
