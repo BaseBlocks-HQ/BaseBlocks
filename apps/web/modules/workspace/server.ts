@@ -1,9 +1,6 @@
-import { getToken } from "@/app/_auth/server";
-import { getServerConvexClient } from "@/app/_convex/server";
+import { fetchAuthQuery } from "@/app/_auth/server";
 import type { TeamRecord } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
-import { redirect } from "next/navigation";
-import { cache } from "react";
 
 interface WorkspaceBoundaryState {
   activeWorkspace: TeamRecord | null;
@@ -19,30 +16,10 @@ export interface WorkspaceUser {
   name: string | null;
 }
 
-export const getWorkspaceBoundaryContext = cache(
-  async (
-    teamSlug?: string,
-  ): Promise<{
-    client: ReturnType<typeof getServerConvexClient>;
-    state: WorkspaceBoundaryState;
-  }> => {
-    const token = await getToken();
-    if (!token) {
-      redirect("/login");
-    }
-
-    const client = getServerConvexClient(token);
-    const state = await client.query(api.teams.getWorkspaceBoundary, {
-      ...(teamSlug ? { teamSlug } : {}),
-    });
-
-    return { client, state };
-  },
-);
-
 export async function getWorkspaceBoundaryState(
   teamSlug?: string,
 ): Promise<WorkspaceBoundaryState> {
-  const { state } = await getWorkspaceBoundaryContext(teamSlug);
-  return state;
+  return await fetchAuthQuery(api.teams.getWorkspaceBoundary, {
+    ...(teamSlug ? { teamSlug } : {}),
+  });
 }

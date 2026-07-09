@@ -6,27 +6,25 @@ import type { Id } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./create-site-dialog";
 import { SiteCard } from "./site-card";
 
-interface SitesPageProps {
-  initialSites?: Array<{
+type SiteList = Array<{
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  logoUrl?: string;
+  isPublished: boolean;
+  team?: {
     _id: string;
     name: string;
     slug: string;
-    description?: string;
-    logoUrl?: string;
-    isPublished: boolean;
-    team?: {
-      _id: string;
-      name: string;
-      slug: string;
-    } | null;
-  }>;
-}
+  } | null;
+}>;
 
 const sitesGridClassName =
   "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
@@ -38,7 +36,7 @@ function SitesSection({
   teamSlug,
 }: {
   canManageSites: boolean;
-  sites: SitesPageProps["initialSites"];
+  sites: SiteList | undefined;
   teamId: Id<"teams">;
   teamSlug: string;
 }) {
@@ -88,15 +86,12 @@ function SitesSection({
   );
 }
 
-export function SitesPage({ initialSites }: SitesPageProps) {
+export function SitesPage() {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
   const sitesQuery = useQuery(api.sites.listByTeam, {
     teamId: team._id,
   });
-  const { isLoading: isConvexLoading } = useConvexAuth();
-  const sites =
-    isConvexLoading || sitesQuery === undefined ? initialSites : sitesQuery;
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
@@ -108,7 +103,7 @@ export function SitesPage({ initialSites }: SitesPageProps) {
 
           <SitesSection
             canManageSites={capabilities.canManageSites}
-            sites={sites}
+            sites={sitesQuery}
             teamId={team._id}
             teamSlug={team.slug}
           />

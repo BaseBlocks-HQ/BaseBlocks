@@ -156,7 +156,11 @@ export function DashboardSidebar() {
                         item.isActive && navActiveClass,
                       )}
                     >
-                      <Link href={item.href} title={item.title}>
+                      <Link
+                        href={item.href}
+                        prefetch={false}
+                        title={item.title}
+                      >
                         <item.icon
                           className={cn(
                             "h-4 w-4 shrink-0",

@@ -23,10 +23,6 @@ import { IntroOverlay } from "./components/intro-overlay";
 import { LandingHeader } from "./components/landing-header";
 import { StepsSection } from "./components/steps-section";
 
-interface LandingPageProps {
-  isAuthenticated: boolean;
-}
-
 type IntroFontVariant =
   | "square"
   | "grid"
@@ -64,7 +60,7 @@ const stepIndices = animationSteps.map((_, index) => index);
 const stepSizes = animationSteps.map((step) => step.size);
 const morphSpring = { stiffness: 30, damping: 15, mass: 3 } as const;
 
-export function LandingPage({ isAuthenticated }: LandingPageProps) {
+export function LandingPage() {
   const { resolvedTheme } = useTheme();
 
   const landingTranslations = useTranslations("landing");
@@ -119,13 +115,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
     return () => window.clearTimeout(revealFallback);
   }, [progress]);
 
-  const authCta = isAuthenticated ? (
-    <Link href="/dashboard">
-      <Button size="lg" className="gap-2">
-        {commonTranslations("goToDashboard")} <ArrowRight className="h-4 w-4" />
-      </Button>
-    </Link>
-  ) : (
+  const authCta = (
     <Link href="/login">
       <Button size="lg" className="gap-2">
         {landingTranslations("getStarted")} <ArrowRight className="h-4 w-4" />
@@ -160,7 +150,6 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
             <ScrollArea className="h-full">
               <div className="min-h-screen">
                 <LandingHeader
-                  isAuthenticated={isAuthenticated}
                   commonTranslations={commonTranslations}
                   navigationTranslations={navigationTranslations}
                 />

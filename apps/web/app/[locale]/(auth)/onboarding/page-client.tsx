@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/app/_auth/client";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
+import { getTeamDashboardPath } from "@/modules/dashboard/routes";
 import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
 import { api } from "@baseblocks/backend";
 import type { Locale } from "@baseblocks/i18n";
@@ -78,7 +79,7 @@ export function OnboardingPageClient() {
           slug,
           organizationId,
         }).then(() => {
-          router.push("/dashboard");
+          router.push(getTeamDashboardPath(slug));
         });
       })
       .catch((err) => {

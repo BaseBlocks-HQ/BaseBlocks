@@ -2,6 +2,7 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/app/_auth/client";
+import { getTeamDashboardPath } from "@/modules/dashboard/routes";
 import { getAuthClientDataOrThrow } from "@/app/_auth/result";
 import { api } from "@baseblocks/backend";
 import {
@@ -175,7 +176,7 @@ export function InvitationInbox({
         }),
         t("acceptFailed"),
       );
-      await Promise.all([
+      const [, syncedMember] = await Promise.all([
         Promise.resolve(
           getAuthClientDataOrThrow(
             await authClient.organization.setActive({
@@ -190,7 +191,7 @@ export function InvitationInbox({
       ]);
       dispatch({ type: "REMOVE_INVITATION", id: invitation.id });
       if (onboardingMode) {
-        router.push("/dashboard");
+        router.push(getTeamDashboardPath(syncedMember.teamSlug));
       }
     } catch (err) {
       dispatch({

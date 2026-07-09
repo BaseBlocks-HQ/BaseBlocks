@@ -567,7 +567,11 @@ export const syncMemberFromInvitation = mutation({
       .first();
 
     if (existing) {
-      return { memberId: existing._id, alreadyExists: true };
+      return {
+        memberId: existing._id,
+        alreadyExists: true,
+        teamSlug: team.slug,
+      };
     }
 
     const role = baRole === "admin" || baRole === "owner" ? "admin" : "editor";
@@ -582,7 +586,7 @@ export const syncMemberFromInvitation = mutation({
       joinedAt: Date.now(),
     });
 
-    return { memberId, alreadyExists: false };
+    return { memberId, alreadyExists: false, teamSlug: team.slug };
   },
 });
 

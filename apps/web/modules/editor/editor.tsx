@@ -29,7 +29,7 @@ import {
 } from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useTranslations } from "next-intl";
@@ -177,18 +177,11 @@ function PanelHeader({ children }: { children: ReactNode }) {
 
 interface SiteEditorProps {
   siteId: string;
-  initialPages?: Doc<"pages">[];
-  initialSite?: Doc<"sites"> | null;
 }
 
-function SiteEditorInner({
-  initialPages,
-  initialSite,
-  siteId,
-}: SiteEditorProps) {
+function SiteEditorInner({ siteId }: SiteEditorProps) {
   const { team } = useTeamAccess();
   const isMobile = useIsMobile();
-  const { isLoading: isConvexLoading } = useConvexAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -232,10 +225,8 @@ function SiteEditorInner({
   const pagesQuery = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
-  const site =
-    isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
-  const pages =
-    isConvexLoading || pagesQuery === undefined ? initialPages : pagesQuery;
+  const site = siteQuery;
+  const pages = pagesQuery;
 
   // Get customization CSS variables for preview
   const { cssVariables: customizationStyles, isCustomized } =
@@ -602,8 +593,6 @@ function SiteEditorInner({
 }
 
 function SiteEditorShell({
-  initialPages,
-  initialSite,
   permissions,
   siteId,
 }: SiteEditorProps & {
@@ -637,27 +626,17 @@ function SiteEditorShell({
         },
       }}
     >
-      <SiteEditorInner
-        initialPages={initialPages}
-        initialSite={initialSite}
-        siteId={siteId}
-      />
+      <SiteEditorInner siteId={siteId} />
     </EditorProvider>
   );
 }
 
-export function SiteEditor({
-  initialPages,
-  initialSite,
-  siteId,
-}: SiteEditorProps) {
+export function SiteEditor({ siteId }: SiteEditorProps) {
   const { capabilities } = useTeamAccess();
-  const { isLoading: isConvexLoading } = useConvexAuth();
   const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
   });
-  const site =
-    isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
+  const site = siteQuery;
 
   const permissions = {
     canEdit: capabilities.canEditContent,
@@ -667,12 +646,7 @@ export function SiteEditor({
 
   return (
     <Suspense fallback={<EditorLoading />}>
-      <SiteEditorShell
-        initialPages={initialPages}
-        initialSite={initialSite}
-        permissions={permissions}
-        siteId={siteId}
-      />
+      <SiteEditorShell permissions={permissions} siteId={siteId} />
     </Suspense>
   );
 }

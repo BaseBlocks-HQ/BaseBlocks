@@ -238,49 +238,6 @@ export const get = query({
   },
 });
 
-export const getEditorInitialData = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return null;
-
-    const isMember = await checkIsMember(ctx, site.teamId);
-    if (!isMember) return null;
-
-    const [pages, layouts] = await Promise.all([
-      ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-      ctx.db
-        .query("layouts")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-    ]);
-
-    const referencedPageIds = new Set<string>();
-    for (const layout of layouts) {
-      for (const slot of layout.slots) {
-        for (const block of slot.blocks) {
-          if (block.type !== "page") continue;
-          const pageId = block.content?.pageId;
-          if (typeof pageId === "string") {
-            referencedPageIds.add(pageId);
-          }
-        }
-      }
-    }
-
-    return {
-      site,
-      pages: pages.map((page) => ({
-        ...page,
-        hasPageBlockReference: referencedPageIds.has(page._id),
-      })),
-    };
-  },
-});
-
 // Get site by team slug and site slug (for public viewing)
 // Returns published field projections for public consumption
 export const getBySlug = query({

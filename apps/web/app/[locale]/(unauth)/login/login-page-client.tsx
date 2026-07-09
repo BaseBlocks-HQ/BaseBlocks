@@ -31,7 +31,7 @@ async function signInWithProvider({
 
 export function LoginPageClient() {
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+  const redirectTo = searchParams.get("redirectTo") || "/onboarding";
 
   return <LoginForm redirectTo={redirectTo} />;
 }

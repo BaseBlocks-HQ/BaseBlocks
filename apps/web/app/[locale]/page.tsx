@@ -1,4 +1,3 @@
-import { isAuthenticated } from "@/app/_auth/server";
 import { LandingPage } from "@/modules/landing/landing-page";
 import type { Metadata } from "next";
 
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Page() {
-  const authed = await isAuthenticated();
-  return <LandingPage isAuthenticated={authed} />;
+export default function Page() {
+  return <LandingPage />;
 }

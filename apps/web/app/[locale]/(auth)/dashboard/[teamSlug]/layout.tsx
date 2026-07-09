@@ -1,5 +1,6 @@
-import { getWorkspaceBoundaryState } from "@/modules/workspace/server";
-import { TeamAccessProvider } from "@/modules/workspace/team-access";
+import { getToken } from "@/app/_auth/server";
+import { ConvexClientProvider } from "@/app/_convex/provider";
+import { DashboardTeamShell } from "@/modules/dashboard/layout/dashboard-team-shell";
 import { redirect } from "next/navigation";
 
 interface TeamLayoutProps {
@@ -12,20 +13,14 @@ export default async function TeamLayout({
   params,
 }: TeamLayoutProps) {
   const { teamSlug } = await params;
-  const { requestedWorkspace, teams, user } =
-    await getWorkspaceBoundaryState(teamSlug);
-
-  if (teams.length === 0) {
-    redirect("/onboarding");
-  }
-
-  if (!requestedWorkspace) {
-    redirect("/dashboard");
+  const token = await getToken();
+  if (!token) {
+    redirect("/login");
   }
 
   return (
-    <TeamAccessProvider team={requestedWorkspace} teams={teams} user={user}>
-      {children}
-    </TeamAccessProvider>
+    <ConvexClientProvider>
+      <DashboardTeamShell teamSlug={teamSlug}>{children}</DashboardTeamShell>
+    </ConvexClientProvider>
   );
 }
