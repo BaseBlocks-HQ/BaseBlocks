@@ -34,7 +34,7 @@ import {
   IconSitemap,
   IconSquareGrid2,
 } from "nucleo-glass";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 
 interface EditorFloatingRailProps {
@@ -120,19 +120,22 @@ function RailButton({
   disabled,
   icon,
   label,
-  onClick,
+  onHover,
+  onPress,
 }: {
   active: boolean;
   disabled?: boolean;
   icon: ReactNode;
   label: string;
-  onClick: () => void;
+  onHover: () => void;
+  onPress: () => void;
 }) {
   const button = (
     <button
       type="button"
       aria-label={label}
       disabled={disabled}
+      aria-expanded={active}
       className={cn(
         "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
         active
@@ -140,7 +143,13 @@ function RailButton({
           : "border-transparent text-muted-foreground hover:bg-accent/70 hover:text-foreground",
         disabled && "cursor-not-allowed opacity-45 hover:bg-transparent",
       )}
-      onClick={onClick}
+      onClick={() => {
+        if (window.matchMedia("(hover: none)").matches) {
+          onPress();
+        }
+      }}
+      onFocus={onHover}
+      onMouseEnter={onHover}
     >
       {icon}
     </button>
@@ -402,10 +411,39 @@ export function EditorFloatingRail({
   const rootPages = navPages
     .filter((page) => !page.parentId)
     .sort((left, right) => left.order - right.order);
+  const closePanelTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selectPanel = (panelId: RailPanelId) => {
+  const clearClosePanelTimeout = () => {
+    if (!closePanelTimeout.current) return;
+    clearTimeout(closePanelTimeout.current);
+    closePanelTimeout.current = null;
+  };
+
+  const openPanel = (panelId: RailPanelId) => {
+    clearClosePanelTimeout();
+    setActivePanel(panelId);
+  };
+
+  const scheduleClosePanel = () => {
+    clearClosePanelTimeout();
+    closePanelTimeout.current = setTimeout(() => {
+      setActivePanel(null);
+      closePanelTimeout.current = null;
+    }, 120);
+  };
+
+  const togglePanel = (panelId: RailPanelId) => {
+    clearClosePanelTimeout();
     setActivePanel((current) => (current === panelId ? null : panelId));
   };
+
+  useEffect(
+    () => () => {
+      if (!closePanelTimeout.current) return;
+      clearTimeout(closePanelTimeout.current);
+    },
+    [],
+  );
 
   const selectPage = (pageId: string) => {
     clearSelection();
@@ -422,8 +460,12 @@ export function EditorFloatingRail({
   };
 
   return (
-    <div className="pointer-events-auto relative">
-      <div className="rounded-2xl border border-sidebar-border bg-sidebar/95 p-2 text-sidebar-foreground backdrop-blur-md">
+    <div
+      className="pointer-events-auto relative"
+      onMouseEnter={clearClosePanelTimeout}
+      onMouseLeave={scheduleClosePanel}
+    >
+      <div className="rounded-full border border-sidebar-border bg-sidebar/95 p-2 text-sidebar-foreground backdrop-blur-md">
         <div className="flex flex-row gap-1 md:flex-col">
           {RAIL_ITEMS.map((item) => {
             const requiresSlot = item.id === "blocks";
@@ -437,7 +479,8 @@ export function EditorFloatingRail({
                 disabled={disabled}
                 icon={item.icon}
                 label={item.label}
-                onClick={() => selectPanel(item.id)}
+                onHover={() => openPanel(item.id)}
+                onPress={() => togglePanel(item.id)}
               />
             );
           })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/modules/dashboard/routes";
 import { TeamAccessProvider } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
@@ -16,8 +16,17 @@ export function DashboardTeamShell({
   children: ReactNode;
   teamSlug: string;
 }) {
+  const pathname = usePathname();
   const router = useRouter();
   const boundary = useQuery(api.teams.getWorkspaceBoundary, { teamSlug });
+  const siteEditorPathPrefix = `${getTeamDashboardPath(teamSlug)}/sites/`;
+  const siteEditorPathSegments = pathname
+    .slice(siteEditorPathPrefix.length)
+    .split("/")
+    .filter(Boolean);
+  const isSiteEditorPath =
+    pathname.startsWith(siteEditorPathPrefix) &&
+    siteEditorPathSegments.length === 1;
 
   useEffect(() => {
     if (!boundary) return;
@@ -50,7 +59,11 @@ export function DashboardTeamShell({
       teams={boundary.teams}
       user={boundary.user}
     >
-      <DashboardLayout>{children}</DashboardLayout>
+      {isSiteEditorPath ? (
+        children
+      ) : (
+        <DashboardLayout>{children}</DashboardLayout>
+      )}
     </TeamAccessProvider>
   );
 }
