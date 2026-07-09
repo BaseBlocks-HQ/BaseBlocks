@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check --write .",
-    "check-types": "fumadocs-mdx && next typegen && mkdir -p .next/types && (test -f .next/types/cache-life.d.ts || echo 'export {};' > .next/types/cache-life.d.ts) && tsc --noEmit --incremental false"
+    "check-types": "fumadocs-mdx && next typegen && tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1078.0",
@@ -43,9 +43,9 @@
     "docx": "^9.6.1",
     "dompurify": "^3.4.5",
     "files-sdk": "^2.0.0",
-    "fumadocs-core": "16.9.1",
-    "fumadocs-mdx": "15.0.8",
-    "fumadocs-ui": "16.9.1",
+    "fumadocs-core": "16.11.1",
+    "fumadocs-mdx": "15.1.0",
+    "fumadocs-ui": "16.11.1",
     "geist": "^1.7.1",
     "lucide-react": "^0.577.0",
     "motion": "^12.40.0",

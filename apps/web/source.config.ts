@@ -1,24 +1,14 @@
-import {
-  type DocsCollection,
-  defineConfig,
-  defineDocs,
-} from "fumadocs-mdx/config";
-import type { metaSchema, pageSchema } from "fumadocs-core/source/schema";
+import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 
-type DefaultDocsCollection = DocsCollection<
-  typeof pageSchema,
-  typeof metaSchema
->;
-
-export const docs: DefaultDocsCollection = defineDocs({
+export const docs = defineDocs({
   dir: "modules/content-pages/content/docs",
 });
 
-export const legalEn: DefaultDocsCollection = defineDocs({
+export const legalEn = defineDocs({
   dir: "modules/content-pages/content/legal/en",
 });
 
-export const legalFr: DefaultDocsCollection = defineDocs({
+export const legalFr = defineDocs({
   dir: "modules/content-pages/content/legal/fr",
 });
 

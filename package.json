@@ -9,7 +9,6 @@
     "dev": "turbo run dev",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "test": "bun test --pass-with-no-tests",
     "check-types": "turbo run check-types"
   },
   "devDependencies": {

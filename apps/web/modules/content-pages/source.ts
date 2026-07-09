@@ -32,10 +32,8 @@ export const docsI18n = defineI18n({
 });
 
 export const { provider: docsI18nProvider } = defineI18nUI(docsI18n, {
-  translations: {
-    en: { displayName: "English" },
-    fr: { displayName: "Français" },
-  },
+  en: { displayName: "English" },
+  fr: { displayName: "Français" },
 });
 
 const docsIconMap = {

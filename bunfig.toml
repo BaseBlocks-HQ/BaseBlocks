@@ -9,5 +9,6 @@ minimumReleaseAgeExcludes = [
   "@baseblocks/web",
   "fumadocs-core",
   "fumadocs-mdx",
+  "@fumadocs/tailwind",
   "fumadocs-ui",
 ]
