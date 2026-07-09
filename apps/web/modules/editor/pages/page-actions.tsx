@@ -1,10 +1,8 @@
 "use client";
 
 import { usePages } from "@/lib/data";
-import {
-  useEditorSite,
-  useEditorUi,
-} from "@/modules/editor/state/editor-context";
+import { generateSlug } from "@/lib/validation";
+import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
@@ -55,9 +53,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { PageAccessDialog } from "../access/page-access-dialog";
-import { CreateChildPageDialog } from "../pages/create-child-page-dialog";
-import { RenamePageDialog } from "../pages/rename-page-dialog";
+import { PageAccessDialog } from "./page-access";
 
 interface PageActionsMenuProps {
   page: PageListItem;
@@ -75,9 +71,7 @@ export function PageActionsMenu({
   const t = useTranslations("navigation.pageActions");
   const tDelete = useTranslations("navigation.deletePage");
   const tCommon = useTranslations("common");
-  const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [childPageOpen, setChildPageOpen] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
   const [exposureDialogOpen, setExposureDialogOpen] = useState(false);
   const [pendingExposure, setPendingExposure] = useState<
@@ -90,6 +84,8 @@ export function PageActionsMenu({
   const pages = usePages(siteId);
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
+  const createPage = useMutation(api.pages.mutations.create);
+  const updatePage = useMutation(api.pages.mutations.update);
   const removePage = useMutation(api.pages.mutations.remove);
   const setExposure = useMutation(api.pages.mutations.setExposure);
 
@@ -143,6 +139,30 @@ export function PageActionsMenu({
     });
   };
 
+  const handleAddChildPage = async () => {
+    const title = window.prompt(t("addChildPage"));
+    if (!title?.trim()) return;
+
+    await createPage({
+      siteId: siteId as Id<"sites">,
+      parentId: page._id as Id<"pages">,
+      title: title.trim(),
+      slug: generateSlug(title),
+    });
+    onExpandParent?.();
+  };
+
+  const handleRename = async () => {
+    const title = window.prompt(t("rename"), page.title);
+    if (!title?.trim()) return;
+
+    await updatePage({
+      pageId: page._id as Id<"pages">,
+      title: title.trim(),
+      slug: generateSlug(title),
+    });
+  };
+
   const handleDelete = async () => {
     await removePage({ pageId: page._id as Id<"pages"> });
     setDeleteOpen(false);
@@ -191,7 +211,7 @@ export function PageActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem onClick={() => setChildPageOpen(true)}>
+          <DropdownMenuItem onClick={handleAddChildPage}>
             <FilePlus className="h-4 w-4" />
             {t("addChildPage")}
           </DropdownMenuItem>
@@ -217,7 +237,7 @@ export function PageActionsMenu({
             {t("navigationAndBlock")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setRenameOpen(true)}>
+          <DropdownMenuItem onClick={handleRename}>
             <Pencil className="h-4 w-4" />
             {t("rename")}
           </DropdownMenuItem>
@@ -239,21 +259,6 @@ export function PageActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <CreateChildPageDialog
-        siteId={siteId}
-        parentId={page._id}
-        parentTitle={page.title}
-        open={childPageOpen}
-        onOpenChange={setChildPageOpen}
-        onSuccess={() => onExpandParent?.()}
-      />
-
-      <RenamePageDialog
-        page={page}
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-      />
 
       <PageAccessDialog
         isAdmin={isAdmin}

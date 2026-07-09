@@ -3,7 +3,7 @@
 import "@blocknote/mantine/style.css";
 
 import { useSiteAssetUpload } from "@/lib/files";
-import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
 import type { Id } from "@baseblocks/backend";
 import type {

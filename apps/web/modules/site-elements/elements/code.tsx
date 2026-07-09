@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
+import { useAutoSave } from "@/modules/editor/use-auto-save";
 import {
   Select,
   SelectContent,

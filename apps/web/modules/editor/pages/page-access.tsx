@@ -33,7 +33,7 @@ import { Loader2, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AudienceMembersDialog } from "./audience-members-dialog";
+import { AudienceMembersDialog } from "./audience-members";
 
 interface PageAccessDialogProps {
   isAdmin: boolean;

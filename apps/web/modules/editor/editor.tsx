@@ -1,15 +1,16 @@
 "use client";
 
+import { usePage } from "@/lib/data";
 import { usePages } from "@/lib/data/use-page";
 import { useSite } from "@/lib/data/use-site";
 import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
 import { useHaptic } from "@/lib/use-haptic";
 import { cn } from "@/lib/utils";
-import { EditorProvider } from "@/modules/editor/state/editor-context";
-import { useEditorUi } from "@/modules/editor/state/editor-context";
+import { EditorProvider } from "@/modules/editor/editor-state";
+import { useEditorUi } from "@/modules/editor/editor-state";
 import { PublicPagePanel } from "@/modules/public-site/page-panel";
 import { getDefaultContent } from "@/modules/site-elements/registry";
-import { useSiteCustomization } from "@/modules/editor/settings/customization/use-site-customization";
+import { useSiteCustomization } from "@/modules/editor/settings/use-site-customization";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
@@ -21,7 +22,9 @@ import type {
   LayoutType,
 } from "@baseblocks/domain";
 import { createBlockDraft } from "@baseblocks/domain";
+import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
+import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
@@ -31,13 +34,15 @@ import {
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useConvexAuth, useMutation } from "convex/react";
+import { Maximize2, Minimize2, X } from "lucide-react";
 import { nanoid } from "nanoid";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { PageEditor } from "@/modules/editor/document/page-editor";
+import { type ReactNode, Suspense, useEffect, useMemo, useState } from "react";
+import { PageEditor } from "@/modules/editor/canvas/page-canvas";
 import { toast } from "sonner";
-import { EditorPageDetailPanel } from "../pages/editor-page-detail-panel";
-import { EditorFloatingRail } from "./editor-floating-rail";
+import { ToolbarButton } from "@/modules/file-preview";
+import { EditorFloatingRail } from "./rail/editor-rail";
 import { EditorHeader } from "./editor-header";
 
 const pagePanelSurfaceClassName =
@@ -45,6 +50,112 @@ const pagePanelSurfaceClassName =
 
 const hiddenSplitHandleClassName =
   "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
+
+function PageEditorPanel({
+  isFullscreen,
+  onToggleFullscreen,
+}: {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}) {
+  const t = useTranslations("editor.pagePanel");
+  const { editingPage, closePageEditor } = useEditorUi();
+  const page = usePage(editingPage?.pageId);
+  const updatePage = useMutation(api.pages.mutations.update);
+  const [title, setTitle] = useState(page?.title ?? "");
+
+  useEffect(() => {
+    setTitle(page?.title ?? "");
+  }, [page?.title]);
+
+  const debouncedSave = useDebounceCallback(async (nextTitle: string) => {
+    if (!editingPage?.pageId || !nextTitle.trim()) {
+      return;
+    }
+
+    try {
+      await updatePage({
+        pageId: editingPage.pageId as Id<"pages">,
+        title: nextTitle.trim(),
+      });
+    } catch (_error) {
+      toast.error(t("renameFailed"));
+    }
+  }, 500);
+
+  if (!editingPage) return null;
+
+  return (
+    <PanelFrame
+      header={
+        <PanelHeader>
+          <div className="flex h-14 items-center justify-between gap-3 px-4">
+            <input
+              value={title}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                debouncedSave(event.target.value);
+              }}
+              placeholder={t("titlePlaceholder")}
+              className="h-8 min-w-0 flex-1 border-none bg-transparent px-0 text-sm font-medium outline-none placeholder:text-muted-foreground"
+            />
+            <div className="flex shrink-0 items-center gap-2">
+              {onToggleFullscreen ? (
+                <ToolbarButton
+                  onClick={onToggleFullscreen}
+                  label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+                  pressed={isFullscreen}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </ToolbarButton>
+              ) : null}
+              <ToolbarButton onClick={closePageEditor} label={t("closeEditor")}>
+                <X className="h-4 w-4" />
+              </ToolbarButton>
+            </div>
+          </div>
+        </PanelHeader>
+      }
+    >
+      <PageEditor pageId={editingPage.pageId} nested />
+    </PanelFrame>
+  );
+}
+
+function PanelFrame({
+  header,
+  children,
+}: {
+  header: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
+        <div className="pointer-events-auto">{header}</div>
+      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="min-h-full px-3 pb-3 pt-14 md:px-4 md:pb-4">
+          {children}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+function PanelHeader({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate overflow-hidden">
+      <BlurStack className="inset-x-0 top-0 h-14" direction="down" />
+      <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
 
 interface SiteEditorProps {
   siteId: string;
@@ -421,7 +532,7 @@ function SiteEditorInner({
                   >
                     <section className={pagePanelSurfaceClassName}>
                       {activePageDetail?.kind === "editor" ? (
-                        <EditorPageDetailPanel
+                        <PageEditorPanel
                           isFullscreen={isFullscreen}
                           onToggleFullscreen={() =>
                             setIsFullscreen(!isFullscreen)
@@ -454,7 +565,7 @@ function SiteEditorInner({
                       <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4">
                         <section className={pagePanelSurfaceClassName}>
                           {activePageDetail?.kind === "editor" ? (
-                            <EditorPageDetailPanel
+                            <PageEditorPanel
                               isFullscreen={isFullscreen}
                               onToggleFullscreen={() =>
                                 setIsFullscreen(!isFullscreen)

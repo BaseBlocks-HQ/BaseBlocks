@@ -4,7 +4,7 @@ import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
 import type { LibraryId } from "@/modules/document-library/tree-input";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
-import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

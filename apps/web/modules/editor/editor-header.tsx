@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getTeamDashboardPath } from "@/lib/routes/team-routes";
 import { getSiteOpenUrl, getSiteUrl } from "@/lib/url";
 import { cn } from "@/lib/utils";
-import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Badge } from "@baseblocks/ui/badge";
@@ -37,14 +37,17 @@ import {
 import { useTranslations } from "next-intl";
 import { IconRocket, IconWindow2 } from "nucleo-glass";
 import { useState } from "react";
-import { DeployDialog } from "../publish/deploy-dialog";
+import { DeployDialog } from "./publishing/deploy-dialog";
 import {
   DeploymentHistoryPanel,
   type DeploymentData,
-} from "../publish/deployment-history-panel";
+} from "./publishing/deployment-history-panel";
 import { EditorSiteSwitcher } from "./editor-site-switcher";
-import { ShareDialog } from "../publish/share-dialog";
-import type { AccessCodeData, SharingSettings } from "../publish/share-dialog";
+import { ShareDialog } from "./publishing/share-dialog";
+import type {
+  AccessCodeData,
+  SharingSettings,
+} from "./publishing/share-dialog";
 import { toast } from "sonner";
 
 interface EditorHeaderProps {

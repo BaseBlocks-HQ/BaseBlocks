@@ -1,13 +1,13 @@
 "use client";
 
 import { useSite } from "@/lib/data";
-import { ElementCard } from "@/modules/editor/element-picker/element-card";
-import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
+import { CollapsibleSettingsSection } from "@/modules/editor/settings/settings-panel";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { NavigationStyle } from "@baseblocks/domain/site-settings";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
-import { LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
+import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +29,39 @@ const NAVIGATION_STYLES: Array<{
   { style: "topnav", label: "Top Nav" },
   { style: "subnav", label: "Tab Bar" },
 ];
+
+function NavigationStyleCard({
+  icon: Icon,
+  isSelected,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  isSelected: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={isSelected}
+      className={cn(
+        "relative flex min-h-[7.5rem] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card text-sm font-medium shadow-sm transition-all",
+        !isSelected && "hover:border-border hover:shadow-md",
+      )}
+      onClick={onClick}
+    >
+      <Icon className="h-8 w-8 text-muted-foreground/80" />
+      <span>{label}</span>
+      {isSelected ? (
+        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
+          <Check className="h-3 w-3 text-primary-foreground" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
 
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const site = useSite(siteId);
@@ -70,7 +103,7 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
           const isSelected = currentNavStyle === styleInfo.style;
 
           return (
-            <ElementCard
+            <NavigationStyleCard
               key={styleInfo.style}
               icon={Icon}
               isSelected={isSelected}

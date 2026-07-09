@@ -1,16 +1,31 @@
 "use client";
 
-import { useEditorSiteOptional } from "@/modules/editor/state/editor-context";
-import { DndProvider, type DragEndEvent } from "@/modules/editor/drag/dnd";
+import { useEditorSiteOptional } from "@/modules/editor/editor-state";
 import type {
   AnyContent,
   LayoutSlot as LayoutSlotType,
   LayoutType,
 } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { SortableBlock } from "../blocks/sortable-block";
+import type { ReactNode } from "react";
+import { SortableBlock } from "./block-editor";
 
 const editorBlockStackClassName = "flex flex-col gap-2";
 const editorSlotActionRowClassName = "flex gap-2 pt-2";
@@ -29,6 +44,38 @@ interface LayoutSlotProps {
   onUpdateBlock: (blockId: string, content: AnyContent) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlock?: (toSlotId: string, blockId: string, toIndex: number) => void;
+}
+
+function SortableBlockGroup({
+  children,
+  items,
+  onDragEnd,
+}: {
+  children: ReactNode;
+  items: string[];
+  onDragEnd: (event: DragEndEvent) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {children}
+      </SortableContext>
+    </DndContext>
+  );
 }
 
 export function LayoutSlot({
@@ -100,7 +147,7 @@ export function LayoutSlot({
         </div>
       ) : (
         <div className={editorBlockStackClassName}>
-          <DndProvider items={blockIds} onDragEnd={handleBlockDragEnd}>
+          <SortableBlockGroup items={blockIds} onDragEnd={handleBlockDragEnd}>
             {slot.blocks.map((block) => (
               <SortableBlock
                 key={block.id}
@@ -114,7 +161,7 @@ export function LayoutSlot({
                 onRemove={() => onRemoveBlock(block.id)}
               />
             ))}
-          </DndProvider>
+          </SortableBlockGroup>
 
           <div className={editorSlotActionRowClassName}>
             <button

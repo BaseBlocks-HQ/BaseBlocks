@@ -1,12 +1,9 @@
 "use client";
 import { usePage } from "@/lib/data";
 import { useSiteRenderActions } from "@/modules/site-runtime/actions";
-import { useEditorUiOptional } from "@/modules/editor/state/editor-context";
+import { useEditorUiOptional } from "@/modules/editor/editor-state";
 import { usePages } from "@/lib/data";
-import {
-  useEditorSite,
-  useEditorUi,
-} from "@/modules/editor/state/editor-context";
+import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageContent } from "@baseblocks/domain/elements";

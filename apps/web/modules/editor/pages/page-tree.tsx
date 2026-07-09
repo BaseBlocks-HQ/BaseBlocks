@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditorSiteOptional } from "@/modules/editor/state/editor-context";
+import { useEditorSiteOptional } from "@/modules/editor/editor-state";
 import { cn } from "@/lib/utils";
 import { isPageRestricted, type PageListItem } from "@baseblocks/domain";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
@@ -8,7 +8,7 @@ import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconFile, IconHouse } from "nucleo-glass";
 import type { ReactNode } from "react";
-import { PageActionsMenu } from "./page-actions-menu";
+import { PageActionsMenu } from "./page-actions";
 
 interface PageNavigationRow {
   id: string;

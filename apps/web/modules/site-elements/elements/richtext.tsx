@@ -4,8 +4,8 @@ import "@blocknote/mantine/style.css";
 
 import { useSiteAssetUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
-import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
-import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useAutoSave } from "@/modules/editor/use-auto-save";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import type { Id } from "@baseblocks/backend";
 import type { Block } from "@blocknote/core";
 import { SideMenuExtension, SuggestionMenu } from "@blocknote/core/extensions";

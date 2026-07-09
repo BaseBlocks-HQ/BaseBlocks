@@ -3,7 +3,7 @@
 import { useImageUpload } from "@/lib/files";
 import { cn } from "@/lib/utils";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
-import { useEditorSite } from "@/modules/editor/state/editor-context";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import { DropZone } from "@/modules/file-ui";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

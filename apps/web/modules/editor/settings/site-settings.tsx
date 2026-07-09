@@ -5,7 +5,7 @@ import { useImageUpload } from "@/lib/files";
 import {
   CollapsibleSettingsSection,
   PanelSettingRow,
-} from "@/modules/editor/settings/shared/editor-panel-primitives";
+} from "@/modules/editor/settings/settings-panel";
 import { DropZone } from "@/modules/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

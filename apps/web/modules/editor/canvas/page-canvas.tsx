@@ -1,8 +1,9 @@
 "use client";
 
 import { useLayouts, usePage } from "@/lib/data";
-import { useEditorUi } from "@/modules/editor/state/editor-context";
-import { DndProvider } from "@/modules/editor/drag/dnd";
+import { useEditorUi } from "@/modules/editor/editor-state";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import type {
   AnyContent,
   LayoutBlockType,
@@ -11,14 +12,33 @@ import type {
   LayoutType,
 } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Plus } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useMutation } from "convex/react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { nanoid } from "nanoid";
 import { useTranslations } from "next-intl";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { SortableLayout } from "../layouts/layout-renderer";
-import { PageTabBar } from "./tabs/page-tab-bar";
-import { usePageEditorCommands } from "./use-page-editor-commands";
+import { SortableLayout } from "./layout-editor";
 
 const editorLayoutStackClassName = "space-y-2";
 
@@ -93,8 +113,8 @@ function LayoutsContent({
   sidebarLayouts,
 }: {
   emptyState: React.ReactNode;
-  handleMainLayoutDragEnd: Parameters<typeof DndProvider>[0]["onDragEnd"];
-  handleSidebarLayoutDragEnd: Parameters<typeof DndProvider>[0]["onDragEnd"];
+  handleMainLayoutDragEnd: (event: DragEndEvent) => void;
+  handleSidebarLayoutDragEnd: (event: DragEndEvent) => void;
   hasSidebar: boolean;
   layouts: React.ReactNode[];
   mainLayoutIds: string[];
@@ -107,23 +127,23 @@ function LayoutsContent({
       <div className="flex gap-8">
         <div className={cn("min-w-0 flex-1", editorLayoutStackClassName)}>
           {mainLayouts.length > 0 ? (
-            <DndProvider
+            <SortableGroup
               items={mainLayoutIds}
               onDragEnd={handleMainLayoutDragEnd}
             >
               {mainLayouts}
-            </DndProvider>
+            </SortableGroup>
           ) : (
             emptyState
           )}
         </div>
         <aside className={cn("w-72 flex-shrink-0", editorLayoutStackClassName)}>
-          <DndProvider
+          <SortableGroup
             items={sidebarLayoutIds}
             onDragEnd={handleSidebarLayoutDragEnd}
           >
             {sidebarLayouts}
-          </DndProvider>
+          </SortableGroup>
         </aside>
       </div>
     );
@@ -132,12 +152,224 @@ function LayoutsContent({
   return (
     <div className={editorLayoutStackClassName}>
       {layouts.length > 0 ? (
-        <DndProvider items={mainLayoutIds} onDragEnd={handleMainLayoutDragEnd}>
+        <SortableGroup
+          items={mainLayoutIds}
+          onDragEnd={handleMainLayoutDragEnd}
+        >
           {layouts}
-        </DndProvider>
+        </SortableGroup>
       ) : (
         emptyState
       )}
+    </div>
+  );
+}
+
+function SortableGroup({
+  children,
+  items,
+  onDragEnd,
+}: {
+  children: React.ReactNode;
+  items: string[];
+  onDragEnd: (event: DragEndEvent) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={onDragEnd}
+    >
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {children}
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+interface PageTab {
+  id: string;
+  label: string;
+}
+
+function TabIconButton({
+  "aria-label": ariaLabel,
+  destructive = false,
+  onClick,
+  onKeyDown,
+  children,
+}: {
+  "aria-label": string;
+  destructive?: boolean;
+  onClick: (event: MouseEvent<HTMLSpanElement>) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLSpanElement>) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      role="button"
+      tabIndex={-1}
+      aria-label={ariaLabel}
+      className={cn(
+        "flex h-4 w-4 cursor-pointer items-center justify-center rounded-sm text-muted-foreground/50",
+        destructive ? "hover:text-destructive" : "hover:text-foreground",
+      )}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+    >
+      {children}
+    </span>
+  );
+}
+
+function PageTabs({
+  activeTabId,
+  editingLabel,
+  editingTabId,
+  onAddTab,
+  onDisableTabs,
+  onFinishRenameTab,
+  onRemoveTab,
+  onStartRenameTab,
+  pageTabs,
+  setActiveTabId,
+  setEditingLabel,
+  setEditingTabId,
+  tabInputRef,
+}: {
+  activeTabId: string | null;
+  editingLabel: string;
+  editingTabId: string | null;
+  onAddTab: () => void;
+  onDisableTabs: () => void;
+  onFinishRenameTab: () => void;
+  onRemoveTab: (tabId: string) => void;
+  onStartRenameTab: (tab: PageTab) => void;
+  pageTabs: PageTab[];
+  setActiveTabId: (tabId: string | null) => void;
+  setEditingLabel: (label: string) => void;
+  setEditingTabId: (tabId: string | null) => void;
+  tabInputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const { clearSelection } = useEditorUi();
+  const t = useTranslations("editor.pageTabBar");
+
+  return (
+    <div
+      className="group/tabbar mb-6 flex items-center justify-center gap-2"
+      role="presentation"
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      <div className="opacity-0 transition-opacity group-hover/tabbar:opacity-100">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          onClick={onDisableTabs}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      <Tabs
+        value={activeTabId ?? undefined}
+        onValueChange={(value) => {
+          setActiveTabId(value);
+          clearSelection();
+        }}
+      >
+        <TabsList>
+          {pageTabs.map((tab, index) => {
+            const isEditing = editingTabId === tab.id;
+            const canRemove = index >= 2;
+
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="group/tab flex items-center gap-1.5 px-3"
+              >
+                {isEditing ? (
+                  <Input
+                    ref={tabInputRef}
+                    value={editingLabel}
+                    onChange={(event) => setEditingLabel(event.target.value)}
+                    onBlur={onFinishRenameTab}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") onFinishRenameTab();
+                      if (event.key === "Escape") setEditingTabId(null);
+                    }}
+                    className="h-5 w-20 border-none px-1 py-0 text-sm shadow-none focus-visible:ring-1"
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                ) : (
+                  <>
+                    <span className="select-none">{tab.label}</span>
+                    <div className="hidden items-center gap-0.5 group-hover/tab:flex">
+                      <TabIconButton
+                        aria-label={t("renameTab")}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onStartRenameTab(tab);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onStartRenameTab(tab);
+                          }
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </TabIconButton>
+                      {canRemove ? (
+                        <TabIconButton
+                          aria-label={t("removeTab")}
+                          destructive
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onRemoveTab(tab.id);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onRemoveTab(tab.id);
+                            }
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </TabIconButton>
+                      ) : null}
+                    </div>
+                  </>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </Tabs>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+        onClick={onAddTab}
+        aria-label={t("addTab")}
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }
@@ -244,7 +476,30 @@ export function PageEditor({
 
   const mainLayoutIds = mainLayouts.map((s) => s.id);
   const sidebarLayoutIds = sidebarLayouts.map((s) => s.id);
-  const commands = usePageEditorCommands(pageId);
+  const createLayout = useMutation(api.layouts.mutations.create);
+  const removeLayout = useMutation(api.layouts.mutations.remove);
+  const reorderLayouts = useMutation(api.layouts.mutations.reorder);
+  const updateLayoutSettings = useMutation(
+    api.layouts.mutations.updateSettings,
+  );
+  const updateBlock = useMutation(api.layouts.mutations.updateBlockInSlot);
+  const removeBlock = useMutation(api.layouts.mutations.removeBlockFromSlot);
+  const moveBlock = useMutation(api.layouts.mutations.moveBlock);
+  const updatePageTabs = useMutation(api.pages.mutations.updatePageTabs);
+  const disablePageTabs = useMutation(api.pages.mutations.disablePageTabs);
+
+  const saveLayoutOrder = async (
+    draggedIds: string[],
+    otherIds: string[],
+    oldIndex: number,
+    newIndex: number,
+  ) => {
+    const nextDraggedOrder = arrayMove(draggedIds, oldIndex, newIndex);
+    await reorderLayouts({
+      pageId: pageId as Id<"pages">,
+      layoutIds: [...nextDraggedOrder, ...otherIds] as Id<"layouts">[],
+    });
+  };
 
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
@@ -261,12 +516,7 @@ export function PageEditor({
     const newIndex = mainLayoutIds.indexOf(String(over.id));
     if (oldIndex === -1 || newIndex === -1) return;
 
-    await commands.reorderLayouts(
-      mainLayoutIds,
-      sidebarLayoutIds,
-      oldIndex,
-      newIndex,
-    );
+    await saveLayoutOrder(mainLayoutIds, sidebarLayoutIds, oldIndex, newIndex);
   };
 
   const handleSidebarLayoutDragEnd = async (event: {
@@ -280,16 +530,15 @@ export function PageEditor({
     const newIndex = sidebarLayoutIds.indexOf(String(over.id));
     if (oldIndex === -1 || newIndex === -1) return;
 
-    await commands.reorderLayouts(
-      sidebarLayoutIds,
-      mainLayoutIds,
-      oldIndex,
-      newIndex,
-    );
+    await saveLayoutOrder(sidebarLayoutIds, mainLayoutIds, oldIndex, newIndex);
   };
 
   const handleAddLayout = async (type: LayoutType) => {
-    const created = await commands.addLayout(type, resolvedActiveTabId);
+    const created = await createLayout({
+      pageId: pageId as Id<"pages">,
+      type,
+      tabId: resolvedActiveTabId ?? undefined,
+    });
 
     if (created.firstSlotId) {
       const firstSlotId = created.firstSlotId;
@@ -301,23 +550,31 @@ export function PageEditor({
   };
 
   const handleRemoveLayout = async (layoutId: string) => {
-    await commands.removeLayout(layoutId);
+    await removeLayout({ layoutId: layoutId as Id<"layouts"> });
     clearSelection();
   };
 
   const handleDisableTabs = async () => {
-    await commands.disableTabs();
+    await disablePageTabs({ pageId: pageId as Id<"pages"> });
     setActiveTabId(null);
   };
 
   const handleAddTab = async () => {
-    const tab = await commands.addTab(pageTabs);
+    const tab = { id: nanoid(10), label: `Tab ${pageTabs.length + 1}` };
+    await updatePageTabs({
+      pageId: pageId as Id<"pages">,
+      pageTabs: [...pageTabs, tab],
+    });
     setActiveTabId(tab.id);
   };
 
   const handleRemoveTab = async (tabId: string) => {
     if (pageTabs.length <= 2) return;
-    const nextTabs = await commands.removeTab(pageTabs, tabId);
+    const nextTabs = pageTabs.filter((tab) => tab.id !== tabId);
+    await updatePageTabs({
+      pageId: pageId as Id<"pages">,
+      pageTabs: nextTabs,
+    });
     if (resolvedActiveTabId === tabId) {
       setActiveTabId(nextTabs[0]?.id ?? null);
     }
@@ -331,7 +588,14 @@ export function PageEditor({
 
   const handleFinishRenameTab = async () => {
     if (!editingTabId) return;
-    await commands.renameTab(pageTabs, editingTabId, editingLabel);
+    await updatePageTabs({
+      pageId: pageId as Id<"pages">,
+      pageTabs: pageTabs.map((tab) =>
+        tab.id === editingTabId
+          ? { ...tab, label: editingLabel.trim() || tab.label }
+          : tab,
+      ),
+    });
     setEditingTabId(null);
   };
 
@@ -365,17 +629,35 @@ export function PageEditor({
       }
       onAddBlock={(slotId) => handleSelectSlot(layout.id, slotId)}
       onUpdateBlock={(slotId, blockId, content) =>
-        commands.updateBlock(layout.id, slotId, blockId, content)
+        updateBlock({
+          layoutId: layout.id as Id<"layouts">,
+          slotId,
+          blockId,
+          content,
+        })
       }
       onRemoveBlock={(slotId, blockId) =>
-        commands.removeBlock(layout.id, slotId, blockId)
+        removeBlock({
+          layoutId: layout.id as Id<"layouts">,
+          slotId,
+          blockId,
+        })
       }
       onMoveBlock={(fromSlotId, toSlotId, blockId, toIndex) =>
-        commands.moveBlock(layout.id, fromSlotId, toSlotId, blockId, toIndex)
+        moveBlock({
+          layoutId: layout.id as Id<"layouts">,
+          fromSlotId,
+          toSlotId,
+          blockId,
+          toIndex,
+        })
       }
       onRemove={() => handleRemoveLayout(layout.id)}
       onUpdateSettings={(settings) =>
-        commands.updateSettings(layout.id, settings)
+        updateLayoutSettings({
+          layoutId: layout.id as Id<"layouts">,
+          settings,
+        })
       }
     />
   );
@@ -423,7 +705,7 @@ export function PageEditor({
         )}
 
         {hasTabs && (
-          <PageTabBar
+          <PageTabs
             pageTabs={pageTabs}
             activeTabId={resolvedActiveTabId}
             setActiveTabId={setActiveTabId}

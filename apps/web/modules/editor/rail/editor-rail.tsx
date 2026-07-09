@@ -1,17 +1,13 @@
 "use client";
 
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import { ElementCard } from "@/modules/editor/element-picker/element-card";
-import { PageTree } from "@/modules/editor/navigation/page-tree";
+import { PageTree } from "@/modules/editor/pages/page-tree";
 import { CreatePageDialog } from "@/modules/editor/pages/create-page-dialog";
-import { CustomizationConfigPanel } from "@/modules/editor/settings/customization/config-panel";
-import { NavigationConfigPanel } from "@/modules/editor/settings/navigation/config-panel";
-import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
-import { SiteConfigPanel } from "@/modules/editor/settings/site/config-panel";
-import {
-  useEditorSite,
-  useEditorUi,
-} from "@/modules/editor/state/editor-context";
+import { CustomizationConfigPanel } from "@/modules/editor/settings/customization-settings";
+import { NavigationConfigPanel } from "@/modules/editor/settings/navigation-settings";
+import { CollapsibleSettingsSection } from "@/modules/editor/settings/settings-panel";
+import { SiteConfigPanel } from "@/modules/editor/settings/site-settings";
+import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
 import {
   type AnyRegistryEntry,
   type ElementCategory,
@@ -28,7 +24,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { PanelTop } from "lucide-react";
+import { Check, PanelTop } from "lucide-react";
+import type { ComponentType } from "react";
 import {
   IconColorPalette,
   IconFile,
@@ -38,6 +35,7 @@ import {
   IconSquareGrid2,
 } from "nucleo-glass";
 import { type ReactNode, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 
 interface EditorFloatingRailProps {
   site: {
@@ -177,7 +175,7 @@ function ElementGrid({
     <div className="p-4">
       <CollapsibleSettingsSection title={title} contentVariant="stack">
         {entries.map((entry) => (
-          <ElementCard
+          <PickerCard
             key={entry.type}
             icon={entry.icon}
             label={entry.label}
@@ -187,6 +185,55 @@ function ElementGrid({
         ))}
       </CollapsibleSettingsSection>
     </div>
+  );
+}
+
+function PickerCard({
+  icon: Icon,
+  isSelected,
+  label,
+  onClick,
+  preview: Preview,
+}: {
+  icon: LucideIcon;
+  isSelected?: boolean;
+  label: string;
+  onClick: () => void;
+  preview?: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={isSelected}
+      className={cn(
+        "relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card text-left shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        !isSelected && "hover:border-border hover:shadow-md",
+      )}
+      onClick={onClick}
+    >
+      <div className="relative aspect-[7/4] min-h-[120px] w-full overflow-hidden rounded-lg bg-muted/35 ring-1 ring-border/25 dark:bg-muted/25">
+        <div className="absolute inset-0">
+          {Preview ? (
+            <Preview className="h-full w-full" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Icon className="h-8 w-8 text-muted-foreground/80" />
+            </div>
+          )}
+        </div>
+        {isSelected ? (
+          <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-sm">
+            <Check className="h-3 w-3 text-primary-foreground" />
+          </div>
+        ) : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-background/95 via-background/55 to-transparent px-2 pb-1.5 pt-7">
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium leading-tight text-foreground/95">
+            {label}
+          </span>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -319,7 +366,7 @@ function RailPanel({
             />
             {activePanel === "layouts" && onEnableTabs ? (
               <div className="px-4 pb-4">
-                <ElementCard
+                <PickerCard
                   icon={PanelTop}
                   label="Tabs"
                   onClick={onEnableTabs}
