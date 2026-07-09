@@ -1,6 +1,6 @@
 "use client";
 
-import { useImageUpload } from "@/modules/files";
+import { useImageUpload } from "@/modules/site-elements/use-image-upload";
 import {
   CollapsibleSettingsSection,
   PanelSettingRow,

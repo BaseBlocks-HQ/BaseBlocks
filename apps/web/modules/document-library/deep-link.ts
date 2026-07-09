@@ -1,5 +1,3 @@
-import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
-
 export const FILE_SEARCH_PARAM = "file";
 
 export function buildFileDeepLinkPath(
@@ -7,9 +5,15 @@ export function buildFileDeepLinkPath(
   currentSearchParams: string,
   documentId: string | null,
 ): string {
-  return buildPathWithUpdatedSearchParams(pathname, currentSearchParams, {
-    [FILE_SEARCH_PARAM]: documentId,
-  });
+  const params = new URLSearchParams(currentSearchParams);
+  if (documentId) {
+    params.set(FILE_SEARCH_PARAM, documentId);
+  } else {
+    params.delete(FILE_SEARCH_PARAM);
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 export function toAbsoluteBrowserUrl(path: string): string {

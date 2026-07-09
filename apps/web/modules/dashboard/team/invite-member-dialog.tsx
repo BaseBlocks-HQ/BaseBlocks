@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/modules/auth/client";
-import { getAuthClientDataOrThrow } from "@/modules/auth/result";
+import { authClient } from "@/app/_auth/client";
+import { getAuthClientDataOrThrow } from "@/app/_auth/result";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,

@@ -1,7 +1,6 @@
 import createIntlMiddleware from "next-intl/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
-import { extractTeamSlug } from "./modules/routing/domains";
 
 // Create the next-intl middleware
 const intlMiddleware = createIntlMiddleware(routing);
@@ -26,6 +25,34 @@ function isAppRoute(path: string): boolean {
 }
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+
+function extractTeamSlug(host: string): string | null {
+  const hostname = host.split(":")[0] || "";
+
+  if (hostname.includes(".localhost")) {
+    return hostname.split(".")[0] || null;
+  }
+
+  if (hostname.includes("localhost") || hostname.includes("127.0.0.1")) {
+    return null;
+  }
+
+  const rootDomain = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
+
+  if (
+    hostname !== rootDomain &&
+    hostname !== `www.${rootDomain}` &&
+    hostname.endsWith(`.${rootDomain}`)
+  ) {
+    return hostname.replace(`.${rootDomain}`, "");
+  }
+
+  if (hostname !== rootDomain && hostname !== `www.${rootDomain}`) {
+    return `custom:${hostname}`;
+  }
+
+  return null;
+}
 
 // Returns true only for the canonical root domain or its subdomains (production).
 // Localhost, Vercel preview, and other non-production hosts return false.

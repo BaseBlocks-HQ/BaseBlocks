@@ -2,8 +2,7 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { authClient } from "@/modules/auth/client";
-import { useHaptic } from "@/modules/ui/use-haptic";
+import { authClient } from "@/app/_auth/client";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
 import { api } from "@baseblocks/backend";
@@ -47,7 +46,6 @@ export function OnboardingPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
-  const haptic = useHaptic();
   const createTeam = useMutation(api.teams.mutations.create);
   const locale = useLocale() as Locale;
   const pathname = usePathname();
@@ -80,12 +78,10 @@ export function OnboardingPageClient() {
           slug,
           organizationId,
         }).then(() => {
-          haptic.trigger("success");
           router.push("/dashboard");
         });
       })
       .catch((err) => {
-        haptic.trigger("error");
         setError(err instanceof Error ? err.message : t("common.error"));
       })
       .finally(() => {

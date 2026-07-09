@@ -1,6 +1,6 @@
-import { getToken } from "@/modules/auth/server";
-import { getServerConvexClient } from "@/modules/convex/server";
-import { getFileUrl } from "@/modules/files/server";
+import { getToken } from "@/app/_auth/server";
+import { getServerConvexClient } from "@/app/_convex/server";
+import { getFileUrl } from "@/app/_storage/server";
 import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";

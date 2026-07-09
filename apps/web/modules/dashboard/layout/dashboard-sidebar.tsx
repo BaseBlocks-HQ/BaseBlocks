@@ -2,7 +2,7 @@
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { authClient } from "@/modules/auth/client";
+import { authClient } from "@/app/_auth/client";
 import type { Locale } from "@baseblocks/i18n";
 import {
   getTeamDashboardPath,

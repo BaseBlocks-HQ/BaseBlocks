@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { extractTeamSlug } from "@/modules/routing/domains";
 /**
  * Dynamic favicon handler for multi-tenant subdomains.
  *
@@ -14,6 +13,36 @@ import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+
+function extractTeamSlug(host: string): string | null {
+  const hostname = host.split(":")[0] || "";
+
+  if (hostname.includes(".localhost")) {
+    return hostname.split(".")[0] || null;
+  }
+
+  if (hostname.includes("localhost") || hostname.includes("127.0.0.1")) {
+    return null;
+  }
+
+  const rootDomain = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
+
+  if (
+    hostname !== rootDomain &&
+    hostname !== `www.${rootDomain}` &&
+    hostname.endsWith(`.${rootDomain}`)
+  ) {
+    return hostname.replace(`.${rootDomain}`, "");
+  }
+
+  if (hostname !== rootDomain && hostname !== `www.${rootDomain}`) {
+    return `custom:${hostname}`;
+  }
+
+  return null;
+}
 
 let defaultFaviconCache: ArrayBuffer | null = null;
 

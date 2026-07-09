@@ -2,7 +2,7 @@
 
 import "@blocknote/mantine/style.css";
 
-import { useSiteAssetUpload } from "@/modules/files";
+import { useSiteAssetUpload } from "@/modules/site-elements/use-site-asset-upload";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useAutoSave } from "@/modules/editor/use-auto-save";
 import { useEditorSite } from "@/modules/editor/editor-state";

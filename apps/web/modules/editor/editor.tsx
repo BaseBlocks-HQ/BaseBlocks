@@ -1,8 +1,6 @@
 "use client";
 
 import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
-import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
-import { useHaptic } from "@/modules/ui/use-haptic";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { EditorProvider } from "@/modules/editor/editor-state";
 import { useEditorUi } from "@/modules/editor/editor-state";
@@ -48,6 +46,22 @@ const pagePanelSurfaceClassName =
 
 const hiddenSplitHandleClassName =
   "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
+
+function buildEditorPath(
+  pathname: string,
+  currentSearchParams: string,
+  updates: Record<string, string | null>,
+) {
+  const params = new URLSearchParams(currentSearchParams);
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
 
 function PageEditorPanel({
   isFullscreen,
@@ -268,17 +282,14 @@ function SiteEditorInner({
     }
   }, [portalContainer, customizationStyles, isCustomized]);
 
-  const haptic = useHaptic();
   const publishSite = useMutation(api.sites.mutations.publish);
   const unpublishSite = useMutation(api.sites.mutations.unpublish);
 
   const handlePublish = async () => {
     try {
       await publishSite({ siteId: siteId as Id<"sites"> });
-      haptic.trigger("success");
       toast.success("Site published");
     } catch (_error) {
-      haptic.trigger("error");
       toast.error("Failed to publish site");
     }
   };
@@ -286,10 +297,8 @@ function SiteEditorInner({
   const handleUnpublish = async () => {
     try {
       await unpublishSite({ siteId: siteId as Id<"sites"> });
-      haptic.trigger("warning");
       toast.success("Site unpublished");
     } catch (_error) {
-      haptic.trigger("error");
       toast.error("Failed to unpublish site");
     }
   };
@@ -299,7 +308,7 @@ function SiteEditorInner({
   };
 
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildPathWithUpdatedSearchParams(
+    const nextUrl = buildEditorPath(
       pathname,
       searchParams.toString(),
       updates,
@@ -329,7 +338,6 @@ function SiteEditorInner({
   const handleAddLayout = async (type: LayoutType) => {
     if (!targetPageId) return;
 
-    haptic.trigger("heavy");
     const created = await createLayoutMutation({
       pageId: targetPageId,
       type,
@@ -350,7 +358,6 @@ function SiteEditorInner({
     if (type === "page") {
       const blockId = nanoid(10);
       try {
-        haptic.trigger("heavy");
         await addPageBlockMutation({
           layoutId: selection.layoutId as Id<"layouts">,
           slotId: selection.slotId,
@@ -359,7 +366,6 @@ function SiteEditorInner({
           slug: `page-${blockId.slice(0, 8)}`,
         });
       } catch (_error) {
-        haptic.trigger("error");
         toast.error("Failed to create page");
       }
       return;
@@ -371,7 +377,6 @@ function SiteEditorInner({
     const block = createBlockDraft(type as LayoutBlockType, content, () =>
       nanoid(10),
     );
-    haptic.trigger("heavy");
     await addBlockMutation({
       layoutId: selection.layoutId as Id<"layouts">,
       slotId: selection.slotId,
@@ -386,7 +391,6 @@ function SiteEditorInner({
   const handleEnableTabs = async () => {
     if (!targetPageId) return;
 
-    haptic.trigger("heavy");
     await enablePageTabsMutation({
       pageId: targetPageId,
       tabs: [
@@ -627,7 +631,7 @@ function SiteEditorShell({
   const editingPageId = searchParams.get("editorPanelPage");
 
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildPathWithUpdatedSearchParams(
+    const nextUrl = buildEditorPath(
       pathname,
       searchParams.toString(),
       updates,

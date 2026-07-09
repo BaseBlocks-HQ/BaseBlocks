@@ -1,6 +1,6 @@
 "use client";
 
-import { authClient } from "@/modules/auth/client";
+import { authClient } from "@/app/_auth/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { TeamRole } from "@baseblocks/domain";

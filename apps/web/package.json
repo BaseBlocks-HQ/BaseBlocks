@@ -16,8 +16,8 @@
     "@aws-sdk/s3-presigned-post": "^3.1078.0",
     "@aws-sdk/s3-request-presigner": "^3.1078.0",
     "@baseblocks/backend": "workspace:*",
-    "@baseblocks/i18n": "workspace:*",
     "@baseblocks/domain": "workspace:*",
+    "@baseblocks/i18n": "workspace:*",
     "@baseblocks/ui": "workspace:*",
     "@blocknote/core": "^0.46.2",
     "@blocknote/mantine": "^0.46.2",
@@ -64,7 +64,6 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "swr": "^2.4.1",
-    "web-haptics": "^0.0.6",
     "yauzl": "^3.3.1",
     "zod": "^4.4.3"
   },

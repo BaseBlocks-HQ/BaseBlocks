@@ -1,6 +1,5 @@
 "use client";
 
-import { useHaptic } from "@/modules/ui/use-haptic";
 import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -41,7 +40,6 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
 
   const [slugLockedByUser, setSlugLockedByUser] = useState(false);
 
-  const haptic = useHaptic();
   const createPage = useMutation(api.pages.mutations.create);
   const pages = useQuery(
     api.pages.queries.list,
@@ -90,7 +88,6 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         slug: slugValue,
         parentId: parentId as Id<"pages"> | undefined,
       });
-      haptic.trigger("success");
       setSlugLockedByUser(false);
       setDialogState({
         open: false,
@@ -102,7 +99,6 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       toast.success(t("pageCreated"));
     } catch (err) {
       const message = err instanceof Error ? err.message : t("createFailed");
-      haptic.trigger("error");
       setDialogState((current) => ({
         ...current,
         error: message,

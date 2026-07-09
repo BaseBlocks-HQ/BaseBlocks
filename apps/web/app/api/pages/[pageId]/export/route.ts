@@ -1,4 +1,4 @@
-import { getServerConvexClient } from "@/modules/convex/server";
+import { getServerConvexClient } from "@/app/_convex/server";
 import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import {
   buildPageExportText,

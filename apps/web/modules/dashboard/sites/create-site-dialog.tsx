@@ -1,6 +1,5 @@
 "use client";
 
-import { useHaptic } from "@/modules/ui/use-haptic";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -100,7 +99,6 @@ export function CreateSiteDialog({
   teamId,
 }: CreateSiteDialogProps) {
   const t = useTranslations();
-  const haptic = useHaptic();
   const [open, setOpen] = useState(false);
   const [formState, dispatch] = useReducer(
     createSiteFormReducer,
@@ -173,11 +171,9 @@ export function CreateSiteDialog({
         slug: trimmedSlug,
         teamId,
       });
-      haptic.trigger("success");
       setOpen(false);
       resetForm();
     } catch (err) {
-      haptic.trigger("error");
       dispatch({
         type: "errorChanged",
         value: err instanceof Error ? err.message : t("common.error"),

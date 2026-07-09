@@ -3,7 +3,7 @@ import {
   baseBlocksOgContentType,
   baseBlocksOgSize,
   createBaseBlocksOpenGraphImage,
-} from "@/modules/og/opengraph-image";
+} from "@/app/_og/opengraph-image";
 
 export const alt = baseBlocksOgAlt;
 export const size = baseBlocksOgSize;

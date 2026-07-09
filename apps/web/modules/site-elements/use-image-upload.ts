@@ -1,7 +1,7 @@
 "use client";
 
 import type { Id } from "@baseblocks/backend";
-import { useSiteAssetUpload } from "./site-asset-upload";
+import { useSiteAssetUpload } from "@/modules/site-elements/use-site-asset-upload";
 
 interface ImageUploadResult {
   url: string;

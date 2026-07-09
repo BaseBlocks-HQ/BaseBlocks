@@ -1,7 +1,7 @@
 import { Files } from "files-sdk";
 import { s3 } from "files-sdk/s3";
 
-export function requireFilesEnv(name: string): string {
+function requireFilesEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(`Missing ${name}`);
@@ -9,12 +9,8 @@ export function requireFilesEnv(name: string): string {
   return value;
 }
 
-export function getFilesBucketName(): string {
+function getFilesBucketName(): string {
   return requireFilesEnv("FILES_BUCKET");
-}
-
-export function getFilesProviderName(): string {
-  return process.env.FILES_ADAPTER?.trim() || "s3";
 }
 
 export function getFilesMaxUploadSize(): number | null {
@@ -77,8 +73,4 @@ export async function getFileUrl(args: {
   return await getFiles().url(args.key, {
     expiresIn: args.expiresIn,
   });
-}
-
-export async function deleteFile(key: string): Promise<void> {
-  await getFiles().delete(key);
 }

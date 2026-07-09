@@ -1,4 +1,4 @@
-import { createBaseBlocksOpenGraphImage } from "@/modules/og/opengraph-image";
+import { createBaseBlocksOpenGraphImage } from "@/app/_og/opengraph-image";
 import type { NextRequest } from "next/server";
 
 export function GET(request: NextRequest) {

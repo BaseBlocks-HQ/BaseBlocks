@@ -5,7 +5,7 @@ import {
   buildFileDeepLinkPath,
   toAbsoluteBrowserUrl,
 } from "@/modules/document-library/deep-link";
-import { useFileUpload } from "@/modules/files";
+import { useFileUpload } from "@/modules/document-library/use-document-upload";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview as FilePreviewPanel,

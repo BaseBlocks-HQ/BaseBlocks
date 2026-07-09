@@ -10,8 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { authClient } from "@/modules/auth/client";
-import { convex } from "@/modules/convex/client";
+import { authClient } from "@/app/_auth/client";
+import { convex } from "@/app/_convex/client";
 
 const InitialTokenContext = createContext<string | null>(null);
 

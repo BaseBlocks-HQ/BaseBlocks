@@ -1,5 +1,5 @@
-import { getToken } from "@/modules/auth/server";
-import { ConvexClientProvider } from "@/modules/convex/provider";
+import { getToken } from "@/app/_auth/server";
+import { ConvexClientProvider } from "@/app/_convex/provider";
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 import { ClientAuthBoundary } from "./client-auth-boundary";

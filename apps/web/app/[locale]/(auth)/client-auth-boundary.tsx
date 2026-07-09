@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/modules/auth/client";
-import { isAuthError } from "@/modules/auth/errors";
+import { authClient } from "@/app/_auth/client";
+import { isAuthError } from "@/app/_auth/errors";
 import { api } from "@baseblocks/backend";
 import { AuthBoundary } from "@convex-dev/better-auth/react";
 import { useRouter } from "next/navigation";

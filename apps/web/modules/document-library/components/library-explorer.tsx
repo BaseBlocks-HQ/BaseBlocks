@@ -19,7 +19,7 @@ import type {
   LibraryFile,
 } from "@/modules/document-library/tree-input";
 import { buildLibraryTreeInput } from "@/modules/document-library/tree-input";
-import { useFileUpload } from "@/modules/files/hooks";
+import { useFileUpload } from "@/modules/document-library/use-document-upload";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";

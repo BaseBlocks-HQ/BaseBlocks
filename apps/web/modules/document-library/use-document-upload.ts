@@ -4,7 +4,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { type UploadProgress, filesClient } from "./client";
+import { type UploadProgress, filesClient } from "@/app/_storage/client";
 
 export interface UploadState {
   isUploading: boolean;

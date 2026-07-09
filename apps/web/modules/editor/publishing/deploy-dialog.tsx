@@ -1,6 +1,5 @@
 "use client";
 
-import { useHaptic } from "@/modules/ui/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -30,14 +29,11 @@ export function DeployDialog({
   const tCommon = useTranslations("common");
   const [notes, setNotes] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
-  const haptic = useHaptic();
 
   const handleDeploy = async () => {
-    haptic.trigger("heavy");
     setIsDeploying(true);
     void onDeploy(notes.trim() || undefined)
       .then(() => {
-        haptic.trigger("success");
         setNotes("");
         onOpenChange(false);
       })

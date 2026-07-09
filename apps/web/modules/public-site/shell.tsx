@@ -3,7 +3,7 @@
 import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { getPageLink } from "@/modules/public-site/urls";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { usePageExpandState } from "@/modules/navigation/use-page-expand-state";
+import { usePageExpandState } from "@/modules/site-runtime/page-expand-state";
 import { SearchBox } from "@/modules/site-search";
 import { SiteRenderActionsProvider } from "@/modules/site-runtime/actions";
 import { useCustomizationStyles } from "@/modules/site-runtime/customization";

@@ -1,5 +1,5 @@
-import { getToken } from "@/modules/auth/server";
-import { ConvexClientProvider } from "@/modules/convex/provider";
+import { getToken } from "@/app/_auth/server";
+import { ConvexClientProvider } from "@/app/_convex/provider";
 import type { ReactNode } from "react";
 
 export default async function PublicLayout({

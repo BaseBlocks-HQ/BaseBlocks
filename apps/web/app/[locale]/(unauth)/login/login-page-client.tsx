@@ -1,8 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { authClient } from "@/modules/auth/client";
-import { useHaptic } from "@/modules/ui/use-haptic";
+import { authClient } from "@/app/_auth/client";
 import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -43,10 +42,8 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
     null,
   );
   const t = useTranslations();
-  const haptic = useHaptic();
 
   const handleSocialSignIn = async (provider: SocialProvider) => {
-    haptic.trigger("heavy");
     setError(null);
     setActiveProvider(provider);
 
@@ -57,7 +54,6 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
     });
 
     if (errorMessage) {
-      haptic.trigger("error");
       setError(errorMessage);
       setActiveProvider(null);
     }

@@ -1,11 +1,28 @@
 "use client";
 
-import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export interface ViewingPage {
   pageId: string;
   searchTerm?: string;
+}
+
+function buildPagePanelPath(
+  pathname: string,
+  currentSearchParams: string,
+  panelPage: string | null,
+  panelSearch: string | null,
+) {
+  const params = new URLSearchParams(currentSearchParams);
+
+  if (panelPage) params.set("panelPage", panelPage);
+  else params.delete("panelPage");
+
+  if (panelSearch) params.set("panelSearch", panelSearch);
+  else params.delete("panelSearch");
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 export function usePagePanelState() {
@@ -15,26 +32,22 @@ export function usePagePanelState() {
 
   const openPage = (pageId: string, options?: { searchTerm?: string }) => {
     const trimmedSearchTerm = options?.searchTerm?.trim();
-    const nextUrl = buildPathWithUpdatedSearchParams(
+    const nextUrl = buildPagePanelPath(
       pathname,
       searchParams.toString(),
-      {
-        panelPage: pageId,
-        panelSearch: trimmedSearchTerm || null,
-      },
+      pageId,
+      trimmedSearchTerm || null,
     );
 
     router.replace(nextUrl, { scroll: false });
   };
 
   const closePage = () => {
-    const nextUrl = buildPathWithUpdatedSearchParams(
+    const nextUrl = buildPagePanelPath(
       pathname,
       searchParams.toString(),
-      {
-        panelPage: null,
-        panelSearch: null,
-      },
+      null,
+      null,
     );
 
     router.replace(nextUrl, { scroll: false });

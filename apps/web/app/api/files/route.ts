@@ -1,7 +1,8 @@
-import { getToken } from "@/modules/auth/server";
-import { canUploadToSite } from "@/modules/convex/server";
+import { getToken } from "@/app/_auth/server";
+import { getServerConvexClient } from "@/app/_convex/server";
 import { parseFileKey } from "@baseblocks/domain";
-import { getFiles, getFilesMaxUploadSize } from "@/modules/files/server";
+import { getFiles, getFilesMaxUploadSize } from "@/app/_storage/server";
+import { api } from "@baseblocks/backend";
 import { FilesError } from "files-sdk";
 import { createFilesRouter, type FilesApi } from "files-sdk/api";
 
@@ -42,7 +43,12 @@ function getRouter() {
         throw new FilesError("Unauthorized", "Not authenticated");
       }
 
-      const canUpload = await canUploadToSite(parsed.siteId, token);
+      const canUpload = await getServerConvexClient(token).query(
+        api.assets.queries.canUploadToSite,
+        {
+          siteId: parsed.siteId as never,
+        },
+      );
       if (!canUpload) {
         throw new FilesError("Unauthorized", "Not authorized");
       }

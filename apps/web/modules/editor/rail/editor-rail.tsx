@@ -1,6 +1,6 @@
 "use client";
 
-import { usePageExpandState } from "@/modules/navigation/use-page-expand-state";
+import { usePageExpandState } from "@/modules/site-runtime/page-expand-state";
 import { PageTree } from "@/modules/editor/pages/page-tree";
 import { CreatePageDialog } from "@/modules/editor/pages/create-page-dialog";
 import { CustomizationConfigPanel } from "@/modules/editor/settings/customization-settings";

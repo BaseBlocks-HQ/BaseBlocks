@@ -67,7 +67,6 @@
         "server-only": "^0.0.1",
         "sonner": "^2.0.7",
         "swr": "^2.4.1",
-        "web-haptics": "^0.0.6",
         "yauzl": "^3.3.1",
         "zod": "^4.4.3",
       },
@@ -1771,8 +1770,6 @@
     "w3c-keyname": ["w3c-keyname@2.2.8", "", {}, "sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ=="],
 
     "warning": ["warning@4.0.3", "", { "dependencies": { "loose-envify": "^1.0.0" } }, "sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w=="],
-
-    "web-haptics": ["web-haptics@0.0.6", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18", "svelte": ">=4", "vue": ">=3" }, "optionalPeers": ["react", "react-dom", "svelte", "vue"] }, "sha512-eCzcf1LDi20+Fr0x9V3OkX92k0gxEQXaHajmhXHitsnk6SxPeshv8TBtBRqxyst8HI1uf2FyFVE7QS3jo1gkrw=="],
 
     "web-namespaces": ["web-namespaces@2.0.1", "", {}, "sha512-bKr1DkiNa2krS7qxNtdrtHAmzuYGFQLiQ13TsorsdT6ULTkPLKuu5+GsFpDlg6JFjUTwX2DyhMPG2be8uPrqsQ=="],
 
