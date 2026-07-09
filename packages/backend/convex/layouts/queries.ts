@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
-import { canViewerAccessPublishedPageById } from "../lib/pageAccess";
+import { getActiveLayoutRevisionsForPage } from "../deployments/snapshots";
+import { canViewerAccessPublishedPageById } from "../sharing/pageAccess";
 
 // Get all layouts for a page (draft version - for editor, authenticated)
 export const list = query({
@@ -43,28 +44,9 @@ export const listPublished = query({
       return [];
     }
 
-    const layouts = await ctx.db
-      .query("layouts")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    // Filter to only deployed layouts and use published fields
-    const deployedLayouts = layouts.filter((l) => l.isDeployed);
-
-    // Sort by published order (fall back to draft order for backwards compat)
-    deployedLayouts.sort(
-      (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-    );
-
-    // Return with published fields substituted
-    return deployedLayouts.map((layout) => ({
-      ...layout,
-      type: layout.publishedType ?? layout.type,
-      order: layout.publishedOrder ?? layout.order,
-      settings: layout.publishedSettings ?? layout.settings,
-      tabId: layout.publishedTabId ?? layout.tabId,
-      slots: layout.publishedSlots ?? [],
-    }));
+    const layouts = await getActiveLayoutRevisionsForPage(ctx, pageId);
+    layouts.sort((a, b) => a.order - b.order);
+    return layouts;
   },
 });
 
@@ -91,29 +73,27 @@ export const get = query({
 export const getActiveLibraryIds = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
-    // Get all pages for this site
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const activeDeployment = await ctx.db
+      .query("deployments")
+      .withIndex("by_site_status", (q) =>
+        q.eq("siteId", siteId).eq("status", "active"),
+      )
+      .first();
+    if (!activeDeployment) return [];
 
     const libraryIds = new Set<string>();
+    const layouts = await ctx.db
+      .query("layoutRevisions")
+      .withIndex("by_deployment", (q) =>
+        q.eq("deploymentId", activeDeployment._id),
+      )
+      .collect();
 
-    // Scan all layouts for library blocks
-    for (const page of pages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-
-      for (const layout of layouts) {
-        // Use publishedSlots for public library scanning
-        const slotsToScan = layout.publishedSlots ?? [];
-        for (const slot of slotsToScan) {
-          for (const block of slot.blocks) {
-            if (block.type === "library" && block.content?.libraryId) {
-              libraryIds.add(block.content.libraryId);
-            }
+    for (const layout of layouts) {
+      for (const slot of layout.slots) {
+        for (const block of slot.blocks) {
+          if (block.type === "library" && block.content?.libraryId) {
+            libraryIds.add(block.content.libraryId);
           }
         }
       }

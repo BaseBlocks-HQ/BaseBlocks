@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

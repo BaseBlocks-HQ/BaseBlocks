@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation } from "../_generated/server";
-import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
-import { resolveSiteContext } from "../lib/resolvers";
+import { buildDocumentSearchMetadata } from "../documents/searchMetadata";
+import { resolveSiteContext } from "../sites/resolvers";
 
 export const rebuildDocumentSearchMetadata = internalMutation({
   args: {

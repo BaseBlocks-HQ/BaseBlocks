@@ -1,7 +1,7 @@
 "use client";
 
-import { filesClient } from "@/lib/files/client";
-import { cn } from "@/lib/utils";
+import { filesClient } from "@/modules/files/client";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useLayoutContext } from "@/modules/site-runtime/layout";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
 import { useEditorSite } from "@/modules/editor/editor-state";

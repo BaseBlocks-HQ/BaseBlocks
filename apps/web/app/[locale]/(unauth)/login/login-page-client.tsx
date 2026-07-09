@@ -1,8 +1,8 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth/client";
-import { useHaptic } from "@/lib/use-haptic";
+import { authClient } from "@/modules/auth/client";
+import { useHaptic } from "@/modules/ui/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import { useTranslations } from "next-intl";
 import Image from "next/image";

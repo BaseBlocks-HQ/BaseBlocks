@@ -9,12 +9,12 @@ import {
   getFilesBucketName,
   getFilesMaxUploadSize,
   getFilesProviderName,
-} from "../files/config";
-import { parseFileKey } from "../files/keys";
-import { buildDocumentSearchMetadata } from "../lib/documentSearchMetadata";
-import { markSiteModified } from "../lib/markModified";
-import { resolveSiteContext } from "../lib/resolvers";
-import { deleteDocumentRows } from "./lib";
+} from "../objectStorage/config";
+import { parseFileKey } from "@baseblocks/domain";
+import { buildDocumentSearchMetadata } from "../documents/searchMetadata";
+import { markSiteModified } from "../sites/markModified";
+import { resolveSiteContext } from "../sites/resolvers";
+import { deleteDocumentRows } from "./cleanup";
 import { upsertDocumentListing } from "./listings";
 
 function validateDocumentUpload(args: {

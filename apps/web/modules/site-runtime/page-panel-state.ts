@@ -1,6 +1,6 @@
 "use client";
 
-import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
+import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export interface ViewingPage {

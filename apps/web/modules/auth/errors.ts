@@ -1,7 +1,5 @@
 import { ConvexError } from "convex/values";
 
-export { cn } from "@baseblocks/ui/lib/utils";
-
 const AUTH_ERROR_PATTERNS = [
   "Unauthenticated",
   "Not authenticated",

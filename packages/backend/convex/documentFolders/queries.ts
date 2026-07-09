@@ -17,7 +17,7 @@ export const listByLibrary = query({
 
     const folders = await ctx.db
       .query("documentFolders")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
       .collect();
 
     return folders.sort((a, b) => a.order - b.order);
@@ -121,7 +121,7 @@ export const listByLibraryPublic = query({
 
     const folders = await ctx.db
       .query("documentFolders")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
       .collect();
 
     return folders.sort((a, b) => a.order - b.order);

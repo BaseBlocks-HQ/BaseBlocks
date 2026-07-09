@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { authClient } from "@/lib/auth/client";
-import { useHaptic } from "@/lib/use-haptic";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { authClient } from "@/modules/auth/client";
+import { useHaptic } from "@/modules/ui/use-haptic";
+import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
 import { api } from "@baseblocks/backend";
 import type { Locale } from "@baseblocks/i18n";

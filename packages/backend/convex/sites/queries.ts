@@ -2,7 +2,8 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
-import { getAccessiblePublishedPages } from "../lib/pageAccess";
+import { getActiveSiteRevision } from "../deployments/snapshots";
+import { getAccessiblePublishedPages } from "../sharing/pageAccess";
 
 export const listByTeam = query({
   args: { teamId: v.id("teams") },
@@ -102,38 +103,38 @@ export const getBySlug = query({
 
     if (!team) return null;
 
-    // If no site slug, get the default/first site
-    let site: Doc<"sites"> | null;
-    if (!siteSlug) {
-      site = await ctx.db
-        .query("sites")
-        .withIndex("by_team", (q) => q.eq("teamId", team._id))
-        .filter((q) => q.eq(q.field("isPublished"), true))
-        .first();
-    } else {
-      // Get specific site
+    let site: Doc<"sites"> | null = null;
+    if (siteSlug) {
       site = await ctx.db
         .query("sites")
         .withIndex("by_slug", (q) =>
           q.eq("teamId", team._id).eq("slug", siteSlug),
         )
         .first();
+    } else {
+      const sites = await ctx.db
+        .query("sites")
+        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .collect();
+      site = sites.find((candidate) => candidate.isPublished) ?? null;
     }
 
-    if (!site || !site.isPublished) return null;
+    if (!site?.isPublished) return null;
+    const revision = await getActiveSiteRevision(ctx, site._id);
+    if (!revision) return null;
 
-    // Return only public-safe fields with published projections
     return {
       _id: site._id,
       _creationTime: site._creationTime,
       teamId: site.teamId,
-      slug: site.slug,
-      isPublished: site.isPublished,
-      visibility: site.visibility,
-      name: site.publishedName ?? site.name,
-      logoUrl: site.publishedLogoUrl ?? site.logoUrl,
-      defaultPageId: site.publishedDefaultPageId ?? site.defaultPageId,
-      settings: site.publishedSettings ?? site.settings,
+      slug: revision.slug,
+      isPublished: true,
+      visibility: revision.visibility,
+      name: revision.name,
+      logoUrl: revision.logoUrl,
+      defaultPageId: revision.defaultPageId,
+      settings: revision.settings,
+      updatedAt: revision.updatedAt,
     };
   },
 });
@@ -155,8 +156,7 @@ export const getWithDefaultPage = query({
 
     if (!team) return null;
 
-    // Get the specific site by slug, or fall back to first published site
-    let site: Doc<"sites"> | null;
+    let site: Doc<"sites"> | null = null;
     if (siteSlug) {
       site = await ctx.db
         .query("sites")
@@ -165,22 +165,23 @@ export const getWithDefaultPage = query({
         )
         .first();
     } else {
-      site = await ctx.db
+      const sites = await ctx.db
         .query("sites")
         .withIndex("by_team", (q) => q.eq("teamId", team._id))
-        .filter((q) => q.eq(q.field("isPublished"), true))
-        .first();
+        .collect();
+      site = sites.find((candidate) => candidate.isPublished) ?? null;
     }
 
-    if (!site || !site.isPublished) return null;
+    if (!site?.isPublished) return null;
+    const revision = await getActiveSiteRevision(ctx, site._id);
+    if (!revision) return null;
 
     const accessiblePages = await getAccessiblePublishedPages(
       ctx,
       site,
       sessionTokens,
     );
-    const publishedDefaultPageId =
-      site.publishedDefaultPageId ?? site.defaultPageId;
+    const publishedDefaultPageId = revision.defaultPageId;
 
     let defaultPage =
       accessiblePages.find((page) => page._id === publishedDefaultPageId) ??
@@ -188,26 +189,23 @@ export const getWithDefaultPage = query({
 
     if (!defaultPage) {
       const rootPages = accessiblePages
-        .filter((page) => !(page.publishedParentId ?? page.parentId))
-        .sort(
-          (a, b) =>
-            (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-        );
+        .filter((page) => !page.parentId)
+        .sort((a, b) => a.order - b.order);
       defaultPage = rootPages[0] ?? null;
     }
 
-    // Project published fields — only expose public-safe data
     const publishedSite = {
       _id: site._id,
       _creationTime: site._creationTime,
       teamId: site.teamId,
-      slug: site.slug,
-      isPublished: site.isPublished,
-      visibility: site.visibility,
-      name: site.publishedName ?? site.name,
-      logoUrl: site.publishedLogoUrl ?? site.logoUrl,
+      slug: revision.slug,
+      isPublished: true,
+      visibility: revision.visibility,
+      name: revision.name,
+      logoUrl: revision.logoUrl,
       defaultPageId: publishedDefaultPageId,
-      settings: site.publishedSettings ?? site.settings,
+      settings: revision.settings,
+      updatedAt: revision.updatedAt,
     };
 
     // Only expose public-safe team fields
@@ -246,12 +244,14 @@ export const listPublishedSlugs = query({
 
       for (const site of sites) {
         if (!site.isPublished) continue;
-        if (site.visibility && site.visibility !== "public") continue;
+        const revision = await getActiveSiteRevision(ctx, site._id);
+        if (!revision) continue;
+        if (revision.visibility && revision.visibility !== "public") continue;
 
         results.push({
           teamSlug: team.slug,
-          siteSlug: site.slug,
-          updatedAt: site.updatedAt,
+          siteSlug: revision.slug,
+          updatedAt: revision.updatedAt,
         });
       }
     }

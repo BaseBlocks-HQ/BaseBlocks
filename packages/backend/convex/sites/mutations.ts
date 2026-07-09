@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requirePublisher, requireSiteManager } from "../auth";
-import { deleteDocumentRows } from "../documents/lib";
-import { markSiteModified } from "../lib/markModified";
-import { deleteObjectAction } from "../files/actions";
+import { deleteDocumentRows } from "../documents/cleanup";
+import { markSiteModified } from "../sites/markModified";
+import { deleteObjectAction } from "../objectStorage/actions";
+import { createDeploymentRevision } from "../deployments/mutations";
 
 // Create a new site
 export const create = mutation({
@@ -55,7 +56,6 @@ export const create = mutation({
       title: "Home",
       slug: "home",
       order: 0,
-      isPublished: true,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -191,137 +191,14 @@ export const publish = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requirePublisher(ctx, site.teamId);
     const now = Date.now();
-
+    await requirePublisher(ctx, site.teamId);
     await ctx.db.patch(siteId, {
       isPublished: true,
-      publishedAt: now,
+      publishedAt: site.publishedAt ?? now,
       updatedAt: now,
     });
-
-    // Auto-deploy on first publish (if never deployed before)
-    if (!site.lastDeployedAt) {
-      const pages = await ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect();
-
-      const newVersion = 1;
-
-      // Create deployment record
-      const deploymentId = await ctx.db.insert("deployments", {
-        siteId,
-        version: newVersion,
-        deployedBy: auth.userId,
-        deployedAt: now,
-        notes: "Initial publish",
-        summary: {
-          pagesDeployed: pages.length,
-          layoutsDeployed: 0,
-          settingsChanged: true,
-        },
-        status: "active",
-      });
-
-      // Copy draft -> published for site
-      await ctx.db.patch(siteId, {
-        publishedName: site.name,
-        publishedLogoUrl: site.logoUrl,
-        publishedDefaultPageId: site.defaultPageId,
-        publishedSettings: site.settings,
-        lastDeployedAt: now,
-        lastDeployedBy: auth.userId,
-        deploymentVersion: newVersion,
-      });
-
-      // Snapshot and copy for pages + layouts
-      let totalLayouts = 0;
-
-      await ctx.db.insert("deploymentSnapshots", {
-        deploymentId,
-        siteId,
-        chunkType: "site-settings",
-        data: {
-          name: site.name,
-          logoUrl: site.logoUrl,
-          defaultPageId: site.defaultPageId,
-          settings: site.settings,
-        },
-      });
-
-      const pageTreeData = pages.map((p) => ({
-        _id: p._id,
-        title: p.title,
-        slug: p.slug,
-        icon: p.icon,
-        order: p.order,
-        parentId: p.parentId,
-        accessPolicy: p.accessPolicy,
-        pageTabs: p.pageTabs,
-      }));
-
-      await ctx.db.insert("deploymentSnapshots", {
-        deploymentId,
-        siteId,
-        chunkType: "page-tree",
-        data: pageTreeData,
-      });
-
-      for (const page of pages) {
-        await ctx.db.patch(page._id, {
-          publishedTitle: page.title,
-          publishedSlug: page.slug,
-          publishedIcon: page.icon,
-          publishedOrder: page.order,
-          publishedParentId: page.parentId,
-          publishedAccessPolicy: page.accessPolicy,
-          publishedPageTabs: page.pageTabs,
-          isDeployed: true,
-        });
-
-        const layouts = await ctx.db
-          .query("layouts")
-          .withIndex("by_page", (q) => q.eq("pageId", page._id))
-          .collect();
-
-        await ctx.db.insert("deploymentSnapshots", {
-          deploymentId,
-          siteId,
-          chunkType: "page-layouts",
-          pageId: page._id,
-          data: layouts.map((l) => ({
-            _id: l._id,
-            type: l.type,
-            order: l.order,
-            tabId: l.tabId,
-            slots: l.slots,
-            settings: l.settings,
-          })),
-        });
-
-        for (const layout of layouts) {
-          await ctx.db.patch(layout._id, {
-            publishedSlots: layout.slots,
-            publishedType: layout.type,
-            publishedOrder: layout.order,
-            publishedSettings: layout.settings,
-            publishedTabId: layout.tabId,
-            isDeployed: true,
-          });
-          totalLayouts++;
-        }
-      }
-
-      await ctx.db.patch(deploymentId, {
-        summary: {
-          pagesDeployed: pages.length,
-          layoutsDeployed: totalLayouts,
-          settingsChanged: true,
-        },
-      });
-    }
-
+    await createDeploymentRevision(ctx, { siteId, notes: "Publish" });
     return siteId;
   },
 });
@@ -393,7 +270,7 @@ export const remove = mutation({
     for (const library of libraries) {
       const docs = await ctx.db
         .query("documents")
-        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+        .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
         .collect();
       for (const doc of docs) {
         await deleteDocumentRows(ctx, doc);
@@ -401,7 +278,7 @@ export const remove = mutation({
 
       const folders = await ctx.db
         .query("documentFolders")
-        .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+        .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
         .collect();
       for (const folder of folders) {
         await ctx.db.delete(folder._id);
@@ -461,18 +338,30 @@ export const remove = mutation({
       await ctx.db.delete(page._id);
     }
 
-    // 6. Delete deployment history (snapshots before deployments, FK order)
+    // 6. Delete deployment history and immutable public revisions
     const deployments = await ctx.db
       .query("deployments")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const deployment of deployments) {
-      const snapshots = await ctx.db
-        .query("deploymentSnapshots")
+      const siteRevisions = await ctx.db
+        .query("siteRevisions")
         .withIndex("by_deployment", (q) => q.eq("deploymentId", deployment._id))
         .collect();
-      for (const snapshot of snapshots) {
-        await ctx.db.delete(snapshot._id);
+      const pageRevisions = await ctx.db
+        .query("pageRevisions")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deployment._id))
+        .collect();
+      const layoutRevisions = await ctx.db
+        .query("layoutRevisions")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deployment._id))
+        .collect();
+      for (const revision of [
+        ...siteRevisions,
+        ...pageRevisions,
+        ...layoutRevisions,
+      ]) {
+        await ctx.db.delete(revision._id);
       }
       await ctx.db.delete(deployment._id);
     }

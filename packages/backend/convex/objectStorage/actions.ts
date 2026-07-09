@@ -12,7 +12,7 @@ export const deleteObjectAction = makeFunctionReference<
   "action",
   DeleteObjectArgs,
   DeleteObjectResult
->("files/deleteObject:deleteObject") as unknown as FunctionReference<
+>("objectStorage/deleteObject:deleteObject") as unknown as FunctionReference<
   "action",
   "internal",
   DeleteObjectArgs,

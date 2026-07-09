@@ -1,6 +1,6 @@
 "use client";
 
-import { getAccessSessionCookieName } from "@/lib/public-site/access-session";
+import { getAccessSessionCookieName } from "@/modules/public-site/access-session";
 import type { Id } from "@baseblocks/backend";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

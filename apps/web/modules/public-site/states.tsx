@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { getDisplayDomain } from "@/lib/url";
+import { getDisplayDomain } from "@/modules/public-site/urls";
 import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Lock } from "lucide-react";

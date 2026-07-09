@@ -1,4 +1,4 @@
-import { isAuthenticated } from "@/lib/auth/server";
+import { isAuthenticated } from "@/modules/auth/server";
 import { LandingPage } from "@/modules/landing/landing-page";
 import type { Metadata } from "next";
 

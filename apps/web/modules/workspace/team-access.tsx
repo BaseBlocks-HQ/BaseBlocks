@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkspaceUser } from "@/lib/workspace/server";
+import type { WorkspaceUser } from "@/modules/workspace/server";
 import type { Id } from "@baseblocks/backend";
 import {
   type TeamCapabilities,

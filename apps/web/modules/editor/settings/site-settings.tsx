@@ -1,7 +1,6 @@
 "use client";
 
-import { useSite } from "@/lib/data";
-import { useImageUpload } from "@/lib/files";
+import { useImageUpload } from "@/modules/files";
 import {
   CollapsibleSettingsSection,
   PanelSettingRow,
@@ -12,7 +11,7 @@ import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Switch } from "@baseblocks/ui/switch";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -179,7 +178,7 @@ function SiteNameSection({
 }
 
 export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
-  const site = useSite(siteId);
+  const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);

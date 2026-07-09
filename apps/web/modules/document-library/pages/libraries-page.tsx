@@ -1,8 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { useTeamSites } from "@/lib/data/use-site";
-import { getTeamLibraryDetailPath } from "@/lib/routes/team-routes";
+import { getTeamLibraryDetailPath } from "@/modules/dashboard/routes";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
@@ -479,7 +478,9 @@ export function LibrariesPage() {
   const [collapsedSites, setCollapsedSites] = useState<Set<string>>(new Set());
 
   const { capabilities, team } = useTeamAccess();
-  const sites = useTeamSites(team._id);
+  const sites = useQuery(api.sites.queries.listByTeam, {
+    teamId: team._id,
+  });
   const deleteLibrary = useMutation(api.documentLibraries.mutations.remove);
 
   const siteLibraries = useQuery(

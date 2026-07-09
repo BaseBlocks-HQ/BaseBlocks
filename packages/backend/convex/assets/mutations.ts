@@ -9,9 +9,9 @@ import {
   getFilesBucketName,
   getFilesMaxUploadSize,
   getFilesProviderName,
-} from "../files/config";
-import { parseFileKey } from "../files/keys";
-import { resolveSiteContext } from "../lib/resolvers";
+} from "../objectStorage/config";
+import { parseFileKey } from "@baseblocks/domain";
+import { resolveSiteContext } from "../sites/resolvers";
 import { buildAssetUrl } from "./urls";
 
 function validateSiteAssetUpload(args: {

@@ -1,7 +1,6 @@
 "use client";
 
-import { usePages } from "@/lib/data";
-import { generateSlug } from "@/lib/validation";
+import { generateSlug } from "@baseblocks/domain";
 import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -40,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   Check,
   FilePlus,
@@ -81,7 +80,9 @@ export function PageActionsMenu({
 
   const { isAdmin } = useEditorSite();
   const { currentPageId, selection } = useEditorUi();
-  const pages = usePages(siteId);
+  const pages = useQuery(api.pages.queries.list, {
+    siteId: siteId as Id<"sites">,
+  });
 
   const setDefaultPage = useMutation(api.sites.mutations.setDefaultPage);
   const createPage = useMutation(api.pages.mutations.create);

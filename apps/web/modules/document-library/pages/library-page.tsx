@@ -1,8 +1,8 @@
 "use client";
 
 import { Link, useRouter } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
-import { getTeamLibrariesPath } from "@/lib/routes/team-routes";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { getTeamLibrariesPath } from "@/modules/dashboard/routes";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
 import type { LibraryId } from "@/modules/document-library/tree-input";
 import { useTeamAccess } from "@/modules/workspace/team-access";

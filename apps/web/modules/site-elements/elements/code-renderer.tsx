@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import type { ElementRendererProps } from "@/modules/site-runtime/rendering";
 import { Button } from "@baseblocks/ui/button";
 import { cssLanguage } from "@codemirror/lang-css";

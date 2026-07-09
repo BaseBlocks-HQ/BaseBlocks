@@ -1,7 +1,7 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { cn } from "@/lib/utils";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { FilePreview, type PreviewFile } from "@/modules/file-preview";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

@@ -2,7 +2,7 @@ import {
   MdxContentPage,
   type MdxContentData,
 } from "@/modules/content-pages/mdx-content-page";
-import { source } from "@/lib/source";
+import { source } from "@/modules/content-pages/source";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

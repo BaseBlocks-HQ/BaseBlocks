@@ -1,11 +1,12 @@
-import { useSite } from "@/lib/data";
 import {
   generateCustomizationStyles,
   hasCustomization,
   useCustomizationStyles,
 } from "@/modules/site-runtime/customization";
+import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { SiteCustomization } from "@baseblocks/domain/site-settings";
+import { useQuery } from "convex/react";
 import type { CSSProperties } from "react";
 
 interface UseSiteCustomizationResult {
@@ -26,7 +27,10 @@ interface UseSiteCustomizationResult {
 export function useSiteCustomization(
   siteId: Id<"sites"> | undefined,
 ): UseSiteCustomizationResult {
-  const site = useSite(siteId);
+  const site = useQuery(
+    api.sites.queries.get,
+    siteId ? { siteId } : "skip",
+  );
 
   const customization = site?.settings?.customization as
     | SiteCustomization

@@ -4,8 +4,8 @@ import {
   FILE_SEARCH_PARAM,
   buildFileDeepLinkPath,
   toAbsoluteBrowserUrl,
-} from "@/lib/file-deep-link";
-import { cn } from "@/lib/utils";
+} from "@/modules/document-library/deep-link";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview as FilePreviewPanel,
   type PreviewFile,

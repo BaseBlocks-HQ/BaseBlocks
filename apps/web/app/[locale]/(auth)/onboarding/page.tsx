@@ -1,4 +1,4 @@
-import { getWorkspaceBoundaryState } from "@/lib/workspace/server";
+import { getWorkspaceBoundaryState } from "@/modules/workspace/server";
 import { redirect } from "next/navigation";
 import { OnboardingPageClient } from "./page-client";
 

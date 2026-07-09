@@ -4,10 +4,10 @@ import {
   isSupportedUploadMimeType,
   resolveUploadMimeType,
   type UploadPurpose,
+  createFileKey,
 } from "@baseblocks/domain";
 import type { SignedUpload } from "files-sdk";
 import { createFilesClient } from "files-sdk/client";
-import { createFileKey } from "./keys";
 
 const maxUploadSizeBytes = 100 * 1024 * 1024;
 
@@ -86,6 +86,7 @@ class BaseBlocksFilesClient {
     const objectKey = createFileKey({
       siteId: options.siteId,
       purpose: options.purpose,
+      fileId: crypto.randomUUID(),
       filename: file.name,
     });
 

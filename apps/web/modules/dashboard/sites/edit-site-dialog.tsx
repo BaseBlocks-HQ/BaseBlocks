@@ -1,6 +1,6 @@
 "use client";
 
-import { filesClient } from "@/lib/files/client";
+import { filesClient } from "@/modules/files/client";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

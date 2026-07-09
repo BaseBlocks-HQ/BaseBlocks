@@ -1,8 +1,7 @@
 "use client";
 
-import { useAudienceMemberAssignments, useMembers } from "@/lib/data";
-import { useSite } from "@/lib/data/use-site";
 import { api } from "@baseblocks/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Checkbox } from "@baseblocks/ui/checkbox";
 import {
@@ -15,7 +14,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -29,6 +28,14 @@ interface AudienceMembersDialogProps {
 }
 
 type TranslationFn = ReturnType<typeof useTranslations>;
+type AudienceAssignments = {
+  audience: { _id: Id<"siteAudiences">; name: string };
+  userIds: string[];
+} | null;
+type MemberListItem = Pick<
+  Doc<"members">,
+  "_id" | "email" | "imageUrl" | "joinedAt" | "name" | "role" | "userId"
+>;
 
 export function AudienceMembersDialog({
   audienceId,
@@ -38,9 +45,19 @@ export function AudienceMembersDialog({
 }: AudienceMembersDialogProps) {
   const t = useTranslations("navigation.audienceMembers");
   const tCommon = useTranslations("common");
-  const site = useSite(siteId);
-  const members = useMembers(site?._id ? site.teamId : undefined);
-  const assignments = useAudienceMemberAssignments(audienceId);
+  const site = useQuery(api.sites.queries.get, {
+    siteId: siteId as Id<"sites">,
+  });
+  const members = useQuery(
+    api.members.queries.list,
+    site?._id ? { teamId: site.teamId } : "skip",
+  );
+  const assignments = useQuery(
+    api.siteAudiences.queries.getMemberAssignments,
+    audienceId
+      ? { audienceId: audienceId as Id<"siteAudiences"> }
+      : "skip",
+  );
   const resetKey = [
     audienceId ?? "no-audience",
     open ? "open" : "closed",
@@ -70,9 +87,9 @@ function AudienceMembersDialogContent({
   t,
   tCommon,
 }: {
-  assignments: ReturnType<typeof useAudienceMemberAssignments>;
+  assignments: AudienceAssignments | undefined;
   audienceId?: string;
-  members: ReturnType<typeof useMembers>;
+  members: MemberListItem[] | undefined;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   t: TranslationFn;

@@ -1,7 +1,7 @@
-import { getToken } from "@/lib/auth/server";
-import { canUploadToSite } from "@/lib/convex/server";
-import { parseFileKey } from "@/lib/files/keys";
-import { getFiles, getFilesMaxUploadSize } from "@/lib/files/server";
+import { getToken } from "@/modules/auth/server";
+import { canUploadToSite } from "@/modules/convex/server";
+import { parseFileKey } from "@baseblocks/domain";
+import { getFiles, getFilesMaxUploadSize } from "@/modules/files/server";
 import { FilesError } from "files-sdk";
 import { createFilesRouter, type FilesApi } from "files-sdk/api";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useSiteAudiences } from "@/lib/data";
 import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { normalizePageAccessPolicy } from "@baseblocks/domain";
 import type { PageListItem } from "@baseblocks/domain";
 import {
@@ -28,7 +28,7 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Loader2, Trash2, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -77,7 +77,9 @@ function PageAccessDialogContent({
 }: PageAccessDialogProps) {
   const t = useTranslations("navigation.pageAccess");
   const tCommon = useTranslations("common");
-  const audiences = useSiteAudiences(siteId);
+  const audiences = useQuery(api.siteAudiences.queries.list, {
+    siteId: siteId as Id<"sites">,
+  });
   const updateAccessPolicy = useMutation(
     api.pages.mutations.updateAccessPolicy,
   );

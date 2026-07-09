@@ -18,14 +18,14 @@ export const list = query({
 
     const audiences = await ctx.db
       .query("siteAudiences")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .withIndex("by_site_name", (q) => q.eq("siteId", siteId))
       .collect();
 
     audiences.sort((a, b) => a.name.localeCompare(b.name));
 
     const audienceMembers = await ctx.db
       .query("siteAudienceMembers")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .withIndex("by_site_user", (q) => q.eq("siteId", siteId))
       .collect();
 
     return audiences.map((audience) => ({
@@ -59,7 +59,7 @@ export const getMemberAssignments = query({
 
     const memberships = await ctx.db
       .query("siteAudienceMembers")
-      .withIndex("by_audience", (q) => q.eq("audienceId", audienceId))
+      .withIndex("by_audience_user", (q) => q.eq("audienceId", audienceId))
       .collect();
 
     return {

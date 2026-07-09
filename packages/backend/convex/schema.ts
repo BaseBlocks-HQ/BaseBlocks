@@ -2,7 +2,7 @@ import { teamRoles } from "@baseblocks/domain";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { layoutSettings, layoutSlot, layoutType } from "./layouts/validators";
-import { pageAccessPolicyValidator } from "./lib/pageAccess";
+import { pageAccessPolicyValidator } from "./sharing/pageAccess";
 import { siteSettings } from "./sites/validators";
 
 export default defineSchema({
@@ -49,11 +49,6 @@ export default defineSchema({
     lastDeployedAt: v.optional(v.number()),
     lastDeployedBy: v.optional(v.string()),
     deploymentVersion: v.optional(v.number()),
-    // Published copies (populated on deploy)
-    publishedName: v.optional(v.string()),
-    publishedLogoUrl: v.optional(v.string()),
-    publishedDefaultPageId: v.optional(v.id("pages")),
-    publishedSettings: v.optional(siteSettings),
     settings: siteSettings,
   })
     .index("by_team", ["teamId"])
@@ -86,9 +81,7 @@ export default defineSchema({
     createdAt: v.number(),
     createdBy: v.string(),
     updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_site_name", ["siteId", "name"]),
+  }).index("by_site_name", ["siteId", "name"]),
 
   siteAudienceMembers: defineTable({
     siteId: v.id("sites"),
@@ -97,8 +90,6 @@ export default defineSchema({
     addedAt: v.number(),
     addedBy: v.string(),
   })
-    .index("by_site", ["siteId"])
-    .index("by_audience", ["audienceId"])
     .index("by_audience_user", ["audienceId", "userId"])
     .index("by_site_user", ["siteId", "userId"]),
 
@@ -109,7 +100,6 @@ export default defineSchema({
     slug: v.string(),
     icon: v.optional(v.string()),
     order: v.number(),
-    isPublished: v.boolean(),
     showInNavigation: v.optional(v.boolean()),
     accessPolicy: v.optional(pageAccessPolicyValidator),
     pageTabs: v.optional(
@@ -123,22 +113,6 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    // Published copies (populated on deploy)
-    publishedTitle: v.optional(v.string()),
-    publishedSlug: v.optional(v.string()),
-    publishedIcon: v.optional(v.string()),
-    publishedOrder: v.optional(v.number()),
-    publishedParentId: v.optional(v.id("pages")),
-    publishedAccessPolicy: v.optional(pageAccessPolicyValidator),
-    publishedPageTabs: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          label: v.string(),
-        }),
-      ),
-    ),
-    isDeployed: v.optional(v.boolean()),
   })
     .index("by_site", ["siteId"])
     .index("by_parent", ["siteId", "parentId"])
@@ -150,18 +124,8 @@ export default defineSchema({
     tabId: v.optional(v.string()),
     type: layoutType,
     order: v.number(),
-    // Draft slots (what editor sees/edits)
     slots: v.array(layoutSlot),
-    // Published slots (what public site sees, populated on deploy)
-    publishedSlots: v.optional(v.array(layoutSlot)),
-    // Layout settings
     settings: layoutSettings,
-    // Published copies of layout structure (populated on deploy)
-    publishedType: v.optional(layoutType),
-    publishedOrder: v.optional(v.number()),
-    publishedSettings: v.optional(layoutSettings),
-    publishedTabId: v.optional(v.string()),
-    isDeployed: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -185,9 +149,7 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index("by_library", ["libraryId"])
-    .index("by_parent", ["libraryId", "parentId"]),
+  }).index("by_parent", ["libraryId", "parentId"]),
 
   assets: defineTable({
     siteId: v.id("sites"),
@@ -219,7 +181,6 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"])
     .searchIndex("search_filename", {
       searchField: "filename",
@@ -241,7 +202,6 @@ export default defineSchema({
   })
     .index("by_document", ["documentId"])
     .index("by_site", ["siteId"])
-    .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"]),
 
   searchableContent: defineTable({
@@ -297,23 +257,68 @@ export default defineSchema({
     .index("by_site_version", ["siteId", "version"])
     .index("by_site_status", ["siteId", "status"]),
 
-  // Deployment snapshots (chunked for 1MB limit)
-  // data is polymorphic by chunkType: site-settings stores settings object,
-  // page-tree stores page array, page-layouts stores layout array.
-  // Typed at the query/mutation layer, not at schema level.
-  deploymentSnapshots: defineTable({
+  siteRevisions: defineTable({
     deploymentId: v.id("deployments"),
     siteId: v.id("sites"),
-    chunkType: v.union(
-      v.literal("site-settings"),
-      v.literal("page-tree"),
-      v.literal("page-layouts"),
+    teamId: v.id("teams"),
+    slug: v.string(),
+    name: v.string(),
+    logoUrl: v.optional(v.string()),
+    defaultPageId: v.optional(v.id("pages")),
+    visibility: v.optional(
+      v.union(
+        v.literal("private"),
+        v.literal("public"),
+        v.literal("link-only"),
+        v.literal("password"),
+      ),
     ),
-    pageId: v.optional(v.id("pages")),
-    data: v.any(),
+    settings: siteSettings,
+    updatedAt: v.number(),
   })
     .index("by_deployment", ["deploymentId"])
-    .index("by_deployment_type", ["deploymentId", "chunkType"]),
+    .index("by_site", ["siteId"]),
+
+  pageRevisions: defineTable({
+    deploymentId: v.id("deployments"),
+    siteId: v.id("sites"),
+    sourcePageId: v.id("pages"),
+    title: v.string(),
+    slug: v.string(),
+    icon: v.optional(v.string()),
+    order: v.number(),
+    parentId: v.optional(v.id("pages")),
+    accessPolicy: v.optional(pageAccessPolicyValidator),
+    pageTabs: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+        }),
+      ),
+    ),
+    showInNavigation: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  })
+    .index("by_deployment", ["deploymentId"])
+    .index("by_deployment_source", ["deploymentId", "sourcePageId"])
+    .index("by_site_deployment", ["siteId", "deploymentId"]),
+
+  layoutRevisions: defineTable({
+    deploymentId: v.id("deployments"),
+    siteId: v.id("sites"),
+    sourcePageId: v.id("pages"),
+    sourceLayoutId: v.id("layouts"),
+    tabId: v.optional(v.string()),
+    type: layoutType,
+    order: v.number(),
+    slots: v.array(layoutSlot),
+    settings: layoutSettings,
+    updatedAt: v.number(),
+  })
+    .index("by_deployment", ["deploymentId"])
+    .index("by_deployment_page", ["deploymentId", "sourcePageId"])
+    .index("by_site_deployment", ["siteId", "deploymentId"]),
 
   members: defineTable({
     teamId: v.id("teams"),

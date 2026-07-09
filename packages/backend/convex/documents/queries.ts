@@ -3,7 +3,8 @@ import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../auth";
-import { getActiveLibraryIds } from "../lib/resolvers";
+import { getActiveDeployment } from "../deployments/snapshots";
+import { getActiveLibraryIds } from "../sites/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
 import { buildDocumentDownloadUrl } from "../assets/urls";
 import { mapDocumentListing } from "./listings";
@@ -33,7 +34,7 @@ async function listDocumentsForLibrary(
 ) {
   const listings = await ctx.db
     .query("documentListings")
-    .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+    .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
     .collect();
   return listings.map(mapDocumentListing);
 }
@@ -66,17 +67,18 @@ async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
 ) {
+  const activeDeployment = await getActiveDeployment(ctx, document.siteId);
+  if (!activeDeployment) return false;
+
   const layouts = await ctx.db
-    .query("layouts")
-    .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
+    .query("layoutRevisions")
+    .withIndex("by_deployment", (q) =>
+      q.eq("deploymentId", activeDeployment._id),
+    )
     .collect();
 
   for (const layout of layouts) {
-    if (!layout.isDeployed) {
-      continue;
-    }
-
-    for (const slot of layout.publishedSlots ?? []) {
+    for (const slot of layout.slots) {
       for (const block of slot.blocks) {
         if (
           block.type === "file" &&
@@ -413,7 +415,7 @@ export const getPublicDownloadAsset = query({
   },
   handler: async (ctx, { documentId, sessionTokens }) => {
     const document = await ctx.db.get(documentId);
-    if (!document || !document.assetId) {
+    if (!document?.assetId) {
       return null;
     }
 

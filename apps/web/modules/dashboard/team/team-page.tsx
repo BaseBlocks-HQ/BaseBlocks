@@ -1,7 +1,7 @@
 "use client";
 
-import { useMembers } from "@/lib/data/use-team";
 import { useTeamAccess } from "@/modules/workspace/team-access";
+import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { TeamRole } from "@baseblocks/domain";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
@@ -17,6 +17,7 @@ import {
 } from "@baseblocks/ui/table";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useQuery } from "convex/react";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { MemberActions } from "./member-actions";
 
@@ -34,7 +35,9 @@ export function TeamPage() {
   const t = useTranslations("team");
 
   const { capabilities, team } = useTeamAccess();
-  const members = useMembers(team?._id);
+  const members = useQuery(api.members.queries.list, {
+    teamId: team._id,
+  });
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {

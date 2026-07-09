@@ -1,5 +1,5 @@
 import { routing } from "@/i18n/routing";
-import { getLegalSource } from "@/lib/legal-source";
+import { getLegalSource } from "@/modules/content-pages/legal-source";
 import type { Locale } from "@baseblocks/i18n";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";

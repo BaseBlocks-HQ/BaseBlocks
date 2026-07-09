@@ -1,12 +1,11 @@
 "use client";
 
-import { useSite } from "@/lib/data";
 import { CollapsibleSettingsSection } from "@/modules/editor/settings/settings-panel";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { NavigationStyle } from "@baseblocks/domain/site-settings";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Check, LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -64,7 +63,7 @@ function NavigationStyleCard({
 }
 
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
-  const site = useSite(siteId);
+  const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
 
   const updateNavigationStyle = async (style: NavigationStyle) => {

@@ -10,6 +10,7 @@ export type {
   TeamRole,
 } from "./access";
 export { getTeamCapabilities, hasTeamCapability, teamRoles } from "./access";
+export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./slug";
 export {
   canAccessPagePolicy,
   isPageRestricted,
@@ -91,3 +92,10 @@ export {
   resolveUploadMimeType,
   supportedUploadMimeTypes,
 } from "./storage";
+export {
+  createFileKey,
+  keyMatchesPurpose,
+  parseFileKey,
+  sanitizeFilename,
+  toFilesKind,
+} from "./file-keys";

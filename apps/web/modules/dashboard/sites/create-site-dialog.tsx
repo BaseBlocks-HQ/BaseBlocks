@@ -1,7 +1,7 @@
 "use client";
 
-import { useHaptic } from "@/lib/use-haptic";
-import { SLUG_PATTERN, generateSlug } from "@/lib/validation";
+import { useHaptic } from "@/modules/ui/use-haptic";
+import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

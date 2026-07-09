@@ -2,9 +2,9 @@ import { createLayoutDraft } from "@baseblocks/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireContentEditor } from "../auth";
-import { indexPageContent } from "../lib/indexPageContent";
-import { markSiteModified } from "../lib/markModified";
-import { resolveLayoutContext, resolvePageContext } from "../lib/resolvers";
+import { indexPageContent } from "../search/indexPageContent";
+import { markSiteModified } from "../sites/markModified";
+import { resolveLayoutContext, resolvePageContext } from "../sites/resolvers";
 import {
   blockContent,
   layoutSettings,
@@ -423,7 +423,6 @@ export const addPageBlock = mutation({
       slug: slug.toLowerCase(),
       parentId: layout.pageId,
       order: maxOrder + 1,
-      isPublished: false,
       showInNavigation: false,
       createdBy: auth.userId,
       createdAt: now,

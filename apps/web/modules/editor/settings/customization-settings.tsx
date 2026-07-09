@@ -1,7 +1,6 @@
 "use client";
 
-import { useSite } from "@/lib/data";
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { hasCustomization } from "@/modules/site-runtime/customization";
 import {
   CollapsibleSettingsSection,
@@ -29,7 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Check, ChevronDown, Info, Loader2, Pipette } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -100,7 +99,7 @@ function getDarkColorForPreset(hex: string) {
 export function CustomizationConfigPanel({
   siteId,
 }: CustomizationConfigPanelProps) {
-  const site = useSite(siteId);
+  const site = useQuery(api.sites.queries.get, { siteId });
   const updateSite = useMutation(api.sites.mutations.update);
   const [isSaving, setIsSaving] = useState(false);
 

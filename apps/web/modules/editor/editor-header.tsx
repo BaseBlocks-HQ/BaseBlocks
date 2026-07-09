@@ -2,9 +2,9 @@
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Link } from "@/i18n/navigation";
-import { getTeamDashboardPath } from "@/lib/routes/team-routes";
-import { getSiteOpenUrl, getSiteUrl } from "@/lib/url";
-import { cn } from "@/lib/utils";
+import { getTeamDashboardPath } from "@/modules/dashboard/routes";
+import { getSiteOpenUrl, getSiteUrl } from "@/modules/public-site/urls";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useEditorSite } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";

@@ -1,8 +1,7 @@
 "use client";
-import { usePage } from "@/lib/data";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { useSiteRenderActions } from "@/modules/site-runtime/actions";
 import { useEditorUiOptional } from "@/modules/editor/editor-state";
-import { usePages } from "@/lib/data";
 import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { ChevronRight, FileText } from "lucide-react";
 import type {
   ElementConfigPanelProps,
@@ -25,7 +24,13 @@ import type {
 
 export function PageEditor({ content }: ElementEditorProps<"page">) {
   const editorUi = useEditorUiOptional();
-  const page = usePage(content.pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const page = useQuery(
+    api.pages.queries.get,
+    content.pageId
+      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
+      : "skip",
+  );
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -65,7 +70,13 @@ export function PageEditor({ content }: ElementEditorProps<"page">) {
 
 export function PageRenderer({ content }: ElementRendererProps<"page">) {
   const actions = useSiteRenderActions();
-  const page = usePage(content.pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const page = useQuery(
+    api.pages.queries.get,
+    content.pageId
+      ? { pageId: content.pageId as Id<"pages">, sessionTokens }
+      : "skip",
+  );
 
   if (!content.pageId || !page) {
     return null;
@@ -101,7 +112,9 @@ export function PageConfigPanel({
   const { siteId } = useEditorSite();
   const { currentPageId } = useEditorUi();
   const setExposure = useMutation(api.pages.mutations.setExposure);
-  const pages = usePages(siteId);
+  const pages = useQuery(api.pages.queries.list, {
+    siteId: siteId as Id<"sites">,
+  });
 
   const availablePages = (pages ?? [])
     .filter((page) => page._id !== currentPageId)

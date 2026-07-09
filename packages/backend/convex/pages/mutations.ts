@@ -8,9 +8,9 @@ import { requireContentEditor } from "../auth";
 import {
   indexPageContent,
   removePageContentIndex,
-} from "../lib/indexPageContent";
-import { markSiteModified } from "../lib/markModified";
-import { pageAccessPolicyValidator } from "../lib/pageAccess";
+} from "../search/indexPageContent";
+import { markSiteModified } from "../sites/markModified";
+import { pageAccessPolicyValidator } from "../sharing/pageAccess";
 
 function createEditorId(): string {
   return Math.random().toString(36).slice(2, 12);
@@ -79,7 +79,6 @@ export const create = mutation({
       parentId,
       icon,
       order: maxOrder + 1,
-      isPublished: false,
       showInNavigation,
       createdBy: auth.userId,
       createdAt: now,
@@ -284,13 +283,9 @@ export const update = mutation({
     title: v.optional(v.string()),
     slug: v.optional(v.string()),
     icon: v.optional(v.string()),
-    isPublished: v.optional(v.boolean()),
     showInNavigation: v.optional(v.boolean()),
   },
-  handler: async (
-    ctx,
-    { pageId, title, slug, icon, isPublished, showInNavigation },
-  ) => {
+  handler: async (ctx, { pageId, title, slug, icon, showInNavigation }) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -319,7 +314,6 @@ export const update = mutation({
     if (title !== undefined) updates.title = title;
     if (slug !== undefined) updates.slug = slug.toLowerCase();
     if (icon !== undefined) updates.icon = icon;
-    if (isPublished !== undefined) updates.isPublished = isPublished;
     if (showInNavigation !== undefined) {
       updates.showInNavigation = showInNavigation;
     }

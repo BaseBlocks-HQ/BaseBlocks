@@ -1,4 +1,4 @@
-import { buildPublicSiteMetadata } from "@/lib/metadata";
+import { buildPublicSiteMetadata } from "@/modules/public-site/metadata";
 import { PublicSite } from "@/modules/public-site/public-site";
 import { PublicSiteSeo } from "@/modules/public-site/seo";
 import type { Metadata } from "next";

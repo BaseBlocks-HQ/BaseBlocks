@@ -1,4 +1,4 @@
-import { source } from "@/lib/source";
+import { source } from "@/modules/content-pages/source";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";

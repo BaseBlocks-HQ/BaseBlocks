@@ -32,7 +32,6 @@
     "@aws-sdk/s3-request-presigner": "^3.1078.0",
     "@baseblocks/domain": "workspace:*",
     "@convex-dev/better-auth": "^0.12.2",
-    "@convex-dev/migrations": "^0.3.4",
     "better-auth": "^1.6.11",
     "convex": "^1.39.1",
     "files-sdk": "^2.0.0"

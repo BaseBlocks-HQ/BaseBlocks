@@ -1,4 +1,4 @@
-import { getWorkspaceBoundaryContext } from "@/lib/workspace/server";
+import { getWorkspaceBoundaryContext } from "@/modules/workspace/server";
 import { DashboardLayout } from "@/modules/dashboard/layout/dashboard-layout";
 import { SitesPage } from "@/modules/dashboard/sites/sites-page";
 import { api } from "@baseblocks/backend";

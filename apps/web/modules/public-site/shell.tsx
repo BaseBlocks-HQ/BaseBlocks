@@ -1,10 +1,9 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { usePageAncestors } from "@/lib/data";
-import { getPageLink } from "@/lib/url";
-import { cn } from "@/lib/utils";
-import { usePageExpandState } from "@/lib/use-page-expand-state";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
+import { getPageLink } from "@/modules/public-site/urls";
+import { cn } from "@baseblocks/ui/lib/utils";
+import { usePageExpandState } from "@/modules/navigation/use-page-expand-state";
 import { SearchBox } from "@/modules/site-search";
 import { SiteRenderActionsProvider } from "@/modules/site-runtime/actions";
 import { useCustomizationStyles } from "@/modules/site-runtime/customization";
@@ -957,7 +956,11 @@ function BreadcrumbBar({
   className?: string;
   siteSlug: string;
 }) {
-  const ancestors = usePageAncestors(pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const ancestors = useQuery(api.pages.queries.getAncestors, {
+    pageId,
+    sessionTokens,
+  });
 
   const breadcrumbItems = (() => {
     if (!ancestors) return [];

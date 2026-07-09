@@ -1,8 +1,8 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
-import { getSiteOpenUrl } from "@/lib/url";
+import { getTeamSiteEditorPath } from "@/modules/dashboard/routes";
+import { getSiteOpenUrl } from "@/modules/public-site/urls";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {

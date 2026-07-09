@@ -1,8 +1,10 @@
-import type { UploadPurpose } from "@baseblocks/domain";
+import type { UploadPurpose } from "./storage";
+
+export type FilesKind = "documents" | "assets";
 
 const unsafeFilenamePattern = /[^a-zA-Z0-9._-]+/g;
 
-export function toFilesKind(purpose: UploadPurpose): "documents" | "assets" {
+export function toFilesKind(purpose: UploadPurpose): FilesKind {
   return purpose === "document" ? "documents" : "assets";
 }
 
@@ -20,23 +22,18 @@ export function sanitizeFilename(filename: string): string {
   return safe || "file";
 }
 
-export function createFileId(): string {
-  return crypto.randomUUID();
-}
-
 export function createFileKey(args: {
   siteId: string;
   purpose: UploadPurpose;
-  fileId?: string;
+  fileId: string;
   filename: string;
 }): string {
-  const fileId = args.fileId ?? createFileId();
-  return `sites/${args.siteId}/${toFilesKind(args.purpose)}/${fileId}/${sanitizeFilename(args.filename)}`;
+  return `sites/${args.siteId}/${toFilesKind(args.purpose)}/${args.fileId}/${sanitizeFilename(args.filename)}`;
 }
 
 export function parseFileKey(key: string): {
   siteId: string;
-  kind: "documents" | "assets";
+  kind: FilesKind;
   fileId: string;
   filename: string;
 } | null {

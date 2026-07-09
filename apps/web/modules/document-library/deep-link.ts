@@ -1,4 +1,4 @@
-import { buildPathWithUpdatedSearchParams } from "./url-search-params";
+import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
 
 export const FILE_SEARCH_PARAM = "file";
 

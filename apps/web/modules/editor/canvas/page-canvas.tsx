@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayouts, usePage } from "@/lib/data";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { useEditorUi } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -32,7 +32,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useTranslations } from "next-intl";
@@ -387,8 +387,14 @@ export function PageEditor({
   nested,
 }: PageEditorProps) {
   const tPage = useTranslations("editor.pageEditor");
-  const rawPage = usePage(pageId);
-  const rawLayouts = useLayouts(pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const rawPage = useQuery(api.pages.queries.get, {
+    pageId: pageId as Id<"pages">,
+    sessionTokens,
+  });
+  const rawLayouts = useQuery(api.layouts.queries.list, {
+    pageId: pageId as Id<"pages">,
+  });
   const pageData: PageData | undefined = rawPage
     ? { title: rawPage.title, pageTabs: rawPage.pageTabs ?? [] }
     : undefined;

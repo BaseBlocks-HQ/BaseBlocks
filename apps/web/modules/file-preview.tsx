@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { FileIcon } from "@/modules/file-ui";
 import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Download, ExternalLink, Maximize2, Minimize2, X } from "lucide-react";
 import dynamic from "next/dynamic";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 const PdfPreview = dynamic(() => import("./pdf-preview-client"), {
   ssr: false,

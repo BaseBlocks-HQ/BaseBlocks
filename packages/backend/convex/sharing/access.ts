@@ -1,5 +1,6 @@
 import type { GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc } from "../_generated/dataModel";
+import { getActiveSiteRevision } from "../deployments/snapshots";
 
 type PublicAccessCtx = Pick<GenericQueryCtx<DataModel>, "db">;
 
@@ -35,7 +36,12 @@ export async function canAccessPublishedSite(
     return false;
   }
 
-  const visibility = site.visibility ?? "public";
+  const revision = await getActiveSiteRevision(ctx, site._id);
+  if (!revision) {
+    return false;
+  }
+
+  const visibility = revision.visibility ?? "public";
   if (visibility === "public" || visibility === "link-only") {
     return true;
   }

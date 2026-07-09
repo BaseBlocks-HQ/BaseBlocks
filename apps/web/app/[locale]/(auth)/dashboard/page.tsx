@@ -1,5 +1,5 @@
-import { getTeamDashboardPath } from "@/lib/routes/team-routes";
-import { getWorkspaceBoundaryState } from "@/lib/workspace/server";
+import { getTeamDashboardPath } from "@/modules/dashboard/routes";
+import { getWorkspaceBoundaryState } from "@/modules/workspace/server";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {

@@ -1,7 +1,7 @@
 "use client";
 
-import { authClient } from "@/lib/auth/client";
-import type { WorkspaceUser } from "@/lib/workspace/server";
+import { authClient } from "@/modules/auth/client";
+import type { WorkspaceUser } from "@/modules/workspace/server";
 import { api } from "@baseblocks/backend";
 import {
   AlertDialog,

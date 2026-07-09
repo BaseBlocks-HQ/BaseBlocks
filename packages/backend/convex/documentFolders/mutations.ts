@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { type MutationCtx, mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";
-import { deleteDocumentRows } from "../documents/lib";
+import { deleteDocumentRows } from "../documents/cleanup";
 
 // Create a new folder
 export const create = mutation({

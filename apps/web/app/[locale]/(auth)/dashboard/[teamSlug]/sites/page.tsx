@@ -1,4 +1,4 @@
-import { getTeamDashboardPath } from "@/lib/routes/team-routes";
+import { getTeamDashboardPath } from "@/modules/dashboard/routes";
 import { redirect } from "next/navigation";
 
 type Props = {

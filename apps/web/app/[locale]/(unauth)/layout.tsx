@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth/server";
+import { getToken } from "@/modules/auth/server";
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 

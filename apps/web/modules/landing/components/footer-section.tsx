@@ -1,6 +1,6 @@
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";
 import {

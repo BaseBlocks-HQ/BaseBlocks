@@ -3,7 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
 import { checkIsMember } from "../auth";
 import { mapDocumentListing } from "../documents/listings";
-import { getActiveLibraryIds } from "../lib/resolvers";
+import { getActiveLibraryIds } from "../sites/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
 
 const librarySummary = v.object({
@@ -57,11 +57,11 @@ async function buildExplorerPayload(
 ) {
   const folders = await ctx.db
     .query("documentFolders")
-    .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+    .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
     .collect();
   const listings = await ctx.db
     .query("documentListings")
-    .withIndex("by_library", (q) => q.eq("libraryId", library._id))
+    .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
     .collect();
 
   return {
@@ -232,7 +232,7 @@ export const listAllWithCounts = query({
       for (const lib of libraries) {
         const docs = await ctx.db
           .query("documentListings")
-          .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
+          .withIndex("by_folder", (q) => q.eq("libraryId", lib._id))
           .collect();
 
         allLibraries.push({
@@ -265,7 +265,7 @@ export const listWithCounts = query({
       libraries.map(async (lib) => {
         const docs = await ctx.db
           .query("documentListings")
-          .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
+          .withIndex("by_folder", (q) => q.eq("libraryId", lib._id))
           .collect();
         return { ...lib, documentCount: docs.length };
       }),

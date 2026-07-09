@@ -7,11 +7,9 @@ export interface PageListItem {
   icon?: string;
   parentId?: string;
   order: number;
-  isPublished: boolean;
   showInNavigation?: boolean;
   hasPageBlockReference?: boolean;
   accessPolicy?: PageAccessPolicy;
-  publishedAccessPolicy?: PageAccessPolicy;
 }
 
 export interface PageWithChildren extends PageListItem {

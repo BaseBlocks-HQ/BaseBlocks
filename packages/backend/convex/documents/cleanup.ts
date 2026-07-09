@@ -11,7 +11,7 @@ import type { Doc } from "../_generated/dataModel";
  *   4. Schedule the object deletion (runs after the transaction commits).
  */
 import type { MutationCtx } from "../_generated/server";
-import { deleteObjectAction } from "../files/actions";
+import { deleteObjectAction } from "../objectStorage/actions";
 import { deleteDocumentListing } from "./listings";
 
 export async function deleteDocumentRows(

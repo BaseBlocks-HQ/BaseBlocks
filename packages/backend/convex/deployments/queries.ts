@@ -50,9 +50,6 @@ export const getCurrent = query({
   },
 });
 
-/**
- * Get deployment with its snapshot details (for rollback preview, authenticated)
- */
 export const getWithSnapshot = query({
   args: {
     deploymentId: v.id("deployments"),
@@ -66,17 +63,28 @@ export const getWithSnapshot = query({
 
     if (!(await checkIsMember(ctx, site.teamId))) return null;
 
-    const snapshots = await ctx.db
-      .query("deploymentSnapshots")
-      .withIndex("by_deployment", (q) => q.eq("deploymentId", deploymentId))
-      .collect();
+    const [siteRevision, pageRevisions, layoutRevisions] = await Promise.all([
+      ctx.db
+        .query("siteRevisions")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deploymentId))
+        .first(),
+      ctx.db
+        .query("pageRevisions")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deploymentId))
+        .collect(),
+      ctx.db
+        .query("layoutRevisions")
+        .withIndex("by_deployment", (q) => q.eq("deploymentId", deploymentId))
+        .collect(),
+    ]);
 
     return {
       deployment,
-      snapshots: snapshots.map((s) => ({
-        chunkType: s.chunkType,
-        pageId: s.pageId,
-      })),
+      revisions: {
+        site: !!siteRevision,
+        pages: pageRevisions.length,
+        layouts: layoutRevisions.length,
+      },
     };
   },
 });

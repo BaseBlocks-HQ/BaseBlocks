@@ -1,5 +1,6 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";
+import { getActiveDeployment } from "../deployments/snapshots";
 
 /**
  * Database context type — works for both queries and mutations.
@@ -94,22 +95,24 @@ export async function getActiveLibraryIdsForPageIds(
   siteId: Id<"sites">,
   pageIds?: Iterable<string>,
 ): Promise<Set<string>> {
-  // Single query via denormalized siteId on layouts
+  const activeDeployment = await getActiveDeployment(ctx, siteId);
+  if (!activeDeployment) return new Set<string>();
+
   const layouts = await ctx.db
-    .query("layouts")
-    .withIndex("by_site", (q) => q.eq("siteId", siteId))
+    .query("layoutRevisions")
+    .withIndex("by_deployment", (q) =>
+      q.eq("deploymentId", activeDeployment._id),
+    )
     .collect();
 
   const allowedPageIds = pageIds ? new Set(pageIds) : null;
   const activeLibraryIds = new Set<string>();
   for (const layout of layouts) {
-    if (allowedPageIds && !allowedPageIds.has(layout.pageId)) {
+    if (allowedPageIds && !allowedPageIds.has(layout.sourcePageId)) {
       continue;
     }
 
-    // ONLY use publishedSlots for public content - never fall back to draft
-    const slotsToScan = layout.publishedSlots ?? [];
-    for (const slot of slotsToScan) {
+    for (const slot of layout.slots) {
       for (const block of slot.blocks) {
         if (block.type === "library" && block.content?.libraryId) {
           activeLibraryIds.add(block.content.libraryId);

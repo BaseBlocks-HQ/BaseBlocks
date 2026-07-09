@@ -1,7 +1,7 @@
 "use client";
 
 import type { PreviewFile } from "@/modules/file-preview";
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import type { ReactNode } from "react";

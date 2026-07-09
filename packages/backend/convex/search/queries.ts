@@ -4,9 +4,9 @@ import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { checkIsMember } from "../auth";
 import { mapDocumentListing } from "../documents/listings";
-import { normalizeDocumentSearchMetadata } from "../lib/documentSearchMetadata";
-import { getAccessiblePublishedPages } from "../lib/pageAccess";
-import { getActiveLibraryIdsForPageIds } from "../lib/resolvers";
+import { normalizeDocumentSearchMetadata } from "../documents/searchMetadata";
+import { getAccessiblePublishedPages } from "../sharing/pageAccess";
+import { getActiveLibraryIdsForPageIds } from "../sites/resolvers";
 import { canAccessPublishedSite } from "../sharing/access";
 
 /**
@@ -128,16 +128,12 @@ function formatDocumentTitleResult(doc: Doc<"documentListings">) {
   };
 }
 
-function formatPageTitleResult(page: {
-  _id: string;
-  title: string;
-  publishedTitle?: string;
-}) {
+function formatPageTitleResult(page: { _id: string; title: string }) {
   return {
     _id: `page:${page._id}`,
     contentType: "page" as const,
     sourceId: page._id,
-    title: page.publishedTitle ?? page.title,
+    title: page.title,
     metadata: {
       pageId: page._id,
     },

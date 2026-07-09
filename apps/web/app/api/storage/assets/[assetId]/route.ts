@@ -1,7 +1,7 @@
-import { getToken } from "@/lib/auth/server";
-import { getAuthorizedAsset, getServerConvexClient } from "@/lib/convex/server";
-import { getFileUrl } from "@/lib/files/server";
-import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
+import { getToken } from "@/modules/auth/server";
+import { getAuthorizedAsset, getServerConvexClient } from "@/modules/convex/server";
+import { getFileUrl } from "@/modules/files/server";
+import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 

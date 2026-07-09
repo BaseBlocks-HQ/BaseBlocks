@@ -3,7 +3,7 @@ import {
   type MdxContentData,
 } from "@/modules/content-pages/mdx-content-page";
 import { routing } from "@/i18n/routing";
-import { getLegalSource } from "@/lib/legal-source";
+import { getLegalSource } from "@/modules/content-pages/legal-source";
 import type { Locale } from "@baseblocks/i18n";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

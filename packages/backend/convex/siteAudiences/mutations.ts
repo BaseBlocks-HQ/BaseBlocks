@@ -3,9 +3,10 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireContentEditor, requireSiteManager } from "../auth";
+import { getActivePageRevisions } from "../deployments/snapshots";
 
 function removeAudienceFromPolicy(
-  policy: Doc<"pages">["accessPolicy"] | Doc<"pages">["publishedAccessPolicy"],
+  policy: Doc<"pages">["accessPolicy"],
   audienceId: Id<"siteAudiences">,
 ) {
   const normalizedPolicy = normalizePageAccessPolicy(policy);
@@ -103,7 +104,7 @@ export const setMembers = mutation({
 
     const existingMemberships = await ctx.db
       .query("siteAudienceMembers")
-      .withIndex("by_audience", (q) => q.eq("audienceId", audienceId))
+      .withIndex("by_audience_user", (q) => q.eq("audienceId", audienceId))
       .collect();
 
     const existingByUserId = new Map(
@@ -161,12 +162,11 @@ export const deleteAudience = mutation({
       .withIndex("by_site", (q) => q.eq("siteId", site._id))
       .collect();
 
-    const isUsedByPublishedPage = pages.some((page) => {
-      const policy = normalizePageAccessPolicy(page.publishedAccessPolicy);
+    const deployedPages = await getActivePageRevisions(ctx, site._id);
+    const isUsedByPublishedPage = deployedPages.some((page) => {
+      const policy = normalizePageAccessPolicy(page.accessPolicy);
       return (
-        page.isDeployed &&
-        policy.kind === "audiences" &&
-        policy.audienceIds.includes(audienceId)
+        policy.kind === "audiences" && policy.audienceIds.includes(audienceId)
       );
     });
 
@@ -196,7 +196,7 @@ export const deleteAudience = mutation({
 
     const memberships = await ctx.db
       .query("siteAudienceMembers")
-      .withIndex("by_audience", (q) => q.eq("audienceId", audienceId))
+      .withIndex("by_audience_user", (q) => q.eq("audienceId", audienceId))
       .collect();
 
     for (const membership of memberships) {

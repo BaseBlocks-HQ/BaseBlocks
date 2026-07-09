@@ -1,7 +1,7 @@
 "use client";
 
 import { BlurStack } from "@baseblocks/ui/blur-stack";
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { ToolbarButton } from "@/modules/file-preview";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";

@@ -1,5 +1,5 @@
-import { getToken } from "@/lib/auth/server";
-import { getServerConvexClient } from "@/lib/convex/server";
+import { getToken } from "@/modules/auth/server";
+import { getServerConvexClient } from "@/modules/convex/server";
 import type { TeamRecord } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import { redirect } from "next/navigation";

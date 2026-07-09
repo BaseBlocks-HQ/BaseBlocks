@@ -1,7 +1,7 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
-import { getPageLink } from "@/lib/url";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
+import { getPageLink } from "@/modules/public-site/urls";
 import { AccessGate } from "@/modules/public-site/access-gate";
 import { PublicSiteState } from "@/modules/public-site/states";
 import { api } from "@baseblocks/backend";

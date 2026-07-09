@@ -2,13 +2,13 @@
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/modules/auth/client";
 import type { Locale } from "@baseblocks/i18n";
 import {
   getTeamDashboardPath,
   getTeamLibrariesPath,
   getTeamMembersPath,
-} from "@/lib/routes/team-routes";
+} from "@/modules/dashboard/routes";
 import { AccountSettings } from "@/modules/dashboard/account/account-settings";
 import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
 import { useTeamAccess } from "@/modules/workspace/team-access";

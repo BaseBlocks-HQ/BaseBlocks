@@ -2,7 +2,7 @@ import {
   JsonLdScript,
   buildBreadcrumbJsonLd,
   buildWebSiteJsonLd,
-} from "@/lib/json-ld";
+} from "@/modules/public-site/json-ld";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";

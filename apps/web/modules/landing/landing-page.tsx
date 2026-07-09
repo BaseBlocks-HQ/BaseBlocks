@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { useHaptic } from "@/lib/use-haptic";
+import { useHaptic } from "@/modules/ui/use-haptic";
 import { Button } from "@baseblocks/ui/button";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { ArrowRight } from "lucide-react";

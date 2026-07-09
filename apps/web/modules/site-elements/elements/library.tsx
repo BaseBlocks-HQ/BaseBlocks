@@ -1,6 +1,6 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/lib/public-site/access-session";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { LibraryExplorer } from "@/modules/document-library/components/library-explorer";
 import type { LibraryId } from "@/modules/document-library/tree-input";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";

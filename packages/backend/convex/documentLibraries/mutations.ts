@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireLibraryManager } from "../auth";
-import { deleteDocumentRows } from "../documents/lib";
+import { deleteDocumentRows } from "../documents/cleanup";
 
 export const create = mutation({
   args: {
@@ -91,7 +91,7 @@ export const remove = mutation({
     // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
       .query("documents")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
       .collect();
 
     for (const doc of documents) {
@@ -101,7 +101,7 @@ export const remove = mutation({
     // Delete all folders in the library
     const folders = await ctx.db
       .query("documentFolders")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
+      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
       .collect();
 
     for (const folder of folders) {

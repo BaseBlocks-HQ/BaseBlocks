@@ -1,7 +1,7 @@
 "use client";
 
-import { useImageUpload } from "@/lib/files";
-import { cn } from "@/lib/utils";
+import { useImageUpload } from "@/modules/files";
+import { cn } from "@baseblocks/ui/lib/utils";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
 import { useEditorSite } from "@/modules/editor/editor-state";
 import { DropZone } from "@/modules/file-ui";

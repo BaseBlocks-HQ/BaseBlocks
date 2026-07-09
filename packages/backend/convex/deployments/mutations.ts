@@ -1,175 +1,153 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
 import { requirePublisher } from "../auth";
-import { getLayoutsBySite } from "../lib/resolvers";
 
-/**
- * Deploy site - copies ALL draft fields to published fields for sites, pages, and layouts.
- * Creates deployment record with snapshot for rollback.
- */
+async function getNextDeploymentVersion(ctx: MutationCtx, siteId: Id<"sites">) {
+  const deployments = await ctx.db
+    .query("deployments")
+    .withIndex("by_site", (q) => q.eq("siteId", siteId))
+    .collect();
+  return (
+    deployments.reduce((version, item) => Math.max(version, item.version), 0) +
+    1
+  );
+}
+
+async function supersedeActiveDeployment(
+  ctx: MutationCtx,
+  siteId: Id<"sites">,
+  status: "superseded" | "rolled-back",
+) {
+  const activeDeployment = await ctx.db
+    .query("deployments")
+    .withIndex("by_site_status", (q) =>
+      q.eq("siteId", siteId).eq("status", "active"),
+    )
+    .first();
+
+  if (activeDeployment) {
+    await ctx.db.patch(activeDeployment._id, { status });
+  }
+}
+
+export async function createDeploymentRevision(
+  ctx: MutationCtx,
+  {
+    notes,
+    siteId,
+    statusForPrevious = "superseded",
+  }: {
+    siteId: Id<"sites">;
+    notes?: string;
+    statusForPrevious?: "superseded" | "rolled-back";
+  },
+) {
+  const site = await ctx.db.get(siteId);
+  if (!site) throw new Error("Site not found");
+
+  const { auth } = await requirePublisher(ctx, site.teamId);
+  const now = Date.now();
+  await supersedeActiveDeployment(ctx, siteId, statusForPrevious);
+
+  const [pages, layouts] = await Promise.all([
+    ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
+      .query("layouts")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+  ]);
+
+  const version = await getNextDeploymentVersion(ctx, siteId);
+  const deploymentId = await ctx.db.insert("deployments", {
+    siteId,
+    version,
+    deployedBy: auth.userId,
+    deployedAt: now,
+    notes,
+    summary: {
+      pagesDeployed: pages.length,
+      layoutsDeployed: layouts.length,
+      settingsChanged: true,
+    },
+    status: "active",
+  });
+
+  await ctx.db.insert("siteRevisions", {
+    deploymentId,
+    siteId,
+    teamId: site.teamId,
+    slug: site.slug,
+    name: site.name,
+    logoUrl: site.logoUrl,
+    defaultPageId: site.defaultPageId,
+    visibility: site.visibility,
+    settings: site.settings,
+    updatedAt: site.updatedAt,
+  });
+
+  await Promise.all(
+    pages.map((page) =>
+      ctx.db.insert("pageRevisions", {
+        deploymentId,
+        siteId,
+        sourcePageId: page._id,
+        title: page.title,
+        slug: page.slug,
+        icon: page.icon,
+        order: page.order,
+        parentId: page.parentId,
+        accessPolicy: page.accessPolicy,
+        pageTabs: page.pageTabs,
+        showInNavigation: page.showInNavigation,
+        updatedAt: page.updatedAt,
+      }),
+    ),
+  );
+
+  await Promise.all(
+    layouts.map((layout) =>
+      ctx.db.insert("layoutRevisions", {
+        deploymentId,
+        siteId,
+        sourcePageId: layout.pageId,
+        sourceLayoutId: layout._id,
+        tabId: layout.tabId,
+        type: layout.type,
+        order: layout.order,
+        slots: layout.slots,
+        settings: layout.settings,
+        updatedAt: layout.updatedAt,
+      }),
+    ),
+  );
+
+  await ctx.db.patch(siteId, {
+    isPublished: true,
+    publishedAt: site.publishedAt ?? now,
+    lastDeployedAt: now,
+    lastDeployedBy: auth.userId,
+    deploymentVersion: version,
+    updatedAt: now,
+  });
+
+  return deploymentId;
+}
+
 export const deploy = mutation({
   args: {
     siteId: v.id("sites"),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { siteId, notes }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    const { auth } = await requirePublisher(ctx, site.teamId);
-    const now = Date.now();
-
-    // Mark current active deployment as superseded
-    const activeDeployment = await ctx.db
-      .query("deployments")
-      .withIndex("by_site_status", (q) =>
-        q.eq("siteId", siteId).eq("status", "active"),
-      )
-      .first();
-
-    if (activeDeployment) {
-      await ctx.db.patch(activeDeployment._id, { status: "superseded" });
-    }
-
-    // Collect all pages and layouts
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    let totalLayouts = 0;
-
-    // Calculate new version number
-    const newVersion = (site.deploymentVersion ?? 0) + 1;
-
-    // Create deployment record
-    const deploymentId = await ctx.db.insert("deployments", {
-      siteId,
-      version: newVersion,
-      deployedBy: auth.userId,
-      deployedAt: now,
-      notes,
-      summary: {
-        pagesDeployed: pages.length,
-        layoutsDeployed: 0, // updated below
-        settingsChanged: true,
-      },
-      status: "active",
-    });
-
-    // Create site-settings snapshot
-    await ctx.db.insert("deploymentSnapshots", {
-      deploymentId,
-      siteId,
-      chunkType: "site-settings",
-      data: {
-        name: site.name,
-        logoUrl: site.logoUrl,
-        defaultPageId: site.defaultPageId,
-        settings: site.settings,
-      },
-    });
-
-    // Create page-tree snapshot
-    const pageTreeData = pages.map((p) => ({
-      _id: p._id,
-      title: p.title,
-      slug: p.slug,
-      icon: p.icon,
-      order: p.order,
-      parentId: p.parentId,
-      accessPolicy: p.accessPolicy,
-      pageTabs: p.pageTabs,
-    }));
-
-    await ctx.db.insert("deploymentSnapshots", {
-      deploymentId,
-      siteId,
-      chunkType: "page-tree",
-      data: pageTreeData,
-    });
-
-    // Copy draft → published for site
-    await ctx.db.patch(siteId, {
-      publishedName: site.name,
-      publishedLogoUrl: site.logoUrl,
-      publishedDefaultPageId: site.defaultPageId,
-      publishedSettings: site.settings,
-      lastDeployedAt: now,
-      lastDeployedBy: auth.userId,
-      deploymentVersion: newVersion,
-    });
-
-    // Fetch all layouts for site in one query (eliminates N+1)
-    const layoutsByPage = await getLayoutsBySite(ctx, siteId);
-
-    // Copy draft → published for each page and its layouts
-    for (const page of pages) {
-      await ctx.db.patch(page._id, {
-        publishedTitle: page.title,
-        publishedSlug: page.slug,
-        publishedIcon: page.icon,
-        publishedOrder: page.order,
-        publishedParentId: page.parentId,
-        publishedAccessPolicy: page.accessPolicy,
-        publishedPageTabs: page.pageTabs,
-        isDeployed: true,
-      });
-
-      const layouts = layoutsByPage.get(page._id) ?? [];
-
-      // Snapshot layouts for this page
-      const layoutData = layouts.map((l) => ({
-        _id: l._id,
-        type: l.type,
-        order: l.order,
-        tabId: l.tabId,
-        slots: l.slots,
-        settings: l.settings,
-      }));
-
-      // Stringify layout data to avoid Convex 16-level nesting limit
-      // (BlockNote content within page blocks can be deeply nested)
-      await ctx.db.insert("deploymentSnapshots", {
-        deploymentId,
-        siteId,
-        chunkType: "page-layouts",
-        pageId: page._id,
-        data: JSON.stringify(layoutData),
-      });
-
-      // Copy draft → published for each layout
-      for (const layout of layouts) {
-        await ctx.db.patch(layout._id, {
-          publishedSlots: layout.slots,
-          publishedType: layout.type,
-          publishedOrder: layout.order,
-          publishedSettings: layout.settings,
-          publishedTabId: layout.tabId,
-          isDeployed: true,
-        });
-        totalLayouts++;
-      }
-    }
-
-    // Update deployment summary with actual layout count
-    await ctx.db.patch(deploymentId, {
-      summary: {
-        pagesDeployed: pages.length,
-        layoutsDeployed: totalLayouts,
-        settingsChanged: true,
-      },
-    });
-
-    return deploymentId;
+    return await createDeploymentRevision(ctx, { siteId, notes });
   },
 });
 
-/**
- * Rollback to a previous deployment - restores published fields from snapshot.
- * Creates a new deployment record so the rollback itself is in history.
- */
 export const rollback = mutation({
   args: {
     siteId: v.id("sites"),
@@ -181,54 +159,42 @@ export const rollback = mutation({
     if (!site) throw new Error("Site not found");
 
     const { auth } = await requirePublisher(ctx, site.teamId);
-
-    // Verify target deployment belongs to this site
     const targetDeployment = await ctx.db.get(targetDeploymentId);
     if (!targetDeployment || targetDeployment.siteId !== siteId) {
       throw new Error("Deployment not found");
     }
 
+    const [siteRevision, pageRevisions, layoutRevisions] = await Promise.all([
+      ctx.db
+        .query("siteRevisions")
+        .withIndex("by_deployment", (q) =>
+          q.eq("deploymentId", targetDeploymentId),
+        )
+        .first(),
+      ctx.db
+        .query("pageRevisions")
+        .withIndex("by_deployment", (q) =>
+          q.eq("deploymentId", targetDeploymentId),
+        )
+        .collect(),
+      ctx.db
+        .query("layoutRevisions")
+        .withIndex("by_deployment", (q) =>
+          q.eq("deploymentId", targetDeploymentId),
+        )
+        .collect(),
+    ]);
+
+    if (!siteRevision) {
+      throw new Error("Incomplete deployment revision");
+    }
+
     const now = Date.now();
-
-    // Mark current active deployment as rolled-back
-    const activeDeployment = await ctx.db
-      .query("deployments")
-      .withIndex("by_site_status", (q) =>
-        q.eq("siteId", siteId).eq("status", "active"),
-      )
-      .first();
-
-    if (activeDeployment) {
-      await ctx.db.patch(activeDeployment._id, { status: "rolled-back" });
-    }
-
-    // Load snapshots for target deployment
-    const snapshots = await ctx.db
-      .query("deploymentSnapshots")
-      .withIndex("by_deployment", (q) =>
-        q.eq("deploymentId", targetDeploymentId),
-      )
-      .collect();
-
-    const siteSettingsSnapshot = snapshots.find(
-      (s) => s.chunkType === "site-settings",
-    );
-    const pageTreeSnapshot = snapshots.find((s) => s.chunkType === "page-tree");
-    const pageLayoutSnapshots = snapshots.filter(
-      (s) => s.chunkType === "page-layouts",
-    );
-
-    if (!siteSettingsSnapshot || !pageTreeSnapshot) {
-      throw new Error("Incomplete deployment snapshot");
-    }
-
-    // Calculate new version
-    const newVersion = (site.deploymentVersion ?? 0) + 1;
-
-    // Create new deployment record for the rollback
+    await supersedeActiveDeployment(ctx, siteId, "rolled-back");
+    const version = await getNextDeploymentVersion(ctx, siteId);
     const rollbackDeploymentId = await ctx.db.insert("deployments", {
       siteId,
-      version: newVersion,
+      version,
       deployedBy: auth.userId,
       deployedAt: now,
       notes: notes || `Rollback to v${targetDeployment.version}`,
@@ -236,117 +202,62 @@ export const rollback = mutation({
       status: "active",
     });
 
-    // Copy snapshots to the new deployment (for future rollback-of-rollback)
-    for (const snapshot of snapshots) {
-      await ctx.db.insert("deploymentSnapshots", {
-        deploymentId: rollbackDeploymentId,
-        siteId: snapshot.siteId,
-        chunkType: snapshot.chunkType,
-        pageId: snapshot.pageId,
-        data: snapshot.data,
-      });
-    }
-
-    // Restore site settings from snapshot
-    const siteData = siteSettingsSnapshot.data as {
-      name: string;
-      logoUrl?: string;
-      defaultPageId?: Id<"pages">;
-      settings: Doc<"sites">["settings"];
-    };
-
-    await ctx.db.patch(siteId, {
-      publishedName: siteData.name,
-      publishedLogoUrl: siteData.logoUrl,
-      publishedDefaultPageId: siteData.defaultPageId,
-      publishedSettings: siteData.settings,
-      lastDeployedAt: now,
-      lastDeployedBy: auth.userId,
-      deploymentVersion: newVersion,
+    await ctx.db.insert("siteRevisions", {
+      deploymentId: rollbackDeploymentId,
+      siteId,
+      teamId: siteRevision.teamId,
+      slug: siteRevision.slug,
+      name: siteRevision.name,
+      logoUrl: siteRevision.logoUrl,
+      defaultPageId: siteRevision.defaultPageId,
+      visibility: siteRevision.visibility,
+      settings: siteRevision.settings,
+      updatedAt: siteRevision.updatedAt,
     });
 
-    // Restore page published fields from snapshot
-    const pageTreeData = pageTreeSnapshot.data as Array<{
-      _id: Id<"pages">;
-      title: string;
-      slug: string;
-      icon?: string;
-      order: number;
-      parentId?: Id<"pages">;
-      accessPolicy?: Doc<"pages">["accessPolicy"];
-      pageTabs?: Array<{ id: string; label: string }>;
-    }>;
+    await Promise.all(
+      pageRevisions.map((page) =>
+        ctx.db.insert("pageRevisions", {
+          deploymentId: rollbackDeploymentId,
+          siteId,
+          sourcePageId: page.sourcePageId,
+          title: page.title,
+          slug: page.slug,
+          icon: page.icon,
+          order: page.order,
+          parentId: page.parentId,
+          accessPolicy: page.accessPolicy,
+          pageTabs: page.pageTabs,
+          showInNavigation: page.showInNavigation,
+          updatedAt: page.updatedAt,
+        }),
+      ),
+    );
 
-    // First, mark all pages as not deployed
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    await Promise.all(
+      layoutRevisions.map((layout) =>
+        ctx.db.insert("layoutRevisions", {
+          deploymentId: rollbackDeploymentId,
+          siteId,
+          sourcePageId: layout.sourcePageId,
+          sourceLayoutId: layout.sourceLayoutId,
+          tabId: layout.tabId,
+          type: layout.type,
+          order: layout.order,
+          slots: layout.slots,
+          settings: layout.settings,
+          updatedAt: layout.updatedAt,
+        }),
+      ),
+    );
 
-    for (const page of allPages) {
-      await ctx.db.patch(page._id, { isDeployed: false });
-    }
-
-    // Restore published fields for pages in snapshot
-    for (const pageData of pageTreeData) {
-      const page = await ctx.db.get(pageData._id);
-      if (page) {
-        await ctx.db.patch(pageData._id, {
-          publishedTitle: pageData.title,
-          publishedSlug: pageData.slug,
-          publishedIcon: pageData.icon,
-          publishedOrder: pageData.order,
-          publishedParentId: pageData.parentId,
-          publishedAccessPolicy: pageData.accessPolicy,
-          publishedPageTabs: pageData.pageTabs,
-          isDeployed: true,
-        });
-      }
-    }
-
-    // Restore layout published fields from snapshots
-    // First, mark all layouts as not deployed (single query via by_site index)
-    const allLayouts = await ctx.db
-      .query("layouts")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    for (const layout of allLayouts) {
-      await ctx.db.patch(layout._id, {
-        isDeployed: false,
-        publishedSlots: undefined,
-        publishedType: undefined,
-        publishedOrder: undefined,
-        publishedSettings: undefined,
-        publishedTabId: undefined,
-      });
-    }
-
-    // Restore from page-layouts snapshots
-    for (const layoutSnapshot of pageLayoutSnapshots) {
-      const layoutsData = JSON.parse(layoutSnapshot.data as string) as Array<{
-        _id: Id<"layouts">;
-        type: Doc<"layouts">["type"];
-        order: number;
-        tabId?: string;
-        slots: Doc<"layouts">["slots"];
-        settings: Doc<"layouts">["settings"];
-      }>;
-
-      for (const layoutData of layoutsData) {
-        const layout = await ctx.db.get(layoutData._id);
-        if (layout) {
-          await ctx.db.patch(layoutData._id, {
-            publishedSlots: layoutData.slots,
-            publishedType: layoutData.type,
-            publishedOrder: layoutData.order,
-            publishedSettings: layoutData.settings,
-            publishedTabId: layoutData.tabId,
-            isDeployed: true,
-          });
-        }
-      }
-    }
+    await ctx.db.patch(siteId, {
+      isPublished: true,
+      lastDeployedAt: now,
+      lastDeployedBy: auth.userId,
+      deploymentVersion: version,
+      updatedAt: now,
+    });
 
     return rollbackDeploymentId;
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditorSiteOptional } from "@/modules/editor/editor-state";
-import { cn } from "@/lib/utils";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { isPageRestricted, type PageListItem } from "@baseblocks/domain";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";

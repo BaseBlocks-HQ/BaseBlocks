@@ -1,12 +1,12 @@
 "use client";
 
-import { useTeamSites } from "@/lib/data/use-site";
 import { useTeamAccess } from "@/modules/workspace/team-access";
+import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./create-site-dialog";
@@ -91,7 +91,9 @@ function SitesSection({
 export function SitesPage({ initialSites }: SitesPageProps) {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
-  const sitesQuery = useTeamSites(team._id);
+  const sitesQuery = useQuery(api.sites.queries.listByTeam, {
+    teamId: team._id,
+  });
   const { isLoading: isConvexLoading } = useConvexAuth();
   const sites =
     isConvexLoading || sitesQuery === undefined ? initialSites : sitesQuery;

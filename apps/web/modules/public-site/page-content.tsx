@@ -1,7 +1,7 @@
 "use client";
 
-import { usePage, usePublishedLayouts } from "@/lib/data";
-import { cn } from "@/lib/utils";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   SPACER_LAYOUT_HEIGHTS,
   getLayoutGridStyle,
@@ -9,7 +9,8 @@ import {
 } from "@/modules/site-runtime/layout";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { ElementRenderer } from "@/modules/site-runtime/rendering";
-import type { Doc } from "@baseblocks/backend";
+import { api } from "@baseblocks/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 import type {
   AnyContent,
   ElementType,
@@ -26,10 +27,18 @@ import {
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
+import { useQuery } from "convex/react";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { PublicPagePanel } from "./page-panel";
 
-type LayoutDoc = Doc<"layouts">;
+type LayoutDoc = {
+  _id: string;
+  tabId?: string;
+  type: LayoutType;
+  order: number;
+  slots: Doc<"layouts">["slots"];
+  settings: LayoutSettings;
+};
 type SlotDoc = LayoutDoc["slots"][number];
 type BlockDoc = SlotDoc["blocks"][number];
 
@@ -276,8 +285,15 @@ function PublicPageContentInner({
 }: PublicPageContentProps) {
   const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
-  const pageData = usePage(pageId);
-  const layoutsData = usePublishedLayouts(pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const pageData = useQuery(api.pages.queries.get, {
+    pageId: pageId as Id<"pages">,
+    sessionTokens,
+  });
+  const layoutsData = useQuery(api.layouts.queries.listPublished, {
+    pageId: pageId as Id<"pages">,
+    sessionTokens,
+  });
   const contentRef = useRef<HTMLDivElement>(null);
   const lastAutoScrolledKeyRef = useRef<string | null>(null);
   const isMobile = useIsMobile();

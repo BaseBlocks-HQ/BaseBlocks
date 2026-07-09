@@ -1,11 +1,9 @@
 "use client";
 
-import { usePage } from "@/lib/data";
-import { usePages } from "@/lib/data/use-page";
-import { useSite } from "@/lib/data/use-site";
-import { buildPathWithUpdatedSearchParams } from "@/lib/url-search-params";
-import { useHaptic } from "@/lib/use-haptic";
-import { cn } from "@/lib/utils";
+import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
+import { buildPathWithUpdatedSearchParams } from "@/modules/routing/search-params";
+import { useHaptic } from "@/modules/ui/use-haptic";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { EditorProvider } from "@/modules/editor/editor-state";
 import { useEditorUi } from "@/modules/editor/editor-state";
 import { PublicPagePanel } from "@/modules/public-site/page-panel";
@@ -33,7 +31,7 @@ import {
 } from "@baseblocks/ui/resizable";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useConvexAuth, useMutation } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useTranslations } from "next-intl";
@@ -60,7 +58,13 @@ function PageEditorPanel({
 }) {
   const t = useTranslations("editor.pagePanel");
   const { editingPage, closePageEditor } = useEditorUi();
-  const page = usePage(editingPage?.pageId);
+  const sessionTokens = getStoredAccessSessionTokens();
+  const page = useQuery(
+    api.pages.queries.get,
+    editingPage?.pageId
+      ? { pageId: editingPage.pageId as Id<"pages">, sessionTokens }
+      : "skip",
+  );
   const updatePage = useMutation(api.pages.mutations.update);
   const [title, setTitle] = useState(page?.title ?? "");
 
@@ -208,8 +212,12 @@ function SiteEditorInner({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingPage, closePageEditor, viewingPage, closePage]);
 
-  const siteQuery = useSite(siteId);
-  const pagesQuery = usePages(siteId);
+  const siteQuery = useQuery(api.sites.queries.get, {
+    siteId: siteId as Id<"sites">,
+  });
+  const pagesQuery = useQuery(api.pages.queries.list, {
+    siteId: siteId as Id<"sites">,
+  });
   const site =
     isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
   const pages =
@@ -658,7 +666,9 @@ export function SiteEditor({
 }: SiteEditorProps) {
   const { capabilities } = useTeamAccess();
   const { isLoading: isConvexLoading } = useConvexAuth();
-  const siteQuery = useSite(siteId);
+  const siteQuery = useQuery(api.sites.queries.get, {
+    siteId: siteId as Id<"sites">,
+  });
   const site =
     isConvexLoading || siteQuery === undefined ? initialSite : siteQuery;
 

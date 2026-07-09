@@ -1,5 +1,5 @@
-import { getServerConvexClient } from "@/lib/convex/server";
-import { getRequestAccessSessionTokens } from "@/lib/public-site/access-session";
+import { getServerConvexClient } from "@/modules/convex/server";
+import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import {
   buildPageExportText,
   createPageExportFilename,
@@ -48,7 +48,7 @@ export async function GET(
         sessionTokens,
       },
     );
-    const pageTitle = page.publishedTitle ?? page.title;
+    const pageTitle = page.title;
 
     const exportDocument = buildPageExportText({
       pageTitle,

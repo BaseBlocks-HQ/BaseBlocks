@@ -4,8 +4,8 @@ import {
   FILE_SEARCH_PARAM,
   buildFileDeepLinkPath,
   toAbsoluteBrowserUrl,
-} from "@/lib/file-deep-link";
-import { cn } from "@/lib/utils";
+} from "@/modules/document-library/deep-link";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview,
   ToolbarButton,
@@ -19,7 +19,7 @@ import type {
   LibraryFile,
 } from "@/modules/document-library/tree-input";
 import { buildLibraryTreeInput } from "@/modules/document-library/tree-input";
-import { useFileUpload } from "@/lib/files/hooks";
+import { useFileUpload } from "@/modules/files/hooks";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";

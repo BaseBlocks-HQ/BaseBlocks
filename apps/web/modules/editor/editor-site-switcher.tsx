@@ -1,10 +1,11 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { useTeamSites } from "@/lib/data/use-site";
-import { getTeamSiteEditorPath } from "@/lib/routes/team-routes";
-import { cn } from "@/lib/utils";
+import { getTeamSiteEditorPath } from "@/modules/dashboard/routes";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useTeamAccess } from "@/modules/workspace/team-access";
+import { api } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
 import Image from "next/image";
+import { useQuery } from "convex/react";
 
 interface EditorSiteSwitcherSite {
   _id: string;
@@ -153,7 +155,9 @@ export function EditorSiteSwitcher({
   teamSlug,
 }: EditorSiteSwitcherProps) {
   const { team } = useTeamAccess();
-  const sites = useTeamSites(team._id);
+  const sites = useQuery(api.sites.queries.listByTeam, {
+    teamId: team._id as Id<"teams">,
+  });
   const switcherSites = getSwitcherSites(sites ?? [], currentSiteId);
   const hasOtherSites = switcherSites.length > 1;
 

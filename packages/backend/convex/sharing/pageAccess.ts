@@ -7,6 +7,11 @@ import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { getAuthContextOrNull } from "../auth";
+import {
+  getActivePageRevisionBySourceId,
+  getActivePageRevisions,
+  type PublicPageRevision,
+} from "../deployments/snapshots";
 import { canAccessPublishedSite } from "../sharing/access";
 
 type QueryCtx = GenericQueryCtx<DataModel>;
@@ -26,29 +31,6 @@ type PublishedViewerContext = {
   isTeamMember: boolean;
 };
 
-type PageForAccess = Pick<
-  Doc<"pages">,
-  | "_id"
-  | "title"
-  | "slug"
-  | "siteId"
-  | "parentId"
-  | "publishedTitle"
-  | "publishedSlug"
-  | "publishedParentId"
-  | "order"
-  | "publishedOrder"
-  | "updatedAt"
-  | "icon"
-  | "publishedIcon"
-  | "pageTabs"
-  | "publishedPageTabs"
-  | "accessPolicy"
-  | "publishedAccessPolicy"
-  | "isDeployed"
-  | "showInNavigation"
->;
-
 export function getDraftPageAccessPolicy(page: {
   accessPolicy?: Doc<"pages">["accessPolicy"];
 }) {
@@ -56,11 +38,9 @@ export function getDraftPageAccessPolicy(page: {
 }
 
 export function getPublishedPageAccessPolicy(page: {
-  publishedAccessPolicy?: Doc<"pages">["publishedAccessPolicy"];
+  accessPolicy?: Doc<"pageRevisions">["accessPolicy"];
 }) {
-  return normalizePageAccessPolicy(
-    page.publishedAccessPolicy ?? publicPageAccessPolicy,
-  );
+  return normalizePageAccessPolicy(page.accessPolicy ?? publicPageAccessPolicy);
 }
 
 export async function resolvePublishedViewerContext(
@@ -111,7 +91,7 @@ export async function resolvePublishedViewerContext(
 }
 
 export function canViewerAccessPublishedPage(
-  page: Pick<Doc<"pages">, "accessPolicy" | "publishedAccessPolicy">,
+  page: Pick<PublicPageRevision, "accessPolicy">,
   viewer: PublishedViewerContext,
 ): boolean {
   const policy = getPublishedPageAccessPolicy(page);
@@ -130,7 +110,7 @@ export async function getAccessiblePublishedPages(
   ctx: QueryCtx,
   site: Doc<"sites">,
   sessionTokens?: string[],
-): Promise<PageForAccess[]> {
+): Promise<PublicPageRevision[]> {
   if (!site.isPublished) {
     return [];
   }
@@ -140,23 +120,14 @@ export async function getAccessiblePublishedPages(
     return [];
   }
 
-  const deployedPages = (
-    await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", site._id))
-      .collect()
-  ).filter((page) => page.isDeployed);
-
+  const deployedPages = await getActivePageRevisions(ctx, site._id);
   const deployedPageIds = new Set(deployedPages.map((page) => page._id));
-  const childrenByParent = new Map<string, PageForAccess[]>();
+  const childrenByParent = new Map<string, PublicPageRevision[]>();
 
   for (const page of deployedPages) {
     const parentId =
-      (page.publishedParentId ?? page.parentId) &&
-      deployedPageIds.has(
-        (page.publishedParentId ?? page.parentId) as Id<"pages">,
-      )
-        ? (page.publishedParentId ?? page.parentId)
+      page.parentId && deployedPageIds.has(page.parentId)
+        ? page.parentId
         : undefined;
     const key = parentId ?? "__root__";
     const existingChildren = childrenByParent.get(key);
@@ -168,12 +139,10 @@ export async function getAccessiblePublishedPages(
   }
 
   for (const children of childrenByParent.values()) {
-    children.sort(
-      (a, b) => (a.publishedOrder ?? a.order) - (b.publishedOrder ?? b.order),
-    );
+    children.sort((a, b) => a.order - b.order);
   }
 
-  const accessiblePages: PageForAccess[] = [];
+  const accessiblePages: PublicPageRevision[] = [];
 
   const visit = (parentId?: Id<"pages">) => {
     const key = parentId ?? "__root__";
@@ -198,12 +167,17 @@ export async function canViewerAccessPublishedPageById(
   sessionTokens?: string[],
 ): Promise<boolean> {
   const page = await ctx.db.get(pageId);
-  if (!page || !page.isDeployed) {
+  if (!page) {
     return false;
   }
 
   const site = await ctx.db.get(page.siteId);
   if (!site) {
+    return false;
+  }
+
+  const revision = await getActivePageRevisionBySourceId(ctx, pageId);
+  if (!revision) {
     return false;
   }
 

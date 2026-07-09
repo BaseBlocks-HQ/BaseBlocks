@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { extractTeamSlug } from "@/lib/domains";
+import { extractTeamSlug } from "@/modules/routing/domains";
 /**
  * Dynamic favicon handler for multi-tenant subdomains.
  *

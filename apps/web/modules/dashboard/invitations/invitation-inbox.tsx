@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "@/i18n/navigation";
-import { authClient } from "@/lib/auth/client";
-import { getAuthClientDataOrThrow } from "@/lib/auth/result";
+import { authClient } from "@/modules/auth/client";
+import { getAuthClientDataOrThrow } from "@/modules/auth/result";
 import { api } from "@baseblocks/backend";
 import {
   AlertDialog,
