@@ -1,11 +1,14 @@
 // Flattened Convex domain module. Keep this file as the public API for this domain.
 import { createLayoutDraft } from "@baseblocks/domain";
-import { nanoid } from "nanoid";
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import { checkIsMember, getAuthContextOrNull, requireContentEditor } from "./permissions";
+import {
+  checkIsMember,
+  getAuthContextOrNull,
+  requireContentEditor,
+} from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
 import {
   canViewerAccessPublishedPageById,
@@ -554,15 +557,13 @@ export const getByPathPublishedStatus = query({
       return { status: "accessible" as const };
     }
 
-    const [accessiblePages, allPublishedPages] = await Promise.all(
-      [
-        getAccessiblePublishedPages(ctx, site, sessionTokens),
-        ctx.db
-          .query("pages")
-          .withIndex("by_site", (q) => q.eq("siteId", siteId))
-          .collect(),
-      ],
-    );
+    const [accessiblePages, allPublishedPages] = await Promise.all([
+      getAccessiblePublishedPages(ctx, site, sessionTokens),
+      ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+    ]);
     const defaultPage = { defaultPageId: site.defaultPageId };
 
     const accessiblePage = resolvePublishedPageByPath(
@@ -619,9 +620,9 @@ export const listDeployedPaths = query({
     const site = await ctx.db.get(siteId);
     if (!site?.isPublished) return [];
 
-    const publishedPages = (await getAccessiblePublishedPages(ctx, site)).filter(
-      (page) => page.showInNavigation !== false,
-    );
+    const publishedPages = (
+      await getAccessiblePublishedPages(ctx, site)
+    ).filter((page) => page.showInNavigation !== false);
 
     const slugMap = new Map(publishedPages.map((p) => [p._id, p.slug]));
     const parentMap = new Map(publishedPages.map((p) => [p._id, p.parentId]));

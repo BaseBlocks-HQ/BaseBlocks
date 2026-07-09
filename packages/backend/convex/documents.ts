@@ -174,10 +174,7 @@ async function isPublishedFileBlockDocument(
 /**
  * Format search result.
  */
-function formatSearchResult(
-  document: Doc<"documents">,
-  matchType: "filename",
-) {
+function formatSearchResult(document: Doc<"documents">, matchType: "filename") {
   return {
     _id: document._id,
     filename: document.filename,

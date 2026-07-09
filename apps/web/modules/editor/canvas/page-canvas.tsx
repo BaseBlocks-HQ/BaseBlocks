@@ -485,9 +485,7 @@ export function PageEditor({
   const createLayout = useMutation(api.layouts.create);
   const removeLayout = useMutation(api.layouts.remove);
   const reorderLayouts = useMutation(api.layouts.reorder);
-  const updateLayoutSettings = useMutation(
-    api.layouts.updateSettings,
-  );
+  const updateLayoutSettings = useMutation(api.layouts.updateSettings);
   const updateBlock = useMutation(api.layouts.updateBlockInSlot);
   const removeBlock = useMutation(api.layouts.removeBlockFromSlot);
   const moveBlock = useMutation(api.layouts.moveBlock);

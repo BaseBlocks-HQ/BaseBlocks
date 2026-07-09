@@ -4,10 +4,7 @@ import { Files } from "files-sdk";
 import { s3 } from "files-sdk/s3";
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import {
-  getFilesBucketName,
-  requireFilesEnv,
-} from "./files";
+import { getFilesBucketName, requireFilesEnv } from "./files";
 
 function getFilesForcePathStyle(): boolean {
   const raw = process.env.FILES_FORCE_PATH_STYLE?.trim().toLowerCase();

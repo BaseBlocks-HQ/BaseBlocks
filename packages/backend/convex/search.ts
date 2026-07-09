@@ -4,7 +4,10 @@ import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { checkIsMember } from "./permissions";
-import { buildDocumentDownloadUrl, normalizeDocumentSearchMetadata } from "./documents";
+import {
+  buildDocumentDownloadUrl,
+  normalizeDocumentSearchMetadata,
+} from "./documents";
 import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIdsForPageIds } from "./sites";
 

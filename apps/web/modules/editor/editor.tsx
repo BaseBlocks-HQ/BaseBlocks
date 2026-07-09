@@ -308,11 +308,7 @@ function SiteEditorInner({
   };
 
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildEditorPath(
-      pathname,
-      searchParams.toString(),
-      updates,
-    );
+    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
     router.replace(nextUrl, { scroll: false });
   };
 
@@ -327,9 +323,7 @@ function SiteEditorInner({
   const createLayoutMutation = useMutation(api.layouts.create);
   const addBlockMutation = useMutation(api.layouts.addBlockToSlot);
   const addPageBlockMutation = useMutation(api.layouts.addPageBlock);
-  const enablePageTabsMutation = useMutation(
-    api.pages.enablePageTabs,
-  );
+  const enablePageTabsMutation = useMutation(api.pages.enablePageTabs);
 
   const targetPageId = editingPage
     ? (editingPage.pageId as Id<"pages">)
@@ -625,11 +619,7 @@ function SiteEditorShell({
   const editingPageId = searchParams.get("editorPanelPage");
 
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildEditorPath(
-      pathname,
-      searchParams.toString(),
-      updates,
-    );
+    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
     router.replace(nextUrl, { scroll: false });
   };
 

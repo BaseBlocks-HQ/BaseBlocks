@@ -3,7 +3,13 @@ import { ConvexError, v } from "convex/values";
 import type { GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import { checkIsMember, getAuthContextOrNull, requireAdmin, requireSiteManager, requireContentEditor } from "./permissions";
+import {
+  checkIsMember,
+  getAuthContextOrNull,
+  requireAdmin,
+  requireSiteManager,
+  requireContentEditor,
+} from "./permissions";
 import {
   canAccessPagePolicy,
   normalizePageAccessPolicy,
@@ -218,9 +224,7 @@ export async function getAccessiblePublishedPages(
 
   for (const page of pages) {
     const parentId =
-      page.parentId && pageIds.has(page.parentId)
-        ? page.parentId
-        : undefined;
+      page.parentId && pageIds.has(page.parentId) ? page.parentId : undefined;
     const key = parentId ?? "__root__";
     const existingChildren = childrenByParent.get(key);
     if (existingChildren) {

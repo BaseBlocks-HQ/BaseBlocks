@@ -69,11 +69,7 @@ export function EditorHeader({
   const { canEdit } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const {
-    siteUrl,
-    settings,
-    accessCode,
-  } = useEditorHeaderData({
+  const { siteUrl, settings, accessCode } = useEditorHeaderData({
     shareOpen: shareDialogOpen,
     siteId,
     teamSlug,
@@ -124,7 +120,6 @@ export function EditorHeader({
         settings={settings}
         accessCode={accessCode}
       />
-
     </>
   );
 }
@@ -243,9 +238,7 @@ function EditorHeaderRightSection({
     <div className="flex items-center gap-1">
       {canEdit ? (
         <>
-          <EditorHeaderMenuButton
-            onOpenShare={onOpenShare}
-          />
+          <EditorHeaderMenuButton onOpenShare={onOpenShare} />
           <ViewSiteButton
             sitePublished={sitePublished}
             teamSlug={teamSlug}
@@ -308,11 +301,7 @@ function ViewSiteButton({
   );
 }
 
-function EditorHeaderMenuButton({
-  onOpenShare,
-}: {
-  onOpenShare: () => void;
-}) {
+function EditorHeaderMenuButton({ onOpenShare }: { onOpenShare: () => void }) {
   const t = useTranslations("editor.header");
   return (
     <DropdownMenu>

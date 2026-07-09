@@ -1,6 +1,10 @@
 "use client";
 
-import { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "@baseblocks/domain";
+import {
+  SLUG_PATTERN,
+  generateSlug,
+  uniqueSlugAmong,
+} from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";

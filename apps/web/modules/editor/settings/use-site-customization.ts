@@ -27,10 +27,7 @@ interface UseSiteCustomizationResult {
 export function useSiteCustomization(
   siteId: Id<"sites"> | undefined,
 ): UseSiteCustomizationResult {
-  const site = useQuery(
-    api.sites.get,
-    siteId ? { siteId } : "skip",
-  );
+  const site = useQuery(api.sites.get, siteId ? { siteId } : "skip");
 
   const customization = site?.settings?.customization as
     | SiteCustomization

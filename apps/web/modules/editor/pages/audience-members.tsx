@@ -54,9 +54,7 @@ export function AudienceMembersDialog({
   );
   const assignments = useQuery(
     api.sharing.getAudienceMemberAssignments,
-    audienceId
-      ? { audienceId: audienceId as Id<"siteAudiences"> }
-      : "skip",
+    audienceId ? { audienceId: audienceId as Id<"siteAudiences"> } : "skip",
   );
   const resetKey = [
     audienceId ?? "no-audience",

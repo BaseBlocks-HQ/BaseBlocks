@@ -129,9 +129,7 @@ export function InvitationInbox({
   const [state, dispatch] = useReducer(inboxReducer, initialState);
   const { invitations, isLoading, processingId, error } = state;
 
-  const syncMember = useMutation(
-    api.teams.syncMemberFromInvitation,
-  );
+  const syncMember = useMutation(api.teams.syncMemberFromInvitation);
 
   const roleLabel = (role: string) => {
     if (role === "admin") return tTeam("roles.admin");

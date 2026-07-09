@@ -230,15 +230,9 @@ export function ShareDialog({
     [t],
   );
 
-  const updateVisibilityMut = useMutation(
-    api.sharing.updateVisibility,
-  );
-  const updateAccessSettingsMut = useMutation(
-    api.sharing.updateAccessSettings,
-  );
-  const generateNewCodeMut = useMutation(
-    api.sharing.generateNewAccessCode,
-  );
+  const updateVisibilityMut = useMutation(api.sharing.updateVisibility);
+  const updateAccessSettingsMut = useMutation(api.sharing.updateAccessSettings);
+  const generateNewCodeMut = useMutation(api.sharing.generateNewAccessCode);
 
   const visibility = settings?.visibility ?? "public";
 

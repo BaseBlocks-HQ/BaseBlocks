@@ -80,13 +80,9 @@ function PageAccessDialogContent({
   const audiences = useQuery(api.sharing.listAudiences, {
     siteId: siteId as Id<"sites">,
   });
-  const updateAccessPolicy = useMutation(
-    api.pages.updateAccessPolicy,
-  );
+  const updateAccessPolicy = useMutation(api.pages.updateAccessPolicy);
   const createAudience = useMutation(api.sharing.createAudience);
-  const deleteAudience = useMutation(
-    api.sharing.deleteAudience,
-  );
+  const deleteAudience = useMutation(api.sharing.deleteAudience);
 
   const currentPolicy = useMemo(
     () => normalizePageAccessPolicy(page.accessPolicy),

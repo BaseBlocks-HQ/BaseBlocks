@@ -62,10 +62,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })) as { _id: Id<"sites"> } | null;
 
         if (siteDoc) {
-          const pages = (await client.query(
-            api.pages.listDeployedPaths,
-            { siteId: siteDoc._id },
-          )) as DeployedPage[];
+          const pages = (await client.query(api.pages.listDeployedPaths, {
+            siteId: siteDoc._id,
+          })) as DeployedPage[];
 
           for (const page of pages) {
             entries.push({

@@ -1,6 +1,5 @@
 // Flattened Convex domain module. Keep this file as the public API for this domain.
 import { createLayoutDraft } from "@baseblocks/domain";
-import { nanoid } from "nanoid";
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { checkIsMember, requireContentEditor } from "./permissions";

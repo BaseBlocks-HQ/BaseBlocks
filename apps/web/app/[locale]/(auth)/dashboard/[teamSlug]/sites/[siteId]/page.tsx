@@ -19,12 +19,9 @@ export default async function TeamSiteEditorPage({ params }: Props) {
     redirect("/dashboard");
   }
 
-  const editorData = await client.query(
-    api.sites.getEditorInitialData,
-    {
-      siteId: siteId as never,
-    },
-  );
+  const editorData = await client.query(api.sites.getEditorInitialData, {
+    siteId: siteId as never,
+  });
 
   if (!editorData || editorData.site.teamId !== requestedWorkspace._id) {
     redirect(getTeamDashboardPath(requestedWorkspace.slug));

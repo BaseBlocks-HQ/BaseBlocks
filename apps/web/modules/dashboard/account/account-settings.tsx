@@ -65,9 +65,7 @@ export function AccountSettings({
     onOpenChange?.(nextOpen);
   };
 
-  const deleteMyAccountData = useMutation(
-    api.teams.deleteMyAccountData,
-  );
+  const deleteMyAccountData = useMutation(api.teams.deleteMyAccountData);
 
   const getInitials = (name?: string, email?: string) => {
     if (name) return name.slice(0, 2).toUpperCase();

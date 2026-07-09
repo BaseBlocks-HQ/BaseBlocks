@@ -3,7 +3,11 @@ import { v } from "convex/values";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import { requirePublisher, requireSiteManager, checkIsMember } from "./permissions";
+import {
+  requirePublisher,
+  requireSiteManager,
+  checkIsMember,
+} from "./permissions";
 import { deleteDocumentRows } from "./documents";
 import { deleteObjectAction } from "./files";
 import { getAccessiblePublishedPages } from "./sharing";

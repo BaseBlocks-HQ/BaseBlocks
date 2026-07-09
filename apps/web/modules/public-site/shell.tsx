@@ -93,14 +93,11 @@ export function PublicSiteShell({
     path: pagePath,
     sessionTokens,
   });
-  const currentPageStatus = useQuery(
-    api.pages.getByPathPublishedStatus,
-    {
-      siteId: site._id,
-      path: pagePath,
-      sessionTokens,
-    },
-  );
+  const currentPageStatus = useQuery(api.pages.getByPathPublishedStatus, {
+    siteId: site._id,
+    path: pagePath,
+    sessionTokens,
+  });
 
   const ancestors = useQuery(
     api.pages.getAncestors,

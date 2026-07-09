@@ -125,12 +125,9 @@ export async function buildPublicSiteMetadata({
         pageTitle = page?.title;
       }
     } else {
-      const siteData = (await client.query(
-        api.sites.getWithDefaultPage,
-        {
-          teamSlug,
-        },
-      )) as PublicSiteWithDefaultPageDoc | null;
+      const siteData = (await client.query(api.sites.getWithDefaultPage, {
+        teamSlug,
+      })) as PublicSiteWithDefaultPageDoc | null;
       site = siteData?.site ?? null;
       pageTitle = siteData?.defaultPage?.title;
     }

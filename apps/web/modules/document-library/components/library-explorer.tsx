@@ -176,9 +176,7 @@ export function LibraryExplorer({
     null,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const createFolderMutation = useMutation(
-    api.libraries.createFolder,
-  );
+  const createFolderMutation = useMutation(api.libraries.createFolder);
   const updateFolder = useMutation(api.libraries.updateFolder);
   const moveFolderMutation = useMutation(api.libraries.moveFolder);
   const removeFolder = useMutation(api.libraries.removeFolder);
