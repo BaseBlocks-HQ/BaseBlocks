@@ -43,19 +43,12 @@ import {
 } from "./elements/basic";
 import { CodeEditor } from "./elements/code";
 import { CodeRenderer } from "./elements/code-renderer";
-import {
-  DecisionTreeEditor,
-} from "./elements/decision-tree/tree-editor";
+import { DecisionTreeEditor } from "./elements/decision-tree/tree-editor";
 import { DecisionTreeRenderer } from "./elements/decision-tree/renderer";
-import { DirectoryConfigPanel } from "./elements/directory/config";
-import { DirectoryEditor } from "./elements/directory/editor";
-import { DirectoryRenderer } from "./elements/directory/renderer";
+import { DirectoryEditor, DirectoryRenderer } from "./elements/directory";
 import { FileEditor } from "./elements/file";
 import { FileRenderer } from "./elements/file-renderer";
-import {
-  FlowchartEditor,
-  FlowchartRenderer,
-} from "./elements/flowchart/editor";
+import { FlowchartEditor, FlowchartRenderer } from "./elements/flowchart";
 import { ImageEditor, ImageRenderer } from "./elements/image";
 import {
   LibraryConfigPanel,
@@ -63,19 +56,16 @@ import {
   LibraryRenderer,
 } from "./elements/library";
 import { PageConfigPanel, PageEditor, PageRenderer } from "./elements/page";
-import {
-  QuicklinksEditor,
-  QuicklinksRenderer,
-} from "./elements/quicklinks";
+import { QuicklinksEditor, QuicklinksRenderer } from "./elements/quicklinks";
 import { RichTextEditor, RichTextRenderer } from "./elements/richtext";
 import {
   SearchConfigPanel,
   SearchEditor,
   SearchRenderer,
 } from "./elements/search";
-import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
 
 import type { LucideIcon } from "lucide-react";
+import NextImage from "next/image";
 import type { ComponentType } from "react";
 
 export interface ElementRendererProps<T extends ElementType = ElementType> {
@@ -146,22 +136,58 @@ export type AnyManifestEntry = ElementManifestEntry | LayoutManifestEntry;
 export type AnyRegistryEntry = AnyManifestEntry;
 
 const blockPreview = (name: string) =>
-  themedPickerImagePreview(
+  themedPreviewImage(
     `/editor/picker/blocks/${name}-light.png`,
     `/editor/picker/blocks/${name}-dark.png`,
   );
 
 const layoutPreview = (name: string) =>
-  themedPickerImagePreview(
+  themedPreviewImage(
     `/editor/picker/layouts/${name}-light.png`,
     `/editor/picker/layouts/${name}-dark.png`,
   );
 
 const layoutPreviewV2 = (name: string) =>
-  themedPickerImagePreview(
+  themedPreviewImage(
     `/editor/picker/layouts/${name}-light-v2.png`,
     `/editor/picker/layouts/${name}-dark-v2.png`,
   );
+
+const shouldOptimizePickerImages = process.env.NODE_ENV === "production";
+
+function themedPreviewImage(lightSrc: string, darkSrc: string) {
+  function ThemedPreviewImage({ className }: ElementPreviewProps) {
+    return (
+      <div
+        className={[
+          "absolute inset-0 overflow-hidden rounded-[inherit]",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <NextImage
+          src={lightSrc}
+          alt=""
+          fill
+          className="object-cover object-center dark:hidden"
+          sizes="(max-width: 768px) 90vw, 320px"
+          unoptimized={!shouldOptimizePickerImages}
+        />
+        <NextImage
+          src={darkSrc}
+          alt=""
+          fill
+          className="hidden object-cover object-center dark:block"
+          sizes="(max-width: 768px) 90vw, 320px"
+          unoptimized={!shouldOptimizePickerImages}
+        />
+      </div>
+    );
+  }
+
+  return ThemedPreviewImage;
+}
 
 export const ELEMENT_CATEGORIES: Array<{
   category: ElementCategory;
@@ -364,7 +390,6 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
     editor: DirectoryEditor,
     renderer: DirectoryRenderer,
     preview: blockPreview("directory"),
-    configPanel: DirectoryConfigPanel,
     defaultContent: DEFAULT_ELEMENT_CONTENT.directory,
   },
   {

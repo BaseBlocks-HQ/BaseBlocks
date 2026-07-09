@@ -2,7 +2,6 @@
 
 import { useSite } from "@/lib/data";
 import { ElementCard } from "@/modules/editor/element-picker/element-card";
-import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
 import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -10,7 +9,6 @@ import type { NavigationStyle } from "@baseblocks/domain/site-settings";
 import { useMutation } from "convex/react";
 import { LayoutList, Loader2, Menu, PanelLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { FC } from "react";
 import { toast } from "sonner";
 
 interface NavigationConfigPanelProps {
@@ -31,24 +29,6 @@ const NAVIGATION_STYLES: Array<{
   { style: "topnav", label: "Top Nav" },
   { style: "subnav", label: "Tab Bar" },
 ];
-
-const NAV_STYLE_PREVIEWS: Record<
-  NavigationStyle,
-  FC<{ className?: string }>
-> = {
-  sidebar: themedPickerImagePreview(
-    "/editor/picker/navigation/sidebar-light-v2.png",
-    "/editor/picker/navigation/sidebar-dark-v2.png",
-  ),
-  topnav: themedPickerImagePreview(
-    "/editor/picker/navigation/topnav-light-v2.png",
-    "/editor/picker/navigation/topnav-dark-v2.png",
-  ),
-  subnav: themedPickerImagePreview(
-    "/editor/picker/navigation/subnav-light-v2.png",
-    "/editor/picker/navigation/subnav-dark-v2.png",
-  ),
-};
 
 export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
   const site = useSite(siteId);
@@ -87,7 +67,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
       <CollapsibleSettingsSection title="Layout" contentVariant="stack">
         {NAVIGATION_STYLES.map((styleInfo) => {
           const Icon = NAV_STYLE_ICONS[styleInfo.style];
-          const Preview = NAV_STYLE_PREVIEWS[styleInfo.style];
           const isSelected = currentNavStyle === styleInfo.style;
 
           return (
@@ -96,7 +75,6 @@ export function NavigationConfigPanel({ siteId }: NavigationConfigPanelProps) {
               icon={Icon}
               isSelected={isSelected}
               label={styleInfo.label}
-              preview={Preview}
               onClick={() => updateNavigationStyle(styleInfo.style)}
             />
           );

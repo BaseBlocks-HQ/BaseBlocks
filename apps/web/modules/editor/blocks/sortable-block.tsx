@@ -1,8 +1,8 @@
 "use client";
 
-import { ElementEditor } from "@/modules/site-elements/edit-element";
 import { LayoutContextProvider } from "@/modules/site-runtime/layout";
 import {
+  getElementEditor,
   getElementConfigPanel,
   hasElementConfigPanel,
 } from "@/modules/site-elements/registry";
@@ -79,6 +79,7 @@ export function SortableBlock({
   const blockType = block.type as ElementType;
   const hasConfig = hasElementConfigPanel(blockType);
   const ConfigPanel = hasConfig ? getElementConfigPanel(blockType) : null;
+  const Editor = getElementEditor(blockType);
 
   const showControls = isHovered || isSelected;
 
@@ -185,14 +186,20 @@ export function SortableBlock({
         })}
       >
         <LayoutContextProvider layoutType={layoutType} layoutId={layoutId}>
-          <ElementEditor
-            id={block.id}
-            type={block.type as ElementType}
-            content={block.content}
-            isSelected={isSelected}
-            onUpdate={onUpdate}
-            onRemove={onRemove}
-          />
+          {Editor ? (
+            createElement(Editor, {
+              id: block.id,
+              type: block.type as ElementType,
+              content: block.content,
+              isSelected,
+              onUpdate,
+              onRemove,
+            })
+          ) : (
+            <div className="rounded-xl border border-dashed border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
+              No editor for {block.type}.
+            </div>
+          )}
         </LayoutContextProvider>
       </div>
     </div>

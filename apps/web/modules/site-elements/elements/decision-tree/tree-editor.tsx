@@ -1,157 +1,111 @@
 "use client";
 
-import { EditableTabs } from "@/modules/editor/shared/element-tabs";
-import { TabsModeToggle } from "@/modules/editor/shared/element-tabs";
+import "@blocknote/mantine/style.css";
+
+import { useSiteAssetUpload } from "@/lib/files";
+import { useEditorSite } from "@/modules/editor/state/editor-context";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
-import { useAutoSave } from "@/modules/editor/shared/use-auto-save";
+import type { Id } from "@baseblocks/backend";
 import type {
   DecisionTree,
   DecisionTreeContent,
   DecisionTreeNode,
 } from "@baseblocks/domain/elements";
-import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@baseblocks/ui/resizable";
+import { Button } from "@baseblocks/ui/button";
+import { Input } from "@baseblocks/ui/input";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { MousePointerClick } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
-import { DecisionTreeBreadcrumbNav } from "./components/decision-tree-breadcrumb";
-import { NodeDetail } from "./editor/node-detail";
-import { NodeList } from "./editor/node-list";
-import { useTreeNavigation } from "./editor/use-tree-navigation";
-import { createDecisionTreeNodeId, insertParentForNode } from "./lib";
+import type { Block } from "@blocknote/core";
+import { BlockNoteView } from "@blocknote/mantine";
+import { useCreateBlockNote } from "@blocknote/react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  GitFork,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { useMemo, useState } from "react";
 
-function generateTreeId() {
-  return Math.random().toString(36).slice(2, 9);
+function makeNodeId() {
+  return `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function TreeTabsBar({
-  activeTreeId,
-  isMobile,
-  onAddTree,
-  onRemoveTree,
-  onRenameTree,
-  onSwitchTree,
-  onTabsModeChange,
-  tabsMode,
-  trees,
-}: {
-  activeTreeId: string;
-  isMobile: boolean;
-  onAddTree: () => void;
-  onRemoveTree?: (treeId: string) => void;
-  onRenameTree: (treeId: string, label: string) => void;
-  onSwitchTree: (treeId: string) => void;
-  onTabsModeChange: (mode: "row" | "dropdown") => void;
-  tabsMode: "row" | "dropdown";
-  trees: DecisionTree[];
-}) {
-  const t = useTranslations("elements.decisionTree");
+function normalizeTree(content: DecisionTreeContent): DecisionTree {
   return (
-    <EditableTabs
-      activeId={activeTreeId}
-      addLabel={t("addTree")}
-      endContent={
-        !isMobile ? (
-          <TabsModeToggle
-            mode={tabsMode}
-            horizontalLabel={t("tabsHorizontal")}
-            dropdownLabel={t("tabsDropdown")}
-            onChange={onTabsModeChange}
-          />
-        ) : undefined
+    content.trees[0] ?? {
+      id: "default",
+      label: "Tree",
+      nodes: [],
+    }
+  );
+}
+
+function sortedChildren(nodes: DecisionTreeNode[], parentId: string | null) {
+  return nodes
+    .filter((node) => node.parentId === parentId)
+    .sort((left, right) => left.order - right.order);
+}
+
+function descendantsOf(nodes: DecisionTreeNode[], nodeId: string) {
+  const ids = new Set([nodeId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of nodes) {
+      if (node.parentId && ids.has(node.parentId) && !ids.has(node.id)) {
+        ids.add(node.id);
+        changed = true;
       }
-      items={trees.map((tree) => ({ id: tree.id, label: tree.label }))}
-      onActiveChange={onSwitchTree}
-      onAdd={onAddTree}
-      onRemove={onRemoveTree}
-      onRename={onRenameTree}
-      removeLabel={t("removeTree")}
-      renameLabel={t("renameTree")}
-      tabsMode={tabsMode}
-    />
-  );
-}
-
-function EmptyNodeDetailState() {
-  const t = useTranslations("elements.decisionTree");
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-      <div className="flex size-9 items-center justify-center rounded-full bg-muted/50">
-        <MousePointerClick className="size-4 text-muted-foreground" />
-      </div>
-      <p className="max-w-[18rem] text-sm text-muted-foreground">
-        {t("emptyDetailSubtitle")}
-      </p>
-    </div>
-  );
-}
-
-function DecisionTreeWorkspace({
-  breadcrumbNav,
-  currentNode,
-  isMobile,
-  nodeDetailPanel,
-  nodeListPanel,
-  treeTabs,
-}: {
-  breadcrumbNav: React.ReactNode;
-  currentNode: DecisionTreeNode | null;
-  isMobile: boolean;
-  nodeDetailPanel: React.ReactNode;
-  nodeListPanel: React.ReactNode;
-  treeTabs: React.ReactNode;
-}) {
-  if (isMobile) {
-    return (
-      <div className="flex flex-col overflow-hidden rounded-lg border border-border/70 bg-muted/10 shadow-xs">
-        {treeTabs}
-        <ScrollArea className="max-h-[70vh]">
-          <div className="space-y-1 p-1">
-            <div className="flex min-h-0 flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
-              {breadcrumbNav}
-              <div className="min-h-0 flex-1">{nodeListPanel}</div>
-            </div>
-            {currentNode ? (
-              <div className="overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
-                {nodeDetailPanel}
-              </div>
-            ) : null}
-          </div>
-        </ScrollArea>
-      </div>
-    );
+    }
   }
+  return ids;
+}
+
+function MiddleText({ text }: { text: string }) {
+  return (
+    <span className="flex min-w-0 flex-1 items-baseline">
+      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+        {text.slice(0, Math.ceil(text.length / 2))}
+      </span>
+      <span className="shrink-0 px-px text-muted-foreground/70">...</span>
+      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-right">
+        {text.slice(Math.ceil(text.length / 2))}
+      </span>
+    </span>
+  );
+}
+
+function NodeDocumentEditor({
+  document,
+  onChange,
+}: {
+  document: unknown[];
+  onChange: (document: unknown[]) => void;
+}) {
+  const { resolvedTheme } = useTheme();
+  const { siteId } = useEditorSite();
+  const { uploadSiteAsset } = useSiteAssetUpload();
+  const editor = useCreateBlockNote({
+    initialContent: document.length > 0 ? (document as Block[]) : undefined,
+    uploadFile: async (file) => {
+      const asset = await uploadSiteAsset(file, siteId as Id<"sites">);
+      if (!asset) throw new Error("Upload failed");
+      return asset.url;
+    },
+  });
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-lg border border-border/70 bg-transparent shadow-xs"
-      style={{ height: "500px" }}
+      className="[&_.bn-container]:!border-none [&_.bn-container]:!bg-transparent [&_.bn-editor]:!bg-transparent [&_.bn-editor]:!px-0"
+      onKeyDown={(event) => event.stopPropagation()}
     >
-      {treeTabs}
-      <div className="flex-1 min-h-0 min-w-0 overflow-hidden px-1 pb-1 pt-0.5">
-        <ResizablePanelGroup
-          orientation="horizontal"
-          className="h-full min-w-0"
-        >
-          <ResizablePanel defaultSize={40} minSize={25}>
-            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
-              {breadcrumbNav}
-              <div className="min-h-0 flex-1">{nodeListPanel}</div>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle className="w-1 cursor-col-resize bg-transparent after:hidden focus-visible:ring-0" />
-          <ResizablePanel defaultSize={60} minSize={35}>
-            <div className="h-full min-w-0 overflow-hidden rounded-md border border-border/60 bg-background/85 shadow-xs">
-              {nodeDetailPanel}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
+      <BlockNoteView
+        editor={editor}
+        theme={resolvedTheme === "dark" ? "dark" : "light"}
+        onChange={() => onChange(editor.document)}
+      />
     </div>
   );
 }
@@ -161,217 +115,226 @@ export function DecisionTreeEditor({
   onUpdate,
   onSaveStatusChange,
 }: ElementEditorProps<"decision-tree">) {
-  const t = useTranslations("elements.decisionTree");
-  const isMobile = useIsMobile();
-  const [trees, setTrees] = useState<DecisionTree[]>(() => content.trees ?? []);
-  const [activeTreeId, setActiveTreeId] = useState<string>(
-    () => (content.trees ?? [])[0]?.id ?? "",
+  const [tree, setTree] = useState(() => normalizeTree(content));
+  const [path, setPath] = useState<string[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const parentId = path.at(-1) ?? null;
+  const children = useMemo(
+    () => sortedChildren(tree.nodes, parentId),
+    [tree.nodes, parentId],
   );
-  const [autoEditNodeId, setAutoEditNodeId] = useState<string | null>(null);
-  const [tabsMode, setTabsMode] = useState<"row" | "dropdown">(
-    content.tabsMode ?? "row",
-  );
-  const tabsModeRef = useRef<"row" | "dropdown">(content.tabsMode ?? "row");
-
-  const { path, currentParentId, navigateInto, navigateToIndex } =
-    useTreeNavigation();
-
-  const resolvedActiveTreeId = trees.find((t) => t.id === activeTreeId)
-    ? activeTreeId
-    : (trees[0]?.id ?? "");
-  const activeTree =
-    trees.find((t) => t.id === resolvedActiveTreeId) ?? trees[0]!;
-  const debouncedSave = useAutoSave(onUpdate, onSaveStatusChange);
-
-  const saveContent = (updatedTrees: DecisionTree[]) => {
-    const newContent: DecisionTreeContent = {
-      trees: updatedTrees,
-      tabsMode: tabsModeRef.current,
-    };
-    onSaveStatusChange?.("pending");
-    debouncedSave(newContent);
-  };
-
-  const updateTrees = (updatedTrees: DecisionTree[]) => {
-    setTrees(updatedTrees);
-    saveContent(updatedTrees);
-  };
-
-  const updateActiveTreeNodes = (newNodes: DecisionTreeNode[]) => {
-    const updatedTrees = trees.map((t) =>
-      t.id === resolvedActiveTreeId ? { ...t, nodes: newNodes } : t,
-    );
-    updateTrees(updatedTrees);
-  };
-
-  const addTree = () => {
-    const newTree: DecisionTree = {
-      id: generateTreeId(),
-      label: t("defaultTreeLabel", { number: trees.length + 1 }),
-      nodes: [],
-    };
-    setActiveTreeId(newTree.id);
-    navigateToIndex(0);
-    updateTrees([...trees, newTree]);
-  };
-
-  const removeTree = (treeId: string) => {
-    if (trees.length <= 1) return;
-    const idx = trees.findIndex((t) => t.id === treeId);
-    const updated = trees.filter((t) => t.id !== treeId);
-    if (resolvedActiveTreeId === treeId) {
-      setActiveTreeId(updated[Math.min(idx, updated.length - 1)]!.id);
-      navigateToIndex(0);
-    }
-    updateTrees(updated);
-  };
-
-  const switchTree = (treeId: string) => {
-    if (treeId !== resolvedActiveTreeId) {
-      setActiveTreeId(treeId);
-      navigateToIndex(0);
-    }
-  };
-
-  const handleTabsModeChange = (mode: "row" | "dropdown") => {
-    setTabsMode(mode);
-    tabsModeRef.current = mode;
-    saveContent(trees);
-  };
-
-  const handleAddNode = (parentId: string | null, name: string) => {
-    const nodes = activeTree.nodes;
-    const siblings = nodes.filter((n) => n.parentId === parentId);
-    const maxOrder = siblings.reduce((max, n) => Math.max(max, n.order), -1);
-    const newNode: DecisionTreeNode = {
-      id: createDecisionTreeNodeId(),
-      parentId,
-      name,
-      order: maxOrder + 1,
-      document: [],
-    };
-    updateActiveTreeNodes([...nodes, newNode]);
-  };
-
-  const handleAddParentNode = (nodeId: string) => {
-    const result = insertParentForNode(activeTree.nodes, nodeId);
-    if (!result.parentId) {
-      return;
-    }
-
-    setAutoEditNodeId(result.parentId);
-    updateActiveTreeNodes(result.nodes);
-  };
-
-  const handleUpdateNode = (nodeId: string, name: string) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, name } : n)),
-    );
-  };
-
-  const handleRemoveNode = (nodeId: string) => {
-    const nodes = activeTree.nodes;
-    const idsToRemove = new Set<string>();
-    const collect = (nid: string) => {
-      idsToRemove.add(nid);
-      for (const child of nodes.filter((n) => n.parentId === nid)) {
-        collect(child.id);
-      }
-    };
-    collect(nodeId);
-    updateActiveTreeNodes(nodes.filter((n) => !idsToRemove.has(n.id)));
-  };
-
-  const handleReorderNodes = (
-    _parentId: string | null,
-    orderedIds: string[],
-  ) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) => {
-        const idx = orderedIds.indexOf(n.id);
-        return idx !== -1 ? { ...n, order: idx } : n;
-      }),
-    );
-  };
-
-  const handleUpdateDocument = (nodeId: string, document: unknown[]) => {
-    updateActiveTreeNodes(
-      activeTree.nodes.map((n) => (n.id === nodeId ? { ...n, document } : n)),
-    );
-  };
-
-  const handleUpdateNodeName = (nodeId: string, name: string) => {
-    handleUpdateNode(nodeId, name);
-  };
-
-  const getNodeName = (nodeId: string) =>
-    activeTree.nodes.find((n) => n.id === nodeId)?.name ?? t("ellipsisName");
-
-  const currentNode = currentParentId
-    ? (activeTree.nodes.find((n) => n.id === currentParentId) ?? null)
+  const selectedNode = selectedId
+    ? (tree.nodes.find((node) => node.id === selectedId) ?? null)
     : null;
 
-  const treeTabs = (
-    <TreeTabsBar
-      activeTreeId={resolvedActiveTreeId}
-      isMobile={isMobile}
-      onAddTree={addTree}
-      onRemoveTree={trees.length > 1 ? removeTree : undefined}
-      onRenameTree={(treeId, label) => {
-        updateTrees(
-          trees.map((tree) => (tree.id === treeId ? { ...tree, label } : tree)),
-        );
-      }}
-      onSwitchTree={switchTree}
-      onTabsModeChange={handleTabsModeChange}
-      tabsMode={tabsMode}
-      trees={trees}
-    />
-  );
+  const save = (nextTree: DecisionTree) => {
+    setTree(nextTree);
+    onSaveStatusChange?.("saving");
+    onUpdate({ trees: [nextTree] });
+    onSaveStatusChange?.("saved");
+  };
 
-  const breadcrumbNav =
-    path.length > 0 ? (
-      <DecisionTreeBreadcrumbNav
-        getNodeName={getNodeName}
-        onNavigateToIndex={navigateToIndex}
-        path={path}
-      />
-    ) : null;
+  const updateNodes = (nodes: DecisionTreeNode[]) => {
+    save({ ...tree, nodes });
+  };
 
-  const nodeListPanel = (
-    <NodeList
-      autoEditNodeId={autoEditNodeId}
-      nodes={activeTree.nodes}
-      parentId={currentParentId}
-      onAddParentNode={handleAddParentNode}
-      onNavigateInto={navigateInto}
-      onAddNode={handleAddNode}
-      onUpdateNode={handleUpdateNode}
-      onAutoEditHandled={() => setAutoEditNodeId(null)}
-      onRemoveNode={handleRemoveNode}
-      onReorderNodes={handleReorderNodes}
-    />
-  );
+  const addNode = () => {
+    const name = newName.trim();
+    if (!name) return;
+    updateNodes([
+      ...tree.nodes,
+      {
+        id: makeNodeId(),
+        parentId,
+        name,
+        order: children.length,
+        document: [],
+      },
+    ]);
+    setNewName("");
+  };
 
-  const nodeDetailPanel = currentNode ? (
-    <NodeDetail
-      key={currentNode.id}
-      node={currentNode}
-      onUpdateNodeName={handleUpdateNodeName}
-      onUpdateDocument={handleUpdateDocument}
-    />
-  ) : (
-    <EmptyNodeDetailState />
-  );
+  const renameNode = (nodeId: string, name: string) => {
+    updateNodes(
+      tree.nodes.map((node) => (node.id === nodeId ? { ...node, name } : node)),
+    );
+  };
+
+  const removeNode = (nodeId: string) => {
+    const ids = descendantsOf(tree.nodes, nodeId);
+    updateNodes(tree.nodes.filter((node) => !ids.has(node.id)));
+    setPath((current) => current.filter((id) => !ids.has(id)));
+    if (selectedId && ids.has(selectedId)) setSelectedId(null);
+  };
+
+  const updateDocument = (nodeId: string, document: unknown[]) => {
+    updateNodes(
+      tree.nodes.map((node) =>
+        node.id === nodeId ? { ...node, document } : node,
+      ),
+    );
+  };
 
   return (
-    <DecisionTreeWorkspace
-      breadcrumbNav={breadcrumbNav}
-      currentNode={currentNode}
-      isMobile={isMobile}
-      nodeDetailPanel={nodeDetailPanel}
-      nodeListPanel={nodeListPanel}
-      treeTabs={treeTabs}
-    />
+    <div className="overflow-hidden rounded-lg border border-border/70 bg-background shadow-xs">
+      <div className="grid min-h-[500px] grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+        <div className="flex min-h-0 flex-col border-r border-border/70">
+          <div className="flex min-w-0 items-center gap-1 border-b border-border/70 px-2 py-1.5">
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              onClick={() => {
+                setPath((current) => current.slice(0, -1));
+                setSelectedId(null);
+              }}
+              disabled={path.length === 0}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                setPath([]);
+                setSelectedId(null);
+              }}
+            >
+              Root
+            </Button>
+            {path.map((nodeId, index) => (
+              <button
+                key={nodeId}
+                type="button"
+                className="min-w-0 truncate rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                onClick={() => {
+                  setPath(path.slice(0, index + 1));
+                  setSelectedId(null);
+                }}
+              >
+                {tree.nodes.find((node) => node.id === nodeId)?.name ??
+                  "Option"}
+              </button>
+            ))}
+          </div>
+
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="space-y-1 p-2">
+              {children.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+                  <GitFork className="size-5 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No options here yet.
+                  </p>
+                </div>
+              ) : (
+                children.map((node) => {
+                  const hasChildren = tree.nodes.some(
+                    (candidate) => candidate.parentId === node.id,
+                  );
+                  return (
+                    <div
+                      key={node.id}
+                      className="group flex min-w-0 items-center gap-1 rounded-lg border border-border/70 bg-background/70 px-2 py-1.5"
+                    >
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-medium"
+                        onClick={() => setSelectedId(node.id)}
+                      >
+                        <MiddleText text={node.name} />
+                      </button>
+                      {hasChildren ? (
+                        <Button
+                          type="button"
+                          size="icon-xs"
+                          variant="ghost"
+                          onClick={() => {
+                            setPath((current) => [...current, node.id]);
+                            setSelectedId(null);
+                          }}
+                        >
+                          <ChevronRight className="size-4" />
+                        </Button>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="icon-xs"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => removeNode(node.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+
+          <div className="flex gap-1.5 border-t border-border/70 p-2">
+            <Input
+              value={newName}
+              placeholder="Add option"
+              className="h-9"
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") addNode();
+              }}
+            />
+            <Button type="button" size="icon-sm" onClick={addNode}>
+              <Plus className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-col">
+          {selectedNode ? (
+            <>
+              <div className="space-y-2 border-b border-border/70 px-4 py-3">
+                <Input
+                  value={selectedNode.name}
+                  className="h-10 text-base font-semibold"
+                  onChange={(event) =>
+                    renameNode(selectedNode.id, event.target.value)
+                  }
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPath((current) => [...current, selectedNode.id]);
+                    setSelectedId(null);
+                  }}
+                >
+                  <Check className="size-4" />
+                  Edit children
+                </Button>
+              </div>
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="px-4 py-3">
+                  <NodeDocumentEditor
+                    key={selectedNode.id}
+                    document={selectedNode.document}
+                    onChange={(document) =>
+                      updateDocument(selectedNode.id, document)
+                    }
+                  />
+                </div>
+              </ScrollArea>
+            </>
+          ) : (
+            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              Select an option to edit its title and details.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

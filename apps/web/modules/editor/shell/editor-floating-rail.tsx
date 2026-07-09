@@ -1,39 +1,34 @@
 "use client";
 
-import {
-  type AnyRegistryEntry,
-  getElementsByCategory,
-} from "@/modules/site-elements/registry";
 import { usePageExpandState } from "@/lib/use-page-expand-state";
-import type { ElementCategory } from "@/modules/site-elements/registry";
-import { themedPickerImagePreview } from "@/modules/editor/element-picker/picker-image-preview";
+import { ElementCard } from "@/modules/editor/element-picker/element-card";
+import { PageTree } from "@/modules/editor/navigation/page-tree";
+import { CreatePageDialog } from "@/modules/editor/pages/create-page-dialog";
 import { CustomizationConfigPanel } from "@/modules/editor/settings/customization/config-panel";
 import { NavigationConfigPanel } from "@/modules/editor/settings/navigation/config-panel";
+import { CollapsibleSettingsSection } from "@/modules/editor/settings/shared/editor-panel-primitives";
 import { SiteConfigPanel } from "@/modules/editor/settings/site/config-panel";
-import { PageTree } from "@/modules/editor/navigation/page-tree";
 import {
   useEditorSite,
   useEditorUi,
 } from "@/modules/editor/state/editor-context";
+import {
+  type AnyRegistryEntry,
+  type ElementCategory,
+  getElementsByCategory,
+} from "@/modules/site-elements/registry";
 import type { Id } from "@baseblocks/backend";
 import type { LayoutType, PageListItem } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
-import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { cn } from "@baseblocks/ui/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { Separator } from "@baseblocks/ui/separator";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
-import { MoreHorizontal, PanelTop } from "lucide-react";
+import { PanelTop } from "lucide-react";
 import {
   IconColorPalette,
   IconFile,
@@ -42,16 +37,7 @@ import {
   IconSitemap,
   IconSquareGrid2,
 } from "nucleo-glass";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { ElementCard } from "@/modules/editor/element-picker/element-card";
-import { ElementGrid } from "@/modules/editor/element-picker/element-grid";
-import { CreatePageDialog } from "../pages/create-page-dialog";
+import { type ReactNode, useState } from "react";
 
 interface EditorFloatingRailProps {
   site: {
@@ -71,6 +57,35 @@ type RailPanelId = "pages" | ElementCategory;
 
 const EXPANDED_PAGES_KEY = "baseblocks_editor_expanded_pages";
 
+const RAIL_ITEMS: Array<{
+  id: RailPanelId;
+  label: string;
+  icon: ReactNode;
+}> = [
+  { id: "pages", label: "Pages", icon: <IconFile className="h-5 w-5" /> },
+  {
+    id: "layouts",
+    label: "Layouts",
+    icon: <IconRectLayoutGrid className="h-5 w-5" />,
+  },
+  {
+    id: "blocks",
+    label: "Blocks",
+    icon: <IconSquareGrid2 className="h-5 w-5" />,
+  },
+  {
+    id: "navigation",
+    label: "Navigation",
+    icon: <IconSitemap className="h-5 w-5" />,
+  },
+  {
+    id: "customization",
+    label: "Customization",
+    icon: <IconColorPalette className="h-5 w-5" />,
+  },
+  { id: "site", label: "Site", icon: <IconGear className="h-5 w-5" /> },
+];
+
 const CATEGORY_TITLES: Record<ElementCategory, string> = {
   site: "Site Settings",
   customization: "Customization",
@@ -78,59 +93,6 @@ const CATEGORY_TITLES: Record<ElementCategory, string> = {
   layouts: "Layouts",
   blocks: "Blocks",
 };
-
-const CATEGORY_ICONS: Record<ElementCategory, ReactNode> = {
-  site: <IconGear className="h-5 w-5" />,
-  customization: <IconColorPalette className="h-5 w-5" />,
-  navigation: <IconSitemap className="h-5 w-5" />,
-  layouts: <IconRectLayoutGrid className="h-5 w-5" />,
-  blocks: <IconSquareGrid2 className="h-5 w-5" />,
-};
-
-const RAIL_ITEMS: Array<{
-  id: RailPanelId;
-  label: string;
-  icon: ReactNode;
-}> = [
-  {
-    id: "pages",
-    label: "Pages",
-    icon: <IconFile className="h-5 w-5" />,
-  },
-  {
-    id: "layouts",
-    label: "Layouts",
-    icon: CATEGORY_ICONS.layouts,
-  },
-  {
-    id: "blocks",
-    label: "Blocks",
-    icon: CATEGORY_ICONS.blocks,
-  },
-  {
-    id: "navigation",
-    label: "Navigation",
-    icon: CATEGORY_ICONS.navigation,
-  },
-  {
-    id: "customization",
-    label: "Customization",
-    icon: CATEGORY_ICONS.customization,
-  },
-  {
-    id: "site",
-    label: "Site Settings",
-    icon: CATEGORY_ICONS.site,
-  },
-];
-
-const SLOT_REQUIRED_CATEGORIES: ElementCategory[] = ["blocks"];
-const BUTTON_SLOT_MOBILE = 40;
-const RAIL_PADDING_MOBILE = 12;
-const FIXED_RIGHT_MOBILE = 85;
-const RAIL_MARGIN = 24;
-const editorFlyoutSurfaceClassName =
-  "w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-[2rem] border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md sm:w-[min(22rem,calc(100vw-6rem))]";
 
 const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
   {
@@ -143,148 +105,92 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
     title: "Advanced",
     types: ["page", "directory", "flowchart", "decision-tree"],
   },
-  {
-    title: "Sections",
-    types: ["search", "library", "quicklinks"],
-  },
+  { title: "Sections", types: ["search", "library", "quicklinks"] },
 ];
 
-const TabsPreview = themedPickerImagePreview(
-  "/editor/picker/layouts/tabs-light.png",
-  "/editor/picker/layouts/tabs-dark.png",
-);
+const layoutTypes = new Set([
+  "single",
+  "rows",
+  "columns",
+  "grid",
+  "spacer",
+  "vertical",
+]);
 
-const CONFIG_PANEL_CATEGORIES: ElementCategory[] = [
-  "site",
-  "customization",
-  "navigation",
-];
-
-function FloatingRailButton({
+function RailButton({
   active,
   disabled,
   icon,
   label,
   onClick,
-  onFocus,
-  onMouseEnter,
-  registerRef,
-  tooltip,
 }: {
   active: boolean;
-  disabled: boolean;
+  disabled?: boolean;
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  onFocus: () => void;
-  onMouseEnter: () => void;
-  registerRef: (node: HTMLButtonElement | null) => void;
-  tooltip?: string;
 }) {
   const button = (
     <button
-      ref={registerRef}
       type="button"
-      aria-disabled={disabled}
       aria-label={label}
-      title={tooltip ? undefined : label}
+      disabled={disabled}
       className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors sm:h-10 sm:w-10 sm:rounded-[1.35rem]",
+        "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
         active
-          ? "border-border bg-accent/70 text-foreground shadow-sm"
-          : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
-        disabled &&
-          "cursor-not-allowed opacity-45 hover:bg-transparent hover:text-muted-foreground",
+          ? "border-border bg-accent text-foreground"
+          : "border-transparent text-muted-foreground hover:bg-accent/70 hover:text-foreground",
+        disabled && "cursor-not-allowed opacity-45 hover:bg-transparent",
       )}
-      onClick={disabled ? undefined : onClick}
-      onFocus={disabled ? undefined : onFocus}
-      onMouseEnter={disabled ? undefined : onMouseEnter}
+      onClick={onClick}
     >
       {icon}
     </button>
   );
 
-  if (!tooltip) return button;
-
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="flex">{button}</span>
-      </TooltipTrigger>
-      <TooltipContent side="right">{tooltip}</TooltipContent>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
   );
 }
 
-function EditorFlyoutSurface({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function PanelSurface({ children }: { children: ReactNode }) {
   return (
-    <div className={cn(editorFlyoutSurfaceClassName, className)} {...props} />
+    <div className="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-2xl backdrop-blur-md">
+      {children}
+    </div>
   );
 }
 
-function EllipsisButton({
-  activePanel,
+function ElementGrid({
+  entries,
   onSelect,
-  overflowItems,
+  title,
 }: {
-  activePanel: RailPanelId | null;
-  onSelect: (id: RailPanelId) => void;
-  overflowItems: typeof RAIL_ITEMS;
+  entries: AnyRegistryEntry[];
+  onSelect: (type: string) => void;
+  title: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const hasActiveOverflow = overflowItems.some(
-    (item) => item.id === activePanel,
-  );
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors",
-            hasActiveOverflow
-              ? "border-border bg-accent/70 text-foreground shadow-sm"
-              : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
-          )}
-        >
-          <MoreHorizontal className="h-5 w-5" />
-          <span className="sr-only">More options</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="top"
-        align="center"
-        sideOffset={8}
-        className="flex w-auto flex-row gap-1 rounded-[32px] border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md"
-      >
-        {overflowItems.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-[1.15rem] border transition-colors",
-              activePanel === item.id
-                ? "border-border bg-accent/70 text-foreground shadow-sm"
-                : "border-transparent bg-transparent text-muted-foreground hover:bg-accent/55 hover:text-foreground",
-            )}
-            onClick={() => {
-              setOpen(false);
-              onSelect(item.id);
-            }}
-          >
-            {item.icon}
-          </button>
+    <div className="p-4">
+      <CollapsibleSettingsSection title={title} contentVariant="stack">
+        {entries.map((entry) => (
+          <ElementCard
+            key={entry.type}
+            icon={entry.icon}
+            label={entry.label}
+            preview={entry.preview}
+            onClick={() => onSelect(entry.type)}
+          />
         ))}
-      </PopoverContent>
-    </Popover>
+      </CollapsibleSettingsSection>
+    </div>
   );
 }
 
-function FloatingRailFlyout({
+function RailPanel({
   activePanel,
   canEdit,
   navPages,
@@ -307,34 +213,30 @@ function FloatingRailFlyout({
   rootPages: PageListItem[];
   selectedPageId?: string;
   setExpanded: (pageId: string, expanded: boolean) => void;
-  site: {
-    _id: string;
-    defaultPageId?: string;
-  };
+  site: { _id: string; defaultPageId?: string };
   toggleExpand: (pageId: string) => void;
   isExpanded: (pageId: string) => boolean;
 }) {
   if (activePanel === "pages") {
     return (
-      <EditorFlyoutSurface>
+      <PanelSurface>
         <div className="flex items-center justify-between px-4 py-3">
           <p className="text-sm font-semibold">Pages</p>
-          {canEdit && <CreatePageDialog siteId={site._id} />}
+          {canEdit ? <CreatePageDialog siteId={site._id} /> : null}
         </div>
-
         <ScrollArea className="h-[min(60vh,32rem)]">
           <div className="p-2">
             {rootPages.length > 0 ? (
               <SidebarMenu>
                 <PageTree
                   allPages={navPages}
+                  defaultPageId={site.defaultPageId}
+                  isExpanded={isExpanded}
+                  onSelect={onSelectPage}
+                  onSetExpanded={setExpanded}
+                  onToggleExpand={toggleExpand}
                   selectedPageId={selectedPageId}
                   siteId={site._id}
-                  defaultPageId={site.defaultPageId}
-                  onSelect={onSelectPage}
-                  isExpanded={isExpanded}
-                  onToggleExpand={toggleExpand}
-                  onSetExpanded={setExpanded}
                 />
               </SidebarMenu>
             ) : (
@@ -344,100 +246,90 @@ function FloatingRailFlyout({
             )}
           </div>
         </ScrollArea>
-      </EditorFlyoutSurface>
+      </PanelSurface>
     );
   }
 
   if (activePanel === "site") {
     return (
-      <EditorFlyoutSurface>
+      <PanelSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <SiteConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </EditorFlyoutSurface>
+      </PanelSurface>
     );
   }
 
   if (activePanel === "navigation") {
     return (
-      <EditorFlyoutSurface>
+      <PanelSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <NavigationConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </EditorFlyoutSurface>
+      </PanelSurface>
     );
   }
 
   if (activePanel === "customization") {
     return (
-      <EditorFlyoutSurface>
+      <PanelSurface>
         <ScrollArea className="h-[min(60vh,32rem)]">
           <CustomizationConfigPanel siteId={site._id as Id<"sites">} />
         </ScrollArea>
-      </EditorFlyoutSurface>
+      </PanelSurface>
     );
   }
 
-  const elements = getElementsByCategory(activePanel);
-
-  if (activePanel === "blocks") {
-    const byType = new Map(elements.map((e) => [e.type, e]));
+  if (!canEdit) {
     return (
-      <EditorFlyoutSurface>
-        {!canEdit ? (
-          <div className="px-4 py-4 text-sm text-muted-foreground">
-            You have view-only access. Contact an admin to request edit
-            permissions.
-          </div>
-        ) : (
-          <ScrollArea className="h-[min(60vh,32rem)]">
-            {BLOCK_GROUPS.map((group) => {
-              const groupEntries = group.types
-                .map((type) => byType.get(type))
-                .filter((e): e is AnyRegistryEntry => e !== undefined);
-              if (groupEntries.length === 0) return null;
-              return (
-                <ElementGrid
-                  key={group.title}
-                  title={group.title}
-                  entries={groupEntries}
-                  onSelect={onSelectElement}
-                />
-              );
-            })}
-          </ScrollArea>
-        )}
-      </EditorFlyoutSurface>
+      <PanelSurface>
+        <div className="px-4 py-4 text-sm text-muted-foreground">
+          You have view-only access.
+        </div>
+      </PanelSurface>
     );
   }
+
+  const entries = getElementsByCategory(activePanel);
 
   return (
-    <EditorFlyoutSurface>
-      {!canEdit ? (
-        <div className="px-4 py-4 text-sm text-muted-foreground">
-          You have view-only access. Contact an admin to request edit
-          permissions.
-        </div>
-      ) : (
-        <ScrollArea className="h-[min(60vh,32rem)]">
-          <ElementGrid
-            title={CATEGORY_TITLES[activePanel] ?? "Elements"}
-            entries={elements}
-            onSelect={onSelectElement}
-          />
-          {activePanel === "layouts" && onEnableTabs && (
-            <div className="px-4 pb-4">
-              <ElementCard
-                label="Tabs"
-                icon={PanelTop}
-                preview={TabsPreview}
-                onClick={onEnableTabs}
+    <PanelSurface>
+      <ScrollArea className="h-[min(60vh,32rem)]">
+        {activePanel === "blocks" ? (
+          BLOCK_GROUPS.map((group) => {
+            const byType = new Map(entries.map((entry) => [entry.type, entry]));
+            const groupEntries = group.types
+              .map((type) => byType.get(type))
+              .filter((entry): entry is AnyRegistryEntry => Boolean(entry));
+            return groupEntries.length > 0 ? (
+              <ElementGrid
+                key={group.title}
+                entries={groupEntries}
+                onSelect={onSelectElement}
+                title={group.title}
               />
-            </div>
-          )}
-        </ScrollArea>
-      )}
-    </EditorFlyoutSurface>
+            ) : null;
+          })
+        ) : (
+          <>
+            <ElementGrid
+              entries={entries}
+              onSelect={onSelectElement}
+              title={CATEGORY_TITLES[activePanel] ?? "Elements"}
+            />
+            {activePanel === "layouts" && onEnableTabs ? (
+              <div className="px-4 pb-4">
+                <ElementCard
+                  icon={PanelTop}
+                  label="Tabs"
+                  onClick={onEnableTabs}
+                />
+              </div>
+            ) : null}
+          </>
+        )}
+      </ScrollArea>
+    </PanelSurface>
   );
 }
 
@@ -453,14 +345,8 @@ export function EditorFloatingRail({
 }: EditorFloatingRailProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
-  const isMobile = useIsMobile();
   const [activePanel, setActivePanel] = useState<RailPanelId | null>(null);
-  const [visibleCount, setVisibleCount] = useState(RAIL_ITEMS.length);
-  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const panelRef = useRef<HTMLDivElement | null>(null);
-  const railWrapperRef = useRef<HTMLDivElement | null>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { isExpanded, toggleExpand, setExpanded } = usePageExpandState(
+  const { isExpanded, setExpanded, toggleExpand } = usePageExpandState(
     EXPANDED_PAGES_KEY,
     site._id,
   );
@@ -468,274 +354,67 @@ export function EditorFloatingRail({
   const navPages = pages.filter((page) => page.showInNavigation !== false);
   const rootPages = navPages
     .filter((page) => !page.parentId)
-    .sort((a, b) => a.order - b.order);
+    .sort((left, right) => left.order - right.order);
 
-  useEffect(() => {
-    if (!isMobile) {
-      return;
-    }
-
-    const computeVisible = () => {
-      const available =
-        window.innerWidth -
-        RAIL_MARGIN -
-        RAIL_PADDING_MOBILE -
-        FIXED_RIGHT_MOBILE;
-      return Math.min(
-        RAIL_ITEMS.length,
-        Math.max(1, Math.floor(available / BUTTON_SLOT_MOBILE)),
-      );
-    };
-
-    const handleResize = () => setVisibleCount(computeVisible());
-    const animationFrame = requestAnimationFrame(handleResize);
-    window.addEventListener("resize", handleResize);
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isMobile]);
-
-  const syncPanelPosition = useCallback(
-    (panelId: RailPanelId) => {
-      if (isMobile) {
-        return;
-      }
-      const button = buttonRefs.current[panelId];
-      const panel = panelRef.current;
-      if (!button || !panel) {
-        return;
-      }
-
-      panel.style.top = `${button.offsetTop}px`;
-    },
-    [isMobile],
-  );
-
-  const clearPendingClose = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
+  const selectPanel = (panelId: RailPanelId) => {
+    setActivePanel((current) => (current === panelId ? null : panelId));
   };
 
-  const openPanel = (panelId: RailPanelId) => {
-    clearPendingClose();
-    setActivePanel(panelId);
-    requestAnimationFrame(() => {
-      syncPanelPosition(panelId);
-    });
-  };
-
-  const scheduleClose = () => {
-    clearPendingClose();
-    const delay =
-      activePanel && activePanel !== "pages"
-        ? CONFIG_PANEL_CATEGORIES.includes(activePanel)
-          ? 240
-          : 140
-        : 140;
-    closeTimeoutRef.current = setTimeout(() => {
-      setActivePanel(null);
-    }, delay);
-  };
-
-  useEffect(() => {
-    if (!activePanel) {
-      return;
-    }
-
-    const handleResize = () => {
-      syncPanelPosition(activePanel);
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setActivePanel(null);
-      }
-    };
-
-    syncPanelPosition(activePanel);
-    window.addEventListener("keydown", handleKeyDown);
-    if (!isMobile) {
-      window.addEventListener("resize", handleResize);
-    }
-
-    return () => {
-      if (!isMobile) {
-        window.removeEventListener("resize", handleResize);
-      }
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [activePanel, isMobile, syncPanelPosition]);
-
-  useEffect(() => {
-    if (!isMobile || !activePanel) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (
-        railWrapperRef.current?.contains(target) ||
-        panelRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setActivePanel(null);
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [activePanel, isMobile]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleSelectPage = (pageId: string) => {
+  const selectPage = (pageId: string) => {
     clearSelection();
     onSelectPage(pageId);
     setActivePanel(null);
   };
 
-  const handleSelectElement = (type: string) => {
-    const layoutTypes = [
-      "single",
-      "rows",
-      "columns",
-      "grid",
-      "spacer",
-      "vertical",
-    ];
-
-    if (layoutTypes.includes(type)) {
+  const selectElement = (type: string) => {
+    if (layoutTypes.has(type)) {
       onAddLayout?.(type as LayoutType);
       return;
     }
-
     onAddBlock?.(type as ElementType);
   };
 
-  const clampedVisible = isMobile
-    ? Math.min(visibleCount, RAIL_ITEMS.length)
-    : RAIL_ITEMS.length;
-  const visibleItems = isMobile
-    ? RAIL_ITEMS.slice(0, clampedVisible)
-    : RAIL_ITEMS;
-  const overflowItems = isMobile ? RAIL_ITEMS.slice(clampedVisible) : [];
-
-  const handleButtonClick = (itemId: RailPanelId) => {
-    if (activePanel === itemId) {
-      setActivePanel(null);
-      return;
-    }
-    openPanel(itemId);
-  };
-
   return (
-    <div
-      ref={railWrapperRef}
-      className="pointer-events-auto relative"
-      onMouseEnter={isMobile ? undefined : clearPendingClose}
-      onMouseLeave={isMobile ? undefined : scheduleClose}
-    >
-      <div className="rounded-[32px] border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md sm:rounded-[2rem] sm:bg-sidebar/95 sm:p-2">
-        <div
-          className={cn(
-            "flex gap-1",
-            isMobile ? "flex-row items-center" : "flex-col",
-          )}
-        >
-          {visibleItems.map((item) => {
-            const categoryId: ElementCategory | null =
-              item.id === "pages" ? null : item.id;
-            const isDisabled =
-              !canEdit && item.id !== "pages"
-                ? true
-                : !!(
-                    categoryId &&
-                    SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
-                    !selectedSlotId
-                  );
-
-            const disabledTooltip =
-              isDisabled &&
-              categoryId &&
-              SLOT_REQUIRED_CATEGORIES.includes(categoryId) &&
-              !selectedSlotId
-                ? "Select a section on the page first"
-                : undefined;
-
+    <div className="pointer-events-auto relative">
+      <div className="rounded-2xl border border-sidebar-border bg-sidebar/95 p-2 text-sidebar-foreground backdrop-blur-md">
+        <div className="flex flex-row gap-1 md:flex-col">
+          {RAIL_ITEMS.map((item) => {
+            const requiresSlot = item.id === "blocks";
+            const disabled =
+              (!canEdit && item.id !== "pages") ||
+              (requiresSlot && !selectedSlotId);
             return (
-              <FloatingRailButton
+              <RailButton
                 key={item.id}
                 active={activePanel === item.id}
-                disabled={isDisabled}
+                disabled={disabled}
                 icon={item.icon}
                 label={item.label}
-                tooltip={disabledTooltip}
-                onClick={() => handleButtonClick(item.id)}
-                onFocus={() => openPanel(item.id)}
-                onMouseEnter={isMobile ? () => {} : () => openPanel(item.id)}
-                registerRef={(node) => {
-                  buttonRefs.current[item.id] = node;
-                }}
+                onClick={() => selectPanel(item.id)}
               />
             );
           })}
-
-          {overflowItems.length > 0 ? (
-            <EllipsisButton
-              activePanel={activePanel}
-              onSelect={handleButtonClick}
-              overflowItems={overflowItems}
-            />
-          ) : null}
-
-          {overflowItems.length === 0 ? null : (
-            <Separator
-              orientation={isMobile ? "vertical" : "horizontal"}
-              className={cn(
-                "bg-border/80",
-                isMobile
-                  ? "mx-0.5 h-7 w-px self-center"
-                  : "mt-2 h-px w-7 self-center",
-              )}
-            />
-          )}
         </div>
       </div>
 
-      {activePanel && (
-        <div
-          ref={panelRef}
-          className={cn(
-            "absolute",
-            isMobile
-              ? "bottom-full left-1/2 mb-3 -translate-x-1/2"
-              : "left-full ml-3",
-          )}
-        >
-          <FloatingRailFlyout
+      {activePanel ? (
+        <div className="absolute bottom-full left-0 mb-3 md:bottom-auto md:left-full md:top-0 md:mb-0 md:ml-3">
+          <RailPanel
             activePanel={activePanel}
             canEdit={canEdit}
+            isExpanded={isExpanded}
             navPages={navPages}
             onEnableTabs={onEnableTabs}
-            onSelectElement={handleSelectElement}
-            onSelectPage={handleSelectPage}
+            onSelectElement={selectElement}
+            onSelectPage={selectPage}
             rootPages={rootPages}
             selectedPageId={selectedPageId}
             setExpanded={setExpanded}
             site={site}
             toggleExpand={toggleExpand}
-            isExpanded={isExpanded}
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
