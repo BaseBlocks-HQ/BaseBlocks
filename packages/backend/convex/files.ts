@@ -1,4 +1,3 @@
-import { type FunctionReference, makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {
   isSupportedUploadMimeType,
