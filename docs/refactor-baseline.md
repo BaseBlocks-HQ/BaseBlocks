@@ -47,7 +47,7 @@ The pre-refactor schema contains duplicated `teams` and `members` records alongs
 ## Linked Vercel project
 
 - Project: `base-blocks`
-- Project ID: `prj_Cua1YpsZOqgIokMVJHuTPQuggPz1`
+- Project ID: configured through `VERCEL_PROJECT_ID`
 - Owner/team: `naaiyy's projects`
 - Root directory: `apps/web`
 - Framework preset: Next.js
