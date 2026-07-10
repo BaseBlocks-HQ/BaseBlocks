@@ -26,6 +26,10 @@ export function PageTabs({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
+  const activeTabIndex = activeTab
+    ? tabs.findIndex((tab) => tab.id === activeTab.id)
+    : -1;
 
   const finishRename = () => {
     if (!editingId) return;
@@ -37,6 +41,20 @@ export function PageTabs({
       ),
     );
     setEditingId(null);
+  };
+
+  const startRename = () => {
+    if (!activeTab) return;
+    setEditingId(activeTab.id);
+    setEditingLabel(activeTab.label);
+    requestAnimationFrame(() => inputRef.current?.select());
+  };
+
+  const removeActiveTab = () => {
+    if (!activeTab || activeTabIndex < 2) return;
+    const nextTabs = tabs.filter((tab) => tab.id !== activeTab.id);
+    onChange(nextTabs);
+    onActiveTabChange(nextTabs[0]?.id ?? "");
   };
 
   return (
@@ -58,68 +76,52 @@ export function PageTabs({
 
       <Tabs value={activeTabId} onValueChange={onActiveTabChange}>
         <TabsList>
-          {tabs.map((tab, index) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="group/tab flex items-center gap-1.5 px-3"
-            >
-              {editingId === tab.id ? (
-                <Input
-                  ref={inputRef}
-                  value={editingLabel}
-                  className="h-5 w-20 border-none px-1 py-0 text-sm shadow-none"
-                  onChange={(event) => setEditingLabel(event.target.value)}
-                  onBlur={finishRename}
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") finishRename();
-                    if (event.key === "Escape") setEditingId(null);
-                  }}
-                />
-              ) : (
-                <>
-                  <span>{tab.label}</span>
-                  <span className="hidden items-center gap-0.5 group-hover/tab:flex">
-                    <button
-                      type="button"
-                      aria-label="Rename tab"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setEditingId(tab.id);
-                        setEditingLabel(tab.label);
-                        requestAnimationFrame(() => inputRef.current?.select());
-                      }}
-                    >
-                      <Pencil className="size-3" />
-                    </button>
-                    {index >= 2 ? (
-                      <button
-                        type="button"
-                        aria-label="Remove tab"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          const nextTabs = tabs.filter(
-                            (candidate) => candidate.id !== tab.id,
-                          );
-                          onChange(nextTabs);
-                          if (activeTabId === tab.id) {
-                            onActiveTabChange(nextTabs[0]?.id ?? "");
-                          }
-                        }}
-                      >
-                        <X className="size-3" />
-                      </button>
-                    ) : null}
-                  </span>
-                </>
-              )}
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id} className="px-3">
+              {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
+
+      {editingId && activeTab?.id === editingId ? (
+        <Input
+          ref={inputRef}
+          value={editingLabel}
+          aria-label="Rename tab"
+          className="h-7 w-24 px-2 py-0 text-sm"
+          onChange={(event) => setEditingLabel(event.target.value)}
+          onBlur={finishRename}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") finishRename();
+            if (event.key === "Escape") setEditingId(null);
+          }}
+        />
+      ) : (
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Rename active tab"
+            onClick={startRename}
+          >
+            <Pencil className="size-3" />
+          </Button>
+          {activeTabIndex >= 2 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Remove active tab"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={removeActiveTab}
+            >
+              <X className="size-3" />
+            </Button>
+          ) : null}
+        </div>
+      )}
 
       <Button
         variant="ghost"
