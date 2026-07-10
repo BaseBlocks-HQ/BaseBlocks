@@ -12,7 +12,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Switch } from "@baseblocks/ui/switch";
 import { useMutation, useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,129 @@ import { SiteMetadataSection } from "./site-metadata-section";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
+}
+
+type DomainOperationResult = {
+  error?: string;
+  hostname?: string;
+  status?: "pending" | "verified" | "misconfigured";
+  verification?: Array<{ type: string; domain: string; value: string }>;
+  recommendedCNAME?: Array<{ rank: number; value: string }>;
+  recommendedIPv4?: Array<{ rank: number; value: string[] }>;
+};
+
+function DomainSettingsSection({ siteId }: SiteConfigPanelProps) {
+  const domains = useQuery(api.siteDomains.listForSite, { siteId });
+  const [hostname, setHostname] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [details, setDetails] = useState<DomainOperationResult | null>(null);
+
+  const operate = async (
+    action: "add" | "inspect" | "remove" | "verify",
+    target: string,
+  ) => {
+    setIsWorking(true);
+    try {
+      const response = await fetch("/api/site-domains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, hostname: target, siteId }),
+      });
+      const result = (await response.json()) as DomainOperationResult;
+      if (!response.ok)
+        throw new Error(result.error ?? "Domain operation failed");
+      setDetails(action === "remove" ? null : result);
+      if (action === "add") setHostname("");
+      toast.success(
+        action === "remove" ? "Domain removed" : "Domain status refreshed",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Domain operation failed",
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  };
+
+  return (
+    <CollapsibleSettingsSection title="Custom domain" contentClassName="p-3">
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          A custom domain opens this site at its root. Vercel provisions and
+          renews TLS automatically.
+        </p>
+        <div className="flex gap-2">
+          <Input
+            value={hostname}
+            onChange={(event) => setHostname(event.target.value)}
+            placeholder="docs.example.com"
+            aria-label="Custom domain"
+            disabled={isWorking}
+          />
+          <Button
+            size="sm"
+            disabled={isWorking || !hostname.trim()}
+            onClick={() => operate("add", hostname)}
+          >
+            Add
+          </Button>
+        </div>
+        {domains?.map((domain) => (
+          <div
+            key={domain._id}
+            className="rounded-md border border-border/60 p-2.5"
+          >
+            <div className="flex items-center gap-2">
+              {domain.status === "verified" ? (
+                <CheckCircle2 className="size-4 text-emerald-500" />
+              ) : null}
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {domain.hostname}
+              </span>
+              <span className="text-xs capitalize text-muted-foreground">
+                {domain.status}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={isWorking}
+                onClick={() => operate("verify", domain.hostname)}
+              >
+                <RefreshCw className="size-3.5" />
+                <span className="sr-only">Verify domain</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={isWorking}
+                onClick={() => operate("remove", domain.hostname)}
+              >
+                <Trash2 className="size-3.5" />
+                <span className="sr-only">Remove domain</span>
+              </Button>
+            </div>
+          </div>
+        ))}
+        {details?.verification?.map((record) => (
+          <div
+            key={`${record.domain}-${record.value}`}
+            className="rounded-md bg-muted p-2 text-xs"
+          >
+            Add {record.type} record <strong>{record.domain}</strong> with value{" "}
+            <code className="break-all">{record.value}</code>
+          </div>
+        ))}
+        {details?.status === "misconfigured" &&
+        details.recommendedCNAME?.[0] ? (
+          <p className="text-xs text-muted-foreground">
+            Point a CNAME record to{" "}
+            <code>{details.recommendedCNAME[0].value}</code>, then verify again.
+          </p>
+        ) : null}
+      </div>
+    </CollapsibleSettingsSection>
+  );
 }
 
 function LogoUploadSection({
@@ -417,6 +540,8 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           }}
         />
       </CollapsibleSettingsSection>
+
+      <DomainSettingsSection siteId={siteId} />
     </div>
   );
 }

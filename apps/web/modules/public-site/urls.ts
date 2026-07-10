@@ -1,50 +1,81 @@
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-const CANONICAL_ROOT_DOMAIN = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
+import {
+  encodePath,
+  getRootDomain,
+  normalizeHostname,
+  normalizePathSegments,
+  parseRequestHost,
+} from "@/modules/tenancy/host";
 
-/**
- * Generate the canonical URL for a published site.
- * Always uses subdomain-based routing: team.baseblocks.dev/site/page
- */
+function sitePath(siteSlug: string, pagePath?: string | string[]): string {
+  return `/${encodePath([siteSlug, ...normalizePathSegments(pagePath)])}`;
+}
+
 export function getSiteUrl(
-  teamSlug: string,
+  organizationSlug: string,
   siteSlug: string,
-  pagePath?: string,
+  pagePath?: string | string[],
 ): string {
-  const path = pagePath ? `/${siteSlug}/${pagePath}` : `/${siteSlug}`;
-  return `https://${teamSlug}.${ROOT_DOMAIN}${path}`;
+  return `https://${organizationSlug}.${getRootDomain()}${sitePath(siteSlug, pagePath)}`;
 }
 
-/**
- * Generate a site URL that works correctly in every environment.
- * Client-side only — falls back to canonical URL on the server.
- *
- * - Production: https://team.baseblocks.dev/site (canonical subdomain)
- * - Localhost / Vercel preview: /s/team/site (path-based, handled by proxy)
- */
-export function getSiteOpenUrl(teamSlug: string, siteSlug: string): string {
-  if (typeof window !== "undefined") {
-    const { hostname } = window.location;
-    if (
-      hostname === CANONICAL_ROOT_DOMAIN ||
-      hostname.endsWith(`.${CANONICAL_ROOT_DOMAIN}`)
-    ) {
-      return getSiteUrl(teamSlug, siteSlug);
-    }
-    return `/s/${teamSlug}/${siteSlug}`;
+export function getCustomDomainUrl(
+  hostname: string,
+  pagePath?: string | string[],
+): string {
+  const path = encodePath(normalizePathSegments(pagePath));
+  return `https://${normalizeHostname(hostname)}${path ? `/${path}` : ""}`;
+}
+
+export function getCanonicalUrl(input: {
+  organizationSlug: string;
+  siteSlug: string;
+  pagePath?: string | string[];
+  customDomain?: string;
+}): string {
+  return input.customDomain
+    ? getCustomDomainUrl(input.customDomain, input.pagePath)
+    : getSiteUrl(input.organizationSlug, input.siteSlug, input.pagePath);
+}
+
+export function getPreviewUrl(
+  organizationSlug: string,
+  siteSlug: string,
+  deploymentHostname: string,
+): string {
+  return `https://${organizationSlug}---${normalizeHostname(deploymentHostname)}${sitePath(siteSlug)}`;
+}
+
+export function getSiteOpenUrl(
+  organizationSlug: string,
+  siteSlug: string,
+): string {
+  if (typeof window === "undefined")
+    return getSiteUrl(organizationSlug, siteSlug);
+
+  const parsed = parseRequestHost(window.location.host);
+  if (parsed.kind === "localhost" || parsed.kind === "localhost-subdomain") {
+    const port = window.location.port ? `:${window.location.port}` : "";
+    return `${window.location.protocol}//${organizationSlug}.localhost${port}${sitePath(siteSlug)}`;
   }
-  return getSiteUrl(teamSlug, siteSlug);
+  if (parsed.kind === "vercel-deployment") {
+    return getSiteUrl(organizationSlug, siteSlug);
+  }
+  return getSiteUrl(organizationSlug, siteSlug);
 }
 
-/**
- * Get the display domain for a team (for showing to users).
- */
-export function getDisplayDomain(teamSlug: string): string {
-  return `${teamSlug}.${ROOT_DOMAIN}`;
+export function getDisplayDomain(organizationSlug: string): string {
+  return `${organizationSlug}.${getRootDomain()}`;
 }
 
-/**
- * Generate an internal page link within a published site.
- */
-export function getPageLink(siteSlug: string, pageSlug: string): string {
-  return `/${siteSlug}/${pageSlug}`;
+export function getPageLink(
+  siteSlug: string,
+  pagePath: string | string[],
+): string {
+  if (
+    typeof window !== "undefined" &&
+    parseRequestHost(window.location.host).kind === "custom-domain"
+  ) {
+    return `/${encodePath(normalizePathSegments(pagePath))}`;
+  }
+  return sitePath(siteSlug, pagePath);
 }

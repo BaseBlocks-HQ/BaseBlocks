@@ -34,10 +34,12 @@ export async function PublicSiteSeo({
   teamSlug,
   siteSlug,
   pagePath = EMPTY_PATH,
+  customDomain,
 }: {
   teamSlug: string;
   siteSlug?: string;
   pagePath?: string[];
+  customDomain?: string;
 }) {
   const client = getConvexClient();
   if (!client) return null;
@@ -70,6 +72,7 @@ export async function PublicSiteSeo({
     siteDescription,
     teamSlug,
     siteSlug: resolvedSiteSlug,
+    customDomain,
   });
   const breadcrumbJsonLd =
     pagePath.length > 0
@@ -83,6 +86,7 @@ export async function PublicSiteSeo({
               .replace(/\b\w/g, (c) => c.toUpperCase()),
             slug: pagePath.slice(0, i + 1).join("/"),
           })),
+          customDomain,
         })
       : null;
 

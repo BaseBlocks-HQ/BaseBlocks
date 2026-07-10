@@ -2,6 +2,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/modules/public-site/urls";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     )) as PublishedSite[];
 
     for (const site of publishedSites) {
-      const siteUrl = `https://${site.teamSlug}.${ROOT_DOMAIN}/${site.siteSlug}`;
+      const siteUrl = getSiteUrl(site.teamSlug, site.siteSlug);
 
       // Add site root
       entries.push({

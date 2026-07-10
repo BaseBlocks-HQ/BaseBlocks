@@ -5,6 +5,7 @@ import type { Id } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { getCanonicalUrl, getCustomDomainUrl } from "./urls";
 
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 const OG_API_BASE = `https://${ROOT_DOMAIN}/api/og`;
@@ -13,6 +14,7 @@ interface PublicSiteMetadataParams {
   teamSlug: string;
   siteSlug?: string;
   pagePath?: string[];
+  customDomain?: string;
 }
 
 interface PublicSiteSettings {
@@ -87,22 +89,11 @@ function getConvexClient(): ConvexHttpClient | null {
 /**
  * Build the canonical URL for a public site page.
  */
-function buildCanonicalUrl(
-  teamSlug: string,
-  siteSlug?: string,
-  pagePath: string[] = [],
-): string {
-  const base = `https://${teamSlug}.${ROOT_DOMAIN}`;
-  if (!siteSlug) return base;
-  const pathSuffix =
-    pagePath.length > 0 ? `/${siteSlug}/${pagePath.join("/")}` : `/${siteSlug}`;
-  return `${base}${pathSuffix}`;
-}
-
 export async function buildPublicSiteMetadata({
   teamSlug,
   siteSlug,
   pagePath = [],
+  customDomain,
 }: PublicSiteMetadataParams): Promise<Metadata> {
   const client = getConvexClient();
   if (!client) return {};
@@ -148,7 +139,13 @@ export async function buildPublicSiteMetadata({
   const version = site.updatedAt;
   const ogImage = withVersion(asOptional(settings.ogImage), version);
   const favicon = withVersion(asOptional(settings.favicon), version);
-  const canonicalUrl = buildCanonicalUrl(teamSlug, siteSlug, pagePath);
+  const resolvedSiteSlug = siteSlug ?? site.slug;
+  const canonicalUrl = getCanonicalUrl({
+    organizationSlug: teamSlug,
+    siteSlug: resolvedSiteSlug,
+    pagePath,
+    customDomain,
+  });
   const visibility = site.visibility ?? "public";
   const isPublicVisibility = visibility === "public";
   const hasOpenAccess = visibility === "public" || visibility === "link-only";
@@ -166,10 +163,12 @@ export async function buildPublicSiteMetadata({
           canonical: canonicalUrl,
           languages: {
             en: canonicalUrl,
-            fr: canonicalUrl.replace(
-              `://${teamSlug}.${ROOT_DOMAIN}`,
-              `://${teamSlug}.${ROOT_DOMAIN}/fr`,
-            ),
+            fr: customDomain
+              ? getCustomDomainUrl(customDomain, ["fr", ...pagePath])
+              : canonicalUrl.replace(
+                  `://${teamSlug}.${ROOT_DOMAIN}`,
+                  `://${teamSlug}.${ROOT_DOMAIN}/fr`,
+                ),
           },
         }
       : undefined,

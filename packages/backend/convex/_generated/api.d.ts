@@ -21,6 +21,7 @@ import type * as pages from "../pages.js";
 import type * as permissions from "../permissions.js";
 import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
+import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
 
 import type {
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   permissions: typeof permissions;
   search: typeof search;
   sharing: typeof sharing;
+  siteDomains: typeof siteDomains;
   sites: typeof sites;
 }>;
 

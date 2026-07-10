@@ -156,7 +156,9 @@ export const listByTeam = query({
 
     const sites = await ctx.db
       .query("sites")
-      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
       .collect();
 
     return sites.map((site) => ({
@@ -356,7 +358,10 @@ export const create = mutation({
     organizationId: v.string(),
   },
   handler: async (ctx, { name, slug, organizationId }) => {
-    const { auth } = await requireOrganizationPermission(ctx, organizationId, { resource: "site", action: "manage" });
+    const { auth } = await requireOrganizationPermission(ctx, organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const organization = await getAuthOrganizationById(ctx, organizationId);
     if (!organization) throw new Error("Organization not found");
@@ -476,7 +481,10 @@ export const update = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
@@ -536,7 +544,10 @@ export const publish = mutation({
     if (!site) throw new Error("Site not found");
 
     const now = Date.now();
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "publication", action: "publish" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "publication",
+      action: "publish",
+    });
     await ctx.db.patch(siteId, {
       isPublished: true,
       publishedAt: site.publishedAt ?? now,
@@ -554,7 +565,10 @@ export const unpublish = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "publication", action: "publish" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "publication",
+      action: "publish",
+    });
 
     await ctx.db.patch(siteId, {
       isPublished: false,
@@ -576,7 +590,10 @@ export const setDefaultPage = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     // Verify the page belongs to this site
     const page = await ctx.db.get(pageId);
@@ -600,7 +617,18 @@ export const remove = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
+
+    const attachedDomains = await ctx.db
+      .query("siteDomains")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    if (attachedDomains.length > 0) {
+      throw new Error("Remove this site's custom domains before deleting it");
+    }
 
     // 1. Delete all document libraries and their contents
     //    (documents first so assets + S3 objects are properly cleaned up)

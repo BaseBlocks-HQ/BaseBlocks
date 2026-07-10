@@ -58,6 +58,8 @@ https://docs.example.com/{pagePath...}
 
 When the Vercel plan supports multitenant preview hostnames, previews use Vercel's dynamic hostname prefix and the same tenant parsing contract. Preview routing must not depend on cookies or a separate `/s/...` public URL.
 
+BaseBlocks does not currently enable Vercel's paid Preview Deployment Suffix add-on. Standard Vercel preview deployments therefore link published-site actions to the canonical production tenant URL. Local tenant previews use `{organizationSlug}.localhost`, and the hostname parser remains ready for dynamic preview prefixes if the add-on is enabled later.
+
 ## Boundary rules
 
 - Proxy normalizes the hostname and rewrites to an internal published route; it does not perform product authorization or load the full site.

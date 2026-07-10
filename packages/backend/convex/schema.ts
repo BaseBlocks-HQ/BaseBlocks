@@ -33,6 +33,21 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_organization_slug", ["organizationId", "slug"]),
 
+  siteDomains: defineTable({
+    siteId: v.id("sites"),
+    hostname: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("verified"),
+      v.literal("misconfigured"),
+    ),
+    verifiedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_hostname", ["hostname"]),
+
   siteAccessCodes: defineTable({
     siteId: v.id("sites"),
     code: v.string(),

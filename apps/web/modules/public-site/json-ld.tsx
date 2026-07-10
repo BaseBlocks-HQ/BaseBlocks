@@ -1,8 +1,7 @@
 import "server-only";
 
 import type { BreadcrumbList, WebSite, WithContext } from "schema-dts";
-
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+import { getCanonicalUrl } from "./urls";
 
 /**
  * Build WebSite JSON-LD for a public site.
@@ -12,15 +11,19 @@ export function buildWebSiteJsonLd({
   siteDescription,
   teamSlug,
   siteSlug,
+  customDomain,
 }: {
   siteTitle: string;
   siteDescription?: string;
   teamSlug: string;
   siteSlug?: string;
+  customDomain?: string;
 }): WithContext<WebSite> {
-  const url = siteSlug
-    ? `https://${teamSlug}.${ROOT_DOMAIN}/${siteSlug}`
-    : `https://${teamSlug}.${ROOT_DOMAIN}`;
+  const url = getCanonicalUrl({
+    organizationSlug: teamSlug,
+    siteSlug: siteSlug ?? "",
+    customDomain,
+  });
 
   return {
     "@context": "https://schema.org",
@@ -39,13 +42,19 @@ export function buildBreadcrumbJsonLd({
   siteSlug,
   siteTitle,
   crumbs,
+  customDomain,
 }: {
   teamSlug: string;
   siteSlug: string;
   siteTitle: string;
   crumbs: Array<{ title: string; slug: string }>;
+  customDomain?: string;
 }): WithContext<BreadcrumbList> {
-  const baseUrl = `https://${teamSlug}.${ROOT_DOMAIN}/${siteSlug}`;
+  const baseUrl = getCanonicalUrl({
+    organizationSlug: teamSlug,
+    siteSlug,
+    customDomain,
+  });
 
   const items = [
     {

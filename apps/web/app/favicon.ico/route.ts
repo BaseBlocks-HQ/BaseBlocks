@@ -11,38 +11,9 @@ import { join } from "node:path";
 import { api } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
+import { parseRequestHost } from "@/modules/tenancy/host";
 
 export const dynamic = "force-dynamic";
-
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
-
-function extractTeamSlug(host: string): string | null {
-  const hostname = host.split(":")[0] || "";
-
-  if (hostname.includes(".localhost")) {
-    return hostname.split(".")[0] || null;
-  }
-
-  if (hostname.includes("localhost") || hostname.includes("127.0.0.1")) {
-    return null;
-  }
-
-  const rootDomain = ROOT_DOMAIN.split(":")[0] || ROOT_DOMAIN;
-
-  if (
-    hostname !== rootDomain &&
-    hostname !== `www.${rootDomain}` &&
-    hostname.endsWith(`.${rootDomain}`)
-  ) {
-    return hostname.replace(`.${rootDomain}`, "");
-  }
-
-  if (hostname !== rootDomain && hostname !== `www.${rootDomain}`) {
-    return `custom:${hostname}`;
-  }
-
-  return null;
-}
 
 let defaultFaviconCache: ArrayBuffer | null = null;
 
@@ -67,10 +38,13 @@ async function getDefaultFavicon(): Promise<NextResponse> {
 export async function GET(request: Request) {
   const host = request.headers.get("host") || "";
   const protocol = request.headers.get("x-forwarded-proto") || "https";
-  const teamSlug = extractTeamSlug(host);
-
-  // custom: prefix means custom domain — no favicon lookup for those yet
-  if (!teamSlug || teamSlug.startsWith("custom:")) {
+  const parsedHost = parseRequestHost(host);
+  if (
+    parsedHost.kind === "root" ||
+    parsedHost.kind === "www" ||
+    parsedHost.kind === "localhost" ||
+    parsedHost.kind === "vercel-deployment"
+  ) {
     return getDefaultFavicon();
   }
 
@@ -81,8 +55,19 @@ export async function GET(request: Request) {
 
   try {
     const client = new ConvexHttpClient(convexUrl);
+    const mapping =
+      parsedHost.kind === "custom-domain"
+        ? await client.query(api.siteDomains.resolve, {
+            hostname: parsedHost.hostname,
+          })
+        : null;
+    const teamSlug =
+      mapping?.organizationSlug ??
+      ("organizationSlug" in parsedHost ? parsedHost.organizationSlug : null);
+    if (!teamSlug) return getDefaultFavicon();
     const site = await client.query(api.sites.getBySlug, {
       teamSlug,
+      siteSlug: mapping?.siteSlug,
     });
 
     const visibility = site?.visibility ?? "public";
