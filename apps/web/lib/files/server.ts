@@ -70,13 +70,3 @@ export async function signedDownloadUrl(
     responseContentDisposition: options?.download ? "attachment" : undefined,
   });
 }
-
-export async function downloadObject(
-  key: string,
-  range?: { start: number; end?: number },
-) {
-  return await getFiles().download(key, {
-    as: "stream",
-    range,
-  });
-}

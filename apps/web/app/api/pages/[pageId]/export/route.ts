@@ -1,5 +1,5 @@
-import { getServerConvexClient } from "@/app/_convex/server";
-import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
+import { getServerConvexClient } from "@/lib/convex/server";
+import { getRequestAccessSessionTokens } from "@/features/published-sites/access-session";
 import {
   buildPageExportText,
   createPageExportFilename,

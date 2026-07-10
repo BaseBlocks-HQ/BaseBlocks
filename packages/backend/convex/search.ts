@@ -3,10 +3,7 @@ import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
-import {
-  buildDocumentDownloadUrl,
-  normalizeDocumentSearchMetadata,
-} from "./documents";
+import { normalizeDocumentSearchMetadata } from "./documents";
 import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIdsForPageIds } from "./sites";
 
@@ -252,7 +249,6 @@ function formatSearchResult(
             filename: document.filename,
             fileContentType: document.contentType,
             size: document.size,
-            downloadUrl: buildDocumentDownloadUrl(document._id),
             libraryId: document.libraryId,
           },
         })
@@ -271,38 +267,6 @@ async function getDocumentForSearchResult(
 ) {
   if (doc.contentType !== "document") return null;
   return await ctx.db.get(doc.sourceId as Id<"documents">);
-}
-
-function formatDocumentTitleResult(document: Doc<"documents">) {
-  return {
-    _id: `document:${document._id}`,
-    contentType: "document" as const,
-    sourceId: document._id,
-    title: document.filename,
-    metadata: normalizeDocumentSearchMetadata({
-      sourceId: document._id,
-      metadata: {
-        fileId: document.fileId,
-        filename: document.filename,
-        fileContentType: document.contentType,
-        size: document.size,
-        downloadUrl: buildDocumentDownloadUrl(document._id),
-        libraryId: document.libraryId,
-      },
-    }),
-  };
-}
-
-function formatPageTitleResult(page: { _id: string; title: string }) {
-  return {
-    _id: `page:${page._id}`,
-    contentType: "page" as const,
-    sourceId: page._id,
-    title: page.title,
-    metadata: {
-      pageId: page._id,
-    },
-  };
 }
 
 function contentTypeMatches(
@@ -485,80 +449,5 @@ export const searchAllPublic = query({
     }
 
     return combined.slice(0, limit);
-  },
-});
-
-/**
- * List all searchable content titles for a site (lightweight, for client-side fuzzy matching)
- * Returns only id, title, contentType, sourceId, and metadata - no extractedText
- */
-export const listTitles = query({
-  args: {
-    siteId: v.id("sites"),
-  },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    const [documents, pages] = await Promise.all([
-      ctx.db
-        .query("documents")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-      ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-    ]);
-
-    return [
-      ...documents.map(formatDocumentTitleResult),
-      ...pages.map(formatPageTitleResult),
-    ];
-  },
-});
-
-/**
- * List all searchable content titles for a published site (public)
- */
-export const listTitlesPublic = query({
-  args: {
-    siteId: v.id("sites"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const accessiblePages = await getAccessiblePublishedPages(
-      ctx,
-      site,
-      sessionTokens,
-    );
-    const accessiblePageIds = new Set(accessiblePages.map((page) => page._id));
-    const activeLibraryIds = await getActiveLibraryIdsForPageIds(
-      ctx,
-      siteId,
-      accessiblePageIds,
-    );
-
-    const documents = await ctx.db
-      .query("documents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    return [
-      ...documents
-        .filter(
-          (document) =>
-            document.libraryId && activeLibraryIds.has(document.libraryId),
-        )
-        .map(formatDocumentTitleResult),
-      ...accessiblePages.map(formatPageTitleResult),
-    ];
   },
 });

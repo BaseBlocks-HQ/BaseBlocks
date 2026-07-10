@@ -1,5 +1,6 @@
-import { ThemeProvider } from "@/app/providers/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
+import { selectMessages } from "@/i18n/messages";
 import type { Locale } from "@baseblocks/i18n";
 import { Toaster } from "@baseblocks/ui/sonner";
 import { MotionConfig } from "motion/react";
@@ -62,10 +63,11 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Enable static rendering
   setRequestLocale(locale);
 
-  // Providing all messages to the client side
   const messages = await getMessages();
   return (
-    <NextIntlClientProvider messages={messages}>
+    <NextIntlClientProvider
+      messages={selectMessages(messages, ["common", "errors"])}
+    >
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

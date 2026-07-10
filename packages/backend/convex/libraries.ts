@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import { isOrganizationMember, requireOrganizationPermission } from "./permissions";
+import {
+  isOrganizationMember,
+  requireOrganizationPermission,
+} from "./permissions";
 import { buildDocumentDownloadUrl, deleteDocumentRows } from "./documents";
 import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds } from "./sites";
@@ -209,7 +212,9 @@ export const listAllWithCounts = query({
 
     const sites = await ctx.db
       .query("sites")
-      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
       .collect();
 
     // Get all libraries for all sites
@@ -279,7 +284,11 @@ export const createLibrary = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "library", action: "manage" },
+    );
 
     // Check for duplicate library name within site
     const existingLibrary = await ctx.db
@@ -319,7 +328,10 @@ export const updateLibrary = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -353,7 +365,10 @@ export const removeLibrary = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
@@ -586,7 +601,11 @@ export const createFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "library", action: "manage" },
+    );
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -646,7 +665,10 @@ export const updateFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     // Check for duplicate name if renaming
     if (
@@ -697,7 +719,10 @@ export const moveFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -788,7 +813,10 @@ export const removeFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

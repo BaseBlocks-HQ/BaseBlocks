@@ -1,12 +1,12 @@
-import { getToken } from "@/app/_auth/server";
-import { getServerConvexClient } from "@/app/_convex/server";
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
 import {
   attachDomain,
   detachDomain,
   inspectDomain,
   validateCustomHostname,
   verifyDomain,
-} from "@/modules/tenancy/vercel-domain-service";
+} from "@/lib/vercel/domains";
 import { api, type Id } from "@baseblocks/backend";
 import { NextResponse } from "next/server";
 

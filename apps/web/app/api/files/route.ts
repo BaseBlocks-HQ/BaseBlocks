@@ -1,5 +1,5 @@
-import { getToken } from "@/app/_auth/server";
-import { getServerConvexClient } from "@/app/_convex/server";
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
 import { parseFileKey } from "@baseblocks/domain";
 import { getFiles, getMaxUploadSize } from "@/lib/files/server";
 import { api } from "@baseblocks/backend";

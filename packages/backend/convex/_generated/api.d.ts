@@ -19,6 +19,7 @@ import type * as pageContent from "../pageContent.js";
 import type * as pageStructure from "../pageStructure.js";
 import type * as pages from "../pages.js";
 import type * as permissions from "../permissions.js";
+import type * as published from "../published.js";
 import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
 import type * as siteDomains from "../siteDomains.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   pageStructure: typeof pageStructure;
   pages: typeof pages;
   permissions: typeof permissions;
+  published: typeof published;
   search: typeof search;
   sharing: typeof sharing;
   siteDomains: typeof siteDomains;

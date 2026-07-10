@@ -124,6 +124,8 @@ function LogoDock({ logoSrc }: { logoSrc: string }) {
               "0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
           }}
         >
+          {/* ImageResponse/Satori requires a native img element. */}
+          {/* biome-ignore lint/performance/noImgElement: next/image cannot render inside ImageResponse. */}
           <img
             src={logoSrc}
             alt=""
@@ -195,7 +197,6 @@ export async function createBaseBlocksOpenGraphImage({
           padding: "64px 80px",
           width: "100%",
           height: "100%",
-          zIndex: 2,
         }}
       >
         <div style={{ display: "flex" }}>

@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@/modules/shared/components",
+    "components": "@/components",
     "utils": "@baseblocks/ui/lib/utils",
     "ui": "@baseblocks/ui",
-    "lib": "@/modules",
-    "hooks": "@/modules/shared/hooks"
+    "lib": "@/lib",
+    "hooks": "@/lib/hooks"
   },
   "registries": {
     "@aceternity": "https://ui.aceternity.com/registry/{name}.json"

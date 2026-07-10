@@ -501,7 +501,7 @@ export const update = mutation({
     if (logoFileId !== undefined) {
       updates.logoFileId = logoFileId;
       // Derive the display URL from the asset ID so they're always in sync
-      updates.logoUrl = `/api/storage/assets/${logoFileId}`;
+      updates.logoUrl = `/api/files/${logoFileId}?kind=asset`;
     }
 
     // Logo removal: clean up the existing asset

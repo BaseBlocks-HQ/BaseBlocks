@@ -284,7 +284,10 @@ export const getAccessCode = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "organization", action: "update" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "organization",
+      action: "update",
+    });
 
     const accessCode = await ctx.db
       .query("siteAccessCodes")
@@ -314,7 +317,10 @@ export const getSettings = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "organization", action: "update" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "organization",
+      action: "update",
+    });
 
     return {
       visibility: site.visibility ?? "public",
@@ -455,7 +461,10 @@ export const updateVisibility = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const now = Date.now();
     await ctx.db.patch(siteId, {
@@ -495,7 +504,10 @@ export const generateNewAccessCode = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const now = Date.now();
     const rotationHours = site.accessCodeRotationHours ?? 24;
@@ -608,7 +620,10 @@ export const updateAccessSettings = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (accessCodeRotationHours !== undefined) {
@@ -729,7 +744,11 @@ export const createAudience = mutation({
       throw new Error("Site not found");
     }
 
-    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "site", action: "manage" },
+    );
     const trimmedName = name.trim();
     if (!trimmedName) {
       throw new Error("Audience name is required");
@@ -773,7 +792,11 @@ export const setAudienceMembers = mutation({
       throw new Error("Site not found");
     }
 
-    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "site", action: "manage" },
+    );
     const teamMembers = await listAuthOrganizationMembers(
       ctx,
       site.organizationId,
@@ -843,7 +866,10 @@ export const deleteAudience = mutation({
       throw new Error("Site not found");
     }
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
 
     const pages = await ctx.db
       .query("pages")
@@ -894,7 +920,10 @@ export const validateAudienceIds = mutation({
       throw new Error("Site not found");
     }
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     const uniqueAudienceIds = Array.from(new Set(audienceIds));
     for (const audienceId of uniqueAudienceIds) {

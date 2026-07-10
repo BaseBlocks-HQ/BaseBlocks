@@ -63,9 +63,6 @@ export async function requireUser(ctx: AuthCtx): Promise<ServerAuthContext> {
   return auth;
 }
 
-export const getServerAuthContext = requireUser;
-export const getAuthContext = requireUser;
-
 export async function getActionAuthContextOrNull(
   ctx: ActionAuthCtx,
 ): Promise<ServerAuthContext | null> {

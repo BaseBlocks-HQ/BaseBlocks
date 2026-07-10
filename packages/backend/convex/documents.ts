@@ -15,11 +15,11 @@ import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds, resolveSiteContext } from "./sites";
 
 export function buildAssetUrl(fileId: Id<"files">): string {
-  return `/api/storage/assets/${fileId}`;
+  return `/api/files/${fileId}?kind=asset`;
 }
 
 export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
-  return `/api/storage/documents/${documentId}`;
+  return `/api/files/${documentId}`;
 }
 
 type SearchMetadata = Doc<"searchableContent">["metadata"];
@@ -37,7 +37,6 @@ export function buildDocumentSearchMetadata(args: {
     filename: args.filename,
     fileContentType: args.contentType,
     size: args.size,
-    downloadUrl: buildDocumentDownloadUrl(args.documentId as never),
     libraryId: args.libraryId,
   };
 }
@@ -45,7 +44,7 @@ export function buildDocumentSearchMetadata(args: {
 export function normalizeDocumentSearchMetadata(args: {
   sourceId: string;
   metadata: SearchMetadata;
-}): SearchMetadata {
+}) {
   return {
     ...args.metadata,
     downloadUrl: buildDocumentDownloadUrl(args.sourceId as never),

@@ -32,7 +32,9 @@ export default defineSchema({
     settings: siteSettings,
   })
     .index("by_organization", ["organizationId"])
-    .index("by_organization_slug", ["organizationId", "slug"]),
+    .index("by_organization_slug", ["organizationId", "slug"])
+    .index("by_published", ["isPublished"])
+    .index("by_published_visibility", ["isPublished", "visibility"]),
 
   siteDomains: defineTable({
     siteId: v.id("sites"),
@@ -260,7 +262,6 @@ export default defineSchema({
       filename: v.optional(v.string()),
       fileContentType: v.optional(v.string()),
       size: v.optional(v.number()),
-      downloadUrl: v.optional(v.string()),
       libraryId: v.optional(v.string()),
       fileId: v.optional(v.id("files")),
       assetId: v.optional(v.id("assets")),

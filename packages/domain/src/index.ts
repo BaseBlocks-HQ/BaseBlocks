@@ -1,19 +1,22 @@
-export type { PageListItem, PageWithChildren } from "./pages";
+export type { PageListItem, PageWithChildren } from "./content/pages";
 export type {
   PageAccessKind,
   PageAccessPolicy,
   SiteAudience,
-} from "./page-access";
-export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./slug";
+} from "./access/page-access";
+export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./sites/slug";
 export {
   canAccessPagePolicy,
   isPageRestricted,
   normalizePageAccessPolicy,
   pageAccessKinds,
   publicPageAccessPolicy,
-} from "./page-access";
+} from "./access/page-access";
 
-export { createBlockDraft, createEmptyPageStructure } from "./page-structure";
+export {
+  createBlockDraft,
+  createEmptyPageStructure,
+} from "./content/page-structure";
 export type {
   BlockData,
   ColumnData,
@@ -22,7 +25,7 @@ export type {
   SectionData,
   SectionPreset,
   SectionRegion,
-} from "./page-structure";
+} from "./content/page-structure";
 
 export type {
   ElementType,
@@ -31,7 +34,7 @@ export type {
   AnyContent,
   TypedElementData,
   SaveStatus,
-} from "./elements";
+} from "./content/elements";
 
 export type {
   HeadingContent,
@@ -60,29 +63,29 @@ export type {
   QuicklinkItem,
   QuicklinksContent,
   ImageContent,
-} from "./elements";
-export { DEFAULT_ELEMENT_CONTENT } from "./elements";
+} from "./content/elements";
+export { DEFAULT_ELEMENT_CONTENT } from "./content/elements";
 
 export type {
   NavigationStyle,
   NavigationItem,
   BorderRadiusPreset,
   SiteCustomization,
-} from "./site-settings";
-export { DEFAULT_CUSTOMIZATION } from "./site-settings";
+} from "./sites/site-settings";
+export { DEFAULT_CUSTOMIZATION } from "./sites/site-settings";
 
-export type { UploadPurpose } from "./storage";
+export type { UploadPurpose } from "./files/storage";
 export {
   getUploadMimeTypeForFilename,
   isSupportedUploadMimeType,
   normalizeMimeType,
   resolveUploadMimeType,
   supportedUploadMimeTypes,
-} from "./storage";
+} from "./files/storage";
 export {
   createFileKey,
   keyMatchesPurpose,
   parseFileKey,
   sanitizeFilename,
   toFilesKind,
-} from "./file-keys";
+} from "./files/file-keys";

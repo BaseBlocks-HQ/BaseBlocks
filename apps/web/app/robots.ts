@@ -3,9 +3,7 @@ import type { MetadataRoute } from "next";
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
 
 export default function robots(): MetadataRoute.Robots {
-  const isProduction =
-    process.env.VERCEL_ENV === "production" ||
-    process.env.NODE_ENV === "production";
+  const isProduction = process.env.VERCEL_ENV === "production";
 
   // Block crawlers on preview and staging hosts.
   if (!isProduction) {

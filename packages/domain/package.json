@@ -5,9 +5,9 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./site-settings": "./src/site-settings.ts",
-    "./elements": "./src/elements/index.ts",
-    "./elements/*": "./src/elements/*.ts"
+    "./site-settings": "./src/sites/site-settings.ts",
+    "./elements": "./src/content/elements/index.ts",
+    "./elements/*": "./src/content/elements/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

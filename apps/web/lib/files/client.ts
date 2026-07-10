@@ -1,7 +1,7 @@
 "use client";
 
 export async function deleteDocument(documentId: string): Promise<void> {
-  const response = await fetch(`/api/storage/documents/${documentId}`, {
+  const response = await fetch(`/api/files/${documentId}`, {
     method: "DELETE",
   });
   if (!response.ok) {

@@ -14,11 +14,11 @@ import { canAccessPublishedSite } from "./sharing";
 import { resolveSiteContext } from "./sites";
 
 export function buildAssetUrl(fileId: Id<"files">): string {
-  return `/api/storage/assets/${fileId}`;
+  return `/api/files/${fileId}?kind=asset`;
 }
 
 export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
-  return `/api/storage/documents/${documentId}`;
+  return `/api/files/${documentId}`;
 }
 
 export const canUploadToSite = query({

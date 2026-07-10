@@ -1,4 +1,4 @@
-import { parseRequestHost } from "@/modules/tenancy/host";
+import { parseRequestHost } from "@/lib/routing/hosts";
 import createIntlMiddleware from "next-intl/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";

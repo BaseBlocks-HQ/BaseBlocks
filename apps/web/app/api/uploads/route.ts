@@ -1,5 +1,5 @@
-import { getToken } from "@/app/_auth/server";
-import { getServerConvexClient } from "@/app/_convex/server";
+import { getToken } from "@/lib/auth/server";
+import { getServerConvexClient } from "@/lib/convex/server";
 import {
   deleteObject,
   getFiles,

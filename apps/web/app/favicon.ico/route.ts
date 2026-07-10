@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { api } from "@baseblocks/backend";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
-import { parseRequestHost } from "@/modules/tenancy/host";
+import { parseRequestHost } from "@/lib/routing/hosts";
 
 export const dynamic = "force-dynamic";
 

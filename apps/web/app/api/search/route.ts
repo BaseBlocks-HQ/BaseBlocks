@@ -1,4 +1,4 @@
-import { source } from "@/modules/content-pages/source";
+import { source } from "@/features/marketing/content-pages/source";
 import { createFromSource } from "fumadocs-core/search/server";
 
 export const revalidate = false;
