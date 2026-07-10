@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -122,11 +121,15 @@ export async function indexPageContent(
   const page = await ctx.db.get(pageId);
   if (!page) return;
 
-  const blocks = await ctx.db
-    .query("blocks")
+  const content = await ctx.db
+    .query("pageContents")
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .collect();
+    .unique();
 
+  const blocks =
+    content?.sections.flatMap((section) =>
+      section.columns.flatMap((column) => column.blocks),
+    ) ?? [];
   const extractedText = extractTextFromBlocks(blocks);
 
   const combinedText = `${page.title} ${extractedText}`.trim();

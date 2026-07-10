@@ -1,8 +1,12 @@
 "use client";
 
 import { Column } from "@/modules/editor/page/column";
-import type { Doc, Id } from "@baseblocks/backend";
-import type { AnyContent } from "@baseblocks/domain";
+import type {
+  AnyContent,
+  BlockData,
+  ColumnData,
+  SectionData,
+} from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useSortable } from "@dnd-kit/react/sortable";
@@ -10,9 +14,9 @@ import { GripVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 interface SectionProps {
-  section: Doc<"sections">;
-  columns: Doc<"columns">[];
-  blocksByColumn: Record<string, Doc<"blocks">[]>;
+  section: SectionData;
+  columns: ColumnData[];
+  blocksByColumn: Record<string, BlockData[]>;
   index: number;
   selectedSectionId: string | null;
   selectedColumnId: string | null;
@@ -20,13 +24,13 @@ interface SectionProps {
   draggingBlockId: string | null;
   canEdit: boolean;
   dragDisabled: boolean;
-  onSelectSection: (sectionId: Id<"sections">) => void;
-  onSelectColumn: (columnId: Id<"columns">) => void;
-  onSelectBlock: (blockId: Id<"blocks">, columnId: Id<"columns">) => void;
-  onAddBlock: (columnId: Id<"columns">) => void;
-  onUpdateBlock: (blockId: Id<"blocks">, content: AnyContent) => void;
-  onRemoveBlock: (blockId: Id<"blocks">) => void;
-  onRemove: (sectionId: Id<"sections">) => void;
+  onSelectSection: (sectionId: string) => void;
+  onSelectColumn: (columnId: string) => void;
+  onSelectBlock: (blockId: string, columnId: string) => void;
+  onAddBlock: (columnId: string) => void;
+  onUpdateBlock: (blockId: string, content: AnyContent) => void;
+  onRemoveBlock: (blockId: string) => void;
+  onRemove: (sectionId: string) => void;
 }
 
 export function Section({
@@ -50,7 +54,7 @@ export function Section({
 }: SectionProps) {
   const [hovered, setHovered] = useState(false);
   const { ref, handleRef, isDragging } = useSortable({
-    id: section._id,
+    id: section.id,
     index,
     group: `section:${section.region}`,
     type: `section:${section.region}`,
@@ -58,19 +62,19 @@ export function Section({
     disabled: dragDisabled,
     data: { kind: "section", region: section.region },
   });
-  const selected = selectedSectionId === section._id;
+  const selected = selectedSectionId === section.id;
   const hasSelectedChild = columns.some(
     (column) =>
-      column._id === selectedColumnId ||
-      (blocksByColumn[column._id] ?? []).some(
-        (block) => block._id === selectedBlockId,
+      column.id === selectedColumnId ||
+      (blocksByColumn[column.id] ?? []).some(
+        (block) => block.id === selectedBlockId,
       ),
   );
   const isBlockDropTarget =
     draggingBlockId !== null &&
     columns.some((column) =>
-      (blocksByColumn[column._id] ?? []).some(
-        (block) => block._id === draggingBlockId,
+      (blocksByColumn[column.id] ?? []).some(
+        (block) => block.id === draggingBlockId,
       ),
     );
 
@@ -83,7 +87,7 @@ export function Section({
       onMouseDown={(event) => {
         if (event.button !== 0) return;
         event.stopPropagation();
-        onSelectSection(section._id);
+        onSelectSection(section.id);
       }}
     >
       {hovered || selected ? (
@@ -105,7 +109,7 @@ export function Section({
               className="text-muted-foreground hover:text-destructive"
               onClick={(event) => {
                 event.stopPropagation();
-                onRemove(section._id);
+                onRemove(section.id);
               }}
             >
               <Trash2 className="size-3.5" />
@@ -131,9 +135,9 @@ export function Section({
       >
         {columns.map((column) => (
           <Column
-            key={column._id}
+            key={column.id}
             column={column}
-            blocks={blocksByColumn[column._id] ?? []}
+            blocks={blocksByColumn[column.id] ?? []}
             region={section.region}
             selectedColumnId={selectedColumnId}
             selectedBlockId={selectedBlockId}

@@ -6,8 +6,13 @@ import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { ElementRenderer } from "@/modules/site-runtime/rendering";
 import { SectionContextProvider } from "@/modules/site-runtime/section";
 import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
-import type { AnyContent, ElementType } from "@baseblocks/domain";
+import type { Id } from "@baseblocks/backend";
+import type {
+  AnyContent,
+  ElementType,
+  PageStructure,
+  SectionData,
+} from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   ResizableHandle,
@@ -25,28 +30,14 @@ interface PublicPageContentProps {
   nested?: boolean;
 }
 
-interface PageStructure {
-  sections: Doc<"sections">[];
-  columns: Doc<"columns">[];
-  blocks: Doc<"blocks">[];
-}
-
 const publicPagePanelSurfaceClassName =
   "flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_18px_40px_hsl(var(--foreground)/0.08)] backdrop-blur-xl";
 
 const hiddenSplitHandleClassName =
   "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
 
-function PublishedSection({
-  section,
-  structure,
-}: {
-  section: Doc<"sections">;
-  structure: PageStructure;
-}) {
-  const columns = structure.columns
-    .filter((column) => column.sectionId === section._id)
-    .sort((a, b) => a.order - b.order);
+function PublishedSection({ section }: { section: SectionData }) {
+  const columns = section.columns.slice().sort((a, b) => a.order - b.order);
 
   return (
     <section
@@ -56,22 +47,20 @@ function PublishedSection({
       )}
     >
       {columns.map((column) => {
-        const blocks = structure.blocks
-          .filter((block) => block.columnId === column._id)
-          .sort((a, b) => a.order - b.order);
+        const blocks = column.blocks.slice().sort((a, b) => a.order - b.order);
         return (
-          <div key={column._id} className="min-w-0 space-y-3">
+          <div key={column.id} className="min-w-0 space-y-3">
             {blocks.map((block) => (
               <div
-                key={block._id}
+                key={block.id}
                 className="prose prose-neutral dark:prose-invert max-w-none"
               >
                 <SectionContextProvider
                   region={section.region}
-                  sectionId={section._id}
+                  sectionId={section.id}
                 >
                   <ElementRenderer
-                    id={block._id}
+                    id={block.id}
                     type={block.type as ElementType}
                     content={block.content as AnyContent}
                   />
@@ -137,21 +126,13 @@ function PublicMainContent({
         >
           <div className="min-w-0 space-y-8">
             {mainSections.map((section) => (
-              <PublishedSection
-                key={section._id}
-                section={section}
-                structure={structure}
-              />
+              <PublishedSection key={section.id} section={section} />
             ))}
           </div>
           {asideSections.length > 0 && (
             <aside className="min-w-0 space-y-6">
               {asideSections.map((section) => (
-                <PublishedSection
-                  key={section._id}
-                  section={section}
-                  structure={structure}
-                />
+                <PublishedSection key={section.id} section={section} />
               ))}
             </aside>
           )}
@@ -169,14 +150,14 @@ function PublicPageContentInner({ pageId, nested }: PublicPageContentProps) {
     pageId: pageId as Id<"pages">,
     sessionTokens,
   });
-  const structure = useQuery(api.pageContent.listPublished, {
+  const structure = useQuery(api.pageContent.getPublished, {
     pageId: pageId as Id<"pages">,
     sessionTokens,
   });
   const isMobile = useIsMobile();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
-  const pageTabs = page?.pageTabs ?? [];
+  const pageTabs = structure?.tabs ?? [];
   const activeTabId = pageTabs.some((tab) => tab.id === selectedTabId)
     ? selectedTabId
     : (pageTabs[0]?.id ?? null);

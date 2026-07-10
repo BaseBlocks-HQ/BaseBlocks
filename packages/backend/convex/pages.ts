@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -30,7 +29,6 @@ export type PageTreeNode = {
   icon?: string;
   order: number;
   parentId?: string;
-  pageTabs?: Array<{ id: string; label: string }>;
   children: PageTreeNode[];
 };
 
@@ -42,7 +40,6 @@ type ProjectedPage = {
   icon?: string;
   order: number;
   parentId?: string;
-  pageTabs?: Array<{ id: string; label: string }>;
 };
 
 /**
@@ -98,7 +95,6 @@ function projectPublishedPage(page: Doc<"pages">) {
     icon: page.icon,
     order: page.order,
     parentId: page.parentId,
-    pageTabs: page.pageTabs,
     showInNavigation: page.showInNavigation,
     updatedAt: page.updatedAt,
   };
@@ -167,18 +163,22 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    const blocks = await ctx.db
-      .query("blocks")
+    const contents = await ctx.db
+      .query("pageContents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
     const referencedPageIds = new Set<string>();
-    for (const block of blocks) {
-      if (block.type !== "page") continue;
-      const referencedPageId = block.content?.pageId;
-      if (typeof referencedPageId === "string") {
-        referencedPageIds.add(referencedPageId);
-      }
+    for (const content of contents) {
+      for (const section of content.sections)
+        for (const column of section.columns) {
+          for (const block of column.blocks) {
+            const referencedPageId =
+              block.type === "page" ? block.content?.pageId : undefined;
+            if (typeof referencedPageId === "string")
+              referencedPageIds.add(referencedPageId);
+          }
+        }
     }
 
     return pages.map((page) => ({
@@ -301,7 +301,6 @@ export const getTree = query({
         icon: page.icon,
         order: page.order,
         parentId: page.parentId,
-        pageTabs: page.pageTabs,
       })),
     );
   },
@@ -461,7 +460,6 @@ export const getTreePublished = query({
         icon: page.icon,
         order: page.order,
         parentId: page.parentId,
-        pageTabs: page.pageTabs,
       })),
     );
   },
@@ -629,7 +627,11 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "content", action: "edit" },
+    );
 
     // Check slug uniqueness
     const existing = await ctx.db
@@ -682,7 +684,7 @@ export const setExposure = mutation({
       v.literal("both"),
     ),
     targetPageId: v.optional(v.id("pages")),
-    targetColumnId: v.optional(v.id("columns")),
+    targetColumnId: v.optional(v.string()),
   },
   handler: async (ctx, { pageId, exposure, targetPageId, targetColumnId }) => {
     const page = await ctx.db.get(pageId);
@@ -691,69 +693,83 @@ export const setExposure = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     const now = Date.now();
-    const blocks = await ctx.db
-      .query("blocks")
+    const contents = await ctx.db
+      .query("pageContents")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
     const removeReferences = async () => {
-      const references = blocks.filter(
-        (block) => block.type === "page" && block.content?.pageId === pageId,
+      await Promise.all(
+        contents.map((content) => {
+          const sections = content.sections.map((section) => ({
+            ...section,
+            columns: section.columns.map((column) => ({
+              ...column,
+              blocks: column.blocks.filter(
+                (block) =>
+                  !(block.type === "page" && block.content?.pageId === pageId),
+              ),
+            })),
+          }));
+          return ctx.db.patch("pageContents", content._id, {
+            sections,
+            updatedAt: now,
+          });
+        }),
       );
-      await Promise.all(references.map((block) => ctx.db.delete(block._id)));
     };
 
     const ensureReferenceOnTargetPage = async () => {
-      const requestedColumn = targetColumnId
-        ? await ctx.db.get(targetColumnId)
-        : null;
-      const resolvedTargetPageId = requestedColumn?.pageId ?? targetPageId;
+      const requestedContent = targetColumnId
+        ? contents.find((content) =>
+            content.sections.some((section) =>
+              section.columns.some((column) => column.id === targetColumnId),
+            ),
+          )
+        : undefined;
+      const resolvedTargetPageId = requestedContent?.pageId ?? targetPageId;
       if (!resolvedTargetPageId || resolvedTargetPageId === pageId) return;
 
       const targetPage = await ctx.db.get(resolvedTargetPageId);
       if (!targetPage || targetPage.siteId !== page.siteId) return;
 
-      const existingReference = blocks.some(
-        (block) =>
-          block.pageId === resolvedTargetPageId &&
-          block.type === "page" &&
-          block.content?.pageId === pageId,
+      const content = contents.find(
+        (candidate) => candidate.pageId === resolvedTargetPageId,
+      );
+      if (!content) return;
+      const existingReference = content.sections.some((section) =>
+        section.columns.some((column) =>
+          column.blocks.some(
+            (block) =>
+              block.type === "page" && block.content?.pageId === pageId,
+          ),
+        ),
       );
 
       if (existingReference) return;
-      let column = requestedColumn;
-      if (!column || column.pageId !== resolvedTargetPageId) {
-        const existingColumns = await ctx.db
-          .query("columns")
-          .withIndex("by_page", (q) => q.eq("pageId", resolvedTargetPageId))
-          .collect();
-        column = existingColumns.sort((a, b) => a.order - b.order)[0] ?? null;
-      }
-      if (!column) {
-        const columnId = await createDefaultPageStructure(ctx, {
-          siteId: page.siteId,
-          pageId: resolvedTargetPageId,
-          now,
-        });
-        column = await ctx.db.get(columnId);
-      }
+      const sections = structuredClone(content.sections);
+      const column = targetColumnId
+        ? sections
+            .flatMap((section) => section.columns)
+            .find((candidate) => candidate.id === targetColumnId)
+        : sections
+            .sort((a, b) => a.order - b.order)[0]
+            ?.columns.sort((a, b) => a.order - b.order)[0];
       if (!column) return;
-      const targetBlocks = await ctx.db
-        .query("blocks")
-        .withIndex("by_column", (q) => q.eq("columnId", column._id))
-        .collect();
-      await ctx.db.insert("blocks", {
-        siteId: page.siteId,
-        pageId: resolvedTargetPageId,
-        sectionId: column.sectionId,
-        columnId: column._id,
-        order: targetBlocks.length,
+      column.blocks.push({
+        id: crypto.randomUUID(),
+        order: column.blocks.length,
         type: "page",
         content: { pageId },
-        createdAt: now,
+      });
+      await ctx.db.patch("pageContents", content._id, {
+        sections,
         updatedAt: now,
       });
       await ctx.db.patch(resolvedTargetPageId, { updatedAt: now });
@@ -802,7 +818,10 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     // Check slug uniqueness if changing
     if (slug && slug !== page.slug) {
@@ -851,7 +870,10 @@ export const updateAccessPolicy = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     if (
       accessPolicy.kind === "audiences" &&
@@ -884,7 +906,10 @@ export const reorder = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     const now = Date.now();
     for (let i = 0; i < pageIds.length; i++) {
@@ -935,7 +960,10 @@ export const move = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -965,118 +993,6 @@ export const move = mutation({
   },
 });
 
-// Update page tabs configuration
-export const updatePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-    pageTabs: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          label: v.string(),
-        }),
-      ),
-    ),
-  },
-  handler: async (ctx, { pageId, pageTabs }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
-
-    await ctx.db.patch(pageId, {
-      pageTabs,
-      updatedAt: Date.now(),
-    });
-
-    return pageId;
-  },
-});
-
-// Enable page tabs and assign existing sections to the first tab.
-export const enablePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-    tabs: v.array(
-      v.object({
-        id: v.string(),
-        label: v.string(),
-      }),
-    ),
-  },
-  handler: async (ctx, { pageId, tabs }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
-
-    // Skip if tabs already enabled
-    if (page.pageTabs && page.pageTabs.length > 0) {
-      return pageId;
-    }
-
-    const existingSections = await ctx.db
-      .query("sections")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    const now = Date.now();
-    const firstTabId = tabs[0]?.id;
-
-    if (firstTabId) {
-      for (const section of existingSections) {
-        await ctx.db.patch(section._id, { tabId: firstTabId, updatedAt: now });
-      }
-    }
-
-    await ctx.db.patch(pageId, {
-      pageTabs: tabs,
-      updatedAt: now,
-    });
-
-    return pageId;
-  },
-});
-
-// Disable page tabs and clear section tab assignments.
-export const disablePageTabs = mutation({
-  args: {
-    pageId: v.id("pages"),
-  },
-  handler: async (ctx, { pageId }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
-
-    const sections = await ctx.db
-      .query("sections")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .collect();
-
-    const now = Date.now();
-    for (const section of sections) {
-      await ctx.db.patch(section._id, { tabId: undefined, updatedAt: now });
-    }
-
-    await ctx.db.patch(pageId, {
-      pageTabs: undefined,
-      updatedAt: now,
-    });
-
-    return pageId;
-  },
-});
-
 // Delete page
 export const remove = mutation({
   args: { pageId: v.id("pages") },
@@ -1087,7 +1003,10 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;

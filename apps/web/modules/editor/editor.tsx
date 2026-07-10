@@ -137,23 +137,46 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  const createSectionMutation = useMutation(api.pageContent.createSection);
-  const addBlockMutation = useMutation(api.pageContent.addBlock);
-  const addPageBlockMutation = useMutation(api.pageContent.addPageBlock);
-  const enablePageTabsMutation = useMutation(api.pages.enablePageTabs);
-
   const targetPageId = selectedPage?._id;
+  const pageContent = useQuery(
+    api.pageContent.get,
+    targetPageId ? { pageId: targetPageId } : "skip",
+  );
+  const savePageContent = useMutation(api.pageContent.save);
+  const createPage = useMutation(api.pages.create);
+
+  const mutatePageContent = async (
+    recipe: (content: NonNullable<typeof pageContent>) => void,
+  ) => {
+    if (!targetPageId || !pageContent) return;
+    const next = structuredClone(pageContent);
+    recipe(next);
+    await savePageContent({ pageId: targetPageId, content: next });
+  };
 
   const handleAddSection = async (preset: SectionPreset) => {
     if (!targetPageId) return;
 
-    const created = await createSectionMutation({
-      pageId: targetPageId,
-      preset,
-      tabId: activeTabId ?? undefined,
+    const firstColumnId = nanoid(10);
+    await mutatePageContent((content) => {
+      const region = preset === "aside" ? "aside" : "main";
+      content.sections.push({
+        id: nanoid(10),
+        tabId: activeTabId ?? undefined,
+        region,
+        order: content.sections.filter((section) => section.region === region)
+          .length,
+        columns: Array.from(
+          { length: preset === "columns" ? 2 : 1 },
+          (_, order) => ({
+            id: order === 0 ? firstColumnId : nanoid(10),
+            order,
+            blocks: [],
+          }),
+        ),
+      });
     });
-
-    if (created.firstColumnId) selectColumn(created.firstColumnId);
+    selectColumn(firstColumnId);
   };
 
   const handleAddBlock = async (type: ElementType) => {
@@ -168,10 +191,23 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     if (type === "page") {
       const blockId = nanoid(10);
       try {
-        await addPageBlockMutation({
-          columnId: columnId as Id<"columns">,
+        const childPageId = await createPage({
+          siteId: siteId as Id<"sites">,
           title: "New Page",
           slug: `page-${blockId.slice(0, 8)}`,
+          parentId: targetPageId,
+          showInNavigation: false,
+        });
+        await mutatePageContent((content) => {
+          const column = content.sections
+            .flatMap((section) => section.columns)
+            .find((item) => item.id === columnId);
+          column?.blocks.push({
+            id: blockId,
+            type: "page",
+            content: { pageId: childPageId },
+            order: column.blocks.length,
+          });
         });
       } catch (_error) {
         toast.error("Failed to create page");
@@ -182,22 +218,29 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     const content = getDefaultContent(type);
     if (!content) return;
 
-    await addBlockMutation({
-      columnId: columnId as Id<"columns">,
-      type,
-      content,
+    await mutatePageContent((pageContent) => {
+      const column = pageContent.sections
+        .flatMap((section) => section.columns)
+        .find((item) => item.id === columnId);
+      column?.blocks.push({
+        id: nanoid(10),
+        type,
+        content,
+        order: column.blocks.length,
+      });
     });
   };
 
   const handleEnableTabs = async () => {
     if (!targetPageId) return;
 
-    await enablePageTabsMutation({
-      pageId: targetPageId,
-      tabs: [
+    await mutatePageContent((content) => {
+      const tabs = [
         { id: nanoid(10), label: "Tab 1" },
         { id: nanoid(10), label: "Tab 2" },
-      ],
+      ];
+      content.tabs = tabs;
+      for (const section of content.sections) section.tabId = tabs[0]!.id;
     });
   };
 

@@ -3,43 +3,58 @@ import type { AnyContent, ElementType } from "./elements";
 export type SectionRegion = "main" | "aside";
 export type SectionPreset = "single" | "columns" | "aside";
 
-export interface SectionData {
+export interface PageTab {
   id: string;
-  tabId?: string;
-  region: SectionRegion;
+  label: string;
+}
+
+export interface BlockData {
+  id: string;
+  type: ElementType;
+  content: AnyContent;
   order: number;
 }
 
 export interface ColumnData {
   id: string;
-  sectionId: string;
   order: number;
-}
-
-export interface BlockData {
-  id: string;
-  sectionId: string;
-  columnId: string;
-  order: number;
-  type: ElementType;
-  content: AnyContent;
-}
-
-export interface PageStructure {
-  sections: SectionData[];
-  columns: ColumnData[];
   blocks: BlockData[];
 }
 
-export interface PageTab {
+export interface SectionData {
   id: string;
-  label: string;
+  tabId?: string;
+  region: SectionRegion;
+  order: number;
+  columns: ColumnData[];
+}
+
+/** The sole portable representation of a page's composition. */
+export interface PageStructure {
+  tabs: PageTab[];
+  sections: SectionData[];
 }
 
 export function createBlockDraft(
   type: ElementType,
   content: AnyContent,
   createId: () => string,
-): Pick<BlockData, "id" | "type" | "content"> {
-  return { id: createId(), type, content };
+): BlockData {
+  return { id: createId(), type, content, order: 0 };
+}
+
+export function createEmptyPageStructure(
+  createId: () => string,
+): PageStructure {
+  return {
+    tabs: [],
+    sections: [
+      {
+        id: createId(),
+        region: "main",
+        order: 0,
+        columns: [{ id: createId(), order: 0, blocks: [] }],
+      },
+    ],
+  };
 }

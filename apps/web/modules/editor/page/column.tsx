@@ -1,8 +1,12 @@
 "use client";
 
 import { Block } from "@/modules/editor/page/block";
-import type { Doc, Id } from "@baseblocks/backend";
-import type { AnyContent, SectionRegion } from "@baseblocks/domain";
+import type {
+  AnyContent,
+  BlockData,
+  ColumnData,
+  SectionRegion,
+} from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { CollisionPriority } from "@dnd-kit/abstract";
 import { pointerIntersection } from "@dnd-kit/collision";
@@ -10,19 +14,19 @@ import { useDroppable } from "@dnd-kit/react";
 import { Plus } from "lucide-react";
 
 interface ColumnProps {
-  column: Doc<"columns">;
-  blocks: Doc<"blocks">[];
+  column: ColumnData;
+  blocks: BlockData[];
   region: SectionRegion;
   selectedColumnId: string | null;
   selectedBlockId: string | null;
   draggingBlockId: string | null;
   canEdit: boolean;
   dragDisabled: boolean;
-  onSelectColumn: (columnId: Id<"columns">) => void;
-  onSelectBlock: (blockId: Id<"blocks">, columnId: Id<"columns">) => void;
-  onAddBlock: (columnId: Id<"columns">) => void;
-  onUpdateBlock: (blockId: Id<"blocks">, content: AnyContent) => void;
-  onRemoveBlock: (blockId: Id<"blocks">) => void;
+  onSelectColumn: (columnId: string) => void;
+  onSelectBlock: (blockId: string, columnId: string) => void;
+  onAddBlock: (columnId: string) => void;
+  onUpdateBlock: (blockId: string, content: AnyContent) => void;
+  onRemoveBlock: (blockId: string) => void;
 }
 
 export function Column({
@@ -40,15 +44,15 @@ export function Column({
   onUpdateBlock,
   onRemoveBlock,
 }: ColumnProps) {
-  const selected = selectedColumnId === column._id;
+  const selected = selectedColumnId === column.id;
   const { ref, isDropTarget } = useDroppable({
-    id: column._id,
+    id: column.id,
     type: "column",
     accept: "block",
     collisionDetector: pointerIntersection,
     collisionPriority: CollisionPriority.Low,
     disabled: dragDisabled || blocks.length > 0,
-    data: { kind: "column", columnId: column._id },
+    data: { kind: "column", columnId: column.id },
   });
 
   return (
@@ -63,13 +67,13 @@ export function Column({
       onMouseDown={(event) => {
         if (event.button !== 0) return;
         event.stopPropagation();
-        onSelectColumn(column._id);
+        onSelectColumn(column.id);
       }}
     >
       <div className="flex flex-col gap-2">
         {blocks.map((block, index) => (
-          <div key={block._id} className="relative">
-            {draggingBlockId === block._id ? (
+          <div key={block.id} className="relative">
+            {draggingBlockId === block.id ? (
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 -top-1 z-10 h-0.5 rounded-full bg-primary shadow-[0_0_0_1px_hsl(var(--background)),0_0_0_3px_hsl(var(--primary)/0.18)]"
@@ -78,14 +82,14 @@ export function Column({
             <Block
               block={block}
               index={index}
-              columnId={column._id}
-              sectionId={column.sectionId}
+              columnId={column.id}
+              sectionId={column.id}
               region={region}
-              selected={selectedBlockId === block._id}
+              selected={selectedBlockId === block.id}
               dragDisabled={dragDisabled}
-              onSelect={() => onSelectBlock(block._id, column._id)}
-              onUpdate={(content) => onUpdateBlock(block._id, content)}
-              onRemove={() => onRemoveBlock(block._id)}
+              onSelect={() => onSelectBlock(block.id, column.id)}
+              onUpdate={(content) => onUpdateBlock(block.id, content)}
+              onRemove={() => onRemoveBlock(block.id)}
             />
           </div>
         ))}
@@ -102,7 +106,7 @@ export function Column({
           disabled={!canEdit}
           onClick={(event) => {
             event.stopPropagation();
-            onAddBlock(column._id);
+            onAddBlock(column.id);
           }}
         >
           <Plus className="size-3" />

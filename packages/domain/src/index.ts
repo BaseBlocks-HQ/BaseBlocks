@@ -13,7 +13,7 @@ export {
   publicPageAccessPolicy,
 } from "./page-access";
 
-export { createBlockDraft } from "./page-structure";
+export { createBlockDraft, createEmptyPageStructure } from "./page-structure";
 export type {
   BlockData,
   ColumnData,

@@ -41,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const structure = await publicClient.query(api.pageContent.listPublished, {
+    const structure = await publicClient.query(api.pageContent.getPublished, {
       pageId: pageId as never,
       sessionTokens,
     });

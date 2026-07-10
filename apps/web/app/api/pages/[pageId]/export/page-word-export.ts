@@ -3,13 +3,19 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 export type PageExportFormat = "docx";
 
 interface SerializablePageStructure {
-  sections: Array<{ _id: string; order: number }>;
-  columns: Array<{ _id: string; sectionId: string; order: number }>;
-  blocks: Array<{
-    columnId: string;
+  sections: Array<{
+    id: string;
     order: number;
-    type: string;
-    content: unknown;
+    columns: Array<{
+      id: string;
+      order: number;
+      blocks: Array<{
+        id: string;
+        order: number;
+        type: string;
+        content: unknown;
+      }>;
+    }>;
   }>;
 }
 
@@ -128,13 +134,9 @@ export function buildPageExportText(args: {
     (a, b) => a.order - b.order,
   );
   for (const section of sections) {
-    const columns = args.structure.columns
-      .filter((column) => column.sectionId === section._id)
-      .sort((a, b) => a.order - b.order);
+    const columns = [...section.columns].sort((a, b) => a.order - b.order);
     for (const column of columns) {
-      const blocks = args.structure.blocks
-        .filter((block) => block.columnId === column._id)
-        .sort((a, b) => a.order - b.order);
+      const blocks = [...column.blocks].sort((a, b) => a.order - b.order);
       for (const block of blocks) {
         lines.push(...extractBlockText(block.type, block.content));
       }

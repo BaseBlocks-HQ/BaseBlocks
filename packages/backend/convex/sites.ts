@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import { v } from "convex/values";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -125,20 +124,22 @@ export async function getActiveLibraryIdsForPageIds(
   siteId: Id<"sites">,
   pageIds?: Iterable<string>,
 ): Promise<Set<string>> {
-  const blocks = await ctx.db
-    .query("blocks")
+  const contents = await ctx.db
+    .query("pageContents")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
 
   const allowedPageIds = pageIds ? new Set(pageIds) : null;
   const activeLibraryIds = new Set<string>();
-  for (const block of blocks) {
-    if (allowedPageIds && !allowedPageIds.has(block.pageId)) {
-      continue;
-    }
-    if (block.type === "library" && block.content?.libraryId) {
-      activeLibraryIds.add(block.content.libraryId);
-    }
+  for (const content of contents) {
+    if (allowedPageIds && !allowedPageIds.has(content.pageId)) continue;
+    for (const section of content.sections)
+      for (const column of section.columns) {
+        for (const block of column.blocks) {
+          if (block.type === "library" && block.content?.libraryId)
+            activeLibraryIds.add(block.content.libraryId);
+        }
+      }
   }
 
   return activeLibraryIds;
@@ -621,7 +622,6 @@ export const remove = mutation({
       resource: "site",
       action: "manage",
     });
-
     const attachedDomains = await ctx.db
       .query("siteDomains")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -693,25 +693,13 @@ export const remove = mutation({
     }
 
     // 5. Delete all page content and pages
-    const [blocks, columns, sections] = await Promise.all([
-      ctx.db
-        .query("blocks")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-      ctx.db
-        .query("columns")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-      ctx.db
-        .query("sections")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-    ]);
-    await Promise.all([
-      ...blocks.map((block) => ctx.db.delete(block._id)),
-      ...columns.map((column) => ctx.db.delete(column._id)),
-      ...sections.map((section) => ctx.db.delete(section._id)),
-    ]);
+    const pageContents = await ctx.db
+      .query("pageContents")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    await Promise.all(
+      pageContents.map((content) => ctx.db.delete("pageContents", content._id)),
+    );
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

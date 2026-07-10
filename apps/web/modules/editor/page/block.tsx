@@ -6,8 +6,7 @@ import {
   hasElementConfigPanel,
 } from "@/modules/site-elements/registry";
 import { SectionContextProvider } from "@/modules/site-runtime/section";
-import type { Doc, Id } from "@baseblocks/backend";
-import type { AnyContent, SectionRegion } from "@baseblocks/domain";
+import type { AnyContent, BlockData, SectionRegion } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
@@ -21,10 +20,10 @@ import { GripVertical, Settings2, Trash2 } from "lucide-react";
 import { createElement, useState } from "react";
 
 interface BlockProps {
-  block: Doc<"blocks">;
+  block: BlockData;
   index: number;
-  columnId: Id<"columns">;
-  sectionId: Id<"sections">;
+  columnId: string;
+  sectionId: string;
   region: SectionRegion;
   selected: boolean;
   dragDisabled: boolean;
@@ -48,7 +47,7 @@ export function Block({
   const [hovered, setHovered] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   const { sourceRef, targetRef, handleRef, isDragging } = useSortable({
-    id: block._id,
+    id: block.id,
     index,
     group: columnId,
     type: "block",
@@ -142,7 +141,7 @@ export function Block({
         <SectionContextProvider region={region} sectionId={sectionId}>
           {Editor ? (
             createElement(Editor, {
-              id: block._id,
+              id: block.id,
               type: block.type,
               content: block.content,
               isSelected: selected,

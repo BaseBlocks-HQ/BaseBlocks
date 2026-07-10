@@ -128,7 +128,7 @@ export function PageActionsMenu({
     await setExposure({
       pageId: page._id as Id<"pages">,
       exposure: nextExposure,
-      targetColumnId: selectedColumnId as Id<"columns"> | undefined,
+      targetColumnId: selectedColumnId ?? undefined,
     });
   };
 

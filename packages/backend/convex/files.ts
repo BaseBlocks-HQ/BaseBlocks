@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import { type FunctionReference, makeFunctionReference } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import {

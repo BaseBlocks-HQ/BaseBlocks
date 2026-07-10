@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { blockContent, blockType, sectionRegion } from "./pageContent";
+import { pageSectionValidator, pageTabValidator } from "./pageContent";
 import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
@@ -96,13 +96,9 @@ export default defineSchema({
     order: v.number(),
     showInNavigation: v.optional(v.boolean()),
     accessPolicy: v.optional(pageAccessPolicyValidator),
+    // Transitional migration source; composition reads tabs from pageContents.
     pageTabs: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          label: v.string(),
-        }),
-      ),
+      v.array(v.object({ id: v.string(), label: v.string() })),
     ),
     createdBy: v.string(),
     createdAt: v.number(),
@@ -112,11 +108,23 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
+  pageContents: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    tabs: v.array(pageTabValidator),
+    sections: v.array(pageSectionValidator),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"]),
+
+  // Transitional source tables. Remove only after the production page-content
+  // migration has been verified and a fresh production backup exists.
   sections: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
     tabId: v.optional(v.string()),
-    region: sectionRegion,
+    region: v.union(v.literal("main"), v.literal("aside")),
     order: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -142,8 +150,25 @@ export default defineSchema({
     sectionId: v.id("sections"),
     columnId: v.id("columns"),
     order: v.number(),
-    type: blockType,
-    content: blockContent,
+    type: v.union(
+      v.literal("heading"),
+      v.literal("paragraph"),
+      v.literal("image"),
+      v.literal("file"),
+      v.literal("library"),
+      v.literal("search"),
+      v.literal("divider"),
+      v.literal("spacer"),
+      v.literal("callout"),
+      v.literal("code"),
+      v.literal("quicklinks"),
+      v.literal("richtext"),
+      v.literal("page"),
+      v.literal("directory"),
+      v.literal("flowchart"),
+      v.literal("decision-tree"),
+    ),
+    content: v.any(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -220,9 +245,9 @@ export default defineSchema({
       libraryId: v.optional(v.string()),
       assetId: v.optional(v.id("assets")),
       pageId: v.optional(v.id("pages")),
-      sectionId: v.optional(v.id("sections")),
-      blockId: v.optional(v.id("blocks")),
-      columnId: v.optional(v.id("columns")),
+      sectionId: v.optional(v.string()),
+      blockId: v.optional(v.string()),
+      columnId: v.optional(v.string()),
       description: v.optional(v.string()),
     }),
     updatedAt: v.number(),

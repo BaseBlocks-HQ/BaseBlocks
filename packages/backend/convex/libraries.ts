@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import { v } from "convex/values";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";

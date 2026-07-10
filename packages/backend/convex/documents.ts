@@ -1,4 +1,3 @@
-// Flattened Convex domain module. Keep this file as the public API for this domain.
 import {
   isSupportedUploadMimeType,
   parseFileKey,
@@ -8,7 +7,10 @@ import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import { type MutationCtx, query, mutation } from "./_generated/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { requireOrganizationPermission, requireOrganizationMember } from "./permissions";
+import {
+  requireOrganizationPermission,
+  requireOrganizationMember,
+} from "./permissions";
 import {
   deleteObjectAction,
   getFilesBucketName,
@@ -150,15 +152,23 @@ async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
 ) {
-  const blocks = await ctx.db
-    .query("blocks")
+  const contents = await ctx.db
+    .query("pageContents")
     .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
     .collect();
 
-  for (const block of blocks) {
-    if (block.type === "file" && block.content?.documentId === document._id) {
-      return true;
-    }
+  for (const content of contents) {
+    for (const section of content.sections)
+      for (const column of section.columns) {
+        if (
+          column.blocks.some(
+            (block) =>
+              block.type === "file" &&
+              block.content?.documentId === document._id,
+          )
+        )
+          return true;
+      }
   }
 
   return false;
@@ -628,7 +638,11 @@ export const create = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      siteCtx.organizationId,
+      { resource: "library", action: "manage" },
+    );
     const assetId = await createDocumentAsset(ctx, {
       siteId,
       uploadedBy: auth.userId,
@@ -705,7 +719,11 @@ export const createInLibrary = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      siteCtx.organizationId,
+      { resource: "library", action: "manage" },
+    );
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -778,7 +796,10 @@ export const move = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     if (!document.libraryId) {
       throw new Error("Document is not in a library");
@@ -810,7 +831,10 @@ export const rename = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     await ctx.db.patch(documentId, { filename });
     await patchDocumentSearchEntry(ctx, { ...document, filename });
@@ -828,7 +852,10 @@ export const remove = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, {
+      resource: "library",
+      action: "manage",
+    });
 
     await deleteDocumentRows(ctx, document);
   },
