@@ -1,7 +1,7 @@
 import { getToken } from "@/app/_auth/server";
 import { getServerConvexClient } from "@/app/_convex/server";
 import { parseFileKey } from "@baseblocks/domain";
-import { getFiles, getFilesMaxUploadSize } from "@/app/_storage/server";
+import { getFiles, getMaxUploadSize } from "@/lib/files/server";
 import { api } from "@baseblocks/backend";
 import { FilesError } from "files-sdk";
 import { createFilesRouter, type FilesApi } from "files-sdk/api";
@@ -22,7 +22,7 @@ function getRouter() {
       "download",
       "signedUploadUrl",
     ],
-    maxUploadSize: getFilesMaxUploadSize() ?? undefined,
+    maxUploadSize: getMaxUploadSize(),
     secret: process.env.FILES_API_SECRET,
     authorize: async ({ operation, key }) => {
       if (operation === "capabilities") {
@@ -47,6 +47,7 @@ function getRouter() {
         api.files.canUploadToSite,
         {
           siteId: parsed.siteId as never,
+          purpose: parsed.kind === "documents" ? "document" : "siteAsset",
         },
       );
       if (!canUpload) {

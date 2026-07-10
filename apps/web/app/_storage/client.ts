@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  isSupportedUploadMimeType,
-  resolveUploadMimeType,
-  type UploadPurpose,
-  createFileKey,
-} from "@baseblocks/domain";
+import type { UploadPurpose } from "@baseblocks/domain";
 import type { SignedUpload } from "files-sdk";
-import { createFilesClient } from "files-sdk/client";
-
-const maxUploadSizeBytes = 100 * 1024 * 1024;
 
 export interface UploadProgress {
   loaded: number;
@@ -17,7 +9,7 @@ export interface UploadProgress {
   percentage: number;
 }
 
-interface UploadResult {
+export interface UploadResult {
   objectKey: string;
   size: number;
   contentType: string;
@@ -72,69 +64,78 @@ function sendSignedUpload(
   });
 }
 
-class BaseBlocksFilesClient {
-  private readonly files = createFilesClient({ endpoint: "/api/files" });
+async function uploadRequest<T>(body: object): Promise<T> {
+  const response = await fetch("/api/uploads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const result = (await response.json().catch(() => null)) as
+    | (T & { error?: string })
+    | null;
+  if (!response.ok)
+    throw new Error(result?.error || `Upload failed (${response.status})`);
+  return result as T;
+}
 
-  async upload(
-    file: File,
-    options: {
-      siteId: string;
-      purpose: UploadPurpose;
-      onProgress?: (progress: UploadProgress) => void;
-    },
-  ): Promise<UploadResult> {
-    const objectKey = createFileKey({
-      siteId: options.siteId,
-      purpose: options.purpose,
-      fileId: crypto.randomUUID(),
-      filename: file.name,
-    });
-
-    if (file.size > maxUploadSizeBytes) {
-      throw new Error("File is too large");
-    }
-
-    const contentType = resolveUploadMimeType({
-      filename: file.name,
-      contentType: file.type,
-    });
-
-    if (!isSupportedUploadMimeType(contentType)) {
-      throw new Error("File type not allowed");
-    }
-
-    const target = await this.files.signedUploadUrl(objectKey, {
-      contentType,
-      expiresIn: 60 * 10,
-      maxSize: maxUploadSizeBytes,
-      minSize: 0,
-    });
-
-    await sendSignedUpload(target, file, options.onProgress);
-
-    const uploaded = await this.files.head(objectKey);
-
-    options.onProgress?.({
-      loaded: uploaded.size,
-      total: uploaded.size,
-      percentage: 100,
-    });
-
-    return {
-      objectKey: uploaded.key,
-      size: uploaded.size,
-      contentType: uploaded.type || contentType,
-      checksum: uploaded.etag ?? "",
-    };
-  }
-
-  async cleanup(options: {
+export async function uploadObject(
+  file: File,
+  options: {
     siteId: string;
     purpose: UploadPurpose;
+    onProgress?: (progress: UploadProgress) => void;
+  },
+): Promise<UploadResult> {
+  const signed = await uploadRequest<{
     objectKey: string;
-  }): Promise<void> {
-    await this.files.delete(options.objectKey).catch(() => undefined);
+    contentType: string;
+    target: SignedUpload;
+    uploadToken: string;
+  }>({
+    action: "sign",
+    siteId: options.siteId,
+    purpose: options.purpose,
+    filename: file.name,
+    contentType: file.type,
+    size: file.size,
+  });
+  await sendSignedUpload(signed.target, file, options.onProgress);
+  const uploaded = await uploadRequest<UploadResult>({
+    action: "complete",
+    siteId: options.siteId,
+    purpose: options.purpose,
+    objectKey: signed.objectKey,
+    filename: file.name,
+    contentType: signed.contentType,
+    size: file.size,
+    uploadToken: signed.uploadToken,
+  });
+  options.onProgress?.({
+    loaded: uploaded.size,
+    total: uploaded.size,
+    percentage: 100,
+  });
+  return uploaded;
+}
+
+async function cleanup(options: {
+  siteId: string;
+  purpose: UploadPurpose;
+  objectKey: string;
+}): Promise<void> {
+  const response = await fetch("/api/uploads", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options),
+  });
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(
+      result?.error || `Upload cleanup failed (${response.status})`,
+    );
   }
 }
 
-export const filesClient = new BaseBlocksFilesClient();
+export const filesClient = { upload: uploadObject, cleanup };

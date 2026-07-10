@@ -11,17 +11,11 @@ import {
   requireOrganizationPermission,
   requireOrganizationMember,
 } from "./permissions";
-import {
-  deleteObjectAction,
-  getFilesBucketName,
-  getFilesMaxUploadSize,
-  getFilesProviderName,
-} from "./files";
 import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds, resolveSiteContext } from "./sites";
 
-export function buildAssetUrl(assetId: Id<"assets">): string {
-  return `/api/storage/assets/${assetId}`;
+export function buildAssetUrl(fileId: Id<"files">): string {
+  return `/api/storage/assets/${fileId}`;
 }
 
 export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
@@ -32,14 +26,14 @@ type SearchMetadata = Doc<"searchableContent">["metadata"];
 
 export function buildDocumentSearchMetadata(args: {
   documentId: string;
-  assetId?: string;
+  fileId?: string;
   filename: string;
   contentType: string;
   size: number;
   libraryId?: string;
 }): SearchMetadata {
   return {
-    assetId: args.assetId as SearchMetadata["assetId"],
+    fileId: args.fileId as SearchMetadata["fileId"],
     filename: args.filename,
     fileContentType: args.contentType,
     size: args.size,
@@ -65,9 +59,9 @@ export function normalizeDocumentSearchMetadata(args: {
  * (single delete, library delete, folder delete, site delete) goes through the
  * same sequence:
  *   1. Remove the searchableContent index entry.
- *   2. Delete the assets row.
+ *   2. Delete the file metadata row.
  *   3. Delete the document row.
- *   4. Schedule the object deletion (runs after the transaction commits).
+ * Object deletion is coordinated by Next.js before this metadata mutation.
  */
 
 export async function deleteDocumentRows(
@@ -85,23 +79,13 @@ export async function deleteDocumentRows(
     await ctx.db.delete(searchEntry._id);
   }
 
-  // 2. Capture asset before deleting it
-  const asset = document.assetId ? await ctx.db.get(document.assetId) : null;
-
-  // 3. Delete the asset record
-  if (document.assetId) {
-    await ctx.db.delete(document.assetId);
+  // 2. Delete the file metadata record
+  if (document.fileId) {
+    await ctx.db.delete(document.fileId);
   }
 
-  // 4. Delete the document record
+  // 3. Delete the document record
   await ctx.db.delete(document._id);
-
-  // 5. Schedule file deletion (fire-and-forget, after DB commit)
-  if (asset) {
-    await ctx.scheduler.runAfter(0, deleteObjectAction, {
-      objectKey: asset.objectKey,
-    });
-  }
 }
 
 function mapDocument(doc: Doc<"documents">) {
@@ -456,11 +440,11 @@ export const getDownloadAsset = query({
 
     await requireOrganizationMember(ctx, site.organizationId);
 
-    if (!document.assetId) {
+    if (!document.fileId) {
       return null;
     }
 
-    const asset = await ctx.db.get(document.assetId);
+    const asset = await ctx.db.get(document.fileId);
     if (!asset) {
       return null;
     }
@@ -470,7 +454,6 @@ export const getDownloadAsset = query({
       filename: document.filename,
       contentType: document.contentType,
       size: document.size,
-      bucket: asset.bucket,
       objectKey: asset.objectKey,
     };
   },
@@ -483,7 +466,7 @@ export const getPublicDownloadAsset = query({
   },
   handler: async (ctx, { documentId, sessionTokens }) => {
     const document = await ctx.db.get(documentId);
-    if (!document?.assetId) {
+    if (!document?.fileId) {
       return null;
     }
 
@@ -504,7 +487,7 @@ export const getPublicDownloadAsset = query({
       }
     }
 
-    const asset = await ctx.db.get(document.assetId);
+    const asset = await ctx.db.get(document.fileId);
     if (!asset) {
       return null;
     }
@@ -514,7 +497,6 @@ export const getPublicDownloadAsset = query({
       filename: document.filename,
       contentType: document.contentType,
       size: document.size,
-      bucket: asset.bucket,
       objectKey: asset.objectKey,
     };
   },
@@ -540,11 +522,6 @@ function validateDocumentUpload(args: {
     throw new Error("File type not allowed");
   }
 
-  const maxUploadSize = getFilesMaxUploadSize();
-  if (maxUploadSize !== null && args.size > maxUploadSize) {
-    throw new Error("File is too large");
-  }
-
   return contentType;
 }
 
@@ -560,12 +537,10 @@ async function createDocumentAsset(
     checksum?: string;
   },
 ) {
-  return await ctx.db.insert("assets", {
+  return await ctx.db.insert("files", {
     siteId: args.siteId,
     kind: "document",
     visibility: "private",
-    provider: getFilesProviderName(),
-    bucket: getFilesBucketName(),
     objectKey: args.objectKey,
     filename: args.filename,
     contentType: args.contentType,
@@ -581,7 +556,7 @@ async function patchDocumentSearchEntry(
   document: {
     _id: string;
     siteId: string;
-    assetId?: string;
+    fileId?: string;
     filename: string;
     contentType: string;
     size: number;
@@ -604,7 +579,7 @@ async function patchDocumentSearchEntry(
     extractedText: document.filename,
     metadata: buildDocumentSearchMetadata({
       documentId: document._id,
-      assetId: document.assetId,
+      fileId: document.fileId,
       filename: document.filename,
       contentType: document.contentType,
       size: document.size,
@@ -643,7 +618,7 @@ export const create = mutation({
       siteCtx.organizationId,
       { resource: "library", action: "manage" },
     );
-    const assetId = await createDocumentAsset(ctx, {
+    const fileId = await createDocumentAsset(ctx, {
       siteId,
       uploadedBy: auth.userId,
       objectKey,
@@ -655,7 +630,7 @@ export const create = mutation({
 
     const documentId = await ctx.db.insert("documents", {
       siteId,
-      assetId,
+      fileId,
       filename,
       contentType: normalizedContentType,
       size,
@@ -672,7 +647,7 @@ export const create = mutation({
       extractedText: filename,
       metadata: buildDocumentSearchMetadata({
         documentId,
-        assetId,
+        fileId,
         filename,
         contentType: normalizedContentType,
         size,
@@ -739,7 +714,7 @@ export const createInLibrary = mutation({
       }
     }
 
-    const assetId = await createDocumentAsset(ctx, {
+    const fileId = await createDocumentAsset(ctx, {
       siteId,
       uploadedBy: auth.userId,
       objectKey,
@@ -753,7 +728,7 @@ export const createInLibrary = mutation({
       siteId,
       libraryId,
       folderId,
-      assetId,
+      fileId,
       filename,
       contentType: normalizedContentType,
       size,
@@ -770,7 +745,7 @@ export const createInLibrary = mutation({
       extractedText: filename,
       metadata: buildDocumentSearchMetadata({
         documentId,
-        assetId,
+        fileId,
         filename,
         contentType: normalizedContentType,
         size,

@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import {
   internalMutation,
   internalQuery,
+  internalAction,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
@@ -151,6 +152,198 @@ export const verifyPageContents = internalQuery({
       mismatched,
       isDone: result.isDone,
       continueCursor: result.continueCursor,
+    };
+  },
+});
+
+const batchSize = 100;
+
+const stageResult = v.object({
+  processed: v.number(),
+  done: v.boolean(),
+  cursor: v.string(),
+});
+
+export const phase5CopyAssets = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  returns: stageResult,
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db
+      .query("assets")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize });
+    let processed = 0;
+    for (const asset of page.page) {
+      const existing = await ctx.db
+        .query("files")
+        .withIndex("by_legacy_asset", (q) => q.eq("legacyAssetId", asset._id))
+        .unique();
+      if (existing) continue;
+      await ctx.db.insert("files", {
+        siteId: asset.siteId,
+        kind: asset.kind,
+        visibility: asset.visibility,
+        objectKey: asset.objectKey,
+        filename: asset.filename,
+        contentType: asset.contentType,
+        size: asset.size,
+        checksum: asset.checksum,
+        uploadedBy: asset.uploadedBy,
+        createdAt: asset.createdAt,
+        legacyAssetId: asset._id,
+      });
+      processed += 1;
+    }
+    return { processed, done: page.isDone, cursor: page.continueCursor };
+  },
+});
+
+export const phase5PatchDocuments = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  returns: stageResult,
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db
+      .query("documents")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize });
+    let processed = 0;
+    for (const document of page.page) {
+      if (document.fileId || !document.assetId) continue;
+      const file = await ctx.db
+        .query("files")
+        .withIndex("by_legacy_asset", (q) =>
+          q.eq("legacyAssetId", document.assetId),
+        )
+        .unique();
+      if (!file)
+        throw new Error(`Missing migrated file for document ${document._id}`);
+      await ctx.db.patch(document._id, { fileId: file._id });
+      processed += 1;
+    }
+    return { processed, done: page.isDone, cursor: page.continueCursor };
+  },
+});
+
+export const phase5PatchSites = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  returns: stageResult,
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db
+      .query("sites")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize });
+    let processed = 0;
+    for (const site of page.page) {
+      if (site.logoFileId || !site.logoAssetId) continue;
+      const file = await ctx.db
+        .query("files")
+        .withIndex("by_legacy_asset", (q) =>
+          q.eq("legacyAssetId", site.logoAssetId),
+        )
+        .unique();
+      if (!file) throw new Error(`Missing migrated logo for site ${site._id}`);
+      await ctx.db.patch(site._id, { logoFileId: file._id });
+      processed += 1;
+    }
+    return { processed, done: page.isDone, cursor: page.continueCursor };
+  },
+});
+
+export const phase5PatchSearch = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  returns: stageResult,
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db
+      .query("searchableContent")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize });
+    let processed = 0;
+    for (const entry of page.page) {
+      const legacyId = entry.metadata.assetId;
+      if (entry.metadata.fileId || !legacyId) continue;
+      const file = await ctx.db
+        .query("files")
+        .withIndex("by_legacy_asset", (q) => q.eq("legacyAssetId", legacyId))
+        .unique();
+      if (!file)
+        throw new Error(`Missing migrated search file for ${entry._id}`);
+      await ctx.db.patch(entry._id, {
+        metadata: { ...entry.metadata, fileId: file._id },
+      });
+      processed += 1;
+    }
+    return { processed, done: page.isDone, cursor: page.continueCursor };
+  },
+});
+
+export const phase5Verify = internalQuery({
+  args: {},
+  returns: v.object({
+    assets: v.number(),
+    migratedFiles: v.number(),
+    unmigratedDocuments: v.number(),
+    unmigratedSites: v.number(),
+    unmigratedSearchEntries: v.number(),
+    danglingDocumentFiles: v.number(),
+  }),
+  handler: async (ctx) => {
+    const [assets, files, documents, sites, entries] = await Promise.all([
+      ctx.db.query("assets").collect(),
+      ctx.db.query("files").collect(),
+      ctx.db.query("documents").collect(),
+      ctx.db.query("sites").collect(),
+      ctx.db.query("searchableContent").collect(),
+    ]);
+    let danglingDocumentFiles = 0;
+    for (const document of documents) {
+      if (document.fileId && !(await ctx.db.get(document.fileId))) {
+        danglingDocumentFiles += 1;
+      }
+    }
+    return {
+      assets: assets.length,
+      migratedFiles: files.filter((file) => file.legacyAssetId).length,
+      unmigratedDocuments: documents.filter((doc) => doc.assetId && !doc.fileId)
+        .length,
+      unmigratedSites: sites.filter(
+        (site) => site.logoAssetId && !site.logoFileId,
+      ).length,
+      unmigratedSearchEntries: entries.filter(
+        (entry) => entry.metadata.assetId && !entry.metadata.fileId,
+      ).length,
+      danglingDocumentFiles,
+    };
+  },
+});
+
+export const phase5Run = internalAction({
+  args: {},
+  returns: v.object({
+    copiedAssets: v.number(),
+    patchedDocuments: v.number(),
+    patchedSites: v.number(),
+    patchedSearchEntries: v.number(),
+  }),
+  handler: async (ctx) => {
+    const stages = [
+      internal.migrations.phase5CopyAssets,
+      internal.migrations.phase5PatchDocuments,
+      internal.migrations.phase5PatchSites,
+      internal.migrations.phase5PatchSearch,
+    ] as const;
+    const totals: number[] = [];
+    for (const stage of stages) {
+      let cursor: string | undefined;
+      let processed = 0;
+      while (true) {
+        const result = await ctx.runMutation(stage, { cursor });
+        processed += result.processed;
+        if (result.done) break;
+        cursor = result.cursor;
+      }
+      totals.push(processed);
+    }
+    return {
+      copiedAssets: totals[0] ?? 0,
+      patchedDocuments: totals[1] ?? 0,
+      patchedSites: totals[2] ?? 0,
+      patchedSearchEntries: totals[3] ?? 0,
     };
   },
 });

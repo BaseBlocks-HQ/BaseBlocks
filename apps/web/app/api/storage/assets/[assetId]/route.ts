@@ -1,6 +1,6 @@
 import { getToken } from "@/app/_auth/server";
 import { getServerConvexClient } from "@/app/_convex/server";
-import { getFileUrl } from "@/app/_storage/server";
+import { signedDownloadUrl } from "@/lib/files/server";
 import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
@@ -11,12 +11,13 @@ export async function GET(
 ) {
   try {
     const { assetId } = await context.params;
+    const fileId = assetId;
     const token = await getToken();
     const sessionTokens = getRequestAccessSessionTokens(request);
     const authorizedAsset = token
       ? await getServerConvexClient(token)
           .query(api.files.getAuthorizedAsset, {
-            assetId: assetId as never,
+            fileId: fileId as never,
           })
           .catch(() => null)
       : null;
@@ -24,7 +25,7 @@ export async function GET(
     const asset =
       authorizedAsset ||
       (await getServerConvexClient().query(api.files.getPublicAsset, {
-        assetId: assetId as never,
+        fileId: fileId as never,
         sessionTokens,
       }));
 
@@ -33,8 +34,7 @@ export async function GET(
     }
 
     const download = request.nextUrl.searchParams.get("download") === "1";
-    const signedUrl = await getFileUrl({
-      key: asset.objectKey,
+    const signedUrl = await signedDownloadUrl(asset.objectKey, {
       expiresIn: 60 * 60,
     });
 

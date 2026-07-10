@@ -7,7 +7,6 @@ import {
   isOrganizationMember,
 } from "./permissions";
 import { deleteDocumentRows } from "./documents";
-import { deleteObjectAction } from "./files";
 import { getAccessiblePublishedPages } from "./sharing";
 import { createDefaultPageStructure } from "./pageStructure";
 import {
@@ -425,7 +424,7 @@ export const update = mutation({
     siteId: v.id("sites"),
     name: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
-    logoAssetId: v.optional(v.id("assets")),
+    logoFileId: v.optional(v.id("files")),
     clearLogo: v.optional(v.boolean()),
     settings: v.optional(
       v.object({
@@ -477,7 +476,7 @@ export const update = mutation({
   },
   handler: async (
     ctx,
-    { siteId, name, logoUrl, logoAssetId, clearLogo, settings },
+    { siteId, name, logoUrl, logoFileId, clearLogo, settings },
   ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
@@ -492,38 +491,26 @@ export const update = mutation({
 
     // Logo replacement: clean up the previous asset when a new one is uploaded
     if (
-      logoAssetId !== undefined &&
-      site.logoAssetId &&
-      site.logoAssetId !== logoAssetId
+      logoFileId !== undefined &&
+      site.logoFileId &&
+      site.logoFileId !== logoFileId
     ) {
-      const oldAsset = await ctx.db.get(site.logoAssetId);
-      await ctx.db.delete(site.logoAssetId);
-      if (oldAsset) {
-        await ctx.scheduler.runAfter(0, deleteObjectAction, {
-          objectKey: oldAsset.objectKey,
-        });
-      }
+      await ctx.db.delete(site.logoFileId);
     }
 
-    if (logoAssetId !== undefined) {
-      updates.logoAssetId = logoAssetId;
+    if (logoFileId !== undefined) {
+      updates.logoFileId = logoFileId;
       // Derive the display URL from the asset ID so they're always in sync
-      updates.logoUrl = `/api/storage/assets/${logoAssetId}`;
+      updates.logoUrl = `/api/storage/assets/${logoFileId}`;
     }
 
     // Logo removal: clean up the existing asset
-    if (clearLogo && site.logoAssetId) {
-      const oldAsset = await ctx.db.get(site.logoAssetId);
-      await ctx.db.delete(site.logoAssetId);
-      if (oldAsset) {
-        await ctx.scheduler.runAfter(0, deleteObjectAction, {
-          objectKey: oldAsset.objectKey,
-        });
-      }
-      updates.logoAssetId = undefined;
+    if (clearLogo && site.logoFileId) {
+      await ctx.db.delete(site.logoFileId);
+      updates.logoFileId = undefined;
       updates.logoUrl = undefined;
-    } else if (logoUrl !== undefined && logoAssetId === undefined) {
-      // Legacy path: plain URL update without an assetId (e.g. external URL)
+    } else if (logoUrl !== undefined && logoFileId === undefined) {
+      // Legacy path: plain URL update without an fileId (e.g. external URL)
       updates.logoUrl = logoUrl;
     }
 
@@ -671,16 +658,13 @@ export const remove = mutation({
     // 3. Delete all site assets (logos, favicons, og images, editor media)
     //    and schedule their S3 object deletions
     const siteAssets = await ctx.db
-      .query("assets")
+      .query("files")
       .withIndex("by_site_kind", (q) =>
         q.eq("siteId", siteId).eq("kind", "siteAsset"),
       )
       .collect();
     for (const asset of siteAssets) {
       await ctx.db.delete(asset._id);
-      await ctx.scheduler.runAfter(0, deleteObjectAction, {
-        objectKey: asset.objectKey,
-      });
     }
 
     // 4. Delete all searchableContent for the site (pages + any remaining docs)

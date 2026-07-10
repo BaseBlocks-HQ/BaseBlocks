@@ -31,7 +31,7 @@ interface EditSiteDialogProps {
     _id: string;
     name: string;
     logoUrl?: string;
-    logoAssetId?: string;
+    logoFileId?: string;
   };
 }
 
@@ -44,7 +44,7 @@ export function EditSiteDialog({
     name: site.name,
     logoUrl: site.logoUrl || "",
     logoPreview: site.logoUrl || "",
-    logoAssetId: site.logoAssetId || "",
+    logoFileId: site.logoFileId || "",
     isSubmitting: false,
     isUploadingLogo: false,
     error: "",
@@ -66,7 +66,7 @@ export function EditSiteDialog({
         name: site.name,
         logoUrl: site.logoUrl || "",
         logoPreview: site.logoUrl || "",
-        logoAssetId: site.logoAssetId || "",
+        logoFileId: site.logoFileId || "",
         isSubmitting: false,
         isUploadingLogo: false,
         error: "",
@@ -119,7 +119,7 @@ export function EditSiteDialog({
       });
       objectKey = uploadResult.objectKey;
 
-      const { assetId, url } = await createSiteAsset({
+      const { fileId, url } = await createSiteAsset({
         siteId: site._id as Id<"sites">,
         objectKey: uploadResult.objectKey,
         filename: file.name,
@@ -132,7 +132,7 @@ export function EditSiteDialog({
         ...current,
         logoUrl: url,
         logoPreview: url,
-        logoAssetId: assetId,
+        logoFileId: fileId,
         isUploadingLogo: false,
       }));
       resetFileInput();
@@ -159,7 +159,7 @@ export function EditSiteDialog({
       ...current,
       logoUrl: "",
       logoPreview: "",
-      logoAssetId: "",
+      logoFileId: "",
       error: "",
     }));
   };
@@ -182,8 +182,8 @@ export function EditSiteDialog({
       isSubmitting: true,
     }));
 
-    const hadLogo = !!site.logoAssetId || !!site.logoUrl;
-    const hasNewAsset = !!dialogState.logoAssetId;
+    const hadLogo = !!site.logoFileId || !!site.logoUrl;
+    const hasNewAsset = !!dialogState.logoFileId;
     const logoCleared = hadLogo && !dialogState.logoUrl;
 
     try {
@@ -191,7 +191,7 @@ export function EditSiteDialog({
         siteId: site._id as Id<"sites">,
         name: trimmedName,
         ...(hasNewAsset && {
-          logoAssetId: dialogState.logoAssetId as Id<"assets">,
+          logoFileId: dialogState.logoFileId as Id<"files">,
         }),
         ...(logoCleared && { clearLogo: true }),
       });

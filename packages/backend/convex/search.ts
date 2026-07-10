@@ -248,7 +248,7 @@ function formatSearchResult(
       ? normalizeDocumentSearchMetadata({
           sourceId: document._id,
           metadata: {
-            assetId: document.assetId,
+            fileId: document.fileId,
             filename: document.filename,
             fileContentType: document.contentType,
             size: document.size,
@@ -282,7 +282,7 @@ function formatDocumentTitleResult(document: Doc<"documents">) {
     metadata: normalizeDocumentSearchMetadata({
       sourceId: document._id,
       metadata: {
-        assetId: document.assetId,
+        fileId: document.fileId,
         filename: document.filename,
         fileContentType: document.contentType,
         size: document.size,

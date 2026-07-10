@@ -1,6 +1,6 @@
 import { getToken } from "@/app/_auth/server";
 import { getServerConvexClient } from "@/app/_convex/server";
-import { getFileUrl } from "@/app/_storage/server";
+import { deleteObject, signedDownloadUrl } from "@/lib/files/server";
 import { getRequestAccessSessionTokens } from "@/modules/public-site/access-session";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
@@ -41,9 +41,9 @@ export async function GET(
     }
 
     const download = request.nextUrl.searchParams.get("download") === "1";
-    const signedUrl = await getFileUrl({
-      key: document.objectKey,
+    const signedUrl = await signedDownloadUrl(document.objectKey, {
       expiresIn: 60 * 60,
+      download,
     });
 
     // Proxy the content server-side to avoid CORS issues when the browser
@@ -78,6 +78,42 @@ export async function GET(
           error instanceof Error ? error.message : "Failed to serve document",
       },
       { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ documentId: string }> },
+) {
+  try {
+    const token = await getToken();
+    if (!token) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const { documentId } = await context.params;
+    const client = getServerConvexClient(token);
+    const document = await client.query(api.documents.getDownloadAsset, {
+      documentId: documentId as never,
+    });
+    if (!document) {
+      return NextResponse.json(
+        { error: "Document not found" },
+        { status: 404 },
+      );
+    }
+
+    // Object-first semantics: if storage fails, metadata remains and the
+    // operation can be retried without creating an unreachable orphan.
+    await deleteObject(document.objectKey);
+    await client.mutation(api.documents.remove, {
+      documentId: documentId as never,
+    });
+    return new NextResponse(null, { status: 204 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to delete document" },
+      { status: 502 },
     );
   }
 }

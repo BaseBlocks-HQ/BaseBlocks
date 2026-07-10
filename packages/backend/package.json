@@ -27,14 +27,9 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1078.0",
-    "@aws-sdk/lib-storage": "^3.1078.0",
-    "@aws-sdk/s3-presigned-post": "^3.1078.0",
-    "@aws-sdk/s3-request-presigner": "^3.1078.0",
     "@baseblocks/domain": "workspace:*",
     "@convex-dev/better-auth": "^0.12.2",
     "better-auth": "^1.6.11",
-    "convex": "^1.39.1",
-    "files-sdk": "^2.0.0"
+    "convex": "^1.39.1"
   }
 }

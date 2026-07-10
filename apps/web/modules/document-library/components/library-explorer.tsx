@@ -20,6 +20,7 @@ import type {
 } from "@/modules/document-library/tree-input";
 import { buildLibraryTreeInput } from "@/modules/document-library/tree-input";
 import { useFileUpload } from "@/modules/document-library/use-document-upload";
+import { deleteDocument } from "@/lib/files/client";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
@@ -182,7 +183,6 @@ export function LibraryExplorer({
   const removeFolder = useMutation(api.libraries.removeFolder);
   const renameDocument = useMutation(api.documents.rename);
   const moveDocument = useMutation(api.documents.move);
-  const removeDocument = useMutation(api.documents.remove);
   const {
     uploadFiles: uploadLibraryFiles,
     isAnyUploading,
@@ -308,7 +308,7 @@ export function LibraryExplorer({
         setCurrentFolderId(null);
       }
     } else {
-      await removeDocument({ documentId: target.id });
+      await deleteDocument(target.id);
       if (openEntity?.kind === "file" && openEntity.file._id === target.id) {
         setOpenFilePath(null);
       }

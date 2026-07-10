@@ -96,17 +96,24 @@ export function useFileUpload() {
 
       return documentId;
     } catch (err) {
+      let failure = err instanceof Error ? err : new Error("Upload failed");
       if (objectKey) {
-        await filesClient.cleanup({
-          siteId: options.siteId,
-          purpose: "document",
-          objectKey,
-        });
+        try {
+          await filesClient.cleanup({
+            siteId: options.siteId,
+            purpose: "document",
+            objectKey,
+          });
+        } catch (cleanupError) {
+          failure = new AggregateError(
+            [failure, cleanupError],
+            "Upload failed and the uploaded object could not be cleaned up",
+          );
+        }
       }
 
-      const error = err instanceof Error ? err : new Error("Upload failed");
-      updateUploadState(fileId, { isUploading: false, error: error.message });
-      options.onError?.(error);
+      updateUploadState(fileId, { isUploading: false, error: failure.message });
+      options.onError?.(failure);
       return null;
     }
   };

@@ -10,7 +10,8 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()),
-    logoAssetId: v.optional(v.id("assets")), // FK to assets table for cleanup on replace
+    logoFileId: v.optional(v.id("files")), // FK to assets table for cleanup on replace
+    logoAssetId: v.optional(v.id("assets")),
     defaultPageId: v.optional(v.id("pages")),
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),
@@ -195,6 +196,8 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_parent", ["libraryId", "parentId"]),
 
+  // Transitional source table retained until development and production have
+  // both completed migrations:phase5Storage.
   assets: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("document"), v.literal("siteAsset")),
@@ -208,15 +211,31 @@ export default defineSchema({
     checksum: v.optional(v.string()),
     uploadedBy: v.string(),
     createdAt: v.number(),
+  }).index("by_site", ["siteId"]),
+
+  files: defineTable({
+    siteId: v.id("sites"),
+    kind: v.union(v.literal("document"), v.literal("siteAsset")),
+    visibility: v.union(v.literal("public"), v.literal("private")),
+    objectKey: v.string(),
+    filename: v.optional(v.string()),
+    contentType: v.string(),
+    size: v.number(),
+    checksum: v.optional(v.string()),
+    uploadedBy: v.string(),
+    createdAt: v.number(),
+    legacyAssetId: v.optional(v.id("assets")),
   })
     .index("by_site", ["siteId"])
     .index("by_site_kind", ["siteId", "kind"])
-    .index("by_object", ["provider", "bucket", "objectKey"]),
+    .index("by_object_key", ["objectKey"])
+    .index("by_legacy_asset", ["legacyAssetId"]),
 
   documents: defineTable({
     siteId: v.id("sites"),
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")),
+    fileId: v.optional(v.id("files")),
     assetId: v.optional(v.id("assets")),
     filename: v.string(),
     contentType: v.string(),
@@ -243,6 +262,7 @@ export default defineSchema({
       size: v.optional(v.number()),
       downloadUrl: v.optional(v.string()),
       libraryId: v.optional(v.string()),
+      fileId: v.optional(v.id("files")),
       assetId: v.optional(v.id("assets")),
       pageId: v.optional(v.id("pages")),
       sectionId: v.optional(v.string()),

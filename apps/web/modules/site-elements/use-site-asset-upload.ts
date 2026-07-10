@@ -67,19 +67,26 @@ export function useSiteAssetUpload() {
         contentType: uploadResult.contentType,
       };
     } catch (err) {
+      let failure = err instanceof Error ? err : new Error("Upload failed");
       if (objectKey) {
-        await filesClient.cleanup({
-          siteId,
-          purpose: "siteAsset",
-          objectKey,
-        });
+        try {
+          await filesClient.cleanup({
+            siteId,
+            purpose: "siteAsset",
+            objectKey,
+          });
+        } catch (cleanupError) {
+          failure = new AggregateError(
+            [failure, cleanupError],
+            "Upload failed and the uploaded object could not be cleaned up",
+          );
+        }
       }
 
-      const error = err instanceof Error ? err.message : "Upload failed";
       setUploadState({
         isUploading: false,
         progress: null,
-        error,
+        error: failure.message,
       });
       return null;
     }

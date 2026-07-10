@@ -14,8 +14,8 @@ import {
 import { canAccessPublishedSite } from "./sharing";
 import { resolveSiteContext } from "./sites";
 
-export function buildAssetUrl(assetId: Id<"assets">): string {
-  return `/api/storage/assets/${assetId}`;
+export function buildAssetUrl(fileId: Id<"files">): string {
+  return `/api/storage/assets/${fileId}`;
 }
 
 export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
@@ -25,15 +25,17 @@ export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
 export const canUploadToSite = query({
   args: {
     siteId: v.id("sites"),
+    purpose: v.union(v.literal("document"), v.literal("siteAsset")),
   },
-  handler: async (ctx, { siteId }) => {
+  returns: v.boolean(),
+  handler: async (ctx, { siteId, purpose }) => {
     const site = await ctx.db.get(siteId);
     if (!site) {
       return false;
     }
 
     return checkOrganizationPermission(ctx, site.organizationId, {
-      resource: "site",
+      resource: purpose === "document" ? "library" : "site",
       action: "manage",
     });
   },
@@ -41,11 +43,11 @@ export const canUploadToSite = query({
 
 export const getPublicAsset = query({
   args: {
-    assetId: v.id("assets"),
+    fileId: v.id("files"),
     sessionTokens: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, { assetId, sessionTokens }) => {
-    const asset = await ctx.db.get(assetId);
+  handler: async (ctx, { fileId, sessionTokens }) => {
+    const asset = await ctx.db.get(fileId);
     if (!asset || asset.visibility !== "public") {
       return null;
     }
@@ -61,10 +63,10 @@ export const getPublicAsset = query({
 
 export const getAuthorizedAsset = query({
   args: {
-    assetId: v.id("assets"),
+    fileId: v.id("files"),
   },
-  handler: async (ctx, { assetId }) => {
-    const asset = await ctx.db.get(assetId);
+  handler: async (ctx, { fileId }) => {
+    const asset = await ctx.db.get(fileId);
     if (!asset) {
       return null;
     }
@@ -103,11 +105,6 @@ function validateSiteAssetUpload(args: {
     throw new ConvexError("File type not allowed");
   }
 
-  const maxUploadSize = getFilesMaxUploadSize();
-  if (maxUploadSize !== null && args.size > maxUploadSize) {
-    throw new ConvexError("File is too large");
-  }
-
   return contentType;
 }
 
@@ -136,14 +133,16 @@ export const createSiteAsset = mutation({
       throw new ConvexError("Site not found");
     }
 
-    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "site", action: "manage" });
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      siteCtx.organizationId,
+      { resource: "site", action: "manage" },
+    );
 
-    const assetId = await ctx.db.insert("assets", {
+    const fileId = await ctx.db.insert("files", {
       siteId,
       kind: "siteAsset",
       visibility: "public",
-      provider: getFilesProviderName(),
-      bucket: getFilesBucketName(),
       objectKey,
       filename,
       contentType: normalizedContentType,
@@ -154,48 +153,8 @@ export const createSiteAsset = mutation({
     });
 
     return {
-      assetId,
-      url: buildAssetUrl(assetId),
+      fileId,
+      url: buildAssetUrl(fileId),
     };
   },
 });
-
-export function requireFilesEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing ${name}`);
-  }
-  return value;
-}
-
-export function getFilesBucketName(): string {
-  return requireFilesEnv("FILES_BUCKET");
-}
-
-export function getFilesProviderName(): string {
-  return process.env.FILES_ADAPTER?.trim() || "s3";
-}
-
-export function getFilesMaxUploadSize(): number | null {
-  const raw = process.env.FILES_MAX_UPLOAD_SIZE_BYTES?.trim();
-  if (!raw) return null;
-  const parsed = Number(raw);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new Error("FILES_MAX_UPLOAD_SIZE_BYTES must be a positive integer");
-  }
-  return parsed;
-}
-
-type DeleteObjectArgs = { objectKey: string };
-type DeleteObjectResult = { deleted: boolean };
-
-export const deleteObjectAction = makeFunctionReference<
-  "action",
-  DeleteObjectArgs,
-  DeleteObjectResult
->("filesNode:deleteObject") as unknown as FunctionReference<
-  "action",
-  "internal",
-  DeleteObjectArgs,
-  DeleteObjectResult
->;

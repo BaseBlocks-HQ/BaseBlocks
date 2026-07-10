@@ -6,6 +6,7 @@ import {
   toAbsoluteBrowserUrl,
 } from "@/modules/document-library/deep-link";
 import { useFileUpload } from "@/modules/document-library/use-document-upload";
+import { deleteDocument } from "@/lib/files/client";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview as FilePreviewPanel,
@@ -487,7 +488,6 @@ export function FileEditor({
   const searchParams = useSearchParams();
   const { uploadFile, isAnyUploading, totalProgress } = useFileUpload();
   const renameDocument = useMutation(api.documents.rename);
-  const removeDocument = useMutation(api.documents.remove);
   const document = useQuery(
     api.documents.get,
     content.documentId
@@ -603,7 +603,7 @@ export function FileEditor({
 
     try {
       setFileSaveStatus(onSaveStatusChange, "saving");
-      await removeDocument({ documentId: resolvedFile._id as Id<"documents"> });
+      await deleteDocument(resolvedFile._id);
       await onUpdate({});
       dispatch({ type: "closeDeleteDialog" });
       toast.success(t("toastDeleted"));
