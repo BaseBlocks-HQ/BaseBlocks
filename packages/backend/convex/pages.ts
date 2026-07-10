@@ -4,9 +4,8 @@ import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
-  checkIsMember,
-  getAuthContextOrNull,
-  requireContentEditor,
+  isOrganizationMember,
+  requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
 import {
@@ -161,7 +160,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const pages = await ctx.db
       .query("pages")
@@ -202,16 +201,7 @@ export const get = query({
     const site = await ctx.db.get(page.siteId);
     if (!site) return null;
 
-    const auth = await getAuthContextOrNull(ctx);
-    if (auth) {
-      const member = await ctx.db
-        .query("members")
-        .withIndex("by_team_user", (q) =>
-          q.eq("teamId", site.teamId).eq("userId", auth.userId),
-        )
-        .first();
-      if (member) return page;
-    }
+    if (await isOrganizationMember(ctx, site.organizationId)) return page;
 
     if (await canViewerAccessPublishedPageById(ctx, pageId, sessionTokens)) {
       return projectPublishedPage(page);
@@ -240,16 +230,7 @@ export const getBySlug = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    const auth = await getAuthContextOrNull(ctx);
-    if (auth) {
-      const member = await ctx.db
-        .query("members")
-        .withIndex("by_team_user", (q) =>
-          q.eq("teamId", site.teamId).eq("userId", auth.userId),
-        )
-        .first();
-      if (member) return page;
-    }
+    if (await isOrganizationMember(ctx, site.organizationId)) return page;
 
     if (await canViewerAccessPublishedPageById(ctx, page._id, sessionTokens)) {
       return page;
@@ -271,17 +252,7 @@ export const getChildren = query({
     if (!site) return [];
 
     // Check access: team member or published site
-    const auth = await getAuthContextOrNull(ctx);
-    let isMember = false;
-    if (auth) {
-      const member = await ctx.db
-        .query("members")
-        .withIndex("by_team_user", (q) =>
-          q.eq("teamId", site.teamId).eq("userId", auth.userId),
-        )
-        .first();
-      isMember = !!member;
-    }
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
 
     if (!isMember) {
       const accessiblePages = await getAccessiblePublishedPages(
@@ -314,7 +285,7 @@ export const getTree = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const allPages = await ctx.db
       .query("pages")
@@ -347,7 +318,7 @@ export const getByPath = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     // Empty path defaults to "home"
     if (path.length === 0) {
@@ -373,15 +344,6 @@ export const getByPath = query({
         .first();
 
       if (!page) {
-        // Fallback: try single-slug lookup for backwards compatibility
-        if (path.length === 1) {
-          return await ctx.db
-            .query("pages")
-            .withIndex("by_slug", (q) =>
-              q.eq("siteId", siteId).eq("slug", path[0]!),
-            )
-            .first();
-        }
         return null;
       }
 
@@ -410,17 +372,7 @@ export const getAncestors = query({
     if (!site) return [];
 
     // Check access: team member or published site
-    const auth = await getAuthContextOrNull(ctx);
-    let isMember = false;
-    if (auth) {
-      const member = await ctx.db
-        .query("members")
-        .withIndex("by_team_user", (q) =>
-          q.eq("teamId", site.teamId).eq("userId", auth.userId),
-        )
-        .first();
-      isMember = !!member;
-    }
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
 
     if (!isMember) {
       const accessiblePages = await getAccessiblePublishedPages(
@@ -596,7 +548,7 @@ export const getFullPath = query({
     const site = await ctx.db.get(page.siteId);
     if (!site) return null;
 
-    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     const slugs: string[] = [];
     let currentPage: typeof page | null = page;
@@ -677,7 +629,7 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireContentEditor(ctx, site.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     // Check slug uniqueness
     const existing = await ctx.db
@@ -739,7 +691,7 @@ export const setExposure = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     const now = Date.now();
     const blocks = await ctx.db
@@ -850,7 +802,7 @@ export const update = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     // Check slug uniqueness if changing
     if (slug && slug !== page.slug) {
@@ -899,7 +851,7 @@ export const updateAccessPolicy = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     if (
       accessPolicy.kind === "audiences" &&
@@ -932,7 +884,7 @@ export const reorder = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     const now = Date.now();
     for (let i = 0; i < pageIds.length; i++) {
@@ -983,7 +935,7 @@ export const move = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -1033,7 +985,7 @@ export const updatePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     await ctx.db.patch(pageId, {
       pageTabs,
@@ -1062,7 +1014,7 @@ export const enablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     // Skip if tabs already enabled
     if (page.pageTabs && page.pageTabs.length > 0) {
@@ -1104,7 +1056,7 @@ export const disablePageTabs = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     const sections = await ctx.db
       .query("sections")
@@ -1135,7 +1087,7 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;

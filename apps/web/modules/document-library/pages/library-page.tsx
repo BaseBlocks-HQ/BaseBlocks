@@ -161,7 +161,7 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
     );
   }
 
-  if (!explorer || explorer.site.teamId !== team._id) {
+  if (!explorer || explorer.site.organizationId !== team._id) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-sm text-muted-foreground">

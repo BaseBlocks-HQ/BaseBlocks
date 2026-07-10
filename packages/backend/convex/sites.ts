@@ -4,14 +4,18 @@ import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
-  requirePublisher,
-  requireSiteManager,
-  checkIsMember,
+  requireOrganizationPermission,
+  isOrganizationMember,
 } from "./permissions";
 import { deleteDocumentRows } from "./documents";
 import { deleteObjectAction } from "./files";
 import { getAccessiblePublishedPages } from "./sharing";
 import { createDefaultPageStructure } from "./pageStructure";
+import {
+  getAuthOrganizationById,
+  getAuthOrganizationBySlug,
+  listAuthOrganizations,
+} from "./authComponent/model";
 
 /** Site customization theme options */
 export const siteCustomization = v.object({
@@ -70,7 +74,7 @@ type DbCtx = Pick<
  * Resolved page info with properly typed IDs.
  */
 export type PageInfo = {
-  teamId: Id<"teams">;
+  organizationId: string;
   siteId: Id<"sites">;
 };
 
@@ -88,7 +92,7 @@ export async function resolvePageContext(
   const site = await ctx.db.get(page.siteId);
   if (!site) return null;
 
-  return { teamId: site.teamId, siteId: site._id };
+  return { organizationId: site.organizationId, siteId: site._id };
 }
 
 /**
@@ -98,11 +102,11 @@ export async function resolvePageContext(
 export async function resolveSiteContext(
   ctx: DbCtx,
   siteId: Id<"sites">,
-): Promise<{ teamId: Id<"teams"> } | null> {
+): Promise<{ organizationId: string } | null> {
   const site = await ctx.db.get(siteId);
   if (!site) return null;
 
-  return { teamId: site.teamId };
+  return { organizationId: site.organizationId };
 }
 
 /**
@@ -141,25 +145,26 @@ export async function getActiveLibraryIdsForPageIds(
 }
 
 export const listByTeam = query({
-  args: { teamId: v.id("teams") },
-  handler: async (ctx, { teamId }) => {
-    const isMember = await checkIsMember(ctx, teamId);
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) => {
+    const isMember = await isOrganizationMember(ctx, organizationId);
     if (!isMember) return [];
 
-    const team = await ctx.db.get(teamId);
-    if (!team) return [];
+    const organization = await getAuthOrganizationById(ctx, organizationId);
+    if (!organization?.slug) return [];
+    const organizationSlug = organization.slug;
 
     const sites = await ctx.db
       .query("sites")
-      .withIndex("by_team", (q) => q.eq("teamId", teamId))
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
       .collect();
 
     return sites.map((site) => ({
       ...site,
       team: {
-        _id: team._id,
-        name: team.name,
-        slug: team.slug,
+        _id: organization._id,
+        name: organization.name,
+        slug: organizationSlug,
       },
     }));
   },
@@ -172,7 +177,7 @@ export const get = query({
     const site = await ctx.db.get(siteId);
     if (!site) return null;
 
-    const isMember = await checkIsMember(ctx, site.teamId);
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
     if (!isMember) return null;
 
     return site;
@@ -187,26 +192,23 @@ export const getBySlug = query({
     siteSlug: v.optional(v.string()),
   },
   handler: async (ctx, { teamSlug, siteSlug }) => {
-    // Find team
-    const team = await ctx.db
-      .query("teams")
-      .withIndex("by_slug", (q) => q.eq("slug", teamSlug))
-      .first();
-
-    if (!team) return null;
+    const organization = await getAuthOrganizationBySlug(ctx, teamSlug);
+    if (!organization) return null;
 
     let site: Doc<"sites"> | null = null;
     if (siteSlug) {
       site = await ctx.db
         .query("sites")
-        .withIndex("by_slug", (q) =>
-          q.eq("teamId", team._id).eq("slug", siteSlug),
+        .withIndex("by_organization_slug", (q) =>
+          q.eq("organizationId", organization._id).eq("slug", siteSlug),
         )
         .first();
     } else {
       const sites = await ctx.db
         .query("sites")
-        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
         .collect();
       site = sites.find((candidate) => candidate.isPublished) ?? null;
     }
@@ -216,7 +218,7 @@ export const getBySlug = query({
     return {
       _id: site._id,
       _creationTime: site._creationTime,
-      teamId: site.teamId,
+      organizationId: site.organizationId,
       slug: site.slug,
       isPublished: true,
       visibility: site.visibility,
@@ -238,26 +240,23 @@ export const getWithDefaultPage = query({
     sessionTokens: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { teamSlug, siteSlug, sessionTokens }) => {
-    // Find team
-    const team = await ctx.db
-      .query("teams")
-      .withIndex("by_slug", (q) => q.eq("slug", teamSlug))
-      .first();
-
-    if (!team) return null;
+    const organization = await getAuthOrganizationBySlug(ctx, teamSlug);
+    if (!organization) return null;
 
     let site: Doc<"sites"> | null = null;
     if (siteSlug) {
       site = await ctx.db
         .query("sites")
-        .withIndex("by_slug", (q) =>
-          q.eq("teamId", team._id).eq("slug", siteSlug),
+        .withIndex("by_organization_slug", (q) =>
+          q.eq("organizationId", organization._id).eq("slug", siteSlug),
         )
         .first();
     } else {
       const sites = await ctx.db
         .query("sites")
-        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
         .collect();
       site = sites.find((candidate) => candidate.isPublished) ?? null;
     }
@@ -285,7 +284,7 @@ export const getWithDefaultPage = query({
     const publishedSite = {
       _id: site._id,
       _creationTime: site._creationTime,
-      teamId: site.teamId,
+      organizationId: site.organizationId,
       slug: site.slug,
       isPublished: true,
       visibility: site.visibility,
@@ -298,9 +297,9 @@ export const getWithDefaultPage = query({
 
     // Only expose public-safe team fields
     const publicTeam = {
-      _id: team._id,
-      name: team.name,
-      slug: team.slug,
+      _id: organization._id,
+      name: organization.name,
+      slug: organization.slug ?? teamSlug,
     };
 
     return {
@@ -316,7 +315,7 @@ export const getWithDefaultPage = query({
 export const listPublishedSlugs = query({
   args: {},
   handler: async (ctx) => {
-    const teams = await ctx.db.query("teams").collect();
+    const organizations = await listAuthOrganizations(ctx);
 
     const results: Array<{
       teamSlug: string;
@@ -324,10 +323,13 @@ export const listPublishedSlugs = query({
       updatedAt: number;
     }> = [];
 
-    for (const team of teams) {
+    for (const organization of organizations) {
+      if (!organization.slug) continue;
       const sites = await ctx.db
         .query("sites")
-        .withIndex("by_team", (q) => q.eq("teamId", team._id))
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
         .collect();
 
       for (const site of sites) {
@@ -335,7 +337,7 @@ export const listPublishedSlugs = query({
         if (site.visibility && site.visibility !== "public") continue;
 
         results.push({
-          teamSlug: team.slug,
+          teamSlug: organization.slug,
           siteSlug: site.slug,
           updatedAt: site.updatedAt,
         });
@@ -351,21 +353,19 @@ export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
-    teamId: v.id("teams"),
+    organizationId: v.string(),
   },
-  handler: async (ctx, { name, slug, teamId }) => {
-    const { auth } = await requireSiteManager(ctx, teamId);
+  handler: async (ctx, { name, slug, organizationId }) => {
+    const { auth } = await requireOrganizationPermission(ctx, organizationId, { resource: "site", action: "manage" });
 
-    const team = await ctx.db.get(teamId);
-    if (!team) {
-      throw new Error("Team not found. Please complete onboarding first.");
-    }
+    const organization = await getAuthOrganizationById(ctx, organizationId);
+    if (!organization) throw new Error("Organization not found");
 
     // Check slug uniqueness within team
     const existing = await ctx.db
       .query("sites")
-      .withIndex("by_slug", (q) =>
-        q.eq("teamId", team._id).eq("slug", slug.toLowerCase()),
+      .withIndex("by_organization_slug", (q) =>
+        q.eq("organizationId", organization._id).eq("slug", slug.toLowerCase()),
       )
       .first();
 
@@ -377,7 +377,7 @@ export const create = mutation({
 
     const now = Date.now();
     const siteId = await ctx.db.insert("sites", {
-      teamId,
+      organizationId,
       name,
       slug: slug.toLowerCase(),
       isPublished: false,
@@ -476,7 +476,7 @@ export const update = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
@@ -536,7 +536,7 @@ export const publish = mutation({
     if (!site) throw new Error("Site not found");
 
     const now = Date.now();
-    await requirePublisher(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "publication", action: "publish" });
     await ctx.db.patch(siteId, {
       isPublished: true,
       publishedAt: site.publishedAt ?? now,
@@ -554,7 +554,7 @@ export const unpublish = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requirePublisher(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "publication", action: "publish" });
 
     await ctx.db.patch(siteId, {
       isPublished: false,
@@ -576,7 +576,7 @@ export const setDefaultPage = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access for write operations
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     // Verify the page belongs to this site
     const page = await ctx.db.get(pageId);
@@ -600,7 +600,7 @@ export const remove = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     // 1. Delete all document libraries and their contents
     //    (documents first so assets + S3 objects are properly cleaned up)

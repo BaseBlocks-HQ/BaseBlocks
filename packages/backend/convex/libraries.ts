@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import { checkIsMember, requireLibraryManager } from "./permissions";
+import { isOrganizationMember, requireOrganizationPermission } from "./permissions";
 import { buildDocumentDownloadUrl, deleteDocumentRows } from "./documents";
 import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds } from "./sites";
@@ -17,7 +17,7 @@ const librarySummary = v.object({
 const librarySiteSummary = v.object({
   _id: v.id("sites"),
   name: v.string(),
-  teamId: v.id("teams"),
+  organizationId: v.string(),
 });
 
 const libraryFolderSummary = v.object({
@@ -54,7 +54,7 @@ async function buildExplorerPayload(
   site: {
     _id: Id<"sites">;
     name: string;
-    teamId: Id<"teams">;
+    organizationId: string;
   },
 ) {
   const folders = await ctx.db
@@ -75,7 +75,7 @@ async function buildExplorerPayload(
     site: {
       _id: site._id,
       name: site.name,
-      teamId: site.teamId,
+      organizationId: site.organizationId,
     },
     folders: folders
       .map((folder) => ({
@@ -105,7 +105,7 @@ export const listLibraries = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     return await ctx.db
       .query("documentLibraries")
@@ -123,7 +123,7 @@ export const getLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     return library;
   },
@@ -139,7 +139,7 @@ export const getExplorer = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     return await buildExplorerPayload(ctx, library, site);
   },
@@ -204,16 +204,13 @@ export const listPublicLibraries = query({
 });
 
 export const listAllWithCounts = query({
-  args: { teamId: v.id("teams") },
-  handler: async (ctx, { teamId }) => {
-    if (!(await checkIsMember(ctx, teamId))) return [];
-
-    const team = await ctx.db.get(teamId);
-    if (!team) return [];
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) => {
+    if (!(await isOrganizationMember(ctx, organizationId))) return [];
 
     const sites = await ctx.db
       .query("sites")
-      .withIndex("by_team", (q) => q.eq("teamId", team._id))
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
       .collect();
 
     // Get all libraries for all sites
@@ -255,7 +252,7 @@ export const listWithCounts = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const libraries = await ctx.db
       .query("documentLibraries")
@@ -283,7 +280,7 @@ export const createLibrary = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireLibraryManager(ctx, site.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Check for duplicate library name within site
     const existingLibrary = await ctx.db
@@ -323,7 +320,7 @@ export const updateLibrary = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -357,7 +354,7 @@ export const removeLibrary = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
@@ -396,7 +393,7 @@ export const listFoldersByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -420,7 +417,7 @@ export const listByParent = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const folders = await ctx.db
       .query("documentFolders")
@@ -446,7 +443,7 @@ export const getFolder = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
-    if (!(await checkIsMember(ctx, site.teamId))) return null;
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     return folder;
   },
@@ -465,7 +462,7 @@ export const getPath = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     // Build path from folder to root (with cycle detection)
     const path: Array<{ _id: string; name: string }> = [];
@@ -590,7 +587,7 @@ export const createFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireLibraryManager(ctx, site.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -650,7 +647,7 @@ export const updateFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Check for duplicate name if renaming
     if (
@@ -701,7 +698,7 @@ export const moveFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -792,7 +789,7 @@ export const removeFolder = mutation({
     const site = await ctx.db.get(library.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "library", action: "manage" });
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

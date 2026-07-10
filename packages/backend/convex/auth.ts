@@ -5,6 +5,10 @@ import { organization } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
+import {
+  baseBlocksAccessControl,
+  baseBlocksRoles,
+} from "./authComponent/permissions";
 import authSchema from "./authComponent/schema";
 
 const defaultAuthOrigin = "http://localhost:3001";
@@ -109,6 +113,11 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     emailAndPassword: {
       enabled: false,
     },
+    user: {
+      deleteUser: {
+        enabled: true,
+      },
+    },
     account: {
       accountLinking: {
         enabled: true,
@@ -137,6 +146,9 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     },
     plugins: [
       organization({
+        ac: baseBlocksAccessControl,
+        roles: baseBlocksRoles,
+        creatorRole: "owner",
         allowUserToCreateOrganization: true,
         cancelPendingInvitationsOnReInvite: true,
       }),

@@ -2,7 +2,6 @@
 
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
@@ -32,12 +31,12 @@ const sitesGridClassName =
 function SitesSection({
   canManageSites,
   sites,
-  teamId,
+  organizationId,
   teamSlug,
 }: {
   canManageSites: boolean;
   sites: SiteList | undefined;
-  teamId: Id<"teams">;
+  organizationId: string;
   teamSlug: string;
 }) {
   const t = useTranslations("dashboard");
@@ -64,7 +63,7 @@ function SitesSection({
         </Card>
         {canManageSites && (
           <div className={sitesGridClassName}>
-            <CreateSiteDialog teamId={teamId} />
+            <CreateSiteDialog organizationId={organizationId} />
           </div>
         )}
       </div>
@@ -73,7 +72,7 @@ function SitesSection({
 
   return (
     <div className={sitesGridClassName}>
-      {canManageSites && <CreateSiteDialog teamId={teamId} />}
+      {canManageSites && <CreateSiteDialog organizationId={organizationId} />}
       {sites.map((site) => (
         <SiteCard
           key={site._id}
@@ -90,7 +89,7 @@ export function SitesPage() {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
   const sitesQuery = useQuery(api.sites.listByTeam, {
-    teamId: team._id,
+    organizationId: team.organizationId,
   });
 
   return (
@@ -104,7 +103,7 @@ export function SitesPage() {
           <SitesSection
             canManageSites={capabilities.canManageSites}
             sites={sitesQuery}
-            teamId={team._id}
+            organizationId={team._id}
             teamSlug={team.slug}
           />
         </div>

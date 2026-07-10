@@ -8,7 +8,7 @@ import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import { type MutationCtx, query, mutation } from "./_generated/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { requireLibraryManager, requireMember } from "./permissions";
+import { requireOrganizationPermission, requireOrganizationMember } from "./permissions";
 import {
   deleteObjectAction,
   getFilesBucketName,
@@ -227,7 +227,7 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
     return await listDocumentsForSite(ctx, siteId);
   },
 });
@@ -241,7 +241,7 @@ export const get = query({
     const site = await ctx.db.get(doc.siteId);
     if (!site) return null;
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
     return mapDocument(doc);
   },
 });
@@ -256,7 +256,7 @@ export const search = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -329,7 +329,7 @@ export const listByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
     return await listDocumentsForLibrary(ctx, libraryId);
   },
 });
@@ -346,7 +346,7 @@ export const listByFolder = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
     return await listDocumentsForFolder(ctx, libraryId, folderId);
   },
 });
@@ -405,7 +405,7 @@ export const searchByLibrary = query({
     const site = await ctx.db.get(library.siteId);
     if (!site) return [];
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -444,7 +444,7 @@ export const getDownloadAsset = query({
       return null;
     }
 
-    await requireMember(ctx, site.teamId);
+    await requireOrganizationMember(ctx, site.organizationId);
 
     if (!document.assetId) {
       return null;
@@ -628,7 +628,7 @@ export const create = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireLibraryManager(ctx, siteCtx.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
     const assetId = await createDocumentAsset(ctx, {
       siteId,
       uploadedBy: auth.userId,
@@ -705,7 +705,7 @@ export const createInLibrary = mutation({
     const siteCtx = await resolveSiteContext(ctx, siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    const { auth } = await requireLibraryManager(ctx, siteCtx.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
 
     // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
@@ -778,7 +778,7 @@ export const move = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, siteCtx.teamId);
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
 
     if (!document.libraryId) {
       throw new Error("Document is not in a library");
@@ -810,7 +810,7 @@ export const rename = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, siteCtx.teamId);
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
 
     await ctx.db.patch(documentId, { filename });
     await patchDocumentSearchEntry(ctx, { ...document, filename });
@@ -828,7 +828,7 @@ export const remove = mutation({
     const siteCtx = await resolveSiteContext(ctx, document.siteId);
     if (!siteCtx) throw new Error("Site not found");
 
-    await requireLibraryManager(ctx, siteCtx.teamId);
+    await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "library", action: "manage" });
 
     await deleteDocumentRows(ctx, document);
   },

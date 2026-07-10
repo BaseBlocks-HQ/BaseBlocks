@@ -215,9 +215,15 @@ export function DashboardSidebar() {
                     <DropdownMenuItem
                       key={workspace._id}
                       className="rounded-lg"
-                      onClick={() =>
-                        router.push(getTeamDashboardPath(workspace.slug))
-                      }
+                      onClick={() => {
+                        void authClient.organization
+                          .setActive({
+                            organizationId: workspace.organizationId,
+                          })
+                          .then(() =>
+                            router.push(getTeamDashboardPath(workspace.slug)),
+                          );
+                      }}
                     >
                       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                         <div className="min-w-0">

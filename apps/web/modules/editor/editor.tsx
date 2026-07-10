@@ -205,7 +205,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     return <EditorLoading />;
   }
 
-  if (!site || site.teamId !== team._id) {
+  if (!site || site.organizationId !== team._id) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">Site not found</p>

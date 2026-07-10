@@ -479,13 +479,13 @@ export function LibrariesPage() {
 
   const { capabilities, team } = useTeamAccess();
   const sites = useQuery(api.sites.listByTeam, {
-    teamId: team._id,
+    organizationId: team.organizationId,
   });
   const deleteLibrary = useMutation(api.libraries.removeLibrary);
 
   const siteLibraries = useQuery(
     api.libraries.listAllWithCounts,
-    sites ? { teamId: team._id } : "skip",
+    sites ? { organizationId: team.organizationId } : "skip",
   );
 
   const toggleSite = (siteId: string) => {

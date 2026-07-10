@@ -6,7 +6,6 @@ import { authClient } from "@/app/_auth/client";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { getTeamDashboardPath } from "@/modules/dashboard/routes";
 import { InvitationInbox } from "@/modules/dashboard/invitations/invitation-inbox";
-import { api } from "@baseblocks/backend";
 import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -25,7 +24,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
-import { useMutation } from "convex/react";
 import { Earth } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -47,7 +45,6 @@ export function OnboardingPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const t = useTranslations();
-  const createTeam = useMutation(api.teams.create);
   const locale = useLocale() as Locale;
   const pathname = usePathname();
 
@@ -66,7 +63,7 @@ export function OnboardingPageClient() {
         name: teamName,
         slug,
       })
-      .then((orgResult) => {
+      .then(async (orgResult) => {
         const organizationId = orgResult.data?.id;
 
         if (!organizationId) {
@@ -74,13 +71,11 @@ export function OnboardingPageClient() {
           return;
         }
 
-        return createTeam({
-          name: teamName,
-          slug,
+        const activeResult = await authClient.organization.setActive({
           organizationId,
-        }).then(() => {
-          router.push(getTeamDashboardPath(slug));
         });
+        if (activeResult.error) throw activeResult.error;
+        router.push(getTeamDashboardPath(slug));
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : t("common.error"));

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type QueryCtx } from "./_generated/server";
-import { requireContentEditor, checkIsMember } from "./permissions";
+import { requireOrganizationPermission, isOrganizationMember } from "./permissions";
 import { indexPageContent } from "./search";
 import { canViewerAccessPublishedPageById } from "./sharing";
 import { resolvePageContext } from "./sites";
@@ -108,7 +108,7 @@ export const list = query({
     const page = await ctx.db.get(pageId);
     if (!page) return { sections: [], columns: [], blocks: [] };
     const site = await ctx.db.get(page.siteId);
-    if (!site || !(await checkIsMember(ctx, site.teamId))) {
+    if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
       return { sections: [], columns: [], blocks: [] };
     }
     return loadPageStructure(ctx, pageId);
@@ -142,7 +142,7 @@ export const createSection = mutation({
   handler: async (ctx, { pageId, preset, tabId }) => {
     const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
 
     const existing = await ctx.db
       .query("sections")
@@ -189,7 +189,7 @@ export const removeSection = mutation({
     if (!section) return null;
     const pageInfo = await resolvePageContext(ctx, section.pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
 
     const [columns, blocks] = await Promise.all([
       ctx.db
@@ -221,7 +221,7 @@ export const reorderSections = mutation({
   handler: async (ctx, { pageId, sectionIds }) => {
     const pageInfo = await resolvePageContext(ctx, pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
     const sections = await Promise.all(sectionIds.map((id) => ctx.db.get(id)));
     if (sections.some((section) => !section || section.pageId !== pageId)) {
       throw new Error("Invalid section order");
@@ -249,7 +249,7 @@ export const addBlock = mutation({
     if (!column) throw new Error("Column not found");
     const pageInfo = await resolvePageContext(ctx, column.pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
 
     const blocks = await ctx.db
       .query("blocks")
@@ -290,7 +290,7 @@ export const updateBlock = mutation({
     if (!block) throw new Error("Block not found");
     const pageInfo = await resolvePageContext(ctx, block.pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
     const now = Date.now();
     await ctx.db.patch(blockId, { content, updatedAt: now });
     await ctx.db.patch(block.pageId, { updatedAt: now });
@@ -307,7 +307,7 @@ export const removeBlock = mutation({
     if (!block) return null;
     const pageInfo = await resolvePageContext(ctx, block.pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
     await ctx.db.delete(blockId);
     const remaining = await ctx.db
       .query("blocks")
@@ -345,7 +345,7 @@ export const moveBlock = mutation({
     }
     const pageInfo = await resolvePageContext(ctx, block.pageId);
     if (!pageInfo) throw new Error("Page not found");
-    await requireContentEditor(ctx, pageInfo.teamId);
+    await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
 
     const sourceColumnId = block.columnId;
     const [sourceBlocks, destinationBlocks] = await Promise.all([
@@ -409,7 +409,7 @@ export const addPageBlock = mutation({
     if (!page) throw new Error("Page not found");
     const pageInfo = await resolvePageContext(ctx, page._id);
     if (!pageInfo) throw new Error("Page not found");
-    const { auth } = await requireContentEditor(ctx, pageInfo.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, pageInfo.organizationId, { resource: "content", action: "edit" });
     const now = Date.now();
     const siblingPages = await ctx.db
       .query("pages")

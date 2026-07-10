@@ -1,4 +1,3 @@
-import { teamRoles } from "@baseblocks/domain";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { blockContent, blockType, sectionRegion } from "./pageContent";
@@ -6,23 +5,8 @@ import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
 export default defineSchema({
-  teams: defineTable({
-    organizationId: v.optional(v.string()), // Better Auth organization ID
-    name: v.string(),
-    slug: v.string(), // subdomain: acme.baseblocks.dev
-    logoUrl: v.optional(v.string()),
-    createdBy: v.string(), // User ID
-    createdAt: v.number(),
-    settings: v.object({
-      primaryColor: v.optional(v.string()),
-      customDomain: v.optional(v.string()), // docs.acme.com
-    }),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_organizationId", ["organizationId"]),
-
   sites: defineTable({
-    teamId: v.id("teams"),
+    organizationId: v.string(),
     name: v.string(),
     slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()),
@@ -46,8 +30,8 @@ export default defineSchema({
     accessCodeSessionDays: v.optional(v.number()),
     settings: siteSettings,
   })
-    .index("by_team", ["teamId"])
-    .index("by_slug", ["teamId", "slug"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_slug", ["organizationId", "slug"]),
 
   siteAccessCodes: defineTable({
     siteId: v.id("sites"),
@@ -238,17 +222,4 @@ export default defineSchema({
       searchField: "extractedText",
       filterFields: ["siteId", "contentType"],
     }),
-
-  members: defineTable({
-    teamId: v.id("teams"),
-    userId: v.string(),
-    email: v.string(),
-    name: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-    role: v.union(...teamRoles.map((role) => v.literal(role))),
-    joinedAt: v.number(),
-  })
-    .index("by_team", ["teamId"])
-    .index("by_team_user", ["teamId", "userId"])
-    .index("by_user", ["userId"]),
 });

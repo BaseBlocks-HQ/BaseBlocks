@@ -4,12 +4,6 @@ export type {
   PageAccessPolicy,
   SiteAudience,
 } from "./page-access";
-export type {
-  TeamCapability,
-  TeamCapabilities,
-  TeamRole,
-} from "./access";
-export { getTeamCapabilities, hasTeamCapability, teamRoles } from "./access";
 export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./slug";
 export {
   canAccessPagePolicy,

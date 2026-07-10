@@ -14,6 +14,7 @@ import type * as files from "../files.js";
 import type * as filesNode from "../filesNode.js";
 import type * as http from "../http.js";
 import type * as libraries from "../libraries.js";
+import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
 import type * as pageStructure from "../pageStructure.js";
 import type * as pages from "../pages.js";
@@ -21,7 +22,6 @@ import type * as permissions from "../permissions.js";
 import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
 import type * as sites from "../sites.js";
-import type * as teams from "../teams.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   filesNode: typeof filesNode;
   http: typeof http;
   libraries: typeof libraries;
+  organizations: typeof organizations;
   pageContent: typeof pageContent;
   pageStructure: typeof pageStructure;
   pages: typeof pages;
@@ -43,7 +44,6 @@ declare const fullApi: ApiFromModules<{
   search: typeof search;
   sharing: typeof sharing;
   sites: typeof sites;
-  teams: typeof teams;
 }>;
 
 /**

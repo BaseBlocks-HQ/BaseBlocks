@@ -1,31 +1,31 @@
 "use client";
 
 import type { WorkspaceUser } from "@/modules/workspace/server";
-import type { Id } from "@baseblocks/backend";
 import {
-  type TeamCapabilities,
-  type TeamRole,
-  getTeamCapabilities,
-} from "@baseblocks/domain";
+  type OrganizationRole,
+  roleHasPermission,
+} from "@baseblocks/backend/auth-permissions";
 import { type ReactNode, createContext, use } from "react";
 
 export type TeamRecord = {
-  _id: Id<"teams">;
+  _id: string;
   joinedAt: number;
   logoUrl?: string;
-  memberRole: TeamRole;
+  memberRole: string;
   name: string;
-  organizationId?: string;
-  settings: {
-    customDomain?: string;
-    primaryColor?: string;
-  };
+  organizationId: string;
   slug: string;
 };
 
 interface TeamAccessValue {
-  capabilities: TeamCapabilities;
-  role: TeamRole;
+  capabilities: {
+    canEditContent: boolean;
+    canManageLibraries: boolean;
+    canManageSites: boolean;
+    canManageTeam: boolean;
+    canPublish: boolean;
+  };
+  role: OrganizationRole;
   team: TeamRecord;
   teams: TeamRecord[];
   user: WorkspaceUser | null;
@@ -46,13 +46,35 @@ export function TeamAccessProvider({
   teams,
   user,
 }: TeamAccessProviderProps) {
-  const capabilities = getTeamCapabilities(team.memberRole);
+  const role = team.memberRole as OrganizationRole;
+  const capabilities = {
+    canEditContent: roleHasPermission(role, {
+      resource: "content",
+      action: "edit",
+    }),
+    canManageLibraries: roleHasPermission(role, {
+      resource: "library",
+      action: "manage",
+    }),
+    canManageSites: roleHasPermission(role, {
+      resource: "site",
+      action: "manage",
+    }),
+    canManageTeam: roleHasPermission(role, {
+      resource: "member",
+      action: "update",
+    }),
+    canPublish: roleHasPermission(role, {
+      resource: "publication",
+      action: "publish",
+    }),
+  };
 
   return (
     <TeamAccessContext.Provider
       value={{
         capabilities,
-        role: team.memberRole,
+        role,
         team,
         teams,
         user,

@@ -2,8 +2,7 @@
 
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import type { TeamRole } from "@baseblocks/domain";
+import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
@@ -22,12 +21,12 @@ import { InviteMemberDialog } from "./invite-member-dialog";
 import { MemberActions } from "./member-actions";
 
 interface MemberListItem {
-  _id: Id<"members">;
+  _id: string;
   userId?: string;
   email: string;
   name?: string;
   imageUrl?: string;
-  role: TeamRole;
+  role: OrganizationRole;
   joinedAt: number;
 }
 
@@ -35,8 +34,8 @@ export function TeamPage() {
   const t = useTranslations("team");
 
   const { capabilities, team } = useTeamAccess();
-  const members = useQuery(api.teams.listMembers, {
-    teamId: team._id,
+  const members = useQuery(api.organizations.listMembers, {
+    organizationId: team.organizationId,
   });
 
   const formatDate = (timestamp: number) => {
@@ -132,7 +131,7 @@ export function TeamPage() {
                         <TableCell>
                           <MemberActions
                             member={member}
-                            teamId={team._id}
+                            organizationId={team.organizationId}
                             isCurrentUserAdmin={capabilities.canManageTeam}
                           />
                         </TableCell>

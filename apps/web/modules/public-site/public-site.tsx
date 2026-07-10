@@ -21,7 +21,7 @@ export function PublicSite({ teamSlug, path }: Props) {
     teamSlug,
     siteSlug,
   });
-  const team = useQuery(api.teams.getBySlug, {
+  const team = useQuery(api.organizations.getBySlug, {
     slug: teamSlug,
   });
 

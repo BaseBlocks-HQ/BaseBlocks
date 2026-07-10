@@ -2,7 +2,6 @@
 
 import { authClient } from "@/app/_auth/client";
 import type { WorkspaceUser } from "@/modules/workspace/server";
-import { api } from "@baseblocks/backend";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,7 +21,6 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { useMutation } from "convex/react";
 import { Loader2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconGear } from "nucleo-glass";
@@ -65,8 +63,6 @@ export function AccountSettings({
     onOpenChange?.(nextOpen);
   };
 
-  const deleteMyAccountData = useMutation(api.teams.deleteMyAccountData);
-
   const getInitials = (name?: string, email?: string) => {
     if (name) return name.slice(0, 2).toUpperCase();
     if (email) return email[0]?.toUpperCase() || "?";
@@ -92,7 +88,8 @@ export function AccountSettings({
     setIsDeleting(true);
     setDeleteError(null);
     try {
-      await deleteMyAccountData();
+      const result = await authClient.deleteUser();
+      if (result.error) throw result.error;
       await authClient.signOut();
       setDeleteConfirmOpen(false);
       setOpen(false);

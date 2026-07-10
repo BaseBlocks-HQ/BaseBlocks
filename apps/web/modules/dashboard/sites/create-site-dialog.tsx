@@ -2,7 +2,6 @@
 
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -23,7 +22,7 @@ import { type FormEvent, useReducer, useState } from "react";
 
 interface CreateSiteDialogProps {
   disabled?: boolean;
-  teamId: Id<"teams">;
+  organizationId: string;
 }
 
 interface CreateSiteFormState {
@@ -96,7 +95,7 @@ function createSiteFormReducer(
 
 export function CreateSiteDialog({
   disabled = false,
-  teamId,
+  organizationId,
 }: CreateSiteDialogProps) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
@@ -169,7 +168,7 @@ export function CreateSiteDialog({
       await createSite({
         name: trimmedName,
         slug: trimmedSlug,
-        teamId,
+        organizationId,
       });
       setOpen(false);
       resetForm();

@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { Checkbox } from "@baseblocks/ui/checkbox";
 import {
@@ -32,10 +32,15 @@ type AudienceAssignments = {
   audience: { _id: Id<"siteAudiences">; name: string };
   userIds: string[];
 } | null;
-type MemberListItem = Pick<
-  Doc<"members">,
-  "_id" | "email" | "imageUrl" | "joinedAt" | "name" | "role" | "userId"
->;
+type MemberListItem = {
+  _id: string;
+  email: string;
+  imageUrl?: string;
+  joinedAt: number;
+  name?: string;
+  role: string;
+  userId: string;
+};
 
 export function AudienceMembersDialog({
   audienceId,
@@ -49,8 +54,8 @@ export function AudienceMembersDialog({
     siteId: siteId as Id<"sites">,
   });
   const members = useQuery(
-    api.teams.listMembers,
-    site?._id ? { teamId: site.teamId } : "skip",
+    api.organizations.listMembers,
+    site?._id ? { organizationId: site.organizationId } : "skip",
   );
   const assignments = useQuery(
     api.sharing.getAudienceMemberAssignments,

@@ -5,7 +5,6 @@ import { getTeamSiteEditorPath } from "@/modules/dashboard/routes";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -156,7 +155,7 @@ export function EditorSiteSwitcher({
 }: EditorSiteSwitcherProps) {
   const { team } = useTeamAccess();
   const sites = useQuery(api.sites.listByTeam, {
-    teamId: team._id as Id<"teams">,
+    organizationId: team.organizationId,
   });
   const switcherSites = getSwitcherSites(sites ?? [], currentSiteId);
   const hasOtherSites = switcherSites.length > 1;

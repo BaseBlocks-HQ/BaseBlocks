@@ -4,17 +4,16 @@ import type { GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
-  checkIsMember,
+  isOrganizationMember,
   getAuthContextOrNull,
-  requireAdmin,
-  requireSiteManager,
-  requireContentEditor,
+  requireOrganizationPermission,
 } from "./permissions";
 import {
   canAccessPagePolicy,
   normalizePageAccessPolicy,
   publicPageAccessPolicy,
 } from "@baseblocks/domain";
+import { listAuthOrganizationMembers } from "./authComponent/model";
 
 /**
  * Cryptographically secure random generation for access codes and session tokens.
@@ -156,14 +155,7 @@ export async function resolvePublishedViewerContext(
     };
   }
 
-  const member = await ctx.db
-    .query("members")
-    .withIndex("by_team_user", (q) =>
-      q.eq("teamId", site.teamId).eq("userId", auth.userId),
-    )
-    .first();
-
-  if (!member) {
+  if (!(await isOrganizationMember(ctx, site.organizationId))) {
     return {
       audienceIds: new Set<string>(),
       isTeamMember: false,
@@ -293,7 +285,7 @@ export const getAccessCode = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "organization", action: "update" });
 
     const accessCode = await ctx.db
       .query("siteAccessCodes")
@@ -323,7 +315,7 @@ export const getSettings = query({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireAdmin(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "organization", action: "update" });
 
     return {
       visibility: site.visibility ?? "public",
@@ -387,7 +379,7 @@ export const checkSiteAccess = query({
         return { hasAccess: false, reason: "Authentication required" };
       }
 
-      const isMember = await checkIsMember(ctx, site.teamId);
+      const isMember = await isOrganizationMember(ctx, site.organizationId);
       if (!isMember) {
         return {
           hasAccess: false,
@@ -464,7 +456,7 @@ export const updateVisibility = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     const now = Date.now();
     await ctx.db.patch(siteId, {
@@ -504,7 +496,7 @@ export const generateNewAccessCode = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     const now = Date.now();
     const rotationHours = site.accessCodeRotationHours ?? 24;
@@ -617,7 +609,7 @@ export const updateAccessSettings = mutation({
     if (!site) throw new Error("Site not found");
 
     // Require admin access
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (accessCodeRotationHours !== undefined) {
@@ -642,7 +634,7 @@ export const listAudiences = query({
       return [];
     }
 
-    if (!(await checkIsMember(ctx, site.teamId))) {
+    if (!(await isOrganizationMember(ctx, site.organizationId))) {
       return [];
     }
 
@@ -683,7 +675,7 @@ export const getAudienceMemberAssignments = query({
       return null;
     }
 
-    if (!(await checkIsMember(ctx, site.teamId))) {
+    if (!(await isOrganizationMember(ctx, site.organizationId))) {
       return null;
     }
 
@@ -738,7 +730,7 @@ export const createAudience = mutation({
       throw new Error("Site not found");
     }
 
-    const { auth } = await requireSiteManager(ctx, site.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
     const trimmedName = name.trim();
     if (!trimmedName) {
       throw new Error("Audience name is required");
@@ -782,11 +774,11 @@ export const setAudienceMembers = mutation({
       throw new Error("Site not found");
     }
 
-    const { auth } = await requireSiteManager(ctx, site.teamId);
-    const teamMembers = await ctx.db
-      .query("members")
-      .withIndex("by_team", (q) => q.eq("teamId", site.teamId))
-      .collect();
+    const { auth } = await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
+    const teamMembers = await listAuthOrganizationMembers(
+      ctx,
+      site.organizationId,
+    );
 
     const validUserIds = new Set(teamMembers.map((member) => member.userId));
     const normalizedUserIds = Array.from(
@@ -852,7 +844,7 @@ export const deleteAudience = mutation({
       throw new Error("Site not found");
     }
 
-    await requireSiteManager(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "site", action: "manage" });
 
     const pages = await ctx.db
       .query("pages")
@@ -903,7 +895,7 @@ export const validateAudienceIds = mutation({
       throw new Error("Site not found");
     }
 
-    await requireContentEditor(ctx, site.teamId);
+    await requireOrganizationPermission(ctx, site.organizationId, { resource: "content", action: "edit" });
 
     const uniqueAudienceIds = Array.from(new Set(audienceIds));
     for (const audienceId of uniqueAudienceIds) {

@@ -70,7 +70,6 @@ interface PublicSiteShellProps {
     name: string;
     slug: string;
     logoUrl?: string;
-    settings: { primaryColor?: string };
   };
   pagePath: string[];
 }
@@ -531,7 +530,7 @@ function SiteLogoImage({
   team,
 }: {
   site: { name: string; logoUrl?: string };
-  team: { name: string; logoUrl?: string; settings: { primaryColor?: string } };
+  team: { name: string; logoUrl?: string };
 }) {
   const logoUrl = site.logoUrl || team.logoUrl;
   const fallbackInitial = (site.name || team.name || "S")[0]?.toUpperCase();

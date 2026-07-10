@@ -1,9 +1,7 @@
 "use client";
 
 import { authClient } from "@/app/_auth/client";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
-import type { TeamRole } from "@baseblocks/domain";
+import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,23 +37,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { useMutation } from "convex/react";
 import { MoreHorizontal, Shield, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface Member {
-  _id: Id<"members">;
+  _id: string;
   userId?: string;
   email: string;
   name?: string;
-  role: TeamRole;
+  role: OrganizationRole;
 }
 
 interface MemberActionsProps {
   member: Member;
-  teamId: Id<"teams">;
+  organizationId: string;
   isCurrentUserAdmin: boolean;
 }
 
@@ -64,7 +61,7 @@ const teamSelectTriggerClassName =
 
 export function MemberActions({
   member,
-  teamId,
+  organizationId,
   isCurrentUserAdmin,
 }: MemberActionsProps) {
   const t = useTranslations("team");
@@ -76,7 +73,7 @@ export function MemberActions({
     showRoleDialog: boolean;
     isRemoving: boolean;
     isChangingRole: boolean;
-    newRole: TeamRole;
+    newRole: OrganizationRole;
     error: string | null;
   }>({
     showRemoveDialog: false,
@@ -86,9 +83,6 @@ export function MemberActions({
     newRole: member.role,
     error: null,
   });
-
-  const removeMember = useMutation(api.teams.removeMember);
-  const updateRoleMutation = useMutation(api.teams.updateRole);
 
   const isCurrentUser = session?.user?.id === member.userId;
   const canModify = isCurrentUserAdmin && !isCurrentUser;
@@ -116,10 +110,11 @@ export function MemberActions({
       isRemoving: true,
     }));
 
-    void removeMember({
-      teamId,
-      memberId: member._id,
-    })
+    void authClient.organization
+      .removeMember({
+        organizationId,
+        memberIdOrEmail: member._id,
+      })
       .then(() => {
         setUiState((current) => ({
           ...current,
@@ -172,10 +167,12 @@ export function MemberActions({
     }));
 
     try {
-      await updateRoleMutation({
+      const result = await authClient.organization.updateMemberRole({
+        organizationId,
         memberId: member._id,
         role: uiState.newRole,
       });
+      if (result.error) throw result.error;
       setUiState((current) => ({
         ...current,
         showRoleDialog: false,
@@ -266,7 +263,7 @@ export function MemberActions({
                 onValueChange={(value) =>
                   setUiState((current) => ({
                     ...current,
-                    newRole: value as TeamRole,
+                    newRole: value as OrganizationRole,
                     error: null,
                   }))
                 }

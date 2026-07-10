@@ -3,7 +3,7 @@ import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { checkIsMember } from "./permissions";
+import { isOrganizationMember } from "./permissions";
 import {
   buildDocumentDownloadUrl,
   normalizeDocumentSearchMetadata,
@@ -329,7 +329,7 @@ export const searchAll = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
@@ -497,7 +497,7 @@ export const listTitles = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await checkIsMember(ctx, site.teamId))) return [];
+    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
     const [documents, pages] = await Promise.all([
       ctx.db

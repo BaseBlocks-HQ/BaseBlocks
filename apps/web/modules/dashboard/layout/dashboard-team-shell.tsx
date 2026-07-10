@@ -8,6 +8,7 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { useEffect, type ReactNode } from "react";
 import { DashboardLayout } from "./dashboard-layout";
+import { authClient } from "@/app/_auth/client";
 
 export function DashboardTeamShell({
   children,
@@ -18,7 +19,9 @@ export function DashboardTeamShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const boundary = useQuery(api.teams.getWorkspaceBoundary, { teamSlug });
+  const boundary = useQuery(api.organizations.getWorkspaceBoundary, {
+    teamSlug,
+  });
   const siteEditorPathPrefix = `${getTeamDashboardPath(teamSlug)}/sites/`;
   const siteEditorPathSegments = pathname
     .slice(siteEditorPathPrefix.length)
@@ -44,6 +47,13 @@ export function DashboardTeamShell({
       );
     }
   }, [boundary, router]);
+
+  useEffect(() => {
+    if (!boundary?.requestedWorkspace) return;
+    void authClient.organization.setActive({
+      organizationId: boundary.requestedWorkspace.organizationId,
+    });
+  }, [boundary?.requestedWorkspace]);
 
   if (!boundary?.requestedWorkspace) {
     return (

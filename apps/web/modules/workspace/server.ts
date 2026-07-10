@@ -19,7 +19,7 @@ export interface WorkspaceUser {
 export async function getWorkspaceBoundaryState(
   teamSlug?: string,
 ): Promise<WorkspaceBoundaryState> {
-  return await fetchAuthQuery(api.teams.getWorkspaceBoundary, {
+  return await fetchAuthQuery(api.organizations.getWorkspaceBoundary, {
     ...(teamSlug ? { teamSlug } : {}),
   });
 }

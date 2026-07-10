@@ -8,7 +8,10 @@ import {
 } from "@baseblocks/domain";
 import { query, mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { checkTeamCapability, requireSiteManager } from "./permissions";
+import {
+  checkOrganizationPermission,
+  requireOrganizationPermission,
+} from "./permissions";
 import { canAccessPublishedSite } from "./sharing";
 import { resolveSiteContext } from "./sites";
 
@@ -30,7 +33,10 @@ export const canUploadToSite = query({
       return false;
     }
 
-    return checkTeamCapability(ctx, site.teamId, "canManageSites");
+    return checkOrganizationPermission(ctx, site.organizationId, {
+      resource: "site",
+      action: "manage",
+    });
   },
 });
 
@@ -69,10 +75,10 @@ export const getAuthorizedAsset = query({
       return null;
     }
 
-    const canManageSites = await checkTeamCapability(
+    const canManageSites = await checkOrganizationPermission(
       ctx,
-      site.teamId,
-      "canManageSites",
+      site.organizationId,
+      { resource: "site", action: "manage" },
     );
     return canManageSites ? asset : null;
   },
@@ -131,7 +137,7 @@ export const createSiteAsset = mutation({
       throw new ConvexError("Site not found");
     }
 
-    const { auth } = await requireSiteManager(ctx, siteCtx.teamId);
+    const { auth } = await requireOrganizationPermission(ctx, siteCtx.organizationId, { resource: "site", action: "manage" });
 
     const assetId = await ctx.db.insert("assets", {
       siteId,

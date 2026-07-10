@@ -1,7 +1,6 @@
 "use client";
 
 import { authClient } from "@/app/_auth/client";
-import { getAuthClientDataOrThrow } from "@/app/_auth/result";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -45,14 +44,14 @@ export function InviteMemberDialog({
   const [dialogState, setDialogState] = useState<{
     open: boolean;
     email: string;
-    role: "admin" | "member";
+    role: "admin" | "editor";
     isInviting: boolean;
     error: string | null;
     success: boolean;
   }>({
     open: false,
     email: "",
-    role: "member",
+    role: "editor",
     isInviting: false,
     error: null,
     success: false,
@@ -63,7 +62,7 @@ export function InviteMemberDialog({
       ...current,
       open: false,
       email: "",
-      role: "member",
+      role: "editor",
       isInviting: false,
       error: null,
       success: false,
@@ -108,14 +107,12 @@ export function InviteMemberDialog({
     }));
 
     try {
-      getAuthClientDataOrThrow(
-        await authClient.organization.inviteMember({
-          organizationId,
-          email: trimmedEmail,
-          role: dialogState.role,
-        }),
-        t("invite.invitationFailed"),
-      );
+      const result = await authClient.organization.inviteMember({
+        organizationId,
+        email: trimmedEmail,
+        role: dialogState.role,
+      });
+      if (result.error) throw result.error;
 
       setDialogState((current) => ({
         ...current,
@@ -127,7 +124,7 @@ export function InviteMemberDialog({
         setDialogState({
           open: false,
           email: "",
-          role: "member",
+          role: "editor",
           isInviting: false,
           error: null,
           success: false,
@@ -203,7 +200,7 @@ export function InviteMemberDialog({
               onValueChange={(value) =>
                 setDialogState((current) => ({
                   ...current,
-                  role: value as "admin" | "member",
+                  role: value as "admin" | "editor",
                 }))
               }
             >
@@ -218,7 +215,7 @@ export function InviteMemberDialog({
                   {t("roles.admin")}
                 </SelectItem>
                 <SelectItem
-                  value="member"
+                  value="editor"
                   className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                 >
                   {t("roles.editor")}

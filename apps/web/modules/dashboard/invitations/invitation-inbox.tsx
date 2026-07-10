@@ -3,8 +3,6 @@
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/app/_auth/client";
 import { getTeamDashboardPath } from "@/modules/dashboard/routes";
-import { getAuthClientDataOrThrow } from "@/app/_auth/result";
-import { api } from "@baseblocks/backend";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +25,6 @@ import {
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
-import { useMutation } from "convex/react";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useReducer, useState } from "react";
@@ -130,8 +127,6 @@ export function InvitationInbox({
   const [state, dispatch] = useReducer(inboxReducer, initialState);
   const { invitations, isLoading, processingId, error } = state;
 
-  const syncMember = useMutation(api.teams.syncMemberFromInvitation);
-
   const roleLabel = (role: string) => {
     if (role === "admin") return tTeam("roles.admin");
     if (role === "owner") return tTeam("roles.owner");
@@ -143,10 +138,9 @@ export function InvitationInbox({
   const loadInvitations = useCallback(async () => {
     dispatch({ type: "LOAD_START" });
     try {
-      const invitations = getAuthClientDataOrThrow<AuthInvitation[]>(
-        await authClient.organization.listUserInvitations(),
-        t("loadFailed"),
-      );
+      const result = await authClient.organization.listUserInvitations();
+      if (result.error) throw result.error;
+      const invitations = (result.data ?? []) as AuthInvitation[];
       const pending = invitations.filter((inv) => inv.status === "pending");
       dispatch({
         type: "LOAD_SUCCESS",
@@ -154,7 +148,7 @@ export function InvitationInbox({
           id: inv.id,
           organizationId: inv.organizationId,
           organizationName: inv.organizationName,
-          role: inv.role || "member",
+          role: inv.role || "viewer",
           expiresAt: new Date(inv.expiresAt),
           inviterEmail: inv.inviterEmail,
         })),
@@ -170,28 +164,25 @@ export function InvitationInbox({
   const handleAccept = async (invitation: ReceivedInvitation) => {
     dispatch({ type: "PROCESS_START", id: invitation.id });
     try {
-      getAuthClientDataOrThrow(
-        await authClient.organization.acceptInvitation({
-          invitationId: invitation.id,
-        }),
-        t("acceptFailed"),
-      );
-      const [, syncedMember] = await Promise.all([
-        Promise.resolve(
-          getAuthClientDataOrThrow(
-            await authClient.organization.setActive({
-              organizationId: invitation.organizationId,
-            }),
-            t("acceptFailed"),
-          ),
-        ),
-        syncMember({
-          organizationId: invitation.organizationId,
-        }),
-      ]);
+      const acceptResult = await authClient.organization.acceptInvitation({
+        invitationId: invitation.id,
+      });
+      if (acceptResult.error) throw acceptResult.error;
+      const activeResult = await authClient.organization.setActive({
+        organizationId: invitation.organizationId,
+      });
+      if (activeResult.error) throw activeResult.error;
       dispatch({ type: "REMOVE_INVITATION", id: invitation.id });
       if (onboardingMode) {
-        router.push(getTeamDashboardPath(syncedMember.teamSlug));
+        const organizationResult =
+          await authClient.organization.getFullOrganization({
+            query: { organizationId: invitation.organizationId },
+          });
+        if (organizationResult.error || !organizationResult.data) {
+          throw organizationResult.error ?? new Error(t("acceptFailed"));
+        }
+        const activeOrganization = organizationResult.data;
+        router.push(getTeamDashboardPath(activeOrganization.slug));
       }
     } catch (err) {
       dispatch({
@@ -205,12 +196,10 @@ export function InvitationInbox({
   const runDecline = async (invitationId: string) => {
     dispatch({ type: "PROCESS_START", id: invitationId });
     try {
-      getAuthClientDataOrThrow(
-        await authClient.organization.rejectInvitation({
-          invitationId,
-        }),
-        t("declineFailed"),
-      );
+      const result = await authClient.organization.rejectInvitation({
+        invitationId,
+      });
+      if (result.error) throw result.error;
       dispatch({ type: "REMOVE_INVITATION", id: invitationId });
     } catch (err) {
       dispatch({
