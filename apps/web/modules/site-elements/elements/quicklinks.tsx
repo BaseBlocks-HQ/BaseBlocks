@@ -2,7 +2,7 @@
 
 import { filesClient } from "@/app/_storage/client";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { useLayoutContext } from "@/modules/site-runtime/layout";
+import { useSectionContext } from "@/modules/site-runtime/section";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
 import { useEditorSite } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
@@ -374,8 +374,8 @@ export function QuicklinksEditor({
 }: ElementEditorProps<"quicklinks">) {
   const { siteId } = useEditorSite();
   const createSiteAsset = useMutation(api.files.createSiteAsset);
-  const layoutContext = useLayoutContext();
-  const isSidebar = layoutContext?.isSidebar ?? false;
+  const sectionContext = useSectionContext();
+  const isSidebar = sectionContext?.isAside ?? false;
   const [state, dispatch] = useReducer(
     quicklinksEditorReducer,
     undefined,
@@ -611,8 +611,8 @@ function QuicklinkButton({ link }: { link: QuicklinkItem }) {
 export function QuicklinksRenderer({
   content,
 }: ElementRendererProps<"quicklinks">) {
-  const layoutContext = useLayoutContext();
-  const isSidebar = layoutContext?.isSidebar ?? false;
+  const sectionContext = useSectionContext();
+  const isSidebar = sectionContext?.isAside ?? false;
 
   const validLinks = (content.links || []).filter((link) => link.url);
 

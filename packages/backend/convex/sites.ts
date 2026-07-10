@@ -11,6 +11,7 @@ import {
 import { deleteDocumentRows } from "./documents";
 import { deleteObjectAction } from "./files";
 import { getAccessiblePublishedPages } from "./sharing";
+import { createDefaultPageStructure } from "./pageStructure";
 
 /** Site customization theme options */
 export const siteCustomization = v.object({
@@ -74,15 +75,6 @@ export type PageInfo = {
 };
 
 /**
- * Resolved layout info with properly typed IDs.
- */
-export type LayoutInfo = {
-  teamId: Id<"teams">;
-  siteId: Id<"sites">;
-  pageId: Id<"pages">;
-};
-
-/**
  * Resolve a page's team and site IDs.
  * Returns null if page or site doesn't exist.
  */
@@ -97,26 +89,6 @@ export async function resolvePageContext(
   if (!site) return null;
 
   return { teamId: site.teamId, siteId: site._id };
-}
-
-/**
- * Resolve a layout's team, site, and page IDs.
- * Returns null if layout, page, or site doesn't exist.
- */
-export async function resolveLayoutContext(
-  ctx: DbCtx,
-  layoutId: Id<"layouts">,
-): Promise<LayoutInfo | null> {
-  const layout = await ctx.db.get(layoutId);
-  if (!layout) return null;
-
-  const page = await ctx.db.get(layout.pageId);
-  if (!page) return null;
-
-  const site = await ctx.db.get(page.siteId);
-  if (!site) return null;
-
-  return { teamId: site.teamId, siteId: site._id, pageId: layout.pageId };
 }
 
 /**
@@ -135,7 +107,7 @@ export async function resolveSiteContext(
 
 /**
  * Collect library IDs that are actively used in published blocks across a site.
- * Uses the layouts by_site index for O(1) query instead of N+1 per-page lookups.
+ * Blocks are first-class documents, so this does not scan nested page trees.
  */
 export async function getActiveLibraryIds(
   ctx: DbCtx,
@@ -149,54 +121,23 @@ export async function getActiveLibraryIdsForPageIds(
   siteId: Id<"sites">,
   pageIds?: Iterable<string>,
 ): Promise<Set<string>> {
-  const layouts = await ctx.db
-    .query("layouts")
+  const blocks = await ctx.db
+    .query("blocks")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
 
   const allowedPageIds = pageIds ? new Set(pageIds) : null;
   const activeLibraryIds = new Set<string>();
-  for (const layout of layouts) {
-    if (allowedPageIds && !allowedPageIds.has(layout.pageId)) {
+  for (const block of blocks) {
+    if (allowedPageIds && !allowedPageIds.has(block.pageId)) {
       continue;
     }
-
-    for (const slot of layout.slots) {
-      for (const block of slot.blocks) {
-        if (block.type === "library" && block.content?.libraryId) {
-          activeLibraryIds.add(block.content.libraryId);
-        }
-      }
+    if (block.type === "library" && block.content?.libraryId) {
+      activeLibraryIds.add(block.content.libraryId);
     }
   }
 
   return activeLibraryIds;
-}
-
-/**
- * Get all layouts for a site in one query (via denormalized siteId).
- * Returns a Map of pageId → layouts[] for efficient grouping.
- */
-export async function getLayoutsBySite(
-  ctx: DbCtx,
-  siteId: Id<"sites">,
-): Promise<Map<string, Doc<"layouts">[]>> {
-  const allLayouts = await ctx.db
-    .query("layouts")
-    .withIndex("by_site", (q) => q.eq("siteId", siteId))
-    .collect();
-
-  const byPage = new Map<string, Doc<"layouts">[]>();
-  for (const layout of allLayouts) {
-    const existing = byPage.get(layout.pageId);
-    if (existing) {
-      existing.push(layout);
-    } else {
-      byPage.set(layout.pageId, [layout]);
-    }
-  }
-
-  return byPage;
 }
 
 export const listByTeam = query({
@@ -459,6 +400,11 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await createDefaultPageStructure(ctx, {
+      siteId,
+      pageId: homePageId,
+      now,
+    });
 
     // Set the home page as the default
     await ctx.db.patch(siteId, { defaultPageId: homePageId });
@@ -718,19 +664,31 @@ export const remove = mutation({
       await ctx.db.delete(entry._id);
     }
 
-    // 5. Delete all pages and their layouts
+    // 5. Delete all page content and pages
+    const [blocks, columns, sections] = await Promise.all([
+      ctx.db
+        .query("blocks")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+      ctx.db
+        .query("columns")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+      ctx.db
+        .query("sections")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+    ]);
+    await Promise.all([
+      ...blocks.map((block) => ctx.db.delete(block._id)),
+      ...columns.map((column) => ctx.db.delete(column._id)),
+      ...sections.map((section) => ctx.db.delete(section._id)),
+    ]);
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const page of pages) {
-      const layouts = await ctx.db
-        .query("layouts")
-        .withIndex("by_page", (q) => q.eq("pageId", page._id))
-        .collect();
-      for (const layout of layouts) {
-        await ctx.db.delete(layout._id);
-      }
       await ctx.db.delete(page._id);
     }
 

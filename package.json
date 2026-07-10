@@ -17,6 +17,7 @@
     "typescript": "5.9.2"
   },
   "resolutions": {
+    "@radix-ui/react-presence": "1.1.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "convex": "^1.39.1"

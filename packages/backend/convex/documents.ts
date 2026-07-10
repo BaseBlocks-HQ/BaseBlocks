@@ -150,21 +150,14 @@ async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
 ) {
-  const layouts = await ctx.db
-    .query("layouts")
+  const blocks = await ctx.db
+    .query("blocks")
     .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
     .collect();
 
-  for (const layout of layouts) {
-    for (const slot of layout.slots) {
-      for (const block of slot.blocks) {
-        if (
-          block.type === "file" &&
-          block.content?.documentId === document._id
-        ) {
-          return true;
-        }
-      }
+  for (const block of blocks) {
+    if (block.type === "file" && block.content?.documentId === document._id) {
+      return true;
     }
   }
 

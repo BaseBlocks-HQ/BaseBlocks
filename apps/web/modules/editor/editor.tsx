@@ -1,6 +1,5 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { EditorProvider } from "@/modules/editor/editor-state";
 import { useEditorUi } from "@/modules/editor/editor-state";
@@ -11,33 +10,21 @@ import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/modules/workspace/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
-import type {
-  AnyContent,
-  ElementType,
-  LayoutBlockType,
-  LayoutType,
-} from "@baseblocks/domain";
-import { createBlockDraft } from "@baseblocks/domain";
-import { BlurStack } from "@baseblocks/ui/blur-stack";
+import type { ElementType, SectionPreset } from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
-import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
-import { Maximize2, Minimize2, X } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, Suspense, useEffect, useMemo, useState } from "react";
-import { PageEditor } from "@/modules/editor/canvas/page-canvas";
+import { Suspense, useEffect, useState } from "react";
+import { PageEditor } from "@/modules/editor/page/page-editor";
 import { toast } from "sonner";
-import { ToolbarButton } from "@/modules/file-preview";
 import { EditorFloatingRail } from "./rail/editor-rail";
 import { EditorHeader } from "./editor-header";
 
@@ -63,118 +50,6 @@ function buildEditorPath(
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function PageEditorPanel({
-  isFullscreen,
-  onToggleFullscreen,
-}: {
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-}) {
-  const t = useTranslations("editor.pagePanel");
-  const { editingPage, closePageEditor } = useEditorUi();
-  const sessionTokens = getStoredAccessSessionTokens();
-  const page = useQuery(
-    api.pages.get,
-    editingPage?.pageId
-      ? { pageId: editingPage.pageId as Id<"pages">, sessionTokens }
-      : "skip",
-  );
-  const updatePage = useMutation(api.pages.update);
-  const [title, setTitle] = useState(page?.title ?? "");
-
-  useEffect(() => {
-    setTitle(page?.title ?? "");
-  }, [page?.title]);
-
-  const debouncedSave = useDebounceCallback(async (nextTitle: string) => {
-    if (!editingPage?.pageId || !nextTitle.trim()) {
-      return;
-    }
-
-    try {
-      await updatePage({
-        pageId: editingPage.pageId as Id<"pages">,
-        title: nextTitle.trim(),
-      });
-    } catch (_error) {
-      toast.error(t("renameFailed"));
-    }
-  }, 500);
-
-  if (!editingPage) return null;
-
-  return (
-    <PanelFrame
-      header={
-        <PanelHeader>
-          <div className="flex h-14 items-center justify-between gap-3 px-4">
-            <input
-              value={title}
-              onChange={(event) => {
-                setTitle(event.target.value);
-                debouncedSave(event.target.value);
-              }}
-              placeholder={t("titlePlaceholder")}
-              className="h-8 min-w-0 flex-1 border-none bg-transparent px-0 text-sm font-medium outline-none placeholder:text-muted-foreground"
-            />
-            <div className="flex shrink-0 items-center gap-2">
-              {onToggleFullscreen ? (
-                <ToolbarButton
-                  onClick={onToggleFullscreen}
-                  label={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
-                  pressed={isFullscreen}
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="h-4 w-4" />
-                  ) : (
-                    <Maximize2 className="h-4 w-4" />
-                  )}
-                </ToolbarButton>
-              ) : null}
-              <ToolbarButton onClick={closePageEditor} label={t("closeEditor")}>
-                <X className="h-4 w-4" />
-              </ToolbarButton>
-            </div>
-          </div>
-        </PanelHeader>
-      }
-    >
-      <PageEditor pageId={editingPage.pageId} nested />
-    </PanelFrame>
-  );
-}
-
-function PanelFrame({
-  header,
-  children,
-}: {
-  header: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="relative flex h-full min-h-0 min-w-0 flex-col">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
-        <div className="pointer-events-auto">{header}</div>
-      </div>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="min-h-full px-3 pb-3 pt-14 md:px-4 md:pb-4">
-          {children}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
-
-function PanelHeader({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative isolate overflow-hidden">
-      <BlurStack className="inset-x-0 top-0 h-14" direction="down" />
-      <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
-      <div className="relative">{children}</div>
-    </div>
-  );
-}
-
 interface SiteEditorProps {
   siteId: string;
 }
@@ -186,29 +61,20 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
-  const [, setSelectedSlotId] = useState<string | null>(null);
-  const { selection, editingPage, closePageEditor, activeTabId, selectSlot } =
+  const { selection, activeTabId, selectColumn, clearSelection } =
     useEditorUi();
   const { viewingPage, closePage } = usePagePanelState();
 
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const activePageDetail = editingPage
-    ? { kind: "editor" as const }
-    : viewingPage
-      ? { kind: "viewer" as const }
-      : null;
-  const showPagePanel = activePageDetail !== null;
+  const showPagePanel = viewingPage !== null;
 
   // ESC key to close page panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingPage) {
-          closePageEditor();
-          setIsFullscreen(false);
-        } else if (viewingPage) {
+        if (viewingPage) {
           closePage();
           setIsFullscreen(false);
         }
@@ -217,7 +83,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editingPage, closePageEditor, viewingPage, closePage]);
+  }, [viewingPage, closePage]);
 
   const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
@@ -232,46 +98,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const { cssVariables: customizationStyles, isCustomized } =
     useSiteCustomization(siteId as Id<"sites">);
 
-  // Create a portal container for Radix portals within the editor content area.
-  // This div lives at document.body level (no layout impact) but carries the
-  // customization CSS variables so portaled elements inherit the right styles.
-  const portalContainer = useMemo(() => {
-    if (typeof document === "undefined") {
-      return undefined;
-    }
-
-    const element = document.createElement("div");
-    element.id = "editor-portal-container";
-    return element;
-  }, []);
-
-  // Mount/unmount the portal container element
-  useEffect(() => {
-    if (!portalContainer) return;
-
-    document.body.appendChild(portalContainer);
-    return () => {
-      document.body.removeChild(portalContainer);
-    };
-  }, [portalContainer]);
-
-  // Sync customization styles and data attribute onto the portal container
-  useEffect(() => {
-    if (!portalContainer) return;
-
-    // Apply CSS variables
-    for (const [key, value] of Object.entries(customizationStyles)) {
-      if (typeof value === "string") {
-        portalContainer.style.setProperty(key, value);
-      }
-    }
-
-    if (isCustomized) {
-      portalContainer.setAttribute("data-site-customized", "");
-    } else {
-      portalContainer.removeAttribute("data-site-customized");
-    }
-  }, [portalContainer, customizationStyles, isCustomized]);
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
 
   const publishSite = useMutation(api.sites.publish);
   const unpublishSite = useMutation(api.sites.unpublish);
@@ -294,16 +123,13 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     }
   };
 
-  const handleSlotSelectionChange = (slotId: string | null) => {
-    setSelectedSlotId(slotId);
-  };
-
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
     const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
     router.replace(nextUrl, { scroll: false });
   };
 
   const setSelectedPageId = (id: string | null) => {
+    clearSelection();
     replaceEditorUrl({ page: id });
   };
 
@@ -311,42 +137,39 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  const createLayoutMutation = useMutation(api.layouts.create);
-  const addBlockMutation = useMutation(api.layouts.addBlockToSlot);
-  const addPageBlockMutation = useMutation(api.layouts.addPageBlock);
+  const createSectionMutation = useMutation(api.pageContent.createSection);
+  const addBlockMutation = useMutation(api.pageContent.addBlock);
+  const addPageBlockMutation = useMutation(api.pageContent.addPageBlock);
   const enablePageTabsMutation = useMutation(api.pages.enablePageTabs);
 
-  const targetPageId = editingPage
-    ? (editingPage.pageId as Id<"pages">)
-    : selectedPage?._id;
+  const targetPageId = selectedPage?._id;
 
-  const handleAddLayout = async (type: LayoutType) => {
+  const handleAddSection = async (preset: SectionPreset) => {
     if (!targetPageId) return;
 
-    const created = await createLayoutMutation({
+    const created = await createSectionMutation({
       pageId: targetPageId,
-      type,
-      tabId: editingPage ? undefined : (activeTabId ?? undefined),
+      preset,
+      tabId: activeTabId ?? undefined,
     });
 
-    if (created.firstSlotId) {
-      const firstSlotId = created.firstSlotId;
-      setTimeout(() => {
-        selectSlot(created.layoutId as string, firstSlotId);
-      }, 100);
-    }
+    if (created.firstColumnId) selectColumn(created.firstColumnId);
   };
 
   const handleAddBlock = async (type: ElementType) => {
-    if (!selection.layoutId || !selection.slotId) return;
+    const columnId =
+      selection?.kind === "column"
+        ? selection.id
+        : selection?.kind === "block"
+          ? selection.columnId
+          : null;
+    if (!columnId) return;
 
     if (type === "page") {
       const blockId = nanoid(10);
       try {
         await addPageBlockMutation({
-          layoutId: selection.layoutId as Id<"layouts">,
-          slotId: selection.slotId,
-          blockId,
+          columnId: columnId as Id<"columns">,
           title: "New Page",
           slug: `page-${blockId.slice(0, 8)}`,
         });
@@ -356,20 +179,13 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       return;
     }
 
-    const content = getDefaultContent(type as ElementType);
+    const content = getDefaultContent(type);
     if (!content) return;
 
-    const block = createBlockDraft(type as LayoutBlockType, content, () =>
-      nanoid(10),
-    );
     await addBlockMutation({
-      layoutId: selection.layoutId as Id<"layouts">,
-      slotId: selection.slotId,
-      block: {
-        id: block.id,
-        type: block.type,
-        content: block.content as AnyContent,
-      },
+      columnId: columnId as Id<"columns">,
+      type,
+      content,
     });
   };
 
@@ -401,12 +217,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     ? "pointer-events-none fixed inset-x-3 bottom-3 z-40 flex justify-center"
     : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
   const showFloatingRail = !(isMobile && showPagePanel);
+  const selectedColumnId =
+    selection?.kind === "column"
+      ? selection.id
+      : selection?.kind === "block"
+        ? selection.columnId
+        : null;
 
   const pageEditor = selectedPage ? (
-    <PageEditor
-      pageId={selectedPage._id}
-      onSelectionChange={handleSlotSelectionChange}
-    />
+    <PageEditor key={selectedPage._id} pageId={selectedPage._id} />
   ) : (
     <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
       Select a page to edit
@@ -414,7 +233,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   );
 
   const editorCanvas = (
-    <ScrollArea className="h-full min-h-0">
+    <div className="h-full min-h-0 overflow-auto">
       <div
         className={
           showPagePanel
@@ -424,7 +243,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       >
         {pageEditor}
       </div>
-    </ScrollArea>
+    </div>
   );
 
   if (isMobile && !showPagePanel) {
@@ -434,6 +253,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         style={customizationStyles}
         {...(isCustomized ? { "data-site-customized": "" } : {})}
       >
+        <div
+          ref={setPortalContainer}
+          className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
+          style={customizationStyles}
+          {...(isCustomized ? { "data-site-customized": "" } : {})}
+        />
         <main className="relative">
           {showFloatingRail ? (
             <div className={railPositionClass}>
@@ -441,9 +266,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                 site={site}
                 pages={pages}
                 selectedPageId={selectedPage?._id}
-                selectedSlotId={selection.slotId}
+                selectedColumnId={selectedColumnId}
                 onSelectPage={setSelectedPageId}
-                onAddLayout={handleAddLayout}
+                onAddSection={handleAddSection}
                 onAddBlock={handleAddBlock}
                 onEnableTabs={handleEnableTabs}
               />
@@ -462,22 +287,13 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
 
-          <PortalContainerProvider value={portalContainer}>
+          <PortalContainerProvider value={portalContainer ?? undefined}>
             <div
               className="overflow-visible p-4 pb-20"
               style={customizationStyles}
               {...(isCustomized ? { "data-site-customized": "" } : {})}
             >
-              {selectedPage ? (
-                <PageEditor
-                  pageId={selectedPage._id}
-                  onSelectionChange={handleSlotSelectionChange}
-                />
-              ) : (
-                <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-                  Select a page to edit
-                </div>
-              )}
+              {pageEditor}
             </div>
           </PortalContainerProvider>
         </main>
@@ -487,6 +303,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div
+        ref={setPortalContainer}
+        className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
+        style={customizationStyles}
+        {...(isCustomized ? { "data-site-customized": "" } : {})}
+      />
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <EditorHeader
           teamSlug={team.slug}
@@ -504,15 +326,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             site={site}
             pages={pages}
             selectedPageId={selectedPage?._id}
-            selectedSlotId={selection.slotId}
+            selectedColumnId={selectedColumnId}
             onSelectPage={setSelectedPageId}
-            onAddLayout={handleAddLayout}
+            onAddSection={handleAddSection}
             onAddBlock={handleAddBlock}
             onEnableTabs={handleEnableTabs}
           />
         </div>
 
-        <PortalContainerProvider value={portalContainer}>
+        <PortalContainerProvider value={portalContainer ?? undefined}>
           <div
             className="absolute inset-0 min-w-0 overflow-hidden"
             style={customizationStyles}
@@ -528,21 +350,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     )}
                   >
                     <section className={pagePanelSurfaceClassName}>
-                      {activePageDetail?.kind === "editor" ? (
-                        <PageEditorPanel
-                          isFullscreen={isFullscreen}
-                          onToggleFullscreen={() =>
-                            setIsFullscreen(!isFullscreen)
-                          }
-                        />
-                      ) : (
-                        <PublicPagePanel
-                          isFullscreen={isFullscreen}
-                          onToggleFullscreen={() =>
-                            setIsFullscreen(!isFullscreen)
-                          }
-                        />
-                      )}
+                      <PublicPagePanel
+                        isFullscreen={isFullscreen}
+                        onToggleFullscreen={() =>
+                          setIsFullscreen(!isFullscreen)
+                        }
+                      />
                     </section>
                   </div>
                 </div>
@@ -561,21 +374,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
                     <ResizablePanel defaultSize={40} minSize={30}>
                       <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4">
                         <section className={pagePanelSurfaceClassName}>
-                          {activePageDetail?.kind === "editor" ? (
-                            <PageEditorPanel
-                              isFullscreen={isFullscreen}
-                              onToggleFullscreen={() =>
-                                setIsFullscreen(!isFullscreen)
-                              }
-                            />
-                          ) : (
-                            <PublicPagePanel
-                              isFullscreen={isFullscreen}
-                              onToggleFullscreen={() =>
-                                setIsFullscreen(!isFullscreen)
-                              }
-                            />
-                          )}
+                          <PublicPagePanel
+                            isFullscreen={isFullscreen}
+                            onToggleFullscreen={() =>
+                              setIsFullscreen(!isFullscreen)
+                            }
+                          />
                         </section>
                       </div>
                     </ResizablePanel>
@@ -605,7 +409,6 @@ function SiteEditorShell({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editingPageId = searchParams.get("editorPanelPage");
 
   const replaceEditorUrl = (updates: Record<string, string | null>) => {
     const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
@@ -616,15 +419,7 @@ function SiteEditorShell({
     <EditorProvider
       siteId={siteId}
       permissions={permissions}
-      pagePanelState={{
-        editingPage: editingPageId ? { pageId: editingPageId } : null,
-        openPageEditor: (page) => {
-          replaceEditorUrl({ editorPanelPage: page.pageId });
-        },
-        closePageEditor: () => {
-          replaceEditorUrl({ editorPanelPage: null });
-        },
-      }}
+      onOpenPage={(pageId) => replaceEditorUrl({ page: pageId })}
     >
       <SiteEditorInner siteId={siteId} />
     </EditorProvider>

@@ -5,7 +5,6 @@ import "@blocknote/mantine/style.css";
 import type { ElementRendererProps } from "@/modules/site-elements/registry";
 import type { DecisionTreeNode } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -124,7 +123,7 @@ export function DecisionTreeRenderer({
             ))}
           </div>
 
-          <ScrollArea className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1">
             <div className="space-y-1 p-2">
               {options.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
@@ -161,10 +160,10 @@ export function DecisionTreeRenderer({
                 ))
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
-        <ScrollArea className="min-h-[240px]">
+        <div className="min-h-[240px]">
           <div className="space-y-3 px-4 py-4">
             {selectedNode ? (
               <>
@@ -177,7 +176,7 @@ export function DecisionTreeRenderer({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );

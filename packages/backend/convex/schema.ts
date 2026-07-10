@@ -1,7 +1,7 @@
 import { teamRoles } from "@baseblocks/domain";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { layoutSettings, layoutSlot, layoutType } from "./layouts";
+import { blockContent, blockType, sectionRegion } from "./pageContent";
 import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
@@ -113,20 +113,45 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
-  layouts: defineTable({
-    siteId: v.optional(v.id("sites")), // Denormalized for efficient site-wide queries
+  sections: defineTable({
+    siteId: v.id("sites"),
     pageId: v.id("pages"),
     tabId: v.optional(v.string()),
-    type: layoutType,
+    region: sectionRegion,
     order: v.number(),
-    slots: v.array(layoutSlot),
-    settings: layoutSettings,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"])
     .index("by_page_tab", ["pageId", "tabId"]),
+
+  columns: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    sectionId: v.id("sections"),
+    order: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"])
+    .index("by_section", ["sectionId"]),
+
+  blocks: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    sectionId: v.id("sections"),
+    columnId: v.id("columns"),
+    order: v.number(),
+    type: blockType,
+    content: blockContent,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"])
+    .index("by_section", ["sectionId"])
+    .index("by_column", ["columnId", "order"]),
 
   documentLibraries: defineTable({
     siteId: v.id("sites"),
@@ -196,9 +221,9 @@ export default defineSchema({
       libraryId: v.optional(v.string()),
       assetId: v.optional(v.id("assets")),
       pageId: v.optional(v.id("pages")),
-      layoutId: v.optional(v.id("layouts")),
-      blockId: v.optional(v.string()),
-      slotId: v.optional(v.string()),
+      sectionId: v.optional(v.id("sections")),
+      blockId: v.optional(v.id("blocks")),
+      columnId: v.optional(v.id("columns")),
       description: v.optional(v.string()),
     }),
     updatedAt: v.number(),

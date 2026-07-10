@@ -1,7 +1,7 @@
 "use client";
 
 import type { SaveStatus } from "@baseblocks/domain";
-import { useDebounceCallback } from "@baseblocks/ui/hooks/use-debounce";
+import { useDebounceCallbackWithFlush } from "@baseblocks/ui/hooks/use-debounce";
 import { toast } from "sonner";
 
 /**
@@ -23,14 +23,19 @@ export function useAutoSave<T>(
   onSaveStatusChange?: (status: SaveStatus) => void,
   delay = 500,
 ) {
-  return useDebounceCallback(async (content: T) => {
-    onSaveStatusChange?.("saving");
-    try {
-      await onUpdate(content);
-      onSaveStatusChange?.("saved");
-    } catch (_error) {
-      toast.error("Failed to save changes");
-      onSaveStatusChange?.("idle");
-    }
-  }, delay);
+  const { debouncedCallback } = useDebounceCallbackWithFlush(
+    async (content: T) => {
+      onSaveStatusChange?.("saving");
+      try {
+        await onUpdate(content);
+        onSaveStatusChange?.("saved");
+      } catch (_error) {
+        toast.error("Failed to save changes");
+        onSaveStatusChange?.("idle");
+      }
+    },
+    delay,
+  );
+
+  return debouncedCallback;
 }

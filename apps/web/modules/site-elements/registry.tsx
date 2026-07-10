@@ -1,6 +1,6 @@
 "use client";
 
-import type { LayoutType } from "@baseblocks/domain";
+import type { SectionPreset } from "@baseblocks/domain";
 import {
   type AnyContent,
   type ContentFor,
@@ -23,7 +23,6 @@ import {
   Minus,
   MoveVertical,
   PanelRight,
-  Rows3,
   Search,
   Square,
   TableIcon,
@@ -78,7 +77,7 @@ export type ElementCategory =
   | "site"
   | "customization"
   | "navigation"
-  | "layouts"
+  | "sections"
   | "blocks";
 
 export interface ElementEditorProps<T extends ElementType = ElementType> {
@@ -122,9 +121,9 @@ export interface ElementManifestEntry<T extends ElementType = ElementType> {
   defaultContent: AnyContent;
 }
 
-export interface LayoutManifestEntry {
-  type: LayoutType;
-  category: "layouts";
+export interface SectionManifestEntry {
+  type: SectionPreset;
+  category: "sections";
   label: string;
   description: string;
   icon: LucideIcon;
@@ -132,7 +131,7 @@ export interface LayoutManifestEntry {
   preview?: ComponentType<ElementPreviewProps>;
 }
 
-export type AnyManifestEntry = ElementManifestEntry | LayoutManifestEntry;
+export type AnyManifestEntry = ElementManifestEntry | SectionManifestEntry;
 export type AnyRegistryEntry = AnyManifestEntry;
 
 const blockPreview = (name: string) =>
@@ -141,13 +140,13 @@ const blockPreview = (name: string) =>
     `/editor/picker/blocks/${name}-dark.png`,
   );
 
-const layoutPreview = (name: string) =>
+const sectionPreview = (name: string) =>
   themedPreviewImage(
     `/editor/picker/layouts/${name}-light.png`,
     `/editor/picker/layouts/${name}-dark.png`,
   );
 
-const layoutPreviewV2 = (name: string) =>
+const sectionPreviewV2 = (name: string) =>
   themedPreviewImage(
     `/editor/picker/layouts/${name}-light-v2.png`,
     `/editor/picker/layouts/${name}-dark-v2.png`,
@@ -197,64 +196,37 @@ export const ELEMENT_CATEGORIES: Array<{
   { category: "site", label: "Site Settings", order: 0 },
   { category: "customization", label: "Customization", order: 1 },
   { category: "navigation", label: "Navigation", order: 2 },
-  { category: "layouts", label: "Layouts", order: 3 },
+  { category: "sections", label: "Sections", order: 3 },
   { category: "blocks", label: "Blocks", order: 4 },
 ];
 
-export const LAYOUT_MANIFEST: LayoutManifestEntry[] = [
+export const SECTION_MANIFEST: SectionManifestEntry[] = [
   {
     type: "single",
-    category: "layouts",
-    label: "Single",
+    category: "sections",
+    label: "One column",
     description: "Full-width single column",
     icon: Square,
     keywords: ["single", "full", "one", "column"],
-    preview: layoutPreviewV2("single"),
+    preview: sectionPreviewV2("single"),
   },
   {
     type: "columns",
-    category: "layouts",
-    label: "Columns",
+    category: "sections",
+    label: "Two columns",
     description: "Horizontal columns",
     icon: Columns3,
     keywords: ["columns", "horizontal", "side"],
-    preview: layoutPreview("columns"),
+    preview: sectionPreview("columns"),
   },
   {
-    type: "rows",
-    category: "layouts",
-    label: "Rows",
-    description: "Vertical stack of rows",
-    icon: Rows3,
-    keywords: ["rows", "vertical", "stack"],
-    preview: layoutPreview("rows"),
-  },
-  {
-    type: "grid",
-    category: "layouts",
-    label: "Grid",
-    description: "Grid layout",
-    icon: LayoutGrid,
-    keywords: ["grid", "matrix", "cells"],
-    preview: layoutPreview("grid"),
-  },
-  {
-    type: "vertical",
-    category: "layouts",
-    label: "Sidebar",
-    description: "Sidebar beside main content",
+    type: "aside",
+    category: "sections",
+    label: "Aside",
+    description: "Narrow column beside the main page",
     icon: PanelRight,
     keywords: ["sidebar", "vertical", "panel", "aside"],
-    preview: layoutPreview("vertical"),
-  },
-  {
-    type: "spacer",
-    category: "layouts",
-    label: "Spacer",
-    description: "Vertical spacing",
-    icon: MoveVertical,
-    keywords: ["spacer", "gap", "space", "vertical"],
-    preview: layoutPreview("spacer"),
+    preview: sectionPreview("vertical"),
   },
 ];
 
@@ -460,8 +432,8 @@ export const ELEMENT_MANIFEST: ElementManifestEntry[] = [
 const elementByType = new Map(
   ELEMENT_MANIFEST.map((entry) => [entry.type, entry]),
 );
-const layoutByType = new Map(
-  LAYOUT_MANIFEST.map((entry) => [entry.type, entry]),
+const sectionByType = new Map(
+  SECTION_MANIFEST.map((entry) => [entry.type, entry]),
 );
 
 export const getSortedCategories = () =>
@@ -470,8 +442,8 @@ export const getSortedCategories = () =>
 export const getElementsByCategory = (
   category: ElementCategory,
 ): AnyManifestEntry[] =>
-  category === "layouts"
-    ? LAYOUT_MANIFEST
+  category === "sections"
+    ? SECTION_MANIFEST
     : ELEMENT_MANIFEST.filter((entry) => entry.category === category);
 
 export const getElementEditor = (type: ElementType) =>
@@ -489,7 +461,7 @@ export const hasElementConfigPanel = (type: ElementType) =>
 export const getDefaultContent = (type: ElementType) =>
   elementByType.get(type)?.defaultContent;
 
-export const getElementLabel = (type: ElementType | LayoutType) =>
+export const getElementLabel = (type: ElementType | SectionPreset) =>
   elementByType.get(type as ElementType)?.label ??
-  layoutByType.get(type as LayoutType)?.label ??
+  sectionByType.get(type as SectionPreset)?.label ??
   type;

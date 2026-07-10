@@ -4,7 +4,6 @@ import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { ToolbarButton } from "@/modules/file-preview";
 import { usePagePanelState } from "@/modules/site-runtime/page-panel-state";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
@@ -29,11 +28,11 @@ function PublicPagePanelFrame({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
         <div className="pointer-events-auto">{header}</div>
       </div>
-      <ScrollArea className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="min-h-full px-3 pb-3 pt-14 md:px-4 md:pb-4">
           {children}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -49,12 +48,7 @@ function PublicPagePanelHeader({ children }: { children: ReactNode }) {
 }
 
 function downloadPageExport(pageId: string) {
-  const link = document.createElement("a");
-  link.href = `/api/pages/${pageId}/export?format=docx`;
-  link.rel = "noopener noreferrer";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  window.location.assign(`/api/pages/${pageId}/export?format=docx`);
 }
 
 export function PublicPagePanel({
@@ -112,11 +106,7 @@ export function PublicPagePanel({
         </PublicPagePanelHeader>
       }
     >
-      <PublicPageContent
-        nested
-        pageId={viewingPage.pageId}
-        searchTerm={viewingPage.searchTerm}
-      />
+      <PublicPageContent nested pageId={viewingPage.pageId} />
     </PublicPagePanelFrame>
   );
 }

@@ -79,7 +79,7 @@ export function PageActionsMenu({
   const [targetPageId, setTargetPageId] = useState("");
 
   const { isAdmin } = useEditorSite();
-  const { currentPageId, selection } = useEditorUi();
+  const { selection } = useEditorUi();
   const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
@@ -108,12 +108,16 @@ export function PageActionsMenu({
   const handleSetExposure = async (
     nextExposure: "navigation" | "block" | "both",
   ) => {
-    const inferredTargetPageId =
-      currentPageId && currentPageId !== page._id ? currentPageId : null;
+    const selectedColumnId =
+      selection?.kind === "column"
+        ? selection.id
+        : selection?.kind === "block"
+          ? selection.columnId
+          : null;
 
     if (
       (nextExposure === "block" || nextExposure === "both") &&
-      !inferredTargetPageId
+      !selectedColumnId
     ) {
       setPendingExposure(nextExposure);
       setTargetPageId("");
@@ -124,12 +128,7 @@ export function PageActionsMenu({
     await setExposure({
       pageId: page._id as Id<"pages">,
       exposure: nextExposure,
-      targetPageId: inferredTargetPageId as Id<"pages"> | undefined,
-      targetLayoutId:
-        selection.layoutId && inferredTargetPageId
-          ? (selection.layoutId as Id<"layouts">)
-          : undefined,
-      targetSlotId: selection.slotId ?? undefined,
+      targetColumnId: selectedColumnId as Id<"columns"> | undefined,
     });
   };
 

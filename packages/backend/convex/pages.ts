@@ -1,5 +1,4 @@
 // Flattened Convex domain module. Keep this file as the public API for this domain.
-import { createLayoutDraft } from "@baseblocks/domain";
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -10,6 +9,10 @@ import {
   requireContentEditor,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
+import {
+  createDefaultPageStructure,
+  deletePageStructure,
+} from "./pageStructure";
 import {
   canViewerAccessPublishedPageById,
   getAccessiblePublishedPages,
@@ -165,21 +168,17 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    const layouts = await ctx.db
-      .query("layouts")
+    const blocks = await ctx.db
+      .query("blocks")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
     const referencedPageIds = new Set<string>();
-    for (const layout of layouts) {
-      for (const slot of layout.slots) {
-        for (const block of slot.blocks) {
-          if (block.type !== "page") continue;
-          const pageId = block.content?.pageId;
-          if (typeof pageId === "string") {
-            referencedPageIds.add(pageId);
-          }
-        }
+    for (const block of blocks) {
+      if (block.type !== "page") continue;
+      const referencedPageId = block.content?.pageId;
+      if (typeof referencedPageId === "string") {
+        referencedPageIds.add(referencedPageId);
       }
     }
 
@@ -647,10 +646,6 @@ export const listDeployedPaths = query({
   },
 });
 
-function createEditorId(): string {
-  return Math.random().toString(36).slice(2, 12);
-}
-
 async function validateAudienceIdsForSite(
   ctx: Pick<GenericMutationCtx<DataModel>, "db">,
   siteId: Id<"sites">,
@@ -720,6 +715,8 @@ export const create = mutation({
       updatedAt: now,
     });
 
+    await createDefaultPageStructure(ctx, { siteId, pageId, now });
+
     return pageId;
   },
 });
@@ -733,13 +730,9 @@ export const setExposure = mutation({
       v.literal("both"),
     ),
     targetPageId: v.optional(v.id("pages")),
-    targetLayoutId: v.optional(v.id("layouts")),
-    targetSlotId: v.optional(v.string()),
+    targetColumnId: v.optional(v.id("columns")),
   },
-  handler: async (
-    ctx,
-    { pageId, exposure, targetPageId, targetLayoutId, targetSlotId },
-  ) => {
+  handler: async (ctx, { pageId, exposure, targetPageId, targetColumnId }) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -749,134 +742,69 @@ export const setExposure = mutation({
     await requireContentEditor(ctx, site.teamId);
 
     const now = Date.now();
-    const layouts = await ctx.db
-      .query("layouts")
+    const blocks = await ctx.db
+      .query("blocks")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
     const removeReferences = async () => {
-      for (const layout of layouts) {
-        let changed = false;
-        const nextSlots = layout.slots.map((slot) => {
-          const nextBlocks = slot.blocks.filter((block) => {
-            if (block.type !== "page") return true;
-            const linkedPageId = block.content?.pageId;
-            const shouldKeep = linkedPageId !== pageId;
-            if (!shouldKeep) {
-              changed = true;
-            }
-            return shouldKeep;
-          });
-
-          if (nextBlocks.length === slot.blocks.length) {
-            return slot;
-          }
-
-          return {
-            ...slot,
-            blocks: nextBlocks,
-          };
-        });
-
-        if (!changed) continue;
-
-        await ctx.db.patch(layout._id, {
-          slots: nextSlots,
-          updatedAt: now,
-        });
-        await ctx.db.patch(layout.pageId, { updatedAt: now });
-      }
+      const references = blocks.filter(
+        (block) => block.type === "page" && block.content?.pageId === pageId,
+      );
+      await Promise.all(references.map((block) => ctx.db.delete(block._id)));
     };
 
     const ensureReferenceOnTargetPage = async () => {
-      if (!targetPageId || targetPageId === pageId) return;
+      const requestedColumn = targetColumnId
+        ? await ctx.db.get(targetColumnId)
+        : null;
+      const resolvedTargetPageId = requestedColumn?.pageId ?? targetPageId;
+      if (!resolvedTargetPageId || resolvedTargetPageId === pageId) return;
 
-      const targetPage = await ctx.db.get(targetPageId);
+      const targetPage = await ctx.db.get(resolvedTargetPageId);
       if (!targetPage || targetPage.siteId !== page.siteId) return;
 
-      const targetLayouts = layouts
-        .filter((layout) => layout.pageId === targetPageId)
-        .sort((a, b) => a.order - b.order);
-
-      const existingReference = targetLayouts.some((layout) =>
-        layout.slots.some((slot) =>
-          slot.blocks.some(
-            (block) =>
-              block.type === "page" && block.content?.pageId === pageId,
-          ),
-        ),
+      const existingReference = blocks.some(
+        (block) =>
+          block.pageId === resolvedTargetPageId &&
+          block.type === "page" &&
+          block.content?.pageId === pageId,
       );
 
       if (existingReference) return;
-
-      const requestedLayout = targetLayoutId
-        ? targetLayouts.find((layout) => layout._id === targetLayoutId)
-        : undefined;
-
-      const targetLayout =
-        requestedLayout && requestedLayout.slots.length > 0
-          ? requestedLayout
-          : targetLayouts.find((layout) => layout.slots.length > 0);
-
-      if (!targetLayout) {
-        const layoutDraft = createLayoutDraft({
-          createId: createEditorId,
-          type: "single",
-        });
-        const firstSlot = layoutDraft.slots[0];
-        if (!firstSlot) return;
-        await ctx.db.insert("layouts", {
-          siteId: page.siteId,
-          pageId: targetPageId,
-          type: layoutDraft.type,
-          slots: [
-            {
-              ...firstSlot,
-              blocks: [
-                {
-                  id: `page-${pageId}-${now}`,
-                  type: "page",
-                  content: { pageId },
-                },
-              ],
-            },
-          ],
-          settings: layoutDraft.settings,
-          order: 0,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await ctx.db.patch(targetPageId, { updatedAt: now });
-        return;
+      let column = requestedColumn;
+      if (!column || column.pageId !== resolvedTargetPageId) {
+        const existingColumns = await ctx.db
+          .query("columns")
+          .withIndex("by_page", (q) => q.eq("pageId", resolvedTargetPageId))
+          .collect();
+        column = existingColumns.sort((a, b) => a.order - b.order)[0] ?? null;
       }
-
-      const targetSlot =
-        (targetSlotId
-          ? targetLayout.slots.find((slot) => slot.id === targetSlotId)
-          : undefined) ?? targetLayout.slots[0];
-      if (!targetSlot) return;
-
-      const nextSlots = targetLayout.slots.map((slot) =>
-        slot.id === targetSlot.id
-          ? {
-              ...slot,
-              blocks: [
-                ...slot.blocks,
-                {
-                  id: `page-${pageId}-${now}`,
-                  type: "page" as const,
-                  content: { pageId },
-                },
-              ],
-            }
-          : slot,
-      );
-
-      await ctx.db.patch(targetLayout._id, {
-        slots: nextSlots,
+      if (!column) {
+        const columnId = await createDefaultPageStructure(ctx, {
+          siteId: page.siteId,
+          pageId: resolvedTargetPageId,
+          now,
+        });
+        column = await ctx.db.get(columnId);
+      }
+      if (!column) return;
+      const targetBlocks = await ctx.db
+        .query("blocks")
+        .withIndex("by_column", (q) => q.eq("columnId", column._id))
+        .collect();
+      await ctx.db.insert("blocks", {
+        siteId: page.siteId,
+        pageId: resolvedTargetPageId,
+        sectionId: column.sectionId,
+        columnId: column._id,
+        order: targetBlocks.length,
+        type: "page",
+        content: { pageId },
+        createdAt: now,
         updatedAt: now,
       });
-      await ctx.db.patch(targetPageId, { updatedAt: now });
+      await ctx.db.patch(resolvedTargetPageId, { updatedAt: now });
     };
 
     if (exposure === "navigation") {
@@ -1024,15 +952,7 @@ async function deletePageRecursively(
   pageId: Id<"pages">,
   siteId: Id<"sites">,
 ) {
-  // Delete all layouts for this page
-  const layouts = await ctx.db
-    .query("layouts")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .collect();
-
-  for (const layout of layouts) {
-    await ctx.db.delete(layout._id);
-  }
+  await deletePageStructure(ctx, pageId);
 
   // Recursively delete child pages
   const children = await ctx.db
@@ -1124,7 +1044,7 @@ export const updatePageTabs = mutation({
   },
 });
 
-// Enable page tabs - creates tabs and assigns all existing layouts to Tab 1
+// Enable page tabs and assign existing sections to the first tab.
 export const enablePageTabs = mutation({
   args: {
     pageId: v.id("pages"),
@@ -1149,18 +1069,17 @@ export const enablePageTabs = mutation({
       return pageId;
     }
 
-    const existingLayouts = await ctx.db
-      .query("layouts")
+    const existingSections = await ctx.db
+      .query("sections")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();
     const firstTabId = tabs[0]?.id;
 
-    // Assign all existing layouts to the first tab
     if (firstTabId) {
-      for (const layout of existingLayouts) {
-        await ctx.db.patch(layout._id, { tabId: firstTabId, updatedAt: now });
+      for (const section of existingSections) {
+        await ctx.db.patch(section._id, { tabId: firstTabId, updatedAt: now });
       }
     }
 
@@ -1173,7 +1092,7 @@ export const enablePageTabs = mutation({
   },
 });
 
-// Disable page tabs - removes pageTabs and clears tabId from all layouts
+// Disable page tabs and clear section tab assignments.
 export const disablePageTabs = mutation({
   args: {
     pageId: v.id("pages"),
@@ -1187,14 +1106,14 @@ export const disablePageTabs = mutation({
 
     await requireContentEditor(ctx, site.teamId);
 
-    const layouts = await ctx.db
-      .query("layouts")
+    const sections = await ctx.db
+      .query("sections")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .collect();
 
     const now = Date.now();
-    for (const layout of layouts) {
-      await ctx.db.patch(layout._id, { tabId: undefined, updatedAt: now });
+    for (const section of sections) {
+      await ctx.db.patch(section._id, { tabId: undefined, updatedAt: now });
     }
 
     await ctx.db.patch(pageId, {

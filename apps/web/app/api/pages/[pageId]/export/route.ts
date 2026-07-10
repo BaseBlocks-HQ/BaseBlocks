@@ -41,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const layouts = await publicClient.query(api.layouts.listPublished, {
+    const structure = await publicClient.query(api.pageContent.listPublished, {
       pageId: pageId as never,
       sessionTokens,
     });
@@ -49,7 +49,7 @@ export async function GET(
 
     const exportDocument = buildPageExportText({
       pageTitle,
-      layouts,
+      structure,
     });
 
     const body = await renderPageExportDocx(exportDocument);

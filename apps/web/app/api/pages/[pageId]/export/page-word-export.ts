@@ -2,14 +2,14 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 
 export type PageExportFormat = "docx";
 
-interface SerializableLayout {
-  order: number;
-  slots: Array<{
-    position: number;
-    blocks: Array<{
-      type: string;
-      content: unknown;
-    }>;
+interface SerializablePageStructure {
+  sections: Array<{ _id: string; order: number }>;
+  columns: Array<{ _id: string; sectionId: string; order: number }>;
+  blocks: Array<{
+    columnId: string;
+    order: number;
+    type: string;
+    content: unknown;
   }>;
 }
 
@@ -119,17 +119,23 @@ function extractBlockText(type: string, content: unknown): string[] {
 
 export function buildPageExportText(args: {
   pageTitle: string;
-  layouts: SerializableLayout[];
+  structure: SerializablePageStructure;
 }) {
   const title = normalizeText(args.pageTitle) || "Untitled page";
   const lines: string[] = [];
 
-  const layouts = [...args.layouts].sort((a, b) => a.order - b.order);
-  for (const layout of layouts) {
-    const slots = [...layout.slots].sort((a, b) => a.position - b.position);
-
-    for (const slot of slots) {
-      for (const block of slot.blocks) {
+  const sections = [...args.structure.sections].sort(
+    (a, b) => a.order - b.order,
+  );
+  for (const section of sections) {
+    const columns = args.structure.columns
+      .filter((column) => column.sectionId === section._id)
+      .sort((a, b) => a.order - b.order);
+    for (const column of columns) {
+      const blocks = args.structure.blocks
+        .filter((block) => block.columnId === column._id)
+        .sort((a, b) => a.order - b.order);
+      for (const block of blocks) {
         lines.push(...extractBlockText(block.type, block.content));
       }
     }

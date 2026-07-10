@@ -1,6 +1,13 @@
 "use client";
 
-import { type ReactNode, createContext, use, useState } from "react";
+import {
+  type ReactNode,
+  createContext,
+  use,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
 interface EditorPermissions {
   canEdit: boolean;
@@ -8,33 +15,21 @@ interface EditorPermissions {
   isLoading: boolean;
 }
 
-export interface EditingPagePanel {
-  pageId: string;
-}
-
-export interface EditorSelection {
-  layoutId: string | null;
-  slotId: string | null;
-  blockId: string | null;
-}
+export type EditorSelection =
+  | { kind: "section"; id: string }
+  | { kind: "column"; id: string }
+  | { kind: "block"; id: string; columnId: string }
+  | null;
 
 export interface EditorUiContextValue {
   selection: EditorSelection;
-  selectLayout: (layoutId: string | null) => void;
-  selectSlot: (layoutId: string, slotId: string | null) => void;
-  selectBlock: (
-    layoutId: string,
-    slotId: string,
-    blockId: string | null,
-  ) => void;
+  selectSection: (sectionId: string) => void;
+  selectColumn: (columnId: string) => void;
+  selectBlock: (blockId: string, columnId: string) => void;
   clearSelection: () => void;
-  editingPage: EditingPagePanel | null;
-  openPageEditor: (page: EditingPagePanel) => void;
-  closePageEditor: () => void;
   activeTabId: string | null;
   setActiveTabId: (tabId: string | null) => void;
-  currentPageId: string | null;
-  setCurrentPageId: (pageId: string | null) => void;
+  openPage: (pageId: string) => void;
 }
 
 export interface EditorSiteContextValue {
@@ -50,60 +45,65 @@ const EditorSiteContext = createContext<EditorSiteContextValue | null>(null);
 interface EditorProviderProps {
   siteId: string;
   permissions: EditorPermissions;
-  pagePanelState?: Pick<
-    EditorUiContextValue,
-    "editingPage" | "openPageEditor" | "closePageEditor"
-  >;
+  onOpenPage: (pageId: string) => void;
   children: ReactNode;
 }
 
 export function EditorProvider({
   siteId,
   permissions,
-  pagePanelState,
+  onOpenPage,
   children,
 }: EditorProviderProps) {
-  const [selection, setSelection] = useState<EditorSelection>({
-    layoutId: null,
-    slotId: null,
-    blockId: null,
-  });
-  const [editingPage, setEditingPage] = useState<EditingPagePanel | null>(null);
-  const [uiState, setUiState] = useState({
-    activeTabId: null as string | null,
-    currentPageId: null as string | null,
-  });
+  const [selection, setSelection] = useState<EditorSelection>(null);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
   const { canEdit, isAdmin, isLoading: isPermissionsLoading } = permissions;
 
-  const uiValue: EditorUiContextValue = {
-    selection,
-    selectLayout: (layoutId) =>
-      setSelection({ layoutId, slotId: null, blockId: null }),
-    selectSlot: (layoutId, slotId) =>
-      setSelection({ layoutId, slotId, blockId: null }),
-    selectBlock: (layoutId, slotId, blockId) =>
-      setSelection({ layoutId, slotId, blockId }),
-    clearSelection: () =>
-      setSelection({ layoutId: null, slotId: null, blockId: null }),
-    editingPage: pagePanelState?.editingPage ?? editingPage,
-    openPageEditor:
-      pagePanelState?.openPageEditor ??
-      ((page) => {
-        setEditingPage(page);
-      }),
-    closePageEditor:
-      pagePanelState?.closePageEditor ??
-      (() => {
-        setEditingPage(null);
-      }),
-    activeTabId: uiState.activeTabId,
-    setActiveTabId: (activeTabId) =>
-      setUiState((current) => ({ ...current, activeTabId })),
-    currentPageId: uiState.currentPageId,
-    setCurrentPageId: (currentPageId) =>
-      setUiState((current) => ({ ...current, currentPageId })),
-  };
+  const selectSection = useCallback(
+    (id: string) => setSelection({ kind: "section", id }),
+    [],
+  );
+  const selectColumn = useCallback(
+    (id: string) => setSelection({ kind: "column", id }),
+    [],
+  );
+  const selectBlock = useCallback(
+    (id: string, columnId: string) =>
+      setSelection({ kind: "block", id, columnId }),
+    [],
+  );
+  const clearSelection = useCallback(() => setSelection(null), []);
+  const openPage = useCallback(
+    (pageId: string) => {
+      setSelection(null);
+      setActiveTabId(null);
+      onOpenPage(pageId);
+    },
+    [onOpenPage],
+  );
+
+  const uiValue = useMemo<EditorUiContextValue>(
+    () => ({
+      selection,
+      selectSection,
+      selectColumn,
+      selectBlock,
+      clearSelection,
+      activeTabId,
+      setActiveTabId,
+      openPage,
+    }),
+    [
+      activeTabId,
+      clearSelection,
+      openPage,
+      selectBlock,
+      selectColumn,
+      selectSection,
+      selection,
+    ],
+  );
 
   return (
     <EditorSiteContext.Provider

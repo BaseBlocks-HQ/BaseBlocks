@@ -2,7 +2,7 @@
 import { getStoredAccessSessionTokens } from "@/modules/public-site/access-session";
 import { useSiteRenderActions } from "@/modules/site-runtime/actions";
 import { useEditorUiOptional } from "@/modules/editor/editor-state";
-import { useEditorSite, useEditorUi } from "@/modules/editor/editor-state";
+import { useEditorSite } from "@/modules/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageContent } from "@baseblocks/domain/elements";
@@ -35,7 +35,7 @@ export function PageEditor({ content }: ElementEditorProps<"page">) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!editorUi || !content.pageId) return;
-    editorUi.openPageEditor({ pageId: content.pageId });
+    editorUi.openPage(content.pageId);
   };
 
   if (!content.pageId) {
@@ -110,15 +110,14 @@ export function PageConfigPanel({
   onUpdate,
 }: ElementConfigPanelProps<"page">) {
   const { siteId } = useEditorSite();
-  const { currentPageId } = useEditorUi();
   const setExposure = useMutation(api.pages.setExposure);
   const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
 
-  const availablePages = (pages ?? [])
-    .filter((page) => page._id !== currentPageId)
-    .sort((a, b) => a.title.localeCompare(b.title));
+  const availablePages = [...(pages ?? [])].sort((a, b) =>
+    a.title.localeCompare(b.title),
+  );
   const linkedPage = availablePages.find((page) => page._id === content.pageId);
 
   const updateContent = (partial: Partial<PageContent>) => {

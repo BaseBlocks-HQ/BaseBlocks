@@ -14,10 +14,9 @@ import {
   getElementsByCategory,
 } from "@/modules/site-elements/registry";
 import type { Id } from "@baseblocks/backend";
-import type { LayoutType, PageListItem } from "@baseblocks/domain";
+import type { PageListItem, SectionPreset } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
 import {
   Tooltip,
@@ -44,9 +43,9 @@ interface EditorFloatingRailProps {
   };
   pages: PageListItem[];
   selectedPageId?: string;
-  selectedSlotId?: string | null;
+  selectedColumnId?: string | null;
   onSelectPage: (pageId: string) => void;
-  onAddLayout?: (type: LayoutType) => void;
+  onAddSection?: (preset: SectionPreset) => void;
   onAddBlock?: (type: ElementType) => void;
   onEnableTabs?: () => void;
 }
@@ -62,8 +61,8 @@ const RAIL_ITEMS: Array<{
 }> = [
   { id: "pages", label: "Pages", icon: <IconFile className="h-5 w-5" /> },
   {
-    id: "layouts",
-    label: "Layouts",
+    id: "sections",
+    label: "Sections",
     icon: <IconRectLayoutGrid className="h-5 w-5" />,
   },
   {
@@ -88,7 +87,7 @@ const CATEGORY_TITLES: Record<ElementCategory, string> = {
   site: "Site Settings",
   customization: "Customization",
   navigation: "Navigation",
-  layouts: "Layouts",
+  sections: "Sections",
   blocks: "Blocks",
 };
 
@@ -106,14 +105,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
   { title: "Sections", types: ["search", "library", "quicklinks"] },
 ];
 
-const layoutTypes = new Set([
-  "single",
-  "rows",
-  "columns",
-  "grid",
-  "spacer",
-  "vertical",
-]);
+const sectionPresets = new Set(["single", "columns", "aside"]);
 
 function RailButton({
   active,
@@ -280,7 +272,7 @@ function RailPanel({
           <p className="text-sm font-semibold">Pages</p>
           {canEdit ? <CreatePageDialog siteId={site._id} /> : null}
         </div>
-        <ScrollArea className="h-[min(60vh,32rem)]">
+        <div className="h-[min(60vh,32rem)] overflow-y-auto">
           <div className="p-2">
             {rootPages.length > 0 ? (
               <SidebarMenu>
@@ -301,7 +293,7 @@ function RailPanel({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </PanelSurface>
     );
   }
@@ -309,9 +301,9 @@ function RailPanel({
   if (activePanel === "site") {
     return (
       <PanelSurface>
-        <ScrollArea className="h-[min(60vh,32rem)]">
+        <div className="h-[min(60vh,32rem)] overflow-y-auto">
           <SiteConfigPanel siteId={site._id as Id<"sites">} />
-        </ScrollArea>
+        </div>
       </PanelSurface>
     );
   }
@@ -319,9 +311,9 @@ function RailPanel({
   if (activePanel === "navigation") {
     return (
       <PanelSurface>
-        <ScrollArea className="h-[min(60vh,32rem)]">
+        <div className="h-[min(60vh,32rem)] overflow-y-auto">
           <NavigationConfigPanel siteId={site._id as Id<"sites">} />
-        </ScrollArea>
+        </div>
       </PanelSurface>
     );
   }
@@ -329,9 +321,9 @@ function RailPanel({
   if (activePanel === "customization") {
     return (
       <PanelSurface>
-        <ScrollArea className="h-[min(60vh,32rem)]">
+        <div className="h-[min(60vh,32rem)] overflow-y-auto">
           <CustomizationConfigPanel siteId={site._id as Id<"sites">} />
-        </ScrollArea>
+        </div>
       </PanelSurface>
     );
   }
@@ -350,7 +342,7 @@ function RailPanel({
 
   return (
     <PanelSurface>
-      <ScrollArea className="h-[min(60vh,32rem)]">
+      <div className="h-[min(60vh,32rem)] overflow-y-auto">
         {activePanel === "blocks" ? (
           BLOCK_GROUPS.map((group) => {
             const byType = new Map(entries.map((entry) => [entry.type, entry]));
@@ -373,7 +365,7 @@ function RailPanel({
               onSelect={onSelectElement}
               title={CATEGORY_TITLES[activePanel] ?? "Elements"}
             />
-            {activePanel === "layouts" && onEnableTabs ? (
+            {activePanel === "sections" && onEnableTabs ? (
               <div className="px-4 pb-4">
                 <PickerCard
                   icon={PanelTop}
@@ -384,7 +376,7 @@ function RailPanel({
             ) : null}
           </>
         )}
-      </ScrollArea>
+      </div>
     </PanelSurface>
   );
 }
@@ -393,9 +385,9 @@ export function EditorFloatingRail({
   site,
   pages,
   selectedPageId,
-  selectedSlotId,
+  selectedColumnId,
   onSelectPage,
-  onAddLayout,
+  onAddSection,
   onAddBlock,
   onEnableTabs,
 }: EditorFloatingRailProps) {
@@ -452,8 +444,8 @@ export function EditorFloatingRail({
   };
 
   const selectElement = (type: string) => {
-    if (layoutTypes.has(type)) {
-      onAddLayout?.(type as LayoutType);
+    if (sectionPresets.has(type)) {
+      onAddSection?.(type as SectionPreset);
       return;
     }
     onAddBlock?.(type as ElementType);
@@ -471,7 +463,7 @@ export function EditorFloatingRail({
             const requiresSlot = item.id === "blocks";
             const disabled =
               (!canEdit && item.id !== "pages") ||
-              (requiresSlot && !selectedSlotId);
+              (requiresSlot && !selectedColumnId);
             return (
               <RailButton
                 key={item.id}

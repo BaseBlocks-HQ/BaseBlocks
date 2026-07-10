@@ -19,23 +19,16 @@ export {
   publicPageAccessPolicy,
 } from "./page-access";
 
+export { createBlockDraft } from "./page-structure";
 export type {
-  LayoutType,
-  LayoutBlockType,
-  LayoutBlockData,
-  LayoutSlot,
-  LayoutSettings,
-  LayoutData,
-  SpacerLayoutHeight,
-} from "./layouts";
-export {
-  LAYOUT_SLOT_COUNTS,
-  DEFAULT_LAYOUT_SETTINGS,
-  createBlockDraft,
-  createLayoutDraft,
-  createLayoutSlots,
-  getLayoutSlotCount,
-} from "./layouts";
+  BlockData,
+  ColumnData,
+  PageStructure,
+  PageTab,
+  SectionData,
+  SectionPreset,
+  SectionRegion,
+} from "./page-structure";
 
 export type {
   ElementType,

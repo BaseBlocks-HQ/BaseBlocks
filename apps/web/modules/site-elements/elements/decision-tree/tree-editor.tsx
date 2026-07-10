@@ -2,6 +2,7 @@
 
 import "@blocknote/mantine/style.css";
 
+import { useAutoSave } from "@/modules/editor/use-auto-save";
 import { useSiteAssetUpload } from "@/modules/site-elements/use-site-asset-upload";
 import { useEditorSite } from "@/modules/editor/editor-state";
 import type { ElementEditorProps } from "@/modules/site-elements/registry";
@@ -13,7 +14,6 @@ import type {
 } from "@baseblocks/domain/elements";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
@@ -87,8 +87,11 @@ function NodeDocumentEditor({
   const { resolvedTheme } = useTheme();
   const { siteId } = useEditorSite();
   const { uploadSiteAsset } = useSiteAssetUpload();
+  const [initialContent] = useState(() =>
+    document.length > 0 ? (document as Block[]) : undefined,
+  );
   const editor = useCreateBlockNote({
-    initialContent: document.length > 0 ? (document as Block[]) : undefined,
+    initialContent,
     uploadFile: async (file) => {
       const asset = await uploadSiteAsset(file, siteId as Id<"sites">);
       if (!asset) throw new Error("Upload failed");
@@ -119,6 +122,7 @@ export function DecisionTreeEditor({
   const [path, setPath] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const persist = useAutoSave(onUpdate, onSaveStatusChange);
   const parentId = path.at(-1) ?? null;
   const children = useMemo(
     () => sortedChildren(tree.nodes, parentId),
@@ -130,9 +134,8 @@ export function DecisionTreeEditor({
 
   const save = (nextTree: DecisionTree) => {
     setTree(nextTree);
-    onSaveStatusChange?.("saving");
-    onUpdate({ trees: [nextTree] });
-    onSaveStatusChange?.("saved");
+    onSaveStatusChange?.("pending");
+    persist({ ...content, trees: [nextTree] });
   };
 
   const updateNodes = (nodes: DecisionTreeNode[]) => {
@@ -221,7 +224,7 @@ export function DecisionTreeEditor({
             ))}
           </div>
 
-          <ScrollArea className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1">
             <div className="space-y-1 p-2">
               {children.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
@@ -274,7 +277,7 @@ export function DecisionTreeEditor({
                 })
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="flex gap-1.5 border-t border-border/70 p-2">
             <Input
@@ -316,7 +319,7 @@ export function DecisionTreeEditor({
                   Edit children
                 </Button>
               </div>
-              <ScrollArea className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1">
                 <div className="px-4 py-3">
                   <NodeDocumentEditor
                     key={selectedNode.id}
@@ -326,7 +329,7 @@ export function DecisionTreeEditor({
                     }
                   />
                 </div>
-              </ScrollArea>
+              </div>
             </>
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
