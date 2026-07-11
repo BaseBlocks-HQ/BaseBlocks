@@ -124,13 +124,27 @@ export const migrateOwnership = internalMutation({
         patched += 1;
       }
     }
-    await recordStatus(ctx, "ownership", {
-      cursor: result.isDone ? undefined : result.continueCursor,
-      sourceCount: result.page.length,
-      destinationCount: patched,
-      mismatchCount: conflicts,
-      completed: result.isDone && conflicts === 0,
-    });
+    if (result.isDone) {
+      const allSites = await ctx.db.query("sites").collect();
+      const destinationCount = allSites.filter(
+        (site) => site.organizationId,
+      ).length;
+      const mismatchCount = conflicts + (allSites.length - destinationCount);
+      await recordStatus(ctx, "ownership", {
+        sourceCount: allSites.length,
+        destinationCount,
+        mismatchCount,
+        completed: mismatchCount === 0,
+      });
+    } else {
+      await recordStatus(ctx, "ownership", {
+        cursor: result.continueCursor,
+        sourceCount: result.page.length,
+        destinationCount: result.page.filter((site) => site.organizationId)
+          .length,
+        mismatchCount: conflicts,
+      });
+    }
     return {
       checked: result.page.length,
       patched,
