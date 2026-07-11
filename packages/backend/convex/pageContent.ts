@@ -57,6 +57,60 @@ const MAX_PAGE_CONTENT_BYTES = 900_000;
 
 const emptyContent = { tabs: [], sections: [] };
 
+const SERIALIZED_CONTENT_KEY = "__baseblocksSerializedContent";
+
+export function serializeDeepBlockContent(
+  sections: typeof pageContentValidator.type.sections,
+): typeof pageContentValidator.type.sections {
+  return sections.map((section) => ({
+    ...section,
+    columns: section.columns.map((column) => ({
+      ...column,
+      blocks: column.blocks.map((block) =>
+        (block.type === "decision-tree" || block.type === "richtext") &&
+        typeof block.content !== "string"
+          ? {
+              ...block,
+              content: {
+                [SERIALIZED_CONTENT_KEY]: JSON.stringify(block.content),
+              },
+            }
+          : block,
+      ),
+    })),
+  }));
+}
+
+export function hydrateDeepBlockContent(
+  sections: typeof pageContentValidator.type.sections,
+): typeof pageContentValidator.type.sections {
+  return sections.map((section) => ({
+    ...section,
+    columns: section.columns.map((column) => ({
+      ...column,
+      blocks: column.blocks.map((block) => {
+        if (
+          block.content &&
+          typeof block.content === "object" &&
+          SERIALIZED_CONTENT_KEY in block.content
+        ) {
+          return {
+            ...block,
+            content: JSON.parse(
+              String(
+                (block.content as Record<string, unknown>)[
+                  SERIALIZED_CONTENT_KEY
+                ],
+              ),
+            ),
+          };
+        }
+        return block;
+      }),
+    })),
+  }));
+}
+
 function normalizeContent(content: typeof pageContentValidator.type) {
   const ids = new Set<string>();
   const claim = (id: string) => {
@@ -93,7 +147,10 @@ async function getContent(ctx: Pick<QueryCtx, "db">, pageId: Id<"pages">) {
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .unique();
   return document
-    ? { tabs: document.tabs, sections: document.sections }
+    ? {
+        tabs: document.tabs,
+        sections: hydrateDeepBlockContent(document.sections),
+      }
     : emptyContent;
 }
 
@@ -135,6 +192,10 @@ export const save = mutation({
       action: "edit",
     });
     const normalized = normalizeContent(structuredClone(content));
+    const stored = {
+      ...normalized,
+      sections: serializeDeepBlockContent(normalized.sections),
+    };
     const existing = await ctx.db
       .query("pageContents")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
@@ -142,14 +203,14 @@ export const save = mutation({
     const updatedAt = Date.now();
     if (existing) {
       await ctx.db.patch("pageContents", existing._id, {
-        ...normalized,
+        ...stored,
         updatedAt,
       });
     } else {
       await ctx.db.insert("pageContents", {
         siteId: page.siteId,
         pageId,
-        ...normalized,
+        ...stored,
         updatedAt,
       });
     }

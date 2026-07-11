@@ -5,8 +5,30 @@ import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
 export default defineSchema({
+  // Transitional tenancy sources. These remain read-only until ownership
+  // parity has been verified in production.
+  teams: defineTable({
+    organizationId: v.optional(v.string()),
+    name: v.string(),
+    slug: v.string(),
+    logoUrl: v.optional(v.string()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    settings: v.object({
+      primaryColor: v.optional(v.string()),
+      customDomain: v.optional(v.string()),
+    }),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_organizationId", ["organizationId"]),
+
   sites: defineTable({
-    organizationId: v.string(),
+    teamId: v.optional(v.id("teams")),
+    // Runtime-optional during migration. The static canonical type stays a
+    // string so application code cannot accidentally grow legacy write paths.
+    organizationId: v.optional(v.string()) as unknown as ReturnType<
+      typeof v.string
+    >,
     name: v.string(),
     slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()),
@@ -270,6 +292,8 @@ export default defineSchema({
       blockId: v.optional(v.string()),
       columnId: v.optional(v.string()),
       description: v.optional(v.string()),
+      // Legacy synchronization output. Never copy this into searchEntries.
+      downloadUrl: v.optional(v.string()),
     }),
     updatedAt: v.number(),
   })
@@ -283,4 +307,58 @@ export default defineSchema({
       searchField: "extractedText",
       filterFields: ["siteId", "contentType"],
     }),
+
+  // Canonical search destination. It deliberately excludes signed URLs and
+  // legacy synchronization metadata.
+  searchEntries: defineTable({
+    siteId: v.id("sites"),
+    kind: v.union(v.literal("document"), v.literal("page")),
+    sourceId: v.string(),
+    title: v.string(),
+    text: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_source", ["kind", "sourceId"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["siteId", "kind"],
+    })
+    .searchIndex("search_text", {
+      searchField: "text",
+      filterFields: ["siteId", "kind"],
+    }),
+
+  migrationStatus: defineTable({
+    stage: v.union(
+      v.literal("ownership"),
+      v.literal("pageContent"),
+      v.literal("files"),
+      v.literal("search"),
+    ),
+    cursor: v.optional(v.string()),
+    sourceCount: v.number(),
+    destinationCount: v.number(),
+    mismatchCount: v.number(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_stage", ["stage"]),
+
+  members: defineTable({
+    teamId: v.id("teams"),
+    userId: v.string(),
+    email: v.string(),
+    name: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    role: v.union(
+      v.literal("owner"),
+      v.literal("admin"),
+      v.literal("editor"),
+      v.literal("viewer"),
+    ),
+    joinedAt: v.number(),
+  })
+    .index("by_team", ["teamId"])
+    .index("by_team_user", ["teamId", "userId"])
+    .index("by_user", ["userId"]),
 });

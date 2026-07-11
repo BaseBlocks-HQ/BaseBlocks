@@ -58,7 +58,7 @@ type MutationCtx = GenericMutationCtx<DataModel>;
 /**
  * Extract searchable text from a page's blocks.
  */
-function extractTextFromBlocks(
+export function extractTextFromBlocks(
   blocks: Array<{ type: string; content: unknown }>,
 ): string {
   const parts: string[] = [];

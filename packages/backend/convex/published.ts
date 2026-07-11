@@ -6,6 +6,7 @@ import {
   listAuthOrganizations,
 } from "./authComponent/model";
 import { buildPageTree } from "./pages";
+import { hydrateDeepBlockContent } from "./pageContent";
 import { getAccessiblePublishedPages } from "./sharing";
 
 function resolvePage(
@@ -49,7 +50,10 @@ async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .unique();
   return content
-    ? { tabs: content.tabs, sections: content.sections }
+    ? {
+        tabs: content.tabs,
+        sections: hydrateDeepBlockContent(content.sections),
+      }
     : { tabs: [], sections: [] };
 }
 
