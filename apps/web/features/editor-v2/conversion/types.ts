@@ -9,6 +9,10 @@ export interface ConversionWarning {
     | "flattened-tabs"
     | "aside-layout"
     | "image-caption"
+    | "unsupported-rich-text-block"
+    | "unsupported-inline-content"
+    | "unsupported-inline-style"
+    | "flattened-rich-text-children"
     | "empty-page";
   message: string;
   severity: ConversionSeverity;

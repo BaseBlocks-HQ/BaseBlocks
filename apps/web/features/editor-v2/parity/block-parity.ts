@@ -42,9 +42,9 @@ export const blockParity: readonly BlockParityRow[] = [
   },
   {
     legacyType: "richtext",
-    target: "Native text blocks",
-    status: "pending",
-    note: "BlockNote conversion required",
+    target: "Native Open Editor document nodes",
+    status: "partial",
+    note: "Legacy wrapper eliminated; supported BlockNote content is flattened in place",
   },
   {
     legacyType: "callout",

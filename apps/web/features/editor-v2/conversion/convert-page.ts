@@ -12,7 +12,9 @@ import type {
   PageStructure,
   ParagraphContent,
   QuicklinksContent,
+  RichTextContent,
 } from "@baseblocks/domain";
+import { convertBlockNoteDocument } from "./convert-blocknote";
 import type { ConversionResult, ConversionWarning } from "./types";
 
 const placeholder = (block: BlockData, reason: string): OpenEditorBlock => ({
@@ -27,32 +29,50 @@ const placeholder = (block: BlockData, reason: string): OpenEditorBlock => ({
 function convertBlock(
   block: BlockData,
   warnings: ConversionWarning[],
-): { node: OpenEditorBlock; converted: boolean } {
+): {
+  nodes: OpenEditorBlock[];
+  converted: boolean;
+  placeholderCount: number;
+} {
   switch (block.type) {
     case "paragraph": {
       const content = block.content as ParagraphContent;
-      return { node: textBlock("paragraph", content.text), converted: true };
+      return {
+        nodes: [textBlock("paragraph", content.text)],
+        converted: true,
+        placeholderCount: 0,
+      };
     }
     case "heading": {
       const content = block.content as HeadingContent;
       return {
-        node: textBlock("heading", content.text, { level: content.level ?? 2 }),
+        nodes: [
+          textBlock("heading", content.text, { level: content.level ?? 2 }),
+        ],
         converted: true,
+        placeholderCount: 0,
       };
     }
     case "code": {
       const content = block.content as CodeContent;
       return {
-        node: {
-          type: "codeBlock",
-          attrs: { language: content.language ?? "plaintext" },
-          content: content.text ? [createTextNode(content.text)] : [],
-        },
+        nodes: [
+          {
+            type: "codeBlock",
+            attrs: { language: content.language ?? "plaintext" },
+            content: content.text ? [createTextNode(content.text)] : [],
+          },
+        ],
         converted: true,
+        placeholderCount: 0,
       };
     }
     case "divider":
-      return { node: { type: "horizontalRule" }, converted: true };
+      return {
+        nodes: [{ type: "horizontalRule" }],
+        converted: true,
+        placeholderCount: 0,
+      };
     case "image": {
       const content = block.content as ImageContent;
       if (content.caption) {
@@ -66,26 +86,48 @@ function convertBlock(
         });
       }
       return {
-        node: {
-          type: "image",
-          attrs: {
-            src: content.url,
-            alt: content.alt ?? "",
-            width: content.width ?? null,
-            height: content.height ?? null,
+        nodes: [
+          {
+            type: "image",
+            attrs: {
+              src: content.url,
+              alt: content.alt ?? "",
+              width: content.width ?? null,
+              height: content.height ?? null,
+            },
           },
-        },
+        ],
         converted: true,
+        placeholderCount: 0,
       };
     }
     case "quicklinks": {
       const content = block.content as QuicklinksContent;
       return {
-        node: {
-          type: "baseblocksQuickLinks",
-          attrs: { links: structuredClone(content.links) },
-        },
+        nodes: [
+          {
+            type: "baseblocksQuickLinks",
+            attrs: { links: structuredClone(content.links) },
+          },
+        ],
         converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "richtext": {
+      const content = block.content as RichTextContent;
+      const converted = convertBlockNoteDocument(content.document);
+      warnings.push(
+        ...converted.warnings.map((warning) => ({
+          ...warning,
+          blockId: warning.blockId ?? block.id,
+          blockType: block.type,
+        })),
+      );
+      return {
+        nodes: converted.nodes,
+        converted: true,
+        placeholderCount: converted.placeholderCount,
       };
     }
     default: {
@@ -97,7 +139,11 @@ function convertBlock(
         blockType: block.type,
         message: reason,
       });
-      return { node: placeholder(block, reason), converted: false };
+      return {
+        nodes: [placeholder(block, reason)],
+        converted: false,
+        placeholderCount: 1,
+      };
     }
   }
 }
@@ -137,12 +183,12 @@ export function convertLegacyPageToOpenEditor(
       .map((column) => {
         const blocks = [...column.blocks]
           .sort((left, right) => left.order - right.order)
-          .map((block) => {
+          .flatMap((block) => {
             sourceBlockCount += 1;
             const result = convertBlock(block, warnings);
             if (result.converted) convertedBlockCount += 1;
-            else placeholderCount += 1;
-            return result.node;
+            placeholderCount += result.placeholderCount;
+            return result.nodes;
           });
         return blocks.length > 0 ? blocks : [textBlock("paragraph", "")];
       });
