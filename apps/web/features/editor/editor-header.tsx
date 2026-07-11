@@ -98,6 +98,7 @@ export function EditorHeader({
               />
               <EditorHeaderRightSection
                 canEdit={canEdit}
+                siteId={siteId}
                 sitePublished={sitePublished}
                 teamSlug={teamSlug}
                 siteSlug={siteSlug}
@@ -217,6 +218,7 @@ function EditorHeaderLeftSection({
 
 interface EditorHeaderRightSectionProps {
   canEdit: boolean;
+  siteId: string;
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
@@ -227,6 +229,7 @@ interface EditorHeaderRightSectionProps {
 
 function EditorHeaderRightSection({
   canEdit,
+  siteId,
   sitePublished,
   teamSlug,
   siteSlug,
@@ -236,6 +239,11 @@ function EditorHeaderRightSection({
 }: EditorHeaderRightSectionProps) {
   return (
     <div className="flex items-center gap-1">
+      <Link href={`/dashboard/${teamSlug}/sites/${siteId}/v2`}>
+        <Button size="sm" variant="ghost">
+          V2
+        </Button>
+      </Link>
       {canEdit ? (
         <>
           <EditorHeaderMenuButton onOpenShare={onOpenShare} />
