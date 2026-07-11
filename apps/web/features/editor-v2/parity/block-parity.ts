@@ -103,7 +103,7 @@ export const blockParity: readonly BlockParityRow[] = [
   {
     legacyType: "quicklinks",
     target: "Quick Links extension",
-    status: "pending",
-    note: "Base Blocks-owned block",
+    status: "converted",
+    note: "Consumer extension with editing, viewing, and export",
   },
 ] as const;

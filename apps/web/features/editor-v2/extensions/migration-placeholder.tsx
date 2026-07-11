@@ -6,6 +6,7 @@ import {
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
 import { Construction } from "lucide-react";
+import { quickLinksExtension } from "./quick-links";
 
 function PlaceholderContent({
   sourceType,
@@ -87,4 +88,7 @@ export const migrationPlaceholderExtension = defineOpenEditorReactNode({
   },
 });
 
-export const editorV2Extensions = [migrationPlaceholderExtension] as const;
+export const editorV2Extensions = [
+  migrationPlaceholderExtension,
+  quickLinksExtension,
+] as const;

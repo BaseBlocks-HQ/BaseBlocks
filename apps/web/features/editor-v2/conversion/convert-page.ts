@@ -11,6 +11,7 @@ import type {
   ImageContent,
   PageStructure,
   ParagraphContent,
+  QuicklinksContent,
 } from "@baseblocks/domain";
 import type { ConversionResult, ConversionWarning } from "./types";
 
@@ -73,6 +74,16 @@ function convertBlock(
             width: content.width ?? null,
             height: content.height ?? null,
           },
+        },
+        converted: true,
+      };
+    }
+    case "quicklinks": {
+      const content = block.content as QuicklinksContent;
+      return {
+        node: {
+          type: "baseblocksQuickLinks",
+          attrs: { links: structuredClone(content.links) },
         },
         converted: true,
       };
