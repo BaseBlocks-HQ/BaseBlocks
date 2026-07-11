@@ -29,7 +29,9 @@ export function DashboardTeamShell({
     .filter(Boolean);
   const isSiteEditorPath =
     pathname.startsWith(siteEditorPathPrefix) &&
-    siteEditorPathSegments.length === 1;
+    (siteEditorPathSegments.length === 1 ||
+      (siteEditorPathSegments.length === 2 &&
+        siteEditorPathSegments[1] === "v2"));
 
   useEffect(() => {
     if (!boundary) return;
