@@ -13,6 +13,7 @@ import type {
   ParagraphContent,
   QuicklinksContent,
   RichTextContent,
+  SpacerContent,
 } from "@baseblocks/domain";
 import { convertBlockNoteDocument } from "./convert-blocknote";
 import type { ConversionResult, ConversionWarning } from "./types";
@@ -73,6 +74,28 @@ function convertBlock(
         converted: true,
         placeholderCount: 0,
       };
+    case "spacer": {
+      const content = block.content as SpacerContent;
+      const paragraphCount: Record<SpacerContent["height"], number> = {
+        small: 1,
+        medium: 2,
+        large: 3,
+        xlarge: 4,
+      };
+      const count = paragraphCount[content.height];
+      warnings.push({
+        code: "normalized-spacer",
+        severity: "info",
+        blockId: block.id,
+        blockType: block.type,
+        message: `Legacy ${content.height} spacer was converted to ${count} empty ${count === 1 ? "paragraph" : "paragraphs"}.`,
+      });
+      return {
+        nodes: Array.from({ length: count }, () => textBlock("paragraph", "")),
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
     case "image": {
       const content = block.content as ImageContent;
       if (content.caption) {

@@ -13,6 +13,7 @@ export interface ConversionWarning {
     | "unsupported-inline-content"
     | "unsupported-inline-style"
     | "flattened-rich-text-children"
+    | "normalized-spacer"
     | "empty-page";
   message: string;
   severity: ConversionSeverity;

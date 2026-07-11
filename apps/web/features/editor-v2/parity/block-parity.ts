@@ -54,9 +54,9 @@ export const blockParity: readonly BlockParityRow[] = [
   },
   {
     legacyType: "spacer",
-    target: "Layout spacing",
-    status: "pending",
-    note: "Migration semantics undecided",
+    target: "Empty paragraphs",
+    status: "converted",
+    note: "Legacy block eliminated; spacing normalized to 1–4 empty paragraphs",
   },
   {
     legacyType: "file",
