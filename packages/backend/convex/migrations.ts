@@ -55,6 +55,77 @@ function canonicalBlockContent(type: string, content: unknown): unknown {
   return content;
 }
 
+const LEGACY_ASSET_URL_PATTERN = /\/api\/storage\/assets\/([a-z0-9]+)/g;
+
+async function canonicalizeAssetUrls<T>(
+  ctx: Pick<QueryCtx | MutationCtx, "db">,
+  value: T,
+): Promise<T> {
+  const filesByAsset = new Map<string, Id<"files"> | null>();
+
+  async function rewrite(current: unknown): Promise<unknown> {
+    if (typeof current === "string") {
+      const assetIds = [
+        ...new Set(
+          [...current.matchAll(LEGACY_ASSET_URL_PATTERN)].map(
+            (match) => match[1] as string,
+          ),
+        ),
+      ];
+      let rewritten = current;
+      for (const assetId of assetIds) {
+        let fileId = filesByAsset.get(assetId);
+        if (fileId === undefined) {
+          const file = await ctx.db
+            .query("files")
+            .withIndex("by_legacy_asset", (q) =>
+              q.eq("legacyAssetId", assetId as Id<"assets">),
+            )
+            .unique();
+          fileId = file?._id ?? null;
+          filesByAsset.set(assetId, fileId);
+        }
+        if (fileId) {
+          rewritten = rewritten.replaceAll(
+            `/api/storage/assets/${assetId}`,
+            `/api/files/${fileId}?kind=asset`,
+          );
+        }
+      }
+      return rewritten;
+    }
+    if (Array.isArray(current)) return Promise.all(current.map(rewrite));
+    if (current && typeof current === "object") {
+      const entries = await Promise.all(
+        Object.entries(current).map(async ([key, nested]) => [
+          key,
+          await rewrite(nested),
+        ]),
+      );
+      return Object.fromEntries(entries);
+    }
+    return current;
+  }
+
+  return (await rewrite(value)) as T;
+}
+
+function countLegacyAssetUrls(value: unknown): number {
+  if (typeof value === "string")
+    return [...value.matchAll(LEGACY_ASSET_URL_PATTERN)].length;
+  if (Array.isArray(value))
+    return value.reduce(
+      (total, nested) => total + countLegacyAssetUrls(nested),
+      0,
+    );
+  if (value && typeof value === "object")
+    return Object.values(value).reduce<number>(
+      (total, nested) => total + countLegacyAssetUrls(nested),
+      0,
+    );
+  return 0;
+}
+
 async function recordStatus(
   ctx: MutationCtx,
   stage: MigrationStage,
@@ -331,9 +402,10 @@ async function buildLegacyContent(
           })),
       })),
   };
+  const canonicalContent = await canonicalizeAssetUrls(ctx, content);
   return {
-    ...content,
-    sections: serializeDeepBlockContent(content.sections),
+    ...canonicalContent,
+    sections: serializeDeepBlockContent(canonicalContent.sections),
   };
 }
 
@@ -377,7 +449,11 @@ export const migratePageContents = internalMutation({
             tabs: content.tabs,
             sections: hydrateDeepBlockContent(content.sections),
           };
-          if (stableJson(actualHydrated) !== stableJson(expectedHydrated))
+          const canonicalActual = await canonicalizeAssetUrls(
+            ctx,
+            actualHydrated,
+          );
+          if (stableJson(canonicalActual) !== stableJson(expectedHydrated))
             throw new Error(`Existing page content mismatch for ${page._id}`);
           await ctx.db.patch(existing._id, { sections: content.sections });
         }
@@ -674,6 +750,7 @@ export const verifyCanonicalState = internalQuery({
       danglingDocumentFiles: v.number(),
       sitesWithoutLogoFiles: v.number(),
       searchWithoutFiles: v.number(),
+      staleAssetUrls: v.number(),
       duplicateSearchEntries: v.number(),
       orphanedSearchEntries: v.number(),
     }),
@@ -787,6 +864,12 @@ export const verifyCanonicalState = internalQuery({
         searchWithoutFiles: legacySearch.filter(
           (entry) => entry.metadata.assetId && !entry.metadata.fileId,
         ).length,
+        staleAssetUrls:
+          sites.reduce((total, site) => total + countLegacyAssetUrls(site), 0) +
+          contents.reduce(
+            (total, content) => total + countLegacyAssetUrls(content),
+            0,
+          ),
         duplicateSearchEntries: duplicateCount(searchKeys),
         orphanedSearchEntries: canonicalSearch.filter((entry) =>
           entry.kind === "page"
@@ -920,18 +1003,57 @@ export const phase5PatchSites = internalMutation({
       .paginate({ cursor: cursor ?? null, numItems: batchSize });
     let processed = 0;
     for (const site of page.page) {
-      if (!site.logoAssetId) continue;
-      const file = await ctx.db
-        .query("files")
-        .withIndex("by_legacy_asset", (q) =>
-          q.eq("legacyAssetId", site.logoAssetId),
-        )
-        .unique();
-      if (!file) throw new Error(`Missing migrated logo for site ${site._id}`);
-      if (site.logoFileId && site.logoFileId !== file._id)
-        throw new Error(`Conflicting logo file for site ${site._id}`);
-      if (site.logoFileId) continue;
-      await ctx.db.patch(site._id, { logoFileId: file._id });
+      let logoFileId = site.logoFileId;
+      if (site.logoAssetId) {
+        const file = await ctx.db
+          .query("files")
+          .withIndex("by_legacy_asset", (q) =>
+            q.eq("legacyAssetId", site.logoAssetId),
+          )
+          .unique();
+        if (!file)
+          throw new Error(`Missing migrated logo for site ${site._id}`);
+        if (logoFileId && logoFileId !== file._id)
+          throw new Error(`Conflicting logo file for site ${site._id}`);
+        logoFileId = file._id;
+      }
+      const canonical = await canonicalizeAssetUrls(ctx, {
+        logoUrl: site.logoUrl,
+        settings: site.settings,
+      });
+      if (
+        logoFileId === site.logoFileId &&
+        canonical.logoUrl === site.logoUrl &&
+        stableJson(canonical.settings) === stableJson(site.settings)
+      )
+        continue;
+      await ctx.db.patch(site._id, {
+        logoFileId,
+        logoUrl: canonical.logoUrl,
+        settings: canonical.settings,
+      });
+      processed += 1;
+    }
+    return { processed, done: page.isDone, cursor: page.continueCursor };
+  },
+});
+
+export const phase5PatchPageAssetUrls = internalMutation({
+  args: { cursor: v.optional(v.string()) },
+  returns: stageResult,
+  handler: async (ctx, { cursor }) => {
+    const page = await ctx.db
+      .query("pageContents")
+      .paginate({ cursor: cursor ?? null, numItems: batchSize });
+    let processed = 0;
+    for (const content of page.page) {
+      const hydrated = hydrateDeepBlockContent(content.sections);
+      const canonical = await canonicalizeAssetUrls(ctx, hydrated);
+      if (stableJson(canonical) === stableJson(hydrated)) continue;
+      await ctx.db.patch(content._id, {
+        sections: serializeDeepBlockContent(canonical),
+        updatedAt: Date.now(),
+      });
       processed += 1;
     }
     return { processed, done: page.isDone, cursor: page.continueCursor };
@@ -997,6 +1119,7 @@ export const phase5Verify = internalQuery({
     unmigratedSites: v.number(),
     unmigratedSearchEntries: v.number(),
     danglingDocumentFiles: v.number(),
+    staleAssetUrls: v.number(),
   }),
   handler: async (ctx) => {
     const [assets, files, documents, sites, entries] = await Promise.all([
@@ -1024,6 +1147,12 @@ export const phase5Verify = internalQuery({
         (entry) => entry.metadata.assetId && !entry.metadata.fileId,
       ).length,
       danglingDocumentFiles,
+      staleAssetUrls:
+        sites.reduce((total, site) => total + countLegacyAssetUrls(site), 0) +
+        (await ctx.db.query("pageContents").collect()).reduce(
+          (total, content) => total + countLegacyAssetUrls(content),
+          0,
+        ),
     };
   },
 });
@@ -1034,6 +1163,7 @@ export const phase5Run = internalAction({
     copiedAssets: v.number(),
     patchedDocuments: v.number(),
     patchedSites: v.number(),
+    patchedPageContents: v.number(),
     patchedSearchEntries: v.number(),
   }),
   handler: async (ctx) => {
@@ -1041,6 +1171,7 @@ export const phase5Run = internalAction({
       internal.migrations.phase5CopyAssets,
       internal.migrations.phase5PatchDocuments,
       internal.migrations.phase5PatchSites,
+      internal.migrations.phase5PatchPageAssetUrls,
       internal.migrations.phase5PatchSearch,
     ] as const;
     const totals: number[] = [];
@@ -1059,7 +1190,8 @@ export const phase5Run = internalAction({
       copiedAssets: totals[0] ?? 0,
       patchedDocuments: totals[1] ?? 0,
       patchedSites: totals[2] ?? 0,
-      patchedSearchEntries: totals[3] ?? 0,
+      patchedPageContents: totals[3] ?? 0,
+      patchedSearchEntries: totals[4] ?? 0,
     };
   },
 });
