@@ -49,9 +49,6 @@ export function getSiteOpenUrl(
     const port = window.location.port ? `:${window.location.port}` : "";
     return `${window.location.protocol}//${organizationSlug}.localhost${port}${sitePath(siteSlug)}`;
   }
-  if (parsed.kind === "vercel-deployment") {
-    return getSiteUrl(organizationSlug, siteSlug);
-  }
   return getSiteUrl(organizationSlug, siteSlug);
 }
 

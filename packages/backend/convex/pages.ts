@@ -44,7 +44,7 @@ type ProjectedPage = {
 
 /**
  * Build a tree structure from a flat array of pages.
- * Shared by both getTree (draft) and getTreePublished (published).
+ * Builds the nested page tree used by editor and published read models.
  *
  * @param pages - Flat array of page data (already projected to the right fields)
  * @returns Root-level tree nodes with nested children, sorted by order
@@ -98,55 +98,6 @@ function projectPublishedPage(page: Doc<"pages">) {
     showInNavigation: page.showInNavigation,
     updatedAt: page.updatedAt,
   };
-}
-
-function resolvePublishedPageByPath(
-  publishedPages: Doc<"pages">[],
-  site: { defaultPageId?: string },
-  path: string[],
-): Doc<"pages"> | null {
-  if (path.length === 0) {
-    if (site.defaultPageId) {
-      const defaultPage = publishedPages.find(
-        (p) => p._id === site.defaultPageId,
-      );
-      if (defaultPage) {
-        return defaultPage;
-      }
-    }
-
-    const rootPages = publishedPages
-      .filter((p) => !p.parentId)
-      .sort((a, b) => a.order - b.order);
-
-    return rootPages[0] ?? null;
-  }
-
-  let parentId: string | undefined;
-
-  for (let i = 0; i < path.length; i++) {
-    const slug = path[i]!;
-    const isLast = i === path.length - 1;
-
-    const page = publishedPages.find(
-      (p) => p.slug === slug && p.parentId === parentId,
-    );
-
-    if (!page) {
-      if (path.length === 1) {
-        return publishedPages.find((p) => p.slug === path[0]!) ?? null;
-      }
-      return null;
-    }
-
-    if (isLast) {
-      return page;
-    }
-
-    parentId = page._id;
-  }
-
-  return null;
 }
 
 // List pages for a site (authenticated — editor only)
@@ -435,103 +386,6 @@ export const getAncestors = query({
     }
 
     return ancestors;
-  },
-});
-
-export const getTreePublished = query({
-  args: {
-    siteId: v.id("sites"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site?.isPublished) return [];
-
-    const publishedPages = (
-      await getAccessiblePublishedPages(ctx, site, sessionTokens)
-    ).filter((page) => page.showInNavigation !== false);
-
-    return buildPageTree(
-      publishedPages.map((page) => ({
-        _id: page._id,
-        siteId: page.siteId,
-        title: page.title,
-        slug: page.slug,
-        icon: page.icon,
-        order: page.order,
-        parentId: page.parentId,
-      })),
-    );
-  },
-});
-
-// Get published page by nested path (for public routing)
-export const getByPathPublished = query({
-  args: {
-    siteId: v.id("sites"),
-    path: v.array(v.string()),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, path, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site?.isPublished) return null;
-
-    const publishedPages = await getAccessiblePublishedPages(
-      ctx,
-      site,
-      sessionTokens,
-    );
-    const page = resolvePublishedPageByPath(
-      publishedPages,
-      { defaultPageId: site.defaultPageId },
-      path,
-    );
-    return page ? projectPublishedPage(page) : null;
-  },
-});
-
-export const getByPathPublishedStatus = query({
-  args: {
-    siteId: v.id("sites"),
-    path: v.array(v.string()),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, path, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site?.isPublished) {
-      return { status: "missing" as const };
-    }
-
-    if (path.length === 0) {
-      return { status: "accessible" as const };
-    }
-
-    const [accessiblePages, allPublishedPages] = await Promise.all([
-      getAccessiblePublishedPages(ctx, site, sessionTokens),
-      ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", siteId))
-        .collect(),
-    ]);
-    const defaultPage = { defaultPageId: site.defaultPageId };
-
-    const accessiblePage = resolvePublishedPageByPath(
-      accessiblePages,
-      defaultPage,
-      path,
-    );
-    if (accessiblePage) {
-      return { status: "accessible" as const };
-    }
-
-    const existingPage = resolvePublishedPageByPath(
-      allPublishedPages,
-      defaultPage,
-      path,
-    );
-    return {
-      status: existingPage ? ("forbidden" as const) : ("missing" as const),
-    };
   },
 });
 

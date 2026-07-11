@@ -1,6 +1,5 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { getPageLink } from "@/features/published-sites/urls";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
@@ -8,7 +7,6 @@ import { SearchBox } from "@/features/search";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { useCustomizationStyles } from "@/components/site-runtime/customization";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
-import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
 import type { SiteCustomization } from "@baseblocks/domain/site-settings";
@@ -30,7 +28,6 @@ import {
   useSidebar,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useQuery } from "convex/react";
 import {
   ChevronDown,
   ChevronRight,
@@ -43,81 +40,32 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { PublicPageContent } from "./page-content";
+import type { PublishedPageResult } from "./read-model";
 import { IconFile } from "nucleo-glass";
 
 interface PublicSiteShellProps {
-  site: {
-    _id: Id<"sites">;
-    name: string;
-    slug: string;
-    logoUrl?: string;
-    settings: {
-      navigationStyle: NavigationStyle;
-      headerType: string;
-      showHeader?: boolean;
-      showLogo?: boolean;
-      showSiteName?: boolean;
-      showHeaderSearch?: boolean;
-      showBreadcrumbs?: boolean;
-      sidebarDefaultExpanded?: boolean;
-      customization?: SiteCustomization;
-    };
-  };
-  team: {
-    name: string;
-    slug: string;
-    logoUrl?: string;
-  };
-  pagePath: string[];
+  result: PublishedPageResult;
 }
 
-export function PublicSiteShell({
-  site,
-  team,
-  pagePath,
-}: PublicSiteShellProps) {
+export function PublicSiteShell({ result }: PublicSiteShellProps) {
+  const {
+    breadcrumbs,
+    navigation: pages,
+    organization: team,
+    page,
+    site,
+  } = result;
   const pagePanel = usePagePanelState();
-  const sessionTokens = getStoredAccessSessionTokens();
-  const pagesRaw = useQuery(api.pages.getTreePublished, {
-    siteId: site._id,
-    sessionTokens,
-  });
-  const pages = pagesRaw as PageWithChildren[] | undefined;
-
-  const currentPage = useQuery(api.pages.getByPathPublished, {
-    siteId: site._id,
-    path: pagePath,
-    sessionTokens,
-  });
-  const currentPageStatus = useQuery(api.pages.getByPathPublishedStatus, {
-    siteId: site._id,
-    path: pagePath,
-    sessionTokens,
-  });
-
-  const ancestors = useQuery(
-    api.pages.getAncestors,
-    currentPage?._id ? { pageId: currentPage._id as Id<"pages"> } : "skip",
+  const ancestorIds = breadcrumbs.map(
+    (breadcrumb: { id: string }) => breadcrumb.id,
   );
-
-  const ancestorIds = ancestors?.map((a) => a._id) ?? [];
   const currentPathString =
-    pagePath.length > 0 ? pagePath.join("/") : (currentPage?.slug ?? "");
-
-  if (
-    pagePath.length === 0 &&
-    currentPage === null &&
-    pages &&
-    pages.length > 0
-  ) {
-    const firstPage = pages[0];
-    if (firstPage) {
-      redirect(getPageLink(site.slug, firstPage.slug));
-    }
-  }
+    result.canonicalUrlInputs.pagePath.join("/") ||
+    breadcrumbs.at(-1)?.path.join("/") ||
+    page?.slug ||
+    "";
 
   const showHeader = site.settings.showHeader !== false;
   const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
@@ -155,6 +103,8 @@ export function PublicSiteShell({
     };
   }, [customizationStyles, isCustomized]);
 
+  if (!page) return null;
+
   const showSidebar = navigationStyle === "sidebar";
 
   const mainContent = (
@@ -163,7 +113,7 @@ export function PublicSiteShell({
         <PublicSiteHeader
           site={site}
           team={team}
-          pages={pages}
+          pages={pages as PageWithChildren[]}
           currentPath={currentPathString}
           onOpenPage={pagePanel.openPage}
         />
@@ -178,16 +128,10 @@ export function PublicSiteShell({
         )}
 
       <PublicSiteMainContent
-        currentPage={
-          currentPage
-            ? {
-                _id: currentPage._id as string,
-                title: currentPage.title,
-              }
-            : currentPage
-        }
-        currentPageStatus={currentPageStatus?.status}
-        pages={pages}
+        currentPage={page}
+        pageContent={result.pageContent}
+        breadcrumbs={breadcrumbs}
+        pages={pages as PageWithChildren[]}
         currentPath={currentPathString}
         siteSlug={site.slug}
         navigationStyle={navigationStyle}
@@ -222,7 +166,7 @@ export function PublicSiteShell({
             <PublicSiteSidebar
               site={site}
               team={team}
-              pages={pages}
+              pages={pages as PageWithChildren[]}
               currentPath={currentPathString}
               ancestorIds={ancestorIds}
               sidebarDefaultExpanded={sidebarDefaultExpanded}
@@ -255,8 +199,8 @@ function PublicSiteHeader({
   site,
   team,
 }: {
-  site: PublicSiteShellProps["site"];
-  team: PublicSiteShellProps["team"];
+  site: PublishedPageResult["site"];
+  team: PublishedPageResult["organization"];
   pages?: PageWithChildren[];
   currentPath: string;
   onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
@@ -344,8 +288,8 @@ function PublicSiteSidebar({
   siteSlug,
   team,
 }: {
-  site: PublicSiteShellProps["site"];
-  team: PublicSiteShellProps["team"];
+  site: PublishedPageResult["site"];
+  team: PublishedPageResult["organization"];
   pages?: PageWithChildren[];
   currentPath: string;
   ancestorIds: string[];
@@ -409,16 +353,18 @@ function PublicSiteSidebar({
 }
 
 function PublicSiteMainContent({
+  breadcrumbs,
   currentPage,
-  currentPageStatus,
   currentPath,
   navigationStyle,
+  pageContent,
   pages,
   showBreadcrumbs,
   siteSlug,
 }: {
-  currentPage: { _id: string; title: string } | null | undefined;
-  currentPageStatus?: "accessible" | "forbidden" | "missing";
+  breadcrumbs: PublishedPageResult["breadcrumbs"];
+  currentPage: NonNullable<PublishedPageResult["page"]>;
+  pageContent: PublishedPageResult["pageContent"];
   pages?: PageWithChildren[];
   currentPath: string;
   navigationStyle: NavigationStyle;
@@ -438,9 +384,9 @@ function PublicSiteMainContent({
         />
       )}
 
-      {showBreadcrumbs && currentPage && (
+      {showBreadcrumbs && currentPage && breadcrumbs.length > 0 && (
         <BreadcrumbBar
-          pageId={currentPage._id as Id<"pages">}
+          breadcrumbs={breadcrumbs}
           pageTitle={currentPage.title}
           siteSlug={siteSlug}
           className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
@@ -448,35 +394,11 @@ function PublicSiteMainContent({
       )}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {currentPage === undefined ? (
-          <div className="flex flex-1 items-center justify-center p-8">
-            <Spinner className="size-6 text-muted-foreground" />
-          </div>
-        ) : currentPage === null ? (
-          <div className="flex flex-1 items-center justify-center p-8">
-            {currentPageStatus === "forbidden" ? (
-              <div className="mx-auto max-w-md space-y-4 text-center">
-                <h2 className="text-2xl font-semibold tracking-tight">
-                  This page is restricted
-                </h2>
-                <p className="text-muted-foreground">
-                  You must have access to view this page.
-                </p>
-                <Button asChild>
-                  <Link href="/login" target="_blank" rel="noreferrer">
-                    Log in
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="mx-auto max-w-md text-center">
-                <p className="text-muted-foreground">Page not found</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <PublicPageContent pageId={currentPage._id as Id<"pages">} />
-        )}
+        <PublicPageContent
+          pageId={currentPage._id as Id<"pages">}
+          initialPage={currentPage}
+          initialStructure={pageContent}
+        />
       </div>
     </>
   );
@@ -942,50 +864,17 @@ function NavItem({
 }
 
 function BreadcrumbBar({
+  breadcrumbs,
   className,
-  pageId,
   pageTitle,
   siteSlug,
 }: {
-  pageId: Id<"pages">;
+  breadcrumbs: PublishedPageResult["breadcrumbs"];
   pageTitle: string;
   className?: string;
   siteSlug: string;
 }) {
-  const sessionTokens = getStoredAccessSessionTokens();
-  const ancestors = useQuery(api.pages.getAncestors, {
-    pageId,
-    sessionTokens,
-  });
-
-  const breadcrumbItems = (() => {
-    if (!ancestors) return [];
-
-    const items: Array<{
-      _id: string;
-      title: string;
-      path: string;
-    }> = [];
-
-    let currentPath = "";
-
-    for (const ancestor of ancestors) {
-      currentPath = currentPath
-        ? `${currentPath}/${ancestor.slug}`
-        : ancestor.slug;
-      items.push({
-        _id: ancestor._id,
-        title: ancestor.title,
-        path: currentPath,
-      });
-    }
-
-    return items;
-  })();
-
-  if (ancestors === undefined || ancestors.length === 0) {
-    return null;
-  }
+  const breadcrumbItems = breadcrumbs.slice(0, -1);
 
   return (
     <nav className={cn("border-b bg-muted/30", className)}>
@@ -1005,21 +894,23 @@ function BreadcrumbBar({
               <ChevronRight className="h-3.5 w-3.5" />
             </li>
 
-            {breadcrumbItems.map((item) => (
-              <Fragment key={item._id}>
-                <li>
-                  <Link
-                    href={getPageLink(siteSlug, item.path)}
-                    className="hover:text-foreground transition-colors"
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-                <li>
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </li>
-              </Fragment>
-            ))}
+            {breadcrumbItems.map(
+              (item: { id: string; title: string; path: string[] }) => (
+                <Fragment key={item.id}>
+                  <li>
+                    <Link
+                      href={getPageLink(siteSlug, item.path)}
+                      className="hover:text-foreground transition-colors"
+                    >
+                      {item.title}
+                    </Link>
+                  </li>
+                  <li>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </li>
+                </Fragment>
+              ),
+            )}
 
             <li className="text-foreground font-medium truncate max-w-[200px]">
               {pageTitle}

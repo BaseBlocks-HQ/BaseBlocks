@@ -1,5 +1,5 @@
 import { buildPublicSiteMetadata } from "@/features/published-sites/metadata";
-import { PublicSiteRoot } from "@/features/published-sites/public-site-root";
+import { PublicSite } from "@/features/published-sites/public-site";
 import { PublicSiteSeo } from "@/features/published-sites/seo";
 import { resolvePublishedPage } from "@/features/published-sites/read-model";
 import type { Metadata } from "next";
@@ -19,7 +19,11 @@ export default async function PublishedSubdomainRoot({ params }: Props) {
   return (
     <>
       {result ? <PublicSiteSeo result={result} /> : null}
-      <PublicSiteRoot teamSlug={organizationSlug} />
+      <PublicSite
+        result={result}
+        organizationSlug={organizationSlug}
+        pagePath={[]}
+      />
     </>
   );
 }

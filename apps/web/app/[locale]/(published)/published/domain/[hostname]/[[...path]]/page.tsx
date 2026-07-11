@@ -35,8 +35,10 @@ export default async function PublishedDomainPage({ params }: Props) {
         <PublicSiteSeo result={result} customDomain={mapping.hostname} />
       ) : null}
       <PublicSite
-        teamSlug={mapping.organizationSlug}
-        path={[mapping.siteSlug, ...path]}
+        result={result}
+        organizationSlug={mapping.organizationSlug}
+        siteSlug={mapping.siteSlug}
+        pagePath={path}
       />
     </>
   );

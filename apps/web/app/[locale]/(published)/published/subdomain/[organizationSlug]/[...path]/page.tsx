@@ -23,7 +23,12 @@ export default async function PublishedSubdomainPage({ params }: Props) {
   return (
     <>
       {result ? <PublicSiteSeo result={result} /> : null}
-      <PublicSite teamSlug={organizationSlug} path={path} />
+      <PublicSite
+        result={result}
+        organizationSlug={organizationSlug}
+        siteSlug={path[0]}
+        pagePath={path.slice(1)}
+      />
     </>
   );
 }

@@ -127,6 +127,7 @@ export const resolve = query({
         id: organization._id,
         name: organization.name,
         slug: organization.slug,
+        logoUrl: organization.logo ?? undefined,
       },
       site: {
         _id: site._id,

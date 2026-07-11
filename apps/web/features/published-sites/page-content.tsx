@@ -27,6 +27,8 @@ import { useEffect, useState } from "react";
 
 interface PublicPageContentProps {
   pageId: string;
+  initialPage?: { title: string };
+  initialStructure?: PageStructure;
   nested?: boolean;
 }
 
@@ -142,18 +144,27 @@ function PublicMainContent({
   );
 }
 
-function PublicPageContentInner({ pageId, nested }: PublicPageContentProps) {
+export function PublicPageContent({
+  pageId,
+  initialPage,
+  initialStructure,
+  nested,
+}: PublicPageContentProps) {
   const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
   const sessionTokens = getStoredAccessSessionTokens();
-  const page = useQuery(api.pages.get, {
-    pageId: pageId as Id<"pages">,
-    sessionTokens,
-  });
-  const structure = useQuery(api.pageContent.getPublished, {
-    pageId: pageId as Id<"pages">,
-    sessionTokens,
-  });
+  const queriedPage = useQuery(
+    api.pages.get,
+    initialPage ? "skip" : { pageId: pageId as Id<"pages">, sessionTokens },
+  );
+  const queriedStructure = useQuery(
+    api.pageContent.getPublished,
+    initialStructure
+      ? "skip"
+      : { pageId: pageId as Id<"pages">, sessionTokens },
+  );
+  const page = initialPage ?? queriedPage;
+  const structure = initialStructure ?? queriedStructure;
   const isMobile = useIsMobile();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
@@ -240,8 +251,4 @@ function PublicPageContentInner({ pageId, nested }: PublicPageContentProps) {
       </ResizablePanel>
     </ResizablePanelGroup>
   );
-}
-
-export function PublicPageContent(props: PublicPageContentProps) {
-  return <PublicPageContentInner {...props} />;
 }

@@ -7,7 +7,6 @@ import {
   isOrganizationMember,
 } from "./permissions";
 import { deleteDocumentRows } from "./documents";
-import { getAccessiblePublishedPages } from "./sharing";
 import { createDefaultPageStructure } from "./pageStructure";
 import {
   getAuthOrganizationById,
@@ -229,85 +228,6 @@ export const getBySlug = query({
       defaultPageId: site.defaultPageId,
       settings: site.settings,
       updatedAt: site.updatedAt,
-    };
-  },
-});
-
-// Get site with default page info (for public viewing)
-// Returns published field projections for public consumption
-export const getWithDefaultPage = query({
-  args: {
-    teamSlug: v.string(),
-    siteSlug: v.optional(v.string()),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { teamSlug, siteSlug, sessionTokens }) => {
-    const organization = await getAuthOrganizationBySlug(ctx, teamSlug);
-    if (!organization) return null;
-
-    let site: Doc<"sites"> | null = null;
-    if (siteSlug) {
-      site = await ctx.db
-        .query("sites")
-        .withIndex("by_organization_slug", (q) =>
-          q.eq("organizationId", organization._id).eq("slug", siteSlug),
-        )
-        .first();
-    } else {
-      const sites = await ctx.db
-        .query("sites")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", organization._id),
-        )
-        .collect();
-      site = sites.find((candidate) => candidate.isPublished) ?? null;
-    }
-
-    if (!site?.isPublished) return null;
-
-    const accessiblePages = await getAccessiblePublishedPages(
-      ctx,
-      site,
-      sessionTokens,
-    );
-    const publishedDefaultPageId = site.defaultPageId;
-
-    let defaultPage =
-      accessiblePages.find((page) => page._id === publishedDefaultPageId) ??
-      null;
-
-    if (!defaultPage) {
-      const rootPages = accessiblePages
-        .filter((page) => !page.parentId)
-        .sort((a, b) => a.order - b.order);
-      defaultPage = rootPages[0] ?? null;
-    }
-
-    const publishedSite = {
-      _id: site._id,
-      _creationTime: site._creationTime,
-      organizationId: site.organizationId,
-      slug: site.slug,
-      isPublished: true,
-      visibility: site.visibility,
-      name: site.name,
-      logoUrl: site.logoUrl,
-      defaultPageId: publishedDefaultPageId,
-      settings: site.settings,
-      updatedAt: site.updatedAt,
-    };
-
-    // Only expose public-safe team fields
-    const publicTeam = {
-      _id: organization._id,
-      name: organization.name,
-      slug: organization.slug ?? teamSlug,
-    };
-
-    return {
-      site: publishedSite,
-      team: publicTeam,
-      defaultPage,
     };
   },
 });
