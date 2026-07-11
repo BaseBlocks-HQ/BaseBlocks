@@ -13,7 +13,6 @@ import type * as documents from "../documents.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as libraries from "../libraries.js";
-import type * as migrations from "../migrations.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
 import type * as pageStructure from "../pageStructure.js";
@@ -37,7 +36,6 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   libraries: typeof libraries;
-  migrations: typeof migrations;
   organizations: typeof organizations;
   pageContent: typeof pageContent;
   pageStructure: typeof pageStructure;

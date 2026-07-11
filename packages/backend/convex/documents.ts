@@ -22,7 +22,13 @@ export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
   return `/api/files/${documentId}`;
 }
 
-type SearchMetadata = Doc<"searchableContent">["metadata"];
+type SearchMetadata = {
+  fileId?: Id<"files">;
+  filename?: string;
+  fileContentType?: string;
+  size?: number;
+  libraryId?: string;
+};
 
 export function buildDocumentSearchMetadata(args: {
   documentId: string;
@@ -33,7 +39,7 @@ export function buildDocumentSearchMetadata(args: {
   libraryId?: string;
 }): SearchMetadata {
   return {
-    fileId: args.fileId as SearchMetadata["fileId"],
+    fileId: args.fileId as Id<"files"> | undefined,
     filename: args.filename,
     fileContentType: args.contentType,
     size: args.size,
@@ -57,7 +63,7 @@ export function normalizeDocumentSearchMetadata(args: {
  * Centralises the cleanup logic so that every code path that removes a document
  * (single delete, library delete, folder delete, site delete) goes through the
  * same sequence:
- *   1. Remove the searchableContent index entry.
+ *   1. Remove the canonical search index entry.
  *   2. Delete the file metadata row.
  *   3. Delete the document row.
  * Object deletion is coordinated by Next.js before this metadata mutation.
@@ -69,9 +75,9 @@ export async function deleteDocumentRows(
 ): Promise<void> {
   // 1. Remove search index entry
   const searchEntry = await ctx.db
-    .query("searchableContent")
+    .query("searchEntries")
     .withIndex("by_source", (q) =>
-      q.eq("contentType", "document").eq("sourceId", document._id),
+      q.eq("kind", "document").eq("sourceId", document._id),
     )
     .first();
   if (searchEntry) {
@@ -563,9 +569,9 @@ async function patchDocumentSearchEntry(
   },
 ) {
   const entry = await ctx.db
-    .query("searchableContent")
+    .query("searchEntries")
     .withIndex("by_source", (q) =>
-      q.eq("contentType", "document").eq("sourceId", document._id),
+      q.eq("kind", "document").eq("sourceId", document._id),
     )
     .first();
 
@@ -575,15 +581,7 @@ async function patchDocumentSearchEntry(
 
   await ctx.db.patch(entry._id, {
     title: document.filename,
-    extractedText: document.filename,
-    metadata: buildDocumentSearchMetadata({
-      documentId: document._id,
-      fileId: document.fileId,
-      filename: document.filename,
-      contentType: document.contentType,
-      size: document.size,
-      libraryId: document.libraryId,
-    }),
+    text: document.filename,
     updatedAt: Date.now(),
   });
 }
@@ -637,20 +635,13 @@ export const create = mutation({
       createdAt: Date.now(),
     });
 
-    // Index in searchableContent so it's always findable by filename
-    await ctx.db.insert("searchableContent", {
+    // Index canonically so it's always findable by filename.
+    await ctx.db.insert("searchEntries", {
       siteId,
-      contentType: "document",
+      kind: "document",
       sourceId: documentId,
       title: filename,
-      extractedText: filename,
-      metadata: buildDocumentSearchMetadata({
-        documentId,
-        fileId,
-        filename,
-        contentType: normalizedContentType,
-        size,
-      }),
+      text: filename,
       updatedAt: Date.now(),
     });
 
@@ -735,21 +726,13 @@ export const createInLibrary = mutation({
       createdAt: Date.now(),
     });
 
-    // Index in searchableContent so it's always findable by filename
-    await ctx.db.insert("searchableContent", {
+    // Index canonically so it's always findable by filename.
+    await ctx.db.insert("searchEntries", {
       siteId,
-      contentType: "document",
+      kind: "document",
       sourceId: documentId,
       title: filename,
-      extractedText: filename,
-      metadata: buildDocumentSearchMetadata({
-        documentId,
-        fileId,
-        filename,
-        contentType: normalizedContentType,
-        size,
-        libraryId,
-      }),
+      text: filename,
       updatedAt: Date.now(),
     });
 

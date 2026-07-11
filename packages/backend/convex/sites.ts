@@ -667,9 +667,9 @@ export const remove = mutation({
       await ctx.db.delete(asset._id);
     }
 
-    // 4. Delete all searchableContent for the site (pages + any remaining docs)
+    // 4. Delete all canonical search entries for the site.
     const searchEntries = await ctx.db
-      .query("searchableContent")
+      .query("searchEntries")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const entry of searchEntries) {

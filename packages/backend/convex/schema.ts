@@ -5,35 +5,12 @@ import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
 export default defineSchema({
-  // Transitional tenancy sources. These remain read-only until ownership
-  // parity has been verified in production.
-  teams: defineTable({
-    organizationId: v.optional(v.string()),
-    name: v.string(),
-    slug: v.string(),
-    logoUrl: v.optional(v.string()),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    settings: v.object({
-      primaryColor: v.optional(v.string()),
-      customDomain: v.optional(v.string()),
-    }),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_organizationId", ["organizationId"]),
-
   sites: defineTable({
-    teamId: v.optional(v.id("teams")),
-    // Runtime-optional during migration. The static canonical type stays a
-    // string so application code cannot accidentally grow legacy write paths.
-    organizationId: v.optional(v.string()) as unknown as ReturnType<
-      typeof v.string
-    >,
+    organizationId: v.string(),
     name: v.string(),
     slug: v.string(), // site slug within team
     logoUrl: v.optional(v.string()),
-    logoFileId: v.optional(v.id("files")), // FK to assets table for cleanup on replace
-    logoAssetId: v.optional(v.id("assets")),
+    logoFileId: v.optional(v.id("files")),
     defaultPageId: v.optional(v.id("pages")),
     isPublished: v.boolean(),
     publishedAt: v.optional(v.number()),
@@ -121,10 +98,6 @@ export default defineSchema({
     order: v.number(),
     showInNavigation: v.optional(v.boolean()),
     accessPolicy: v.optional(pageAccessPolicyValidator),
-    // Transitional migration source; composition reads tabs from pageContents.
-    pageTabs: v.optional(
-      v.array(v.object({ id: v.string(), label: v.string() })),
-    ),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -142,65 +115,6 @@ export default defineSchema({
   })
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
-
-  // Transitional source tables. Remove only after the production page-content
-  // migration has been verified and a fresh production backup exists.
-  sections: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    tabId: v.optional(v.string()),
-    region: v.union(v.literal("main"), v.literal("aside")),
-    order: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"])
-    .index("by_page_tab", ["pageId", "tabId"]),
-
-  columns: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    sectionId: v.id("sections"),
-    order: v.number(),
-    createdAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"])
-    .index("by_section", ["sectionId"]),
-
-  blocks: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    sectionId: v.id("sections"),
-    columnId: v.id("columns"),
-    order: v.number(),
-    type: v.union(
-      v.literal("heading"),
-      v.literal("paragraph"),
-      v.literal("image"),
-      v.literal("file"),
-      v.literal("library"),
-      v.literal("search"),
-      v.literal("divider"),
-      v.literal("spacer"),
-      v.literal("callout"),
-      v.literal("code"),
-      v.literal("quicklinks"),
-      v.literal("richtext"),
-      v.literal("page"),
-      v.literal("directory"),
-      v.literal("flowchart"),
-      v.literal("decision-tree"),
-    ),
-    content: v.any(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"])
-    .index("by_section", ["sectionId"])
-    .index("by_column", ["columnId", "order"]),
 
   documentLibraries: defineTable({
     siteId: v.id("sites"),
@@ -220,23 +134,6 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_parent", ["libraryId", "parentId"]),
 
-  // Transitional source table retained until development and production have
-  // both completed migrations:phase5Storage.
-  assets: defineTable({
-    siteId: v.id("sites"),
-    kind: v.union(v.literal("document"), v.literal("siteAsset")),
-    visibility: v.union(v.literal("public"), v.literal("private")),
-    provider: v.string(),
-    bucket: v.string(),
-    objectKey: v.string(),
-    filename: v.optional(v.string()),
-    contentType: v.string(),
-    size: v.number(),
-    checksum: v.optional(v.string()),
-    uploadedBy: v.string(),
-    createdAt: v.number(),
-  }).index("by_site", ["siteId"]),
-
   files: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("document"), v.literal("siteAsset")),
@@ -248,19 +145,16 @@ export default defineSchema({
     checksum: v.optional(v.string()),
     uploadedBy: v.string(),
     createdAt: v.number(),
-    legacyAssetId: v.optional(v.id("assets")),
   })
     .index("by_site", ["siteId"])
     .index("by_site_kind", ["siteId", "kind"])
-    .index("by_object_key", ["objectKey"])
-    .index("by_legacy_asset", ["legacyAssetId"]),
+    .index("by_object_key", ["objectKey"]),
 
   documents: defineTable({
     siteId: v.id("sites"),
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")),
-    fileId: v.optional(v.id("files")),
-    assetId: v.optional(v.id("assets")),
+    fileId: v.id("files"),
     filename: v.string(),
     contentType: v.string(),
     size: v.number(),
@@ -274,42 +168,6 @@ export default defineSchema({
       filterFields: ["siteId"],
     }),
 
-  searchableContent: defineTable({
-    siteId: v.id("sites"),
-    contentType: v.union(v.literal("document"), v.literal("page")),
-    sourceId: v.string(),
-    title: v.string(),
-    extractedText: v.string(),
-    metadata: v.object({
-      filename: v.optional(v.string()),
-      fileContentType: v.optional(v.string()),
-      size: v.optional(v.number()),
-      libraryId: v.optional(v.string()),
-      fileId: v.optional(v.id("files")),
-      assetId: v.optional(v.id("assets")),
-      pageId: v.optional(v.id("pages")),
-      sectionId: v.optional(v.string()),
-      blockId: v.optional(v.string()),
-      columnId: v.optional(v.string()),
-      description: v.optional(v.string()),
-      // Legacy synchronization output. Never copy this into searchEntries.
-      downloadUrl: v.optional(v.string()),
-    }),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_source", ["contentType", "sourceId"])
-    .searchIndex("search_title", {
-      searchField: "title",
-      filterFields: ["siteId", "contentType"],
-    })
-    .searchIndex("search_content", {
-      searchField: "extractedText",
-      filterFields: ["siteId", "contentType"],
-    }),
-
-  // Canonical search destination. It deliberately excludes signed URLs and
-  // legacy synchronization metadata.
   searchEntries: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("document"), v.literal("page")),
@@ -329,36 +187,4 @@ export default defineSchema({
       filterFields: ["siteId", "kind"],
     }),
 
-  migrationStatus: defineTable({
-    stage: v.union(
-      v.literal("ownership"),
-      v.literal("pageContent"),
-      v.literal("files"),
-      v.literal("search"),
-    ),
-    cursor: v.optional(v.string()),
-    sourceCount: v.number(),
-    destinationCount: v.number(),
-    mismatchCount: v.number(),
-    completedAt: v.optional(v.number()),
-    updatedAt: v.number(),
-  }).index("by_stage", ["stage"]),
-
-  members: defineTable({
-    teamId: v.id("teams"),
-    userId: v.string(),
-    email: v.string(),
-    name: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-    role: v.union(
-      v.literal("owner"),
-      v.literal("admin"),
-      v.literal("editor"),
-      v.literal("viewer"),
-    ),
-    joinedAt: v.number(),
-  })
-    .index("by_team", ["teamId"])
-    .index("by_team_user", ["teamId", "userId"])
-    .index("by_user", ["userId"]),
 });

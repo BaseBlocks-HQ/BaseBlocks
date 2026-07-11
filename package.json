@@ -12,7 +12,6 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1078.0",
     "@biomejs/biome": "^2.4.15",
     "turbo": "^2.9.14",
     "typescript": "5.9.2"

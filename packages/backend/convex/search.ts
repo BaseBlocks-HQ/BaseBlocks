@@ -132,45 +132,38 @@ export async function indexPageContent(
   const combinedText = `${page.title} ${extractedText}`.trim();
   if (!combinedText) return;
 
-  // Upsert into searchableContent
+  // Upsert into the canonical search index.
   const existing = await ctx.db
-    .query("searchableContent")
-    .withIndex("by_source", (q) =>
-      q.eq("contentType", "page").eq("sourceId", pageId),
-    )
+    .query("searchEntries")
+    .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
     .first();
 
   const indexData = {
     siteId: page.siteId,
-    contentType: "page" as const,
+    kind: "page" as const,
     sourceId: pageId,
     title: page.title,
-    extractedText: combinedText,
-    metadata: {
-      pageId: page._id,
-    },
+    text: combinedText,
     updatedAt: Date.now(),
   };
 
   if (existing) {
     await ctx.db.patch(existing._id, indexData);
   } else {
-    await ctx.db.insert("searchableContent", indexData);
+    await ctx.db.insert("searchEntries", indexData);
   }
 }
 
 /**
- * Remove a page's searchableContent entry.
+ * Remove a page's canonical search entry.
  */
 export async function removePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
 ): Promise<void> {
   const existing = await ctx.db
-    .query("searchableContent")
-    .withIndex("by_source", (q) =>
-      q.eq("contentType", "page").eq("sourceId", pageId),
-    )
+    .query("searchEntries")
+    .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
     .first();
 
   if (existing) {
@@ -219,22 +212,20 @@ function extractSnippet(
 }
 
 /**
- * Format search result from searchableContent
+ * Format a canonical search result for the existing client contract.
  */
 function formatSearchResult(
-  doc: Doc<"searchableContent">,
+  doc: Doc<"searchEntries">,
   matchType: "title" | "content",
   searchTerm: string,
   document?: Doc<"documents"> | null,
 ) {
   const snippetData =
-    matchType === "content"
-      ? extractSnippet(doc.extractedText, searchTerm)
-      : null;
+    matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
 
   return {
     _id: doc._id,
-    contentType: doc.contentType,
+    contentType: doc.kind,
     sourceId: doc.sourceId,
     title: document?.filename ?? doc.title,
     matchType,
@@ -252,28 +243,25 @@ function formatSearchResult(
             libraryId: document.libraryId,
           },
         })
-      : doc.contentType === "document"
-        ? normalizeDocumentSearchMetadata({
-            sourceId: doc.sourceId,
-            metadata: doc.metadata,
-          })
-        : doc.metadata,
+      : doc.kind === "page"
+        ? { pageId: doc.sourceId as Id<"pages"> }
+        : {},
   };
 }
 
 async function getDocumentForSearchResult(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  doc: Doc<"searchableContent">,
+  doc: Doc<"searchEntries">,
 ) {
-  if (doc.contentType !== "document") return null;
+  if (doc.kind !== "document") return null;
   return await ctx.db.get(doc.sourceId as Id<"documents">);
 }
 
 function contentTypeMatches(
-  doc: Doc<"searchableContent">,
+  doc: Doc<"searchEntries">,
   contentTypes?: Array<"document" | "page">,
 ) {
-  return !contentTypes?.length || contentTypes.includes(doc.contentType);
+  return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
 /**
@@ -303,7 +291,7 @@ export const searchAll = query({
 
     // Search by title
     const titleResults = await ctx.db
-      .query("searchableContent")
+      .query("searchEntries")
       .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
@@ -311,9 +299,9 @@ export const searchAll = query({
 
     // Search by content
     const contentResults = await ctx.db
-      .query("searchableContent")
-      .withSearchIndex("search_content", (q) =>
-        q.search("extractedText", trimmed).eq("siteId", siteId),
+      .query("searchEntries")
+      .withSearchIndex("search_text", (q) =>
+        q.search("text", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -321,14 +309,14 @@ export const searchAll = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleDocument = async (doc: Doc<"searchableContent">) => {
+    const getVisibleDocument = async (doc: Doc<"searchEntries">) => {
       if (!contentTypeMatches(doc, contentTypes)) return null;
-      if (doc.contentType !== "document") return null;
+      if (doc.kind !== "document") return null;
       return await getDocumentForSearchResult(ctx, doc);
     };
 
-    const shouldIncludePage = (doc: Doc<"searchableContent">) => {
-      if (doc.contentType !== "page") return false;
+    const shouldIncludePage = (doc: Doc<"searchEntries">) => {
+      if (doc.kind !== "page") return false;
       return contentTypeMatches(doc, contentTypes);
     };
 
@@ -394,7 +382,7 @@ export const searchAllPublic = query({
 
     // Search by title
     const titleResults = await ctx.db
-      .query("searchableContent")
+      .query("searchEntries")
       .withSearchIndex("search_title", (q) =>
         q.search("title", trimmed).eq("siteId", siteId),
       )
@@ -402,9 +390,9 @@ export const searchAllPublic = query({
 
     // Search by content
     const contentResults = await ctx.db
-      .query("searchableContent")
-      .withSearchIndex("search_content", (q) =>
-        q.search("extractedText", trimmed).eq("siteId", siteId),
+      .query("searchEntries")
+      .withSearchIndex("search_text", (q) =>
+        q.search("text", trimmed).eq("siteId", siteId),
       )
       .take(limit * 2);
 
@@ -412,9 +400,9 @@ export const searchAllPublic = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleDocument = async (doc: Doc<"searchableContent">) => {
+    const getVisibleDocument = async (doc: Doc<"searchEntries">) => {
       if (!contentTypeMatches(doc, contentTypes)) return null;
-      if (doc.contentType !== "document") return null;
+      if (doc.kind !== "document") return null;
       const document = await getDocumentForSearchResult(ctx, doc);
       if (!document?.libraryId || !activeLibraryIds.has(document.libraryId)) {
         return null;
@@ -422,12 +410,10 @@ export const searchAllPublic = query({
       return document;
     };
 
-    const shouldIncludePage = (doc: Doc<"searchableContent">) => {
+    const shouldIncludePage = (doc: Doc<"searchEntries">) => {
       if (!contentTypeMatches(doc, contentTypes)) return false;
-      if (doc.contentType !== "page") return false;
-      const pageId = doc.metadata.pageId;
-      if (!pageId) return false;
-      return accessiblePageIds.has(pageId);
+      if (doc.kind !== "page") return false;
+      return accessiblePageIds.has(doc.sourceId as Id<"pages">);
     };
 
     // Content matches first
