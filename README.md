@@ -1,210 +1,175 @@
 # BaseBlocks
 
-An open-source, multi-tenant site builder. Create documentation sites, knowledge bases, and internal portals — organized by teams, deployed instantly.
+BaseBlocks is an open-source, multi-workspace site builder for documentation, knowledge bases, internal portals, onboarding hubs, and public resources.
+
+Teams create structured sites with a block editor, organize pages and document libraries, customize the published experience, and control who can access it.
 
 **Documentation:** [baseblocks.dev/docs](https://baseblocks.dev/docs)
 
 ## Features
 
-- **Multi-tenant architecture** — teams get their own subdomain (`team.baseblocks.dev`)
-- **Visual page builder** — drag-and-drop layouts with blocks (headings, text, images, code, embeds, forms, and more)
-- **Draft/deploy workflow** — edit freely, publish when ready, rollback if needed
-- **Document libraries** — upload, organize, and search documents with text extraction
-- **Customizable themes** — accent colors, navigation styles, header options
-- **Access control** — public, private, link-only, or password-protected sites
-- **Internationalization** — built-in i18n support
+- **Block editor** — rich text, lists, callouts, code, tables, columns, images, attachments, pages, Mermaid diagrams, and interactive BaseBlocks blocks
+- **Page trees** — nested pages, navigation visibility, page access policies, and embedded page references
+- **Interactive blocks** — quick links, directories, site search, document libraries, and decision trees
+- **Published sites** — sidebar, top navigation, or sub-navigation layouts with responsive page rendering
+- **Site customization** — light and dark theme colors, header styling, gradients, border radius, logos, metadata, favicons, and Open Graph images
+- **Access control** — public, private, unlisted, and access-code-protected sites
+- **Custom domains** — DNS verification and managed TLS through Vercel
+- **Document libraries** — uploads, folders, search, text extraction, previews, and downloads
+- **Workspace management** — multiple teams, invitations, roles, and workspace switching
+- **Internationalization** — English and French product UI and documentation
+- **Self-hosting** — Convex backend and S3-compatible file storage
 
-## Roadmap
+## Publishing model
 
-The high-level plan for the project, in order of priority:
+A site can be published or unpublished. Publishing makes the current saved content available at its generated URL and any verified custom domain. Unpublishing removes public access without deleting the site.
 
-|  #  | Step                                                         | Status |
-| :-: | ------------------------------------------------------------ | :----: |
-|  1  | Core platform — multi-tenant site builder with visual editor |   ✅   |
-|  2  | Draft/deploy workflow with rollback                          |   ✅   |
-|  3  | Document libraries with text extraction                      |   ✅   |
-|  4  | Access control — public, private, link-only, password        |   ✅   |
-|  5  | Documentation website                                        |   ✅   |
-|  6  | Pluggable storage architecture — bring your own provider     |   ✅   |
-|  7  | Custom domains                                               |   ❌   |
-|  8  | Payments & billing                                           |   ❌   |
-|  9  | Custom Block SDK — build your own blocks with our APIs       |   ❌   |
-| 10  | Block Marketplace — discover and share community blocks      |   ❌   |
-| 11  | AI-powered experience — AI blocks and agentic site builder   |   ❌   |
-| 12  | Embeddable SDK — embed BaseBlocks in any software            |   ❌   |
-| 13  | Templates & starter sites                                    |   ❌   |
-| 14  | Analytics & insights                                         |   ❌   |
-| 15  | Public API                                                   |   ❌   |
+Published sites currently read the latest saved page content. Historical deployment snapshots and rollback are not implemented yet.
 
-#### Core Platform
-
-Multi-tenant architecture where teams get their own subdomain (`team.baseblocks.dev`). Visual drag-and-drop page builder with blocks for headings, text, images, code, embeds, forms, and more. Customizable themes with accent colors, navigation styles, and header options. Built-in i18n support.
-
-#### Draft/Deploy Workflow
-
-Edit freely in draft mode, publish when ready, and rollback to any previous deployment if needed. Full deployment history with one-click restore.
-
-#### Document Libraries
-
-Upload, organize, and search documents with automatic text extraction. Supports PDF, images, video, and audio with an integrated media viewer.
-
-#### Access Control
-
-Sites can be public, private (team-only), link-only, or password-protected. Granular permissions per site.
-
-#### Documentation Website
-
-Official documentation at [baseblocks.dev/docs](https://baseblocks.dev/docs) covering setup, configuration, self-hosting, and the full feature set.
-
-#### Pluggable Storage Architecture
-
-BaseBlocks ships with an S3-compatible storage adapter and selects the concrete provider entirely through environment variables. Railway buckets work out of the box, but the same adapter can target AWS S3, Cloudflare R2, MinIO, Backblaze B2, or any other S3-compatible provider without changing app code.
-
-#### Custom Domains
-
-Map your own domain to any published site. Automatic SSL provisioning and DNS verification.
-
-#### Payments & Billing
-
-Subscription plans for teams with usage-based pricing. Marketplace payment processing for block creators. Stripe integration for billing, invoicing, and payouts.
-
-#### Custom Block SDK
-
-A developer-facing API and SDK for building custom blocks. Define your own block types with custom rendering, configuration panels, and data sources. Blocks can be private to your team or published to the marketplace. Full documentation, CLI tooling, and local development environment.
-
-#### Block Marketplace
-
-A community-driven marketplace where developers can publish, discover, and install blocks. Ratings, reviews, and verified publishers. Revenue sharing for paid blocks. Categories spanning content, data visualization, integrations, forms, navigation, and more.
-
-#### AI-Powered Experience
-
-AI blocks that generate and transform content inline — text, images, layouts, and code. An agentic site builder that can scaffold entire sites from a prompt, suggest layouts, and auto-populate content. AI-assisted editing for rewriting, translating, and summarizing. Bring-your-own-key or built-in credits.
-
-#### Embeddable SDK
-
-A lightweight SDK (`@baseblocks/embed`) for embedding BaseBlocks sites, pages, or individual blocks into any application. Framework-agnostic with first-class adapters for React, Vue, Angular, and web components. Enterprise integrations for Salesforce, Oracle, ServiceNow, and more. Embed as an iframe, a web component, or a native SDK. White-label support for OEM use cases.
-
-#### Templates & Starter Sites
-
-Pre-built site templates for common use cases — documentation, knowledge bases, internal portals, changelogs, and landing pages. One-click clone and customize.
-
-#### Analytics & Insights
-
-Built-in analytics for published sites — page views, visitor counts, popular pages, and referral sources. Privacy-friendly with no third-party trackers.
-
-#### Public API
-
-A RESTful API for programmatic site management — create sites, manage pages, publish deployments, and manage team members. API keys with scoped permissions.
-
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | [Next.js](https://nextjs.org/) 16, [React](https://react.dev/) 19, [Tailwind CSS](https://tailwindcss.com/) v4 |
-| Backend | [Convex](https://convex.dev/) (real-time database + serverless functions) |
-| Auth | [Better Auth](https://www.better-auth.com/) |
-| Editor | [BlockNote](https://www.blocknotejs.org/) (rich text), custom layout engine |
-| UI | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
-| Monorepo | [Turborepo](https://turborepo.dev/) + [Bun](https://bun.sh/) workspaces |
-| Linting | [Biome](https://biomejs.dev/) |
+|---|---|
+| Web | [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/) |
+| Editor | [OpenEditor](https://github.com/EasyLink-HQ/openeditor), Tiptap, and BaseBlocks extensions |
+| Backend | [Convex](https://convex.dev/) |
+| Authentication | [Better Auth](https://www.better-auth.com/) with email/password and social providers |
+| Files | Files SDK with S3-compatible storage |
+| UI | shadcn/ui, Radix UI, Base UI, and Nucleo Glass icons |
+| Monorepo | [Turborepo](https://turborepo.dev/) and [Bun](https://bun.sh/) workspaces |
+| Quality | TypeScript, [Biome](https://biomejs.dev/), Bun Test |
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 18
-- [Bun](https://bun.sh/) >= 1.3
+- [Node.js](https://nodejs.org/) 18 or newer
+- [Bun](https://bun.sh/) 1.3 or newer
 - A [Convex](https://convex.dev/) account
+- An S3-compatible bucket for file uploads
+
+Vercel credentials are only required when developing custom-domain lifecycle features. OAuth credentials are only required for the social providers you enable.
 
 ### Setup
 
 ```bash
-# Clone the repo
-git clone https://github.com/naaiyy/BaseBlocks.git
+git clone https://github.com/BaseBlocks-HQ/BaseBlocks.git
 cd BaseBlocks
 
-# Install dependencies
 bun install
 
-# Set up environment variables
 cp .env.example apps/web/.env.local
 cp .env.example packages/backend/.env.local
-# Edit both files with your Convex deployment URLs and auth origins
+```
 
-# Start development
+Edit the two environment files and fill in the values for their corresponding sections in `.env.example`. At minimum, configure Convex, `BETTER_AUTH_SECRET`, the application URLs, and file storage.
+
+Start the web application and Convex backend:
+
+```bash
 bun run dev
 ```
 
-This starts the Next.js app on `http://localhost:3001` and the Convex backend.
+The web application runs at [http://localhost:3001](http://localhost:3001).
 
-Production note: published subdomains like `team.baseblocks.dev` use Better
-Auth shared cookies on `.baseblocks.dev`, configured in
-`packages/backend/convex/authSetup.ts` via
-`advanced.crossSubDomainCookies`. That is what allows authenticated
-audience-restricted pages to work on `*.baseblocks.dev`. This does not solve
-arbitrary custom domains; custom domain auth will require a separate design.
+### Authentication callbacks
 
-- Google JavaScript origins:
-  - `http://localhost:3001`
-- Google redirect URIs:
-  - `http://localhost:3001/api/auth/callback/google`
-- GitHub callback URLs:
-  - `http://localhost:3001/api/auth/callback/github`
-- Microsoft redirect URIs:
-  - `http://localhost:3001/api/auth/callback/microsoft`
+For local social authentication, configure these provider callbacks:
 
-Microsoft sign-in caveat: if the callback returns to
-`?error=email_not_found`, the redirect URI is usually not the problem. Better
-Auth's Microsoft provider currently expects an `email` claim in the ID token.
-Some Entra accounts, especially managed or external multi-tenant accounts, do
-not include that claim consistently. In the Microsoft app registration, add the
-`email` optional claim for ID tokens and verify the exact account type you want
-to support.
+| Provider | Local callback |
+|---|---|
+| Google | `http://localhost:3001/api/auth/callback/google` |
+| GitHub | `http://localhost:3001/api/auth/callback/github` |
+| Microsoft | `http://localhost:3001/api/auth/callback/microsoft` |
 
-## Project Structure
+Google also requires `http://localhost:3001` as an authorized JavaScript origin.
 
-```
+Production subdomains use Better Auth shared cookies on `.baseblocks.dev`, configured in `packages/backend/convex/authSetup.ts`. Authentication on arbitrary custom domains requires a separate cookie and session design.
+
+Some Microsoft Entra accounts do not include an `email` claim by default. If a callback returns `?error=email_not_found`, add the `email` optional claim for ID tokens in the Microsoft application registration.
+
+## Repository structure
+
+```text
 baseblocks/
 ├── apps/
-│   └── web/                   # Next.js frontend (app router)
-│       ├── app/               # Route definitions (thin layer)
-│       ├── modules/           # Domain modules (self-contained features)
-│       │   ├── dashboard/     # Team dashboard, site cards, libraries
-│       │   ├── documents/     # Document library (upload, folders, viewer)
-│       │   ├── editor/        # Site editor shell (bridges to @baseblocks/editor)
-│       │   ├── elements/      # Block, layout, and section system
-│       │   ├── media-viewer/  # File viewer (PDF, image, video, audio)
-│       │   ├── navigation/    # Page tree, breadcrumbs, nav menus
-│       │   ├── public-site/   # Published site rendering, access control
-│       │   └── team/          # Team management, invitations
-│       ├── components/        # Shared UI only (dialogs, skeletons)
-│       ├── hooks/             # App-level hooks (direct imports, no barrels)
-│       └── lib/               # Utilities by concern (auth/, convex/, storage/)
+│   └── web/
+│       ├── app/                  # Next.js routes and API handlers
+│       ├── components/
+│       │   ├── file-viewer/      # File previews and upload surfaces
+│       │   ├── site-elements/    # Site-specific content primitives
+│       │   └── site-runtime/     # Shared editor/viewer runtime contexts
+│       ├── features/
+│       │   ├── authentication/   # Session and workspace access
+│       │   ├── dashboard/        # Sites, members, and workspace shell
+│       │   ├── editor/           # Editor chrome, rail, pages, and settings
+│       │   ├── editor-v2/        # OpenEditor integration and extensions
+│       │   ├── libraries/        # Document-library management
+│       │   ├── marketing/        # Website, docs, and legal content
+│       │   └── published-sites/  # Public rendering, metadata, and access
+│       ├── i18n/                 # Next.js locale routing
+│       └── lib/                  # Auth, Convex, files, routing, and Vercel
 ├── packages/
-│   ├── backend/               # Convex backend (schema, queries, mutations)
-│   ├── editor/                # Page editor engine (drag-and-drop, layouts, undo)
-│   ├── types/                 # Shared type definitions (zero dependencies)
-│   └── ui/                    # UI component library (shadcn/ui + Radix)
+│   ├── backend/                  # Convex schema, queries, and mutations
+│   ├── domain/                   # Shared domain models and validators
+│   ├── i18n/                     # English and French messages
+│   └── ui/                       # Shared UI components
 ├── tooling/
-│   ├── tsconfig/              # Shared TypeScript configurations
-│   └── tailwind/              # Shared Tailwind CSS and PostCSS config
-├── turbo.json                 # Turborepo task configuration
-├── biome.jsonc                # Linting, formatting, and architectural boundaries
-└── package.json               # Workspace root
+│   └── tsconfig/                 # Shared TypeScript configuration
+├── biome.jsonc                   # Formatting and architectural boundaries
+├── turbo.json                    # Monorepo task graph
+└── package.json                  # Workspace scripts and dependency policy
 ```
 
 ## Scripts
 
 ```bash
-bun run dev          # Start all apps in development mode
-bun run build        # Build all apps and packages
-bun run lint         # Lint and format with Biome
-bun run check-types  # TypeScript type checking
+bun run dev          # Start workspace development processes
+bun run build        # Build the complete workspace
+bun run lint         # Lint the repository with Biome
+bun run format       # Format the repository with Biome
+bun run check-types  # Run workspace TypeScript checks
 ```
+
+Run the editor conversion tests directly with:
+
+```bash
+bun test apps/web/features/editor-v2/conversion
+```
+
+## Storage
+
+File storage is selected through environment variables. The current adapter supports S3-compatible services including AWS S3, Cloudflare R2, MinIO, Backblaze B2, and compatible hosted buckets.
+
+Relevant settings include:
+
+- `FILES_BUCKET`
+- `FILES_ENDPOINT`
+- `FILES_REGION`
+- `FILES_FORCE_PATH_STYLE`
+- `FILES_ACCESS_KEY_ID`
+- `FILES_SECRET_ACCESS_KEY`
+- `FILES_MAX_UPLOAD_SIZE_BYTES`
+
+Document text extraction can be connected through `EXTRACTION_API_URL` and `EXTRACTION_API_SECRET`.
+
+## Roadmap
+
+Active areas of work include:
+
+- Continued editor polish and accessibility
+- Historical publishing snapshots and rollback
+- Broader custom-block APIs
+- Templates and starter sites
+- Analytics and insights
+- Public APIs and embeddable surfaces
+- AI-assisted site creation and editing
+
+The roadmap is directional. Repository issues and documentation are the source of truth for shipped behavior.
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions, coding standards, and PR guidelines.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for local development, code standards, and pull-request guidance.
 
 ## License
 
