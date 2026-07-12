@@ -464,14 +464,6 @@ function QuickLinksGrid({
   return (
     <section className="not-prose my-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
-        {links.map((link) => (
-          <QuickLinkCard
-            editable={editable}
-            key={link.id}
-            link={link}
-            onEdit={() => setDraft({ originalId: link.id, value: { ...link } })}
-          />
-        ))}
         {editable ? (
           <button
             className="flex min-h-[70px] items-center justify-center gap-2 rounded-2xl border border-dashed text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -482,6 +474,14 @@ function QuickLinksGrid({
             Add link
           </button>
         ) : null}
+        {links.map((link) => (
+          <QuickLinkCard
+            editable={editable}
+            key={link.id}
+            link={link}
+            onEdit={() => setDraft({ originalId: link.id, value: { ...link } })}
+          />
+        ))}
       </div>
       {draft ? (
         <QuickLinkForm
