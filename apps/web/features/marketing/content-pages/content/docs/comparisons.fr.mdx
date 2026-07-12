@@ -9,7 +9,7 @@ import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
 BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier du contenu interne. Cette page le compare aux alternatives les plus courantes — honnêtement et sur la base de faits vérifiables.
 
 <Callout type="info" title="Note d'équité">
-  Cette comparaison est maintenue par l'équipe BaseBlocks. Nous avons fait de notre mieux pour représenter chaque produit avec précision. Si quelque chose est incorrect ou obsolète, [ouvrez un ticket](https://github.com/naaiyy/BaseBlocks/issues).
+  Cette comparaison est maintenue par l'équipe BaseBlocks. Nous avons fait de notre mieux pour représenter chaque produit avec précision. Si quelque chose est incorrect ou obsolète, [ouvrez un ticket](https://github.com/BaseBlocks-HQ/BaseBlocks/issues).
 </Callout>
 
 ## En un coup d'œil
@@ -18,7 +18,7 @@ BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier 
 |---|---|---|---|---|---|---|
 | Open source | **Oui (MIT)** | Non | Non | Non | Frontend uniquement | Oui (MIT) |
 | Auto-hébergeable | **Oui** | On-prem (complexe) | Déprécié 2026 | Non | Frontend uniquement | Oui (Docker) |
-| Éditeur glisser-déposer | **Oui** | Partiel | Non | Basé sur blocs | Non | Non |
+| Éditeur par blocs | **Oui** | Partiel | Oui | Oui | Oui | Oui |
 | Flux brouillon / publication | **Oui** | Au niveau page | Oui + Live Docs | Non (immédiat) | Demandes de modification | Non (immédiat) |
 | Publication de site public | **Oui** | Non | Non | Oui (Notion Sites) | Oui | Non |
 | Multi-tenant | **Oui** | Non | Non | Non | Non | Non |
@@ -44,7 +44,7 @@ BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier 
 
 **Avantages de BaseBlocks :**
 - Aucun coût de licence par utilisateur — BaseBlocks est gratuit et open source
-- Éditeur visuel glisser-déposer vs le système de composants WebPart de SharePoint (fonctionnel mais pas moderne)
+- Éditeur par blocs plus clair face au système de composants WebPart de SharePoint
 - Identité visuelle personnalisée par site sans administration enterprise lourde
 - Multi-tenant par conception — gérez des espaces de travail d'équipe séparés depuis un seul déploiement
 - Auto-hébergeable sans engagement d'infrastructure ; SharePoint on-premises est une entreprise considérable
@@ -72,7 +72,7 @@ BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier 
 **Avantages de BaseBlocks :**
 - Open source et gratuit — Confluence Cloud commence à 6,40 $/utilisateur/mois ; pour 50 utilisateurs, c'est 320 $/mois
 - Auto-hébergeable : Confluence déprécie les nouvelles ventes de licences Data Center (auto-hébergées) à partir de mars 2026 — cette voie est éliminée
-- Éditeur de mise en page visuel glisser-déposer ; Confluence utilise un éditeur basé sur des blocs sans contrôle de mise en page
+- Éditeur de blocs ouvert et extensible avec des blocs interactifs propres à BaseBlocks
 - Publication de site public — Confluence n'a pas de sortie de site public native
 - Identité visuelle personnalisée par site ; la personnalisation Confluence est limitée
 
@@ -126,7 +126,7 @@ BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier 
 **Avantages de BaseBlocks :**
 - Entièrement open source et auto-hébergeable — la plateforme de contenu de GitBook est propriétaire ; seul le frontend de rendu est open source
 - Pas de tarification par site — GitBook Pro coûte 65 $/site/mois de base plus 12 $/utilisateur/mois ; les configurations multi-sites deviennent rapidement coûteuses
-- Éditeur de mise en page visuel glisser-déposer ; GitBook utilise un éditeur basé sur des blocs sans contrôle de mise en page
+- Éditeur extensible avec des blocs interactifs de site, répertoire, bibliothèque, recherche et arbre de décision
 - Multi-tenant par conception ; GitBook n'est pas conçu pour gérer des espaces de travail client/équipe séparés
 
 **À savoir :**
@@ -150,7 +150,7 @@ BaseBlocks est l'un des nombreux outils utilisés par les équipes pour publier 
 - Interface claire et rapide avec édition orientée clavier
 
 **Avantages de BaseBlocks :**
-- Éditeur de mise en page visuel glisser-déposer ; Outline utilise un éditeur de blocs ProseMirror sans contrôle de mise en page
+- Extensions de création de sites et publication publique intégrées à l'éditeur
 - Publication de site public — Outline est un outil interne uniquement ; il n'y a pas de sortie de site public ni de flux de déploiement
 - Vrai modèle brouillon / publication — les modifications Outline sont visibles par l'équipe immédiatement ; il n'y a pas d'étape de staging
 - Conception multi-tenant — BaseBlocks gère des espaces de travail d'équipe séparés ; Outline est mono-espace de travail par installation

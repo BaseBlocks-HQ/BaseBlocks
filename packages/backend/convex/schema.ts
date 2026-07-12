@@ -116,6 +116,18 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
 
+  // Native content lives separately so retaining a full legacy snapshot cannot
+  // push a pageContents document over Convex's per-document size limit.
+  openEditorPageContents: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    document: v.any(),
+    migratedAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"]),
+
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
@@ -186,5 +198,4 @@ export default defineSchema({
       searchField: "text",
       filterFields: ["siteId", "kind"],
     }),
-
 });

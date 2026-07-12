@@ -37,6 +37,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 
 interface EditorFloatingRailProps {
+  engine?: "openeditor" | "legacy";
   site: {
     _id: string;
     defaultPageId?: string;
@@ -382,6 +383,7 @@ function RailPanel({
 }
 
 export function EditorFloatingRail({
+  engine = "openeditor",
   site,
   pages,
   selectedPageId,
@@ -459,7 +461,11 @@ export function EditorFloatingRail({
     >
       <div className="rounded-full border border-sidebar-border bg-sidebar/95 p-2 text-sidebar-foreground backdrop-blur-md">
         <div className="flex flex-row gap-1 md:flex-col">
-          {RAIL_ITEMS.map((item) => {
+          {RAIL_ITEMS.filter(
+            (item) =>
+              engine === "legacy" ||
+              (item.id !== "sections" && item.id !== "blocks"),
+          ).map((item) => {
             const requiresSlot = item.id === "blocks";
             const disabled =
               (!canEdit && item.id !== "pages") ||

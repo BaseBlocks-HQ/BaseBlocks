@@ -45,16 +45,22 @@ function pagePath(page: Doc<"pages">, pagesById: Map<string, Doc<"pages">>) {
 }
 
 async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
-  const content = await ctx.db
-    .query("pageContents")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  return content
-    ? {
-        tabs: content.tabs,
-        sections: hydrateDeepBlockContent(content.sections),
-      }
-    : { tabs: [], sections: [] };
+  const [legacy, native] = await Promise.all([
+    ctx.db
+      .query("pageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique(),
+    ctx.db
+      .query("openEditorPageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique(),
+  ]);
+  return {
+    tabs: legacy?.tabs ?? [],
+    sections: legacy ? hydrateDeepBlockContent(legacy.sections) : [],
+    openEditorDocument: native?.document,
+    migratedAt: native?.migratedAt,
+  };
 }
 
 export const resolve = query({
@@ -172,12 +178,20 @@ export const resolve = query({
         site.updatedAt,
         page?.updatedAt ?? 0,
         page
-          ? ((
-              await ctx.db
-                .query("pageContents")
-                .withIndex("by_page", (q) => q.eq("pageId", page._id))
-                .unique()
-            )?.updatedAt ?? 0)
+          ? Math.max(
+              (
+                await ctx.db
+                  .query("pageContents")
+                  .withIndex("by_page", (q) => q.eq("pageId", page._id))
+                  .unique()
+              )?.updatedAt ?? 0,
+              (
+                await ctx.db
+                  .query("openEditorPageContents")
+                  .withIndex("by_page", (q) => q.eq("pageId", page._id))
+                  .unique()
+              )?.updatedAt ?? 0,
+            )
           : 0,
       ),
     };

@@ -1,6 +1,6 @@
 ---
 title: Qu'est-ce que BaseBlocks
-description: BaseBlocks est un constructeur de sites open source pour les équipes — éditeur glisser-déposer, flux brouillon/publication et espaces de travail multi-tenant inclus.
+description: BaseBlocks est un constructeur de sites open source avec édition par blocs, publication, contrôle d'accès et plusieurs espaces de travail.
 icon: BadgeSparkle
 ---
 
@@ -14,8 +14,8 @@ La plupart des équipes se retrouvent avec du contenu éparpillé entre un wiki,
 
 BaseBlocks donne aux équipes un vrai constructeur de sites avec :
 
-- Un éditeur visuel glisser-déposer — sans Markdown, sans code
-- Un modèle brouillon et publication — les modifications restent privées jusqu'à ce que vous soyez prêt
+- Un éditeur visuel par blocs — sans Markdown ni code
+- Des contrôles pour publier ou retirer un site
 - Une vraie URL — chaque site obtient un sous-domaine que votre équipe peut mettre en favoris
 - Un contrôle d'accès — décidez qui peut modifier, publier ou simplement consulter
 
@@ -31,19 +31,15 @@ Une collection de pages publiées sous un seul chemin URL (`votre-equipe.baseblo
 
 ### Page
 
-Une page à l'intérieur d'un site. Les pages sont organisées en arborescence et peuvent être imbriquées en sous-pages. Chaque page contient des mises en page et des blocs.
-
-### Mise en page
-
-Une ligne sur la page. Les mises en page contiennent un ou plusieurs emplacements (colonnes) où les blocs sont placés.
+Une page à l'intérieur d'un site. Les pages sont organisées en arborescence et peuvent être imbriquées en sous-pages. Chaque page contient un document ordonné de blocs. Les pages créées avec l'ancien éditeur sont converties pour le nouvel éditeur, tandis que leur contenu d'origine reste accessible dans l'Éditeur classique pendant la bêta.
 
 ### Bloc
 
-Un contenu à l'intérieur d'un emplacement de mise en page. Titres, paragraphes, images, blocs de code, encadrés et bien plus.
+Un contenu dans le document de la page : titres, paragraphes, listes, images, pièces jointes, pages, blocs de code, encadrés, diagrammes, extensions interactives BaseBlocks et plus encore.
 
-### Brouillon / Publié
+### Publié / Non publié
 
-Chaque site existe dans deux états. Les modifications vont toujours au brouillon. La publication copie le brouillon vers le site publié. Les visiteurs voient la version publiée. La restauration remplace la version publiée par un instantané précédent.
+La publication rend le site accessible à son URL générée et sur son domaine personnalisé vérifié. Le retrait coupe l'accès public sans supprimer le contenu. Les sites publiés affichent actuellement le dernier contenu enregistré ; les déploiements par instantané et la restauration ne sont pas encore disponibles.
 
 ## À qui s'adresse-t-il
 
@@ -62,6 +58,6 @@ BaseBlocks convient à toute équipe qui a besoin d'un site interne qu'elle peut
 
 BaseBlocks est sous licence MIT. Vous pouvez l'héberger vous-même, le forker ou y contribuer.
 
-<GithubInfo owner="naaiyy" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
+<GithubInfo owner="BaseBlocks-HQ" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
 
 Hébergé dans le cloud sur [baseblocks.dev](https://baseblocks.dev) — gratuit pour commencer.

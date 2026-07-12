@@ -1,6 +1,6 @@
 ---
 title: What is BaseBlocks
-description: BaseBlocks is an open-source site builder for teams — drag-and-drop pages, draft/publish flow, and multi-tenant workspaces out of the box.
+description: BaseBlocks is an open-source site builder for teams with block editing, publishing, access control, and multi-workspace support.
 icon: BadgeSparkle
 ---
 
@@ -14,8 +14,8 @@ Most teams end up with content spread across a wiki, a Google Drive folder, a No
 
 BaseBlocks gives teams a proper site builder with:
 
-- A visual drag-and-drop editor — no Markdown, no code required
-- A draft and publish model — edits stay private until you're ready
+- A visual block editor — no Markdown or code required
+- Site publishing and unpublishing controls
 - A real URL — every site gets a subdomain your team can bookmark
 - Access control — decide who can edit, publish, or just view
 
@@ -31,19 +31,15 @@ A collection of pages published under a single URL path (`your-team.baseblocks.d
 
 ### Page
 
-A page inside a site. Pages are organized in a tree and can be nested into child pages. Each page has sections, columns, and blocks.
-
-### Section
-
-A structural row on the page. A section owns one or two columns where blocks are placed.
+A page inside a site. Pages are organized in a tree and can be nested into child pages. Each page has an ordered block document. Pages created with the previous layout editor are converted for the new editor while their original content remains available through the Legacy Editor during the beta.
 
 ### Block
 
-A piece of content inside a column. Headings, paragraphs, images, code blocks, callouts, and more.
+A piece of content in the page document: headings, paragraphs, lists, images, attachments, pages, code blocks, callouts, diagrams, interactive BaseBlocks extensions, and more.
 
-### Draft / Live
+### Published / Unpublished
 
-Every site has two states. Edits always go to draft. Publishing copies the draft to live. Visitors see the live version. Rollback replaces the live version with any previous snapshot.
+Publishing makes the site available at its generated URL and verified custom domain. Unpublishing removes public access without deleting content. Published sites currently show the latest saved content; snapshot deployments and rollback are not yet available.
 
 ## Who it's for
 
@@ -62,6 +58,6 @@ BaseBlocks works for any team that needs an internal site they can actually main
 
 BaseBlocks is MIT licensed. You can self-host it, fork it, or contribute to it.
 
-<GithubInfo owner="naaiyy" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
+<GithubInfo owner="BaseBlocks-HQ" repo="BaseBlocks" token={process.env.GITHUB_TOKEN} />
 
 Cloud-hosted at [baseblocks.dev](https://baseblocks.dev) — free to get started.

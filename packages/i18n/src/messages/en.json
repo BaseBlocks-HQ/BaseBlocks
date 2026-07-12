@@ -153,7 +153,15 @@
       "deploymentHistory": "Deployment history",
       "deployChanges": "Deploy changes",
       "deployShort": "Deploy",
-      "publishedStatus": "Published"
+      "publishedStatus": "Published",
+      "legacyEditor": "Legacy Editor",
+      "newEditor": "New Editor",
+      "beta": "Beta",
+      "newEditorDialogTitle": "Meet the new editor",
+      "newEditorDialogDescription": "We moved to a cleaner block editor that makes writing, organizing, and extending your pages easier.",
+      "newEditorDialogBetaBody": "The new editor is still in beta. We are actively fixing rough edges and refining the experience while you use it.",
+      "newEditorDialogFallbackBody": "If something does not look or behave as expected, you can switch to the Legacy Editor at any time. Your original page remains available there during the transition.",
+      "openLegacyEditor": "Open Legacy Editor"
     },
     "picker": {
       "categories": {
@@ -168,7 +176,9 @@
     "pageEditor": {
       "emptyWithTabs": "Add a layout to this tab",
       "emptyNoTabs": "Add a layout to get started",
-      "pageNotFound": "Page not found"
+      "pageNotFound": "Page not found",
+      "loading": "Loading page…",
+      "saveFailed": "Failed to save page"
     },
     "pageTabBar": {
       "renameTab": "Rename tab",

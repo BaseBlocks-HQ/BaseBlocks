@@ -604,6 +604,15 @@ export const remove = mutation({
     await Promise.all(
       pageContents.map((content) => ctx.db.delete("pageContents", content._id)),
     );
+    const openEditorPageContents = await ctx.db
+      .query("openEditorPageContents")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    await Promise.all(
+      openEditorPageContents.map((content) =>
+        ctx.db.delete("openEditorPageContents", content._id),
+      ),
+    );
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

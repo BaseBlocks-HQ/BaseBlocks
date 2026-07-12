@@ -7,22 +7,20 @@ icon: Palette
 Each site has its own branding settings, independent of other sites in the team. Changes apply to the live site immediately — you don't need to publish for branding changes to take effect.
 
 Access these settings from the floating rail on the left edge of the editor:
-- **Customization** (palette icon) — accent color, header background, and border radius
+- **Customization** (palette icon) — light and dark accent, header, secondary, and tertiary colors; an optional header gradient; and border radius
 - **Navigation** (sitemap icon) — navigation style
 
 ## Accent color
 
 The primary interactive color used across the site — links, buttons, active states, and focus rings.
 
-Set as a hex value (e.g., `#3b82f6`) or an HSL value. The editor shows a live preview as you type.
+Choose separate light and dark values. The editor previews the same theme variables used by the published site.
 
 The accent color cascades through the site via CSS custom properties (`--accent`). All interactive elements inherit it automatically.
 
-## Header background
+## Header and supporting colors
 
-The background color of the site navigation header. Defaults to the site's background color.
-
-Setting a distinct header background helps establish visual hierarchy, especially on sites with a light content area and a darker branded nav bar.
+Header, secondary, and tertiary colors can each be configured for light and dark themes. Enable the header gradient to blend the accent and supporting colors across the published header.
 
 ## Border radius
 
@@ -43,7 +41,7 @@ Controls how navigation is rendered on the public site. Set from the **Navigatio
 | Style | Description |
 |---|---|
 | Sidebar | Vertical page tree in a persistent left sidebar |
-| Top Nav | Horizontal menu in the header with dropdowns for nested pages |
-| Tab Bar | Horizontal tab bar below the header |
+| Top Nav | Horizontal navigation in the header |
+| Subnav | Horizontal navigation below the header |
 
 Navigation style affects the live site only. The editor always shows the default editor chrome.

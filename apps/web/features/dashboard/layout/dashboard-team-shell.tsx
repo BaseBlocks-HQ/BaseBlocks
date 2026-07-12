@@ -31,7 +31,7 @@ export function DashboardTeamShell({
     pathname.startsWith(siteEditorPathPrefix) &&
     (siteEditorPathSegments.length === 1 ||
       (siteEditorPathSegments.length === 2 &&
-        siteEditorPathSegments[1] === "v2"));
+        ["legacy", "migration", "v2"].includes(siteEditorPathSegments[1]!)));
 
   useEffect(() => {
     if (!boundary) return;

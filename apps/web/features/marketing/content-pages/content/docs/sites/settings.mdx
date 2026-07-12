@@ -4,7 +4,7 @@ description: Configure a site's name, slug, visibility, and metadata.
 icon: Toggle
 ---
 
-Access site settings from the editor header → **Settings**, or from the team dashboard by clicking the settings icon on a site card.
+Access site settings from the **Site** panel in the editor rail. Basic site actions are also available from the site card on the team dashboard.
 
 ## General
 
@@ -16,11 +16,19 @@ Access site settings from the editor header → **Settings**, or from the team d
 https://your-team.baseblocks.dev/[site-slug]
 ```
 
-<Callout type="warn">
-  Changing the site slug changes the URL for every page in the site. Existing links and bookmarks will break. There is no automatic redirect.
+<Callout type="info">
+  The site slug is chosen when the site is created and cannot currently be changed from Site Settings.
 </Callout>
 
-**Meta description** — A short description used in browser tab previews, social sharing cards (Open Graph), and search engine snippets. Keep it under 160 characters.
+**Site metadata** — Configure the browser title, description, keywords, favicon, and Open Graph image used by published pages.
+
+## Header and navigation
+
+Choose whether to show the published-site header, logo, site name, header search, and breadcrumbs. Sidebar navigation can start expanded or collapsed. Navigation style is configured from the separate **Navigation** rail panel.
+
+## Custom domains
+
+Add a hostname such as `docs.example.com` from the Custom Domain section. BaseBlocks reports the required DNS record and verification status. After DNS is configured and verified, the published site opens at the root of that domain with TLS managed automatically.
 
 ## Visibility
 
@@ -37,7 +45,7 @@ See [Site Visibility](/docs/publishing/visibility) for details on each mode.
 
 ## Deleting a site
 
-Site deletion is available from the bottom of Site Settings. Deleting a site removes all pages, sections, blocks, documents, and snapshots permanently.
+Site deletion is available from the site controls. Deleting a site removes its pages, legacy and new-editor content, documents, assets, domains, access sessions, and search entries permanently.
 
 <Callout type="error">
   Site deletion is permanent and cannot be undone. There is no recovery path after deletion.

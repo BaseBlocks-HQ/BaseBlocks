@@ -1,6 +1,10 @@
 "use client";
 
 import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
+import { useSiteRenderActions } from "@/components/site-runtime/actions";
+import { convertLegacyPageToOpenEditor } from "@/features/editor-v2/conversion/convert-page";
+import { editorV2Extensions } from "@/features/editor-v2/extensions";
+import { baseBlocksOpenEditorTheme } from "@/features/editor-v2/openeditor-theme";
 import { PublicPagePanel } from "@/features/published-sites/page-panel";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { ElementRenderer } from "@/components/site-runtime/rendering";
@@ -23,12 +27,25 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import type { OpenEditorDocument } from "@openeditor/core";
+import {
+  OpenEditorViewer,
+  type OpenEditorPageRuntime,
+} from "@openeditor/react";
+import { OpenEditorThemeProvider } from "@openeditor/ui";
+import "@openeditor/ui/styles.css";
+import { useEffect, useMemo, useState } from "react";
+
+type ResolvedPageStructure = PageStructure & {
+  openEditorDocument?: OpenEditorDocument;
+  migratedAt?: number;
+};
 
 interface PublicPageContentProps {
   pageId: string;
   initialPage?: { title: string };
-  initialStructure?: PageStructure;
+  initialStructure?: ResolvedPageStructure;
+  pageTitles?: ReadonlyMap<string, string>;
   nested?: boolean;
 }
 
@@ -76,7 +93,7 @@ function PublishedSection({ section }: { section: SectionData }) {
   );
 }
 
-function PublicMainContent({
+function _PublicMainContent({
   pageTitle,
   pageTabs,
   activeTabId,
@@ -149,6 +166,7 @@ export function PublicPageContent({
   initialPage,
   initialStructure,
   nested,
+  pageTitles = new Map(),
 }: PublicPageContentProps) {
   const { viewingPage, closePage } = usePagePanelState();
   const showPagePanel = !nested && !!viewingPage;
@@ -167,11 +185,24 @@ export function PublicPageContent({
   const structure = initialStructure ?? queriedStructure;
   const isMobile = useIsMobile();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedTabId, setSelectedTabId] = useState<string | null>(null);
-  const pageTabs = structure?.tabs ?? [];
-  const activeTabId = pageTabs.some((tab) => tab.id === selectedTabId)
-    ? selectedTabId
-    : (pageTabs[0]?.id ?? null);
+  const actions = useSiteRenderActions();
+  const openEditorDocument = useMemo(() => {
+    if (!structure) return null;
+    return (
+      structure.openEditorDocument ??
+      convertLegacyPageToOpenEditor(structure, { pageTitles }).document
+    );
+  }, [pageTitles, structure]);
+  const pageRuntime = useMemo<OpenEditorPageRuntime>(
+    () => ({
+      resolvePage: async (targetPageId) => ({
+        pageId: targetPageId,
+        title: pageTitles.get(targetPageId) ?? "Untitled",
+      }),
+      openPage: ({ pageId: targetPageId }) => actions.openPage?.(targetPageId),
+    }),
+    [actions, pageTitles],
+  );
 
   useEffect(() => {
     if (!viewingPage) return;
@@ -202,13 +233,22 @@ export function PublicPageContent({
 
   const mainContent = (
     <div className="h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
-      <PublicMainContent
-        pageTitle={page.title}
-        pageTabs={pageTabs}
-        activeTabId={activeTabId}
-        structure={structure}
-        onTabChange={setSelectedTabId}
-      />
+      <article className="mx-auto max-w-4xl px-4 py-8 md:px-8">
+        <h1 className="mb-8 text-3xl font-bold">{page.title}</h1>
+        {openEditorDocument ? (
+          <OpenEditorThemeProvider
+            className="contents"
+            theme={baseBlocksOpenEditorTheme}
+          >
+            <OpenEditorViewer
+              className="oe-viewer"
+              document={openEditorDocument}
+              extensions={editorV2Extensions}
+              pageRuntime={pageRuntime}
+            />
+          </OpenEditorThemeProvider>
+        ) : null}
+      </article>
     </div>
   );
 

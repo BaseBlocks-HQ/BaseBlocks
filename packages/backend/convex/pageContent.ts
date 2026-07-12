@@ -50,12 +50,17 @@ export const pageSectionValidator = v.object({
 export const pageContentValidator = v.object({
   tabs: v.array(pageTabValidator),
   sections: v.array(pageSectionValidator),
+  openEditorDocument: v.optional(v.any()),
+  migratedAt: v.optional(v.number()),
 });
 
 // Leave headroom for page/site IDs, timestamps, and Convex's document fields.
 const MAX_PAGE_CONTENT_BYTES = 900_000;
 
-const emptyContent = { tabs: [], sections: [] };
+const emptyContent: typeof pageContentValidator.type = {
+  tabs: [],
+  sections: [],
+};
 
 const SERIALIZED_CONTENT_KEY = "__baseblocksSerializedContent";
 
@@ -142,16 +147,22 @@ function normalizeContent(content: typeof pageContentValidator.type) {
 }
 
 async function getContent(ctx: Pick<QueryCtx, "db">, pageId: Id<"pages">) {
-  const document = await ctx.db
-    .query("pageContents")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  return document
-    ? {
-        tabs: document.tabs,
-        sections: hydrateDeepBlockContent(document.sections),
-      }
-    : emptyContent;
+  const [legacy, native] = await Promise.all([
+    ctx.db
+      .query("pageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique(),
+    ctx.db
+      .query("openEditorPageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique(),
+  ]);
+  return {
+    tabs: legacy?.tabs ?? [],
+    sections: legacy ? hydrateDeepBlockContent(legacy.sections) : [],
+    openEditorDocument: native?.document,
+    migratedAt: native?.migratedAt,
+  };
 }
 
 export const get = query({
@@ -191,7 +202,10 @@ export const save = mutation({
       resource: "content",
       action: "edit",
     });
-    const normalized = normalizeContent(structuredClone(content));
+    const normalized = normalizeContent({
+      tabs: structuredClone(content.tabs),
+      sections: structuredClone(content.sections),
+    });
     const stored = {
       ...normalized,
       sections: serializeDeepBlockContent(normalized.sections),
@@ -211,6 +225,60 @@ export const save = mutation({
         siteId: page.siteId,
         pageId,
         ...stored,
+        updatedAt,
+      });
+    }
+    await ctx.db.patch("pages", pageId, { updatedAt });
+    return null;
+  },
+});
+
+/**
+ * Saves the native OpenEditor representation without modifying the legacy
+ * tabs/sections snapshot. The first save is the migration boundary.
+ */
+export const saveOpenEditorDocument = mutation({
+  args: { pageId: v.id("pages"), document: v.any() },
+  returns: v.null(),
+  handler: async (ctx, { pageId, document }) => {
+    const page = await ctx.db.get("pages", pageId);
+    if (!page) throw new ConvexError("Page not found");
+    const site = await ctx.db.get("sites", page.siteId);
+    if (!site) throw new ConvexError("Site not found");
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
+    if (
+      !document ||
+      typeof document !== "object" ||
+      document.type !== "doc" ||
+      document.version !== 1 ||
+      !Array.isArray(document.content)
+    ) {
+      throw new ConvexError("Invalid OpenEditor document");
+    }
+    if (getConvexSize(document) > MAX_PAGE_CONTENT_BYTES) {
+      throw new ConvexError(
+        "This page is too large. Split it into child pages.",
+      );
+    }
+    const existing = await ctx.db
+      .query("openEditorPageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique();
+    const updatedAt = Date.now();
+    if (existing) {
+      await ctx.db.patch("openEditorPageContents", existing._id, {
+        document,
+        updatedAt,
+      });
+    } else {
+      await ctx.db.insert("openEditorPageContents", {
+        siteId: page.siteId,
+        pageId,
+        document,
+        migratedAt: updatedAt,
         updatedAt,
       });
     }

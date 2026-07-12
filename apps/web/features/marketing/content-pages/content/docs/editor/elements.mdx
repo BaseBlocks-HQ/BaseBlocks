@@ -1,12 +1,10 @@
 ---
 title: Elements
-description: Elements are content blocks placed inside columns.
+description: Elements are the blocks that make up an editor document.
 icon: SquareGrid
 ---
 
-An element is a block inside a column. Select a column in the page editor, open the block picker, then choose an element to insert it.
-
-A column can hold any number of blocks. Drag blocks to reorder them or move them between columns.
+An element is a block in the page document. Type `/` in the new editor to open the insertion menu. Text formatting is available from the selection toolbar.
 
 ## Blocks
 
@@ -18,7 +16,7 @@ General-purpose content units.
 
 **Paragraph** — Plain text block. Supports basic inline formatting (bold, italic, links).
 
-**Rich Text** — Full-featured text editor with headings, lists, inline code, links, images, and more. Use for longer-form content where Paragraph is too limited.
+**Lists and tasks** — Bulleted, numbered, task, toggle, and nested list content.
 
 **Callout** — A highlighted notice box. Supports info, warning, error, and success variants. Use for important notes, tips, or alerts.
 
@@ -29,8 +27,6 @@ General-purpose content units.
 **Spacer** — Vertical whitespace between nearby blocks.
 
 **Page** — Embeds a card or list linking to a page. Useful on parent pages that act as index pages for a section.
-
-**Banner** — A wide, styled announcement strip. Supports a headline, body text, and an optional call-to-action button.
 
 **Directory** — Renders a directory listing of pages. Useful for building navigation hubs or listing all pages in a section.
 
@@ -56,10 +52,6 @@ Larger content blocks for navigation and discovery.
 
 **File** — Displays a downloadable file attachment with filename, file type, and size. Stored in the site's document library.
 
-### Forms
-
-**Form** — A form builder element. Add fields (text, email, select, checkbox, and more), set labels and validation, and connect submissions to a destination.
-
-<Callout type="warn" title="Custom elements — coming soon">
-  A public elements API for registering custom React elements will be available in a future release. Custom elements will appear in the picker alongside built-in ones.
+<Callout type="info">
+  BaseBlocks-specific blocks such as Directory, Search, Library, Quick Links, and Decision Tree are implemented as editor extensions and render in both the editor and published viewer.
 </Callout>

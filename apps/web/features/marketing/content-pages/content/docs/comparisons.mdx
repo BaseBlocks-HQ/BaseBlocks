@@ -9,7 +9,7 @@ import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
 BaseBlocks is one of several tools teams use to publish internal content. This page compares it to the most common alternatives — honestly and based on verifiable facts.
 
 <Callout type="info" title="Fairness note">
-  This comparison is maintained by the BaseBlocks team. We've done our best to represent each product accurately. If something is wrong or outdated, [open an issue](https://github.com/naaiyy/BaseBlocks/issues).
+  This comparison is maintained by the BaseBlocks team. We've done our best to represent each product accurately. If something is wrong or outdated, [open an issue](https://github.com/BaseBlocks-HQ/BaseBlocks/issues).
 </Callout>
 
 ## At a glance
@@ -18,7 +18,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 |---|---|---|---|---|---|---|
 | Open source | **Yes (MIT)** | No | No | No | Frontend only | Yes (MIT) |
 | Self-hostable | **Yes** | On-prem (complex) | Deprecated 2026 | No | Frontend only | Yes (Docker) |
-| Drag-and-drop editor | **Yes** | Partial | No | Block-based | No | No |
+| Block editor | **Yes** | Partial | Yes | Yes | Yes | Yes |
 | Draft / publish flow | **Yes** | Page-level | Yes + Live Docs | No (immediate) | Change requests | No (immediate) |
 | Public site publishing | **Yes** | No | No | Yes (Notion Sites) | Yes | No |
 | Multi-tenant | **Yes** | No | No | No | No | No |
@@ -44,7 +44,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 
 **Where BaseBlocks wins:**
 - No per-user licensing cost — BaseBlocks is free and open source
-- Visual drag-and-drop editor vs SharePoint's web-part system (functional but not modern)
+- Cleaner block editor vs SharePoint's web-part system
 - Per-site custom branding without enterprise admin overhead
 - Multi-tenant by design — manage separate team workspaces from one deployment
 - Self-hostable with no infrastructure commitment; SharePoint on-premises is a significant undertaking
@@ -72,7 +72,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 **Where BaseBlocks wins:**
 - Open source and free — Confluence Cloud starts at $6.40/user/month; for 50 users that's $320/month
 - Self-hostable: Confluence is deprecating new Data Center (self-hosted) license sales from March 2026 — this path is being eliminated
-- Visual drag-and-drop layout editor; Confluence uses a block-based editor without layout control
+- Open, extensible block editor with BaseBlocks-specific interactive blocks
 - Public site publishing — Confluence has no native public-facing site output
 - Per-site custom branding; Confluence theming is limited
 
@@ -126,7 +126,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 **Where BaseBlocks wins:**
 - Fully open source and self-hostable — GitBook's content platform is proprietary; only the rendering frontend is open source
 - No per-site pricing — GitBook Pro costs $65/site/month base plus $12/user/month; multi-site setups become expensive quickly
-- Visual drag-and-drop layout editor; GitBook uses a block-based editor without layout control
+- Extensible editor with interactive site, directory, library, search, and decision-tree blocks
 - Multi-tenant by design; GitBook is not designed for managing separate customer/team workspaces
 
 **Things to know:**
@@ -150,7 +150,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Clean, fast interface with keyboard-first editing
 
 **Where BaseBlocks wins:**
-- Visual drag-and-drop layout editor; Outline uses a ProseMirror block editor without layout control
+- Site-building extensions and public publishing integrated with the editor
 - Public site publishing — Outline is an internal tool only; there is no public-facing site output or deploy workflow
 - True draft / publish model — Outline changes are live to the team immediately; there is no staging step
 - Multi-tenant design — BaseBlocks manages separate team workspaces; Outline is single-workspace per installation

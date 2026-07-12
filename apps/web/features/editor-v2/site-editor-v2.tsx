@@ -12,7 +12,10 @@ import {
   type OpenEditorPageRuntime,
   useOpenEditorController,
 } from "@openeditor/react";
-import type { OpenEditorAttachmentRuntime } from "@openeditor/core";
+import type {
+  OpenEditorAttachmentRuntime,
+  OpenEditorDocument,
+} from "@openeditor/core";
 import {
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
@@ -28,7 +31,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
 import { editorV2Extensions } from "./extensions";
 import { blockParity, type ParityStatus } from "./parity/block-parity";
@@ -44,16 +47,18 @@ const statusClass: Record<ParityStatus, string> = {
 export function SiteEditorV2({
   siteId,
   teamSlug,
+  migrationTools = false,
 }: {
   siteId: string;
   teamSlug: string;
+  migrationTools?: boolean;
 }) {
   const { team } = useTeamAccess();
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
   const [mode, setMode] = useState<"editor" | "viewer">("editor");
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(migrationTools);
 
   const site = useQuery(api.sites.get, { siteId: siteId as Id<"sites"> });
   const pages = useQuery(api.pages.list, { siteId: siteId as Id<"sites"> });
@@ -136,6 +141,11 @@ export function SiteEditorV2({
   const conversion = convertLegacyPageToOpenEditor(resolvedLegacyContent, {
     pageTitles,
   });
+  const initialDocument =
+    (resolvedLegacyContent.openEditorDocument as
+      | OpenEditorDocument
+      | undefined) ?? conversion.document;
+  const isMigrated = resolvedLegacyContent.openEditorDocument !== undefined;
   return (
     <SiteRenderActionsProvider actions={{ siteId: siteId as Id<"sites"> }}>
       <div className="flex h-screen min-h-0 w-full flex-col overflow-hidden bg-background">
@@ -144,9 +154,9 @@ export function SiteEditorV2({
             <div className="flex min-w-0 items-center gap-3">
               <Button asChild size="sm" variant="ghost">
                 <Link
-                  href={`/dashboard/${teamSlug}/sites/${siteId}${selectedPage ? `?page=${selectedPage._id}` : ""}`}
+                  href={`/dashboard/${teamSlug}/sites/${siteId}/legacy${selectedPage ? `?page=${selectedPage._id}` : ""}`}
                 >
-                  <ArrowLeft className="size-4" /> Legacy editor
+                  <ArrowLeft className="size-4" /> Legacy snapshot
                 </Link>
               </Button>
               <div className="min-w-0">
@@ -155,12 +165,12 @@ export function SiteEditorV2({
                     {site.name}
                   </h1>
                   <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:text-violet-300">
-                    V2
+                    OpenEditor
                   </span>
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
-                  {selectedPage?.title ?? "No page"} · converted from legacy ·
-                  never saved
+                  {selectedPage?.title ?? "No page"} ·{" "}
+                  {isMigrated ? "native document" : "migrates on first edit"}
                 </p>
               </div>
             </div>
@@ -179,13 +189,15 @@ export function SiteEditorV2({
               >
                 <Eye className="size-4" /> Viewer
               </Button>
-              <Button
-                onClick={() => setInspectorOpen((current) => !current)}
-                size="sm"
-                variant={inspectorOpen ? "secondary" : "ghost"}
-              >
-                <PanelRight className="size-4" /> Migration
-              </Button>
+              {migrationTools ? (
+                <Button
+                  onClick={() => setInspectorOpen((current) => !current)}
+                  size="sm"
+                  variant={inspectorOpen ? "secondary" : "ghost"}
+                >
+                  <PanelRight className="size-4" /> Migration
+                </Button>
+              ) : null}
             </div>
           </div>
         </header>
@@ -224,9 +236,10 @@ export function SiteEditorV2({
 
           <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-muted/20">
             <ConvertedEditor
-              conversion={conversion}
+              initialDocument={initialDocument}
               key={selectedPage?._id ?? "empty"}
               mode={mode}
+              pageId={selectedPage?._id}
               pageRuntime={pageRuntime}
               attachmentRuntime={attachmentRuntime}
             />
@@ -304,23 +317,51 @@ export function SiteEditorV2({
 }
 
 function ConvertedEditor({
-  conversion,
+  initialDocument,
   mode,
+  pageId,
   pageRuntime,
   attachmentRuntime,
 }: {
-  conversion: ReturnType<typeof convertLegacyPageToOpenEditor>;
+  initialDocument: OpenEditorDocument;
   mode: "editor" | "viewer";
+  pageId?: Id<"pages">;
   pageRuntime: OpenEditorPageRuntime;
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
 }) {
   const extensions = editorV2Extensions;
+  const saveDocument = useMutation(api.pageContent.saveOpenEditorDocument);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDocument = useRef<OpenEditorDocument | null>(null);
   const controller = useOpenEditorController({
-    initialDocument: conversion.document,
+    initialDocument,
     extensions,
     pageRuntime,
     attachmentRuntime,
+    onChange: (document) => {
+      if (!pageId) return;
+      pendingDocument.current = document;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        const nextDocument = pendingDocument.current;
+        pendingDocument.current = null;
+        if (nextDocument) {
+          void saveDocument({ pageId, document: nextDocument });
+        }
+      }, 750);
+    },
   });
+
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const nextDocument = pendingDocument.current;
+      if (pageId && nextDocument) {
+        void saveDocument({ pageId, document: nextDocument });
+      }
+    },
+    [pageId, saveDocument],
+  );
 
   if (mode === "viewer") {
     return (

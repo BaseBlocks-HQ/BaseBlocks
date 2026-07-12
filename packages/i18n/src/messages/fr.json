@@ -153,7 +153,15 @@
       "deploymentHistory": "Historique des deploiements",
       "deployChanges": "Deployer les modifications",
       "deployShort": "Deployer",
-      "publishedStatus": "Publie"
+      "publishedStatus": "Publié",
+      "legacyEditor": "Éditeur classique",
+      "newEditor": "Nouvel éditeur",
+      "beta": "Bêta",
+      "newEditorDialogTitle": "Découvrez le nouvel éditeur",
+      "newEditorDialogDescription": "Nous sommes passés à un éditeur de blocs plus clair pour faciliter la rédaction, l’organisation et l’évolution de vos pages.",
+      "newEditorDialogBetaBody": "Le nouvel éditeur est encore en version bêta. Nous corrigeons activement les imperfections et affinons l’expérience au fil de son utilisation.",
+      "newEditorDialogFallbackBody": "Si un élément ne s’affiche pas ou ne fonctionne pas comme prévu, vous pouvez revenir à l’Éditeur classique à tout moment. Votre page d’origine reste disponible pendant la transition.",
+      "openLegacyEditor": "Ouvrir l’Éditeur classique"
     },
     "picker": {
       "categories": {
@@ -168,7 +176,9 @@
     "pageEditor": {
       "emptyWithTabs": "Ajoutez une mise en page a cet onglet",
       "emptyNoTabs": "Ajoutez une mise en page pour commencer",
-      "pageNotFound": "Page introuvable"
+      "pageNotFound": "Page introuvable",
+      "loading": "Chargement de la page…",
+      "saveFailed": "Impossible d’enregistrer la page"
     },
     "pageTabBar": {
       "renameTab": "Renommer l'onglet",

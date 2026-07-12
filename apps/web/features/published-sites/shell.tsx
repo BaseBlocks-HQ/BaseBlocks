@@ -49,6 +49,17 @@ interface PublicSiteShellProps {
   result: PublishedPageResult;
 }
 
+function collectPageTitles(
+  pages: readonly PageWithChildren[],
+  target = new Map<string, string>(),
+) {
+  for (const page of pages) {
+    target.set(page._id, page.title);
+    collectPageTitles(page.children, target);
+  }
+  return target;
+}
+
 export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const {
     breadcrumbs,
@@ -372,6 +383,7 @@ function PublicSiteMainContent({
   siteSlug: string;
 }) {
   const showSubNav = navigationStyle === "subnav";
+  const pageTitles = collectPageTitles(pages ?? []);
 
   return (
     <>
@@ -398,6 +410,7 @@ function PublicSiteMainContent({
           pageId={currentPage._id as Id<"pages">}
           initialPage={currentPage}
           initialStructure={pageContent}
+          pageTitles={pageTitles}
         />
       </div>
     </>

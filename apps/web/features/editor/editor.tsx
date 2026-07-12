@@ -24,6 +24,7 @@ import { nanoid } from "nanoid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { PageEditor } from "@/features/editor/page/page-editor";
+import { OpenEditorPageEditor } from "@/features/editor-v2/openeditor-page-editor";
 import { toast } from "sonner";
 import { EditorFloatingRail } from "./rail/editor-rail";
 import { EditorHeader } from "./editor-header";
@@ -52,9 +53,10 @@ function buildEditorPath(
 
 interface SiteEditorProps {
   siteId: string;
+  engine?: "openeditor" | "legacy";
 }
 
-function SiteEditorInner({ siteId }: SiteEditorProps) {
+function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   const { team } = useTeamAccess();
   const isMobile = useIsMobile();
   const pathname = usePathname();
@@ -268,7 +270,16 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         : null;
 
   const pageEditor = selectedPage ? (
-    <PageEditor key={selectedPage._id} pageId={selectedPage._id} />
+    engine === "legacy" ? (
+      <PageEditor key={selectedPage._id} pageId={selectedPage._id} />
+    ) : (
+      <OpenEditorPageEditor
+        key={selectedPage._id}
+        pageId={selectedPage._id}
+        pages={pages}
+        siteId={site._id}
+      />
+    )
   ) : (
     <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
       Select a page to edit
@@ -306,6 +317,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           {showFloatingRail ? (
             <div className={railPositionClass}>
               <EditorFloatingRail
+                engine={engine}
                 site={site}
                 pages={pages}
                 selectedPageId={selectedPage?._id}
@@ -319,6 +331,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           ) : null}
 
           <EditorHeader
+            engine={engine}
             inFlow
             teamSlug={team.slug}
             siteSlug={site.slug}
@@ -354,6 +367,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       />
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <EditorHeader
+          engine={engine}
           teamSlug={team.slug}
           siteSlug={site.slug}
           siteId={site._id}
@@ -366,6 +380,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
         <div className={railPositionClass}>
           <EditorFloatingRail
+            engine={engine}
             site={site}
             pages={pages}
             selectedPageId={selectedPage?._id}
@@ -442,6 +457,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 function SiteEditorShell({
   permissions,
   siteId,
+  engine,
 }: SiteEditorProps & {
   permissions: {
     canEdit: boolean;
@@ -464,12 +480,12 @@ function SiteEditorShell({
       permissions={permissions}
       onOpenPage={(pageId) => replaceEditorUrl({ page: pageId })}
     >
-      <SiteEditorInner siteId={siteId} />
+      <SiteEditorInner engine={engine} siteId={siteId} />
     </EditorProvider>
   );
 }
 
-export function SiteEditor({ siteId }: SiteEditorProps) {
+export function SiteEditor({ siteId, engine = "openeditor" }: SiteEditorProps) {
   const { capabilities } = useTeamAccess();
   const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
@@ -484,7 +500,11 @@ export function SiteEditor({ siteId }: SiteEditorProps) {
 
   return (
     <Suspense fallback={<EditorLoading />}>
-      <SiteEditorShell permissions={permissions} siteId={siteId} />
+      <SiteEditorShell
+        engine={engine}
+        permissions={permissions}
+        siteId={siteId}
+      />
     </Suspense>
   );
 }

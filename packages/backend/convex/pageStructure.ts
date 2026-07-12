@@ -37,4 +37,11 @@ export async function deletePageStructure(
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .unique();
   if (content) await ctx.db.delete("pageContents", content._id);
+  const nativeContent = await ctx.db
+    .query("openEditorPageContents")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .unique();
+  if (nativeContent) {
+    await ctx.db.delete("openEditorPageContents", nativeContent._id);
+  }
 }

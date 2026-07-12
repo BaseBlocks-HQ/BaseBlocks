@@ -1,63 +1,41 @@
 ---
 title: Publishing
-description: Every site has a draft state and a live state. Edits stay in draft until you publish. Automatic snapshots let you roll back at any time.
+description: Publish or unpublish a site and control who can access it.
 icon: SquarePointer
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-## Draft and live
+## Publication status
 
-Every site exists in two states simultaneously: **draft** and **live**.
+A site is either **published** or **unpublished**. Publishing makes its pages available at the generated site URL and any verified custom domain. Unpublishing removes public access.
 
-- **Draft** is what you build in the editor. Edits, new pages, and layout changes all go to draft. Visitors never see draft.
-- **Live** is what visitors see when they open your site URL. It only changes when you publish.
-
-The two states are completely independent. You can rebuild a page entirely in draft without affecting what's currently live.
+<Callout type="warn" title="Current publishing model">
+  Published sites currently read the latest saved page content. Editing a published site can therefore change what visitors see without a separate snapshot deployment. Historical snapshots and rollback are not currently available.
+</Callout>
 
 ## Publishing
 
 <Steps>
 <Step>
 
-### Build in draft
+### Build your site
 
-Make all your changes in the editor. Add pages, update sections, edit content. Nothing is visible to visitors yet.
-
-</Step>
-<Step>
-
-### Preview (optional)
-
-Use the **Preview** button in the editor header to see the live render of your draft before publishing. Preview mode shows the draft as visitors will see it.
+Create pages and edit content. Changes save automatically.
 
 </Step>
 <Step>
 
 ### Publish
 
-Click **Publish** in the editor header. A snapshot of the current draft is saved automatically, then the draft is copied to live.
-
-Publishing is immediate — there is no queue or processing delay.
+Click **Deploy** in the editor header. The site becomes available immediately.
 
 </Step>
 </Steps>
 
-## Snapshots and rollback
+## Unpublishing
 
-A snapshot is taken automatically every time you publish. Snapshots capture the full state of all pages and content at that moment.
-
-To view snapshots, open **Deployment History** from the editor header. Each entry shows the publish timestamp.
-
-To roll back, select a snapshot and click **Restore**. This replaces the current live state with the snapshot. The current draft is not affected.
-
-<Callout type="info">
-  Rollback only affects the live state. Your draft stays as-is. If you want the draft to also match the snapshot, publish again after rolling back — the draft will have diverged.
-</Callout>
-
-## What's published
-
-Publishing copies the entire site — all pages, tabs, sections, columns, and blocks. Individual page publishing is not currently supported.
+Open the deployment menu and choose **Unpublish**. The generated URL and custom domain stop serving the site until it is published again. Saved content is not deleted.
 
 ## What's next
 

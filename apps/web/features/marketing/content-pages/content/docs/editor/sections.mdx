@@ -1,10 +1,14 @@
 ---
 title: Sections
-description: Sections are the page's structural rows. Each section owns one or two columns, and each column owns an ordered list of blocks.
+description: How legacy section layouts are represented during the new-editor transition.
 icon: Window2
 ---
 
-A page is an ordered list of sections. A section contains one or two columns, and a column can contain any number of blocks.
+Sections, main and aside regions, tabs, and column slots belong to the Legacy Editor's page model. The new editor uses one ordered document and supports columns as document nodes.
+
+<Callout type="info">
+  When a legacy page opens in the new editor, sections are converted in order, two-column sections become column nodes, and aside content is placed inline. Legacy tabs are flattened into document order. Use **Legacy Editor** when you need to inspect the original layout during the beta.
+</Callout>
 
 ## Section types
 
@@ -18,7 +22,7 @@ Spacing is a block, not a special structural row.
 
 ## Editing sections
 
-Choose **Sections** in the editor rail to add one. Drag its handle to reorder it within the main or aside region. Select a section and use the delete action to remove the section, its columns, and its blocks.
+These controls remain available only in the Legacy Editor. The new editor hides the Sections and Blocks rail panels; use its slash menu and document controls instead.
 
 Select a column before choosing a block from the rail. Blocks can be reordered within a column or dragged directly into another column.
 

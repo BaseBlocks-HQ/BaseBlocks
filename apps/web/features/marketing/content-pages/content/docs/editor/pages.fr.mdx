@@ -1,10 +1,8 @@
 ---
 title: Pages
-description: Gérez votre arborescence de pages — ajoutez des pages, imbriquez-les en sous-pages, configurez les paramètres et utilisez les onglets pour les pages à plusieurs sections.
+description: Gérez l'arborescence, créez des sous-pages et configurez leur accès et leur navigation.
 icon: FileText
 ---
-
-import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
 
 ## Gérer les pages
 
@@ -39,13 +37,9 @@ Chaque page a ses propres paramètres. Ouvrez-les en cliquant sur l'icône d'eng
 
 Changer un identifiant change l'URL de la page. Les liens existants vers l'ancienne URL seront cassés — il n'y a pas de redirection automatique.
 
-### Onglets de page
+### Blocs Page
 
-Une page peut avoir plusieurs onglets. Chaque onglet est un ensemble indépendant de mises en page et de contenu.
-
-Les onglets sont utiles pour présenter différentes vues d'un même sujet — par exemple, une page sur une fonctionnalité avec des onglets séparés pour Vue d'ensemble, Configuration et Référence API.
-
-Pour ajouter un onglet, ouvrez la page et cliquez sur **Ajouter un onglet** dans l'en-tête de l'éditeur. Les onglets peuvent être renommés et réorganisés. Supprimer un onglet supprime tout son contenu.
+Insérez un bloc **Page** depuis le menu slash pour créer ou référencer une sous-page dans le document. Le bloc récupère le titre actuel et ouvre la page cible dans l'éditeur ou dans le panneau du site publié.
 
 ## Flux d'édition
 
@@ -58,8 +52,8 @@ Toutes les actions de l'éditeur peuvent être annulées.
 | Annuler | `Cmd Z` | `Ctrl Z` |
 | Rétablir | `Cmd Shift Z` | `Ctrl Shift Z` |
 
-L'historique d'annulation est par session. Recharger la page efface la pile d'annulation.
+L'historique d'annulation du document est limité à la session. Recharger la page efface la pile.
 
 <Callout type="info">
-  L'annulation couvre les opérations de mise en page, les modifications de blocs, la réorganisation des pages, la gestion des onglets et la plupart des interactions de l'éditeur. La publication n'est pas annulable — utilisez la restauration pour revenir à un site publié.
+  L'annulation concerne l'édition du document. Les opérations sur l'arborescence et la publication sont des actions enregistrées séparément et ne font pas partie de cette pile.
 </Callout>

@@ -16,6 +16,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { Separator } from "@baseblocks/ui/separator";
 import {
   Tooltip,
@@ -34,7 +43,8 @@ import {
   Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconWindow2 } from "nucleo-glass";
+import { useSearchParams } from "next/navigation";
+import { IconMagicWandSparkle, IconWindow2 } from "nucleo-glass";
 import { useState } from "react";
 import { EditorSiteSwitcher } from "./editor-site-switcher";
 import { ShareDialog } from "./publishing/share-dialog";
@@ -44,6 +54,7 @@ import type {
 } from "./publishing/share-dialog";
 
 interface EditorHeaderProps {
+  engine?: "openeditor" | "legacy";
   inFlow?: boolean;
   teamSlug: string;
   siteSlug: string;
@@ -56,6 +67,7 @@ interface EditorHeaderProps {
 }
 
 export function EditorHeader({
+  engine = "openeditor",
   inFlow = false,
   teamSlug,
   siteSlug,
@@ -97,6 +109,7 @@ export function EditorHeader({
                 teamSlug={teamSlug}
               />
               <EditorHeaderRightSection
+                engine={engine}
                 canEdit={canEdit}
                 siteId={siteId}
                 sitePublished={sitePublished}
@@ -217,6 +230,7 @@ function EditorHeaderLeftSection({
 }
 
 interface EditorHeaderRightSectionProps {
+  engine: "openeditor" | "legacy";
   canEdit: boolean;
   siteId: string;
   sitePublished: boolean;
@@ -228,6 +242,7 @@ interface EditorHeaderRightSectionProps {
 }
 
 function EditorHeaderRightSection({
+  engine,
   canEdit,
   siteId,
   sitePublished,
@@ -237,11 +252,82 @@ function EditorHeaderRightSection({
   onUnpublish,
   onOpenShare,
 }: EditorHeaderRightSectionProps) {
+  const t = useTranslations("editor.header");
+  const searchParams = useSearchParams();
+  const selectedPageId = searchParams.get("page");
+  const enginePath =
+    engine === "legacy"
+      ? `/dashboard/${teamSlug}/sites/${siteId}`
+      : `/dashboard/${teamSlug}/sites/${siteId}/legacy`;
+  const engineHref = selectedPageId
+    ? `${enginePath}?page=${selectedPageId}`
+    : enginePath;
   return (
     <div className="flex items-center gap-1">
-      <Link href={`/dashboard/${teamSlug}/sites/${siteId}/v2`}>
+      {engine === "openeditor" ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              className="gap-1.5 rounded-full border-violet-500/20 bg-violet-500/8 text-violet-700 hover:bg-violet-500/14 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
+              size="sm"
+              variant="outline"
+            >
+              <IconMagicWandSparkle className="size-3.5" />
+              <span className="max-sm:sr-only">{t("newEditor")}</span>
+              <Badge
+                className="h-4 rounded-full px-1.5 text-[9px] uppercase tracking-wide"
+                variant="secondary"
+              >
+                {t("beta")}
+              </Badge>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:right-4 [&_[data-slot='dialog-close']]:top-4">
+            <div className="border-b border-sidebar-border/60 bg-linear-to-br from-violet-500/12 via-transparent to-transparent px-5 pb-5 pt-5">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-2xl bg-violet-500/12 text-violet-700 dark:text-violet-300">
+                <IconMagicWandSparkle className="size-5" />
+              </div>
+              <DialogHeader className="gap-2">
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="text-lg">
+                    {t("newEditorDialogTitle")}
+                  </DialogTitle>
+                  <Badge className="rounded-full text-[10px] uppercase tracking-wide">
+                    {t("beta")}
+                  </Badge>
+                </div>
+                <DialogDescription className="text-sm leading-relaxed text-sidebar-foreground/60">
+                  {t("newEditorDialogDescription")}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="space-y-3 px-5 text-sm leading-relaxed text-sidebar-foreground/70">
+              <p>{t("newEditorDialogBetaBody")}</p>
+              <p>{t("newEditorDialogFallbackBody")}</p>
+            </div>
+            <DialogFooter className="px-5 pb-5 pt-1">
+              <Button asChild className="rounded-full" variant="outline">
+                <Link href={engineHref}>{t("openLegacyEditor")}</Link>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+      <Link href={engineHref}>
         <Button size="sm" variant="ghost">
-          V2
+          {engine === "legacy" ? (
+            <span className="flex items-center gap-1.5">
+              {t("newEditor")}
+              <Badge
+                className="h-4 rounded-full px-1.5 text-[9px] uppercase tracking-wide"
+                variant="secondary"
+              >
+                {t("beta")}
+              </Badge>
+            </span>
+          ) : (
+            t("legacyEditor")
+          )}
         </Button>
       </Link>
       {canEdit ? (

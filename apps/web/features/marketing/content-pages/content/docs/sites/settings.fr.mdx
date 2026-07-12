@@ -4,7 +4,7 @@ description: Configurez le nom, l'identifiant, la visibilité et les métadonné
 icon: Toggle
 ---
 
-Accédez aux paramètres du site depuis l'en-tête de l'éditeur → **Paramètres**, ou depuis le tableau de bord de l'équipe en cliquant sur l'icône de paramètres sur une carte de site.
+Accédez aux paramètres du site depuis le panneau **Site** du rail de l'éditeur. Les actions de base sont également disponibles depuis la carte du site dans le tableau de bord.
 
 ## Général
 
@@ -16,11 +16,19 @@ Accédez aux paramètres du site depuis l'en-tête de l'éditeur → **Paramètr
 https://votre-equipe.baseblocks.dev/[identifiant-site]
 ```
 
-<Callout type="warn">
-  Changer l'identifiant du site change l'URL de chaque page du site. Les liens et favoris existants seront cassés. Il n'y a pas de redirection automatique.
+<Callout type="info">
+  L'identifiant du site est choisi à sa création et ne peut pas être modifié actuellement depuis les paramètres.
 </Callout>
 
-**Méta description** — Une courte description utilisée dans les aperçus d'onglets du navigateur, les cartes de partage social (Open Graph) et les extraits de moteurs de recherche. Gardez-la en dessous de 160 caractères.
+**Métadonnées du site** — Configurez le titre du navigateur, la description, les mots-clés, le favicon et l'image Open Graph utilisés par les pages publiées.
+
+## En-tête et navigation
+
+Choisissez d'afficher ou non l'en-tête du site publié, le logo, le nom du site, la recherche dans l'en-tête et le fil d'Ariane. La navigation latérale peut être ouverte ou fermée par défaut. Son style se configure dans le panneau **Navigation** du rail.
+
+## Domaines personnalisés
+
+Ajoutez un nom d'hôte comme `docs.exemple.com` dans la section Domaine personnalisé. BaseBlocks indique l'enregistrement DNS requis et son état de vérification. Une fois le DNS configuré et vérifié, le site publié s'ouvre à la racine du domaine avec TLS géré automatiquement.
 
 ## Visibilité
 
@@ -37,7 +45,7 @@ Voir [Visibilité du site](/docs/publishing/visibility) pour les détails sur ch
 
 ## Supprimer un site
 
-La suppression du site est disponible en bas des Paramètres du site. Supprimer un site supprime définitivement toutes les pages, mises en page, documents et instantanés.
+La suppression est disponible depuis les contrôles du site. Elle efface définitivement les pages, les contenus de l'ancien et du nouvel éditeur, les documents, les ressources, les domaines, les sessions d'accès et les entrées de recherche.
 
 <Callout type="error">
   La suppression d'un site est permanente et ne peut pas être annulée. Il n'y a pas de chemin de récupération après la suppression.

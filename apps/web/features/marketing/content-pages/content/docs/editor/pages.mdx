@@ -1,10 +1,8 @@
 ---
 title: Pages
-description: Manage your page tree — add pages, nest child pages, configure settings, and use tabs for multi-section pages.
+description: Manage the page tree, create child pages, and configure page access and navigation.
 icon: FileText
 ---
-
-import { Accordions, Accordion } from 'fumadocs-ui/components/accordion';
 
 ## Managing pages
 
@@ -39,13 +37,9 @@ Each page has individual settings. Open them by clicking the gear icon next to t
 
 Changing a slug changes the page URL. Existing links to the old URL will break — there is no automatic redirect.
 
-### Page tabs
+### Page blocks
 
-A page can have multiple tabs. Each tab is an independent set of sections and content.
-
-Tabs are useful for presenting different views of the same topic — for example, a page about a feature with separate tabs for Overview, Setup, and API Reference.
-
-To add a tab, open the page and click **Add tab** in the editor header. Tabs can be renamed and reordered. Deleting a tab deletes all its content.
+Insert a **Page** block from the slash menu to create or reference a child page from within the document. Page blocks resolve the current title and open the target page in the editor or published-site page panel.
 
 ## Editing workflow
 
@@ -58,8 +52,8 @@ All editor actions are undoable.
 | Undo | `Cmd Z` | `Ctrl Z` |
 | Redo | `Cmd Shift Z` | `Ctrl Shift Z` |
 
-Undo history is per-session. Reloading the page clears the undo stack.
+Document undo history is per-session. Reloading the page clears the undo stack.
 
 <Callout type="info">
-  Undo covers layout operations, block changes, page reordering, tab management, and most editor interactions. Publishing is not undoable — use rollback to revert a published site.
+  Undo applies to document editing. Page-tree operations and publishing are separate saved actions and are not part of the document undo stack.
 </Callout>
