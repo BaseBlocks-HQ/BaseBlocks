@@ -8,6 +8,14 @@ import type {
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@baseblocks/ui/table";
+import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
@@ -37,6 +45,13 @@ function readDirectory(value: unknown): DirectoryContent {
 
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
+function blankRow(columns: DirectoryColumn[]): DirectoryRow {
+  return {
+    id: makeId("row"),
+    cells: Object.fromEntries(columns.map((column) => [column.id, ""])),
+  };
+}
+
 function DirectoryTable({
   value,
   editable,
@@ -58,6 +73,7 @@ function DirectoryTable({
     );
   }, [normalized.columns, normalized.rows, query]);
   const update = (next: DirectoryContent) => onChange?.(next);
+
   const addColumn = () => {
     const column: DirectoryColumn = {
       id: makeId("column"),
@@ -73,41 +89,64 @@ function DirectoryTable({
       })),
     });
   };
-  const removeColumn = (id: string) =>
+  const removeColumn = (columnId: string) =>
     update({
       ...normalized,
-      columns: normalized.columns.filter((column) => column.id !== id),
-      rows: normalized.rows.map((row) => ({
-        ...row,
-        cells: Object.fromEntries(
-          Object.entries(row.cells).filter(([key]) => key !== id),
-        ),
-      })),
+      columns: normalized.columns.filter((column) => column.id !== columnId),
+      rows: normalized.rows.map((row) => {
+        const cells = { ...row.cells };
+        delete cells[columnId];
+        return { ...row, cells };
+      }),
     });
-  const addRow = () => {
-    const row: DirectoryRow = {
-      id: makeId("row"),
-      cells: Object.fromEntries(
-        normalized.columns.map((column) => [column.id, ""]),
+  const updateColumn = (columnId: string, header: string) =>
+    update({
+      ...normalized,
+      columns: normalized.columns.map((column) =>
+        column.id === columnId ? { ...column, header } : column,
       ),
-    };
-    update({ ...normalized, rows: [...normalized.rows, row] });
-  };
+    });
+  const addRow = () =>
+    update({
+      ...normalized,
+      rows: [...normalized.rows, blankRow(normalized.columns)],
+    });
+  const removeRow = (rowId: string) =>
+    update({
+      ...normalized,
+      rows: normalized.rows.filter((row) => row.id !== rowId),
+    });
+  const updateCell = (rowId: string, columnId: string, value: string) =>
+    update({
+      ...normalized,
+      rows: normalized.rows.map((row) =>
+        row.id === rowId
+          ? { ...row, cells: { ...row.cells, [columnId]: value } }
+          : row,
+      ),
+    });
 
   return (
-    <section className="not-prose my-4 space-y-3 rounded-xl border bg-background p-4">
+    <section className="not-prose my-4 space-y-3">
       {editable ? (
         <div className="flex gap-2">
-          <Button onClick={addColumn} size="sm" type="button" variant="outline">
+          <Button
+            className="rounded-xl border-0 bg-card shadow-none hover:bg-muted/60"
+            onClick={addColumn}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
             <Plus className="size-4" />
             Column
           </Button>
           <Button
+            className="rounded-xl border-0 bg-card shadow-none hover:bg-muted/60"
             disabled={normalized.columns.length === 0}
             onClick={addRow}
             size="sm"
             type="button"
-            variant="outline"
+            variant="ghost"
           >
             <Plus className="size-4" />
             Row
@@ -129,37 +168,34 @@ function DirectoryTable({
         </div>
       ) : null}
       {normalized.columns.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
           {editable
             ? "Add a column to start this directory."
             : "This directory is empty."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b bg-muted/40">
+        <div className="overflow-hidden rounded-2xl bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
                 {normalized.columns.map((column) => (
-                  <th className="min-w-44 p-2 text-left" key={column.id}>
+                  <TableHead
+                    className="h-auto min-w-44 px-3 py-1.5"
+                    key={column.id}
+                  >
                     {editable ? (
-                      <div className="flex gap-1">
+                      <div className="flex items-center gap-1">
                         <Input
                           aria-label="Column name"
-                          className="h-8"
+                          className="h-8 border-transparent bg-transparent px-1 font-medium shadow-none focus-visible:bg-background"
                           onChange={(event) =>
-                            update({
-                              ...normalized,
-                              columns: normalized.columns.map((item) =>
-                                item.id === column.id
-                                  ? { ...item, header: event.target.value }
-                                  : item,
-                              ),
-                            })
+                            updateColumn(column.id, event.target.value)
                           }
                           value={column.header}
                         />
                         <Button
                           aria-label={`Remove ${column.header}`}
+                          className="text-muted-foreground hover:text-destructive"
                           onClick={() => removeColumn(column.id)}
                           size="icon-xs"
                           type="button"
@@ -171,67 +207,59 @@ function DirectoryTable({
                     ) : (
                       column.header
                     )}
-                  </th>
+                  </TableHead>
                 ))}
-                {editable ? <th className="w-10" /> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr className="border-b last:border-0" key={row.id}>
-                  {normalized.columns.map((column) => (
-                    <td className="p-2" key={column.id}>
-                      {editable ? (
-                        <Input
-                          aria-label={`${column.header} value`}
-                          className="h-8"
-                          onChange={(event) =>
-                            update({
-                              ...normalized,
-                              rows: normalized.rows.map((item) =>
-                                item.id === row.id
-                                  ? {
-                                      ...item,
-                                      cells: {
-                                        ...item.cells,
-                                        [column.id]: event.target.value,
-                                      },
-                                    }
-                                  : item,
-                              ),
-                            })
-                          }
-                          value={row.cells[column.id] ?? ""}
-                        />
-                      ) : (
-                        (row.cells[column.id] ?? "")
-                      )}
-                    </td>
-                  ))}
-                  {editable ? (
-                    <td className="p-2">
-                      <Button
-                        aria-label="Remove row"
-                        onClick={() =>
-                          update({
-                            ...normalized,
-                            rows: normalized.rows.filter(
-                              (item) => item.id !== row.id,
-                            ),
-                          })
-                        }
-                        size="icon-xs"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                {editable ? <TableHead className="h-auto w-10 py-1.5" /> : null}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell
+                    className="py-10 text-center text-muted-foreground"
+                    colSpan={normalized.columns.length + (editable ? 1 : 0)}
+                  >
+                    {query ? "No rows found." : "No rows yet."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {normalized.columns.map((column) => (
+                      <TableCell className="min-w-44 p-1.5" key={column.id}>
+                        {editable ? (
+                          <Input
+                            aria-label={`${column.header} value`}
+                            className="h-8 border-transparent bg-transparent shadow-none focus-visible:bg-background"
+                            onChange={(event) =>
+                              updateCell(row.id, column.id, event.target.value)
+                            }
+                            value={row.cells[column.id] ?? ""}
+                          />
+                        ) : (
+                          (row.cells[column.id] ?? "")
+                        )}
+                      </TableCell>
+                    ))}
+                    {editable ? (
+                      <TableCell className="w-10 p-1.5">
+                        <Button
+                          aria-label="Remove row"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => removeRow(row.id)}
+                          size="icon-xs"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
     </section>
