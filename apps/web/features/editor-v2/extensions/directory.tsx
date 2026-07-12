@@ -11,6 +11,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -128,31 +129,6 @@ function DirectoryTable({
 
   return (
     <section className="not-prose my-4 space-y-3">
-      {editable ? (
-        <div className="flex gap-2">
-          <Button
-            className="rounded-xl border-0 bg-card shadow-none hover:bg-muted/60"
-            onClick={addColumn}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            <Plus className="size-4" />
-            Column
-          </Button>
-          <Button
-            className="rounded-xl border-0 bg-card shadow-none hover:bg-muted/60"
-            disabled={normalized.columns.length === 0}
-            onClick={addRow}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            <Plus className="size-4" />
-            Row
-          </Button>
-        </div>
-      ) : null}
       {!editable &&
       normalized.settings.showSearch &&
       normalized.columns.length > 0 ? (
@@ -168,11 +144,24 @@ function DirectoryTable({
         </div>
       ) : null}
       {normalized.columns.length === 0 ? (
-        <p className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
-          {editable
-            ? "Add a column to start this directory."
-            : "This directory is empty."}
-        </p>
+        <div className="flex min-h-28 items-center justify-center rounded-2xl border border-dashed">
+          {editable ? (
+            <Button
+              className="rounded-xl"
+              onClick={addColumn}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <Plus className="size-4" />
+              Add column
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This directory is empty.
+            </p>
+          )}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card">
           <Table>
@@ -209,7 +198,20 @@ function DirectoryTable({
                     )}
                   </TableHead>
                 ))}
-                {editable ? <TableHead className="h-auto w-10 py-1.5" /> : null}
+                {editable ? (
+                  <TableHead className="h-auto w-10 p-1.5">
+                    <Button
+                      aria-label="Add column"
+                      className="text-muted-foreground"
+                      onClick={addColumn}
+                      size="icon-xs"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </TableHead>
+                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,6 +261,27 @@ function DirectoryTable({
                 ))
               )}
             </TableBody>
+            {editable ? (
+              <TableFooter className="border-0 bg-transparent">
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableCell
+                    className="p-1.5"
+                    colSpan={normalized.columns.length + 1}
+                  >
+                    <Button
+                      className="w-full justify-start rounded-xl text-muted-foreground"
+                      onClick={addRow}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Plus className="size-4" />
+                      Add row
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            ) : null}
           </Table>
         </div>
       )}
