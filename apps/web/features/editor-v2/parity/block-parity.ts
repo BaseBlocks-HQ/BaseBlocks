@@ -61,8 +61,8 @@ export const blockParity: readonly BlockParityRow[] = [
   {
     legacyType: "file",
     target: "Attachment",
-    status: "pending",
-    note: "Awaiting attachment support",
+    status: "converted",
+    note: "Canonical Attachment with BaseBlocks storage runtime",
   },
   {
     legacyType: "page",

@@ -12,6 +12,7 @@ import {
   type OpenEditorPageRuntime,
   useOpenEditorController,
 } from "@openeditor/react";
+import type { OpenEditorAttachmentRuntime } from "@openeditor/core";
 import { OpenEditorSelectionBubble, OpenEditorSlashMenu } from "@openeditor/ui";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -27,6 +28,7 @@ import { useMemo, useState } from "react";
 import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
 import { editorV2Extensions } from "./extensions";
 import { blockParity, type ParityStatus } from "./parity/block-parity";
+import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 
 const statusClass: Record<ParityStatus, string> = {
   converted: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -60,6 +62,9 @@ export function SiteEditorV2({
   );
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
+  const attachmentRuntime = useBaseBlocksAttachmentRuntime(
+    siteId as Id<"sites">,
+  );
   const resolvedLegacyContent = selectedPage
     ? legacyContent
     : { tabs: [], sections: [] };
@@ -218,6 +223,7 @@ export function SiteEditorV2({
               key={selectedPage?._id ?? "empty"}
               mode={mode}
               pageRuntime={pageRuntime}
+              attachmentRuntime={attachmentRuntime}
             />
           </main>
 
@@ -296,16 +302,19 @@ function ConvertedEditor({
   conversion,
   mode,
   pageRuntime,
+  attachmentRuntime,
 }: {
   conversion: ReturnType<typeof convertLegacyPageToOpenEditor>;
   mode: "editor" | "viewer";
   pageRuntime: OpenEditorPageRuntime;
+  attachmentRuntime: OpenEditorAttachmentRuntime<File>;
 }) {
   const extensions = editorV2Extensions;
   const controller = useOpenEditorController({
     initialDocument: conversion.document,
     extensions,
     pageRuntime,
+    attachmentRuntime,
   });
 
   if (mode === "viewer") {
@@ -316,6 +325,7 @@ function ConvertedEditor({
           document={controller.document}
           extensions={extensions}
           pageRuntime={pageRuntime}
+          attachmentRuntime={attachmentRuntime}
         />
       </div>
     );

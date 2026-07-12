@@ -20,6 +20,7 @@ function sendSignedUpload(
   target: SignedUpload,
   file: File,
   onProgress?: (progress: UploadProgress) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -49,6 +50,11 @@ function sendSignedUpload(
     });
     xhr.addEventListener("error", () => reject(new Error("Upload failed")));
     xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+    if (signal?.aborted) {
+      xhr.abort();
+      return;
+    }
+    signal?.addEventListener("abort", () => xhr.abort(), { once: true });
 
     if (target.method === "POST") {
       const form = new FormData();
@@ -64,11 +70,15 @@ function sendSignedUpload(
   });
 }
 
-async function uploadRequest<T>(body: object): Promise<T> {
+async function uploadRequest<T>(
+  body: object,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await fetch("/api/uploads", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal,
   });
   const result = (await response.json().catch(() => null)) as
     | (T & { error?: string })
@@ -84,6 +94,7 @@ async function uploadObject(
     siteId: string;
     purpose: UploadPurpose;
     onProgress?: (progress: UploadProgress) => void;
+    signal?: AbortSignal;
   },
 ): Promise<UploadResult> {
   const signed = await uploadRequest<{
@@ -91,25 +102,36 @@ async function uploadObject(
     contentType: string;
     target: SignedUpload;
     uploadToken: string;
-  }>({
-    action: "sign",
-    siteId: options.siteId,
-    purpose: options.purpose,
-    filename: file.name,
-    contentType: file.type,
-    size: file.size,
-  });
-  await sendSignedUpload(signed.target, file, options.onProgress);
-  const uploaded = await uploadRequest<UploadResult>({
-    action: "complete",
-    siteId: options.siteId,
-    purpose: options.purpose,
-    objectKey: signed.objectKey,
-    filename: file.name,
-    contentType: signed.contentType,
-    size: file.size,
-    uploadToken: signed.uploadToken,
-  });
+  }>(
+    {
+      action: "sign",
+      siteId: options.siteId,
+      purpose: options.purpose,
+      filename: file.name,
+      contentType: file.type,
+      size: file.size,
+    },
+    options.signal,
+  );
+  await sendSignedUpload(
+    signed.target,
+    file,
+    options.onProgress,
+    options.signal,
+  );
+  const uploaded = await uploadRequest<UploadResult>(
+    {
+      action: "complete",
+      siteId: options.siteId,
+      purpose: options.purpose,
+      objectKey: signed.objectKey,
+      filename: file.name,
+      contentType: signed.contentType,
+      size: file.size,
+      uploadToken: signed.uploadToken,
+    },
+    options.signal,
+  );
   options.onProgress?.({
     loaded: uploaded.size,
     total: uploaded.size,

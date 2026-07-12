@@ -11,6 +11,7 @@ import type {
   DecisionTreeContent,
   DirectoryContent,
   FlowchartContent,
+  FileContent,
   HeadingContent,
   ImageContent,
   LibraryContent,
@@ -168,6 +169,27 @@ function convertBlock(
               alt: content.alt ?? "",
               width: content.width ?? null,
               height: content.height ?? null,
+            },
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "file": {
+      const content = block.content as FileContent;
+      return {
+        nodes: [
+          {
+            type: "attachment",
+            attrs: {
+              attachmentId: content.documentId ?? null,
+              name: content.filename ?? "Attachment",
+              mimeType: content.contentType ?? null,
+              size: content.size ?? null,
+              url: content.documentId
+                ? `/api/files/${content.documentId}`
+                : null,
             },
           },
         ],

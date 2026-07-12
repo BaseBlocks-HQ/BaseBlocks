@@ -25,6 +25,40 @@ const spacer = (
 ): BlockData => ({ id, order, type: "spacer", content: { height } });
 
 describe("legacy page conversion", () => {
+  test("converts legacy files to canonical attachments without losing metadata", () => {
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        {
+          id: "file-1",
+          order: 0,
+          type: "file",
+          content: {
+            documentId: "document-1",
+            filename: "brief.pdf",
+            contentType: "application/pdf",
+            size: 4096,
+            createdAt: 123,
+          },
+        },
+      ]),
+    );
+
+    expect(result.document.content).toEqual([
+      {
+        type: "attachment",
+        attrs: {
+          attachmentId: "document-1",
+          name: "brief.pdf",
+          mimeType: "application/pdf",
+          size: 4096,
+          url: "/api/files/document-1",
+        },
+      },
+    ]);
+    expect(result.convertedBlockCount).toBe(1);
+    expect(result.placeholderCount).toBe(0);
+  });
+
   test.each([
     ["small", 1],
     ["medium", 2],
