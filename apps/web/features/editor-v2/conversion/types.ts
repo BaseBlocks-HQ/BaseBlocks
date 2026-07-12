@@ -7,6 +7,7 @@ export interface ConversionWarning {
   code:
     | "unsupported-block"
     | "flattened-tabs"
+    | "flattened-diagram-tabs"
     | "aside-layout"
     | "image-caption"
     | "unsupported-rich-text-block"

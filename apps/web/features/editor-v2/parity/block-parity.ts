@@ -49,8 +49,8 @@ export const blockParity: readonly BlockParityRow[] = [
   {
     legacyType: "callout",
     target: "Callout",
-    status: "pending",
-    note: "Awaiting generic or local extension",
+    status: "converted",
+    note: "Text and tone preserved",
   },
   {
     legacyType: "spacer",
@@ -78,9 +78,9 @@ export const blockParity: readonly BlockParityRow[] = [
   },
   {
     legacyType: "flowchart",
-    target: "Mermaid",
-    status: "pending",
-    note: "Awaiting Mermaid support",
+    target: "Diagram",
+    status: "converted",
+    note: "Mermaid source preserved; legacy tabs flatten into document order",
   },
   {
     legacyType: "decision-tree",

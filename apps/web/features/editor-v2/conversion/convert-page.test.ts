@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { BlockData, PageStructure, SpacerContent } from "@baseblocks/domain";
+import type {
+  BlockData,
+  PageStructure,
+  SpacerContent,
+} from "@baseblocks/domain";
 import { convertLegacyPageToOpenEditor } from "./convert-page";
 
 const pageWithBlocks = (blocks: BlockData[]): PageStructure => ({
@@ -32,11 +36,13 @@ describe("legacy page conversion", () => {
     );
 
     expect(result.document.content).toHaveLength(count);
-    expect(result.document.content.every((node) => node.type === "paragraph")).toBe(
-      true,
-    );
     expect(
-      result.document.content.every((node) => (node.content?.length ?? 0) === 0),
+      result.document.content.every((node) => node.type === "paragraph"),
+    ).toBe(true);
+    expect(
+      result.document.content.every(
+        (node) => (node.content?.length ?? 0) === 0,
+      ),
     ).toBe(true);
     expect(result.placeholderCount).toBe(0);
     expect(result.convertedBlockCount).toBe(1);
@@ -84,6 +90,63 @@ describe("legacy page conversion", () => {
           node.type === "baseblocksMigrationPlaceholder",
       ),
     ).toBe(false);
+    expect(result.placeholderCount).toBe(0);
+  });
+
+  test("converts callout text and maps the legacy error variant to danger", () => {
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        {
+          id: "callout",
+          order: 0,
+          type: "callout",
+          content: { text: "Be careful", variant: "error" },
+        },
+      ]),
+    );
+
+    expect(result.document.content[0]).toEqual({
+      type: "callout",
+      attrs: { tone: "danger" },
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Be careful" }] },
+      ],
+    });
+    expect(result.placeholderCount).toBe(0);
+  });
+
+  test("preserves every legacy Mermaid diagram in document order", () => {
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        {
+          id: "flowchart",
+          order: 0,
+          type: "flowchart",
+          content: {
+            diagrams: [
+              { id: "one", label: "One", mermaidCode: "flowchart LR\nA --> B" },
+              {
+                id: "two",
+                label: "Two",
+                mermaidCode: "sequenceDiagram\nA->>B: Hi",
+              },
+            ],
+            tabsMode: "row",
+          },
+        },
+      ]),
+    );
+
+    expect(result.document.content).toEqual([
+      { type: "mermaidDiagram", attrs: { code: "flowchart LR\nA --> B" } },
+      { type: "mermaidDiagram", attrs: { code: "sequenceDiagram\nA->>B: Hi" } },
+    ]);
+    expect(result.warnings).toContainEqual(
+      expect.objectContaining({
+        code: "flattened-diagram-tabs",
+        blockId: "flowchart",
+      }),
+    );
     expect(result.placeholderCount).toBe(0);
   });
 });

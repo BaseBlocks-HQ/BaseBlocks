@@ -6,7 +6,9 @@ import {
 } from "@openeditor/core";
 import type {
   BlockData,
+  CalloutContent,
   CodeContent,
+  FlowchartContent,
   HeadingContent,
   ImageContent,
   PageStructure,
@@ -64,6 +66,49 @@ function convertBlock(
             content: content.text ? [createTextNode(content.text)] : [],
           },
         ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "callout": {
+      const content = block.content as CalloutContent;
+      return {
+        nodes: [
+          {
+            type: "callout",
+            attrs: {
+              tone:
+                content.variant === "error"
+                  ? "danger"
+                  : (content.variant ?? "info"),
+            },
+            content: [textBlock("paragraph", content.text)],
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "flowchart": {
+      const content = block.content as FlowchartContent;
+      if (content.diagrams.length > 1) {
+        warnings.push({
+          code: "flattened-diagram-tabs",
+          severity: "info",
+          blockId: block.id,
+          blockType: block.type,
+          message: `${content.diagrams.length} legacy diagram tabs were preserved in document order without their tab presentation.`,
+        });
+      }
+      const diagrams =
+        content.diagrams.length > 0
+          ? content.diagrams
+          : [{ id: "default", label: "Diagram", mermaidCode: "" }];
+      return {
+        nodes: diagrams.map((diagram) => ({
+          type: "mermaidDiagram",
+          attrs: { code: diagram.mermaidCode },
+        })),
         converted: true,
         placeholderCount: 0,
       };

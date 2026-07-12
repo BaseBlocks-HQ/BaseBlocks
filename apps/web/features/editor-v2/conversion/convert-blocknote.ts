@@ -240,6 +240,27 @@ function listItem(
   };
 }
 
+function toggleListItem(
+  block: BlockNoteBlock,
+  warnings: ConversionWarning[],
+): { node: ProseMirrorNode; placeholders: number } {
+  const children = convertBlocks(block.children, warnings);
+  return {
+    node: {
+      type: "toggleListItem",
+      attrs: { open: block.props.open !== false },
+      content: [
+        {
+          type: "paragraph",
+          content: inlineContent(block.content, warnings, block),
+        },
+        ...children.nodes,
+      ],
+    },
+    placeholders: children.placeholders,
+  };
+}
+
 function convertBlocks(
   blocks: BlockNoteBlock[],
   warnings: ConversionWarning[],
@@ -249,6 +270,23 @@ function convertBlocks(
 
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index]!;
+
+    if (block.type === "toggleListItem") {
+      const items: ProseMirrorNode[] = [];
+      let cursor = index;
+      while (
+        cursor < blocks.length &&
+        blocks[cursor]?.type === "toggleListItem"
+      ) {
+        const item = toggleListItem(blocks[cursor]!, warnings);
+        items.push(item.node);
+        placeholders += item.placeholders;
+        cursor += 1;
+      }
+      nodes.push({ type: "toggleList", content: items });
+      index = cursor - 1;
+      continue;
+    }
 
     if (
       ["bulletListItem", "numberedListItem", "checkListItem"].includes(

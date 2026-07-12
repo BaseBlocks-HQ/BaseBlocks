@@ -65,6 +65,25 @@ describe("BlockNote to Open Editor conversion", () => {
     expect(result.nodes[1]?.content?.[0]?.attrs?.checked).toBe(true);
   });
 
+  test("converts consecutive and nested toggle list items", () => {
+    const result = convertBlockNoteDocument([
+      block("one", "toggleListItem", [text("One")], { open: false }, [
+        block("nested", "toggleListItem", [text("Nested")]),
+      ]),
+      block("two", "toggleListItem", [text("Two")]),
+    ]);
+
+    expect(result.nodes).toHaveLength(1);
+    expect(result.nodes[0]?.type).toBe("toggleList");
+    expect(result.nodes[0]?.content).toHaveLength(2);
+    expect(result.nodes[0]?.content?.[0]?.type).toBe("toggleListItem");
+    expect(result.nodes[0]?.content?.[0]?.attrs?.open).toBe(false);
+    expect(result.nodes[0]?.content?.[0]?.content?.[1]?.type).toBe(
+      "toggleList",
+    );
+    expect(result.placeholderCount).toBe(0);
+  });
+
   test("converts BlockNote tables and localizes unsupported media", () => {
     const result = convertBlockNoteDocument([
       block("table", "table", {
