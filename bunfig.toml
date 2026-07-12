@@ -8,6 +8,7 @@ minimumReleaseAgeExcludes = [
   "@baseblocks/ui",
   "@baseblocks/web",
   "@openeditor/core",
+  "@openeditor/emoji",
   "@openeditor/exporters",
   "@openeditor/extensions",
   "@openeditor/react",
