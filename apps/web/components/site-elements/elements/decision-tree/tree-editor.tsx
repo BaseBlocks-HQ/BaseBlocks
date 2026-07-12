@@ -18,16 +18,15 @@ import { Input } from "@baseblocks/ui/input";
 import type { Block } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  GitFork,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import {
+  removeDecisionTreeNodesFromPath,
+  resolveDecisionTreeEditor,
+} from "./editor-model";
+import { DecisionTreeEditorBreadcrumb } from "./editor-breadcrumb";
+import { DecisionTreeEditorEmptyState } from "./editor-empty-state";
 
 function makeNodeId() {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -41,12 +40,6 @@ function normalizeTree(content: DecisionTreeContent): DecisionTree {
       nodes: [],
     }
   );
-}
-
-function sortedChildren(nodes: DecisionTreeNode[], parentId: string | null) {
-  return nodes
-    .filter((node) => node.parentId === parentId)
-    .sort((left, right) => left.order - right.order);
 }
 
 function descendantsOf(nodes: DecisionTreeNode[], nodeId: string) {
@@ -121,17 +114,14 @@ export function DecisionTreeEditor({
 }: ElementEditorProps<"decision-tree">) {
   const [tree, setTree] = useState(() => normalizeTree(content));
   const [path, setPath] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const persist = useAutoSave(onUpdate, onSaveStatusChange);
-  const parentId = path.at(-1) ?? null;
-  const children = useMemo(
-    () => sortedChildren(tree.nodes, parentId),
-    [tree.nodes, parentId],
-  );
-  const selectedNode = selectedId
-    ? (tree.nodes.find((node) => node.id === selectedId) ?? null)
-    : null;
+  const {
+    activeNode,
+    path: validPath,
+    visibleOptions,
+  } = resolveDecisionTreeEditor(tree.nodes, path);
+  const parentId = activeNode?.id ?? null;
 
   const save = (nextTree: DecisionTree) => {
     setTree(nextTree);
@@ -152,7 +142,7 @@ export function DecisionTreeEditor({
         id: makeNodeId(),
         parentId,
         name,
-        order: children.length,
+        order: visibleOptions.length,
         document: [],
       },
     ]);
@@ -168,8 +158,7 @@ export function DecisionTreeEditor({
   const removeNode = (nodeId: string) => {
     const ids = descendantsOf(tree.nodes, nodeId);
     updateNodes(tree.nodes.filter((node) => !ids.has(node.id)));
-    setPath((current) => current.filter((id) => !ids.has(id)));
-    if (selectedId && ids.has(selectedId)) setSelectedId(null);
+    setPath((current) => removeDecisionTreeNodesFromPath(current, ids));
   };
 
   const updateDocument = (nodeId: string, document: unknown[]) => {
@@ -182,88 +171,36 @@ export function DecisionTreeEditor({
 
   return (
     <div className="overflow-hidden rounded-lg border border-border/70 bg-background shadow-xs">
-      <div className="grid min-h-[500px] grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+      <div className="grid h-[500px] max-h-[70vh] grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] overflow-hidden">
         <div className="flex min-h-0 flex-col border-r border-border/70">
-          <div className="flex min-w-0 items-center gap-1 border-b border-border/70 px-2 py-1.5">
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              onClick={() => {
-                setPath((current) => current.slice(0, -1));
-                setSelectedId(null);
-              }}
-              disabled={path.length === 0}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-xs"
-              onClick={() => {
-                setPath([]);
-                setSelectedId(null);
-              }}
-            >
-              Root
-            </Button>
-            {path.map((nodeId, index) => (
-              <button
-                key={nodeId}
-                type="button"
-                className="min-w-0 truncate rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-                onClick={() => {
-                  setPath(path.slice(0, index + 1));
-                  setSelectedId(null);
-                }}
-              >
-                {tree.nodes.find((node) => node.id === nodeId)?.name ??
-                  "Option"}
-              </button>
-            ))}
+          <div>
+            <DecisionTreeEditorBreadcrumb
+              getNodeName={(nodeId) =>
+                tree.nodes.find((node) => node.id === nodeId)?.name ?? "Option"
+              }
+              onNavigate={setPath}
+              path={validPath}
+            />
           </div>
 
-          <div className="min-h-0 flex-1">
-            <div className="space-y-1 p-2">
-              {children.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
-                  <GitFork className="size-5 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    No options here yet.
-                  </p>
-                </div>
-              ) : (
-                children.map((node) => {
-                  const hasChildren = tree.nodes.some(
-                    (candidate) => candidate.parentId === node.id,
-                  );
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {visibleOptions.length === 0 ? (
+              <DecisionTreeEditorEmptyState variant="options" />
+            ) : (
+              <div className="space-y-1">
+                {visibleOptions.map((node) => {
                   return (
                     <div
                       key={node.id}
-                      className="group flex min-w-0 items-center gap-1 rounded-lg border border-border/70 bg-background/70 px-2 py-1.5"
+                      className="group flex min-w-0 items-center gap-1 rounded-lg border border-border/70 bg-background/70 px-1 py-1 transition-colors hover:bg-accent/40"
                     >
                       <button
                         type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-medium"
-                        onClick={() => setSelectedId(node.id)}
+                        className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => setPath([...validPath, node.id])}
                       >
                         <MiddleText text={node.name} />
                       </button>
-                      {hasChildren ? (
-                        <Button
-                          type="button"
-                          size="icon-xs"
-                          variant="ghost"
-                          onClick={() => {
-                            setPath((current) => [...current, node.id]);
-                            setSelectedId(null);
-                          }}
-                        >
-                          <ChevronRight className="size-4" />
-                        </Button>
-                      ) : null}
                       <Button
                         type="button"
                         size="icon-xs"
@@ -275,9 +212,9 @@ export function DecisionTreeEditor({
                       </Button>
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-1.5 border-t border-border/70 p-2">
@@ -296,45 +233,31 @@ export function DecisionTreeEditor({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-col">
-          {selectedNode ? (
+        <div className="flex min-h-0 flex-col overflow-hidden">
+          {activeNode ? (
             <>
-              <div className="space-y-2 border-b border-border/70 px-4 py-3">
+              <div className="border-b border-border/70 px-4 py-3">
                 <InlineRename
-                  label={`Rename ${selectedNode.name}`}
-                  value={selectedNode.name}
-                  onCancel={() => setSelectedId(null)}
-                  onSave={(name) => renameNode(selectedNode.id, name)}
+                  label={`Rename ${activeNode.name}`}
+                  value={activeNode.name}
+                  onCancel={() => undefined}
+                  onSave={(name) => renameNode(activeNode.id, name)}
                 />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setPath((current) => [...current, selectedNode.id]);
-                    setSelectedId(null);
-                  }}
-                >
-                  <Check className="size-4" />
-                  Edit children
-                </Button>
               </div>
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="px-4 py-3">
                   <NodeDocumentEditor
-                    key={selectedNode.id}
-                    document={selectedNode.document}
+                    key={activeNode.id}
+                    document={activeNode.document}
                     onChange={(document) =>
-                      updateDocument(selectedNode.id, document)
+                      updateDocument(activeNode.id, document)
                     }
                   />
                 </div>
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              Select an option to edit its title and details.
-            </div>
+            <DecisionTreeEditorEmptyState variant="selection" />
           )}
         </div>
       </div>

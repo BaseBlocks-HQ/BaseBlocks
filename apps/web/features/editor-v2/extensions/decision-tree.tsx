@@ -27,7 +27,6 @@ import {
 } from "@openeditor/react";
 import { toHtml, toPlainText } from "@openeditor/exporters";
 import {
-  ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
   GitFork,
@@ -35,7 +34,13 @@ import {
   RotateCcw,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { DecisionTreeEditorBreadcrumb } from "@/components/site-elements/elements/decision-tree/editor-breadcrumb";
+import { DecisionTreeEditorEmptyState } from "@/components/site-elements/elements/decision-tree/editor-empty-state";
+import {
+  removeDecisionTreeNodesFromPath,
+  resolveDecisionTreeEditor,
+} from "@/components/site-elements/elements/decision-tree/editor-model";
 import { migrationPlaceholderExtension } from "./migration-placeholder";
 
 const nestedDocumentExtensions = [migrationPlaceholderExtension] as const;
@@ -172,20 +177,18 @@ function TreeEditor({
 }) {
   const [treeId, setTreeId] = useState(value.trees[0]?.id ?? "default");
   const [path, setPath] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const tree =
     value.trees.find((item) => item.id === treeId) ?? value.trees[0]!;
-  const parentId = path.at(-1) ?? null;
-  const children = useMemo(
-    () => childrenOf(tree.nodes, parentId),
-    [tree.nodes, parentId],
-  );
-  const selected = tree.nodes.find((node) => node.id === selectedId);
+  const {
+    activeNode,
+    path: validPath,
+    visibleOptions,
+  } = resolveDecisionTreeEditor(tree.nodes, path);
+  const parentId = activeNode?.id ?? null;
   const selectTree = (nextTreeId: string) => {
     setTreeId(nextTreeId);
     setPath([]);
-    setSelectedId(null);
   };
   const updateTree = (next: Tree) =>
     onChange({
@@ -220,7 +223,7 @@ function TreeEditor({
           id: crypto.randomUUID(),
           parentId,
           name,
-          order: children.length,
+          order: visibleOptions.length,
           document: emptyDocument(),
         },
       ],
@@ -233,8 +236,7 @@ function TreeEditor({
       ...tree,
       nodes: tree.nodes.filter((node) => !removed.has(node.id)),
     });
-    setPath((current) => current.filter((item) => !removed.has(item)));
-    if (selectedId && removed.has(selectedId)) setSelectedId(null);
+    setPath((current) => removeDecisionTreeNodesFromPath(current, removed));
   };
 
   return (
@@ -247,95 +249,47 @@ function TreeEditor({
         onSelect={selectTree}
         trees={value.trees}
       />
-      <div className="grid min-h-[440px] gap-3 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
-        <div className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
-          <div className="flex min-w-0 items-center gap-1 px-2 py-2.5">
-            {path.length > 0 ? (
-              <Button
-                aria-label="Go up"
-                onClick={() => {
-                  setPath((current) => current.slice(0, -1));
-                  setSelectedId(null);
-                }}
-                size="icon-xs"
-                type="button"
-                variant="ghost"
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-            ) : null}
-            <Button
-              className="rounded-xl"
-              onClick={() => {
-                setPath([]);
-                setSelectedId(null);
-              }}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              Root
-            </Button>
-            {path.map((id, index) => (
-              <button
-                className="truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                key={id}
-                onClick={() => {
-                  setPath(path.slice(0, index + 1));
-                  setSelectedId(null);
-                }}
-                type="button"
-              >
-                /{tree.nodes.find((node) => node.id === id)?.name ?? "Option"}
-              </button>
-            ))}
+      <div className="grid h-[500px] max-h-[70vh] gap-3 overflow-hidden md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
+          <div>
+            <DecisionTreeEditorBreadcrumb
+              getNodeName={(nodeId) =>
+                tree.nodes.find((node) => node.id === nodeId)?.name ?? "Option"
+              }
+              onNavigate={setPath}
+              path={validPath}
+            />
           </div>
-          <div className="flex-1 space-y-1.5 p-2">
-            {children.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                No options here yet.
-              </p>
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {visibleOptions.length === 0 ? (
+              <DecisionTreeEditorEmptyState variant="options" />
             ) : (
-              children.map((node) => (
-                <div
-                  className={`flex items-center gap-1 rounded-xl p-2 transition ${
-                    selectedId === node.id
-                      ? "bg-primary/10 text-primary"
-                      : "bg-background/60 hover:bg-muted/60"
-                  }`}
-                  key={node.id}
-                >
-                  <button
-                    className="min-w-0 flex-1 truncate rounded-lg px-1 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => setSelectedId(node.id)}
-                    type="button"
+              <div className="space-y-1.5">
+                {visibleOptions.map((node) => (
+                  <div
+                    className="group flex items-center gap-1 rounded-xl bg-background/60 p-2 transition hover:bg-muted/60"
+                    key={node.id}
                   >
-                    {node.name}
-                  </button>
-                  <Button
-                    aria-label={`Edit children of ${node.name}`}
-                    onClick={() => {
-                      setPath((current) => [...current, node.id]);
-                      setSelectedId(null);
-                    }}
-                    size="icon-xs"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ChevronRight className="size-4" />
-                  </Button>
-                  <Button
-                    aria-label={`Remove ${node.name}`}
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => remove(node.id)}
-                    size="icon-xs"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))
+                    <button
+                      className="flex min-w-0 flex-1 items-center justify-between gap-2 truncate rounded-lg px-1 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setPath([...validPath, node.id])}
+                      type="button"
+                    >
+                      <span className="truncate">{node.name}</span>
+                    </button>
+                    <Button
+                      aria-label={`Remove ${node.name}`}
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => remove(node.id)}
+                      size="icon-xs"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <div className="flex gap-2 p-2.5">
@@ -361,8 +315,8 @@ function TreeEditor({
             </Button>
           </div>
         </div>
-        <div className="min-w-0 rounded-2xl bg-card p-4">
-          {selected ? (
+        <div className="min-h-0 min-w-0 overflow-y-auto rounded-2xl bg-card p-4">
+          {activeNode ? (
             <div className="space-y-3">
               <Input
                 aria-label="Option name"
@@ -371,31 +325,29 @@ function TreeEditor({
                   updateTree({
                     ...tree,
                     nodes: tree.nodes.map((node) =>
-                      node.id === selected.id
+                      node.id === activeNode.id
                         ? { ...node, name: event.target.value }
                         : node,
                     ),
                   })
                 }
-                value={selected.name}
+                value={activeNode.name}
               />
               <NestedEditor
-                document={selected.document}
-                key={selected.id}
+                document={activeNode.document}
+                key={activeNode.id}
                 onChange={(document) =>
                   updateTree({
                     ...tree,
                     nodes: tree.nodes.map((node) =>
-                      node.id === selected.id ? { ...node, document } : node,
+                      node.id === activeNode.id ? { ...node, document } : node,
                     ),
                   })
                 }
               />
             </div>
           ) : (
-            <div className="flex min-h-72 items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              Select an option to edit its details.
-            </div>
+            <DecisionTreeEditorEmptyState variant="selection" />
           )}
         </div>
       </div>
