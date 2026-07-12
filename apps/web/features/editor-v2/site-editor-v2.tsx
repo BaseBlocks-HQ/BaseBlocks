@@ -13,7 +13,11 @@ import {
   useOpenEditorController,
 } from "@openeditor/react";
 import type { OpenEditorAttachmentRuntime } from "@openeditor/core";
-import { OpenEditorSelectionBubble, OpenEditorSlashMenu } from "@openeditor/ui";
+import {
+  OpenEditorSelectionBubble,
+  OpenEditorSlashMenu,
+  OpenEditorThemeProvider,
+} from "@openeditor/ui";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -29,6 +33,7 @@ import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
 import { editorV2Extensions } from "./extensions";
 import { blockParity, type ParityStatus } from "./parity/block-parity";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
+import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 
 const statusClass: Record<ParityStatus, string> = {
   converted: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -319,24 +324,34 @@ function ConvertedEditor({
 
   if (mode === "viewer") {
     return (
-      <div className="mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
-        <OpenEditorViewer
-          className="oe-viewer"
-          document={controller.document}
-          extensions={extensions}
-          pageRuntime={pageRuntime}
-          attachmentRuntime={attachmentRuntime}
-        />
-      </div>
+      <OpenEditorThemeProvider
+        className="contents"
+        theme={baseBlocksOpenEditorTheme}
+      >
+        <div className="mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
+          <OpenEditorViewer
+            className="oe-viewer"
+            document={controller.document}
+            extensions={extensions}
+            pageRuntime={pageRuntime}
+            attachmentRuntime={attachmentRuntime}
+          />
+        </div>
+      </OpenEditorThemeProvider>
     );
   }
 
   return (
-    <div className="oe-editor-surface mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
-      <OpenEditorContent controller={controller} />
-      <OpenEditorSelectionBubble controller={controller} />
-      <OpenEditorSlashMenu controller={controller} />
-    </div>
+    <OpenEditorThemeProvider
+      className="contents"
+      theme={baseBlocksOpenEditorTheme}
+    >
+      <div className="oe-editor-surface mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
+        <OpenEditorContent controller={controller} />
+        <OpenEditorSelectionBubble controller={controller} />
+        <OpenEditorSlashMenu controller={controller} />
+      </div>
+    </OpenEditorThemeProvider>
   );
 }
 

@@ -87,27 +87,6 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
-  /* Open Editor tokens inherit the active Base Blocks theme, including portals. */
-  --oe-surface: var(--background);
-  --oe-surface-muted: var(--muted);
-  --oe-text: var(--foreground);
-  --oe-text-soft: var(--foreground);
-  --oe-heading: var(--foreground);
-  --oe-muted: var(--muted-foreground);
-  --oe-placeholder: var(--muted-foreground);
-  --oe-border: var(--border);
-  --oe-border-strong: var(--input);
-  --oe-accent: var(--accent);
-  --oe-accent-text: var(--accent-foreground);
-  --oe-accent-strong: var(--primary);
-  --oe-button-bg: var(--primary);
-  --oe-button-text: var(--primary-foreground);
-  --oe-code-bg: var(--muted);
-  --oe-code-text: var(--foreground);
-  --oe-link: var(--primary);
-  --oe-link-hover: var(--foreground);
-  --oe-shadow: rgb(0 0 0 / 14%);
 }
 
 @keyframes library-upload-shimmer {
@@ -151,7 +130,6 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --oe-shadow: rgb(0 0 0 / 40%);
 }
 
 @layer base {
