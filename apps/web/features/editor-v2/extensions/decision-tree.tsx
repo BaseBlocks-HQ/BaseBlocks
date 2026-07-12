@@ -142,11 +142,12 @@ function TreeEditor({
   };
 
   return (
-    <section className="not-prose my-4 overflow-hidden rounded-xl border bg-background">
+    <section className="not-prose my-4 space-y-3">
       {value.trees.length > 1 ? (
-        <div className="flex gap-1 border-b p-2">
+        <div className="flex flex-wrap gap-1">
           {value.trees.map((item) => (
             <Button
+              className="rounded-xl"
               key={item.id}
               onClick={() => {
                 setTreeId(item.id);
@@ -162,23 +163,25 @@ function TreeEditor({
           ))}
         </div>
       ) : null}
-      <div className="grid min-h-[440px] md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
-        <div className="flex flex-col border-r">
-          <div className="flex items-center gap-1 border-b p-2">
+      <div className="grid min-h-[440px] gap-3 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
+        <div className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
+          <div className="flex min-w-0 items-center gap-1 px-2 py-2.5">
+            {path.length > 0 ? (
+              <Button
+                aria-label="Go up"
+                onClick={() => {
+                  setPath((current) => current.slice(0, -1));
+                  setSelectedId(null);
+                }}
+                size="icon-xs"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+            ) : null}
             <Button
-              aria-label="Go up"
-              disabled={path.length === 0}
-              onClick={() => {
-                setPath((current) => current.slice(0, -1));
-                setSelectedId(null);
-              }}
-              size="icon-xs"
-              type="button"
-              variant="ghost"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
+              className="rounded-xl"
               onClick={() => {
                 setPath([]);
                 setSelectedId(null);
@@ -191,7 +194,7 @@ function TreeEditor({
             </Button>
             {path.map((id, index) => (
               <button
-                className="truncate text-xs text-muted-foreground"
+                className="truncate rounded-md px-1 py-0.5 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 key={id}
                 onClick={() => {
                   setPath(path.slice(0, index + 1));
@@ -203,7 +206,7 @@ function TreeEditor({
               </button>
             ))}
           </div>
-          <div className="flex-1 space-y-1 p-2">
+          <div className="flex-1 space-y-1.5 p-2">
             {children.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 No options here yet.
@@ -211,11 +214,15 @@ function TreeEditor({
             ) : (
               children.map((node) => (
                 <div
-                  className="flex items-center gap-1 rounded-lg border p-2"
+                  className={`flex items-center gap-1 rounded-xl p-2 transition ${
+                    selectedId === node.id
+                      ? "bg-primary/10 text-primary"
+                      : "bg-background/60 hover:bg-muted/60"
+                  }`}
                   key={node.id}
                 >
                   <button
-                    className="min-w-0 flex-1 truncate text-left text-sm font-medium"
+                    className="min-w-0 flex-1 truncate rounded-lg px-1 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSelectedId(node.id)}
                     type="button"
                   >
@@ -235,6 +242,7 @@ function TreeEditor({
                   </Button>
                   <Button
                     aria-label={`Remove ${node.name}`}
+                    className="text-muted-foreground hover:text-destructive"
                     onClick={() => remove(node.id)}
                     size="icon-xs"
                     type="button"
@@ -246,9 +254,10 @@ function TreeEditor({
               ))
             )}
           </div>
-          <div className="flex gap-2 border-t p-2">
+          <div className="flex gap-2 p-2.5">
             <Input
               aria-label="New option name"
+              className="rounded-xl border-transparent bg-background/70 shadow-none"
               onChange={(event) => setNewName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") add();
@@ -258,6 +267,8 @@ function TreeEditor({
             />
             <Button
               aria-label="Add option"
+              className="shrink-0 rounded-xl"
+              disabled={!newName.trim()}
               onClick={add}
               size="icon"
               type="button"
@@ -266,11 +277,12 @@ function TreeEditor({
             </Button>
           </div>
         </div>
-        <div className="p-4">
+        <div className="min-w-0 rounded-2xl bg-card p-4">
           {selected ? (
             <div className="space-y-3">
               <Input
                 aria-label="Option name"
+                className="rounded-xl border-transparent bg-background/70 font-medium shadow-none"
                 onChange={(event) =>
                   updateTree({
                     ...tree,
@@ -297,7 +309,7 @@ function TreeEditor({
               />
             </div>
           ) : (
-            <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
+            <div className="flex min-h-72 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               Select an option to edit its details.
             </div>
           )}
@@ -316,11 +328,12 @@ function TreeViewer({ value }: { value: TreeValue }) {
   const options = childrenOf(tree.nodes, path.at(-1) ?? null);
   const selected = tree.nodes.find((node) => node.id === selectedId);
   return (
-    <section className="not-prose my-4 overflow-hidden rounded-xl border bg-background">
+    <section className="not-prose my-4 space-y-3">
       {value.trees.length > 1 ? (
-        <div className="flex gap-1 border-b p-2">
+        <div className="flex flex-wrap gap-1">
           {value.trees.map((item) => (
             <Button
+              className="rounded-xl"
               key={item.id}
               onClick={() => {
                 setTreeId(item.id);
@@ -336,9 +349,10 @@ function TreeViewer({ value }: { value: TreeValue }) {
           ))}
         </div>
       ) : null}
-      <div className="grid min-h-80 md:grid-cols-2">
-        <div className="border-r p-3">
+      <div className="grid min-h-80 gap-3 md:grid-cols-2">
+        <div className="rounded-2xl bg-card p-3">
           <Button
+            className="rounded-xl"
             onClick={() => {
               setPath([]);
               setSelectedId(null);
@@ -358,7 +372,7 @@ function TreeViewer({ value }: { value: TreeValue }) {
             ) : (
               options.map((node) => (
                 <button
-                  className="flex w-full items-center justify-between rounded-lg border p-3 text-left text-sm font-medium hover:bg-muted"
+                  className="flex w-full items-center justify-between rounded-xl bg-background/60 p-3 text-left text-sm font-medium transition hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   key={node.id}
                   onClick={() => {
                     if (hasChildren(tree.nodes, node.id)) {
@@ -379,7 +393,7 @@ function TreeViewer({ value }: { value: TreeValue }) {
             )}
           </div>
         </div>
-        <div className="p-4">
+        <div className="rounded-2xl bg-card p-4">
           {selected ? (
             <>
               <h3 className="mb-3 font-semibold">{selected.name}</h3>
@@ -389,7 +403,7 @@ function TreeViewer({ value }: { value: TreeValue }) {
               />
             </>
           ) : (
-            <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
+            <div className="flex min-h-64 items-center justify-center px-6 text-center text-sm text-muted-foreground">
               <GitFork className="mr-2 size-4" />
               Choose an option.
             </div>
