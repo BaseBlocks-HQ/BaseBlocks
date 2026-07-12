@@ -28,6 +28,11 @@ import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
 import { editorV2Extensions } from "./extensions";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
+import { OpenEditorTabbedPage } from "./page-tabs";
+import {
+  readOpenEditorPageTabs,
+  shouldRefreshLegacyTabbedDocument,
+} from "./page-tabs-model";
 
 export function OpenEditorPageEditor({
   pageId,
@@ -62,9 +67,15 @@ export function OpenEditorPageEditor({
         : null,
     [content, pageTitles],
   );
-  const initialDocument =
-    (content?.openEditorDocument as OpenEditorDocument | undefined) ??
-    convertedDocument;
+  const storedDocument = content?.openEditorDocument as
+    | OpenEditorDocument
+    | undefined;
+  const initialDocument = shouldRefreshLegacyTabbedDocument(
+    content?.tabs.length ?? 0,
+    storedDocument,
+  )
+    ? convertedDocument
+    : (storedDocument ?? convertedDocument);
 
   const pageRuntime = useMemo<OpenEditorPageRuntime>(
     () => ({
@@ -114,19 +125,99 @@ export function OpenEditorPageEditor({
 
   return (
     <SiteRenderActionsProvider actions={{ siteId }}>
-      <OpenEditorDocumentEditor
-        attachmentRuntime={attachmentRuntime}
-        canEdit={canEdit}
-        initialDocument={initialDocument}
-        pageId={pageId}
-        pageRuntime={pageRuntime}
-        preview={preview}
-        saveDocument={saveDocument}
-        saveTimer={saveTimer}
-        pendingDocument={pendingDocument}
-        saveFailedMessage={t("saveFailed")}
-      />
+      {readOpenEditorPageTabs(initialDocument) ? (
+        <OpenEditorTabbedPageEditor
+          canEdit={canEdit}
+          initialDocument={initialDocument}
+          pageId={pageId}
+          pageRuntime={pageRuntime}
+          preview={preview}
+          saveDocument={saveDocument}
+          saveFailedMessage={t("saveFailed")}
+        />
+      ) : (
+        <OpenEditorDocumentEditor
+          attachmentRuntime={attachmentRuntime}
+          canEdit={canEdit}
+          initialDocument={initialDocument}
+          pageId={pageId}
+          pageRuntime={pageRuntime}
+          preview={preview}
+          saveDocument={saveDocument}
+          saveTimer={saveTimer}
+          pendingDocument={pendingDocument}
+          saveFailedMessage={t("saveFailed")}
+        />
+      )}
     </SiteRenderActionsProvider>
+  );
+}
+
+function OpenEditorTabbedPageEditor({
+  canEdit,
+  initialDocument,
+  pageId,
+  pageRuntime,
+  preview,
+  saveDocument,
+  saveFailedMessage,
+}: {
+  canEdit: boolean;
+  initialDocument: OpenEditorDocument;
+  pageId: Id<"pages">;
+  pageRuntime: OpenEditorPageRuntime;
+  preview: boolean;
+  saveDocument: (args: {
+    pageId: Id<"pages">;
+    document: OpenEditorDocument;
+  }) => Promise<null>;
+  saveFailedMessage: string;
+}) {
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDocument = useRef<OpenEditorDocument | null>(null);
+  const persist = useCallback(
+    (document: OpenEditorDocument) => {
+      void saveDocument({ pageId, document }).catch(() =>
+        toast.error(saveFailedMessage),
+      );
+    },
+    [pageId, saveDocument, saveFailedMessage],
+  );
+  const queueSave = (document: OpenEditorDocument) => {
+    pendingDocument.current = document;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const nextDocument = pendingDocument.current;
+      pendingDocument.current = null;
+      if (nextDocument) persist(nextDocument);
+    }, 750);
+  };
+
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const nextDocument = pendingDocument.current;
+      pendingDocument.current = null;
+      if (nextDocument) persist(nextDocument);
+    },
+    [persist],
+  );
+
+  return (
+    <OpenEditorThemeProvider
+      className="contents"
+      theme={baseBlocksOpenEditorTheme}
+    >
+      <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+        <OpenEditorTabbedPage
+          document={initialDocument}
+          editable={canEdit && !preview}
+          extensions={editorV2Extensions}
+          onChange={queueSave}
+          pageRuntime={pageRuntime}
+        />
+      </div>
+    </OpenEditorThemeProvider>
   );
 }
 

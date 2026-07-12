@@ -352,51 +352,80 @@ export function convertLegacyPageToOpenEditor(
   let placeholderCount = 0;
   const pageTitles = options.pageTitles ?? new Map<string, string>();
 
-  if (page.tabs.length > 0) {
-    warnings.push({
-      code: "flattened-tabs",
-      severity: "warning",
-      message: `${page.tabs.length} legacy page tabs are flattened into document order for now.`,
-    });
-  }
-
   const sections = [...page.sections].sort(
     (left, right) => left.order - right.order,
   );
+  const convertSections = (selectedSections: typeof sections) => {
+    const converted: OpenEditorBlock[] = [];
+    for (const section of selectedSections) {
+      if (section.region === "aside") {
+        warnings.push({
+          code: "aside-layout",
+          severity: "warning",
+          message: `Aside section ${section.id} is rendered inline until V2 has an aside layout extension.`,
+        });
+      }
+
+      const columns = [...section.columns]
+        .sort((left, right) => left.order - right.order)
+        .map((column) => {
+          const blocks = [...column.blocks]
+            .sort((left, right) => left.order - right.order)
+            .flatMap((block) => {
+              sourceBlockCount += 1;
+              const result = convertBlock(block, warnings, pageTitles);
+              if (result.converted) convertedBlockCount += 1;
+              placeholderCount += result.placeholderCount;
+              return result.nodes;
+            });
+          return blocks.length > 0 ? blocks : [textBlock("paragraph", "")];
+        });
+
+      if (columns.length > 1) {
+        converted.push({
+          type: "columns",
+          content: columns.map((column) => ({
+            type: "column",
+            content: column,
+          })),
+        });
+      } else {
+        converted.push(...(columns[0] ?? []));
+      }
+    }
+    return converted;
+  };
+
   const content: OpenEditorBlock[] = [];
+  if (page.tabs.length > 0) {
+    content.push({
+      type: "baseblocksPageTabs",
+      attrs: {
+        tabs: {
+          tabs: page.tabs.map((tab) => ({
+            id: tab.id,
+            label: tab.label,
+            document: createDocument(
+              convertSections(
+                sections.filter((section) => section.tabId === tab.id),
+              ),
+              {
+                source: "baseblocks-legacy-tab-converter",
+                schemaVersion: 1,
+              },
+            ),
+          })),
+        },
+      },
+    });
 
-  for (const section of sections) {
-    if (section.region === "aside") {
-      warnings.push({
-        code: "aside-layout",
-        severity: "warning",
-        message: `Aside section ${section.id} is rendered inline until V2 has an aside layout extension.`,
-      });
-    }
-
-    const columns = [...section.columns]
-      .sort((left, right) => left.order - right.order)
-      .map((column) => {
-        const blocks = [...column.blocks]
-          .sort((left, right) => left.order - right.order)
-          .flatMap((block) => {
-            sourceBlockCount += 1;
-            const result = convertBlock(block, warnings, pageTitles);
-            if (result.converted) convertedBlockCount += 1;
-            placeholderCount += result.placeholderCount;
-            return result.nodes;
-          });
-        return blocks.length > 0 ? blocks : [textBlock("paragraph", "")];
-      });
-
-    if (columns.length > 1) {
-      content.push({
-        type: "columns",
-        content: columns.map((column) => ({ type: "column", content: column })),
-      });
-    } else {
-      content.push(...(columns[0] ?? []));
-    }
+    const unassignedSections = sections.filter(
+      (section) =>
+        !section.tabId || !page.tabs.some((tab) => tab.id === section.tabId),
+    );
+    content.push(...convertSections(unassignedSections));
+  } else {
+    content.push(...convertSections(sections));
   }
 
   if (content.length === 0) {
@@ -411,7 +440,7 @@ export function convertLegacyPageToOpenEditor(
   return {
     document: createDocument(content, {
       source: "baseblocks-legacy-converter",
-      schemaVersion: 1,
+      schemaVersion: 2,
     }),
     warnings,
     sourceBlockCount,

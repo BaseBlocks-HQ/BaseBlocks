@@ -5,6 +5,11 @@ import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { convertLegacyPageToOpenEditor } from "@/features/editor-v2/conversion/convert-page";
 import { editorV2Extensions } from "@/features/editor-v2/extensions";
 import { baseBlocksOpenEditorTheme } from "@/features/editor-v2/openeditor-theme";
+import { OpenEditorTabbedPage } from "@/features/editor-v2/page-tabs";
+import {
+  readOpenEditorPageTabs,
+  shouldRefreshLegacyTabbedDocument,
+} from "@/features/editor-v2/page-tabs-model";
 import { PublicPagePanel } from "@/features/published-sites/page-panel";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { ElementRenderer } from "@/components/site-runtime/rendering";
@@ -188,10 +193,15 @@ export function PublicPageContent({
   const actions = useSiteRenderActions();
   const openEditorDocument = useMemo(() => {
     if (!structure) return null;
-    return (
-      structure.openEditorDocument ??
-      convertLegacyPageToOpenEditor(structure, { pageTitles }).document
-    );
+    const converted = convertLegacyPageToOpenEditor(structure, {
+      pageTitles,
+    }).document;
+    return shouldRefreshLegacyTabbedDocument(
+      structure.tabs.length,
+      structure.openEditorDocument,
+    )
+      ? converted
+      : (structure.openEditorDocument ?? converted);
   }, [pageTitles, structure]);
   const pageRuntime = useMemo<OpenEditorPageRuntime>(
     () => ({
@@ -240,12 +250,21 @@ export function PublicPageContent({
             className="contents"
             theme={baseBlocksOpenEditorTheme}
           >
-            <OpenEditorViewer
-              className="oe-viewer"
-              document={openEditorDocument}
-              extensions={editorV2Extensions}
-              pageRuntime={pageRuntime}
-            />
+            {readOpenEditorPageTabs(openEditorDocument) ? (
+              <OpenEditorTabbedPage
+                document={openEditorDocument}
+                editable={false}
+                extensions={editorV2Extensions}
+                pageRuntime={pageRuntime}
+              />
+            ) : (
+              <OpenEditorViewer
+                className="oe-viewer"
+                document={openEditorDocument}
+                extensions={editorV2Extensions}
+                pageRuntime={pageRuntime}
+              />
+            )}
           </OpenEditorThemeProvider>
         ) : null}
       </article>

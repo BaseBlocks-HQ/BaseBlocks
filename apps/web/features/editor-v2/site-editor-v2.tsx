@@ -37,6 +37,11 @@ import { editorV2Extensions } from "./extensions";
 import { blockParity, type ParityStatus } from "./parity/block-parity";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
+import { OpenEditorTabbedPage } from "./page-tabs";
+import {
+  readOpenEditorPageTabs,
+  shouldRefreshLegacyTabbedDocument,
+} from "./page-tabs-model";
 
 const statusClass: Record<ParityStatus, string> = {
   converted: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -141,10 +146,15 @@ export function SiteEditorV2({
   const conversion = convertLegacyPageToOpenEditor(resolvedLegacyContent, {
     pageTitles,
   });
-  const initialDocument =
-    (resolvedLegacyContent.openEditorDocument as
-      | OpenEditorDocument
-      | undefined) ?? conversion.document;
+  const storedDocument = resolvedLegacyContent.openEditorDocument as
+    | OpenEditorDocument
+    | undefined;
+  const initialDocument = shouldRefreshLegacyTabbedDocument(
+    resolvedLegacyContent.tabs.length,
+    storedDocument,
+  )
+    ? conversion.document
+    : (storedDocument ?? conversion.document);
   const isMigrated = resolvedLegacyContent.openEditorDocument !== undefined;
   return (
     <SiteRenderActionsProvider actions={{ siteId: siteId as Id<"sites"> }}>
@@ -317,6 +327,92 @@ export function SiteEditorV2({
 }
 
 function ConvertedEditor({
+  initialDocument,
+  mode,
+  pageId,
+  pageRuntime,
+  attachmentRuntime,
+}: {
+  initialDocument: OpenEditorDocument;
+  mode: "editor" | "viewer";
+  pageId?: Id<"pages">;
+  pageRuntime: OpenEditorPageRuntime;
+  attachmentRuntime: OpenEditorAttachmentRuntime<File>;
+}) {
+  if (readOpenEditorPageTabs(initialDocument)) {
+    return (
+      <TabbedConvertedEditor
+        initialDocument={initialDocument}
+        mode={mode}
+        pageId={pageId}
+        pageRuntime={pageRuntime}
+      />
+    );
+  }
+  return (
+    <StandardConvertedEditor
+      attachmentRuntime={attachmentRuntime}
+      initialDocument={initialDocument}
+      mode={mode}
+      pageId={pageId}
+      pageRuntime={pageRuntime}
+    />
+  );
+}
+
+function TabbedConvertedEditor({
+  initialDocument,
+  mode,
+  pageId,
+  pageRuntime,
+}: {
+  initialDocument: OpenEditorDocument;
+  mode: "editor" | "viewer";
+  pageId?: Id<"pages">;
+  pageRuntime: OpenEditorPageRuntime;
+}) {
+  const saveDocument = useMutation(api.pageContent.saveOpenEditorDocument);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDocument = useRef<OpenEditorDocument | null>(null);
+  const queueSave = (document: OpenEditorDocument) => {
+    if (!pageId) return;
+    pendingDocument.current = document;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const nextDocument = pendingDocument.current;
+      pendingDocument.current = null;
+      if (nextDocument) void saveDocument({ pageId, document: nextDocument });
+    }, 750);
+  };
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const nextDocument = pendingDocument.current;
+      if (pageId && nextDocument)
+        void saveDocument({ pageId, document: nextDocument });
+    },
+    [pageId, saveDocument],
+  );
+
+  return (
+    <OpenEditorThemeProvider
+      className="contents"
+      theme={baseBlocksOpenEditorTheme}
+    >
+      <div className="oe-editor-surface mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
+        <OpenEditorTabbedPage
+          document={initialDocument}
+          editable={mode === "editor"}
+          extensions={editorV2Extensions}
+          onChange={queueSave}
+          pageRuntime={pageRuntime}
+        />
+      </div>
+    </OpenEditorThemeProvider>
+  );
+}
+
+function StandardConvertedEditor({
   initialDocument,
   mode,
   pageId,

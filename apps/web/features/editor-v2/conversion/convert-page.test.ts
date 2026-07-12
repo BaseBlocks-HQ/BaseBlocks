@@ -25,6 +25,138 @@ const spacer = (
 ): BlockData => ({ id, order, type: "spacer", content: { height } });
 
 describe("legacy page conversion", () => {
+  test("preserves legacy page tabs as nested OpenEditor documents", () => {
+    const result = convertLegacyPageToOpenEditor({
+      tabs: [
+        { id: "overview", label: "Overview" },
+        { id: "details", label: "Details" },
+      ],
+      sections: [
+        {
+          id: "details-section",
+          order: 0,
+          region: "main",
+          tabId: "details",
+          columns: [
+            {
+              id: "details-column",
+              order: 0,
+              blocks: [
+                {
+                  id: "details-heading",
+                  order: 0,
+                  type: "heading",
+                  content: { text: "Technical details", level: 3 },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "overview-section",
+          order: 1,
+          region: "main",
+          tabId: "overview",
+          columns: [
+            {
+              id: "overview-column",
+              order: 0,
+              blocks: [
+                {
+                  id: "overview-paragraph",
+                  order: 0,
+                  type: "paragraph",
+                  content: { text: "Welcome" },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.document.content).toHaveLength(1);
+    expect(result.document.content[0]?.type).toBe("baseblocksPageTabs");
+    expect(result.document.content[0]?.attrs?.tabs).toEqual({
+      tabs: [
+        {
+          id: "overview",
+          label: "Overview",
+          document: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Welcome" }],
+              },
+            ],
+            meta: {
+              source: "baseblocks-legacy-tab-converter",
+              schemaVersion: 1,
+            },
+          },
+        },
+        {
+          id: "details",
+          label: "Details",
+          document: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "heading",
+                attrs: { level: 3 },
+                content: [{ type: "text", text: "Technical details" }],
+              },
+            ],
+            meta: {
+              source: "baseblocks-legacy-tab-converter",
+              schemaVersion: 1,
+            },
+          },
+        },
+      ],
+    });
+    expect(result.sourceBlockCount).toBe(2);
+    expect(result.convertedBlockCount).toBe(2);
+    expect(
+      result.warnings.some((warning) => warning.code === "flattened-tabs"),
+    ).toBe(false);
+  });
+
+  test("keeps unassigned legacy sections after the tabs block", () => {
+    const result = convertLegacyPageToOpenEditor({
+      tabs: [{ id: "tab-1", label: "Tab 1" }],
+      sections: [
+        {
+          id: "orphan",
+          order: 0,
+          region: "main",
+          columns: [
+            {
+              id: "column",
+              order: 0,
+              blocks: [
+                {
+                  id: "paragraph",
+                  order: 0,
+                  type: "paragraph",
+                  content: { text: "Still preserved" },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.document.content.map((node) => node.type)).toEqual([
+      "baseblocksPageTabs",
+      "paragraph",
+    ]);
+  });
+
   test("converts legacy files to canonical attachments without losing metadata", () => {
     const result = convertLegacyPageToOpenEditor(
       pageWithBlocks([
