@@ -3,19 +3,32 @@
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { SearchBox } from "@/features/search";
 import type { SearchContent } from "@baseblocks/domain";
+import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@baseblocks/ui/popover";
 import { Switch } from "@baseblocks/ui/switch";
 import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
+import { Settings } from "lucide-react";
 
 const defaults: Required<SearchContent> = {
   placeholder: "Search documents…",
   maxResults: 10,
   showFileType: true,
 };
+
+const searchBoxClassName =
+  "[&>div]:rounded-2xl [&>div]:hover:ring-0 [&>div>input]:!rounded-2xl [&>div>input]:!border-0 [&>div>input]:!bg-card [&>div>input]:!shadow-none";
 
 function readSearch(value: unknown): Required<SearchContent> {
   const candidate =
@@ -41,6 +54,7 @@ function SearchPreview({ value }: { value: Required<SearchContent> }) {
   }
   return (
     <SearchBox
+      className={searchBoxClassName}
       maxResults={value.maxResults}
       placeholder={value.placeholder}
       showFileType={value.showFileType}
@@ -60,6 +74,7 @@ function SearchViewer({ value }: { value: Required<SearchContent> }) {
     );
   return (
     <SearchBox
+      className={searchBoxClassName}
       maxResults={value.maxResults}
       onOpenPageResult={(pageId, searchTerm) =>
         actions.openPage?.(pageId, { searchTerm })
@@ -78,32 +93,76 @@ function SearchNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
     updateAttributes({ search: { ...value, ...patch } });
   return (
     <NodeViewWrapper contentEditable={false}>
-      <section className="not-prose my-4 space-y-3 rounded-xl border bg-background p-4">
-        <div className="grid gap-3 sm:grid-cols-[1fr_8rem_auto]">
-          <Input
-            aria-label="Search placeholder"
-            onChange={(event) => update({ placeholder: event.target.value })}
-            value={value.placeholder}
-          />
-          <Input
-            aria-label="Maximum search results"
-            max={50}
-            min={1}
-            onChange={(event) =>
-              update({ maxResults: Number(event.target.value) })
-            }
-            type="number"
-            value={value.maxResults}
-          />
-          <div className="flex items-center gap-2 text-sm">
-            <Switch
-              checked={value.showFileType}
-              onCheckedChange={(checked) => update({ showFileType: checked })}
-            />
-            File types
-          </div>
+      <section className="not-prose my-4 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <SearchPreview value={value} />
         </div>
-        <SearchPreview value={value} />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              aria-label="Configure search"
+              className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <Settings className="size-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-72 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
+          >
+            <PopoverHeader className="mb-4">
+              <PopoverTitle>Search settings</PopoverTitle>
+            </PopoverHeader>
+            <div className="grid gap-4">
+              <Label
+                className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
+                htmlFor="search-placeholder"
+              >
+                Placeholder
+                <Input
+                  className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+                  id="search-placeholder"
+                  onChange={(event) =>
+                    update({ placeholder: event.target.value })
+                  }
+                  value={value.placeholder}
+                />
+              </Label>
+              <Label
+                className="grid gap-1.5 text-xs font-medium tracking-wide text-sidebar-foreground/55"
+                htmlFor="search-max-results"
+              >
+                Maximum results
+                <Input
+                  className="h-9 rounded-[0.85rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground"
+                  id="search-max-results"
+                  max={50}
+                  min={1}
+                  onChange={(event) =>
+                    update({ maxResults: Number(event.target.value) })
+                  }
+                  type="number"
+                  value={value.maxResults}
+                />
+              </Label>
+              <div className="flex items-center justify-between gap-4">
+                <Label className="text-sm" htmlFor="search-file-types">
+                  Show file types
+                </Label>
+                <Switch
+                  checked={value.showFileType}
+                  id="search-file-types"
+                  onCheckedChange={(checked) =>
+                    update({ showFileType: checked })
+                  }
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </section>
     </NodeViewWrapper>
   );
