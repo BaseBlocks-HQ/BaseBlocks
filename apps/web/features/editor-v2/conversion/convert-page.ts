@@ -8,13 +8,17 @@ import type {
   BlockData,
   CalloutContent,
   CodeContent,
+  DecisionTreeContent,
+  DirectoryContent,
   FlowchartContent,
   HeadingContent,
   ImageContent,
+  LibraryContent,
   PageStructure,
   ParagraphContent,
   QuicklinksContent,
   RichTextContent,
+  SearchContent,
   SpacerContent,
 } from "@baseblocks/domain";
 import { convertBlockNoteDocument } from "./convert-blocknote";
@@ -180,6 +184,88 @@ function convertBlock(
         ],
         converted: true,
         placeholderCount: 0,
+      };
+    }
+    case "directory": {
+      const content = block.content as DirectoryContent;
+      return {
+        nodes: [
+          {
+            type: "baseblocksDirectory",
+            attrs: { directory: structuredClone(content) },
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "search": {
+      const content = block.content as SearchContent;
+      return {
+        nodes: [
+          {
+            type: "baseblocksSearch",
+            attrs: { search: structuredClone(content) },
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "library": {
+      const content = block.content as LibraryContent;
+      return {
+        nodes: [
+          {
+            type: "baseblocksLibrary",
+            attrs: { library: structuredClone(content) },
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
+    case "decision-tree": {
+      const content = block.content as DecisionTreeContent;
+      let nestedPlaceholders = 0;
+      const trees = content.trees.map((tree) => ({
+        ...tree,
+        nodes: tree.nodes.map((node) => {
+          const converted = convertBlockNoteDocument(node.document);
+          nestedPlaceholders += converted.placeholderCount;
+          warnings.push(
+            ...converted.warnings.map((warning) => ({
+              ...warning,
+              blockId: warning.blockId ?? block.id,
+              blockType: block.type,
+              message: `Decision tree option “${node.name}”: ${warning.message}`,
+            })),
+          );
+          return {
+            ...node,
+            document: createDocument(
+              converted.nodes.length > 0
+                ? converted.nodes
+                : [textBlock("paragraph", "")],
+              {
+                source: "baseblocks-decision-tree-converter",
+                schemaVersion: 1,
+              },
+            ),
+          };
+        }),
+      }));
+      return {
+        nodes: [
+          {
+            type: "baseblocksDecisionTree",
+            attrs: {
+              decisionTree: { trees, tabsMode: content.tabsMode ?? "row" },
+            },
+          },
+        ],
+        converted: true,
+        placeholderCount: nestedPlaceholders,
       };
     }
     case "richtext": {

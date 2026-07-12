@@ -73,7 +73,7 @@ export const blockParity: readonly BlockParityRow[] = [
   {
     legacyType: "directory",
     target: "Directory extension",
-    status: "pending",
+    status: "converted",
     note: "Base Blocks-owned block",
   },
   {
@@ -85,19 +85,19 @@ export const blockParity: readonly BlockParityRow[] = [
   {
     legacyType: "decision-tree",
     target: "Decision Tree extension",
-    status: "pending",
+    status: "converted",
     note: "Base Blocks-owned block",
   },
   {
     legacyType: "search",
     target: "Search extension",
-    status: "pending",
+    status: "converted",
     note: "Requires site search runtime",
   },
   {
     legacyType: "library",
     target: "Library extension",
-    status: "pending",
+    status: "converted",
     note: "Requires document runtime",
   },
   {

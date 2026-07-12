@@ -149,4 +149,114 @@ describe("legacy page conversion", () => {
     );
     expect(result.placeholderCount).toBe(0);
   });
+
+  test("converts BaseBlocks-owned directory, search, and library blocks", () => {
+    const directory = {
+      columns: [{ id: "name", header: "Name", type: "text" as const }],
+      rows: [{ id: "row", cells: { name: "Ada" } }],
+      settings: { copyMode: "cell" as const, pageSize: 20, showSearch: false },
+    };
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        { id: "directory", order: 0, type: "directory", content: directory },
+        {
+          id: "search",
+          order: 1,
+          type: "search",
+          content: {
+            placeholder: "Find it",
+            maxResults: 7,
+            showFileType: false,
+          },
+        },
+        {
+          id: "library",
+          order: 2,
+          type: "library",
+          content: { libraryId: "library-1", allowDownloads: false },
+        },
+      ]),
+    );
+
+    expect(result.document.content).toEqual([
+      { type: "baseblocksDirectory", attrs: { directory } },
+      {
+        type: "baseblocksSearch",
+        attrs: {
+          search: {
+            placeholder: "Find it",
+            maxResults: 7,
+            showFileType: false,
+          },
+        },
+      },
+      {
+        type: "baseblocksLibrary",
+        attrs: { library: { libraryId: "library-1", allowDownloads: false } },
+      },
+    ]);
+    expect(result.convertedBlockCount).toBe(3);
+    expect(result.placeholderCount).toBe(0);
+  });
+
+  test("converts decision-tree option documents to nested OpenEditor documents", () => {
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        {
+          id: "tree",
+          order: 0,
+          type: "decision-tree",
+          content: {
+            tabsMode: "dropdown",
+            trees: [
+              {
+                id: "tree-1",
+                label: "Troubleshoot",
+                nodes: [
+                  {
+                    id: "node-1",
+                    parentId: null,
+                    name: "Restart",
+                    order: 0,
+                    document: [
+                      {
+                        id: "paragraph-1",
+                        type: "paragraph",
+                        props: {},
+                        content: [
+                          {
+                            type: "text",
+                            text: "Turn it off and on",
+                            styles: {},
+                          },
+                        ],
+                        children: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ]),
+    );
+
+    expect(result.document.content[0]?.type).toBe("baseblocksDecisionTree");
+    const decisionTree = result.document.content[0]?.attrs?.decisionTree as {
+      trees: Array<{
+        nodes: Array<{
+          document: { type: string; content: Array<{ type: string }> };
+        }>;
+      }>;
+      tabsMode: string;
+    };
+    expect(decisionTree.tabsMode).toBe("dropdown");
+    expect(decisionTree.trees[0]?.nodes[0]?.document.type).toBe("doc");
+    expect(decisionTree.trees[0]?.nodes[0]?.document.content[0]?.type).toBe(
+      "paragraph",
+    );
+    expect(result.convertedBlockCount).toBe(1);
+    expect(result.placeholderCount).toBe(0);
+  });
 });
