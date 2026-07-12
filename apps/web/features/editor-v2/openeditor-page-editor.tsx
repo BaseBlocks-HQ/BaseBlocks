@@ -11,6 +11,7 @@ import type {
 import {
   OpenEditorContent,
   type OpenEditorPageRuntime,
+  OpenEditorViewer,
   useOpenEditorController,
 } from "@openeditor/react";
 import {
@@ -20,7 +21,7 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, type RefObject } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
@@ -31,10 +32,12 @@ import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 export function OpenEditorPageEditor({
   pageId,
   pages,
+  preview = false,
   siteId,
 }: {
   pageId: Id<"pages">;
   pages: Doc<"pages">[];
+  preview?: boolean;
   siteId: Id<"sites">;
 }) {
   const t = useTranslations("editor.pageEditor");
@@ -117,6 +120,7 @@ export function OpenEditorPageEditor({
         initialDocument={initialDocument}
         pageId={pageId}
         pageRuntime={pageRuntime}
+        preview={preview}
         saveDocument={saveDocument}
         saveTimer={saveTimer}
         pendingDocument={pendingDocument}
@@ -132,6 +136,7 @@ function OpenEditorDocumentEditor({
   initialDocument,
   pageId,
   pageRuntime,
+  preview,
   pendingDocument,
   saveDocument,
   saveTimer,
@@ -142,6 +147,7 @@ function OpenEditorDocumentEditor({
   initialDocument: OpenEditorDocument;
   pageId: Id<"pages">;
   pageRuntime: OpenEditorPageRuntime;
+  preview: boolean;
   pendingDocument: RefObject<OpenEditorDocument | null>;
   saveDocument: (args: {
     pageId: Id<"pages">;
@@ -150,11 +156,14 @@ function OpenEditorDocumentEditor({
   saveTimer: RefObject<ReturnType<typeof setTimeout> | null>;
   saveFailedMessage: string;
 }) {
-  const persist = (document: OpenEditorDocument) => {
-    void saveDocument({ pageId, document }).catch(() => {
-      toast.error(saveFailedMessage);
-    });
-  };
+  const persist = useCallback(
+    (document: OpenEditorDocument) => {
+      void saveDocument({ pageId, document }).catch(() => {
+        toast.error(saveFailedMessage);
+      });
+    },
+    [pageId, saveDocument, saveFailedMessage],
+  );
   const controller = useOpenEditorController({
     initialDocument,
     editable: canEdit,
@@ -172,20 +181,37 @@ function OpenEditorDocumentEditor({
     },
   });
 
-  useEffect(() => () => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    const nextDocument = pendingDocument.current;
-    if (nextDocument) persist(nextDocument);
-  });
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const nextDocument = pendingDocument.current;
+      pendingDocument.current = null;
+      if (nextDocument) persist(nextDocument);
+    },
+    [pendingDocument, persist, saveTimer],
+  );
 
   return (
     <OpenEditorThemeProvider
       className="contents"
       theme={baseBlocksOpenEditorTheme}
     >
-      <div className="oe-editor-surface mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
-        <OpenEditorContent controller={controller} />
-        {canEdit ? (
+      <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+        {preview ? (
+          <OpenEditorViewer
+            attachmentRuntime={attachmentRuntime}
+            className="oe-viewer"
+            document={controller.document}
+            extensions={editorV2Extensions}
+            pageRuntime={pageRuntime}
+          />
+        ) : (
+          <OpenEditorContent
+            className="oe-editor-surface"
+            controller={controller}
+          />
+        )}
+        {canEdit && !preview ? (
           <>
             <OpenEditorSelectionBubble controller={controller} />
             <OpenEditorSlashMenu controller={controller} />

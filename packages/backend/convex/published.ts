@@ -58,7 +58,10 @@ async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
   return {
     tabs: legacy?.tabs ?? [],
     sections: legacy ? hydrateDeepBlockContent(legacy.sections) : [],
-    openEditorDocument: native?.document,
+    openEditorDocument:
+      typeof native?.document === "string"
+        ? JSON.parse(native.document)
+        : native?.document,
     migratedAt: native?.migratedAt,
   };
 }

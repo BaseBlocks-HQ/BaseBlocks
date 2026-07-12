@@ -160,7 +160,10 @@ async function getContent(ctx: Pick<QueryCtx, "db">, pageId: Id<"pages">) {
   return {
     tabs: legacy?.tabs ?? [],
     sections: legacy ? hydrateDeepBlockContent(legacy.sections) : [],
-    openEditorDocument: native?.document,
+    openEditorDocument:
+      typeof native?.document === "string"
+        ? JSON.parse(native.document)
+        : native?.document,
     migratedAt: native?.migratedAt,
   };
 }
@@ -258,7 +261,8 @@ export const saveOpenEditorDocument = mutation({
     ) {
       throw new ConvexError("Invalid OpenEditor document");
     }
-    if (getConvexSize(document) > MAX_PAGE_CONTENT_BYTES) {
+    const serializedDocument = JSON.stringify(document);
+    if (getConvexSize(serializedDocument) > MAX_PAGE_CONTENT_BYTES) {
       throw new ConvexError(
         "This page is too large. Split it into child pages.",
       );
@@ -270,14 +274,14 @@ export const saveOpenEditorDocument = mutation({
     const updatedAt = Date.now();
     if (existing) {
       await ctx.db.patch("openEditorPageContents", existing._id, {
-        document,
+        document: serializedDocument,
         updatedAt,
       });
     } else {
       await ctx.db.insert("openEditorPageContents", {
         siteId: page.siteId,
         pageId,
-        document,
+        document: serializedDocument,
         migratedAt: updatedAt,
         updatedAt,
       });

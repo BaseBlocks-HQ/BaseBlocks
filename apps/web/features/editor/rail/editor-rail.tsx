@@ -18,11 +18,6 @@ import type { PageListItem, SectionPreset } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@baseblocks/ui/tooltip";
 import { Check, PanelTop } from "lucide-react";
 import type { ComponentType } from "react";
 import {
@@ -123,17 +118,17 @@ function RailButton({
   onHover: () => void;
   onPress: () => void;
 }) {
-  const button = (
+  return (
     <button
       type="button"
       aria-label={label}
       disabled={disabled}
       aria-expanded={active}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
+        "flex h-9 w-9 items-center justify-center rounded-full border border-transparent outline-none transition-colors focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-0",
         active
-          ? "border-border bg-accent text-foreground"
-          : "border-transparent text-muted-foreground hover:bg-accent/70 hover:text-foreground",
+          ? "bg-accent text-foreground"
+          : "text-muted-foreground hover:bg-accent/70 hover:text-foreground",
         disabled && "cursor-not-allowed opacity-45 hover:bg-transparent",
       )}
       onClick={() => {
@@ -146,13 +141,6 @@ function RailButton({
     >
       {icon}
     </button>
-  );
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
-    </Tooltip>
   );
 }
 
@@ -459,8 +447,8 @@ export function EditorFloatingRail({
       onMouseEnter={clearClosePanelTimeout}
       onMouseLeave={scheduleClosePanel}
     >
-      <div className="rounded-full border border-sidebar-border bg-sidebar/95 p-2 text-sidebar-foreground backdrop-blur-md">
-        <div className="flex flex-row gap-1 md:flex-col">
+      <div className="rounded-full border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md">
+        <div className="flex flex-row gap-0.5 md:flex-col">
           {RAIL_ITEMS.filter(
             (item) =>
               engine === "legacy" ||

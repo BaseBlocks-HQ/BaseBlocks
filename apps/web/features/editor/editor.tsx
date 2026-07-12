@@ -69,6 +69,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
 
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const showPagePanel = viewingPage !== null;
 
@@ -277,6 +278,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
         key={selectedPage._id}
         pageId={selectedPage._id}
         pages={pages}
+        preview={isPreviewing}
         siteId={site._id}
       />
     )
@@ -340,6 +342,8 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
             siteName={site.name}
             siteLogoUrl={site.logoUrl}
             onPublish={handlePublish}
+            isPreviewing={isPreviewing}
+            onTogglePreview={() => setIsPreviewing((current) => !current)}
             onUnpublish={handleUnpublish}
           />
 
@@ -375,6 +379,8 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           siteName={site.name}
           siteLogoUrl={site.logoUrl}
           onPublish={handlePublish}
+          isPreviewing={isPreviewing}
+          onTogglePreview={() => setIsPreviewing((current) => !current)}
           onUnpublish={handleUnpublish}
         />
 

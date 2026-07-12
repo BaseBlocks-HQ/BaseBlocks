@@ -42,11 +42,13 @@ export const canUploadToSite = query({
 
 export const getPublicAsset = query({
   args: {
-    fileId: v.id("files"),
+    fileId: v.string(),
     sessionTokens: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { fileId, sessionTokens }) => {
-    const asset = await ctx.db.get(fileId);
+    const normalizedFileId = ctx.db.normalizeId("files", fileId);
+    if (!normalizedFileId) return null;
+    const asset = await ctx.db.get(normalizedFileId);
     if (!asset || asset.visibility !== "public") {
       return null;
     }
@@ -62,10 +64,12 @@ export const getPublicAsset = query({
 
 export const getAuthorizedAsset = query({
   args: {
-    fileId: v.id("files"),
+    fileId: v.string(),
   },
   handler: async (ctx, { fileId }) => {
-    const asset = await ctx.db.get(fileId);
+    const normalizedFileId = ctx.db.normalizeId("files", fileId);
+    if (!normalizedFileId) return null;
+    const asset = await ctx.db.get(normalizedFileId);
     if (!asset) {
       return null;
     }

@@ -232,9 +232,11 @@ export const list = query({
 });
 
 export const get = query({
-  args: { documentId: v.id("documents") },
+  args: { documentId: v.string() },
   handler: async (ctx, { documentId }) => {
-    const doc = await ctx.db.get(documentId);
+    const normalizedDocumentId = ctx.db.normalizeId("documents", documentId);
+    if (!normalizedDocumentId) return null;
+    const doc = await ctx.db.get(normalizedDocumentId);
     if (!doc) return null;
 
     const site = await ctx.db.get(doc.siteId);
@@ -431,9 +433,11 @@ export const searchByLibrary = query({
 });
 
 export const getDownloadAsset = query({
-  args: { documentId: v.id("documents") },
+  args: { documentId: v.string() },
   handler: async (ctx, { documentId }) => {
-    const document = await ctx.db.get(documentId);
+    const normalizedDocumentId = ctx.db.normalizeId("documents", documentId);
+    if (!normalizedDocumentId) return null;
+    const document = await ctx.db.get(normalizedDocumentId);
     if (!document) {
       return null;
     }
@@ -466,11 +470,13 @@ export const getDownloadAsset = query({
 
 export const getPublicDownloadAsset = query({
   args: {
-    documentId: v.id("documents"),
+    documentId: v.string(),
     sessionTokens: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { documentId, sessionTokens }) => {
-    const document = await ctx.db.get(documentId);
+    const normalizedDocumentId = ctx.db.normalizeId("documents", documentId);
+    if (!normalizedDocumentId) return null;
+    const document = await ctx.db.get(normalizedDocumentId);
     if (!document?.fileId) {
       return null;
     }

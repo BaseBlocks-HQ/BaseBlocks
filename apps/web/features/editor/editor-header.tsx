@@ -40,6 +40,7 @@ import {
   EyeOff,
   Globe,
   MoreHorizontal,
+  PencilLine,
   Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -55,6 +56,7 @@ import type {
 
 interface EditorHeaderProps {
   engine?: "openeditor" | "legacy";
+  isPreviewing?: boolean;
   inFlow?: boolean;
   teamSlug: string;
   siteSlug: string;
@@ -63,11 +65,13 @@ interface EditorHeaderProps {
   siteName: string;
   siteLogoUrl?: string;
   onPublish: () => void;
+  onTogglePreview?: () => void;
   onUnpublish?: () => void;
 }
 
 export function EditorHeader({
   engine = "openeditor",
+  isPreviewing = false,
   inFlow = false,
   teamSlug,
   siteSlug,
@@ -76,6 +80,7 @@ export function EditorHeader({
   siteName,
   siteLogoUrl,
   onPublish,
+  onTogglePreview,
   onUnpublish,
 }: EditorHeaderProps) {
   const { canEdit } = useEditorSite();
@@ -104,18 +109,21 @@ export function EditorHeader({
               <EditorHeaderLeftSection
                 canEdit={canEdit}
                 currentSiteId={siteId}
+                engine={engine}
                 siteName={siteName}
                 siteLogoUrl={siteLogoUrl}
                 teamSlug={teamSlug}
               />
               <EditorHeaderRightSection
                 engine={engine}
+                isPreviewing={isPreviewing}
                 canEdit={canEdit}
                 siteId={siteId}
                 sitePublished={sitePublished}
                 teamSlug={teamSlug}
                 siteSlug={siteSlug}
                 onPublish={onPublish}
+                onTogglePreview={onTogglePreview}
                 onUnpublish={onUnpublish}
                 onOpenShare={() => setShareDialogOpen(true)}
               />
@@ -192,6 +200,7 @@ function openSite(teamSlug: string, siteSlug: string) {
 interface EditorHeaderLeftSectionProps {
   canEdit: boolean;
   currentSiteId: string;
+  engine: "openeditor" | "legacy";
   siteName: string;
   siteLogoUrl?: string;
   teamSlug: string;
@@ -200,11 +209,18 @@ interface EditorHeaderLeftSectionProps {
 function EditorHeaderLeftSection({
   canEdit,
   currentSiteId,
+  engine,
   siteName,
   siteLogoUrl,
   teamSlug,
 }: EditorHeaderLeftSectionProps) {
   const t = useTranslations("editor.header");
+  const searchParams = useSearchParams();
+  const selectedPageId = searchParams.get("page");
+  const legacyPath = `/dashboard/${teamSlug}/sites/${currentSiteId}/legacy`;
+  const legacyHref = selectedPageId
+    ? `${legacyPath}?page=${selectedPageId}`
+    : legacyPath;
   return (
     <div className="flex min-w-0 items-center gap-2">
       <Link href={getTeamDashboardPath(teamSlug)}>
@@ -219,6 +235,9 @@ function EditorHeaderLeftSection({
         currentSiteLogoUrl={siteLogoUrl}
         teamSlug={teamSlug}
       />
+      {engine === "openeditor" ? (
+        <NewEditorAnnouncement legacyHref={legacyHref} />
+      ) : null}
       {!canEdit && (
         <Badge variant="secondary" className="gap-1">
           <Eye className="h-3 w-3" />
@@ -229,26 +248,81 @@ function EditorHeaderLeftSection({
   );
 }
 
+function NewEditorAnnouncement({ legacyHref }: { legacyHref: string }) {
+  const t = useTranslations("editor.header");
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          className="gap-1.5 rounded-full border-violet-500/20 bg-violet-500/8 text-violet-700 hover:bg-violet-500/14 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
+          size="sm"
+          variant="outline"
+        >
+          <IconMagicWandSparkle className="size-3.5" />
+          <span className="max-sm:sr-only">{t("newEditor")}</span>
+          <Badge
+            className="h-4 rounded-full px-1.5 text-[9px] uppercase tracking-wide"
+            variant="secondary"
+          >
+            {t("beta")}
+          </Badge>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:right-4 [&_[data-slot='dialog-close']]:top-4">
+        <div className="px-5 pt-5">
+          <DialogHeader className="gap-2">
+            <div className="flex items-center gap-2">
+              <IconMagicWandSparkle className="size-5 shrink-0 text-violet-700 dark:text-violet-300" />
+              <DialogTitle className="text-lg">
+                {t("newEditorDialogTitle")}
+              </DialogTitle>
+              <Badge className="rounded-full text-[10px] uppercase tracking-wide">
+                {t("beta")}
+              </Badge>
+            </div>
+            <DialogDescription className="text-sm leading-relaxed text-sidebar-foreground/60">
+              {t("newEditorDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+        <div className="space-y-3 px-5 text-sm leading-relaxed text-sidebar-foreground/70">
+          <p>{t("newEditorDialogBetaBody")}</p>
+          <p>{t("newEditorDialogFallbackBody")}</p>
+        </div>
+        <DialogFooter className="px-5 pb-5 pt-1">
+          <Button asChild className="rounded-full" variant="outline">
+            <Link href={legacyHref}>{t("openLegacyEditor")}</Link>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface EditorHeaderRightSectionProps {
   engine: "openeditor" | "legacy";
+  isPreviewing: boolean;
   canEdit: boolean;
   siteId: string;
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
   onPublish: () => void;
+  onTogglePreview?: () => void;
   onUnpublish?: () => void;
   onOpenShare: () => void;
 }
 
 function EditorHeaderRightSection({
   engine,
+  isPreviewing,
   canEdit,
   siteId,
   sitePublished,
   teamSlug,
   siteSlug,
   onPublish,
+  onTogglePreview,
   onUnpublish,
   onOpenShare,
 }: EditorHeaderRightSectionProps) {
@@ -264,55 +338,6 @@ function EditorHeaderRightSection({
     : enginePath;
   return (
     <div className="flex items-center gap-1">
-      {engine === "openeditor" ? (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              className="gap-1.5 rounded-full border-violet-500/20 bg-violet-500/8 text-violet-700 hover:bg-violet-500/14 hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
-              size="sm"
-              variant="outline"
-            >
-              <IconMagicWandSparkle className="size-3.5" />
-              <span className="max-sm:sr-only">{t("newEditor")}</span>
-              <Badge
-                className="h-4 rounded-full px-1.5 text-[9px] uppercase tracking-wide"
-                variant="secondary"
-              >
-                {t("beta")}
-              </Badge>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:right-4 [&_[data-slot='dialog-close']]:top-4">
-            <div className="border-b border-sidebar-border/60 bg-linear-to-br from-violet-500/12 via-transparent to-transparent px-5 pb-5 pt-5">
-              <div className="mb-4 flex size-10 items-center justify-center rounded-2xl bg-violet-500/12 text-violet-700 dark:text-violet-300">
-                <IconMagicWandSparkle className="size-5" />
-              </div>
-              <DialogHeader className="gap-2">
-                <div className="flex items-center gap-2">
-                  <DialogTitle className="text-lg">
-                    {t("newEditorDialogTitle")}
-                  </DialogTitle>
-                  <Badge className="rounded-full text-[10px] uppercase tracking-wide">
-                    {t("beta")}
-                  </Badge>
-                </div>
-                <DialogDescription className="text-sm leading-relaxed text-sidebar-foreground/60">
-                  {t("newEditorDialogDescription")}
-                </DialogDescription>
-              </DialogHeader>
-            </div>
-            <div className="space-y-3 px-5 text-sm leading-relaxed text-sidebar-foreground/70">
-              <p>{t("newEditorDialogBetaBody")}</p>
-              <p>{t("newEditorDialogFallbackBody")}</p>
-            </div>
-            <DialogFooter className="px-5 pb-5 pt-1">
-              <Button asChild className="rounded-full" variant="outline">
-                <Link href={engineHref}>{t("openLegacyEditor")}</Link>
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      ) : null}
       <Link href={engineHref}>
         <Button size="sm" variant="ghost">
           {engine === "legacy" ? (
@@ -330,28 +355,46 @@ function EditorHeaderRightSection({
           )}
         </Button>
       </Link>
+      {engine === "openeditor" && onTogglePreview ? (
+        <Button
+          aria-pressed={isPreviewing}
+          className="gap-1.5 max-sm:size-8 max-sm:px-0 sm:min-w-24"
+          onClick={onTogglePreview}
+          size="sm"
+          variant="ghost"
+        >
+          {isPreviewing ? <PencilLine /> : <Eye />}
+          <span className="max-sm:sr-only sm:not-sr-only">
+            {isPreviewing ? t("edit") : t("preview")}
+          </span>
+        </Button>
+      ) : null}
       {canEdit ? (
         <>
-          <EditorHeaderMenuButton onOpenShare={onOpenShare} />
-          <ViewSiteButton
-            sitePublished={sitePublished}
-            teamSlug={teamSlug}
-            siteSlug={siteSlug}
-          />
+          {engine === "legacy" ? (
+            <ViewSiteButton
+              sitePublished={sitePublished}
+              teamSlug={teamSlug}
+              siteSlug={siteSlug}
+            />
+          ) : null}
           <Separator orientation="vertical" className="mx-1.5 h-5" />
           <DeployCta
             sitePublished={sitePublished}
+            teamSlug={teamSlug}
+            siteSlug={siteSlug}
             onPublish={onPublish}
             onUnpublish={onUnpublish}
           />
+          <EditorHeaderMenuButton onOpenShare={onOpenShare} />
         </>
-      ) : (
+      ) : engine === "legacy" ? (
         <ViewSiteButton
           sitePublished={sitePublished}
           teamSlug={teamSlug}
           siteSlug={siteSlug}
         />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -416,10 +459,14 @@ function EditorHeaderMenuButton({ onOpenShare }: { onOpenShare: () => void }) {
 
 function DeployCta({
   sitePublished,
+  teamSlug,
+  siteSlug,
   onPublish,
   onUnpublish,
 }: {
   sitePublished: boolean;
+  teamSlug: string;
+  siteSlug: string;
   onPublish: () => void;
   onUnpublish?: () => void;
 }) {
@@ -436,6 +483,10 @@ function DeployCta({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => openSite(teamSlug, siteSlug)}>
+            <IconWindow2 />
+            {tHeader("visitPublishedSite")}
+          </DropdownMenuItem>
           {onUnpublish ? (
             <DropdownMenuItem onClick={onUnpublish} variant="destructive">
               <EyeOff />
