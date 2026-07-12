@@ -447,7 +447,7 @@ export function EditorFloatingRail({
       onMouseEnter={clearClosePanelTimeout}
       onMouseLeave={scheduleClosePanel}
     >
-      <div className="rounded-full border border-sidebar-border bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md">
+      <div className="rounded-full bg-sidebar/95 p-1.5 text-sidebar-foreground backdrop-blur-md">
         <div className="flex flex-row gap-0.5 md:flex-col">
           {RAIL_ITEMS.filter(
             (item) =>

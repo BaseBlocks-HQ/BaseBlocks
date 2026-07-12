@@ -132,11 +132,11 @@ function DirectoryTable({
       {!editable &&
       normalized.settings.showSearch &&
       normalized.columns.length > 0 ? (
-        <div className="relative block">
+        <div className="relative block rounded-2xl transition-all hover:ring-0">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <span className="sr-only">Search directory</span>
           <Input
-            className="pl-9"
+            className="!rounded-2xl !border-0 !bg-card !pl-10 !shadow-none"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search directory…"
             value={query}
