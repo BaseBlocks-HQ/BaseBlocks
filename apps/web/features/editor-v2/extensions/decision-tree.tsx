@@ -6,6 +6,16 @@ import {
   type OpenEditorDocument,
 } from "@openeditor/core";
 import { Button } from "@baseblocks/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import {
   defineOpenEditorReactNode,
@@ -19,6 +29,7 @@ import { toHtml, toPlainText } from "@openeditor/exporters";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
   GitFork,
   Plus,
   RotateCcw,
@@ -74,6 +85,69 @@ function descendants(nodes: TreeNode[], id: string) {
   return result;
 }
 
+function TreeSwitcher({
+  activeTreeId,
+  editable = false,
+  onAdd,
+  onRemove,
+  onSelect,
+  trees,
+}: {
+  activeTreeId: string;
+  editable?: boolean;
+  onAdd?: () => void;
+  onRemove?: () => void;
+  onSelect: (treeId: string) => void;
+  trees: Tree[];
+}) {
+  const activeTree = trees.find((tree) => tree.id === activeTreeId) ?? trees[0];
+
+  if (!activeTree || (!editable && trees.length <= 1)) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          className="max-w-64 justify-between gap-2 rounded-xl"
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <span className="truncate">{activeTree.label}</span>
+          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-56">
+        <DropdownMenuLabel>Decision trees</DropdownMenuLabel>
+        <DropdownMenuRadioGroup onValueChange={onSelect} value={activeTree.id}>
+          {trees.map((tree) => (
+            <DropdownMenuRadioItem key={tree.id} value={tree.id}>
+              <span className="truncate">{tree.label}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        {editable ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onAdd}>
+              <Plus />
+              Add tree
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={trees.length <= 1}
+              onSelect={onRemove}
+              variant="destructive"
+            >
+              <Trash2 />
+              Remove tree
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function NestedEditor({
   document,
   onChange,
@@ -108,11 +182,33 @@ function TreeEditor({
     [tree.nodes, parentId],
   );
   const selected = tree.nodes.find((node) => node.id === selectedId);
+  const selectTree = (nextTreeId: string) => {
+    setTreeId(nextTreeId);
+    setPath([]);
+    setSelectedId(null);
+  };
   const updateTree = (next: Tree) =>
     onChange({
       ...value,
       trees: value.trees.map((item) => (item.id === next.id ? next : item)),
     });
+  const addTree = () => {
+    const nextTree: Tree = {
+      id: crypto.randomUUID(),
+      label: `Tree ${value.trees.length + 1}`,
+      nodes: [],
+    };
+    onChange({ ...value, trees: [...value.trees, nextTree] });
+    selectTree(nextTree.id);
+  };
+  const removeTree = () => {
+    if (value.trees.length <= 1) return;
+    const treeIndex = value.trees.findIndex((item) => item.id === tree.id);
+    const nextTrees = value.trees.filter((item) => item.id !== tree.id);
+    const nextTree = nextTrees[Math.min(treeIndex, nextTrees.length - 1)]!;
+    onChange({ ...value, trees: nextTrees });
+    selectTree(nextTree.id);
+  };
   const add = () => {
     const name = newName.trim();
     if (!name) return;
@@ -143,26 +239,14 @@ function TreeEditor({
 
   return (
     <section className="not-prose my-4 space-y-3">
-      {value.trees.length > 1 ? (
-        <div className="flex flex-wrap gap-1">
-          {value.trees.map((item) => (
-            <Button
-              className="rounded-xl"
-              key={item.id}
-              onClick={() => {
-                setTreeId(item.id);
-                setPath([]);
-                setSelectedId(null);
-              }}
-              size="sm"
-              type="button"
-              variant={item.id === tree.id ? "secondary" : "ghost"}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
-      ) : null}
+      <TreeSwitcher
+        activeTreeId={tree.id}
+        editable
+        onAdd={addTree}
+        onRemove={removeTree}
+        onSelect={selectTree}
+        trees={value.trees}
+      />
       <div className="grid min-h-[440px] gap-3 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
         <div className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
           <div className="flex min-w-0 items-center gap-1 px-2 py-2.5">
@@ -327,28 +411,18 @@ function TreeViewer({ value }: { value: TreeValue }) {
     value.trees.find((item) => item.id === treeId) ?? value.trees[0]!;
   const options = childrenOf(tree.nodes, path.at(-1) ?? null);
   const selected = tree.nodes.find((node) => node.id === selectedId);
+  const selectTree = (nextTreeId: string) => {
+    setTreeId(nextTreeId);
+    setPath([]);
+    setSelectedId(null);
+  };
   return (
     <section className="not-prose my-4 space-y-3">
-      {value.trees.length > 1 ? (
-        <div className="flex flex-wrap gap-1">
-          {value.trees.map((item) => (
-            <Button
-              className="rounded-xl"
-              key={item.id}
-              onClick={() => {
-                setTreeId(item.id);
-                setPath([]);
-                setSelectedId(null);
-              }}
-              size="sm"
-              type="button"
-              variant={item.id === tree.id ? "secondary" : "ghost"}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
-      ) : null}
+      <TreeSwitcher
+        activeTreeId={tree.id}
+        onSelect={selectTree}
+        trees={value.trees}
+      />
       <div className="grid min-h-80 gap-3 md:grid-cols-2">
         <div className="rounded-2xl bg-card p-3">
           <Button
