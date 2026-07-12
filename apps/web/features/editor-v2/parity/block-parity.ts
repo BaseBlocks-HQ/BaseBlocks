@@ -66,9 +66,9 @@ export const blockParity: readonly BlockParityRow[] = [
   },
   {
     legacyType: "page",
-    target: "Page reference",
-    status: "pending",
-    note: "Requires page resolver",
+    target: "Page",
+    status: "converted",
+    note: "First-party OpenEditor Page with BaseBlocks lifecycle runtime",
   },
   {
     legacyType: "directory",

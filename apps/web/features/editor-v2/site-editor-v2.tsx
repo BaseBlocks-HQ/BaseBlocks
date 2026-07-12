@@ -3,15 +3,17 @@
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { api, type Doc, type Id } from "@baseblocks/backend";
+import { generateSlug } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
 import {
   OpenEditorContent,
   OpenEditorViewer,
+  type OpenEditorPageRuntime,
   useOpenEditorController,
 } from "@openeditor/react";
 import { OpenEditorSelectionBubble, OpenEditorSlashMenu } from "@openeditor/ui";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
   Eye,
@@ -20,8 +22,8 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
 import { editorV2Extensions } from "./extensions";
 import { blockParity, type ParityStatus } from "./parity/block-parity";
@@ -41,6 +43,7 @@ export function SiteEditorV2({
 }) {
   const { team } = useTeamAccess();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const selectedPageId = searchParams.get("page");
   const [mode, setMode] = useState<"editor" | "viewer">("editor");
   const [inspectorOpen, setInspectorOpen] = useState(true);
@@ -55,9 +58,47 @@ export function SiteEditorV2({
     api.pageContent.get,
     selectedPage ? { pageId: selectedPage._id } : "skip",
   );
+  const createPage = useMutation(api.pages.create);
+  const updatePage = useMutation(api.pages.update);
   const resolvedLegacyContent = selectedPage
     ? legacyContent
     : { tabs: [], sections: [] };
+  const resolvedPages = pages ?? [];
+  const pageRuntime = useMemo<OpenEditorPageRuntime>(
+    () => ({
+      createPage: async ({ title, icon }) => {
+        const suffix = crypto.randomUUID().slice(0, 8);
+        const pageId = await createPage({
+          siteId: siteId as Id<"sites">,
+          parentId: selectedPage?._id,
+          title,
+          icon: icon ?? undefined,
+          slug: `${generateSlug(title) || "page"}-${suffix}`,
+          showInNavigation: false,
+        });
+        return { pageId, title, icon: icon ?? "📄", href: `?page=${pageId}` };
+      },
+      resolvePage: async (pageId) => {
+        const page = resolvedPages.find(
+          (candidate: Doc<"pages">) => candidate._id === pageId,
+        );
+        return page
+          ? {
+              pageId,
+              title: page.title,
+              icon: page.icon ?? "📄",
+              href: `?page=${pageId}`,
+            }
+          : null;
+      },
+      renamePage: async (pageId, title) => {
+        await updatePage({ pageId: pageId as Id<"pages">, title });
+      },
+      openPage: (page) =>
+        router.replace(`?page=${page.pageId}`, { scroll: false }),
+    }),
+    [createPage, resolvedPages, router, selectedPage?._id, siteId, updatePage],
+  );
 
   if (
     site === undefined ||
@@ -79,8 +120,12 @@ export function SiteEditorV2({
     );
   }
 
-  const conversion = convertLegacyPageToOpenEditor(resolvedLegacyContent);
-
+  const pageTitles = new Map(
+    pages.map((page: Doc<"pages">) => [page._id, page.title]),
+  );
+  const conversion = convertLegacyPageToOpenEditor(resolvedLegacyContent, {
+    pageTitles,
+  });
   return (
     <SiteRenderActionsProvider actions={{ siteId: siteId as Id<"sites"> }}>
       <div className="flex h-screen min-h-0 w-full flex-col overflow-hidden bg-background">
@@ -172,6 +217,7 @@ export function SiteEditorV2({
               conversion={conversion}
               key={selectedPage?._id ?? "empty"}
               mode={mode}
+              pageRuntime={pageRuntime}
             />
           </main>
 
@@ -249,14 +295,17 @@ export function SiteEditorV2({
 function ConvertedEditor({
   conversion,
   mode,
+  pageRuntime,
 }: {
   conversion: ReturnType<typeof convertLegacyPageToOpenEditor>;
   mode: "editor" | "viewer";
+  pageRuntime: OpenEditorPageRuntime;
 }) {
   const extensions = editorV2Extensions;
   const controller = useOpenEditorController({
     initialDocument: conversion.document,
     extensions,
+    pageRuntime,
   });
 
   if (mode === "viewer") {
@@ -266,6 +315,7 @@ function ConvertedEditor({
           className="oe-viewer"
           document={controller.document}
           extensions={extensions}
+          pageRuntime={pageRuntime}
         />
       </div>
     );

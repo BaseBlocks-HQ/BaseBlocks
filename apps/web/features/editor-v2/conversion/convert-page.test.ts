@@ -259,4 +259,26 @@ describe("legacy page conversion", () => {
     expect(result.convertedBlockCount).toBe(1);
     expect(result.placeholderCount).toBe(0);
   });
+
+  test("converts legacy page references to the first-party Page primitive", () => {
+    const result = convertLegacyPageToOpenEditor(
+      pageWithBlocks([
+        {
+          id: "page-block",
+          order: 0,
+          type: "page",
+          content: { pageId: "child-page" },
+        },
+      ]),
+      { pageTitles: new Map([["child-page", "Child page"]]) },
+    );
+
+    expect(result.document.content[0]).toEqual({
+      type: "page",
+      attrs: { pageId: "child-page", icon: "📄", href: null },
+      content: [{ type: "text", text: "Child page" }],
+    });
+    expect(result.convertedBlockCount).toBe(1);
+    expect(result.placeholderCount).toBe(0);
+  });
 });

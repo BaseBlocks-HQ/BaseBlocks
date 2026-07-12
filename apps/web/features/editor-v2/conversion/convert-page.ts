@@ -15,6 +15,7 @@ import type {
   ImageContent,
   LibraryContent,
   PageStructure,
+  PageContent,
   ParagraphContent,
   QuicklinksContent,
   RichTextContent,
@@ -36,6 +37,7 @@ const placeholder = (block: BlockData, reason: string): OpenEditorBlock => ({
 function convertBlock(
   block: BlockData,
   warnings: ConversionWarning[],
+  pageTitles: ReadonlyMap<string, string>,
 ): {
   nodes: OpenEditorBlock[];
   converted: boolean;
@@ -186,6 +188,22 @@ function convertBlock(
         placeholderCount: 0,
       };
     }
+    case "page": {
+      const content = block.content as PageContent;
+      return {
+        nodes: [
+          {
+            type: "page",
+            attrs: { pageId: content.pageId, icon: "📄", href: null },
+            content: [
+              createTextNode(pageTitles.get(content.pageId) ?? "Untitled"),
+            ],
+          },
+        ],
+        converted: true,
+        placeholderCount: 0,
+      };
+    }
     case "directory": {
       const content = block.content as DirectoryContent;
       return {
@@ -304,11 +322,13 @@ function convertBlock(
 
 export function convertLegacyPageToOpenEditor(
   page: PageStructure,
+  options: { pageTitles?: ReadonlyMap<string, string> } = {},
 ): ConversionResult {
   const warnings: ConversionWarning[] = [];
   let sourceBlockCount = 0;
   let convertedBlockCount = 0;
   let placeholderCount = 0;
+  const pageTitles = options.pageTitles ?? new Map<string, string>();
 
   if (page.tabs.length > 0) {
     warnings.push({
@@ -339,7 +359,7 @@ export function convertLegacyPageToOpenEditor(
           .sort((left, right) => left.order - right.order)
           .flatMap((block) => {
             sourceBlockCount += 1;
-            const result = convertBlock(block, warnings);
+            const result = convertBlock(block, warnings, pageTitles);
             if (result.converted) convertedBlockCount += 1;
             placeholderCount += result.placeholderCount;
             return result.nodes;
