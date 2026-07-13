@@ -96,7 +96,6 @@ export function ReadOnlyLibraryExplorer({
       contentType: entity.file.contentType,
       size: entity.file.size,
       allowDownload: allowDownloads,
-      documentId: entity.file._id,
     });
   }, [allowDownloads, model.entityByFileId, searchParams]);
   const visibleNodes = useMemo(() => {
@@ -208,7 +207,6 @@ export function ReadOnlyLibraryExplorer({
                       contentType: file.contentType,
                       size: file.size,
                       allowDownload: allowDownloads,
-                      documentId: file._id,
                     });
                     router.replace(filePath(file._id), { scroll: false });
                   }}

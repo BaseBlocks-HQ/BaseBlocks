@@ -18,8 +18,6 @@ export interface PreviewFile {
   filename: string;
   contentType: string;
   size?: number;
-  documentId?: string;
-  searchTerm?: string;
   allowDownload?: boolean;
 }
 

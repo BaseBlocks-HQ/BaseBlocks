@@ -29,9 +29,7 @@ export function SearchViewer({ value }: { value: Required<SearchContent> }) {
   return (
     <SearchBox
       maxResults={value.maxResults}
-      onOpenPageResult={(pageId, searchTerm) =>
-        actions.openPage?.(pageId, { searchTerm })
-      }
+      onOpenPageResult={(pageId) => actions.openPage?.(pageId)}
       placeholder={value.placeholder}
       showFileType={value.showFileType}
       siteId={actions.siteId}

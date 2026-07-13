@@ -77,7 +77,7 @@ interface SearchBoxProps {
   usePublicQuery?: boolean;
   /** Additional content to render in the input area (e.g., settings button) */
   inputAddon?: ReactNode;
-  onOpenPageResult?: (pageId: string, searchTerm: string) => void;
+  onOpenPageResult?: (pageId: string) => void;
   surface?: "default" | "soft";
   className?: string;
 }
@@ -158,7 +158,7 @@ export function SearchBox({
   const handleResultClick = (result: SearchResultItem) => {
     const pageId = getPageId(result);
     if (result.contentType === "page" && pageId) {
-      onOpenPageResult?.(pageId, debouncedQuery);
+      onOpenPageResult?.(pageId);
       setIsFocused(false);
       return;
     }
@@ -170,7 +170,6 @@ export function SearchBox({
         filename: metadata.filename || result.title,
         contentType: metadata.fileContentType || "application/octet-stream",
         size: metadata.size || 0,
-        searchTerm: debouncedQuery,
       });
     }
     setIsFocused(false);

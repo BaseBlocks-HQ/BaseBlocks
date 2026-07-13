@@ -2,7 +2,6 @@
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
-import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
@@ -28,7 +27,7 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { ChevronDown, ChevronRight, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -102,10 +101,8 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
         actions={{
           siteId: site._id,
           siteSlug: site.slug,
-          teamSlug: team.slug,
           openPage,
           publicSearch: true,
-          fileDeepLinks: true,
         }}
       >
         <SidebarProvider>
@@ -114,7 +111,6 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
             team={team}
             pages={pages as PageWithChildren[] | undefined}
             currentPath={currentPath}
-            siteId={site._id}
             siteSlug={site.slug}
           />
 
@@ -150,7 +146,7 @@ function PublicSiteHeader({
 }: {
   site: PublishedPageResult["site"];
   pageId?: string;
-  onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
+  onOpenPage: (pageId: string) => void;
 }) {
   return (
     <header className="absolute inset-x-0 top-0 z-40">
@@ -184,9 +180,7 @@ function PublicSiteHeader({
                 maxResults={5}
                 className="w-64"
                 surface="soft"
-                onOpenPageResult={(pageId, searchTerm) =>
-                  onOpenPage(pageId, { searchTerm })
-                }
+                onOpenPageResult={(pageId) => onOpenPage(pageId)}
               />
             ) : null}
             <PublicSiteThemeMenu />
@@ -201,7 +195,6 @@ function PublicSiteSidebar({
   currentPath,
   pages,
   site,
-  siteId,
   siteSlug,
   team,
 }: {
@@ -209,7 +202,6 @@ function PublicSiteSidebar({
   team: PublishedPageResult["organization"];
   pages?: PageWithChildren[];
   currentPath: string;
-  siteId: Id<"sites">;
   siteSlug: string;
 }) {
   const showLogo = site.settings.showLogo !== false;
@@ -234,7 +226,6 @@ function PublicSiteSidebar({
               <PublishedPageNavigation
                 currentPath={currentPath}
                 pages={pages}
-                siteId={siteId}
                 siteSlug={siteSlug}
               />
             )}
@@ -307,34 +298,20 @@ function PublicSiteThemeMenu() {
   );
 }
 
-const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
-
 interface PublishedNavigationRow {
+  depth: number;
   fullPath: string;
-  hasChildren: boolean;
-  isExpanded: boolean;
   page: PageWithChildren;
 }
 
-function buildPublishedNavigationRows(
-  pages: PageWithChildren[],
-  currentPath: string,
-  expandedPages: Set<string>,
-) {
+function buildPublishedNavigationRows(pages: PageWithChildren[]) {
   const rows: PublishedNavigationRow[] = [];
 
-  const visit = (siblings: PageWithChildren[], parentPath = "") => {
+  const visit = (siblings: PageWithChildren[], parentPath = "", depth = 0) => {
     for (const page of siblings) {
       const fullPath = parentPath ? `${parentPath}/${page.slug}` : page.slug;
-      const hasChildren = page.children.length > 0;
-      const isCurrentParent = currentPath.startsWith(`${fullPath}/`);
-      const isExpanded = expandedPages.has(page._id) || isCurrentParent;
-
-      rows.push({ fullPath, hasChildren, isExpanded, page });
-
-      if (hasChildren && isExpanded) {
-        visit(page.children, fullPath);
-      }
+      rows.push({ depth, fullPath, page });
+      visit(page.children, fullPath, depth + 1);
     }
   };
 
@@ -345,46 +322,29 @@ function buildPublishedNavigationRows(
 function PublishedPageNavigation({
   currentPath,
   pages,
-  siteId,
   siteSlug,
 }: {
   currentPath: string;
   pages: PageWithChildren[];
-  siteId: Id<"sites">;
   siteSlug: string;
 }) {
-  const { expandedPages, toggleExpand } = usePageExpandState(
-    EXPANDED_PAGES_KEY,
-    siteId,
-  );
-  const rows = buildPublishedNavigationRows(pages, currentPath, expandedPages);
+  const rows = buildPublishedNavigationRows(pages);
 
   return (
-    <SidebarMenu className="gap-0.5">
-      {rows.map(({ fullPath, hasChildren, isExpanded, page }) => (
-        <SidebarMenuItem key={page._id}>
+    <SidebarMenu aria-label="Site pages" className="gap-0.5" role="tree">
+      {rows.map(({ depth, fullPath, page }) => (
+        <SidebarMenuItem
+          aria-level={depth + 1}
+          key={page._id}
+          role="treeitem"
+          style={{ paddingLeft: depth * 14 }}
+        >
           <SidebarMenuButton
             asChild
             isActive={fullPath === currentPath}
-            className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-0 p-0 font-normal data-[active=true]:font-medium"
+            className="p-0 font-normal data-[active=true]:font-medium"
           >
             <div>
-              {hasChildren ? (
-                <button
-                  type="button"
-                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-                  className="flex h-8 w-7 items-center justify-center text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                  onClick={() => toggleExpand(page._id)}
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="size-3.5" />
-                  ) : (
-                    <ChevronRight className="size-3.5" />
-                  )}
-                </button>
-              ) : (
-                <span className="h-8 w-7" />
-              )}
               <OverflowTooltip content={page.title}>
                 {(textRef) => (
                   <Link

@@ -1,6 +1,5 @@
 "use client";
 
-import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
 import { BlockPickerPanel } from "@/features/editor/blocks/block-picker-panel";
 import {
   useEditorBlockPicker,
@@ -43,7 +42,6 @@ interface EditorToolDockProps {
 
 type EditorTool = "pages" | "blocks" | "site";
 
-const EXPANDED_PAGES_KEY = "baseblocks_editor_expanded_pages";
 const TOOLS: Array<{ id: EditorTool; label: string; icon: ReactNode }> = [
   { id: "pages", label: "Pages", icon: <IconFile /> },
   { id: "blocks", label: "Blocks", icon: <IconAppStack /> },
@@ -65,14 +63,6 @@ export function EditorToolDock({
   const [hoveredTool, setHoveredTool] = useState<EditorTool | null>(null);
   const [pinnedTool, setPinnedTool] = useState<EditorTool | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { isExpanded, setExpanded, toggleExpand } = usePageExpandState(
-    EXPANDED_PAGES_KEY,
-    site._id,
-  );
-  const rootPages = pages
-    .filter((page) => !page.parentId)
-    .sort((left, right) => left.order - right.order);
-
   const selectTool = (tool: EditorTool) => {
     setActiveTool(tool);
   };
@@ -131,14 +121,10 @@ export function EditorToolDock({
     <ToolPanel
       activeTool={tool}
       canEdit={canEdit}
-      isExpanded={isExpanded}
       pages={pages}
       onSelectPage={selectPage}
-      rootPages={rootPages}
       selectedPageId={selectedPageId}
-      setExpanded={setExpanded}
       site={site}
-      toggleExpand={toggleExpand}
     />
   );
 
@@ -257,23 +243,15 @@ function ToolPanel({
   canEdit,
   pages,
   onSelectPage,
-  rootPages,
   selectedPageId,
-  setExpanded,
   site,
-  toggleExpand,
-  isExpanded,
 }: {
   activeTool: EditorTool;
   canEdit: boolean;
   pages: PageListItem[];
   onSelectPage: (pageId: string) => void;
-  rootPages: PageListItem[];
   selectedPageId?: string;
-  setExpanded: (pageId: string, expanded: boolean) => void;
   site: { _id: string; defaultPageId?: string };
-  toggleExpand: (pageId: string) => void;
-  isExpanded: (pageId: string) => boolean;
 }) {
   if (activeTool === "pages") {
     return (
@@ -283,15 +261,16 @@ function ToolPanel({
           {canEdit ? <CreatePageDialog siteId={site._id} /> : null}
         </div>
         <div className="px-2 pb-2">
-          {rootPages.length ? (
-            <SidebarMenu className="gap-0.5">
+          {pages.length ? (
+            <SidebarMenu
+              aria-label="Site pages"
+              className="gap-0.5"
+              role="tree"
+            >
               <PageTree
                 allPages={pages}
                 defaultPageId={site.defaultPageId}
-                isExpanded={isExpanded}
                 onSelect={onSelectPage}
-                onSetExpanded={setExpanded}
-                onToggleExpand={toggleExpand}
                 selectedPageId={selectedPageId}
                 siteId={site._id}
               />

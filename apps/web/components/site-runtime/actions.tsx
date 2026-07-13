@@ -6,10 +6,8 @@ import { type ReactNode, createContext, use } from "react";
 export interface SiteRenderActions {
   siteId?: Id<"sites">;
   siteSlug?: string;
-  teamSlug?: string;
-  openPage?: (pageId: string, options?: { searchTerm?: string }) => void;
+  openPage?: (pageId: string) => void;
   publicSearch?: boolean;
-  fileDeepLinks?: boolean;
 }
 
 const SiteRenderActionsContext = createContext<SiteRenderActions>({});
