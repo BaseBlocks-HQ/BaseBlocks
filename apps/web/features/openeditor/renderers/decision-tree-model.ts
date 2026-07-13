@@ -5,13 +5,11 @@ interface DecisionTreeNodeLike {
 }
 
 /**
- * Decision tree editor interaction contract:
- *
  * An option is both a content node and a branch. Opening it makes its content
- * active and reveals its children. Keep those behaviors derived from one path;
- * do not introduce independent selection and navigation state.
+ * active and reveals its children. Both edit and read-only views derive those
+ * behaviors from this single path.
  */
-export function resolveDecisionTreeEditor<T extends DecisionTreeNodeLike>(
+export function resolveDecisionTree<T extends DecisionTreeNodeLike>(
   nodes: T[],
   path: string[],
 ) {
