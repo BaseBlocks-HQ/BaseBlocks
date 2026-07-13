@@ -2,8 +2,11 @@
 
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import {
+  DirectoryPagination,
+  DirectorySearch,
   DirectoryViewer,
   readDirectory,
+  useDirectoryView,
 } from "@/features/openeditor/renderers/directory";
 import type {
   DirectoryColumn,
@@ -13,15 +16,6 @@ import type {
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@baseblocks/ui/pagination";
 import {
   Popover,
   PopoverContent,
@@ -51,8 +45,7 @@ import {
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
-import { Plus, Search, Settings, TableProperties, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, Settings, TableProperties, Trash2 } from "lucide-react";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50] as const;
 
@@ -71,35 +64,6 @@ function blankRow(columns: DirectoryColumn[]): DirectoryRow {
   };
 }
 
-function paginationItems(
-  currentPage: number,
-  pageCount: number,
-): Array<number | { ellipsisBefore: number }> {
-  if (pageCount <= 7) {
-    return Array.from({ length: pageCount }, (_, index) => index + 1);
-  }
-
-  const pages = new Set([
-    1,
-    pageCount,
-    currentPage - 1,
-    currentPage,
-    currentPage + 1,
-  ]);
-  const visiblePages = [...pages]
-    .filter((page) => page >= 1 && page <= pageCount)
-    .sort((a, b) => a - b);
-
-  return visiblePages.flatMap<number | { ellipsisBefore: number }>(
-    (page, index) => {
-      const previous = visiblePages[index - 1];
-      return previous && page - previous > 1
-        ? [{ ellipsisBefore: page }, page]
-        : [page];
-    },
-  );
-}
-
 function DirectoryTable({
   value,
   onChange,
@@ -107,26 +71,8 @@ function DirectoryTable({
   value: DirectoryContent;
   onChange: (value: DirectoryContent) => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
   const normalized = readDirectory(value);
-  const rows = (() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return normalized.rows;
-    return normalized.rows.filter((row) =>
-      normalized.columns.some((column) =>
-        (row.cells[column.id] ?? "").toLowerCase().includes(needle),
-      ),
-    );
-  })();
-  const pageSize = normalized.settings.pageSize;
-  const pageCount =
-    pageSize > 0 ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
-  const currentPage = Math.min(page, pageCount);
-  const visibleRows =
-    pageSize > 0
-      ? rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-      : rows;
+  const directory = useDirectoryView(normalized);
   const update = (next: DirectoryContent) => onChange(next);
 
   const addColumn = () => {
@@ -167,7 +113,9 @@ function DirectoryTable({
       rows: [...normalized.rows, blankRow(normalized.columns)],
     };
     update(next);
-    if (pageSize > 0) setPage(Math.ceil(next.rows.length / pageSize));
+    if (directory.pageSize > 0) {
+      directory.goToPage(Math.ceil(next.rows.length / directory.pageSize));
+    }
   };
   const removeRow = (rowId: string) =>
     update({
@@ -184,40 +132,27 @@ function DirectoryTable({
       ),
     });
   const updatePageSize = (nextPageSize: number) => {
-    setPage(1);
+    directory.goToPage(1);
     update({
       ...normalized,
       settings: { ...normalized.settings, pageSize: nextPageSize },
     });
   };
   const updateShowSearch = (showSearch: boolean) => {
-    if (!showSearch) setQuery("");
+    if (!showSearch) directory.updateQuery("");
     update({
       ...normalized,
       settings: { ...normalized.settings, showSearch },
     });
   };
-  const goToPage = (nextPage: number) => {
-    setPage(Math.min(pageCount, Math.max(1, nextPage)));
-  };
-
   return (
     <section className="not-prose my-4 flex items-start gap-2">
       <div className="min-w-0 flex-1 space-y-3">
         {normalized.settings.showSearch && normalized.columns.length > 0 ? (
-          <div className="relative block rounded-2xl transition-all hover:ring-0">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <span className="sr-only">Search directory</span>
-            <Input
-              className="!rounded-2xl !border-0 !bg-card !pl-10 !shadow-none"
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Search directory…"
-              value={query}
-            />
-          </div>
+          <DirectorySearch
+            onQueryChange={directory.updateQuery}
+            query={directory.query}
+          />
         ) : null}
         {normalized.columns.length === 0 ? (
           <div className="flex min-h-28 items-center justify-center rounded-2xl border border-dashed">
@@ -279,17 +214,17 @@ function DirectoryTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.length === 0 ? (
+                {directory.filteredRows.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell
                       className="py-10 text-center text-muted-foreground"
                       colSpan={normalized.columns.length + 1}
                     >
-                      {query ? "No rows found." : "No rows yet."}
+                      {directory.query ? "No rows found." : "No rows yet."}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  visibleRows.map((row) => (
+                  directory.visibleRows.map((row) => (
                     <TableRow key={row.id}>
                       {normalized.columns.map((column) => (
                         <TableCell className="min-w-44 p-1.5" key={column.id}>
@@ -341,66 +276,11 @@ function DirectoryTable({
             </Table>
           </div>
         )}
-        {pageCount > 1 ? (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  aria-disabled={currentPage === 1}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : undefined
-                  }
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    goToPage(currentPage - 1);
-                  }}
-                  tabIndex={currentPage === 1 ? -1 : undefined}
-                />
-              </PaginationItem>
-              {paginationItems(currentPage, pageCount).map((item) =>
-                typeof item === "object" ? (
-                  <PaginationItem
-                    key={`ellipsis-before-${item.ellipsisBefore}`}
-                  >
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={item}>
-                    <PaginationLink
-                      href="#"
-                      isActive={item === currentPage}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        goToPage(item);
-                      }}
-                    >
-                      {item}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
-              )}
-              <PaginationItem>
-                <PaginationNext
-                  aria-disabled={currentPage === pageCount}
-                  className={
-                    currentPage === pageCount
-                      ? "pointer-events-none opacity-50"
-                      : undefined
-                  }
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    goToPage(currentPage + 1);
-                  }}
-                  tabIndex={currentPage === pageCount ? -1 : undefined}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        ) : null}
+        <DirectoryPagination
+          currentPage={directory.currentPage}
+          onPageChange={directory.goToPage}
+          pageCount={directory.pageCount}
+        />
       </div>
       <Popover>
         <PopoverTrigger asChild>
@@ -428,7 +308,7 @@ function DirectoryTable({
               </Label>
               <Select
                 onValueChange={(next) => updatePageSize(Number(next))}
-                value={String(pageSize)}
+                value={String(directory.pageSize)}
               >
                 <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
                   <SelectValue />

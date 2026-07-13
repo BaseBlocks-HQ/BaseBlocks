@@ -1,8 +1,16 @@
 "use client";
 
 import type { DirectoryContent } from "@baseblocks/domain";
-import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@baseblocks/ui/pagination";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
@@ -26,44 +34,175 @@ export function readDirectory(value: unknown): DirectoryContent {
   };
 }
 
-export function DirectoryViewer({ value }: { value: DirectoryContent }) {
+function paginationItems(
+  currentPage: number,
+  pageCount: number,
+): Array<number | { ellipsisBefore: number }> {
+  if (pageCount <= 7) {
+    return Array.from({ length: pageCount }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([
+    1,
+    pageCount,
+    currentPage - 1,
+    currentPage,
+    currentPage + 1,
+  ]);
+  const visiblePages = [...pages]
+    .filter((page) => page >= 1 && page <= pageCount)
+    .sort((a, b) => a - b);
+
+  return visiblePages.flatMap<number | { ellipsisBefore: number }>(
+    (page, index) => {
+      const previous = visiblePages[index - 1];
+      return previous && page - previous > 1
+        ? [{ ellipsisBefore: page }, page]
+        : [page];
+    },
+  );
+}
+
+export function useDirectoryView(value: DirectoryContent) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  const rows = normalizedQuery
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredRows = normalizedQuery
     ? value.rows.filter((row) =>
         value.columns.some((column) =>
-          (row.cells[column.id] ?? "")
-            .toLocaleLowerCase()
-            .includes(normalizedQuery),
+          (row.cells[column.id] ?? "").toLowerCase().includes(normalizedQuery),
         ),
       )
     : value.rows;
   const pageSize = value.settings.pageSize;
   const pageCount = pageSize
-    ? Math.max(1, Math.ceil(rows.length / pageSize))
+    ? Math.max(1, Math.ceil(filteredRows.length / pageSize))
     : 1;
   const currentPage = Math.min(page, pageCount);
   const visibleRows = pageSize
-    ? rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-    : rows;
+    ? filteredRows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : filteredRows;
+
+  const updateQuery = (nextQuery: string) => {
+    setQuery(nextQuery);
+    setPage(1);
+  };
+  const goToPage = (nextPage: number) => {
+    setPage(Math.max(1, nextPage));
+  };
+
+  return {
+    currentPage,
+    filteredRows,
+    goToPage,
+    pageCount,
+    pageSize,
+    query,
+    updateQuery,
+    visibleRows,
+  };
+}
+
+export function DirectorySearch({
+  onQueryChange,
+  query,
+}: {
+  onQueryChange: (query: string) => void;
+  query: string;
+}) {
+  return (
+    <div className="relative block rounded-2xl transition-all hover:ring-0">
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        aria-label="Search directory"
+        className="!rounded-2xl !border-0 !bg-card !pl-10 !shadow-none"
+        onChange={(event) => onQueryChange(event.target.value)}
+        placeholder="Search directory…"
+        value={query}
+      />
+    </div>
+  );
+}
+
+export function DirectoryPagination({
+  currentPage,
+  onPageChange,
+  pageCount,
+}: {
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  pageCount: number;
+}) {
+  if (pageCount <= 1) return null;
+
+  return (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            aria-disabled={currentPage === 1}
+            className={
+              currentPage === 1 ? "pointer-events-none opacity-50" : undefined
+            }
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              onPageChange(currentPage - 1);
+            }}
+            tabIndex={currentPage === 1 ? -1 : undefined}
+          />
+        </PaginationItem>
+        {paginationItems(currentPage, pageCount).map((item) =>
+          typeof item === "object" ? (
+            <PaginationItem key={`ellipsis-before-${item.ellipsisBefore}`}>
+              <PaginationEllipsis />
+            </PaginationItem>
+          ) : (
+            <PaginationItem key={item}>
+              <PaginationLink
+                href="#"
+                isActive={item === currentPage}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onPageChange(item);
+                }}
+              >
+                {item}
+              </PaginationLink>
+            </PaginationItem>
+          ),
+        )}
+        <PaginationItem>
+          <PaginationNext
+            aria-disabled={currentPage === pageCount}
+            className={
+              currentPage === pageCount
+                ? "pointer-events-none opacity-50"
+                : undefined
+            }
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              onPageChange(currentPage + 1);
+            }}
+            tabIndex={currentPage === pageCount ? -1 : undefined}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+}
+
+export function DirectoryViewer({ value }: { value: DirectoryContent }) {
+  const directory = useDirectoryView(value);
 
   return (
     <section className="not-prose my-4 space-y-3">
-      {value.settings.showSearch ? (
-        <div className="relative max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Search directory"
-            className="rounded-xl bg-card pl-9 shadow-none"
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search directory…"
-            value={query}
-          />
-        </div>
+      {value.settings.showSearch && value.columns.length > 0 ? (
+        <DirectorySearch
+          onQueryChange={directory.updateQuery}
+          query={directory.query}
+        />
       ) : null}
       <div className="overflow-x-auto rounded-2xl bg-card">
         {value.columns.length ? (
@@ -81,8 +220,8 @@ export function DirectoryViewer({ value }: { value: DirectoryContent }) {
               </tr>
             </thead>
             <tbody>
-              {visibleRows.length ? (
-                visibleRows.map((row) => (
+              {directory.visibleRows.length ? (
+                directory.visibleRows.map((row) => (
                   <tr className="border-b last:border-0" key={row.id}>
                     {value.columns.map((column) => (
                       <td
@@ -100,7 +239,7 @@ export function DirectoryViewer({ value }: { value: DirectoryContent }) {
                     className="py-10 text-center text-muted-foreground"
                     colSpan={value.columns.length}
                   >
-                    {query ? "No rows found." : "No rows yet."}
+                    {directory.query ? "No rows found." : "No rows yet."}
                   </td>
                 </tr>
               )}
@@ -112,33 +251,11 @@ export function DirectoryViewer({ value }: { value: DirectoryContent }) {
           </p>
         )}
       </div>
-      {pageCount > 1 ? (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Previous
-          </Button>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {currentPage} / {pageCount}
-          </span>
-          <Button
-            disabled={currentPage === pageCount}
-            onClick={() =>
-              setPage((current) => Math.min(pageCount, current + 1))
-            }
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Next
-          </Button>
-        </div>
-      ) : null}
+      <DirectoryPagination
+        currentPage={directory.currentPage}
+        onPageChange={directory.goToPage}
+        pageCount={directory.pageCount}
+      />
     </section>
   );
 }
