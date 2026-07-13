@@ -48,6 +48,47 @@ cleanup criteria are:
 Track the upstream implementation in
 [vercel/next.js#95639](https://github.com/vercel/next.js/pull/95639).
 
+## Canary experiment (2026-07-13)
+
+A disposable worktree tested `next@16.3.0-canary.83` with the workaround
+removed and this replacement configuration:
+
+```js
+experimental: {
+  useTypeScriptCli: true,
+},
+```
+
+The experiment also restored the web build script to `next build` and removed
+the `@typescript/native-preview` alias. Three forced clean production builds
+were run for stable and canary on the same machine and source revision:
+
+| Metric | Next 16.2.10 | Next 16.3.0-canary.83 | Difference |
+| --- | ---: | ---: | ---: |
+| Average complete build | 13.09s | 11.72s | 10.5% faster |
+| Median complete build | 12.71s | 11.82s | 7.0% faster |
+| Average compilation | 8.97s | 7.37s | 17.8% faster |
+| Shared initial JS (gzip) | 167.7 KiB | 164.3 KiB | 2.0% smaller |
+| Complete `.next` output | 91.6 MiB | 90.1 MiB | 1.7% smaller |
+
+The canary's integrated native TypeScript check averaged 0.85 seconds. Its
+aggregate static JavaScript was about 31% smaller, but that number sums every
+route and generated chunk and is not representative of a single page load;
+the 2% shared-initial-JavaScript change is the more conservative client metric.
+
+The test exposed two blockers:
+
+- the canary was newer than the repository's three-day minimum release age and
+  required bypassing that supply-chain protection for the disposable test; and
+- `next-intl` resolved a nested stable copy of Next because its peer range did
+  not accept the prerelease. A forced `next` resolution and clean reinstall
+  were required to avoid incompatible `NextRequest` types.
+
+The result confirms that Next's CLI backend works and makes the configuration
+cleaner, but the canary ecosystem is not ready for this production repository.
+All experimental dependency, resolution, lockfile, config, and worktree changes
+were discarded. Stable Next 16.2.10 and the guarded workaround remain in use.
+
 ## Cleanup procedure
 
 Once the criteria above are satisfied:
