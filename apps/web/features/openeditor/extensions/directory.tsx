@@ -165,12 +165,16 @@ function DirectoryTable({
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card">
-          <Table>
+          <Table className={editable ? undefined : "table-fixed"}>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 {normalized.columns.map((column) => (
                   <TableHead
-                    className="h-auto min-w-44 px-3 py-1.5"
+                    className={
+                      editable
+                        ? "h-auto min-w-44 px-3 py-1.5"
+                        : "h-auto whitespace-normal px-3 py-2 align-top [overflow-wrap:anywhere]"
+                    }
                     key={column.id}
                   >
                     {editable ? (
@@ -229,7 +233,14 @@ function DirectoryTable({
                 rows.map((row) => (
                   <TableRow key={row.id}>
                     {normalized.columns.map((column) => (
-                      <TableCell className="min-w-44 p-1.5" key={column.id}>
+                      <TableCell
+                        className={
+                          editable
+                            ? "min-w-44 p-1.5"
+                            : "whitespace-normal px-3 py-2 align-top [overflow-wrap:anywhere]"
+                        }
+                        key={column.id}
+                      >
                         {editable ? (
                           <Input
                             aria-label={`${column.header} value`}
