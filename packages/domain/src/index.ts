@@ -66,14 +66,6 @@ export type {
 } from "./content/elements";
 export { DEFAULT_ELEMENT_CONTENT } from "./content/elements";
 
-export type {
-  NavigationStyle,
-  NavigationItem,
-  BorderRadiusPreset,
-  SiteCustomization,
-} from "./sites/site-settings";
-export { DEFAULT_CUSTOMIZATION } from "./sites/site-settings";
-
 export type { UploadPurpose } from "./files/storage";
 export {
   getUploadMimeTypeForFilename,

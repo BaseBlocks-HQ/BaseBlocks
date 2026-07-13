@@ -28,6 +28,8 @@ interface EditorSiteSwitcherProps {
   currentSiteId: string;
   currentSiteLogoUrl?: string;
   currentSiteName: string;
+  currentSitePublished: boolean;
+  currentSiteSlug: string;
   teamSlug: string;
 }
 
@@ -86,11 +88,11 @@ function CurrentSiteButton({
       <div className="rounded-[0.6875rem] bg-background/80 p-px shadow-[inset_0_1px_0_hsl(var(--background)/0.65)] ring-1 ring-border/60">
         <SiteAvatar logoUrl={logoUrl} name={name} sizeClassName="h-7 w-7" />
       </div>
-      <div className="min-w-0">
+      <div className="hidden min-w-0 @2xl/header:block">
         <p className="truncate text-sm font-medium leading-none">{name}</p>
       </div>
       {showChevron ? (
-        <ChevronDown className="ml-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/80" />
+        <ChevronDown className="ml-0.5 hidden h-3.5 w-3.5 shrink-0 text-muted-foreground/80 @2xl/header:block" />
       ) : null}
     </div>
   );
@@ -151,31 +153,34 @@ export function EditorSiteSwitcher({
   currentSiteId,
   currentSiteLogoUrl,
   currentSiteName,
+  currentSitePublished,
+  currentSiteSlug,
   teamSlug,
 }: EditorSiteSwitcherProps) {
   const { team } = useTeamAccess();
   const sites = useQuery(api.sites.listByTeam, {
     organizationId: team._id,
   });
-  const switcherSites = getSwitcherSites(sites ?? [], currentSiteId);
-  const hasOtherSites = switcherSites.length > 1;
-
-  if (!hasOtherSites) {
-    return (
-      <CurrentSiteButton
-        name={currentSiteName}
-        logoUrl={currentSiteLogoUrl}
-        showChevron={false}
-      />
-    );
-  }
+  const currentSite: EditorSiteSwitcherSite = {
+    _id: currentSiteId,
+    isPublished: currentSitePublished,
+    logoUrl: currentSiteLogoUrl,
+    name: currentSiteName,
+    slug: currentSiteSlug,
+  };
+  const switcherSites = getSwitcherSites(
+    sites?.some((site) => site._id === currentSiteId)
+      ? sites
+      : [currentSite, ...(sites ?? [])],
+    currentSiteId,
+  );
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-9 min-w-0 rounded-[0.875rem] px-2 text-left shadow-[inset_0_1px_0_hsl(var(--background)/0.45)] transition-[background-color,box-shadow] duration-150 ease-out hover:bg-background/85 hover:shadow-[0_10px_24px_hsl(var(--foreground)/0.06)]"
+          className="size-8 min-w-0 max-w-full rounded-[0.875rem] px-0 text-left shadow-[inset_0_1px_0_hsl(var(--background)/0.45)] transition-[background-color,box-shadow] duration-150 ease-out hover:bg-background/85 hover:shadow-[0_10px_24px_hsl(var(--foreground)/0.06)] @2xl/header:h-9 @2xl/header:w-auto @2xl/header:px-2"
         >
           <CurrentSiteButton
             name={currentSiteName}

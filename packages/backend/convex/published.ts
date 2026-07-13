@@ -1,10 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
-import {
-  getAuthOrganizationBySlug,
-  listAuthOrganizations,
-} from "./authComponent/model";
+import { getAuthOrganizationBySlug } from "./authComponent/model";
 import { buildPageTree } from "./pages";
 import { hydrateDeepBlockContent } from "./pageContent";
 import { getAccessiblePublishedPages } from "./sharing";
@@ -32,16 +29,6 @@ function resolvePage(
     parentId = page._id;
   }
   return pages.find((page) => page._id === parentId) ?? null;
-}
-
-function pagePath(page: Doc<"pages">, pagesById: Map<string, Doc<"pages">>) {
-  const segments: string[] = [];
-  let current: Doc<"pages"> | undefined = page;
-  while (current) {
-    segments.unshift(current.slug);
-    current = current.parentId ? pagesById.get(current.parentId) : undefined;
-  }
-  return segments;
 }
 
 async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
@@ -109,25 +96,6 @@ export const resolve = query({
       : resolvePage(allPages, site.defaultPageId, args.pagePath)
         ? "forbidden"
         : "missing";
-    const pagesById = new Map(accessiblePages.map((item) => [item._id, item]));
-    const breadcrumbs = page
-      ? pagePath(page, pagesById)
-          .map((_, index, path) => {
-            const target = accessiblePages.find(
-              (item) =>
-                pagePath(item, pagesById).join("/") ===
-                path.slice(0, index + 1).join("/"),
-            );
-            return target
-              ? {
-                  id: target._id,
-                  title: target.title,
-                  path: path.slice(0, index + 1),
-                }
-              : null;
-          })
-          .filter((crumb): crumb is NonNullable<typeof crumb> => crumb !== null)
-      : [];
     const content = page
       ? await pageContent(ctx, page._id)
       : { tabs: [], sections: [] };
@@ -169,9 +137,7 @@ export const resolve = query({
             parentId: item.parentId,
           })),
       ),
-      breadcrumbs,
       access: { status, visibility: site.visibility ?? "public" },
-      customization: site.settings.customization,
       canonicalUrlInputs: {
         organizationSlug: organization.slug,
         siteSlug: site.slug,
@@ -198,96 +164,5 @@ export const resolve = query({
           : 0,
       ),
     };
-  },
-});
-
-export const sitemap = query({
-  args: {},
-  returns: v.array(
-    v.object({
-      organizationSlug: v.string(),
-      siteSlug: v.string(),
-      customDomain: v.optional(v.string()),
-      pagePath: v.array(v.string()),
-      updatedAt: v.number(),
-    }),
-  ),
-  handler: async (ctx) => {
-    const [organizations, sites] = await Promise.all([
-      listAuthOrganizations(ctx),
-      ctx.db
-        .query("sites")
-        .withIndex("by_published", (q) => q.eq("isPublished", true))
-        .collect(),
-    ]);
-    const slugs = new Map(
-      organizations.flatMap((organization) =>
-        organization.slug
-          ? [[organization._id, organization.slug] as const]
-          : [],
-      ),
-    );
-    const entries: Array<{
-      organizationSlug: string;
-      siteSlug: string;
-      customDomain?: string;
-      pagePath: string[];
-      updatedAt: number;
-    }> = [];
-    for (const site of sites) {
-      if (site.visibility && site.visibility !== "public") continue;
-      const organizationSlug = slugs.get(site.organizationId);
-      if (!organizationSlug) continue;
-      const [pages, contents, domain] = await Promise.all([
-        ctx.db
-          .query("pages")
-          .withIndex("by_site", (q) => q.eq("siteId", site._id))
-          .collect(),
-        ctx.db
-          .query("pageContents")
-          .withIndex("by_site", (q) => q.eq("siteId", site._id))
-          .collect(),
-        ctx.db
-          .query("siteDomains")
-          .withIndex("by_site", (q) => q.eq("siteId", site._id))
-          .filter((q) => q.eq(q.field("status"), "verified"))
-          .first(),
-      ]);
-      const pagesById = new Map(pages.map((page) => [page._id, page]));
-      const contentUpdatedAt = new Map(
-        contents.map((content) => [content.pageId, content.updatedAt]),
-      );
-      const defaultPage =
-        pages.find((page) => page._id === site.defaultPageId) ??
-        pages
-          .filter((page) => !page.parentId)
-          .sort((a, b) => a.order - b.order)[0];
-      entries.push({
-        organizationSlug,
-        siteSlug: site.slug,
-        customDomain: domain?.hostname,
-        pagePath: [],
-        updatedAt: Math.max(
-          site.updatedAt,
-          defaultPage?.updatedAt ?? 0,
-          defaultPage ? (contentUpdatedAt.get(defaultPage._id) ?? 0) : 0,
-        ),
-      });
-      for (const page of pages) {
-        if (page._id === defaultPage?._id) continue;
-        entries.push({
-          organizationSlug,
-          siteSlug: site.slug,
-          customDomain: domain?.hostname,
-          pagePath: pagePath(page, pagesById),
-          updatedAt: Math.max(
-            site.updatedAt,
-            page.updatedAt,
-            contentUpdatedAt.get(page._id) ?? 0,
-          ),
-        });
-      }
-    }
-    return entries;
   },
 });

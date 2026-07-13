@@ -73,12 +73,7 @@ export interface ElementRendererProps<T extends ElementType = ElementType> {
   content: ContentFor<T>;
 }
 
-export type ElementCategory =
-  | "site"
-  | "customization"
-  | "navigation"
-  | "sections"
-  | "blocks";
+export type ElementCategory = "sections" | "blocks";
 
 export interface ElementEditorProps<T extends ElementType = ElementType> {
   id: string;

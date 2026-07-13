@@ -27,9 +27,6 @@ const defaults: Required<SearchContent> = {
   showFileType: true,
 };
 
-const searchBoxClassName =
-  "[&>div]:rounded-2xl [&>div]:hover:ring-0 [&>div>input]:!rounded-2xl [&>div>input]:!border-0 [&>div>input]:!bg-card [&>div>input]:!shadow-none";
-
 function readSearch(value: unknown): Required<SearchContent> {
   const candidate =
     value && typeof value === "object" ? (value as SearchContent) : {};
@@ -54,11 +51,11 @@ function SearchPreview({ value }: { value: Required<SearchContent> }) {
   }
   return (
     <SearchBox
-      className={searchBoxClassName}
       maxResults={value.maxResults}
       placeholder={value.placeholder}
       showFileType={value.showFileType}
       siteId={siteId}
+      surface="soft"
       usePublicQuery={false}
     />
   );
@@ -74,7 +71,6 @@ function SearchViewer({ value }: { value: Required<SearchContent> }) {
     );
   return (
     <SearchBox
-      className={searchBoxClassName}
       maxResults={value.maxResults}
       onOpenPageResult={(pageId, searchTerm) =>
         actions.openPage?.(pageId, { searchTerm })
@@ -82,6 +78,7 @@ function SearchViewer({ value }: { value: Required<SearchContent> }) {
       placeholder={value.placeholder}
       showFileType={value.showFileType}
       siteId={actions.siteId}
+      surface="soft"
       usePublicQuery={actions.publicSearch === true}
     />
   );

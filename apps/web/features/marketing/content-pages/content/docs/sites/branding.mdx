@@ -1,47 +1,21 @@
 ---
 title: Branding
-description: Customize the look of your site — accent color, header background, border radius, and navigation style.
+description: Configure the name and logo displayed in your published site's sidebar.
 icon: Palette
 ---
 
-Each site has its own branding settings, independent of other sites in the team. Changes apply to the live site immediately — you don't need to publish for branding changes to take effect.
+Published sites use one consistent shell: a page sidebar and a transparent content header. Visual themes and navigation layouts are not configurable.
 
-Access these settings from the floating rail on the left edge of the editor:
-- **Customization** (palette icon) — light and dark accent, header, secondary, and tertiary colors; an optional header gradient; and border radius
-- **Navigation** (sitemap icon) — navigation style
+Open **Site Settings** in the editor sidebar to choose whether the site name and logo appear in the published sidebar.
 
-## Accent color
+## Site name
 
-The primary interactive color used across the site — links, buttons, active states, and focus rings.
+The site name is managed in Site Settings. Disable **Show site name** to keep it out of the published sidebar.
 
-Choose separate light and dark values. The editor previews the same theme variables used by the published site.
+## Logo
 
-The accent color cascades through the site via CSS custom properties (`--accent`). All interactive elements inherit it automatically.
+Upload or replace the site's logo in Site Settings. Disable **Show logo** to hide it without deleting the uploaded asset.
 
-## Header and supporting colors
+## Fixed site shell
 
-Header, secondary, and tertiary colors can each be configured for light and dark themes. Enable the header gradient to blend the accent and supporting colors across the published header.
-
-## Border radius
-
-Controls the roundness of UI elements — cards, buttons, inputs, and containers.
-
-| Setting | Value | Look |
-|---|---|---|
-| None | `0px` | Sharp corners, flat UI |
-| Small | `4px` | Subtly rounded |
-| Medium | `8px` | Standard rounded (default) |
-| Large | `12px` | Prominently rounded |
-| Full | `9999px` | Pill-shaped buttons and fully rounded containers |
-
-## Navigation style
-
-Controls how navigation is rendered on the public site. Set from the **Navigation** panel in the rail.
-
-| Style | Description |
-|---|---|
-| Sidebar | Vertical page tree in a persistent left sidebar |
-| Top Nav | Horizontal navigation in the header |
-| Subnav | Horizontal navigation below the header |
-
-Navigation style affects the live site only. The editor always shows the default editor chrome.
+The sidebar always contains page navigation. The header always exists in the content column and contains public actions such as theme mode and, when enabled, search.

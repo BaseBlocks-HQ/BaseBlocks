@@ -5,7 +5,6 @@ import { EditorProvider } from "@/features/editor/editor-state";
 import { useEditorUi } from "@/features/editor/editor-state";
 import { PublicPagePanel } from "@/features/published-sites/page-panel";
 import { getDefaultContent } from "@/components/site-elements/registry";
-import { useSiteCustomization } from "@/features/editor/settings/use-site-customization";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
@@ -23,6 +22,7 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
+import { SidebarProvider, SidebarTrigger } from "@baseblocks/ui/sidebar";
 import { useMutation, useQuery } from "convex/react";
 import { nanoid } from "nanoid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +30,7 @@ import { Suspense, useEffect, useState } from "react";
 import { PageEditor } from "@/features/editor/page/page-editor";
 import { OpenEditorPageEditor } from "@/features/editor-v2/openeditor-page-editor";
 import { toast } from "sonner";
-import { EditorFloatingRail } from "./rail/editor-rail";
+import { EditorSidebar } from "./sidebar/editor-sidebar";
 import { EditorHeader } from "./editor-header";
 
 const pagePanelSurfaceClassName =
@@ -101,10 +101,6 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   });
   const site = siteQuery;
   const pages = pagesQuery;
-
-  // Get customization CSS variables for preview
-  const { cssVariables: customizationStyles, isCustomized } =
-    useSiteCustomization(siteId as Id<"sites">);
 
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
@@ -264,10 +260,6 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
     );
   }
 
-  const railPositionClass = isMobile
-    ? "pointer-events-none fixed inset-x-3 bottom-3 z-40 flex justify-center"
-    : "pointer-events-none absolute inset-y-14 left-3 z-30 flex items-center sm:left-4 lg:left-6";
-  const showFloatingRail = !(isMobile && showPagePanel);
   const selectedColumnId =
     selection?.kind === "column"
       ? selection.id
@@ -299,8 +291,8 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
       <div
         className={
           showPagePanel
-            ? "pr-2 pb-6 pt-18 pl-20 md:pr-2 md:pb-8 md:pt-18 md:pl-24 lg:pr-2 lg:pl-28"
-            : "p-4 pt-18 pl-20 md:p-8 md:pt-18 md:pl-24 lg:pl-28"
+            ? "pr-2 pb-6 pt-18 md:pr-2 md:pb-8 md:pt-18 lg:pr-2"
+            : "p-4 pt-18 md:p-8 md:pt-18"
         }
       >
         {pageEditor}
@@ -310,34 +302,23 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
 
   if (isMobile && !showPagePanel) {
     return (
-      <div
-        className="w-full bg-background"
-        style={customizationStyles}
-        {...(isCustomized ? { "data-site-customized": "" } : {})}
-      >
+      <SidebarProvider defaultOpen={false} className="w-full bg-background">
+        <EditorSidebar
+          engine={engine}
+          site={site}
+          pages={pages}
+          selectedPageId={selectedPage?._id}
+          selectedColumnId={selectedColumnId}
+          onSelectPage={setSelectedPageId}
+          onAddSection={handleAddSection}
+          onAddBlock={handleAddBlock}
+          onEnableTabs={handleEnableTabs}
+        />
         <div
           ref={setPortalContainer}
           className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
-          style={customizationStyles}
-          {...(isCustomized ? { "data-site-customized": "" } : {})}
         />
-        <main className="relative">
-          {showFloatingRail ? (
-            <div className={railPositionClass}>
-              <EditorFloatingRail
-                engine={engine}
-                site={site}
-                pages={pages}
-                selectedPageId={selectedPage?._id}
-                selectedColumnId={selectedColumnId}
-                onSelectPage={setSelectedPageId}
-                onAddSection={handleAddSection}
-                onAddBlock={handleAddBlock}
-                onEnableTabs={handleEnableTabs}
-              />
-            </div>
-          ) : null}
-
+        <main className="relative min-w-0 w-full overflow-hidden">
           <EditorHeader
             engine={engine}
             inFlow
@@ -353,28 +334,35 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
             onTogglePreview={() => setIsPreviewing((current) => !current)}
             onUnpublish={handleUnpublish}
           />
+          <SidebarTrigger className="fixed bottom-4 left-4 z-40 size-10 rounded-full border bg-background shadow-lg md:hidden" />
 
           <PortalContainerProvider value={portalContainer ?? undefined}>
-            <div
-              className="overflow-visible p-4 pb-20"
-              style={customizationStyles}
-              {...(isCustomized ? { "data-site-customized": "" } : {})}
-            >
-              {pageEditor}
-            </div>
+            <div className="overflow-visible p-4 pb-20">{pageEditor}</div>
           </PortalContainerProvider>
         </main>
-      </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <SidebarProvider
+      defaultOpen
+      className="h-screen overflow-hidden bg-background"
+    >
+      <EditorSidebar
+        engine={engine}
+        site={site}
+        pages={pages}
+        selectedPageId={selectedPage?._id}
+        selectedColumnId={selectedColumnId}
+        onSelectPage={setSelectedPageId}
+        onAddSection={handleAddSection}
+        onAddBlock={handleAddBlock}
+        onEnableTabs={handleEnableTabs}
+      />
       <div
         ref={setPortalContainer}
         className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
-        style={customizationStyles}
-        {...(isCustomized ? { "data-site-customized": "" } : {})}
       />
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <EditorHeader
@@ -392,33 +380,15 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           onUnpublish={handleUnpublish}
         />
 
-        <div className={railPositionClass}>
-          <EditorFloatingRail
-            engine={engine}
-            site={site}
-            pages={pages}
-            selectedPageId={selectedPage?._id}
-            selectedColumnId={selectedColumnId}
-            onSelectPage={setSelectedPageId}
-            onAddSection={handleAddSection}
-            onAddBlock={handleAddBlock}
-            onEnableTabs={handleEnableTabs}
-          />
-        </div>
-
         <PortalContainerProvider value={portalContainer ?? undefined}>
-          <div
-            className="absolute inset-0 min-w-0 overflow-hidden"
-            style={customizationStyles}
-            {...(isCustomized ? { "data-site-customized": "" } : {})}
-          >
+          <div className="absolute inset-0 min-w-0 overflow-hidden">
             {showPagePanel ? (
               isFullscreen || isMobile ? (
                 <div className="h-full min-h-0 min-w-0">
                   <div
                     className={cn(
                       "h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
-                      isFullscreen && !isMobile && "pl-20 md:pl-24 lg:pl-28",
+                      isFullscreen && !isMobile && "pl-2 md:pl-3 lg:pl-4",
                     )}
                   >
                     <section className={pagePanelSurfaceClassName}>
@@ -464,7 +434,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           </div>
         </PortalContainerProvider>
       </main>
-    </div>
+    </SidebarProvider>
   );
 }
 

@@ -1,6 +1,5 @@
-import { buildPublicSiteMetadata } from "@/features/published-sites/metadata";
+import { buildPublicSiteFaviconMetadata } from "@/features/published-sites/favicon-metadata";
 import { PublicSite } from "@/features/published-sites/public-site";
-import { PublicSiteSeo } from "@/features/published-sites/seo";
 import { resolveCustomDomain } from "@/features/published-sites-resolver";
 import { resolvePublishedPage } from "@/features/published-sites/read-model";
 import type { Metadata } from "next";
@@ -17,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     mapping.siteSlug,
     path,
   );
-  return buildPublicSiteMetadata(result, mapping.hostname);
+  return buildPublicSiteFaviconMetadata(result);
 }
 
 export default async function PublishedDomainPage({ params }: Props) {
@@ -30,16 +29,11 @@ export default async function PublishedDomainPage({ params }: Props) {
     path,
   );
   return (
-    <>
-      {result ? (
-        <PublicSiteSeo result={result} customDomain={mapping.hostname} />
-      ) : null}
-      <PublicSite
-        result={result}
-        organizationSlug={mapping.organizationSlug}
-        siteSlug={mapping.siteSlug}
-        pagePath={path}
-      />
-    </>
+    <PublicSite
+      result={result}
+      organizationSlug={mapping.organizationSlug}
+      siteSlug={mapping.siteSlug}
+      pagePath={path}
+    />
   );
 }

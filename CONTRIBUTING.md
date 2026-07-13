@@ -107,7 +107,7 @@ The `apps/web/` app follows a **module-based** architecture:
   - `editor/` — Site editor shell (bridges to `@baseblocks/editor`)
   - `elements/` — Block, layout, and section system (registry, editors, renderers, previews)
   - `media-viewer/` — File viewer (PDF, image, video, audio, text)
-  - `navigation/` — Page tree, breadcrumbs, sortable nav menus
+  - `navigation/` — Page tree and sortable navigation menus
   - `public-site/` — Published site rendering, access control
   - `team/` — Team management, invitations
 - **`components/`** — Truly shared, non-feature UI only (dialogs, skeletons, site-logo)

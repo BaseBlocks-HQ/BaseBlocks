@@ -1,47 +1,21 @@
 ---
-title: Personnalisation
-description: Personnalisez l'apparence de votre site — couleur d'accent, arrière-plan d'en-tête, rayon de bordure et style de navigation.
+title: Identité visuelle
+description: Configurez le nom et le logo affichés dans la barre latérale de votre site publié.
 icon: Palette
 ---
 
-Chaque site a ses propres paramètres de personnalisation, indépendants des autres sites de l'équipe. Les modifications s'appliquent immédiatement au site publié — vous n'avez pas besoin de publier pour que les modifications de personnalisation prennent effet.
+Les sites publiés utilisent une structure unique et cohérente : une barre latérale pour les pages et un en-tête transparent dans la zone de contenu. Les thèmes visuels et les dispositions de navigation ne sont pas configurables.
 
-Accédez à ces paramètres depuis le rail flottant sur le bord gauche de l'éditeur :
-- **Personnalisation** (icône palette) — couleurs claires et sombres pour l'accent, l'en-tête, les tons secondaire et tertiaire, dégradé optionnel et rayon de bordure
-- **Navigation** (icône organigramme) — style de navigation
+Ouvrez **Paramètres du site** dans la barre latérale de l'éditeur pour choisir si le nom et le logo apparaissent dans la barre latérale publiée.
 
-## Couleur d'accent
+## Nom du site
 
-La couleur interactive principale utilisée sur l'ensemble du site — liens, boutons, états actifs et anneaux de focus.
+Le nom se gère dans les paramètres du site. Désactivez **Afficher le nom du site** pour le masquer dans la barre latérale publiée.
 
-Choisissez des valeurs distinctes pour les thèmes clair et sombre. L'éditeur affiche le résultat avec les mêmes variables de thème que le site publié.
+## Logo
 
-La couleur d'accent se propage dans le site via des propriétés personnalisées CSS (`--accent`). Tous les éléments interactifs l'héritent automatiquement.
+Importez ou remplacez le logo dans les paramètres du site. Désactivez **Afficher le logo** pour le masquer sans supprimer le fichier importé.
 
-## En-tête et couleurs complémentaires
+## Structure fixe du site
 
-Les couleurs de l'en-tête, secondaire et tertiaire peuvent être configurées pour les thèmes clair et sombre. Activez le dégradé d'en-tête pour mélanger l'accent et les couleurs complémentaires.
-
-## Rayon de bordure
-
-Contrôle l'arrondi des éléments d'interface — cartes, boutons, champs de saisie et conteneurs.
-
-| Réglage | Valeur | Apparence |
-|---|---|---|
-| Aucun | `0px` | Coins nets, interface plate |
-| Petit | `4px` | Légèrement arrondi |
-| Moyen | `8px` | Arrondi standard (par défaut) |
-| Grand | `12px` | Bien arrondi |
-| Complet | `9999px` | Boutons en forme de pilule et conteneurs entièrement arrondis |
-
-## Style de navigation
-
-Contrôle comment la navigation est rendue sur le site public. Se configure depuis le panneau **Navigation** dans le rail.
-
-| Style | Description |
-|---|---|
-| Barre latérale | Arborescence des pages verticale dans une barre latérale gauche persistante |
-| Navigation haute | Navigation horizontale dans l'en-tête |
-| Sous-navigation | Navigation horizontale sous l'en-tête |
-
-Le style de navigation affecte uniquement le site publié. L'éditeur affiche toujours le chrome d'éditeur par défaut.
+La barre latérale contient toujours la navigation des pages. L'en-tête existe toujours dans la zone de contenu et contient les actions publiques, notamment le thème et, lorsqu'elle est activée, la recherche.

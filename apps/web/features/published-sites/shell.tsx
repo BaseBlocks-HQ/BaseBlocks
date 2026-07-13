@@ -1,16 +1,13 @@
 "use client";
 
-import { getPageLink } from "@/features/published-sites/urls";
-import { cn } from "@baseblocks/ui/lib/utils";
-import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
-import { SearchBox } from "@/features/search";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
-import { useCustomizationStyles } from "@/components/site-runtime/customization";
+import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
+import { SearchBox } from "@/features/search";
+import { getPageLink } from "@/features/published-sites/urls";
 import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
-import type { SiteCustomization } from "@baseblocks/domain/site-settings";
-import type { NavigationStyle } from "@baseblocks/domain/site-settings";
+import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
 import {
   DropdownMenu,
@@ -18,32 +15,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Home,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { IconFile } from "nucleo-glass";
 import { PublicPageContent } from "./page-content";
 import type { PublishedPageResult } from "./read-model";
-import { IconFile } from "nucleo-glass";
 
 interface PublicSiteShellProps {
   result: PublishedPageResult;
@@ -61,95 +52,14 @@ function collectPageTitles(
 }
 
 export function PublicSiteShell({ result }: PublicSiteShellProps) {
-  const {
-    breadcrumbs,
-    navigation: pages,
-    organization: team,
-    page,
-    site,
-  } = result;
+  const { navigation: pages, organization: team, page, site } = result;
   const pagePanel = usePagePanelState();
-  const ancestorIds = breadcrumbs.map(
-    (breadcrumb: { id: string }) => breadcrumb.id,
-  );
-  const currentPathString =
-    result.canonicalUrlInputs.pagePath.join("/") ||
-    breadcrumbs.at(-1)?.path.join("/") ||
-    page?.slug ||
-    "";
-
-  const showHeader = site.settings.showHeader !== false;
-  const sidebarDefaultExpanded = site.settings.sidebarDefaultExpanded === true;
-  const navigationStyle = site.settings.navigationStyle;
-  const showBreadcrumbs =
-    site.settings.showBreadcrumbs ?? navigationStyle !== "sidebar";
-
-  const customizationStyles = useCustomizationStyles(
-    site.settings.customization,
-  );
-  const isCustomized = !!(
-    site.settings.customization?.accentColor ||
-    site.settings.customization?.headerColor ||
-    site.settings.customization?.secondaryColor ||
-    site.settings.customization?.borderRadius
-  );
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isCustomized) {
-      root.setAttribute("data-site-customized", "");
-      for (const [key, value] of Object.entries(customizationStyles)) {
-        if (key.startsWith("--")) {
-          root.style.setProperty(key, value as string);
-        }
-      }
-    }
-    return () => {
-      root.removeAttribute("data-site-customized");
-      for (const key of Object.keys(customizationStyles)) {
-        if (key.startsWith("--")) {
-          root.style.removeProperty(key);
-        }
-      }
-    };
-  }, [customizationStyles, isCustomized]);
 
   if (!page) return null;
 
-  const showSidebar = navigationStyle === "sidebar";
-
-  const mainContent = (
-    <>
-      {showHeader && (
-        <PublicSiteHeader
-          site={site}
-          team={team}
-          pages={pages as PageWithChildren[]}
-          currentPath={currentPathString}
-          onOpenPage={pagePanel.openPage}
-        />
-      )}
-
-      {!showSidebar &&
-        site.settings.customization?.showHeaderGradient &&
-        showHeader && (
-          <div className="relative z-30">
-            <GradientStripe customization={site.settings.customization} />
-          </div>
-        )}
-
-      <PublicSiteMainContent
-        currentPage={page}
-        pageContent={result.pageContent}
-        breadcrumbs={breadcrumbs}
-        pages={pages as PageWithChildren[]}
-        currentPath={currentPathString}
-        siteSlug={site.slug}
-        navigationStyle={navigationStyle}
-        showBreadcrumbs={showBreadcrumbs}
-      />
-    </>
-  );
+  const currentPath =
+    result.canonicalUrlInputs.pagePath.join("/") || page.slug || "";
+  const pageTitles = collectPageTitles(pages ?? []);
 
   return (
     <SiteRenderActionsProvider
@@ -162,127 +72,62 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
         fileDeepLinks: true,
       }}
     >
-      {showSidebar ? (
-        <SidebarProvider>
-          {site.settings.customization?.showHeaderGradient && showHeader && (
-            <div className="fixed top-14 left-0 right-0 z-30">
-              <GradientStripe customization={site.settings.customization} />
-            </div>
-          )}
-          <div
-            className="h-screen bg-background flex overflow-hidden w-full"
-            style={customizationStyles}
-            {...(isCustomized ? { "data-site-customized": "" } : {})}
-          >
-            <PublicSiteSidebar
-              site={site}
-              team={team}
-              pages={pages as PageWithChildren[]}
-              currentPath={currentPathString}
-              ancestorIds={ancestorIds}
-              sidebarDefaultExpanded={sidebarDefaultExpanded}
-              siteId={site._id}
-              siteSlug={site.slug}
-            />
+      <SidebarProvider>
+        <PublicSiteSidebar
+          site={site}
+          team={team}
+          pages={pages as PageWithChildren[] | undefined}
+          currentPath={currentPath}
+          siteId={site._id}
+          siteSlug={site.slug}
+        />
 
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-              {mainContent}
-            </main>
+        <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background">
+          <PublicSiteHeader site={site} onOpenPage={pagePanel.openPage} />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <PublicPageContent
+              pageId={page._id as Id<"pages">}
+              initialPage={page}
+              initialStructure={result.pageContent}
+              pageTitles={pageTitles}
+            />
           </div>
-        </SidebarProvider>
-      ) : (
-        <div
-          className="h-screen bg-background flex flex-col overflow-hidden"
-          style={customizationStyles}
-          {...(isCustomized ? { "data-site-customized": "" } : {})}
-        >
-          {mainContent}
-        </div>
-      )}
+        </SidebarInset>
+      </SidebarProvider>
     </SiteRenderActionsProvider>
   );
 }
 
 function PublicSiteHeader({
-  currentPath,
   onOpenPage,
-  pages,
   site,
-  team,
 }: {
   site: PublishedPageResult["site"];
-  team: PublishedPageResult["organization"];
-  pages?: PageWithChildren[];
-  currentPath: string;
   onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
 }) {
-  const showSidebar = site.settings.navigationStyle === "sidebar";
-  const showTopNav = site.settings.navigationStyle === "topnav";
-  const showLogo = site.settings.showLogo !== false;
-  const showSiteName = site.settings.showSiteName !== false;
-  const showHeaderSearch = site.settings.showHeaderSearch === true;
-  const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
-  const themeButtonClassName = hasCustomHeaderColor
-    ? "text-current hover:bg-current/10"
-    : undefined;
-
   return (
-    <header
-      className={cn(
-        "relative shrink-0 z-40",
-        !site.settings.customization?.headerColor &&
-          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-      )}
-      style={
-        site.settings.customization?.headerColor
-          ? {
-              backgroundColor: "var(--site-header-bg)",
-              color: "var(--site-header-fg)",
-            }
-          : undefined
-      }
-    >
-      <div className="flex h-14 items-center px-4">
-        {showSidebar ? (
-          <CollapsedSidebarTrigger
-            triggerClassName={
-              hasCustomHeaderColor
-                ? "text-current hover:bg-current/10"
-                : undefined
-            }
-          />
-        ) : (
-          <div className="flex items-center gap-2">
-            {showLogo && <SiteLogoImage site={site} team={team} />}
-            {showSiteName && <span className="font-semibold">{site.name}</span>}
+    <header className="absolute inset-x-0 top-0 z-40 [--bb-header-height:3.5rem]">
+      <div className="relative isolate">
+        <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
+        <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
+        <div className="relative flex h-14 items-center gap-3 px-4">
+          <SidebarTrigger />
+          <div className="ml-auto flex items-center gap-3">
+            {site.settings.showHeaderSearch === true ? (
+              <SearchBox
+                siteId={site._id}
+                usePublicQuery
+                placeholder="Search..."
+                maxResults={5}
+                className="w-64"
+                surface="soft"
+                onOpenPageResult={(pageId, searchTerm) =>
+                  onOpenPage(pageId, { searchTerm })
+                }
+              />
+            ) : null}
+            <PublicSiteThemeMenu />
           </div>
-        )}
-
-        {showTopNav && pages && (
-          <div className="flex-1 flex justify-center ml-8">
-            <TopNavMenu
-              pages={pages}
-              currentPath={currentPath}
-              siteSlug={site.slug}
-            />
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 ml-auto">
-          {showHeaderSearch && (
-            <SearchBox
-              siteId={site._id}
-              usePublicQuery
-              placeholder="Search..."
-              maxResults={5}
-              className="w-64"
-              headerMode={hasCustomHeaderColor}
-              onOpenPageResult={(pageId, searchTerm) =>
-                onOpenPage(pageId, { searchTerm })
-              }
-            />
-          )}
-          <PublicSiteThemeMenu className={themeButtonClassName} />
         </div>
       </div>
     </header>
@@ -290,10 +135,8 @@ function PublicSiteHeader({
 }
 
 function PublicSiteSidebar({
-  ancestorIds,
   currentPath,
   pages,
-  sidebarDefaultExpanded,
   site,
   siteId,
   siteSlug,
@@ -303,38 +146,19 @@ function PublicSiteSidebar({
   team: PublishedPageResult["organization"];
   pages?: PageWithChildren[];
   currentPath: string;
-  ancestorIds: string[];
-  sidebarDefaultExpanded: boolean;
   siteId: Id<"sites">;
   siteSlug: string;
 }) {
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
-  const hasCustomHeaderColor = !!site.settings.customization?.headerColor;
 
   return (
-    <Sidebar className="group-data-[side=left]:border-r-0 group-data-[side=right]:border-l-0">
-      <SidebarHeader
-        className="h-14 px-4 flex flex-row items-center gap-2"
-        style={
-          site.settings.customization?.headerColor
-            ? {
-                backgroundColor: "var(--site-header-bg)",
-                color: "var(--site-header-fg)",
-              }
-            : undefined
-        }
-      >
-        {showLogo && <SiteLogoImage site={site} team={team} />}
-        {showSiteName && (
-          <span className="font-semibold truncate">{site.name}</span>
-        )}
-        <SidebarTrigger
-          className={cn(
-            "ml-auto",
-            hasCustomHeaderColor && "text-current hover:bg-current/10",
-          )}
-        />
+    <Sidebar>
+      <SidebarHeader className="flex h-14 flex-row items-center gap-2 px-4">
+        {showLogo ? <SiteLogoImage site={site} team={team} /> : null}
+        {showSiteName ? (
+          <span className="truncate font-semibold">{site.name}</span>
+        ) : null}
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
         <ScrollArea className="h-full">
@@ -349,8 +173,6 @@ function PublicSiteSidebar({
                   key={page._id}
                   page={page}
                   currentPath={currentPath}
-                  ancestorIds={ancestorIds}
-                  defaultExpanded={sidebarDefaultExpanded}
                   siteId={siteId}
                   siteSlug={siteSlug}
                 />
@@ -361,103 +183,6 @@ function PublicSiteSidebar({
       </SidebarContent>
     </Sidebar>
   );
-}
-
-function PublicSiteMainContent({
-  breadcrumbs,
-  currentPage,
-  currentPath,
-  navigationStyle,
-  pageContent,
-  pages,
-  showBreadcrumbs,
-  siteSlug,
-}: {
-  breadcrumbs: PublishedPageResult["breadcrumbs"];
-  currentPage: NonNullable<PublishedPageResult["page"]>;
-  pageContent: PublishedPageResult["pageContent"];
-  pages?: PageWithChildren[];
-  currentPath: string;
-  navigationStyle: NavigationStyle;
-  showBreadcrumbs: boolean;
-  siteSlug: string;
-}) {
-  const showSubNav = navigationStyle === "subnav";
-  const pageTitles = collectPageTitles(pages ?? []);
-
-  return (
-    <>
-      {showSubNav && pages && (
-        <SubNavBar
-          pages={pages}
-          currentPath={currentPath}
-          siteSlug={siteSlug}
-          className="sticky top-14 z-30"
-        />
-      )}
-
-      {showBreadcrumbs && currentPage && breadcrumbs.length > 0 && (
-        <BreadcrumbBar
-          breadcrumbs={breadcrumbs}
-          pageTitle={currentPage.title}
-          siteSlug={siteSlug}
-          className={cn("sticky z-20", showSubNav ? "top-24" : "top-14")}
-        />
-      )}
-
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <PublicPageContent
-          pageId={currentPage._id as Id<"pages">}
-          initialPage={currentPage}
-          initialStructure={pageContent}
-          pageTitles={pageTitles}
-        />
-      </div>
-    </>
-  );
-}
-
-function GradientStripe({
-  customization,
-}: {
-  customization: SiteCustomization;
-}) {
-  const primaryColor = customization.accentColor || "#0066FF";
-  const gradientStops = [primaryColor];
-
-  if (customization.tertiaryColor) {
-    gradientStops.push(customization.tertiaryColor);
-  }
-
-  if (customization.secondaryColor) {
-    gradientStops.push(customization.secondaryColor);
-  }
-
-  const gradient =
-    gradientStops.length >= 2
-      ? `linear-gradient(to right, ${gradientStops.join(", ")})`
-      : primaryColor;
-
-  return (
-    <div
-      className="h-1 w-full flex-shrink-0"
-      style={{ background: gradient }}
-    />
-  );
-}
-
-function CollapsedSidebarTrigger({
-  triggerClassName,
-}: {
-  triggerClassName?: string;
-}) {
-  const { open } = useSidebar();
-
-  if (open) {
-    return null;
-  }
-
-  return <SidebarTrigger className={triggerClassName} />;
 }
 
 function SiteLogoImage({
@@ -472,7 +197,7 @@ function SiteLogoImage({
 
   if (!logoUrl) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
         {fallbackInitial}
       </div>
     );
@@ -482,7 +207,7 @@ function SiteLogoImage({
     <Image
       src={logoUrl}
       alt={`${site.name} logo`}
-      className="h-8 w-8 shrink-0 rounded-lg object-contain"
+      className="size-8 shrink-0 rounded-lg object-contain"
       width={32}
       height={32}
       unoptimized
@@ -490,7 +215,7 @@ function SiteLogoImage({
   );
 }
 
-function PublicSiteThemeMenu({ className }: { className?: string }) {
+function PublicSiteThemeMenu() {
   const { setTheme } = useTheme();
   const t = useTranslations("common");
 
@@ -498,15 +223,12 @@ function PublicSiteThemeMenu({ className }: { className?: string }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          className={cn(
-            "relative text-muted-foreground hover:text-foreground",
-            className,
-          )}
+          className="relative text-muted-foreground hover:text-foreground"
           size="icon"
           variant="ghost"
         >
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Sun className="size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
@@ -525,262 +247,10 @@ function PublicSiteThemeMenu({ className }: { className?: string }) {
   );
 }
 
-function TopNavMenu({
-  className,
-  currentPath,
-  pages,
-  siteSlug,
-}: {
-  pages: PageWithChildren[];
-  currentPath?: string;
-  className?: string;
-  siteSlug: string;
-}) {
-  return (
-    <nav className={cn("flex items-center gap-1", className)}>
-      {pages.map((page) => (
-        <HorizontalNavItem
-          key={page._id}
-          page={page}
-          currentPath={currentPath}
-          siteSlug={siteSlug}
-          variant="topnav"
-        />
-      ))}
-    </nav>
-  );
-}
-
-function SubNavBar({
-  className,
-  currentPath,
-  pages,
-  siteSlug,
-}: {
-  pages: PageWithChildren[];
-  currentPath?: string;
-  className?: string;
-  siteSlug: string;
-}) {
-  return (
-    <nav
-      className={cn(
-        "border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        className,
-      )}
-    >
-      <div className="container mx-auto px-4">
-        <div className="flex h-10 items-center gap-1">
-          {pages.map((page) => (
-            <HorizontalNavItem
-              key={page._id}
-              page={page}
-              currentPath={currentPath}
-              siteSlug={siteSlug}
-              variant="tabbar"
-            />
-          ))}
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function HorizontalNavItem({
-  currentPath,
-  page,
-  siteSlug,
-  variant,
-}: {
-  page: PageWithChildren;
-  currentPath?: string;
-  siteSlug: string;
-  variant: "topnav" | "tabbar";
-}) {
-  const hasChildren = page.children && page.children.length > 0;
-  const fullPath = page.slug;
-  const isActive = currentPath === fullPath;
-  const isParentOfActive = currentPath?.startsWith(`${fullPath}/`);
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<"left" | "right">(
-    "left",
-  );
-  const containerRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const updateDropdownPosition = () => {
-    if (!containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const dropdownWidth = 220;
-    const shouldAlignRight = rect.left + dropdownWidth > window.innerWidth - 20;
-    setDropdownPosition(shouldAlignRight ? "right" : "left");
-  };
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    updateDropdownPosition();
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const triggerStyles = cn(
-    "inline-flex items-center gap-1 text-sm font-medium transition-colors rounded-md",
-    "hover:text-foreground",
-    isActive || isParentOfActive ? "text-foreground" : "text-muted-foreground",
-    variant === "topnav" && "px-4 py-2 hover:bg-accent",
-    variant === "tabbar" && [
-      "px-3 py-2",
-      "relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5",
-      (isActive || isParentOfActive) && "after:bg-primary",
-    ],
-  );
-
-  if (!hasChildren) {
-    return (
-      <Link href={getPageLink(siteSlug, fullPath)} className={triggerStyles}>
-        {page.title}
-      </Link>
-    );
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Link href={getPageLink(siteSlug, fullPath)} className={triggerStyles}>
-        {page.title}
-        <ChevronDown
-          className={cn(
-            "h-3 w-3 transition-transform duration-200",
-            isOpen && "rotate-180",
-          )}
-        />
-      </Link>
-
-      {isOpen && (
-        <div
-          className={cn(
-            "absolute top-full pt-1 z-50",
-            dropdownPosition === "left" ? "left-0" : "right-0",
-          )}
-        >
-          <div className="w-[220px] rounded-md border bg-popover p-1 shadow-md animate-in fade-in-0 zoom-in-95">
-            <DropdownNavTree
-              page={page}
-              currentPath={currentPath}
-              siteSlug={siteSlug}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DropdownNavTree({
-  currentPath,
-  depth = 0,
-  page,
-  pagePath,
-  siteSlug,
-}: {
-  page: PageWithChildren;
-  currentPath?: string;
-  depth?: number;
-  pagePath?: string;
-  siteSlug: string;
-}) {
-  const hasChildren = page.children && page.children.length > 0;
-  const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
-  const isActive = currentPath === fullPath;
-  const isParentOfActive = currentPath?.startsWith(`${fullPath}/`);
-  const [isExpanded, setIsExpanded] = useState(isParentOfActive);
-
-  const handleToggleExpand = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsExpanded((value) => !value);
-  };
-
-  return (
-    <>
-      <div
-        className={cn(
-          "flex items-center gap-1 py-1.5 rounded-md text-sm transition-colors",
-          isActive
-            ? "bg-primary/10 text-primary font-medium"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-        )}
-        style={{ paddingLeft: `${depth * 12 + 8}px`, paddingRight: "8px" }}
-      >
-        {hasChildren ? (
-          <button
-            type="button"
-            onClick={handleToggleExpand}
-            className="h-5 w-5 flex items-center justify-center shrink-0 hover:bg-accent rounded transition-colors"
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
-            )}
-          </button>
-        ) : (
-          <span className="w-5" />
-        )}
-
-        <Link
-          href={getPageLink(siteSlug, fullPath)}
-          className="flex-1 flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4 shrink-0" />
-          <span className="truncate">{page.title}</span>
-        </Link>
-      </div>
-
-      {hasChildren &&
-        isExpanded &&
-        page.children.map((child) => (
-          <DropdownNavTree
-            key={child._id}
-            page={child}
-            currentPath={currentPath}
-            pagePath={fullPath}
-            siteSlug={siteSlug}
-            depth={depth + 1}
-          />
-        ))}
-    </>
-  );
-}
-
-const EMPTY_ANCESTOR_IDS: string[] = [];
 const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
 
 function NavItem({
-  ancestorIds = EMPTY_ANCESTOR_IDS,
   currentPath,
-  defaultExpanded,
   depth = 0,
   page,
   pagePath,
@@ -790,147 +260,76 @@ function NavItem({
   page: PageWithChildren;
   currentPath?: string;
   depth?: number;
-  ancestorIds?: string[];
   pagePath?: string;
-  defaultExpanded?: boolean;
   siteId: Id<"sites">;
   siteSlug: string;
 }) {
-  const hasChildren = page.children && page.children.length > 0;
+  const hasChildren = page.children.length > 0;
   const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
   const isActive = fullPath === currentPath;
-  const shouldAutoExpand = ancestorIds.includes(page._id);
+  const shouldAutoExpand = currentPath?.startsWith(`${fullPath}/`) === true;
   const {
-    isExpanded: isExpandedFromStorage,
+    isExpanded: readExpanded,
     toggleExpand,
     setExpanded,
   } = usePageExpandState(EXPANDED_PAGES_KEY, siteId);
-  const isExpanded = isExpandedFromStorage(page._id);
+  const isExpanded = readExpanded(page._id);
 
   useEffect(() => {
-    if ((shouldAutoExpand || (defaultExpanded && hasChildren)) && !isExpanded) {
+    if (shouldAutoExpand && hasChildren && !isExpanded) {
       setExpanded(page._id, true);
     }
-  }, [
-    shouldAutoExpand,
-    defaultExpanded,
-    hasChildren,
-    isExpanded,
-    setExpanded,
-    page._id,
-  ]);
-
-  const handleToggleExpand = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleExpand(page._id);
-  };
+  }, [hasChildren, isExpanded, page._id, setExpanded, shouldAutoExpand]);
 
   return (
     <>
       <Link
         href={getPageLink(siteSlug, fullPath)}
-        className={`flex items-center gap-1 px-1 py-1 rounded-md text-sm transition-colors ${
+        className={cn(
+          "flex items-center gap-1 rounded-md px-1 py-1 text-sm transition-colors",
           isActive
-            ? "bg-primary/10 text-primary font-medium"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-        }`}
+            ? "bg-primary/10 font-medium text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
         style={{ paddingLeft: `${(depth + 1) * 9}px` }}
       >
         {hasChildren ? (
           <button
             type="button"
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
-            onClick={handleToggleExpand}
-            className="h-3 w-3 flex items-center justify-center shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              toggleExpand(page._id);
+            }}
+            className="flex size-3 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           >
             {isExpanded ? (
-              <ChevronDown className="h-2.5 w-2.5" />
+              <ChevronDown className="size-2.5" />
             ) : (
-              <ChevronRight className="h-2.5 w-2.5" />
+              <ChevronRight className="size-2.5" />
             )}
           </button>
         ) : (
           <span className="w-3" />
         )}
-        <IconFile className="h-4 w-4" />
-        {page.title}
+        <IconFile className="size-4 shrink-0" />
+        <span className="truncate">{page.title}</span>
       </Link>
 
-      {hasChildren &&
-        isExpanded &&
-        page.children.map((child) => (
-          <NavItem
-            key={child._id}
-            page={child}
-            currentPath={currentPath}
-            depth={depth + 1}
-            ancestorIds={ancestorIds}
-            pagePath={fullPath}
-            defaultExpanded={defaultExpanded}
-            siteId={siteId}
-            siteSlug={siteSlug}
-          />
-        ))}
+      {hasChildren && isExpanded
+        ? page.children.map((child) => (
+            <NavItem
+              key={child._id}
+              page={child}
+              currentPath={currentPath}
+              depth={depth + 1}
+              pagePath={fullPath}
+              siteId={siteId}
+              siteSlug={siteSlug}
+            />
+          ))
+        : null}
     </>
-  );
-}
-
-function BreadcrumbBar({
-  breadcrumbs,
-  className,
-  pageTitle,
-  siteSlug,
-}: {
-  breadcrumbs: PublishedPageResult["breadcrumbs"];
-  pageTitle: string;
-  className?: string;
-  siteSlug: string;
-}) {
-  const breadcrumbItems = breadcrumbs.slice(0, -1);
-
-  return (
-    <nav className={cn("border-b bg-muted/30", className)}>
-      <div className="container mx-auto px-4">
-        <div className="flex h-8 items-center">
-          <ol className="flex items-center gap-1 text-sm text-muted-foreground">
-            <li>
-              <Link
-                href={getPageLink(siteSlug, "home")}
-                className="flex items-center hover:text-foreground transition-colors"
-              >
-                <Home className="h-3.5 w-3.5" />
-                <span className="sr-only">Home</span>
-              </Link>
-            </li>
-            <li>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </li>
-
-            {breadcrumbItems.map(
-              (item: { id: string; title: string; path: string[] }) => (
-                <Fragment key={item.id}>
-                  <li>
-                    <Link
-                      href={getPageLink(siteSlug, item.path)}
-                      className="hover:text-foreground transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                  </li>
-                  <li>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </li>
-                </Fragment>
-              ),
-            )}
-
-            <li className="text-foreground font-medium truncate max-w-[200px]">
-              {pageTitle}
-            </li>
-          </ol>
-        </div>
-      </div>
-    </nav>
   );
 }

@@ -16,7 +16,7 @@ import { CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { SiteMetadataSection } from "./site-metadata-section";
+import { FaviconSettings } from "./favicon-settings";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
@@ -374,18 +374,9 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     );
   }
 
-  const showHeader = site.settings.showHeader !== false;
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
-  const showBreadcrumbs =
-    site.settings.showBreadcrumbs ??
-    site.settings.navigationStyle !== "sidebar";
-  const isSidebarNav =
-    !site.settings.navigationStyle ||
-    site.settings.navigationStyle === "sidebar";
-  const sidebarDefaultExpanded = !!(site.settings as Record<string, unknown>)
-    .sidebarDefaultExpanded;
 
   return (
     <div className="space-y-5 p-4">
@@ -393,40 +384,23 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
         <h3 className="text-sm font-semibold tracking-tight">Site settings</h3>
       </header>
 
-      <CollapsibleSettingsSection title="Header">
+      <CollapsibleSettingsSection title="Published site">
         <PanelSettingRow
-          htmlFor="show-header"
-          label="Show header"
-          tooltip="Top bar with your branding, site name, and navigation."
+          htmlFor="show-site-name"
+          label="Show site name"
+          tooltip="Displays the site name in the published sidebar."
           control={
             <Switch
-              id="show-header"
-              checked={showHeader}
+              id="show-site-name"
+              checked={showSiteName}
               onCheckedChange={(checked) =>
-                updateSettings("showHeader", checked)
+                updateSettings("showSiteName", checked)
               }
             />
           }
         />
 
-        {showHeader && (
-          <PanelSettingRow
-            htmlFor="show-site-name"
-            label="Show site name"
-            tooltip="Displays your site name beside the logo when both logo and name are turned on."
-            control={
-              <Switch
-                id="show-site-name"
-                checked={showSiteName}
-                onCheckedChange={(checked) =>
-                  updateSettings("showSiteName", checked)
-                }
-              />
-            }
-          />
-        )}
-
-        {showHeader && showSiteName && (
+        {showSiteName && (
           <SiteNameSection
             displayName={site.name}
             editValue={localName}
@@ -444,24 +418,20 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           />
         )}
 
-        {showHeader && (
-          <PanelSettingRow
-            htmlFor="show-logo"
-            label="Show logo"
-            tooltip="When enabled, the logo you upload appears in the header (if the header is visible)."
-            control={
-              <Switch
-                id="show-logo"
-                checked={showLogo}
-                onCheckedChange={(checked) =>
-                  updateSettings("showLogo", checked)
-                }
-              />
-            }
-          />
-        )}
+        <PanelSettingRow
+          htmlFor="show-logo"
+          label="Show logo"
+          tooltip="Displays the uploaded logo in the published sidebar."
+          control={
+            <Switch
+              id="show-logo"
+              checked={showLogo}
+              onCheckedChange={(checked) => updateSettings("showLogo", checked)}
+            />
+          }
+        />
 
-        {showHeader && showLogo && (
+        {showLogo && (
           <LogoUploadSection
             fileInputRef={fileInputRef}
             isUploading={isUploading}
@@ -471,72 +441,32 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
           />
         )}
 
-        {showHeader && (
-          <PanelSettingRow
-            htmlFor="show-header-search"
-            label="Search in header"
-            tooltip="Adds a search field so visitors can find documents from the header."
-            control={
-              <Switch
-                id="show-header-search"
-                checked={showHeaderSearch}
-                onCheckedChange={(checked) =>
-                  updateSettings("showHeaderSearch", checked)
-                }
-              />
-            }
-          />
-        )}
-
         <PanelSettingRow
-          htmlFor="show-breadcrumbs"
-          label="Breadcrumbs"
-          tooltip="Shows the path to the current page under the main navigation so visitors know where they are."
+          htmlFor="show-header-search"
+          label="Search in header"
+          tooltip="Adds search to the published-site header."
           control={
             <Switch
-              id="show-breadcrumbs"
-              checked={showBreadcrumbs}
+              id="show-header-search"
+              checked={showHeaderSearch}
               onCheckedChange={(checked) =>
-                updateSettings("showBreadcrumbs", checked)
+                updateSettings("showHeaderSearch", checked)
               }
             />
           }
         />
-
-        {isSidebarNav && (
-          <PanelSettingRow
-            htmlFor="sidebar-default-expanded"
-            label="Expand sidebar pages"
-            tooltip="When using sidebar navigation, nested pages start expanded instead of collapsed."
-            control={
-              <Switch
-                id="sidebar-default-expanded"
-                checked={sidebarDefaultExpanded}
-                onCheckedChange={(checked) =>
-                  updateSettings("sidebarDefaultExpanded", checked)
-                }
-              />
-            }
-          />
-        )}
       </CollapsibleSettingsSection>
 
-      <CollapsibleSettingsSection
-        title="Discovery and SEO"
-        contentClassName="p-3"
-      >
-        <SiteMetadataSection
+      <CollapsibleSettingsSection title="Favicon" contentClassName="p-3">
+        <FaviconSettings
+          favicon={site.settings.favicon}
           siteId={siteId}
-          siteName={site.name}
-          initialValues={{
-            siteTitle: site.settings.siteTitle ?? "",
-            siteDescription: site.settings.siteDescription ?? "",
-            siteKeywords: site.settings.siteKeywords ?? "",
-            favicon: site.settings.favicon ?? "",
-            ogImage: site.settings.ogImage ?? "",
-          }}
-          onSave={async (values) => {
-            await updateSite({ siteId, settings: values });
+          onChange={async (favicon) => {
+            await updateSite(
+              favicon
+                ? { siteId, settings: { favicon } }
+                : { siteId, clearFavicon: true },
+            );
           }}
         />
       </CollapsibleSettingsSection>

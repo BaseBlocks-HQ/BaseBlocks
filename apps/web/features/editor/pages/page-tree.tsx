@@ -25,10 +25,10 @@ interface PageNavigationRow {
 }
 
 const treeItemButtonClassName =
-  "flex h-full w-full min-w-0 items-center gap-2 overflow-hidden rounded-md p-2 pr-1 text-left text-sm outline-hidden [&>svg]:size-4 [&>svg]:shrink-0";
+  "flex h-full w-full min-w-0 items-center gap-1 overflow-hidden rounded-md p-1 text-left text-sm outline-hidden [&>svg]:size-4 [&>svg]:shrink-0";
 
 const treeItemRowClassName =
-  "peer/menu-button grid h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_1.75rem] items-center overflow-hidden rounded-md text-sm outline-hidden ring-ring transition-colors hover:bg-accent hover:text-accent-foreground active:bg-accent active:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground";
+  "peer/menu-button grid h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_1.75rem] items-center overflow-hidden rounded-md text-sm text-muted-foreground outline-hidden ring-ring transition-colors hover:bg-muted hover:text-foreground active:bg-muted active:text-foreground data-[active=true]:bg-primary/10 data-[active=true]:font-medium data-[active=true]:text-primary";
 
 function buildPageNavigationRows(
   pages: PageListItem[],
@@ -183,7 +183,7 @@ function PageTreeRow({
   return (
     <SidebarMenuItem
       className={cn("group/page relative w-full min-w-0 overflow-hidden")}
-      style={{ paddingLeft: item.depth * 16 }}
+      style={{ paddingLeft: item.depth * 9 }}
     >
       <div
         data-active={selectedPageId === page._id}

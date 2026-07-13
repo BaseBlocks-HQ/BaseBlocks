@@ -116,8 +116,7 @@ interface SearchBoxProps {
   /** Additional content to render in the input area (e.g., settings button) */
   inputAddon?: ReactNode;
   onOpenPageResult?: (pageId: string, searchTerm: string) => void;
-  /** Adapt colors to blend with a custom-colored header */
-  headerMode?: boolean;
+  surface?: "default" | "soft";
   className?: string;
 }
 
@@ -129,7 +128,7 @@ export function SearchBox({
   usePublicQuery = false,
   inputAddon,
   onOpenPageResult,
-  headerMode = false,
+  surface = "default",
   className,
 }: SearchBoxProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -220,15 +219,15 @@ export function SearchBox({
       <div
         className={cn(
           "relative rounded-md transition-all",
-          headerMode
-            ? "hover:ring-2 hover:ring-current/20"
+          surface === "soft"
+            ? "rounded-2xl"
             : "hover:ring-2 hover:ring-muted-foreground/40",
         )}
       >
         <Search
           className={cn(
             "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
-            headerMode ? "text-current opacity-50" : "text-muted-foreground",
+            "text-muted-foreground",
           )}
         />
         <Input
@@ -240,15 +239,15 @@ export function SearchBox({
           className={cn(
             "pl-10",
             inputAddon ? "pr-10" : "",
-            headerMode &&
-              "border-current/20 bg-current/[0.08] text-current placeholder:text-current/50 dark:bg-current/[0.08] focus-visible:ring-current/25 focus-visible:border-current/30",
+            surface === "soft" &&
+              "rounded-2xl border-0 bg-card shadow-none dark:bg-card",
           )}
         />
         {isSearching && (
           <Loader2
             className={cn(
               "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
-              headerMode ? "text-current opacity-50" : "text-muted-foreground",
+              "text-muted-foreground",
               inputAddon ? "right-10" : "right-3",
             )}
           />

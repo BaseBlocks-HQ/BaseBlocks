@@ -14,48 +14,12 @@ import {
   listAuthOrganizations,
 } from "./authComponent/model";
 
-/** Site customization theme options */
-export const siteCustomization = v.object({
-  accentColor: v.optional(v.string()),
-  accentColorDark: v.optional(v.string()),
-  headerColor: v.optional(v.string()),
-  headerColorDark: v.optional(v.string()),
-  secondaryColor: v.optional(v.string()),
-  secondaryColorDark: v.optional(v.string()),
-  tertiaryColor: v.optional(v.string()),
-  tertiaryColorDark: v.optional(v.string()),
-  showHeaderGradient: v.optional(v.boolean()),
-  borderRadius: v.optional(
-    v.union(
-      v.literal("none"),
-      v.literal("small"),
-      v.literal("medium"),
-      v.literal("large"),
-      v.literal("full"),
-    ),
-  ),
-});
-
-/** Site settings (navigation, header, SEO, customization) */
+/** The few supported public-site presentation settings. */
 export const siteSettings = v.object({
   favicon: v.optional(v.string()),
-  ogImage: v.optional(v.string()),
-  siteTitle: v.optional(v.string()),
-  siteDescription: v.optional(v.string()),
-  siteKeywords: v.optional(v.string()),
-  headerType: v.union(v.literal("logo"), v.literal("text")),
-  navigationStyle: v.union(
-    v.literal("sidebar"),
-    v.literal("topnav"),
-    v.literal("subnav"),
-  ),
-  showHeader: v.optional(v.boolean()),
   showLogo: v.optional(v.boolean()),
   showSiteName: v.optional(v.boolean()),
   showHeaderSearch: v.optional(v.boolean()),
-  showBreadcrumbs: v.optional(v.boolean()),
-  sidebarDefaultExpanded: v.optional(v.boolean()),
-  customization: v.optional(siteCustomization),
 });
 
 /**
@@ -309,10 +273,7 @@ export const create = mutation({
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
-      settings: {
-        headerType: "text",
-        navigationStyle: "sidebar",
-      },
+      settings: {},
     });
 
     // Create a default home page
@@ -346,57 +307,19 @@ export const update = mutation({
     logoUrl: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
     clearLogo: v.optional(v.boolean()),
+    clearFavicon: v.optional(v.boolean()),
     settings: v.optional(
       v.object({
         favicon: v.optional(v.string()),
-        ogImage: v.optional(v.string()),
-        siteTitle: v.optional(v.string()),
-        siteDescription: v.optional(v.string()),
-        siteKeywords: v.optional(v.string()),
-        headerType: v.optional(v.union(v.literal("logo"), v.literal("text"))),
-        navigationStyle: v.optional(
-          v.union(
-            v.literal("sidebar"),
-            v.literal("topnav"),
-            v.literal("subnav"),
-          ),
-        ),
-        // Header visibility settings
-        showHeader: v.optional(v.boolean()),
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
         showHeaderSearch: v.optional(v.boolean()),
-        showBreadcrumbs: v.optional(v.boolean()),
-        sidebarDefaultExpanded: v.optional(v.boolean()),
-        // Site customization
-        customization: v.optional(
-          v.object({
-            accentColor: v.optional(v.string()),
-            accentColorDark: v.optional(v.string()),
-            headerColor: v.optional(v.string()),
-            headerColorDark: v.optional(v.string()),
-            secondaryColor: v.optional(v.string()),
-            secondaryColorDark: v.optional(v.string()),
-            tertiaryColor: v.optional(v.string()),
-            tertiaryColorDark: v.optional(v.string()),
-            showHeaderGradient: v.optional(v.boolean()),
-            borderRadius: v.optional(
-              v.union(
-                v.literal("none"),
-                v.literal("small"),
-                v.literal("medium"),
-                v.literal("large"),
-                v.literal("full"),
-              ),
-            ),
-          }),
-        ),
       }),
     ),
   },
   handler: async (
     ctx,
-    { siteId, name, logoUrl, logoFileId, clearLogo, settings },
+    { siteId, name, logoUrl, logoFileId, clearLogo, clearFavicon, settings },
   ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
@@ -434,8 +357,10 @@ export const update = mutation({
       updates.logoUrl = logoUrl;
     }
 
-    if (settings !== undefined) {
-      updates.settings = { ...site.settings, ...settings };
+    if (settings !== undefined || clearFavicon) {
+      const nextSettings = { ...site.settings, ...settings };
+      if (clearFavicon) delete nextSettings.favicon;
+      updates.settings = nextSettings;
     }
 
     await ctx.db.patch(siteId, updates);
@@ -575,7 +500,7 @@ export const remove = mutation({
       await deleteDocumentRows(ctx, doc);
     }
 
-    // 3. Delete all site assets (logos, favicons, og images, editor media)
+    // 3. Delete all site assets (logos, favicons, editor media)
     //    and schedule their S3 object deletions
     const siteAssets = await ctx.db
       .query("files")

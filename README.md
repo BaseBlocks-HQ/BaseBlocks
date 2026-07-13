@@ -2,7 +2,7 @@
 
 BaseBlocks is an open-source, multi-workspace site builder for documentation, knowledge bases, internal portals, onboarding hubs, and public resources.
 
-Teams create structured sites with a block editor, organize pages and document libraries, customize the published experience, and control who can access it.
+Teams create structured sites with a block editor, organize pages and document libraries, publish a consistent site experience, and control who can access it.
 
 **Documentation:** [baseblocks.dev/docs](https://baseblocks.dev/docs)
 
@@ -11,8 +11,8 @@ Teams create structured sites with a block editor, organize pages and document l
 - **Block editor** — rich text, lists, callouts, code, tables, columns, images, attachments, pages, Mermaid diagrams, and interactive BaseBlocks blocks
 - **Page trees** — nested pages, navigation visibility, page access policies, and embedded page references
 - **Interactive blocks** — quick links, directories, site search, document libraries, and decision trees
-- **Published sites** — sidebar, top navigation, or sub-navigation layouts with responsive page rendering
-- **Site customization** — light and dark theme colors, header styling, gradients, border radius, logos, metadata, favicons, and Open Graph images
+- **Published sites** — responsive sidebar navigation with a transparent content header
+- **Site identity** — optional sidebar logo, site name, and favicon
 - **Access control** — public, private, unlisted, and access-code-protected sites
 - **Custom domains** — DNS verification and managed TLS through Vercel
 - **Document libraries** — uploads, folders, search, text extraction, previews, and downloads
@@ -102,7 +102,7 @@ baseblocks/
 │       ├── features/
 │       │   ├── authentication/   # Session and workspace access
 │       │   ├── dashboard/        # Sites, members, and workspace shell
-│       │   ├── editor/           # Editor chrome, rail, pages, and settings
+│       │   ├── editor/           # Editor chrome, sidebar, pages, and settings
 │       │   ├── editor-v2/        # OpenEditor integration and extensions
 │       │   ├── libraries/        # Document-library management
 │       │   ├── marketing/        # Website, docs, and legal content
