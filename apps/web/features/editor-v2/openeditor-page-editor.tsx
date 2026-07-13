@@ -15,6 +15,7 @@ import {
   useOpenEditorController,
 } from "@openeditor/react";
 import {
+  OpenEditorBlockMenu,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
   OpenEditorThemeProvider,
@@ -304,6 +305,7 @@ function OpenEditorDocumentEditor({
         )}
         {canEdit && !preview ? (
           <>
+            <OpenEditorBlockMenu controller={controller} />
             <OpenEditorSelectionBubble controller={controller} />
             <OpenEditorSlashMenu controller={controller} />
           </>

@@ -15,7 +15,11 @@ import {
   type OpenEditorReactExtension,
   useOpenEditorController,
 } from "@openeditor/react";
-import { OpenEditorSelectionBubble, OpenEditorSlashMenu } from "@openeditor/ui";
+import {
+  OpenEditorBlockMenu,
+  OpenEditorSelectionBubble,
+  OpenEditorSlashMenu,
+} from "@openeditor/ui";
 import { Pencil, Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import {
@@ -153,6 +157,7 @@ function ActiveTabEditor({
   return (
     <>
       <OpenEditorContent controller={controller} />
+      <OpenEditorBlockMenu controller={controller} />
       <OpenEditorSelectionBubble controller={controller} />
       <OpenEditorSlashMenu controller={controller} />
     </>

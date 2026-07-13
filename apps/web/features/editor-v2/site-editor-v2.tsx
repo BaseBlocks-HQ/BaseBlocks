@@ -17,6 +17,7 @@ import type {
   OpenEditorDocument,
 } from "@openeditor/core";
 import {
+  OpenEditorBlockMenu,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
   OpenEditorThemeProvider,
@@ -485,6 +486,7 @@ function StandardConvertedEditor({
     >
       <div className="oe-editor-surface mx-auto min-h-full max-w-4xl bg-background px-6 py-10 sm:px-10">
         <OpenEditorContent controller={controller} />
+        <OpenEditorBlockMenu controller={controller} />
         <OpenEditorSelectionBubble controller={controller} />
         <OpenEditorSlashMenu controller={controller} />
       </div>
