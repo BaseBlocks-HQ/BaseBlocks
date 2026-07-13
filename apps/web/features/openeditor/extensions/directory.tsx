@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
+import { Switch } from "@baseblocks/ui/switch";
 import {
   Table,
   TableBody,
@@ -201,6 +202,13 @@ function DirectoryTable({
       settings: { ...normalized.settings, pageSize: nextPageSize },
     });
   };
+  const updateShowSearch = (showSearch: boolean) => {
+    if (!showSearch) setQuery("");
+    update({
+      ...normalized,
+      settings: { ...normalized.settings, showSearch },
+    });
+  };
   const goToPage = (nextPage: number) => {
     setPage(Math.min(pageCount, Math.max(1, nextPage)));
   };
@@ -208,9 +216,7 @@ function DirectoryTable({
   return (
     <section className="not-prose my-4 flex items-start gap-2">
       <div className="min-w-0 flex-1 space-y-3">
-        {!editable &&
-        normalized.settings.showSearch &&
-        normalized.columns.length > 0 ? (
+        {normalized.settings.showSearch && normalized.columns.length > 0 ? (
           <div className="relative block rounded-2xl transition-all hover:ring-0">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <span className="sr-only">Search directory</span>
@@ -463,26 +469,38 @@ function DirectoryTable({
             <PopoverHeader className="mb-4">
               <PopoverTitle>Directory settings</PopoverTitle>
             </PopoverHeader>
-            <div className="grid gap-1.5">
-              <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
-                Rows per page
-              </Label>
-              <Select
-                onValueChange={(next) => updatePageSize(Number(next))}
-                value={String(pageSize)}
-              >
-                <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-                  {PAGE_SIZE_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={String(option)}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="0">Unlimited</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid gap-4">
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
+                  Rows per page
+                </Label>
+                <Select
+                  onValueChange={(next) => updatePageSize(Number(next))}
+                  value={String(pageSize)}
+                >
+                  <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                    {PAGE_SIZE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={String(option)}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="0">Unlimited</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <Label className="text-sm" htmlFor="directory-show-search">
+                  Show search
+                </Label>
+                <Switch
+                  checked={normalized.settings.showSearch}
+                  id="directory-show-search"
+                  onCheckedChange={updateShowSearch}
+                />
+              </div>
             </div>
           </PopoverContent>
         </Popover>
