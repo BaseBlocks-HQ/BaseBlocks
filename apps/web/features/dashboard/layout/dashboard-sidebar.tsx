@@ -1,9 +1,19 @@
 "use client";
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import {
+  productPaletteIds,
+  useProductAppearance,
+  type ProductPaletteId,
+} from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import type { Locale } from "@baseblocks/i18n";
+import {
+  getSiteThemePreviewColors,
+  siteThemeStyleIds,
+  type SiteThemeStyleId,
+} from "@baseblocks/domain";
 import {
   getTeamDashboardPath,
   getTeamLibrariesPath,
@@ -75,6 +85,12 @@ export function DashboardSidebar() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { setTheme, theme, resolvedTheme } = useTheme();
+  const {
+    palette: productPalette,
+    setPalette: setProductPalette,
+    setStyle: setProductStyle,
+    style: productStyle,
+  } = useProductAppearance();
   const { team, teams, user } = useTeamAccess();
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
@@ -114,6 +130,19 @@ export function DashboardSidebar() {
         : t("common.themeLight");
 
   const ThemeIcon = resolvedTheme === "dark" ? Moon : Sun;
+  const paletteLabels: Record<ProductPaletteId, string> = {
+    neutral: t("common.themeNeutral"),
+    amber: t("common.themeAmber"),
+    blue: t("common.themeBlue"),
+    green: t("common.themeGreen"),
+    violet: t("common.themeViolet"),
+    rose: t("common.themeRose"),
+  };
+  const styleLabels: Record<SiteThemeStyleId, string> = {
+    subtle: t("common.themeSubtle"),
+    tinted: t("common.themeTinted"),
+    vibrant: t("common.themeVibrant"),
+  };
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -326,20 +355,84 @@ export function DashboardSidebar() {
                       <ThemeIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span>{t("common.themeMenu")}</span>
                     </span>
-                    <span className="w-[7rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                      {themeSummary}
+                    <span className="w-[7rem] shrink-0 truncate text-right text-xs text-muted-foreground">
+                      {paletteLabels[productPalette]}
                     </span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                      {t("common.themeLight")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      {t("common.themeDark")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("system")}>
-                      {t("common.themeSystem")}
-                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <span className="flex-1">{t("common.themeMode")}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {themeSummary}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {(["light", "dark", "system"] as const).map((value) => (
+                          <DropdownMenuItem
+                            key={value}
+                            onClick={() => setTheme(value)}
+                          >
+                            {value === "light"
+                              ? t("common.themeLight")
+                              : value === "dark"
+                                ? t("common.themeDark")
+                                : t("common.themeSystem")}
+                            {theme === value ? (
+                              <Check className="ml-auto size-4 text-muted-foreground" />
+                            ) : null}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <span className="flex-1">{t("common.themeColor")}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {paletteLabels[productPalette]}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {productPaletteIds.map((palette) => (
+                          <DropdownMenuItem
+                            key={palette}
+                            onClick={() => setProductPalette(palette)}
+                          >
+                            <ProductPaletteIndicator
+                              palette={palette}
+                              style={productStyle}
+                            />
+                            {paletteLabels[palette]}
+                            {productPalette === palette ? (
+                              <Check className="ml-auto size-4 text-muted-foreground" />
+                            ) : null}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <span className="flex-1">{t("common.themeStyle")}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {styleLabels[productStyle]}
+                        </span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {siteThemeStyleIds.map((style) => (
+                          <DropdownMenuItem
+                            key={style}
+                            onClick={() => setProductStyle(style)}
+                          >
+                            {styleLabels[style]}
+                            {productStyle === style ? (
+                              <Check className="ml-auto size-4 text-muted-foreground" />
+                            ) : null}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
@@ -370,5 +463,22 @@ export function DashboardSidebar() {
         user={user}
       />
     </Sidebar>
+  );
+}
+
+function ProductPaletteIndicator({
+  palette,
+  style,
+}: {
+  palette: ProductPaletteId;
+  style: SiteThemeStyleId;
+}) {
+  const colors = getSiteThemePreviewColors({ palette, style });
+  return (
+    <span
+      aria-hidden
+      className="size-3.5 rounded-full border border-black/10 shadow-xs dark:border-white/15"
+      style={{ backgroundColor: colors.primary }}
+    />
   );
 }

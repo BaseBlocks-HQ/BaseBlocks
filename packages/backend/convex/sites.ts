@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { normalizeBrandColor } from "@baseblocks/domain/site-theme";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
@@ -18,12 +19,31 @@ import {
   listAuthOrganizations,
 } from "./authComponent/model";
 
-/** The few supported public-site presentation settings. */
+export const siteThemeSettings = v.object({
+  palette: v.union(
+    v.literal("neutral"),
+    v.literal("amber"),
+    v.literal("blue"),
+    v.literal("green"),
+    v.literal("violet"),
+    v.literal("rose"),
+    v.literal("custom"),
+  ),
+  style: v.union(
+    v.literal("subtle"),
+    v.literal("tinted"),
+    v.literal("vibrant"),
+  ),
+  brandColor: v.optional(v.string()),
+});
+
+/** The supported public-site presentation settings. */
 export const siteSettings = v.object({
   favicon: v.optional(v.string()),
   showLogo: v.optional(v.boolean()),
   showSiteName: v.optional(v.boolean()),
   showHeaderSearch: v.optional(v.boolean()),
+  theme: v.optional(siteThemeSettings),
 });
 
 /**
@@ -318,6 +338,7 @@ export const update = mutation({
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
         showHeaderSearch: v.optional(v.boolean()),
+        theme: v.optional(siteThemeSettings),
       }),
     ),
   },
@@ -362,7 +383,16 @@ export const update = mutation({
     }
 
     if (settings !== undefined || clearFavicon) {
-      const nextSettings = { ...site.settings, ...settings };
+      let normalizedSettings = settings;
+      if (settings?.theme?.brandColor) {
+        const brandColor = normalizeBrandColor(settings.theme.brandColor);
+        if (!brandColor) throw new Error("Invalid custom brand color");
+        normalizedSettings = {
+          ...settings,
+          theme: { ...settings.theme, brandColor },
+        };
+      }
+      const nextSettings = { ...site.settings, ...normalizedSettings };
       if (clearFavicon) delete nextSettings.favicon;
       updates.settings = nextSettings;
     }

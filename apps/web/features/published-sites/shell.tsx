@@ -1,6 +1,7 @@
 "use client";
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
+import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
@@ -92,47 +93,53 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
     result.canonicalUrlInputs.pagePath.join("/") || page.slug || "";
 
   return (
-    <SiteRenderActionsProvider
-      actions={{
-        siteId: site._id,
-        siteSlug: site.slug,
-        teamSlug: team.slug,
-        openPage,
-        publicSearch: true,
-        fileDeepLinks: true,
-      }}
+    <SiteThemeScope
+      className="h-svh w-full overflow-hidden"
+      theme={site.settings.theme}
+      withPortalContainer
     >
-      <SidebarProvider>
-        <PublicSiteSidebar
-          site={site}
-          team={team}
-          pages={pages as PageWithChildren[] | undefined}
-          currentPath={currentPath}
-          siteId={site._id}
-          siteSlug={site.slug}
-        />
-
-        <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background [--bb-header-height:3.5rem]">
-          <PublicSiteHeader
-            onOpenPage={openPage}
-            pageId={page.parentId ? page._id : undefined}
+      <SiteRenderActionsProvider
+        actions={{
+          siteId: site._id,
+          siteSlug: site.slug,
+          teamSlug: team.slug,
+          openPage,
+          publicSearch: true,
+          fileDeepLinks: true,
+        }}
+      >
+        <SidebarProvider>
+          <PublicSiteSidebar
             site={site}
+            team={team}
+            pages={pages as PageWithChildren[] | undefined}
+            currentPath={currentPath}
+            siteId={site._id}
+            siteSlug={site.slug}
           />
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <PublicPageContent
-              pageId={page._id as Id<"pages">}
-              initialPage={
-                navigationIcon ? { ...page, icon: navigationIcon } : page
-              }
-              initialStructure={result.pageContent}
-              canGoBack={previousPageUrl !== null}
-              onGoBack={goBack}
-              pageTargets={pageTargets}
+
+          <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background [--bb-header-height:3.5rem]">
+            <PublicSiteHeader
+              onOpenPage={openPage}
+              pageId={page.parentId ? page._id : undefined}
+              site={site}
             />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </SiteRenderActionsProvider>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <PublicPageContent
+                pageId={page._id as Id<"pages">}
+                initialPage={
+                  navigationIcon ? { ...page, icon: navigationIcon } : page
+                }
+                initialStructure={result.pageContent}
+                canGoBack={previousPageUrl !== null}
+                onGoBack={goBack}
+                pageTargets={pageTargets}
+              />
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </SiteRenderActionsProvider>
+    </SiteThemeScope>
   );
 }
 

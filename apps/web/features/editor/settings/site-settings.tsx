@@ -5,6 +5,7 @@ import { PanelSettingRow } from "@/features/editor/settings/settings-panel";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { DEFAULT_SITE_THEME } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Switch } from "@baseblocks/ui/switch";
@@ -14,21 +15,27 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FaviconSettings } from "./favicon-settings";
+import { SiteAppearanceSettings } from "./site-appearance-settings";
 
 interface SiteConfigPanelProps {
   siteId: Id<"sites">;
 }
 
 function SettingsSection({
+  action,
   children,
   title,
 }: {
+  action?: React.ReactNode;
   children: React.ReactNode;
   title: string;
 }) {
   return (
     <section className="space-y-3">
-      <h4 className="px-0.5 text-sm font-medium">{title}</h4>
+      <div className="flex min-h-7 items-center justify-between gap-3 px-0.5">
+        <h4 className="text-sm font-medium">{title}</h4>
+        {action}
+      </div>
       {children}
     </section>
   );
@@ -208,6 +215,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [localName, setLocalName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [isResettingAppearance, setIsResettingAppearance] = useState(false);
 
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
@@ -264,6 +272,20 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
       toast.success("Site name updated");
     } catch (_error) {
       toast.error("Failed to update name");
+    }
+  };
+
+  const handleResetAppearance = async () => {
+    setIsResettingAppearance(true);
+    try {
+      await updateSite({
+        siteId,
+        settings: { theme: DEFAULT_SITE_THEME },
+      });
+    } catch (_error) {
+      toast.error("Failed to reset site appearance");
+    } finally {
+      setIsResettingAppearance(false);
     }
   };
 
@@ -331,6 +353,23 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
             />
           </SettingSurface>
         </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Appearance"
+        action={
+          <Button
+            className="h-7 px-2 text-xs"
+            disabled={isResettingAppearance}
+            onClick={() => void handleResetAppearance()}
+            size="sm"
+            variant="ghost"
+          >
+            Reset
+          </Button>
+        }
+      >
+        <SiteAppearanceSettings siteId={siteId} theme={site.settings.theme} />
       </SettingsSection>
 
       <SettingsSection title="Navigation">

@@ -7,6 +7,7 @@ import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
+import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
@@ -131,6 +132,15 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     </div>
   );
 
+  const themedPageEditor = (
+    <SiteThemeScope
+      className="min-h-full rounded-2xl"
+      theme={site.settings.theme}
+    >
+      {pageEditor}
+    </SiteThemeScope>
+  );
+
   const editorCanvas = (
     <div
       className={cn(
@@ -138,7 +148,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         isToolDockExpanded ? "md:pl-0" : "md:pl-14",
       )}
     >
-      <div className="p-4 pt-18 md:p-8 md:pt-18">{pageEditor}</div>
+      <div className="p-4 pt-18 md:p-8 md:pt-18">{themedPageEditor}</div>
     </div>
   );
 
@@ -173,7 +183,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             onUnpublish={handleUnpublish}
           />
           <PortalContainerProvider value={portalContainer ?? undefined}>
-            <div className="overflow-visible p-4 pb-20">{pageEditor}</div>
+            <div className="overflow-visible p-4 pb-20">{themedPageEditor}</div>
           </PortalContainerProvider>
         </main>
       </div>

@@ -4,6 +4,23 @@ export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./sites/slug";
 export type { SaveStatus } from "./content/elements";
 
 export type {
+  SiteThemePaletteId,
+  SiteThemeSettings,
+  SiteThemeStyleId,
+} from "./sites/site-theme";
+export {
+  DEFAULT_CUSTOM_BRAND_COLOR,
+  DEFAULT_SITE_THEME,
+  getSiteThemeCssVariables,
+  getSiteThemePreviewColors,
+  isValidBrandColor,
+  normalizeBrandColor,
+  resolveSiteTheme,
+  siteThemePaletteIds,
+  siteThemeStyleIds,
+} from "./sites/site-theme";
+
+export type {
   DirectoryColumnType,
   DirectoryColumn,
   DirectoryRow,
