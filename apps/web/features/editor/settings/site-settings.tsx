@@ -1,6 +1,6 @@
 "use client";
 
-import { useImageUpload } from "@/components/site-elements/use-image-upload";
+import { useImageUpload } from "@/lib/files/use-image-upload";
 import { PanelSettingRow } from "@/features/editor/settings/settings-panel";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";

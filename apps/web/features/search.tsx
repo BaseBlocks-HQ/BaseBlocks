@@ -6,55 +6,23 @@ import {
   FilePreview,
   type PreviewFile,
 } from "@/components/file-viewer/file-viewer";
+import { FileIcon, formatFileSize } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounce } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import {
   ChevronRight,
   Download,
   Eye,
-  File,
-  FileImage,
-  FileSpreadsheet,
-  FileText,
   Loader2,
   NotebookText,
-  Presentation,
   Search,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-
-function getFileIcon(contentType: string | undefined) {
-  if (!contentType) return <File className="h-4 w-4 text-gray-500" />;
-  if (contentType.includes("pdf")) {
-    return <FileText className="h-4 w-4 text-red-500" />;
-  }
-  if (contentType.includes("spreadsheet") || contentType.includes("excel")) {
-    return <FileSpreadsheet className="h-4 w-4 text-green-500" />;
-  }
-  if (
-    contentType.includes("presentation") ||
-    contentType.includes("powerpoint")
-  ) {
-    return <Presentation className="h-4 w-4 text-orange-500" />;
-  }
-  if (contentType.includes("word") || contentType.includes("document")) {
-    return <FileText className="h-4 w-4 text-blue-500" />;
-  }
-  if (contentType.includes("image")) {
-    return <FileImage className="h-4 w-4 text-purple-500" />;
-  }
-  return <File className="h-4 w-4 text-gray-500" />;
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function HighlightedSnippet({
   snippet,
@@ -84,25 +52,20 @@ function HighlightedSnippet({
   );
 }
 
-interface SearchResultItem {
-  _id: string;
-  contentType: "document" | "page";
-  sourceId: string;
-  title: string;
-  matchType: "title" | "content";
-  snippet: string | null;
-  snippetMatchStart: number | null;
-  snippetMatchEnd: number | null;
-  metadata: {
-    // Document metadata
-    filename?: string;
-    fileContentType?: string;
-    size?: number;
-    downloadUrl?: string;
-    libraryId?: string;
-    // Page metadata
-    pageId?: string;
-  };
+type SearchResultItem = FunctionReturnType<typeof api.search.searchAll>[number];
+type DocumentSearchMetadata = Extract<
+  SearchResultItem["metadata"],
+  { downloadUrl: string }
+>;
+
+function getDocumentMetadata(
+  result: SearchResultItem,
+): DocumentSearchMetadata | null {
+  return "downloadUrl" in result.metadata ? result.metadata : null;
+}
+
+function getPageId(result: SearchResultItem) {
+  return "pageId" in result.metadata ? result.metadata.pageId : undefined;
 }
 
 interface SearchBoxProps {
@@ -159,7 +122,7 @@ export function SearchBox({
     !usePublicQuery && shouldSearch
       ? { siteId, query: debouncedQuery, limit: maxResults }
       : "skip",
-  ) as SearchResultItem[] | undefined;
+  );
 
   const publicResults = useQuery(
     api.search.searchAllPublic,
@@ -171,7 +134,7 @@ export function SearchBox({
           sessionTokens,
         }
       : "skip",
-  ) as SearchResultItem[] | undefined;
+  );
 
   const serverResults = usePublicQuery ? publicResults : authResults;
 
@@ -193,19 +156,20 @@ export function SearchBox({
   };
 
   const handleResultClick = (result: SearchResultItem) => {
-    if (result.contentType === "page" && result.metadata.pageId) {
-      onOpenPageResult?.(result.metadata.pageId, debouncedQuery);
+    const pageId = getPageId(result);
+    if (result.contentType === "page" && pageId) {
+      onOpenPageResult?.(pageId, debouncedQuery);
       setIsFocused(false);
       return;
     }
 
-    if (result.metadata.downloadUrl) {
+    const metadata = getDocumentMetadata(result);
+    if (metadata) {
       setPreviewFile({
-        url: result.metadata.downloadUrl,
-        filename: result.metadata.filename || result.title,
-        contentType:
-          result.metadata.fileContentType || "application/octet-stream",
-        size: result.metadata.size || 0,
+        url: metadata.downloadUrl,
+        filename: metadata.filename || result.title,
+        contentType: metadata.fileContentType || "application/octet-stream",
+        size: metadata.size || 0,
         searchTerm: debouncedQuery,
       });
     }
@@ -268,6 +232,7 @@ export function SearchBox({
                 {searchResults.map((result) => {
                   const isPage = result.contentType === "page";
                   const isContentMatch = result.matchType === "content";
+                  const documentMetadata = getDocumentMetadata(result);
 
                   return (
                     <button
@@ -282,7 +247,12 @@ export function SearchBox({
                             (isPage ? (
                               <NotebookText className="h-4 w-4 text-indigo-500" />
                             ) : (
-                              getFileIcon(result.metadata.fileContentType)
+                              <FileIcon
+                                contentType={
+                                  documentMetadata?.fileContentType ??
+                                  "application/octet-stream"
+                                }
+                              />
                             ))}
                           <div className="min-w-0 flex-1">
                             <p className="font-medium truncate text-sm text-foreground">
@@ -294,8 +264,8 @@ export function SearchBox({
                                   Page
                                 </span>
                               ) : (
-                                result.metadata.size &&
-                                formatFileSize(result.metadata.size)
+                                documentMetadata?.size &&
+                                formatFileSize(documentMetadata.size)
                               )}
                               {isContentMatch && (
                                 <span className="ml-2 text-primary">
@@ -321,7 +291,7 @@ export function SearchBox({
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {result.metadata.downloadUrl && (
+                            {documentMetadata && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -329,8 +299,8 @@ export function SearchBox({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDownload(
-                                    result.metadata.downloadUrl!,
-                                    result.metadata.filename || result.title,
+                                    documentMetadata.downloadUrl,
+                                    documentMetadata.filename || result.title,
                                   );
                                 }}
                                 title="Download"

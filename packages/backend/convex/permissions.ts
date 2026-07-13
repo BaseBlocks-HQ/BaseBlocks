@@ -1,19 +1,13 @@
-import type {
-  GenericActionCtx,
-  GenericMutationCtx,
-  GenericQueryCtx,
-} from "convex/server";
-import { ConvexError, v } from "convex/values";
+import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
+import { ConvexError } from "convex/values";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { internalQuery, query } from "./_generated/server";
 import {
   type OrganizationPermission,
   roleHasPermission,
 } from "./authComponent/permissions";
 
 type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
-type ActionAuthCtx = GenericActionCtx<DataModel>;
 
 export type ServerAuthContext = {
   userId: string;
@@ -54,32 +48,6 @@ export async function getAuthContextOrNull(
 
 export async function requireUser(ctx: AuthCtx): Promise<ServerAuthContext> {
   const auth = await getAuthContextOrNull(ctx);
-  if (!auth) {
-    throw new ConvexError({
-      code: "UNAUTHENTICATED",
-      message: "Authentication required",
-    });
-  }
-  return auth;
-}
-
-export async function getActionAuthContextOrNull(
-  ctx: ActionAuthCtx,
-): Promise<ServerAuthContext | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) return null;
-  return {
-    userId: identity.subject,
-    email: identity.email ?? undefined,
-    name: identity.name ?? undefined,
-    imageUrl: identity.pictureUrl ?? undefined,
-  };
-}
-
-export async function getActionAuthContext(
-  ctx: ActionAuthCtx,
-): Promise<ServerAuthContext> {
-  const auth = await getActionAuthContextOrNull(ctx);
   if (!auth) {
     throw new ConvexError({
       code: "UNAUTHENTICATED",
@@ -167,53 +135,3 @@ export async function checkOrganizationPermission(
   const member = await findOrganizationMember(ctx, organizationId, auth.userId);
   return member ? roleHasPermission(member.role, permission) : false;
 }
-
-export const hasOrganizationManagementPermission = (
-  ctx: AuthCtx,
-  organizationId: string,
-) =>
-  checkOrganizationPermission(ctx, organizationId, {
-    resource: "organization",
-    action: "update",
-  });
-
-export const getFullAuthContext = query({
-  args: {},
-  handler: async (ctx) => {
-    const auth = await getAuthContextOrNull(ctx);
-    if (!auth) {
-      return { isAuthenticated: false, hasOrganization: false, user: null };
-    }
-
-    const memberships = await ctx.runQuery(
-      components.betterAuth.adapter.findMany,
-      {
-        model: "member",
-        where: [{ field: "userId", operator: "eq", value: auth.userId }],
-        paginationOpts: { numItems: 1, cursor: null },
-      },
-    );
-
-    return {
-      isAuthenticated: true,
-      hasOrganization: Boolean(memberships?.page?.length),
-      user: {
-        id: auth.userId,
-        email: auth.email,
-        name: auth.name,
-        imageUrl: auth.imageUrl,
-      },
-    };
-  },
-});
-
-export const checkSiteMembership = internalQuery({
-  args: { siteId: v.id("sites"), userId: v.string() },
-  handler: async (ctx, { siteId, userId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return false;
-    return Boolean(
-      await findOrganizationMember(ctx, site.organizationId, userId),
-    );
-  },
-});

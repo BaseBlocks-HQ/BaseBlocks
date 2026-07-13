@@ -1,6 +1,6 @@
 "use client";
 
-import { useImageUpload } from "@/components/site-elements/use-image-upload";
+import { useImageUpload } from "@/lib/files/use-image-upload";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";

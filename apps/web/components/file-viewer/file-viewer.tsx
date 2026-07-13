@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@baseblocks/ui/lib/utils";
-import { FileIcon } from "@/components/file-viewer/file-ui";
+import { FileIcon, formatFileSize } from "@/components/file-viewer/file-ui";
 import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Download, ExternalLink, Maximize2, Minimize2, X } from "lucide-react";
@@ -159,23 +159,19 @@ export function ToolbarButton({
   disabled,
   label,
   onClick,
-  pressed,
 }: {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
   label: string;
   onClick: () => void;
-  pressed?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
-      aria-pressed={pressed}
       className={cn(
         "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
-        pressed && "bg-primary/10 text-primary",
         className,
       )}
       disabled={disabled}
@@ -250,11 +246,4 @@ function downloadFile(file: PreviewFile) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-}
-
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

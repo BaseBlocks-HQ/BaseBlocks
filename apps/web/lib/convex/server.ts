@@ -1,3 +1,5 @@
+import "server-only";
+
 import { ConvexHttpClient } from "convex/browser";
 
 function getConvexUrl(): string {

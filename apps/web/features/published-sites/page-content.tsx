@@ -2,10 +2,10 @@
 
 import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
-import { openEditorExtensions } from "@/features/openeditor/extensions";
 import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
 import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
 import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
+import { publicSiteRenderers } from "@/features/openeditor/renderers";
 import { getPageLink } from "@/features/published-sites/urls";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -116,15 +116,15 @@ export function PublicPageContent({
               <OpenEditorTabbedPage
                 document={openEditorDocument}
                 editable={false}
-                extensions={openEditorExtensions}
                 pageRuntime={pageRuntime}
+                renderers={publicSiteRenderers}
               />
             ) : (
               <OpenEditorViewer
                 className="oe-viewer"
                 document={openEditorDocument}
-                extensions={openEditorExtensions}
                 pageRuntime={pageRuntime}
+                renderers={publicSiteRenderers}
               />
             )}
           </OpenEditorThemeProvider>

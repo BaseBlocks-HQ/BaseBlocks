@@ -35,22 +35,6 @@ export const resolve = query({
   },
 });
 
-export const listForSite = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "site",
-      action: "manage",
-    });
-    return ctx.db
-      .query("siteDomains")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-  },
-});
-
 export const assertAvailable = query({
   args: { siteId: v.id("sites"), hostname: v.string() },
   handler: async (ctx, { siteId, hostname }) => {

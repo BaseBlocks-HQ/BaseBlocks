@@ -9,6 +9,8 @@
     "allowJs": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
+    "declaration": false,
+    "declarationMap": false,
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true

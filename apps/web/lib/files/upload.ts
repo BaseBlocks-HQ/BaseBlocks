@@ -9,11 +9,39 @@ export interface UploadProgress {
   percentage: number;
 }
 
-interface UploadResult {
+export interface UploadResult {
   objectKey: string;
   size: number;
   contentType: string;
   checksum: string;
+}
+
+export interface FileRegistration {
+  objectKey: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  checksum: string;
+}
+
+interface UploadOptions {
+  siteId: string;
+  purpose: UploadPurpose;
+  onProgress?: (progress: UploadProgress) => void;
+  signal?: AbortSignal;
+}
+
+export function fileRegistration(
+  file: File,
+  uploaded: UploadResult,
+): FileRegistration {
+  return {
+    objectKey: uploaded.objectKey,
+    filename: file.name,
+    contentType: uploaded.contentType,
+    size: uploaded.size,
+    checksum: uploaded.checksum,
+  };
 }
 
 function sendSignedUpload(
@@ -90,12 +118,7 @@ async function uploadRequest<T>(
 
 async function uploadObject(
   file: File,
-  options: {
-    siteId: string;
-    purpose: UploadPurpose;
-    onProgress?: (progress: UploadProgress) => void;
-    signal?: AbortSignal;
-  },
+  options: UploadOptions,
 ): Promise<UploadResult> {
   const signed = await uploadRequest<{
     objectKey: string;
@@ -119,19 +142,32 @@ async function uploadObject(
     options.onProgress,
     options.signal,
   );
-  const uploaded = await uploadRequest<UploadResult>(
-    {
-      action: "complete",
-      siteId: options.siteId,
-      purpose: options.purpose,
-      objectKey: signed.objectKey,
-      filename: file.name,
-      contentType: signed.contentType,
-      size: file.size,
-      uploadToken: signed.uploadToken,
-    },
-    options.signal,
-  );
+  let uploaded: UploadResult;
+  try {
+    uploaded = await uploadRequest<UploadResult>(
+      {
+        action: "complete",
+        siteId: options.siteId,
+        purpose: options.purpose,
+        objectKey: signed.objectKey,
+        filename: file.name,
+        contentType: signed.contentType,
+        size: file.size,
+        uploadToken: signed.uploadToken,
+      },
+      options.signal,
+    );
+  } catch (completionError) {
+    return await cleanupAfterFailure(
+      completionError,
+      {
+        siteId: options.siteId,
+        purpose: options.purpose,
+        objectKey: signed.objectKey,
+      },
+      "Upload verification failed and the uploaded object could not be cleaned up",
+    );
+  }
   options.onProgress?.({
     loaded: uploaded.size,
     total: uploaded.size,
@@ -160,4 +196,41 @@ async function cleanup(options: {
   }
 }
 
-export const filesClient = { upload: uploadObject, cleanup };
+async function cleanupAfterFailure(
+  failure: unknown,
+  options: { siteId: string; purpose: UploadPurpose; objectKey: string },
+  cleanupFailureMessage: string,
+): Promise<never> {
+  try {
+    await cleanup(options);
+  } catch (cleanupError) {
+    throw new AggregateError([failure, cleanupError], cleanupFailureMessage);
+  }
+  throw failure;
+}
+
+async function uploadAndRegister<T>(
+  file: File,
+  options: UploadOptions,
+  register: (uploaded: UploadResult) => Promise<T>,
+): Promise<{ registered: T; uploaded: UploadResult }> {
+  const uploaded = await uploadObject(file, options);
+
+  try {
+    return { registered: await register(uploaded), uploaded };
+  } catch (registrationError) {
+    return await cleanupAfterFailure(
+      registrationError,
+      {
+        siteId: options.siteId,
+        purpose: options.purpose,
+        objectKey: uploaded.objectKey,
+      },
+      "Upload registration failed and the uploaded object could not be cleaned up",
+    );
+  }
+}
+
+export const filesClient = {
+  uploadAndRegister,
+};

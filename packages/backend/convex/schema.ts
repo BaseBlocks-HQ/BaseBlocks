@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { siteSettings } from "./sites";
+import { siteSettings } from "./validators/sites";
 
 export default defineSchema({
   sites: defineTable({

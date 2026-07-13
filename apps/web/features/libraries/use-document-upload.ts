@@ -4,7 +4,11 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { type UploadProgress, filesClient } from "@/lib/files/upload";
+import {
+  fileRegistration,
+  type UploadProgress,
+  filesClient,
+} from "@/lib/files/upload";
 
 export interface UploadState {
   isUploading: boolean;
@@ -47,8 +51,6 @@ export function useFileUpload() {
     options: UploadOptions,
   ): Promise<Id<"documents"> | null> => {
     const fileId = `${file.name}-${Date.now()}`;
-    let objectKey: string | null = null;
-
     try {
       updateUploadState(fileId, {
         isUploading: true,
@@ -56,37 +58,27 @@ export function useFileUpload() {
         error: null,
       });
 
-      const uploadResult = await filesClient.upload(file, {
-        siteId: options.siteId,
-        purpose: "document",
-        onProgress: (progress) => {
-          updateUploadState(fileId, { progress });
+      const { registered: documentId } = await filesClient.uploadAndRegister(
+        file,
+        {
+          siteId: options.siteId,
+          purpose: "document",
+          onProgress: (progress) => {
+            updateUploadState(fileId, { progress });
+          },
         },
-      });
-      objectKey = uploadResult.objectKey;
-
-      let documentId: Id<"documents">;
-      if (options.libraryId) {
-        documentId = await createInLibrary({
-          siteId: options.siteId,
-          libraryId: options.libraryId,
-          folderId: options.folderId,
-          objectKey: uploadResult.objectKey,
-          filename: file.name,
-          contentType: uploadResult.contentType,
-          size: uploadResult.size,
-          checksum: uploadResult.checksum,
-        });
-      } else {
-        documentId = await createDocument({
-          siteId: options.siteId,
-          objectKey: uploadResult.objectKey,
-          filename: file.name,
-          contentType: uploadResult.contentType,
-          size: uploadResult.size,
-          checksum: uploadResult.checksum,
-        });
-      }
+        (upload) => {
+          const registration = fileRegistration(file, upload);
+          return options.libraryId
+            ? createInLibrary({
+                siteId: options.siteId,
+                libraryId: options.libraryId,
+                folderId: options.folderId,
+                ...registration,
+              })
+            : createDocument({ siteId: options.siteId, ...registration });
+        },
+      );
 
       updateUploadState(fileId, {
         isUploading: false,
@@ -96,21 +88,7 @@ export function useFileUpload() {
 
       return documentId;
     } catch (err) {
-      let failure = err instanceof Error ? err : new Error("Upload failed");
-      if (objectKey) {
-        try {
-          await filesClient.cleanup({
-            siteId: options.siteId,
-            purpose: "document",
-            objectKey,
-          });
-        } catch (cleanupError) {
-          failure = new AggregateError(
-            [failure, cleanupError],
-            "Upload failed and the uploaded object could not be cleaned up",
-          );
-        }
-      }
+      const failure = err instanceof Error ? err : new Error("Upload failed");
 
       updateUploadState(fileId, { isUploading: false, error: failure.message });
       options.onError?.(failure);

@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { normalizeBrandColor } from "@baseblocks/domain/site-theme";
-import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
   requireOrganizationPermission,
@@ -10,126 +9,10 @@ import {
 import { deleteDocumentRows } from "./documents";
 import { createDefaultPageStructure } from "./pageStructure";
 import {
-  collectOpenEditorAttributeValues,
-  parseOpenEditorDocument,
-} from "./openEditorDocuments";
-import {
   getAuthOrganizationById,
   getAuthOrganizationBySlug,
-  listAuthOrganizations,
 } from "./authComponent/model";
-
-export const siteThemeSettings = v.object({
-  palette: v.union(
-    v.literal("neutral"),
-    v.literal("amber"),
-    v.literal("blue"),
-    v.literal("green"),
-    v.literal("violet"),
-    v.literal("rose"),
-    v.literal("custom"),
-  ),
-  style: v.union(
-    v.literal("subtle"),
-    v.literal("tinted"),
-    v.literal("vibrant"),
-  ),
-  brandColor: v.optional(v.string()),
-});
-
-/** The supported public-site presentation settings. */
-export const siteSettings = v.object({
-  favicon: v.optional(v.string()),
-  showLogo: v.optional(v.boolean()),
-  showSiteName: v.optional(v.boolean()),
-  showHeaderSearch: v.optional(v.boolean()),
-  theme: v.optional(siteThemeSettings),
-});
-
-/**
- * Database context type — works for both queries and mutations.
- * Replaces the unsafe `ctx: { db: any }` pattern used previously.
- */
-type DbCtx = Pick<
-  GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
-  "db"
->;
-
-/**
- * Resolved page info with properly typed IDs.
- */
-export type PageInfo = {
-  organizationId: string;
-  siteId: Id<"sites">;
-};
-
-/**
- * Resolve a page's team and site IDs.
- * Returns null if page or site doesn't exist.
- */
-export async function resolvePageContext(
-  ctx: DbCtx,
-  pageId: Id<"pages">,
-): Promise<PageInfo | null> {
-  const page = await ctx.db.get(pageId);
-  if (!page) return null;
-
-  const site = await ctx.db.get(page.siteId);
-  if (!site) return null;
-
-  return { organizationId: site.organizationId, siteId: site._id };
-}
-
-/**
- * Resolve a site's team ID.
- * Returns null if site doesn't exist.
- */
-export async function resolveSiteContext(
-  ctx: DbCtx,
-  siteId: Id<"sites">,
-): Promise<{ organizationId: string } | null> {
-  const site = await ctx.db.get(siteId);
-  if (!site) return null;
-
-  return { organizationId: site.organizationId };
-}
-
-/**
- * Collect library IDs that are actively used in published blocks across a site.
- * Blocks are first-class documents, so this does not scan nested page trees.
- */
-export async function getActiveLibraryIds(
-  ctx: DbCtx,
-  siteId: Id<"sites">,
-): Promise<Set<string>> {
-  return getActiveLibraryIdsForPageIds(ctx, siteId);
-}
-
-export async function getActiveLibraryIdsForPageIds(
-  ctx: DbCtx,
-  siteId: Id<"sites">,
-  pageIds?: Iterable<string>,
-): Promise<Set<string>> {
-  const contents = await ctx.db
-    .query("openEditorPageContents")
-    .withIndex("by_site", (q) => q.eq("siteId", siteId))
-    .collect();
-
-  const allowedPageIds = pageIds ? new Set(pageIds) : null;
-  const activeLibraryIds = new Set<string>();
-  for (const content of contents) {
-    if (allowedPageIds && !allowedPageIds.has(content.pageId)) continue;
-    for (const libraryId of collectOpenEditorAttributeValues(
-      parseOpenEditorDocument(content.document),
-      "baseblocksLibrary",
-      ["library", "libraryId"],
-    )) {
-      activeLibraryIds.add(libraryId);
-    }
-  }
-
-  return activeLibraryIds;
-}
+import { siteThemeSettings } from "./validators/sites";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -217,44 +100,6 @@ export const getBySlug = query({
       settings: site.settings,
       updatedAt: site.updatedAt,
     };
-  },
-});
-
-// List all published, public-visibility sites with team slugs (for sitemap generation)
-// No auth required — only exposes public-safe data
-export const listPublishedSlugs = query({
-  args: {},
-  handler: async (ctx) => {
-    const organizations = await listAuthOrganizations(ctx);
-
-    const results: Array<{
-      teamSlug: string;
-      siteSlug: string;
-      updatedAt: number;
-    }> = [];
-
-    for (const organization of organizations) {
-      if (!organization.slug) continue;
-      const sites = await ctx.db
-        .query("sites")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", organization._id),
-        )
-        .collect();
-
-      for (const site of sites) {
-        if (!site.isPublished) continue;
-        if (site.visibility && site.visibility !== "public") continue;
-
-        results.push({
-          teamSlug: organization.slug,
-          siteSlug: site.slug,
-          updatedAt: site.updatedAt,
-        });
-      }
-    }
-
-    return results;
   },
 });
 

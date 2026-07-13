@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Toggle } from "@baseblocks/ui/toggle";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
@@ -36,13 +37,17 @@ import {
 import { useTranslations } from "next-intl";
 import { IconEye, IconWindow2 } from "nucleo-glass";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { ShareDialog } from "./publishing/share-dialog";
 import type {
   AccessCodeData,
   SharingSettings,
 } from "./publishing/share-dialog";
+
+const ShareDialog = dynamic(() =>
+  import("./publishing/share-dialog").then((module) => module.ShareDialog),
+);
 
 interface EditorHeaderProps {
   isPreviewing?: boolean;
@@ -116,16 +121,18 @@ export function EditorHeader({
         </div>
       </header>
 
-      <ShareDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        siteId={siteId}
-        teamSlug={teamSlug}
-        siteSlug={siteSlug}
-        siteUrl={siteUrl}
-        settings={settings}
-        accessCode={accessCode}
-      />
+      {shareDialogOpen ? (
+        <ShareDialog
+          open
+          onOpenChange={setShareDialogOpen}
+          siteId={siteId}
+          teamSlug={teamSlug}
+          siteSlug={siteSlug}
+          siteUrl={siteUrl}
+          settings={settings}
+          accessCode={accessCode}
+        />
+      ) : null}
     </>
   );
 }
@@ -302,18 +309,17 @@ function EditorHeaderActions({
   return (
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
       {onTogglePreview ? (
-        <Button
-          aria-pressed={isPreviewing}
+        <Toggle
           className={headerActionClassName}
-          onClick={onTogglePreview}
+          onPressedChange={() => onTogglePreview()}
+          pressed={isPreviewing}
           size="sm"
-          variant="ghost"
         >
           {isPreviewing ? <PencilLine /> : <IconEye />}
           <HeaderActionLabel>
             {isPreviewing ? t("edit") : t("preview")}
           </HeaderActionLabel>
-        </Button>
+        </Toggle>
       ) : null}
 
       <ViewSiteAction

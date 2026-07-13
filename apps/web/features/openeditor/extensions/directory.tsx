@@ -1,6 +1,10 @@
 "use client";
 
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  DirectoryViewer,
+  readDirectory,
+} from "@/features/openeditor/renderers/directory";
 import type {
   DirectoryColumn,
   DirectoryContent,
@@ -57,20 +61,6 @@ const emptyDirectory = (): DirectoryContent => ({
   rows: [],
   settings: { copyMode: "none", pageSize: 10, showSearch: true },
 });
-
-function readDirectory(value: unknown): DirectoryContent {
-  if (!value || typeof value !== "object") return emptyDirectory();
-  const candidate = value as Partial<DirectoryContent>;
-  return {
-    columns: Array.isArray(candidate.columns) ? candidate.columns : [],
-    rows: Array.isArray(candidate.rows) ? candidate.rows : [],
-    settings: {
-      copyMode: candidate.settings?.copyMode ?? "none",
-      pageSize: Math.max(0, candidate.settings?.pageSize ?? 10),
-      showSearch: candidate.settings?.showSearch ?? true,
-    },
-  };
-}
 
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
@@ -516,11 +506,15 @@ function DirectoryNode({
 }: OpenEditorNodeViewProps) {
   return (
     <NodeViewWrapper contentEditable={false}>
-      <DirectoryTable
-        editable={editor.isEditable}
-        onChange={(directory) => updateAttributes({ directory })}
-        value={readDirectory(node.attrs.directory)}
-      />
+      {editor.isEditable ? (
+        <DirectoryTable
+          editable
+          onChange={(directory) => updateAttributes({ directory })}
+          value={readDirectory(node.attrs.directory)}
+        />
+      ) : (
+        <DirectoryViewer value={readDirectory(node.attrs.directory)} />
+      )}
     </NodeViewWrapper>
   );
 }
@@ -555,10 +549,7 @@ export const directoryExtension = defineOpenEditorReactNode({
     order: baseBlocksSlashMenuOrder.directory,
   },
   viewer: ({ node }) => (
-    <DirectoryTable
-      editable={false}
-      value={readDirectory(node.attrs?.directory)}
-    />
+    <DirectoryViewer value={readDirectory(node.attrs?.directory)} />
   ),
   exporters: {
     html: {

@@ -1,7 +1,10 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  PublicLibraryViewer,
+  readLibrary,
+} from "@/features/openeditor/renderers/library";
 import { LibraryExplorer } from "@/features/libraries/components/library-explorer";
 import type { LibraryId } from "@/features/libraries/tree-input";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
@@ -33,15 +36,6 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { FolderPlus, LibraryBig, Plus, Settings } from "lucide-react";
 import { useState } from "react";
-
-function readLibrary(value: unknown): LibraryContent {
-  const candidate =
-    value && typeof value === "object" ? (value as LibraryContent) : {};
-  return {
-    libraryId: candidate.libraryId,
-    allowDownloads: candidate.allowDownloads ?? true,
-  };
-}
 
 function LibraryEditor({
   value,
@@ -98,7 +92,6 @@ function LibraryEditor({
       <div className="min-w-0 flex-1">
         {libraryId ? (
           <LibraryExplorer
-            access="manage"
             allowDownloads={value.allowDownloads !== false}
             embedded
             explorer={explorer}
@@ -218,25 +211,6 @@ function LibraryEditor({
   );
 }
 
-function LibraryViewer({ value }: { value: LibraryContent }) {
-  const libraryId = value.libraryId as LibraryId | undefined;
-  const explorer = useQuery(
-    api.libraries.getPublicExplorer,
-    libraryId
-      ? { libraryId, sessionTokens: getStoredAccessSessionTokens() }
-      : "skip",
-  );
-  if (!libraryId) return null;
-  return (
-    <LibraryExplorer
-      access="read"
-      allowDownloads={value.allowDownloads !== false}
-      embedded
-      explorer={explorer}
-    />
-  );
-}
-
 function LibraryNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
   const value = readLibrary(node.attrs.library);
   return (
@@ -281,7 +255,7 @@ export const libraryExtension = defineOpenEditorReactNode({
     order: baseBlocksSlashMenuOrder.library,
   },
   viewer: ({ node }) => (
-    <LibraryViewer value={readLibrary(node.attrs?.library)} />
+    <PublicLibraryViewer value={readLibrary(node.attrs?.library)} />
   ),
   exporters: {
     html: {

@@ -6,7 +6,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./site-theme": "./src/sites/site-theme.ts",
-    "./site-settings": "./src/sites/site-settings.ts",
     "./elements": "./src/content/elements/index.ts",
     "./elements/*": "./src/content/elements/*.ts"
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { filesClient } from "@/lib/files/upload";
+import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -110,41 +110,26 @@ export function EditSiteDialog({
       isUploadingLogo: true,
     }));
 
-    let objectKey: string | null = null;
-
     try {
-      const uploadResult = await filesClient.upload(file, {
-        siteId: site._id,
-        purpose: "siteAsset",
-      });
-      objectKey = uploadResult.objectKey;
-
-      const { fileId, url } = await createSiteAsset({
-        siteId: site._id as Id<"sites">,
-        objectKey: uploadResult.objectKey,
-        filename: file.name,
-        contentType: uploadResult.contentType,
-        size: uploadResult.size,
-        checksum: uploadResult.checksum,
-      });
+      const { registered } = await filesClient.uploadAndRegister(
+        file,
+        { siteId: site._id, purpose: "siteAsset" },
+        (upload) =>
+          createSiteAsset({
+            siteId: site._id as Id<"sites">,
+            ...fileRegistration(file, upload),
+          }),
+      );
 
       setDialogState((current) => ({
         ...current,
-        logoUrl: url,
-        logoPreview: url,
-        logoFileId: fileId,
+        logoUrl: registered.url,
+        logoPreview: registered.url,
+        logoFileId: registered.fileId,
         isUploadingLogo: false,
       }));
       resetFileInput();
     } catch (err) {
-      if (objectKey) {
-        await filesClient.cleanup({
-          siteId: site._id,
-          purpose: "siteAsset",
-          objectKey,
-        });
-      }
-
       setDialogState((current) => ({
         ...current,
         error: err instanceof Error ? err.message : t("common.error"),

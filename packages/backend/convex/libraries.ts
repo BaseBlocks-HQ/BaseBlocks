@@ -8,7 +8,11 @@ import {
 } from "./permissions";
 import { buildDocumentDownloadUrl, deleteDocumentRows } from "./documents";
 import { canAccessPublishedSite } from "./sharing";
-import { getActiveLibraryIds } from "./sites";
+import { getActiveLibraryIds } from "./model/sites";
+import {
+  requireFolderManagement,
+  requireLibraryManagement,
+} from "./model/libraryAccess";
 
 const librarySummary = v.object({
   _id: v.id("documentLibraries"),
@@ -116,21 +120,6 @@ export const listLibraries = query({
   },
 });
 
-export const getLibrary = query({
-  args: { libraryId: v.id("documentLibraries") },
-  handler: async (ctx, { libraryId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return null;
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return null;
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
-
-    return library;
-  },
-});
-
 export const getExplorer = query({
   args: { libraryId: v.id("documentLibraries") },
   returns: v.union(explorerPayload, v.null()),
@@ -144,24 +133,6 @@ export const getExplorer = query({
     if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
     return await buildExplorerPayload(ctx, library, site);
-  },
-});
-
-export const getPublicLibrary = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { libraryId, sessionTokens }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return null;
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return null;
-    }
-
-    return library;
   },
 });
 
@@ -184,24 +155,6 @@ export const getPublicExplorer = query({
     if (!activeLibraryIds.has(libraryId)) return null;
 
     return await buildExplorerPayload(ctx, library, site);
-  },
-});
-
-export const listPublicLibraries = query({
-  args: {
-    siteId: v.id("sites"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    return await ctx.db
-      .query("documentLibraries")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
   },
 });
 
@@ -247,31 +200,6 @@ export const listAllWithCounts = query({
     }
 
     return allLibraries;
-  },
-});
-
-export const listWithCounts = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    const libraries = await ctx.db
-      .query("documentLibraries")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    return Promise.all(
-      libraries.map(async (lib) => {
-        const docs = await ctx.db
-          .query("documents")
-          .withIndex("by_folder", (q) => q.eq("libraryId", lib._id))
-          .collect();
-        return { ...lib, documentCount: docs.length };
-      }),
-    );
   },
 });
 
@@ -322,16 +250,7 @@ export const updateLibrary = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { libraryId, name }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
+    const { library } = await requireLibraryManagement(ctx, libraryId);
 
     // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
@@ -359,16 +278,7 @@ export const updateLibrary = mutation({
 export const removeLibrary = mutation({
   args: { libraryId: v.id("documentLibraries") },
   handler: async (ctx, { libraryId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
+    await requireLibraryManagement(ctx, libraryId);
 
     // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
@@ -397,196 +307,6 @@ export const removeLibrary = mutation({
   },
 });
 
-// List all folders in a library (flat list)
-export const listFoldersByLibrary = query({
-  args: { libraryId: v.id("documentLibraries") },
-  handler: async (ctx, { libraryId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    const folders = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
-      .collect();
-
-    return folders.sort((a, b) => a.order - b.order);
-  },
-});
-
-// List folders by parent (for tree navigation)
-export const listByParent = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    parentId: v.optional(v.id("documentFolders")),
-  },
-  handler: async (ctx, { libraryId, parentId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    const folders = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) =>
-        q.eq("libraryId", libraryId).eq("parentId", parentId),
-      )
-      .collect();
-
-    return folders.sort((a, b) => a.order - b.order);
-  },
-});
-
-// Get a single folder
-export const getFolder = query({
-  args: { folderId: v.id("documentFolders") },
-  handler: async (ctx, { folderId }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) return null;
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) return null;
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return null;
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
-
-    return folder;
-  },
-});
-
-// Get folder path (breadcrumbs)
-export const getPath = query({
-  args: { folderId: v.id("documentFolders") },
-  handler: async (ctx, { folderId }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) return [];
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    // Build path from folder to root (with cycle detection)
-    const path: Array<{ _id: string; name: string }> = [];
-    const visited = new Set<string>();
-    let current: typeof folder | null = folder;
-
-    while (current) {
-      if (visited.has(current._id)) break; // Circular reference detected
-      visited.add(current._id);
-      path.unshift({ _id: current._id, name: current.name });
-      if (current.parentId) {
-        current = await ctx.db.get(current.parentId);
-      } else {
-        break;
-      }
-    }
-
-    return path;
-  },
-});
-
-// List folders for public viewing
-export const listFoldersByLibraryPublic = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { libraryId, sessionTokens }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const folders = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
-      .collect();
-
-    return folders.sort((a, b) => a.order - b.order);
-  },
-});
-
-// List folders by parent for public viewing
-export const listByParentPublic = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    parentId: v.optional(v.id("documentFolders")),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { libraryId, parentId, sessionTokens }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const folders = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) =>
-        q.eq("libraryId", libraryId).eq("parentId", parentId),
-      )
-      .collect();
-
-    return folders.sort((a, b) => a.order - b.order);
-  },
-});
-
-// Get folder path for public viewing
-export const getPathPublic = query({
-  args: {
-    folderId: v.id("documentFolders"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { folderId, sessionTokens }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) return [];
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    // Build path from folder to root (with cycle detection)
-    const path: Array<{ _id: string; name: string }> = [];
-    const visited = new Set<string>();
-    let current: typeof folder | null = folder;
-
-    while (current) {
-      if (visited.has(current._id)) break; // Circular reference detected
-      visited.add(current._id);
-      path.unshift({ _id: current._id, name: current.name });
-      if (current.parentId) {
-        current = await ctx.db.get(current.parentId);
-      } else {
-        break;
-      }
-    }
-
-    return path;
-  },
-});
-
 // Create a new folder
 export const createFolder = mutation({
   args: {
@@ -595,17 +315,7 @@ export const createFolder = mutation({
     name: v.string(),
   },
   handler: async (ctx, { libraryId, parentId, name }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    const { auth } = await requireOrganizationPermission(
-      ctx,
-      site.organizationId,
-      { resource: "library", action: "manage" },
-    );
+    const { auth } = await requireLibraryManagement(ctx, libraryId);
 
     // Verify parent folder exists if specified
     if (parentId) {
@@ -656,19 +366,7 @@ export const updateFolder = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { folderId, name }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) throw new Error("Folder not found");
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
+    const { folder } = await requireFolderManagement(ctx, folderId);
 
     // Check for duplicate name if renaming
     if (
@@ -710,19 +408,7 @@ export const moveFolder = mutation({
     newOrder: v.optional(v.number()),
   },
   handler: async (ctx, { folderId, newParentId, newOrder }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) throw new Error("Folder not found");
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
+    const { folder } = await requireFolderManagement(ctx, folderId);
 
     // Verify new parent exists if specified
     if (newParentId) {
@@ -804,19 +490,7 @@ async function deleteFolderRecursively(
 export const removeFolder = mutation({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {
-    const folder = await ctx.db.get(folderId);
-    if (!folder) throw new Error("Folder not found");
-
-    const library = await ctx.db.get(folder.libraryId);
-    if (!library) throw new Error("Library not found");
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
+    const { folder } = await requireFolderManagement(ctx, folderId);
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 

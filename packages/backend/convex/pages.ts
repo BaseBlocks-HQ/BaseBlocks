@@ -1,3 +1,4 @@
+import { SLUG_PATTERN } from "@baseblocks/domain";
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -11,10 +12,7 @@ import {
   createDefaultPageStructure,
   deletePageStructure,
 } from "./pageStructure";
-import {
-  canViewerAccessPublishedPageById,
-  getAccessiblePublishedPages,
-} from "./sharing";
+import { canViewerAccessPublishedPageById } from "./sharing";
 
 /**
  * A page node in the tree structure.
@@ -40,6 +38,18 @@ type ProjectedPage = {
   order: number;
   parentId?: string;
 };
+
+const pageSlugPattern = new RegExp(`^${SLUG_PATTERN}$`);
+
+function normalizePageSlug(slug: string): string {
+  const normalized = slug.trim().toLowerCase();
+  if (!pageSlugPattern.test(normalized)) {
+    throw new Error(
+      "Page URLs may only contain lowercase letters, numbers, and hyphens",
+    );
+  }
+  return normalized;
+}
 
 /**
  * Build a tree structure from a flat array of pages.
@@ -139,211 +149,6 @@ export const get = query({
   },
 });
 
-// Get page by slug (authenticated or published)
-export const getBySlug = query({
-  args: {
-    siteId: v.id("sites"),
-    slug: v.string(),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, slug, sessionTokens }) => {
-    const page = await ctx.db
-      .query("pages")
-      .withIndex("by_slug", (q) => q.eq("siteId", siteId).eq("slug", slug))
-      .first();
-
-    if (!page) return null;
-
-    // Verify access
-    const site = await ctx.db.get(siteId);
-    if (!site) return null;
-
-    if (await isOrganizationMember(ctx, site.organizationId)) return page;
-
-    if (await canViewerAccessPublishedPageById(ctx, page._id, sessionTokens)) {
-      return page;
-    }
-
-    return null;
-  },
-});
-
-// Get child pages (requires membership or published site)
-export const getChildren = query({
-  args: {
-    siteId: v.id("sites"),
-    parentId: v.optional(v.id("pages")),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, parentId, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    // Check access: team member or published site
-    const isMember = await isOrganizationMember(ctx, site.organizationId);
-
-    if (!isMember) {
-      const accessiblePages = await getAccessiblePublishedPages(
-        ctx,
-        site,
-        sessionTokens,
-      );
-
-      return accessiblePages
-        .filter((page) => page.parentId === parentId)
-        .sort((a, b) => a.order - b.order);
-    }
-
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_parent", (q) =>
-        q.eq("siteId", siteId).eq("parentId", parentId),
-      )
-      .collect();
-
-    pages.sort((a, b) => a.order - b.order);
-    return pages;
-  },
-});
-
-// Build page tree (for editor navigation — uses draft fields)
-export const getTree = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    return buildPageTree(
-      allPages.map((page) => ({
-        _id: page._id,
-        siteId: page.siteId,
-        title: page.title,
-        slug: page.slug,
-        icon: page.icon,
-        order: page.order,
-        parentId: page.parentId,
-      })),
-    );
-  },
-});
-
-// Get page by nested path (e.g., ["docs", "api", "endpoints"])
-// Authenticated — requires team membership
-export const getByPath = query({
-  args: {
-    siteId: v.id("sites"),
-    path: v.array(v.string()),
-  },
-  handler: async (ctx, { siteId, path }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return null;
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
-
-    // Empty path defaults to "home"
-    if (path.length === 0) {
-      return await ctx.db
-        .query("pages")
-        .withIndex("by_slug", (q) => q.eq("siteId", siteId).eq("slug", "home"))
-        .first();
-    }
-
-    // Walk the path from root to leaf
-    let parentId: Id<"pages"> | undefined;
-
-    for (let i = 0; i < path.length; i++) {
-      const slug = path[i]!;
-      const isLast = i === path.length - 1;
-
-      const page = await ctx.db
-        .query("pages")
-        .withIndex("by_parent", (q) =>
-          q.eq("siteId", siteId).eq("parentId", parentId),
-        )
-        .filter((q) => q.eq(q.field("slug"), slug))
-        .first();
-
-      if (!page) {
-        return null;
-      }
-
-      if (isLast) {
-        return page;
-      }
-
-      parentId = page._id;
-    }
-
-    return null;
-  },
-});
-
-// Get full URL path for a page (e.g., "docs/api/endpoints")
-// Authenticated — requires team membership (exposes draft slugs)
-export const getFullPath = query({
-  args: { pageId: v.id("pages") },
-  handler: async (ctx, { pageId }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) return null;
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) return null;
-
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
-
-    const slugs: string[] = [];
-    let currentPage: typeof page | null = page;
-
-    while (currentPage) {
-      slugs.unshift(currentPage.slug);
-      if (!currentPage.parentId) break;
-      currentPage = await ctx.db.get(currentPage.parentId);
-    }
-
-    return slugs.join("/");
-  },
-});
-
-// List deployed page paths for a published site (for sitemap generation)
-// No auth required — only returns public-safe data for published sites
-export const listDeployedPaths = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site?.isPublished) return [];
-
-    const publishedPages = await getAccessiblePublishedPages(ctx, site);
-
-    const slugMap = new Map(publishedPages.map((p) => [p._id, p.slug]));
-    const parentMap = new Map(publishedPages.map((p) => [p._id, p.parentId]));
-
-    // Resolve full path for each page
-    function getFullPath(pageId: Id<"pages">): string {
-      const slugs: string[] = [];
-      let currentId: Id<"pages"> | undefined = pageId;
-      while (currentId) {
-        const slug = slugMap.get(currentId);
-        if (!slug) break;
-        slugs.unshift(slug);
-        currentId = parentMap.get(currentId) as Id<"pages"> | undefined;
-      }
-      return slugs.join("/");
-    }
-
-    return publishedPages.map((page) => ({
-      path: getFullPath(page._id),
-      updatedAt: page.updatedAt,
-    }));
-  },
-});
-
 // Create a new page
 export const create = mutation({
   args: {
@@ -354,6 +159,7 @@ export const create = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
+    const normalizedSlug = normalizePageSlug(slug);
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
@@ -366,12 +172,14 @@ export const create = mutation({
     // Check slug uniqueness
     const existing = await ctx.db
       .query("pages")
-      .withIndex("by_slug", (q) => q.eq("siteId", siteId).eq("slug", slug))
+      .withIndex("by_slug", (q) =>
+        q.eq("siteId", siteId).eq("slug", normalizedSlug),
+      )
       .first();
 
     if (existing) {
       throw new Error(
-        `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`,
+        `A page with the URL "${normalizedSlug}" already exists. Please choose a different title or URL slug.`,
       );
     }
 
@@ -389,7 +197,7 @@ export const create = mutation({
     const pageId = await ctx.db.insert("pages", {
       siteId,
       title,
-      slug: slug.toLowerCase(),
+      slug: normalizedSlug,
       parentId,
       icon,
       order: maxOrder + 1,
@@ -413,6 +221,8 @@ export const update = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, { pageId, title, slug, icon }) => {
+    const normalizedSlug =
+      slug === undefined ? undefined : normalizePageSlug(slug);
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -425,24 +235,24 @@ export const update = mutation({
     });
 
     // Check slug uniqueness if changing
-    if (slug && slug !== page.slug) {
+    if (normalizedSlug && normalizedSlug !== page.slug) {
       const existing = await ctx.db
         .query("pages")
         .withIndex("by_slug", (q) =>
-          q.eq("siteId", page.siteId).eq("slug", slug),
+          q.eq("siteId", page.siteId).eq("slug", normalizedSlug),
         )
         .first();
 
       if (existing) {
         throw new Error(
-          `A page with the URL "${slug}" already exists. Please choose a different title or URL slug.`,
+          `A page with the URL "${normalizedSlug}" already exists. Please choose a different title or URL slug.`,
         );
       }
     }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (title !== undefined) updates.title = title;
-    if (slug !== undefined) updates.slug = slug.toLowerCase();
+    if (normalizedSlug !== undefined) updates.slug = normalizedSlug;
     if (icon !== undefined) updates.icon = icon;
 
     await ctx.db.patch(pageId, updates);
@@ -453,34 +263,6 @@ export const update = mutation({
     }
 
     return pageId;
-  },
-});
-
-// Reorder pages within a parent - takes ordered array of page IDs
-export const reorder = mutation({
-  args: {
-    siteId: v.id("sites"),
-    parentId: v.optional(v.id("pages")),
-    pageIds: v.array(v.id("pages")),
-  },
-  handler: async (ctx, { siteId, pageIds }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-
-    const now = Date.now();
-    for (let i = 0; i < pageIds.length; i++) {
-      const pageId = pageIds[i];
-      if (pageId) {
-        await ctx.db.patch(pageId, { order: i, updatedAt: now });
-      }
-    }
-
-    return pageIds;
   },
 });
 
@@ -506,53 +288,6 @@ async function deletePageRecursively(
 
   await ctx.db.delete(pageId);
 }
-
-// Move page to new parent and/or position
-export const move = mutation({
-  args: {
-    pageId: v.id("pages"),
-    newParentId: v.optional(v.id("pages")),
-    newOrder: v.number(),
-  },
-  handler: async (ctx, { pageId, newParentId, newOrder }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-
-    // Verify new parent exists if specified
-    if (newParentId) {
-      const parent = await ctx.db.get(newParentId);
-      if (!parent || parent.siteId !== page.siteId) {
-        throw new Error("Target page not found");
-      }
-
-      // Prevent moving page into itself or its descendants
-      let checkId: Id<"pages"> | undefined = newParentId;
-      while (checkId) {
-        if (checkId === pageId) {
-          throw new Error("Cannot move page into itself or its descendants");
-        }
-        const checkPage: Doc<"pages"> | null = await ctx.db.get(checkId);
-        checkId = checkPage?.parentId;
-      }
-    }
-
-    await ctx.db.patch(pageId, {
-      parentId: newParentId,
-      order: newOrder,
-      updatedAt: Date.now(),
-    });
-
-    return pageId;
-  },
-});
 
 // Delete page
 export const remove = mutation({

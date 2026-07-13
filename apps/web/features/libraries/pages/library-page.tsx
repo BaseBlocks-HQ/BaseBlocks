@@ -4,6 +4,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { getTeamLibrariesPath } from "@/features/dashboard/routes";
 import { LibraryExplorer } from "@/features/libraries/components/library-explorer";
+import { ReadOnlyLibraryExplorer } from "@/features/openeditor/renderers/library";
 import type { LibraryId } from "@/features/libraries/tree-input";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
@@ -254,12 +255,19 @@ export function LibraryPage({ libraryId }: { libraryId: LibraryId }) {
           ) : null}
         </header>
 
-        <LibraryExplorer
-          access={capabilities.canManageLibraries ? "manage" : "read"}
-          allowDownloads
-          className="flex-1"
-          explorer={explorer}
-        />
+        {capabilities.canManageLibraries ? (
+          <LibraryExplorer
+            allowDownloads
+            className="flex-1"
+            explorer={explorer}
+          />
+        ) : (
+          <ReadOnlyLibraryExplorer
+            allowDownloads
+            className="my-0 h-full flex-1 rounded-lg border bg-background"
+            explorer={explorer}
+          />
+        )}
       </div>
 
       {capabilities.canManageLibraries ? (

@@ -11,14 +11,10 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { canAccessPublishedSite } from "./sharing";
-import { resolveSiteContext } from "./sites";
+import { resolveSiteContext } from "./model/sites";
 
 export function buildAssetUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}?kind=asset`;
-}
-
-export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
-  return `/api/files/${documentId}`;
 }
 
 export const canUploadToSite = query({

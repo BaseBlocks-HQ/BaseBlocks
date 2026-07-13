@@ -19,8 +19,6 @@ import {
   getTeamLibrariesPath,
   getTeamMembersPath,
 } from "@/features/dashboard/routes";
-import { AccountSettings } from "@/features/dashboard/account/account-settings";
-import { InvitationInbox } from "@/features/dashboard/invitations/invitation-inbox";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import {
@@ -60,7 +58,19 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
 import { useState } from "react";
+
+const AccountSettings = dynamic(() =>
+  import("@/features/dashboard/account/account-settings").then(
+    (module) => module.AccountSettings,
+  ),
+);
+const InvitationInbox = dynamic(() =>
+  import("@/features/dashboard/invitations/invitation-inbox").then(
+    (module) => module.InvitationInbox,
+  ),
+);
 
 const SIDEBAR_ICON_STROKE = 1.75;
 
@@ -456,12 +466,14 @@ export function DashboardSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <AccountSettings
-        open={accountSettingsOpen}
-        onOpenChange={setAccountSettingsOpen}
-        showTrigger={false}
-        user={user}
-      />
+      {accountSettingsOpen ? (
+        <AccountSettings
+          open
+          onOpenChange={setAccountSettingsOpen}
+          showTrigger={false}
+          user={user}
+        />
+      ) : null}
     </Sidebar>
   );
 }

@@ -43,7 +43,7 @@ Published sites currently read the latest saved page content. Historical deploym
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or newer
+- [Node.js](https://nodejs.org/) 20.9 or newer
 - [Bun](https://bun.sh/) 1.3 or newer
 - A [Convex](https://convex.dev/) account
 - An S3-compatible bucket for file uploads
@@ -84,7 +84,7 @@ For local social authentication, configure these provider callbacks:
 
 Google also requires `http://localhost:3001` as an authorized JavaScript origin.
 
-Production subdomains use Better Auth shared cookies on `.baseblocks.dev`, configured in `packages/backend/convex/authSetup.ts`. Authentication on arbitrary custom domains requires a separate cookie and session design.
+Production subdomains use Better Auth shared cookies on `.baseblocks.dev`, configured in `packages/backend/convex/auth.ts`. Authentication on arbitrary custom domains requires a separate cookie and session design.
 
 Some Microsoft Entra accounts do not include an `email` claim by default. If a callback returns `?error=email_not_found`, add the `email` optional claim for ID tokens in the Microsoft application registration.
 
@@ -129,9 +129,11 @@ bun run build        # Build the complete workspace
 bun run lint         # Lint the repository with Biome
 bun run format       # Format the repository with Biome
 bun run check-types  # Run workspace TypeScript checks
+bun run test         # Run the repository test suite
+bun run clean        # Remove generated build and task caches
 ```
 
-Run the editor conversion tests directly with:
+Run a focused test directory with:
 
 ```bash
 bun test apps/web/features/openeditor

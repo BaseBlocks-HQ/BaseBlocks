@@ -6,23 +6,8 @@ import {
   type AuthUser,
   authPage,
   getAuthOrganizationById,
-  getAuthOrganizationBySlug,
 } from "./authComponent/model";
 import { getAuthContextOrNull, requireOrganizationMember } from "./permissions";
-
-export const getBySlug = query({
-  args: { slug: v.string() },
-  handler: async (ctx, { slug }) => {
-    const organization = await getAuthOrganizationBySlug(ctx, slug);
-    if (!organization) return null;
-    return {
-      _id: organization._id,
-      name: organization.name,
-      slug: organization.slug ?? slug,
-      logoUrl: organization.logo ?? undefined,
-    };
-  },
-});
 
 export const getViewerState = query({
   args: { teamSlug: v.optional(v.string()) },

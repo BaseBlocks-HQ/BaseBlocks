@@ -1,7 +1,6 @@
 import {
   encodePath,
   getRootDomain,
-  normalizeHostname,
   normalizePathSegments,
   parseRequestHost,
 } from "@/lib/routing/hosts";
@@ -16,25 +15,6 @@ export function getSiteUrl(
   pagePath?: string | string[],
 ): string {
   return `https://${organizationSlug}.${getRootDomain()}${sitePath(siteSlug, pagePath)}`;
-}
-
-function getCustomDomainUrl(
-  hostname: string,
-  pagePath?: string | string[],
-): string {
-  const path = encodePath(normalizePathSegments(pagePath));
-  return `https://${normalizeHostname(hostname)}${path ? `/${path}` : ""}`;
-}
-
-export function getCanonicalUrl(input: {
-  organizationSlug: string;
-  siteSlug: string;
-  pagePath?: string | string[];
-  customDomain?: string;
-}): string {
-  return input.customDomain
-    ? getCustomDomainUrl(input.customDomain, input.pagePath)
-    : getSiteUrl(input.organizationSlug, input.siteSlug, input.pagePath);
 }
 
 export function getSiteOpenUrl(

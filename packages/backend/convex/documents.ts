@@ -12,15 +12,11 @@ import {
   requireOrganizationMember,
 } from "./permissions";
 import { canAccessPublishedSite } from "./sharing";
-import { getActiveLibraryIds, resolveSiteContext } from "./sites";
+import { getActiveLibraryIds, resolveSiteContext } from "./model/sites";
 import {
   collectOpenEditorAttributeValues,
   parseOpenEditorDocument,
 } from "./openEditorDocuments";
-
-export function buildAssetUrl(fileId: Id<"files">): string {
-  return `/api/files/${fileId}?kind=asset`;
-}
 
 export function buildDocumentDownloadUrl(documentId: Id<"documents">): string {
   return `/api/files/${documentId}`;
@@ -33,23 +29,6 @@ type SearchMetadata = {
   size?: number;
   libraryId?: string;
 };
-
-export function buildDocumentSearchMetadata(args: {
-  documentId: string;
-  fileId?: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  libraryId?: string;
-}): SearchMetadata {
-  return {
-    fileId: args.fileId as Id<"files"> | undefined,
-    filename: args.filename,
-    fileContentType: args.contentType,
-    size: args.size,
-    libraryId: args.libraryId,
-  };
-}
 
 export function normalizeDocumentSearchMetadata(args: {
   sourceId: string;
@@ -105,42 +84,6 @@ function mapDocument(doc: Doc<"documents">) {
   };
 }
 
-async function listDocumentsForSite(
-  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  siteId: Id<"sites">,
-) {
-  const documents = await ctx.db
-    .query("documents")
-    .withIndex("by_site", (q) => q.eq("siteId", siteId))
-    .collect();
-  return documents.map(mapDocument);
-}
-
-async function listDocumentsForLibrary(
-  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  libraryId: Id<"documentLibraries">,
-) {
-  const documents = await ctx.db
-    .query("documents")
-    .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
-    .collect();
-  return documents.map(mapDocument);
-}
-
-async function listDocumentsForFolder(
-  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  libraryId: Id<"documentLibraries">,
-  folderId: Id<"documentFolders"> | undefined,
-) {
-  const documents = await ctx.db
-    .query("documents")
-    .withIndex("by_folder", (q) =>
-      q.eq("libraryId", libraryId).eq("folderId", folderId),
-    )
-    .collect();
-  return documents.map(mapDocument);
-}
-
 async function isPublishedFileBlockDocument(
   ctx: Pick<GenericQueryCtx<DataModel>, "db">,
   document: Doc<"documents">,
@@ -163,74 +106,6 @@ async function isPublishedFileBlockDocument(
   return false;
 }
 
-/**
- * Format search result.
- */
-function formatSearchResult(document: Doc<"documents">, matchType: "filename") {
-  return {
-    _id: document._id,
-    filename: document.filename,
-    contentType: document.contentType,
-    size: document.size,
-    downloadUrl: buildDocumentDownloadUrl(document._id),
-    libraryId: document.libraryId,
-    matchType,
-    snippet: null,
-    snippetMatchStart: null,
-    snippetMatchEnd: null,
-  };
-}
-
-/**
- * Core search logic shared between authenticated and public queries
- * @param activeLibraryIds - If provided, only return documents from these libraries (for public search filtering)
- */
-async function performSearch(
-  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  siteId: Id<"sites">,
-  searchTerm: string,
-  limit: number,
-  activeLibraryIds?: string[],
-) {
-  const filenameResults = await ctx.db
-    .query("documents")
-    .withSearchIndex("search_filename", (q) =>
-      q.search("filename", searchTerm).eq("siteId", siteId),
-    )
-    .take(limit * 2);
-
-  const seen = new Set<string>();
-  const combined: ReturnType<typeof formatSearchResult>[] = [];
-
-  const getVisibleDocument = (doc: Doc<"documents">) => {
-    if (!activeLibraryIds) return doc;
-    if (!doc.libraryId) return null;
-    return activeLibraryIds.includes(doc.libraryId) ? doc : null;
-  };
-
-  for (const doc of filenameResults) {
-    if (!seen.has(doc._id)) {
-      const visibleDocument = getVisibleDocument(doc);
-      if (!visibleDocument) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(visibleDocument, "filename"));
-    }
-  }
-
-  return combined.slice(0, limit);
-}
-
-export const list = query({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    await requireOrganizationMember(ctx, site.organizationId);
-    return await listDocumentsForSite(ctx, siteId);
-  },
-});
-
 export const get = query({
   args: { documentId: v.string() },
   handler: async (ctx, { documentId }) => {
@@ -244,191 +119,6 @@ export const get = query({
 
     await requireOrganizationMember(ctx, site.organizationId);
     return mapDocument(doc);
-  },
-});
-
-export const search = query({
-  args: {
-    siteId: v.id("sites"),
-    query: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { siteId, query: searchQuery, limit = 20 }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) return [];
-
-    await requireOrganizationMember(ctx, site.organizationId);
-
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return [];
-
-    return performSearch(ctx, siteId, trimmed, limit);
-  },
-});
-
-export const searchPublic = query({
-  args: {
-    siteId: v.id("sites"),
-    query: v.string(),
-    limit: v.optional(v.number()),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (
-    ctx,
-    { siteId, query: searchQuery, limit = 20, sessionTokens },
-  ) => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return [];
-
-    const site = await ctx.db.get(siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
-
-    // Use shared search logic with active library filter
-    return performSearch(
-      ctx,
-      siteId,
-      trimmed,
-      limit,
-      Array.from(activeLibraryIds),
-    );
-  },
-});
-
-export const listPublic = query({
-  args: {
-    siteId: v.id("sites"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { siteId, sessionTokens }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const activeLibraryIds = await getActiveLibraryIds(ctx, siteId);
-    const allDocs = await listDocumentsForSite(ctx, siteId);
-
-    return allDocs
-      .filter((doc) => doc.libraryId && activeLibraryIds.has(doc.libraryId))
-      .map((doc) => ({
-        ...doc,
-        downloadUrl: doc.downloadUrl,
-      }));
-  },
-});
-
-export const listByLibrary = query({
-  args: { libraryId: v.id("documentLibraries") },
-  handler: async (ctx, { libraryId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    await requireOrganizationMember(ctx, site.organizationId);
-    return await listDocumentsForLibrary(ctx, libraryId);
-  },
-});
-
-export const listByFolder = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    folderId: v.optional(v.id("documentFolders")),
-  },
-  handler: async (ctx, { libraryId, folderId }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    await requireOrganizationMember(ctx, site.organizationId);
-    return await listDocumentsForFolder(ctx, libraryId, folderId);
-  },
-});
-
-export const listByLibraryPublic = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { libraryId, sessionTokens }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
-    if (!activeLibraryIds.has(libraryId)) return [];
-    return await listDocumentsForLibrary(ctx, libraryId);
-  },
-});
-
-export const listByFolderPublic = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    folderId: v.optional(v.id("documentFolders")),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { libraryId, folderId, sessionTokens }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
-      return [];
-    }
-
-    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
-    if (!activeLibraryIds.has(libraryId)) return [];
-    return await listDocumentsForFolder(ctx, libraryId, folderId);
-  },
-});
-
-export const searchByLibrary = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    query: v.string(),
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, { libraryId, query: searchQuery, limit = 20 }) => {
-    const library = await ctx.db.get(libraryId);
-    if (!library) return [];
-
-    const site = await ctx.db.get(library.siteId);
-    if (!site) return [];
-
-    await requireOrganizationMember(ctx, site.organizationId);
-
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return [];
-
-    const filenameResults = await ctx.db
-      .query("documents")
-      .withSearchIndex("search_filename", (q) =>
-        q.search("filename", trimmed).eq("siteId", site._id),
-      )
-      .take(limit * 2);
-
-    const seen = new Set<string>();
-    const combined: ReturnType<typeof formatSearchResult>[] = [];
-
-    for (const doc of filenameResults) {
-      if (seen.has(doc._id)) continue;
-      if (doc.libraryId !== libraryId) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "filename"));
-    }
-
-    return combined.slice(0, limit);
   },
 });
 

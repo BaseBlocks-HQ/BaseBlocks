@@ -18,6 +18,13 @@ import { useDropzone } from "react-dropzone";
 
 const defaultMaxSize = 50 * 1024 * 1024;
 
+export function formatFileSize(bytes?: number): string {
+  if (bytes === undefined) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function DropZone({
   accept,
   children,
@@ -152,36 +159,4 @@ export function FileIcon({
   }
 
   return <Icon className={cn("h-4 w-4", className)} />;
-}
-
-export function getFileTypeColor(contentType: string): string {
-  if (contentType.includes("pdf")) return "text-red-500";
-  if (contentType.includes("word") || contentType.includes("document")) {
-    return "text-blue-500";
-  }
-  if (
-    contentType.includes("sheet") ||
-    contentType.includes("excel") ||
-    contentType.includes("csv")
-  ) {
-    return "text-green-500";
-  }
-  if (contentType.startsWith("image/")) return "text-purple-500";
-  if (contentType.startsWith("video/")) return "text-pink-500";
-  if (contentType.startsWith("audio/")) return "text-orange-500";
-  if (
-    contentType.includes("zip") ||
-    contentType.includes("archive") ||
-    contentType.includes("rar")
-  ) {
-    return "text-yellow-600";
-  }
-  if (
-    contentType.includes("json") ||
-    contentType.includes("javascript") ||
-    contentType.includes("html")
-  ) {
-    return "text-cyan-500";
-  }
-  return "text-muted-foreground";
 }

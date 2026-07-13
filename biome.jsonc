@@ -137,7 +137,7 @@
         }
       }
     },
-    // Architectural boundaries: lib/ is lower-level than modules/
+    // Architectural boundaries: lib/ is lower-level than features/
     {
       "includes": ["apps/web/lib/**"],
       "linter": {
@@ -146,22 +146,19 @@
             "noRestrictedImports": {
               "level": "error",
               "options": {
-                "paths": {
-                  "@/modules/dashboard": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/editor": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/elements": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/public-site": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/documents": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/media-viewer": "lib/ must not import from modules/ — lib is a lower layer",
-                  "@/modules/team": "lib/ must not import from modules/ — lib is a lower layer"
-                }
+                "patterns": [
+                  {
+                    "group": ["@/features", "@/features/*"],
+                    "message": "lib/ must not import from features/ — lib is a lower layer"
+                  }
+                ]
               }
             }
           }
         }
       }
     },
-    // Architectural boundaries: shared components/ must not import from modules/
+    // Architectural boundaries: shared components/ must not import from features/
     {
       "includes": ["apps/web/components/**"],
       "linter": {
@@ -170,15 +167,12 @@
             "noRestrictedImports": {
               "level": "error",
               "options": {
-                "paths": {
-                  "@/modules/dashboard": "shared components/ must not import from modules/",
-                  "@/modules/editor": "shared components/ must not import from modules/",
-                  "@/modules/elements": "shared components/ must not import from modules/",
-                  "@/modules/public-site": "shared components/ must not import from modules/",
-                  "@/modules/documents": "shared components/ must not import from modules/",
-                  "@/modules/media-viewer": "shared components/ must not import from modules/",
-                  "@/modules/team": "shared components/ must not import from modules/"
-                }
+                "patterns": [
+                  {
+                    "group": ["@/features", "@/features/*"],
+                    "message": "shared components/ must not import from features/"
+                  }
+                ]
               }
             }
           }

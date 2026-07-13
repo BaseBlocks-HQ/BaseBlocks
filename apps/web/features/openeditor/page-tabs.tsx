@@ -13,6 +13,7 @@ import {
   OpenEditorViewer,
   type OpenEditorPageRuntime,
   type OpenEditorReactExtension,
+  type OpenEditorViewerRenderer,
   useOpenEditorController,
 } from "@openeditor/react";
 import {
@@ -167,14 +168,16 @@ function ActiveTabEditor({
 export function OpenEditorTabbedPage({
   document,
   editable,
-  extensions,
+  extensions = [],
   pageRuntime,
+  renderers,
   onChange,
 }: {
   document: OpenEditorDocument;
   editable: boolean;
-  extensions: readonly OpenEditorReactExtension[];
+  extensions?: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
+  renderers?: Partial<Record<string, OpenEditorViewerRenderer>>;
   onChange?: (document: OpenEditorDocument) => void;
 }) {
   const [currentDocument, setCurrentDocument] = useState(document);
@@ -242,6 +245,7 @@ export function OpenEditorTabbedPage({
           document={active.document}
           extensions={extensions}
           pageRuntime={pageRuntime}
+          renderers={renderers}
         />
       )}
     </>

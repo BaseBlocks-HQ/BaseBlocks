@@ -4,7 +4,7 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 18
+- [Node.js](https://nodejs.org/) >= 20.9
 - [Bun](https://bun.sh/) >= 1.3
 - A [Convex](https://convex.dev/) account (free tier works)
 
@@ -53,7 +53,7 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
    Production note: published subdomains on `*.baseblocks.dev` rely on Better
    Auth shared cookies on `.baseblocks.dev` so authenticated audience-restricted
    pages work on the real published site. That configuration lives in
-   `packages/backend/convex/authSetup.ts` via
+   `packages/backend/convex/auth.ts` via
    `advanced.crossSubDomainCookies`. This applies to BaseBlocks subdomains only,
    not arbitrary custom domains.
 
@@ -79,19 +79,18 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 baseblocks/
 ├── apps/
 │   └── web/                   # Next.js frontend
-│       ├── app/               # Route definitions (thin layer)
-│       ├── modules/           # Domain modules (self-contained features)
-│       ├── components/        # Shared UI only (dialogs, skeletons)
-│       ├── hooks/             # App-level hooks (direct imports, no barrels)
-│       └── lib/               # Utilities by concern (auth/, convex/, storage/)
+│       ├── app/               # Route definitions and API handlers
+│       ├── features/          # Product capabilities and their UI
+│       ├── components/        # Cross-feature UI and runtime primitives
+│       ├── i18n/              # Locale routing and message loading
+│       └── lib/               # Lower-level infrastructure adapters
 ├── packages/
 │   ├── backend/               # Convex backend (schema, queries, mutations)
-│   ├── editor/                # Page editor engine (drag-and-drop, layouts, undo)
-│   ├── types/                 # Shared type definitions (zero dependencies)
+│   ├── domain/                # Portable domain models and validators
+│   ├── i18n/                  # Shared English and French messages
 │   └── ui/                    # UI component library (shadcn/ui + Radix)
 ├── tooling/
-│   ├── tsconfig/              # Shared TypeScript configurations
-│   └── tailwind/              # Shared Tailwind CSS and PostCSS config
+│   └── tsconfig/              # Shared TypeScript configurations
 ├── turbo.json                 # Turborepo task config
 ├── biome.jsonc                # Linting, formatting, and architectural boundaries
 └── package.json               # Workspace root
@@ -99,20 +98,12 @@ baseblocks/
 
 ### Frontend Organization
 
-The `apps/web/` app follows a **module-based** architecture:
+The `apps/web/` app follows a feature-based architecture:
 
-- **`modules/`** — Domain modules, each self-contained with its own components, hooks, and dialogs:
-  - `dashboard/` — Team dashboard, site cards, library management
-  - `documents/` — Document library (upload, folders, file viewer)
-  - `editor/` — Site editor shell (bridges to `@baseblocks/editor`)
-  - `elements/` — Block, layout, and section system (registry, editors, renderers, previews)
-  - `media-viewer/` — File viewer (PDF, image, video, audio, text)
-  - `navigation/` — Page tree and sortable navigation menus
-  - `public-site/` — Published site rendering, access control
-  - `team/` — Team management, invitations
-- **`components/`** — Truly shared, non-feature UI only (dialogs, skeletons, site-logo)
-- **`hooks/`** — App-level hooks only. Import directly from source files, not through barrels.
-- **`lib/`** — Utilities organized by concern (`auth/`, `convex/`, `storage/`, `url.ts`, `tree.ts`)
+- **`features/`** — Product capabilities such as dashboard, editor, libraries, marketing, authentication, and published sites.
+- **`components/`** — Cross-feature primitives only, including the file viewer, trees, and shared site runtime.
+- **`lib/`** — Framework and infrastructure adapters organized by concern (`auth/`, `convex/`, `files/`, `routing/`, and `vercel/`).
+- **`app/`** — Thin Next.js route adapters and API handlers.
 
 ### Architectural Boundaries
 
@@ -120,8 +111,8 @@ Biome enforces import boundaries at lint time:
 
 - `packages/domain` must remain standalone (no backend, UI, or React imports)
 - `packages/ui` must not import from backend or editor
-- `lib/` must not import from `modules/` (lib is a lower layer)
-- `components/` must not import from `modules/` (shared components are a lower layer)
+- `lib/` must not import from `features/` (lib is a lower layer)
+- `components/` must not import from `features/` (shared components are a lower layer)
 
 ## Development Workflow
 
@@ -138,6 +129,7 @@ Biome enforces import boundaries at lint time:
    ```bash
    bun run lint
    bun run check-types
+   bun run test
    ```
 
 4. **Push and open a PR** against `main`.
@@ -154,7 +146,7 @@ Biome enforces import boundaries at lint time:
 
 - Keep PRs focused — one feature or fix per PR.
 - Write a clear description of what changed and why.
-- Make sure CI passes (lint + typecheck + build).
+- Make sure CI passes (lint + typecheck + test + build).
 - Screenshots or recordings for UI changes are appreciated.
 
 ## Architecture Decisions

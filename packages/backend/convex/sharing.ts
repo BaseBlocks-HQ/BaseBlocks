@@ -2,11 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
-import {
-  isOrganizationMember,
-  getAuthContextOrNull,
-  requireOrganizationPermission,
-} from "./permissions";
+import { requireOrganizationPermission } from "./permissions";
 
 /**
  * Cryptographically secure random generation for access codes and session tokens.
@@ -217,90 +213,6 @@ export const validateSession = query({
     }
 
     return { valid: true };
-  },
-});
-
-// Check if current user has access to view a site (combines auth and visibility checks)
-export const checkSiteAccess = query({
-  args: {
-    siteId: v.id("sites"),
-    sessionToken: v.optional(v.string()),
-  },
-  handler: async (ctx, { siteId, sessionToken }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) {
-      return { hasAccess: false, reason: "Site not found" };
-    }
-
-    const visibility = site.visibility ?? "public";
-
-    // Public and link-only sites are accessible to everyone
-    if (visibility === "public" || visibility === "link-only") {
-      return { hasAccess: true };
-    }
-
-    // For private sites, check if user is authenticated and a member
-    if (visibility === "private") {
-      const auth = await getAuthContextOrNull(ctx);
-      if (!auth) {
-        return { hasAccess: false, reason: "Authentication required" };
-      }
-
-      const isMember = await isOrganizationMember(ctx, site.organizationId);
-      if (!isMember) {
-        return {
-          hasAccess: false,
-          reason: "Not a member of this organization",
-        };
-      }
-
-      return { hasAccess: true };
-    }
-
-    // For password-protected sites, check session token
-    if (visibility === "password") {
-      if (!sessionToken) {
-        return { hasAccess: false, reason: "Access code required" };
-      }
-
-      const now = Date.now();
-      const session = await ctx.db
-        .query("siteAccessSessions")
-        .withIndex("by_site_token", (q) =>
-          q.eq("siteId", siteId).eq("sessionToken", sessionToken),
-        )
-        .first();
-
-      if (!session) {
-        return { hasAccess: false, reason: "Invalid session" };
-      }
-
-      if (session.expiresAt < now) {
-        return { hasAccess: false, reason: "Session expired" };
-      }
-
-      return { hasAccess: true };
-    }
-
-    return { hasAccess: false, reason: "Unknown visibility setting" };
-  },
-});
-
-// Get site visibility for public check (minimal info for public)
-export const getSiteVisibility = query({
-  args: {
-    siteId: v.id("sites"),
-  },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) {
-      return null;
-    }
-
-    return {
-      visibility: site.visibility ?? "public",
-      isPublished: site.isPublished,
-    };
   },
 });
 

@@ -17,7 +17,8 @@
   "scripts": {
     "dev": "bunx convex dev",
     "deploy": "bunx convex deploy",
-    "lint": "biome check --write ."
+    "lint": "biome check --write .",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",

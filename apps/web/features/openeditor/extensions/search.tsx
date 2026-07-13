@@ -2,6 +2,11 @@
 
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  readSearch,
+  SearchViewer,
+  searchDefaults,
+} from "@/features/openeditor/renderers/search";
 import { SearchBox } from "@/features/search";
 import type { SearchContent } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
@@ -22,25 +27,6 @@ import {
 } from "@openeditor/react";
 import { Search, Settings } from "lucide-react";
 
-const defaults: Required<SearchContent> = {
-  placeholder: "Search documents…",
-  maxResults: 10,
-  showFileType: true,
-};
-
-function readSearch(value: unknown): Required<SearchContent> {
-  const candidate =
-    value && typeof value === "object" ? (value as SearchContent) : {};
-  return {
-    placeholder: candidate.placeholder || defaults.placeholder,
-    maxResults: Math.min(
-      50,
-      Math.max(1, candidate.maxResults ?? defaults.maxResults),
-    ),
-    showFileType: candidate.showFileType ?? defaults.showFileType,
-  };
-}
-
 function SearchPreview({ value }: { value: Required<SearchContent> }) {
   const { siteId } = useSiteRenderActions();
   if (!siteId) {
@@ -58,29 +44,6 @@ function SearchPreview({ value }: { value: Required<SearchContent> }) {
       siteId={siteId}
       surface="soft"
       usePublicQuery={false}
-    />
-  );
-}
-
-function SearchViewer({ value }: { value: Required<SearchContent> }) {
-  const actions = useSiteRenderActions();
-  if (!actions.siteId)
-    return (
-      <p className="my-4 rounded-lg border p-4 text-sm text-muted-foreground">
-        Search is unavailable outside a site.
-      </p>
-    );
-  return (
-    <SearchBox
-      maxResults={value.maxResults}
-      onOpenPageResult={(pageId, searchTerm) =>
-        actions.openPage?.(pageId, { searchTerm })
-      }
-      placeholder={value.placeholder}
-      showFileType={value.showFileType}
-      siteId={actions.siteId}
-      surface="soft"
-      usePublicQuery={actions.publicSearch === true}
     />
   );
 }
@@ -174,7 +137,7 @@ export const searchExtension = defineOpenEditorReactNode({
     group: "embed",
     defaultNode: () => ({
       type: "baseblocksSearch",
-      attrs: { search: defaults },
+      attrs: { search: searchDefaults },
     }),
     support: { web: "supported", native: "unsupported" },
   },
@@ -182,7 +145,7 @@ export const searchExtension = defineOpenEditorReactNode({
     group: "block",
     atom: true,
     draggable: true,
-    addAttributes: () => ({ search: { default: defaults } }),
+    addAttributes: () => ({ search: { default: searchDefaults } }),
     parseHTML: () => [{ tag: "section[data-baseblocks-search]" }],
     renderHTML: ({ HTMLAttributes }) => [
       "section",

@@ -153,13 +153,11 @@ function UploadDropzone({
 export function LibraryExplorer({
   className,
   explorer,
-  access,
   allowDownloads,
   embedded,
 }: {
   className?: string;
   explorer: LibraryExplorerPayload | null | undefined;
-  access: "manage" | "read";
   allowDownloads: boolean;
   embedded?: boolean;
 }) {
@@ -188,7 +186,7 @@ export function LibraryExplorer({
     totalProgress,
   } = useFileUpload();
 
-  const canManage = access === "manage";
+  const canManage = true;
   const model = useMemo(
     () => buildLibraryTreeInput(explorer?.folders ?? [], explorer?.files ?? []),
     [explorer?.folders, explorer?.files],

@@ -37,7 +37,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.1"
+          bun-version: "1.3.14"
 
       - run: bun install --frozen-lockfile
 
@@ -52,22 +52,36 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.1"
+          bun-version: "1.3.14"
 
       - run: bun install --frozen-lockfile
 
       - run: bun run check-types
 
-  build:
-    name: Build
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    needs: [react-doctor, lint, typecheck]
     steps:
       - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.1"
+          bun-version: "1.3.14"
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [react-doctor, lint, typecheck, test]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
 
       - run: bun install --frozen-lockfile
 
@@ -77,8 +91,12 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: "https://placeholder.convex.cloud"
           NEXT_PUBLIC_CONVEX_SITE_URL: "https://placeholder.convex.site"
           NEXT_PUBLIC_ROOT_DOMAIN: "baseblocks.dev"
-          STORAGE_BUCKET_NAME: "placeholder-bucket"
-          STORAGE_ENDPOINT: "https://example.invalid"
-          STORAGE_REGION: "us-east-1"
-          STORAGE_ACCESS_KEY_ID: "placeholder"
-          STORAGE_SECRET_ACCESS_KEY: "placeholder"
+          FILES_ADAPTER: "s3"
+          FILES_BUCKET: "placeholder-bucket"
+          FILES_ENDPOINT: "https://example.invalid"
+          FILES_REGION: "us-east-1"
+          FILES_FORCE_PATH_STYLE: "true"
+          FILES_ACCESS_KEY_ID: "placeholder"
+          FILES_SECRET_ACCESS_KEY: "placeholder"
+          FILES_MAX_UPLOAD_SIZE_BYTES: "104857600"
+          FILES_API_SECRET: "placeholder"

@@ -13,6 +13,8 @@ import type * as documents from "../documents.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as libraries from "../libraries.js";
+import type * as model_libraryAccess from "../model/libraryAccess.js";
+import type * as model_sites from "../model/sites.js";
 import type * as openEditorDocuments from "../openEditorDocuments.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
@@ -24,6 +26,7 @@ import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
 import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
+import type * as validators_sites from "../validators/sites.js";
 
 import type {
   ApiFromModules,
@@ -37,6 +40,8 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   libraries: typeof libraries;
+  "model/libraryAccess": typeof model_libraryAccess;
+  "model/sites": typeof model_sites;
   openEditorDocuments: typeof openEditorDocuments;
   organizations: typeof organizations;
   pageContent: typeof pageContent;
@@ -48,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   sharing: typeof sharing;
   siteDomains: typeof siteDomains;
   sites: typeof sites;
+  "validators/sites": typeof validators_sites;
 }>;
 
 /**

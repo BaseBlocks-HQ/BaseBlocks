@@ -2,11 +2,24 @@
 
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import {
+  DecisionTreeViewer,
+  readDecisionTree,
+} from "@/features/openeditor/renderers/decision-tree";
+import {
   createDocument,
   textBlock,
   type OpenEditorDocument,
 } from "@openeditor/core";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@baseblocks/ui/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,26 +35,17 @@ import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
   OpenEditorContent,
-  OpenEditorViewer,
   type OpenEditorNodeViewProps,
   useOpenEditorController,
 } from "@openeditor/react";
 import { toHtml, toPlainText } from "@openeditor/exporters";
-import {
-  ChevronRight,
-  ChevronsUpDown,
-  GitFork,
-  Plus,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { ChevronsUpDown, GitFork, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { DecisionTreeEditorBreadcrumb } from "@/components/site-elements/elements/decision-tree/editor-breadcrumb";
-import { DecisionTreeEditorEmptyState } from "@/components/site-elements/elements/decision-tree/editor-empty-state";
+import { DecisionTreeEditorEmptyState } from "@/features/openeditor/extensions/decision-tree/editor-empty-state";
 import {
   removeDecisionTreeNodesFromPath,
   resolveDecisionTreeEditor,
-} from "@/components/site-elements/elements/decision-tree/editor-model";
+} from "@/features/openeditor/extensions/decision-tree/editor-model";
 const nestedDocumentExtensions = [] as const;
 const nestedDocumentExporters = {};
 
@@ -61,24 +65,6 @@ const defaultValue = (): TreeValue => ({
   tabsMode: "row",
 });
 
-function readValue(value: unknown): TreeValue {
-  if (!value || typeof value !== "object") return defaultValue();
-  const candidate = value as Partial<TreeValue>;
-  return {
-    trees:
-      Array.isArray(candidate.trees) && candidate.trees.length > 0
-        ? candidate.trees
-        : defaultValue().trees,
-    tabsMode: candidate.tabsMode === "dropdown" ? "dropdown" : "row",
-  };
-}
-
-const childrenOf = (nodes: TreeNode[], parentId: string | null) =>
-  [...nodes.filter((node) => node.parentId === parentId)].sort(
-    (left, right) => left.order - right.order,
-  );
-const hasChildren = (nodes: TreeNode[], id: string) =>
-  nodes.some((node) => node.parentId === id);
 function descendants(nodes: TreeNode[], id: string) {
   const result = new Set([id]);
   let size = 0;
@@ -251,15 +237,66 @@ function TreeEditor({
       />
       <div className="grid h-[500px] max-h-[70vh] gap-3 overflow-hidden md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
         <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
-          <div>
-            <DecisionTreeEditorBreadcrumb
-              getNodeName={(nodeId) =>
-                tree.nodes.find((node) => node.id === nodeId)?.name ?? "Option"
-              }
-              onNavigate={setPath}
-              path={validPath}
-            />
-          </div>
+          <Breadcrumb
+            aria-label="Decision tree path"
+            className="flex h-10 min-w-0 items-center border-b border-border/50 px-2"
+          >
+            <BreadcrumbList className="w-full min-w-0 flex-nowrap overflow-hidden text-xs">
+              <BreadcrumbItem className="shrink-0">
+                {validPath.length ? (
+                  <BreadcrumbLink asChild>
+                    <button onClick={() => setPath([])} type="button">
+                      Root
+                    </button>
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>Root</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {validPath.length > 1 ? (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem className="shrink-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          aria-label="Show intermediate options"
+                          className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          type="button"
+                        >
+                          <BreadcrumbEllipsis className="size-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        {validPath.slice(0, -1).map((nodeId, index) => (
+                          <DropdownMenuItem
+                            key={nodeId}
+                            onSelect={() =>
+                              setPath(validPath.slice(0, index + 1))
+                            }
+                          >
+                            {tree.nodes.find((node) => node.id === nodeId)
+                              ?.name ?? "Option"}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </BreadcrumbItem>
+                </>
+              ) : null}
+              {validPath.length ? (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem className="min-w-0 flex-1">
+                    <BreadcrumbPage className="block min-w-0 truncate font-medium">
+                      {tree.nodes.find((node) => node.id === validPath.at(-1))
+                        ?.name ?? "Option"}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : null}
+            </BreadcrumbList>
+          </Breadcrumb>
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {visibleOptions.length === 0 ? (
               <DecisionTreeEditorEmptyState variant="options" />
@@ -355,99 +392,22 @@ function TreeEditor({
   );
 }
 
-function TreeViewer({ value }: { value: TreeValue }) {
-  const [treeId, setTreeId] = useState(value.trees[0]?.id ?? "default");
-  const [path, setPath] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const tree =
-    value.trees.find((item) => item.id === treeId) ?? value.trees[0]!;
-  const options = childrenOf(tree.nodes, path.at(-1) ?? null);
-  const selected = tree.nodes.find((node) => node.id === selectedId);
-  const selectTree = (nextTreeId: string) => {
-    setTreeId(nextTreeId);
-    setPath([]);
-    setSelectedId(null);
-  };
-  return (
-    <section className="not-prose my-4 space-y-3">
-      <TreeSwitcher
-        activeTreeId={tree.id}
-        onSelect={selectTree}
-        trees={value.trees}
-      />
-      <div className="grid min-h-80 gap-3 md:grid-cols-2">
-        <div className="rounded-2xl bg-card p-3">
-          <Button
-            className="rounded-xl"
-            onClick={() => {
-              setPath([]);
-              setSelectedId(null);
-            }}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            <RotateCcw className="size-3.5" />
-            Start over
-          </Button>
-          <div className="mt-2 space-y-2">
-            {options.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No more options.
-              </p>
-            ) : (
-              options.map((node) => (
-                <button
-                  className="flex w-full items-center justify-between rounded-xl bg-background/60 p-3 text-left text-sm font-medium transition hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  key={node.id}
-                  onClick={() => {
-                    if (hasChildren(tree.nodes, node.id)) {
-                      setPath((current) => [...current, node.id]);
-                      setSelectedId(null);
-                    } else {
-                      setSelectedId(node.id);
-                    }
-                  }}
-                  type="button"
-                >
-                  {node.name}
-                  {hasChildren(tree.nodes, node.id) ? (
-                    <ChevronRight className="size-4" />
-                  ) : null}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-        <div className="rounded-2xl bg-card p-4">
-          {selected ? (
-            <>
-              <h3 className="mb-3 font-semibold">{selected.name}</h3>
-              <OpenEditorViewer
-                document={selected.document}
-                extensions={nestedDocumentExtensions}
-              />
-            </>
-          ) : (
-            <div className="flex min-h-64 items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              <GitFork className="mr-2 size-4" />
-              Choose an option.
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DecisionTreeNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
-  const value = readValue(node.attrs.decisionTree);
+function DecisionTreeNode({
+  editor,
+  node,
+  updateAttributes,
+}: OpenEditorNodeViewProps) {
+  const value = readDecisionTree(node.attrs.decisionTree);
   return (
     <NodeViewWrapper contentEditable={false}>
-      <TreeEditor
-        onChange={(decisionTree) => updateAttributes({ decisionTree })}
-        value={value}
-      />
+      {editor.isEditable ? (
+        <TreeEditor
+          onChange={(decisionTree) => updateAttributes({ decisionTree })}
+          value={value}
+        />
+      ) : (
+        <DecisionTreeViewer value={value} />
+      )}
     </NodeViewWrapper>
   );
 }
@@ -482,12 +442,12 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
     order: baseBlocksSlashMenuOrder.decisionTree,
   },
   viewer: ({ node }) => (
-    <TreeViewer value={readValue(node.attrs?.decisionTree)} />
+    <DecisionTreeViewer value={readDecisionTree(node.attrs?.decisionTree)} />
   ),
   exporters: {
     html: {
       baseblocksDecisionTree: ({ node, escapeHtml }) =>
-        readValue(node.attrs?.decisionTree)
+        readDecisionTree(node.attrs?.decisionTree)
           .trees.map(
             (tree) =>
               `<section data-baseblocks-decision-tree><h2>${escapeHtml(tree.label)}</h2><ul>${tree.nodes.map((item) => `<li><strong>${escapeHtml(item.name)}</strong>${toHtml(item.document, nestedDocumentExporters)}</li>`).join("")}</ul></section>`,
@@ -496,7 +456,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
     },
     text: {
       baseblocksDecisionTree: ({ node }) =>
-        readValue(node.attrs?.decisionTree)
+        readDecisionTree(node.attrs?.decisionTree)
           .trees.flatMap((tree) => [
             tree.label,
             ...tree.nodes.map((item) =>

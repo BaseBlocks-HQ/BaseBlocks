@@ -1,6 +1,6 @@
 "use client";
 
-import { filesClient } from "@/lib/files/upload";
+import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api, type Id } from "@baseblocks/backend";
 import {
   isSupportedUploadMimeType,
@@ -95,42 +95,34 @@ export function useBaseBlocksAttachmentRuntime(
         signal?: AbortSignal;
       },
     ) => {
-      let objectKey: string | null = null;
-      try {
-        const uploaded = await filesClient.upload(input.source, {
-          siteId,
-          purpose: "document",
-          signal: callbacks?.signal,
-          onProgress: (progress) =>
-            callbacks?.onProgress?.(progress.percentage / 100),
-        });
-        objectKey = uploaded.objectKey;
-        if (callbacks?.signal?.aborted) {
-          throw new DOMException("Upload cancelled", "AbortError");
-        }
-        const documentId = await createDocument({
-          siteId,
-          objectKey: uploaded.objectKey,
-          filename: input.name,
-          contentType: uploaded.contentType,
-          size: uploaded.size,
-          checksum: uploaded.checksum,
-        });
-        return {
-          attachmentId: documentId,
-          name: input.name,
-          mimeType: uploaded.contentType,
-          size: uploaded.size,
-          url: `/api/files/${documentId}`,
-        } satisfies OpenEditorAttachmentSnapshot;
-      } catch (error) {
-        if (objectKey) {
-          await filesClient
-            .cleanup({ siteId, purpose: "document", objectKey })
-            .catch(() => undefined);
-        }
-        throw error;
-      }
+      const { registered: documentId, uploaded } =
+        await filesClient.uploadAndRegister(
+          input.source,
+          {
+            siteId,
+            purpose: "document",
+            signal: callbacks?.signal,
+            onProgress: (progress) =>
+              callbacks?.onProgress?.(progress.percentage / 100),
+          },
+          (upload) => {
+            if (callbacks?.signal?.aborted) {
+              throw new DOMException("Upload cancelled", "AbortError");
+            }
+            return createDocument({
+              siteId,
+              ...fileRegistration(input.source, upload),
+              filename: input.name,
+            });
+          },
+        );
+      return {
+        attachmentId: documentId,
+        name: input.name,
+        mimeType: uploaded.contentType,
+        size: uploaded.size,
+        url: `/api/files/${documentId}`,
+      } satisfies OpenEditorAttachmentSnapshot;
     };
 
     return {

@@ -1,20 +1,14 @@
 "use client";
 
-import type { WorkspaceUser } from "@/features/authentication/server";
+import type {
+  TeamRecord,
+  WorkspaceUser,
+} from "@/features/authentication/model";
 import {
   type OrganizationRole,
   roleHasPermission,
 } from "@baseblocks/backend/auth-permissions";
 import { type ReactNode, createContext, use } from "react";
-
-export type TeamRecord = {
-  _id: string;
-  joinedAt: number;
-  logoUrl?: string;
-  memberRole: string;
-  name: string;
-  slug: string;
-};
 
 interface TeamAccessValue {
   capabilities: {

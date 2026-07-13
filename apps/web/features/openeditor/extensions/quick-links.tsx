@@ -2,7 +2,11 @@
 
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
-import { filesClient } from "@/lib/files/upload";
+import {
+  QuickLinksViewer,
+  readQuickLinks,
+} from "@/features/openeditor/renderers/quick-links";
+import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import type { QuicklinkItem } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
@@ -45,31 +49,6 @@ type LinkDraft = {
   originalId: string | null;
   value: QuicklinkItem;
 };
-
-function readLinks(value: unknown): QuicklinkItem[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    if (!item || typeof item !== "object") return [];
-    const link = item as Partial<QuicklinkItem>;
-    if (
-      typeof link.id !== "string" ||
-      typeof link.title !== "string" ||
-      typeof link.url !== "string"
-    )
-      return [];
-    return [
-      {
-        id: link.id,
-        title: link.title,
-        url: link.url,
-        linkType: link.linkType === "app" ? "app" : "website",
-        ...(typeof link.imageUrl === "string" && link.imageUrl
-          ? { imageUrl: link.imageUrl }
-          : {}),
-      },
-    ];
-  });
-}
 
 function safeHref(link: QuicklinkItem) {
   const url = link.url.trim();
@@ -182,29 +161,16 @@ function useImageUpload() {
     if (!siteId) throw new Error("Image uploads require a site.");
     if (!file.type.startsWith("image/"))
       throw new Error("Choose an image file.");
-    let objectKey: string | null = null;
-    try {
-      const uploaded = await filesClient.upload(file, {
+    const { registered } = await filesClient.uploadAndRegister(
+      file,
+      {
         siteId,
         purpose: "siteAsset",
-      });
-      objectKey = uploaded.objectKey;
-      const asset = await createSiteAsset({
-        siteId,
-        objectKey,
-        filename: file.name,
-        contentType: uploaded.contentType,
-        size: uploaded.size,
-        checksum: uploaded.checksum,
-      });
-      return asset.url;
-    } catch (error) {
-      if (objectKey)
-        await filesClient
-          .cleanup({ siteId, purpose: "siteAsset", objectKey })
-          .catch(() => undefined);
-      throw error;
-    }
+      },
+      (upload) =>
+        createSiteAsset({ siteId, ...fileRegistration(file, upload) }),
+    );
+    return registered.url;
   };
 }
 
@@ -513,11 +479,15 @@ function QuickLinksNode({
 }: OpenEditorNodeViewProps) {
   return (
     <NodeViewWrapper contentEditable={false}>
-      <QuickLinksGrid
-        editable={editor.isEditable}
-        links={readLinks(node.attrs.links)}
-        onChange={(links) => updateAttributes({ links })}
-      />
+      {editor.isEditable ? (
+        <QuickLinksGrid
+          editable
+          links={readQuickLinks(node.attrs.links)}
+          onChange={(links) => updateAttributes({ links })}
+        />
+      ) : (
+        <QuickLinksViewer links={readQuickLinks(node.attrs.links)} />
+      )}
     </NodeViewWrapper>
   );
 }
@@ -552,12 +522,12 @@ export const quickLinksExtension = defineOpenEditorReactNode({
     order: baseBlocksSlashMenuOrder.quickLinks,
   },
   viewer: ({ node }) => (
-    <QuickLinksGrid editable={false} links={readLinks(node.attrs?.links)} />
+    <QuickLinksViewer links={readQuickLinks(node.attrs?.links)} />
   ),
   exporters: {
     html: {
       baseblocksQuickLinks: ({ node, escapeAttribute, escapeHtml }) =>
-        readLinks(node.attrs?.links)
+        readQuickLinks(node.attrs?.links)
           .filter((link) => safeHref(link))
           .map(
             (link) =>
@@ -567,7 +537,7 @@ export const quickLinksExtension = defineOpenEditorReactNode({
     },
     text: {
       baseblocksQuickLinks: ({ node }) =>
-        readLinks(node.attrs?.links)
+        readQuickLinks(node.attrs?.links)
           .filter((link) => safeHref(link))
           .map((link) => `${link.title}: ${link.url}`)
           .join("\n"),

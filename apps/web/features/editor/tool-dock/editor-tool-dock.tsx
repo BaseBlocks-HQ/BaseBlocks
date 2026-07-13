@@ -4,7 +4,6 @@ import { usePageExpandState } from "@/components/site-runtime/page-expand-state"
 import { useEditorSite } from "@/features/editor/editor-state";
 import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
 import { PageTree } from "@/features/editor/pages/page-tree";
-import { SiteConfigPanel } from "@/features/editor/settings/site-settings";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -13,6 +12,7 @@ import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Popover, PopoverAnchor, PopoverContent } from "@baseblocks/ui/popover";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
 import type { ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
   IconFile,
@@ -20,6 +20,12 @@ import {
   IconSidebarLeftHide,
   IconSidebarLeftShow,
 } from "nucleo-glass";
+
+const SiteConfigPanel = dynamic(() =>
+  import("@/features/editor/settings/site-settings").then(
+    (module) => module.SiteConfigPanel,
+  ),
+);
 
 interface EditorToolDockProps {
   expanded: boolean;

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { isAuthError } from "@/lib/auth/errors";
 import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
 

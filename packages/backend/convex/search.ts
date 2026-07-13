@@ -5,7 +5,7 @@ import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { normalizeDocumentSearchMetadata } from "./documents";
 import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
-import { getActiveLibraryIdsForPageIds } from "./sites";
+import { getActiveLibraryIdsForPageIds } from "./model/sites";
 import {
   extractOpenEditorText,
   parseOpenEditorDocument,
