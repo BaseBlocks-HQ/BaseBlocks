@@ -27,13 +27,13 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Moon, Sun } from "lucide-react";
+import { ChevronDown, ChevronRight, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
@@ -301,17 +301,29 @@ function PublicSiteThemeMenu() {
 interface PublishedNavigationRow {
   depth: number;
   fullPath: string;
+  hasChildren: boolean;
+  isExpanded: boolean;
   page: PageWithChildren;
 }
 
-function buildPublishedNavigationRows(pages: PageWithChildren[]) {
+function buildPublishedNavigationRows(
+  pages: PageWithChildren[],
+  currentPath: string,
+  expandedPages: ReadonlySet<string>,
+) {
   const rows: PublishedNavigationRow[] = [];
 
   const visit = (siblings: PageWithChildren[], parentPath = "", depth = 0) => {
     for (const page of siblings) {
       const fullPath = parentPath ? `${parentPath}/${page.slug}` : page.slug;
-      rows.push({ depth, fullPath, page });
-      visit(page.children, fullPath, depth + 1);
+      const hasChildren = page.children.length > 0;
+      const isCurrentParent = currentPath.startsWith(`${fullPath}/`);
+      const isExpanded = expandedPages.has(page._id) || isCurrentParent;
+
+      rows.push({ depth, fullPath, hasChildren, isExpanded, page });
+      if (hasChildren && isExpanded) {
+        visit(page.children, fullPath, depth + 1);
+      }
     }
   };
 
@@ -328,23 +340,49 @@ function PublishedPageNavigation({
   pages: PageWithChildren[];
   siteSlug: string;
 }) {
-  const rows = buildPublishedNavigationRows(pages);
+  const [expandedPages, setExpandedPages] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const rows = buildPublishedNavigationRows(pages, currentPath, expandedPages);
 
   return (
     <SidebarMenu aria-label="Site pages" className="gap-0.5" role="tree">
-      {rows.map(({ depth, fullPath, page }) => (
+      {rows.map(({ depth, fullPath, hasChildren, isExpanded, page }) => (
         <SidebarMenuItem
           aria-level={depth + 1}
+          aria-expanded={hasChildren ? isExpanded : undefined}
           key={page._id}
           role="treeitem"
-          style={{ paddingLeft: depth * 14 }}
         >
           <SidebarMenuButton
             asChild
             isActive={fullPath === currentPath}
-            className="p-0 font-normal data-[active=true]:font-medium"
+            className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-0 p-0 font-normal data-[active=true]:font-medium"
           >
             <div>
+              {hasChildren ? (
+                <button
+                  type="button"
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+                  className="flex h-8 w-7 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  onClick={() => {
+                    setExpandedPages((current) => {
+                      const next = new Set(current);
+                      if (next.has(page._id)) next.delete(page._id);
+                      else next.add(page._id);
+                      return next;
+                    });
+                  }}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="size-3.5" />
+                  ) : (
+                    <ChevronRight className="size-3.5" />
+                  )}
+                </button>
+              ) : (
+                <span className="h-8 w-7" />
+              )}
               <OverflowTooltip content={page.title}>
                 {(textRef) => (
                   <Link
