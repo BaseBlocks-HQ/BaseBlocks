@@ -47,14 +47,12 @@ const steps: readonly {
 ];
 
 interface StepsSectionProps {
-  isDarkTheme: boolean;
   gridColor: string;
   gridOpacity: number;
   landingTranslations: TranslateFn;
 }
 
 export function StepsSection({
-  isDarkTheme,
   gridColor,
   gridOpacity,
   landingTranslations,
@@ -72,13 +70,8 @@ export function StepsSection({
         maxOpacity={gridOpacity}
         flickerChance={0.25}
       />
-      <div
-        className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b ${
-          isDarkTheme
-            ? "from-background/88 via-background/62 to-background/88"
-            : "from-background/80 via-background/52 to-background/80"
-        }`}
-      />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/82 via-background/58 to-background/90 dark:from-background/90 dark:via-background/68 dark:to-background/94" />
+
       <div className="relative z-10 mx-auto max-w-6xl">
         <Reveal>
           <div className="max-w-xl">
@@ -100,44 +93,43 @@ export function StepsSection({
         <div className="mt-16 space-y-6 sm:space-y-8">
           {steps.map((step, index) => (
             <Reveal key={step.titleKey} delay={0.1 * index}>
-              {(() => {
-                const stepImage = isDarkTheme
-                  ? step.image.dark
-                  : step.image.light;
-
-                return (
-                  <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-                    <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                      <div
-                        className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
-                        style={{
-                          fontFamily: "var(--font-geist-pixel-circle)",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {step.num}
-                      </div>
-                      <h3 className="text-[1rem] font-semibold sm:text-[1.05rem]">
-                        {landingTranslations(step.titleKey)}
-                      </h3>
-                      <p className="mt-2 text-[0.92rem] leading-relaxed text-muted-foreground sm:text-sm">
-                        {landingTranslations(step.descKey)}
-                      </p>
-                    </div>
-                    <div className={index % 2 === 1 ? "lg:order-1" : ""}>
-                      <div className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-background/70 text-left shadow-sm dark:border-white/[0.08] dark:bg-background/50">
-                        <Image
-                          src={stepImage}
-                          alt={landingTranslations(step.imageAltKey)}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 100vw, 50vw"
-                        />
-                      </div>
-                    </div>
+              <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+                <div className={index % 2 === 1 ? "lg:order-2" : ""}>
+                  <div
+                    className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
+                    style={{
+                      fontFamily: "var(--font-geist-pixel-circle)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {step.num}
                   </div>
-                );
-              })()}
+                  <h3 className="text-[1rem] font-semibold sm:text-[1.05rem]">
+                    {landingTranslations(step.titleKey)}
+                  </h3>
+                  <p className="mt-2 text-[0.92rem] leading-relaxed text-muted-foreground sm:text-sm">
+                    {landingTranslations(step.descKey)}
+                  </p>
+                </div>
+                <div className={index % 2 === 1 ? "lg:order-1" : ""}>
+                  <div className="group relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border/60 bg-background/70 text-left shadow-sm dark:border-white/[0.08] dark:bg-background/50">
+                    <Image
+                      src={step.image.light}
+                      alt={landingTranslations(step.imageAltKey)}
+                      fill
+                      className="object-cover dark:hidden"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                    <Image
+                      src={step.image.dark}
+                      alt={landingTranslations(step.imageAltKey)}
+                      fill
+                      className="hidden object-cover dark:block"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                  </div>
+                </div>
+              </div>
             </Reveal>
           ))}
         </div>

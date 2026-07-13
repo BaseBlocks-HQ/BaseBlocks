@@ -1,9 +1,9 @@
 import {
   IconAppStack,
+  IconColorPalette,
   IconFolders,
   IconRocket,
   IconSitemap,
-  IconSquarePointer,
   IconUsers,
 } from "nucleo-glass";
 import type { ComponentType, SVGProps } from "react";
@@ -21,22 +21,22 @@ const features: readonly {
 }[] = [
   {
     icon: IconAppStack,
-    titleKey: "visualEditorTitle",
-    descKey: "visualEditorDesc",
+    titleKey: "editorTitle",
+    descKey: "editorDesc",
     num: "01",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: IconRocket,
-    titleKey: "draftDeployTitle",
-    descKey: "draftDeployDesc",
+    icon: IconSitemap,
+    titleKey: "pageTreeTitle",
+    descKey: "pageTreeDesc",
     num: "02",
     iconClassName: "group-hover:scale-110",
   },
   {
     icon: IconFolders,
-    titleKey: "documentLibrariesTitle",
-    descKey: "documentLibrariesDesc",
+    titleKey: "filesSearchTitle",
+    descKey: "filesSearchDesc",
     num: "03",
     iconClassName: "group-hover:scale-110",
   },
@@ -48,19 +48,18 @@ const features: readonly {
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: IconSquarePointer,
-    titleKey: "customThemesTitle",
-    descKey: "customThemesDesc",
+    icon: IconRocket,
+    titleKey: "publishingTitle",
+    descKey: "publishingDesc",
     num: "05",
     iconClassName: "group-hover:scale-110",
   },
   {
-    icon: IconSitemap,
-    titleKey: "openSourceTitle",
-    descKey: "openSourceDesc",
+    icon: IconColorPalette,
+    titleKey: "brandingTitle",
+    descKey: "brandingDesc",
     num: "06",
-    iconClassName:
-      "[transform:scaleY(-1)] group-hover:[transform:scaleY(-1)_scale(1.1)]",
+    iconClassName: "group-hover:scale-110",
   },
 ];
 
@@ -98,7 +97,7 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <Reveal key={feature.titleKey} delay={0.06 * index}>
-              <div className="group relative isolate h-full overflow-hidden rounded-xl border border-border/70 bg-background/95 p-6 shadow-sm shadow-black/[0.04] transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:border-white/[0.06] dark:bg-white/[0.02] dark:shadow-none dark:hover:border-amber-400/20">
+              <div className="group relative isolate h-full overflow-hidden rounded-xl bg-background/95 p-6 shadow-sm shadow-black/[0.04] transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/[0.04] dark:bg-white/[0.02] dark:shadow-none">
                 <feature.icon
                   className={`absolute right-[-16px] bottom-[-16px] z-0 h-28 w-28 opacity-[0.58] transition-transform duration-300 dark:opacity-35 ${feature.iconClassName}`}
                 />

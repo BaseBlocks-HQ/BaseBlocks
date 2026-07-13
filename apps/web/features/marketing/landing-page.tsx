@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { FeaturesSection } from "./features-section";
+import { FlickeringGrid } from "./flickering-grid";
 import { FooterSection } from "./footer-section";
 import { HeroSection } from "./hero-section";
 import { IntroOverlay } from "./intro-overlay";
@@ -71,8 +72,8 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
   const navigationTranslations = useTranslations("navigation");
 
   const isDarkTheme = resolvedTheme === "dark";
-  const stepsGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
-  const stepsGridOpacity = isDarkTheme ? 0.2 : 0.34;
+  const heroGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
+  const heroGridOpacity = isDarkTheme ? 0.2 : 0.34;
 
   const titleRef = useRef<HTMLSpanElement>(null);
   const progress = useMotionValue(0);
@@ -120,7 +121,7 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
 
   const authCta = (
     <Link href={authenticatedHref ?? "/login"}>
-      <Button size="lg" className="gap-2">
+      <Button size="lg" className="gap-2 rounded-full">
         {authenticatedHref
           ? commonTranslations("goToDashboard")
           : landingTranslations("getStarted")}{" "}
@@ -131,11 +132,7 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
 
   const docsCta = (
     <Link href="/docs">
-      <Button
-        variant="outline"
-        size="lg"
-        className="bg-background dark:bg-background dark:hover:bg-accent"
-      >
+      <Button variant="ghost" size="lg" className="rounded-full">
         {landingTranslations("viewDocs")}
       </Button>
     </Link>
@@ -154,22 +151,35 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
 
           {expanded && (
             <div className="h-full overflow-y-auto">
-              <div className="min-h-screen">
+              <div className="relative isolate min-h-screen">
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[56rem] overflow-hidden sm:h-[50rem] lg:h-[44rem]">
+                  <FlickeringGrid
+                    className="absolute inset-0"
+                    color={heroGridColor}
+                    squareSize={4}
+                    gridGap={8}
+                    maxOpacity={heroGridOpacity}
+                    flickerChance={0.25}
+                  />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${
+                      isDarkTheme
+                        ? "from-background/96 via-background/78 to-background/36"
+                        : "from-background/94 via-background/72 to-background/30"
+                    }`}
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+                </div>
                 <LandingHeader
                   authenticatedHref={authenticatedHref}
                   commonTranslations={commonTranslations}
                   navigationTranslations={navigationTranslations}
                 />
-                <HeroSection
-                  authCta={authCta}
-                  docsCta={docsCta}
-                  landingTranslations={landingTranslations}
-                />
+                <HeroSection authCta={authCta} docsCta={docsCta} />
                 <FeaturesSection landingTranslations={landingTranslations} />
                 <StepsSection
-                  isDarkTheme={isDarkTheme}
-                  gridColor={stepsGridColor}
-                  gridOpacity={stepsGridOpacity}
+                  gridColor={heroGridColor}
+                  gridOpacity={heroGridOpacity}
                   landingTranslations={landingTranslations}
                 />
                 <FooterSection

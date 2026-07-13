@@ -1,7 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
-import { GitFork } from "lucide-react";
 import Image from "next/image";
 
 type TranslateFn = (key: string) => string;
@@ -19,7 +18,7 @@ export function LandingHeader({
 }: LandingHeaderProps) {
   const authAction = (
     <Link href={authenticatedHref ?? "/login"}>
-      <Button size="sm">
+      <Button size="sm" className="rounded-full">
         {commonTranslations(authenticatedHref ? "goToDashboard" : "signIn")}
       </Button>
     </Link>
@@ -61,28 +60,13 @@ export function LandingHeader({
             </div>
 
             <div className="flex shrink-0 items-center gap-1 sm:gap-4">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground max-sm:size-8 max-sm:px-0 max-[360px]:hidden"
-              >
-                <a
-                  href="https://github.com/naaiyy/BaseBlocks"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <GitFork className="h-4 w-4 shrink-0" />
-                  <span className="max-sm:sr-only">GitHub</span>
-                </a>
-              </Button>
               <Link href="/docs">
-                <Button variant="outline" size="sm">
+                <Button variant="ghost" size="sm" className="rounded-full">
                   {navigationTranslations("docs")}
                 </Button>
               </Link>
               <Link href="/legal">
-                <Button variant="outline" size="sm">
+                <Button variant="ghost" size="sm" className="rounded-full">
                   {navigationTranslations("legal")}
                 </Button>
               </Link>
