@@ -72,7 +72,7 @@ export function QuickLinksViewer({ links }: { links: QuicklinkItem[] }) {
               ? {}
               : { rel: "noopener noreferrer", target: "_blank" })}
           >
-            <span className="relative isolate flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary">
+            <span className="relative isolate flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary [&>img]:!m-0 [&>img]:!size-full [&>img]:!max-w-none [&>img]:!object-cover">
               {link.imageUrl ? (
                 <Image
                   alt=""
@@ -80,6 +80,7 @@ export function QuickLinksViewer({ links }: { links: QuicklinkItem[] }) {
                   fill
                   sizes="44px"
                   src={link.imageUrl}
+                  style={{ objectFit: "cover" }}
                   unoptimized
                 />
               ) : link.linkType === "app" ? (
