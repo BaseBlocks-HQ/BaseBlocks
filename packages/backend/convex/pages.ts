@@ -1,4 +1,4 @@
-import { SLUG_PATTERN } from "@baseblocks/domain";
+import { planTreeMove, SLUG_PATTERN } from "@baseblocks/domain";
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
@@ -183,15 +183,13 @@ export const create = mutation({
       );
     }
 
-    // Get max order for siblings
-    const siblings = await ctx.db
+    const lastSibling = await ctx.db
       .query("pages")
-      .withIndex("by_parent", (q) =>
+      .withIndex("by_parent_order", (q) =>
         q.eq("siteId", siteId).eq("parentId", parentId),
       )
-      .collect();
-
-    const maxOrder = siblings.reduce((max, p) => Math.max(max, p.order), -1);
+      .order("desc")
+      .first();
 
     const now = Date.now();
     const pageId = await ctx.db.insert("pages", {
@@ -200,7 +198,7 @@ export const create = mutation({
       slug: normalizedSlug,
       parentId,
       icon,
-      order: maxOrder + 1,
+      order: (lastSibling?.order ?? -1) + 1,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -263,6 +261,74 @@ export const update = mutation({
     }
 
     return pageId;
+  },
+});
+
+/**
+ * The only write path for changing page-tree structure. The client describes
+ * the semantic drop; the server resolves and normalizes both affected sibling
+ * lists in the same transaction.
+ */
+export const moveInTree = mutation({
+  args: {
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    targetId: v.optional(v.id("pages")),
+    placement: v.union(
+      v.literal("before"),
+      v.literal("after"),
+      v.literal("inside"),
+      v.literal("root-end"),
+    ),
+  },
+  handler: async (ctx, { siteId, pageId, targetId, placement }) => {
+    const site = await ctx.db.get(siteId);
+    if (!site) throw new Error("Site not found");
+
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
+
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    const page = pages.find((candidate) => candidate._id === pageId);
+    if (!page) throw new Error("Page not found in site");
+    if (targetId && !pages.some((candidate) => candidate._id === targetId)) {
+      throw new Error("Target page not found in site");
+    }
+
+    const plan = planTreeMove(
+      pages.map((candidate) => ({
+        id: candidate._id,
+        parentId: candidate.parentId ?? null,
+        order: candidate.order,
+      })),
+      {
+        nodeId: pageId,
+        targetId: targetId ?? null,
+        placement,
+      },
+    );
+    const now = Date.now();
+
+    for (const update of plan.updates) {
+      await ctx.db.patch(update.id as Id<"pages">, {
+        parentId: update.parentId
+          ? (update.parentId as Id<"pages">)
+          : undefined,
+        order: update.order,
+        updatedAt: now,
+      });
+    }
+
+    return {
+      pageId,
+      parentId: plan.parentId ? (plan.parentId as Id<"pages">) : undefined,
+      order: plan.index,
+    };
   },
 });
 

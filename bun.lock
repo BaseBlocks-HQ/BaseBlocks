@@ -22,6 +22,7 @@
         "@baseblocks/i18n": "workspace:*",
         "@baseblocks/ui": "workspace:*",
         "@convex-dev/better-auth": "^0.12.2",
+        "@dnd-kit/collision": "0.5.0",
         "@dnd-kit/react": "^0.5.0",
         "@openeditor/core": "0.0.24",
         "@openeditor/emoji": "0.0.24",

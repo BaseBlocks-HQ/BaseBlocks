@@ -1,4 +1,18 @@
 export type { PageListItem, PageWithChildren } from "./content/pages";
+export type {
+  OrderedTreeNode,
+  ProjectedTreeNode,
+  TreeDropPlacement,
+  TreeMove,
+  TreeMovePlan,
+  TreeNode,
+  TreeNodeUpdate,
+} from "./content/tree";
+export {
+  InvalidTreeMoveError,
+  planTreeMove,
+  projectTree,
+} from "./content/tree";
 export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./sites/slug";
 
 export type { SaveStatus } from "./content/elements";

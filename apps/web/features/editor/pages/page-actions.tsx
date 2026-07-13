@@ -31,14 +31,14 @@ interface PageActionsMenuProps {
   page: PageListItem;
   siteId: string;
   isDefault: boolean;
-  onExpandParent?: () => void;
+  onChildCreated?: () => void;
 }
 
 export function PageActionsMenu({
   page,
   siteId,
   isDefault,
-  onExpandParent,
+  onChildCreated,
 }: PageActionsMenuProps) {
   const t = useTranslations("navigation.pageActions");
   const tDelete = useTranslations("navigation.deletePage");
@@ -98,7 +98,7 @@ export function PageActionsMenu({
       </DropdownMenu>
 
       <CreatePageDialog
-        onCreated={onExpandParent}
+        onCreated={onChildCreated}
         onOpenChange={setCreateChildOpen}
         open={createChildOpen}
         parentId={page._id}

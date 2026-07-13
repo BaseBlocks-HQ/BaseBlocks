@@ -1,6 +1,6 @@
 import type { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
-import type { TreeNode } from "@/components/tree/model";
+import type { TreeNode } from "@baseblocks/domain";
 
 export type LibraryExplorerPayload = NonNullable<
   FunctionReturnType<typeof api.libraries.getExplorer>

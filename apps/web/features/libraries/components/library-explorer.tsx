@@ -175,10 +175,8 @@ export function LibraryExplorer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderMutation = useMutation(api.libraries.createFolder);
   const updateFolder = useMutation(api.libraries.updateFolder);
-  const moveFolderMutation = useMutation(api.libraries.moveFolder);
   const removeFolder = useMutation(api.libraries.removeFolder);
   const renameDocument = useMutation(api.documents.rename);
-  const moveDocument = useMutation(api.documents.move);
   const {
     uploadFiles: uploadLibraryFiles,
     isAnyUploading,
@@ -324,46 +322,6 @@ export function LibraryExplorer({
     toast.success(tExplorer("toastFolderCreated"));
   };
 
-  // Failure modes:
-  // - Move mutations are unavailable in read-only contexts
-  // - Target folder was deleted or permissions changed before the drop commits
-  // - Multiple selected items partially move if the backend rejects one request
-  const dropEntities = async (
-    entities: LibraryEntity[],
-    targetFolderId: FolderId | undefined,
-  ) => {
-    if (!canManage) throw new Error("You do not have permission to move files");
-
-    let movedCount = 0;
-    for (const entity of entities) {
-      if (entity.kind === "folder") {
-        if ((entity.folder.parentId ?? undefined) === targetFolderId) continue;
-        await moveFolderMutation({
-          folderId: entity.folder._id,
-          newParentId: targetFolderId,
-        });
-        if (currentFolderId === entity.folder._id) {
-          setCurrentFolderId(entity.folder._id);
-        }
-      } else {
-        if ((entity.file.folderId ?? undefined) === targetFolderId) continue;
-        await moveDocument({
-          documentId: entity.file._id,
-          folderId: targetFolderId,
-        });
-        if (
-          openEntity?.kind === "file" &&
-          openEntity.file._id === entity.file._id
-        ) {
-          setCurrentFolderId(targetFolderId ?? null);
-        }
-      }
-      movedCount += 1;
-    }
-
-    if (movedCount > 0) toast.success(tExplorer("toastMoved"));
-  };
-
   const downloadFile = (file: LibraryFile) => {
     const link = document.createElement("a");
     link.href = file.downloadUrl;
@@ -422,17 +380,6 @@ export function LibraryExplorer({
         if (entity.kind === "file") downloadFile(entity.file);
       }}
       onCopyLink={(entity) => void copyEntityLink(entity)}
-      onDropEntities={
-        canManage
-          ? (entities, targetFolderId) =>
-              dropEntities(entities, targetFolderId).catch((error) => {
-                toast.error(
-                  error instanceof Error ? error.message : "Move failed",
-                );
-                throw error;
-              })
-          : undefined
-      }
       onOpenEntity={openEntityInExplorer}
       onRenameEntity={renameEntity}
       onUploadFiles={() => fileInputRef.current?.click()}
@@ -447,7 +394,6 @@ export function LibraryExplorer({
         contentType: openFile.contentType,
         size: openFile.size,
         allowDownload: allowDownloads,
-        documentId: openFile._id,
       }
     : null;
   const closeFilePreview = () => {
@@ -456,7 +402,7 @@ export function LibraryExplorer({
   };
   const fileViewerContent = previewFile ? (
     <FilePreview
-      key={previewFile.documentId ?? previewFile.url}
+      key={previewFile.url}
       file={previewFile}
       mode="embedded"
       onClose={closeFilePreview}

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
   isOrganizationMember,
@@ -396,58 +396,6 @@ export const updateFolder = mutation({
     if (name !== undefined) updates.name = name.trim();
 
     await ctx.db.patch(folderId, updates);
-    return folderId;
-  },
-});
-
-// Move folder to new parent
-export const moveFolder = mutation({
-  args: {
-    folderId: v.id("documentFolders"),
-    newParentId: v.optional(v.id("documentFolders")),
-    newOrder: v.optional(v.number()),
-  },
-  handler: async (ctx, { folderId, newParentId, newOrder }) => {
-    const { folder } = await requireFolderManagement(ctx, folderId);
-
-    // Verify new parent exists if specified
-    if (newParentId) {
-      const parent = await ctx.db.get(newParentId);
-      if (!parent || parent.libraryId !== folder.libraryId) {
-        throw new Error("Target folder not found");
-      }
-
-      // Prevent moving folder into itself or its descendants
-      let checkId: Id<"documentFolders"> | undefined = newParentId;
-      while (checkId) {
-        if (checkId === folderId) {
-          throw new Error("Cannot move folder into itself or its descendants");
-        }
-        const checkFolder: Doc<"documentFolders"> | null =
-          await ctx.db.get(checkId);
-        checkId = checkFolder?.parentId;
-      }
-    }
-
-    // Calculate order if not specified
-    let order = newOrder;
-    if (order === undefined) {
-      const siblings = await ctx.db
-        .query("documentFolders")
-        .withIndex("by_parent", (q) =>
-          q.eq("libraryId", folder.libraryId).eq("parentId", newParentId),
-        )
-        .collect();
-
-      order = siblings.reduce((max, f) => Math.max(max, f.order), -1) + 1;
-    }
-
-    await ctx.db.patch(folderId, {
-      parentId: newParentId,
-      order,
-      updatedAt: Date.now(),
-    });
-
     return folderId;
   },
 });

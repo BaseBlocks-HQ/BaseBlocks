@@ -436,41 +436,6 @@ export const createInLibrary = mutation({
   },
 });
 
-// Move document to different folder
-export const move = mutation({
-  args: {
-    documentId: v.id("documents"),
-    folderId: v.optional(v.id("documentFolders")),
-  },
-  handler: async (ctx, { documentId, folderId }) => {
-    const document = await ctx.db.get(documentId);
-    if (!document) throw new Error("Document not found");
-
-    const siteCtx = await resolveSiteContext(ctx, document.siteId);
-    if (!siteCtx) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, siteCtx.organizationId, {
-      resource: "library",
-      action: "manage",
-    });
-
-    if (!document.libraryId) {
-      throw new Error("Document is not in a library");
-    }
-
-    if (folderId) {
-      const folder = await ctx.db.get(folderId);
-      if (!folder || folder.libraryId !== document.libraryId) {
-        throw new Error("Target folder not found in library");
-      }
-    }
-
-    await ctx.db.patch(documentId, { folderId });
-    await patchDocumentSearchEntry(ctx, document);
-    return documentId;
-  },
-});
-
 // Rename document
 export const rename = mutation({
   args: {

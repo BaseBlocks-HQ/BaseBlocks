@@ -2,14 +2,8 @@
 
 import type { FolderId, LibraryEntity } from "@/features/libraries/tree-input";
 import { InlineRename } from "@/components/tree/inline-rename";
-import {
-  projectTree,
-  type TreeNode,
-  wouldCreateCycle,
-} from "@/components/tree/model";
+import { projectTree, type TreeNode } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
-import { cn } from "@baseblocks/ui/lib/utils";
-import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import {
   ChevronDown,
   ChevronRight,
@@ -17,7 +11,6 @@ import {
   File,
   Folder,
   FolderPlus,
-  GripVertical,
   Link,
   Pencil,
   Trash2,
@@ -34,10 +27,6 @@ export function LibraryTree(props: {
   onCreateFolder: (name: string, parentId?: FolderId) => Promise<void>;
   onDeleteEntity: (entity: LibraryEntity) => void;
   onDownloadFile: (entity: LibraryEntity) => void;
-  onDropEntities?: (
-    entities: LibraryEntity[],
-    targetFolderId: FolderId | undefined,
-  ) => Promise<void>;
   onOpenEntity: (entity: LibraryEntity) => void;
   onRenameEntity: (entity: LibraryEntity, name: string) => Promise<void>;
   onUploadFiles: () => void;
@@ -55,99 +44,71 @@ export function LibraryTree(props: {
     () => projectTree(props.nodes, expanded),
     [props.nodes, expanded],
   );
-  const byId = useMemo(
-    () => new Map(props.nodes.map((node) => [node.id, node])),
-    [props.nodes],
-  );
-
   return (
-    <DragDropProvider
-      onDragEnd={(event) => {
-        const sourceId = String(event.operation.source?.id ?? "");
-        const targetId = String(event.operation.target?.id ?? "");
-        const source = byId.get(sourceId);
-        const target = byId.get(targetId);
-        if (!source || !target || !props.onDropEntities) return;
-        const parentId =
-          target.data.kind === "folder" ? target.id : target.parentId;
-        if (
-          source.data.kind === "folder" &&
-          wouldCreateCycle(props.nodes, source.id, parentId)
-        )
-          return;
-        void props.onDropEntities(
-          [source.data],
-          parentId as FolderId | undefined,
-        );
-      }}
+    <div
+      className="flex h-full min-h-0 flex-col"
+      role="tree"
+      aria-label="Library files"
     >
-      <div
-        className="flex h-full min-h-0 flex-col"
-        role="tree"
-        aria-label="Library files"
-      >
-        <div className="flex h-10 shrink-0 items-center justify-between px-2">
-          <span className="truncate pl-1 text-xs font-medium">
-            {props.title}
-          </span>
-          {props.canManage ? (
-            <div className="flex gap-1">
-              <Button
-                size="icon-xs"
-                variant="ghost"
-                aria-label="Upload files"
-                disabled={props.uploadDisabled}
-                onClick={props.onUploadFiles}
-              >
-                <Upload />
-              </Button>
-              <Button
-                size="icon-xs"
-                variant="ghost"
-                aria-label="New folder"
-                onClick={() =>
-                  void props.onCreateFolder(
-                    "Untitled folder",
-                    props.currentFolderId ?? undefined,
-                  )
-                }
-              >
-                <FolderPlus />
-              </Button>
-            </div>
-          ) : null}
-        </div>
-        <div className="min-h-0 flex-1 overflow-auto px-1 pb-2">
-          {rows.map((node) => (
-            <LibraryTreeRow
-              key={node.id}
-              node={node}
-              expanded={expanded.has(node.id)}
-              canManage={props.canManage}
-              allowDownloads={props.allowDownloads}
-              renaming={renamingId === node.id}
-              onToggle={() =>
-                setExpanded((current) => {
-                  const next = new Set(current);
-                  next.has(node.id) ? next.delete(node.id) : next.add(node.id);
-                  return next;
-                })
+      <div className="flex h-10 shrink-0 items-center justify-between px-2">
+        <span className="truncate pl-1 text-xs font-medium">{props.title}</span>
+        {props.canManage ? (
+          <div className="flex gap-1">
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label="Upload files"
+              disabled={props.uploadDisabled}
+              onClick={props.onUploadFiles}
+            >
+              <Upload />
+            </Button>
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              aria-label="New folder"
+              onClick={() =>
+                void props.onCreateFolder(
+                  "Untitled folder",
+                  props.currentFolderId ?? undefined,
+                )
               }
-              onOpen={() => props.onOpenEntity(node.data)}
-              onRename={() => setRenamingId(node.id)}
-              onRenameSave={async (name: string) => {
-                await props.onRenameEntity(node.data, name);
-                setRenamingId(null);
-              }}
-              onRenameCancel={() => setRenamingId(null)}
-              onCopy={() => void props.onCopyLink(node.data)}
-              onDownload={() => props.onDownloadFile(node.data)}
-              onDelete={() => props.onDeleteEntity(node.data)}
-            />
-          ))}
-        </div>
+            >
+              <FolderPlus />
+            </Button>
+          </div>
+        ) : null}
       </div>
-    </DragDropProvider>
+      <div className="min-h-0 flex-1 overflow-auto px-1 pb-2">
+        {rows.map((node) => (
+          <LibraryTreeRow
+            key={node.id}
+            node={node}
+            expanded={expanded.has(node.id)}
+            canManage={props.canManage}
+            allowDownloads={props.allowDownloads}
+            renaming={renamingId === node.id}
+            onToggle={() =>
+              setExpanded((current) => {
+                const next = new Set(current);
+                next.has(node.id) ? next.delete(node.id) : next.add(node.id);
+                return next;
+              })
+            }
+            onOpen={() => props.onOpenEntity(node.data)}
+            onRename={() => setRenamingId(node.id)}
+            onRenameSave={async (name: string) => {
+              await props.onRenameEntity(node.data, name);
+              setRenamingId(null);
+            }}
+            onRenameCancel={() => setRenamingId(null)}
+            onCopy={() => void props.onCopyLink(node.data)}
+            onDownload={() => props.onDownloadFile(node.data)}
+            onDelete={() => props.onDeleteEntity(node.data)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -180,48 +141,16 @@ function LibraryTreeRow({
   onDownload: () => void;
   onDelete: () => void;
 }) {
-  const {
-    ref: dragRef,
-    handleRef,
-    isDragging,
-  } = useDraggable({
-    id: node.id,
-    disabled: !canManage,
-    data: { nodeId: node.id },
-  });
-  const { ref: dropRef, isDropTarget } = useDroppable({
-    id: node.id,
-    disabled: !canManage,
-    data: { nodeId: node.id },
-  });
   const folder = node.data.kind === "folder";
   return (
     <div
-      ref={(element) => {
-        dragRef(element);
-        dropRef(element);
-      }}
       role="treeitem"
       tabIndex={0}
       aria-level={node.depth + 1}
       aria-expanded={folder ? expanded : undefined}
-      className={cn(
-        "group flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent",
-        isDragging && "opacity-40",
-        isDropTarget && "ring-2 ring-primary/40",
-      )}
+      className="group flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent"
       style={{ paddingLeft: node.depth * 16 + 4 }}
     >
-      {canManage ? (
-        <button
-          ref={handleRef}
-          type="button"
-          aria-label={`Move ${node.label}`}
-          className="cursor-grab text-muted-foreground opacity-0 group-hover:opacity-100"
-        >
-          <GripVertical className="size-3.5" />
-        </button>
-      ) : null}
       {folder ? (
         <button
           type="button"

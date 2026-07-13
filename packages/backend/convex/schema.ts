@@ -82,6 +82,7 @@ export default defineSchema({
   })
     .index("by_site", ["siteId"])
     .index("by_parent", ["siteId", "parentId"])
+    .index("by_parent_order", ["siteId", "parentId", "order"])
     .index("by_slug", ["siteId", "slug"]),
 
   // OpenEditor documents are serialized to stay below Convex's nesting limit.
