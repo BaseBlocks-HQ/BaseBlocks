@@ -35,14 +35,12 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
-import { convertLegacyPageToOpenEditor } from "./conversion/convert-page";
-import { editorV2Extensions } from "./extensions";
+import { openEditorExtensions } from "./extensions";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
 import {
   createOpenEditorPageTabs,
   readOpenEditorPageTabs,
-  shouldRefreshLegacyTabbedDocument,
 } from "./page-tabs-model";
 
 export function OpenEditorPageEditor({
@@ -64,7 +62,7 @@ export function OpenEditorPageEditor({
   const content = useQuery(api.pageContent.get, { pageId });
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
-  const saveDocument = useMutation(api.pageContent.saveOpenEditorDocument);
+  const saveDocument = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDocument = useRef<OpenEditorDocument | null>(null);
@@ -73,26 +71,7 @@ export function OpenEditorPageEditor({
     document: OpenEditorDocument;
   } | null>(null);
 
-  const pageTitles = useMemo(
-    () => new Map(pages.map((page) => [page._id, page.title])),
-    [pages],
-  );
-  const convertedDocument = useMemo(
-    () =>
-      content
-        ? convertLegacyPageToOpenEditor(content, { pageTitles }).document
-        : null,
-    [content, pageTitles],
-  );
-  const storedDocument = content?.openEditorDocument as
-    | OpenEditorDocument
-    | undefined;
-  const initialDocument = shouldRefreshLegacyTabbedDocument(
-    content?.tabs.length ?? 0,
-    storedDocument,
-  )
-    ? convertedDocument
-    : (storedDocument ?? convertedDocument);
+  const initialDocument = content?.document as OpenEditorDocument | undefined;
   const resolvedDocument =
     localDocument?.pageId === pageId ? localDocument.document : initialDocument;
   const handleConvertToTabs = useCallback(
@@ -248,7 +227,7 @@ function OpenEditorTabbedPageEditor({
         <OpenEditorTabbedPage
           document={initialDocument}
           editable={canEdit && !preview}
-          extensions={editorV2Extensions}
+          extensions={openEditorExtensions}
           onChange={queueSave}
           pageRuntime={pageRuntime}
         />
@@ -329,7 +308,7 @@ function OpenEditorDocumentEditor({
   const controller = useOpenEditorController({
     initialDocument,
     editable: canEdit,
-    extensions: editorV2Extensions,
+    extensions: openEditorExtensions,
     pageRuntime,
     attachmentRuntime,
     slashMenuItems,
@@ -367,7 +346,7 @@ function OpenEditorDocumentEditor({
             attachmentRuntime={attachmentRuntime}
             className="oe-viewer"
             document={controller.document}
-            extensions={editorV2Extensions}
+            extensions={openEditorExtensions}
             pageRuntime={pageRuntime}
           />
         ) : (

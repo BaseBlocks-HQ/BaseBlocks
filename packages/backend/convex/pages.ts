@@ -12,6 +12,11 @@ import {
   deletePageStructure,
 } from "./pageStructure";
 import {
+  collectOpenEditorAttributeValues,
+  parseOpenEditorDocument,
+  removeOpenEditorNodes,
+} from "./openEditorDocuments";
+import {
   canViewerAccessPublishedPageById,
   getAccessiblePublishedPages,
   pageAccessPolicyValidator,
@@ -115,21 +120,19 @@ export const list = query({
       .collect();
 
     const contents = await ctx.db
-      .query("pageContents")
+      .query("openEditorPageContents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
     const referencedPageIds = new Set<string>();
     for (const content of contents) {
-      for (const section of content.sections)
-        for (const column of section.columns) {
-          for (const block of column.blocks) {
-            const referencedPageId =
-              block.type === "page" ? block.content?.pageId : undefined;
-            if (typeof referencedPageId === "string")
-              referencedPageIds.add(referencedPageId);
-          }
-        }
+      for (const pageId of collectOpenEditorAttributeValues(
+        parseOpenEditorDocument(content.document),
+        "page",
+        ["pageId"],
+      )) {
+        referencedPageIds.add(pageId);
+      }
     }
 
     return pages.map((page) => ({
@@ -457,9 +460,8 @@ export const setExposure = mutation({
       v.literal("both"),
     ),
     targetPageId: v.optional(v.id("pages")),
-    targetColumnId: v.optional(v.string()),
   },
-  handler: async (ctx, { pageId, exposure, targetPageId, targetColumnId }) => {
+  handler: async (ctx, { pageId, exposure, targetPageId }) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -473,25 +475,27 @@ export const setExposure = mutation({
 
     const now = Date.now();
     const contents = await ctx.db
-      .query("pageContents")
+      .query("openEditorPageContents")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
     const removeReferences = async () => {
       await Promise.all(
         contents.map((content) => {
-          const sections = content.sections.map((section) => ({
-            ...section,
-            columns: section.columns.map((column) => ({
-              ...column,
-              blocks: column.blocks.filter(
-                (block) =>
-                  !(block.type === "page" && block.content?.pageId === pageId),
-              ),
-            })),
-          }));
-          return ctx.db.patch("pageContents", content._id, {
-            sections,
+          const document = parseOpenEditorDocument(content.document);
+          if (
+            !collectOpenEditorAttributeValues(document, "page", ["pageId"]).has(
+              pageId,
+            )
+          ) {
+            return Promise.resolve();
+          }
+          const nextDocument = removeOpenEditorNodes(
+            document,
+            (node) => node.type === "page" && node.attrs?.pageId === pageId,
+          );
+          return ctx.db.patch("openEditorPageContents", content._id, {
+            document: JSON.stringify(nextDocument),
             updatedAt: now,
           });
         }),
@@ -499,14 +503,7 @@ export const setExposure = mutation({
     };
 
     const ensureReferenceOnTargetPage = async () => {
-      const requestedContent = targetColumnId
-        ? contents.find((content) =>
-            content.sections.some((section) =>
-              section.columns.some((column) => column.id === targetColumnId),
-            ),
-          )
-        : undefined;
-      const resolvedTargetPageId = requestedContent?.pageId ?? targetPageId;
+      const resolvedTargetPageId = targetPageId;
       if (!resolvedTargetPageId || resolvedTargetPageId === pageId) return;
 
       const targetPage = await ctx.db.get(resolvedTargetPageId);
@@ -516,33 +513,21 @@ export const setExposure = mutation({
         (candidate) => candidate.pageId === resolvedTargetPageId,
       );
       if (!content) return;
-      const existingReference = content.sections.some((section) =>
-        section.columns.some((column) =>
-          column.blocks.some(
-            (block) =>
-              block.type === "page" && block.content?.pageId === pageId,
-          ),
-        ),
-      );
+      const document = parseOpenEditorDocument(content.document);
+      const existingReference = collectOpenEditorAttributeValues(
+        document,
+        "page",
+        ["pageId"],
+      ).has(pageId);
 
       if (existingReference) return;
-      const sections = structuredClone(content.sections);
-      const column = targetColumnId
-        ? sections
-            .flatMap((section) => section.columns)
-            .find((candidate) => candidate.id === targetColumnId)
-        : sections
-            .sort((a, b) => a.order - b.order)[0]
-            ?.columns.sort((a, b) => a.order - b.order)[0];
-      if (!column) return;
-      column.blocks.push({
-        id: crypto.randomUUID(),
-        order: column.blocks.length,
+      document.content.push({
         type: "page",
-        content: { pageId },
+        attrs: { pageId, icon: page.icon ?? "📄", href: null },
+        content: [{ type: "text", text: page.title }],
       });
-      await ctx.db.patch("pageContents", content._id, {
-        sections,
+      await ctx.db.patch("openEditorPageContents", content._id, {
+        document: JSON.stringify(document),
         updatedAt: now,
       });
       await ctx.db.patch(resolvedTargetPageId, { updatedAt: now });

@@ -15,9 +15,7 @@ export interface WorkspaceUser {
   name: string | null;
 }
 
-export async function getViewerState(
-  teamSlug?: string,
-): Promise<ViewerState> {
+export async function getViewerState(teamSlug?: string): Promise<ViewerState> {
   return await fetchAuthQuery(api.organizations.getViewerState, {
     ...(teamSlug ? { teamSlug } : {}),
   });

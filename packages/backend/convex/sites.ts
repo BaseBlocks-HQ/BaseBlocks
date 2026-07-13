@@ -9,6 +9,10 @@ import {
 import { deleteDocumentRows } from "./documents";
 import { createDefaultPageStructure } from "./pageStructure";
 import {
+  collectOpenEditorAttributeValues,
+  parseOpenEditorDocument,
+} from "./openEditorDocuments";
+import {
   getAuthOrganizationById,
   getAuthOrganizationBySlug,
   listAuthOrganizations,
@@ -87,7 +91,7 @@ export async function getActiveLibraryIdsForPageIds(
   pageIds?: Iterable<string>,
 ): Promise<Set<string>> {
   const contents = await ctx.db
-    .query("pageContents")
+    .query("openEditorPageContents")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
 
@@ -95,13 +99,13 @@ export async function getActiveLibraryIdsForPageIds(
   const activeLibraryIds = new Set<string>();
   for (const content of contents) {
     if (allowedPageIds && !allowedPageIds.has(content.pageId)) continue;
-    for (const section of content.sections)
-      for (const column of section.columns) {
-        for (const block of column.blocks) {
-          if (block.type === "library" && block.content?.libraryId)
-            activeLibraryIds.add(block.content.libraryId);
-        }
-      }
+    for (const libraryId of collectOpenEditorAttributeValues(
+      parseOpenEditorDocument(content.document),
+      "baseblocksLibrary",
+      ["library", "libraryId"],
+    )) {
+      activeLibraryIds.add(libraryId);
+    }
   }
 
   return activeLibraryIds;
@@ -522,13 +526,6 @@ export const remove = mutation({
     }
 
     // 5. Delete all page content and pages
-    const pageContents = await ctx.db
-      .query("pageContents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    await Promise.all(
-      pageContents.map((content) => ctx.db.delete("pageContents", content._id)),
-    );
     const openEditorPageContents = await ctx.db
       .query("openEditorPageContents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

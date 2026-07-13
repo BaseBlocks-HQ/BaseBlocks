@@ -20,9 +20,7 @@ export function LandingHeader({
   const authAction = (
     <Link href={authenticatedHref ?? "/login"}>
       <Button size="sm">
-        {commonTranslations(
-          authenticatedHref ? "goToDashboard" : "signIn",
-        )}
+        {commonTranslations(authenticatedHref ? "goToDashboard" : "signIn")}
       </Button>
     </Link>
   );

@@ -13,6 +13,10 @@ import {
 } from "./permissions";
 import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds, resolveSiteContext } from "./sites";
+import {
+  collectOpenEditorAttributeValues,
+  parseOpenEditorDocument,
+} from "./openEditorDocuments";
 
 export function buildAssetUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}?kind=asset`;
@@ -142,23 +146,19 @@ async function isPublishedFileBlockDocument(
   document: Doc<"documents">,
 ) {
   const contents = await ctx.db
-    .query("pageContents")
+    .query("openEditorPageContents")
     .withIndex("by_site", (q) => q.eq("siteId", document.siteId))
     .collect();
 
-  for (const content of contents) {
-    for (const section of content.sections)
-      for (const column of section.columns) {
-        if (
-          column.blocks.some(
-            (block) =>
-              block.type === "file" &&
-              block.content?.documentId === document._id,
-          )
-        )
-          return true;
-      }
-  }
+  for (const content of contents)
+    if (
+      collectOpenEditorAttributeValues(
+        parseOpenEditorDocument(content.document),
+        "attachment",
+        ["attachmentId"],
+      ).has(document._id)
+    )
+      return true;
 
   return false;
 }

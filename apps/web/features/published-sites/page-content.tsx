@@ -2,34 +2,20 @@
 
 import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
-import { convertLegacyPageToOpenEditor } from "@/features/editor-v2/conversion/convert-page";
-import { editorV2Extensions } from "@/features/editor-v2/extensions";
-import { baseBlocksOpenEditorTheme } from "@/features/editor-v2/openeditor-theme";
-import { OpenEditorTabbedPage } from "@/features/editor-v2/page-tabs";
-import {
-  readOpenEditorPageTabs,
-  shouldRefreshLegacyTabbedDocument,
-} from "@/features/editor-v2/page-tabs-model";
+import { openEditorExtensions } from "@/features/openeditor/extensions";
+import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
+import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
+import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
 import { PublicPagePanel } from "@/features/published-sites/page-panel";
 import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
-import { ElementRenderer } from "@/components/site-runtime/rendering";
-import { SectionContextProvider } from "@/components/site-runtime/section";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import type {
-  AnyContent,
-  ElementType,
-  PageStructure,
-  SectionData,
-} from "@baseblocks/domain";
-import { cn } from "@baseblocks/ui/lib/utils";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { useQuery } from "convex/react";
 import type { OpenEditorDocument } from "@openeditor/core";
@@ -41,15 +27,12 @@ import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useEffect, useMemo, useState } from "react";
 
-type ResolvedPageStructure = PageStructure & {
-  openEditorDocument?: OpenEditorDocument;
-  migratedAt?: number;
-};
+type ResolvedPageContent = { document: OpenEditorDocument };
 
 interface PublicPageContentProps {
   pageId: string;
   initialPage?: { title: string };
-  initialStructure?: ResolvedPageStructure;
+  initialStructure?: ResolvedPageContent;
   pageTitles?: ReadonlyMap<string, string>;
   nested?: boolean;
 }
@@ -59,112 +42,6 @@ const publicPagePanelSurfaceClassName =
 
 const hiddenSplitHandleClassName =
   "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
-
-function PublishedSection({ section }: { section: SectionData }) {
-  const columns = section.columns.slice().sort((a, b) => a.order - b.order);
-
-  return (
-    <section
-      className={cn(
-        "grid min-w-0 gap-6",
-        columns.length > 1 && "md:grid-cols-2",
-      )}
-    >
-      {columns.map((column) => {
-        const blocks = column.blocks.slice().sort((a, b) => a.order - b.order);
-        return (
-          <div key={column.id} className="min-w-0 space-y-3">
-            {blocks.map((block) => (
-              <div
-                key={block.id}
-                className="prose prose-neutral dark:prose-invert max-w-none"
-              >
-                <SectionContextProvider
-                  region={section.region}
-                  sectionId={section.id}
-                >
-                  <ElementRenderer
-                    id={block.id}
-                    type={block.type as ElementType}
-                    content={block.content as AnyContent}
-                  />
-                </SectionContextProvider>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </section>
-  );
-}
-
-function _PublicMainContent({
-  pageTitle,
-  pageTabs,
-  activeTabId,
-  structure,
-  onTabChange,
-}: {
-  pageTitle: string;
-  pageTabs: Array<{ id: string; label: string }>;
-  activeTabId: string | null;
-  structure: PageStructure;
-  onTabChange: (tabId: string) => void;
-}) {
-  const hasTabs = pageTabs.length > 0;
-  const sections = structure.sections
-    .filter((section) => !hasTabs || section.tabId === activeTabId)
-    .sort((a, b) => a.order - b.order);
-  const mainSections = sections.filter((section) => section.region === "main");
-  const asideSections = sections.filter(
-    (section) => section.region === "aside",
-  );
-
-  return (
-    <div className="p-4 md:p-8">
-      <article
-        className={cn(
-          "mx-auto",
-          asideSections.length > 0 ? "max-w-6xl" : "max-w-4xl",
-        )}
-      >
-        <h1 className="mb-8 text-3xl font-bold">{pageTitle}</h1>
-        {hasTabs && (
-          <div className="mb-8 flex justify-center">
-            <Tabs value={activeTabId ?? undefined} onValueChange={onTabChange}>
-              <TabsList>
-                {pageTabs.map((tab) => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="px-4">
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        )}
-        <div
-          className={cn(
-            "grid gap-8",
-            asideSections.length > 0 && "lg:grid-cols-[minmax(0,1fr)_18rem]",
-          )}
-        >
-          <div className="min-w-0 space-y-8">
-            {mainSections.map((section) => (
-              <PublishedSection key={section.id} section={section} />
-            ))}
-          </div>
-          {asideSections.length > 0 && (
-            <aside className="min-w-0 space-y-6">
-              {asideSections.map((section) => (
-                <PublishedSection key={section.id} section={section} />
-              ))}
-            </aside>
-          )}
-        </div>
-      </article>
-    </div>
-  );
-}
 
 export function PublicPageContent({
   pageId,
@@ -191,18 +68,7 @@ export function PublicPageContent({
   const isMobile = useIsMobile();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const actions = useSiteRenderActions();
-  const openEditorDocument = useMemo(() => {
-    if (!structure) return null;
-    const converted = convertLegacyPageToOpenEditor(structure, {
-      pageTitles,
-    }).document;
-    return shouldRefreshLegacyTabbedDocument(
-      structure.tabs.length,
-      structure.openEditorDocument,
-    )
-      ? converted
-      : (structure.openEditorDocument ?? converted);
-  }, [pageTitles, structure]);
+  const openEditorDocument = structure?.document;
   const pageRuntime = useMemo<OpenEditorPageRuntime>(
     () => ({
       resolvePage: async (targetPageId) => ({
@@ -254,14 +120,14 @@ export function PublicPageContent({
               <OpenEditorTabbedPage
                 document={openEditorDocument}
                 editable={false}
-                extensions={editorV2Extensions}
+                extensions={openEditorExtensions}
                 pageRuntime={pageRuntime}
               />
             ) : (
               <OpenEditorViewer
                 className="oe-viewer"
                 document={openEditorDocument}
-                extensions={editorV2Extensions}
+                extensions={openEditorExtensions}
                 pageRuntime={pageRuntime}
               />
             )}

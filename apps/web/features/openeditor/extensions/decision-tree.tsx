@@ -41,9 +41,8 @@ import {
   removeDecisionTreeNodesFromPath,
   resolveDecisionTreeEditor,
 } from "@/components/site-elements/elements/decision-tree/editor-model";
-import { migrationPlaceholderExtension } from "./migration-placeholder";
-
-const nestedDocumentExtensions = [migrationPlaceholderExtension] as const;
+const nestedDocumentExtensions = [] as const;
+const nestedDocumentExporters = {};
 
 type TreeNode = {
   id: string;
@@ -486,7 +485,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
         readValue(node.attrs?.decisionTree)
           .trees.map(
             (tree) =>
-              `<section data-baseblocks-decision-tree><h2>${escapeHtml(tree.label)}</h2><ul>${tree.nodes.map((item) => `<li><strong>${escapeHtml(item.name)}</strong>${toHtml(item.document, migrationPlaceholderExtension.exporters)}</li>`).join("")}</ul></section>`,
+              `<section data-baseblocks-decision-tree><h2>${escapeHtml(tree.label)}</h2><ul>${tree.nodes.map((item) => `<li><strong>${escapeHtml(item.name)}</strong>${toHtml(item.document, nestedDocumentExporters)}</li>`).join("")}</ul></section>`,
           )
           .join(""),
     },
@@ -498,10 +497,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
             ...tree.nodes.map((item) =>
               [
                 `${"  ".repeat(item.parentId ? 1 : 0)}${item.name}`,
-                toPlainText(
-                  item.document,
-                  migrationPlaceholderExtension.exporters,
-                ),
+                toPlainText(item.document, nestedDocumentExporters),
               ]
                 .filter(Boolean)
                 .join("\n"),

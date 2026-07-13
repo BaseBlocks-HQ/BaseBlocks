@@ -11,9 +11,7 @@ export default async function UnauthLayout({ children }: PropsWithChildren) {
   const token = await getToken();
   if (token) {
     const { team } = await getViewerState();
-    redirect(
-      team ? getTeamDashboardPath(team.slug) : "/onboarding",
-    );
+    redirect(team ? getTeamDashboardPath(team.slug) : "/onboarding");
   }
   const messages = await getMessages();
   return (

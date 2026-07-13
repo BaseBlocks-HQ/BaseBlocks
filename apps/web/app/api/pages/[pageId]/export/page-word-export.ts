@@ -3,20 +3,7 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 export type PageExportFormat = "docx";
 
 interface SerializablePageStructure {
-  sections: Array<{
-    id: string;
-    order: number;
-    columns: Array<{
-      id: string;
-      order: number;
-      blocks: Array<{
-        id: string;
-        order: number;
-        type: string;
-        content: unknown;
-      }>;
-    }>;
-  }>;
+  document: unknown;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -66,61 +53,10 @@ function extractNestedText(value: unknown): string {
     extractNestedText(record.content),
     extractNestedText(record.children),
     extractNestedText(record.document),
+    extractNestedText(record.attrs),
   ]
     .filter(Boolean)
     .join(" ");
-}
-
-function extractDirectoryText(content: UnknownRecord): string[] {
-  const columns = Array.isArray(content.columns)
-    ? content.columns
-        .map((column) => asRecord(column))
-        .filter((column): column is UnknownRecord => column !== null)
-    : [];
-
-  const rows = Array.isArray(content.rows)
-    ? content.rows
-        .map((row) => asRecord(row))
-        .filter((row): row is UnknownRecord => row !== null)
-    : [];
-
-  return rows
-    .map((row) => {
-      const cells = asRecord(row.cells) ?? {};
-      return columns
-        .map((column) => {
-          const columnId = readString(column.id);
-          return normalizeText(readString(cells[columnId]));
-        })
-        .filter(Boolean)
-        .join(" - ");
-    })
-    .filter(Boolean);
-}
-
-function extractBlockText(type: string, content: unknown): string[] {
-  const record = asRecord(content);
-  if (!record) {
-    return [];
-  }
-
-  if (type === "divider" || type === "spacer") {
-    return [];
-  }
-
-  if (type === "directory") {
-    return extractDirectoryText(record);
-  }
-
-  if (type === "richtext") {
-    return splitLines(extractNestedText(record.document));
-  }
-
-  if (type === "page") {
-    return splitLines(readString(record.title));
-  }
-
-  return splitLines(extractNestedText(record));
 }
 
 export function buildPageExportText(args: {
@@ -128,20 +64,7 @@ export function buildPageExportText(args: {
   structure: SerializablePageStructure;
 }) {
   const title = normalizeText(args.pageTitle) || "Untitled page";
-  const lines: string[] = [];
-
-  const sections = [...args.structure.sections].sort(
-    (a, b) => a.order - b.order,
-  );
-  for (const section of sections) {
-    const columns = [...section.columns].sort((a, b) => a.order - b.order);
-    for (const column of columns) {
-      const blocks = [...column.blocks].sort((a, b) => a.order - b.order);
-      for (const block of blocks) {
-        lines.push(...extractBlockText(block.type, block.content));
-      }
-    }
-  }
+  const lines = splitLines(extractNestedText(args.structure.document));
 
   return { title, lines };
 }

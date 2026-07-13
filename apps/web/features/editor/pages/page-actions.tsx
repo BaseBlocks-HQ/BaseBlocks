@@ -1,7 +1,7 @@
 "use client";
 
 import { generateSlug } from "@baseblocks/domain";
-import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
+import { useEditorSite } from "@/features/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
@@ -78,7 +78,6 @@ export function PageActionsMenu({
   const [targetPageId, setTargetPageId] = useState("");
 
   const { isAdmin } = useEditorSite();
-  const { selection } = useEditorUi();
   const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
@@ -106,17 +105,7 @@ export function PageActionsMenu({
   const handleSetExposure = async (
     nextExposure: "navigation" | "block" | "both",
   ) => {
-    const selectedColumnId =
-      selection?.kind === "column"
-        ? selection.id
-        : selection?.kind === "block"
-          ? selection.columnId
-          : null;
-
-    if (
-      (nextExposure === "block" || nextExposure === "both") &&
-      !selectedColumnId
-    ) {
+    if (nextExposure === "block" || nextExposure === "both") {
       setPendingExposure(nextExposure);
       setTargetPageId("");
       setExposureDialogOpen(true);
@@ -126,7 +115,6 @@ export function PageActionsMenu({
     await setExposure({
       pageId: page._id as Id<"pages">,
       exposure: nextExposure,
-      targetColumnId: selectedColumnId ?? undefined,
     });
   };
 

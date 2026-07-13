@@ -3,7 +3,10 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
 import { getAuthOrganizationBySlug } from "./authComponent/model";
 import { buildPageTree } from "./pages";
-import { hydrateDeepBlockContent } from "./pageContent";
+import {
+  emptyOpenEditorDocument,
+  parseOpenEditorDocument,
+} from "./openEditorDocuments";
 import { getAccessiblePublishedPages } from "./sharing";
 
 function resolvePage(
@@ -32,24 +35,14 @@ function resolvePage(
 }
 
 async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
-  const [legacy, native] = await Promise.all([
-    ctx.db
-      .query("pageContents")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .unique(),
-    ctx.db
-      .query("openEditorPageContents")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .unique(),
-  ]);
+  const content = await ctx.db
+    .query("openEditorPageContents")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .unique();
   return {
-    tabs: legacy?.tabs ?? [],
-    sections: legacy ? hydrateDeepBlockContent(legacy.sections) : [],
-    openEditorDocument:
-      typeof native?.document === "string"
-        ? JSON.parse(native.document)
-        : native?.document,
-    migratedAt: native?.migratedAt,
+    document: content
+      ? parseOpenEditorDocument(content.document)
+      : emptyOpenEditorDocument(),
   };
 }
 
@@ -98,7 +91,7 @@ export const resolve = query({
         : "missing";
     const content = page
       ? await pageContent(ctx, page._id)
-      : { tabs: [], sections: [] };
+      : { document: emptyOpenEditorDocument() };
     return {
       organization: {
         id: organization._id,
@@ -147,20 +140,12 @@ export const resolve = query({
         site.updatedAt,
         page?.updatedAt ?? 0,
         page
-          ? Math.max(
-              (
-                await ctx.db
-                  .query("pageContents")
-                  .withIndex("by_page", (q) => q.eq("pageId", page._id))
-                  .unique()
-              )?.updatedAt ?? 0,
-              (
-                await ctx.db
-                  .query("openEditorPageContents")
-                  .withIndex("by_page", (q) => q.eq("pageId", page._id))
-                  .unique()
-              )?.updatedAt ?? 0,
-            )
+          ? ((
+              await ctx.db
+                .query("openEditorPageContents")
+                .withIndex("by_page", (q) => q.eq("pageId", page._id))
+                .unique()
+            )?.updatedAt ?? 0)
           : 0,
       ),
     };

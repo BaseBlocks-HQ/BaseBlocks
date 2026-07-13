@@ -25,9 +25,7 @@ export default async function Page() {
 
   if (token) {
     const { team } = await getViewerState();
-    authenticatedHref = team
-      ? getTeamDashboardPath(team.slug)
-      : "/onboarding";
+    authenticatedHref = team ? getTeamDashboardPath(team.slug) : "/onboarding";
   }
 
   return <LandingPage authenticatedHref={authenticatedHref} />;

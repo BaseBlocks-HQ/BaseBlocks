@@ -6,104 +6,12 @@ import { isOrganizationMember } from "./permissions";
 import { normalizeDocumentSearchMetadata } from "./documents";
 import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIdsForPageIds } from "./sites";
-
-/**
- * Extract plain text from BlockNote document format for search indexing
- */
-export function extractBlockNoteText(blocks: unknown[] | undefined): string {
-  if (!blocks || !Array.isArray(blocks)) return "";
-
-  const extractText = (node: unknown): string => {
-    if (!node || typeof node !== "object") return "";
-
-    const obj = node as Record<string, unknown>;
-    let text = "";
-
-    // Extract direct text content
-    if (typeof obj.text === "string") {
-      text += `${obj.text} `;
-    }
-
-    // Handle BlockNote inline content (text with styles)
-    if (Array.isArray(obj.content)) {
-      for (const child of obj.content) {
-        if (typeof child === "string") {
-          text += `${child} `;
-        } else if (typeof child === "object" && child !== null) {
-          const childObj = child as Record<string, unknown>;
-          if (typeof childObj.text === "string") {
-            text += `${childObj.text} `;
-          }
-          // Recursively extract from nested content
-          text += extractText(child);
-        }
-      }
-    }
-
-    // Recursively extract from children array (nested blocks)
-    if (Array.isArray(obj.children)) {
-      for (const child of obj.children) {
-        text += extractText(child);
-      }
-    }
-
-    return text;
-  };
-
-  return blocks.map(extractText).join(" ").replace(/\s+/g, " ").trim();
-}
+import {
+  extractOpenEditorText,
+  parseOpenEditorDocument,
+} from "./openEditorDocuments";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
-
-/**
- * Extract searchable text from a page's blocks.
- */
-export function extractTextFromBlocks(
-  blocks: Array<{ type: string; content: unknown }>,
-): string {
-  const parts: string[] = [];
-
-  for (const block of blocks) {
-    if (!block.content || typeof block.content !== "object") continue;
-    const c = block.content as Record<string, unknown>;
-
-    switch (block.type) {
-      case "richtext":
-        if (Array.isArray(c.document)) {
-          parts.push(extractBlockNoteText(c.document));
-        }
-        break;
-      case "heading":
-      case "paragraph":
-        if (typeof c.text === "string") parts.push(c.text);
-        break;
-      case "callout":
-        if (typeof c.title === "string") parts.push(c.title);
-        if (typeof c.text === "string") parts.push(c.text);
-        break;
-      case "code":
-        if (typeof c.code === "string") parts.push(c.code);
-        break;
-      case "quicklinks":
-        if (Array.isArray(c.links)) {
-          for (const link of c.links) {
-            if (typeof link?.title === "string") parts.push(link.title);
-            if (typeof link?.description === "string")
-              parts.push(link.description);
-          }
-        }
-        break;
-      default:
-        // For other block types, try extracting common text fields
-        if (typeof c.text === "string") parts.push(c.text);
-        if (typeof c.title === "string") parts.push(c.title);
-        if (typeof c.description === "string") parts.push(c.description);
-        break;
-    }
-  }
-
-  return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-}
 
 /**
  * Index or update a page's searchable content.
@@ -119,15 +27,13 @@ export async function indexPageContent(
   if (!page) return;
 
   const content = await ctx.db
-    .query("pageContents")
+    .query("openEditorPageContents")
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .unique();
 
-  const blocks =
-    content?.sections.flatMap((section) =>
-      section.columns.flatMap((column) => column.blocks),
-    ) ?? [];
-  const extractedText = extractTextFromBlocks(blocks);
+  const extractedText = content
+    ? extractOpenEditorText(parseOpenEditorDocument(content.document))
+    : "";
 
   const combinedText = `${page.title} ${extractedText}`.trim();
   if (!combinedText) return;

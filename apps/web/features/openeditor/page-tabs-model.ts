@@ -69,15 +69,3 @@ export function updateOpenEditorPageTabs(
     content: [node, ...document.content.slice(1)],
   };
 }
-
-export function shouldRefreshLegacyTabbedDocument(
-  legacyTabCount: number,
-  document: OpenEditorDocument | undefined,
-) {
-  if (legacyTabCount === 0 || !document) return false;
-  if (readOpenEditorPageTabs(document)) return false;
-  return (
-    document.meta?.source === "baseblocks-legacy-converter" &&
-    (document.meta.schemaVersion ?? 0) < 2
-  );
-}

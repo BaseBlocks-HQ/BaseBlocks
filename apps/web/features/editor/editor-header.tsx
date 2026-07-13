@@ -11,15 +11,6 @@ import { Badge } from "@baseblocks/ui/badge";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@baseblocks/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -45,8 +36,7 @@ import {
   Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
-import { IconMagicWandSparkle, IconWindow2 } from "nucleo-glass";
+import { IconWindow2 } from "nucleo-glass";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { EditorSiteSwitcher } from "./editor-site-switcher";
@@ -57,7 +47,6 @@ import type {
 } from "./publishing/share-dialog";
 
 interface EditorHeaderProps {
-  engine?: "openeditor" | "legacy";
   isPreviewing?: boolean;
   inFlow?: boolean;
   teamSlug: string;
@@ -73,7 +62,6 @@ interface EditorHeaderProps {
 }
 
 export function EditorHeader({
-  engine = "openeditor",
   isPreviewing = false,
   inFlow = false,
   teamSlug,
@@ -109,7 +97,6 @@ export function EditorHeader({
           <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
           <div className="relative flex h-14 min-w-0 items-center gap-2 px-3 sm:px-4">
             <EditorHeaderIdentity
-              engine={engine}
               siteId={siteId}
               siteLogoUrl={siteLogoUrl}
               siteName={siteName}
@@ -119,14 +106,12 @@ export function EditorHeader({
             />
             <EditorHeaderActions
               canEdit={canEdit}
-              engine={engine}
               isPreviewing={isPreviewing}
               onOpenShare={() => setShareDialogOpen(true)}
               onPublish={onPublish}
               onTogglePreview={onTogglePreview}
               onUnpublish={onUnpublish}
               saveStatus={saveStatus}
-              siteId={siteId}
               sitePublished={sitePublished}
               siteSlug={siteSlug}
               teamSlug={teamSlug}
@@ -150,7 +135,6 @@ export function EditorHeader({
 }
 
 function EditorHeaderIdentity({
-  engine,
   siteId,
   siteLogoUrl,
   siteName,
@@ -158,7 +142,6 @@ function EditorHeaderIdentity({
   siteSlug,
   teamSlug,
 }: {
-  engine: "openeditor" | "legacy";
   siteId: string;
   siteLogoUrl?: string;
   siteName: string;
@@ -167,13 +150,6 @@ function EditorHeaderIdentity({
   teamSlug: string;
 }) {
   const t = useTranslations("editor.header");
-  const searchParams = useSearchParams();
-  const selectedPageId = searchParams.get("page");
-  const legacyPath = `/dashboard/${teamSlug}/sites/${siteId}/legacy`;
-  const legacyHref = selectedPageId
-    ? `${legacyPath}?page=${selectedPageId}`
-    : legacyPath;
-
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
       <Tooltip>
@@ -198,129 +174,37 @@ function EditorHeaderIdentity({
           teamSlug={teamSlug}
         />
       </div>
-
-      {engine === "openeditor" ? (
-        <NewEditorAnnouncement legacyHref={legacyHref} />
-      ) : null}
     </div>
-  );
-}
-
-function NewEditorAnnouncement({ legacyHref }: { legacyHref: string }) {
-  const t = useTranslations("editor.header");
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          className="size-8 gap-1.5 rounded-full border-violet-500/20 bg-violet-500/8 px-0 text-violet-700 hover:bg-violet-500/14 hover:text-violet-800 @2xl/header:h-8 @2xl/header:w-auto @2xl/header:px-3 dark:text-violet-300 dark:hover:text-violet-200"
-          size="sm"
-          variant="outline"
-        >
-          <IconMagicWandSparkle className="size-3.5" />
-          <span className="sr-only @2xl/header:not-sr-only">
-            {t("newEditor")}
-          </span>
-          <Badge
-            className="hidden h-4 rounded-full px-1.5 text-[9px] uppercase tracking-wide @2xl/header:inline-flex"
-            variant="secondary"
-          >
-            {t("beta")}
-          </Badge>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:right-4 [&_[data-slot='dialog-close']]:top-4">
-        <div className="px-5 pt-5">
-          <DialogHeader className="gap-2 text-left">
-            <div className="flex items-center justify-start gap-2 text-left">
-              <IconMagicWandSparkle className="size-5 shrink-0 text-violet-700 dark:text-violet-300" />
-              <DialogTitle className="text-lg">
-                {t("newEditorDialogTitle")}
-              </DialogTitle>
-              <Badge className="rounded-full text-[10px] uppercase tracking-wide">
-                {t("beta")}
-              </Badge>
-            </div>
-            <DialogDescription className="text-left text-sm leading-relaxed text-sidebar-foreground/60">
-              {t("newEditorDialogDescription")}
-            </DialogDescription>
-          </DialogHeader>
-        </div>
-        <div className="space-y-3 px-5 text-left text-sm leading-relaxed text-sidebar-foreground/70">
-          <p>{t("newEditorDialogBetaBody")}</p>
-          <p>{t("newEditorDialogFallbackBody")}</p>
-        </div>
-        <DialogFooter className="px-5 pb-5 pt-1">
-          <Button asChild className="rounded-full" variant="outline">
-            <Link href={legacyHref}>{t("openLegacyEditor")}</Link>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
 function EditorHeaderActions({
   canEdit,
-  engine,
   isPreviewing,
   onOpenShare,
   onPublish,
   onTogglePreview,
   onUnpublish,
   saveStatus,
-  siteId,
   sitePublished,
   siteSlug,
   teamSlug,
 }: {
   canEdit: boolean;
-  engine: "openeditor" | "legacy";
   isPreviewing: boolean;
   onOpenShare: () => void;
   onPublish: () => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
   saveStatus: SaveStatus;
-  siteId: string;
   sitePublished: boolean;
   siteSlug: string;
   teamSlug: string;
 }) {
   const t = useTranslations("editor.header");
-  const searchParams = useSearchParams();
-  const selectedPageId = searchParams.get("page");
-  const targetEngine = engine === "legacy" ? "openeditor" : "legacy";
-  const enginePath =
-    targetEngine === "legacy"
-      ? `/dashboard/${teamSlug}/sites/${siteId}/legacy`
-      : `/dashboard/${teamSlug}/sites/${siteId}`;
-  const engineHref = selectedPageId
-    ? `${enginePath}?page=${selectedPageId}`
-    : enginePath;
-  const engineLabel =
-    targetEngine === "legacy" ? t("legacyEditor") : t("newEditor");
-
   return (
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-      <HeaderAction tooltip={engineLabel}>
-        <Button
-          asChild
-          className={headerActionClassName}
-          size="sm"
-          variant="ghost"
-        >
-          <Link href={engineHref}>
-            {targetEngine === "legacy" ? (
-              <PencilLine />
-            ) : (
-              <IconMagicWandSparkle />
-            )}
-            <HeaderActionLabel>{engineLabel}</HeaderActionLabel>
-          </Link>
-        </Button>
-      </HeaderAction>
-
-      {engine === "openeditor" && onTogglePreview ? (
+      {onTogglePreview ? (
         <HeaderAction tooltip={isPreviewing ? t("edit") : t("preview")}>
           <Button
             aria-pressed={isPreviewing}

@@ -103,7 +103,7 @@ baseblocks/
 │       │   ├── authentication/   # Session and workspace access
 │       │   ├── dashboard/        # Sites, members, and workspace shell
 │       │   ├── editor/           # Editor chrome, sidebar, pages, and settings
-│       │   ├── editor-v2/        # OpenEditor integration and extensions
+│       │   ├── openeditor/       # OpenEditor integration and extensions
 │       │   ├── libraries/        # Document-library management
 │       │   ├── marketing/        # Website, docs, and legal content
 │       │   └── published-sites/  # Public rendering, metadata, and access
@@ -134,7 +134,7 @@ bun run check-types  # Run workspace TypeScript checks
 Run the editor conversion tests directly with:
 
 ```bash
-bun test apps/web/features/editor-v2/conversion
+bun test apps/web/features/openeditor
 ```
 
 ## Storage

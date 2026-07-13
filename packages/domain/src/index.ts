@@ -13,58 +13,19 @@ export {
   publicPageAccessPolicy,
 } from "./access/page-access";
 
-export {
-  createBlockDraft,
-  createEmptyPageStructure,
-} from "./content/page-structure";
-export type {
-  BlockData,
-  ColumnData,
-  PageStructure,
-  PageTab,
-  SectionData,
-  SectionPreset,
-  SectionRegion,
-} from "./content/page-structure";
+export type { SaveStatus } from "./content/elements";
 
 export type {
-  ElementType,
-  ContentTypeMap,
-  ContentFor,
-  AnyContent,
-  TypedElementData,
-  SaveStatus,
-} from "./content/elements";
-
-export type {
-  HeadingContent,
-  ParagraphContent,
-  CalloutContent,
-  CodeContent,
-  DividerContent,
-  SpacerContent,
-  FileContent,
-  RichTextContent,
-  PageContent,
   DirectoryColumnType,
   DirectoryColumn,
   DirectoryRow,
   DirectorySettings,
   DirectoryContent,
-  FlowchartDiagram,
-  TabsDisplayMode,
-  FlowchartContent,
-  DecisionTreeNode,
-  DecisionTree,
-  DecisionTreeContent,
   SearchContent,
   LibraryContent,
   QuicklinkType,
   QuicklinkItem,
-  QuicklinksContent,
-  ImageContent,
 } from "./content/elements";
-export { DEFAULT_ELEMENT_CONTENT } from "./content/elements";
 
 export type { UploadPurpose } from "./files/storage";
 export {

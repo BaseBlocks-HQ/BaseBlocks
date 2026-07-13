@@ -1,31 +1,21 @@
 import type { GenericMutationCtx } from "convex/server";
 import type { DataModel, Id } from "./_generated/dataModel";
+import { emptyOpenEditorDocument } from "./openEditorDocuments";
 
 type DatabaseContext = Pick<GenericMutationCtx<DataModel>, "db">;
-
-const stableId = () => crypto.randomUUID();
 
 export async function createDefaultPageStructure(
   ctx: DatabaseContext,
   args: { siteId: Id<"sites">; pageId: Id<"pages">; now?: number },
 ) {
   const now = args.now ?? Date.now();
-  const firstColumnId = stableId();
-  await ctx.db.insert("pageContents", {
+  await ctx.db.insert("openEditorPageContents", {
     siteId: args.siteId,
     pageId: args.pageId,
-    tabs: [],
-    sections: [
-      {
-        id: stableId(),
-        region: "main",
-        order: 0,
-        columns: [{ id: firstColumnId, order: 0, blocks: [] }],
-      },
-    ],
+    document: JSON.stringify(emptyOpenEditorDocument()),
+    migratedAt: now,
     updatedAt: now,
   });
-  return firstColumnId;
 }
 
 export async function deletePageStructure(
@@ -33,15 +23,10 @@ export async function deletePageStructure(
   pageId: Id<"pages">,
 ) {
   const content = await ctx.db
-    .query("pageContents")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  if (content) await ctx.db.delete("pageContents", content._id);
-  const nativeContent = await ctx.db
     .query("openEditorPageContents")
     .withIndex("by_page", (q) => q.eq("pageId", pageId))
     .unique();
-  if (nativeContent) {
-    await ctx.db.delete("openEditorPageContents", nativeContent._id);
+  if (content) {
+    await ctx.db.delete("openEditorPageContents", content._id);
   }
 }

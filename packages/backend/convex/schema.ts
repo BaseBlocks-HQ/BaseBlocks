@@ -1,6 +1,5 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { pageSectionValidator, pageTabValidator } from "./pageContent";
 import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
 
@@ -106,18 +105,7 @@ export default defineSchema({
     .index("by_parent", ["siteId", "parentId"])
     .index("by_slug", ["siteId", "slug"]),
 
-  pageContents: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    tabs: v.array(pageTabValidator),
-    sections: v.array(pageSectionValidator),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"]),
-
-  // Native content lives separately so retaining a full legacy snapshot cannot
-  // push a pageContents document over Convex's per-document size limit.
+  // OpenEditor documents are serialized to stay below Convex's nesting limit.
   openEditorPageContents: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),

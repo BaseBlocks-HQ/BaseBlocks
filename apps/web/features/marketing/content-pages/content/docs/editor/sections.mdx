@@ -1,31 +1,19 @@
 ---
-title: Sections
-description: How legacy section layouts are represented during the new-editor transition.
+title: Columns and tabs
+description: Structure page content with document-native columns and tabs.
 icon: Window2
 ---
 
-Sections, main and aside regions, tabs, and column slots belong to the Legacy Editor's page model. The new editor uses one ordered document and supports columns as document nodes.
+Pages use one ordered block document. Add columns when content should sit side by side, and add page tabs when readers need to switch between related views.
 
-<Callout type="info">
-  When a legacy page opens in the new editor, sections are converted in order, two-column sections become column nodes, and aside content is placed inline. Legacy tabs are flattened into document order. Use **Legacy Editor** when you need to inspect the original layout during the beta.
-</Callout>
+## Columns
 
-## Section types
+Insert a columns block from the `/` menu, then add and reorder content inside each column. Columns stack vertically on smaller screens so the page remains readable.
 
-| Type | Columns | Region |
-|---|---:|---|
-| One column | 1 | Main content |
-| Two columns | 2 | Main content |
-| Aside | 1 | Right-side content |
+## Page tabs
 
-Spacing is a block, not a special structural row.
+Use the tabs command to wrap the current document in a tabbed page. Each tab contains its own block document and can be renamed, reordered, added, or removed.
 
-## Editing sections
+## Spacing
 
-These controls remain available only in the Legacy Editor. The new editor hides the Sections and Blocks sidebar tools; use its slash menu and document controls instead.
-
-Select a column before choosing a block from the sidebar. Blocks can be reordered within a column or dragged directly into another column.
-
-## Mobile behavior
-
-Two-column sections collapse to one column on smaller screens. Aside sections render after the main content.
+Use normal paragraphs and document spacing instead of empty layout rows. This keeps page structure predictable across editing, viewing, and export.
