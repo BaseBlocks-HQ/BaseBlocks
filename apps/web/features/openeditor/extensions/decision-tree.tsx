@@ -37,7 +37,9 @@ function NestedEditor({
     onChange,
     extensions: nestedDocumentExtensions,
   });
-  return <OpenEditorContent className="min-h-40" controller={controller} />;
+  return (
+    <OpenEditorContent className="oe-canvas min-h-40" controller={controller} />
+  );
 }
 
 function DecisionTreeNode({

@@ -152,7 +152,7 @@ export function useRegisterEditorBlockPicker(
   const registerBlockPicker = useEffectEvent(register);
 
   useEffect(() => {
-    if (!enabled || !controller.editor) return;
+    if (!enabled || !controller.ready) return;
     return registerBlockPicker(readBlockPickerItems());
-  }, [controller.editor, enabled]);
+  }, [controller.ready, enabled]);
 }

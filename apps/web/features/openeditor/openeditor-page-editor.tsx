@@ -49,6 +49,7 @@ import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
 import {
   createOpenEditorPageTabs,
+  deleteOpenEditorTextRange,
   readOpenEditorPageTabs,
 } from "./page-tabs-model";
 
@@ -324,13 +325,12 @@ function OpenEditorDocumentEditor({
       keywords: ["tabs", "sections", "organize"],
       order: baseBlocksSlashMenuOrder.tabs,
       execute: ({ controller: current, range }) => {
-        if (!current.editor) return false;
-        current.editor.chain().focus().deleteRange(range).run();
+        if (!current.ready) return false;
         if (saveTimer.current) clearTimeout(saveTimer.current);
         pendingDocument.current = null;
         const revision = ++saveRevision.current;
         const document = createOpenEditorPageTabs(
-          current.getContent(),
+          deleteOpenEditorTextRange(current.getContent(), range),
           crypto.randomUUID(),
         );
         void persist(document, revision);
@@ -389,7 +389,7 @@ function OpenEditorDocumentEditor({
           />
         ) : (
           <OpenEditorContent
-            className="oe-editor-surface min-w-0 [&_.oe-prosemirror]:w-full [&_.oe-prosemirror]:min-w-0"
+            className="oe-canvas min-w-0"
             controller={controller}
           />
         )}
