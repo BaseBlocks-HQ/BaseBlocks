@@ -178,12 +178,14 @@
 [data-site-customized] {
   --accent: var(--site-accent-light-bg, oklch(0.97 0 0));
   --accent-foreground: var(--site-accent-light-fg, oklch(0.205 0 0));
+  --card: oklch(0.97 0 0);
 }
 
 /* Site customization dark mode overrides */
 /* Fallback values are the .dark theme defaults to avoid circular var() references */
 [data-site-customized].dark,
 .dark [data-site-customized] {
+  --card: oklch(0.205 0 0);
   --primary: var(--site-primary-dark, oklch(0.922 0 0));
   --primary-foreground: var(--site-primary-foreground-dark, oklch(0.205 0 0));
   --site-header-bg: var(--site-header-bg-dark);
