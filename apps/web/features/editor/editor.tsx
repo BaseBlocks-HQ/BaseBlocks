@@ -302,7 +302,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
 
   if (isMobile && !showPagePanel) {
     return (
-      <SidebarProvider defaultOpen={false} className="w-full bg-background">
+      <SidebarProvider open className="w-full bg-background">
         <EditorSidebar
           engine={engine}
           site={site}
@@ -345,10 +345,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   }
 
   return (
-    <SidebarProvider
-      defaultOpen
-      className="h-screen overflow-hidden bg-background"
-    >
+    <SidebarProvider open className="h-screen overflow-hidden bg-background">
       <EditorSidebar
         engine={engine}
         site={site}

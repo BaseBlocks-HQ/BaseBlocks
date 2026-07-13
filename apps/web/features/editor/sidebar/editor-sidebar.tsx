@@ -95,7 +95,7 @@ function EditorSidebarContents({
 }: EditorSidebarProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
-  const { state, setOpen, setOpenMobile, isMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
   const [activeTool, setActiveTool] = useState<EditorTool>("pages");
   const { isExpanded, setExpanded, toggleExpand } = usePageExpandState(
     EXPANDED_PAGES_KEY,
@@ -107,13 +107,8 @@ function EditorSidebarContents({
     .sort((left, right) => left.order - right.order);
 
   const selectTool = (tool: EditorTool) => {
-    if (activeTool === tool && state === "expanded" && !isMobile) {
-      setOpen(false);
-      return;
-    }
     setActiveTool(tool);
     if (isMobile) setOpenMobile(true);
-    else setOpen(true);
   };
 
   const selectPage = (pageId: string) => {
