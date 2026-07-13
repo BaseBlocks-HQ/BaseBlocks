@@ -84,6 +84,7 @@ export const create = mutation({
       name,
       slug: slug.toLowerCase(),
       isPublished: false,
+      visibility: "private",
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -313,22 +314,6 @@ export const remove = mutation({
       .collect();
     for (const page of pages) {
       await ctx.db.delete(page._id);
-    }
-
-    const accessCodes = await ctx.db
-      .query("siteAccessCodes")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const code of accessCodes) {
-      await ctx.db.delete(code._id);
-    }
-
-    const accessSessions = await ctx.db
-      .query("siteAccessSessions")
-      .withIndex("by_site_token", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const session of accessSessions) {
-      await ctx.db.delete(session._id);
     }
 
     await ctx.db.delete(siteId);

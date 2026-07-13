@@ -39,28 +39,18 @@ export async function deleteFileRows(
   ctx: MutationCtx,
   file: Doc<"files">,
 ): Promise<void> {
-  const searchEntries = await Promise.all([
-    ctx.db
-      .query("searchEntries")
-      .withIndex("by_source", (q) =>
-        q.eq("kind", "file").eq("sourceId", file._id),
-      )
-      .first(),
-    ctx.db
-      .query("searchEntries")
-      .withIndex("by_source", (q) =>
-        q.eq("kind", "document").eq("sourceId", file._id),
-      )
-      .first(),
-  ]);
-  for (const entry of searchEntries) {
-    if (entry) await ctx.db.delete(entry._id);
-  }
+  const searchEntry = await ctx.db
+    .query("searchEntries")
+    .withIndex("by_source", (q) =>
+      q.eq("kind", "file").eq("sourceId", file._id),
+    )
+    .first();
+  if (searchEntry) await ctx.db.delete(searchEntry._id);
   await ctx.db.delete(file._id);
 }
 
 function isUploadedFile(file: Doc<"files">) {
-  return file.kind === "file" || file.kind === "document";
+  return file.kind === "file";
 }
 
 function mapFile(file: Doc<"files">) {
@@ -76,7 +66,7 @@ async function isReferencedFile(ctx: QueryCtx, file: Doc<"files">) {
     .query("pageReferences")
     .withIndex("by_site", (q) => q.eq("siteId", file.siteId))
     .collect();
-  return references.some((reference) => reference.fileIds?.includes(file._id));
+  return references.some((reference) => reference.fileIds.includes(file._id));
 }
 
 export const canUploadToSite = query({
@@ -289,9 +279,7 @@ export const rename = mutation({
     const entry = await ctx.db
       .query("searchEntries")
       .withIndex("by_source", (q) =>
-        q
-          .eq("kind", file.kind === "document" ? "document" : "file")
-          .eq("sourceId", fileId),
+        q.eq("kind", "file").eq("sourceId", fileId),
       )
       .first();
     if (entry) {

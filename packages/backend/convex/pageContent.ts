@@ -50,7 +50,6 @@ async function indexPageReferences(
       const normalized = ctx.db.normalizeId("files", id);
       return normalized ? [normalized] : [];
     }),
-    documentIds: [],
     updatedAt,
   };
   const existing = await ctx.db

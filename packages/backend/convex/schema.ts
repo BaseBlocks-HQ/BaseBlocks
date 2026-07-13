@@ -15,16 +15,7 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    visibility: v.optional(
-      v.union(
-        v.literal("private"),
-        v.literal("public"),
-        v.literal("link-only"),
-        v.literal("password"),
-      ),
-    ),
-    accessCodeRotationHours: v.optional(v.number()),
-    accessCodeSessionDays: v.optional(v.number()),
+    visibility: v.union(v.literal("private"), v.literal("public")),
     settings: siteSettings,
   })
     .index("by_organization", ["organizationId"])
@@ -45,22 +36,6 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_hostname", ["hostname"]),
 
-  siteAccessCodes: defineTable({
-    siteId: v.id("sites"),
-    code: v.string(),
-    expiresAt: v.number(),
-    createdAt: v.number(),
-    failedAttempts: v.optional(v.number()),
-    lockedUntil: v.optional(v.number()),
-  }).index("by_site", ["siteId"]),
-
-  siteAccessSessions: defineTable({
-    siteId: v.id("sites"),
-    sessionToken: v.string(),
-    verifiedAt: v.number(),
-    expiresAt: v.number(),
-  }).index("by_site_token", ["siteId", "sessionToken"]),
-
   pages: defineTable({
     siteId: v.id("sites"),
     parentId: v.optional(v.id("pages")),
@@ -77,15 +52,6 @@ export default defineSchema({
     .index("by_parent_order", ["siteId", "parentId", "order"])
     .index("by_slug", ["siteId", "slug"]),
 
-  openEditorPageContents: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    document: v.string(),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"]),
-
   pageContents: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
@@ -99,8 +65,7 @@ export default defineSchema({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
     libraryIds: v.array(v.id("documentLibraries")),
-    fileIds: v.optional(v.array(v.id("files"))),
-    documentIds: v.optional(v.array(v.id("documents"))),
+    fileIds: v.array(v.id("files")),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -126,11 +91,7 @@ export default defineSchema({
 
   files: defineTable({
     siteId: v.id("sites"),
-    kind: v.union(
-      v.literal("file"),
-      v.literal("siteAsset"),
-      v.literal("document"),
-    ),
+    kind: v.union(v.literal("file"), v.literal("siteAsset")),
     visibility: v.union(v.literal("public"), v.literal("private")),
     objectKey: v.string(),
     filename: v.optional(v.string()),
@@ -147,23 +108,9 @@ export default defineSchema({
     .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"]),
 
-  documents: defineTable({
-    siteId: v.id("sites"),
-    libraryId: v.optional(v.id("documentLibraries")),
-    folderId: v.optional(v.id("documentFolders")),
-    fileId: v.id("files"),
-    filename: v.string(),
-    contentType: v.string(),
-    size: v.number(),
-    uploadedBy: v.string(),
-    createdAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_folder", ["libraryId", "folderId"]),
-
   searchEntries: defineTable({
     siteId: v.id("sites"),
-    kind: v.union(v.literal("file"), v.literal("page"), v.literal("document")),
+    kind: v.union(v.literal("file"), v.literal("page")),
     sourceId: v.string(),
     title: v.string(),
     text: v.string(),

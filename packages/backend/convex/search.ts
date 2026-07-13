@@ -149,10 +149,7 @@ function contentTypeMatches(
   doc: Doc<"searchEntries">,
   contentTypes?: Array<"file" | "page">,
 ) {
-  return (
-    doc.kind !== "document" &&
-    (!contentTypes?.length || contentTypes.includes(doc.kind))
-  );
+  return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
 export const searchAll = query({

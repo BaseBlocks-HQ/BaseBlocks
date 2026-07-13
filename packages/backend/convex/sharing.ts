@@ -6,16 +6,8 @@ import { requireOrganizationPermission } from "./permissions";
 
 type QueryCtx = GenericQueryCtx<DataModel>;
 
-function normalizeVisibility(
-  visibility: Doc<"sites">["visibility"],
-): "public" | "private" {
-  return visibility === "public" || visibility === "link-only"
-    ? "public"
-    : "private";
-}
-
 export function canAccessPublishedSite(site: Doc<"sites">): boolean {
-  return site.isPublished && normalizeVisibility(site.visibility) === "public";
+  return site.isPublished && site.visibility === "public";
 }
 
 export async function getAccessiblePublishedPages(
@@ -38,7 +30,7 @@ export const getSettings = query({
       resource: "site",
       action: "manage",
     });
-    return { visibility: normalizeVisibility(site.visibility) };
+    return { visibility: site.visibility };
   },
 });
 
@@ -55,16 +47,6 @@ export const updateVisibility = mutation({
       action: "manage",
     });
     await ctx.db.patch(siteId, { visibility, updatedAt: Date.now() });
-    const codes = await ctx.db
-      .query("siteAccessCodes")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const code of codes) await ctx.db.delete(code._id);
-    const sessions = await ctx.db
-      .query("siteAccessSessions")
-      .withIndex("by_site_token", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const session of sessions) await ctx.db.delete(session._id);
     return siteId;
   },
 });
