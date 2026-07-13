@@ -15,17 +15,13 @@ import type { Id } from "@baseblocks/backend";
 import type { PageListItem, SectionPreset } from "@baseblocks/domain";
 import type { ElementType } from "@baseblocks/domain/elements";
 import { cn } from "@baseblocks/ui/lib/utils";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@baseblocks/ui/sidebar";
-import { Check, PanelTop } from "lucide-react";
+import { Button } from "@baseblocks/ui/button";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import { Popover, PopoverAnchor, PopoverContent } from "@baseblocks/ui/popover";
+import { SidebarMenu } from "@baseblocks/ui/sidebar";
+import { Check, PanelLeftClose, PanelLeftOpen, PanelTop } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   IconFile,
@@ -34,7 +30,7 @@ import {
   IconSquareGrid2,
 } from "nucleo-glass";
 
-interface EditorSidebarProps {
+interface EditorToolDockProps {
   engine?: "openeditor" | "legacy";
   site: { _id: string; defaultPageId?: string };
   pages: PageListItem[];
@@ -70,19 +66,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
 ];
 const sectionPresets = new Set(["single", "columns", "aside"]);
 
-export function EditorSidebar(props: EditorSidebarProps) {
-  return (
-    <Sidebar
-      variant="floating"
-      collapsible="icon"
-      className="z-30 [&_[data-slot=sidebar-inner]]:border-0 [&_[data-slot=sidebar-inner]]:shadow-none"
-    >
-      <EditorSidebarContents {...props} />
-    </Sidebar>
-  );
-}
-
-function EditorSidebarContents({
+export function EditorToolDock({
   engine = "openeditor",
   site,
   pages,
@@ -92,11 +76,15 @@ function EditorSidebarContents({
   onAddSection,
   onAddBlock,
   onEnableTabs,
-}: EditorSidebarProps) {
+}: EditorToolDockProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
-  const { setOpenMobile, isMobile } = useSidebar();
+  const isHorizontal = useIsMobile();
+  const [expanded, setDockExpanded] = useState(false);
   const [activeTool, setActiveTool] = useState<EditorTool>("pages");
+  const [hoveredTool, setHoveredTool] = useState<EditorTool | null>(null);
+  const [pinnedTool, setPinnedTool] = useState<EditorTool | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isExpanded, setExpanded, toggleExpand } = usePageExpandState(
     EXPANDED_PAGES_KEY,
     site._id,
@@ -108,13 +96,46 @@ function EditorSidebarContents({
 
   const selectTool = (tool: EditorTool) => {
     setActiveTool(tool);
-    if (isMobile) setOpenMobile(true);
   };
+
+  const clearCloseTimer = () => {
+    if (!closeTimer.current) return;
+    clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+
+  const previewTool = (tool: EditorTool) => {
+    if (expanded || pinnedTool) return;
+    clearCloseTimer();
+    setHoveredTool(tool);
+  };
+
+  const schedulePreviewClose = () => {
+    if (expanded || pinnedTool) return;
+    clearCloseTimer();
+    closeTimer.current = setTimeout(() => {
+      setHoveredTool(null);
+      closeTimer.current = null;
+    }, 120);
+  };
+
+  const pinTool = (tool: EditorTool) => {
+    clearCloseTimer();
+    selectTool(tool);
+    setHoveredTool(null);
+    setPinnedTool((current) => (current === tool ? null : tool));
+  };
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   const selectPage = (pageId: string) => {
     clearSelection();
     onSelectPage(pageId);
-    if (isMobile) setOpenMobile(false);
   };
 
   const selectElement = (type: string) => {
@@ -122,54 +143,128 @@ function EditorSidebarContents({
     else onAddBlock?.(type as ElementType);
   };
 
-  return (
-    <div className="flex h-full min-h-0">
-      <nav className="w-12 shrink-0 p-2">
-        <SidebarMenu className="gap-0.5">
-          {TOOLS.filter(
-            (tool) =>
-              engine === "legacy" ||
-              (tool.id !== "sections" && tool.id !== "blocks"),
-          ).map((tool) => {
-            const disabled =
-              (!canEdit && tool.id !== "pages") ||
-              (tool.id === "blocks" && !selectedColumnId);
-            return (
-              <SidebarMenuItem key={tool.id}>
-                <SidebarMenuButton
-                  aria-label={tool.label}
-                  className="size-8 justify-center rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
-                  disabled={disabled}
-                  isActive={activeTool === tool.id}
-                  onClick={() => selectTool(tool.id)}
-                  tooltip={tool.label}
-                >
-                  {tool.icon}
-                  <span className="sr-only">{tool.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </nav>
+  const availableTools = TOOLS.filter(
+    (tool) =>
+      engine === "legacy" || (tool.id !== "sections" && tool.id !== "blocks"),
+  );
+  const openTool = pinnedTool ?? hoveredTool;
 
-      <SidebarContent className="group-data-[collapsible=icon]:hidden">
-        <ToolPanel
-          activeTool={activeTool}
-          canEdit={canEdit}
-          isExpanded={isExpanded}
-          navPages={navPages}
-          onEnableTabs={onEnableTabs}
-          onSelectElement={selectElement}
-          onSelectPage={selectPage}
-          rootPages={rootPages}
-          selectedPageId={selectedPageId}
-          setExpanded={setExpanded}
-          site={site}
-          toggleExpand={toggleExpand}
-        />
-      </SidebarContent>
-    </div>
+  const panel = (tool: EditorTool) => (
+    <ToolPanel
+      activeTool={tool}
+      canEdit={canEdit}
+      isExpanded={isExpanded}
+      navPages={navPages}
+      onEnableTabs={onEnableTabs}
+      onSelectElement={selectElement}
+      onSelectPage={selectPage}
+      rootPages={rootPages}
+      selectedPageId={selectedPageId}
+      setExpanded={setExpanded}
+      site={site}
+      toggleExpand={toggleExpand}
+    />
+  );
+
+  return (
+    <aside
+      className={cn(
+        "pointer-events-auto fixed z-30",
+        expanded
+          ? "inset-x-3 bottom-3 md:inset-x-auto md:left-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
+          : "bottom-3 left-1/2 -translate-x-1/2 md:bottom-auto md:left-4 md:top-1/2 md:translate-x-0 md:-translate-y-1/2",
+      )}
+      aria-label="Editor tools"
+    >
+      <Popover
+        open={!expanded && openTool !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setPinnedTool(null);
+          setHoveredTool(null);
+        }}
+      >
+        <PopoverAnchor asChild>
+          <div
+            className={cn(
+              "flex overflow-hidden rounded-2xl bg-sidebar/95 text-sidebar-foreground shadow-xl backdrop-blur-md",
+              expanded && "max-h-[min(78vh,42rem)] flex-col md:flex-row",
+            )}
+          >
+            <nav className="flex shrink-0 flex-row gap-0.5 p-1 md:flex-col">
+              {availableTools.map((tool) => {
+                const disabled =
+                  (!canEdit && tool.id !== "pages") ||
+                  (tool.id === "blocks" && !selectedColumnId);
+
+                return (
+                  <div key={tool.id}>
+                    <Button
+                      aria-label={tool.label}
+                      aria-pressed={activeTool === tool.id}
+                      className={cn(
+                        "size-8 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-4",
+                        (expanded
+                          ? activeTool === tool.id
+                          : openTool === tool.id) &&
+                          "bg-primary/10 text-primary",
+                      )}
+                      disabled={disabled}
+                      onClick={() =>
+                        expanded ? selectTool(tool.id) : pinTool(tool.id)
+                      }
+                      onFocus={() => previewTool(tool.id)}
+                      onMouseEnter={() => previewTool(tool.id)}
+                      onMouseLeave={schedulePreviewClose}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      {tool.icon}
+                    </Button>
+                  </div>
+                );
+              })}
+
+              <Button
+                aria-label={
+                  expanded ? "Collapse tool dock" : "Expand tool dock"
+                }
+                className="size-8 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-4"
+                onClick={() => {
+                  clearCloseTimer();
+                  setPinnedTool(null);
+                  setHoveredTool(null);
+                  setDockExpanded((current) => !current);
+                }}
+                size="icon"
+                variant="ghost"
+              >
+                {expanded ? <PanelLeftClose /> : <PanelLeftOpen />}
+              </Button>
+            </nav>
+
+            {expanded ? (
+              <div className="min-h-0 w-full overflow-y-auto md:w-80">
+                {panel(activeTool)}
+              </div>
+            ) : null}
+          </div>
+        </PopoverAnchor>
+
+        {!expanded && openTool ? (
+          <PopoverContent
+            align={isHorizontal ? "center" : "start"}
+            className="max-h-[min(70vh,40rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[1.5rem] border-0 bg-sidebar/95 p-0 text-sidebar-foreground shadow-2xl backdrop-blur-md md:max-h-[min(calc(50vh+2rem),40rem)]"
+            onMouseEnter={clearCloseTimer}
+            onMouseLeave={schedulePreviewClose}
+            side={isHorizontal ? "top" : "right"}
+            sideOffset={12}
+          >
+            {panel(openTool)}
+          </PopoverContent>
+        ) : null}
+      </Popover>
+    </aside>
   );
 }
 

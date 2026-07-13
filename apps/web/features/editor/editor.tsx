@@ -22,7 +22,6 @@ import {
   ResizablePanelGroup,
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { SidebarProvider, SidebarTrigger } from "@baseblocks/ui/sidebar";
 import { useMutation, useQuery } from "convex/react";
 import { nanoid } from "nanoid";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +29,7 @@ import { Suspense, useEffect, useState } from "react";
 import { PageEditor } from "@/features/editor/page/page-editor";
 import { OpenEditorPageEditor } from "@/features/editor-v2/openeditor-page-editor";
 import { toast } from "sonner";
-import { EditorSidebar } from "./sidebar/editor-sidebar";
+import { EditorToolDock } from "./tool-dock/editor-tool-dock";
 import { EditorHeader } from "./editor-header";
 
 const pagePanelSurfaceClassName =
@@ -287,7 +286,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   );
 
   const editorCanvas = (
-    <div className="h-full min-h-0 overflow-auto">
+    <div className="h-full min-h-0 overflow-auto md:pl-14 lg:pl-0">
       <div
         className={
           showPagePanel
@@ -302,8 +301,8 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
 
   if (isMobile && !showPagePanel) {
     return (
-      <SidebarProvider open className="w-full bg-background">
-        <EditorSidebar
+      <div className="w-full bg-background">
+        <EditorToolDock
           engine={engine}
           site={site}
           pages={pages}
@@ -334,19 +333,17 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
             onTogglePreview={() => setIsPreviewing((current) => !current)}
             onUnpublish={handleUnpublish}
           />
-          <SidebarTrigger className="fixed bottom-4 left-4 z-40 size-10 rounded-full border bg-background shadow-lg md:hidden" />
-
           <PortalContainerProvider value={portalContainer ?? undefined}>
             <div className="overflow-visible p-4 pb-20">{pageEditor}</div>
           </PortalContainerProvider>
         </main>
-      </SidebarProvider>
+      </div>
     );
   }
 
   return (
-    <SidebarProvider open className="h-screen overflow-hidden bg-background">
-      <EditorSidebar
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      <EditorToolDock
         engine={engine}
         site={site}
         pages={pages}
@@ -385,7 +382,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
                   <div
                     className={cn(
                       "h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
-                      isFullscreen && !isMobile && "pl-2 md:pl-3 lg:pl-4",
+                      isFullscreen && !isMobile && "pl-2 md:pl-14 lg:pl-4",
                     )}
                   >
                     <section className={pagePanelSurfaceClassName}>
@@ -431,7 +428,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           </div>
         </PortalContainerProvider>
       </main>
-    </SidebarProvider>
+    </div>
   );
 }
 
