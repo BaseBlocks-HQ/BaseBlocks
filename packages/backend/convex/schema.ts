@@ -110,7 +110,6 @@ export default defineSchema({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
     document: v.any(),
-    migratedAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])

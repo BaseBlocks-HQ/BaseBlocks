@@ -6,6 +6,7 @@ import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
   parseOpenEditorDocument,
+  visitOpenEditorNodes,
 } from "./openEditorDocuments";
 import { getAccessiblePublishedPages } from "./sharing";
 
@@ -44,6 +45,24 @@ async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
       ? parseOpenEditorDocument(content.document)
       : emptyOpenEditorDocument(),
   };
+}
+
+function collectReferencedPageIcons(document: unknown) {
+  const icons = new Map<string, string>();
+  visitOpenEditorNodes(document, (node) => {
+    if (node.type !== "page") return;
+    const pageId = node.attrs?.pageId;
+    const icon = node.attrs?.icon;
+    if (
+      typeof pageId === "string" &&
+      typeof icon === "string" &&
+      icon &&
+      !icons.has(pageId)
+    ) {
+      icons.set(pageId, icon);
+    }
+  });
+  return icons;
 }
 
 export const resolve = query({
@@ -92,6 +111,7 @@ export const resolve = query({
     const content = page
       ? await pageContent(ctx, page._id)
       : { document: emptyOpenEditorDocument() };
+    const referencedPageIcons = collectReferencedPageIcons(content.document);
     return {
       organization: {
         id: organization._id,
@@ -113,10 +133,19 @@ export const resolve = query({
             _id: page._id,
             title: page.title,
             slug: page.slug,
+            icon: page.icon,
+            parentId: page.parentId,
             updatedAt: page.updatedAt,
           }
         : null,
       pageContent: content,
+      pages: accessiblePages.map((item) => ({
+        _id: item._id,
+        title: item.title,
+        slug: item.slug,
+        icon: referencedPageIcons.get(item._id) ?? item.icon,
+        parentId: item.parentId,
+      })),
       navigation: buildPageTree(
         accessiblePages
           .filter((item) => item.showInNavigation !== false)

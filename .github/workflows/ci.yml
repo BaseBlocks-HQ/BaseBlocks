@@ -14,6 +14,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  statuses: write
 
 jobs:
   react-doctor:
@@ -26,8 +27,7 @@ jobs:
 
       - uses: millionco/react-doctor@main
         with:
-          diff: ${{ github.event_name == 'pull_request' && 'main' || github.event.before }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-status: true
 
   lint:
     name: Lint

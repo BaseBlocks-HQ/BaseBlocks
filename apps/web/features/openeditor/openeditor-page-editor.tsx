@@ -112,6 +112,9 @@ export function OpenEditorPageEditor({
       renamePage: async (targetPageId, title) => {
         await updatePage({ pageId: targetPageId as Id<"pages">, title });
       },
+      updatePageIcon: async (targetPageId, icon) => {
+        await updatePage({ pageId: targetPageId as Id<"pages">, icon });
+      },
       openPage: ({ pageId: targetPageId }) => openPage(targetPageId),
     }),
     [createPage, openPage, pageId, pages, siteId, updatePage],

@@ -2,7 +2,6 @@
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
-import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
 import type { Id } from "@baseblocks/backend";
@@ -31,35 +30,37 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo } from "react";
 import { IconFile } from "nucleo-glass";
 import { PublicPageContent } from "./page-content";
+import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
+import { WordLogoIcon } from "./word-logo-icon";
 
 interface PublicSiteShellProps {
   result: PublishedPageResult;
 }
 
-function collectPageTitles(
-  pages: readonly PageWithChildren[],
-  target = new Map<string, string>(),
-) {
-  for (const page of pages) {
-    target.set(page._id, page.title);
-    collectPageTitles(page.children, target);
-  }
-  return target;
-}
-
 export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const { navigation: pages, organization: team, page, site } = result;
-  const pagePanel = usePagePanelState();
+  const router = useRouter();
+  const pageTargets = useMemo(
+    () => buildPublishedPageTargets(result.pages),
+    [result.pages],
+  );
+  const openPage = useCallback(
+    (pageId: string) => {
+      const target = pageTargets.get(pageId);
+      if (target) router.push(getPageLink(site.slug, target.path));
+    },
+    [pageTargets, router, site.slug],
+  );
 
   if (!page) return null;
 
   const currentPath =
     result.canonicalUrlInputs.pagePath.join("/") || page.slug || "";
-  const pageTitles = collectPageTitles(pages ?? []);
 
   return (
     <SiteRenderActionsProvider
@@ -67,7 +68,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
         siteId: site._id,
         siteSlug: site.slug,
         teamSlug: team.slug,
-        openPage: pagePanel.openPage,
+        openPage,
         publicSearch: true,
         fileDeepLinks: true,
       }}
@@ -82,14 +83,18 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
           siteSlug={site.slug}
         />
 
-        <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background">
-          <PublicSiteHeader site={site} onOpenPage={pagePanel.openPage} />
+        <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background [--bb-header-height:3.5rem]">
+          <PublicSiteHeader
+            onOpenPage={openPage}
+            pageId={page.parentId ? page._id : undefined}
+            site={site}
+          />
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <PublicPageContent
               pageId={page._id as Id<"pages">}
               initialPage={page}
               initialStructure={result.pageContent}
-              pageTitles={pageTitles}
+              pageTargets={pageTargets}
             />
           </div>
         </SidebarInset>
@@ -100,19 +105,37 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
 
 function PublicSiteHeader({
   onOpenPage,
+  pageId,
   site,
 }: {
   site: PublishedPageResult["site"];
+  pageId?: string;
   onOpenPage: (pageId: string, options?: { searchTerm?: string }) => void;
 }) {
   return (
-    <header className="absolute inset-x-0 top-0 z-40 [--bb-header-height:3.5rem]">
+    <header className="absolute inset-x-0 top-0 z-40">
       <div className="relative isolate">
         <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
         <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 dark:from-background/86 dark:via-background/52 dark:to-background/12" />
         <div className="relative flex h-14 items-center gap-3 px-4">
           <SidebarTrigger />
           <div className="ml-auto flex items-center gap-3">
+            {pageId ? (
+              <Button
+                aria-label="Export as Word"
+                onClick={() =>
+                  window.location.assign(
+                    `/api/pages/${pageId}/export?format=docx`,
+                  )
+                }
+                size="sm"
+                title="Export as Word"
+                variant="ghost"
+              >
+                <WordLogoIcon className="size-4" />
+                <span className="hidden sm:inline">Export Word</span>
+              </Button>
+            ) : null}
             {site.settings.showHeaderSearch === true ? (
               <SearchBox
                 siteId={site._id}

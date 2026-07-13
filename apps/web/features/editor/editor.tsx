@@ -2,33 +2,20 @@
 
 import { cn } from "@baseblocks/ui/lib/utils";
 import { EditorProvider } from "@/features/editor/editor-state";
-import { PublicPagePanel } from "@/features/published-sites/page-panel";
-import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { toast } from "sonner";
 import { EditorToolDock } from "./tool-dock/editor-tool-dock";
 import { EditorHeader } from "./editor-header";
-
-const pagePanelSurfaceClassName =
-  "flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-[0_1px_2px_hsl(var(--foreground)/0.04),0_18px_40px_hsl(var(--foreground)/0.08)] backdrop-blur-xl";
-
-const hiddenSplitHandleClassName =
-  "relative z-20 -mr-1 !w-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 after:absolute after:inset-y-0 after:left-1/2 after:block after:w-3 after:-translate-x-1/2 after:bg-transparent";
 
 function buildEditorPath(
   pathname: string,
@@ -57,30 +44,9 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedPageId = searchParams.get("page");
-  const { viewingPage, closePage } = usePagePanelState();
-
-  // Fullscreen state for page panel
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isToolDockExpanded, setIsToolDockExpanded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-
-  const showPagePanel = viewingPage !== null;
-
-  // ESC key to close page panel
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (viewingPage) {
-          closePage();
-          setIsFullscreen(false);
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [viewingPage, closePage]);
 
   const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
@@ -163,19 +129,11 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
         isToolDockExpanded ? "md:pl-0" : "md:pl-14",
       )}
     >
-      <div
-        className={
-          showPagePanel
-            ? "pr-2 pb-6 pt-18 md:pr-2 md:pb-8 md:pt-18 lg:pr-2"
-            : "p-4 pt-18 md:p-8 md:pt-18"
-        }
-      >
-        {pageEditor}
-      </div>
+      <div className="p-4 pt-18 md:p-8 md:pt-18">{pageEditor}</div>
     </div>
   );
 
-  if (isMobile && !showPagePanel) {
+  if (isMobile) {
     return (
       <div className="w-full bg-background">
         <EditorToolDock
@@ -249,59 +207,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
               isToolDockExpanded && "md:ml-[18.5rem] lg:ml-[24.25rem]",
             )}
           >
-            {showPagePanel ? (
-              isFullscreen || isMobile ? (
-                <div className="h-full min-h-0 min-w-0">
-                  <div
-                    className={cn(
-                      "h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
-                      isFullscreen &&
-                        !isMobile &&
-                        (isToolDockExpanded
-                          ? "pl-2 md:pl-3 lg:pl-4"
-                          : "pl-2 md:pl-14 lg:pl-4"),
-                    )}
-                  >
-                    <section className={pagePanelSurfaceClassName}>
-                      <PublicPagePanel
-                        isFullscreen={isFullscreen}
-                        onToggleFullscreen={() =>
-                          setIsFullscreen(!isFullscreen)
-                        }
-                      />
-                    </section>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full min-h-0 min-w-0">
-                  <ResizablePanelGroup
-                    className="h-full min-h-0 min-w-0"
-                    orientation="horizontal"
-                  >
-                    <ResizablePanel defaultSize={60} minSize={30}>
-                      <div className="h-full min-h-0 min-w-0 overflow-hidden pr-2 md:pr-2 lg:pr-2">
-                        {editorCanvas}
-                      </div>
-                    </ResizablePanel>
-                    <ResizableHandle className={hiddenSplitHandleClassName} />
-                    <ResizablePanel defaultSize={40} minSize={30}>
-                      <div className="h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4">
-                        <section className={pagePanelSurfaceClassName}>
-                          <PublicPagePanel
-                            isFullscreen={isFullscreen}
-                            onToggleFullscreen={() =>
-                              setIsFullscreen(!isFullscreen)
-                            }
-                          />
-                        </section>
-                      </div>
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
-                </div>
-              )
-            ) : (
-              editorCanvas
-            )}
+            {editorCanvas}
           </div>
         </PortalContainerProvider>
       </main>

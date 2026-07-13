@@ -93,7 +93,6 @@ export const save = mutation({
         siteId: page.siteId,
         pageId,
         document: serializedDocument,
-        migratedAt: updatedAt,
         updatedAt,
       });
     }

@@ -13,7 +13,6 @@ export async function createDefaultPageStructure(
     siteId: args.siteId,
     pageId: args.pageId,
     document: JSON.stringify(emptyOpenEditorDocument()),
-    migratedAt: now,
     updatedAt: now,
   });
 }
