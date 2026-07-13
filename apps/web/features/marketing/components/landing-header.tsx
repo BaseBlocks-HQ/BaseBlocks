@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
-import { Github } from "lucide-react";
+import { GitFork } from "lucide-react";
 import Image from "next/image";
 
 type TranslateFn = (key: string) => string;
@@ -72,7 +72,7 @@ export function LandingHeader({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Github className="h-4 w-4 shrink-0" />
+                  <GitFork className="h-4 w-4 shrink-0" />
                   <span className="max-sm:sr-only">GitHub</span>
                 </a>
               </Button>

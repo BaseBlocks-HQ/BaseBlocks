@@ -9,4 +9,6 @@ if (!convexUrl) {
 }
 
 // Single shared Convex client instance
-export const convex = new ConvexReactClient(convexUrl);
+export const convex = new ConvexReactClient(convexUrl, {
+  initialAuthTokenReuse: true,
+});

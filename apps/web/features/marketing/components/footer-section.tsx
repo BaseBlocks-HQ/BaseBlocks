@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Earth, Github, Moon, Sun } from "lucide-react";
+import { Earth, GitFork, Moon, Sun } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -75,7 +75,7 @@ export function FooterSection({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <Github className="h-3.5 w-3.5" />
+                  <GitFork className="h-3.5 w-3.5" />
                   GitHub
                 </a>
               </div>

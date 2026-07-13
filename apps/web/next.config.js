@@ -77,6 +77,10 @@ const nextConfig = {
   serverExternalPackages: [],
   poweredByHeader: false,
   reactCompiler: true,
+  typescript: {
+    // CI and the build script run TypeScript 7 before Next. See docs/maintenance/typescript-7-nextjs.md.
+    ignoreBuildErrors: true,
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 85, 100],

@@ -16,7 +16,7 @@ export const resolve = query({
       .query("siteDomains")
       .withIndex("by_hostname", (q) => q.eq("hostname", hostname))
       .unique();
-    if (!mapping || mapping.status !== "verified") return null;
+    if (mapping?.status !== "verified") return null;
 
     const site = await ctx.db.get(mapping.siteId);
     if (!site?.isPublished) return null;

@@ -45,7 +45,7 @@ export const getPublicAsset = query({
     const normalizedFileId = ctx.db.normalizeId("files", fileId);
     if (!normalizedFileId) return null;
     const asset = await ctx.db.get(normalizedFileId);
-    if (!asset || asset.visibility !== "public") {
+    if (asset?.visibility !== "public") {
       return null;
     }
 

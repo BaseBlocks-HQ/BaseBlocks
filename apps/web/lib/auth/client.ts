@@ -5,11 +5,10 @@ import {
   baseBlocksAccessControl,
   baseBlocksRoles,
 } from "@baseblocks/backend/auth-permissions";
-import type { BetterAuthClientOptions } from "better-auth/client";
 import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-const authClientOptions = {
+export const authClient = createAuthClient({
   plugins: [
     organizationClient({
       ac: baseBlocksAccessControl,
@@ -17,6 +16,4 @@ const authClientOptions = {
     }),
     convexClient(),
   ],
-} satisfies BetterAuthClientOptions;
-
-export const authClient = createAuthClient(authClientOptions);
+});
