@@ -85,7 +85,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
 
   return (
     <>
-      <article className="group relative flex min-h-[7.5rem] flex-col justify-between gap-4 rounded-xl border bg-card p-4 transition-shadow duration-150 hover:shadow-sm">
+      <article className="group relative flex min-h-[7.5rem] flex-col justify-between gap-4 rounded-xl bg-card p-4 transition-shadow duration-150 hover:shadow-sm">
         <Link
           aria-label={openEditorLabel}
           className="absolute inset-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

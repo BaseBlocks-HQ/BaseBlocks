@@ -99,8 +99,8 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
               )}
 
               <Button
-                variant="outline"
-                className="h-11 w-full bg-background"
+                variant="secondary"
+                className="h-11 w-full rounded-full"
                 onClick={() => handleSocialSignIn("github")}
                 disabled={activeProvider !== null}
               >
@@ -117,8 +117,8 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
               </Button>
 
               <Button
-                variant="outline"
-                className="h-11 w-full bg-background"
+                variant="secondary"
+                className="h-11 w-full rounded-full"
                 onClick={() => handleSocialSignIn("microsoft")}
                 disabled={activeProvider !== null}
               >
@@ -134,8 +134,8 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
               </Button>
 
               <Button
-                variant="outline"
-                className="h-11 w-full bg-background"
+                variant="secondary"
+                className="h-11 w-full rounded-full"
                 onClick={() => handleSocialSignIn("google")}
                 disabled={activeProvider !== null}
               >

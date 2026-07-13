@@ -43,7 +43,7 @@ function HighlightedSnippet({
   return (
     <span className="text-muted-foreground text-xs leading-relaxed">
       {before}
-      <mark className="bg-yellow-200 dark:bg-yellow-800 text-foreground px-0.5 rounded">
+      <mark className="rounded-sm bg-primary/12 px-0.5 text-foreground">
         {match}
       </mark>
       {after}
@@ -216,15 +216,15 @@ export function SearchBox({
 
       {/* Floating dropdown results */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-background text-foreground shadow-lg">
-          <div className="max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-2xl bg-card text-card-foreground shadow-xl ring-1 ring-border/60">
+          <div className="max-h-[400px] overflow-y-auto p-1.5">
             {isSearching ? (
-              <div className="p-4 text-center text-muted-foreground">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                Searching...
+              <div className="flex items-center justify-center gap-2 px-4 py-7 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                <span>Searching...</span>
               </div>
             ) : hasResults && searchResults ? (
-              <div className="divide-y">
+              <div className="space-y-0.5">
                 {searchResults.map((result) => {
                   const isPage = result.contentType === "page";
                   const isContentMatch = result.matchType === "content";
@@ -234,7 +234,7 @@ export function SearchBox({
                     <button
                       type="button"
                       key={result._id}
-                      className="w-full p-3 text-left hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="w-full cursor-pointer rounded-xl p-3 text-left outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50"
                       onClick={() => handleResultClick(result)}
                     >
                       <div className="flex items-center justify-between">
@@ -278,7 +278,7 @@ export function SearchBox({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleResultClick(result);
@@ -291,7 +291,7 @@ export function SearchBox({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDownload(
@@ -322,7 +322,7 @@ export function SearchBox({
                 })}
               </div>
             ) : (
-              <div className="p-4 text-center text-muted-foreground text-sm">
+              <div className="px-4 py-7 text-center text-sm text-muted-foreground">
                 No results found for "{debouncedQuery}"
               </div>
             )}
