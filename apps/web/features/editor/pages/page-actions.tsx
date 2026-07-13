@@ -1,7 +1,6 @@
 "use client";
 
 import { generateSlug } from "@baseblocks/domain";
-import { useEditorSite } from "@/features/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
@@ -17,41 +16,16 @@ import {
 } from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@baseblocks/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Label } from "@baseblocks/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@baseblocks/ui/select";
-import { useMutation, useQuery } from "convex/react";
-import {
-  Check,
-  FilePlus,
-  Lock,
-  MoreHorizontal,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { useMutation } from "convex/react";
+import { FilePlus, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { PageAccessDialog } from "./page-access";
+import { useState } from "react";
 
 interface PageActionsMenuProps {
   page: PageListItem;
@@ -70,53 +44,10 @@ export function PageActionsMenu({
   const tDelete = useTranslations("navigation.deletePage");
   const tCommon = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [accessOpen, setAccessOpen] = useState(false);
-  const [exposureDialogOpen, setExposureDialogOpen] = useState(false);
-  const [pendingExposure, setPendingExposure] = useState<
-    "block" | "both" | null
-  >(null);
-  const [targetPageId, setTargetPageId] = useState("");
-
-  const { isAdmin } = useEditorSite();
-  const pages = useQuery(api.pages.list, {
-    siteId: siteId as Id<"sites">,
-  });
 
   const setDefaultPage = useMutation(api.sites.setDefaultPage);
   const createPage = useMutation(api.pages.create);
   const removePage = useMutation(api.pages.remove);
-  const setExposure = useMutation(api.pages.setExposure);
-
-  const exposure =
-    page.showInNavigation !== false
-      ? page.hasPageBlockReference
-        ? "both"
-        : "navigation"
-      : "block";
-
-  const targetOptions = useMemo(
-    () =>
-      (pages ?? [])
-        .filter((candidate) => candidate._id !== page._id)
-        .sort((a, b) => a.title.localeCompare(b.title)),
-    [page._id, pages],
-  );
-
-  const handleSetExposure = async (
-    nextExposure: "navigation" | "block" | "both",
-  ) => {
-    if (nextExposure === "block" || nextExposure === "both") {
-      setPendingExposure(nextExposure);
-      setTargetPageId("");
-      setExposureDialogOpen(true);
-      return;
-    }
-
-    await setExposure({
-      pageId: page._id as Id<"pages">,
-      exposure: nextExposure,
-    });
-  };
 
   const handleSetDefault = async () => {
     await setDefaultPage({
@@ -143,33 +74,6 @@ export function PageActionsMenu({
     setDeleteOpen(false);
   };
 
-  const handleExposureDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      setPendingExposure(null);
-      setTargetPageId("");
-    }
-    setExposureDialogOpen(open);
-  };
-
-  const handleConfirmExposureTarget = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
-    e.preventDefault();
-
-    if (!pendingExposure || !targetPageId) {
-      toast.error(t("choosePageToast"));
-      return;
-    }
-
-    await setExposure({
-      pageId: page._id as Id<"pages">,
-      exposure: pendingExposure,
-      targetPageId: targetPageId as Id<"pages">,
-    });
-
-    handleExposureDialogOpenChange(false);
-  };
-
   return (
     <>
       <DropdownMenu>
@@ -191,31 +95,6 @@ export function PageActionsMenu({
             {t("addChildPage")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => handleSetExposure("navigation")}>
-            <Check
-              className={
-                exposure === "navigation" ? "h-4 w-4" : "h-4 w-4 opacity-0"
-              }
-            />
-            {t("navigationOnly")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleSetExposure("block")}>
-            <Check
-              className={exposure === "block" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
-            />
-            {t("pageBlockOnly")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleSetExposure("both")}>
-            <Check
-              className={exposure === "both" ? "h-4 w-4" : "h-4 w-4 opacity-0"}
-            />
-            {t("navigationAndBlock")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setAccessOpen(true)}>
-            <Lock className="h-4 w-4" />
-            {t("access")}
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
             <Star className="h-4 w-4" />
             {isDefault ? t("defaultPage") : t("setAsDefault")}
@@ -230,14 +109,6 @@ export function PageActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <PageAccessDialog
-        isAdmin={isAdmin}
-        open={accessOpen}
-        onOpenChange={setAccessOpen}
-        page={page}
-        siteId={siteId}
-      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">
@@ -277,76 +148,6 @@ export function PageActionsMenu({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Dialog
-        open={exposureDialogOpen}
-        onOpenChange={handleExposureDialogOpenChange}
-      >
-        <DialogContent
-          className={
-            "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
-          }
-        >
-          <DialogHeader className={"px-5 pt-4 pb-0"}>
-            <DialogTitle className={"text-base font-semibold"}>
-              {t("chooseBlockPageTitle")}
-            </DialogTitle>
-            <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
-              {t("chooseBlockPageDescription")}
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            noValidate
-            onSubmit={handleConfirmExposureTarget}
-            className={"px-5 pb-3"}
-          >
-            <div className="space-y-2">
-              <Label
-                htmlFor="pageExposureTarget"
-                className={
-                  "mb-0.5 block text-xs font-medium tracking-wide text-sidebar-foreground/55"
-                }
-              >
-                {t("insertIntoPageLabel")}
-              </Label>
-              <Select value={targetPageId} onValueChange={setTargetPageId}>
-                <SelectTrigger
-                  id="pageExposureTarget"
-                  className="rounded-[0.95rem] border-sidebar-border/80 bg-background/70"
-                >
-                  <SelectValue placeholder={t("choosePagePlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {targetOptions.map((candidate) => (
-                    <SelectItem key={candidate._id} value={candidate._id}>
-                      {candidate.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleExposureDialogOpenChange(false)}
-                className={
-                  "h-8 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
-                }
-              >
-                {tCommon("cancel")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={!targetPageId}
-                className={"h-8 rounded-full px-4 text-sm"}
-              >
-                {t("insertBlock")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

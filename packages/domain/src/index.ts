@@ -1,17 +1,5 @@
 export type { PageListItem, PageWithChildren } from "./content/pages";
-export type {
-  PageAccessKind,
-  PageAccessPolicy,
-  SiteAudience,
-} from "./access/page-access";
 export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./sites/slug";
-export {
-  canAccessPagePolicy,
-  isPageRestricted,
-  normalizePageAccessPolicy,
-  pageAccessKinds,
-  publicPageAccessPolicy,
-} from "./access/page-access";
 
 export type { SaveStatus } from "./content/elements";
 

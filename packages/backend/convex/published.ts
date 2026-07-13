@@ -147,17 +147,15 @@ export const resolve = query({
         parentId: item.parentId,
       })),
       navigation: buildPageTree(
-        accessiblePages
-          .filter((item) => item.showInNavigation !== false)
-          .map((item) => ({
-            _id: item._id,
-            siteId: item.siteId,
-            title: item.title,
-            slug: item.slug,
-            icon: item.icon,
-            order: item.order,
-            parentId: item.parentId,
-          })),
+        accessiblePages.map((item) => ({
+          _id: item._id,
+          siteId: item.siteId,
+          title: item.title,
+          slug: item.slug,
+          icon: item.icon,
+          order: item.order,
+          parentId: item.parentId,
+        })),
       ),
       access: { status, visibility: site.visibility ?? "public" },
       canonicalUrlInputs: {

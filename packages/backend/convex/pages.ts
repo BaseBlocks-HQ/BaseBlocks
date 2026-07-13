@@ -12,14 +12,8 @@ import {
   deletePageStructure,
 } from "./pageStructure";
 import {
-  collectOpenEditorAttributeValues,
-  parseOpenEditorDocument,
-  removeOpenEditorNodes,
-} from "./openEditorDocuments";
-import {
   canViewerAccessPublishedPageById,
   getAccessiblePublishedPages,
-  pageAccessPolicyValidator,
 } from "./sharing";
 
 /**
@@ -100,7 +94,6 @@ function projectPublishedPage(page: Doc<"pages">) {
     icon: page.icon,
     order: page.order,
     parentId: page.parentId,
-    showInNavigation: page.showInNavigation,
     updatedAt: page.updatedAt,
   };
 }
@@ -119,26 +112,7 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    const contents = await ctx.db
-      .query("openEditorPageContents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    const referencedPageIds = new Set<string>();
-    for (const content of contents) {
-      for (const pageId of collectOpenEditorAttributeValues(
-        parseOpenEditorDocument(content.document),
-        "page",
-        ["pageId"],
-      )) {
-        referencedPageIds.add(pageId);
-      }
-    }
-
-    return pages.map((page) => ({
-      ...page,
-      hasPageBlockReference: referencedPageIds.has(page._id),
-    }));
+    return pages;
   },
 });
 
@@ -345,9 +319,7 @@ export const listDeployedPaths = query({
     const site = await ctx.db.get(siteId);
     if (!site?.isPublished) return [];
 
-    const publishedPages = (
-      await getAccessiblePublishedPages(ctx, site)
-    ).filter((page) => page.showInNavigation !== false);
+    const publishedPages = await getAccessiblePublishedPages(ctx, site);
 
     const slugMap = new Map(publishedPages.map((p) => [p._id, p.slug]));
     const parentMap = new Map(publishedPages.map((p) => [p._id, p.parentId]));
@@ -372,20 +344,6 @@ export const listDeployedPaths = query({
   },
 });
 
-async function validateAudienceIdsForSite(
-  ctx: Pick<GenericMutationCtx<DataModel>, "db">,
-  siteId: Id<"sites">,
-  audienceIds: Id<"siteAudiences">[],
-): Promise<void> {
-  const uniqueAudienceIds = Array.from(new Set(audienceIds));
-  for (const audienceId of uniqueAudienceIds) {
-    const audience = await ctx.db.get(audienceId);
-    if (!audience || audience.siteId !== siteId) {
-      throw new Error("Invalid audience selection");
-    }
-  }
-}
-
 // Create a new page
 export const create = mutation({
   args: {
@@ -394,12 +352,8 @@ export const create = mutation({
     slug: v.string(),
     parentId: v.optional(v.id("pages")),
     icon: v.optional(v.string()),
-    showInNavigation: v.optional(v.boolean()),
   },
-  handler: async (
-    ctx,
-    { siteId, title, slug, parentId, icon, showInNavigation },
-  ) => {
+  handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
@@ -439,7 +393,6 @@ export const create = mutation({
       parentId,
       icon,
       order: maxOrder + 1,
-      showInNavigation,
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
@@ -451,115 +404,6 @@ export const create = mutation({
   },
 });
 
-export const setExposure = mutation({
-  args: {
-    pageId: v.id("pages"),
-    exposure: v.union(
-      v.literal("navigation"),
-      v.literal("block"),
-      v.literal("both"),
-    ),
-    targetPageId: v.optional(v.id("pages")),
-  },
-  handler: async (ctx, { pageId, exposure, targetPageId }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-
-    const now = Date.now();
-    const contents = await ctx.db
-      .query("openEditorPageContents")
-      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-      .collect();
-
-    const removeReferences = async () => {
-      await Promise.all(
-        contents.map((content) => {
-          const document = parseOpenEditorDocument(content.document);
-          if (
-            !collectOpenEditorAttributeValues(document, "page", ["pageId"]).has(
-              pageId,
-            )
-          ) {
-            return Promise.resolve();
-          }
-          const nextDocument = removeOpenEditorNodes(
-            document,
-            (node) => node.type === "page" && node.attrs?.pageId === pageId,
-          );
-          return ctx.db.patch("openEditorPageContents", content._id, {
-            document: JSON.stringify(nextDocument),
-            updatedAt: now,
-          });
-        }),
-      );
-    };
-
-    const ensureReferenceOnTargetPage = async () => {
-      const resolvedTargetPageId = targetPageId;
-      if (!resolvedTargetPageId || resolvedTargetPageId === pageId) return;
-
-      const targetPage = await ctx.db.get(resolvedTargetPageId);
-      if (!targetPage || targetPage.siteId !== page.siteId) return;
-
-      const content = contents.find(
-        (candidate) => candidate.pageId === resolvedTargetPageId,
-      );
-      if (!content) return;
-      const document = parseOpenEditorDocument(content.document);
-      const existingReference = collectOpenEditorAttributeValues(
-        document,
-        "page",
-        ["pageId"],
-      ).has(pageId);
-
-      if (existingReference) return;
-      document.content.push({
-        type: "page",
-        attrs: { pageId, icon: page.icon ?? "📄", href: null },
-        content: [{ type: "text", text: page.title }],
-      });
-      await ctx.db.patch("openEditorPageContents", content._id, {
-        document: JSON.stringify(document),
-        updatedAt: now,
-      });
-      await ctx.db.patch(resolvedTargetPageId, { updatedAt: now });
-    };
-
-    if (exposure === "navigation") {
-      await removeReferences();
-      await ctx.db.patch(pageId, {
-        showInNavigation: true,
-        updatedAt: now,
-      });
-      return { exposure };
-    }
-
-    if (exposure === "block") {
-      await ensureReferenceOnTargetPage();
-      await ctx.db.patch(pageId, {
-        showInNavigation: false,
-        updatedAt: now,
-      });
-      return { exposure };
-    }
-
-    await ensureReferenceOnTargetPage();
-    await ctx.db.patch(pageId, {
-      showInNavigation: true,
-      updatedAt: now,
-    });
-    return { exposure };
-  },
-});
-
 // Update page
 export const update = mutation({
   args: {
@@ -567,9 +411,8 @@ export const update = mutation({
     title: v.optional(v.string()),
     slug: v.optional(v.string()),
     icon: v.optional(v.string()),
-    showInNavigation: v.optional(v.boolean()),
   },
-  handler: async (ctx, { pageId, title, slug, icon, showInNavigation }) => {
+  handler: async (ctx, { pageId, title, slug, icon }) => {
     const page = await ctx.db.get(pageId);
     if (!page) throw new Error("Page not found");
 
@@ -601,9 +444,6 @@ export const update = mutation({
     if (title !== undefined) updates.title = title;
     if (slug !== undefined) updates.slug = slug.toLowerCase();
     if (icon !== undefined) updates.icon = icon;
-    if (showInNavigation !== undefined) {
-      updates.showInNavigation = showInNavigation;
-    }
 
     await ctx.db.patch(pageId, updates);
 
@@ -611,43 +451,6 @@ export const update = mutation({
     if (title !== undefined) {
       await indexPageContent(ctx, pageId);
     }
-
-    return pageId;
-  },
-});
-
-export const updateAccessPolicy = mutation({
-  args: {
-    pageId: v.id("pages"),
-    accessPolicy: pageAccessPolicyValidator,
-  },
-  handler: async (ctx, { pageId, accessPolicy }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-
-    if (
-      accessPolicy.kind === "audiences" &&
-      accessPolicy.audienceIds.length === 0
-    ) {
-      throw new Error("Choose at least one audience");
-    }
-
-    if (accessPolicy.kind === "audiences") {
-      await validateAudienceIdsForSite(ctx, site._id, accessPolicy.audienceIds);
-    }
-
-    await ctx.db.patch(pageId, {
-      accessPolicy,
-      updatedAt: Date.now(),
-    });
 
     return pageId;
   },

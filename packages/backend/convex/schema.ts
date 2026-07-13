@@ -1,7 +1,14 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { pageAccessPolicyValidator } from "./sharing";
 import { siteSettings } from "./sites";
+
+const legacyPageAccessPolicy = v.union(
+  v.object({ kind: v.literal("public") }),
+  v.object({
+    kind: v.literal("audiences"),
+    audienceIds: v.array(v.id("siteAudiences")),
+  }),
+);
 
 export default defineSchema({
   sites: defineTable({
@@ -96,7 +103,7 @@ export default defineSchema({
     icon: v.optional(v.string()),
     order: v.number(),
     showInNavigation: v.optional(v.boolean()),
-    accessPolicy: v.optional(pageAccessPolicyValidator),
+    accessPolicy: v.optional(legacyPageAccessPolicy),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),

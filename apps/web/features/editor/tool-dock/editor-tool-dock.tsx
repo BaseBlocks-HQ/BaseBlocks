@@ -56,8 +56,7 @@ export function EditorToolDock({
     EXPANDED_PAGES_KEY,
     site._id,
   );
-  const navPages = pages.filter((page) => page.showInNavigation !== false);
-  const rootPages = navPages
+  const rootPages = pages
     .filter((page) => !page.parentId)
     .sort((left, right) => left.order - right.order);
 
@@ -112,7 +111,7 @@ export function EditorToolDock({
       activeTool={tool}
       canEdit={canEdit}
       isExpanded={isExpanded}
-      navPages={navPages}
+      pages={pages}
       onSelectPage={selectPage}
       rootPages={rootPages}
       selectedPageId={selectedPageId}
@@ -221,7 +220,7 @@ export function EditorToolDock({
 function ToolPanel({
   activeTool,
   canEdit,
-  navPages,
+  pages,
   onSelectPage,
   rootPages,
   selectedPageId,
@@ -232,7 +231,7 @@ function ToolPanel({
 }: {
   activeTool: EditorTool;
   canEdit: boolean;
-  navPages: PageListItem[];
+  pages: PageListItem[];
   onSelectPage: (pageId: string) => void;
   rootPages: PageListItem[];
   selectedPageId?: string;
@@ -252,7 +251,7 @@ function ToolPanel({
           {rootPages.length ? (
             <SidebarMenu className="gap-0.5">
               <PageTree
-                allPages={navPages}
+                allPages={pages}
                 defaultPageId={site.defaultPageId}
                 isExpanded={isExpanded}
                 onSelect={onSelectPage}

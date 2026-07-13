@@ -5,13 +5,9 @@ import { InlineRename } from "@/components/tree/inline-rename";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { api, type Id } from "@baseblocks/backend";
 import { useMutation } from "convex/react";
-import {
-  generateSlug,
-  isPageRestricted,
-  type PageListItem,
-} from "@baseblocks/domain";
+import { generateSlug, type PageListItem } from "@baseblocks/domain";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
-import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { PageActionsMenu } from "./page-actions";
@@ -163,8 +159,6 @@ function PageTreeRow({
   const t = useTranslations("navigation.tree");
   const page = item.page;
   const isDefault = defaultPageId === page._id;
-  const isRestricted = isPageRestricted(page.accessPolicy);
-  const isHiddenFromNavigation = page.showInNavigation === false;
 
   return (
     <SidebarMenuItem className="group/page relative w-full min-w-0">
@@ -214,12 +208,6 @@ function PageTreeRow({
                     {page.title}
                   </span>
                 )}
-                {isHiddenFromNavigation ? (
-                  <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                ) : null}
-                {isRestricted ? (
-                  <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                ) : null}
                 {isDefault ? (
                   <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
                     {t("defaultBadge")}

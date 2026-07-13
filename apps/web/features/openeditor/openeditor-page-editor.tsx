@@ -89,7 +89,6 @@ export function OpenEditorPageEditor({
           title,
           icon: icon ?? undefined,
           slug: `${generateSlug(title) || "page"}-${suffix}`,
-          showInNavigation: false,
         });
         return {
           pageId: childPageId,
