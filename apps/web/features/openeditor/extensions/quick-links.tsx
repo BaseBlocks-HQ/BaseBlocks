@@ -103,17 +103,19 @@ function LinkArtwork({ link }: { link: QuicklinkItem }) {
 }
 
 function QuickLinkCard({
-  editable,
   link,
   onEdit,
 }: {
-  editable: boolean;
   link: QuicklinkItem;
-  onEdit?: () => void;
+  onEdit: () => void;
 }) {
-  const href = safeHref(link);
-  const content = (
-    <>
+  return (
+    <button
+      aria-label={`Edit ${link.title || "quick link"}`}
+      className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 text-left transition hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={onEdit}
+      type="button"
+    >
       <LinkArtwork link={link} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold">
@@ -124,32 +126,7 @@ function QuickLinkCard({
         </span>
       </span>
       <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
-    </>
-  );
-
-  if (editable)
-    return (
-      <button
-        aria-label={`Edit ${link.title || "quick link"}`}
-        className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 text-left transition hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        onClick={onEdit}
-        type="button"
-      >
-        {content}
-      </button>
-    );
-
-  if (!href) return null;
-  return (
-    <a
-      className="group flex min-w-0 items-center gap-3 rounded-2xl bg-card p-3 transition hover:-translate-y-0.5 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      href={href}
-      {...(link.linkType === "app" || href.startsWith("/")
-        ? {}
-        : { rel: "noopener noreferrer", target: "_blank" })}
-    >
-      {content}
-    </a>
+    </button>
   );
 }
 
@@ -392,13 +369,11 @@ function QuickLinkForm({
 }
 
 function QuickLinksGrid({
-  editable,
   links,
   onChange,
 }: {
-  editable: boolean;
   links: QuicklinkItem[];
-  onChange?: (links: QuicklinkItem[]) => void;
+  onChange: (links: QuicklinkItem[]) => void;
 }) {
   const [draft, setDraft] = useState<LinkDraft | null>(null);
   const startNew = () =>
@@ -418,7 +393,7 @@ function QuickLinksGrid({
       title: draft.value.title.trim(),
       url: draft.value.url.trim(),
     };
-    onChange?.(
+    onChange(
       draft.originalId
         ? links.map((link) => (link.id === draft.originalId ? value : link))
         : [...links, value],
@@ -426,24 +401,19 @@ function QuickLinksGrid({
     setDraft(null);
   };
 
-  if (!editable && links.every((link) => !safeHref(link))) return null;
-
   return (
     <section className="not-prose my-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
-        {editable ? (
-          <button
-            className="flex min-h-[70px] items-center justify-center gap-2 rounded-2xl border border-dashed text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={draft ? undefined : startNew}
-            type="button"
-          >
-            <Plus className="size-4" />
-            Add link
-          </button>
-        ) : null}
+        <button
+          className="flex min-h-[70px] items-center justify-center gap-2 rounded-2xl border border-dashed text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={draft ? undefined : startNew}
+          type="button"
+        >
+          <Plus className="size-4" />
+          Add link
+        </button>
         {links.map((link) => (
           <QuickLinkCard
-            editable={editable}
             key={link.id}
             link={link}
             onEdit={() => setDraft({ originalId: link.id, value: { ...link } })}
@@ -458,7 +428,7 @@ function QuickLinksGrid({
           onDelete={
             draft.originalId
               ? () => {
-                  onChange?.(
+                  onChange(
                     links.filter((link) => link.id !== draft.originalId),
                   );
                   setDraft(null);
@@ -481,7 +451,6 @@ function QuickLinksNode({
     <NodeViewWrapper contentEditable={false}>
       {editor.isEditable ? (
         <QuickLinksGrid
-          editable
           links={readQuickLinks(node.attrs.links)}
           onChange={(links) => updateAttributes({ links })}
         />

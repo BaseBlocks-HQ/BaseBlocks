@@ -5,7 +5,7 @@ import type { TreeNode } from "@baseblocks/domain";
 export type LibraryExplorerPayload = NonNullable<
   FunctionReturnType<typeof api.libraries.getExplorer>
 >;
-export type LibraryFolder = LibraryExplorerPayload["folders"][number];
+type LibraryFolder = LibraryExplorerPayload["folders"][number];
 export type LibraryFile = LibraryExplorerPayload["files"][number];
 export type FolderId = LibraryFolder["_id"];
 export type DocumentId = LibraryFile["_id"];
@@ -17,7 +17,7 @@ export type LibraryDialogTarget =
   | { kind: "folder"; id: FolderId; name: string }
   | { kind: "file"; id: DocumentId; name: string };
 
-export function buildLibraryTreeInput(
+export function buildLibraryExplorerModel(
   folders: LibraryFolder[],
   files: LibraryFile[],
 ) {
@@ -48,4 +48,22 @@ export function buildLibraryTreeInput(
       ),
     ),
   };
+}
+
+export const LIBRARY_FILE_SEARCH_PARAM = "file";
+
+export function buildLibraryFilePath(
+  pathname: string,
+  currentSearchParams: string,
+  documentId: string | null,
+): string {
+  const params = new URLSearchParams(currentSearchParams);
+  if (documentId) {
+    params.set(LIBRARY_FILE_SEARCH_PARAM, documentId);
+  } else {
+    params.delete(LIBRARY_FILE_SEARCH_PARAM);
+  }
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }

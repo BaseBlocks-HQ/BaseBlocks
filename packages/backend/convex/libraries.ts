@@ -170,7 +170,6 @@ export const listAllWithCounts = query({
       )
       .collect();
 
-    // Get all libraries for all sites
     const allLibraries: Array<{
       _id: Id<"documentLibraries">;
       siteId: Id<"sites">;
@@ -218,7 +217,6 @@ export const createLibrary = mutation({
       { resource: "library", action: "manage" },
     );
 
-    // Check for duplicate library name within site
     const existingLibrary = await ctx.db
       .query("documentLibraries")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -252,7 +250,6 @@ export const updateLibrary = mutation({
   handler: async (ctx, { libraryId, name }) => {
     const { library } = await requireLibraryManagement(ctx, libraryId);
 
-    // Check for duplicate library name if changing
     if (name !== undefined && name.trim() !== library.name) {
       const existingLibrary = await ctx.db
         .query("documentLibraries")
@@ -280,7 +277,6 @@ export const removeLibrary = mutation({
   handler: async (ctx, { libraryId }) => {
     await requireLibraryManagement(ctx, libraryId);
 
-    // Delete all documents in the library (full cleanup: search index + asset + S3)
     const documents = await ctx.db
       .query("documents")
       .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
@@ -290,7 +286,6 @@ export const removeLibrary = mutation({
       await deleteDocumentRows(ctx, doc);
     }
 
-    // Delete all folders in the library
     const folders = await ctx.db
       .query("documentFolders")
       .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
@@ -300,14 +295,12 @@ export const removeLibrary = mutation({
       await ctx.db.delete(folder._id);
     }
 
-    // Delete the library itself
     await ctx.db.delete(libraryId);
 
     return { success: true };
   },
 });
 
-// Create a new folder
 export const createFolder = mutation({
   args: {
     libraryId: v.id("documentLibraries"),
@@ -317,7 +310,6 @@ export const createFolder = mutation({
   handler: async (ctx, { libraryId, parentId, name }) => {
     const { auth } = await requireLibraryManagement(ctx, libraryId);
 
-    // Verify parent folder exists if specified
     if (parentId) {
       const parent = await ctx.db.get(parentId);
       if (!parent || parent.libraryId !== libraryId) {
@@ -325,7 +317,6 @@ export const createFolder = mutation({
       }
     }
 
-    // Get siblings and check for duplicate name
     const siblings = await ctx.db
       .query("documentFolders")
       .withIndex("by_parent", (q) =>
@@ -359,7 +350,6 @@ export const createFolder = mutation({
   },
 });
 
-// Update folder (rename)
 export const updateFolder = mutation({
   args: {
     folderId: v.id("documentFolders"),
@@ -368,7 +358,6 @@ export const updateFolder = mutation({
   handler: async (ctx, { folderId, name }) => {
     const { folder } = await requireFolderManagement(ctx, folderId);
 
-    // Check for duplicate name if renaming
     if (
       name !== undefined &&
       name.trim().toLowerCase() !== folder.name.toLowerCase()
@@ -400,13 +389,11 @@ export const updateFolder = mutation({
   },
 });
 
-// Helper to recursively delete folder and contents
 async function deleteFolderRecursively(
   ctx: MutationCtx,
   folderId: Id<"documentFolders">,
   libraryId: Id<"documentLibraries">,
 ) {
-  // Delete all documents in this folder (full cleanup: search index + asset + S3)
   const documents = await ctx.db
     .query("documents")
     .withIndex("by_folder", (q) =>
@@ -418,7 +405,6 @@ async function deleteFolderRecursively(
     await deleteDocumentRows(ctx, doc);
   }
 
-  // Recursively delete child folders
   const children = await ctx.db
     .query("documentFolders")
     .withIndex("by_parent", (q) =>
@@ -430,11 +416,9 @@ async function deleteFolderRecursively(
     await deleteFolderRecursively(ctx, child._id, libraryId);
   }
 
-  // Delete the folder itself
   await ctx.db.delete(folderId);
 }
 
-// Delete folder and all contents
 export const removeFolder = mutation({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {

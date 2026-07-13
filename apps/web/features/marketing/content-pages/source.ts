@@ -1,5 +1,6 @@
 import { routing } from "@/i18n/routing";
-import { docs } from "collections/server";
+import type { Locale } from "@baseblocks/i18n";
+import { docs, legalEn, legalFr } from "collections/server";
 import { defineI18n } from "fumadocs-core/i18n";
 import { loader } from "fumadocs-core/source";
 import { icons } from "lucide-react";
@@ -65,3 +66,21 @@ export const source = loader({
     if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
   },
 });
+
+function createLegalSource(
+  locale: Locale,
+  collection: typeof legalEn | typeof legalFr,
+) {
+  return loader(collection.toFumadocsSource(), {
+    baseUrl: `/${locale}/legal`,
+  });
+}
+
+const legalSources: Record<Locale, ReturnType<typeof createLegalSource>> = {
+  en: createLegalSource("en", legalEn),
+  fr: createLegalSource("fr", legalFr),
+};
+
+export function getLegalSource(locale: Locale) {
+  return legalSources[locale];
+}

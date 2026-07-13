@@ -20,7 +20,6 @@ import {
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { ArrowLeft } from "lucide-react";
-import { useMemo } from "react";
 import type { PublishedPageTarget } from "./page-targets";
 
 type ResolvedPageContent = { document: OpenEditorDocument };
@@ -58,18 +57,15 @@ export function PublicPageContent({
   const structure = initialStructure ?? queriedStructure;
   const actions = useSiteRenderActions();
   const openEditorDocument = structure?.document;
-  const pageRuntime = useMemo<OpenEditorPageRuntime>(
-    () => ({
-      resolvePage: async (targetPageId) => {
-        const target = pageTargets.get(targetPageId);
-        return target && actions.siteSlug
-          ? { ...target, href: getPageLink(actions.siteSlug, target.path) }
-          : null;
-      },
-      openPage: ({ pageId: targetPageId }) => actions.openPage?.(targetPageId),
-    }),
-    [actions, pageTargets],
-  );
+  const pageRuntime: OpenEditorPageRuntime = {
+    resolvePage: async (targetPageId) => {
+      const target = pageTargets.get(targetPageId);
+      return target && actions.siteSlug
+        ? { ...target, href: getPageLink(actions.siteSlug, target.path) }
+        : null;
+    },
+    openPage: ({ pageId: targetPageId }) => actions.openPage?.(targetPageId),
+  };
 
   if (page === undefined || structure === undefined) {
     return (

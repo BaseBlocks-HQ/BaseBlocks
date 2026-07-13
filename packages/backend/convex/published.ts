@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { query, type QueryCtx } from "./_generated/server";
+import { query } from "./_generated/server";
 import { getAuthOrganizationBySlug } from "./authComponent/model";
 import { buildPageTree } from "./pages";
 import {
@@ -32,18 +32,6 @@ function resolvePage(
     parentId = page._id;
   }
   return pages.find((page) => page._id === parentId) ?? null;
-}
-
-async function pageContent(ctx: QueryCtx, pageId: Id<"pages">) {
-  const content = await ctx.db
-    .query("openEditorPageContents")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  return {
-    document: content
-      ? parseOpenEditorDocument(content.document)
-      : emptyOpenEditorDocument(),
-  };
 }
 
 export const resolve = query({
@@ -89,9 +77,17 @@ export const resolve = query({
       : resolvePage(allPages, site.defaultPageId, args.pagePath)
         ? "forbidden"
         : "missing";
-    const content = page
-      ? await pageContent(ctx, page._id)
-      : { document: emptyOpenEditorDocument() };
+    const contentRow = page
+      ? await ctx.db
+          .query("openEditorPageContents")
+          .withIndex("by_page", (q) => q.eq("pageId", page._id))
+          .unique()
+      : null;
+    const content = {
+      document: contentRow
+        ? parseOpenEditorDocument(contentRow.document)
+        : emptyOpenEditorDocument(),
+    };
     return {
       organization: {
         id: organization._id,
@@ -146,14 +142,7 @@ export const resolve = query({
       updatedAt: Math.max(
         site.updatedAt,
         page?.updatedAt ?? 0,
-        page
-          ? ((
-              await ctx.db
-                .query("openEditorPageContents")
-                .withIndex("by_page", (q) => q.eq("pageId", page._id))
-                .unique()
-            )?.updatedAt ?? 0)
-          : 0,
+        contentRow?.updatedAt ?? 0,
       ),
     };
   },

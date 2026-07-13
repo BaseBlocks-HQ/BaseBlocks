@@ -8,7 +8,6 @@ import {
 import {
   type ReactElement,
   type RefCallback,
-  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -25,9 +24,9 @@ export function OverflowTooltip({
   const [textElement, setTextElement] = useState<HTMLElement | null>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const textRef = useCallback<RefCallback<HTMLElement>>((element) => {
+  const textRef: RefCallback<HTMLElement> = (element) => {
     setTextElement(element);
-  }, []);
+  };
 
   useEffect(() => {
     if (disabled || !textElement) {

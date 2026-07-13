@@ -6,7 +6,7 @@ export default defineSchema({
   sites: defineTable({
     organizationId: v.string(),
     name: v.string(),
-    slug: v.string(), // site slug within team
+    slug: v.string(),
     logoUrl: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
     defaultPageId: v.optional(v.id("pages")),
@@ -15,7 +15,6 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    // Visibility
     visibility: v.optional(
       v.union(
         v.literal("private"),
@@ -29,9 +28,7 @@ export default defineSchema({
     settings: siteSettings,
   })
     .index("by_organization", ["organizationId"])
-    .index("by_organization_slug", ["organizationId", "slug"])
-    .index("by_published", ["isPublished"])
-    .index("by_published_visibility", ["isPublished", "visibility"]),
+    .index("by_organization_slug", ["organizationId", "slug"]),
 
   siteDomains: defineTable({
     siteId: v.id("sites"),
@@ -55,19 +52,14 @@ export default defineSchema({
     createdAt: v.number(),
     failedAttempts: v.optional(v.number()),
     lockedUntil: v.optional(v.number()),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_code", ["code"])
-    .index("by_expiresAt", ["expiresAt"]),
+  }).index("by_site", ["siteId"]),
 
   siteAccessSessions: defineTable({
     siteId: v.id("sites"),
     sessionToken: v.string(),
     verifiedAt: v.number(),
     expiresAt: v.number(),
-  })
-    .index("by_site_token", ["siteId", "sessionToken"])
-    .index("by_expiresAt", ["expiresAt"]),
+  }).index("by_site_token", ["siteId", "sessionToken"]),
 
   pages: defineTable({
     siteId: v.id("sites"),
@@ -85,11 +77,10 @@ export default defineSchema({
     .index("by_parent_order", ["siteId", "parentId", "order"])
     .index("by_slug", ["siteId", "slug"]),
 
-  // OpenEditor documents are serialized to stay below Convex's nesting limit.
   openEditorPageContents: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
-    document: v.any(),
+    document: v.string(),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -126,8 +117,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_site_kind", ["siteId", "kind"])
-    .index("by_object_key", ["objectKey"]),
+    .index("by_site_kind", ["siteId", "kind"]),
 
   documents: defineTable({
     siteId: v.id("sites"),
@@ -141,11 +131,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_folder", ["libraryId", "folderId"])
-    .searchIndex("search_filename", {
-      searchField: "filename",
-      filterFields: ["siteId"],
-    }),
+    .index("by_folder", ["libraryId", "folderId"]),
 
   searchEntries: defineTable({
     siteId: v.id("sites"),

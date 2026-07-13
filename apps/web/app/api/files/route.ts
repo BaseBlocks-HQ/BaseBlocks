@@ -1,6 +1,12 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
-import { parseFileKey } from "@baseblocks/domain";
+import {
+  isSupportedUploadMimeType,
+  parseFileKey,
+  resolveUploadMimeType,
+  toFilesKind,
+  type UploadPurpose,
+} from "@baseblocks/domain";
 import { getFiles, getMaxUploadSize } from "@/lib/files/server";
 import { api } from "@baseblocks/backend";
 import { FilesError } from "files-sdk";
@@ -24,18 +30,45 @@ function getRouter() {
     ],
     maxUploadSize: getMaxUploadSize(),
     secret: process.env.FILES_API_SECRET,
-    authorize: async ({ operation, key }) => {
+    authorize: async ({ operation, key, req }) => {
       if (operation === "capabilities") {
         return;
       }
 
-      if (!key) {
-        throw new FilesError("Unauthorized", "Missing file key");
+      const parsed = key ? parseFileKey(key) : null;
+      const scopedSiteId = req.headers.get("x-baseblocks-site-id");
+      const scopedPurpose = req.headers.get("x-baseblocks-upload-purpose");
+      const scopedFileId = req.headers.get("x-baseblocks-upload-file-id");
+      const hasUploadScope =
+        scopedSiteId &&
+        (scopedPurpose === "document" || scopedPurpose === "siteAsset") &&
+        scopedFileId &&
+        !scopedSiteId.includes("/") &&
+        !scopedFileId.includes("/");
+      if (!parsed && !hasUploadScope) {
+        throw new FilesError("Unauthorized", "Invalid file scope");
       }
 
-      const parsed = parseFileKey(key);
-      if (!parsed) {
-        throw new FilesError("Unauthorized", "Invalid file key");
+      const siteId = parsed?.siteId ?? scopedSiteId;
+      const purpose: UploadPurpose = parsed
+        ? parsed.kind === "documents"
+          ? "document"
+          : "siteAsset"
+        : (scopedPurpose as UploadPurpose);
+
+      if (operation === "upload") {
+        const contentType = resolveUploadMimeType({
+          filename:
+            parsed?.filename ??
+            req.headers.get("x-baseblocks-upload-filename") ??
+            "upload",
+          contentType:
+            req.headers.get("x-baseblocks-upload-content-type") ??
+            req.headers.get("content-type"),
+        });
+        if (!isSupportedUploadMimeType(contentType)) {
+          throw new FilesError("Unauthorized", "File type not allowed");
+        }
       }
 
       const token = await getToken();
@@ -46,8 +79,8 @@ function getRouter() {
       const canUpload = await getServerConvexClient(token).query(
         api.files.canUploadToSite,
         {
-          siteId: parsed.siteId as never,
-          purpose: parsed.kind === "documents" ? "document" : "siteAsset",
+          siteId: siteId as never,
+          purpose,
         },
       );
       if (!canUpload) {
@@ -60,6 +93,9 @@ function getRouter() {
             ? "inline"
             : undefined,
         maxExpiresIn: 60 * 60,
+        keyPrefix: parsed
+          ? undefined
+          : `sites/${siteId}/${toFilesKind(purpose)}/${scopedFileId}/`,
       };
     },
   });

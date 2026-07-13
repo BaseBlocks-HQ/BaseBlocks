@@ -1,23 +1,14 @@
 import { planTreeMove, SLUG_PATTERN } from "@baseblocks/domain";
-import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
-import {
-  createDefaultPageStructure,
-  deletePageStructure,
-} from "./pageStructure";
 import { canViewerAccessPublishedPageById } from "./sharing";
 
-/**
- * A page node in the tree structure.
- * Used for both draft and published page trees.
- */
 export type PageTreeNode = {
   _id: string;
   siteId: Doc<"pages">["siteId"];
@@ -51,30 +42,20 @@ function normalizePageSlug(slug: string): string {
   return normalized;
 }
 
-/**
- * Build a tree structure from a flat array of pages.
- * Builds the nested page tree used by editor and published read models.
- *
- * @param pages - Flat array of page data (already projected to the right fields)
- * @returns Root-level tree nodes with nested children, sorted by order
- */
 export function buildPageTree(pages: ProjectedPage[]): PageTreeNode[] {
   const pageMap = new Map<string, PageTreeNode>();
   const rootPages: PageTreeNode[] = [];
 
-  // First pass: create map with empty children
   for (const page of pages) {
     pageMap.set(page._id, { ...page, children: [] });
   }
 
-  // Second pass: build tree
   for (const node of pageMap.values()) {
     if (node.parentId) {
       const parent = pageMap.get(node.parentId);
       if (parent) {
         parent.children.push(node);
       } else {
-        // Parent not in set (e.g., not deployed), treat as root
         rootPages.push(node);
       }
     } else {
@@ -82,7 +63,6 @@ export function buildPageTree(pages: ProjectedPage[]): PageTreeNode[] {
     }
   }
 
-  // Sort children by order recursively
   sortChildren(rootPages);
 
   return rootPages;
@@ -108,7 +88,6 @@ function projectPublishedPage(page: Doc<"pages">) {
   };
 }
 
-// List pages for a site (authenticated — editor only)
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
@@ -126,7 +105,6 @@ export const list = query({
   },
 });
 
-// Get page by ID (authenticated — requires team membership)
 export const get = query({
   args: {
     pageId: v.id("pages"),
@@ -149,7 +127,6 @@ export const get = query({
   },
 });
 
-// Create a new page
 export const create = mutation({
   args: {
     siteId: v.id("sites"),
@@ -169,7 +146,6 @@ export const create = mutation({
       { resource: "content", action: "edit" },
     );
 
-    // Check slug uniqueness
     const existing = await ctx.db
       .query("pages")
       .withIndex("by_slug", (q) =>
@@ -204,13 +180,10 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    await createDefaultPageStructure(ctx, { siteId, pageId, now });
-
     return pageId;
   },
 });
 
-// Update page
 export const update = mutation({
   args: {
     pageId: v.id("pages"),
@@ -232,7 +205,6 @@ export const update = mutation({
       action: "edit",
     });
 
-    // Check slug uniqueness if changing
     if (normalizedSlug && normalizedSlug !== page.slug) {
       const existing = await ctx.db
         .query("pages")
@@ -255,7 +227,6 @@ export const update = mutation({
 
     await ctx.db.patch(pageId, updates);
 
-    // Re-index if title changed (title is part of the search index)
     if (title !== undefined) {
       await indexPageContent(ctx, pageId);
     }
@@ -264,11 +235,6 @@ export const update = mutation({
   },
 });
 
-/**
- * The only write path for changing page-tree structure. The client describes
- * the semantic drop; the server resolves and normalizes both affected sibling
- * lists in the same transaction.
- */
 export const moveInTree = mutation({
   args: {
     siteId: v.id("sites"),
@@ -332,30 +298,6 @@ export const moveInTree = mutation({
   },
 });
 
-// Helper to recursively delete a page and its children
-async function deletePageRecursively(
-  ctx: Pick<GenericMutationCtx<DataModel>, "db">,
-  pageId: Id<"pages">,
-  siteId: Id<"sites">,
-) {
-  await deletePageStructure(ctx, pageId);
-
-  // Recursively delete child pages
-  const children = await ctx.db
-    .query("pages")
-    .withIndex("by_parent", (q) =>
-      q.eq("siteId", siteId).eq("parentId", pageId),
-    )
-    .collect();
-
-  for (const child of children) {
-    await deletePageRecursively(ctx, child._id, siteId);
-  }
-
-  await ctx.db.delete(pageId);
-}
-
-// Delete page
 export const remove = mutation({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
@@ -370,16 +312,13 @@ export const remove = mutation({
       action: "edit",
     });
 
-    // Check if this is the default page
     const isDefaultPage = site.defaultPageId === pageId;
 
-    // Get all pages for descendant collection
     const allPages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
 
-    // Collect all descendant IDs
     const pagesToDelete = new Set<string>([pageId]);
     const collectDescendants = (parentId: string) => {
       const children = allPages.filter((p) => p.parentId === parentId);
@@ -394,7 +333,6 @@ export const remove = mutation({
       .filter((p) => !pagesToDelete.has(p._id))
       .sort((a, b) => a.order - b.order);
 
-    // If deleting the default page, reassign to first remaining page
     if (isDefaultPage) {
       const firstRootPage = remainingPages.find((p) => !p.parentId);
       const newDefaultPage = firstRootPage ?? remainingPages[0];
@@ -412,12 +350,22 @@ export const remove = mutation({
       }
     }
 
-    // Remove search index entries for all pages being deleted
     for (const id of pagesToDelete) {
       await removePageContentIndex(ctx, id as Id<"pages">);
     }
 
-    await deletePageRecursively(ctx, pageId, page.siteId);
+    const contents = await ctx.db
+      .query("openEditorPageContents")
+      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
+      .collect();
+    const contentByPageId = new Map(
+      contents.map((content) => [content.pageId, content]),
+    );
+    for (const id of pagesToDelete) {
+      const content = contentByPageId.get(id as Id<"pages">);
+      if (content) await ctx.db.delete(content._id);
+      await ctx.db.delete(id as Id<"pages">);
+    }
 
     return { success: true };
   },

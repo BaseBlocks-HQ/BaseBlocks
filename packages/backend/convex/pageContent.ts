@@ -14,7 +14,6 @@ import { indexPageContent } from "./search";
 
 export const pageContentValidator = v.object({ document: v.any() });
 
-// Leave headroom for page/site IDs, timestamps, and Convex's document fields.
 const MAX_PAGE_CONTENT_BYTES = 900_000;
 
 async function getContent(ctx: Pick<QueryCtx, "db">, pageId: Id<"pages">) {

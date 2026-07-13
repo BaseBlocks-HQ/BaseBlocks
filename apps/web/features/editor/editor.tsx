@@ -12,10 +12,10 @@ import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useState } from "react";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { toast } from "sonner";
-import { EditorToolDock } from "./tool-dock/editor-tool-dock";
+import { EditorToolDock } from "./editor-tool-dock";
 import { EditorHeader } from "./editor-header";
 
 function buildEditorPath(
@@ -84,17 +84,10 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     }
   };
 
-  const replaceEditorUrl = useCallback(
-    (updates: Record<string, string | null>) => {
-      const nextUrl = buildEditorPath(
-        pathname,
-        searchParams.toString(),
-        updates,
-      );
-      router.replace(nextUrl, { scroll: false });
-    },
-    [pathname, router, searchParams],
-  );
+  const replaceEditorUrl = (updates: Record<string, string | null>) => {
+    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
+    router.replace(nextUrl, { scroll: false });
+  };
 
   const setSelectedPageId = (id: string | null) => {
     resetPageHistory();
@@ -249,36 +242,26 @@ function SiteEditorShell({
   const searchParams = useSearchParams();
   const [pageHistory, setPageHistory] = useState<(string | null)[]>([]);
 
-  const replaceEditorUrl = useCallback(
-    (updates: Record<string, string | null>) => {
-      const nextUrl = buildEditorPath(
-        pathname,
-        searchParams.toString(),
-        updates,
-      );
-      router.replace(nextUrl, { scroll: false });
-    },
-    [pathname, router, searchParams],
-  );
+  const replaceEditorUrl = (updates: Record<string, string | null>) => {
+    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
+    router.replace(nextUrl, { scroll: false });
+  };
 
-  const openPage = useCallback(
-    (pageId: string) => {
-      const currentPageId = searchParams.get("page");
-      if (currentPageId === pageId) return;
-      setPageHistory((current) => [...current, currentPageId]);
-      replaceEditorUrl({ page: pageId });
-    },
-    [replaceEditorUrl, searchParams],
-  );
+  const openPage = (pageId: string) => {
+    const currentPageId = searchParams.get("page");
+    if (currentPageId === pageId) return;
+    setPageHistory((current) => [...current, currentPageId]);
+    replaceEditorUrl({ page: pageId });
+  };
 
-  const goBack = useCallback(() => {
+  const goBack = () => {
     if (pageHistory.length === 0) return;
     const previousPageId = pageHistory.at(-1) ?? null;
     setPageHistory((current) => current.slice(0, -1));
     replaceEditorUrl({ page: previousPageId });
-  }, [pageHistory, replaceEditorUrl]);
+  };
 
-  const resetPageHistory = useCallback(() => setPageHistory([]), []);
+  const resetPageHistory = () => setPageHistory([]);
 
   return (
     <EditorProvider

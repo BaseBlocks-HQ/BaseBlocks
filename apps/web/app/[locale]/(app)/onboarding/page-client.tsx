@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
-import { InvitationInbox } from "@/features/dashboard/invitations/invitation-inbox";
+import { InvitationInbox } from "@/features/dashboard/invitation-inbox";
 import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";
 import {

@@ -32,7 +32,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type Visibility = "private" | "public" | "link-only" | "password";
@@ -211,24 +211,18 @@ export function ShareDialog({
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  const rotationOptions = useMemo(
-    () => [
-      { value: "1", label: t("rotation1h") },
-      { value: "6", label: t("rotation6h") },
-      { value: "24", label: t("rotation24h") },
-      { value: "168", label: t("rotation7d") },
-    ],
-    [t],
-  );
+  const rotationOptions = [
+    { value: "1", label: t("rotation1h") },
+    { value: "6", label: t("rotation6h") },
+    { value: "24", label: t("rotation24h") },
+    { value: "168", label: t("rotation7d") },
+  ];
 
-  const sessionOptions = useMemo(
-    () => [
-      { value: "1", label: t("session1d") },
-      { value: "7", label: t("session7d") },
-      { value: "30", label: t("session30d") },
-    ],
-    [t],
-  );
+  const sessionOptions = [
+    { value: "1", label: t("session1d") },
+    { value: "7", label: t("session7d") },
+    { value: "30", label: t("session30d") },
+  ];
 
   const updateVisibilityMut = useMutation(api.sharing.updateVisibility);
   const updateAccessSettingsMut = useMutation(api.sharing.updateAccessSettings);

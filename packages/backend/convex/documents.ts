@@ -40,23 +40,10 @@ export function normalizeDocumentSearchMetadata(args: {
   };
 }
 
-/**
- * Shared document deletion helper.
- *
- * Centralises the cleanup logic so that every code path that removes a document
- * (single delete, library delete, folder delete, site delete) goes through the
- * same sequence:
- *   1. Remove the canonical search index entry.
- *   2. Delete the file metadata row.
- *   3. Delete the document row.
- * Object deletion is coordinated by Next.js before this metadata mutation.
- */
-
 export async function deleteDocumentRows(
   ctx: MutationCtx,
   document: Doc<"documents">,
 ): Promise<void> {
-  // 1. Remove search index entry
   const searchEntry = await ctx.db
     .query("searchEntries")
     .withIndex("by_source", (q) =>
@@ -67,12 +54,10 @@ export async function deleteDocumentRows(
     await ctx.db.delete(searchEntry._id);
   }
 
-  // 2. Delete the file metadata record
   if (document.fileId) {
     await ctx.db.delete(document.fileId);
   }
 
-  // 3. Delete the document record
   await ctx.db.delete(document._id);
 }
 
@@ -207,7 +192,6 @@ function validateDocumentUpload(args: {
   siteId: string;
   objectKey: string;
   contentType: string;
-  size: number;
 }): string {
   const parsed = parseFileKey(args.objectKey);
   if (!parsed || parsed.siteId !== args.siteId || parsed.kind !== "documents") {
@@ -226,19 +210,22 @@ function validateDocumentUpload(args: {
   return contentType;
 }
 
-async function createDocumentAsset(
+async function createDocumentRows(
   ctx: MutationCtx,
   args: {
-    siteId: Parameters<typeof resolveSiteContext>[1];
+    siteId: Id<"sites">;
     uploadedBy: string;
     objectKey: string;
     filename: string;
     contentType: string;
     size: number;
     checksum?: string;
+    libraryId?: Id<"documentLibraries">;
+    folderId?: Id<"documentFolders">;
   },
 ) {
-  return await ctx.db.insert("files", {
+  const createdAt = Date.now();
+  const fileId = await ctx.db.insert("files", {
     siteId: args.siteId,
     kind: "document",
     visibility: "private",
@@ -248,8 +235,28 @@ async function createDocumentAsset(
     size: args.size,
     checksum: args.checksum,
     uploadedBy: args.uploadedBy,
-    createdAt: Date.now(),
+    createdAt,
   });
+  const documentId = await ctx.db.insert("documents", {
+    siteId: args.siteId,
+    libraryId: args.libraryId,
+    folderId: args.folderId,
+    fileId,
+    filename: args.filename,
+    contentType: args.contentType,
+    size: args.size,
+    uploadedBy: args.uploadedBy,
+    createdAt,
+  });
+  await ctx.db.insert("searchEntries", {
+    siteId: args.siteId,
+    kind: "document",
+    sourceId: documentId,
+    title: args.filename,
+    text: args.filename,
+    updatedAt: createdAt,
+  });
+  return documentId;
 }
 
 async function patchDocumentSearchEntry(
@@ -282,7 +289,6 @@ async function patchDocumentSearchEntry(
   });
 }
 
-// Create document record after direct upload to object storage
 export const create = mutation({
   args: {
     siteId: v.id("sites"),
@@ -300,7 +306,6 @@ export const create = mutation({
       siteId,
       objectKey,
       contentType,
-      size,
     });
 
     const siteCtx = await resolveSiteContext(ctx, siteId);
@@ -311,7 +316,7 @@ export const create = mutation({
       siteCtx.organizationId,
       { resource: "library", action: "manage" },
     );
-    const fileId = await createDocumentAsset(ctx, {
+    return createDocumentRows(ctx, {
       siteId,
       uploadedBy: auth.userId,
       objectKey,
@@ -320,32 +325,9 @@ export const create = mutation({
       size,
       checksum,
     });
-
-    const documentId = await ctx.db.insert("documents", {
-      siteId,
-      fileId,
-      filename,
-      contentType: normalizedContentType,
-      size,
-      uploadedBy: auth.userId,
-      createdAt: Date.now(),
-    });
-
-    // Index canonically so it's always findable by filename.
-    await ctx.db.insert("searchEntries", {
-      siteId,
-      kind: "document",
-      sourceId: documentId,
-      title: filename,
-      text: filename,
-      updatedAt: Date.now(),
-    });
-
-    return documentId;
   },
 });
 
-// Create document in a library (optionally in a folder)
 export const createInLibrary = mutation({
   args: {
     siteId: v.id("sites"),
@@ -374,7 +356,6 @@ export const createInLibrary = mutation({
       siteId,
       objectKey,
       contentType,
-      size,
     });
 
     const siteCtx = await resolveSiteContext(ctx, siteId);
@@ -386,13 +367,11 @@ export const createInLibrary = mutation({
       { resource: "library", action: "manage" },
     );
 
-    // Verify library exists and belongs to site
     const library = await ctx.db.get(libraryId);
     if (!library || library.siteId !== siteId) {
       throw new Error("Library not found");
     }
 
-    // Verify folder exists and belongs to library if specified
     if (folderId) {
       const folder = await ctx.db.get(folderId);
       if (!folder || folder.libraryId !== libraryId) {
@@ -400,7 +379,7 @@ export const createInLibrary = mutation({
       }
     }
 
-    const fileId = await createDocumentAsset(ctx, {
+    return createDocumentRows(ctx, {
       siteId,
       uploadedBy: auth.userId,
       objectKey,
@@ -408,35 +387,12 @@ export const createInLibrary = mutation({
       contentType: normalizedContentType,
       size,
       checksum,
-    });
-
-    const documentId = await ctx.db.insert("documents", {
-      siteId,
       libraryId,
       folderId,
-      fileId,
-      filename,
-      contentType: normalizedContentType,
-      size,
-      uploadedBy: auth.userId,
-      createdAt: Date.now(),
     });
-
-    // Index canonically so it's always findable by filename.
-    await ctx.db.insert("searchEntries", {
-      siteId,
-      kind: "document",
-      sourceId: documentId,
-      title: filename,
-      text: filename,
-      updatedAt: Date.now(),
-    });
-
-    return documentId;
   },
 });
 
-// Rename document
 export const rename = mutation({
   args: {
     documentId: v.id("documents"),
@@ -460,7 +416,6 @@ export const rename = mutation({
   },
 });
 
-// Delete document
 export const remove = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, { documentId }) => {

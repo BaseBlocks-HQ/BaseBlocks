@@ -4,11 +4,7 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import { requireOrganizationPermission } from "./permissions";
 
-/**
- * Cryptographically secure random generation for access codes and session tokens.
- */
-
-const ACCESS_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Avoiding ambiguous: 0, O, I, 1
+const ACCESS_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const TOKEN_CHARS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -22,12 +18,10 @@ function secureRandomChars(chars: string, length: number): string {
   return result;
 }
 
-/** Generate a random 6-character alphanumeric access code */
 export function generateAccessCode(): string {
   return secureRandomChars(ACCESS_CODE_CHARS, 6);
 }
 
-/** Generate a 32-character session token */
 export function generateSessionToken(): string {
   return secureRandomChars(TOKEN_CHARS, 32);
 }
@@ -132,7 +126,6 @@ export async function canViewerAccessPublishedPageById(
   return canAccessPublishedSite(ctx, site, sessionTokens);
 }
 
-// Get current access code (admin only)
 export const getAccessCode = query({
   args: {
     siteId: v.id("sites"),
@@ -141,7 +134,6 @@ export const getAccessCode = query({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "organization",
       action: "update",
@@ -165,7 +157,6 @@ export const getAccessCode = query({
   },
 });
 
-// Get visibility and access settings (admin only)
 export const getSettings = query({
   args: {
     siteId: v.id("sites"),
@@ -174,7 +165,6 @@ export const getSettings = query({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "organization",
       action: "update",
@@ -188,7 +178,6 @@ export const getSettings = query({
   },
 });
 
-// Validate a session token (public query - for visitors)
 export const validateSession = query({
   args: {
     siteId: v.id("sites"),
@@ -216,7 +205,6 @@ export const validateSession = query({
   },
 });
 
-// Visibility types
 const visibilityValidator = v.union(
   v.literal("private"),
   v.literal("public"),
@@ -224,7 +212,6 @@ const visibilityValidator = v.union(
   v.literal("password"),
 );
 
-// Update site visibility
 export const updateVisibility = mutation({
   args: {
     siteId: v.id("sites"),
@@ -234,7 +221,6 @@ export const updateVisibility = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "site",
       action: "manage",
@@ -246,7 +232,6 @@ export const updateVisibility = mutation({
       updatedAt: now,
     });
 
-    // If switching to password mode, generate an access code if none exists
     if (visibility === "password") {
       const existingCode = await ctx.db
         .query("siteAccessCodes")
@@ -268,7 +253,6 @@ export const updateVisibility = mutation({
   },
 });
 
-// Generate a new access code (admin only)
 export const generateNewAccessCode = mutation({
   args: {
     siteId: v.id("sites"),
@@ -277,7 +261,6 @@ export const generateNewAccessCode = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "site",
       action: "manage",
@@ -286,7 +269,6 @@ export const generateNewAccessCode = mutation({
     const now = Date.now();
     const rotationHours = site.accessCodeRotationHours ?? 24;
 
-    // Delete any existing codes for this site
     const existingCodes = await ctx.db
       .query("siteAccessCodes")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -296,7 +278,6 @@ export const generateNewAccessCode = mutation({
       await ctx.db.delete(code._id);
     }
 
-    // Create new code
     const newCode = generateAccessCode();
     await ctx.db.insert("siteAccessCodes", {
       siteId,
@@ -310,9 +291,8 @@ export const generateNewAccessCode = mutation({
 });
 
 const MAX_VERIFY_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
-// Verify an access code and create a session (public mutation)
 export const verifyAccessCode = mutation({
   args: {
     siteId: v.id("sites"),
@@ -322,14 +302,12 @@ export const verifyAccessCode = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Check if site requires password
     if (site.visibility !== "password") {
       throw new ConvexError("Site does not require password access");
     }
 
     const now = Date.now();
 
-    // Find valid access code
     const accessCode = await ctx.db
       .query("siteAccessCodes")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -364,7 +342,6 @@ export const verifyAccessCode = mutation({
 
     await ctx.db.patch(accessCode._id, { failedAttempts: 0, lockedUntil: 0 });
 
-    // Generate session token
     const sessionToken = generateSessionToken();
     const sessionDays = site.accessCodeSessionDays ?? 7;
 
@@ -379,7 +356,6 @@ export const verifyAccessCode = mutation({
   },
 });
 
-// Update access settings (rotation hours, session days)
 export const updateAccessSettings = mutation({
   args: {
     siteId: v.id("sites"),
@@ -393,7 +369,6 @@ export const updateAccessSettings = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    // Require admin access
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "site",
       action: "manage",

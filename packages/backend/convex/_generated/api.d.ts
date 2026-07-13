@@ -18,7 +18,6 @@ import type * as model_sites from "../model/sites.js";
 import type * as openEditorDocuments from "../openEditorDocuments.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
-import type * as pageStructure from "../pageStructure.js";
 import type * as pages from "../pages.js";
 import type * as permissions from "../permissions.js";
 import type * as published from "../published.js";
@@ -45,7 +44,6 @@ declare const fullApi: ApiFromModules<{
   openEditorDocuments: typeof openEditorDocuments;
   organizations: typeof organizations;
   pageContent: typeof pageContent;
-  pageStructure: typeof pageStructure;
   pages: typeof pages;
   permissions: typeof permissions;
   published: typeof published;

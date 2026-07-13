@@ -33,7 +33,7 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
@@ -60,31 +60,23 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const searchParams = useSearchParams();
   const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
   const navigationIcon = readNavigationIcon(searchParams.get("icon"));
-  const pageTargets = useMemo(
-    () => buildPublishedPageTargets(result.pages),
-    [result.pages],
-  );
-  const openPage = useCallback(
-    (pageId: string) => {
-      const target = pageTargets.get(pageId);
-      if (!target || target.pageId === page?._id) return;
-      const currentQuery = searchParams.toString();
-      const currentUrl = currentQuery
-        ? `${pathname}?${currentQuery}`
-        : pathname;
-      const targetUrl = getPageLink(site.slug, target.path);
-      const targetSearchParams = new URLSearchParams({
-        from: currentUrl,
-        icon: target.icon ?? "📄",
-      });
-      router.push(`${targetUrl}?${targetSearchParams.toString()}`);
-    },
-    [page?._id, pageTargets, pathname, router, searchParams, site.slug],
-  );
+  const pageTargets = buildPublishedPageTargets(result.pages);
+  const openPage = (pageId: string) => {
+    const target = pageTargets.get(pageId);
+    if (!target || target.pageId === page?._id) return;
+    const currentQuery = searchParams.toString();
+    const currentUrl = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+    const targetUrl = getPageLink(site.slug, target.path);
+    const targetSearchParams = new URLSearchParams({
+      from: currentUrl,
+      icon: target.icon ?? "📄",
+    });
+    router.push(`${targetUrl}?${targetSearchParams.toString()}`);
+  };
 
-  const goBack = useCallback(() => {
+  const goBack = () => {
     if (previousPageUrl) router.push(previousPageUrl);
-  }, [previousPageUrl, router]);
+  };
 
   if (!page) return null;
 

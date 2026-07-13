@@ -1,6 +1,6 @@
 "use client";
 
-import { LibraryPage } from "@/features/libraries/pages/library-page";
+import { LibraryPage } from "@/features/libraries/library-page";
 import type { Id } from "@baseblocks/backend";
 import { use } from "react";
 

@@ -40,13 +40,10 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type {
-  AccessCodeData,
-  SharingSettings,
-} from "./publishing/share-dialog";
+import type { AccessCodeData, SharingSettings } from "./share-dialog";
 
 const ShareDialog = dynamic(() =>
-  import("./publishing/share-dialog").then((module) => module.ShareDialog),
+  import("./share-dialog").then((module) => module.ShareDialog),
 );
 
 interface EditorHeaderProps {

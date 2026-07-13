@@ -1,23 +1,23 @@
 "use client";
 
 import { useImageUpload } from "@/lib/files/use-image-upload";
-import { PanelSettingRow } from "@/features/editor/settings/settings-panel";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { DEFAULT_SITE_THEME } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
+import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { FaviconSettings } from "./favicon-settings";
-import { SiteAppearanceSettings } from "./site-appearance-settings";
+import { FaviconSettings } from "./settings/favicon-settings";
+import { SiteAppearanceSettings } from "./settings/site-appearance-settings";
 
-interface SiteConfigPanelProps {
+interface SiteSettingsPanelProps {
   siteId: Id<"sites">;
 }
 
@@ -52,6 +52,27 @@ function SettingSurface({
     <div className="rounded-lg bg-muted/25 p-3">
       <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
       {children}
+    </div>
+  );
+}
+
+function PanelSettingRow({
+  control,
+  htmlFor,
+  label,
+}: {
+  control: React.ReactNode;
+  htmlFor?: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/30">
+      <div className="min-w-0 flex-1 pr-2">
+        <Label className="text-sm font-medium leading-none" htmlFor={htmlFor}>
+          {label}
+        </Label>
+      </div>
+      <div className="shrink-0">{control}</div>
     </div>
   );
 }
@@ -208,7 +229,7 @@ function SiteNameSection({
   );
 }
 
-export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
+export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
   const site = useQuery(api.sites.get, { siteId });
   const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();

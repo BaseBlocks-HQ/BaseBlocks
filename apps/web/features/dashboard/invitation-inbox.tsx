@@ -26,7 +26,7 @@ import {
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useEffect, useEffectEvent, useReducer, useState } from "react";
 
 const SIDEBAR_ICON_STROKE = 1.75;
 
@@ -134,7 +134,7 @@ export function InvitationInbox({
     return role;
   };
 
-  const loadInvitations = useCallback(async () => {
+  const loadInvitations = async () => {
     dispatch({ type: "LOAD_START" });
     try {
       const result = await authClient.organization.listUserInvitations();
@@ -158,7 +158,7 @@ export function InvitationInbox({
         error: err instanceof Error ? err.message : t("loadFailed"),
       });
     }
-  }, [t]);
+  };
 
   const handleAccept = async (invitation: ReceivedInvitation) => {
     dispatch({ type: "PROCESS_START", id: invitation.id });
@@ -223,13 +223,15 @@ export function InvitationInbox({
     return "?";
   };
 
+  const refreshInvitations = useEffectEvent(loadInvitations);
+
   useEffect(() => {
     if (!onboardingMode) {
       return;
     }
 
-    void loadInvitations();
-  }, [loadInvitations, onboardingMode]);
+    void refreshInvitations();
+  }, [onboardingMode]);
 
   useEffect(() => {
     if (!onboardingMode && !open) {
@@ -237,15 +239,15 @@ export function InvitationInbox({
     }
 
     if (!onboardingMode) {
-      void loadInvitations();
+      void refreshInvitations();
     }
 
     const interval = setInterval(() => {
-      void loadInvitations();
+      void refreshInvitations();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [onboardingMode, open, loadInvitations]);
+  }, [onboardingMode, open]);
 
   const invitationContent = (
     <div className="space-y-3">

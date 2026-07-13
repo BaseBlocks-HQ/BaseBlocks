@@ -1,4 +1,4 @@
-export interface DecisionTreeNodeLike {
+interface DecisionTreeNodeLike {
   id: string;
   parentId: string | null;
   order: number;

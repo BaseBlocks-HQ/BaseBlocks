@@ -5,15 +5,12 @@ import {
   type PreviewFile,
 } from "@/components/file-viewer/file-viewer";
 import {
-  FILE_SEARCH_PARAM,
-  buildFileDeepLinkPath,
-  toAbsoluteBrowserUrl,
-} from "@/features/libraries/deep-link";
-import {
-  buildLibraryTreeInput,
+  LIBRARY_FILE_SEARCH_PARAM,
+  buildLibraryExplorerModel,
+  buildLibraryFilePath,
   type DocumentId,
   type LibraryExplorerPayload,
-} from "@/features/libraries/tree-input";
+} from "@/features/libraries/model";
 import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { api, type Id } from "@baseblocks/backend";
 import type { LibraryContent } from "@baseblocks/domain";
@@ -29,7 +26,7 @@ import {
   Link,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function readLibrary(value: unknown): LibraryContent {
@@ -72,9 +69,9 @@ export function ReadOnlyLibraryExplorer({
   const searchParams = useSearchParams();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
-  const model = useMemo(
-    () => buildLibraryTreeInput(explorer?.folders ?? [], explorer?.files ?? []),
-    [explorer?.folders, explorer?.files],
+  const model = buildLibraryExplorerModel(
+    explorer?.folders ?? [],
+    explorer?.files ?? [],
   );
   useEffect(() => {
     setExpanded(
@@ -86,7 +83,9 @@ export function ReadOnlyLibraryExplorer({
     );
   }, [model.nodes]);
   useEffect(() => {
-    const selectedId = searchParams.get(FILE_SEARCH_PARAM) as DocumentId | null;
+    const selectedId = searchParams.get(
+      LIBRARY_FILE_SEARCH_PARAM,
+    ) as DocumentId | null;
     if (!selectedId) return;
     const entity = model.entityByFileId.get(selectedId);
     if (entity?.kind !== "file") return;
@@ -98,7 +97,7 @@ export function ReadOnlyLibraryExplorer({
       allowDownload: allowDownloads,
     });
   }, [allowDownloads, model.entityByFileId, searchParams]);
-  const visibleNodes = useMemo(() => {
+  const visibleNodes = (() => {
     const result: Array<(typeof model.nodes)[number] & { depth: number }> = [];
     const visit = (parentId: string | undefined, depth: number) => {
       for (const node of model.nodes.filter(
@@ -111,7 +110,7 @@ export function ReadOnlyLibraryExplorer({
     };
     visit(undefined, 0);
     return result;
-  }, [expanded, model.nodes]);
+  })();
 
   if (explorer === undefined) {
     return (
@@ -129,7 +128,7 @@ export function ReadOnlyLibraryExplorer({
   }
 
   const filePath = (documentId: string | null) =>
-    buildFileDeepLinkPath(pathname, searchParams.toString(), documentId);
+    buildLibraryFilePath(pathname, searchParams.toString(), documentId);
 
   return (
     <section
@@ -221,7 +220,12 @@ export function ReadOnlyLibraryExplorer({
                       className="rounded-md p-1 text-muted-foreground hover:text-foreground"
                       onClick={() =>
                         void navigator.clipboard
-                          .writeText(toAbsoluteBrowserUrl(filePath(file._id)))
+                          .writeText(
+                            new URL(
+                              filePath(file._id),
+                              window.location.origin,
+                            ).toString(),
+                          )
                           .then(() => toast.success("Link copied"))
                       }
                       type="button"

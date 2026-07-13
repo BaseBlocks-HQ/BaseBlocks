@@ -476,9 +476,7 @@
     "serverError": "Server error",
     "serverErrorDescription": "Something went wrong. Please try again later.",
     "siteNotFound": "Site not found",
-    "siteNotFoundDescription": "The site you're looking for doesn't exist.",
-    "siteNotPublished": "Site not published",
-    "siteNotPublishedDescription": "This site hasn't been published yet."
+    "siteNotFoundDescription": "The site you're looking for doesn't exist."
   },
   "language": {
     "select": "Select language",

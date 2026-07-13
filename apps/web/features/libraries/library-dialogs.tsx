@@ -1,6 +1,6 @@
 "use client";
 
-import type { LibraryDialogTarget } from "@/features/libraries/tree-input";
+import type { LibraryDialogTarget } from "@/features/libraries/model";
 import {
   AlertDialog,
   AlertDialogAction,

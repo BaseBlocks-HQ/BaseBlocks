@@ -54,30 +54,3 @@ export async function getAuthOrganizationBySlug(
     where: [{ field: "slug", operator: "eq", value: slug }],
   })) as AuthOrganization | null;
 }
-
-export async function listAuthOrganizations(
-  ctx: AuthDataCtx,
-): Promise<AuthOrganization[]> {
-  return authPage<AuthOrganization>(
-    await ctx.runQuery(components.betterAuth.adapter.findMany, {
-      model: "organization",
-      where: [],
-      paginationOpts: { numItems: 1000, cursor: null },
-    }),
-  );
-}
-
-export async function listAuthOrganizationMembers(
-  ctx: AuthDataCtx,
-  organizationId: string,
-): Promise<AuthMember[]> {
-  return authPage<AuthMember>(
-    await ctx.runQuery(components.betterAuth.adapter.findMany, {
-      model: "member",
-      where: [
-        { field: "organizationId", operator: "eq", value: organizationId },
-      ],
-      paginationOpts: { numItems: 1000, cursor: null },
-    }),
-  );
-}

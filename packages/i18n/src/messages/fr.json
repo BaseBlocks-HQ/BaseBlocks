@@ -476,9 +476,7 @@
     "serverError": "Erreur serveur",
     "serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
     "siteNotFound": "Site non trouvé",
-    "siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
-    "siteNotPublished": "Site non publié",
-    "siteNotPublishedDescription": "Ce site n'est pas encore publié."
+    "siteNotFoundDescription": "Le site que vous recherchez n'existe pas."
   },
   "language": {
     "select": "Choisir la langue",

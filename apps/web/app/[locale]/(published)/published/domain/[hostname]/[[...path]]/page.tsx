@@ -1,7 +1,9 @@
 import { buildPublicSiteFaviconMetadata } from "@/features/published-sites/favicon-metadata";
 import { PublicSite } from "@/features/published-sites/public-site";
-import { resolveCustomDomain } from "@/features/published-sites-resolver";
-import { resolvePublishedPage } from "@/features/published-sites/read-model";
+import {
+  resolveCustomDomain,
+  resolvePublishedPage,
+} from "@/features/published-sites/read-model";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

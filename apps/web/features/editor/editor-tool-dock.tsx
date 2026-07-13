@@ -1,19 +1,17 @@
 "use client";
 
-import { BlockPickerPanel } from "@/features/editor/blocks/block-picker-panel";
+import { BlockPickerPanel } from "@/features/editor/block-picker-panel";
+import { PagesPanel } from "@/features/editor/pages-panel";
 import {
   useEditorBlockPicker,
   useEditorSite,
 } from "@/features/editor/editor-state";
-import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
-import { PageTree } from "@/features/editor/pages/page-tree";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Popover, PopoverAnchor, PopoverContent } from "@baseblocks/ui/popover";
-import { SidebarMenu } from "@baseblocks/ui/sidebar";
 import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -25,15 +23,15 @@ import {
   IconSidebarLeftShow,
 } from "nucleo-glass";
 
-const SiteConfigPanel = dynamic(() =>
-  import("@/features/editor/settings/site-settings").then(
-    (module) => module.SiteConfigPanel,
+const SiteSettingsPanel = dynamic(() =>
+  import("@/features/editor/site-settings-panel").then(
+    (module) => module.SiteSettingsPanel,
   ),
 );
 
 interface EditorToolDockProps {
   expanded: boolean;
-  site: { _id: string; defaultPageId?: string };
+  site: { _id: Id<"sites">; defaultPageId?: Id<"pages"> };
   pages: PageListItem[];
   selectedPageId?: string;
   onSelectPage: (pageId: string) => void;
@@ -251,42 +249,22 @@ function ToolPanel({
   pages: PageListItem[];
   onSelectPage: (pageId: string) => void;
   selectedPageId?: string;
-  site: { _id: string; defaultPageId?: string };
+  site: { _id: Id<"sites">; defaultPageId?: Id<"pages"> };
 }) {
   if (activeTool === "pages") {
     return (
-      <>
-        <div className="flex h-14 items-center justify-between px-3">
-          <p className="text-sm font-semibold">Pages</p>
-          {canEdit ? <CreatePageDialog siteId={site._id} /> : null}
-        </div>
-        <div className="px-2 pb-2">
-          {pages.length ? (
-            <SidebarMenu
-              aria-label="Site pages"
-              className="gap-0.5"
-              role="tree"
-            >
-              <PageTree
-                allPages={pages}
-                defaultPageId={site.defaultPageId}
-                onSelect={onSelectPage}
-                selectedPageId={selectedPageId}
-                siteId={site._id}
-              />
-            </SidebarMenu>
-          ) : (
-            <p className="px-3 py-4 text-sm text-muted-foreground">
-              No pages yet.
-            </p>
-          )}
-        </div>
-      </>
+      <PagesPanel
+        canEdit={canEdit}
+        onSelectPage={onSelectPage}
+        pages={pages}
+        selectedPageId={selectedPageId}
+        site={site}
+      />
     );
   }
 
   if (activeTool === "site") {
-    return <SiteConfigPanel siteId={site._id as Id<"sites">} />;
+    return <SiteSettingsPanel siteId={site._id} />;
   }
 
   if (activeTool === "blocks") {

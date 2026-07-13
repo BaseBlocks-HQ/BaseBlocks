@@ -62,12 +62,12 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 
 const AccountSettings = dynamic(() =>
-  import("@/features/dashboard/account/account-settings").then(
+  import("@/features/dashboard/account-settings").then(
     (module) => module.AccountSettings,
   ),
 );
 const InvitationInbox = dynamic(() =>
-  import("@/features/dashboard/invitations/invitation-inbox").then(
+  import("@/features/dashboard/invitation-inbox").then(
     (module) => module.InvitationInbox,
   ),
 );

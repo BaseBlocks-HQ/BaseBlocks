@@ -9,9 +9,8 @@ import {
   type ReactNode,
   createContext,
   use,
-  useCallback,
   useEffect,
-  useMemo,
+  useEffectEvent,
   useRef,
   useState,
 } from "react";
@@ -22,7 +21,7 @@ interface EditorPermissions {
   isLoading: boolean;
 }
 
-export interface EditorUiContextValue {
+interface EditorUiContextValue {
   canGoBack: boolean;
   goBack: () => void;
   openPage: (pageId: string) => void;
@@ -71,34 +70,28 @@ export function EditorProvider({
   >([]);
   const activeBlockPicker = useRef<symbol | null>(null);
 
-  const registerBlockPicker = useCallback(
-    (items: readonly OpenEditorBlockPickerItem[]) => {
-      const registration = Symbol("editor-block-picker");
-      activeBlockPicker.current = registration;
-      setBlockPickerItems(items);
+  const registerBlockPicker = (items: readonly OpenEditorBlockPickerItem[]) => {
+    const registration = Symbol("editor-block-picker");
+    activeBlockPicker.current = registration;
+    setBlockPickerItems(items);
 
-      return () => {
-        if (activeBlockPicker.current !== registration) return;
-        activeBlockPicker.current = null;
-        setBlockPickerItems([]);
-      };
-    },
-    [],
-  );
+    return () => {
+      if (activeBlockPicker.current !== registration) return;
+      activeBlockPicker.current = null;
+      setBlockPickerItems([]);
+    };
+  };
 
-  const uiValue = useMemo<EditorUiContextValue>(
-    () => ({
-      canGoBack,
-      goBack: onGoBack,
-      openPage: onOpenPage,
-      resetPageHistory: onResetPageHistory,
-    }),
-    [canGoBack, onGoBack, onOpenPage, onResetPageHistory],
-  );
-  const blockPickerValue = useMemo<EditorBlockPickerContextValue>(
-    () => ({ items: blockPickerItems, register: registerBlockPicker }),
-    [blockPickerItems, registerBlockPicker],
-  );
+  const uiValue: EditorUiContextValue = {
+    canGoBack,
+    goBack: onGoBack,
+    openPage: onOpenPage,
+    resetPageHistory: onResetPageHistory,
+  };
+  const blockPickerValue: EditorBlockPickerContextValue = {
+    items: blockPickerItems,
+    register: registerBlockPicker,
+  };
 
   return (
     <EditorSiteContext.Provider
@@ -153,14 +146,13 @@ export function useRegisterEditorBlockPicker(
   enabled = true,
 ) {
   const { register } = useEditorBlockPicker();
-  const controllerRef = useRef(controller);
-
-  useEffect(() => {
-    controllerRef.current = controller;
-  }, [controller]);
+  const readBlockPickerItems = useEffectEvent(() =>
+    getDefaultBlockPickerItems(controller),
+  );
+  const registerBlockPicker = useEffectEvent(register);
 
   useEffect(() => {
     if (!enabled || !controller.editor) return;
-    return register(getDefaultBlockPickerItems(controllerRef.current));
-  }, [controller.editor, enabled, register]);
+    return registerBlockPicker(readBlockPickerItems());
+  }, [controller.editor, enabled]);
 }

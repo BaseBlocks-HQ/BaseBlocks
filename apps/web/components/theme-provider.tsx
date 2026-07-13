@@ -15,7 +15,6 @@ import {
   type ComponentProps,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 
@@ -69,16 +68,13 @@ export function ThemeProvider({
     } catch {}
   }, [appearance, preferencesLoaded]);
 
-  const contextValue = useMemo<ProductAppearanceContextValue>(
-    () => ({
-      palette: appearance.palette,
-      setPalette: (palette) =>
-        setAppearance((current) => ({ ...current, palette })),
-      setStyle: (style) => setAppearance((current) => ({ ...current, style })),
-      style: appearance.style,
-    }),
-    [appearance.palette, appearance.style],
-  );
+  const contextValue: ProductAppearanceContextValue = {
+    palette: appearance.palette,
+    setPalette: (palette) =>
+      setAppearance((current) => ({ ...current, palette })),
+    setStyle: (style) => setAppearance((current) => ({ ...current, style })),
+    style: appearance.style,
+  };
 
   return (
     <ProductAppearanceContext.Provider value={contextValue}>

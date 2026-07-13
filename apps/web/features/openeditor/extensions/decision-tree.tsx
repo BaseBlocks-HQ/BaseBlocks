@@ -32,6 +32,13 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
+import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
   OpenEditorContent,
@@ -39,9 +46,14 @@ import {
   useOpenEditorController,
 } from "@openeditor/react";
 import { toHtml, toPlainText } from "@openeditor/exporters";
-import { ChevronsUpDown, GitFork, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronsUpDown,
+  GitFork,
+  MousePointerClick,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
-import { DecisionTreeEditorEmptyState } from "@/features/openeditor/extensions/decision-tree/editor-empty-state";
 import {
   removeDecisionTreeNodesFromPath,
   resolveDecisionTreeEditor,
@@ -65,6 +77,33 @@ const defaultValue = (): TreeValue => ({
   tabsMode: "row",
 });
 
+function DecisionTreeEditorEmptyState({
+  variant,
+}: {
+  variant: "options" | "selection";
+}) {
+  const isOptionsEmpty = variant === "options";
+  const Icon = isOptionsEmpty ? GitFork : MousePointerClick;
+
+  return (
+    <Empty className="h-full min-h-0 gap-3 border-0 px-6 py-8 md:p-8">
+      <EmptyHeader className="gap-1.5">
+        <EmptyMedia className="mb-1 size-9 rounded-xl" variant="icon">
+          <Icon className="size-4" />
+        </EmptyMedia>
+        <EmptyTitle className="text-sm font-medium">
+          {isOptionsEmpty ? "No options yet" : "Open an option"}
+        </EmptyTitle>
+        <EmptyDescription className="max-w-60 text-xs leading-relaxed">
+          {isOptionsEmpty
+            ? "Add an option below to continue this path."
+            : "Choose an option on the left to edit its title and details."}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
 function descendants(nodes: TreeNode[], id: string) {
   const result = new Set([id]);
   let size = 0;
@@ -78,22 +117,20 @@ function descendants(nodes: TreeNode[], id: string) {
 
 function TreeSwitcher({
   activeTreeId,
-  editable = false,
   onAdd,
   onRemove,
   onSelect,
   trees,
 }: {
   activeTreeId: string;
-  editable?: boolean;
-  onAdd?: () => void;
-  onRemove?: () => void;
+  onAdd: () => void;
+  onRemove: () => void;
   onSelect: (treeId: string) => void;
   trees: Tree[];
 }) {
   const activeTree = trees.find((tree) => tree.id === activeTreeId) ?? trees[0];
 
-  if (!activeTree || (!editable && trees.length <= 1)) return null;
+  if (!activeTree) return null;
 
   return (
     <DropdownMenu>
@@ -117,23 +154,19 @@ function TreeSwitcher({
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
-        {editable ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onAdd}>
-              <Plus />
-              Add tree
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={trees.length <= 1}
-              onSelect={onRemove}
-              variant="destructive"
-            >
-              <Trash2 />
-              Remove tree
-            </DropdownMenuItem>
-          </>
-        ) : null}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onAdd}>
+          <Plus />
+          Add tree
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={trees.length <= 1}
+          onSelect={onRemove}
+          variant="destructive"
+        >
+          <Trash2 />
+          Remove tree
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -229,7 +262,6 @@ function TreeEditor({
     <section className="not-prose my-4 space-y-3">
       <TreeSwitcher
         activeTreeId={tree.id}
-        editable
         onAdd={addTree}
         onRemove={removeTree}
         onSelect={selectTree}

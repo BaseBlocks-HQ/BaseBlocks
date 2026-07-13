@@ -52,7 +52,7 @@ import {
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
 import { Plus, Search, Settings, TableProperties, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50] as const;
 
@@ -102,17 +102,15 @@ function paginationItems(
 
 function DirectoryTable({
   value,
-  editable,
   onChange,
 }: {
   value: DirectoryContent;
-  editable: boolean;
-  onChange?: (value: DirectoryContent) => void;
+  onChange: (value: DirectoryContent) => void;
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const normalized = readDirectory(value);
-  const rows = useMemo(() => {
+  const rows = (() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return normalized.rows;
     return normalized.rows.filter((row) =>
@@ -120,7 +118,7 @@ function DirectoryTable({
         (row.cells[column.id] ?? "").toLowerCase().includes(needle),
       ),
     );
-  }, [normalized.columns, normalized.rows, query]);
+  })();
   const pageSize = normalized.settings.pageSize;
   const pageCount =
     pageSize > 0 ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
@@ -129,7 +127,7 @@ function DirectoryTable({
     pageSize > 0
       ? rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
       : rows;
-  const update = (next: DirectoryContent) => onChange?.(next);
+  const update = (next: DirectoryContent) => onChange(next);
 
   const addColumn = () => {
     const column: DirectoryColumn = {
@@ -223,77 +221,61 @@ function DirectoryTable({
         ) : null}
         {normalized.columns.length === 0 ? (
           <div className="flex min-h-28 items-center justify-center rounded-2xl border border-dashed">
-            {editable ? (
-              <Button
-                className="rounded-xl"
-                onClick={addColumn}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <Plus className="size-4" />
-                Add column
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                This directory is empty.
-              </p>
-            )}
+            <Button
+              className="rounded-xl"
+              onClick={addColumn}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <Plus className="size-4" />
+              Add column
+            </Button>
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl bg-card">
-            <Table className={editable ? undefined : "table-fixed"}>
+            <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   {normalized.columns.map((column) => (
                     <TableHead
-                      className={
-                        editable
-                          ? "h-auto min-w-44 px-3 py-1.5"
-                          : "h-auto whitespace-normal px-3 py-2 align-top [overflow-wrap:anywhere]"
-                      }
+                      className="h-auto min-w-44 px-3 py-1.5"
                       key={column.id}
                     >
-                      {editable ? (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            aria-label="Column name"
-                            className="h-8 border-transparent bg-transparent px-1 font-medium shadow-none focus-visible:bg-background"
-                            onChange={(event) =>
-                              updateColumn(column.id, event.target.value)
-                            }
-                            value={column.header}
-                          />
-                          <Button
-                            aria-label={`Remove ${column.header}`}
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={() => removeColumn(column.id)}
-                            size="icon-xs"
-                            type="button"
-                            variant="ghost"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        column.header
-                      )}
+                      <div className="flex items-center gap-1">
+                        <Input
+                          aria-label="Column name"
+                          className="h-8 border-transparent bg-transparent px-1 font-medium shadow-none focus-visible:bg-background"
+                          onChange={(event) =>
+                            updateColumn(column.id, event.target.value)
+                          }
+                          value={column.header}
+                        />
+                        <Button
+                          aria-label={`Remove ${column.header}`}
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => removeColumn(column.id)}
+                          size="icon-xs"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </TableHead>
                   ))}
-                  {editable ? (
-                    <TableHead className="h-auto w-10 p-1.5">
-                      <Button
-                        aria-label="Add column"
-                        className="text-muted-foreground"
-                        onClick={addColumn}
-                        size="icon-xs"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Plus className="size-3.5" />
-                      </Button>
-                    </TableHead>
-                  ) : null}
+                  <TableHead className="h-auto w-10 p-1.5">
+                    <Button
+                      aria-label="Add column"
+                      className="text-muted-foreground"
+                      onClick={addColumn}
+                      size="icon-xs"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +283,7 @@ function DirectoryTable({
                   <TableRow className="hover:bg-transparent">
                     <TableCell
                       className="py-10 text-center text-muted-foreground"
-                      colSpan={normalized.columns.length + (editable ? 1 : 0)}
+                      colSpan={normalized.columns.length + 1}
                     >
                       {query ? "No rows found." : "No rows yet."}
                     </TableCell>
@@ -310,71 +292,52 @@ function DirectoryTable({
                   visibleRows.map((row) => (
                     <TableRow key={row.id}>
                       {normalized.columns.map((column) => (
-                        <TableCell
-                          className={
-                            editable
-                              ? "min-w-44 p-1.5"
-                              : "whitespace-normal px-3 py-2 align-top [overflow-wrap:anywhere]"
-                          }
-                          key={column.id}
-                        >
-                          {editable ? (
-                            <Input
-                              aria-label={`${column.header} value`}
-                              className="h-8 border-transparent bg-transparent shadow-none focus-visible:bg-background"
-                              onChange={(event) =>
-                                updateCell(
-                                  row.id,
-                                  column.id,
-                                  event.target.value,
-                                )
-                              }
-                              value={row.cells[column.id] ?? ""}
-                            />
-                          ) : (
-                            (row.cells[column.id] ?? "")
-                          )}
+                        <TableCell className="min-w-44 p-1.5" key={column.id}>
+                          <Input
+                            aria-label={`${column.header} value`}
+                            className="h-8 border-transparent bg-transparent shadow-none focus-visible:bg-background"
+                            onChange={(event) =>
+                              updateCell(row.id, column.id, event.target.value)
+                            }
+                            value={row.cells[column.id] ?? ""}
+                          />
                         </TableCell>
                       ))}
-                      {editable ? (
-                        <TableCell className="w-10 p-1.5">
-                          <Button
-                            aria-label="Remove row"
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={() => removeRow(row.id)}
-                            size="icon-xs"
-                            type="button"
-                            variant="ghost"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </TableCell>
-                      ) : null}
+                      <TableCell className="w-10 p-1.5">
+                        <Button
+                          aria-label="Remove row"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => removeRow(row.id)}
+                          size="icon-xs"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
-              {editable ? (
-                <TableFooter className="border-0 bg-transparent">
-                  <TableRow className="border-0 hover:bg-transparent">
-                    <TableCell
-                      className="p-1.5"
-                      colSpan={normalized.columns.length + 1}
+              <TableFooter className="border-0 bg-transparent">
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableCell
+                    className="p-1.5"
+                    colSpan={normalized.columns.length + 1}
+                  >
+                    <Button
+                      className="w-full justify-start rounded-xl text-muted-foreground"
+                      onClick={addRow}
+                      size="sm"
+                      type="button"
+                      variant="ghost"
                     >
-                      <Button
-                        className="w-full justify-start rounded-xl text-muted-foreground"
-                        onClick={addRow}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Plus className="size-4" />
-                        Add row
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                </TableFooter>
-              ) : null}
+                      <Plus className="size-4" />
+                      Add row
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           </div>
         )}
@@ -439,62 +402,60 @@ function DirectoryTable({
           </Pagination>
         ) : null}
       </div>
-      {editable ? (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              aria-label="Configure directory"
-              className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
-              size="icon"
-              type="button"
-              variant="ghost"
-            >
-              <Settings className="size-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            className="w-72 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            aria-label="Configure directory"
+            className="shrink-0 rounded-2xl border-0 bg-card shadow-none hover:bg-muted/60"
+            size="icon"
+            type="button"
+            variant="ghost"
           >
-            <PopoverHeader className="mb-4">
-              <PopoverTitle>Directory settings</PopoverTitle>
-            </PopoverHeader>
-            <div className="grid gap-4">
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
-                  Rows per page
-                </Label>
-                <Select
-                  onValueChange={(next) => updatePageSize(Number(next))}
-                  value={String(pageSize)}
-                >
-                  <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
-                    {PAGE_SIZE_OPTIONS.map((option) => (
-                      <SelectItem key={option} value={String(option)}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="0">Unlimited</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <Label className="text-sm" htmlFor="directory-show-search">
-                  Show search
-                </Label>
-                <Switch
-                  checked={normalized.settings.showSearch}
-                  id="directory-show-search"
-                  onCheckedChange={updateShowSearch}
-                />
-              </div>
+            <Settings className="size-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="w-72 rounded-[1.25rem] border-sidebar-border bg-sidebar p-4 text-sidebar-foreground shadow-2xl"
+        >
+          <PopoverHeader className="mb-4">
+            <PopoverTitle>Directory settings</PopoverTitle>
+          </PopoverHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-1.5">
+              <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
+                Rows per page
+              </Label>
+              <Select
+                onValueChange={(next) => updatePageSize(Number(next))}
+                value={String(pageSize)}
+              >
+                <SelectTrigger className="h-10 w-full rounded-[0.95rem] border-sidebar-border/80 bg-background/70 text-sidebar-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="0">Unlimited</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </PopoverContent>
-        </Popover>
-      ) : null}
+            <div className="flex items-center justify-between gap-4">
+              <Label className="text-sm" htmlFor="directory-show-search">
+                Show search
+              </Label>
+              <Switch
+                checked={normalized.settings.showSearch}
+                id="directory-show-search"
+                onCheckedChange={updateShowSearch}
+              />
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </section>
   );
 }
@@ -508,7 +469,6 @@ function DirectoryNode({
     <NodeViewWrapper contentEditable={false}>
       {editor.isEditable ? (
         <DirectoryTable
-          editable
           onChange={(directory) => updateAttributes({ directory })}
           value={readDirectory(node.attrs.directory)}
         />

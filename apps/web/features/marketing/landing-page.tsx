@@ -15,12 +15,12 @@ import {
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
-import { FeaturesSection } from "./components/features-section";
-import { FooterSection } from "./components/footer-section";
-import { HeroSection } from "./components/hero-section";
-import { IntroOverlay } from "./components/intro-overlay";
-import { LandingHeader } from "./components/landing-header";
-import { StepsSection } from "./components/steps-section";
+import { FeaturesSection } from "./features-section";
+import { FooterSection } from "./footer-section";
+import { HeroSection } from "./hero-section";
+import { IntroOverlay } from "./intro-overlay";
+import { LandingHeader } from "./landing-header";
+import { StepsSection } from "./steps-section";
 
 type IntroFontVariant =
   | "square"

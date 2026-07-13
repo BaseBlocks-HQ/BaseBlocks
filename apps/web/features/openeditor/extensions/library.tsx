@@ -5,8 +5,8 @@ import {
   PublicLibraryViewer,
   readLibrary,
 } from "@/features/openeditor/renderers/library";
-import { LibraryExplorer } from "@/features/libraries/components/library-explorer";
-import type { LibraryId } from "@/features/libraries/tree-input";
+import { LibraryExplorer } from "@/features/libraries/library-explorer";
+import type { LibraryId } from "@/features/libraries/model";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { api } from "@baseblocks/backend";
 import type { LibraryContent } from "@baseblocks/domain";

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FolderId, LibraryEntity } from "@/features/libraries/tree-input";
+import type { FolderId, LibraryEntity } from "@/features/libraries/model";
 import { InlineRename } from "@/components/tree/inline-rename";
 import { projectTree, type TreeNode } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
@@ -16,7 +16,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 export function LibraryTree(props: {
   allowDownloads: boolean;
@@ -40,10 +40,7 @@ export function LibraryTree(props: {
       ),
   );
   const [renamingId, setRenamingId] = useState<string | null>(null);
-  const rows = useMemo(
-    () => projectTree(props.nodes, expanded),
-    [props.nodes, expanded],
-  );
+  const rows = projectTree(props.nodes, expanded);
   return (
     <div
       className="flex h-full min-h-0 flex-col"

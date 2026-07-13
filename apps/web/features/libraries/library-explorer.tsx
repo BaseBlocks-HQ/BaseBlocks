@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  FILE_SEARCH_PARAM,
-  buildFileDeepLinkPath,
-  toAbsoluteBrowserUrl,
-} from "@/features/libraries/deep-link";
+  LIBRARY_FILE_SEARCH_PARAM,
+  buildLibraryExplorerModel,
+  buildLibraryFilePath,
+} from "@/features/libraries/model";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview,
@@ -18,10 +18,9 @@ import type {
   LibraryEntity,
   LibraryExplorerPayload,
   LibraryFile,
-} from "@/features/libraries/tree-input";
-import { buildLibraryTreeInput } from "@/features/libraries/tree-input";
-import { useFileUpload } from "@/features/libraries/use-document-upload";
+} from "@/features/libraries/model";
 import { deleteDocument } from "@/lib/files/client";
+import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
@@ -35,7 +34,7 @@ import { useMutation } from "convex/react";
 import { Loader2, PanelLeft, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { DeleteItemDialog } from "./library-dialogs";
@@ -172,27 +171,23 @@ export function LibraryExplorer({
   const [deleteTarget, setDeleteTarget] = useState<LibraryDialogTarget | null>(
     null,
   );
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderMutation = useMutation(api.libraries.createFolder);
   const updateFolder = useMutation(api.libraries.updateFolder);
   const removeFolder = useMutation(api.libraries.removeFolder);
   const renameDocument = useMutation(api.documents.rename);
-  const {
-    uploadFiles: uploadLibraryFiles,
-    isAnyUploading,
-    clearAllUploadStates,
-    totalProgress,
-  } = useFileUpload();
+  const createDocument = useMutation(api.documents.createInLibrary);
 
   const canManage = true;
-  const model = useMemo(
-    () => buildLibraryTreeInput(explorer?.folders ?? [], explorer?.files ?? []),
-    [explorer?.folders, explorer?.files],
+  const model = buildLibraryExplorerModel(
+    explorer?.folders ?? [],
+    explorer?.files ?? [],
   );
   const openEntity = openFileId ? model.entityById.get(openFileId) : null;
   const openFile = openEntity?.kind === "file" ? openEntity.file : null;
   const selectedFileId = searchParams.get(
-    FILE_SEARCH_PARAM,
+    LIBRARY_FILE_SEARCH_PARAM,
   ) as DocumentId | null;
 
   useEffect(() => {
@@ -206,7 +201,7 @@ export function LibraryExplorer({
   }, [model.entityByFileId, selectedFileId]);
 
   const syncFileUrl = (documentId: string | null) => {
-    const nextUrl = buildFileDeepLinkPath(
+    const nextUrl = buildLibraryFilePath(
       pathname,
       searchParams.toString(),
       documentId,
@@ -217,12 +212,14 @@ export function LibraryExplorer({
   const copyEntityLink = async (entity: LibraryEntity) => {
     if (entity.kind !== "file") return;
 
-    const sharePath = buildFileDeepLinkPath(
+    const sharePath = buildLibraryFilePath(
       pathname,
       searchParams.toString(),
       entity.file._id,
     );
-    await navigator.clipboard.writeText(toAbsoluteBrowserUrl(sharePath));
+    await navigator.clipboard.writeText(
+      new URL(sharePath, window.location.origin).toString(),
+    );
     toast.success("Link copied");
   };
 
@@ -245,6 +242,8 @@ export function LibraryExplorer({
     const targetFolderId = currentFolderId ?? undefined;
     const count = files.length;
     const primaryName = files[0]?.name ?? "";
+    const loadedByFile = new Map(files.map((file) => [file, 0]));
+    const totalBytes = files.reduce((total, file) => total + file.size, 0);
 
     const toastId = toast.loading(
       count === 1
@@ -252,27 +251,42 @@ export function LibraryExplorer({
         : tExplorer("toastUploadingCount", { count }),
     );
 
-    const results = await uploadLibraryFiles(files, {
-      siteId: explorer.site._id,
-      libraryId: explorer.library._id,
-      folderId: targetFolderId,
-    })
-      .catch((error) => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : tExplorer("toastUploadFailed"),
-          { id: toastId },
-        );
-        return null;
-      })
-      .finally(() => {
-        clearAllUploadStates();
-      });
-
-    if (!results) {
-      return;
-    }
+    setUploadPercent(0);
+    const results = await Promise.all(
+      files.map(async (file) => {
+        try {
+          const { registered } = await filesClient.uploadAndRegister(
+            file,
+            {
+              siteId: explorer.site._id,
+              purpose: "document",
+              onProgress: ({ loaded }) => {
+                loadedByFile.set(file, loaded);
+                const totalLoaded = [...loadedByFile.values()].reduce(
+                  (total, value) => total + value,
+                  0,
+                );
+                setUploadPercent(
+                  totalBytes > 0
+                    ? Math.round((totalLoaded / totalBytes) * 100)
+                    : 100,
+                );
+              },
+            },
+            (upload) =>
+              createDocument({
+                siteId: explorer.site._id,
+                libraryId: explorer.library._id,
+                folderId: targetFolderId,
+                ...fileRegistration(file, upload),
+              }),
+          );
+          return registered;
+        } catch {
+          return null;
+        }
+      }),
+    ).finally(() => setUploadPercent(null));
 
     const succeeded = results.filter(Boolean).length;
     const failed = count - succeeded;
@@ -384,7 +398,7 @@ export function LibraryExplorer({
       onRenameEntity={renameEntity}
       onUploadFiles={() => fileInputRef.current?.click()}
       title={embedded ? explorer.library.name : undefined}
-      uploadDisabled={isAnyUploading}
+      uploadDisabled={uploadPercent !== null}
     />
   );
   const previewFile: PreviewFile | null = openFile
@@ -438,8 +452,8 @@ export function LibraryExplorer({
     <>
       <UploadDropzone
         disabled={!canManage || !explorer}
-        isUploading={isAnyUploading}
-        uploadPercent={totalProgress?.percentage ?? null}
+        isUploading={uploadPercent !== null}
+        uploadPercent={uploadPercent}
         uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(

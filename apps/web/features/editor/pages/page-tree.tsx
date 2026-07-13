@@ -24,7 +24,7 @@ import {
 import { useMutation } from "convex/react";
 import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageActionsMenu } from "./page-actions";
 
@@ -121,15 +121,12 @@ export function PageTree({
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const updatePage = useMutation(api.pages.update);
   const movePage = useMutation(api.pages.moveInTree);
-  const nodes = useMemo(() => toTreeNodes(allPages), [allPages]);
-  const rows = useMemo(() => projectTree(nodes, expanded), [nodes, expanded]);
+  const nodes = toTreeNodes(allPages);
+  const rows = projectTree(nodes, expanded);
   const draggedPage = draggedPageId
     ? (allPages.find((page) => page._id === draggedPageId) ?? null)
     : null;
-  const invalidDropIds = useMemo(
-    () => descendantIds(nodes, draggedPageId),
-    [draggedPageId, nodes],
-  );
+  const invalidDropIds = descendantIds(nodes, draggedPageId);
 
   useEffect(() => {
     const ancestors = ancestorIds(nodes, selectedPageId);

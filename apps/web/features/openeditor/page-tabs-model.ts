@@ -6,7 +6,7 @@ export type OpenEditorPageTab = {
   document: OpenEditorDocument;
 };
 
-export type OpenEditorPageTabs = {
+type OpenEditorPageTabs = {
   tabs: OpenEditorPageTab[];
 };
 

@@ -3,9 +3,9 @@
 import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { getTeamLibrariesPath } from "@/features/dashboard/routes";
-import { LibraryExplorer } from "@/features/libraries/components/library-explorer";
+import { LibraryExplorer } from "@/features/libraries/library-explorer";
 import { ReadOnlyLibraryExplorer } from "@/features/openeditor/renderers/library";
-import type { LibraryId } from "@/features/libraries/tree-input";
+import type { LibraryId } from "@/features/libraries/model";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 import {

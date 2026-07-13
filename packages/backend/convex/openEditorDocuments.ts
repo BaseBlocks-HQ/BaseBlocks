@@ -69,35 +69,6 @@ export function collectOpenEditorAttributeValues(
   return values;
 }
 
-export function removeOpenEditorNodes(
-  value: unknown,
-  predicate: (node: OpenEditorNode) => boolean,
-): unknown {
-  if (Array.isArray(value)) {
-    return value
-      .filter(
-        (item) =>
-          !(
-            item &&
-            typeof item === "object" &&
-            typeof (item as { type?: unknown }).type === "string" &&
-            (item as { type: string }).type !== "doc" &&
-            predicate(item as OpenEditorNode)
-          ),
-      )
-      .map((item) => removeOpenEditorNodes(item, predicate));
-  }
-  if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, child]) => [
-      key,
-      child && typeof child === "object"
-        ? removeOpenEditorNodes(child, predicate)
-        : child,
-    ]),
-  );
-}
-
 export function extractOpenEditorText(document: OpenEditorDocument): string {
   const parts: string[] = [];
   visitOpenEditorNodes(document, (node) => {

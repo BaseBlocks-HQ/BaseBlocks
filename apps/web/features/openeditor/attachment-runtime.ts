@@ -12,7 +12,6 @@ import type {
   OpenEditorAttachmentUploadInput,
 } from "@openeditor/core";
 import { useConvex, useMutation } from "convex/react";
-import { useMemo } from "react";
 
 const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;
 
@@ -87,82 +86,80 @@ export function useBaseBlocksAttachmentRuntime(
   const createDocument = useMutation(api.documents.create);
   const renameDocument = useMutation(api.documents.rename);
 
-  return useMemo(() => {
-    const upload = async (
-      input: OpenEditorAttachmentUploadInput<File>,
-      callbacks?: {
-        onProgress?: (progress: number) => void;
-        signal?: AbortSignal;
-      },
-    ) => {
-      const { registered: documentId, uploaded } =
-        await filesClient.uploadAndRegister(
-          input.source,
-          {
+  const upload = async (
+    input: OpenEditorAttachmentUploadInput<File>,
+    callbacks?: {
+      onProgress?: (progress: number) => void;
+      signal?: AbortSignal;
+    },
+  ) => {
+    const { registered: documentId, uploaded } =
+      await filesClient.uploadAndRegister(
+        input.source,
+        {
+          siteId,
+          purpose: "document",
+          signal: callbacks?.signal,
+          onProgress: (progress) =>
+            callbacks?.onProgress?.(progress.percentage / 100),
+        },
+        (upload) => {
+          if (callbacks?.signal?.aborted) {
+            throw new DOMException("Upload cancelled", "AbortError");
+          }
+          return createDocument({
             siteId,
-            purpose: "document",
-            signal: callbacks?.signal,
-            onProgress: (progress) =>
-              callbacks?.onProgress?.(progress.percentage / 100),
-          },
-          (upload) => {
-            if (callbacks?.signal?.aborted) {
-              throw new DOMException("Upload cancelled", "AbortError");
-            }
-            return createDocument({
-              siteId,
-              ...fileRegistration(input.source, upload),
-              filename: input.name,
-            });
-          },
-        );
-      return {
-        attachmentId: documentId,
-        name: input.name,
-        mimeType: uploaded.contentType,
-        size: uploaded.size,
-        url: `/api/files/${documentId}`,
-      } satisfies OpenEditorAttachmentSnapshot;
-    };
-
+            ...fileRegistration(input.source, upload),
+            filename: input.name,
+          });
+        },
+      );
     return {
-      selectAttachment: ({ signal } = {}) => selectBrowserFile(signal),
-      validateAttachment: (input) => {
-        if (input.size !== null && input.size > MAX_ATTACHMENT_SIZE) {
-          return {
-            accepted: false,
-            message: "Files must be 50 MB or smaller.",
-          };
-        }
-        const contentType = resolveUploadMimeType({
-          filename: input.name,
-          contentType: input.mimeType ?? "",
-        });
-        return isSupportedUploadMimeType(contentType)
-          ? { accepted: true }
-          : { accepted: false, message: "This file type is not allowed." };
-      },
-      uploadAttachment: upload,
-      replaceAttachment: async (_attachmentId, input, callbacks) =>
-        upload(input, callbacks),
-      resolveAttachment: async (attachmentId) => {
-        const resolved = await convex.query(api.documents.get, {
-          documentId: attachmentId as Id<"documents">,
-        });
-        return resolved ? snapshot(resolved) : null;
-      },
-      renameAttachment: async (attachmentId, name) => {
-        await renameDocument({
-          documentId: attachmentId as Id<"documents">,
-          filename: name,
-        });
-      },
-      openAttachment: (attachment) => {
-        const url = attachment.attachmentId
-          ? `/api/files/${attachment.attachmentId}`
-          : attachment.url;
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
-      },
-    } satisfies OpenEditorAttachmentRuntime<File>;
-  }, [convex, createDocument, renameDocument, siteId]);
+      attachmentId: documentId,
+      name: input.name,
+      mimeType: uploaded.contentType,
+      size: uploaded.size,
+      url: `/api/files/${documentId}`,
+    } satisfies OpenEditorAttachmentSnapshot;
+  };
+
+  return {
+    selectAttachment: ({ signal } = {}) => selectBrowserFile(signal),
+    validateAttachment: (input) => {
+      if (input.size !== null && input.size > MAX_ATTACHMENT_SIZE) {
+        return {
+          accepted: false,
+          message: "Files must be 50 MB or smaller.",
+        };
+      }
+      const contentType = resolveUploadMimeType({
+        filename: input.name,
+        contentType: input.mimeType ?? "",
+      });
+      return isSupportedUploadMimeType(contentType)
+        ? { accepted: true }
+        : { accepted: false, message: "This file type is not allowed." };
+    },
+    uploadAttachment: upload,
+    replaceAttachment: async (_attachmentId, input, callbacks) =>
+      upload(input, callbacks),
+    resolveAttachment: async (attachmentId) => {
+      const resolved = await convex.query(api.documents.get, {
+        documentId: attachmentId as Id<"documents">,
+      });
+      return resolved ? snapshot(resolved) : null;
+    },
+    renameAttachment: async (attachmentId, name) => {
+      await renameDocument({
+        documentId: attachmentId as Id<"documents">,
+        filename: name,
+      });
+    },
+    openAttachment: (attachment) => {
+      const url = attachment.attachmentId
+        ? `/api/files/${attachment.attachmentId}`
+        : attachment.url;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+    },
+  } satisfies OpenEditorAttachmentRuntime<File>;
 }

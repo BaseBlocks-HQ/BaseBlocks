@@ -13,12 +13,6 @@ import {
 
 type MutationCtx = GenericMutationCtx<DataModel>;
 
-/**
- * Index or update a page's searchable content.
- *
- * Uses the page ID as the sourceId so search results stay attached to the
- * page itself, regardless of how it is surfaced in navigation.
- */
 export async function indexPageContent(
   ctx: MutationCtx,
   pageId: Id<"pages">,
@@ -38,7 +32,6 @@ export async function indexPageContent(
   const combinedText = `${page.title} ${extractedText}`.trim();
   if (!combinedText) return;
 
-  // Upsert into the canonical search index.
   const existing = await ctx.db
     .query("searchEntries")
     .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
@@ -60,9 +53,6 @@ export async function indexPageContent(
   }
 }
 
-/**
- * Remove a page's canonical search entry.
- */
 export async function removePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
@@ -77,9 +67,6 @@ export async function removePageContentIndex(
   }
 }
 
-/**
- * Extract a text snippet around the first occurrence of a search term
- */
 function extractSnippet(
   text: string | undefined,
   searchTerm: string,
@@ -117,9 +104,6 @@ function extractSnippet(
   };
 }
 
-/**
- * Format a canonical search result for the existing client contract.
- */
 function formatSearchResult(
   doc: Doc<"searchEntries">,
   matchType: "title" | "content",
@@ -170,10 +154,6 @@ function contentTypeMatches(
   return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
-/**
- * Unified search across all content types (documents + pages)
- * For authenticated users (dashboard)
- */
 export const searchAll = query({
   args: {
     siteId: v.id("sites"),
@@ -195,7 +175,6 @@ export const searchAll = query({
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
 
-    // Search by title
     const titleResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_title", (q) =>
@@ -203,7 +182,6 @@ export const searchAll = query({
       )
       .take(limit * 2);
 
-    // Search by content
     const contentResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_text", (q) =>
@@ -211,7 +189,6 @@ export const searchAll = query({
       )
       .take(limit * 2);
 
-    // Merge and deduplicate, prioritizing content matches
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
@@ -226,7 +203,6 @@ export const searchAll = query({
       return contentTypeMatches(doc, contentTypes);
     };
 
-    // Content matches first (higher relevance)
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       const document = await getVisibleDocument(doc);
@@ -235,7 +211,6 @@ export const searchAll = query({
       combined.push(formatSearchResult(doc, "content", trimmed, document));
     }
 
-    // Then title matches
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       const document = await getVisibleDocument(doc);
@@ -248,10 +223,6 @@ export const searchAll = query({
   },
 });
 
-/**
- * Unified search for public site viewing
- * Only searches published sites and active library documents
- */
 export const searchAllPublic = query({
   args: {
     siteId: v.id("sites"),
@@ -286,7 +257,6 @@ export const searchAllPublic = query({
       accessiblePageIds,
     );
 
-    // Search by title
     const titleResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_title", (q) =>
@@ -294,7 +264,6 @@ export const searchAllPublic = query({
       )
       .take(limit * 2);
 
-    // Search by content
     const contentResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_text", (q) =>
@@ -302,7 +271,6 @@ export const searchAllPublic = query({
       )
       .take(limit * 2);
 
-    // Filter and deduplicate
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
@@ -322,7 +290,6 @@ export const searchAllPublic = query({
       return accessiblePageIds.has(doc.sourceId as Id<"pages">);
     };
 
-    // Content matches first
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       const document = await getVisibleDocument(doc);
@@ -331,7 +298,6 @@ export const searchAllPublic = query({
       combined.push(formatSearchResult(doc, "content", trimmed, document));
     }
 
-    // Then title matches
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       const document = await getVisibleDocument(doc);

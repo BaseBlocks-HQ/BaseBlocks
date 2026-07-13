@@ -1,6 +1,6 @@
 import type { OpenEditorPageSnapshot } from "@openeditor/react";
 
-export type PublishedPageSummary = {
+type PublishedPageSummary = {
   _id: string;
   title: string;
   slug: string;
