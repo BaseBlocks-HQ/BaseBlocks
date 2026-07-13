@@ -81,6 +81,15 @@ export function extractOpenEditorReferences(content: OpenEditorDocument) {
   };
 }
 
+export function referencesOpenEditorPage(
+  content: OpenEditorDocument,
+  pageId: string,
+): boolean {
+  return collectOpenEditorAttributeValues(content, "page", ["pageId"]).has(
+    pageId,
+  );
+}
+
 export function extractOpenEditorText(content: OpenEditorDocument): string {
   const parts: string[] = [];
   visitOpenEditorNodes(content, (node) => {

@@ -63,7 +63,12 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
   const navigationIcon = readNavigationIcon(searchParams.get("icon"));
   const pageTargets = buildPublishedPageTargets(result.navigation);
-  const openPage = (pageId: string) => {
+  const navigateToPage = (pageId: string) => {
+    const target = pageTargets.get(pageId);
+    if (!target || target.pageId === page?._id) return;
+    router.push(getPageLink(site.slug, target.path));
+  };
+  const openPageBlock = (pageId: string) => {
     const target = pageTargets.get(pageId);
     if (!target || target.pageId === page?._id) return;
     const currentQuery = searchParams.toString();
@@ -95,7 +100,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
         actions={{
           siteId: site._id,
           siteSlug: site.slug,
-          openPage,
+          openPage: navigateToPage,
           publicSearch: true,
         }}
       >
@@ -110,8 +115,8 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
 
           <SidebarInset className="relative h-svh min-w-0 overflow-hidden bg-background [--bb-header-height:3.5rem]">
             <PublicSiteHeader
-              onOpenPage={openPage}
-              pageId={page.parentId ? page._id : undefined}
+              onOpenPage={navigateToPage}
+              pageId={page.isOpenEditorPageBlock ? page._id : undefined}
               site={site}
             />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -120,6 +125,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
                 content={result.content}
                 canGoBack={previousPageUrl !== null}
                 onGoBack={goBack}
+                onOpenPageBlock={openPageBlock}
                 pageTargets={pageTargets}
               />
             </div>

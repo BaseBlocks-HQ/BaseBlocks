@@ -22,6 +22,7 @@ const EMPTY_PAGE_TARGETS = new Map<string, PublishedPageTarget>();
 interface PublicPageContentProps {
   canGoBack?: boolean;
   onGoBack?: () => void;
+  onOpenPageBlock?: (pageId: string) => void;
   page: { icon?: string; title: string };
   content: OpenEditorDocument;
   pageTargets?: ReadonlyMap<string, PublishedPageTarget>;
@@ -30,6 +31,7 @@ interface PublicPageContentProps {
 export function PublicPageContent({
   canGoBack = false,
   onGoBack,
+  onOpenPageBlock,
   page,
   content,
   pageTargets = EMPTY_PAGE_TARGETS,
@@ -42,7 +44,7 @@ export function PublicPageContent({
         ? { ...target, href: getPageLink(actions.siteSlug, target.path) }
         : null;
     },
-    openPage: ({ pageId: targetPageId }) => actions.openPage?.(targetPageId),
+    openPage: ({ pageId: targetPageId }) => onOpenPageBlock?.(targetPageId),
   };
 
   return (

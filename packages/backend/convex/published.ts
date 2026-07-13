@@ -6,6 +6,7 @@ import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
   parseOpenEditorDocument,
+  referencesOpenEditorPage,
 } from "./pageContentFormat";
 import { canAccessPublishedSite } from "./sharing";
 
@@ -86,9 +87,21 @@ export const resolve = query({
           .withIndex("by_page", (q) => q.eq("pageId", page._id))
           .unique()
       : null;
+    const parentContentRow = page?.parentId
+      ? await ctx.db
+          .query("pageContents")
+          .withIndex("by_page", (q) => q.eq("pageId", page.parentId!))
+          .unique()
+      : null;
     const content = contentRow
       ? parseOpenEditorDocument(contentRow.content)
       : emptyOpenEditorDocument();
+    const isOpenEditorPageBlock = parentContentRow
+      ? referencesOpenEditorPage(
+          parseOpenEditorDocument(parentContentRow.content),
+          page?._id ?? "",
+        )
+      : false;
     return {
       organization: {
         id: organization._id,
@@ -112,6 +125,7 @@ export const resolve = query({
             slug: page.slug,
             icon: page.icon,
             parentId: page.parentId,
+            isOpenEditorPageBlock,
             updatedAt: page.updatedAt,
           }
         : null,
