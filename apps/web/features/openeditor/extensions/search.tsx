@@ -1,6 +1,7 @@
 "use client";
 
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import { SearchBox } from "@/features/search";
 import type { SearchContent } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
@@ -19,7 +20,7 @@ import {
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
-import { Settings } from "lucide-react";
+import { Search, Settings } from "lucide-react";
 
 const defaults: Required<SearchContent> = {
   placeholder: "Search documents…",
@@ -189,7 +190,11 @@ export const searchExtension = defineOpenEditorReactNode({
     ],
   },
   component: SearchNode,
-  slashMenu: { keywords: ["find", "query", "documents"] },
+  slashMenu: {
+    icon: Search,
+    keywords: ["find", "query", "documents"],
+    order: baseBlocksSlashMenuOrder.search,
+  },
   viewer: ({ node }) => <SearchViewer value={readSearch(node.attrs?.search)} />,
   exporters: {
     html: {

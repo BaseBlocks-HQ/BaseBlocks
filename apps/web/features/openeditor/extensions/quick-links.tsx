@@ -1,6 +1,7 @@
 "use client";
 
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import { filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import type { QuicklinkItem } from "@baseblocks/domain";
@@ -545,7 +546,11 @@ export const quickLinksExtension = defineOpenEditorReactNode({
     ],
   },
   component: QuickLinksNode,
-  slashMenu: { keywords: ["links", "cards", "bookmarks", "shortcuts"] },
+  slashMenu: {
+    icon: AppWindow,
+    keywords: ["links", "cards", "bookmarks", "shortcuts"],
+    order: baseBlocksSlashMenuOrder.quickLinks,
+  },
   viewer: ({ node }) => (
     <QuickLinksGrid editable={false} links={readLinks(node.attrs?.links)} />
   ),

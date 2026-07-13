@@ -1,6 +1,7 @@
 "use client";
 
 import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import { LibraryExplorer } from "@/features/libraries/components/library-explorer";
 import type { LibraryId } from "@/features/libraries/tree-input";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
@@ -30,7 +31,7 @@ import {
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
 import { useMutation, useQuery } from "convex/react";
-import { FolderPlus, Plus, Settings } from "lucide-react";
+import { FolderPlus, LibraryBig, Plus, Settings } from "lucide-react";
 import { useState } from "react";
 
 function readLibrary(value: unknown): LibraryContent {
@@ -274,7 +275,11 @@ export const libraryExtension = defineOpenEditorReactNode({
     ],
   },
   component: LibraryNode,
-  slashMenu: { keywords: ["documents", "files", "folder"] },
+  slashMenu: {
+    icon: LibraryBig,
+    keywords: ["documents", "files", "folder"],
+    order: baseBlocksSlashMenuOrder.library,
+  },
   viewer: ({ node }) => (
     <LibraryViewer value={readLibrary(node.attrs?.library)} />
   ),

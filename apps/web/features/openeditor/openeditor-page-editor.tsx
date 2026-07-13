@@ -2,6 +2,7 @@
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
@@ -26,7 +27,7 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PanelsTopLeft } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -341,7 +342,9 @@ function OpenEditorDocumentEditor({
         key: "baseblocksPageTabs",
         label: "Tabs",
         group: "structure",
+        icon: PanelsTopLeft,
         keywords: ["tabs", "sections", "organize"],
+        order: baseBlocksSlashMenuOrder.tabs,
         execute: ({ controller: current, range }) => {
           if (!current.editor) return false;
           current.editor.chain().focus().deleteRange(range).run();

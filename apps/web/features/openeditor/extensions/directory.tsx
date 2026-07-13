@@ -1,5 +1,6 @@
 "use client";
 
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import type {
   DirectoryColumn,
   DirectoryContent,
@@ -21,7 +22,7 @@ import {
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, TableProperties, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const emptyDirectory = (): DirectoryContent => ({
@@ -329,7 +330,11 @@ export const directoryExtension = defineOpenEditorReactNode({
     ],
   },
   component: DirectoryNode,
-  slashMenu: { keywords: ["table", "data", "list", "grid"] },
+  slashMenu: {
+    icon: TableProperties,
+    keywords: ["table", "data", "list", "grid"],
+    order: baseBlocksSlashMenuOrder.directory,
+  },
   viewer: ({ node }) => (
     <DirectoryTable
       editable={false}

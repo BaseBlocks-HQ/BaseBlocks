@@ -1,5 +1,6 @@
 "use client";
 
+import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import {
   createDocument,
   textBlock,
@@ -475,7 +476,11 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
     ],
   },
   component: DecisionTreeNode,
-  slashMenu: { keywords: ["decision", "branch", "wizard", "guide"] },
+  slashMenu: {
+    icon: GitFork,
+    keywords: ["decision", "branch", "wizard", "guide"],
+    order: baseBlocksSlashMenuOrder.decisionTree,
+  },
   viewer: ({ node }) => (
     <TreeViewer value={readValue(node.attrs?.decisionTree)} />
   ),
