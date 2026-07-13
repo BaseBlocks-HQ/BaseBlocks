@@ -328,7 +328,6 @@ export const update = mutation({
   args: {
     siteId: v.id("sites"),
     name: v.optional(v.string()),
-    logoUrl: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
     clearLogo: v.optional(v.boolean()),
     clearFavicon: v.optional(v.boolean()),
@@ -344,7 +343,7 @@ export const update = mutation({
   },
   handler: async (
     ctx,
-    { siteId, name, logoUrl, logoFileId, clearLogo, clearFavicon, settings },
+    { siteId, name, logoFileId, clearLogo, clearFavicon, settings },
   ) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
@@ -356,6 +355,21 @@ export const update = mutation({
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (name !== undefined) updates.name = name;
+
+    if (clearLogo && logoFileId !== undefined) {
+      throw new Error("Cannot replace and remove a site logo simultaneously");
+    }
+
+    if (logoFileId !== undefined) {
+      const logoFile = await ctx.db.get(logoFileId);
+      if (
+        !logoFile ||
+        logoFile.siteId !== siteId ||
+        logoFile.kind !== "siteAsset"
+      ) {
+        throw new Error("Invalid site logo asset");
+      }
+    }
 
     // Logo replacement: clean up the previous asset when a new one is uploaded
     if (
@@ -373,13 +387,10 @@ export const update = mutation({
     }
 
     // Logo removal: clean up the existing asset
-    if (clearLogo && site.logoFileId) {
-      await ctx.db.delete(site.logoFileId);
+    if (clearLogo) {
+      if (site.logoFileId) await ctx.db.delete(site.logoFileId);
       updates.logoFileId = undefined;
       updates.logoUrl = undefined;
-    } else if (logoUrl !== undefined && logoFileId === undefined) {
-      // Legacy path: plain URL update without an fileId (e.g. external URL)
-      updates.logoUrl = logoUrl;
     }
 
     if (settings !== undefined || clearFavicon) {

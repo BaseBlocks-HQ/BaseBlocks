@@ -4,6 +4,7 @@ import type { Id } from "@baseblocks/backend";
 import { useSiteAssetUpload } from "@/components/site-elements/use-site-asset-upload";
 
 interface ImageUploadResult {
+  fileId: Id<"files">;
   url: string;
   width?: number;
   height?: number;
@@ -28,6 +29,7 @@ export function useImageUpload() {
     const dimensions = await getImageDimensions(asset.url);
 
     return {
+      fileId: asset.fileId,
       url: asset.url,
       ...dimensions,
     };

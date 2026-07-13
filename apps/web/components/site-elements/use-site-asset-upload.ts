@@ -13,6 +13,7 @@ export interface SiteAssetUploadState {
 }
 
 export interface SiteAssetUploadResult {
+  fileId: Id<"files">;
   url: string;
   contentType: string;
 }
@@ -47,7 +48,7 @@ export function useSiteAssetUpload() {
       });
       objectKey = uploadResult.objectKey;
 
-      const { url } = await createSiteAsset({
+      const { fileId, url } = await createSiteAsset({
         siteId,
         objectKey: uploadResult.objectKey,
         filename: file.name,
@@ -63,6 +64,7 @@ export function useSiteAssetUpload() {
       });
 
       return {
+        fileId,
         url,
         contentType: uploadResult.contentType,
       };

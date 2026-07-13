@@ -248,7 +248,7 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
     if (result) {
       await updateSite({
         siteId,
-        logoUrl: result.url,
+        logoFileId: result.fileId,
       });
       toast.success("Logo uploaded");
     } else if (uploadState.error) {
