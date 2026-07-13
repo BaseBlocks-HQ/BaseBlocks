@@ -3,6 +3,12 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const withMDX = createMDX();
+const environmentFavicons = {
+  preview: "/favicon.preview.ico",
+  development: "/favicon.development.ico",
+};
+const environment = process.env.VERCEL_ENV ?? process.env.NODE_ENV;
+const environmentFavicon = environmentFavicons[environment];
 const filesEndpoint = process.env.FILES_ENDPOINT?.trim();
 const filesOrigin = (() => {
   if (!filesEndpoint) {
@@ -82,6 +88,20 @@ const nextConfig = {
         headers: securityHeaders,
       },
     ];
+  },
+  async rewrites() {
+    if (!environmentFavicon) {
+      return [];
+    }
+
+    return {
+      beforeFiles: [
+        {
+          source: "/favicon.ico",
+          destination: environmentFavicon,
+        },
+      ],
+    };
   },
 };
 
