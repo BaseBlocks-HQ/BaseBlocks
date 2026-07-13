@@ -26,14 +26,23 @@ function PaginationContent({
   return (
     <ul
       data-slot="pagination-content"
-      className={cn("flex flex-row items-center gap-1", className)}
+      className={cn(
+        "m-0 flex list-none flex-row items-center gap-1 p-0",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function PaginationItem({ ...props }: React.ComponentProps<"li">) {
-  return <li data-slot="pagination-item" {...props} />;
+function PaginationItem({ className, ...props }: React.ComponentProps<"li">) {
+  return (
+    <li
+      data-slot="pagination-item"
+      className={cn("m-0 list-none p-0", className)}
+      {...props}
+    />
+  );
 }
 
 type PaginationLinkProps = {
