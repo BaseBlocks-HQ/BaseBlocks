@@ -395,14 +395,15 @@ export function LibraryExplorer({
   };
 
   if (explorer === undefined) {
-    return <LibraryExplorerLoading className={className} />;
+    return <LibraryExplorerLoading className={className} embedded={embedded} />;
   }
 
   if (!explorer) {
     return (
       <div
         className={cn(
-          "flex min-h-72 items-center justify-center rounded-lg border bg-background text-sm text-muted-foreground",
+          "flex min-h-72 items-center justify-center text-sm text-muted-foreground",
+          embedded ? "rounded-2xl bg-card" : "rounded-lg border bg-background",
           className,
         )}
       >
@@ -498,8 +499,10 @@ export function LibraryExplorer({
         uploadingLabel={tExplorer("dropzoneUploading")}
         onFilesAccepted={uploadFiles}
         className={cn(
-          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
-          embedded ? "h-[32rem]" : "h-full flex-1",
+          "flex min-h-[28rem] min-w-0 flex-col overflow-hidden",
+          embedded
+            ? "h-[32rem] rounded-2xl bg-card"
+            : "h-full flex-1 rounded-lg border bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
           className,
         )}
       >
@@ -533,11 +536,18 @@ export function LibraryExplorer({
   );
 }
 
-function LibraryExplorerLoading({ className }: { className?: string }) {
+function LibraryExplorerLoading({
+  className,
+  embedded,
+}: {
+  className?: string;
+  embedded?: boolean;
+}) {
   return (
     <div
       className={cn(
-        "flex min-h-[28rem] items-center justify-center rounded-lg border bg-background",
+        "flex min-h-[28rem] items-center justify-center",
+        embedded ? "rounded-2xl bg-card" : "rounded-lg border bg-background",
         className,
       )}
     >

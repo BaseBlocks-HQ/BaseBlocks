@@ -156,6 +156,12 @@
       "saving": "Saving…",
       "legacyEditor": "Legacy Editor",
       "newEditor": "New Editor",
+      "beta": "Beta",
+      "newEditorDialogTitle": "Meet the new editor",
+      "newEditorDialogDescription": "We moved to a cleaner block editor that makes writing, organizing, and extending your pages easier.",
+      "newEditorDialogBetaBody": "The new editor is still in beta. We are actively fixing rough edges and refining the experience while you use it.",
+      "newEditorDialogFallbackBody": "If something does not look or behave as expected, you can switch to the Legacy Editor at any time. Your original page remains available there during the transition.",
+      "openLegacyEditor": "Open Legacy Editor",
       "preview": "Preview",
       "edit": "Edit",
       "moreActions": "More actions"
