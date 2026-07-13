@@ -146,24 +146,9 @@ export function OpenEditorPageEditor({
       updatePageIcon: async (targetPageId, icon) => {
         await updatePage({ pageId: targetPageId as Id<"pages">, icon });
       },
-      openPage: async ({ icon, pageId: targetPageId }) => {
-        const targetPage = pages.find(
-          (candidate) => candidate._id === targetPageId,
-        );
-        if (canEdit && icon && targetPage?.icon !== icon) {
-          try {
-            await updatePage({
-              pageId: targetPageId as Id<"pages">,
-              icon,
-            });
-          } catch (_error) {
-            toast.error("Failed to sync page icon");
-          }
-        }
-        openPage(targetPageId);
-      },
+      openPage: ({ pageId: targetPageId }) => openPage(targetPageId),
     }),
-    [canEdit, createPage, openPage, pageId, pages, siteId, updatePage],
+    [createPage, openPage, pageId, pages, siteId, updatePage],
   );
 
   if (!resolvedDocument) {

@@ -23,11 +23,11 @@
         "@baseblocks/ui": "workspace:*",
         "@convex-dev/better-auth": "^0.12.2",
         "@dnd-kit/react": "^0.5.0",
-        "@openeditor/core": "0.0.22",
-        "@openeditor/emoji": "0.0.22",
-        "@openeditor/exporters": "0.0.22",
-        "@openeditor/react": "0.0.22",
-        "@openeditor/ui": "0.0.22",
+        "@openeditor/core": "0.0.23",
+        "@openeditor/emoji": "0.0.23",
+        "@openeditor/exporters": "0.0.23",
+        "@openeditor/react": "0.0.23",
+        "@openeditor/ui": "0.0.23",
         "@vercel/analytics": "^1.6.1",
         "@vercel/sdk": "^1.28.8",
         "better-auth": "^1.6.11",
@@ -471,17 +471,17 @@
 
     "@noble/hashes": ["@noble/hashes@2.0.1", "", {}, "sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw=="],
 
-    "@openeditor/core": ["@openeditor/core@0.0.22", "", {}, "sha512-hLW18wMKDWKMs2pqdMo1CzIvA8ZKyFaJ98jl67iBCrein+1zYEGy4+aXdK/fJkdjEMP6M8wtnjkGMa4s2xIc6w=="],
+    "@openeditor/core": ["@openeditor/core@0.0.23", "", {}, "sha512-CSXNxGEq4ggbDW8DypfoqQKUvuDQxFrpx8oKHh3uLhbvg1GyENxwoGs+3h4raiDgLXenBWTlJlTPeyVcGUhviA=="],
 
-    "@openeditor/emoji": ["@openeditor/emoji@0.0.22", "", { "dependencies": { "@base-ui/react": "^1.6.0", "emojibase-data": "16.0.2", "frimousse": "0.3.0", "react": "19.2.7" } }, "sha512-9KKuEaDTMPwwqV+MTK2aRXaJJkDljrucyAt1GFa936LHFMGH7zJz/y/pyBTtZR4FNu531U1z5t654/UwEGP4dg=="],
+    "@openeditor/emoji": ["@openeditor/emoji@0.0.23", "", { "dependencies": { "@base-ui/react": "^1.6.0", "emojibase-data": "16.0.2", "frimousse": "0.3.0", "react": "19.2.7" } }, "sha512-zFay7CAiBLLJUuHpT5jySkGDfSra8O9704nBOUFgUcduXDlTxEX8ode2s9VbnnK3g1JyaZI+9KCy1nCYPf6yVg=="],
 
-    "@openeditor/exporters": ["@openeditor/exporters@0.0.22", "", { "dependencies": { "@openeditor/core": "0.0.22" } }, "sha512-8Q2/wF/PJJk9+qOAaxns0TwsmqlZ5HsQyTUL0s/tElrK5XHmN5vo93Fr3OgD6jcxND06RBoLAR4dRk5o4L4iDg=="],
+    "@openeditor/exporters": ["@openeditor/exporters@0.0.23", "", { "dependencies": { "@openeditor/core": "0.0.23" } }, "sha512-/JDa5pYuaFLvdJLNQX9Y4rT3V+f1VQBkaKJ51TxSIxCOnqZXeiq2/a+HyYClni2s/tBmYgWJI9BWp0isHI77KA=="],
 
-    "@openeditor/extensions": ["@openeditor/extensions@0.0.22", "", { "dependencies": { "@openeditor/core": "0.0.22" } }, "sha512-JvfY/4o8EfKZXc++bplpxQKFZbjGy+WBjHvPryUpseA2ZTCoSMwIoAJJvehJd/V5ydUfns8q9Ug123DEvrS7SQ=="],
+    "@openeditor/extensions": ["@openeditor/extensions@0.0.23", "", { "dependencies": { "@openeditor/core": "0.0.23" } }, "sha512-piMYXh4nogb8mEAND7Vud7Blje0/CBMOvl3hkFWDAozkEEWFbipBGN2FdcRt8CBKb/erqCU9XyNJ4XPgSAtH/g=="],
 
-    "@openeditor/react": ["@openeditor/react@0.0.22", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@openeditor/core": "0.0.22", "@openeditor/emoji": "0.0.22", "@openeditor/exporters": "0.0.22", "@openeditor/extensions": "0.0.22", "@tiptap/core": "3.27.1", "@tiptap/extension-drag-handle-react": "3.27.1", "@tiptap/extension-horizontal-rule": "3.27.1", "@tiptap/extension-image": "3.27.1", "@tiptap/extension-link": "3.27.1", "@tiptap/extension-placeholder": "3.27.1", "@tiptap/extension-table": "3.27.1", "@tiptap/extension-table-cell": "3.27.1", "@tiptap/extension-table-header": "3.27.1", "@tiptap/extension-table-row": "3.27.1", "@tiptap/extension-task-item": "3.27.1", "@tiptap/extension-task-list": "3.27.1", "@tiptap/extension-text-align": "3.27.1", "@tiptap/extension-underline": "3.27.1", "@tiptap/pm": "3.27.1", "@tiptap/react": "3.27.1", "@tiptap/starter-kit": "3.27.1", "beautiful-mermaid": "1.1.3", "react": "19.2.7" } }, "sha512-ETaxwKRbI7t5fHGO/3mZLOO1OxsMZ+DUsKUfJRaPBM6iGmCGE5v2Sky+K2Z0hgJpwnrU+R+d7jDcxl85Q15ICg=="],
+    "@openeditor/react": ["@openeditor/react@0.0.23", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@openeditor/core": "0.0.23", "@openeditor/emoji": "0.0.23", "@openeditor/exporters": "0.0.23", "@openeditor/extensions": "0.0.23", "@tiptap/core": "3.27.1", "@tiptap/extension-drag-handle-react": "3.27.1", "@tiptap/extension-horizontal-rule": "3.27.1", "@tiptap/extension-image": "3.27.1", "@tiptap/extension-link": "3.27.1", "@tiptap/extension-placeholder": "3.27.1", "@tiptap/extension-table": "3.27.1", "@tiptap/extension-table-cell": "3.27.1", "@tiptap/extension-table-header": "3.27.1", "@tiptap/extension-table-row": "3.27.1", "@tiptap/extension-task-item": "3.27.1", "@tiptap/extension-task-list": "3.27.1", "@tiptap/extension-text-align": "3.27.1", "@tiptap/extension-underline": "3.27.1", "@tiptap/pm": "3.27.1", "@tiptap/react": "3.27.1", "@tiptap/starter-kit": "3.27.1", "beautiful-mermaid": "1.1.3", "react": "19.2.7" } }, "sha512-jxb5FJtc7fkHCySsqxb4OZng4BoLlh5nWKrZCvQKTzPIfgbFu8HRRp57MftQobLg9DaBmt74KyP1v+6mVKOxsg=="],
 
-    "@openeditor/ui": ["@openeditor/ui@0.0.22", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@openeditor/emoji": "0.0.22", "@openeditor/react": "0.0.22", "lucide-react": "^1.23.0", "react": "19.2.7", "react-dom": "19.2.7" } }, "sha512-t5tWv4uzK67OqnBd9bRZq7msYiJK3DVTrcxoUEm+92R/ndD9powgK+ZT/OTO+7Lx5JiRmdnAbP137RSlj3mKNg=="],
+    "@openeditor/ui": ["@openeditor/ui@0.0.23", "", { "dependencies": { "@base-ui/react": "^1.6.0", "@openeditor/emoji": "0.0.23", "@openeditor/react": "0.0.23", "lucide-react": "^1.23.0", "react": "19.2.7", "react-dom": "19.2.7" } }, "sha512-zUDyYo1fY0UbQth9F+TujhK76Zn42xAeT1z671SP+Bdc4UA50ExmZ7R62n6ym+r4UtYMWT/Zfs3CvfgdqXJyvA=="],
 
     "@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.41.1", "", {}, "sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA=="],
 
