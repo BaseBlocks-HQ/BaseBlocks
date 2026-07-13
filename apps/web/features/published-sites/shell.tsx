@@ -2,6 +2,7 @@
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
+import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
 import type { Id } from "@baseblocks/backend";
@@ -14,12 +15,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
@@ -30,8 +33,7 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo } from "react";
-import { IconFile } from "nucleo-glass";
+import { useCallback, useMemo } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
@@ -184,21 +186,18 @@ function PublicSiteSidebar({
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
         <div className="h-full overflow-y-auto">
-          <nav className="space-y-0.5 p-2.5">
+          <nav className="p-2">
             {pages === undefined ? (
               <div className="flex min-h-24 items-center justify-center">
                 <Spinner className="size-5 text-muted-foreground" />
               </div>
             ) : (
-              pages.map((page) => (
-                <NavItem
-                  key={page._id}
-                  page={page}
-                  currentPath={currentPath}
-                  siteId={siteId}
-                  siteSlug={siteSlug}
-                />
-              ))
+              <PublishedPageNavigation
+                currentPath={currentPath}
+                pages={pages}
+                siteId={siteId}
+                siteSlug={siteSlug}
+              />
             )}
           </nav>
         </div>
@@ -271,87 +270,98 @@ function PublicSiteThemeMenu() {
 
 const EXPANDED_PAGES_KEY = "baseblocks_expanded_pages";
 
-function NavItem({
+interface PublishedNavigationRow {
+  fullPath: string;
+  hasChildren: boolean;
+  isExpanded: boolean;
+  page: PageWithChildren;
+}
+
+function buildPublishedNavigationRows(
+  pages: PageWithChildren[],
+  currentPath: string,
+  expandedPages: Set<string>,
+) {
+  const rows: PublishedNavigationRow[] = [];
+
+  const visit = (siblings: PageWithChildren[], parentPath = "") => {
+    for (const page of siblings) {
+      const fullPath = parentPath ? `${parentPath}/${page.slug}` : page.slug;
+      const hasChildren = page.children.length > 0;
+      const isCurrentParent = currentPath.startsWith(`${fullPath}/`);
+      const isExpanded = expandedPages.has(page._id) || isCurrentParent;
+
+      rows.push({ fullPath, hasChildren, isExpanded, page });
+
+      if (hasChildren && isExpanded) {
+        visit(page.children, fullPath);
+      }
+    }
+  };
+
+  visit(pages);
+  return rows;
+}
+
+function PublishedPageNavigation({
   currentPath,
-  depth = 0,
-  page,
-  pagePath,
+  pages,
   siteId,
   siteSlug,
 }: {
-  page: PageWithChildren;
-  currentPath?: string;
-  depth?: number;
-  pagePath?: string;
+  currentPath: string;
+  pages: PageWithChildren[];
   siteId: Id<"sites">;
   siteSlug: string;
 }) {
-  const hasChildren = page.children.length > 0;
-  const fullPath = pagePath ? `${pagePath}/${page.slug}` : page.slug;
-  const isActive = fullPath === currentPath;
-  const shouldAutoExpand = currentPath?.startsWith(`${fullPath}/`) === true;
-  const {
-    isExpanded: readExpanded,
-    toggleExpand,
-    setExpanded,
-  } = usePageExpandState(EXPANDED_PAGES_KEY, siteId);
-  const isExpanded = readExpanded(page._id);
-
-  useEffect(() => {
-    if (shouldAutoExpand && hasChildren && !isExpanded) {
-      setExpanded(page._id, true);
-    }
-  }, [hasChildren, isExpanded, page._id, setExpanded, shouldAutoExpand]);
+  const { expandedPages, toggleExpand } = usePageExpandState(
+    EXPANDED_PAGES_KEY,
+    siteId,
+  );
+  const rows = buildPublishedNavigationRows(pages, currentPath, expandedPages);
 
   return (
-    <>
-      <Link
-        href={getPageLink(siteSlug, fullPath)}
-        className={cn(
-          "flex items-center gap-1 rounded-md px-1 py-1 text-sm transition-colors",
-          isActive
-            ? "bg-primary/10 font-medium text-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-        )}
-        style={{ paddingLeft: `${(depth + 1) * 9}px` }}
-      >
-        {hasChildren ? (
-          <button
-            type="button"
-            aria-label={isExpanded ? "Collapse section" : "Expand section"}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              toggleExpand(page._id);
-            }}
-            className="flex size-3 shrink-0 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+    <SidebarMenu className="gap-0.5">
+      {rows.map(({ fullPath, hasChildren, isExpanded, page }) => (
+        <SidebarMenuItem key={page._id}>
+          <SidebarMenuButton
+            asChild
+            isActive={fullPath === currentPath}
+            className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-0 p-0 font-normal data-[active=true]:font-medium"
           >
-            {isExpanded ? (
-              <ChevronDown className="size-2.5" />
-            ) : (
-              <ChevronRight className="size-2.5" />
-            )}
-          </button>
-        ) : (
-          <span className="w-3" />
-        )}
-        <IconFile className="size-4 shrink-0" />
-        <span className="truncate">{page.title}</span>
-      </Link>
-
-      {hasChildren && isExpanded
-        ? page.children.map((child) => (
-            <NavItem
-              key={child._id}
-              page={child}
-              currentPath={currentPath}
-              depth={depth + 1}
-              pagePath={fullPath}
-              siteId={siteId}
-              siteSlug={siteSlug}
-            />
-          ))
-        : null}
-    </>
+            <div>
+              {hasChildren ? (
+                <button
+                  type="button"
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+                  className="flex h-8 w-7 items-center justify-center text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  onClick={() => toggleExpand(page._id)}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="size-3.5" />
+                  ) : (
+                    <ChevronRight className="size-3.5" />
+                  )}
+                </button>
+              ) : (
+                <span className="h-8 w-7" />
+              )}
+              <OverflowTooltip content={page.title}>
+                {(textRef) => (
+                  <Link
+                    className="flex h-8 min-w-0 items-center overflow-hidden pr-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    href={getPageLink(siteSlug, fullPath)}
+                  >
+                    <span ref={textRef} className="min-w-0 truncate">
+                      {page.title}
+                    </span>
+                  </Link>
+                )}
+              </OverflowTooltip>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   );
 }

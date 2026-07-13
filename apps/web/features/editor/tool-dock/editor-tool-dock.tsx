@@ -250,7 +250,7 @@ function ToolPanel({
         </div>
         <div className="px-2 pb-2">
           {rootPages.length ? (
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               <PageTree
                 allPages={navPages}
                 defaultPageId={site.defaultPageId}

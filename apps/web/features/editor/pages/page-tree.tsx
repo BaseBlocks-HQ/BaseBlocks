@@ -2,33 +2,25 @@
 
 import { useEditorSiteOptional } from "@/features/editor/editor-state";
 import { InlineRename } from "@/components/tree/inline-rename";
+import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { api, type Id } from "@baseblocks/backend";
 import { useMutation } from "convex/react";
-import { cn } from "@baseblocks/ui/lib/utils";
 import {
   generateSlug,
   isPageRestricted,
   type PageListItem,
 } from "@baseblocks/domain";
-import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { ChevronDown, ChevronRight, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconFile, IconHouse } from "nucleo-glass";
 import { type ReactNode, useState } from "react";
 import { PageActionsMenu } from "./page-actions";
 
 interface PageNavigationRow {
   id: string;
   parentId: string | null;
-  depth: number;
   page: PageListItem;
 }
-
-const treeItemButtonClassName =
-  "flex h-full w-full min-w-0 items-center gap-1 overflow-hidden rounded-md p-1 text-left text-sm outline-hidden [&>svg]:size-4 [&>svg]:shrink-0";
-
-const treeItemRowClassName =
-  "peer/menu-button grid h-8 w-full min-w-0 grid-cols-[minmax(0,1fr)_1.75rem] items-center overflow-hidden rounded-md text-sm text-muted-foreground outline-hidden ring-ring transition-colors hover:bg-muted hover:text-foreground active:bg-muted active:text-foreground data-[active=true]:bg-primary/10 data-[active=true]:font-medium data-[active=true]:text-primary";
 
 function buildPageNavigationRows(
   pages: PageListItem[],
@@ -53,22 +45,21 @@ function buildPageNavigationRows(
   }
 
   const rows: PageNavigationRow[] = [];
-  const visit = (parentId: string | null, depth: number) => {
+  const visit = (parentId: string | null) => {
     for (const page of childrenByParentId.get(parentId) ?? []) {
       rows.push({
         id: page._id,
         parentId,
-        depth,
         page,
       });
 
       if (isExpanded(page._id)) {
-        visit(page._id, depth + 1);
+        visit(page._id);
       }
     }
   };
 
-  visit(null, 0);
+  visit(null);
 
   return { childCounts, rows };
 }
@@ -175,92 +166,78 @@ function PageTreeRow({
   const isRestricted = isPageRestricted(page.accessPolicy);
   const isHiddenFromNavigation = page.showInNavigation === false;
 
-  const toggle = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    onToggleExpand();
-  };
-
   return (
-    <SidebarMenuItem
-      className={cn("group/page relative w-full min-w-0 overflow-hidden")}
-      style={{ paddingLeft: item.depth * 9 }}
-    >
-      <div
-        data-active={selectedPageId === page._id}
-        className={treeItemRowClassName}
+    <SidebarMenuItem className="group/page relative w-full min-w-0">
+      <SidebarMenuButton
+        asChild
+        isActive={selectedPageId === page._id}
+        className="grid grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] gap-0 p-0 font-normal data-[active=true]:font-medium"
       >
-        <button
-          type="button"
-          onClick={() => onSelect(page._id)}
-          className={treeItemButtonClassName}
-        >
+        <div>
           {hasChildren ? (
-            <span className="relative h-4 w-4 shrink-0">
-              <span className="absolute inset-0 flex items-center justify-center opacity-100 transition-opacity group-hover/page:opacity-0">
-                {isDefault ? (
-                  <IconHouse className="h-4 w-4 text-primary" />
-                ) : (
-                  <IconFile className="h-4 w-4" />
-                )}
-              </span>
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={toggle}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onToggleExpand();
-                  }
-                }}
-                className="absolute inset-0 flex cursor-pointer items-center justify-center text-muted-foreground opacity-0 transition-colors hover:text-foreground group-hover/page:opacity-100"
+            <button
+              type="button"
+              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+              className="flex h-8 w-7 items-center justify-center text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              onClick={onToggleExpand}
+            >
+              {isExpanded ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronRight className="size-3.5" />
+              )}
+            </button>
+          ) : (
+            <span className="h-8 w-7" />
+          )}
+
+          <OverflowTooltip content={page.title} disabled={renaming}>
+            {(textRef) => (
+              <button
+                type="button"
+                onClick={() => onSelect(page._id)}
+                className="flex h-8 min-w-0 items-center gap-1.5 overflow-hidden pr-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               >
-                {isExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                {renaming ? (
+                  <InlineRename
+                    label={`Rename ${page.title}`}
+                    value={page.title}
+                    onCancel={onRenameCancel}
+                    onSave={onRenameSave}
+                  />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <span
+                    ref={textRef}
+                    className="min-w-0 flex-1 truncate"
+                    onDoubleClick={onRename}
+                  >
+                    {page.title}
+                  </span>
                 )}
-              </span>
-            </span>
-          ) : isDefault ? (
-            <IconHouse className="h-4 w-4 text-primary" />
-          ) : (
-            <IconFile className="h-4 w-4" />
-          )}
+                {isHiddenFromNavigation ? (
+                  <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : null}
+                {isRestricted ? (
+                  <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : null}
+                {isDefault ? (
+                  <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                    {t("defaultBadge")}
+                  </span>
+                ) : null}
+              </button>
+            )}
+          </OverflowTooltip>
 
-          {renaming ? (
-            <InlineRename
-              label={`Rename ${page.title}`}
-              value={page.title}
-              onCancel={onRenameCancel}
-              onSave={onRenameSave}
-            />
+          {actionsMenu ? (
+            <div className="relative z-10 flex h-8 w-7 items-center justify-center">
+              {actionsMenu}
+            </div>
           ) : (
-            <span className="min-w-0 flex-1 truncate" onDoubleClick={onRename}>
-              {page.title}
-            </span>
+            <span className="h-8 w-7" />
           )}
-          {isHiddenFromNavigation ? (
-            <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          ) : null}
-          {isRestricted ? (
-            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          ) : null}
-          {isDefault ? (
-            <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
-              {t("defaultBadge")}
-            </span>
-          ) : null}
-        </button>
-
-        {actionsMenu ? (
-          <div className="relative z-10 flex h-8 w-7 min-w-0 items-center justify-center overflow-hidden">
-            {actionsMenu}
-          </div>
-        ) : (
-          <span className="h-8 w-7 min-w-0" />
-        )}
-      </div>
+        </div>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
