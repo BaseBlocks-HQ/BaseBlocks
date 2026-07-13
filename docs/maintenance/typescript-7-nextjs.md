@@ -22,11 +22,13 @@ deployment gate.
 
 ## What we are waiting for
 
-Next.js added an experimental native CLI backend in
-`16.3.0-canary.81` through `experimental.useTypeScriptCli`. It invokes the
-project-local `tsc` instead of importing the legacy compiler API. As of
-2026-07-13, the feature is present in the 16.3 canary line but not in
-`16.3.0-preview.5` or the stable 16.2 line.
+Next.js added an experimental native CLI backend through
+`experimental.useTypeScriptCli`. It invokes the project-local `tsc` instead of
+importing the legacy compiler API. Although the upstream implementation
+commit's demo identifies itself as `16.3.0-canary.81`, the published `.81` and
+`.82` packages do not recognize the flag; `.83` is the first published package
+verified with this repository. As of 2026-07-13, the feature is present in the
+newer 16.3 canary line but not in `16.3.0-preview.5` or the stable 16.2 line.
 
 Do not remove the workaround merely because a newer Next version exists. The
 cleanup criteria are:
@@ -36,9 +38,11 @@ cleanup criteria are:
    support.
 2. With the alias and `ignoreBuildErrors` removed, `next typegen` recognizes
    the normal `typescript` package and `next build` runs TypeScript 7.
-3. `bun run check-types`, `bun run lint`, `bun test`, and a production build all
+3. Framework peers such as `next-intl` resolve the same Next.js version without
+   a forced prerelease resolution or a release-age policy exception.
+4. `bun run check-types`, `bun run lint`, `bun test`, and a production build all
    pass in this monorepo.
-4. The build continues to fail on an intentional TypeScript error, confirming
+5. The build continues to fail on an intentional TypeScript error, confirming
    that local, CI, and Vercel builds cannot bypass type checking.
 
 Track the upstream implementation in
@@ -57,4 +61,3 @@ Once the criteria above are satisfied:
 6. Keep the explicit pre-build typecheck until Next's CLI integration has been
    validated on Vercel; afterward, remove the duplicate invocation only if all
    deployment paths remain type-gated.
-
