@@ -9,9 +9,11 @@ export const siteThemePaletteIds = [
 ] as const;
 
 export const siteThemeStyleIds = ["subtle", "tinted", "vibrant"] as const;
+export const siteSidebarVariantIds = ["sidebar", "floating", "inset"] as const;
 
 export type SiteThemePaletteId = (typeof siteThemePaletteIds)[number];
 export type SiteThemeStyleId = (typeof siteThemeStyleIds)[number];
+export type SiteSidebarVariant = (typeof siteSidebarVariantIds)[number];
 
 export interface SiteThemeSettings {
   palette: SiteThemePaletteId;
@@ -24,6 +26,9 @@ export const DEFAULT_SITE_THEME = {
   palette: "neutral",
   style: "subtle",
 } as const satisfies SiteThemeSettings;
+
+export const DEFAULT_SITE_SIDEBAR_VARIANT =
+  "sidebar" as const satisfies SiteSidebarVariant;
 
 export const DEFAULT_CUSTOM_BRAND_COLOR = "#2563eb";
 

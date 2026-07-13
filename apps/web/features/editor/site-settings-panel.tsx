@@ -4,7 +4,10 @@ import { useImageUpload } from "@/lib/files/use-image-upload";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
-import { DEFAULT_SITE_THEME } from "@baseblocks/domain";
+import {
+  DEFAULT_SITE_SIDEBAR_VARIANT,
+  DEFAULT_SITE_THEME,
+} from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -301,7 +304,10 @@ export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
     try {
       await updateSite({
         siteId,
-        settings: { theme: DEFAULT_SITE_THEME },
+        settings: {
+          sidebarVariant: DEFAULT_SITE_SIDEBAR_VARIANT,
+          theme: DEFAULT_SITE_THEME,
+        },
       });
     } catch (_error) {
       toast.error("Failed to reset site appearance");
@@ -390,7 +396,11 @@ export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
           </Button>
         }
       >
-        <SiteAppearanceSettings siteId={siteId} theme={site.settings.theme} />
+        <SiteAppearanceSettings
+          sidebarVariant={site.settings.sidebarVariant}
+          siteId={siteId}
+          theme={site.settings.theme}
+        />
       </SettingsSection>
 
       <SettingsSection title="Navigation">

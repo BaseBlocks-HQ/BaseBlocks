@@ -7,7 +7,7 @@ import {
 } from "./permissions";
 import { deleteFileRows } from "./files";
 import { getAuthOrganizationById } from "./authComponent/model";
-import { siteThemeSettings } from "./validators/sites";
+import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -116,6 +116,7 @@ export const update = mutation({
     settings: v.optional(
       v.object({
         favicon: v.optional(v.string()),
+        sidebarVariant: v.optional(siteSidebarVariant),
         showLogo: v.optional(v.boolean()),
         showSiteName: v.optional(v.boolean()),
         showHeaderSearch: v.optional(v.boolean()),

@@ -3,16 +3,24 @@
 import { api, type Id } from "@baseblocks/backend";
 import {
   DEFAULT_CUSTOM_BRAND_COLOR,
+  DEFAULT_SITE_SIDEBAR_VARIANT,
   getSiteThemePreviewColors,
   isValidBrandColor,
   normalizeBrandColor,
   resolveSiteTheme,
   type SiteThemePaletteId,
+  type SiteSidebarVariant,
   type SiteThemeSettings,
   type SiteThemeStyleId,
 } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
-import { Input } from "@baseblocks/ui/input";
+import { ColorPicker } from "@baseblocks/ui/color-picker";
+import { Label } from "@baseblocks/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@baseblocks/ui/popover";
 import {
   Select,
   SelectContent,
@@ -42,6 +50,15 @@ const STYLE_OPTIONS: Array<{ id: SiteThemeStyleId; label: string }> = [
   { id: "vibrant", label: "Vibrant" },
 ];
 
+const SIDEBAR_VARIANT_OPTIONS: Array<{
+  id: SiteSidebarVariant;
+  label: string;
+}> = [
+  { id: "sidebar", label: "Standard" },
+  { id: "floating", label: "Floating" },
+  { id: "inset", label: "Inset" },
+];
+
 const ALL_PALETTE_OPTIONS: Array<{
   id: SiteThemePaletteId;
   label: string;
@@ -49,9 +66,11 @@ const ALL_PALETTE_OPTIONS: Array<{
 
 export function SiteAppearanceSettings({
   siteId,
+  sidebarVariant,
   theme,
 }: {
   siteId: Id<"sites">;
+  sidebarVariant?: SiteSidebarVariant;
   theme?: SiteThemeSettings;
 }) {
   const updateSite = useMutation(api.sites.update);
@@ -60,15 +79,18 @@ export function SiteAppearanceSettings({
     resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const customColorInputId = useId();
 
   const saveTheme = async (nextTheme: SiteThemeSettings) => {
-    if (isSaving) return;
+    if (isSaving) return false;
     setIsSaving(true);
     try {
       await updateSite({ siteId, settings: { theme: nextTheme } });
+      return true;
     } catch (_error) {
       toast.error("Failed to update site appearance");
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -85,15 +107,16 @@ export function SiteAppearanceSettings({
     });
   };
 
-  const applyCustomColor = () => {
+  const applyCustomColor = async () => {
     const brandColor = normalizeBrandColor(customColor);
     if (!brandColor) return;
     setCustomColor(brandColor);
-    void saveTheme({
+    const didSave = await saveTheme({
       ...resolvedTheme,
       palette: "custom",
       brandColor,
     });
+    if (didSave) setIsColorPickerOpen(false);
   };
 
   const selectedPaletteLabel =
@@ -102,6 +125,11 @@ export function SiteAppearanceSettings({
   const selectedStyleLabel =
     STYLE_OPTIONS.find((option) => option.id === resolvedTheme.style)?.label ??
     "Subtle";
+  const resolvedSidebarVariant = sidebarVariant ?? DEFAULT_SITE_SIDEBAR_VARIANT;
+  const selectedSidebarVariantLabel =
+    SIDEBAR_VARIANT_OPTIONS.find(
+      (option) => option.id === resolvedSidebarVariant,
+    )?.label ?? "Standard";
 
   return (
     <div className="space-y-4">
@@ -138,53 +166,85 @@ export function SiteAppearanceSettings({
       </div>
 
       {resolvedTheme.palette === "custom" ? (
-        <div className="space-y-2 rounded-lg bg-muted/25 p-3">
-          <label
+        <div className="space-y-2">
+          <Label
             className="text-xs font-medium text-muted-foreground"
             htmlFor={customColorInputId}
           >
             Custom brand color
-          </label>
-          <div className="flex gap-2">
-            <Input
-              aria-label="Choose custom brand color"
-              className="size-9 shrink-0 cursor-pointer p-1"
-              disabled={isSaving}
-              onChange={(event) => setCustomColor(event.target.value)}
-              type="color"
-              value={
-                normalizeBrandColor(customColor) ?? DEFAULT_CUSTOM_BRAND_COLOR
+          </Label>
+          <Popover
+            onOpenChange={(open) => {
+              if (open) {
+                setCustomColor(
+                  resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
+                );
+              } else if (!isSaving) {
+                setCustomColor(
+                  resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
+                );
               }
-            />
-            <Input
-              aria-invalid={!isValidBrandColor(customColor)}
-              className="h-9 min-w-0 font-mono"
-              disabled={isSaving}
-              id={customColorInputId}
-              maxLength={7}
-              onChange={(event) => setCustomColor(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && isValidBrandColor(customColor)) {
-                  applyCustomColor();
+              setIsColorPickerOpen(open);
+            }}
+            open={isColorPickerOpen}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                className="h-10 w-full justify-start px-3 font-normal"
+                disabled={isSaving}
+                id={customColorInputId}
+                type="button"
+                variant="outline"
+              >
+                <span
+                  aria-hidden
+                  className="size-5 rounded-md border border-black/10 shadow-xs dark:border-white/15"
+                  style={{
+                    backgroundColor:
+                      normalizeBrandColor(customColor) ??
+                      DEFAULT_CUSTOM_BRAND_COLOR,
+                  }}
+                />
+                <span className="font-mono text-xs uppercase">
+                  {normalizeBrandColor(customColor) ??
+                    DEFAULT_CUSTOM_BRAND_COLOR}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 space-y-3 p-3">
+              <ColorPicker
+                disabled={isSaving}
+                onValueChange={setCustomColor}
+                value={
+                  normalizeBrandColor(customColor) ?? DEFAULT_CUSTOM_BRAND_COLOR
                 }
-              }}
-              placeholder="#2563eb"
-              spellCheck={false}
-              value={customColor}
-            />
-            <Button
-              className="h-9"
-              disabled={isSaving || !isValidBrandColor(customColor)}
-              onClick={applyCustomColor}
-              size="sm"
-            >
-              Apply
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            BaseBlocks creates accessible light and dark variants from this one
-            color.
-          </p>
+              />
+              <div className="flex justify-end gap-2 border-t pt-3">
+                <Button
+                  disabled={isSaving}
+                  onClick={() => {
+                    setCustomColor(
+                      resolvedTheme.brandColor ?? DEFAULT_CUSTOM_BRAND_COLOR,
+                    );
+                    setIsColorPickerOpen(false);
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={isSaving || !isValidBrandColor(customColor)}
+                  onClick={() => void applyCustomColor()}
+                  size="sm"
+                  type="button"
+                >
+                  {isSaving ? "Applying..." : "Apply"}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       ) : null}
 
@@ -205,6 +265,38 @@ export function SiteAppearanceSettings({
           </SelectTrigger>
           <SelectContent align="start">
             {STYLE_OPTIONS.map((option) => (
+              <SelectItem key={option.id} value={option.id}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Sidebar style
+        </p>
+        <Select
+          disabled={isSaving}
+          onValueChange={(value) => {
+            const nextVariant = value as SiteSidebarVariant;
+            if (nextVariant === resolvedSidebarVariant) return;
+            setIsSaving(true);
+            void updateSite({
+              siteId,
+              settings: { sidebarVariant: nextVariant },
+            })
+              .catch(() => toast.error("Failed to update sidebar style"))
+              .finally(() => setIsSaving(false));
+          }}
+          value={resolvedSidebarVariant}
+        >
+          <SelectTrigger aria-label="Sidebar style" className="w-full">
+            <SelectValue>{selectedSidebarVariantLabel}</SelectValue>
+          </SelectTrigger>
+          <SelectContent align="start">
+            {SIDEBAR_VARIANT_OPTIONS.map((option) => (
               <SelectItem key={option.id} value={option.id}>
                 {option.label}
               </SelectItem>

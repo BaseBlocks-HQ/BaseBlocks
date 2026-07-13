@@ -5,7 +5,10 @@ import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
-import type { PageWithChildren } from "@baseblocks/domain";
+import {
+  DEFAULT_SITE_SIDEBAR_VARIANT,
+  type PageWithChildren,
+} from "@baseblocks/domain";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -196,7 +199,9 @@ function PublicSiteSidebar({
   const showSiteName = site.settings.showSiteName !== false;
 
   return (
-    <Sidebar>
+    <Sidebar
+      variant={site.settings.sidebarVariant ?? DEFAULT_SITE_SIDEBAR_VARIANT}
+    >
       <SidebarHeader className="flex h-14 flex-row items-center gap-2 px-4">
         {showLogo ? <SiteLogoImage site={site} team={team} /> : null}
         {showSiteName ? (

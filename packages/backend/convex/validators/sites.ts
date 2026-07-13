@@ -18,8 +18,15 @@ export const siteThemeSettings = v.object({
   brandColor: v.optional(v.string()),
 });
 
+export const siteSidebarVariant = v.union(
+  v.literal("sidebar"),
+  v.literal("floating"),
+  v.literal("inset"),
+);
+
 export const siteSettings = v.object({
   favicon: v.optional(v.string()),
+  sidebarVariant: v.optional(siteSidebarVariant),
   showLogo: v.optional(v.boolean()),
   showSiteName: v.optional(v.boolean()),
   showHeaderSearch: v.optional(v.boolean()),
