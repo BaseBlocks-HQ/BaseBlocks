@@ -12,7 +12,12 @@ export default async function PublicLayout({
   const messages = await getMessages();
   return (
     <NextIntlClientProvider
-      messages={selectMessages(messages, ["common", "elements", "errors"])}
+      messages={selectMessages(messages, [
+        "common",
+        "elements",
+        "errors",
+        "libraries",
+      ])}
     >
       <PublicConvexClientProvider>{children}</PublicConvexClientProvider>
     </NextIntlClientProvider>

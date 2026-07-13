@@ -467,7 +467,6 @@
     },
     "createPage": {
       "title": "Create new page",
-      "description": "Add a new page to your site",
       "nameLabel": "Page name",
       "namePlaceholder": "My page",
       "titleLabel": "Page title",

@@ -11,7 +11,6 @@ import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -120,6 +119,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         </Button>
       </DialogTrigger>
       <DialogContent
+        aria-describedby={undefined}
         className={
           "overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
         }
@@ -128,9 +128,6 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
           <DialogTitle className={"text-base font-semibold"}>
             {t("title")}
           </DialogTitle>
-          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
-            {t("description")}
-          </DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit} className={"px-5 pb-3"}>
           <div className="space-y-2">
