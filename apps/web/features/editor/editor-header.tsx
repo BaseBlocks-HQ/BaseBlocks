@@ -40,7 +40,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { AccessCodeData, SharingSettings } from "./share-dialog";
+import type { SharingSettings } from "./share-dialog";
 
 const ShareDialog = dynamic(() =>
   import("./share-dialog").then((module) => module.ShareDialog),
@@ -77,7 +77,7 @@ export function EditorHeader({
 }: EditorHeaderProps) {
   const { canEdit } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const { siteUrl, settings, accessCode } = useEditorHeaderData({
+  const { siteUrl, settings } = useEditorHeaderData({
     shareOpen: shareDialogOpen,
     siteId,
     teamSlug,
@@ -127,7 +127,6 @@ export function EditorHeader({
           siteSlug={siteSlug}
           siteUrl={siteUrl}
           settings={settings}
-          accessCode={accessCode}
         />
       ) : null}
     </>
@@ -479,31 +478,11 @@ function useEditorHeaderData({
     api.sharing.getSettings,
     shareOpen ? { siteId } : "skip",
   );
-  const rawAccessCode = useQuery(
-    api.sharing.getAccessCode,
-    shareOpen ? { siteId } : "skip",
-  );
   const settings: SharingSettings | undefined = sharingSettings
-    ? {
-        visibility: sharingSettings.visibility,
-        accessCodeRotationHours: sharingSettings.accessCodeRotationHours,
-        accessCodeSessionDays: sharingSettings.accessCodeSessionDays,
-      }
+    ? { visibility: sharingSettings.visibility }
     : undefined;
-  const accessCode: AccessCodeData | null | undefined =
-    rawAccessCode === undefined
-      ? undefined
-      : rawAccessCode
-        ? {
-            code: rawAccessCode.code,
-            expiresAt: rawAccessCode.expiresAt,
-            isExpired: rawAccessCode.isExpired,
-          }
-        : null;
-
   return {
     siteUrl: getSiteUrl(teamSlug, siteSlug),
     settings,
-    accessCode,
   };
 }

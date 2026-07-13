@@ -1,16 +1,12 @@
 import { v } from "convex/values";
 import { normalizeBrandColor } from "@baseblocks/domain/site-theme";
-import type { Doc } from "./_generated/dataModel";
 import { query, mutation } from "./_generated/server";
 import {
   requireOrganizationPermission,
   isOrganizationMember,
 } from "./permissions";
-import { deleteDocumentRows } from "./documents";
-import {
-  getAuthOrganizationById,
-  getAuthOrganizationBySlug,
-} from "./authComponent/model";
+import { deleteFileRows } from "./files";
+import { getAuthOrganizationById } from "./authComponent/model";
 import { siteThemeSettings } from "./validators/sites";
 
 export const listByTeam = query({
@@ -51,51 +47,6 @@ export const get = query({
     if (!isMember) return null;
 
     return site;
-  },
-});
-
-export const getBySlug = query({
-  args: {
-    teamSlug: v.string(),
-    siteSlug: v.optional(v.string()),
-  },
-  handler: async (ctx, { teamSlug, siteSlug }) => {
-    const organization = await getAuthOrganizationBySlug(ctx, teamSlug);
-    if (!organization) return null;
-
-    let site: Doc<"sites"> | null = null;
-    if (siteSlug) {
-      site = await ctx.db
-        .query("sites")
-        .withIndex("by_organization_slug", (q) =>
-          q.eq("organizationId", organization._id).eq("slug", siteSlug),
-        )
-        .first();
-    } else {
-      const sites = await ctx.db
-        .query("sites")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", organization._id),
-        )
-        .collect();
-      site = sites.find((candidate) => candidate.isPublished) ?? null;
-    }
-
-    if (!site?.isPublished) return null;
-
-    return {
-      _id: site._id,
-      _creationTime: site._creationTime,
-      organizationId: site.organizationId,
-      slug: site.slug,
-      isPublished: true,
-      visibility: site.visibility,
-      name: site.name,
-      logoUrl: site.logoUrl,
-      defaultPageId: site.defaultPageId,
-      settings: site.settings,
-      updatedAt: site.updatedAt,
-    };
   },
 });
 
@@ -211,7 +162,7 @@ export const update = mutation({
 
     if (logoFileId !== undefined) {
       updates.logoFileId = logoFileId;
-      updates.logoUrl = `/api/files/${logoFileId}?kind=asset`;
+      updates.logoUrl = `/api/files/${logoFileId}`;
     }
 
     if (clearLogo) {
@@ -241,40 +192,22 @@ export const update = mutation({
   },
 });
 
-export const publish = mutation({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
+export const setPublished = mutation({
+  args: { siteId: v.id("sites"), published: v.boolean() },
+  handler: async (ctx, { siteId, published }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
+
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "publication",
+      action: "publish",
+    });
 
     const now = Date.now();
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "publication",
-      action: "publish",
-    });
     await ctx.db.patch(siteId, {
-      isPublished: true,
-      publishedAt: site.publishedAt ?? now,
+      isPublished: published,
+      publishedAt: published ? (site.publishedAt ?? now) : site.publishedAt,
       updatedAt: now,
-    });
-    return siteId;
-  },
-});
-
-export const unpublish = mutation({
-  args: { siteId: v.id("sites") },
-  handler: async (ctx, { siteId }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "publication",
-      action: "publish",
-    });
-
-    await ctx.db.patch(siteId, {
-      isPublished: false,
-      updatedAt: Date.now(),
     });
 
     return siteId;
@@ -333,14 +266,6 @@ export const remove = mutation({
       .collect();
 
     for (const library of libraries) {
-      const docs = await ctx.db
-        .query("documents")
-        .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
-        .collect();
-      for (const doc of docs) {
-        await deleteDocumentRows(ctx, doc);
-      }
-
       const folders = await ctx.db
         .query("documentFolders")
         .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
@@ -352,23 +277,12 @@ export const remove = mutation({
       await ctx.db.delete(library._id);
     }
 
-    const siteDocs = await ctx.db
-      .query("documents")
+    const files = await ctx.db
+      .query("files")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
-    for (const doc of siteDocs) {
-      if (doc.libraryId) continue;
-      await deleteDocumentRows(ctx, doc);
-    }
-
-    const siteAssets = await ctx.db
-      .query("files")
-      .withIndex("by_site_kind", (q) =>
-        q.eq("siteId", siteId).eq("kind", "siteAsset"),
-      )
-      .collect();
-    for (const asset of siteAssets) {
-      await ctx.db.delete(asset._id);
+    for (const file of files) {
+      await deleteFileRows(ctx, file);
     }
 
     const searchEntries = await ctx.db
@@ -379,15 +293,20 @@ export const remove = mutation({
       await ctx.db.delete(entry._id);
     }
 
-    const openEditorPageContents = await ctx.db
-      .query("openEditorPageContents")
+    const pageContents = await ctx.db
+      .query("pageContents")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     await Promise.all(
-      openEditorPageContents.map((content) =>
-        ctx.db.delete("openEditorPageContents", content._id),
-      ),
+      pageContents.map((content) => ctx.db.delete("pageContents", content._id)),
     );
+    const pageReferences = await ctx.db
+      .query("pageReferences")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const reference of pageReferences) {
+      await ctx.db.delete(reference._id);
+    }
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

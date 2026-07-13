@@ -8,14 +8,14 @@ export type LibraryExplorerPayload = NonNullable<
 type LibraryFolder = LibraryExplorerPayload["folders"][number];
 export type LibraryFile = LibraryExplorerPayload["files"][number];
 export type FolderId = LibraryFolder["_id"];
-export type DocumentId = LibraryFile["_id"];
+export type FileId = LibraryFile["_id"];
 export type LibraryId = LibraryExplorerPayload["library"]["_id"];
 export type LibraryEntity =
   | { kind: "folder"; folder: LibraryFolder }
   | { kind: "file"; file: LibraryFile };
 export type LibraryDialogTarget =
   | { kind: "folder"; id: FolderId; name: string }
-  | { kind: "file"; id: DocumentId; name: string };
+  | { kind: "file"; id: FileId; name: string };
 
 export function buildLibraryExplorerModel(
   folders: LibraryFolder[],
@@ -55,11 +55,11 @@ export const LIBRARY_FILE_SEARCH_PARAM = "file";
 export function buildLibraryFilePath(
   pathname: string,
   currentSearchParams: string,
-  documentId: string | null,
+  fileId: string | null,
 ): string {
   const params = new URLSearchParams(currentSearchParams);
-  if (documentId) {
-    params.set(LIBRARY_FILE_SEARCH_PARAM, documentId);
+  if (fileId) {
+    params.set(LIBRARY_FILE_SEARCH_PARAM, fileId);
   } else {
     params.delete(LIBRARY_FILE_SEARCH_PARAM);
   }

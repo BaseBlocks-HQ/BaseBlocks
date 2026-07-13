@@ -24,7 +24,7 @@ describe("filesClient.uploadAndRegister", () => {
     await expect(
       client.uploadAndRegister(
         new File(["pdf"], "guide.pdf", { type: "application/pdf" }),
-        { siteId: "site-1", purpose: "document" },
+        { siteId: "site-1", purpose: "file" },
         () => Promise.reject(new Error("Registration failed")),
       ),
     ).rejects.toThrow("Registration failed");

@@ -65,13 +65,15 @@ export async function GET(request: Request) {
       mapping?.organizationSlug ??
       ("organizationSlug" in parsedHost ? parsedHost.organizationSlug : null);
     if (!teamSlug) return getDefaultFavicon();
-    const site = await client.query(api.sites.getBySlug, {
-      teamSlug,
+    const result = await client.query(api.published.resolve, {
+      organizationSlug: teamSlug,
       siteSlug: mapping?.siteSlug,
+      pagePath: [],
     });
+    const site = result?.site;
 
     const visibility = site?.visibility ?? "public";
-    if (visibility === "private" || visibility === "password") {
+    if (visibility === "private") {
       return getDefaultFavicon();
     }
 

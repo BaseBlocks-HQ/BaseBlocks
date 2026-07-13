@@ -41,7 +41,7 @@ function getRouter() {
       const scopedFileId = req.headers.get("x-baseblocks-upload-file-id");
       const hasUploadScope =
         scopedSiteId &&
-        (scopedPurpose === "document" || scopedPurpose === "siteAsset") &&
+        (scopedPurpose === "file" || scopedPurpose === "siteAsset") &&
         scopedFileId &&
         !scopedSiteId.includes("/") &&
         !scopedFileId.includes("/");
@@ -51,8 +51,8 @@ function getRouter() {
 
       const siteId = parsed?.siteId ?? scopedSiteId;
       const purpose: UploadPurpose = parsed
-        ? parsed.kind === "documents"
-          ? "document"
+        ? parsed.kind === "documents" || parsed.kind === "files"
+          ? "file"
           : "siteAsset"
         : (scopedPurpose as UploadPurpose);
 

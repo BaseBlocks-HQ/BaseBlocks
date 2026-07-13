@@ -19,18 +19,18 @@ export const emptyOpenEditorDocument = (): OpenEditorDocument => ({
 });
 
 export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
-  const document =
+  const content =
     typeof value === "string" ? (JSON.parse(value) as unknown) : value;
   if (
-    !document ||
-    typeof document !== "object" ||
-    (document as { type?: unknown }).type !== "doc" ||
-    (document as { version?: unknown }).version !== 1 ||
-    !Array.isArray((document as { content?: unknown }).content)
+    !content ||
+    typeof content !== "object" ||
+    (content as { type?: unknown }).type !== "doc" ||
+    (content as { version?: unknown }).version !== 1 ||
+    !Array.isArray((content as { content?: unknown }).content)
   ) {
-    throw new Error("Invalid OpenEditor document");
+    throw new Error("Invalid page content");
   }
-  return document as OpenEditorDocument;
+  return content as OpenEditorDocument;
 }
 
 export function visitOpenEditorNodes(
@@ -52,12 +52,12 @@ export function visitOpenEditorNodes(
 }
 
 export function collectOpenEditorAttributeValues(
-  document: OpenEditorDocument,
+  content: OpenEditorDocument,
   nodeType: string,
   attributePath: string[],
 ): Set<string> {
   const values = new Set<string>();
-  visitOpenEditorNodes(document, (node) => {
+  visitOpenEditorNodes(content, (node) => {
     if (node.type !== nodeType) return;
     let value: unknown = node.attrs;
     for (const key of attributePath) {
@@ -69,9 +69,21 @@ export function collectOpenEditorAttributeValues(
   return values;
 }
 
-export function extractOpenEditorText(document: OpenEditorDocument): string {
+export function extractOpenEditorReferences(content: OpenEditorDocument) {
+  return {
+    libraryIds: collectOpenEditorAttributeValues(content, "baseblocksLibrary", [
+      "library",
+      "libraryId",
+    ]),
+    fileIds: collectOpenEditorAttributeValues(content, "attachment", [
+      "attachmentId",
+    ]),
+  };
+}
+
+export function extractOpenEditorText(content: OpenEditorDocument): string {
   const parts: string[] = [];
-  visitOpenEditorNodes(document, (node) => {
+  visitOpenEditorNodes(content, (node) => {
     if (typeof node.text === "string") parts.push(node.text);
     const attrs = node.attrs;
     if (!attrs) return;

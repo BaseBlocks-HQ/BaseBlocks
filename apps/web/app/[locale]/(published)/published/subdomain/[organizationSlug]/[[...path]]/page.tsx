@@ -24,14 +24,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PublishedSubdomainPage({ params }: Props) {
-  const { organizationSlug, pagePath, result, siteSlug } =
-    await resolveRoute(params);
-  return (
-    <PublicSite
-      result={result}
-      organizationSlug={organizationSlug}
-      siteSlug={siteSlug}
-      pagePath={pagePath}
-    />
-  );
+  const { organizationSlug, result } = await resolveRoute(params);
+  return <PublicSite result={result} organizationSlug={organizationSlug} />;
 }

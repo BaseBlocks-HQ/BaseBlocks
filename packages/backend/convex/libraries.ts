@@ -6,7 +6,7 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { buildDocumentDownloadUrl, deleteDocumentRows } from "./documents";
+import { buildFileUrl, deleteFileRows } from "./files";
 import { canAccessPublishedSite } from "./sharing";
 import { getActiveLibraryIds } from "./model/sites";
 import {
@@ -35,7 +35,7 @@ const libraryFolderSummary = v.object({
 });
 
 const libraryFileSummary = v.object({
-  _id: v.id("documents"),
+  _id: v.id("files"),
   filename: v.string(),
   contentType: v.string(),
   size: v.number(),
@@ -67,8 +67,8 @@ async function buildExplorerPayload(
     .query("documentFolders")
     .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
     .collect();
-  const documents = await ctx.db
-    .query("documents")
+  const files = await ctx.db
+    .query("files")
     .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
     .collect();
 
@@ -92,14 +92,14 @@ async function buildExplorerPayload(
         order: folder.order,
       }))
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
-    files: documents
-      .map((document) => ({
-        _id: document._id,
-        filename: document.filename,
-        contentType: document.contentType,
-        size: document.size,
-        downloadUrl: buildDocumentDownloadUrl(document._id),
-        folderId: document.folderId,
+    files: files
+      .map((file) => ({
+        _id: file._id,
+        filename: file.filename ?? "file",
+        contentType: file.contentType,
+        size: file.size,
+        downloadUrl: buildFileUrl(file._id),
+        folderId: file.folderId,
       }))
       .sort((a, b) => a.filename.localeCompare(b.filename)),
   };
@@ -137,17 +137,14 @@ export const getExplorer = query({
 });
 
 export const getPublicExplorer = query({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
+  args: { libraryId: v.id("documentLibraries") },
   returns: v.union(explorerPayload, v.null()),
-  handler: async (ctx, { libraryId, sessionTokens }) => {
+  handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !(await canAccessPublishedSite(ctx, site, sessionTokens))) {
+    if (!site || !canAccessPublishedSite(site)) {
       return null;
     }
 
@@ -184,16 +181,16 @@ export const listAllWithCounts = query({
         .collect();
 
       for (const lib of libraries) {
-        const docs = await ctx.db
-          .query("documents")
-          .withIndex("by_folder", (q) => q.eq("libraryId", lib._id))
+        const files = await ctx.db
+          .query("files")
+          .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
           .collect();
 
         allLibraries.push({
           _id: lib._id,
           siteId: lib.siteId,
           name: lib.name,
-          documentCount: docs.length,
+          documentCount: files.length,
         });
       }
     }
@@ -277,13 +274,13 @@ export const removeLibrary = mutation({
   handler: async (ctx, { libraryId }) => {
     await requireLibraryManagement(ctx, libraryId);
 
-    const documents = await ctx.db
-      .query("documents")
-      .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
+    const files = await ctx.db
+      .query("files")
+      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
       .collect();
 
-    for (const doc of documents) {
-      await deleteDocumentRows(ctx, doc);
+    for (const file of files) {
+      await deleteFileRows(ctx, file);
     }
 
     const folders = await ctx.db
@@ -394,15 +391,15 @@ async function deleteFolderRecursively(
   folderId: Id<"documentFolders">,
   libraryId: Id<"documentLibraries">,
 ) {
-  const documents = await ctx.db
-    .query("documents")
+  const files = await ctx.db
+    .query("files")
     .withIndex("by_folder", (q) =>
       q.eq("libraryId", libraryId).eq("folderId", folderId),
     )
     .collect();
 
-  for (const doc of documents) {
-    await deleteDocumentRows(ctx, doc);
+  for (const file of files) {
+    await deleteFileRows(ctx, file);
   }
 
   const children = await ctx.db

@@ -6,8 +6,8 @@ import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
   parseOpenEditorDocument,
-} from "./openEditorDocuments";
-import { getAccessiblePublishedPages } from "./sharing";
+} from "./pageContentFormat";
+import { canAccessPublishedSite } from "./sharing";
 
 function resolvePage(
   pages: Doc<"pages">[],
@@ -39,7 +39,6 @@ export const resolve = query({
     organizationSlug: v.string(),
     siteSlug: v.optional(v.string()),
     pagePath: v.array(v.string()),
-    sessionTokens: v.optional(v.array(v.string())),
   },
   returns: v.any(),
   handler: async (ctx, args) => {
@@ -48,30 +47,34 @@ export const resolve = query({
       args.organizationSlug,
     );
     if (!organization?.slug) return null;
-    const sites = await ctx.db
-      .query("sites")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", organization._id),
-      )
-      .collect();
     const site = args.siteSlug
-      ? sites.find((candidate) => candidate.slug === args.siteSlug)
-      : sites.find((candidate) => candidate.isPublished);
+      ? await ctx.db
+          .query("sites")
+          .withIndex("by_organization_slug", (q) =>
+            q.eq("organizationId", organization._id).eq("slug", args.siteSlug!),
+          )
+          .first()
+      : (
+          await ctx.db
+            .query("sites")
+            .withIndex("by_organization", (q) =>
+              q.eq("organizationId", organization._id),
+            )
+            .collect()
+        ).find((candidate) => candidate.isPublished);
     if (!site?.isPublished) return null;
-    const accessiblePages = await getAccessiblePublishedPages(
-      ctx,
-      site,
-      args.sessionTokens,
-    );
+    const canAccess = canAccessPublishedSite(site);
+    const allPages = await ctx.db
+      .query("pages")
+      .withIndex("by_site", (q) => q.eq("siteId", site._id))
+      .collect();
+    const accessiblePages = canAccess ? allPages : [];
+    const visibility = canAccess ? "public" : "private";
     const page = resolvePage(
       accessiblePages,
       site.defaultPageId,
       args.pagePath,
     );
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", site._id))
-      .collect();
     const status = page
       ? "accessible"
       : resolvePage(allPages, site.defaultPageId, args.pagePath)
@@ -79,15 +82,13 @@ export const resolve = query({
         : "missing";
     const contentRow = page
       ? await ctx.db
-          .query("openEditorPageContents")
+          .query("pageContents")
           .withIndex("by_page", (q) => q.eq("pageId", page._id))
           .unique()
       : null;
-    const content = {
-      document: contentRow
-        ? parseOpenEditorDocument(contentRow.document)
-        : emptyOpenEditorDocument(),
-    };
+    const content = contentRow
+      ? parseOpenEditorDocument(contentRow.content)
+      : emptyOpenEditorDocument();
     return {
       organization: {
         id: organization._id,
@@ -100,7 +101,7 @@ export const resolve = query({
         name: site.name,
         slug: site.slug,
         logoUrl: site.logoUrl,
-        visibility: site.visibility ?? "public",
+        visibility,
         settings: site.settings,
         updatedAt: site.updatedAt,
       },
@@ -114,14 +115,7 @@ export const resolve = query({
             updatedAt: page.updatedAt,
           }
         : null,
-      pageContent: content,
-      pages: accessiblePages.map((item) => ({
-        _id: item._id,
-        title: item.title,
-        slug: item.slug,
-        icon: item.icon,
-        parentId: item.parentId,
-      })),
+      content,
       navigation: buildPageTree(
         accessiblePages.map((item) => ({
           _id: item._id,
@@ -133,7 +127,7 @@ export const resolve = query({
           parentId: item.parentId,
         })),
       ),
-      access: { status, visibility: site.visibility ?? "public" },
+      access: { status, visibility },
       canonicalUrlInputs: {
         organizationSlug: organization.slug,
         siteSlug: site.slug,
@@ -144,6 +138,35 @@ export const resolve = query({
         page?.updatedAt ?? 0,
         contentRow?.updatedAt ?? 0,
       ),
+    };
+  },
+});
+
+export const getPageById = query({
+  args: { pageId: v.id("pages") },
+  returns: v.any(),
+  handler: async (ctx, { pageId }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page) return null;
+    const site = await ctx.db.get(page.siteId);
+    if (!site || !canAccessPublishedSite(site)) {
+      return null;
+    }
+    const content = await ctx.db
+      .query("pageContents")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique();
+    return {
+      page: {
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        icon: page.icon,
+        parentId: page.parentId,
+      },
+      content: content
+        ? parseOpenEditorDocument(content.content)
+        : emptyOpenEditorDocument(),
     };
   },
 });

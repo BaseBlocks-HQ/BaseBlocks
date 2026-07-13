@@ -13,13 +13,13 @@ import {
 } from "@/components/file-viewer/file-viewer";
 import type {
   FolderId,
-  DocumentId,
+  FileId,
   LibraryDialogTarget,
   LibraryEntity,
   LibraryExplorerPayload,
   LibraryFile,
 } from "@/features/libraries/model";
-import { deleteDocument } from "@/lib/files/client";
+import { deleteFile } from "@/lib/files/client";
 import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
@@ -166,7 +166,7 @@ export function LibraryExplorer({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentFolderId, setCurrentFolderId] = useState<FolderId | null>(null);
-  const [openFileId, setOpenFileId] = useState<DocumentId | null>(null);
+  const [openFileId, setOpenFileId] = useState<FileId | null>(null);
   const [treeDrawerOpen, setTreeDrawerOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<LibraryDialogTarget | null>(
     null,
@@ -176,8 +176,8 @@ export function LibraryExplorer({
   const createFolderMutation = useMutation(api.libraries.createFolder);
   const updateFolder = useMutation(api.libraries.updateFolder);
   const removeFolder = useMutation(api.libraries.removeFolder);
-  const renameDocument = useMutation(api.documents.rename);
-  const createDocument = useMutation(api.documents.createInLibrary);
+  const renameFile = useMutation(api.files.rename);
+  const createFile = useMutation(api.files.create);
 
   const canManage = true;
   const model = buildLibraryExplorerModel(
@@ -188,7 +188,7 @@ export function LibraryExplorer({
   const openFile = openEntity?.kind === "file" ? openEntity.file : null;
   const selectedFileId = searchParams.get(
     LIBRARY_FILE_SEARCH_PARAM,
-  ) as DocumentId | null;
+  ) as FileId | null;
 
   useEffect(() => {
     if (!selectedFileId) return;
@@ -200,11 +200,11 @@ export function LibraryExplorer({
     }
   }, [model.entityByFileId, selectedFileId]);
 
-  const syncFileUrl = (documentId: string | null) => {
+  const syncFileUrl = (fileId: string | null) => {
     const nextUrl = buildLibraryFilePath(
       pathname,
       searchParams.toString(),
-      documentId,
+      fileId,
     );
     router.replace(nextUrl, { scroll: false });
   };
@@ -259,7 +259,7 @@ export function LibraryExplorer({
             file,
             {
               siteId: explorer.site._id,
-              purpose: "document",
+              purpose: "file",
               onProgress: ({ loaded }) => {
                 loadedByFile.set(file, loaded);
                 const totalLoaded = [...loadedByFile.values()].reduce(
@@ -274,7 +274,7 @@ export function LibraryExplorer({
               },
             },
             (upload) =>
-              createDocument({
+              createFile({
                 siteId: explorer.site._id,
                 libraryId: explorer.library._id,
                 folderId: targetFolderId,
@@ -318,7 +318,7 @@ export function LibraryExplorer({
         setCurrentFolderId(null);
       }
     } else {
-      await deleteDocument(target.id);
+      await deleteFile(target.id);
       if (openEntity?.kind === "file" && openEntity.file._id === target.id) {
         setOpenFileId(null);
       }
@@ -351,7 +351,7 @@ export function LibraryExplorer({
     if (entity.kind === "folder") {
       await updateFolder({ folderId: entity.folder._id, name });
     } else {
-      await renameDocument({ documentId: entity.file._id, filename: name });
+      await renameFile({ fileId: entity.file._id, filename: name });
     }
     toast.success(tExplorer("toastRenamed"));
   };

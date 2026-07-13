@@ -86,6 +86,26 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
 
+  pageContents: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    content: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"]),
+
+  pageReferences: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    libraryIds: v.array(v.id("documentLibraries")),
+    fileIds: v.optional(v.array(v.id("files"))),
+    documentIds: v.optional(v.array(v.id("documents"))),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"]),
+
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
@@ -106,18 +126,26 @@ export default defineSchema({
 
   files: defineTable({
     siteId: v.id("sites"),
-    kind: v.union(v.literal("document"), v.literal("siteAsset")),
+    kind: v.union(
+      v.literal("file"),
+      v.literal("siteAsset"),
+      v.literal("document"),
+    ),
     visibility: v.union(v.literal("public"), v.literal("private")),
     objectKey: v.string(),
     filename: v.optional(v.string()),
     contentType: v.string(),
     size: v.number(),
     checksum: v.optional(v.string()),
+    libraryId: v.optional(v.id("documentLibraries")),
+    folderId: v.optional(v.id("documentFolders")),
     uploadedBy: v.string(),
     createdAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_site_kind", ["siteId", "kind"]),
+    .index("by_site_kind", ["siteId", "kind"])
+    .index("by_library", ["libraryId"])
+    .index("by_folder", ["libraryId", "folderId"]),
 
   documents: defineTable({
     siteId: v.id("sites"),
@@ -135,7 +163,7 @@ export default defineSchema({
 
   searchEntries: defineTable({
     siteId: v.id("sites"),
-    kind: v.union(v.literal("document"), v.literal("page")),
+    kind: v.union(v.literal("file"), v.literal("page"), v.literal("document")),
     sourceId: v.string(),
     title: v.string(),
     text: v.string(),

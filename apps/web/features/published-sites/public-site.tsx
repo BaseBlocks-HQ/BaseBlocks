@@ -1,31 +1,19 @@
 "use client";
 
-import { AccessGate } from "@/features/published-sites/access-gate";
 import { PublicSiteShell } from "@/features/published-sites/shell";
 import { getDisplayDomain } from "@/features/published-sites/urls";
 import { Link } from "@/i18n/navigation";
-import { getStoredAccessSessionTokens } from "./access-session";
 import type { PublishedPageResult } from "./read-model";
-import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
-import { Spinner } from "@baseblocks/ui/spinner";
-import { useQuery } from "convex/react";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type Props = {
   result: PublishedPageResult | null;
   organizationSlug: string;
-  siteSlug?: string;
-  pagePath: string[];
 };
 
-export function PublicSite({
-  result,
-  organizationSlug,
-  siteSlug,
-  pagePath,
-}: Props) {
+export function PublicSite({ result, organizationSlug }: Props) {
   if (!result) {
     return (
       <PublicSiteState kind="site-not-found" teamSlug={organizationSlug} />
@@ -37,43 +25,6 @@ export function PublicSite({
     return <PublicSiteState kind="site-private" siteName={result.site.name} />;
   }
 
-  if (visibility === "password") {
-    return (
-      <AccessGate siteId={result.site._id} siteName={result.site.name}>
-        <UnlockedPublicSite
-          organizationSlug={organizationSlug}
-          siteSlug={siteSlug ?? result.site.slug}
-          pagePath={pagePath}
-        />
-      </AccessGate>
-    );
-  }
-
-  return <ResolvedPublicSite result={result} />;
-}
-
-function UnlockedPublicSite({
-  organizationSlug,
-  siteSlug,
-  pagePath,
-}: {
-  organizationSlug: string;
-  siteSlug: string;
-  pagePath: string[];
-}) {
-  const result = useQuery(api.published.resolve, {
-    organizationSlug,
-    siteSlug,
-    pagePath,
-    sessionTokens: getStoredAccessSessionTokens(),
-  });
-
-  if (result === undefined) return <PublicSiteState kind="loading" />;
-  if (!result) {
-    return (
-      <PublicSiteState kind="site-not-found" teamSlug={organizationSlug} />
-    );
-  }
   return <ResolvedPublicSite result={result} />;
 }
 
@@ -89,7 +40,6 @@ function ResolvedPublicSite({ result }: { result: PublishedPageResult }) {
 }
 
 type PublicSiteStateKind =
-  | "loading"
   | "site-not-found"
   | "site-private"
   | "page-not-found"
@@ -106,14 +56,6 @@ function PublicSiteState({
   teamSlug?: string;
 }) {
   const t = useTranslations("errors");
-
-  if (kind === "loading") {
-    return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
-        <Spinner className="size-6 text-muted-foreground" />
-      </div>
-    );
-  }
 
   if (kind === "site-private") {
     return (

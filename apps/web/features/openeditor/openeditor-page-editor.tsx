@@ -71,7 +71,7 @@ export function OpenEditorPageEditor({
   const content = useQuery(api.pageContent.get, { pageId });
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
-  const saveDocument = useMutation(api.pageContent.save);
+  const saveContent = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDocument = useRef<OpenEditorDocument | null>(null);
@@ -80,7 +80,7 @@ export function OpenEditorPageEditor({
     document: OpenEditorDocument;
   } | null>(null);
 
-  const initialDocument = content?.document as OpenEditorDocument | undefined;
+  const initialDocument = content as OpenEditorDocument | undefined;
   const resolvedDocument =
     localDocument?.pageId === pageId ? localDocument.document : initialDocument;
   const handleConvertToTabs = (document: OpenEditorDocument) =>
@@ -168,7 +168,7 @@ export function OpenEditorPageEditor({
           pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
-          saveDocument={saveDocument}
+          saveContent={saveContent}
           saveFailedMessage={t("saveFailed")}
         />
       ) : (
@@ -182,7 +182,7 @@ export function OpenEditorPageEditor({
           pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
-          saveDocument={saveDocument}
+          saveContent={saveContent}
           saveTimer={saveTimer}
           pendingDocument={pendingDocument}
           saveFailedMessage={t("saveFailed")}
@@ -200,7 +200,7 @@ function OpenEditorTabbedPageEditor({
   pageHeading,
   pageRuntime,
   preview,
-  saveDocument,
+  saveContent,
   saveFailedMessage,
 }: {
   canEdit: boolean;
@@ -210,9 +210,9 @@ function OpenEditorTabbedPageEditor({
   pageHeading: ReactNode;
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
-  saveDocument: (args: {
+  saveContent: (args: {
     pageId: Id<"pages">;
-    document: OpenEditorDocument;
+    content: OpenEditorDocument;
   }) => Promise<null>;
   saveFailedMessage: string;
 }) {
@@ -222,7 +222,7 @@ function OpenEditorTabbedPageEditor({
   const persist = async (document: OpenEditorDocument, revision: number) => {
     if (revision === saveRevision.current) onSaveStatusChange?.("saving");
     try {
-      await saveDocument({ pageId, document });
+      await saveContent({ pageId, content: document });
       if (revision === saveRevision.current) onSaveStatusChange?.("saved");
     } catch (_error) {
       toast.error(saveFailedMessage);
@@ -283,7 +283,7 @@ function OpenEditorDocumentEditor({
   pageRuntime,
   preview,
   pendingDocument,
-  saveDocument,
+  saveContent,
   saveTimer,
   saveFailedMessage,
 }: {
@@ -297,9 +297,9 @@ function OpenEditorDocumentEditor({
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
   pendingDocument: RefObject<OpenEditorDocument | null>;
-  saveDocument: (args: {
+  saveContent: (args: {
     pageId: Id<"pages">;
-    document: OpenEditorDocument;
+    content: OpenEditorDocument;
   }) => Promise<null>;
   saveTimer: RefObject<ReturnType<typeof setTimeout> | null>;
   saveFailedMessage: string;
@@ -308,7 +308,7 @@ function OpenEditorDocumentEditor({
   const persist = async (document: OpenEditorDocument, revision: number) => {
     if (revision === saveRevision.current) onSaveStatusChange?.("saving");
     try {
-      await saveDocument({ pageId, document });
+      await saveContent({ pageId, content: document });
       if (revision === saveRevision.current) onSaveStatusChange?.("saved");
     } catch (_error) {
       toast.error(saveFailedMessage);

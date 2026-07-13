@@ -7,7 +7,6 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
-import { canViewerAccessPublishedPageById } from "./sharing";
 
 export type PageTreeNode = {
   _id: string;
@@ -75,19 +74,6 @@ function sortChildren(pages: PageTreeNode[]) {
   }
 }
 
-function projectPublishedPage(page: Doc<"pages">) {
-  return {
-    _id: page._id,
-    siteId: page.siteId,
-    title: page.title,
-    slug: page.slug,
-    icon: page.icon,
-    order: page.order,
-    parentId: page.parentId,
-    updatedAt: page.updatedAt,
-  };
-}
-
 export const list = query({
   args: { siteId: v.id("sites") },
   handler: async (ctx, { siteId }) => {
@@ -102,28 +88,6 @@ export const list = query({
       .collect();
 
     return pages;
-  },
-});
-
-export const get = query({
-  args: {
-    pageId: v.id("pages"),
-    sessionTokens: v.optional(v.array(v.string())),
-  },
-  handler: async (ctx, { pageId, sessionTokens }) => {
-    const page = await ctx.db.get(pageId);
-    if (!page) return null;
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) return null;
-
-    if (await isOrganizationMember(ctx, site.organizationId)) return page;
-
-    if (await canViewerAccessPublishedPageById(ctx, pageId, sessionTokens)) {
-      return projectPublishedPage(page);
-    }
-
-    return null;
   },
 });
 
@@ -355,15 +319,24 @@ export const remove = mutation({
     }
 
     const contents = await ctx.db
-      .query("openEditorPageContents")
+      .query("pageContents")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
     const contentByPageId = new Map(
       contents.map((content) => [content.pageId, content]),
     );
+    const references = await ctx.db
+      .query("pageReferences")
+      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
+      .collect();
+    const referencesByPageId = new Map(
+      references.map((reference) => [reference.pageId, reference]),
+    );
     for (const id of pagesToDelete) {
       const content = contentByPageId.get(id as Id<"pages">);
       if (content) await ctx.db.delete(content._id);
+      const reference = referencesByPageId.get(id as Id<"pages">);
+      if (reference) await ctx.db.delete(reference._id);
       await ctx.db.delete(id as Id<"pages">);
     }
 

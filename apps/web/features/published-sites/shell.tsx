@@ -5,7 +5,6 @@ import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
-import type { Id } from "@baseblocks/backend";
 import type { PageWithChildren } from "@baseblocks/domain";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
@@ -60,7 +59,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const searchParams = useSearchParams();
   const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
   const navigationIcon = readNavigationIcon(searchParams.get("icon"));
-  const pageTargets = buildPublishedPageTargets(result.pages);
+  const pageTargets = buildPublishedPageTargets(result.navigation);
   const openPage = (pageId: string) => {
     const target = pageTargets.get(pageId);
     if (!target || target.pageId === page?._id) return;
@@ -114,11 +113,8 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
             />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <PublicPageContent
-                pageId={page._id as Id<"pages">}
-                initialPage={
-                  navigationIcon ? { ...page, icon: navigationIcon } : page
-                }
-                initialStructure={result.pageContent}
+                page={navigationIcon ? { ...page, icon: navigationIcon } : page}
+                content={result.content}
                 canGoBack={previousPageUrl !== null}
                 onGoBack={goBack}
                 pageTargets={pageTargets}

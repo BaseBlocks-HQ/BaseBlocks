@@ -1,6 +1,5 @@
 "use client";
 
-import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview,
@@ -98,7 +97,6 @@ export function SearchBox({
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const sessionTokens = getStoredAccessSessionTokens();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -131,7 +129,6 @@ export function SearchBox({
           siteId,
           query: debouncedQuery,
           limit: maxResults,
-          sessionTokens,
         }
       : "skip",
   );

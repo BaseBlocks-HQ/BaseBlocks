@@ -1,4 +1,4 @@
-export type UploadPurpose = "document" | "siteAsset";
+export type UploadPurpose = "file" | "siteAsset";
 
 export const supportedUploadMimeTypes = [
   "image/avif",

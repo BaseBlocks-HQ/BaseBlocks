@@ -1,7 +1,6 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { deleteObject, signedDownloadUrl } from "@/lib/files/server";
-import { getRequestAccessSessionTokens } from "@/features/published-sites/access-session";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -13,41 +12,17 @@ type FileAsset = {
   filename?: string;
 };
 
-async function resolveFile(
-  request: NextRequest,
-  fileId: string,
-): Promise<FileAsset | null> {
+async function resolveFile(fileId: string): Promise<FileAsset | null> {
   const token = await getToken();
-  const sessionTokens = getRequestAccessSessionTokens(request);
-  const isAsset = request.nextUrl.searchParams.get("kind") === "asset";
-
-  if (isAsset) {
-    const authorized = token
-      ? await getServerConvexClient(token)
-          .query(api.files.getAuthorizedAsset, { fileId: fileId as never })
-          .catch(() => null)
-      : null;
-    return (
-      authorized ??
-      (await getServerConvexClient().query(api.files.getPublicAsset, {
-        fileId: fileId as never,
-        sessionTokens,
-      }))
-    );
-  }
-
   const authorized = token
     ? await getServerConvexClient(token)
-        .query(api.documents.getDownloadAsset, {
-          documentId: fileId as never,
-        })
+        .query(api.files.getAuthorized, { fileId: fileId as never })
         .catch(() => null)
     : null;
   return (
     authorized ??
-    (await getServerConvexClient().query(api.documents.getPublicDownloadAsset, {
-      documentId: fileId as never,
-      sessionTokens,
+    (await getServerConvexClient().query(api.files.getPublic, {
+      fileId: fileId as never,
     }))
   );
 }
@@ -58,7 +33,7 @@ export async function GET(
 ) {
   try {
     const { fileId } = await params;
-    const file = await resolveFile(request, fileId);
+    const file = await resolveFile(fileId);
     if (!file) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
@@ -102,31 +77,31 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> },
 ) {
   try {
-    if (request.nextUrl.searchParams.get("kind") === "asset") {
-      return NextResponse.json(
-        { error: "Asset deletion must follow its owning product workflow" },
-        { status: 405 },
-      );
-    }
     const token = await getToken();
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     const { fileId } = await params;
     const client = getServerConvexClient(token);
-    const document = await client.query(api.documents.getDownloadAsset, {
-      documentId: fileId as never,
+    const file = await client.query(api.files.getDownloadAsset, {
+      fileId: fileId as never,
     });
-    if (!document) {
+    if (!file) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
-    await deleteObject(document.objectKey);
-    await client.mutation(api.documents.remove, {
-      documentId: fileId as never,
+    if (file.kind === "siteAsset") {
+      return NextResponse.json(
+        { error: "Asset deletion must follow its owning product workflow" },
+        { status: 405 },
+      );
+    }
+    await deleteObject(file.objectKey);
+    await client.mutation(api.files.remove, {
+      fileId: fileId as never,
     });
     return new NextResponse(null, { status: 204 });
   } catch {

@@ -15,17 +15,17 @@ import { useConvex, useMutation } from "convex/react";
 
 const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;
 
-const snapshot = (document: {
+const snapshot = (file: {
   _id: string;
   filename: string;
   contentType: string;
   size: number;
 }): OpenEditorAttachmentSnapshot => ({
-  attachmentId: document._id,
-  name: document.filename,
-  mimeType: document.contentType,
-  size: document.size,
-  url: `/api/files/${document._id}`,
+  attachmentId: file._id,
+  name: file.filename,
+  mimeType: file.contentType,
+  size: file.size,
+  url: `/api/files/${file._id}`,
 });
 
 const selectBrowserFile = (signal?: AbortSignal) =>
@@ -83,8 +83,8 @@ export function useBaseBlocksAttachmentRuntime(
   siteId: Id<"sites">,
 ): OpenEditorAttachmentRuntime<File> {
   const convex = useConvex();
-  const createDocument = useMutation(api.documents.create);
-  const renameDocument = useMutation(api.documents.rename);
+  const createFile = useMutation(api.files.create);
+  const renameFile = useMutation(api.files.rename);
 
   const upload = async (
     input: OpenEditorAttachmentUploadInput<File>,
@@ -93,12 +93,12 @@ export function useBaseBlocksAttachmentRuntime(
       signal?: AbortSignal;
     },
   ) => {
-    const { registered: documentId, uploaded } =
+    const { registered: fileId, uploaded } =
       await filesClient.uploadAndRegister(
         input.source,
         {
           siteId,
-          purpose: "document",
+          purpose: "file",
           signal: callbacks?.signal,
           onProgress: (progress) =>
             callbacks?.onProgress?.(progress.percentage / 100),
@@ -107,7 +107,7 @@ export function useBaseBlocksAttachmentRuntime(
           if (callbacks?.signal?.aborted) {
             throw new DOMException("Upload cancelled", "AbortError");
           }
-          return createDocument({
+          return createFile({
             siteId,
             ...fileRegistration(input.source, upload),
             filename: input.name,
@@ -115,11 +115,11 @@ export function useBaseBlocksAttachmentRuntime(
         },
       );
     return {
-      attachmentId: documentId,
+      attachmentId: fileId,
       name: input.name,
       mimeType: uploaded.contentType,
       size: uploaded.size,
-      url: `/api/files/${documentId}`,
+      url: `/api/files/${fileId}`,
     } satisfies OpenEditorAttachmentSnapshot;
   };
 
@@ -144,14 +144,14 @@ export function useBaseBlocksAttachmentRuntime(
     replaceAttachment: async (_attachmentId, input, callbacks) =>
       upload(input, callbacks),
     resolveAttachment: async (attachmentId) => {
-      const resolved = await convex.query(api.documents.get, {
-        documentId: attachmentId as Id<"documents">,
+      const resolved = await convex.query(api.files.get, {
+        fileId: attachmentId as Id<"files">,
       });
       return resolved ? snapshot(resolved) : null;
     },
     renameAttachment: async (attachmentId, name) => {
-      await renameDocument({
-        documentId: attachmentId as Id<"documents">,
+      await renameFile({
+        fileId: attachmentId as Id<"files">,
         filename: name,
       });
     },

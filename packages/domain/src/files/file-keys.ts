@@ -1,11 +1,11 @@
 import type { UploadPurpose } from "./storage";
 
-export type FilesKind = "documents" | "assets";
+export type FilesKind = "files" | "documents" | "assets";
 
 const unsafeFilenamePattern = /[^a-zA-Z0-9._-]+/g;
 
 export function toFilesKind(purpose: UploadPurpose): FilesKind {
-  return purpose === "document" ? "documents" : "assets";
+  return purpose === "file" ? "files" : "assets";
 }
 
 export function sanitizeFilename(filename: string): string {
@@ -41,7 +41,9 @@ export function parseFileKey(key: string): {
   if (
     parts.length !== 5 ||
     parts[0] !== "sites" ||
-    (parts[2] !== "documents" && parts[2] !== "assets") ||
+    (parts[2] !== "files" &&
+      parts[2] !== "documents" &&
+      parts[2] !== "assets") ||
     !parts[1] ||
     !parts[3] ||
     !parts[4]
@@ -64,6 +66,8 @@ export function keyMatchesPurpose(args: {
 }): boolean {
   const parsed = parseFileKey(args.key);
   return (
-    parsed?.siteId === args.siteId && parsed.kind === toFilesKind(args.purpose)
+    parsed?.siteId === args.siteId &&
+    (parsed.kind === toFilesKind(args.purpose) ||
+      (args.purpose === "file" && parsed.kind === "documents"))
   );
 }

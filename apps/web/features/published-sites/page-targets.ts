@@ -5,7 +5,7 @@ type PublishedPageSummary = {
   title: string;
   slug: string;
   icon?: string;
-  parentId?: string;
+  children?: readonly PublishedPageSummary[];
 };
 
 export type PublishedPageTarget = OpenEditorPageSnapshot & {
@@ -15,27 +15,25 @@ export type PublishedPageTarget = OpenEditorPageSnapshot & {
 export function buildPublishedPageTargets(
   pages: readonly PublishedPageSummary[],
 ): ReadonlyMap<string, PublishedPageTarget> {
-  const pagesById = new Map(pages.map((page) => [page._id, page]));
   const targets = new Map<string, PublishedPageTarget>();
 
-  for (const page of pages) {
-    const path: string[] = [];
-    const visited = new Set<string>();
-    let current: PublishedPageSummary | undefined = page;
-
-    while (current && !visited.has(current._id)) {
-      visited.add(current._id);
-      path.unshift(current.slug);
-      current = current.parentId ? pagesById.get(current.parentId) : undefined;
+  const visit = (
+    items: readonly PublishedPageSummary[],
+    parentPath: string[],
+  ) => {
+    for (const page of items) {
+      const path = [...parentPath, page.slug];
+      targets.set(page._id, {
+        pageId: page._id,
+        title: page.title,
+        icon: page.icon ?? "📄",
+        path,
+      });
+      if (page.children?.length) visit(page.children, path);
     }
+  };
 
-    targets.set(page._id, {
-      pageId: page._id,
-      title: page.title,
-      icon: page.icon ?? "📄",
-      path,
-    });
-  }
+  visit(pages, []);
 
   return targets;
 }

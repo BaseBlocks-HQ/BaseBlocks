@@ -31,11 +31,6 @@ export default async function PublishedDomainPage({ params }: Props) {
     path,
   );
   return (
-    <PublicSite
-      result={result}
-      organizationSlug={mapping.organizationSlug}
-      siteSlug={mapping.siteSlug}
-      pagePath={path}
-    />
+    <PublicSite result={result} organizationSlug={mapping.organizationSlug} />
   );
 }

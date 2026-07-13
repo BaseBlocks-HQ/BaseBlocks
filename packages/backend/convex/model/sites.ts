@@ -1,9 +1,5 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Id } from "../_generated/dataModel";
-import {
-  collectOpenEditorAttributeValues,
-  parseOpenEditorDocument,
-} from "../openEditorDocuments";
 
 type DbCtx = Pick<
   GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
@@ -27,22 +23,16 @@ export async function getActiveLibraryIdsForPageIds(
   siteId: Id<"sites">,
   pageIds?: Iterable<string>,
 ): Promise<Set<string>> {
-  const contents = await ctx.db
-    .query("openEditorPageContents")
+  const references = await ctx.db
+    .query("pageReferences")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
     .collect();
   const allowedPageIds = pageIds ? new Set(pageIds) : null;
   const libraryIds = new Set<string>();
 
-  for (const content of contents) {
-    if (allowedPageIds && !allowedPageIds.has(content.pageId)) continue;
-    for (const libraryId of collectOpenEditorAttributeValues(
-      parseOpenEditorDocument(content.document),
-      "baseblocksLibrary",
-      ["library", "libraryId"],
-    )) {
-      libraryIds.add(libraryId);
-    }
+  for (const reference of references) {
+    if (allowedPageIds && !allowedPageIds.has(reference.pageId)) continue;
+    for (const libraryId of reference.libraryIds) libraryIds.add(libraryId);
   }
 
   return libraryIds;

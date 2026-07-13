@@ -1,5 +1,4 @@
 import { getServerConvexClient } from "@/lib/convex/server";
-import { getRequestAccessSessionTokens } from "@/features/published-sites/access-session";
 import {
   buildPageExportText,
   createPageExportFilename,
@@ -30,26 +29,17 @@ export async function GET(
     }
 
     const publicClient = getServerConvexClient();
-    const sessionTokens = getRequestAccessSessionTokens(request);
-
-    const page = await publicClient.query(api.pages.get, {
+    const result = await publicClient.query(api.published.getPageById, {
       pageId: pageId as never,
-      sessionTokens,
     });
 
-    if (!page) {
+    if (!result) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const structure = await publicClient.query(api.pageContent.getPublished, {
-      pageId: pageId as never,
-      sessionTokens,
-    });
-    const pageTitle = page.title;
-
     const exportDocument = buildPageExportText({
-      pageTitle,
-      structure,
+      pageTitle: result.page.title,
+      content: result.content,
     });
 
     const body = await renderPageExportDocx(exportDocument);

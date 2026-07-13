@@ -2,10 +2,6 @@ import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 
 export type PageExportFormat = "docx";
 
-interface SerializablePageStructure {
-  document: unknown;
-}
-
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord | null {
@@ -61,10 +57,10 @@ function extractNestedText(value: unknown): string {
 
 export function buildPageExportText(args: {
   pageTitle: string;
-  structure: SerializablePageStructure;
+  content: unknown;
 }) {
   const title = normalizeText(args.pageTitle) || "Untitled page";
-  const lines = splitLines(extractNestedText(args.structure.document));
+  const lines = splitLines(extractNestedText(args.content));
 
   return { title, lines };
 }

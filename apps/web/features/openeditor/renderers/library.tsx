@@ -8,10 +8,9 @@ import {
   LIBRARY_FILE_SEARCH_PARAM,
   buildLibraryExplorerModel,
   buildLibraryFilePath,
-  type DocumentId,
+  type FileId,
   type LibraryExplorerPayload,
 } from "@/features/libraries/model";
-import { getStoredAccessSessionTokens } from "@/features/published-sites/access-session";
 import { api, type Id } from "@baseblocks/backend";
 import type { LibraryContent } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -42,9 +41,7 @@ export function PublicLibraryViewer({ value }: { value: LibraryContent }) {
   const libraryId = value.libraryId as Id<"documentLibraries"> | undefined;
   const explorer = useQuery(
     api.libraries.getPublicExplorer,
-    libraryId
-      ? { libraryId, sessionTokens: getStoredAccessSessionTokens() }
-      : "skip",
+    libraryId ? { libraryId } : "skip",
   );
   if (!libraryId) return null;
   return (
@@ -85,7 +82,7 @@ export function ReadOnlyLibraryExplorer({
   useEffect(() => {
     const selectedId = searchParams.get(
       LIBRARY_FILE_SEARCH_PARAM,
-    ) as DocumentId | null;
+    ) as FileId | null;
     if (!selectedId) return;
     const entity = model.entityByFileId.get(selectedId);
     if (entity?.kind !== "file") return;

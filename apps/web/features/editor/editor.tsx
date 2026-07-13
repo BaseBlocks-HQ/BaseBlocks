@@ -63,12 +63,14 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     null,
   );
 
-  const publishSite = useMutation(api.sites.publish);
-  const unpublishSite = useMutation(api.sites.unpublish);
+  const setSitePublished = useMutation(api.sites.setPublished);
 
   const handlePublish = async () => {
     try {
-      await publishSite({ siteId: siteId as Id<"sites"> });
+      await setSitePublished({
+        siteId: siteId as Id<"sites">,
+        published: true,
+      });
       toast.success("Site published");
     } catch (_error) {
       toast.error("Failed to publish site");
@@ -77,7 +79,10 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
 
   const handleUnpublish = async () => {
     try {
-      await unpublishSite({ siteId: siteId as Id<"sites"> });
+      await setSitePublished({
+        siteId: siteId as Id<"sites">,
+        published: false,
+      });
       toast.success("Site unpublished");
     } catch (_error) {
       toast.error("Failed to unpublish site");
