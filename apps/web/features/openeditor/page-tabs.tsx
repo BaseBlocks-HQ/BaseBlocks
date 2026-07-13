@@ -1,5 +1,6 @@
 "use client";
 
+import { useRegisterEditorBlockPicker } from "@/features/editor/editor-state";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
@@ -155,6 +156,8 @@ function ActiveTabEditor({
     pageRuntime,
     onChange,
   });
+  useRegisterEditorBlockPicker(controller);
+
   return (
     <>
       <OpenEditorContent controller={controller} />

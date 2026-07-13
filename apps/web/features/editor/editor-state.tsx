@@ -1,11 +1,16 @@
 "use client";
 
-import type { OpenEditorBlockPickerItem } from "@openeditor/react";
+import {
+  getDefaultBlockPickerItems,
+  type OpenEditorBlockPickerItem,
+  type OpenEditorController,
+} from "@openeditor/react";
 import {
   type ReactNode,
   createContext,
   use,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -33,9 +38,7 @@ interface EditorSiteContextValue {
 
 interface EditorBlockPickerContextValue {
   items: readonly OpenEditorBlockPickerItem[];
-  register: (
-    items: readonly OpenEditorBlockPickerItem[],
-  ) => () => void;
+  register: (items: readonly OpenEditorBlockPickerItem[]) => () => void;
 }
 
 const EditorUiContext = createContext<EditorUiContextValue | null>(null);
@@ -143,4 +146,21 @@ export function useEditorBlockPicker() {
     );
   }
   return context;
+}
+
+export function useRegisterEditorBlockPicker(
+  controller: OpenEditorController,
+  enabled = true,
+) {
+  const { register } = useEditorBlockPicker();
+  const controllerRef = useRef(controller);
+
+  useEffect(() => {
+    controllerRef.current = controller;
+  }, [controller]);
+
+  useEffect(() => {
+    if (!enabled || !controller.editor) return;
+    return register(getDefaultBlockPickerItems(controllerRef.current));
+  }, [controller.editor, enabled, register]);
 }

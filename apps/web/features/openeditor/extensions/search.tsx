@@ -153,7 +153,7 @@ export const searchExtension = defineOpenEditorReactNode({
     ],
   },
   component: SearchNode,
-  slashMenu: {
+  insertMenu: {
     icon: Search,
     keywords: ["find", "query", "documents"],
     order: baseBlocksSlashMenuOrder.search,

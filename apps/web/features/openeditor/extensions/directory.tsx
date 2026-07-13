@@ -543,7 +543,7 @@ export const directoryExtension = defineOpenEditorReactNode({
     ],
   },
   component: DirectoryNode,
-  slashMenu: {
+  insertMenu: {
     icon: TableProperties,
     keywords: ["table", "data", "list", "grid"],
     order: baseBlocksSlashMenuOrder.directory,

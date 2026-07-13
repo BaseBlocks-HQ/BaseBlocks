@@ -436,7 +436,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
     ],
   },
   component: DecisionTreeNode,
-  slashMenu: {
+  insertMenu: {
     icon: GitFork,
     keywords: ["decision", "branch", "wizard", "guide"],
     order: baseBlocksSlashMenuOrder.decisionTree,

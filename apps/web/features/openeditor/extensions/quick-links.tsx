@@ -516,7 +516,7 @@ export const quickLinksExtension = defineOpenEditorReactNode({
     ],
   },
   component: QuickLinksNode,
-  slashMenu: {
+  insertMenu: {
     icon: AppWindow,
     keywords: ["links", "cards", "bookmarks", "shortcuts"],
     order: baseBlocksSlashMenuOrder.quickLinks,

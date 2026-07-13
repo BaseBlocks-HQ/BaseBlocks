@@ -249,7 +249,7 @@ export const libraryExtension = defineOpenEditorReactNode({
     ],
   },
   component: LibraryNode,
-  slashMenu: {
+  insertMenu: {
     icon: LibraryBig,
     keywords: ["documents", "files", "folder"],
     order: baseBlocksSlashMenuOrder.library,

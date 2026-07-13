@@ -1,7 +1,11 @@
 "use client";
 
 import { usePageExpandState } from "@/components/site-runtime/page-expand-state";
-import { useEditorSite } from "@/features/editor/editor-state";
+import { BlockPickerPanel } from "@/features/editor/blocks/block-picker-panel";
+import {
+  useEditorBlockPicker,
+  useEditorSite,
+} from "@/features/editor/editor-state";
 import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
 import { PageTree } from "@/features/editor/pages/page-tree";
 import type { Id } from "@baseblocks/backend";
@@ -15,6 +19,7 @@ import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
+  IconAppStack,
   IconFile,
   IconGear,
   IconSidebarLeftHide,
@@ -36,11 +41,12 @@ interface EditorToolDockProps {
   onExpandedChange: (expanded: boolean) => void;
 }
 
-type EditorTool = "pages" | "site";
+type EditorTool = "pages" | "blocks" | "site";
 
 const EXPANDED_PAGES_KEY = "baseblocks_editor_expanded_pages";
 const TOOLS: Array<{ id: EditorTool; label: string; icon: ReactNode }> = [
   { id: "pages", label: "Pages", icon: <IconFile /> },
+  { id: "blocks", label: "Blocks", icon: <IconAppStack /> },
   { id: "site", label: "Site", icon: <IconGear /> },
 ];
 
@@ -53,6 +59,7 @@ export function EditorToolDock({
   onExpandedChange,
 }: EditorToolDockProps) {
   const { canEdit } = useEditorSite();
+  const { items: blockPickerItems } = useEditorBlockPicker();
   const isHorizontal = useIsMobile();
   const [activeTool, setActiveTool] = useState<EditorTool>("pages");
   const [hoveredTool, setHoveredTool] = useState<EditorTool | null>(null);
@@ -151,14 +158,16 @@ export function EditorToolDock({
         <PopoverAnchor asChild>
           <div
             className={cn(
-              "flex h-10 w-[6.75rem] flex-col-reverse overflow-hidden rounded-2xl bg-sidebar/95 text-sidebar-foreground shadow-xl backdrop-blur-md transition-[width,height] duration-200 ease-out md:h-[6.75rem] md:w-10 md:flex-row",
+              "flex h-10 w-36 flex-col-reverse overflow-hidden rounded-2xl bg-sidebar/95 text-sidebar-foreground shadow-xl backdrop-blur-md transition-[width,height] duration-200 ease-out md:h-36 md:w-10 md:flex-row",
               expanded &&
                 "h-[min(78vh,42rem)] w-[min(22rem,calc(100vw-1.5rem))] md:h-[min(calc(50vh+2rem),40rem)] md:w-[17rem] lg:w-[22.5rem]",
             )}
           >
             <nav className="flex shrink-0 self-center flex-row gap-0.5 p-1 md:flex-col">
               {TOOLS.map((tool) => {
-                const disabled = !canEdit && tool.id !== "pages";
+                const disabled =
+                  (!canEdit && tool.id !== "pages") ||
+                  (tool.id === "blocks" && blockPickerItems.length === 0);
 
                 return (
                   <div key={tool.id}>
@@ -299,6 +308,10 @@ function ToolPanel({
 
   if (activeTool === "site") {
     return <SiteConfigPanel siteId={site._id as Id<"sites">} />;
+  }
+
+  if (activeTool === "blocks") {
+    return <BlockPickerPanel />;
   }
 
   return null;
