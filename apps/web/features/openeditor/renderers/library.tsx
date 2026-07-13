@@ -25,7 +25,7 @@ import {
   Link,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export function readLibrary(value: unknown): LibraryContent {
@@ -66,9 +66,10 @@ export function ReadOnlyLibraryExplorer({
   const searchParams = useSearchParams();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
-  const model = buildLibraryExplorerModel(
-    explorer?.folders ?? [],
-    explorer?.files ?? [],
+  const model = useMemo(
+    () =>
+      buildLibraryExplorerModel(explorer?.folders ?? [], explorer?.files ?? []),
+    [explorer],
   );
   useEffect(() => {
     setExpanded(
@@ -96,7 +97,7 @@ export function ReadOnlyLibraryExplorer({
   }, [allowDownloads, model.entityByFileId, searchParams]);
   const visibleNodes = (() => {
     const result: Array<(typeof model.nodes)[number] & { depth: number }> = [];
-    const visit = (parentId: string | undefined, depth: number) => {
+    const visit = (parentId: string | null, depth: number) => {
       for (const node of model.nodes.filter(
         (candidate) => candidate.parentId === parentId,
       )) {
@@ -105,7 +106,7 @@ export function ReadOnlyLibraryExplorer({
           visit(node.id, depth + 1);
       }
     };
-    visit(undefined, 0);
+    visit(null, 0);
     return result;
   })();
 
