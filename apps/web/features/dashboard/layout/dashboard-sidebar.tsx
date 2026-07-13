@@ -24,8 +24,6 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -57,15 +55,14 @@ import { useState } from "react";
 const SIDEBAR_ICON_STROKE = 1.75;
 
 const sidebarFloatingInnerClass =
-  "[&_[data-slot=sidebar-inner]]:rounded-[1.35rem] [&_[data-slot=sidebar-inner]]:border-sidebar-border/80 [&_[data-slot=sidebar-inner]]:!bg-sidebar/95 [&_[data-slot=sidebar-inner]]:text-sidebar-foreground [&_[data-slot=sidebar-inner]]:shadow-lg [&_[data-slot=sidebar-inner]]:backdrop-blur-md sm:[&_[data-slot=sidebar-inner]]:rounded-[1.5rem]";
+  "[&_[data-slot=sidebar-inner]]:rounded-xl [&_[data-slot=sidebar-inner]]:border-sidebar-border/60 [&_[data-slot=sidebar-inner]]:!bg-sidebar/95 [&_[data-slot=sidebar-inner]]:text-sidebar-foreground [&_[data-slot=sidebar-inner]]:shadow-sm [&_[data-slot=sidebar-inner]]:backdrop-blur-md";
 
 const pillRowClass = cn(
-  "flex h-10 w-full items-center justify-start gap-2.5 border border-transparent px-2.5 text-[13px] font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/55 hover:text-sidebar-accent-foreground",
-  nestedCardRadiusClass,
+  "flex h-9 w-full items-center justify-start gap-2 border-0 px-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-accent-foreground",
+  "rounded-lg",
 );
 
-const navActiveClass =
-  "border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground shadow-sm";
+const navActiveClass = "bg-sidebar-accent/70 text-sidebar-accent-foreground";
 
 const languageNames: Record<Locale, string> = {
   en: "English",
@@ -135,14 +132,14 @@ export function DashboardSidebar() {
   return (
     <Sidebar
       className={cn(
-        "min-h-svh [--sidebar-width:14.5rem]",
+        "min-h-svh [--sidebar-width:13.5rem]",
         sidebarFloatingInnerClass,
       )}
       collapsible="offcanvas"
       variant="floating"
     >
-      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1.5">
-        <ScrollArea className="min-h-0 h-full">
+      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">
+        <div className="h-full min-h-0 overflow-y-auto">
           <SidebarGroup className="p-0">
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
@@ -178,10 +175,10 @@ export function DashboardSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        </ScrollArea>
+        </div>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto shrink-0 border-0 p-1.5">
+      <SidebarFooter className="mt-auto shrink-0 border-0 p-1">
         <SidebarMenu className="gap-1">
           <SidebarMenuItem>
             <InvitationInbox

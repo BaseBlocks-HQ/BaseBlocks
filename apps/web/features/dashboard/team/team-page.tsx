@@ -5,7 +5,6 @@ import { api } from "@baseblocks/backend";
 import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -73,7 +72,7 @@ export function TeamPage() {
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
-      <ScrollArea className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem] space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -154,7 +153,7 @@ export function TeamPage() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </main>
   );
 }

@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -155,7 +154,7 @@ function AudienceMembersDialogContent({
           </DialogDescription>
         </DialogHeader>
         <div className={"px-5 pb-3"}>
-          <ScrollArea className="max-h-80">
+          <div className="max-h-80 overflow-y-auto">
             <div className="space-y-3 pr-3">
               {members === undefined || assignments === undefined ? (
                 <div className="flex items-center justify-center py-6 text-sm text-sidebar-foreground/60">
@@ -188,7 +187,7 @@ function AudienceMembersDialogContent({
                 ))
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="pt-2">
             <Button

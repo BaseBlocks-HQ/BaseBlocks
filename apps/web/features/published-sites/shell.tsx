@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -184,7 +183,7 @@ function PublicSiteSidebar({
         ) : null}
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
-        <ScrollArea className="h-full">
+        <div className="h-full overflow-y-auto">
           <nav className="space-y-0.5 p-2.5">
             {pages === undefined ? (
               <div className="flex min-h-24 items-center justify-center">
@@ -202,7 +201,7 @@ function PublicSiteSidebar({
               ))
             )}
           </nav>
-        </ScrollArea>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

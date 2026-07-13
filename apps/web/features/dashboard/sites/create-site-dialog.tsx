@@ -14,7 +14,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { nestedCardRadiusClass } from "@baseblocks/ui/nested-card";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -186,9 +185,8 @@ export function CreateSiteDialog({
       <DialogTrigger asChild>
         <button
           className={cn(
-            nestedCardRadiusClass,
-            "group relative flex min-h-[13rem] w-full flex-col items-center justify-center gap-3 overflow-hidden border-2 border-dashed border-muted-foreground/35 bg-transparent text-muted-foreground transition-[transform,border-color,background-color,color,box-shadow] duration-200 ease-out",
-            "hover:-translate-y-0.5 hover:border-primary/28 hover:bg-accent/14 hover:text-foreground hover:shadow-[0_10px_28px_hsl(var(--primary)/0.08)]",
+            "group flex min-h-[7.5rem] w-full flex-col items-start justify-between gap-4 rounded-xl border border-dashed border-muted-foreground/35 bg-transparent p-4 text-left text-muted-foreground transition-[border-color,background-color,color] duration-150",
+            "hover:border-muted-foreground/55 hover:bg-accent/10 hover:text-foreground",
             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
             "active:scale-[0.98]",
             "disabled:pointer-events-none disabled:opacity-50",
@@ -196,11 +194,10 @@ export function CreateSiteDialog({
           disabled={disabled}
           type="button"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/[0.018] via-transparent to-transparent opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100" />
-          <span className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-card shadow-[inset_0_1px_0_hsl(var(--background)/0.5)] transition-colors duration-200 ease-out group-hover:border-primary/25 group-hover:bg-background">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted transition-colors duration-150 group-hover:bg-accent">
             <Plus className="h-4 w-4 shrink-0" />
           </span>
-          <span className="relative flex items-center gap-2 font-medium">
+          <span className="text-sm font-medium">
             {t("dashboard.createSite")}
           </span>
         </button>

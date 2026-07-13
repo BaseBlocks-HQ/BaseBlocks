@@ -3,7 +3,6 @@
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { Globe } from "lucide-react";
@@ -26,7 +25,7 @@ type SiteList = Array<{
 }>;
 
 const sitesGridClassName =
-  "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3";
+  "grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3";
 
 function SitesSection({
   canManageSites,
@@ -93,10 +92,10 @@ export function SitesPage() {
   });
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
-      <ScrollArea className="min-h-0 flex-1">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold">{t("dashboard.yourSites")}</h1>
           </div>
 
@@ -107,7 +106,7 @@ export function SitesPage() {
             teamSlug={team.slug}
           />
         </div>
-      </ScrollArea>
+      </div>
     </main>
   );
 }

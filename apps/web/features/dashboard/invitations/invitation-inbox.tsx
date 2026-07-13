@@ -24,7 +24,6 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useReducer, useState } from "react";
@@ -272,7 +271,7 @@ export function InvitationInbox({
         </div>
       ) : null}
 
-      <ScrollArea className="max-h-80">
+      <div className="max-h-80 overflow-y-auto">
         <div className="space-y-3 pr-3">
           {invitations.map((invitation) => (
             <div
@@ -336,7 +335,7 @@ export function InvitationInbox({
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 

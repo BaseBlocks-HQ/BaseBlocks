@@ -11,7 +11,6 @@ import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
 import { useDebounce } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { useQuery } from "convex/react";
 import {
   ChevronRight,
@@ -258,7 +257,7 @@ export function SearchBox({
       {/* Floating dropdown results */}
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-background text-foreground shadow-lg">
-          <ScrollArea className="max-h-[400px]">
+          <div className="max-h-[400px] overflow-y-auto">
             {isSearching ? (
               <div className="p-4 text-center text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
@@ -361,7 +360,7 @@ export function SearchBox({
                 No results found for "{debouncedQuery}"
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       )}
       <FilePreview file={previewFile} onClose={() => setPreviewFile(null)} />

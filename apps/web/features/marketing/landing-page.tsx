@@ -2,7 +2,6 @@
 
 import { Link } from "@/i18n/navigation";
 import { Button } from "@baseblocks/ui/button";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import { ArrowRight } from "lucide-react";
 import {
   LayoutGroup,
@@ -154,7 +153,7 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
           />
 
           {expanded && (
-            <ScrollArea className="h-full">
+            <div className="h-full overflow-y-auto">
               <div className="min-h-screen">
                 <LandingHeader
                   authenticatedHref={authenticatedHref}
@@ -179,7 +178,7 @@ export function LandingPage({ authenticatedHref }: LandingPageProps) {
                   landingTranslations={landingTranslations}
                 />
               </div>
-            </ScrollArea>
+            </div>
           )}
         </LayoutGroup>
       </div>

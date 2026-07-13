@@ -33,7 +33,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { ScrollArea } from "@baseblocks/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -530,7 +529,7 @@ export function LibrariesPage() {
 
   return (
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
-      <ScrollArea className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-2xl font-bold">{t("libraries.title")}</h1>
@@ -634,7 +633,7 @@ export function LibrariesPage() {
             </AlertDialog>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </main>
   );
 }

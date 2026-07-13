@@ -1,10 +1,7 @@
 "use client";
 
 import { useImageUpload } from "@/components/site-elements/use-image-upload";
-import {
-  CollapsibleSettingsSection,
-  PanelSettingRow,
-} from "@/features/editor/settings/settings-panel";
+import { PanelSettingRow } from "@/features/editor/settings/settings-panel";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -12,7 +9,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Switch } from "@baseblocks/ui/switch";
 import { useMutation, useQuery } from "convex/react";
-import { CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -22,126 +19,33 @@ interface SiteConfigPanelProps {
   siteId: Id<"sites">;
 }
 
-type DomainOperationResult = {
-  error?: string;
-  hostname?: string;
-  status?: "pending" | "verified" | "misconfigured";
-  verification?: Array<{ type: string; domain: string; value: string }>;
-  recommendedCNAME?: Array<{ rank: number; value: string }>;
-  recommendedIPv4?: Array<{ rank: number; value: string[] }>;
-};
-
-function DomainSettingsSection({ siteId }: SiteConfigPanelProps) {
-  const domains = useQuery(api.siteDomains.listForSite, { siteId });
-  const [hostname, setHostname] = useState("");
-  const [isWorking, setIsWorking] = useState(false);
-  const [details, setDetails] = useState<DomainOperationResult | null>(null);
-
-  const operate = async (
-    action: "add" | "inspect" | "remove" | "verify",
-    target: string,
-  ) => {
-    setIsWorking(true);
-    try {
-      const response = await fetch("/api/site-domains", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, hostname: target, siteId }),
-      });
-      const result = (await response.json()) as DomainOperationResult;
-      if (!response.ok)
-        throw new Error(result.error ?? "Domain operation failed");
-      setDetails(action === "remove" ? null : result);
-      if (action === "add") setHostname("");
-      toast.success(
-        action === "remove" ? "Domain removed" : "Domain status refreshed",
-      );
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Domain operation failed",
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  };
-
+function SettingsSection({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title: string;
+}) {
   return (
-    <CollapsibleSettingsSection title="Custom domain" contentClassName="p-3">
-      <div className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          A custom domain opens this site at its root. Vercel provisions and
-          renews TLS automatically.
-        </p>
-        <div className="flex gap-2">
-          <Input
-            value={hostname}
-            onChange={(event) => setHostname(event.target.value)}
-            placeholder="docs.example.com"
-            aria-label="Custom domain"
-            disabled={isWorking}
-          />
-          <Button
-            size="sm"
-            disabled={isWorking || !hostname.trim()}
-            onClick={() => operate("add", hostname)}
-          >
-            Add
-          </Button>
-        </div>
-        {domains?.map((domain) => (
-          <div
-            key={domain._id}
-            className="rounded-md border border-border/60 p-2.5"
-          >
-            <div className="flex items-center gap-2">
-              {domain.status === "verified" ? (
-                <CheckCircle2 className="size-4 text-emerald-500" />
-              ) : null}
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                {domain.hostname}
-              </span>
-              <span className="text-xs capitalize text-muted-foreground">
-                {domain.status}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={isWorking}
-                onClick={() => operate("verify", domain.hostname)}
-              >
-                <RefreshCw className="size-3.5" />
-                <span className="sr-only">Verify domain</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={isWorking}
-                onClick={() => operate("remove", domain.hostname)}
-              >
-                <Trash2 className="size-3.5" />
-                <span className="sr-only">Remove domain</span>
-              </Button>
-            </div>
-          </div>
-        ))}
-        {details?.verification?.map((record) => (
-          <div
-            key={`${record.domain}-${record.value}`}
-            className="rounded-md bg-muted p-2 text-xs"
-          >
-            Add {record.type} record <strong>{record.domain}</strong> with value{" "}
-            <code className="break-all">{record.value}</code>
-          </div>
-        ))}
-        {details?.status === "misconfigured" &&
-        details.recommendedCNAME?.[0] ? (
-          <p className="text-xs text-muted-foreground">
-            Point a CNAME record to{" "}
-            <code>{details.recommendedCNAME[0].value}</code>, then verify again.
-          </p>
-        ) : null}
-      </div>
-    </CollapsibleSettingsSection>
+    <section className="space-y-3">
+      <h4 className="px-0.5 text-sm font-medium">{title}</h4>
+      {children}
+    </section>
+  );
+}
+
+function SettingSurface({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="rounded-lg bg-muted/25 p-3">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
+      {children}
+    </div>
   );
 }
 
@@ -160,62 +64,59 @@ function LogoUploadSection({
 }) {
   if (logoUrl) {
     return (
-      <div className="border-t border-border/60 px-3 py-3">
-        <p className="mb-2 text-xs text-muted-foreground">Current logo</p>
-        <div className="flex items-center gap-3">
-          <Image
-            src={logoUrl}
-            alt="Site logo"
-            className="h-10 w-10 rounded-md border border-border/60 bg-background object-contain"
-            width={40}
-            height={40}
-            unoptimized
+      <div className="flex items-center gap-3">
+        <Image
+          src={logoUrl}
+          alt="Site logo"
+          className="h-10 w-10 rounded-md border border-border/60 bg-background object-contain"
+          width={40}
+          height={40}
+          unoptimized
+        />
+        <div className="min-w-0 flex-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              const files = Array.from(event.target.files || []);
+              if (files.length > 0) {
+                onFilesAccepted(files);
+              }
+              event.target.value = "";
+            }}
           />
-          <div className="min-w-0 flex-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(event) => {
-                const files = Array.from(event.target.files || []);
-                if (files.length > 0) {
-                  onFilesAccepted(files);
-                }
-                event.target.value = "";
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  {uploadProgress}%
-                </>
-              ) : (
-                "Replace"
-              )}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                {uploadProgress}%
+              </>
+            ) : (
+              "Replace"
+            )}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="border-t border-border/60 px-3 py-3">
+    <div>
       <DropZone
         onFilesAccepted={onFilesAccepted}
         accept={{
           "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
         }}
         maxSize={5 * 1024 * 1024}
-        className="border-dashed py-6"
+        className="border-dashed bg-background/40 py-5"
       >
         <div className="flex flex-col items-center justify-center gap-1 text-center">
           {isUploading ? (
@@ -252,7 +153,7 @@ function SiteNameSection({
   onSave: () => void;
 }) {
   return (
-    <div className="border-t border-border/60 px-3 py-3">
+    <div>
       {isEditing ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -281,7 +182,7 @@ function SiteNameSection({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/80 px-2.5 py-1.5">
+        <div className="flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-sm">
             {displayName.trim() ? displayName : "Untitled site"}
           </span>
@@ -379,99 +280,104 @@ export function SiteConfigPanel({ siteId }: SiteConfigPanelProps) {
   const showHeaderSearch = site.settings.showHeaderSearch === true;
 
   return (
-    <div className="space-y-5 p-4">
+    <div className="space-y-7 p-4">
       <header>
-        <h3 className="text-sm font-semibold tracking-tight">Site settings</h3>
+        <h3 className="text-base font-semibold tracking-tight">
+          Site settings
+        </h3>
       </header>
 
-      <CollapsibleSettingsSection title="Published site">
-        <PanelSettingRow
-          htmlFor="show-site-name"
-          label="Show site name"
-          tooltip="Displays the site name in the published sidebar."
-          control={
-            <Switch
-              id="show-site-name"
-              checked={showSiteName}
-              onCheckedChange={(checked) =>
-                updateSettings("showSiteName", checked)
-              }
+      <SettingsSection title="Brand">
+        <div className="space-y-2">
+          <SettingSurface label="Site name">
+            <SiteNameSection
+              displayName={site.name}
+              editValue={localName}
+              isEditing={isEditingName}
+              onCancel={() => {
+                setLocalName(site.name);
+                setIsEditingName(false);
+              }}
+              onChange={setLocalName}
+              onEdit={() => {
+                setLocalName(site.name);
+                setIsEditingName(true);
+              }}
+              onSave={handleSaveName}
             />
-          }
-        />
+          </SettingSurface>
 
-        {showSiteName && (
-          <SiteNameSection
-            displayName={site.name}
-            editValue={localName}
-            isEditing={isEditingName}
-            onCancel={() => {
-              setLocalName(site.name);
-              setIsEditingName(false);
-            }}
-            onChange={setLocalName}
-            onEdit={() => {
-              setLocalName(site.name);
-              setIsEditingName(true);
-            }}
-            onSave={handleSaveName}
+          <SettingSurface label="Logo">
+            <LogoUploadSection
+              fileInputRef={fileInputRef}
+              isUploading={isUploading}
+              logoUrl={site.logoUrl}
+              onFilesAccepted={handleLogoUpload}
+              uploadProgress={uploadProgress}
+            />
+          </SettingSurface>
+
+          <SettingSurface label="Favicon">
+            <FaviconSettings
+              favicon={site.settings.favicon}
+              siteId={siteId}
+              onChange={async (favicon) => {
+                await updateSite(
+                  favicon
+                    ? { siteId, settings: { favicon } }
+                    : { siteId, clearFavicon: true },
+                );
+              }}
+            />
+          </SettingSurface>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection title="Navigation">
+        <div className="space-y-0.5">
+          <PanelSettingRow
+            htmlFor="show-site-name"
+            label="Show site name"
+            control={
+              <Switch
+                id="show-site-name"
+                checked={showSiteName}
+                onCheckedChange={(checked) =>
+                  updateSettings("showSiteName", checked)
+                }
+              />
+            }
           />
-        )}
 
-        <PanelSettingRow
-          htmlFor="show-logo"
-          label="Show logo"
-          tooltip="Displays the uploaded logo in the published sidebar."
-          control={
-            <Switch
-              id="show-logo"
-              checked={showLogo}
-              onCheckedChange={(checked) => updateSettings("showLogo", checked)}
-            />
-          }
-        />
-
-        {showLogo && (
-          <LogoUploadSection
-            fileInputRef={fileInputRef}
-            isUploading={isUploading}
-            logoUrl={site.logoUrl}
-            onFilesAccepted={handleLogoUpload}
-            uploadProgress={uploadProgress}
+          <PanelSettingRow
+            htmlFor="show-logo"
+            label="Show logo"
+            control={
+              <Switch
+                id="show-logo"
+                checked={showLogo}
+                onCheckedChange={(checked) =>
+                  updateSettings("showLogo", checked)
+                }
+              />
+            }
           />
-        )}
 
-        <PanelSettingRow
-          htmlFor="show-header-search"
-          label="Search in header"
-          tooltip="Adds search to the published-site header."
-          control={
-            <Switch
-              id="show-header-search"
-              checked={showHeaderSearch}
-              onCheckedChange={(checked) =>
-                updateSettings("showHeaderSearch", checked)
-              }
-            />
-          }
-        />
-      </CollapsibleSettingsSection>
-
-      <CollapsibleSettingsSection title="Favicon" contentClassName="p-3">
-        <FaviconSettings
-          favicon={site.settings.favicon}
-          siteId={siteId}
-          onChange={async (favicon) => {
-            await updateSite(
-              favicon
-                ? { siteId, settings: { favicon } }
-                : { siteId, clearFavicon: true },
-            );
-          }}
-        />
-      </CollapsibleSettingsSection>
-
-      <DomainSettingsSection siteId={siteId} />
+          <PanelSettingRow
+            htmlFor="show-header-search"
+            label="Search in header"
+            control={
+              <Switch
+                id="show-header-search"
+                checked={showHeaderSearch}
+                onCheckedChange={(checked) =>
+                  updateSettings("showHeaderSearch", checked)
+                }
+              />
+            }
+          />
+        </div>
+      </SettingsSection>
     </div>
   );
 }
