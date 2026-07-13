@@ -2,9 +2,8 @@ import { fetchAuthQuery } from "@/lib/auth/server";
 import type { TeamRecord } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 
-interface WorkspaceBoundaryState {
-  activeWorkspace: TeamRecord | null;
-  requestedWorkspace: TeamRecord | null;
+interface ViewerState {
+  team: TeamRecord | null;
   teams: TeamRecord[];
   user: WorkspaceUser | null;
 }
@@ -16,10 +15,10 @@ export interface WorkspaceUser {
   name: string | null;
 }
 
-export async function getWorkspaceBoundaryState(
+export async function getViewerState(
   teamSlug?: string,
-): Promise<WorkspaceBoundaryState> {
-  return await fetchAuthQuery(api.organizations.getWorkspaceBoundary, {
+): Promise<ViewerState> {
+  return await fetchAuthQuery(api.organizations.getViewerState, {
     ...(teamSlug ? { teamSlug } : {}),
   });
 }

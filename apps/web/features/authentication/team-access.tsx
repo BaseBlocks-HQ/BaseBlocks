@@ -13,7 +13,6 @@ export type TeamRecord = {
   logoUrl?: string;
   memberRole: string;
   name: string;
-  organizationId: string;
   slug: string;
 };
 

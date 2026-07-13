@@ -60,7 +60,11 @@ const stepIndices = animationSteps.map((_, index) => index);
 const stepSizes = animationSteps.map((step) => step.size);
 const morphSpring = { stiffness: 30, damping: 15, mass: 3 } as const;
 
-export function LandingPage() {
+interface LandingPageProps {
+  authenticatedHref: string | null;
+}
+
+export function LandingPage({ authenticatedHref }: LandingPageProps) {
   const { resolvedTheme } = useTheme();
 
   const landingTranslations = useTranslations("landing");
@@ -116,9 +120,12 @@ export function LandingPage() {
   }, [progress]);
 
   const authCta = (
-    <Link href="/login">
+    <Link href={authenticatedHref ?? "/login"}>
       <Button size="lg" className="gap-2">
-        {landingTranslations("getStarted")} <ArrowRight className="h-4 w-4" />
+        {authenticatedHref
+          ? commonTranslations("goToDashboard")
+          : landingTranslations("getStarted")}{" "}
+        <ArrowRight className="h-4 w-4" />
       </Button>
     </Link>
   );
@@ -150,6 +157,7 @@ export function LandingPage() {
             <ScrollArea className="h-full">
               <div className="min-h-screen">
                 <LandingHeader
+                  authenticatedHref={authenticatedHref}
                   commonTranslations={commonTranslations}
                   navigationTranslations={navigationTranslations}
                 />

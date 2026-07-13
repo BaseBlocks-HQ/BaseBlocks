@@ -63,18 +63,11 @@ export function OnboardingPageClient() {
         name: teamName,
         slug,
       })
-      .then(async (orgResult) => {
-        const organizationId = orgResult.data?.id;
-
-        if (!organizationId) {
+      .then((orgResult) => {
+        if (!orgResult.data?.id) {
           setError("Failed to create organization");
           return;
         }
-
-        const activeResult = await authClient.organization.setActive({
-          organizationId,
-        });
-        if (activeResult.error) throw activeResult.error;
         router.push(getTeamDashboardPath(slug));
       })
       .catch((err) => {

@@ -35,7 +35,7 @@ export function TeamPage() {
 
   const { capabilities, team } = useTeamAccess();
   const members = useQuery(api.organizations.listMembers, {
-    organizationId: team.organizationId,
+    organizationId: team._id,
   });
 
   const formatDate = (timestamp: number) => {
@@ -83,7 +83,7 @@ export function TeamPage() {
             </div>
             <div className="flex items-center gap-2">
               {capabilities.canManageTeam && (
-                <InviteMemberDialog organizationId={team.organizationId} />
+                <InviteMemberDialog organizationId={team._id} />
               )}
             </div>
           </div>
@@ -131,7 +131,7 @@ export function TeamPage() {
                         <TableCell>
                           <MemberActions
                             member={member}
-                            organizationId={team.organizationId}
+                            organizationId={team._id}
                             isCurrentUserAdmin={capabilities.canManageTeam}
                           />
                         </TableCell>
@@ -149,7 +149,7 @@ export function TeamPage() {
                 {t("noMembersDescription")}
               </p>
               {capabilities.canManageTeam && (
-                <InviteMemberDialog organizationId={team.organizationId} />
+                <InviteMemberDialog organizationId={team._id} />
               )}
             </div>
           )}

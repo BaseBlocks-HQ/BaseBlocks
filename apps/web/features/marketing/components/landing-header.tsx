@@ -7,17 +7,23 @@ import Image from "next/image";
 type TranslateFn = (key: string) => string;
 
 interface LandingHeaderProps {
+  authenticatedHref: string | null;
   commonTranslations: TranslateFn;
   navigationTranslations: TranslateFn;
 }
 
 export function LandingHeader({
+  authenticatedHref,
   commonTranslations,
   navigationTranslations,
 }: LandingHeaderProps) {
   const authAction = (
-    <Link href="/login">
-      <Button size="sm">{commonTranslations("signIn")}</Button>
+    <Link href={authenticatedHref ?? "/login"}>
+      <Button size="sm">
+        {commonTranslations(
+          authenticatedHref ? "goToDashboard" : "signIn",
+        )}
+      </Button>
     </Link>
   );
 

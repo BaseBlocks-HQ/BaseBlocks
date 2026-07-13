@@ -168,10 +168,6 @@ export function InvitationInbox({
         invitationId: invitation.id,
       });
       if (acceptResult.error) throw acceptResult.error;
-      const activeResult = await authClient.organization.setActive({
-        organizationId: invitation.organizationId,
-      });
-      if (activeResult.error) throw activeResult.error;
       dispatch({ type: "REMOVE_INVITATION", id: invitation.id });
       if (onboardingMode) {
         const organizationResult =

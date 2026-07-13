@@ -24,14 +24,13 @@ export const getBySlug = query({
   },
 });
 
-export const getWorkspaceBoundary = query({
+export const getViewerState = query({
   args: { teamSlug: v.optional(v.string()) },
   handler: async (ctx, { teamSlug }) => {
     const auth = await getAuthContextOrNull(ctx);
     if (!auth) {
       return {
-        activeWorkspace: null,
-        requestedWorkspace: null,
+        team: null,
         teams: [],
         user: null,
       };
@@ -58,7 +57,6 @@ export const getWorkspaceBoundary = query({
         if (!organization?.slug) return null;
         return {
           _id: organization._id,
-          organizationId: organization._id,
           joinedAt: membership.createdAt,
           logoUrl: organization.logo ?? undefined,
           memberRole: membership.role,
@@ -71,14 +69,12 @@ export const getWorkspaceBoundary = query({
       (organization): organization is NonNullable<typeof organization> =>
         organization !== null,
     );
-    const requestedWorkspace = teamSlug
-      ? (teams.find((team) => team.slug === teamSlug) ?? null)
-      : null;
-    const activeWorkspace = requestedWorkspace ?? teams[0] ?? null;
+    const team = teamSlug
+      ? (teams.find((candidate) => candidate.slug === teamSlug) ?? null)
+      : (teams[0] ?? null);
 
     return {
-      activeWorkspace,
-      requestedWorkspace,
+      team,
       teams,
       user: {
         email: auth.email ?? null,

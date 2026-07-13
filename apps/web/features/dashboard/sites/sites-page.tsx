@@ -89,7 +89,7 @@ export function SitesPage() {
   const t = useTranslations();
   const { capabilities, team } = useTeamAccess();
   const sitesQuery = useQuery(api.sites.listByTeam, {
-    organizationId: team.organizationId,
+    organizationId: team._id,
   });
 
   return (

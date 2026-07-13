@@ -1,13 +1,13 @@
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
-import { getWorkspaceBoundaryState } from "@/features/authentication/server";
+import { getViewerState } from "@/features/authentication/server";
 import { redirect } from "next/navigation";
 import { OnboardingPageClient } from "./page-client";
 
 export default async function OnboardingPage() {
-  const { activeWorkspace } = await getWorkspaceBoundaryState();
+  const { team } = await getViewerState();
 
-  if (activeWorkspace) {
-    redirect(getTeamDashboardPath(activeWorkspace.slug));
+  if (team) {
+    redirect(getTeamDashboardPath(team.slug));
   }
 
   return <OnboardingPageClient />;
