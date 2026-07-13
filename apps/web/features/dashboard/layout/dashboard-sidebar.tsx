@@ -16,7 +16,6 @@ import {
 } from "@baseblocks/domain";
 import {
   getTeamDashboardPath,
-  getTeamLibrariesPath,
   getTeamMembersPath,
 } from "@/features/dashboard/routes";
 import { useTeamAccess } from "@/features/authentication/team-access";
@@ -48,7 +47,6 @@ import {
   Check,
   ChevronsUpDown,
   Earth,
-  FolderPlus,
   House,
   LogOut,
   Moon,
@@ -117,12 +115,6 @@ export function DashboardSidebar() {
       href: getTeamDashboardPath(team.slug),
       icon: House,
       isActive: pathname === getTeamDashboardPath(team.slug),
-    },
-    {
-      title: t("libraries.title"),
-      href: getTeamLibrariesPath(team.slug),
-      icon: FolderPlus,
-      isActive: pathname.startsWith(getTeamLibrariesPath(team.slug)),
     },
     {
       title: t("team.title"),

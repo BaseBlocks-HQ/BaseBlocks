@@ -155,50 +155,6 @@ export const getPublicExplorer = query({
   },
 });
 
-export const listAllWithCounts = query({
-  args: { organizationId: v.string() },
-  handler: async (ctx, { organizationId }) => {
-    if (!(await isOrganizationMember(ctx, organizationId))) return [];
-
-    const sites = await ctx.db
-      .query("sites")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", organizationId),
-      )
-      .collect();
-
-    const allLibraries: Array<{
-      _id: Id<"documentLibraries">;
-      siteId: Id<"sites">;
-      name: string;
-      documentCount: number;
-    }> = [];
-
-    for (const site of sites) {
-      const libraries = await ctx.db
-        .query("documentLibraries")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect();
-
-      for (const lib of libraries) {
-        const files = await ctx.db
-          .query("files")
-          .withIndex("by_library", (q) => q.eq("libraryId", lib._id))
-          .collect();
-
-        allLibraries.push({
-          _id: lib._id,
-          siteId: lib.siteId,
-          name: lib.name,
-          documentCount: files.length,
-        });
-      }
-    }
-
-    return allLibraries;
-  },
-});
-
 export const createLibrary = mutation({
   args: {
     siteId: v.id("sites"),
@@ -236,65 +192,6 @@ export const createLibrary = mutation({
     });
 
     return libraryId;
-  },
-});
-
-export const updateLibrary = mutation({
-  args: {
-    libraryId: v.id("documentLibraries"),
-    name: v.optional(v.string()),
-  },
-  handler: async (ctx, { libraryId, name }) => {
-    const { library } = await requireLibraryManagement(ctx, libraryId);
-
-    if (name !== undefined && name.trim() !== library.name) {
-      const existingLibrary = await ctx.db
-        .query("documentLibraries")
-        .withIndex("by_site", (q) => q.eq("siteId", library.siteId))
-        .filter((q) => q.eq(q.field("name"), name.trim()))
-        .first();
-
-      if (existingLibrary && existingLibrary._id !== libraryId) {
-        throw new Error(
-          `A library named "${name}" already exists. Please choose a different name.`,
-        );
-      }
-    }
-
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (name !== undefined) updates.name = name.trim();
-
-    await ctx.db.patch(libraryId, updates);
-    return libraryId;
-  },
-});
-
-export const removeLibrary = mutation({
-  args: { libraryId: v.id("documentLibraries") },
-  handler: async (ctx, { libraryId }) => {
-    await requireLibraryManagement(ctx, libraryId);
-
-    const files = await ctx.db
-      .query("files")
-      .withIndex("by_library", (q) => q.eq("libraryId", libraryId))
-      .collect();
-
-    for (const file of files) {
-      await deleteFileRows(ctx, file);
-    }
-
-    const folders = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
-      .collect();
-
-    for (const folder of folders) {
-      await ctx.db.delete(folder._id);
-    }
-
-    await ctx.db.delete(libraryId);
-
-    return { success: true };
   },
 });
 
