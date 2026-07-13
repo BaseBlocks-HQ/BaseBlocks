@@ -10,6 +10,24 @@ export type OpenEditorPageTabs = {
   tabs: OpenEditorPageTab[];
 };
 
+export function createOpenEditorPageTabs(
+  document: OpenEditorDocument,
+  tabId: string,
+): OpenEditorDocument {
+  return updateOpenEditorPageTabs(
+    { ...document, content: [] },
+    {
+      tabs: [
+        {
+          id: tabId,
+          label: "Tab 1",
+          document,
+        },
+      ],
+    },
+  );
+}
+
 export function readOpenEditorPageTabs(
   document: OpenEditorDocument,
 ): OpenEditorPageTabs | null {

@@ -8,6 +8,7 @@ import { cn } from "@baseblocks/ui/lib/utils";
 import { useEditorSite } from "@/features/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import type { SaveStatus } from "@baseblocks/domain";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -39,6 +40,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  LoaderCircle,
   MoreHorizontal,
   PencilLine,
   Share2,
@@ -64,6 +66,7 @@ interface EditorHeaderProps {
   sitePublished: boolean;
   siteName: string;
   siteLogoUrl?: string;
+  saveStatus?: SaveStatus;
   onPublish: () => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
@@ -79,6 +82,7 @@ export function EditorHeader({
   sitePublished,
   siteName,
   siteLogoUrl,
+  saveStatus = "idle",
   onPublish,
   onTogglePreview,
   onUnpublish,
@@ -122,6 +126,7 @@ export function EditorHeader({
                 sitePublished={sitePublished}
                 teamSlug={teamSlug}
                 siteSlug={siteSlug}
+                saveStatus={saveStatus}
                 onPublish={onPublish}
                 onTogglePreview={onTogglePreview}
                 onUnpublish={onUnpublish}
@@ -307,6 +312,7 @@ interface EditorHeaderRightSectionProps {
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
+  saveStatus: SaveStatus;
   onPublish: () => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
@@ -321,6 +327,7 @@ function EditorHeaderRightSection({
   sitePublished,
   teamSlug,
   siteSlug,
+  saveStatus,
   onPublish,
   onTogglePreview,
   onUnpublish,
@@ -383,6 +390,7 @@ function EditorHeaderRightSection({
             sitePublished={sitePublished}
             teamSlug={teamSlug}
             siteSlug={siteSlug}
+            saveStatus={saveStatus}
             onPublish={onPublish}
             onUnpublish={onUnpublish}
           />
@@ -461,17 +469,28 @@ function DeployCta({
   sitePublished,
   teamSlug,
   siteSlug,
+  saveStatus,
   onPublish,
   onUnpublish,
 }: {
   sitePublished: boolean;
   teamSlug: string;
   siteSlug: string;
+  saveStatus: SaveStatus;
   onPublish: () => void;
   onUnpublish?: () => void;
 }) {
   const t = useTranslations("editor");
   const tHeader = useTranslations("editor.header");
+  const isSaving = saveStatus === "pending" || saveStatus === "saving";
+  if (isSaving) {
+    return (
+      <Button aria-live="polite" className="gap-1.5" disabled size="sm">
+        <LoaderCircle className="size-3.5 animate-spin" />
+        {tHeader("saving")}
+      </Button>
+    );
+  }
   if (sitePublished) {
     return (
       <DropdownMenu>

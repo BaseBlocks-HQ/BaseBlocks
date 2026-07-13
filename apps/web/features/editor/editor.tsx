@@ -10,7 +10,11 @@ import { usePagePanelState } from "@/components/site-runtime/page-panel-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
-import type { ElementType, SectionPreset } from "@baseblocks/domain";
+import type {
+  ElementType,
+  SaveStatus,
+  SectionPreset,
+} from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
@@ -70,6 +74,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
   const showPagePanel = viewingPage !== null;
 
@@ -276,6 +281,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
     ) : (
       <OpenEditorPageEditor
         key={selectedPage._id}
+        onSaveStatusChange={setSaveStatus}
         pageId={selectedPage._id}
         pages={pages}
         preview={isPreviewing}
@@ -341,6 +347,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
             sitePublished={site.isPublished}
             siteName={site.name}
             siteLogoUrl={site.logoUrl}
+            saveStatus={engine === "openeditor" ? saveStatus : "idle"}
             onPublish={handlePublish}
             isPreviewing={isPreviewing}
             onTogglePreview={() => setIsPreviewing((current) => !current)}
@@ -378,6 +385,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           sitePublished={site.isPublished}
           siteName={site.name}
           siteLogoUrl={site.logoUrl}
+          saveStatus={engine === "openeditor" ? saveStatus : "idle"}
           onPublish={handlePublish}
           isPreviewing={isPreviewing}
           onTogglePreview={() => setIsPreviewing((current) => !current)}
