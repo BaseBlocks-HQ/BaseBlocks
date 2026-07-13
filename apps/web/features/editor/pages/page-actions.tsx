@@ -1,6 +1,5 @@
 "use client";
 
-import { generateSlug } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
@@ -26,6 +25,7 @@ import { useMutation } from "convex/react";
 import { FilePlus, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { CreatePageDialog } from "./create-page-dialog";
 
 interface PageActionsMenuProps {
   page: PageListItem;
@@ -43,10 +43,10 @@ export function PageActionsMenu({
   const t = useTranslations("navigation.pageActions");
   const tDelete = useTranslations("navigation.deletePage");
   const tCommon = useTranslations("common");
+  const [createChildOpen, setCreateChildOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const setDefaultPage = useMutation(api.sites.setDefaultPage);
-  const createPage = useMutation(api.pages.create);
   const removePage = useMutation(api.pages.remove);
 
   const handleSetDefault = async () => {
@@ -54,19 +54,6 @@ export function PageActionsMenu({
       siteId: siteId as Id<"sites">,
       pageId: page._id as Id<"pages">,
     });
-  };
-
-  const handleAddChildPage = async () => {
-    const title = window.prompt(t("addChildPage"));
-    if (!title?.trim()) return;
-
-    await createPage({
-      siteId: siteId as Id<"sites">,
-      parentId: page._id as Id<"pages">,
-      title: title.trim(),
-      slug: generateSlug(title),
-    });
-    onExpandParent?.();
   };
 
   const handleDelete = async () => {
@@ -90,7 +77,7 @@ export function PageActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem onClick={handleAddChildPage}>
+          <DropdownMenuItem onClick={() => setCreateChildOpen(true)}>
             <FilePlus className="h-4 w-4" />
             {t("addChildPage")}
           </DropdownMenuItem>
@@ -109,6 +96,15 @@ export function PageActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <CreatePageDialog
+        onCreated={onExpandParent}
+        onOpenChange={setCreateChildOpen}
+        open={createChildOpen}
+        parentId={page._id}
+        siteId={siteId}
+        trigger={null}
+      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[32rem]">

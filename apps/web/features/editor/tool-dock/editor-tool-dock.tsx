@@ -217,7 +217,7 @@ export function EditorToolDock({
               if (
                 target instanceof Element &&
                 target.closest(
-                  '[data-slot="dropdown-menu-content"], [data-slot="alert-dialog-content"], [data-slot="alert-dialog-overlay"]',
+                  '[data-slot="dropdown-menu-content"], [data-slot="dialog-content"], [data-slot="dialog-overlay"], [data-slot="alert-dialog-content"], [data-slot="alert-dialog-overlay"]',
                 )
               ) {
                 event.preventDefault();

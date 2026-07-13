@@ -21,15 +21,26 @@ import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 interface CreatePageDialogProps {
   siteId: string;
   parentId?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCreated?: () => void;
+  trigger?: ReactNode | null;
 }
 
-export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
+export function CreatePageDialog({
+  siteId,
+  parentId,
+  open,
+  onOpenChange,
+  onCreated,
+  trigger,
+}: CreatePageDialogProps) {
   const t = useTranslations("dialogs.createPage");
   const tCommon = useTranslations("common");
 
@@ -44,9 +55,10 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   const [slugLockedByUser, setSlugLockedByUser] = useState(false);
 
   const createPage = useMutation(api.pages.create);
+  const dialogOpen = open ?? dialogState.open;
   const pages = useQuery(
     api.pages.list,
-    dialogState.open ? { siteId: siteId as Id<"sites"> } : "skip",
+    dialogOpen ? { siteId: siteId as Id<"sites"> } : "skip",
   );
   const usedSlugs = new Set(
     (pages ?? []).map((page) => page.slug.toLowerCase()),
@@ -74,6 +86,7 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
       open: newOpen,
       error: newOpen ? current.error : "",
     }));
+    onOpenChange?.(newOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,6 +112,8 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
         isSubmitting: false,
         error: "",
       });
+      onOpenChange?.(false);
+      onCreated?.();
       toast.success(t("pageCreated"));
     } catch (err) {
       const message = err instanceof Error ? err.message : t("createFailed");
@@ -112,12 +127,16 @@ export function CreatePageDialog({ siteId, parentId }: CreatePageDialogProps) {
   };
 
   return (
-    <Dialog open={dialogState.open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
-          <Plus className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {trigger !== null ? (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button variant="ghost" size="icon" className="h-6 w-6">
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+        </DialogTrigger>
+      ) : null}
       <DialogContent
         aria-describedby={undefined}
         className={
