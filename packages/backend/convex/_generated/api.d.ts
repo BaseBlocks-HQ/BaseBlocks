@@ -13,7 +13,6 @@ import type * as documents from "../documents.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as libraries from "../libraries.js";
-import type * as migrations_removeUnusedPageFeatures from "../migrations/removeUnusedPageFeatures.js";
 import type * as openEditorDocuments from "../openEditorDocuments.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
@@ -38,7 +37,6 @@ declare const fullApi: ApiFromModules<{
   files: typeof files;
   http: typeof http;
   libraries: typeof libraries;
-  "migrations/removeUnusedPageFeatures": typeof migrations_removeUnusedPageFeatures;
   openEditorDocuments: typeof openEditorDocuments;
   organizations: typeof organizations;
   pageContent: typeof pageContent;

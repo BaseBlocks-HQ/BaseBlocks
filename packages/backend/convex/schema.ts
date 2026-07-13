@@ -2,14 +2,6 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { siteSettings } from "./sites";
 
-const legacyPageAccessPolicy = v.union(
-  v.object({ kind: v.literal("public") }),
-  v.object({
-    kind: v.literal("audiences"),
-    audienceIds: v.array(v.id("siteAudiences")),
-  }),
-);
-
 export default defineSchema({
   sites: defineTable({
     organizationId: v.string(),
@@ -77,24 +69,6 @@ export default defineSchema({
     .index("by_site_token", ["siteId", "sessionToken"])
     .index("by_expiresAt", ["expiresAt"]),
 
-  siteAudiences: defineTable({
-    siteId: v.id("sites"),
-    name: v.string(),
-    createdAt: v.number(),
-    createdBy: v.string(),
-    updatedAt: v.number(),
-  }).index("by_site_name", ["siteId", "name"]),
-
-  siteAudienceMembers: defineTable({
-    siteId: v.id("sites"),
-    audienceId: v.id("siteAudiences"),
-    userId: v.string(),
-    addedAt: v.number(),
-    addedBy: v.string(),
-  })
-    .index("by_audience_user", ["audienceId", "userId"])
-    .index("by_site_user", ["siteId", "userId"]),
-
   pages: defineTable({
     siteId: v.id("sites"),
     parentId: v.optional(v.id("pages")),
@@ -102,8 +76,6 @@ export default defineSchema({
     slug: v.string(),
     icon: v.optional(v.string()),
     order: v.number(),
-    showInNavigation: v.optional(v.boolean()),
-    accessPolicy: v.optional(legacyPageAccessPolicy),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),

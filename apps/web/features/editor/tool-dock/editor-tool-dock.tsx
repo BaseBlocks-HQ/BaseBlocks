@@ -106,6 +106,14 @@ export function EditorToolDock({
   const openTool = pinnedTool ?? hoveredTool;
   const DockToggleIcon = expanded ? IconSidebarLeftHide : IconSidebarLeftShow;
 
+  const pinOpenTool = () => {
+    if (!openTool) return;
+    clearCloseTimer();
+    setActiveTool(openTool);
+    setHoveredTool(null);
+    setPinnedTool(openTool);
+  };
+
   const panel = (tool: EditorTool) => (
     <ToolPanel
       activeTool={tool}
@@ -204,8 +212,20 @@ export function EditorToolDock({
           <PopoverContent
             align={isHorizontal ? "center" : "start"}
             className="max-h-[min(70vh,40rem)] w-[min(22rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[1.5rem] border-0 bg-sidebar/95 p-0 text-sidebar-foreground shadow-2xl backdrop-blur-md md:max-h-[min(calc(50vh+2rem),40rem)]"
+            onInteractOutside={(event) => {
+              const target = event.target;
+              if (
+                target instanceof Element &&
+                target.closest(
+                  '[data-slot="dropdown-menu-content"], [data-slot="alert-dialog-content"], [data-slot="alert-dialog-overlay"]',
+                )
+              ) {
+                event.preventDefault();
+              }
+            }}
             onMouseEnter={clearCloseTimer}
             onMouseLeave={schedulePreviewClose}
+            onPointerDownCapture={pinOpenTool}
             side={isHorizontal ? "top" : "right"}
             sideOffset={12}
           >
