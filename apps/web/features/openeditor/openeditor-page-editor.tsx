@@ -5,6 +5,7 @@ import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
+import { Button } from "@baseblocks/ui/button";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
@@ -18,18 +19,22 @@ import {
 } from "@openeditor/react";
 import {
   OpenEditorBlockMenu,
+  OpenEditorEmojiPicker,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
   OpenEditorThemeProvider,
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation, useQuery } from "convex/react";
+import { ArrowLeft } from "lucide-react";
 import {
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { useTranslations } from "next-intl";
@@ -58,7 +63,7 @@ export function OpenEditorPageEditor({
 }) {
   const t = useTranslations("editor.pageEditor");
   const { canEdit } = useEditorSite();
-  const { openPage } = useEditorUi();
+  const { canGoBack, goBack, openPage } = useEditorUi();
   const content = useQuery(api.pageContent.get, { pageId });
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
@@ -78,6 +83,32 @@ export function OpenEditorPageEditor({
     (document: OpenEditorDocument) => setLocalDocument({ pageId, document }),
     [pageId],
   );
+  const activePage = pages.find((candidate) => candidate._id === pageId);
+
+  const pageHeading = activePage ? (
+    <OpenEditorPageHeading
+      canGoBack={canGoBack}
+      editable={canEdit && !preview}
+      icon={activePage.icon ?? "📄"}
+      onGoBack={goBack}
+      onIconChange={async (icon) => {
+        try {
+          await updatePage({ pageId, icon });
+        } catch (_error) {
+          toast.error("Failed to update page icon");
+        }
+      }}
+      onTitleChange={async (title) => {
+        try {
+          await updatePage({ pageId, title });
+        } catch (error) {
+          toast.error("Failed to update page title");
+          throw error;
+        }
+      }}
+      title={activePage.title}
+    />
+  ) : null;
 
   const pageRuntime = useMemo<OpenEditorPageRuntime>(
     () => ({
@@ -114,9 +145,24 @@ export function OpenEditorPageEditor({
       updatePageIcon: async (targetPageId, icon) => {
         await updatePage({ pageId: targetPageId as Id<"pages">, icon });
       },
-      openPage: ({ pageId: targetPageId }) => openPage(targetPageId),
+      openPage: async ({ icon, pageId: targetPageId }) => {
+        const targetPage = pages.find(
+          (candidate) => candidate._id === targetPageId,
+        );
+        if (canEdit && icon && targetPage?.icon !== icon) {
+          try {
+            await updatePage({
+              pageId: targetPageId as Id<"pages">,
+              icon,
+            });
+          } catch (_error) {
+            toast.error("Failed to sync page icon");
+          }
+        }
+        openPage(targetPageId);
+      },
     }),
-    [createPage, openPage, pageId, pages, siteId, updatePage],
+    [canEdit, createPage, openPage, pageId, pages, siteId, updatePage],
   );
 
   if (!resolvedDocument) {
@@ -135,6 +181,7 @@ export function OpenEditorPageEditor({
           initialDocument={resolvedDocument}
           onSaveStatusChange={onSaveStatusChange}
           pageId={pageId}
+          pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
           saveDocument={saveDocument}
@@ -148,6 +195,7 @@ export function OpenEditorPageEditor({
           onConvertToTabs={handleConvertToTabs}
           onSaveStatusChange={onSaveStatusChange}
           pageId={pageId}
+          pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
           saveDocument={saveDocument}
@@ -165,6 +213,7 @@ function OpenEditorTabbedPageEditor({
   initialDocument,
   onSaveStatusChange,
   pageId,
+  pageHeading,
   pageRuntime,
   preview,
   saveDocument,
@@ -174,6 +223,7 @@ function OpenEditorTabbedPageEditor({
   initialDocument: OpenEditorDocument;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
+  pageHeading: ReactNode;
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
   saveDocument: (args: {
@@ -226,6 +276,7 @@ function OpenEditorTabbedPageEditor({
       theme={baseBlocksOpenEditorTheme}
     >
       <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+        {pageHeading}
         <OpenEditorTabbedPage
           document={initialDocument}
           editable={canEdit && !preview}
@@ -245,6 +296,7 @@ function OpenEditorDocumentEditor({
   onConvertToTabs,
   onSaveStatusChange,
   pageId,
+  pageHeading,
   pageRuntime,
   preview,
   pendingDocument,
@@ -258,6 +310,7 @@ function OpenEditorDocumentEditor({
   onConvertToTabs: (document: OpenEditorDocument) => void;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
+  pageHeading: ReactNode;
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
   pendingDocument: RefObject<OpenEditorDocument | null>;
@@ -343,6 +396,7 @@ function OpenEditorDocumentEditor({
       theme={baseBlocksOpenEditorTheme}
     >
       <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
+        {pageHeading}
         {preview ? (
           <OpenEditorViewer
             attachmentRuntime={attachmentRuntime}
@@ -366,5 +420,88 @@ function OpenEditorDocumentEditor({
         ) : null}
       </div>
     </OpenEditorThemeProvider>
+  );
+}
+
+function OpenEditorPageHeading({
+  canGoBack,
+  editable,
+  icon,
+  onGoBack,
+  onIconChange,
+  onTitleChange,
+  title,
+}: {
+  canGoBack: boolean;
+  editable: boolean;
+  icon: string;
+  onGoBack: () => void;
+  onIconChange: (icon: string) => Promise<void>;
+  onTitleChange: (title: string) => Promise<void>;
+  title: string;
+}) {
+  const t = useTranslations("editor.header");
+  const [draftTitle, setDraftTitle] = useState(title);
+
+  useEffect(() => setDraftTitle(title), [title]);
+
+  const saveTitle = async () => {
+    const nextTitle = draftTitle.trim() || t("untitledPage");
+    setDraftTitle(nextTitle);
+    if (nextTitle === title) return;
+    try {
+      await onTitleChange(nextTitle);
+    } catch {
+      setDraftTitle(title);
+    }
+  };
+
+  const handleTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") event.currentTarget.blur();
+    if (event.key === "Escape") {
+      setDraftTitle(title);
+      event.currentTarget.blur();
+    }
+  };
+
+  return (
+    <div className="mb-8 flex min-w-0 items-center gap-2">
+      {canGoBack ? (
+        <Button
+          aria-label={t("backToPreviousPage")}
+          className="shrink-0 rounded-lg"
+          onClick={onGoBack}
+          size="icon"
+          title={t("backToPreviousPage")}
+          variant="ghost"
+        >
+          <ArrowLeft />
+        </Button>
+      ) : null}
+      <OpenEditorEmojiPicker
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg text-3xl hover:bg-muted disabled:cursor-default"
+        disabled={!editable}
+        emoji={icon}
+        label={t("changePageEmoji")}
+        onEmojiSelect={(nextIcon) => void onIconChange(nextIcon)}
+      />
+      <h1 className="min-w-0 flex-1 text-3xl font-bold">
+        {editable ? (
+          <input
+            aria-label={t("pageTitle")}
+            className="w-full min-w-0 rounded-md bg-transparent px-1.5 font-inherit outline-none hover:bg-muted/70 focus:bg-background focus:ring-2 focus:ring-ring"
+            onBlur={() => void saveTitle()}
+            onChange={(event) => setDraftTitle(event.target.value)}
+            onKeyDown={handleTitleKeyDown}
+            placeholder={t("untitledPage")}
+            value={draftTitle}
+          />
+        ) : (
+          <span className="block truncate px-1.5">
+            {title || t("untitledPage")}
+          </span>
+        )}
+      </h1>
+    </div>
   );
 }

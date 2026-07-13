@@ -32,7 +32,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
@@ -43,9 +43,23 @@ interface PublicSiteShellProps {
   result: PublishedPageResult;
 }
 
+function readPreviousPageUrl(value: string | null) {
+  if (!value?.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
+function readNavigationIcon(value: string | null) {
+  if (!value || value.length > 16) return null;
+  return value;
+}
+
 export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const { navigation: pages, organization: team, page, site } = result;
+  const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
+  const navigationIcon = readNavigationIcon(searchParams.get("icon"));
   const pageTargets = useMemo(
     () => buildPublishedPageTargets(result.pages),
     [result.pages],
@@ -53,10 +67,24 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const openPage = useCallback(
     (pageId: string) => {
       const target = pageTargets.get(pageId);
-      if (target) router.push(getPageLink(site.slug, target.path));
+      if (!target || target.pageId === page?._id) return;
+      const currentQuery = searchParams.toString();
+      const currentUrl = currentQuery
+        ? `${pathname}?${currentQuery}`
+        : pathname;
+      const targetUrl = getPageLink(site.slug, target.path);
+      const targetSearchParams = new URLSearchParams({
+        from: currentUrl,
+        icon: target.icon ?? "📄",
+      });
+      router.push(`${targetUrl}?${targetSearchParams.toString()}`);
     },
-    [pageTargets, router, site.slug],
+    [page?._id, pageTargets, pathname, router, searchParams, site.slug],
   );
+
+  const goBack = useCallback(() => {
+    if (previousPageUrl) router.push(previousPageUrl);
+  }, [previousPageUrl, router]);
 
   if (!page) return null;
 
@@ -93,8 +121,12 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <PublicPageContent
               pageId={page._id as Id<"pages">}
-              initialPage={page}
+              initialPage={
+                navigationIcon ? { ...page, icon: navigationIcon } : page
+              }
               initialStructure={result.pageContent}
+              canGoBack={previousPageUrl !== null}
+              onGoBack={goBack}
               pageTargets={pageTargets}
             />
           </div>

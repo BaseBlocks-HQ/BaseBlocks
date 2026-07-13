@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@baseblocks/ui/lib/utils";
-import { EditorProvider } from "@/features/editor/editor-state";
+import { EditorProvider, useEditorUi } from "@/features/editor/editor-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
 import type { Doc, Id } from "@baseblocks/backend";
@@ -11,7 +11,7 @@ import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { toast } from "sonner";
 import { EditorToolDock } from "./tool-dock/editor-tool-dock";
@@ -43,6 +43,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { resetPageHistory } = useEditorUi();
   const selectedPageId = searchParams.get("page");
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isToolDockExpanded, setIsToolDockExpanded] = useState(false);
@@ -82,12 +83,20 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     }
   };
 
-  const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
-    router.replace(nextUrl, { scroll: false });
-  };
+  const replaceEditorUrl = useCallback(
+    (updates: Record<string, string | null>) => {
+      const nextUrl = buildEditorPath(
+        pathname,
+        searchParams.toString(),
+        updates,
+      );
+      router.replace(nextUrl, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   const setSelectedPageId = (id: string | null) => {
+    resetPageHistory();
     replaceEditorUrl({ page: id });
   };
 
@@ -228,17 +237,47 @@ function SiteEditorShell({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [pageHistory, setPageHistory] = useState<(string | null)[]>([]);
 
-  const replaceEditorUrl = (updates: Record<string, string | null>) => {
-    const nextUrl = buildEditorPath(pathname, searchParams.toString(), updates);
-    router.replace(nextUrl, { scroll: false });
-  };
+  const replaceEditorUrl = useCallback(
+    (updates: Record<string, string | null>) => {
+      const nextUrl = buildEditorPath(
+        pathname,
+        searchParams.toString(),
+        updates,
+      );
+      router.replace(nextUrl, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const openPage = useCallback(
+    (pageId: string) => {
+      const currentPageId = searchParams.get("page");
+      if (currentPageId === pageId) return;
+      setPageHistory((current) => [...current, currentPageId]);
+      replaceEditorUrl({ page: pageId });
+    },
+    [replaceEditorUrl, searchParams],
+  );
+
+  const goBack = useCallback(() => {
+    if (pageHistory.length === 0) return;
+    const previousPageId = pageHistory.at(-1) ?? null;
+    setPageHistory((current) => current.slice(0, -1));
+    replaceEditorUrl({ page: previousPageId });
+  }, [pageHistory, replaceEditorUrl]);
+
+  const resetPageHistory = useCallback(() => setPageHistory([]), []);
 
   return (
     <EditorProvider
       siteId={siteId}
       permissions={permissions}
-      onOpenPage={(pageId) => replaceEditorUrl({ page: pageId })}
+      canGoBack={pageHistory.length > 0}
+      onGoBack={goBack}
+      onOpenPage={openPage}
+      onResetPageHistory={resetPageHistory}
     >
       <SiteEditorInner siteId={siteId} />
     </EditorProvider>

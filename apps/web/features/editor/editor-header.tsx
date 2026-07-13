@@ -151,7 +151,7 @@ function EditorHeaderIdentity({
         </Link>
       </Button>
 
-      <div className="min-w-0 w-8 @2xl/header:w-auto @2xl/header:max-w-52">
+      <div className="flex h-8 min-w-0 w-8 items-center @2xl/header:w-auto @2xl/header:max-w-52">
         <EditorSiteSwitcher
           currentSiteId={siteId}
           currentSiteLogoUrl={siteLogoUrl}

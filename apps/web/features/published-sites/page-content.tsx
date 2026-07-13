@@ -10,6 +10,7 @@ import { getPageLink } from "@/features/published-sites/urls";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Spinner } from "@baseblocks/ui/spinner";
+import { Button } from "@baseblocks/ui/button";
 import { useQuery } from "convex/react";
 import type { OpenEditorDocument } from "@openeditor/core";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@openeditor/react";
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
+import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
 import type { PublishedPageTarget } from "./page-targets";
 
@@ -25,13 +27,17 @@ type ResolvedPageContent = { document: OpenEditorDocument };
 const EMPTY_PAGE_TARGETS = new Map<string, PublishedPageTarget>();
 
 interface PublicPageContentProps {
+  canGoBack?: boolean;
+  onGoBack?: () => void;
   pageId: string;
-  initialPage?: { title: string };
+  initialPage?: { icon?: string; title: string };
   initialStructure?: ResolvedPageContent;
   pageTargets?: ReadonlyMap<string, PublishedPageTarget>;
 }
 
 export function PublicPageContent({
+  canGoBack = false,
+  onGoBack,
   pageId,
   initialPage,
   initialStructure,
@@ -60,6 +66,7 @@ export function PublicPageContent({
           ? { ...target, href: getPageLink(actions.siteSlug, target.path) }
           : null;
       },
+      openPage: ({ pageId: targetPageId }) => actions.openPage?.(targetPageId),
     }),
     [actions, pageTargets],
   );
@@ -82,7 +89,24 @@ export function PublicPageContent({
   return (
     <div className="h-full min-h-0 min-w-0 overflow-y-auto overflow-x-hidden pt-[var(--bb-header-height)]">
       <article className="mx-auto max-w-4xl px-4 py-8 md:px-8 [&_.oe-page-arrow]:hidden">
-        <h1 className="mb-8 text-3xl font-bold">{page.title}</h1>
+        <div className="mb-8 flex min-w-0 items-center gap-2">
+          {canGoBack && onGoBack ? (
+            <Button
+              aria-label="Back to previous page"
+              className="shrink-0 rounded-lg"
+              onClick={onGoBack}
+              size="icon"
+              title="Back to previous page"
+              variant="ghost"
+            >
+              <ArrowLeft />
+            </Button>
+          ) : null}
+          <span aria-hidden="true" className="shrink-0 text-3xl leading-none">
+            {page.icon ?? "📄"}
+          </span>
+          <h1 className="min-w-0 truncate text-3xl font-bold">{page.title}</h1>
+        </div>
         {openEditorDocument ? (
           <OpenEditorThemeProvider
             className="contents"

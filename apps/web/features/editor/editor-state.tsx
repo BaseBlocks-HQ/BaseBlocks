@@ -9,7 +9,10 @@ interface EditorPermissions {
 }
 
 export interface EditorUiContextValue {
+  canGoBack: boolean;
+  goBack: () => void;
   openPage: (pageId: string) => void;
+  resetPageHistory: () => void;
 }
 
 interface EditorSiteContextValue {
@@ -25,21 +28,32 @@ const EditorSiteContext = createContext<EditorSiteContextValue | null>(null);
 interface EditorProviderProps {
   siteId: string;
   permissions: EditorPermissions;
+  canGoBack: boolean;
+  onGoBack: () => void;
   onOpenPage: (pageId: string) => void;
+  onResetPageHistory: () => void;
   children: ReactNode;
 }
 
 export function EditorProvider({
   siteId,
   permissions,
+  canGoBack,
+  onGoBack,
   onOpenPage,
+  onResetPageHistory,
   children,
 }: EditorProviderProps) {
   const { canEdit, isAdmin, isLoading: isPermissionsLoading } = permissions;
 
   const uiValue = useMemo<EditorUiContextValue>(
-    () => ({ openPage: onOpenPage }),
-    [onOpenPage],
+    () => ({
+      canGoBack,
+      goBack: onGoBack,
+      openPage: onOpenPage,
+      resetPageHistory: onResetPageHistory,
+    }),
+    [canGoBack, onGoBack, onOpenPage, onResetPageHistory],
   );
 
   return (

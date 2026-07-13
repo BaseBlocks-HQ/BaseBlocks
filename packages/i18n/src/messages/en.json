@@ -145,6 +145,10 @@
     },
     "header": {
       "backToDashboard": "Back to dashboard",
+      "backToPreviousPage": "Back to previous page",
+      "changePageEmoji": "Change page emoji",
+      "pageTitle": "Page title",
+      "untitledPage": "Untitled",
       "viewOnlyBadge": "View only",
       "viewPublishedTooltipWhenPublished": "Open published site",
       "viewPublishedTooltipWhenDraft": "Publish your site first",
