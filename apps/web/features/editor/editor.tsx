@@ -73,6 +73,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   // Fullscreen state for page panel
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isToolDockExpanded, setIsToolDockExpanded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
   const showPagePanel = viewingPage !== null;
@@ -286,7 +287,12 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   );
 
   const editorCanvas = (
-    <div className="h-full min-h-0 overflow-auto md:pl-14 lg:pl-0">
+    <div
+      className={cn(
+        "h-full min-h-0 overflow-auto lg:pl-0",
+        isToolDockExpanded ? "md:pl-0" : "md:pl-14",
+      )}
+    >
       <div
         className={
           showPagePanel
@@ -303,6 +309,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
     return (
       <div className="w-full bg-background">
         <EditorToolDock
+          expanded={isToolDockExpanded}
           engine={engine}
           site={site}
           pages={pages}
@@ -312,6 +319,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
           onAddSection={handleAddSection}
           onAddBlock={handleAddBlock}
           onEnableTabs={handleEnableTabs}
+          onExpandedChange={setIsToolDockExpanded}
         />
         <div
           ref={setPortalContainer}
@@ -344,6 +352,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <EditorToolDock
+        expanded={isToolDockExpanded}
         engine={engine}
         site={site}
         pages={pages}
@@ -353,6 +362,7 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
         onAddSection={handleAddSection}
         onAddBlock={handleAddBlock}
         onEnableTabs={handleEnableTabs}
+        onExpandedChange={setIsToolDockExpanded}
       />
       <div
         ref={setPortalContainer}
@@ -375,14 +385,23 @@ function SiteEditorInner({ siteId, engine = "openeditor" }: SiteEditorProps) {
         />
 
         <PortalContainerProvider value={portalContainer ?? undefined}>
-          <div className="absolute inset-0 min-w-0 overflow-hidden">
+          <div
+            className={cn(
+              "absolute inset-0 min-w-0 overflow-hidden transition-[margin] duration-200 ease-out",
+              isToolDockExpanded && "md:ml-[18.5rem] lg:ml-[24.25rem]",
+            )}
+          >
             {showPagePanel ? (
               isFullscreen || isMobile ? (
                 <div className="h-full min-h-0 min-w-0">
                   <div
                     className={cn(
                       "h-full min-h-0 min-w-0 pr-2 pb-2 pt-16 md:pr-3 md:pb-3 md:pt-18 lg:pr-4 lg:pb-4",
-                      isFullscreen && !isMobile && "pl-2 md:pl-14 lg:pl-4",
+                      isFullscreen &&
+                        !isMobile &&
+                        (isToolDockExpanded
+                          ? "pl-2 md:pl-3 lg:pl-4"
+                          : "pl-2 md:pl-14 lg:pl-4"),
                     )}
                   >
                     <section className={pagePanelSurfaceClassName}>

@@ -372,7 +372,7 @@ function OpenEditorDocumentEditor({
           />
         ) : (
           <OpenEditorContent
-            className="oe-editor-surface"
+            className="oe-editor-surface min-w-0 [&_.oe-prosemirror]:w-full [&_.oe-prosemirror]:min-w-0"
             controller={controller}
           />
         )}

@@ -19,7 +19,7 @@ import { Button } from "@baseblocks/ui/button";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import { Popover, PopoverAnchor, PopoverContent } from "@baseblocks/ui/popover";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
-import { Check, PanelLeftClose, PanelLeftOpen, PanelTop } from "lucide-react";
+import { Check, PanelTop } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -27,10 +27,13 @@ import {
   IconFile,
   IconGear,
   IconRectLayoutGrid,
+  IconSidebarLeftHide,
+  IconSidebarLeftShow,
   IconSquareGrid2,
 } from "nucleo-glass";
 
 interface EditorToolDockProps {
+  expanded: boolean;
   engine?: "openeditor" | "legacy";
   site: { _id: string; defaultPageId?: string };
   pages: PageListItem[];
@@ -40,6 +43,7 @@ interface EditorToolDockProps {
   onAddSection?: (preset: SectionPreset) => void;
   onAddBlock?: (type: ElementType) => void;
   onEnableTabs?: () => void;
+  onExpandedChange: (expanded: boolean) => void;
 }
 
 type EditorTool = "pages" | "site" | "sections" | "blocks";
@@ -67,6 +71,7 @@ const BLOCK_GROUPS: Array<{ title: string; types: ElementType[] }> = [
 const sectionPresets = new Set(["single", "columns", "aside"]);
 
 export function EditorToolDock({
+  expanded,
   engine = "openeditor",
   site,
   pages,
@@ -76,11 +81,11 @@ export function EditorToolDock({
   onAddSection,
   onAddBlock,
   onEnableTabs,
+  onExpandedChange,
 }: EditorToolDockProps) {
   const { canEdit } = useEditorSite();
   const { clearSelection } = useEditorUi();
   const isHorizontal = useIsMobile();
-  const [expanded, setDockExpanded] = useState(false);
   const [activeTool, setActiveTool] = useState<EditorTool>("pages");
   const [hoveredTool, setHoveredTool] = useState<EditorTool | null>(null);
   const [pinnedTool, setPinnedTool] = useState<EditorTool | null>(null);
@@ -148,6 +153,7 @@ export function EditorToolDock({
       engine === "legacy" || (tool.id !== "sections" && tool.id !== "blocks"),
   );
   const openTool = pinnedTool ?? hoveredTool;
+  const DockToggleIcon = expanded ? IconSidebarLeftHide : IconSidebarLeftShow;
 
   const panel = (tool: EditorTool) => (
     <ToolPanel
@@ -168,12 +174,7 @@ export function EditorToolDock({
 
   return (
     <aside
-      className={cn(
-        "pointer-events-auto fixed z-30",
-        expanded
-          ? "inset-x-3 bottom-3 md:inset-x-auto md:left-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
-          : "bottom-3 left-1/2 -translate-x-1/2 md:bottom-auto md:left-4 md:top-1/2 md:translate-x-0 md:-translate-y-1/2",
-      )}
+      className="pointer-events-auto fixed bottom-3 left-1/2 z-30 -translate-x-1/2 md:bottom-auto md:left-4 md:top-1/2 md:translate-x-0 md:-translate-y-1/2"
       aria-label="Editor tools"
     >
       <Popover
@@ -187,11 +188,12 @@ export function EditorToolDock({
         <PopoverAnchor asChild>
           <div
             className={cn(
-              "flex overflow-hidden rounded-2xl bg-sidebar/95 text-sidebar-foreground shadow-xl backdrop-blur-md",
-              expanded && "max-h-[min(78vh,42rem)] flex-col md:flex-row",
+              "flex h-10 w-[6.75rem] flex-col-reverse overflow-hidden rounded-2xl bg-sidebar/95 text-sidebar-foreground shadow-xl backdrop-blur-md transition-[width,height] duration-200 ease-out md:h-[6.75rem] md:w-10 md:flex-row",
+              expanded &&
+                "h-[min(78vh,42rem)] w-[min(22rem,calc(100vw-1.5rem))] md:h-[min(calc(50vh+2rem),40rem)] md:w-[17rem] lg:w-[22.5rem]",
             )}
           >
-            <nav className="flex shrink-0 flex-row gap-0.5 p-1 md:flex-col">
+            <nav className="flex shrink-0 self-center flex-row gap-0.5 p-1 md:flex-col">
               {availableTools.map((tool) => {
                 const disabled =
                   (!canEdit && tool.id !== "pages") ||
@@ -234,17 +236,17 @@ export function EditorToolDock({
                   clearCloseTimer();
                   setPinnedTool(null);
                   setHoveredTool(null);
-                  setDockExpanded((current) => !current);
+                  onExpandedChange(!expanded);
                 }}
                 size="icon"
                 variant="ghost"
               >
-                {expanded ? <PanelLeftClose /> : <PanelLeftOpen />}
+                <DockToggleIcon className={cn(isHorizontal && "-rotate-90")} />
               </Button>
             </nav>
 
             {expanded ? (
-              <div className="min-h-0 w-full overflow-y-auto md:w-80">
+              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
                 {panel(activeTool)}
               </div>
             ) : null}
