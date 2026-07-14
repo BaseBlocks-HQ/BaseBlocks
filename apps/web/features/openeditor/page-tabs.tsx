@@ -7,12 +7,13 @@ import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
 import {
   createDocument,
   textBlock,
+  type OpenEditorAttachmentRuntime,
   type OpenEditorDocument,
+  type OpenEditorPageRuntime,
 } from "@openeditor/core";
 import {
   OpenEditorContent,
   OpenEditorViewer,
-  type OpenEditorPageRuntime,
   type OpenEditorReactExtension,
   type OpenEditorViewerRenderer,
   useOpenEditorController,
@@ -140,18 +141,21 @@ function TabBar({
 }
 
 function ActiveTabEditor({
-  document,
+  attachmentRuntime,
+  initialDocument,
   extensions,
   pageRuntime,
   onChange,
 }: {
-  document: OpenEditorDocument;
+  attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  initialDocument: OpenEditorDocument;
   extensions: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
   onChange: (document: OpenEditorDocument) => void;
 }) {
   const controller = useOpenEditorController({
-    initialDocument: document,
+    initialDocument,
+    attachmentRuntime,
     extensions,
     pageRuntime,
     onChange,
@@ -169,21 +173,23 @@ function ActiveTabEditor({
 }
 
 export function OpenEditorTabbedPage({
-  document,
+  attachmentRuntime,
+  initialDocument,
   editable,
   extensions = [],
   pageRuntime,
   renderers,
   onChange,
 }: {
-  document: OpenEditorDocument;
+  attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  initialDocument: OpenEditorDocument;
   editable: boolean;
   extensions?: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
   renderers?: Partial<Record<string, OpenEditorViewerRenderer>>;
   onChange?: (document: OpenEditorDocument) => void;
 }) {
-  const [currentDocument, setCurrentDocument] = useState(document);
+  const [currentDocument, setCurrentDocument] = useState(initialDocument);
   const value = readOpenEditorPageTabs(currentDocument);
   const [activeId, setActiveId] = useState(value?.tabs[0]?.id ?? "");
   if (!value) return null;
@@ -236,7 +242,8 @@ export function OpenEditorTabbedPage({
       />
       {editable ? (
         <ActiveTabEditor
-          document={active.document}
+          attachmentRuntime={attachmentRuntime}
+          initialDocument={active.document}
           extensions={extensions}
           key={active.id}
           onChange={(nextDocument) => updateActive({ document: nextDocument })}
@@ -244,6 +251,7 @@ export function OpenEditorTabbedPage({
         />
       ) : (
         <OpenEditorViewer
+          attachmentRuntime={attachmentRuntime}
           className="oe-viewer"
           document={active.document}
           extensions={extensions}

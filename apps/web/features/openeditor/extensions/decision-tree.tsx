@@ -18,7 +18,6 @@ import {
 import { toHtml, toPlainText } from "@openeditor/exporters";
 import { GitFork } from "lucide-react";
 const nestedDocumentExtensions = [] as const;
-const nestedDocumentExporters = {};
 
 const defaultValue = (): DecisionTreeValue => ({
   trees: [{ id: "default", label: "Tree 1", nodes: [] }],
@@ -26,14 +25,14 @@ const defaultValue = (): DecisionTreeValue => ({
 });
 
 function NestedEditor({
-  document,
+  initialDocument,
   onChange,
 }: {
-  document: OpenEditorDocument;
+  initialDocument: OpenEditorDocument;
   onChange: (document: OpenEditorDocument) => void;
 }) {
   const controller = useOpenEditorController({
-    initialDocument: document,
+    initialDocument,
     onChange,
     extensions: nestedDocumentExtensions,
   });
@@ -55,7 +54,7 @@ function DecisionTreeNode({
           onChange={(decisionTree) => updateAttributes({ decisionTree })}
           renderDocument={(activeNode, onChange) => (
             <NestedEditor
-              document={activeNode.document}
+              initialDocument={activeNode.document}
               key={activeNode.id}
               onChange={onChange}
             />
@@ -107,7 +106,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
         readDecisionTree(node.attrs?.decisionTree)
           .trees.map(
             (tree) =>
-              `<section data-baseblocks-decision-tree><h2>${escapeHtml(tree.label)}</h2><ul>${tree.nodes.map((item) => `<li><strong>${escapeHtml(item.name)}</strong>${toHtml(item.document, nestedDocumentExporters)}</li>`).join("")}</ul></section>`,
+              `<section data-baseblocks-decision-tree><h2>${escapeHtml(tree.label)}</h2><ul>${tree.nodes.map((item) => `<li><strong>${escapeHtml(item.name)}</strong>${toHtml(item.document)}</li>`).join("")}</ul></section>`,
           )
           .join(""),
     },
@@ -119,7 +118,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
             ...tree.nodes.map((item) =>
               [
                 `${"  ".repeat(item.parentId ? 1 : 0)}${item.name}`,
-                toPlainText(item.document, nestedDocumentExporters),
+                toPlainText(item.document),
               ]
                 .filter(Boolean)
                 .join("\n"),

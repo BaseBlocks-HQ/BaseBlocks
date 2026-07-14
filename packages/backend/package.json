@@ -30,6 +30,7 @@
   "dependencies": {
     "@baseblocks/domain": "workspace:*",
     "@convex-dev/better-auth": "^0.12.5",
+    "@openeditor/core": "0.0.28",
     "better-auth": "^1.6.23",
     "convex": "^1.42.1"
   }

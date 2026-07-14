@@ -14,17 +14,17 @@ import { Button } from "@baseblocks/ui/button";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
+  OpenEditorPageRuntime,
 } from "@openeditor/core";
 import {
   OpenEditorContent,
-  type OpenEditorPageRuntime,
+  OpenEditorPageHeader,
   type OpenEditorSlashMenuItem,
   OpenEditorViewer,
   useOpenEditorController,
 } from "@openeditor/react";
 import {
   OpenEditorBlockMenu,
-  OpenEditorEmojiPicker,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
   OpenEditorThemeProvider,
@@ -37,7 +37,6 @@ import {
   useEffectEvent,
   useRef,
   useState,
-  type KeyboardEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -88,31 +87,6 @@ export function OpenEditorPageEditor({
     setLocalDocument({ pageId, document });
   const activePage = pages.find((candidate) => candidate._id === pageId);
 
-  const pageHeading = activePage ? (
-    <OpenEditorPageHeading
-      canGoBack={canGoBack}
-      editable={canEdit && !preview}
-      icon={activePage.icon ?? "📄"}
-      onGoBack={goBack}
-      onIconChange={async (icon) => {
-        try {
-          await updatePage({ pageId, icon });
-        } catch (_error) {
-          toast.error("Failed to update page icon");
-        }
-      }}
-      onTitleChange={async (title) => {
-        try {
-          await updatePage({ pageId, title });
-        } catch (error) {
-          toast.error("Failed to update page title");
-          throw error;
-        }
-      }}
-      title={activePage.title}
-    />
-  ) : null;
-
   const pageRuntime: OpenEditorPageRuntime = {
     createPage: async ({ title, icon }) => {
       const suffix = crypto.randomUUID().slice(0, 8);
@@ -141,14 +115,51 @@ export function OpenEditorPageEditor({
           }
         : null;
     },
-    renamePage: async (targetPageId, title) => {
-      await updatePage({ pageId: targetPageId as Id<"pages">, title });
-    },
-    updatePageIcon: async (targetPageId, icon) => {
-      await updatePage({ pageId: targetPageId as Id<"pages">, icon });
+    updatePage: async (targetPageId, pageUpdate) => {
+      try {
+        await updatePage({
+          pageId: targetPageId as Id<"pages">,
+          title: pageUpdate.title,
+          icon: pageUpdate.icon ?? undefined,
+          clearIcon: pageUpdate.icon === null,
+        });
+      } catch (error) {
+        toast.error("Failed to update page");
+        throw error;
+      }
+      const current = pages.find(
+        (candidate) => candidate._id === targetPageId,
+      );
+      return {
+        pageId: targetPageId,
+        title: pageUpdate.title ?? current?.title ?? "Untitled",
+        icon:
+          pageUpdate.icon === undefined
+            ? (current?.icon ?? "📄")
+            : pageUpdate.icon,
+        href: `?page=${targetPageId}`,
+      };
     },
     openPage: ({ pageId: targetPageId }) => openPage(targetPageId),
   };
+
+  const pageSnapshot = activePage
+    ? {
+        pageId: activePage._id,
+        title: activePage.title,
+        icon: activePage.icon ?? "📄",
+        href: `?page=${activePage._id}`,
+      }
+    : null;
+  const pageHeading = pageSnapshot ? (
+    <OpenEditorPageHeading
+      canGoBack={canGoBack}
+      editable={canEdit && !preview}
+      onGoBack={goBack}
+      page={pageSnapshot}
+      pageRuntime={pageRuntime}
+    />
+  ) : null;
 
   if (!resolvedDocument) {
     return (
@@ -162,6 +173,7 @@ export function OpenEditorPageEditor({
     <SiteRenderActionsProvider actions={{ siteId }}>
       {readOpenEditorPageTabs(resolvedDocument) ? (
         <OpenEditorTabbedPageEditor
+          attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
           initialDocument={resolvedDocument}
           onSaveStatusChange={onSaveStatusChange}
@@ -194,6 +206,7 @@ export function OpenEditorPageEditor({
 }
 
 function OpenEditorTabbedPageEditor({
+  attachmentRuntime,
   canEdit,
   initialDocument,
   onSaveStatusChange,
@@ -204,6 +217,7 @@ function OpenEditorTabbedPageEditor({
   saveContent,
   saveFailedMessage,
 }: {
+  attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
   initialDocument: OpenEditorDocument;
   onSaveStatusChange?: (status: SaveStatus) => void;
@@ -262,9 +276,10 @@ function OpenEditorTabbedPageEditor({
       <div className="mx-auto min-h-[calc(100vh-8rem)] max-w-4xl rounded-xl bg-background px-6 py-10 sm:px-10">
         {pageHeading}
         <OpenEditorTabbedPage
-          document={initialDocument}
+          attachmentRuntime={attachmentRuntime}
           editable={canEdit && !preview}
           extensions={openEditorExtensions}
+          initialDocument={initialDocument}
           onChange={queueSave}
           pageRuntime={pageRuntime}
         />
@@ -408,43 +423,17 @@ function OpenEditorDocumentEditor({
 function OpenEditorPageHeading({
   canGoBack,
   editable,
-  icon,
   onGoBack,
-  onIconChange,
-  onTitleChange,
-  title,
+  page,
+  pageRuntime,
 }: {
   canGoBack: boolean;
   editable: boolean;
-  icon: string;
   onGoBack: () => void;
-  onIconChange: (icon: string) => Promise<void>;
-  onTitleChange: (title: string) => Promise<void>;
-  title: string;
+  page: { pageId: string; title: string; icon: string; href: string };
+  pageRuntime: OpenEditorPageRuntime;
 }) {
   const t = useTranslations("editor.header");
-  const [draftTitle, setDraftTitle] = useState(title);
-
-  useEffect(() => setDraftTitle(title), [title]);
-
-  const saveTitle = async () => {
-    const nextTitle = draftTitle.trim() || t("untitledPage");
-    setDraftTitle(nextTitle);
-    if (nextTitle === title) return;
-    try {
-      await onTitleChange(nextTitle);
-    } catch {
-      setDraftTitle(title);
-    }
-  };
-
-  const handleTitleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") event.currentTarget.blur();
-    if (event.key === "Escape") {
-      setDraftTitle(title);
-      event.currentTarget.blur();
-    }
-  };
 
   return (
     <div className="mb-8 flex min-w-0 items-center gap-2">
@@ -460,30 +449,22 @@ function OpenEditorPageHeading({
           <ArrowLeft />
         </Button>
       ) : null}
-      <OpenEditorEmojiPicker
-        className="flex size-11 shrink-0 items-center justify-center rounded-lg text-3xl hover:bg-muted disabled:cursor-default"
-        disabled={!editable}
-        emoji={icon}
-        label={t("changePageEmoji")}
-        onEmojiSelect={(nextIcon) => void onIconChange(nextIcon)}
-      />
-      <h1 className="min-w-0 flex-1 text-3xl font-bold">
-        {editable ? (
-          <input
-            aria-label={t("pageTitle")}
-            className="w-full min-w-0 rounded-md bg-transparent px-1.5 font-inherit outline-none hover:bg-muted/70 focus:bg-background focus:ring-2 focus:ring-ring"
-            onBlur={() => void saveTitle()}
-            onChange={(event) => setDraftTitle(event.target.value)}
-            onKeyDown={handleTitleKeyDown}
-            placeholder={t("untitledPage")}
-            value={draftTitle}
-          />
-        ) : (
-          <span className="block truncate px-1.5">
-            {title || t("untitledPage")}
+      {editable ? (
+        <OpenEditorPageHeader
+          className="min-w-0 flex-1"
+          page={page}
+          runtime={pageRuntime}
+        />
+      ) : (
+        <>
+          <span aria-hidden="true" className="shrink-0 text-3xl leading-none">
+            {page.icon}
           </span>
-        )}
-      </h1>
+          <h1 className="min-w-0 flex-1 truncate px-1.5 text-3xl font-bold">
+            {page.title || t("untitledPage")}
+          </h1>
+        </>
+      )}
     </div>
   );
 }

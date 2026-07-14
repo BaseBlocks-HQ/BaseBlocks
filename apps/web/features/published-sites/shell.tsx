@@ -121,6 +121,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
             />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <PublicPageContent
+                key={page._id}
                 page={navigationIcon ? { ...page, icon: navigationIcon } : page}
                 content={result.content}
                 canGoBack={previousPageUrl !== null}

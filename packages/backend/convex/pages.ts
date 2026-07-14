@@ -154,8 +154,9 @@ export const update = mutation({
     title: v.optional(v.string()),
     slug: v.optional(v.string()),
     icon: v.optional(v.string()),
+    clearIcon: v.optional(v.boolean()),
   },
-  handler: async (ctx, { pageId, title, slug, icon }) => {
+  handler: async (ctx, { pageId, title, slug, icon, clearIcon }) => {
     const normalizedSlug =
       slug === undefined ? undefined : normalizePageSlug(slug);
     const page = await ctx.db.get(pageId);
@@ -187,7 +188,8 @@ export const update = mutation({
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
     if (title !== undefined) updates.title = title;
     if (normalizedSlug !== undefined) updates.slug = normalizedSlug;
-    if (icon !== undefined) updates.icon = icon;
+    if (clearIcon) updates.icon = undefined;
+    else if (icon !== undefined) updates.icon = icon;
 
     await ctx.db.patch(pageId, updates);
 

@@ -1,36 +1,20 @@
-export type OpenEditorNode = {
-  type: string;
-  attrs?: Record<string, unknown>;
-  content?: OpenEditorNode[];
-  text?: string;
-};
+import {
+  createDocument,
+  parseOpenEditorDocument as parseOpenEditorDocumentStrict,
+  type OpenEditorDocument,
+  type ProseMirrorNode,
+} from "@openeditor/core";
 
-export type OpenEditorDocument = {
-  type: "doc";
-  version: 1;
-  content: OpenEditorNode[];
-  meta?: Record<string, unknown>;
-};
+export type { OpenEditorDocument } from "@openeditor/core";
 
-export const emptyOpenEditorDocument = (): OpenEditorDocument => ({
-  type: "doc",
-  version: 1,
-  content: [{ type: "paragraph" }],
-});
+export type OpenEditorNode = ProseMirrorNode;
+
+export const emptyOpenEditorDocument = (): OpenEditorDocument =>
+  createDocument([{ type: "paragraph" }]);
 
 export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
-  const content =
-    typeof value === "string" ? (JSON.parse(value) as unknown) : value;
-  if (
-    !content ||
-    typeof content !== "object" ||
-    (content as { type?: unknown }).type !== "doc" ||
-    (content as { version?: unknown }).version !== 1 ||
-    !Array.isArray((content as { content?: unknown }).content)
-  ) {
-    throw new Error("Invalid page content");
-  }
-  return content as OpenEditorDocument;
+  const decoded = typeof value === "string" ? JSON.parse(value) : value;
+  return parseOpenEditorDocumentStrict(decoded);
 }
 
 export function visitOpenEditorNodes(

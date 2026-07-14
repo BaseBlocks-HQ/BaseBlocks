@@ -7,11 +7,11 @@ import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
 import { publicSiteRenderers } from "@/features/openeditor/renderers";
 import { getPageLink } from "@/features/published-sites/urls";
 import { Button } from "@baseblocks/ui/button";
-import type { OpenEditorDocument } from "@openeditor/core";
-import {
-  OpenEditorViewer,
-  type OpenEditorPageRuntime,
-} from "@openeditor/react";
+import type {
+  OpenEditorDocument,
+  OpenEditorPageRuntime,
+} from "@openeditor/core";
+import { OpenEditorViewer } from "@openeditor/react";
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { ArrowLeft } from "lucide-react";
@@ -44,6 +44,9 @@ export function PublicPageContent({
         ? { ...target, href: getPageLink(actions.siteSlug, target.path) }
         : null;
     },
+    updatePage: () => {
+      throw new Error("Published pages are read-only.");
+    },
     openPage: ({ pageId: targetPageId }) => onOpenPageBlock?.(targetPageId),
   };
 
@@ -75,8 +78,8 @@ export function PublicPageContent({
           >
             {readOpenEditorPageTabs(content) ? (
               <OpenEditorTabbedPage
-                document={content}
                 editable={false}
+                initialDocument={content}
                 pageRuntime={pageRuntime}
                 renderers={publicSiteRenderers}
               />
