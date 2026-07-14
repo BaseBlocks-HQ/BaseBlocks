@@ -25,6 +25,7 @@ export const siteSidebarVariant = v.union(
 );
 
 export const siteSettings = v.object({
+  expandNavigationByDefault: v.optional(v.boolean()),
   favicon: v.optional(v.string()),
   sidebarVariant: v.optional(siteSidebarVariant),
   showLogo: v.optional(v.boolean()),

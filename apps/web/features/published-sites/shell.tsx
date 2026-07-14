@@ -225,6 +225,9 @@ function PublicSiteSidebar({
             ) : (
               <PublishedPageNavigation
                 currentPath={currentPath}
+                expandByDefault={
+                  site.settings.expandNavigationByDefault === true
+                }
                 pages={pages}
                 siteSlug={siteSlug}
               />
@@ -333,15 +336,25 @@ function buildPublishedNavigationRows(
 
 function PublishedPageNavigation({
   currentPath,
+  expandByDefault,
   pages,
   siteSlug,
 }: {
   currentPath: string;
+  expandByDefault: boolean;
   pages: PageWithChildren[];
   siteSlug: string;
 }) {
-  const [expandedPages, setExpandedPages] = useState<Set<string>>(
-    () => new Set(),
+  const [expandedPages, setExpandedPages] = useState<Set<string>>(() =>
+    expandByDefault
+      ? new Set(
+          pages.flatMap(function collectExpandablePageIds(page): string[] {
+            return page.children.length > 0
+              ? [page._id, ...page.children.flatMap(collectExpandablePageIds)]
+              : [];
+          }),
+        )
+      : new Set(),
   );
   const rows = buildPublishedNavigationRows(pages, currentPath, expandedPages);
 

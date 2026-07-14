@@ -327,6 +327,8 @@ export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
   const showLogo = site.settings.showLogo !== false;
   const showSiteName = site.settings.showSiteName !== false;
   const showHeaderSearch = site.settings.showHeaderSearch === true;
+  const expandNavigationByDefault =
+    site.settings.expandNavigationByDefault === true;
 
   return (
     <div className="space-y-7 p-4">
@@ -442,6 +444,20 @@ export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
                 checked={showHeaderSearch}
                 onCheckedChange={(checked) =>
                   updateSettings("showHeaderSearch", checked)
+                }
+              />
+            }
+          />
+
+          <PanelSettingRow
+            htmlFor="expand-navigation-by-default"
+            label="Expand pages by default"
+            control={
+              <Switch
+                id="expand-navigation-by-default"
+                checked={expandNavigationByDefault}
+                onCheckedChange={(checked) =>
+                  updateSettings("expandNavigationByDefault", checked)
                 }
               />
             }

@@ -115,6 +115,7 @@ export const update = mutation({
     clearFavicon: v.optional(v.boolean()),
     settings: v.optional(
       v.object({
+        expandNavigationByDefault: v.optional(v.boolean()),
         favicon: v.optional(v.string()),
         sidebarVariant: v.optional(siteSidebarVariant),
         showLogo: v.optional(v.boolean()),

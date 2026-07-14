@@ -23,12 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import { Badge } from "@baseblocks/ui/badge";
 import { cn } from "@baseblocks/ui/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -63,12 +59,9 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
 
   const effectiveTeamSlug = site.team?.slug ?? teamSlug;
   const editorHref = getTeamSiteEditorPath(effectiveTeamSlug, site._id);
+  const publishedSiteHref = getSiteOpenUrl(effectiveTeamSlug, site.slug);
   const isPublished = site.isPublished;
   const statusLabel = isPublished ? t("sites.published") : t("sites.draft");
-
-  const handleViewSite = () => {
-    window.open(getSiteOpenUrl(effectiveTeamSlug, site.slug), "_blank");
-  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -92,7 +85,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
           href={editorHref}
         />
 
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-medium text-muted-foreground">
             {site.logoUrl ? (
               <Image
@@ -108,81 +101,79 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
             )}
           </div>
 
-          <div className="relative z-10 flex items-center gap-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    "mr-1 inline-flex h-2 w-2 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-                    isPublished
-                      ? "bg-green-500 dark:bg-green-400"
-                      : "bg-amber-500 dark:bg-amber-300",
-                  )}
-                >
-                  <span className="sr-only">{statusLabel}</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={6}>
-                {statusLabel}
-              </TooltipContent>
-            </Tooltip>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="truncate text-sm font-medium leading-snug">
+              {site.name}
+            </h3>
+            <p className="mt-0.5 truncate text-xs leading-relaxed text-muted-foreground">
+              /{site.slug}
+            </p>
+          </div>
 
-            <div className="flex items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-              {site.isPublished && (
-                <Button
-                  aria-label={t("sites.viewSite")}
-                  className="h-7 w-7 text-muted-foreground"
-                  onClick={handleViewSite}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
+          <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5">
+            {site.isPublished && (
+              <Button
+                asChild
+                aria-label={t("sites.viewSite")}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                size="icon"
+                title={t("sites.viewSite")}
+                variant="ghost"
+              >
+                <a href={publishedSiteHref} rel="noreferrer" target="_blank">
                   <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-              )}
+                </a>
+              </Button>
+            )}
 
-              {canManageSites && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      aria-label={t("common.settings")}
-                      className="h-7 w-7 text-muted-foreground"
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      {t("common.edit")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => setDeleteOpen(true)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {t("common.delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+            {canManageSites && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    aria-label={t("common.settings")}
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    size="icon"
+                    title={t("common.settings")}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {t("common.edit")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {t("common.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-medium leading-snug">
-            {site.name}
-          </h3>
-          <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
-            /{site.slug}
-          </p>
-        </div>
+        <Badge
+          className="gap-1.5 border-0 bg-muted/60 px-2 py-1 font-normal text-muted-foreground"
+          variant="secondary"
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "size-1.5 rounded-full",
+              isPublished
+                ? "bg-green-500 dark:bg-green-400"
+                : "bg-amber-500 dark:bg-amber-300",
+            )}
+          />
+          {statusLabel}
+        </Badge>
       </article>
 
       {canManageSites && (
