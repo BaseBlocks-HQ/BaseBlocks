@@ -167,6 +167,7 @@ export function DashboardSidebar() {
         sidebarFloatingInnerClass,
       )}
       collapsible="offcanvas"
+      mobileClassName="!top-2 !bottom-2 !left-2 !max-h-[calc(100svh-1rem)] !w-[min(13.5rem,calc(100vw-1rem))] rounded-xl !border-0 !bg-sidebar/95 shadow-sm"
       variant="floating"
     >
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">

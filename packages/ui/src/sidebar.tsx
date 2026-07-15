@@ -189,12 +189,14 @@ function Sidebar({
   variant = "sidebar",
   collapsible = "offcanvas",
   className,
+  mobileClassName,
   children,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right";
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
+  mobileClassName?: string;
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
@@ -227,6 +229,7 @@ function Sidebar({
             isFloating
               ? "flex min-h-0 flex-col data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left !inset-y-auto !top-3 !bottom-3 !left-3 !right-auto !h-auto !max-h-[calc(100svh-1.5rem)] !w-[min(18rem,calc(100vw-1.5rem))] rounded-[1.75rem] !border !border-border/80 !bg-background/95 shadow-2xl backdrop-blur-md sm:!max-w-none"
               : "bg-sidebar w-(--sidebar-width)",
+            mobileClassName,
           )}
           style={
             isFloating
@@ -245,7 +248,7 @@ function Sidebar({
             className={cn(
               "flex w-full flex-col",
               isFloating
-                ? "min-h-0 flex-1 overflow-hidden rounded-[1.75rem]"
+                ? "min-h-0 flex-1 overflow-hidden rounded-[inherit]"
                 : "h-full min-h-0",
             )}
           >
