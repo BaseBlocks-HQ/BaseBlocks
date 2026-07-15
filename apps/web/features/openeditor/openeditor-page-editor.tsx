@@ -127,9 +127,7 @@ export function OpenEditorPageEditor({
         toast.error("Failed to update page");
         throw error;
       }
-      const current = pages.find(
-        (candidate) => candidate._id === targetPageId,
-      );
+      const current = pages.find((candidate) => candidate._id === targetPageId);
       return {
         pageId: targetPageId,
         title: pageUpdate.title ?? current?.title ?? "Untitled",

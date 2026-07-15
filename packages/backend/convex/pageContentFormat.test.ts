@@ -43,9 +43,9 @@ describe("parseOpenEditorDocument", () => {
   });
 
   test("rejects unversioned ProseMirror documents", () => {
-    expect(() =>
-      parseOpenEditorDocument({ type: "doc", content: [] }),
-    ).toThrow("Document version must be 1");
+    expect(() => parseOpenEditorDocument({ type: "doc", content: [] })).toThrow(
+      "Document version must be 1",
+    );
   });
 });
 
