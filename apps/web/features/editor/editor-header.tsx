@@ -15,6 +15,16 @@ import { Badge } from "@baseblocks/ui/badge";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -28,14 +38,13 @@ import {
   Check,
   ChevronDown,
   EyeOff,
-  Globe,
   LoaderCircle,
   MoreHorizontal,
   PencilLine,
   Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconEye, IconWindow2 } from "nucleo-glass";
+import { IconEarth, IconEye, IconSparkle4, IconWindow2 } from "nucleo-glass";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -133,6 +142,48 @@ export function EditorHeader({
   );
 }
 
+function EditorBetaBanner() {
+  const t = useTranslations("editor.header.beta");
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          className="group ml-1 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border/70 bg-background/65 px-2.5 text-xs font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+          type="button"
+        >
+          <IconSparkle4 className="size-4 transition-transform group-hover:scale-105" />
+          <span className="@2xl/header:hidden">{t("shortLabel")}</span>
+          <span className="hidden @2xl/header:inline">{t("label")}</span>
+          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.625rem] leading-none font-semibold tracking-wide text-muted-foreground uppercase">
+            {t("badge")}
+          </span>
+        </button>
+      </DialogTrigger>
+      <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4">
+        <DialogHeader className="px-5 pt-5 pb-0 text-left">
+          <div className="flex items-center gap-2">
+            <IconSparkle4 className="size-5 shrink-0" />
+            <DialogTitle className="text-base font-semibold">
+              {t("title")}
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-sm leading-relaxed text-sidebar-foreground/60">
+            {t("description")}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="px-5 pt-1 pb-4">
+          <DialogClose asChild>
+            <Button className="h-8 rounded-full px-4" size="sm">
+              {t("dismiss")}
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EditorHeaderIdentity({
   siteId,
   siteLogoUrl,
@@ -162,6 +213,7 @@ function EditorHeaderIdentity({
           teamSlug={teamSlug}
         />
       </div>
+      <EditorBetaBanner />
     </div>
   );
 }
@@ -408,7 +460,7 @@ function DeployAction({
   if (!sitePublished) {
     return (
       <Button className={headerActionClassName} onClick={onPublish} size="sm">
-        <Globe />
+        <IconEarth />
         <HeaderActionLabel>{t("publish")}</HeaderActionLabel>
       </Button>
     );
@@ -418,7 +470,7 @@ function DeployAction({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button className={headerActionClassName} size="sm" variant="ghost">
-          <Globe />
+          <IconEarth />
           <HeaderActionLabel>{tHeader("publishedStatus")}</HeaderActionLabel>
           <ChevronDown className="hidden @2xl/header:block" />
         </Button>

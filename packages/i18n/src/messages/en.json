@@ -170,7 +170,15 @@
       "saving": "Saving…",
       "preview": "Preview",
       "edit": "Edit",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "beta": {
+        "shortLabel": "New",
+        "label": "New editor",
+        "badge": "Beta",
+        "title": "Meet the new editor",
+        "description": "The new block editor is designed to make building and updating your site faster and more intuitive. It’s still in beta, so you may encounter a few rough edges while we continue improving the experience.",
+        "dismiss": "Got it"
+      }
     },
     "picker": {
       "categories": {
