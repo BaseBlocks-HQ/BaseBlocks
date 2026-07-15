@@ -17,6 +17,7 @@ export default async function PublicLayout({
         "elements",
         "errors",
         "libraries",
+        "language",
       ])}
     >
       <PublicConvexClientProvider>{children}</PublicConvexClientProvider>

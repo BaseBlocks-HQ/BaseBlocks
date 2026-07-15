@@ -141,7 +141,7 @@ export function ReadOnlyLibraryExplorer({
           previewFile && "hidden border-r md:block md:max-w-[36%]",
         )}
       >
-        <div className="flex h-10 items-center px-3 text-xs font-medium">
+        <div className="flex h-10 items-center border-b bg-muted/70 px-3 text-xs font-medium text-foreground">
           {explorer.library.name}
         </div>
         <div

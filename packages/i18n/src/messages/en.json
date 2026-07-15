@@ -461,7 +461,10 @@
   "language": {
     "select": "Select language",
     "menuLabel": "Language",
-    "current": "Current language"
+    "current": "Current language",
+    "browserDefault": "Browser default",
+    "english": "English",
+    "french": "Français"
   },
   "blocks": {
     "heading": "Heading",
@@ -477,6 +480,18 @@
     "spacer": "Spacer"
   },
   "libraries": {
+    "viewer": {
+      "openNewTab": "Open in new tab",
+      "download": "Download",
+      "fullscreen": "Fullscreen",
+      "exitFullscreen": "Exit fullscreen",
+      "close": "Close",
+      "previewUnavailable": "This file type cannot be previewed in the browser.",
+      "open": "Open",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "pdfLoadError": "Unable to load PDF"
+    },
     "explorer": {
       "deleteFileTitle": "Delete file?",
       "deleteFolderTitle": "Delete folder?",

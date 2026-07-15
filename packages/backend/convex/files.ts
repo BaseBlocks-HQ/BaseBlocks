@@ -199,6 +199,29 @@ async function createUploadedFile(
   },
 ) {
   const createdAt = Date.now();
+  const [folderSiblings, fileSiblings] = args.libraryId
+    ? await Promise.all([
+        ctx.db
+          .query("documentFolders")
+          .withIndex("by_parent", (q) =>
+            q.eq("libraryId", args.libraryId!).eq("parentId", args.folderId),
+          )
+          .collect(),
+        ctx.db
+          .query("files")
+          .withIndex("by_folder", (q) =>
+            q.eq("libraryId", args.libraryId!).eq("folderId", args.folderId),
+          )
+          .collect(),
+      ])
+    : [[], []];
+  const legacyOrder = Number.MAX_SAFE_INTEGER / 2;
+  const order =
+    [...folderSiblings, ...fileSiblings].reduce(
+      (maximum, sibling, index) =>
+        Math.max(maximum, sibling.order ?? legacyOrder + index),
+      -1,
+    ) + 1;
   const fileId = await ctx.db.insert("files", {
     siteId: args.siteId,
     kind: "file",
@@ -210,6 +233,7 @@ async function createUploadedFile(
     checksum: args.checksum,
     libraryId: args.libraryId,
     folderId: args.folderId,
+    order,
     uploadedBy: args.uploadedBy,
     createdAt,
   });

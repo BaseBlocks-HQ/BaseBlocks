@@ -5,6 +5,7 @@ import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
+import type { Locale } from "@baseblocks/i18n";
 import {
   DEFAULT_SITE_SIDEBAR_VARIANT,
   type PageWithChildren,
@@ -29,8 +30,15 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { ChevronDown, ChevronRight, Moon, Sun } from "lucide-react";
-import { useTranslations } from "next-intl";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Languages,
+  Moon,
+  Sun,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -181,11 +189,66 @@ function PublicSiteHeader({
                 onOpenPageResult={(pageId) => onOpenPage(pageId)}
               />
             ) : null}
+            <PublicSiteLanguageMenu />
             <PublicSiteThemeMenu />
           </div>
         </div>
       </div>
     </header>
+  );
+}
+
+function publicLocalePath(pathname: string, locale: Locale) {
+  const localePattern = /^\/(en|fr)(?=\/|$)/;
+  const unprefixed = pathname.replace(localePattern, "") || "/";
+  return locale === "en" ? unprefixed : `/fr${unprefixed}`;
+}
+
+function PublicSiteLanguageMenu() {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("language");
+
+  const selectLocale = (selection: Locale | "browser") => {
+    if (selection === "browser") {
+      // biome-ignore lint/suspicious/noDocumentCookie: NEXT_LOCALE is also read by the edge proxy.
+      document.cookie = "NEXT_LOCALE=; Path=/; Max-Age=0; SameSite=Lax";
+    } else {
+      // biome-ignore lint/suspicious/noDocumentCookie: NEXT_LOCALE is also read by the edge proxy.
+      document.cookie = `NEXT_LOCALE=${selection}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    }
+    window.location.assign(
+      selection === "browser"
+        ? publicLocalePath(window.location.pathname, "en")
+        : publicLocalePath(window.location.pathname, selection),
+    );
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label={t("select")}
+          className="text-muted-foreground hover:text-foreground"
+          size="icon"
+          variant="ghost"
+        >
+          <Languages className="size-[1.2rem]" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => selectLocale("browser")}>
+          <span className="flex-1">{t("browserDefault")}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => selectLocale("en")}>
+          <span className="flex-1">{t("english")}</span>
+          {locale === "en" ? <Check className="size-4" /> : null}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => selectLocale("fr")}>
+          <span className="flex-1">{t("french")}</span>
+          {locale === "fr" ? <Check className="size-4" /> : null}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

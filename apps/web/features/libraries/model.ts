@@ -29,11 +29,11 @@ export function buildLibraryExplorerModel(
       order: folder.order,
       data: { kind: "folder" as const, folder },
     })),
-    ...files.map((file, index) => ({
+    ...files.map((file) => ({
       id: file._id,
       parentId: file.folderId ?? null,
       label: file.filename,
-      order: Number.MAX_SAFE_INTEGER - files.length + index,
+      order: file.order,
       data: { kind: "file" as const, file },
     })),
   ];

@@ -1,3 +1,4 @@
+import { planTreeMove } from "@baseblocks/domain";
 import { v } from "convex/values";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
@@ -41,6 +42,7 @@ const libraryFileSummary = v.object({
   size: v.number(),
   downloadUrl: v.string(),
   folderId: v.optional(v.id("documentFolders")),
+  order: v.number(),
 });
 
 const explorerPayload = v.object({
@@ -72,6 +74,25 @@ async function buildExplorerPayload(
     .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
     .collect();
 
+  const fileOrderFallback = new Map<string, number>();
+  const filesByFolder = new Map<string | undefined, typeof files>();
+  for (const file of files) {
+    const siblings = filesByFolder.get(file.folderId) ?? [];
+    siblings.push(file);
+    filesByFolder.set(file.folderId, siblings);
+  }
+  for (const siblings of filesByFolder.values()) {
+    siblings
+      .sort(
+        (a, b) =>
+          (a.filename ?? "file").localeCompare(b.filename ?? "file") ||
+          a._id.localeCompare(b._id),
+      )
+      .forEach((file, index) => {
+        fileOrderFallback.set(file._id, index);
+      });
+  }
+
   return {
     library: {
       _id: library._id,
@@ -100,8 +121,13 @@ async function buildExplorerPayload(
         size: file.size,
         downloadUrl: buildFileUrl(file._id),
         folderId: file.folderId,
+        order:
+          file.order ??
+          Number.MAX_SAFE_INTEGER / 2 + (fileOrderFallback.get(file._id) ?? 0),
       }))
-      .sort((a, b) => a.filename.localeCompare(b.filename)),
+      .sort(
+        (a, b) => a.order - b.order || a.filename.localeCompare(b.filename),
+      ),
   };
 }
 
@@ -211,12 +237,20 @@ export const createFolder = mutation({
       }
     }
 
-    const siblings = await ctx.db
-      .query("documentFolders")
-      .withIndex("by_parent", (q) =>
-        q.eq("libraryId", libraryId).eq("parentId", parentId),
-      )
-      .collect();
+    const [siblings, siblingFiles] = await Promise.all([
+      ctx.db
+        .query("documentFolders")
+        .withIndex("by_parent", (q) =>
+          q.eq("libraryId", libraryId).eq("parentId", parentId),
+        )
+        .collect(),
+      ctx.db
+        .query("files")
+        .withIndex("by_folder", (q) =>
+          q.eq("libraryId", libraryId).eq("folderId", parentId),
+        )
+        .collect(),
+    ]);
 
     const duplicateFolder = siblings.find(
       (f) => f.name.toLowerCase() === name.trim().toLowerCase(),
@@ -227,7 +261,12 @@ export const createFolder = mutation({
       );
     }
 
-    const maxOrder = siblings.reduce((max, f) => Math.max(max, f.order), -1);
+    const legacyOrder = Number.MAX_SAFE_INTEGER / 2;
+    const maxOrder = [...siblings, ...siblingFiles].reduce(
+      (maximum, sibling, index) =>
+        Math.max(maximum, sibling.order ?? legacyOrder + index),
+      -1,
+    );
 
     const now = Date.now();
     const folderId = await ctx.db.insert("documentFolders", {
@@ -321,5 +360,97 @@ export const removeFolder = mutation({
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
 
     return { success: true };
+  },
+});
+
+export const moveInTree = mutation({
+  args: {
+    libraryId: v.id("documentLibraries"),
+    entityId: v.string(),
+    targetId: v.optional(v.string()),
+    placement: v.union(
+      v.literal("before"),
+      v.literal("after"),
+      v.literal("inside"),
+      v.literal("root-end"),
+    ),
+  },
+  handler: async (ctx, { libraryId, entityId, targetId, placement }) => {
+    await requireLibraryManagement(ctx, libraryId);
+
+    const [folders, files] = await Promise.all([
+      ctx.db
+        .query("documentFolders")
+        .withIndex("by_parent", (q) => q.eq("libraryId", libraryId))
+        .collect(),
+      ctx.db
+        .query("files")
+        .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
+        .collect(),
+    ]);
+    const folderIds = new Set(folders.map((folder) => folder._id));
+    const fileIds = new Set(files.map((file) => file._id));
+    if (
+      !folderIds.has(entityId as Id<"documentFolders">) &&
+      !fileIds.has(entityId as Id<"files">)
+    ) {
+      throw new Error("Library item not found");
+    }
+    if (
+      targetId &&
+      !folderIds.has(targetId as Id<"documentFolders">) &&
+      !fileIds.has(targetId as Id<"files">)
+    ) {
+      throw new Error("Target item not found");
+    }
+    if (
+      placement === "inside" &&
+      (!targetId || !folderIds.has(targetId as Id<"documentFolders">))
+    ) {
+      throw new Error("Files can only be moved inside folders");
+    }
+
+    const fallbackOrder = Number.MAX_SAFE_INTEGER / 2;
+    const plan = planTreeMove(
+      [
+        ...folders.map((folder) => ({
+          id: folder._id,
+          parentId: folder.parentId ?? null,
+          order: folder.order,
+        })),
+        ...files.map((file, index) => ({
+          id: file._id,
+          parentId: file.folderId ?? null,
+          order: file.order ?? fallbackOrder + index,
+        })),
+      ],
+      {
+        nodeId: entityId,
+        targetId: targetId ?? null,
+        placement,
+      },
+    );
+    const now = Date.now();
+
+    for (const update of plan.updates) {
+      if (folderIds.has(update.id as Id<"documentFolders">)) {
+        await ctx.db.patch(update.id as Id<"documentFolders">, {
+          parentId: update.parentId
+            ? (update.parentId as Id<"documentFolders">)
+            : undefined,
+          order: update.order,
+          updatedAt: now,
+        });
+      } else {
+        await ctx.db.patch(update.id as Id<"files">, {
+          folderId: update.parentId
+            ? (update.parentId as Id<"documentFolders">)
+            : undefined,
+          order: update.order,
+        });
+      }
+    }
+
+    return { entityId, parentId: plan.parentId, order: plan.index };
   },
 });

@@ -100,6 +100,7 @@ export default defineSchema({
     checksum: v.optional(v.string()),
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")),
+    order: v.optional(v.number()),
     uploadedBy: v.string(),
     createdAt: v.number(),
   })

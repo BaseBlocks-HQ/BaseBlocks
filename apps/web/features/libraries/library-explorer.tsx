@@ -175,6 +175,7 @@ export function LibraryExplorer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createFolderMutation = useMutation(api.libraries.createFolder);
   const updateFolder = useMutation(api.libraries.updateFolder);
+  const moveEntity = useMutation(api.libraries.moveInTree);
   const removeFolder = useMutation(api.libraries.removeFolder);
   const renameFile = useMutation(api.files.rename);
   const createFile = useMutation(api.files.create);
@@ -395,9 +396,17 @@ export function LibraryExplorer({
       }}
       onCopyLink={(entity) => void copyEntityLink(entity)}
       onOpenEntity={openEntityInExplorer}
+      onMoveEntity={async ({ entityId, placement, targetId }) => {
+        await moveEntity({
+          libraryId: explorer.library._id,
+          entityId,
+          targetId: targetId ?? undefined,
+          placement,
+        });
+      }}
       onRenameEntity={renameEntity}
       onUploadFiles={() => fileInputRef.current?.click()}
-      title={embedded ? explorer.library.name : undefined}
+      title={explorer.library.name}
       uploadDisabled={uploadPercent !== null}
     />
   );

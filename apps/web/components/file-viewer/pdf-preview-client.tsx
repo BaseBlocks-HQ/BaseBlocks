@@ -4,6 +4,7 @@ import type { PreviewFile } from "@/components/file-viewer/file-viewer";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -16,6 +17,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 export default function PdfPreview({ file }: { file: PreviewFile }) {
+  const t = useTranslations("libraries.viewer");
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [numPages, setNumPages] = useState(0);
@@ -41,7 +43,7 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
       <div className="flex h-10 shrink-0 items-center justify-end gap-1 border-b bg-background/70 px-2">
         <ToolbarButton
           disabled={scale <= 0.5}
-          label="Zoom out"
+          label={t("zoomOut")}
           onClick={() => setScale((value) => Math.max(value - 0.25, 0.5))}
         >
           <ZoomOut className="h-4 w-4" />
@@ -51,7 +53,7 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
         </span>
         <ToolbarButton
           disabled={scale >= 3}
-          label="Zoom in"
+          label={t("zoomIn")}
           onClick={() => setScale((value) => Math.min(value + 0.25, 3))}
         >
           <ZoomIn className="h-4 w-4" />
@@ -61,7 +63,7 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
         <Document
           file={file.url}
           loading={<PreviewLoading />}
-          error={<PreviewError message="Unable to load PDF" />}
+          error={<PreviewError message={t("pdfLoadError")} />}
           onLoadSuccess={({ numPages: nextNumPages }) =>
             setNumPages(nextNumPages)
           }

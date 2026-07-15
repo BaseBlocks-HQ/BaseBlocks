@@ -461,7 +461,10 @@
   "language": {
     "select": "Choisir la langue",
     "menuLabel": "Langue",
-    "current": "Langue actuelle"
+    "current": "Langue actuelle",
+    "browserDefault": "Langue du navigateur",
+    "english": "English",
+    "french": "Français"
   },
   "blocks": {
     "heading": "Titre",
@@ -477,6 +480,18 @@
     "spacer": "Espacement"
   },
   "libraries": {
+    "viewer": {
+      "openNewTab": "Ouvrir dans un nouvel onglet",
+      "download": "Télécharger",
+      "fullscreen": "Plein écran",
+      "exitFullscreen": "Quitter le plein écran",
+      "close": "Fermer",
+      "previewUnavailable": "Ce type de fichier ne peut pas être prévisualisé dans le navigateur.",
+      "open": "Ouvrir",
+      "zoomOut": "Dézoomer",
+      "zoomIn": "Zoomer",
+      "pdfLoadError": "Impossible de charger le PDF"
+    },
     "explorer": {
       "deleteFileTitle": "Supprimer le fichier ?",
       "deleteFolderTitle": "Supprimer le dossier ?",
