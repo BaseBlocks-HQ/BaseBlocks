@@ -102,14 +102,19 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     baseURL,
     trustedOrigins,
     database: authComponent.adapter(ctx),
-    advanced: crossSubdomainCookieDomain
-      ? {
-          crossSubDomainCookies: {
-            enabled: true,
-            domain: crossSubdomainCookieDomain,
-          },
-        }
-      : undefined,
+    advanced: {
+      database: {
+        generateId: false,
+      },
+      ...(crossSubdomainCookieDomain
+        ? {
+            crossSubDomainCookies: {
+              enabled: true,
+              domain: crossSubdomainCookieDomain,
+            },
+          }
+        : {}),
+    },
     emailAndPassword: {
       enabled: false,
     },
@@ -151,6 +156,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         creatorRole: "owner",
         allowUserToCreateOrganization: true,
         cancelPendingInvitationsOnReInvite: true,
+        requireEmailVerificationOnInvitation: true,
       }),
       convex({ authConfig }),
     ],
