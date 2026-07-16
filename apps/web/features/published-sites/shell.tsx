@@ -433,6 +433,7 @@ function PublishedPageNavigation({
           <SidebarMenuButton
             asChild
             isActive={fullPath === currentPath}
+            style={{ paddingInlineStart: `${depth * 0.75}rem` }}
             className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-0 p-0 font-normal data-[active=true]:font-medium"
           >
             <div>

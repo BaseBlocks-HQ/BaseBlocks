@@ -294,6 +294,7 @@ function PageTreeRow({
       <SidebarMenuButton
         asChild
         isActive={selectedPageId === page._id}
+        style={{ paddingInlineStart: `${item.depth * 0.75}rem` }}
         className={cn(
           "gap-0 p-0 font-normal data-[active=true]:font-medium",
           canEdit
