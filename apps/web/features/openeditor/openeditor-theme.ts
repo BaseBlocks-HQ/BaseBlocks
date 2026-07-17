@@ -2,7 +2,8 @@ import type { OpenEditorTheme } from "@openeditor/ui";
 
 export const baseBlocksOpenEditorTheme = {
   surface: "var(--background)",
-  surfaceRaised: "var(--popover)",
+  surfaceRaised:
+    "color-mix(in oklab, var(--background) 94%, var(--foreground))",
   surfaceMuted: "var(--muted)",
   blockSurface: "var(--card)",
   text: "var(--foreground)",
