@@ -9,6 +9,7 @@ import {
   textBlock,
   type OpenEditorAttachmentRuntime,
   type OpenEditorDocument,
+  type OpenEditorImageRuntime,
   type OpenEditorPageRuntime,
 } from "@openeditor/core";
 import {
@@ -22,6 +23,7 @@ import {
   OpenEditorBlockMenu,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
+  OpenEditorTableMenu,
 } from "@openeditor/ui";
 import { Pencil, Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
@@ -142,12 +144,14 @@ function TabBar({
 
 function ActiveTabEditor({
   attachmentRuntime,
+  imageRuntime,
   initialDocument,
   extensions,
   pageRuntime,
   onChange,
 }: {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  imageRuntime?: OpenEditorImageRuntime<File>;
   initialDocument: OpenEditorDocument;
   extensions: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
@@ -156,6 +160,7 @@ function ActiveTabEditor({
   const controller = useOpenEditorController({
     initialDocument,
     attachmentRuntime,
+    imageRuntime,
     extensions,
     pageRuntime,
     onChange,
@@ -167,6 +172,7 @@ function ActiveTabEditor({
       <OpenEditorContent controller={controller} />
       <OpenEditorBlockMenu controller={controller} />
       <OpenEditorSelectionBubble controller={controller} />
+      <OpenEditorTableMenu controller={controller} />
       <OpenEditorSlashMenu controller={controller} />
     </>
   );
@@ -174,6 +180,7 @@ function ActiveTabEditor({
 
 export function OpenEditorTabbedPage({
   attachmentRuntime,
+  imageRuntime,
   initialDocument,
   editable,
   extensions = [],
@@ -182,6 +189,7 @@ export function OpenEditorTabbedPage({
   onChange,
 }: {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  imageRuntime?: OpenEditorImageRuntime<File>;
   initialDocument: OpenEditorDocument;
   editable: boolean;
   extensions?: readonly OpenEditorReactExtension[];
@@ -243,8 +251,9 @@ export function OpenEditorTabbedPage({
       {editable ? (
         <ActiveTabEditor
           attachmentRuntime={attachmentRuntime}
-          initialDocument={active.document}
           extensions={extensions}
+          imageRuntime={imageRuntime}
+          initialDocument={active.document}
           key={active.id}
           onChange={(nextDocument) => updateActive({ document: nextDocument })}
           pageRuntime={pageRuntime}
@@ -255,6 +264,7 @@ export function OpenEditorTabbedPage({
           className="oe-viewer"
           document={active.document}
           extensions={extensions}
+          imageRuntime={imageRuntime}
           pageRuntime={pageRuntime}
           renderers={renderers}
         />

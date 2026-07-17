@@ -8,6 +8,7 @@ import {
   type UploadPurpose,
 } from "@baseblocks/domain";
 import { getFiles, getMaxUploadSize } from "@/lib/files/server";
+import { withPublicRequestOrigin } from "@/lib/files/request-origin";
 import { api } from "@baseblocks/backend";
 import { FilesError } from "files-sdk";
 import { createFilesRouter, type FilesApi } from "files-sdk/api";
@@ -103,13 +104,13 @@ function getRouter() {
 }
 
 export async function GET(request: Request) {
-  return await getRouter().handle(request);
+  return await getRouter().handle(withPublicRequestOrigin(request));
 }
 
 export async function POST(request: Request) {
-  return await getRouter().handle(request);
+  return await getRouter().handle(withPublicRequestOrigin(request));
 }
 
 export async function PUT(request: Request) {
-  return await getRouter().handle(request);
+  return await getRouter().handle(withPublicRequestOrigin(request));
 }

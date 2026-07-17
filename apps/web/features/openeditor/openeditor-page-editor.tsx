@@ -14,6 +14,7 @@ import { Button } from "@baseblocks/ui/button";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
+  OpenEditorImageRuntime,
   OpenEditorPageRuntime,
 } from "@openeditor/core";
 import {
@@ -27,6 +28,7 @@ import {
   OpenEditorBlockMenu,
   OpenEditorSelectionBubble,
   OpenEditorSlashMenu,
+  OpenEditorTableMenu,
   OpenEditorThemeProvider,
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
@@ -44,6 +46,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
 import { openEditorExtensions } from "./extensions";
+import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
 import {
@@ -73,6 +76,7 @@ export function OpenEditorPageEditor({
   const updatePage = useMutation(api.pages.update);
   const saveContent = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
+  const imageRuntime = useBaseBlocksImageRuntime(siteId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDocument = useRef<OpenEditorDocument | null>(null);
   const [localDocument, setLocalDocument] = useState<{
@@ -173,6 +177,7 @@ export function OpenEditorPageEditor({
         <OpenEditorTabbedPageEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
+          imageRuntime={imageRuntime}
           initialDocument={resolvedDocument}
           onSaveStatusChange={onSaveStatusChange}
           pageId={pageId}
@@ -186,6 +191,7 @@ export function OpenEditorPageEditor({
         <OpenEditorDocumentEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
+          imageRuntime={imageRuntime}
           initialDocument={resolvedDocument}
           onConvertToTabs={handleConvertToTabs}
           onSaveStatusChange={onSaveStatusChange}
@@ -206,6 +212,7 @@ export function OpenEditorPageEditor({
 function OpenEditorTabbedPageEditor({
   attachmentRuntime,
   canEdit,
+  imageRuntime,
   initialDocument,
   onSaveStatusChange,
   pageId,
@@ -217,6 +224,7 @@ function OpenEditorTabbedPageEditor({
 }: {
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
+  imageRuntime: OpenEditorImageRuntime<File>;
   initialDocument: OpenEditorDocument;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
@@ -277,6 +285,7 @@ function OpenEditorTabbedPageEditor({
           attachmentRuntime={attachmentRuntime}
           editable={canEdit && !preview}
           extensions={openEditorExtensions}
+          imageRuntime={imageRuntime}
           initialDocument={initialDocument}
           onChange={queueSave}
           pageRuntime={pageRuntime}
@@ -289,6 +298,7 @@ function OpenEditorTabbedPageEditor({
 function OpenEditorDocumentEditor({
   attachmentRuntime,
   canEdit,
+  imageRuntime,
   initialDocument,
   onConvertToTabs,
   onSaveStatusChange,
@@ -303,6 +313,7 @@ function OpenEditorDocumentEditor({
 }: {
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
+  imageRuntime: OpenEditorImageRuntime<File>;
   initialDocument: OpenEditorDocument;
   onConvertToTabs: (document: OpenEditorDocument) => void;
   onSaveStatusChange?: (status: SaveStatus) => void;
@@ -358,6 +369,7 @@ function OpenEditorDocumentEditor({
     extensions: openEditorExtensions,
     pageRuntime,
     attachmentRuntime,
+    imageRuntime,
     slashMenuItems,
     onChange: (document) => {
       const revision = ++saveRevision.current;
@@ -398,6 +410,7 @@ function OpenEditorDocumentEditor({
             className="oe-viewer"
             document={controller.document}
             extensions={openEditorExtensions}
+            imageRuntime={imageRuntime}
             pageRuntime={pageRuntime}
           />
         ) : (
@@ -410,6 +423,7 @@ function OpenEditorDocumentEditor({
           <>
             <OpenEditorBlockMenu controller={controller} />
             <OpenEditorSelectionBubble controller={controller} />
+            <OpenEditorTableMenu controller={controller} />
             <OpenEditorSlashMenu controller={controller} />
           </>
         ) : null}
