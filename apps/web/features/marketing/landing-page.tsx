@@ -9,7 +9,6 @@ import { StepsSection } from "./steps-section";
 export type LandingCopy = Record<
   | "brandingDesc"
   | "brandingTitle"
-  | "ctaSubtitle"
   | "ctaTitle"
   | "editorDesc"
   | "editorTitle"

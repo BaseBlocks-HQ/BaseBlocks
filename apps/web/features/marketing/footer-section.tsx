@@ -28,30 +28,20 @@ export function FooterSection({
 }: FooterSectionProps) {
   return (
     <Reveal>
-      <footer className="border-t border-border/40 bg-muted/20 px-6 py-10 dark:border-white/[0.04] dark:bg-white/[0.015] sm:py-12">
+      <footer className="px-6 py-12 sm:py-16">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 py-14 sm:py-20 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:gap-16">
-            <div>
-              <div className="landing-pixel-square mb-4 text-xs tracking-[0.22em] text-amber-700 dark:text-amber-400">
-                BASEBLOCKS
-              </div>
-              <h2 className="landing-pixel-grid max-w-2xl text-3xl leading-tight tracking-tight sm:text-5xl">
-                {copy.ctaTitle}
-              </h2>
-            </div>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
+            <h2 className="landing-pixel-grid max-w-2xl text-3xl leading-tight tracking-tight sm:text-5xl">
+              {copy.ctaTitle}
+            </h2>
 
-            <div>
-              <p className="max-w-sm text-[0.94rem] leading-relaxed text-muted-foreground">
-                {copy.ctaSubtitle}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                {authCta}
-                {docsCta}
-              </div>
+            <div className="flex shrink-0 flex-wrap gap-3 lg:justify-end">
+              {authCta}
+              {docsCta}
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 border-t border-border/50 py-7 sm:flex-row sm:items-center sm:justify-between dark:border-white/[0.06]">
+          <div className="mt-12 flex flex-col gap-6 sm:mt-16 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {/* biome-ignore lint/performance/noImgElement: This uses the Next optimizer URL without its client runtime. */}
               <img

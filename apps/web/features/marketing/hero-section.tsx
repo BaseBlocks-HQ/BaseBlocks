@@ -56,7 +56,7 @@ export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
               [640, 750, 828, 960, 1080, 1600, 1920],
             )}
             alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
-            className="relative rounded-xl border border-neutral-700 shadow-2xl lg:rounded-r-none lg:border-r-0"
+            className="relative rounded-xl shadow-2xl lg:rounded-r-none"
             sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
             width={3420}
             height={1950}

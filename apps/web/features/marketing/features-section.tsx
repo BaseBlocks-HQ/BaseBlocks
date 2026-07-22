@@ -69,10 +69,7 @@ interface FeaturesSectionProps {
 
 export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
   return (
-    <section
-      id="features"
-      className="scroll-mt-20 border-t border-border/40 bg-muted/20 px-6 py-24 sm:py-32 dark:border-white/[0.04] dark:bg-white/[0.015]"
-    >
+    <section id="features" className="scroll-mt-20 px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <div className="max-w-xl">

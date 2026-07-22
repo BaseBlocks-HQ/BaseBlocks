@@ -37,7 +37,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const landingKeys = [
   "brandingDesc",
   "brandingTitle",
-  "ctaSubtitle",
   "ctaTitle",
   "editorDesc",
   "editorTitle",

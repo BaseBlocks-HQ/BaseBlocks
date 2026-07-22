@@ -54,7 +54,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
   return (
     <section
       id="how-it-works"
-      className="relative isolate scroll-mt-20 overflow-hidden border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
+      className="relative isolate scroll-mt-20 overflow-hidden px-6 py-24 sm:py-32"
     >
       <FlickeringGrid className="absolute inset-0 z-0" />
       <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/82 via-background/58 to-background/90 dark:from-background/90 dark:via-background/68 dark:to-background/94" />
