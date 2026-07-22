@@ -32,11 +32,7 @@ export const resolvePublishedPage = cache(
     siteSlug: string | undefined,
     pagePath: string[],
   ): Promise<PublishedPageResult | null> => {
-    const fixture = resolveSeoAuditPage(
-      organizationSlug,
-      siteSlug,
-      pagePath,
-    );
+    const fixture = resolveSeoAuditPage(organizationSlug, siteSlug, pagePath);
     if (fixture !== undefined) {
       return fixture as PublishedPageResult | null;
     }

@@ -1,8 +1,5 @@
 import { parseRequestHost } from "@/lib/routing/hosts";
-import {
-  getMarketingOrigin,
-  getPublishedOrigin,
-} from "@/lib/seo/site-url";
+import { getMarketingOrigin, getPublishedOrigin } from "@/lib/seo/site-url";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 

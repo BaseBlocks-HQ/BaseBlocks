@@ -18,9 +18,7 @@ const pages = [
 ] as const;
 
 export function seoAuditFixturesEnabled(): boolean {
-  return (
-    process.env.BASEBLOCKS_SEO_AUDIT === "1" && process.env.VERCEL !== "1"
-  );
+  return process.env.BASEBLOCKS_SEO_AUDIT === "1" && process.env.VERCEL !== "1";
 }
 
 export function resolveSeoAuditCustomDomain(hostname: string) {

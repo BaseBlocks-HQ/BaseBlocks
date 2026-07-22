@@ -56,7 +56,11 @@ async function validateMarketingSite() {
   expectAlternate(home, "fr", `${origin}/fr`);
   expectAlternate(home, "x-default", origin);
   expectIncludes(home, '"@type":"SoftwareApplication"', "JSON-LD");
-  expectIncludes(home, "Build sites your team will actually use", "server HTML");
+  expectIncludes(
+    home,
+    "Build sites your team will actually use",
+    "server HTML",
+  );
 
   const french = await getHtml("/fr");
   expectTag(french, "canonical", `${origin}/fr`);
@@ -128,7 +132,11 @@ async function validatePublishedSites() {
     host: `docs.example.test:${port}`,
   });
   expectTag(customHome, "canonical", `${customOrigin}/`);
-  expectIncludes(customHome, "Acme Knowledge Base | Acme Handbook", "custom-domain title");
+  expectIncludes(
+    customHome,
+    "Acme Knowledge Base | Acme Handbook",
+    "custom-domain title",
+  );
 
   const customSitemap = await getText("/sitemap.xml", origin, {
     host: `docs.example.test:${port}`,
@@ -157,7 +165,10 @@ async function validateSitemapPages(sitemap: string) {
   for (const url of urls) {
     if (!url) continue;
     const parsed = new URL(url);
-    const html = await getHtml(`${parsed.pathname}${parsed.search}`, parsed.origin);
+    const html = await getHtml(
+      `${parsed.pathname}${parsed.search}`,
+      parsed.origin,
+    );
     expectTag(html, "canonical", url);
   }
 }
@@ -275,9 +286,7 @@ function expectMeta(html: string, name: string, expectedContent: string) {
 }
 
 function readAttribute(tag: string, attribute: string) {
-  const match = tag.match(
-    new RegExp(`${attribute}=["']([^"']*)["']`, "i"),
-  );
+  const match = tag.match(new RegExp(`${attribute}=["']([^"']*)["']`, "i"));
   return match?.[1];
 }
 
