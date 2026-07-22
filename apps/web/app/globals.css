@@ -87,18 +87,11 @@
 }
 
 .landing-pixel-grid {
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-geist-pixel-grid);
 }
 
 .landing-pixel-square {
-  font-family: ui-sans-serif, system-ui, sans-serif;
-}
-
-@media (min-width: 640px) {
-  .landing-pixel-grid,
-  .landing-pixel-square {
-    font-family: var(--font-geist-pixel-grid);
-  }
+  font-family: var(--font-geist-pixel-grid);
 }
 
 .dark {

@@ -22,13 +22,11 @@ export function LandingHeader({ labels, locale }: LandingHeaderProps) {
   );
 
   return (
-    <header className="landing-header z-50 [--bb-header-height:3.5rem] max-sm:absolute max-sm:inset-x-0 max-sm:top-0 sm:sticky sm:top-0">
+    <header className="landing-header sticky top-0 z-50 [--bb-header-height:3.5rem]">
       <div className="relative isolate">
-        <div className="max-sm:hidden">
-          <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
-        </div>
-        <div className="relative mx-auto max-w-6xl px-5 pt-[42px] sm:px-6 sm:pt-0">
-          <div className="relative flex h-12 min-w-0 w-full items-center justify-between gap-2 sm:h-14 sm:gap-4">
+        <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="relative flex h-14 min-w-0 w-full items-center justify-between gap-2 sm:gap-4">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
               <a href={prefix || "/"} aria-label="BaseBlocks">
                 <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
@@ -41,7 +39,7 @@ export function LandingHeader({ labels, locale }: LandingHeaderProps) {
                     className="h-8 w-8 shrink-0 object-contain"
                     decoding="async"
                   />
-                  <span className="landing-header-brand landing-pixel-square text-[0.9375rem] leading-none tracking-tight">
+                  <span className="landing-pixel-square text-[0.9375rem] leading-none tracking-tight max-[22rem]:hidden">
                     BaseBlocks
                   </span>
                 </div>
@@ -51,7 +49,6 @@ export function LandingHeader({ labels, locale }: LandingHeaderProps) {
             <div className="flex shrink-0 items-center gap-1 sm:gap-4">
               <a
                 className={marketingActionClassName({
-                  className: "landing-header-link",
                   size: "sm",
                   variant: "ghost",
                 })}
@@ -61,7 +58,6 @@ export function LandingHeader({ labels, locale }: LandingHeaderProps) {
               </a>
               <a
                 className={marketingActionClassName({
-                  className: "landing-header-link",
                   size: "sm",
                   variant: "ghost",
                 })}

@@ -1,9 +1,6 @@
 import { getToken } from "@/lib/auth/server";
 import "@/app/product.css";
-import {
-  ProductThemeProvider,
-  ThemeProvider,
-} from "@/components/theme-provider";
+import { ProductThemeProvider } from "@/components/product-theme-provider";
 import { ConvexClientProvider } from "@/lib/convex/provider";
 import { redirect } from "@/i18n/navigation";
 import { selectMessages } from "@/i18n/messages";
@@ -29,36 +26,29 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
 
   const messages = await getMessages();
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+    <NextIntlClientProvider
+      messages={selectMessages(messages, [
+        "blocks",
+        "common",
+        "dashboard",
+        "dialogs",
+        "editor",
+        "elements",
+        "errors",
+        "inbox",
+        "language",
+        "libraries",
+        "navigation",
+        "onboarding",
+        "settings",
+        "sites",
+        "team",
+      ])}
     >
-      <NextIntlClientProvider
-        messages={selectMessages(messages, [
-          "blocks",
-          "common",
-          "dashboard",
-          "dialogs",
-          "editor",
-          "elements",
-          "errors",
-          "inbox",
-          "language",
-          "libraries",
-          "navigation",
-          "onboarding",
-          "settings",
-          "sites",
-          "team",
-        ])}
-      >
-        <ProductThemeProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-          <Toaster />
-        </ProductThemeProvider>
-      </NextIntlClientProvider>
-    </ThemeProvider>
+      <ProductThemeProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <Toaster />
+      </ProductThemeProvider>
+    </NextIntlClientProvider>
   );
 }

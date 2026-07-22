@@ -22,9 +22,9 @@ const geistPixelGrid = localFont({
   src: "./fonts/GeistPixel-Grid.woff2",
   variable: "--font-geist-pixel-grid",
   weight: "500",
-  fallback: ["Geist", "ui-sans-serif", "system-ui", "sans-serif"],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
   adjustFontFallback: false,
-  preload: false,
+  preload: true,
 });
 const MARKETING_SITE_URL = getMarketingSiteUrl();
 

@@ -1,4 +1,5 @@
 import { routing } from "@/i18n/routing";
+import { ThemeProvider } from "@/components/theme-provider";
 import type { Locale } from "@baseblocks/i18n";
 import type { Metadata, ResolvingMetadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -56,8 +57,15 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
 
   return (
-    <div className="contents" lang={locale}>
-      {children}
-    </div>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      disableTransitionOnChange
+      enableSystem
+    >
+      <div className="contents" lang={locale}>
+        {children}
+      </div>
+    </ThemeProvider>
   );
 }

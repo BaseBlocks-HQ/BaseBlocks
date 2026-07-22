@@ -13,7 +13,7 @@ import { Check, Earth, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 
-interface LandingControlsProps {
+export interface LandingControlsProps {
   labels: {
     selectLanguage: string;
     themeDark: string;

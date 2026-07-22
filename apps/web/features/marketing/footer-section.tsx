@@ -1,8 +1,8 @@
 import type { Locale } from "@baseblocks/i18n";
 import { GitFork } from "lucide-react";
 import type { ReactNode } from "react";
+import { DeferredLandingControls } from "./deferred-landing-controls";
 import type { LandingCopy } from "./landing-page";
-import { LandingControls } from "./landing-controls";
 import { optimizedImageUrl } from "./optimized-image-url";
 import { Reveal } from "./reveal";
 
@@ -74,14 +74,18 @@ export function FooterSection({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <LandingControls labels={labels} locale={locale} />
+              <DeferredLandingControls labels={labels} locale={locale} />
               <a
                 href="https://github.com/naaiyy/BaseBlocks"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:hover:bg-accent/50"
               >
-                <GitFork aria-hidden="true" className="size-4" strokeWidth={1.75} />
+                <GitFork
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={1.75}
+                />
                 GitHub
               </a>
             </div>

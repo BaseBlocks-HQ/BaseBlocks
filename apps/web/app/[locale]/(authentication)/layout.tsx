@@ -1,5 +1,4 @@
 import { getToken } from "@/lib/auth/server";
-import { ThemeProvider } from "@/components/theme-provider";
 import "@/app/product.css";
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
 import { getViewerState } from "@/features/authentication/server";
@@ -22,17 +21,10 @@ export default async function UnauthLayout({ children }: PropsWithChildren) {
   }
   const messages = await getMessages();
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+    <NextIntlClientProvider
+      messages={selectMessages(messages, ["auth", "common", "errors"])}
     >
-      <NextIntlClientProvider
-        messages={selectMessages(messages, ["auth", "common", "errors"])}
-      >
-        {children}
-      </NextIntlClientProvider>
-    </ThemeProvider>
+      {children}
+    </NextIntlClientProvider>
   );
 }

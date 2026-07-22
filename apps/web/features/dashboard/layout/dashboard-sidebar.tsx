@@ -5,7 +5,7 @@ import {
   productPaletteIds,
   useProductAppearance,
   type ProductPaletteId,
-} from "@/components/theme-provider";
+} from "@/components/product-theme-provider";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import type { Locale } from "@baseblocks/i18n";

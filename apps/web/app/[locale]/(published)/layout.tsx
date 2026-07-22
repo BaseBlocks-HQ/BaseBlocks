@@ -1,5 +1,4 @@
 import { PublicConvexClientProvider } from "@/lib/convex/provider";
-import { ThemeProvider } from "@/components/theme-provider";
 import "@/app/product.css";
 import type { ReactNode } from "react";
 import { selectMessages } from "@/i18n/messages";
@@ -14,24 +13,17 @@ export default async function PublicLayout({
 }) {
   const messages = await getMessages();
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+    <NextIntlClientProvider
+      messages={selectMessages(messages, [
+        "common",
+        "elements",
+        "errors",
+        "libraries",
+        "language",
+      ])}
     >
-      <NextIntlClientProvider
-        messages={selectMessages(messages, [
-          "common",
-          "elements",
-          "errors",
-          "libraries",
-          "language",
-        ])}
-      >
-        <PublicConvexClientProvider>{children}</PublicConvexClientProvider>
-        <Toaster />
-      </NextIntlClientProvider>
-    </ThemeProvider>
+      <PublicConvexClientProvider>{children}</PublicConvexClientProvider>
+      <Toaster />
+    </NextIntlClientProvider>
   );
 }
