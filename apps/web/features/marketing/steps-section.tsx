@@ -93,7 +93,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                       src={optimizedImageUrl(step.image.light, 1080)}
                       srcSet={optimizedImageSrcSet(
                         step.image.light,
-                        [640, 1080, 1600, 1920],
+                        [640, 750, 828, 960, 1080],
                       )}
                       alt={landingTranslations(step.imageAltKey)}
                       width={1920}
@@ -101,14 +101,14 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                       loading="lazy"
                       decoding="async"
                       className="absolute inset-0 h-full w-full object-cover dark:hidden"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      sizes="(max-width: 1023px) calc(100vw - 48px), 550px"
                     />
                     {/* biome-ignore lint/performance/noImgElement: Native responsive images avoid hydrating this static marketing page. */}
                     <img
                       src={optimizedImageUrl(step.image.dark, 1080)}
                       srcSet={optimizedImageSrcSet(
                         step.image.dark,
-                        [640, 1080, 1600, 1920],
+                        [640, 750, 828, 960, 1080],
                       )}
                       alt={landingTranslations(step.imageAltKey)}
                       width={1920}
@@ -116,7 +116,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                       loading="lazy"
                       decoding="async"
                       className="absolute inset-0 hidden h-full w-full object-cover dark:block"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      sizes="(max-width: 1023px) calc(100vw - 48px), 550px"
                     />
                   </div>
                 </div>

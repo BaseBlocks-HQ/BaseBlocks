@@ -50,10 +50,11 @@ export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
         <div className="relative mx-auto max-w-md select-none sm:max-w-none">
           {/* biome-ignore lint/performance/noImgElement: Native responsive image avoids shipping the client-side Next Image runtime on this static page. */}
           <img
-            src={optimizedImageUrl("/landing/hero-image-dark.png", 1080)}
+            src={optimizedImageUrl("/landing/hero-image-dark.png", 1080, 60)}
             srcSet={optimizedImageSrcSet(
               "/landing/hero-image-dark.png",
               [640, 750, 828, 960, 1080, 1600, 1920],
+              60,
             )}
             alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
             className="relative rounded-xl shadow-2xl lg:rounded-r-none"

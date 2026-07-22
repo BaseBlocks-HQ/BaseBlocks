@@ -19,7 +19,7 @@ interface GridState {
   squares: Float32Array;
 }
 
-const FRAME_INTERVAL_MS = 1000 / 60;
+const FRAME_INTERVAL_MS = 1000 / 12;
 const MAX_DEVICE_PIXEL_RATIO = 2;
 
 export function FlickeringGrid({
@@ -44,6 +44,7 @@ export function FlickeringGrid({
     let color = getComputedStyle(container).color;
     let grid: GridState | null = null;
     let inView = false;
+    let initialized = false;
     let lastTick = performance.now();
     let resizeFrameId: number | undefined;
     let timeoutId: number | undefined;
@@ -109,11 +110,15 @@ export function FlickeringGrid({
       const deltaTime = Math.min((now - lastTick) / 1000, 0.25);
       lastTick = now;
 
-      for (let index = 0; index < grid.squares.length; index++) {
-        if (Math.random() < flickerChance * deltaTime) {
-          grid.squares[index] = Math.random() * maxOpacity;
-          drawSquare(index);
-        }
+      const expectedUpdates = grid.squares.length * flickerChance * deltaTime;
+      const updateCount =
+        Math.floor(expectedUpdates) +
+        (Math.random() < expectedUpdates % 1 ? 1 : 0);
+
+      for (let update = 0; update < updateCount; update++) {
+        const index = Math.floor(Math.random() * grid.squares.length);
+        grid.squares[index] = Math.random() * maxOpacity;
+        drawSquare(index);
       }
       context.globalAlpha = 1;
       timeoutId = window.setTimeout(tick, FRAME_INTERVAL_MS);
@@ -128,6 +133,7 @@ export function FlickeringGrid({
     };
 
     const resizeObserver = new ResizeObserver(() => {
+      if (!initialized) return;
       if (resizeFrameId !== undefined) cancelAnimationFrame(resizeFrameId);
       resizeFrameId = requestAnimationFrame(resize);
     });
@@ -135,8 +141,13 @@ export function FlickeringGrid({
 
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       inView = entry?.isIntersecting ?? false;
-      if (inView) start();
-      else stop();
+      if (inView) {
+        if (!initialized) {
+          initialized = true;
+          resize();
+        }
+        start();
+      } else stop();
     });
     intersectionObserver.observe(canvas);
 
@@ -160,8 +171,6 @@ export function FlickeringGrid({
       attributeFilter: ["class"],
       attributes: true,
     });
-
-    resize();
 
     return () => {
       stop();
