@@ -1,0 +1,126 @@
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@reference "./globals.css";
+
+@source "../../../node_modules/fumadocs-ui/dist/**/*.js";
+
+/* Mobile: collapse gutter/sidebar/toc columns to 0, full-width content. */
+@media (max-width: 767.9px) {
+  #nd-docs-layout {
+    grid-template:
+      "sidebar sidebar header toc toc"
+      "sidebar sidebar toc-popover toc toc"
+      "sidebar sidebar main toc toc" 1fr
+      "sidebar sidebar footer footer ." / 0 0 1fr 0 0 !important;
+  }
+}
+
+/* Desktop: custom five-column layout with gutters. */
+@media (min-width: 768px) {
+  #nd-docs-layout {
+    --fd-sidebar-width: 240px !important;
+    grid-template:
+      "sidebar sidebar header toc toc"
+      "sidebar sidebar toc-popover toc toc"
+      "sidebar sidebar main toc toc" 1fr
+      "sidebar sidebar footer footer ." /
+      minmax(min-content, 1fr) var(--fd-sidebar-col)
+      minmax(
+        0,
+        calc(
+          var(--fd-layout-width, 97rem) -
+          var(--fd-sidebar-width) -
+          var(--fd-toc-width)
+        )
+      )
+      var(--fd-toc-width) minmax(min-content, 1fr) !important;
+  }
+
+  #nd-sidebar {
+    align-items: flex-start !important;
+    width: var(--fd-sidebar-width) !important;
+  }
+}
+
+.bb-docs-shell {
+  --fd-layout-width: 108rem;
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: oklch(0.48 0 0);
+  --color-fd-popover: var(--popover);
+  --color-fd-popover-foreground: var(--popover-foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-primary: oklch(0.7 0.16 72);
+  --color-fd-primary-foreground: oklch(0.18 0 0);
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-accent: var(--accent);
+  --color-fd-accent-foreground: var(--accent-foreground);
+  --color-fd-ring: oklch(0.7 0.16 72);
+  --bb-docs-sidebar-surface: var(--sidebar);
+}
+
+.dark .bb-docs-shell {
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-primary: oklch(0.78 0.16 72);
+  --color-fd-primary-foreground: oklch(0.2 0 0);
+  --color-fd-ring: oklch(0.78 0.16 72);
+}
+
+.bb-docs-shell #nd-sidebar,
+.bb-docs-shell [data-sidebar-panel],
+.bb-docs-shell footer[grid-area="footer"] {
+  background: var(--bb-docs-sidebar-surface);
+  backdrop-filter: blur(18px);
+}
+
+.bb-docs-shell [data-toc-popover] > header,
+.bb-docs-shell [data-toc-popover-trigger],
+.bb-docs-shell [data-toc-popover-content] {
+  background: var(--color-fd-popover);
+}
+
+.bb-docs-shell [data-toc-popover] {
+  z-index: 20;
+}
+.bb-docs-shell [data-toc-popover] > header {
+  backdrop-filter: none;
+}
+
+.bb-docs-shell #nd-page .prose h2 {
+  color: var(--color-amber-700);
+  font-family: var(--font-geist-sans);
+  font-size: 0.92rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dark .bb-docs-shell #nd-page .prose h2 {
+  color: var(--color-amber-400);
+}
+
+.bb-docs-shell #nd-page .prose h3 {
+  margin-top: 1.15rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+#nd-sidebar > .border-t,
+#nd-sidebar-mobile > .border-t {
+  display: none;
+}
+
+.bb-docs-shell #nd-sidebar p.inline-flex.items-center.gap-2::before,
+.bb-docs-shell #nd-sidebar p.inline-flex.items-center.gap-2::after,
+.bb-docs-shell [data-state="open"] p.inline-flex.items-center.gap-2::before,
+.bb-docs-shell [data-state="open"] p.inline-flex.items-center.gap-2::after,
+.bb-docs-shell [data-state="closed"] p.inline-flex.items-center.gap-2::before,
+.bb-docs-shell [data-state="closed"] p.inline-flex.items-center.gap-2::after {
+  content: none !important;
+  display: none !important;
+}

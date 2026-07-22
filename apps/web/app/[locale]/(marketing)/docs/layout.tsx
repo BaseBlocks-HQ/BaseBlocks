@@ -1,4 +1,5 @@
 import { source } from "@/features/marketing/content-pages/source";
+import "@/app/fumadocs.css";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";

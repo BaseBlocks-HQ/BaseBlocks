@@ -76,7 +76,7 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <div className="max-w-xl">
-            <div className="landing-pixel-triangle mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400">
+            <div className="landing-pixel-square mb-4 text-xs tracking-[0.22em] text-amber-700 dark:text-amber-400">
               {landingTranslations("featuresLabel").toUpperCase()}
             </div>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -95,7 +95,7 @@ export function FeaturesSection({ landingTranslations }: FeaturesSectionProps) {
                 <feature.icon
                   className={`absolute right-[-16px] bottom-[-16px] z-0 h-28 w-28 opacity-[0.58] transition-transform duration-300 dark:opacity-35 ${feature.iconClassName}`}
                 />
-                <div className="landing-pixel-circle relative z-10 mb-3 text-[11px] text-muted-foreground">
+                <div className="relative z-10 mb-3 font-mono text-[11px] text-muted-foreground">
                   {feature.num}
                 </div>
                 <h3 className="relative z-10 text-[0.94rem] font-semibold">

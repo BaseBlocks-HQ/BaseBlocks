@@ -1,10 +1,9 @@
-import { Link } from "@/i18n/navigation";
-import { Button } from "@baseblocks/ui/button";
 import { ArrowRight } from "lucide-react";
 import { FeaturesSection } from "./features-section";
 import { FooterSection } from "./footer-section";
 import { HeroSection } from "./hero-section";
 import { LandingHeader } from "./landing-header";
+import { marketingActionClassName } from "./marketing-action";
 import { StepsSection } from "./steps-section";
 
 export type LandingCopy = Record<
@@ -57,24 +56,35 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ copy, labels, locale }: LandingPageProps) {
+  const prefix = locale === "fr" ? "/fr" : "";
   const authCta = (
-    <Button asChild size="lg" className="gap-2 rounded-full">
-      <Link href="/login">
-        {copy.getStarted} <ArrowRight aria-hidden="true" className="h-4 w-4" />
-      </Link>
-    </Button>
+    <a
+      className={marketingActionClassName({
+        size: "lg",
+        variant: "default",
+      })}
+      href={`${prefix}/login`}
+    >
+      {copy.getStarted} <ArrowRight aria-hidden="true" className="h-4 w-4" />
+    </a>
   );
 
   const docsCta = (
-    <Button asChild variant="ghost" size="lg" className="rounded-full">
-      <Link href="/docs">{copy.viewDocs}</Link>
-    </Button>
+    <a
+      className={marketingActionClassName({
+        size: "lg",
+        variant: "ghost",
+      })}
+      href={`${prefix}/docs`}
+    >
+      {copy.viewDocs}
+    </a>
   );
 
   return (
     <div className="min-h-screen bg-background">
       <div className="relative isolate min-h-screen">
-        <LandingHeader labels={labels} />
+        <LandingHeader labels={labels} locale={locale} />
         <main>
           <HeroSection authCta={authCta} docsCta={docsCta} />
           <FeaturesSection

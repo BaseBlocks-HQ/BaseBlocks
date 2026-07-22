@@ -73,12 +73,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
               sizes="24px"
               className="size-6 shrink-0 object-contain"
             />
-            <span
-              style={{ fontFamily: "var(--font-geist-pixel-square)" }}
-              className="tracking-tight"
-            >
-              BaseBlocks
-            </span>
+            <span className="tracking-tight">BaseBlocks</span>
           </Link>
         </div>
 

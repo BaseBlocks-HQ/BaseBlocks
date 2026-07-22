@@ -1,6 +1,6 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { FlickeringGrid } from "./flickering-grid";
+import { optimizedImageSrcSet, optimizedImageUrl } from "./optimized-image-url";
 import { Reveal } from "./reveal";
 
 interface HeroSectionProps {
@@ -48,15 +48,20 @@ export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
         className="relative z-10 mt-14 hidden px-6 sm:block lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
       >
         <div className="relative mx-auto max-w-md select-none sm:max-w-none">
-          <Image
-            src="/landing/hero-image-dark.png"
+          {/* biome-ignore lint/performance/noImgElement: Native responsive image avoids shipping the client-side Next Image runtime on this static page. */}
+          <img
+            src={optimizedImageUrl("/landing/hero-image-dark.png", 1080)}
+            srcSet={optimizedImageSrcSet(
+              "/landing/hero-image-dark.png",
+              [640, 1080, 1600, 1920],
+            )}
             alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
             className="relative rounded-xl border border-neutral-700 shadow-2xl lg:rounded-r-none lg:border-r-0"
-            fetchPriority="high"
-            loading="eager"
             sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
             width={3420}
             height={1950}
+            loading="lazy"
+            decoding="async"
           />
         </div>
       </Reveal>

@@ -1,0 +1,24 @@
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@reference "./globals.css";
+
+@source "../features/marketing";
+@source "./[locale]/(marketing)";
+@source "../../../packages/ui/src/blur-stack.tsx";
+@source "../../../packages/ui/src/button.tsx";
+@source "../../../packages/ui/src/dropdown-menu.tsx";
+
+.landing-header .landing-header-brand,
+.landing-header .landing-header-link {
+  display: none;
+}
+
+@media (min-width: 40rem) {
+  .landing-header .landing-header-brand {
+    display: inline;
+  }
+
+  .landing-header .landing-header-link {
+    display: inline-flex;
+  }
+}

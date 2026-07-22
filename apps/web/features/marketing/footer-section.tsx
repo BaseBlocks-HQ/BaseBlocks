@@ -1,9 +1,9 @@
 import type { Locale } from "@baseblocks/i18n";
 import { GitFork } from "lucide-react";
-import Image from "next/image";
 import type { ReactNode } from "react";
 import type { LandingCopy } from "./landing-page";
 import { LandingControls } from "./landing-controls";
+import { optimizedImageUrl } from "./optimized-image-url";
 import { Reveal } from "./reveal";
 
 interface FooterSectionProps {
@@ -32,7 +32,7 @@ export function FooterSection({
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 py-14 sm:py-20 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:gap-16">
             <div>
-              <div className="landing-pixel-triangle mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400">
+              <div className="landing-pixel-square mb-4 text-xs tracking-[0.22em] text-amber-700 dark:text-amber-400">
                 BASEBLOCKS
               </div>
               <h2 className="landing-pixel-grid max-w-2xl text-3xl leading-tight tracking-tight sm:text-5xl">
@@ -53,13 +53,15 @@ export function FooterSection({
 
           <div className="flex flex-col gap-6 border-t border-border/50 py-7 sm:flex-row sm:items-center sm:justify-between dark:border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <Image
-                src="/brand/baseblocks-logo.png"
+              {/* biome-ignore lint/performance/noImgElement: This uses the Next optimizer URL without its client runtime. */}
+              <img
+                src={optimizedImageUrl("/brand/baseblocks-logo.png", 64)}
                 alt=""
-                width={600}
-                height={600}
-                sizes="28px"
+                width={28}
+                height={28}
                 className="size-7 shrink-0 object-contain"
+                loading="lazy"
+                decoding="async"
               />
               <div>
                 <div className="landing-pixel-square text-sm tracking-tight">
@@ -77,9 +79,9 @@ export function FooterSection({
                 href="https://github.com/naaiyy/BaseBlocks"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:hover:bg-accent/50"
+                className="inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground dark:hover:bg-accent/50"
               >
-                <GitFork aria-hidden="true" className="h-3.5 w-3.5" />
+                <GitFork aria-hidden="true" className="size-4" strokeWidth={1.75} />
                 GitHub
               </a>
             </div>

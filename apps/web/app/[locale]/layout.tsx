@@ -1,4 +1,3 @@
-import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import type { Locale } from "@baseblocks/i18n";
 import type { Metadata, ResolvingMetadata } from "next";
@@ -57,15 +56,8 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <div className="contents" lang={locale}>
-        {children}
-      </div>
-    </ThemeProvider>
+    <div className="contents" lang={locale}>
+      {children}
+    </div>
   );
 }

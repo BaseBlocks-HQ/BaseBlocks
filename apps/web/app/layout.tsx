@@ -1,25 +1,29 @@
-import { Analytics } from "@vercel/analytics/next";
 import { getMarketingSiteUrl } from "@/lib/seo/site-url";
-import {
-  GeistPixelCircle,
-  GeistPixelGrid,
-  GeistPixelSquare,
-  GeistPixelTriangle,
-} from "geist/font/pixel";
 import type { Metadata, Viewport } from "next";
+import { Geist } from "next/font/google";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import "./globals.css";
 
-const geistSans = localFont({
+const geistSans = Geist({
   display: "optional",
-  src: "./fonts/GeistVF.woff",
+  subsets: ["latin"],
   variable: "--font-geist-sans",
+  preload: false,
 });
 const geistMono = localFont({
   display: "optional",
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
+  preload: false,
+});
+const geistPixelGrid = localFont({
+  display: "optional",
+  src: "./fonts/GeistPixel-Grid.woff2",
+  variable: "--font-geist-pixel-grid",
+  weight: "500",
+  fallback: ["Geist", "ui-sans-serif", "system-ui", "sans-serif"],
+  adjustFontFallback: false,
   preload: false,
 });
 const MARKETING_SITE_URL = getMarketingSiteUrl();
@@ -67,10 +71,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable} min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} ${geistPixelGrid.variable} min-h-screen flex flex-col`}
       >
         {children}
-        {process.env.VERCEL === "1" ? <Analytics /> : null}
+        {process.env.VERCEL === "1" ? (
+          <>
+            <script
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: Static Vercel Analytics bootstrap; no user data is interpolated.
+              dangerouslySetInnerHTML={{
+                __html:
+                  "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};",
+              }}
+            />
+            <script defer src="/_vercel/insights/script.js" />
+          </>
+        ) : null}
       </body>
     </html>
   );

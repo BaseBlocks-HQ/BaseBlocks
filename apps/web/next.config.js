@@ -77,6 +77,9 @@ const nextConfig = {
   serverExternalPackages: [],
   poweredByHeader: false,
   reactCompiler: true,
+  experimental: {
+    inlineCss: true,
+  },
   typescript: {
     // CI and the build script run TypeScript 7 before Next. See docs/maintenance/typescript-7-nextjs.md.
     ignoreBuildErrors: true,

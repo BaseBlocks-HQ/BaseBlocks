@@ -27,18 +27,20 @@ export function MdxContentPage({
   const MdxContent = content.body;
 
   return (
-    <DocsPage
-      tableOfContent={{ style: "clerk" }}
-      tableOfContentPopover={{ style: "clerk" }}
-      toc={content.toc}
-    >
-      <DocsTitle>{content.title ?? fallbackTitle}</DocsTitle>
-      {content.description ? (
-        <DocsDescription>{content.description}</DocsDescription>
-      ) : null}
-      <DocsBody>
-        <MdxContent components={defaultMdxComponents} />
-      </DocsBody>
-    </DocsPage>
+    <main className="contents">
+      <DocsPage
+        tableOfContent={{ style: "clerk" }}
+        tableOfContentPopover={{ style: "clerk" }}
+        toc={content.toc}
+      >
+        <DocsTitle>{content.title ?? fallbackTitle}</DocsTitle>
+        {content.description ? (
+          <DocsDescription>{content.description}</DocsDescription>
+        ) : null}
+        <DocsBody>
+          <MdxContent components={defaultMdxComponents} />
+        </DocsBody>
+      </DocsPage>
+    </main>
   );
 }

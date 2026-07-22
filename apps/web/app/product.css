@@ -1,0 +1,123 @@
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@reference "./globals.css";
+
+@source "../components";
+@source "../features";
+@source not "../features/marketing";
+@source "./[locale]/(app)";
+@source "./[locale]/(authentication)";
+@source "./[locale]/(published)";
+@source "../../../packages/ui";
+
+@keyframes library-upload-shimmer {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+/* Customer site themes are scoped so BaseBlocks product chrome stays neutral. */
+[data-product-theme],
+[data-site-theme] {
+  color-scheme: light;
+  --background: var(--site-light-background);
+  --foreground: var(--site-light-foreground);
+  --card: var(--site-light-card);
+  --card-foreground: var(--site-light-card-foreground);
+  --popover: var(--site-light-popover);
+  --popover-foreground: var(--site-light-popover-foreground);
+  --primary: var(--site-light-primary);
+  --primary-foreground: var(--site-light-primary-foreground);
+  --secondary: var(--site-light-secondary);
+  --secondary-foreground: var(--site-light-secondary-foreground);
+  --muted: var(--site-light-muted);
+  --muted-foreground: var(--site-light-muted-foreground);
+  --accent: var(--site-light-accent);
+  --accent-foreground: var(--site-light-accent-foreground);
+  --border: var(--site-light-border);
+  --input: var(--site-light-input);
+  --ring: var(--site-light-ring);
+  --chart-1: var(--site-light-chart-1);
+  --chart-2: var(--site-light-chart-2);
+  --chart-3: var(--site-light-chart-3);
+  --chart-4: var(--site-light-chart-4);
+  --chart-5: var(--site-light-chart-5);
+  --sidebar: var(--site-light-sidebar);
+  --sidebar-foreground: var(--site-light-sidebar-foreground);
+  --sidebar-primary: var(--site-light-sidebar-primary);
+  --sidebar-primary-foreground: var(--site-light-sidebar-primary-foreground);
+  --sidebar-accent: var(--site-light-sidebar-accent);
+  --sidebar-accent-foreground: var(--site-light-sidebar-accent-foreground);
+  --sidebar-border: var(--site-light-sidebar-border);
+  --sidebar-ring: var(--site-light-sidebar-ring);
+}
+
+.dark [data-site-theme],
+[data-site-theme].dark,
+[data-product-theme].dark {
+  color-scheme: dark;
+  --background: var(--site-dark-background);
+  --foreground: var(--site-dark-foreground);
+  --card: var(--site-dark-card);
+  --card-foreground: var(--site-dark-card-foreground);
+  --popover: var(--site-dark-popover);
+  --popover-foreground: var(--site-dark-popover-foreground);
+  --primary: var(--site-dark-primary);
+  --primary-foreground: var(--site-dark-primary-foreground);
+  --secondary: var(--site-dark-secondary);
+  --secondary-foreground: var(--site-dark-secondary-foreground);
+  --muted: var(--site-dark-muted);
+  --muted-foreground: var(--site-dark-muted-foreground);
+  --accent: var(--site-dark-accent);
+  --accent-foreground: var(--site-dark-accent-foreground);
+  --border: var(--site-dark-border);
+  --input: var(--site-dark-input);
+  --ring: var(--site-dark-ring);
+  --chart-1: var(--site-dark-chart-1);
+  --chart-2: var(--site-dark-chart-2);
+  --chart-3: var(--site-dark-chart-3);
+  --chart-4: var(--site-dark-chart-4);
+  --chart-5: var(--site-dark-chart-5);
+  --sidebar: var(--site-dark-sidebar);
+  --sidebar-foreground: var(--site-dark-sidebar-foreground);
+  --sidebar-primary: var(--site-dark-sidebar-primary);
+  --sidebar-primary-foreground: var(--site-dark-sidebar-primary-foreground);
+  --sidebar-accent: var(--site-dark-sidebar-accent);
+  --sidebar-accent-foreground: var(--site-dark-sidebar-accent-foreground);
+  --sidebar-border: var(--site-dark-sidebar-border);
+  --sidebar-ring: var(--site-dark-sidebar-ring);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+[data-slot="skeleton"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.06) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark [data-slot="skeleton"]::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.08) 50%,
+    transparent 100%
+  );
+}
