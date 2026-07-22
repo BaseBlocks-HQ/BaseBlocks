@@ -45,7 +45,6 @@ interface LandingPageProps {
   locale: "en" | "fr";
   labels: {
     docs: string;
-    legal: string;
     selectLanguage: string;
     signIn: string;
     themeDark: string;

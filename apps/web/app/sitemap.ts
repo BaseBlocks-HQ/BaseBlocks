@@ -1,14 +1,10 @@
-import { getLegalSource, source } from "@/features/marketing/content-pages/source";
+import { source } from "@/features/marketing/content-pages/source";
 import {
   resolveCustomDomain,
   resolvePublishedSitemap,
 } from "@/features/published-sites/read-model";
-import { routing } from "@/i18n/routing";
 import { encodePath, parseRequestHost } from "@/lib/routing/hosts";
-import {
-  getMarketingOrigin,
-  getPublishedOrigin,
-} from "@/lib/seo/site-url";
+import { getMarketingOrigin, getPublishedOrigin } from "@/lib/seo/site-url";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
@@ -18,15 +14,10 @@ function marketingSitemap(): MetadataRoute.Sitemap {
   const urls = new Set<string>(["/", "/fr"]);
 
   for (const page of source.getPages()) urls.add(page.url);
-  for (const locale of routing.locales) {
-    for (const page of getLegalSource(locale).getPages()) {
-      urls.add(page.url.replace(/^\/en(?=\/|$)/, ""));
-    }
-  }
 
   return [...urls].sort().map((pathname) => ({
     url: new URL(pathname || "/", ORIGIN).toString(),
-    changeFrequency: pathname.includes("/legal") ? "yearly" : "monthly",
+    changeFrequency: pathname.includes("/docs/legal") ? "yearly" : "monthly",
     priority: pathname === "/" || pathname === "/fr" ? 1 : 0.7,
   }));
 }

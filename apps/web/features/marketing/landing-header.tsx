@@ -3,15 +3,18 @@ import { marketingActionClassName } from "./marketing-action";
 import { optimizedImageUrl } from "./optimized-image-url";
 
 interface LandingHeaderProps {
-  labels: { docs: string; legal: string; signIn: string };
+  labels: { docs: string; signIn: string };
   locale: "en" | "fr";
 }
+
+const headerActionClassName = "w-[5.5rem]";
 
 export function LandingHeader({ labels, locale }: LandingHeaderProps) {
   const prefix = locale === "fr" ? "/fr" : "";
   const authAction = (
     <a
       className={marketingActionClassName({
+        className: headerActionClassName,
         size: "sm",
         variant: "default",
       })}
@@ -46,24 +49,16 @@ export function LandingHeader({ labels, locale }: LandingHeaderProps) {
               </a>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1 sm:gap-4">
+            <div className="flex shrink-0 items-center gap-3">
               <a
                 className={marketingActionClassName({
+                  className: headerActionClassName,
                   size: "sm",
                   variant: "ghost",
                 })}
                 href={`${prefix}/docs`}
               >
                 {labels.docs}
-              </a>
-              <a
-                className={marketingActionClassName({
-                  size: "sm",
-                  variant: "ghost",
-                })}
-                href={`${prefix}/legal`}
-              >
-                {labels.legal}
               </a>
               {authAction}
             </div>

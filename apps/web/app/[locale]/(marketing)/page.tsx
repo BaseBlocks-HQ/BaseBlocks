@@ -106,7 +106,6 @@ export default async function Page({ params }: Props) {
         locale={locale}
         labels={{
           docs: navigation("docs"),
-          legal: navigation("legal"),
           selectLanguage: language("select"),
           signIn: common("signIn"),
           themeDark: common("themeDark"),

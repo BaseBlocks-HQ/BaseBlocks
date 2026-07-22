@@ -1,4 +1,5 @@
 import { source } from "@/features/marketing/content-pages/source";
+import { DocsHomeLink } from "@/features/marketing/content-pages/docs-home-link";
 import "@/app/fumadocs.css";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
@@ -15,6 +16,7 @@ export default async function DocsSectionLayout({
   params,
 }: LayoutProps) {
   const { locale } = await params;
+  const homeUrl = locale === "fr" ? "/fr" : "/";
 
   return (
     <RootProvider
@@ -47,8 +49,8 @@ export default async function DocsSectionLayout({
         ]}
         nav={{
           enabled: true,
-          title: "BaseBlocks",
-          url: `/${locale}`,
+          title: DocsHomeLink,
+          url: homeUrl,
         }}
         tree={source.getPageTree(locale)}
       >
