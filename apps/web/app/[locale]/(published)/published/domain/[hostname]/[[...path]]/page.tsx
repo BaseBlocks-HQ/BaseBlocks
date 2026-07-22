@@ -1,4 +1,4 @@
-import { buildPublicSiteFaviconMetadata } from "@/features/published-sites/favicon-metadata";
+import { buildPublicSiteMetadata } from "@/features/published-sites/favicon-metadata";
 import { PublicSite } from "@/features/published-sites/public-site";
 import {
   resolveCustomDomain,
@@ -6,6 +6,8 @@ import {
 } from "@/features/published-sites/read-model";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { encodePath } from "@/lib/routing/hosts";
+import { getPublishedOrigin } from "@/lib/seo/site-url";
 
 type Props = { params: Promise<{ hostname: string; path?: string[] }> };
 
@@ -18,7 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     mapping.siteSlug,
     path,
   );
-  return buildPublicSiteFaviconMetadata(result);
+  const canonicalPath = encodePath(result?.canonicalUrlInputs.pagePath ?? []);
+  const canonicalUrl = `${getPublishedOrigin(hostname)}${canonicalPath ? `/${canonicalPath}` : "/"}`;
+  return buildPublicSiteMetadata(result, canonicalUrl);
 }
 
 export default async function PublishedDomainPage({ params }: Props) {

@@ -1,197 +1,97 @@
-"use client";
-
 import { Link } from "@/i18n/navigation";
 import { Button } from "@baseblocks/ui/button";
 import { ArrowRight } from "lucide-react";
-import {
-  LayoutGroup,
-  LazyMotion,
-  domMax,
-  useMotionValue,
-  useMotionValueEvent,
-  useSpring,
-  useTransform,
-} from "motion/react";
-import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
 import { FeaturesSection } from "./features-section";
-import { FlickeringGrid } from "./flickering-grid";
 import { FooterSection } from "./footer-section";
 import { HeroSection } from "./hero-section";
-import { IntroOverlay } from "./intro-overlay";
 import { LandingHeader } from "./landing-header";
 import { StepsSection } from "./steps-section";
 
-type IntroFontVariant =
-  | "square"
-  | "grid"
-  | "triangle"
-  | "circle"
-  | "sans"
-  | "mono";
-
-const introFonts: Record<IntroFontVariant, string> = {
-  square: "var(--font-geist-pixel-square)",
-  grid: "var(--font-geist-pixel-grid)",
-  triangle: "var(--font-geist-pixel-triangle)",
-  circle: "var(--font-geist-pixel-circle)",
-  sans: "var(--font-geist-sans)",
-  mono: "var(--font-geist-mono)",
-};
-
-const animationSteps: ReadonlyArray<{
-  font: IntroFontVariant;
-  size: number;
-  amber?: true;
-}> = [
-  { font: "square", size: 10 },
-  { font: "grid", size: 8.2 },
-  { font: "sans", size: 6.8, amber: true },
-  { font: "triangle", size: 5.5 },
-  { font: "mono", size: 4.5 },
-  { font: "circle", size: 3.8 },
-  { font: "square", size: 3.2, amber: true },
-  { font: "square", size: 2.8 },
-];
-
-const lastStep = animationSteps.length - 1;
-const stepIndices = animationSteps.map((_, index) => index);
-const stepSizes = animationSteps.map((step) => step.size);
-const morphSpring = { stiffness: 30, damping: 15, mass: 3 } as const;
+export type LandingCopy = Record<
+  | "brandingDesc"
+  | "brandingTitle"
+  | "ctaSubtitle"
+  | "ctaTitle"
+  | "editorDesc"
+  | "editorTitle"
+  | "featuresLabel"
+  | "featuresSubtitle"
+  | "featuresTitle"
+  | "filesSearchDesc"
+  | "filesSearchTitle"
+  | "footerCopyright"
+  | "getStarted"
+  | "pageTreeDesc"
+  | "pageTreeTitle"
+  | "publishingDesc"
+  | "publishingTitle"
+  | "step1Desc"
+  | "step1ImageAlt"
+  | "step1Title"
+  | "step2Desc"
+  | "step2ImageAlt"
+  | "step2Title"
+  | "step3Desc"
+  | "step3ImageAlt"
+  | "step3Title"
+  | "stepsLabel"
+  | "stepsTitle"
+  | "teamWorkspacesDesc"
+  | "teamWorkspacesTitle"
+  | "viewDocs",
+  string
+>;
 
 interface LandingPageProps {
-  authenticatedHref: string | null;
+  copy: LandingCopy;
+  locale: "en" | "fr";
+  labels: {
+    docs: string;
+    legal: string;
+    selectLanguage: string;
+    signIn: string;
+    themeDark: string;
+    themeLight: string;
+    themeSystem: string;
+  };
 }
 
-export function LandingPage({ authenticatedHref }: LandingPageProps) {
-  const { resolvedTheme } = useTheme();
-
-  const landingTranslations = useTranslations("landing");
-  const commonTranslations = useTranslations("common");
-  const navigationTranslations = useTranslations("navigation");
-
-  const isDarkTheme = resolvedTheme === "dark";
-  const heroGridColor = isDarkTheme ? "rgb(229, 229, 229)" : "rgb(23, 23, 23)";
-  const heroGridOpacity = isDarkTheme ? 0.2 : 0.34;
-
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const progress = useMotionValue(0);
-  const spring = useSpring(progress, morphSpring);
-  const [expanded, setExpanded] = useState(false);
-
-  const fontSize = useTransform(spring, stepIndices, stepSizes);
-  const fontSizeRem = useTransform(
-    fontSize,
-    (value) =>
-      `clamp(${(value * 0.3).toFixed(2)}rem, ${(value * 3.5).toFixed(2)}vw, ${value}rem)`,
-  );
-
-  useMotionValueEvent(spring, "change", (value) => {
-    if (!titleRef.current) return;
-
-    const index = Math.max(0, Math.min(Math.round(value), lastStep));
-    const currentStep = animationSteps[index];
-
-    if (currentStep) {
-      titleRef.current.style.setProperty(
-        "font-family",
-        introFonts[currentStep.font],
-        "important",
-      );
-      titleRef.current.style.color = currentStep.amber
-        ? "var(--color-amber-500)"
-        : "";
-    }
-
-    if (value >= lastStep - 0.02) {
-      setExpanded(true);
-    }
-  });
-
-  useEffect(() => {
-    progress.set(lastStep + 0.1);
-
-    const revealFallback = window.setTimeout(() => {
-      setExpanded(true);
-    }, 2500);
-
-    return () => window.clearTimeout(revealFallback);
-  }, [progress]);
-
+export function LandingPage({ copy, labels, locale }: LandingPageProps) {
   const authCta = (
-    <Link href={authenticatedHref ?? "/login"}>
-      <Button size="lg" className="gap-2 rounded-full">
-        {authenticatedHref
-          ? commonTranslations("goToDashboard")
-          : landingTranslations("getStarted")}{" "}
-        <ArrowRight className="h-4 w-4" />
-      </Button>
-    </Link>
+    <Button asChild size="lg" className="gap-2 rounded-full">
+      <Link href="/login">
+        {copy.getStarted} <ArrowRight aria-hidden="true" className="h-4 w-4" />
+      </Link>
+    </Button>
   );
 
   const docsCta = (
-    <Link href="/docs">
-      <Button variant="ghost" size="lg" className="rounded-full">
-        {landingTranslations("viewDocs")}
-      </Button>
-    </Link>
+    <Button asChild variant="ghost" size="lg" className="rounded-full">
+      <Link href="/docs">{copy.viewDocs}</Link>
+    </Button>
   );
 
   return (
-    <LazyMotion features={domMax} strict>
-      <div className="h-screen bg-background">
-        <LayoutGroup>
-          <IntroOverlay
-            expanded={expanded}
-            titleRef={titleRef}
-            fontSizeRem={fontSizeRem}
-            brandFontFamily="var(--font-geist-pixel-square)"
+    <div className="min-h-screen bg-background">
+      <div className="relative isolate min-h-screen">
+        <LandingHeader labels={labels} />
+        <main>
+          <HeroSection authCta={authCta} docsCta={docsCta} />
+          <FeaturesSection
+            landingTranslations={(key) => copy[key as keyof LandingCopy]}
           />
-
-          {expanded && (
-            <div className="h-full overflow-y-auto">
-              <div className="relative isolate min-h-screen">
-                <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[56rem] overflow-hidden sm:h-[50rem] lg:h-[44rem]">
-                  <FlickeringGrid
-                    className="absolute inset-0"
-                    color={heroGridColor}
-                    squareSize={4}
-                    gridGap={8}
-                    maxOpacity={heroGridOpacity}
-                    flickerChance={0.25}
-                  />
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r ${
-                      isDarkTheme
-                        ? "from-background/96 via-background/78 to-background/36"
-                        : "from-background/94 via-background/72 to-background/30"
-                    }`}
-                  />
-                  <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
-                </div>
-                <LandingHeader
-                  authenticatedHref={authenticatedHref}
-                  commonTranslations={commonTranslations}
-                  navigationTranslations={navigationTranslations}
-                />
-                <HeroSection authCta={authCta} docsCta={docsCta} />
-                <FeaturesSection landingTranslations={landingTranslations} />
-                <StepsSection
-                  gridColor={heroGridColor}
-                  gridOpacity={heroGridOpacity}
-                  landingTranslations={landingTranslations}
-                />
-                <FooterSection
-                  authCta={authCta}
-                  docsCta={docsCta}
-                  landingTranslations={landingTranslations}
-                />
-              </div>
-            </div>
-          )}
-        </LayoutGroup>
+          <StepsSection
+            landingTranslations={(key) => copy[key as keyof LandingCopy]}
+          />
+        </main>
+        <FooterSection
+          authCta={authCta}
+          copy={copy}
+          docsCta={docsCta}
+          labels={labels}
+          locale={locale}
+        />
       </div>
-    </LazyMotion>
+    </div>
   );
 }

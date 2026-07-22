@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { selectMessages } from "@/i18n/messages";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import { Toaster } from "@baseblocks/ui/sonner";
 
 export default async function PublicLayout({
   children,
@@ -21,6 +22,7 @@ export default async function PublicLayout({
       ])}
     >
       <PublicConvexClientProvider>{children}</PublicConvexClientProvider>
+      <Toaster />
     </NextIntlClientProvider>
   );
 }

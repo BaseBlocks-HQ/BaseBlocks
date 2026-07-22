@@ -24,9 +24,20 @@ export async function generateMetadata({
     notFound();
   }
 
+  const suffix = slug?.length ? `/${slug.join("/")}` : "";
+  const canonical = `${locale === "fr" ? "/fr" : ""}/docs${suffix}`;
+
   return {
     title: page.data.title ?? "Documentation",
     description: page.data.description,
+    alternates: {
+      canonical,
+      languages: {
+        en: `/docs${suffix}`,
+        fr: `/fr/docs${suffix}`,
+        "x-default": `/docs${suffix}`,
+      },
+    },
   };
 }
 

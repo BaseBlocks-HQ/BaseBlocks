@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
+import { getMarketingSiteUrl } from "@/lib/seo/site-url";
 import {
   GeistPixelCircle,
   GeistPixelGrid,
@@ -11,15 +12,17 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 const geistSans = localFont({
+  display: "optional",
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
 });
 const geistMono = localFont({
+  display: "optional",
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
+  preload: false,
 });
-
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "baseblocks.dev";
+const MARKETING_SITE_URL = getMarketingSiteUrl();
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -28,7 +31,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(`https://${ROOT_DOMAIN}`),
+  metadataBase: MARKETING_SITE_URL,
   title: {
     default: "BaseBlocks - Idea to site in minutes",
     template: "%s | BaseBlocks",
@@ -45,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: `https://${ROOT_DOMAIN}`,
+    url: MARKETING_SITE_URL,
     siteName: "BaseBlocks",
   },
   twitter: {
@@ -67,7 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className={`${geistSans.variable} ${geistMono.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelTriangle.variable} ${GeistPixelCircle.variable} min-h-screen flex flex-col`}
       >
         {children}
-        {process.env.NODE_ENV === "production" ? <Analytics /> : null}
+        {process.env.VERCEL === "1" ? <Analytics /> : null}
       </body>
     </html>
   );

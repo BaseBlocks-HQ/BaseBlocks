@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { selectMessages } from "@/i18n/messages";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
+import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function UnauthLayout({ children }: PropsWithChildren) {
   const token = await getToken();

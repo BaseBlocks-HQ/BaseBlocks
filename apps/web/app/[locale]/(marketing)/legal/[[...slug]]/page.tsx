@@ -40,9 +40,20 @@ export async function generateMetadata({
     notFound();
   }
 
+  const suffix = slug?.length ? `/${slug.join("/")}` : "";
+  const canonical = `${locale === "fr" ? "/fr" : ""}/legal${suffix}`;
+
   return {
     title: page.data.title ?? "Legal",
     description: page.data.description,
+    alternates: {
+      canonical,
+      languages: {
+        en: `/legal${suffix}`,
+        fr: `/fr/legal${suffix}`,
+        "x-default": `/legal${suffix}`,
+      },
+    },
   };
 }
 

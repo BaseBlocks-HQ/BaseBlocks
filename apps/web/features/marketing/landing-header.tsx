@@ -3,25 +3,15 @@ import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
 import Image from "next/image";
 
-type TranslateFn = (key: string) => string;
-
 interface LandingHeaderProps {
-  authenticatedHref: string | null;
-  commonTranslations: TranslateFn;
-  navigationTranslations: TranslateFn;
+  labels: { docs: string; legal: string; signIn: string };
 }
 
-export function LandingHeader({
-  authenticatedHref,
-  commonTranslations,
-  navigationTranslations,
-}: LandingHeaderProps) {
+export function LandingHeader({ labels }: LandingHeaderProps) {
   const authAction = (
-    <Link href={authenticatedHref ?? "/login"}>
-      <Button size="sm" className="rounded-full">
-        {commonTranslations(authenticatedHref ? "goToDashboard" : "signIn")}
-      </Button>
-    </Link>
+    <Button asChild size="sm" className="rounded-full">
+      <Link href="/login">{labels.signIn}</Link>
+    </Button>
   );
 
   return (
@@ -30,7 +20,6 @@ export function LandingHeader({
         <div className="max-sm:hidden">
           <BlurStack className="inset-x-0 top-0 h-full" direction="down" />
         </div>
-        <div className="absolute inset-0 bg-linear-to-b from-background/78 via-background/42 to-background/8 max-sm:hidden dark:from-background/86 dark:via-background/52 dark:to-background/12" />
         <div className="relative mx-auto max-w-6xl px-5 pt-[42px] sm:px-6 sm:pt-0">
           <div className="relative flex h-12 min-w-0 w-full items-center justify-between gap-2 sm:h-14 sm:gap-4">
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
@@ -41,18 +30,10 @@ export function LandingHeader({
                     alt=""
                     width={600}
                     height={600}
-                    priority
                     sizes="32px"
                     className="h-8 w-8 shrink-0 object-contain"
                   />
-                  <span
-                    className="hidden tracking-tight min-[380px]:inline"
-                    style={{
-                      fontFamily: "var(--font-geist-pixel-square)",
-                      fontSize: "0.9375rem",
-                      lineHeight: 1,
-                    }}
-                  >
+                  <span className="landing-pixel-square hidden text-[0.9375rem] leading-none tracking-tight sm:inline">
                     BaseBlocks
                   </span>
                 </div>
@@ -60,16 +41,22 @@ export function LandingHeader({
             </div>
 
             <div className="flex shrink-0 items-center gap-1 sm:gap-4">
-              <Link href="/docs">
-                <Button variant="ghost" size="sm" className="rounded-full">
-                  {navigationTranslations("docs")}
-                </Button>
-              </Link>
-              <Link href="/legal">
-                <Button variant="ghost" size="sm" className="rounded-full">
-                  {navigationTranslations("legal")}
-                </Button>
-              </Link>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden rounded-full sm:inline-flex"
+              >
+                <Link href="/docs">{labels.docs}</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden rounded-full sm:inline-flex"
+              >
+                <Link href="/legal">{labels.legal}</Link>
+              </Button>
               {authAction}
             </div>
           </div>

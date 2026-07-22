@@ -24,6 +24,7 @@ export default async function DocsSectionLayout({
           { locale: "fr", name: "Français" },
         ],
       }}
+      search={{ preload: false }}
       theme={{ enabled: false }}
     >
       <DocsLayout
@@ -35,10 +36,10 @@ export default async function DocsSectionLayout({
             type: "custom" as const,
             children: (
               <GithubInfo
+                className="lg:-mx-2"
                 owner="naaiyy"
                 repo="BaseBlocks"
                 token={process.env.GITHUB_TOKEN}
-                className="lg:-mx-2"
               />
             ),
           },

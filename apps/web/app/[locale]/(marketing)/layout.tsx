@@ -1,20 +1,12 @@
-import { selectMessages } from "@/i18n/messages";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
 import type { PropsWithChildren } from "react";
 
-export default async function MarketingLayout({ children }: PropsWithChildren) {
-  const messages = await getMessages();
+type Props = PropsWithChildren<{ params: Promise<{ locale: string }> }>;
+
+export default async function MarketingLayout({ children, params }: Props) {
+  const { locale } = await params;
   return (
-    <NextIntlClientProvider
-      messages={selectMessages(messages, [
-        "common",
-        "errors",
-        "landing",
-        "language",
-        "navigation",
-      ])}
-    >
+    <NextIntlClientProvider locale={locale} messages={{}} timeZone="UTC">
       {children}
     </NextIntlClientProvider>
   );

@@ -13,6 +13,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import {
   createContext,
   type ComponentProps,
+  type PropsWithChildren,
   useContext,
   useEffect,
   useState,
@@ -41,10 +42,11 @@ type ProductAppearanceContextValue = {
 const ProductAppearanceContext =
   createContext<ProductAppearanceContextValue | null>(null);
 
-export function ThemeProvider({
-  children,
-  ...props
-}: ComponentProps<typeof NextThemesProvider>) {
+export function ThemeProvider(props: ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props} />;
+}
+
+export function ProductThemeProvider({ children }: PropsWithChildren) {
   const [appearance, setAppearance] = useState<{
     palette: ProductPaletteId;
     style: SiteThemeStyleId;
@@ -82,7 +84,7 @@ export function ThemeProvider({
       <script id="baseblocks-product-appearance">
         {productAppearanceScript}
       </script>
-      <NextThemesProvider {...props}>{children}</NextThemesProvider>
+      {children}
     </ProductAppearanceContext.Provider>
   );
 }

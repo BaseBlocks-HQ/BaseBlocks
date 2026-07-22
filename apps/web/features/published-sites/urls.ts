@@ -4,6 +4,7 @@ import {
   normalizePathSegments,
   parseRequestHost,
 } from "@/lib/routing/hosts";
+import { getMarketingSiteUrl } from "@/lib/seo/site-url";
 
 function sitePath(siteSlug: string, pagePath?: string | string[]): string {
   return `/${encodePath([siteSlug, ...normalizePathSegments(pagePath)])}`;
@@ -14,7 +15,9 @@ export function getSiteUrl(
   siteSlug: string,
   pagePath?: string | string[],
 ): string {
-  return `https://${organizationSlug}.${getRootDomain()}${sitePath(siteSlug, pagePath)}`;
+  const siteUrl = getMarketingSiteUrl();
+  const port = siteUrl.port ? `:${siteUrl.port}` : "";
+  return `${siteUrl.protocol}//${organizationSlug}.${getRootDomain()}${port}${sitePath(siteSlug, pagePath)}`;
 }
 
 export function getSiteOpenUrl(

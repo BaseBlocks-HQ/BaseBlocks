@@ -8,6 +8,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "biome lint .",
+    "seo:audit": "NEXT_PUBLIC_SITE_URL=http://localhost:3002 NEXT_PUBLIC_ROOT_DOMAIN=localhost BASEBLOCKS_SEO_AUDIT=1 VERCEL_ENV=production bun run build && NEXT_PUBLIC_SITE_URL=http://localhost:3002 NEXT_PUBLIC_ROOT_DOMAIN=localhost BASEBLOCKS_SEO_AUDIT=1 VERCEL_ENV=production bun scripts/audit-seo.ts",
     "format": "biome format --write .",
     "check-types": "turbo run check-types",
     "test": "bun test",
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",
     "@typescript/native-preview": "npm:typescript@7.0.2",
+    "lighthouse": "13.0.1",
     "turbo": "^2.10.4",
     "typescript": "7.0.2"
   },

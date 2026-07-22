@@ -3,7 +3,6 @@ import type { Locale } from "@baseblocks/i18n";
 import { docs, legalEn, legalFr } from "collections/server";
 import { defineI18n } from "fumadocs-core/i18n";
 import { loader } from "fumadocs-core/source";
-import { icons } from "lucide-react";
 import {
   IconBadgeSparkle,
   IconCodeEditor,
@@ -54,17 +53,18 @@ const docsIconMap = {
   Zap: IconRocket,
 } as const;
 
+function resolveContentIcon(icon: string | undefined) {
+  if (!icon) return;
+  if (icon in docsIconMap) {
+    return createElement(docsIconMap[icon as keyof typeof docsIconMap]);
+  }
+}
+
 export const source = loader({
   baseUrl: "/docs",
   source: docs.toFumadocsSource(),
   i18n: docsI18n,
-  icon(icon) {
-    if (!icon) return;
-    if (icon in docsIconMap) {
-      return createElement(docsIconMap[icon as keyof typeof docsIconMap]);
-    }
-    if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
-  },
+  icon: resolveContentIcon,
 });
 
 function createLegalSource(
@@ -73,6 +73,7 @@ function createLegalSource(
 ) {
   return loader(collection.toFumadocsSource(), {
     baseUrl: `/${locale}/legal`,
+    icon: resolveContentIcon,
   });
 }
 

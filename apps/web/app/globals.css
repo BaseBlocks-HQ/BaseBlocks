@@ -98,6 +98,22 @@
   }
 }
 
+.landing-pixel-grid {
+  font-family: var(--font-geist-pixel-grid);
+}
+
+.landing-pixel-square {
+  font-family: var(--font-geist-pixel-square);
+}
+
+.landing-pixel-triangle {
+  font-family: var(--font-geist-pixel-triangle);
+}
+
+.landing-pixel-circle {
+  font-family: var(--font-geist-pixel-circle);
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

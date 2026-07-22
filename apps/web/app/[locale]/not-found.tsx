@@ -1,10 +1,12 @@
-import { Link } from "@/i18n/navigation";
 import { Button } from "@baseblocks/ui/button";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
-export default function NotFound() {
-  const t = useTranslations("errors");
-  const tCommon = useTranslations("common");
+export default async function NotFound() {
+  const [t, tCommon] = await Promise.all([
+    getTranslations("errors"),
+    getTranslations("common"),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">

@@ -1,16 +1,8 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
-import { selectMessages } from "@/i18n/messages";
 import type { Locale } from "@baseblocks/i18n";
-import { Toaster } from "@baseblocks/ui/sonner";
-import { MotionConfig } from "motion/react";
 import type { Metadata, ResolvingMetadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
-import {
-  getMessages,
-  getTranslations,
-  setRequestLocale,
-} from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -33,6 +25,7 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "metadata" });
   const parentMetadata = await parent;
   const parentOpenGraph = parentMetadata.openGraph;
@@ -63,22 +56,16 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Enable static rendering
   setRequestLocale(locale);
 
-  const messages = await getMessages();
   return (
-    <NextIntlClientProvider
-      messages={selectMessages(messages, ["common", "errors"])}
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
     >
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <MotionConfig reducedMotion="user">
-          {children}
-          <Toaster />
-        </MotionConfig>
-      </ThemeProvider>
-    </NextIntlClientProvider>
+      <div className="contents" lang={locale}>
+        {children}
+      </div>
+    </ThemeProvider>
   );
 }

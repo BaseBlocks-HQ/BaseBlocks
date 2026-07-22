@@ -35,6 +35,68 @@ function resolvePage(
   return pages.find((page) => page._id === parentId) ?? null;
 }
 
+function getCanonicalPagePath(
+  pages: Doc<"pages">[],
+  page: Doc<"pages">,
+  defaultPageId: Id<"pages"> | undefined,
+) {
+  if (page._id === defaultPageId) return [];
+  const path = [page.slug];
+  let parentId = page.parentId;
+  while (parentId) {
+    const parent = pages.find((candidate) => candidate._id === parentId);
+    if (!parent) break;
+    path.unshift(parent.slug);
+    parentId = parent.parentId;
+  }
+  return path;
+}
+
+export const sitemap = query({
+  args: {
+    organizationSlug: v.string(),
+    siteSlug: v.optional(v.string()),
+  },
+  returns: v.any(),
+  handler: async (ctx, args) => {
+    const organization = await getAuthOrganizationBySlug(
+      ctx,
+      args.organizationSlug,
+    );
+    if (!organization?.slug) return [];
+    const sites = (
+      await ctx.db
+        .query("sites")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", organization._id),
+        )
+        .collect()
+    ).filter(
+      (site) =>
+        site.isPublished &&
+        site.visibility === "public" &&
+        (!args.siteSlug || site.slug === args.siteSlug),
+    );
+
+    return Promise.all(
+      sites.map(async (site) => {
+        const pages = await ctx.db
+          .query("pages")
+          .withIndex("by_site", (q) => q.eq("siteId", site._id))
+          .collect();
+        return {
+          siteSlug: site.slug,
+          updatedAt: site.updatedAt,
+          pages: pages.map((page) => ({
+            path: getCanonicalPagePath(pages, page, site.defaultPageId),
+            updatedAt: page.updatedAt,
+          })),
+        };
+      }),
+    );
+  },
+});
+
 export const resolve = query({
   args: {
     organizationSlug: v.string(),
@@ -145,7 +207,9 @@ export const resolve = query({
       canonicalUrlInputs: {
         organizationSlug: organization.slug,
         siteSlug: site.slug,
-        pagePath: args.pagePath,
+        pagePath: page
+          ? getCanonicalPagePath(allPages, page, site.defaultPageId)
+          : args.pagePath,
       },
       updatedAt: Math.max(
         site.updatedAt,

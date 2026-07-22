@@ -47,44 +47,25 @@ const steps: readonly {
 ];
 
 interface StepsSectionProps {
-  gridColor: string;
-  gridOpacity: number;
   landingTranslations: TranslateFn;
 }
 
-export function StepsSection({
-  gridColor,
-  gridOpacity,
-  landingTranslations,
-}: StepsSectionProps) {
+export function StepsSection({ landingTranslations }: StepsSectionProps) {
   return (
     <section
       id="how-it-works"
       className="relative isolate scroll-mt-20 overflow-hidden border-t border-border/40 px-6 py-24 sm:py-32 dark:border-white/[0.04]"
     >
-      <FlickeringGrid
-        className="absolute inset-0 z-0"
-        color={gridColor}
-        squareSize={4}
-        gridGap={8}
-        maxOpacity={gridOpacity}
-        flickerChance={0.25}
-      />
+      <FlickeringGrid className="absolute inset-0 z-0" />
       <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/82 via-background/58 to-background/90 dark:from-background/90 dark:via-background/68 dark:to-background/94" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
         <Reveal>
           <div className="max-w-xl">
-            <div
-              className="mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400"
-              style={{ fontFamily: "var(--font-geist-pixel-triangle)" }}
-            >
+            <div className="landing-pixel-triangle mb-4 text-xs tracking-[0.22em] text-amber-600 dark:text-amber-400">
               {landingTranslations("stepsLabel").toUpperCase()}
             </div>
-            <h2
-              className="text-3xl tracking-tight sm:text-4xl"
-              style={{ fontFamily: "var(--font-geist-pixel-grid)" }}
-            >
+            <h2 className="landing-pixel-grid text-3xl tracking-tight sm:text-4xl">
               {landingTranslations("stepsTitle")}
             </h2>
           </div>
@@ -95,13 +76,7 @@ export function StepsSection({
             <Reveal key={step.titleKey} delay={0.1 * index}>
               <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
                 <div className={index % 2 === 1 ? "lg:order-2" : ""}>
-                  <div
-                    className="relative z-20 mb-4 text-7xl text-amber-600 dark:text-amber-400 sm:text-8xl"
-                    style={{
-                      fontFamily: "var(--font-geist-pixel-circle)",
-                      lineHeight: 1,
-                    }}
-                  >
+                  <div className="landing-pixel-square relative z-20 mb-4 text-7xl leading-none text-amber-600 dark:text-amber-400 sm:text-8xl">
                     {step.num}
                   </div>
                   <h3 className="text-[1rem] font-semibold sm:text-[1.05rem]">

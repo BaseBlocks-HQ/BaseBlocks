@@ -51,10 +51,10 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com",
-      "style-src 'self' 'unsafe-inline' https://vercel.live https://fonts.googleapis.com",
-      "style-src-elem 'self' 'unsafe-inline' https://vercel.live https://fonts.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://vercel.live",
+      "style-src-elem 'self' 'unsafe-inline' https://vercel.live",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data:",
       `connect-src ${connectSrc}`,
       "frame-src https://vercel.live",
       "worker-src 'self' blob:",
@@ -82,6 +82,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    deviceSizes: [640, 750, 828, 960, 1080, 1200, 1280, 1440, 1600, 1920],
     formats: ["image/avif", "image/webp"],
     qualities: [60, 75, 85, 100],
   },

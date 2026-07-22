@@ -1,10 +1,17 @@
 import { getToken } from "@/lib/auth/server";
+import { ProductThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "@/lib/convex/provider";
 import { redirect } from "@/i18n/navigation";
 import { selectMessages } from "@/i18n/messages";
 import { NextIntlClientProvider } from "next-intl";
+import { Toaster } from "@baseblocks/ui/sonner";
 import { getMessages } from "next-intl/server";
+import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 type AppLayoutProps = PropsWithChildren<{
   params: Promise<{ locale: string }>;
@@ -37,7 +44,10 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
         "team",
       ])}
     >
-      <ConvexClientProvider>{children}</ConvexClientProvider>
+      <ProductThemeProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <Toaster />
+      </ProductThemeProvider>
     </NextIntlClientProvider>
   );
 }
