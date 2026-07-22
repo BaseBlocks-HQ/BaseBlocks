@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { FlickeringGrid } from "./flickering-grid";
-import { optimizedImageSrcSet, optimizedImageUrl } from "./optimized-image-url";
+import styles from "./hero-section.module.css";
 import { Reveal } from "./reveal";
 
 interface HeroSectionProps {
@@ -48,22 +49,25 @@ export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
         className="relative z-10 mt-14 px-6 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
       >
         <div className="relative mx-auto max-w-md select-none sm:max-w-none">
-          {/* biome-ignore lint/performance/noImgElement: Native responsive image avoids shipping the client-side Next Image runtime on this static page. */}
-          <img
-            src={optimizedImageUrl("/landing/hero-image-dark.png", 1080, 60)}
-            srcSet={optimizedImageSrcSet(
-              "/landing/hero-image-dark.png",
-              [640, 750, 828, 960, 1080, 1600, 1920],
-              60,
-            )}
+          <Image
+            src="/landing/hero-image-light.png"
             alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
-            className="relative rounded-xl shadow-2xl lg:rounded-r-none"
+            className={`${styles.lightImage} relative rounded-xl shadow-2xl lg:rounded-r-none`}
             sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
-            width={3420}
-            height={1950}
+            width={1920}
+            height={1095}
             fetchPriority="high"
-            loading="eager"
-            decoding="async"
+            quality={60}
+          />
+          <Image
+            src="/landing/hero-image-dark.png"
+            alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
+            className={`${styles.darkImage} relative rounded-xl shadow-2xl lg:rounded-r-none`}
+            sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
+            width={1920}
+            height={1095}
+            fetchPriority="high"
+            quality={60}
           />
         </div>
       </Reveal>

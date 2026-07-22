@@ -1,0 +1,13 @@
+.darkImage {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .lightImage {
+    display: none;
+  }
+
+  .darkImage {
+    display: block;
+  }
+}
