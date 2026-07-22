@@ -297,7 +297,7 @@ function EditSiteLogoField({
   const t = useTranslations();
 
   return (
-    <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+    <div>
       <div className="mb-3 flex items-center gap-1.5">
         <Label className="text-xs font-medium tracking-wide text-sidebar-foreground/55">
           {t("dialogs.editSite.logoLabel")}

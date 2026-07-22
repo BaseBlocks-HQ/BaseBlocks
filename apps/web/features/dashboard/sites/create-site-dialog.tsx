@@ -185,7 +185,7 @@ export function CreateSiteDialog({
       <DialogTrigger asChild>
         <button
           className={cn(
-            "group flex min-h-[7.5rem] w-full flex-col items-start justify-between gap-4 rounded-xl border border-dashed border-muted-foreground/35 bg-transparent p-4 text-left text-muted-foreground transition-[border-color,background-color,color] duration-150",
+            "group flex min-h-[7.5rem] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-muted-foreground/35 bg-transparent p-4 text-center text-muted-foreground transition-[border-color,background-color,color] duration-150",
             "hover:border-muted-foreground/55 hover:bg-accent/10 hover:text-foreground",
             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
             "active:scale-[0.98]",

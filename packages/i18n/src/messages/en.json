@@ -571,7 +571,6 @@
     },
     "invite": {
       "title": "Invite Team Member",
-      "description": "Search for users by email or username to invite them to your organization",
       "emailPlaceholder": "name@example.com",
       "emailRequired": "Enter an email address.",
       "organizationRequired": "This team is not linked to an organization.",

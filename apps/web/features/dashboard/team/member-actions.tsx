@@ -254,7 +254,7 @@ export function MemberActions({
             onSubmit={handleRoleSubmit}
             className={cn("px-5 pb-3", "space-y-4 pb-4")}
           >
-            <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+            <div>
               <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
                 {t("member.role")}
               </Label>
@@ -268,7 +268,9 @@ export function MemberActions({
                   }))
                 }
               >
-                <SelectTrigger className={teamSelectTriggerClassName}>
+                <SelectTrigger
+                  className={`${teamSelectTriggerClassName} [&_[data-slot='select-value']_.role-description]:hidden`}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
@@ -276,29 +278,37 @@ export function MemberActions({
                     value="admin"
                     className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                   >
-                    {t("roles.admin")}
+                    <span className="flex min-w-0 flex-col items-start gap-0.5">
+                      <span>{t("roles.admin")}</span>
+                      <span className="role-description text-xs font-normal leading-relaxed text-sidebar-foreground/60">
+                        {t("roleDescriptions.admin")}
+                      </span>
+                    </span>
                   </SelectItem>
                   <SelectItem
                     value="editor"
                     className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                   >
-                    {t("roles.editor")}
+                    <span className="flex min-w-0 flex-col items-start gap-0.5">
+                      <span>{t("roles.editor")}</span>
+                      <span className="role-description text-xs font-normal leading-relaxed text-sidebar-foreground/60">
+                        {t("roleDescriptions.editor")}
+                      </span>
+                    </span>
                   </SelectItem>
                   <SelectItem
                     value="viewer"
                     className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                   >
-                    {t("roles.viewer")}
+                    <span className="flex min-w-0 flex-col items-start gap-0.5">
+                      <span>{t("roles.viewer")}</span>
+                      <span className="role-description text-xs font-normal leading-relaxed text-sidebar-foreground/60">
+                        {t("roleDescriptions.viewer")}
+                      </span>
+                    </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
-                {uiState.newRole === "admin"
-                  ? t("roleDescriptions.admin")
-                  : uiState.newRole === "editor"
-                    ? t("roleDescriptions.editor")
-                    : t("roleDescriptions.viewer")}
-              </p>
             </div>
 
             {uiState.error ? (

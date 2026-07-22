@@ -571,7 +571,6 @@
     },
     "invite": {
       "title": "Inviter un membre",
-      "description": "Recherchez des utilisateurs par email ou nom d'utilisateur pour les inviter dans votre organisation",
       "emailPlaceholder": "nom@exemple.com",
       "emailRequired": "Saisissez une adresse e-mail.",
       "organizationRequired": "Cette equipe n'est pas liee a une organisation.",

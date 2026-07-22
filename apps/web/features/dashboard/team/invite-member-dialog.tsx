@@ -5,7 +5,6 @@ import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -157,9 +156,6 @@ export function InviteMemberDialog({
           <DialogTitle className={"text-base font-semibold"}>
             {t("invite.title")}
           </DialogTitle>
-          <DialogDescription className={"text-sm text-sidebar-foreground/60"}>
-            {t("invite.description")}
-          </DialogDescription>
         </DialogHeader>
         <form
           noValidate
@@ -191,7 +187,7 @@ export function InviteMemberDialog({
             />
           </div>
 
-          <div className="rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-3 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]">
+          <div>
             <Label className="mb-2 block text-xs font-medium tracking-wide text-sidebar-foreground/55">
               {t("invite.selectRole")}
             </Label>
@@ -204,7 +200,9 @@ export function InviteMemberDialog({
                 }))
               }
             >
-              <SelectTrigger className={teamSelectTriggerClassName}>
+              <SelectTrigger
+                className={`${teamSelectTriggerClassName} [&_[data-slot='select-value']_.role-description]:hidden`}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-[1rem] border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl">
@@ -212,21 +210,26 @@ export function InviteMemberDialog({
                   value="admin"
                   className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                 >
-                  {t("roles.admin")}
+                  <span className="flex min-w-0 flex-col items-start gap-0.5">
+                    <span>{t("roles.admin")}</span>
+                    <span className="role-description text-xs font-normal leading-relaxed text-sidebar-foreground/60">
+                      {t("roleDescriptions.admin")}
+                    </span>
+                  </span>
                 </SelectItem>
                 <SelectItem
                   value="editor"
                   className="rounded-[0.7rem] py-2 focus:bg-sidebar-accent focus:text-sidebar-accent-foreground"
                 >
-                  {t("roles.editor")}
+                  <span className="flex min-w-0 flex-col items-start gap-0.5">
+                    <span>{t("roles.editor")}</span>
+                    <span className="role-description text-xs font-normal leading-relaxed text-sidebar-foreground/60">
+                      {t("roleDescriptions.editor")}
+                    </span>
+                  </span>
                 </SelectItem>
               </SelectContent>
             </Select>
-            <p className="mt-2.5 text-pretty text-sm leading-relaxed text-sidebar-foreground/60">
-              {dialogState.role === "admin"
-                ? t("roleDescriptions.admin")
-                : t("roleDescriptions.editor")}
-            </p>
           </div>
 
           {dialogState.error ? (

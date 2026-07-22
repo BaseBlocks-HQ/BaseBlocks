@@ -1,12 +1,49 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { FlickeringGrid } from "./flickering-grid";
-import styles from "./hero-section.module.css";
 import { Reveal } from "./reveal";
 
 interface HeroSectionProps {
   authCta: ReactNode;
   docsCta: ReactNode;
+}
+
+const heroImage = {
+  alt: "BaseBlocks editor showing a site with dashboard, table, and rich text blocks",
+  width: 1920,
+  height: 1095,
+  sizes:
+    "(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw",
+  quality: 60,
+  loading: "eager" as const,
+  fetchPriority: "high" as const,
+};
+
+function HeroImage() {
+  const {
+    props: { srcSet: darkSrcSet },
+  } = getImageProps({
+    ...heroImage,
+    src: "/landing/hero-image-dark.png",
+  });
+  const {
+    props: { srcSet: lightSrcSet, ...lightImageProps },
+  } = getImageProps({
+    ...heroImage,
+    src: "/landing/hero-image-light.png",
+  });
+
+  return (
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcSet={darkSrcSet} />
+      <img
+        {...lightImageProps}
+        alt={heroImage.alt}
+        srcSet={lightSrcSet}
+        className="relative rounded-xl shadow-2xl lg:rounded-r-none"
+      />
+    </picture>
+  );
 }
 
 export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
@@ -49,26 +86,7 @@ export function HeroSection({ authCta, docsCta }: HeroSectionProps) {
         className="relative z-10 mt-14 px-6 lg:absolute lg:top-1/2 lg:-right-[5vw] lg:mt-0 lg:w-[58vw] lg:-translate-y-1/2 lg:pr-0 lg:pl-0 xl:-right-[4vw] xl:w-[52vw]"
       >
         <div className="relative mx-auto max-w-md select-none sm:max-w-none">
-          <Image
-            src="/landing/hero-image-light.png"
-            alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
-            className={`${styles.lightImage} relative rounded-xl shadow-2xl lg:rounded-r-none`}
-            sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
-            width={1920}
-            height={1095}
-            fetchPriority="high"
-            quality={60}
-          />
-          <Image
-            src="/landing/hero-image-dark.png"
-            alt="BaseBlocks editor showing a site with dashboard, table, and rich text blocks"
-            className={`${styles.darkImage} relative rounded-xl shadow-2xl lg:rounded-r-none`}
-            sizes="(max-width: 640px) calc(100vw - 48px), (max-width: 1024px) 100vw, 58vw"
-            width={1920}
-            height={1095}
-            fetchPriority="high"
-            quality={60}
-          />
+          <HeroImage />
         </div>
       </Reveal>
     </section>
