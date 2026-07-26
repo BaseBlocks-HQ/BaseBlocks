@@ -1,26 +1,18 @@
-export type DirectoryColumnType = "text" | "email" | "phone" | "url";
-
-export interface DirectoryColumn {
-  id: string;
-  header: string;
-  type?: DirectoryColumnType;
-}
-
 export interface DirectoryRow {
   id: string;
   cells: Record<string, string>;
 }
 
-export interface DirectorySettings {
-  copyMode: "none" | "cell" | "row";
-  pageSize: number;
-  showSearch: boolean;
+export interface Directory {
+  id: string;
+  label: string;
+  columnIds: string[];
+  rows: DirectoryRow[];
+  pageSize: number | null;
 }
 
 export interface DirectoryContent {
-  columns: DirectoryColumn[];
-  rows: DirectoryRow[];
-  settings: DirectorySettings;
+  directories: Directory[];
 }
 
 export interface SearchContent {

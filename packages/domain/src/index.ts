@@ -38,10 +38,8 @@ export {
 } from "./sites/site-theme";
 
 export type {
-  DirectoryColumnType,
-  DirectoryColumn,
   DirectoryRow,
-  DirectorySettings,
+  Directory,
   DirectoryContent,
   SearchContent,
   LibraryContent,

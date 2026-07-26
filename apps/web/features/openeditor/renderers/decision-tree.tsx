@@ -4,6 +4,7 @@ import {
   removeDecisionTreeNodesFromPath,
   resolveDecisionTree,
 } from "@/features/openeditor/renderers/decision-tree-model";
+import { NamedItemSwitcher } from "@/features/openeditor/renderers/named-item-switcher";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -18,10 +19,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import {
@@ -38,13 +35,7 @@ import {
   type OpenEditorDocument,
 } from "@openeditor/core";
 import { OpenEditorViewer } from "@openeditor/react";
-import {
-  ChevronsUpDown,
-  GitFork,
-  MousePointerClick,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { GitFork, MousePointerClick, Plus, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 export type DecisionNode = {
@@ -131,60 +122,28 @@ function TreeSwitcher({
   activeTreeId,
   onAdd,
   onRemove,
+  onRename,
   onSelect,
   trees,
 }: {
   activeTreeId: string;
   onAdd?: () => void;
   onRemove?: () => void;
+  onRename?: (treeId: string, label: string) => void;
   onSelect: (treeId: string) => void;
   trees: DecisionTree[];
 }) {
-  const activeTree = trees.find((tree) => tree.id === activeTreeId) ?? trees[0];
-
-  if (!activeTree) return null;
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          className="max-w-64 justify-between gap-2 rounded-xl"
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          <span className="truncate">{activeTree.label}</span>
-          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-56">
-        <DropdownMenuLabel>Decision trees</DropdownMenuLabel>
-        <DropdownMenuRadioGroup onValueChange={onSelect} value={activeTree.id}>
-          {trees.map((tree) => (
-            <DropdownMenuRadioItem key={tree.id} value={tree.id}>
-              <span className="truncate">{tree.label}</span>
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-        {onAdd && onRemove ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onAdd}>
-              <Plus />
-              Add tree
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={trees.length <= 1}
-              onSelect={onRemove}
-              variant="destructive"
-            >
-              <Trash2 />
-              Remove tree
-            </DropdownMenuItem>
-          </>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <NamedItemSwitcher
+      activeId={activeTreeId}
+      collectionLabel="Decision trees"
+      itemName="tree"
+      items={trees}
+      onAdd={onAdd}
+      onRemove={onRemove}
+      onRename={onRename}
+      onSelect={onSelect}
+    />
   );
 }
 
@@ -233,6 +192,14 @@ export function DecisionTree({
     onChange?.({ ...value, trees: nextTrees });
     selectTree(nextTree.id);
   };
+  const renameTree = (treeId: string, label: string) => {
+    onChange?.({
+      ...value,
+      trees: value.trees.map((item) =>
+        item.id === treeId ? { ...item, label } : item,
+      ),
+    });
+  };
   const addOption = () => {
     const name = newName.trim();
     if (!name) return;
@@ -266,6 +233,7 @@ export function DecisionTree({
         activeTreeId={tree.id}
         onAdd={isEditable ? addTree : undefined}
         onRemove={isEditable ? removeTree : undefined}
+        onRename={isEditable ? renameTree : undefined}
         onSelect={selectTree}
         trees={value.trees}
       />

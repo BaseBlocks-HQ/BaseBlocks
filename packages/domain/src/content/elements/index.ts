@@ -1,8 +1,6 @@
 export type {
-  DirectoryColumnType,
-  DirectoryColumn,
   DirectoryRow,
-  DirectorySettings,
+  Directory,
   DirectoryContent,
   SearchContent,
   LibraryContent,

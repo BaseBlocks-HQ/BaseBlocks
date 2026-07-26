@@ -1,6 +1,7 @@
 import type { OpenEditorViewerRenderer } from "@openeditor/react";
 import { DecisionTreeViewer, readDecisionTree } from "./decision-tree";
-import { DirectoryViewer, readDirectory } from "./directory";
+import { DirectoryViewer } from "./directory";
+import { readDirectory } from "./directory-model";
 import { PublicLibraryViewer, readLibrary } from "./library";
 import { QuickLinksViewer, readQuickLinks } from "./quick-links";
 import { SearchViewer, readSearch } from "./search";
