@@ -37,14 +37,18 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
-  EyeOff,
   LoaderCircle,
-  MoreHorizontal,
   PencilLine,
-  Share2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconEarth, IconEye, IconSparkle4, IconWindow2 } from "nucleo-glass";
+import {
+  IconEarth,
+  IconEye,
+  IconEyeClosed,
+  IconPaperPlane,
+  IconSparkle4,
+  IconWindow2,
+} from "nucleo-glass";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -377,15 +381,13 @@ function EditorHeaderActions({
       />
 
       {canEdit ? (
-        <>
-          <DeployAction
-            onPublish={onPublish}
-            onUnpublish={onUnpublish}
-            saveStatus={saveStatus}
-            sitePublished={sitePublished}
-          />
-          <HeaderOverflow onOpenShare={onOpenShare} />
-        </>
+        <DeployAction
+          onOpenShare={onOpenShare}
+          onPublish={onPublish}
+          onUnpublish={onUnpublish}
+          saveStatus={saveStatus}
+          sitePublished={sitePublished}
+        />
       ) : (
         <Badge className="ml-1 hidden xl:flex" variant="secondary">
           {t("viewOnlyBadge")}
@@ -429,11 +431,13 @@ function ViewSiteAction({
 }
 
 function DeployAction({
+  onOpenShare,
   onPublish,
   onUnpublish,
   saveStatus,
   sitePublished,
 }: {
+  onOpenShare: () => void;
   onPublish: () => void;
   onUnpublish?: () => void;
   saveStatus: SaveStatus;
@@ -476,36 +480,16 @@ function DeployAction({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onOpenShare}>
+          <IconPaperPlane />
+          {tHeader("share")}
+        </DropdownMenuItem>
         {onUnpublish ? (
           <DropdownMenuItem onClick={onUnpublish} variant="destructive">
-            <EyeOff />
+            <IconEyeClosed />
             {t("unpublish")}
           </DropdownMenuItem>
         ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function HeaderOverflow({ onOpenShare }: { onOpenShare: () => void }) {
-  const t = useTranslations("editor.header");
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={t("moreActions")}
-          className="rounded-lg"
-          size="icon-sm"
-          variant="ghost"
-        >
-          <MoreHorizontal />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onOpenShare}>
-          <Share2 />
-          {t("share")}
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
