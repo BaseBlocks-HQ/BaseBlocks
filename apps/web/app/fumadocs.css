@@ -46,37 +46,47 @@
 
 .bb-docs-shell {
   --fd-layout-width: 108rem;
-  --color-fd-background: var(--background);
+  --bb-docs-surface: #fff;
+  --color-fd-background: var(--bb-docs-surface);
   --color-fd-foreground: var(--foreground);
-  --color-fd-muted: var(--muted);
-  --color-fd-muted-foreground: oklch(0.48 0 0);
-  --color-fd-popover: var(--popover);
-  --color-fd-popover-foreground: var(--popover-foreground);
-  --color-fd-card: var(--card);
-  --color-fd-card-foreground: var(--card-foreground);
-  --color-fd-border: var(--border);
-  --color-fd-primary: oklch(0.7 0.16 72);
-  --color-fd-primary-foreground: oklch(0.18 0 0);
-  --color-fd-secondary: var(--secondary);
-  --color-fd-secondary-foreground: var(--secondary-foreground);
-  --color-fd-accent: var(--accent);
-  --color-fd-accent-foreground: var(--accent-foreground);
-  --color-fd-ring: oklch(0.7 0.16 72);
-  --bb-docs-sidebar-surface: var(--sidebar);
+  --color-fd-muted: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --color-fd-muted-foreground: color-mix(
+    in oklab,
+    var(--foreground) 58%,
+    transparent
+  );
+  --color-fd-popover: var(--bb-docs-surface);
+  --color-fd-popover-foreground: var(--foreground);
+  --color-fd-card: var(--bb-docs-surface);
+  --color-fd-card-foreground: var(--foreground);
+  --color-fd-border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --color-fd-primary: var(--foreground);
+  --color-fd-primary-foreground: var(--background);
+  --color-fd-secondary: color-mix(in oklab, var(--foreground) 6%, transparent);
+  --color-fd-secondary-foreground: var(--foreground);
+  --color-fd-accent: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --color-fd-accent-foreground: var(--foreground);
+  --color-fd-ring: color-mix(in oklab, var(--foreground) 34%, transparent);
+  --bb-docs-sidebar-surface: var(--bb-docs-surface);
+  background: var(--bb-docs-surface);
+  font-family: var(--font-landing-sans), Arial, sans-serif;
 }
 
 .dark .bb-docs-shell {
-  --color-fd-muted-foreground: var(--muted-foreground);
-  --color-fd-primary: oklch(0.78 0.16 72);
-  --color-fd-primary-foreground: oklch(0.2 0 0);
-  --color-fd-ring: oklch(0.78 0.16 72);
+  --bb-docs-surface: #080808;
+  --color-fd-muted-foreground: color-mix(
+    in oklab,
+    var(--foreground) 62%,
+    transparent
+  );
 }
 
+.bb-docs-shell #nd-page,
 .bb-docs-shell #nd-sidebar,
 .bb-docs-shell [data-sidebar-panel],
 .bb-docs-shell footer[grid-area="footer"] {
   background: var(--bb-docs-sidebar-surface);
-  backdrop-filter: blur(18px);
+  backdrop-filter: none;
 }
 
 .bb-docs-shell [data-toc-popover] > header,
@@ -93,20 +103,63 @@
 }
 
 .bb-docs-shell #nd-page .prose h2 {
-  color: var(--color-amber-700);
-  font-size: 0.92rem;
-  letter-spacing: 0.18em;
+  color: var(--foreground);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.dark .bb-docs-shell #nd-page .prose h2 {
-  color: var(--color-amber-400);
+.bb-docs-shell #nd-page h1 {
+  font-family: var(--font-landing-serif), Georgia, serif;
+  font-size: clamp(2.5rem, 5vw, 4.25rem);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1;
 }
 
 .bb-docs-shell #nd-page .prose h3 {
   margin-top: 1.15rem;
   font-size: 1.15rem;
+  font-weight: 500;
   letter-spacing: -0.02em;
+}
+
+.bb-docs-shell #nd-page .prose a.block.rounded-xl {
+  border-radius: 0.625rem;
+  background: transparent;
+}
+
+.bb-docs-shell #nd-page .prose a.block.rounded-xl:hover {
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.bb-docs-shell #nd-sidebar {
+  border-color: var(--color-fd-border);
+}
+
+.bb-docs-shell #nd-sidebar a[data-active="true"] {
+  background: color-mix(in oklab, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+}
+
+.bb-docs-shell #nd-sidebar a,
+.bb-docs-shell #nd-sidebar button {
+  border-radius: 0.5rem;
+}
+
+.bb-docs-shell #nd-sidebar svg {
+  color: currentColor;
+}
+
+.bb-docs-brand-mark {
+  width: 1.125rem;
+  height: auto;
+  filter: invert(1);
+}
+
+.dark .bb-docs-brand-mark {
+  filter: none;
 }
 
 #nd-sidebar > .border-t,

@@ -3,24 +3,29 @@ import { docs } from "collections/server";
 import { defineI18n } from "fumadocs-core/i18n";
 import { loader } from "fumadocs-core/source";
 import {
-  IconBadgeSparkle,
-  IconCodeEditor,
-  IconColorPalette,
-  IconFeather,
-  IconFile,
-  IconGauge,
-  IconGear,
-  IconMonitor,
-  IconNut,
-  IconRocket,
-  IconSignal,
-  IconSquareGrid,
-  IconSquarePointer,
-  IconTabs,
-  IconToggle,
-  IconUsers,
-  IconWindow2,
-} from "nucleo-glass";
+  Blocks,
+  BookOpen,
+  Columns3,
+  Cookie,
+  Eye,
+  Feather,
+  FileText,
+  Gauge,
+  GitCompareArrows,
+  Globe,
+  LayoutGrid,
+  Monitor,
+  Network,
+  Palette,
+  PanelsTopLeft,
+  PenLine,
+  Rocket,
+  Scale,
+  Send,
+  Settings,
+  SlidersHorizontal,
+  UsersRound,
+} from "lucide-react";
 import { createElement } from "react";
 
 const docsI18n = defineI18n({
@@ -30,32 +35,36 @@ const docsI18n = defineI18n({
 });
 
 const docsIconMap = {
-  BadgeSparkle: IconBadgeSparkle,
-  BookOpen: IconBadgeSparkle,
-  Building2: IconMonitor,
-  CodeEditor: IconCodeEditor,
-  Feather: IconFeather,
-  FileText: IconFile,
-  Gauge: IconGauge,
-  Globe: IconRocket,
-  Monitor: IconMonitor,
-  Nut: IconNut,
-  Palette: IconColorPalette,
-  Signal: IconSignal,
-  SquareGrid: IconSquareGrid,
-  SquarePointer: IconSquarePointer,
-  Settings: IconGear,
-  Tabs: IconTabs,
-  Toggle: IconToggle,
-  Users: IconUsers,
-  Window2: IconWindow2,
-  Zap: IconRocket,
+  Blocks,
+  BookOpen,
+  Columns3,
+  Cookie,
+  Eye,
+  Feather,
+  FileText,
+  Gauge,
+  GitCompareArrows,
+  Globe,
+  Monitor,
+  Network,
+  Palette,
+  PanelsTopLeft,
+  PenLine,
+  Rocket,
+  Scale,
+  Send,
+  Settings,
+  SlidersHorizontal,
+  SquareGrid: LayoutGrid,
+  UsersRound,
 } as const;
 
 function resolveContentIcon(icon: string | undefined) {
   if (!icon) return;
   if (icon in docsIconMap) {
-    return createElement(docsIconMap[icon as keyof typeof docsIconMap]);
+    return createElement(docsIconMap[icon as keyof typeof docsIconMap], {
+      strokeWidth: 1.65,
+    });
   }
 }
 

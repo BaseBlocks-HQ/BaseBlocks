@@ -27,11 +27,12 @@ export default async function DocsSectionLayout({
           { locale: "fr", name: "Français" },
         ],
       }}
-      search={{ preload: false }}
+      search={{ hotKey: [], preload: false }}
       theme={{ enabled: false }}
     >
       <DocsLayout
         containerProps={{ className: "bb-docs-shell" }}
+        i18n={false}
         themeSwitch={{ enabled: false }}
         sidebar={{ footer: null }}
         links={[
