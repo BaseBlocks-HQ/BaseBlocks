@@ -12,27 +12,24 @@ export type LandingCopy = Record<
   | "ctaTitle"
   | "editorDesc"
   | "editorTitle"
-  | "featuresLabel"
   | "featuresSubtitle"
   | "featuresTitle"
   | "filesSearchDesc"
   | "filesSearchTitle"
   | "footerCopyright"
   | "getStarted"
+  | "heroDescription"
+  | "heroTitle"
   | "pageTreeDesc"
   | "pageTreeTitle"
   | "publishingDesc"
   | "publishingTitle"
   | "step1Desc"
-  | "step1ImageAlt"
   | "step1Title"
   | "step2Desc"
-  | "step2ImageAlt"
   | "step2Title"
   | "step3Desc"
-  | "step3ImageAlt"
   | "step3Title"
-  | "stepsLabel"
   | "stepsTitle"
   | "teamWorkspacesDesc"
   | "teamWorkspacesTitle"
@@ -67,24 +64,16 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
     </a>
   );
 
-  const docsCta = (
-    <a
-      className={marketingActionClassName({
-        size: "lg",
-        variant: "ghost",
-      })}
-      href={`${prefix}/docs`}
-    >
-      {copy.viewDocs}
-    </a>
-  );
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="landing-page min-h-screen bg-background">
       <div className="relative isolate min-h-screen">
         <LandingHeader labels={labels} locale={locale} />
         <main>
-          <HeroSection authCta={authCta} docsCta={docsCta} />
+          <HeroSection
+            authCta={authCta}
+            description={copy.heroDescription}
+            title={copy.heroTitle}
+          />
           <FeaturesSection
             landingTranslations={(key) => copy[key as keyof LandingCopy]}
           />
@@ -95,7 +84,6 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
         <FooterSection
           authCta={authCta}
           copy={copy}
-          docsCta={docsCta}
           labels={labels}
           locale={locale}
         />

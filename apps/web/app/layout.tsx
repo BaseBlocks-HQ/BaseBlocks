@@ -1,32 +1,19 @@
 import { getMarketingSiteUrl } from "@/lib/seo/site-url";
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
-import localFont from "next/font/local";
+import { Manrope, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 
-const geistSans = Geist({
-  display: "optional",
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-  preload: false,
-});
-const geistMono = localFont({
-  display: "optional",
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  preload: false,
-});
-const geistPixelGrid = localFont({
-  display: "optional",
-  src: "./fonts/GeistPixel-Grid.woff2",
-  variable: "--font-geist-pixel-grid",
-  weight: "500",
-  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
-  adjustFontFallback: false,
-  preload: true,
-});
 const MARKETING_SITE_URL = getMarketingSiteUrl();
+const landingSans = Manrope({
+  subsets: ["latin"],
+  variable: "--font-landing-sans",
+});
+const landingSerif = Newsreader({
+  axes: ["opsz"],
+  subsets: ["latin"],
+  variable: "--font-landing-serif",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -71,7 +58,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${geistPixelGrid.variable} min-h-screen flex flex-col`}
+        className={`${landingSans.variable} ${landingSerif.variable} min-h-screen flex flex-col`}
       >
         {children}
         {process.env.VERCEL === "1" ? (

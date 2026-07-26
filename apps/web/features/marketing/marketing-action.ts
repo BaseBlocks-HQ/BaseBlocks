@@ -1,7 +1,7 @@
 import { cn } from "@baseblocks/ui/lib/utils";
 
 const baseClassName =
-  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[0.625rem] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
 
 const sizeClassNames = {
   icon: "size-9",
@@ -10,7 +10,7 @@ const sizeClassNames = {
 } as const;
 
 const variantClassNames = {
-  default: "bg-primary text-primary-foreground hover:bg-primary/90",
+  default: "landing-primary-action",
   ghost: "hover:bg-accent hover:text-accent-foreground",
 } as const;
 
