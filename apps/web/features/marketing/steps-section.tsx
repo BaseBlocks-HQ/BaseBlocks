@@ -30,7 +30,10 @@ interface StepsSectionProps {
 
 export function StepsSection({ landingTranslations }: StepsSectionProps) {
   return (
-    <section id="how-it-works" className="landing-section scroll-mt-20">
+    <section
+      id="how-it-works"
+      className="landing-section landing-steps-section scroll-mt-20"
+    >
       <div className="landing-rail landing-open-heading landing-steps-heading">
         <h2>{landingTranslations("stepsTitle")}</h2>
       </div>

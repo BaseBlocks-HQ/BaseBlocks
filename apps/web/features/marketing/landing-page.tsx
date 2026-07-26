@@ -16,7 +16,14 @@ export type LandingCopy = Record<
   | "featuresTitle"
   | "filesSearchDesc"
   | "filesSearchTitle"
+  | "footerCookies"
   | "footerCopyright"
+  | "footerDocsOverview"
+  | "footerDocumentation"
+  | "footerLegal"
+  | "footerLegalNotice"
+  | "footerLegalOverview"
+  | "footerQuickStart"
   | "getStarted"
   | "heroDescription"
   | "heroTitle"
@@ -81,12 +88,7 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
             landingTranslations={(key) => copy[key as keyof LandingCopy]}
           />
         </main>
-        <FooterSection
-          authCta={authCta}
-          copy={copy}
-          labels={labels}
-          locale={locale}
-        />
+        <FooterSection authCta={authCta} copy={copy} locale={locale} />
       </div>
     </div>
   );

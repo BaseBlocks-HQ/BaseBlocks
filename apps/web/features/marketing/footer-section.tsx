@@ -1,29 +1,23 @@
-import type { Locale } from "@baseblocks/i18n";
 import type { ReactNode } from "react";
-import { DeferredLandingControls } from "./deferred-landing-controls";
+import { FooterGradient } from "./footer-gradient";
 import type { LandingCopy } from "./landing-page";
 
 interface FooterSectionProps {
   authCta: ReactNode;
   copy: LandingCopy;
-  labels: {
-    selectLanguage: string;
-    themeDark: string;
-    themeLight: string;
-    themeSystem: string;
-  };
-  locale: Locale;
+  locale: "en" | "fr";
 }
 
-export function FooterSection({
-  authCta,
-  copy,
-  labels,
-  locale,
-}: FooterSectionProps) {
+export function FooterSection({ authCta, copy, locale }: FooterSectionProps) {
+  const prefix = locale === "fr" ? "/fr" : "";
+
   return (
     <footer className="landing-footer">
-      <div className="landing-rail">
+      <div className="landing-footer-gradient">
+        <FooterGradient />
+      </div>
+
+      <div className="landing-rail landing-footer-content">
         <div className="landing-footer-cta">
           <div>
             {/* biome-ignore lint/performance/noImgElement: This local SVG logo does not need image optimization. */}
@@ -41,34 +35,39 @@ export function FooterSection({
           </div>
         </div>
 
-        <div className="landing-footer-base">
-          <div className="landing-footer-brand">
-            <div className="landing-footer-brand-lockup">
-              {/* biome-ignore lint/performance/noImgElement: This local SVG logo does not need image optimization. */}
-              <img
-                className="landing-brand-mark landing-brand-mark-footer"
-                src="/brand/baseblocks-mark.svg"
-                alt=""
-                width="270"
-                height="228"
-              />
-              <div>
-                <strong>BaseBlocks</strong>
-                <span>{copy.footerCopyright}</span>
-              </div>
-            </div>
-          </div>
+        <nav className="landing-footer-navigation" aria-label="Footer">
+          <section>
+            <h3>{copy.footerDocumentation}</h3>
+            <a href={`${prefix}/docs`}>{copy.footerDocsOverview}</a>
+            <a href={`${prefix}/docs/quick-start`}>{copy.footerQuickStart}</a>
+            <a href="https://github.com/naaiyy/BaseBlocks">GitHub</a>
+          </section>
 
-          <div className="landing-footer-controls">
-            <DeferredLandingControls labels={labels} locale={locale} />
-            <a
-              href="https://github.com/naaiyy/BaseBlocks"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GitHub
+          <section>
+            <h3>{copy.footerLegal}</h3>
+            <a href={`${prefix}/docs/legal`}>{copy.footerLegalOverview}</a>
+            <a href={`${prefix}/docs/legal/cookie-policy`}>
+              {copy.footerCookies}
             </a>
+            <a href={`${prefix}/docs/legal/legal-notice`}>
+              {copy.footerLegalNotice}
+            </a>
+          </section>
+        </nav>
+
+        <div className="landing-footer-base">
+          <div className="landing-footer-brand-lockup">
+            {/* biome-ignore lint/performance/noImgElement: This local SVG logo does not need image optimization. */}
+            <img
+              className="landing-brand-mark landing-brand-mark-footer"
+              src="/brand/baseblocks-mark.svg"
+              alt=""
+              width="270"
+              height="228"
+            />
+            <strong>BaseBlocks</strong>
           </div>
+          <span className="landing-footer-license">{copy.footerCopyright}</span>
         </div>
       </div>
     </footer>

@@ -75,7 +75,14 @@
     "ctaTitle": "Start building in minutes",
     "footerProduct": "Product",
     "footerCommunity": "Community",
-    "footerCopyright": "\u00a9 2026 BaseBlocks. MIT License."
+    "footerCopyright": "\u00a9 2026 BaseBlocks. MIT License.",
+    "footerDocumentation": "Documentation",
+    "footerDocsOverview": "Overview",
+    "footerQuickStart": "Quick start",
+    "footerLegal": "Legal",
+    "footerLegalOverview": "Legal overview",
+    "footerCookies": "Cookie policy",
+    "footerLegalNotice": "Legal notice"
   },
   "auth": {
     "loginTitle": "Welcome back",
