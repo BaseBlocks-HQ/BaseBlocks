@@ -484,11 +484,6 @@
 .landing-step-visual-motion {
   display: grid;
   place-items: center;
-  background: radial-gradient(
-    circle at 50% 50%,
-    color-mix(in oklab, var(--foreground) 3%, transparent),
-    transparent 68%
-  );
 }
 
 .landing-step-visual-presence {
@@ -496,461 +491,223 @@
 }
 
 .step-two-scene {
+  --step-two-sidebar-width: 8.25rem;
   position: relative;
   width: min(30rem, calc(100% - 1rem));
   height: 20rem;
+  isolation: isolate;
   opacity: 1;
   transition: opacity 320ms cubic-bezier(0.4, 0, 1, 1);
 }
 
-.step-two-scene.is-fading {
-  opacity: 0;
-}
-
-.step-two-scene::before {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 15.75rem;
-  height: 14.75rem;
-  border: 1px solid var(--landing-line-strong);
-  border-radius: 0.55rem;
-  background: var(--background);
-  box-shadow: 0 1rem 2.75rem color-mix(in oklab, #000 7%, transparent);
-  content: "";
-  transform: translate(-50%, -50%);
-  transition:
-    width 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 300ms ease-out;
-}
-
-.step-two-scene.is-site::before {
-  width: 100%;
-  height: 18rem;
-  border-radius: 0.8rem;
+.step-two-scene.is-hidden {
   opacity: 0;
 }
 
 .step-two-site-shell {
   position: absolute;
-  z-index: 1;
   top: 50%;
   left: 50%;
+  display: grid;
+  width: 17rem;
+  height: 16rem;
+  grid-template-columns: 0 minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.7rem;
+  background: var(--background);
+  box-shadow:
+    0 1.25rem 3.5rem color-mix(in oklab, #000 8%, transparent),
+    inset 0 1px 0 oklch(1 0 0 / 28%);
+  transform: translate(-50%, -50%);
+}
+
+.step-two-scene.is-place .step-two-site-shell {
   width: 100%;
   height: 18rem;
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 0.8rem;
-  background: var(--background);
-  clip-path: inset(0 calc((100% - 15.75rem) / 2) round 0.55rem);
-  transform: translate(-50%, -50%) scale(0.82);
-  transform-origin: center;
-  transition:
-    clip-path 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 300ms ease-out,
-    border-radius 850ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 850ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.step-two-scene.is-site .step-two-site-shell {
-  border-color: var(--landing-line-strong);
-  clip-path: inset(0 0 0 0 round 0.8rem);
+  grid-template-columns: var(--step-two-sidebar-width) minmax(0, 1fr);
+  border-radius: 0.85rem;
   box-shadow:
     0 1.5rem 4rem color-mix(in oklab, #000 9%, transparent),
-    inset 0 1px 0 oklch(1 0 0 / 32%);
-  transform: translate(-50%, -50%) scale(0.98);
+    inset 0 1px 0 oklch(1 0 0 / 30%);
 }
 
-.step-two-scene.is-mobile .step-two-site-shell {
-  border-color: transparent;
-  border-radius: 0.95rem;
-  box-shadow: 0 1.5rem 4rem color-mix(in oklab, #000 9%, transparent);
-  clip-path: inset(0 calc((100% - 11.6rem) / 2) round 0.95rem);
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.step-two-device-outline {
-  position: absolute;
-  z-index: 3;
-  top: 50%;
-  left: 50%;
-  width: 11.6rem;
-  height: 18rem;
-  border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
-  border-radius: 1rem;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.96);
-  transition:
-    opacity 420ms ease-out,
-    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.step-two-scene.is-mobile .step-two-device-outline {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.step-two-desktop-site,
-.step-two-mobile-site {
-  position: absolute;
-  inset: 0;
-}
-
-.step-two-desktop-site {
+.step-two-published-sidebar {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.85rem 0.65rem;
+  border-right: 1px solid var(--landing-line);
+  background: color-mix(in oklab, var(--foreground) 2.5%, var(--background));
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 500ms ease-out 120ms,
-    filter 500ms ease-out;
 }
 
-.step-two-scene.is-site .step-two-desktop-site {
+.step-two-scene.is-place .step-two-published-sidebar {
   opacity: 1;
   visibility: visible;
 }
 
-.step-two-scene.is-mobile .step-two-desktop-site {
-  filter: blur(1.5px);
-  opacity: 0;
-}
-
-.step-two-draft-page {
-  position: absolute;
-  z-index: 2;
-  top: 50%;
-  left: 50%;
-  width: 13.25rem;
-  height: 12.25rem;
-  opacity: 1;
-  transform: translate(-50%, -50%);
-  transition:
-    opacity 260ms cubic-bezier(0.4, 0, 1, 1),
-    transform 500ms cubic-bezier(0.4, 0, 1, 1);
-}
-
-.step-two-scene.is-site .step-two-draft-page {
-  opacity: 0;
-  transform: translate(-50%, calc(-50% - 0.35rem));
-}
-
-.step-two-draft-page .step-two-page-content {
-  padding: 3.2rem 0.8rem;
-}
-
-.step-two-draft-page .step-two-page-content h4 {
-  font-size: 1rem;
-}
-
-.step-two-draft-page .step-two-page-content > p {
-  width: auto;
-  font-size: 0.48rem;
-}
-
-.step-two-draft-page .step-two-page-divider,
-.step-two-draft-page .step-two-section-label,
-.step-two-draft-page .step-two-resource-card {
-  display: none;
-}
-
-.step-two-published-sidebar {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 8.25rem;
-  padding: 1rem 0.75rem 0.8rem;
-  border-right: 1px solid var(--landing-line);
-  background: color-mix(in oklab, var(--foreground) 2.5%, var(--background));
-  opacity: 0;
-  transform: translateX(-0.65rem);
-  transition:
-    opacity 500ms ease-out 180ms,
-    transform 750ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
-}
-
-.step-two-scene.is-site .step-two-published-sidebar {
-  opacity: 1;
-  transform: translateX(0);
-}
-
 .step-two-brand {
   display: flex;
+  min-width: 6.9rem;
+  height: 1.65rem;
   align-items: center;
   gap: 0.45rem;
   color: var(--foreground);
   font-size: 0.58rem;
   font-weight: 570;
-  opacity: 0;
-  transform: translateY(0.25rem);
-  transition:
-    opacity 400ms ease-out,
-    transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.step-two-scene.has-identity .step-two-brand {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .step-two-brand-mark {
   display: grid;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 auto;
   place-items: center;
-  border-radius: 0.34rem;
-  background: color-mix(in oklab, var(--foreground) 8%, var(--background));
-  color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, var(--foreground) 88%, var(--background));
+  color: var(--background);
   font-size: 0.58rem;
-  font-style: normal;
   font-weight: 650;
-  transition:
-    color 400ms ease-out,
-    background-color 400ms ease-out;
 }
 
-.step-two-scene.has-identity .step-two-brand-mark {
-  background: #4263eb;
-  color: #fff;
+.step-two-brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .step-two-navigation {
   display: grid;
-  gap: 0.22rem;
-  margin-top: 1.15rem;
+  min-width: 6.9rem;
+  gap: 0.18rem;
+  margin-top: 1.05rem;
 }
 
 .step-two-navigation span {
+  display: grid;
+  min-height: 1.75rem;
+  grid-template-columns: 1.35rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.34rem 0.45rem;
-  border-radius: 0.3rem;
+  border-radius: 0.38rem;
   color: color-mix(in oklab, var(--foreground) 55%, transparent);
   font-size: 0.52rem;
-  opacity: 0;
-  transform: translateY(0.35rem);
   transition:
-    opacity 420ms ease-out,
-    transform 560ms cubic-bezier(0.16, 1, 0.3, 1),
     color 300ms ease-out,
     background-color 300ms ease-out;
 }
 
-.step-two-scene.has-navigation .step-two-navigation span {
-  opacity: 1;
-  transform: translateY(0);
+.step-two-navigation span.is-active {
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: var(--foreground);
 }
 
-.step-two-scene.has-navigation .step-two-navigation span.is-active {
-  background: color-mix(in oklab, #4263eb 10%, transparent);
-  color: color-mix(in oklab, #4263eb 92%, var(--foreground));
+.step-two-navigation svg {
+  width: 0.66rem;
+  height: 0.66rem;
+  justify-self: center;
+  stroke-width: 1.7;
 }
 
-.step-two-sidebar-note {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.8rem;
-  left: 0.75rem;
-  color: color-mix(in oklab, var(--foreground) 35%, transparent);
-  font-size: 0.43rem;
-  opacity: 0;
-  transition: opacity 400ms ease-out 300ms;
-}
-
-.step-two-scene.has-navigation .step-two-sidebar-note {
-  opacity: 1;
-}
-
-.step-two-desktop-main {
-  position: absolute;
-  inset: 0 0 0 8.25rem;
-  transform: translateX(-4.125rem);
-  transition: transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.step-two-scene.is-site .step-two-desktop-main {
-  transform: translateX(0);
-}
-
-.step-two-site-header {
-  display: flex;
-  height: 2.65rem;
-  align-items: center;
-  justify-content: space-between;
-  padding-inline: 1rem;
-  border-bottom: 1px solid var(--landing-line);
-  opacity: 0;
-  transform: translateY(-0.4rem);
-  transition:
-    opacity 500ms ease-out 160ms,
-    transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
-}
-
-.step-two-scene.is-site .step-two-site-header {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.step-two-header-path {
-  color: color-mix(in oklab, var(--foreground) 50%, transparent);
-  font-size: 0.5rem;
-}
-
-.step-two-header-path i {
-  padding-inline: 0.2rem;
-  color: color-mix(in oklab, var(--foreground) 23%, transparent);
+.step-two-navigation i {
+  overflow: hidden;
   font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .step-two-page-content {
-  padding: 2.1rem 2.2rem;
+  min-width: 0;
+  overflow: hidden;
+  padding: 2.2rem 2rem;
 }
 
-.step-two-page-kicker,
-.step-two-section-label {
-  display: block;
-  color: color-mix(in oklab, #4263eb 86%, var(--foreground));
-  font-size: 0.43rem;
-  font-weight: 620;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.step-two-page-heading {
+  display: flex;
+  min-width: 13rem;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-.step-two-page-content h4 {
-  margin: 0.35rem 0 0;
+.step-two-page-heading > span {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.38rem;
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: color-mix(in oklab, var(--foreground) 66%, transparent);
+}
+
+.step-two-page-heading > span svg {
+  width: 0.72rem;
+  height: 0.72rem;
+  stroke-width: 1.7;
+}
+
+.step-two-page-heading h4 {
   color: var(--foreground);
-  font-size: 1.3rem;
-  font-weight: 440;
-  letter-spacing: -0.035em;
+  font-family: var(--font-landing-serif), Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
   line-height: 1.1;
 }
 
 .step-two-page-content > p {
-  width: 15rem;
-  margin: 0.55rem 0 0;
+  width: min(15rem, 100%);
+  margin: 0.85rem 0 0;
   color: color-mix(in oklab, var(--foreground) 57%, transparent);
-  font-size: 0.57rem;
-  line-height: 1.6;
+  font-size: 0.58rem;
+  line-height: 1.65;
 }
 
-.step-two-page-divider {
-  height: 1px;
-  margin: 1.5rem 0 1rem;
-  background: var(--landing-line);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.step-two-scene.has-navigation .step-two-page-divider {
-  transform: scaleX(1);
-}
-
-.step-two-section-label {
-  color: color-mix(in oklab, var(--foreground) 43%, transparent);
+.step-two-document-blocks {
+  width: min(17rem, 100%);
+  margin-top: 1.25rem;
   opacity: 0;
-  transition: opacity 400ms ease-out 180ms;
 }
 
-.step-two-resource-card {
-  position: relative;
-  display: grid;
-  margin-top: 0.55rem;
-  padding: 0.65rem 2rem 0.65rem 0.7rem;
-  border: 1px solid var(--landing-line);
-  border-radius: 0.42rem;
-  opacity: 0;
-  transform: translateY(0.45rem);
-  transition:
-    opacity 450ms ease-out 240ms,
-    transform 650ms cubic-bezier(0.16, 1, 0.3, 1) 200ms;
-}
-
-.step-two-scene.has-navigation .step-two-section-label,
-.step-two-scene.has-navigation .step-two-resource-card {
+.step-two-scene.is-place .step-two-document-blocks {
   opacity: 1;
-  transform: translateY(0);
 }
 
-.step-two-resource-card > span {
+.step-two-document-blocks h5 {
   color: var(--foreground);
-  font-size: 0.53rem;
-  font-weight: 560;
+  font-size: 0.67rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
 }
 
-.step-two-resource-card small {
-  margin-top: 0.18rem;
-  color: color-mix(in oklab, var(--foreground) 47%, transparent);
-  font-size: 0.44rem;
+.step-two-document-blocks > p {
+  margin-top: 0.35rem;
+  color: color-mix(in oklab, var(--foreground) 54%, transparent);
+  font-size: 0.5rem;
+  line-height: 1.55;
 }
 
-.step-two-resource-card i {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  color: color-mix(in oklab, var(--foreground) 40%, transparent);
-  font-size: 0.65rem;
-  font-style: normal;
-  transform: translateY(-50%);
-}
-
-.step-two-mobile-site {
-  right: auto;
-  left: 50%;
-  width: 11.6rem;
-  background: var(--background);
-  filter: blur(1.5px);
-  opacity: 0;
-  transform: translateX(-50%);
-  transition:
-    opacity 360ms ease-out,
-    filter 500ms ease-out;
-}
-
-.step-two-scene.is-mobile .step-two-mobile-site {
-  filter: blur(0);
-  opacity: 1;
-}
-
-.step-two-mobile-header {
+.step-two-document-blocks ul {
   display: grid;
-  height: 2.5rem;
-  grid-template-columns: auto 1fr auto;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+}
+
+.step-two-document-blocks li {
+  display: flex;
   align-items: center;
-  gap: 0.38rem;
-  padding: 0.62rem 0.72rem;
-  border-bottom: 1px solid var(--landing-line);
-  color: var(--foreground);
-  font-size: 0.54rem;
-  font-weight: 560;
-}
-
-.step-two-mobile-header svg {
-  width: 0.8rem;
-  height: 0.8rem;
-  color: color-mix(in oklab, var(--foreground) 60%, transparent);
-  stroke-width: 1.7;
-}
-
-.step-two-page-content.is-mobile-content {
-  padding: 1.5rem 1.1rem;
-}
-
-.step-two-page-content.is-mobile-content h4 {
-  margin-top: 0.3rem;
-  font-size: 1.12rem;
-}
-
-.step-two-page-content.is-mobile-content > p {
-  width: auto;
+  gap: 0.4rem;
+  color: color-mix(in oklab, var(--foreground) 68%, transparent);
   font-size: 0.5rem;
 }
 
-.step-two-page-content.is-mobile-content .step-two-page-divider {
-  margin-block: 1.2rem 0.8rem;
-}
-
-.step-two-page-content.is-mobile-content .step-two-resource-card {
-  padding: 0.62rem 1.7rem 0.62rem 0.62rem;
+.step-two-document-blocks li svg {
+  width: 0.58rem;
+  height: 0.58rem;
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+  stroke-width: 1.7;
 }
 
 .step-three-scene {
@@ -1031,8 +788,8 @@
 }
 
 .step-three-privacy-option.is-active {
-  border-color: color-mix(in oklab, #4263eb 45%, var(--landing-line));
-  background: color-mix(in oklab, #4263eb 7%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 34%, var(--landing-line));
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
   color: var(--foreground);
   transform: translateX(0.14rem);
 }
@@ -1092,8 +849,8 @@
 }
 
 .step-three-privacy-option.is-active > i {
-  border-color: #4263eb;
-  background: #4263eb;
+  border-color: var(--foreground);
+  background: var(--foreground);
 }
 
 .step-three-privacy-option.is-active > i::after {
@@ -1122,8 +879,8 @@
 }
 
 .step-three-scene.is-publishing .step-three-publish-button {
-  background: color-mix(in oklab, #4263eb 86%, var(--foreground));
-  color: #fff;
+  background: color-mix(in oklab, var(--foreground) 84%, var(--background));
+  color: var(--background);
   transform: scale(0.98);
 }
 
@@ -1202,16 +959,16 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  background: color-mix(in oklab, #4263eb 12%, transparent);
-  color: #4263eb;
+  background: color-mix(in oklab, var(--foreground) 9%, transparent);
+  color: var(--foreground);
   transition:
     color 350ms ease-out,
     background-color 350ms ease-out;
 }
 
 .step-three-scene.is-live .step-three-deployment-status > span {
-  background: color-mix(in oklab, #21a366 13%, transparent);
-  color: #21a366;
+  background: var(--foreground);
+  color: var(--background);
 }
 
 .step-three-deployment-status svg {
@@ -1223,7 +980,7 @@
 .step-three-deployment-status i {
   width: 0.52rem;
   height: 0.52rem;
-  border: 1px solid color-mix(in oklab, #4263eb 28%, transparent);
+  border: 1px solid color-mix(in oklab, var(--foreground) 28%, transparent);
   border-top-color: currentcolor;
   border-radius: 50%;
   animation: step-three-spin 700ms linear infinite;
@@ -1306,8 +1063,8 @@
 .step-three-analytics > header > i {
   padding: 0.2rem 0.4rem;
   border-radius: 999px;
-  background: color-mix(in oklab, #21a366 12%, transparent);
-  color: color-mix(in oklab, #21a366 84%, var(--foreground));
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  color: var(--foreground);
   font-size: 0.4rem;
   font-style: normal;
   font-weight: 590;
@@ -1319,8 +1076,8 @@
   height: 1.35rem;
   place-items: center;
   border-radius: 0.4rem;
-  background: color-mix(in oklab, #4263eb 12%, transparent);
-  color: #4263eb;
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  color: var(--foreground);
 }
 
 .step-three-analytics-icon svg {
@@ -1367,7 +1124,7 @@
   position: absolute;
   top: 0.6rem;
   right: 0.6rem;
-  color: color-mix(in oklab, #21a366 85%, var(--foreground));
+  color: color-mix(in oklab, var(--foreground) 58%, transparent);
 }
 
 .step-three-chart {
@@ -1390,14 +1147,14 @@
 }
 
 .step-three-chart-area {
-  fill: color-mix(in oklab, #4263eb 9%, transparent);
+  fill: color-mix(in oklab, var(--foreground) 7%, transparent);
   opacity: 0;
   transition: opacity 700ms ease-out 450ms;
 }
 
 .step-three-chart-line {
   fill: none;
-  stroke: #4263eb;
+  stroke: color-mix(in oklab, var(--foreground) 72%, transparent);
   stroke-dasharray: 340;
   stroke-dashoffset: 340;
   stroke-linecap: round;
@@ -1439,7 +1196,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: color-mix(in oklab, #4263eb 68%, var(--foreground));
+  background: color-mix(in oklab, var(--foreground) 64%, transparent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 750ms cubic-bezier(0.16, 1, 0.3, 1) 500ms;

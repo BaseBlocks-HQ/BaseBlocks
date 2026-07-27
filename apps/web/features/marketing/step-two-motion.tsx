@@ -1,19 +1,14 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { BookOpen, FileText, Home, Library } from "lucide-react";
 import { useInView, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 type TimelineMode =
-  | "draft"
-  | "expand"
-  | "identity"
-  | "navigation"
-  | "desktopHold"
-  | "mobile"
-  | "mobileHold"
-  | "return"
-  | "settle"
+  | "document"
+  | "documentExit"
+  | "placeEnter"
+  | "placeHold"
   | "fade";
 
 interface TimelineEvent {
@@ -21,25 +16,19 @@ interface TimelineEvent {
   mode: TimelineMode;
 }
 
-const firstEvent: TimelineEvent = { duration: 1300, mode: "draft" };
+const firstEvent: TimelineEvent = { duration: 1800, mode: "document" };
 const timeline: readonly TimelineEvent[] = [
   firstEvent,
-  { duration: 900, mode: "expand" },
-  { duration: 850, mode: "identity" },
-  { duration: 1000, mode: "navigation" },
-  { duration: 1050, mode: "desktopHold" },
-  { duration: 950, mode: "mobile" },
-  { duration: 1250, mode: "mobileHold" },
-  { duration: 900, mode: "return" },
-  { duration: 1800, mode: "settle" },
+  { duration: 320, mode: "documentExit" },
+  { duration: 450, mode: "placeEnter" },
+  { duration: 3200, mode: "placeHold" },
   { duration: 400, mode: "fade" },
 ];
 
 const navigationItems = [
-  "Overview",
-  "Getting started",
-  "Product",
-  "Resources",
+  { icon: Home, label: "Overview" },
+  { icon: BookOpen, label: "Product handbook" },
+  { icon: Library, label: "Resources" },
 ] as const;
 
 export function StepTwoMotion() {
@@ -62,95 +51,71 @@ export function StepTwoMotion() {
   }, [eventIndex, isInView, reduceMotion]);
 
   const mode = reduceMotion
-    ? ("settle" satisfies TimelineMode)
+    ? ("placeHold" satisfies TimelineMode)
     : (timeline[eventIndex]?.mode ?? firstEvent.mode);
-  const siteReady = mode !== "draft";
-  const identityReady = !["draft", "expand"].includes(mode);
-  const navigationReady = !["draft", "expand", "identity"].includes(mode);
-  const mobile = mode === "mobile" || mode === "mobileHold";
-  const fading = mode === "fade";
+  const placeReady = ["placeEnter", "placeHold", "fade"].includes(mode);
+  const hidden = mode === "documentExit" || mode === "fade";
 
   return (
     <div
-      className={`step-two-scene ${siteReady ? "is-site" : "is-draft"} ${
-        identityReady ? "has-identity" : ""
-      } ${navigationReady ? "has-navigation" : ""} ${
-        mobile ? "is-mobile" : ""
-      } ${fading ? "is-fading" : ""}`}
+      className={`step-two-scene ${placeReady ? "is-place" : ""} ${
+        hidden ? "is-hidden" : ""
+      }`}
       ref={ref}
     >
-      <div className="step-two-device-outline" />
-
       <div className="step-two-site-shell">
-        <div className="step-two-draft-page">
-          <PublishedPageContent />
-        </div>
-
-        <div className="step-two-desktop-site">
-          <aside className="step-two-published-sidebar">
-            <div className="step-two-brand">
-              <span className="step-two-brand-mark">A</span>
-              <span>Atlas Handbook</span>
-            </div>
-
-            <nav className="step-two-navigation">
-              {navigationItems.map((item, index) => (
-                <span
-                  className={index === 2 ? "is-active" : ""}
-                  key={item}
-                  style={{ transitionDelay: `${index * 65}ms` }}
-                >
-                  {item}
-                </span>
-              ))}
-            </nav>
-
-            <span className="step-two-sidebar-note">Updated moments ago</span>
-          </aside>
-
-          <div className="step-two-desktop-main">
-            <header className="step-two-site-header">
-              <span className="step-two-header-path">
-                Handbook <i>/</i> Product
-              </span>
-            </header>
-
-            <PublishedPageContent />
-          </div>
-        </div>
-
-        <div className="step-two-mobile-site">
-          <header className="step-two-mobile-header">
+        <aside className="step-two-published-sidebar">
+          <div className="step-two-brand">
             <span className="step-two-brand-mark">A</span>
-            <span>Atlas</span>
-            <Menu aria-hidden="true" />
-          </header>
-          <PublishedPageContent mobile />
-        </div>
+            <span className="step-two-brand-name">Atlas Handbook</span>
+          </div>
+
+          <nav className="step-two-navigation">
+            {navigationItems.map(({ icon: Icon, label }, index) => (
+              <span
+                className={index === 1 ? "is-active" : ""}
+                key={label}
+                style={{ transitionDelay: `${index * 55}ms` }}
+              >
+                <Icon aria-hidden="true" />
+                <i>{label}</i>
+              </span>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="step-two-page-content">
+          <div className="step-two-page-heading">
+            <span aria-hidden="true">
+              <FileText />
+            </span>
+            <h4>Product handbook</h4>
+          </div>
+
+          <p>
+            Keep every decision, resource, and update in one clear place so the
+            whole team can move with confidence.
+          </p>
+
+          <div className="step-two-document-blocks">
+            <h5>Working together</h5>
+            <p>
+              Use this handbook as the shared source for product principles,
+              plans, and decisions.
+            </p>
+            <ul>
+              <li>
+                <FileText aria-hidden="true" />
+                Product principles
+              </li>
+              <li>
+                <FileText aria-hidden="true" />
+                Planning and decisions
+              </li>
+            </ul>
+          </div>
+        </main>
       </div>
     </div>
-  );
-}
-
-function PublishedPageContent({ mobile = false }: { mobile?: boolean }) {
-  return (
-    <main
-      className={`step-two-page-content ${mobile ? "is-mobile-content" : ""}`}
-    >
-      <span className="step-two-page-kicker">Product</span>
-      <h4>Product handbook</h4>
-      <p>
-        Everything your team needs to build, launch, and support the product.
-      </p>
-
-      <div className="step-two-page-divider" />
-
-      <span className="step-two-section-label">Start here</span>
-      <div className="step-two-resource-card">
-        <span>Getting started</span>
-        <small>Set up the essentials in a few minutes.</small>
-        <i>→</i>
-      </div>
-    </main>
   );
 }
