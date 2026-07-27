@@ -152,6 +152,19 @@
   color: currentColor;
 }
 
+.bb-docs-shell button:has(> svg.lucide-panel-left) > svg {
+  display: none;
+}
+
+.bb-docs-shell button:has(> svg.lucide-panel-left)::before {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  background: currentColor;
+  content: "";
+  mask: url("/docs/sidebar-trigger.svg") center / contain no-repeat;
+}
+
 .bb-docs-brand-mark {
   width: 1.125rem;
   height: auto;
