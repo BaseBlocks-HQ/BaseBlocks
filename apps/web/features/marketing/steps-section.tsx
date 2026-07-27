@@ -1,4 +1,7 @@
 import { StepRailPattern } from "./step-rail-pattern";
+import { StepOneMotion } from "./step-one-motion";
+import { StepThreeMotion } from "./step-three-motion";
+import { StepTwoMotion } from "./step-two-motion";
 
 type TranslateFn = (key: string) => string;
 
@@ -54,8 +57,21 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                   <p>{landingTranslations(step.descKey)}</p>
                 </div>
               </div>
-              <div className="landing-step-visual" aria-hidden="true">
-                <div className="landing-step-marker">{step.num}</div>
+              <div
+                className={`landing-step-visual ${
+                  index < 3 ? "landing-step-visual-motion" : ""
+                } ${index > 0 ? "landing-step-visual-presence" : ""}`}
+                aria-hidden="true"
+              >
+                {index === 0 ? (
+                  <StepOneMotion />
+                ) : index === 1 ? (
+                  <StepTwoMotion />
+                ) : index === 2 ? (
+                  <StepThreeMotion />
+                ) : (
+                  <div className="landing-step-marker">{step.num}</div>
+                )}
               </div>
             </article>
           ))}

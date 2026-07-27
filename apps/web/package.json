@@ -30,6 +30,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/sdk": "^1.28.8",
     "better-auth": "^1.6.23",
+    "cobe": "^2.0.1",
     "convex": "^1.42.1",
     "docx": "^9.7.1",
     "files-sdk": "^2.1.0",

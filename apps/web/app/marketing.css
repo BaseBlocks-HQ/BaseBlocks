@@ -481,6 +481,1544 @@
   transform: translate(-50%, -50%);
 }
 
+.landing-step-visual-motion {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in oklab, var(--foreground) 3%, transparent),
+    transparent 68%
+  );
+}
+
+.landing-step-visual-presence {
+  background: var(--background);
+}
+
+.step-two-scene {
+  position: relative;
+  width: min(30rem, calc(100% - 1rem));
+  height: 20rem;
+  opacity: 1;
+  transition: opacity 320ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.step-two-scene.is-fading {
+  opacity: 0;
+}
+
+.step-two-scene::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15.75rem;
+  height: 14.75rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.55rem;
+  background: var(--background);
+  box-shadow: 0 1rem 2.75rem color-mix(in oklab, #000 7%, transparent);
+  content: "";
+  transform: translate(-50%, -50%);
+  transition:
+    width 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 300ms ease-out;
+}
+
+.step-two-scene.is-site::before {
+  width: 100%;
+  height: 18rem;
+  border-radius: 0.8rem;
+  opacity: 0;
+}
+
+.step-two-site-shell {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 18rem;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 0.8rem;
+  background: var(--background);
+  clip-path: inset(0 calc((100% - 15.75rem) / 2) round 0.55rem);
+  transform: translate(-50%, -50%) scale(0.82);
+  transform-origin: center;
+  transition:
+    clip-path 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 300ms ease-out,
+    border-radius 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 850ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-two-scene.is-site .step-two-site-shell {
+  border-color: var(--landing-line-strong);
+  clip-path: inset(0 0 0 0 round 0.8rem);
+  box-shadow:
+    0 1.5rem 4rem color-mix(in oklab, #000 9%, transparent),
+    inset 0 1px 0 oklch(1 0 0 / 32%);
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.step-two-scene.is-mobile .step-two-site-shell {
+  border-color: transparent;
+  border-radius: 0.95rem;
+  box-shadow: 0 1.5rem 4rem color-mix(in oklab, #000 9%, transparent);
+  clip-path: inset(0 calc((100% - 11.6rem) / 2) round 0.95rem);
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.step-two-device-outline {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: 11.6rem;
+  height: 18rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
+  border-radius: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition:
+    opacity 420ms ease-out,
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-two-scene.is-mobile .step-two-device-outline {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.step-two-desktop-site,
+.step-two-mobile-site {
+  position: absolute;
+  inset: 0;
+}
+
+.step-two-desktop-site {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 500ms ease-out 120ms,
+    filter 500ms ease-out;
+}
+
+.step-two-scene.is-site .step-two-desktop-site {
+  opacity: 1;
+  visibility: visible;
+}
+
+.step-two-scene.is-mobile .step-two-desktop-site {
+  filter: blur(1.5px);
+  opacity: 0;
+}
+
+.step-two-draft-page {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 13.25rem;
+  height: 12.25rem;
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 260ms cubic-bezier(0.4, 0, 1, 1),
+    transform 500ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.step-two-scene.is-site .step-two-draft-page {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% - 0.35rem));
+}
+
+.step-two-draft-page .step-two-page-content {
+  padding: 3.2rem 0.8rem;
+}
+
+.step-two-draft-page .step-two-page-content h4 {
+  font-size: 1rem;
+}
+
+.step-two-draft-page .step-two-page-content > p {
+  width: auto;
+  font-size: 0.48rem;
+}
+
+.step-two-draft-page .step-two-page-divider,
+.step-two-draft-page .step-two-section-label,
+.step-two-draft-page .step-two-resource-card {
+  display: none;
+}
+
+.step-two-published-sidebar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8.25rem;
+  padding: 1rem 0.75rem 0.8rem;
+  border-right: 1px solid var(--landing-line);
+  background: color-mix(in oklab, var(--foreground) 2.5%, var(--background));
+  opacity: 0;
+  transform: translateX(-0.65rem);
+  transition:
+    opacity 500ms ease-out 180ms,
+    transform 750ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+.step-two-scene.is-site .step-two-published-sidebar {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.step-two-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--foreground);
+  font-size: 0.58rem;
+  font-weight: 570;
+  opacity: 0;
+  transform: translateY(0.25rem);
+  transition:
+    opacity 400ms ease-out,
+    transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-two-scene.has-identity .step-two-brand {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-two-brand-mark {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 0.34rem;
+  background: color-mix(in oklab, var(--foreground) 8%, var(--background));
+  color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 650;
+  transition:
+    color 400ms ease-out,
+    background-color 400ms ease-out;
+}
+
+.step-two-scene.has-identity .step-two-brand-mark {
+  background: #4263eb;
+  color: #fff;
+}
+
+.step-two-navigation {
+  display: grid;
+  gap: 0.22rem;
+  margin-top: 1.15rem;
+}
+
+.step-two-navigation span {
+  padding: 0.34rem 0.45rem;
+  border-radius: 0.3rem;
+  color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  font-size: 0.52rem;
+  opacity: 0;
+  transform: translateY(0.35rem);
+  transition:
+    opacity 420ms ease-out,
+    transform 560ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 300ms ease-out,
+    background-color 300ms ease-out;
+}
+
+.step-two-scene.has-navigation .step-two-navigation span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-two-scene.has-navigation .step-two-navigation span.is-active {
+  background: color-mix(in oklab, #4263eb 10%, transparent);
+  color: color-mix(in oklab, #4263eb 92%, var(--foreground));
+}
+
+.step-two-sidebar-note {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.8rem;
+  left: 0.75rem;
+  color: color-mix(in oklab, var(--foreground) 35%, transparent);
+  font-size: 0.43rem;
+  opacity: 0;
+  transition: opacity 400ms ease-out 300ms;
+}
+
+.step-two-scene.has-navigation .step-two-sidebar-note {
+  opacity: 1;
+}
+
+.step-two-desktop-main {
+  position: absolute;
+  inset: 0 0 0 8.25rem;
+  transform: translateX(-4.125rem);
+  transition: transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-two-scene.is-site .step-two-desktop-main {
+  transform: translateX(0);
+}
+
+.step-two-site-header {
+  display: flex;
+  height: 2.65rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1rem;
+  border-bottom: 1px solid var(--landing-line);
+  opacity: 0;
+  transform: translateY(-0.4rem);
+  transition:
+    opacity 500ms ease-out 160ms,
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
+}
+
+.step-two-scene.is-site .step-two-site-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-two-header-path {
+  color: color-mix(in oklab, var(--foreground) 50%, transparent);
+  font-size: 0.5rem;
+}
+
+.step-two-header-path i {
+  padding-inline: 0.2rem;
+  color: color-mix(in oklab, var(--foreground) 23%, transparent);
+  font-style: normal;
+}
+
+.step-two-page-content {
+  padding: 2.1rem 2.2rem;
+}
+
+.step-two-page-kicker,
+.step-two-section-label {
+  display: block;
+  color: color-mix(in oklab, #4263eb 86%, var(--foreground));
+  font-size: 0.43rem;
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.step-two-page-content h4 {
+  margin: 0.35rem 0 0;
+  color: var(--foreground);
+  font-size: 1.3rem;
+  font-weight: 440;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.step-two-page-content > p {
+  width: 15rem;
+  margin: 0.55rem 0 0;
+  color: color-mix(in oklab, var(--foreground) 57%, transparent);
+  font-size: 0.57rem;
+  line-height: 1.6;
+}
+
+.step-two-page-divider {
+  height: 1px;
+  margin: 1.5rem 0 1rem;
+  background: var(--landing-line);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-two-scene.has-navigation .step-two-page-divider {
+  transform: scaleX(1);
+}
+
+.step-two-section-label {
+  color: color-mix(in oklab, var(--foreground) 43%, transparent);
+  opacity: 0;
+  transition: opacity 400ms ease-out 180ms;
+}
+
+.step-two-resource-card {
+  position: relative;
+  display: grid;
+  margin-top: 0.55rem;
+  padding: 0.65rem 2rem 0.65rem 0.7rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.42rem;
+  opacity: 0;
+  transform: translateY(0.45rem);
+  transition:
+    opacity 450ms ease-out 240ms,
+    transform 650ms cubic-bezier(0.16, 1, 0.3, 1) 200ms;
+}
+
+.step-two-scene.has-navigation .step-two-section-label,
+.step-two-scene.has-navigation .step-two-resource-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-two-resource-card > span {
+  color: var(--foreground);
+  font-size: 0.53rem;
+  font-weight: 560;
+}
+
+.step-two-resource-card small {
+  margin-top: 0.18rem;
+  color: color-mix(in oklab, var(--foreground) 47%, transparent);
+  font-size: 0.44rem;
+}
+
+.step-two-resource-card i {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  color: color-mix(in oklab, var(--foreground) 40%, transparent);
+  font-size: 0.65rem;
+  font-style: normal;
+  transform: translateY(-50%);
+}
+
+.step-two-mobile-site {
+  right: auto;
+  left: 50%;
+  width: 11.6rem;
+  background: var(--background);
+  filter: blur(1.5px);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition:
+    opacity 360ms ease-out,
+    filter 500ms ease-out;
+}
+
+.step-two-scene.is-mobile .step-two-mobile-site {
+  filter: blur(0);
+  opacity: 1;
+}
+
+.step-two-mobile-header {
+  display: grid;
+  height: 2.5rem;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.62rem 0.72rem;
+  border-bottom: 1px solid var(--landing-line);
+  color: var(--foreground);
+  font-size: 0.54rem;
+  font-weight: 560;
+}
+
+.step-two-mobile-header svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: color-mix(in oklab, var(--foreground) 60%, transparent);
+  stroke-width: 1.7;
+}
+
+.step-two-page-content.is-mobile-content {
+  padding: 1.5rem 1.1rem;
+}
+
+.step-two-page-content.is-mobile-content h4 {
+  margin-top: 0.3rem;
+  font-size: 1.12rem;
+}
+
+.step-two-page-content.is-mobile-content > p {
+  width: auto;
+  font-size: 0.5rem;
+}
+
+.step-two-page-content.is-mobile-content .step-two-page-divider {
+  margin-block: 1.2rem 0.8rem;
+}
+
+.step-two-page-content.is-mobile-content .step-two-resource-card {
+  padding: 0.62rem 1.7rem 0.62rem 0.62rem;
+}
+
+.step-three-scene {
+  position: relative;
+  width: min(32rem, calc(100% - 2rem));
+  height: 20rem;
+  opacity: 1;
+  transition: opacity 320ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.step-three-scene.is-fading {
+  opacity: 0;
+}
+
+.step-three-publish-card {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 17rem;
+  padding: 1rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.75rem;
+  background: var(--background);
+  box-shadow:
+    0 1.25rem 4rem color-mix(in oklab, #000 9%, transparent),
+    inset 0 1px 0 oklch(1 0 0 / 30%);
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 300ms cubic-bezier(0.4, 0, 1, 1),
+    transform 650ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.step-three-scene.has-deployment .step-three-publish-card {
+  opacity: 0;
+  transform: translate(-50%, calc(-50% - 0.55rem)) scale(0.96);
+}
+
+.step-three-publish-card header {
+  display: grid;
+  gap: 0.22rem;
+  padding-bottom: 0.85rem;
+}
+
+.step-three-publish-card header > span {
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 570;
+}
+
+.step-three-publish-card header small {
+  color: color-mix(in oklab, var(--foreground) 48%, transparent);
+  font-size: 0.48rem;
+}
+
+.step-three-privacy-options {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.step-three-privacy-option {
+  position: relative;
+  display: grid;
+  min-height: 2.9rem;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.52rem;
+  color: color-mix(in oklab, var(--foreground) 52%, transparent);
+  transition:
+    color 350ms ease-out,
+    border-color 350ms ease-out,
+    background-color 350ms ease-out,
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-three-privacy-option.is-active {
+  border-color: color-mix(in oklab, #4263eb 45%, var(--landing-line));
+  background: color-mix(in oklab, #4263eb 7%, transparent);
+  color: var(--foreground);
+  transform: translateX(0.14rem);
+}
+
+.step-three-privacy-icon {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.step-three-privacy-icon svg {
+  width: 0.7rem;
+  height: 0.7rem;
+  stroke-width: 1.7;
+}
+
+.step-three-privacy-option > span:nth-child(2) {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.step-three-privacy-option strong {
+  font-size: 0.54rem;
+  font-weight: 560;
+}
+
+.step-three-privacy-option small {
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+  font-size: 0.43rem;
+}
+
+.step-three-privacy-option > i {
+  position: relative;
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 25%, transparent);
+  border-radius: 50%;
+  transition:
+    border-color 350ms ease-out,
+    background-color 350ms ease-out;
+}
+
+.step-three-privacy-option > i::after {
+  position: absolute;
+  inset: 0.17rem;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  opacity: 0;
+  transform: scale(0.65);
+  transition:
+    opacity 250ms ease-out,
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-three-privacy-option.is-active > i {
+  border-color: #4263eb;
+  background: #4263eb;
+}
+
+.step-three-privacy-option.is-active > i::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.step-three-publish-button {
+  position: relative;
+  display: flex;
+  height: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  margin-top: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.54rem;
+  font-weight: 590;
+  transition:
+    background-color 350ms ease-out,
+    color 350ms ease-out,
+    transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-three-scene.is-publishing .step-three-publish-button {
+  background: color-mix(in oklab, #4263eb 86%, var(--foreground));
+  color: #fff;
+  transform: scale(0.98);
+}
+
+.step-three-button-spinner {
+  width: 0;
+  height: 0.68rem;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-top-color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition:
+    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 250ms ease-out;
+}
+
+.step-three-scene.is-publishing .step-three-button-spinner {
+  width: 0.68rem;
+  opacity: 1;
+  animation: step-three-spin 700ms linear infinite;
+}
+
+.step-three-deployment {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(0.9rem);
+  transition:
+    opacity 500ms ease-out,
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 450ms ease-out;
+}
+
+.step-three-scene.has-deployment .step-three-deployment {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.step-three-scene.has-analytics .step-three-deployment {
+  filter: blur(1.5px);
+  opacity: 0;
+  transform: translateX(-3.5rem) scale(0.76);
+}
+
+.step-three-deployment canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 17rem;
+  height: 17rem;
+  transform: translate(-50%, -55%);
+}
+
+.step-three-deployment-status {
+  position: absolute;
+  right: 50%;
+  bottom: 0.45rem;
+  display: flex;
+  min-width: 9.7rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.52rem 0.7rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  box-shadow: 0 0.8rem 2rem color-mix(in oklab, #000 8%, transparent);
+  backdrop-filter: blur(0.75rem);
+  transform: translateX(50%);
+}
+
+.step-three-deployment-status > span {
+  display: grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, #4263eb 12%, transparent);
+  color: #4263eb;
+  transition:
+    color 350ms ease-out,
+    background-color 350ms ease-out;
+}
+
+.step-three-scene.is-live .step-three-deployment-status > span {
+  background: color-mix(in oklab, #21a366 13%, transparent);
+  color: #21a366;
+}
+
+.step-three-deployment-status svg {
+  width: 0.62rem;
+  height: 0.62rem;
+  stroke-width: 2.2;
+}
+
+.step-three-deployment-status i {
+  width: 0.52rem;
+  height: 0.52rem;
+  border: 1px solid color-mix(in oklab, #4263eb 28%, transparent);
+  border-top-color: currentcolor;
+  border-radius: 50%;
+  animation: step-three-spin 700ms linear infinite;
+}
+
+.step-three-deployment-status > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.step-three-deployment-status strong {
+  color: var(--foreground);
+  font-size: 0.49rem;
+  font-weight: 580;
+}
+
+.step-three-deployment-status small {
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+  font-size: 0.4rem;
+}
+
+.step-three-analytics {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  max-width: 29.5rem;
+  min-height: 17.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.8rem;
+  background: var(--background);
+  box-shadow:
+    0 1.5rem 4rem color-mix(in oklab, #000 9%, transparent),
+    inset 0 1px 0 oklch(1 0 0 / 30%);
+  opacity: 0;
+  transform: translate(calc(-50% + 1.25rem), -50%);
+  transition:
+    opacity 520ms ease-out 140ms,
+    transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 80ms;
+}
+
+.step-three-scene.has-analytics .step-three-analytics {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.step-three-analytics > header {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.step-three-analytics > header > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-three-analytics > header span:nth-child(2) {
+  display: grid;
+  gap: 0.06rem;
+}
+
+.step-three-analytics > header strong {
+  color: var(--foreground);
+  font-size: 0.55rem;
+  font-weight: 580;
+}
+
+.step-three-analytics > header small {
+  color: color-mix(in oklab, var(--foreground) 40%, transparent);
+  font-size: 0.41rem;
+}
+
+.step-three-analytics > header > i {
+  padding: 0.2rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, #21a366 12%, transparent);
+  color: color-mix(in oklab, #21a366 84%, var(--foreground));
+  font-size: 0.4rem;
+  font-style: normal;
+  font-weight: 590;
+}
+
+.step-three-analytics-icon {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 0.4rem;
+  background: color-mix(in oklab, #4263eb 12%, transparent);
+  color: #4263eb;
+}
+
+.step-three-analytics-icon svg {
+  width: 0.68rem;
+  height: 0.68rem;
+  stroke-width: 1.8;
+}
+
+.step-three-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 0.7rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.5rem;
+}
+
+.step-three-metrics > div {
+  position: relative;
+  display: grid;
+  min-height: 3.3rem;
+  align-content: center;
+  gap: 0.12rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.step-three-metrics > div:not(:last-child) {
+  border-right: 1px solid var(--landing-line);
+}
+
+.step-three-metrics span,
+.step-three-metrics small {
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+  font-size: 0.4rem;
+}
+
+.step-three-metrics strong {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.step-three-metrics small {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  color: color-mix(in oklab, #21a366 85%, var(--foreground));
+}
+
+.step-three-chart {
+  margin-top: 0.65rem;
+}
+
+.step-three-chart > span,
+.step-three-activity > span {
+  color: color-mix(in oklab, var(--foreground) 47%, transparent);
+  font-size: 0.42rem;
+  font-weight: 560;
+}
+
+.step-three-chart svg {
+  display: block;
+  width: 100%;
+  height: 3.65rem;
+  margin-top: 0.25rem;
+  overflow: visible;
+}
+
+.step-three-chart-area {
+  fill: color-mix(in oklab, #4263eb 9%, transparent);
+  opacity: 0;
+  transition: opacity 700ms ease-out 450ms;
+}
+
+.step-three-chart-line {
+  fill: none;
+  stroke: #4263eb;
+  stroke-dasharray: 340;
+  stroke-dashoffset: 340;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  transition: stroke-dashoffset 1100ms cubic-bezier(0.16, 1, 0.3, 1) 280ms;
+}
+
+.step-three-scene.has-analytics .step-three-chart-area {
+  opacity: 1;
+}
+
+.step-three-scene.has-analytics .step-three-chart-line {
+  stroke-dashoffset: 0;
+}
+
+.step-three-activity {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.step-three-activity > div {
+  display: grid;
+  grid-template-columns: 6rem 1fr 1.4rem;
+  align-items: center;
+  gap: 0.55rem;
+  color: color-mix(in oklab, var(--foreground) 58%, transparent);
+  font-size: 0.4rem;
+}
+
+.step-three-activity > div > i {
+  height: 0.19rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.step-three-activity > div b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in oklab, #4263eb 68%, var(--foreground));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 750ms cubic-bezier(0.16, 1, 0.3, 1) 500ms;
+}
+
+.step-three-scene.has-analytics .step-three-activity > div b {
+  transform: scaleX(1);
+}
+
+.step-three-activity small {
+  text-align: right;
+}
+
+@keyframes step-three-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.step-one-scene {
+  position: relative;
+  width: min(32rem, calc(100% - 3.5rem));
+  height: 20rem;
+}
+
+.step-one-orbit {
+  position: absolute;
+  border: 1px solid var(--landing-line);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.step-one-orbit-left {
+  top: 1.75rem;
+  left: -3.5rem;
+  width: 11rem;
+  height: 11rem;
+}
+
+.step-one-orbit-right {
+  right: -4rem;
+  bottom: 0;
+  width: 13rem;
+  height: 13rem;
+}
+
+.step-one-panel {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.step-one-command,
+.step-one-content {
+  border: 1px solid var(--landing-line-strong);
+  background: color-mix(in oklab, var(--background) 96%, transparent);
+  box-shadow:
+    0 1.25rem 4rem color-mix(in oklab, #000 9%, transparent),
+    inset 0 1px 0 color-mix(in oklab, #fff 35%, transparent);
+  backdrop-filter: blur(1rem);
+}
+
+.step-one-command {
+  display: flex;
+  min-height: 5.25rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.95rem 0.75rem 0.65rem 1rem;
+  border-radius: 0.8rem;
+}
+
+.step-one-command > span {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+.step-one-command > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-one-source-count {
+  display: flex;
+  min-width: 2rem;
+  height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding-inline: 0.4rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.45rem;
+  color: var(--muted-foreground);
+}
+
+.step-one-source-count svg {
+  width: 0.72rem;
+  height: 0.72rem;
+}
+
+.step-one-source-count small {
+  font-size: 0.5rem;
+}
+
+.step-one-command > div > i {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 0.45rem;
+  color: var(--background);
+}
+
+.step-one-command > div > i svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.step-one-content {
+  position: relative;
+  margin-top: 0.6rem;
+  padding: 0.45rem 0 0.55rem;
+  overflow: hidden;
+  border-radius: 0.8rem;
+}
+
+.step-one-content-heading,
+.step-one-source-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.step-one-content-heading {
+  min-height: 1.55rem;
+  padding-inline: 0.9rem;
+  color: var(--muted-foreground);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.step-one-source-row {
+  min-height: 2.65rem;
+  padding-inline: 0.9rem;
+  border-top: 1px solid var(--landing-line);
+}
+
+.step-one-source-row > span {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.65rem;
+}
+
+.step-one-source-row > span > i {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.4rem;
+  color: var(--muted-foreground);
+}
+
+.step-one-source-row > span svg {
+  width: 0.68rem;
+  height: 0.68rem;
+}
+
+.step-one-source-row em {
+  position: relative;
+  width: 1.65rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+  font-style: normal;
+  transition: background 240ms ease;
+}
+
+.step-one-source-row em > i {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--background);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 16%);
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-one-source-row em.is-on {
+  background: #30c495;
+}
+
+.step-one-source-row em.is-on > i {
+  transform: translateX(0.7rem);
+}
+
+.step-one-source-row b {
+  color: var(--muted-foreground);
+  font-size: 0.58rem;
+  font-weight: 400;
+}
+
+.step-one-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #30c495;
+  transform-origin: left;
+}
+
+.step-one-editor-scene {
+  width: min(34rem, calc(100% - 3rem));
+  height: 22rem;
+}
+
+.step-editor-closeup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(31rem, 100%);
+  height: 20rem;
+  overflow: visible;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.9rem;
+  background: var(--background);
+  box-shadow:
+    0 1.5rem 5rem color-mix(in oklab, #000 10%, transparent),
+    inset 0 1px 0 color-mix(in oklab, #fff 34%, transparent);
+  transform: translate(-50%, -50%);
+}
+
+.step-editor-closeup-bar {
+  display: flex;
+  height: 2.6rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1rem;
+  border-bottom: 1px solid var(--landing-line);
+  color: var(--muted-foreground);
+  font-size: 0.58rem;
+}
+
+.step-editor-closeup-bar > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.step-editor-closeup-bar i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #30c495;
+}
+
+.step-editor-closeup-canvas {
+  position: relative;
+  width: min(22rem, calc(100% - 3rem));
+  margin-inline: auto;
+  padding-top: 2.2rem;
+}
+
+.step-editor-closeup-kicker {
+  color: var(--muted-foreground);
+  font-size: 0.48rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+}
+
+.step-editor-closeup-title {
+  margin-top: 0.6rem;
+  font-family: var(--font-landing-serif), Georgia, serif;
+  font-size: 1.65rem;
+  letter-spacing: -0.04em;
+}
+
+.step-editor-closeup-copy {
+  display: grid;
+  margin-top: 1.1rem;
+  gap: 0.45rem;
+}
+
+.step-editor-closeup-copy span {
+  width: 88%;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.step-editor-closeup-copy span:last-child {
+  width: 62%;
+}
+
+.step-editor-active-line {
+  position: relative;
+  min-height: 2.65rem;
+  margin-top: 1.15rem;
+}
+
+.step-editor-query {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  color: var(--foreground);
+  font-size: 0.72rem;
+}
+
+.step-editor-query small {
+  margin-left: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.62rem;
+}
+
+.step-editor-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  margin-left: 0.08rem;
+  background: var(--foreground);
+  animation: step-editor-caret-blink 900ms steps(1) infinite;
+}
+
+@keyframes step-editor-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.step-editor-slash-menu {
+  position: absolute;
+  z-index: 3;
+  top: 12.2rem;
+  left: 0;
+  width: 12.5rem;
+  padding: 0.38rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 1.4375rem;
+  background: var(--background);
+  box-shadow: 0 1.1rem 3rem color-mix(in oklab, #000 15%, transparent);
+  transform-origin: top left;
+}
+
+.step-editor-menu-label {
+  padding: 0.38rem 0.65rem 0.2rem;
+  color: var(--muted-foreground);
+  font-size: 0.47rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.step-editor-slash-menu > div:not(.step-editor-menu-label) {
+  display: flex;
+  min-height: 2.125rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding-inline: 0.6rem;
+  border-radius: 1.0625rem;
+  color: var(--foreground);
+  font-size: 0.65rem;
+  font-weight: 640;
+}
+
+.step-editor-slash-menu > div.is-highlighted {
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+}
+
+.step-editor-slash-menu svg {
+  width: 0.78rem;
+  height: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.step-editor-slash-menu small {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 0.6rem;
+}
+
+.step-editor-page-block {
+  display: flex;
+  width: 100%;
+  min-height: 2.125rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+}
+
+.step-editor-page-block:hover {
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.step-editor-page-icon {
+  width: 1.5rem;
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.step-editor-page-title {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--foreground) 28%,
+    transparent
+  );
+  text-underline-offset: 0.18em;
+}
+
+.step-editor-page-placeholder {
+  display: flex;
+  align-items: center;
+  color: var(--muted-foreground);
+}
+
+.step-editor-block-handle {
+  position: absolute;
+  top: 9.93rem;
+  left: -1.15rem;
+  display: grid;
+  grid-template-columns: repeat(2, 0.13rem);
+  gap: 0.11rem;
+}
+
+.step-editor-block-handle i {
+  width: 0.13rem;
+  height: 0.13rem;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--foreground) 40%, transparent);
+}
+
+.step-editor-floating-type {
+  position: absolute;
+  z-index: 4;
+  top: 1.45rem;
+  right: 0.35rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.55rem;
+  background: var(--background);
+  box-shadow: 0 0.65rem 1.8rem color-mix(in oklab, #000 10%, transparent);
+  color: var(--muted-foreground);
+}
+
+.step-editor-floating-type svg {
+  width: 0.78rem;
+  height: 0.78rem;
+}
+
+.step-editor-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 0.9rem;
+}
+
+.step-editor-document-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.step-editor-document {
+  width: 26rem;
+  height: 30rem;
+  padding: 4rem 3.25rem;
+  border: 1px solid var(--landing-line-strong);
+  border-radius: 0.65rem;
+  background: var(--background);
+  box-shadow:
+    0 1.5rem 5rem color-mix(in oklab, #000 11%, transparent),
+    inset 0 1px 0 color-mix(in oklab, #fff 35%, transparent);
+  transform-origin: center;
+  transition:
+    border-color 300ms ease,
+    border-radius 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.step-editor-document.is-panned {
+  border-bottom-color: transparent;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  box-shadow: none;
+}
+
+.step-editor-document-title {
+  min-height: 2.75rem;
+  font-family: var(--font-landing-serif), Georgia, serif;
+  font-size: 2.15rem;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+.step-editor-document-title > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.step-editor-document-title .is-placeholder {
+  color: var(--muted-foreground);
+}
+
+.step-editor-written-copy {
+  width: 100%;
+  min-height: 6.3rem;
+  margin-top: 1.9rem;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+
+.step-editor-written-copy > span {
+  display: inline;
+}
+
+.step-editor-written-copy .step-editor-caret {
+  height: 0.9rem;
+  vertical-align: -0.08rem;
+}
+
+.step-editor-insert-line {
+  position: relative;
+  min-height: 2.5rem;
+  margin-top: 1.6rem;
+}
+
+.step-editor-insert-line .step-editor-query {
+  min-height: 2.125rem;
+  font-size: 0.78rem;
+}
+
+.step-editor-insert-line .step-editor-slash-menu {
+  top: 2.15rem;
+  left: 0;
+}
+
+.step-editor-insert-line .step-editor-page-block {
+  font-size: 0.78rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-editor-caret {
+    animation: none;
+  }
+
+  .step-two-scene *,
+  .step-two-scene::before {
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .step-three-scene *,
+  .step-three-scene::before {
+    animation: none !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .landing-footer {
   --landing-footer-core: #111;
   --landing-footer-mid: #3a3a3a;
@@ -622,6 +2160,16 @@
 @media (max-width: 767px) {
   .landing-page {
     --landing-grid-size: 4.5rem;
+  }
+
+  .step-two-scene {
+    width: 30rem;
+    transform: scale(0.68);
+  }
+
+  .step-three-scene {
+    width: 30rem;
+    transform: scale(0.68);
   }
 
   .landing-rail {
