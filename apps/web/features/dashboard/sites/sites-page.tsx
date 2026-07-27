@@ -95,8 +95,10 @@ export function SitesPage() {
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">{t("dashboard.yourSites")}</h1>
+          <div className="mb-8 border-b border-foreground/10 pb-5">
+            <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
+              {t("dashboard.yourSites")}
+            </h1>
           </div>
 
           <SitesSection

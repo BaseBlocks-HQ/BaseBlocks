@@ -19,6 +19,43 @@
   }
 }
 
+.auth-brand-mark {
+  filter: invert(1);
+}
+
+.dark .auth-brand-mark {
+  filter: none;
+}
+
+.auth-editor-visual .landing-editor-particle-field {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(68rem, 145%);
+  aspect-ratio: 1;
+  mask-image: radial-gradient(ellipse at center, #000 55%, transparent 92%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.auth-editor-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(9rem, 24%);
+  transform: translate(-50%, -50%);
+}
+
+.auth-editor-mark img {
+  width: 100%;
+  height: auto;
+  filter: invert(1);
+}
+
+.dark .auth-editor-mark img {
+  filter: none;
+}
+
 /* Customer site themes are scoped so BaseBlocks product chrome stays neutral. */
 [data-product-theme],
 [data-site-theme] {

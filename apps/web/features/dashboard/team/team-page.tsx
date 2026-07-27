@@ -71,16 +71,16 @@ export function TeamPage() {
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem] space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">
+        <div className="mx-auto w-full max-w-[64rem]">
+          <div className="mb-8 flex items-end justify-between gap-4 border-b border-foreground/10 pb-5">
+            <div className="min-w-0">
+              <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
                 {t("title")}
-              </h2>
+              </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {capabilities.canManageTeam && (
                 <InviteMemberDialog organizationId={team._id} />
               )}
@@ -88,9 +88,9 @@ export function TeamPage() {
           </div>
 
           {members && members.length > 0 ? (
-            <div className="rounded-md border">
+            <div className="overflow-hidden rounded-xl border bg-card">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/45 text-muted-foreground">
                   <TableRow>
                     <TableHead>{t("member.email")}</TableHead>
                     <TableHead>{t("member.role")}</TableHead>
@@ -141,10 +141,10 @@ export function TeamPage() {
               </Table>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/10">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 py-12 text-center">
+              <Users className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="text-lg font-medium">{t("noMembers")}</h3>
-              <p className="text-muted-foreground mt-1 mb-4">
+              <p className="mt-1 mb-4 text-muted-foreground">
                 {t("noMembersDescription")}
               </p>
               {capabilities.canManageTeam && (

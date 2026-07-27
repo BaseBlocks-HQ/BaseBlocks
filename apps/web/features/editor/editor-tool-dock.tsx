@@ -16,12 +16,12 @@ import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
-  IconAppStack,
-  IconFile,
-  IconGear,
-  IconSidebarLeftHide,
-  IconSidebarLeftShow,
-} from "nucleo-glass";
+  Blocks,
+  Files,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+} from "lucide-react";
 
 const SiteSettingsPanel = dynamic(() =>
   import("@/features/editor/site-settings-panel").then(
@@ -41,9 +41,9 @@ interface EditorToolDockProps {
 type EditorTool = "pages" | "blocks" | "site";
 
 const TOOLS: Array<{ id: EditorTool; label: string; icon: ReactNode }> = [
-  { id: "pages", label: "Pages", icon: <IconFile /> },
-  { id: "blocks", label: "Blocks", icon: <IconAppStack /> },
-  { id: "site", label: "Site", icon: <IconGear /> },
+  { id: "pages", label: "Pages", icon: <Files /> },
+  { id: "blocks", label: "Blocks", icon: <Blocks /> },
+  { id: "site", label: "Site", icon: <Settings /> },
 ];
 
 export function EditorToolDock({
@@ -105,7 +105,7 @@ export function EditorToolDock({
   };
 
   const openTool = pinnedTool ?? hoveredTool;
-  const DockToggleIcon = expanded ? IconSidebarLeftHide : IconSidebarLeftShow;
+  const DockToggleIcon = expanded ? PanelLeftClose : PanelLeftOpen;
 
   const pinOpenTool = () => {
     if (!openTool) return;

@@ -28,8 +28,10 @@ type ParticlePulse = {
 
 export function EditorParticleField({
   contourRef,
+  lightModeContrast = 1,
 }: {
   contourRef: RefObject<HTMLDivElement | null>;
+  lightModeContrast?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -147,7 +149,11 @@ export function EditorParticleField({
             0.5 / dpr,
           );
 
-          ctx.fillStyle = particleColor(intensity, dark, 0.4);
+          const colorIntensity = dark
+            ? intensity
+            : Math.min(1, intensity * lightModeContrast);
+          const highlight = dark ? 0.4 : 0.4 / lightModeContrast;
+          ctx.fillStyle = particleColor(colorIntensity, dark, highlight);
           ctx.beginPath();
           ctx.arc(x, y, radius, 0, Math.PI * 2);
           ctx.fill();
@@ -357,7 +363,7 @@ export function EditorParticleField({
       window.removeEventListener("blur", onPointerLeave);
       document.removeEventListener("mouseleave", onPointerLeave);
     };
-  }, [contourRef]);
+  }, [contourRef, lightModeContrast]);
 
   return <canvas className="landing-editor-particle-field" ref={canvasRef} />;
 }

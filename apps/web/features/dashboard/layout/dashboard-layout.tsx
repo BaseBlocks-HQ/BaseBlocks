@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider className="brand-interface" defaultOpen={true}>
       <DashboardSidebar />
       <SidebarInset className="h-svh overflow-hidden">
         <SidebarTrigger

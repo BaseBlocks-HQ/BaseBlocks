@@ -51,6 +51,14 @@
   inset-inline-start: calc(var(--spacing) * -4);
 }
 
+.brand-interface {
+  font-family: var(--font-landing-sans), Arial, sans-serif;
+}
+
+.brand-display {
+  font-family: var(--font-landing-serif), Georgia, serif;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

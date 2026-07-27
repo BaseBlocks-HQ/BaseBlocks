@@ -21,9 +21,8 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IconGear } from "nucleo-glass";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
@@ -114,7 +113,7 @@ export function AccountSettings({
         variant="ghost"
         className={cn("h-8 w-full justify-start gap-2 px-2", triggerClassName)}
       >
-        <IconGear className="h-4 w-4" />
+        <Settings className="h-4 w-4" />
         <span>{tCommon("settings")}</span>
       </Button>
     ));

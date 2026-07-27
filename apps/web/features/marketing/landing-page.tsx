@@ -70,7 +70,6 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
       {copy.getStarted} <ArrowRight aria-hidden="true" className="h-4 w-4" />
     </a>
   );
-
   return (
     <div className="landing-page min-h-screen bg-background">
       <div className="relative isolate min-h-screen">

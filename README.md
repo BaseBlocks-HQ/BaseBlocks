@@ -35,7 +35,7 @@ Published sites currently read the latest saved page content. Historical deploym
 | Backend | [Convex](https://convex.dev/) |
 | Authentication | [Better Auth](https://www.better-auth.com/) with email/password and social providers |
 | Files | Files SDK with S3-compatible storage |
-| UI | shadcn/ui, Radix UI, Base UI, and Nucleo Glass icons |
+| UI | shadcn/ui, Radix UI, Base UI, and Lucide icons |
 | Monorepo | [Turborepo](https://turborepo.dev/) and [Bun](https://bun.sh/) workspaces |
 | Quality | TypeScript, [Biome](https://biomejs.dev/), Bun Test |
 

@@ -37,18 +37,16 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Globe2,
   LoaderCircle,
   PencilLine,
+  Send,
+  Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  IconEarth,
-  IconEye,
-  IconEyeClosed,
-  IconPaperPlane,
-  IconSparkle4,
-  IconWindow2,
-} from "nucleo-glass";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -156,7 +154,7 @@ function EditorBetaBanner() {
           className="group ml-1 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border/70 bg-background/65 px-2.5 text-xs font-medium text-foreground/80 shadow-xs backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
           type="button"
         >
-          <IconSparkle4 className="size-4 transition-transform group-hover:scale-105" />
+          <Sparkles className="size-4 transition-transform group-hover:scale-105" />
           <span className="@2xl/header:hidden">{t("shortLabel")}</span>
           <span className="hidden @2xl/header:inline">{t("label")}</span>
           <span className="rounded-md bg-muted px-1.5 py-0.5 text-[0.625rem] leading-none font-semibold tracking-wide text-muted-foreground uppercase">
@@ -167,7 +165,7 @@ function EditorBetaBanner() {
       <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-md [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4">
         <DialogHeader className="px-5 pt-5 pb-0 text-left">
           <div className="flex items-center gap-2">
-            <IconSparkle4 className="size-5 shrink-0" />
+            <Sparkles className="size-5 shrink-0" />
             <DialogTitle className="text-base font-semibold">
               {t("title")}
             </DialogTitle>
@@ -367,7 +365,7 @@ function EditorHeaderActions({
           pressed={isPreviewing}
           size="sm"
         >
-          {isPreviewing ? <PencilLine /> : <IconEye />}
+          {isPreviewing ? <PencilLine /> : <Eye />}
           <HeaderActionLabel>
             {isPreviewing ? t("edit") : t("preview")}
           </HeaderActionLabel>
@@ -424,7 +422,7 @@ function ViewSiteAction({
       size="sm"
       variant="ghost"
     >
-      <IconWindow2 />
+      <ExternalLink />
       <HeaderActionLabel>{t("viewSite")}</HeaderActionLabel>
     </Button>
   );
@@ -464,7 +462,7 @@ function DeployAction({
   if (!sitePublished) {
     return (
       <Button className={headerActionClassName} onClick={onPublish} size="sm">
-        <IconEarth />
+        <Globe2 />
         <HeaderActionLabel>{t("publish")}</HeaderActionLabel>
       </Button>
     );
@@ -474,19 +472,19 @@ function DeployAction({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button className={headerActionClassName} size="sm" variant="ghost">
-          <IconEarth />
+          <Globe2 />
           <HeaderActionLabel>{tHeader("publishedStatus")}</HeaderActionLabel>
           <ChevronDown className="hidden @2xl/header:block" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onOpenShare}>
-          <IconPaperPlane />
+          <Send />
           {tHeader("share")}
         </DropdownMenuItem>
         {onUnpublish ? (
           <DropdownMenuItem onClick={onUnpublish} variant="destructive">
-            <IconEyeClosed />
+            <EyeOff />
             {t("unpublish")}
           </DropdownMenuItem>
         ) : null}
