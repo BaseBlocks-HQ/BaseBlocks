@@ -73,14 +73,14 @@ const InvitationInbox = dynamic(() =>
 const SIDEBAR_ICON_STROKE = 1.75;
 
 const sidebarFloatingInnerClass =
-  "[&_[data-slot=sidebar-inner]]:rounded-xl [&_[data-slot=sidebar-inner]]:border-0 [&_[data-slot=sidebar-inner]]:!bg-sidebar/95 [&_[data-slot=sidebar-inner]]:text-sidebar-foreground [&_[data-slot=sidebar-inner]]:shadow-sm [&_[data-slot=sidebar-inner]]:backdrop-blur-md";
+  "[&_[data-slot=sidebar-inner]]:rounded-xl [&_[data-slot=sidebar-inner]]:border [&_[data-slot=sidebar-inner]]:border-sidebar-foreground/[0.06] [&_[data-slot=sidebar-inner]]:!bg-sidebar [&_[data-slot=sidebar-inner]]:text-sidebar-foreground [&_[data-slot=sidebar-inner]]:shadow-sm";
 
 const pillRowClass = cn(
-  "flex h-9 w-full items-center justify-start gap-2 border-0 px-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent/45 hover:text-sidebar-accent-foreground",
+  "dashboard-sidebar-row flex h-9 w-full items-center justify-start gap-2 border-0 px-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:text-sidebar-foreground",
   "rounded-lg",
 );
 
-const navActiveClass = "bg-sidebar-accent/70 text-sidebar-accent-foreground";
+const navActiveClass = "text-sidebar-foreground";
 
 const languageNames: Record<Locale, string> = {
   en: "English",
@@ -167,7 +167,7 @@ export function DashboardSidebar() {
         sidebarFloatingInnerClass,
       )}
       collapsible="offcanvas"
-      mobileClassName="!top-2 !bottom-2 !left-2 !max-h-[calc(100svh-1rem)] !w-[min(13.5rem,calc(100vw-1rem))] rounded-xl !border-0 !bg-sidebar/95 shadow-sm"
+      mobileClassName="!top-2 !bottom-2 !left-2 !max-h-[calc(100svh-1rem)] !w-[min(13.5rem,calc(100vw-1rem))] rounded-xl !border !border-sidebar-foreground/[0.06] !bg-sidebar shadow-sm"
       variant="floating"
     >
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">
