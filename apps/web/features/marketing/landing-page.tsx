@@ -81,9 +81,7 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
             description={copy.heroDescription}
             title={copy.heroTitle}
           />
-          <FeaturesSection
-            landingTranslations={(key) => copy[key as keyof LandingCopy]}
-          />
+          <FeaturesSection />
           <StepsSection
             landingTranslations={(key) => copy[key as keyof LandingCopy]}
           />
