@@ -58,7 +58,7 @@ async function validateMarketingSite() {
   expectIncludes(home, '"@type":"SoftwareApplication"', "JSON-LD");
   expectIncludes(
     home,
-    "Build sites your team will actually use",
+    "Build internal sites your team will actually use",
     "server HTML",
   );
 
