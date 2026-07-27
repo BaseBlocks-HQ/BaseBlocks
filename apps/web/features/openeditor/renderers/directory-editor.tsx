@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
@@ -53,8 +54,11 @@ import {
   Copy,
   GripHorizontal,
   GripVertical,
+  ListChecks,
+  MoreHorizontal,
   Settings,
   Trash2,
+  X,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -377,11 +381,17 @@ function SortableColumn({
   columnId,
   index,
   onAction,
+  onSelectedChange,
+  selected,
+  selectionMode,
 }: {
   canRemove: boolean;
   columnId: string;
   index: number;
   onAction: (action: Action) => void;
+  onSelectedChange: () => void;
+  selected: boolean;
+  selectionMode: boolean;
 }) {
   const sortable = useSortable<SortData>({
     id: columnId,
@@ -397,16 +407,28 @@ function SortableColumn({
     <div
       className={`flex h-8 items-center justify-center border-l first:border-0 ${
         sortable.isDropTarget ? "bg-muted/70" : ""
-      } ${sortable.isDragging ? "opacity-40" : ""}`}
+      } ${sortable.isDragging ? "opacity-40" : ""} ${
+        selected ? "bg-primary/10" : ""
+      }`}
       ref={sortable.ref}
     >
-      <SortableHandle
-        axis="column"
-        canRemove={canRemove}
-        handleRef={sortable.handleRef}
-        index={index}
-        onAction={onAction}
-      />
+      {selectionMode ? (
+        <input
+          aria-label={`Select column ${index + 1}`}
+          checked={selected}
+          className="size-4 accent-primary"
+          onChange={onSelectedChange}
+          type="checkbox"
+        />
+      ) : (
+        <SortableHandle
+          axis="column"
+          canRemove={canRemove}
+          handleRef={sortable.handleRef}
+          index={index}
+          onAction={onAction}
+        />
+      )}
     </div>
   );
 }
@@ -417,14 +439,22 @@ function SortableRow({
   index,
   onAction,
   onCellChange,
+  onSelectedChange,
   row,
+  selected,
+  selectedColumnIds,
+  selectionMode,
 }: {
   canRemove: boolean;
   columnIds: string[];
   index: number;
   onAction: (action: Action) => void;
   onCellChange: (columnId: string, value: string) => void;
+  onSelectedChange: () => void;
   row: DirectoryRow;
+  selected: boolean;
+  selectedColumnIds: Set<string>;
+  selectionMode: boolean;
 }) {
   const sortable = useSortable<SortData>({
     id: row.id,
@@ -440,17 +470,29 @@ function SortableRow({
     <div
       className={`grid grid-cols-[2rem_minmax(0,1fr)] gap-x-2 ${
         sortable.isDropTarget ? "[&>*]:bg-muted/70" : ""
-      } ${sortable.isDragging ? "opacity-40" : ""}`}
+      } ${sortable.isDragging ? "opacity-40" : ""} ${
+        selected ? "[&>*]:bg-primary/10" : ""
+      }`}
       ref={sortable.ref}
     >
       <div className="flex items-center justify-center border-b bg-card last:border-0">
-        <SortableHandle
-          axis="row"
-          canRemove={canRemove}
-          handleRef={sortable.handleRef}
-          index={index}
-          onAction={onAction}
-        />
+        {selectionMode ? (
+          <input
+            aria-label={`Select row ${index + 1}`}
+            checked={selected}
+            className="size-4 accent-primary"
+            onChange={onSelectedChange}
+            type="checkbox"
+          />
+        ) : (
+          <SortableHandle
+            axis="row"
+            canRemove={canRemove}
+            handleRef={sortable.handleRef}
+            index={index}
+            onAction={onAction}
+          />
+        )}
       </div>
       <div
         className="grid min-w-0 divide-x border-b bg-card"
@@ -460,7 +502,9 @@ function SortableRow({
       >
         {columnIds.map((columnId, columnIndex) => (
           <div
-            className={`${directoryCellClassName} min-w-0 p-1.5`}
+            className={`${directoryCellClassName} min-w-0 p-1.5 ${
+              selectedColumnIds.has(columnId) ? "bg-primary/10" : ""
+            }`}
             key={columnId}
           >
             <textarea
@@ -544,8 +588,69 @@ function DirectoryGrid({
   const [previewColumnIds, setPreviewColumnIds] = useState<string[] | null>(
     null,
   );
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [selectedColumnIds, setSelectedColumnIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const previewColumnIdsRef = useRef<string[] | null>(null);
   const columnIds = previewColumnIds ?? value.columnIds;
+  const selectedCount = selectedRowIds.size + selectedColumnIds.size;
+  const itemCount = value.rows.length + value.columnIds.length;
+  const toggleSelection = (
+    id: string,
+    setSelectedIds: (
+      value: Set<string> | ((current: Set<string>) => Set<string>),
+    ) => void,
+  ) =>
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const startSelection = () => {
+    setSelectedRowIds(new Set());
+    setSelectedColumnIds(new Set());
+    setSelectionMode(true);
+  };
+  const cancelSelection = () => {
+    setSelectedRowIds(new Set());
+    setSelectedColumnIds(new Set());
+    setSelectionMode(false);
+  };
+  const selectAll = () => {
+    setSelectedRowIds(new Set(value.rows.map(({ id }) => id)));
+    setSelectedColumnIds(new Set(value.columnIds));
+  };
+  const deleteSelected = () => {
+    if (selectedCount === 0) return;
+
+    const remainingColumnIds = value.columnIds.filter(
+      (id) => !selectedColumnIds.has(id),
+    );
+    const nextColumnIds = remainingColumnIds.length
+      ? remainingColumnIds
+      : [makeId("column")];
+    const remainingRows = value.rows
+      .filter(({ id }) => !selectedRowIds.has(id))
+      .map((row) => ({
+        ...row,
+        cells: Object.fromEntries(
+          nextColumnIds.map((id) => [id, row.cells[id] ?? ""]),
+        ),
+      }));
+
+    view.setPage(1);
+    onChange({
+      ...value,
+      columnIds: nextColumnIds,
+      rows: remainingRows.length ? remainingRows : [blankRow(nextColumnIds)],
+    });
+    cancelSelection();
+  };
   const updateCell = (rowId: string, columnId: string, cell: string) =>
     onChange({
       ...value,
@@ -671,17 +776,66 @@ function DirectoryGrid({
         >
           <div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-2">
             <div className="flex h-8 items-center justify-center rounded-2xl bg-card">
-              <Button
-                aria-label="Copy entire directory"
-                onClick={() =>
-                  void copyText(directoryToTsv(value), "Directory copied")
-                }
-                size="icon-xs"
-                type="button"
-                variant="ghost"
-              >
-                <Copy className="size-3.5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    aria-label="Directory actions"
+                    size="icon-xs"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <MoreHorizontal className="size-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-52">
+                  {selectionMode ? (
+                    <>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">
+                        {selectedCount} selected
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={selectAll}>
+                        <ListChecks />
+                        Select all
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={selectedCount === 0}
+                        onSelect={deleteSelected}
+                        variant="destructive"
+                      >
+                        <Trash2 />
+                        Delete selected
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={cancelSelection}>
+                        <X />
+                        Cancel selection
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          void copyText(
+                            directoryToTsv(value),
+                            "Directory copied",
+                          )
+                        }
+                      >
+                        <Copy />
+                        Copy directory
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={itemCount === 0}
+                        onSelect={startSelection}
+                      >
+                        <ListChecks />
+                        Select rows and columns
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div
               className="grid overflow-hidden rounded-2xl bg-card"
@@ -696,6 +850,11 @@ function DirectoryGrid({
                   index={index}
                   key={columnId}
                   onAction={(action) => columnAction(columnId, action)}
+                  onSelectedChange={() =>
+                    toggleSelection(columnId, setSelectedColumnIds)
+                  }
+                  selected={selectedColumnIds.has(columnId)}
+                  selectionMode={selectionMode}
                 />
               ))}
             </div>
@@ -712,7 +871,13 @@ function DirectoryGrid({
                   onCellChange={(columnId, cell) =>
                     updateCell(row.id, columnId, cell)
                   }
+                  onSelectedChange={() =>
+                    toggleSelection(row.id, setSelectedRowIds)
+                  }
                   row={row}
+                  selected={selectedRowIds.has(row.id)}
+                  selectedColumnIds={selectedColumnIds}
+                  selectionMode={selectionMode}
                 />
               ))
             ) : (
