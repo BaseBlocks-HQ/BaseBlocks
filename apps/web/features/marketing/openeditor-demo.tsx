@@ -298,7 +298,7 @@ export function OpenEditorDemo() {
           className="landing-editor-contour-target"
           ref={contourRef}
         />
-        <EditorParticleField contourRef={contourRef} />
+        <EditorParticleField contourRef={contourRef} shape="masses" />
         <div className="landing-editor-paper">
           <div className="landing-editor-paper-inner">
             <OpenEditorContent

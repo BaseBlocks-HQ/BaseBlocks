@@ -273,6 +273,19 @@
   transform: translateX(-50%);
 }
 
+.landing-editor-demo > .landing-editor-particle-field {
+  width: calc(100% + 2px);
+  height: calc(100% + 6rem);
+  aspect-ratio: auto;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+}
+
 .landing-editor-paper {
   position: relative;
   z-index: 1;

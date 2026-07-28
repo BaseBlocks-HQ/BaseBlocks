@@ -4,10 +4,7 @@ import { useEffect, useRef } from "react";
 import { particleColor } from "./particle-color";
 
 interface RailHalftoneProps {
-  blendOrigin: readonly [number, number];
-  blendRadius: number;
-  phase: number;
-  phaseB: number;
+  side: "left" | "right";
 }
 
 interface TrailPoint {
@@ -25,8 +22,6 @@ interface ClickRing {
 }
 
 const spacing = 7;
-const leftBlendOrigin = [0, 1] as const;
-const rightBlendOrigin = [1, 1] as const;
 
 function smoothstep(edge0: number, edge1: number, value: number) {
   const ratio = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -38,22 +33,46 @@ function randomAt(column: number, row: number) {
   return value - Math.floor(value);
 }
 
-function structureValue(x: number, y: number, phase: number) {
-  return (
-    0.25 * (0.5 * Math.sin(16 * x + 8 * y + 1.6 * phase) + 0.5) +
-    0.25 * (0.5 * Math.sin(5 * x - 12 * y + 2 + 1.2 * phase) + 0.5) +
-    0.2 * (0.5 * Math.sin((x + y) * 9 + 1.3 + 1.4 * phase) + 0.5) +
-    0.15 * (0.5 * Math.cos(7 * x + 14 * y - 0.7 + phase) + 0.5) +
-    0.15 * (0.5 * Math.sin((0.4 * x + y) * 7 + 0.8 * phase) + 0.5)
-  );
+function terrainValue(x: number, y: number, side: "left" | "right") {
+  const clampedY = Math.max(0, Math.min(1, y));
+
+  if (side === "left") {
+    const path =
+      0.12 +
+      0.7 * (clampedY * clampedY * (3 - 2 * clampedY)) +
+      0.07 * Math.sin(Math.PI * clampedY);
+    const width = 0.13 + 0.17 * Math.sin(Math.PI * clampedY) ** 1.4;
+    const distance = x - path;
+    const body =
+      Math.exp(-(distance * distance) / (2 * width * width)) *
+      (0.34 +
+        0.34 * (0.5 + 0.5 * Math.sin(5 * x + 7 * y + 0.8)) +
+        0.32 * (0.5 + 0.5 * Math.cos(9 * x - 3 * y)));
+    const cutout =
+      Math.exp(-(((x - 0.42) / 0.24) ** 2 + ((y - 0.62) / 0.115) ** 2) * 1.6) *
+      0.78;
+    const leadingEdge =
+      Math.exp(-((distance + width * 0.82) ** 2) / 0.0045) * 0.28;
+    return Math.max(0, Math.min(1, body + leadingEdge - cutout));
+  }
+
+  const path =
+    0.78 - 0.56 * Math.sin(Math.PI * clampedY) ** 1.35 + 0.07 * clampedY;
+  const width = 0.11 + 0.2 * (1 - clampedY) * clampedY * 4;
+  const distance = x - path;
+  const body =
+    Math.exp(-(distance * distance) / (2 * width * width)) *
+    (0.3 +
+      0.4 * (0.5 + 0.5 * Math.sin(8 * x - 4 * y + 1.7)) +
+      0.3 * (0.5 + 0.5 * Math.cos(4 * x + 8 * y)));
+  const cutout =
+    Math.exp(-(((x - 0.6) / 0.2) ** 2 + ((y - 0.3) / 0.14) ** 2) * 1.8) * 0.72;
+  const trailingEdge =
+    Math.exp(-((distance - width * 0.76) ** 2) / 0.0055) * 0.24;
+  return Math.max(0, Math.min(1, body + trailingEdge - cutout));
 }
 
-function RailHalftone({
-  blendOrigin,
-  blendRadius,
-  phase,
-  phaseB,
-}: RailHalftoneProps) {
+function RailHalftone({ side }: RailHalftoneProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -124,7 +143,6 @@ function RailHalftone({
       const columns = Math.ceil(width / spacing) + 1;
       const rows = Math.ceil(height / spacing) + 1;
       const values = new Float32Array(columns * rows);
-      const radiusSquared = blendRadius * blendRadius;
 
       for (let row = 0; row < rows; row += 1) {
         const stagger = row % 2 === 0 ? 0 : spacing / 2;
@@ -133,24 +151,13 @@ function RailHalftone({
         for (let column = 0; column < columns; column += 1) {
           const normalizedX =
             (spacing * column + stagger - spacing / 2) / width;
-          const deltaX = normalizedX - blendOrigin[0];
-          const deltaY = normalizedY - blendOrigin[1];
-          const distanceSquared = deltaX * deltaX + deltaY * deltaY;
-          const distance =
-            distanceSquared >= radiusSquared
-              ? 1
-              : Math.sqrt(distanceSquared) / blendRadius;
-          const phaseBWeight = 1 - distance * distance * (3 - 2 * distance);
-          const phaseWeight = 1 - phaseBWeight;
-          const value =
-            structureValue(normalizedX, normalizedY, phase) * phaseWeight +
-            structureValue(normalizedX, normalizedY, phaseB) * phaseBWeight;
+          const value = terrainValue(normalizedX, normalizedY, side);
           const horizontalFade =
             1 - 0.4 * (2 * Math.abs(normalizedX - 0.5)) ** 2;
 
           values[row * columns + column] = Math.max(
             0,
-            Math.min(1, value * horizontalFade * 0.55),
+            Math.min(1, value * horizontalFade * 0.64),
           );
         }
       }
@@ -403,7 +410,7 @@ function RailHalftone({
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [blendOrigin, blendRadius, phase, phaseB]);
+  }, [side]);
 
   return (
     <div className="landing-step-rail-halftone" ref={wrapperRef}>
@@ -415,18 +422,8 @@ function RailHalftone({
 export function StepRailPattern() {
   return (
     <div aria-hidden="true" className="landing-step-rail-pattern">
-      <RailHalftone
-        blendOrigin={leftBlendOrigin}
-        blendRadius={1.1}
-        phase={0}
-        phaseB={5.2}
-      />
-      <RailHalftone
-        blendOrigin={rightBlendOrigin}
-        blendRadius={1.1}
-        phase={3.7}
-        phaseB={1.4}
-      />
+      <RailHalftone side="left" />
+      <RailHalftone side="right" />
     </div>
   );
 }

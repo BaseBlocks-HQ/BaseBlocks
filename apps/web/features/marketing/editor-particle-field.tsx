@@ -29,9 +29,11 @@ type ParticlePulse = {
 export function EditorParticleField({
   contourRef,
   lightModeContrast = 1,
+  shape = "rings",
 }: {
   contourRef: RefObject<HTMLDivElement | null>;
   lightModeContrast?: number;
+  shape?: "masses" | "rings";
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -195,6 +197,73 @@ export function EditorParticleField({
       const halfWidth = (right - left) / 2;
       const halfHeight = (bottom - top) / 2;
 
+      if (shape === "masses") {
+        const massHeight = Math.max(1, height);
+
+        for (let row = 0; row < rows; row++) {
+          const stagger = row % 2 === 0 ? 0 : spacing / 2;
+          const gridY = spacing * row - spacing / 2;
+          const progress = gridY / massHeight;
+          const verticalFade =
+            smoothstep((progress + 0.02) / 0.1) *
+            smoothstep((1.02 - progress) / 0.1);
+
+          if (verticalFade <= 0) continue;
+
+          for (let column = 0; column < columns; column++) {
+            const gridX = spacing * column + stagger - spacing / 2;
+            const side = gridX < left ? -1 : gridX > right ? 1 : 0;
+            if (side === 0) continue;
+
+            const outwardDistance = side < 0 ? left - gridX : gridX - right;
+            const centerProgress = side < 0 ? 0.37 : 0.64;
+            const progressDistance =
+              (progress - centerProgress) / (side < 0 ? 0.67 : 0.54);
+            const availableWidth = side < 0 ? left : width - right;
+            const maximumReach =
+              side < 0
+                ? Math.max(176, availableWidth * 1.04)
+                : Math.max(150, availableWidth * 1.04);
+            const reach =
+              maximumReach *
+                Math.max(0, 1 - progressDistance * progressDistance) +
+              (side < 0 ? 8 : 18) * (progress - 0.5);
+            const interior = smoothstep((reach - outwardDistance) / 34);
+            const texture =
+              0.28 +
+              0.38 *
+                (0.5 +
+                  0.5 *
+                    Math.sin(
+                      gridX * 0.031 + gridY * 0.014 + (side < 0 ? 0.4 : 2.2),
+                    )) +
+              0.34 *
+                (0.5 +
+                  0.5 *
+                    Math.cos(
+                      gridX * 0.012 - gridY * 0.026 + (side < 0 ? 1.3 : -0.7),
+                    ));
+            const edgeDistance = outwardDistance - reach;
+            const tornEdge =
+              Math.exp(-(edgeDistance * edgeDistance) / 240) * 0.26;
+            const voidProgress = side < 0 ? 0.3 : 0.7;
+            const voidOutward = side < 0 ? 76 : 54;
+            const voidDistance =
+              ((outwardDistance - voidOutward) / (side < 0 ? 44 : 33)) ** 2 +
+              ((progress - voidProgress) / (side < 0 ? 0.095 : 0.13)) ** 2;
+            const carvedVoid = Math.exp(-voidDistance * 1.5);
+            const value =
+              Math.max(0, interior * texture + tornEdge - carvedVoid * 0.68) *
+              verticalFade;
+
+            field[row * columns + column] = Math.min(1, value);
+          }
+        }
+
+        scheduleDraw();
+        return;
+      }
+
       for (let ringIndex = 0; ringIndex < contourPadding.length; ringIndex++) {
         const padding = contourPadding[ringIndex] ?? 0;
         const amplitude = contourAmplitude[ringIndex] ?? 0;
@@ -271,13 +340,15 @@ export function EditorParticleField({
       const x = event.clientX - canvasRect.left;
       const y = event.clientY - canvasRect.top;
       const contourBottom = contourRect.bottom - canvasRect.top;
+      const interactionBottom =
+        shape === "masses" ? canvasRect.height : contourBottom;
 
       if (
         x < 0 ||
         x > canvasRect.width ||
         y < 0 ||
         y > canvasRect.height ||
-        y >= contourBottom
+        y >= interactionBottom
       ) {
         pointerActive = false;
         scheduleDraw();
@@ -363,7 +434,7 @@ export function EditorParticleField({
       window.removeEventListener("blur", onPointerLeave);
       document.removeEventListener("mouseleave", onPointerLeave);
     };
-  }, [contourRef, lightModeContrast]);
+  }, [contourRef, lightModeContrast, shape]);
 
   return <canvas className="landing-editor-particle-field" ref={canvasRef} />;
 }

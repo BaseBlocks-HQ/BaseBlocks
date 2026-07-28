@@ -4,19 +4,11 @@ import { useEffect, useRef } from "react";
 import { particleColor } from "./particle-color";
 
 const params = {
-  bowlY: 0.66,
-  helixAmp: 0.11,
-  thickness: 0.024,
-  waveSpeed: 0.5,
-  waveDepth: 0.7,
-  waveFrequency: 6,
-  crossbars: 0.45,
-  coreSize: 0.055,
-  coreBreathSpeed: 0.85,
-  coreBreathDepth: 0.3,
-  coreBrightness: 0.6,
+  canopyY: 0.7,
+  strandThickness: 0.018,
+  twistFrequency: 4.4,
+  waveSpeed: 0.22,
   cursorGlow: 0.3,
-  floorIntensity: 0.2,
   rippleIntensity: 0.14,
   rippleSpeed: 0.14,
   rippleFade: 2.3,
@@ -151,19 +143,8 @@ export function HeroParticleField() {
       const spacing = compact ? 6 : 7;
       const dotMin = compact ? 0.18 : 0.2;
       const dotMax = compact ? 3.4 : 4;
-      const bowlY = compact ? 0.5 : params.bowlY;
-      const helixAmp =
-        (compact ? 0.2 : params.helixAmp) *
-        (width / height >= 1.5 ? 1 : Math.max(0.55, width / height / 1.5));
-      const thickness = compact ? 0.028 : params.thickness;
-      const waveFrequency =
-        (compact ? 4 : params.waveFrequency) *
-        (width / height >= 1.5 ? 1 : Math.max(0.55, width / height / 1.5));
-      const waveDepth = compact ? 0.85 : params.waveDepth;
-      const crossbars = compact ? 0.65 : params.crossbars;
-      const coreSize = compact ? 0.04 : params.coreSize;
-      const coreBrightness = compact ? 0.45 : params.coreBrightness;
-      const floorIntensity = compact ? 0.14 : params.floorIntensity;
+      const canopyY = compact ? 0.61 : params.canopyY;
+      const strandThickness = compact ? 0.024 : params.strandThickness;
       const minDimension = Math.min(width, height);
 
       for (let i = trail.length - 1; i >= 0; i -= 1) {
@@ -187,13 +168,7 @@ export function HeroParticleField() {
       const columns = Math.ceil(width / spacing) + 1;
       const rows = Math.ceil(height / spacing) + 1;
       const wavePhase = time * params.waveSpeed;
-      const thicknessSquared = 2 * thickness * thickness;
-      const coreSquared = 2 * coreSize * coreSize;
-      const breath =
-        1 -
-        params.coreBreathDepth +
-        params.coreBreathDepth *
-          (0.5 * Math.sin(time * params.coreBreathSpeed * 2) + 0.5);
+      const strandDenominator = 2 * strandThickness * strandThickness;
       const cursorPx = pointerInside ? pointerX * width : 0;
       const cursorPy = pointerInside ? pointerY * height : 0;
       const cursorSpread = 2 * (0.045 * minDimension) ** 2;
@@ -208,76 +183,26 @@ export function HeroParticleField() {
         for (let column = 0; column < columns; column += 1) {
           const x = column * spacing + stagger - spacing / 2;
           const normalizedX = x / width;
-          const centeredX = normalizedX - 0.5;
+          const shapeX = Math.max(0, Math.min(1, normalizedX));
           const random = randomAt(column, row);
-          const localFrequency =
-            waveFrequency * (1 + 0.08 * Math.sin(1.2 * normalizedX));
-          const phaseA = normalizedX * localFrequency + wavePhase;
-          const phaseB = phaseA + Math.PI;
+          const arch =
+            canopyY -
+            (compact ? 0.22 : 0.3) * Math.sin(Math.PI * shapeX) ** 1.35;
+          const phase = shapeX * Math.PI * params.twistFrequency + wavePhase;
           const amplitude =
-            helixAmp * (1 + 0.18 * Math.sin(2.3 * normalizedX + 0.25 * time));
-          const bowl = bowlY - 0.4 * centeredX * centeredX;
-          const strandA = bowl + amplitude * Math.sin(phaseA);
-          const strandB = bowl + amplitude * Math.sin(phaseB);
-          const distanceA = normalizedY - strandA;
-          const distanceB = normalizedY - strandB;
-          const depthA = (Math.cos(phaseA) + 1) / 2;
-          const depthB = (Math.cos(phaseB) + 1) / 2;
-          const modulationA =
-            (0.65 + 0.35 * Math.sin(4.7 * phaseA + 1.5 * time)) *
-            (1 + 0.22 * Math.sin(8 * normalizedX - 1.4 * time));
-          const modulationB =
-            (0.65 + 0.35 * Math.sin(4.7 * phaseB + 1.5 * time + 1.8)) *
-            (1 + 0.22 * Math.sin(8 * normalizedX - 1.4 * time + 2.4));
-          const localThickness =
-            thicknessSquared *
-            (1 + 0.25 * Math.sin(4 * normalizedX - 0.7 * time)) ** 2;
-          const strandIntensityA =
-            Math.exp(-(distanceA * distanceA) / localThickness) *
-            (1 - waveDepth + waveDepth * depthA) *
-            modulationA;
-          const strandIntensityB =
-            Math.exp(-(distanceB * distanceB) / localThickness) *
-            (1 - waveDepth + waveDepth * depthB) *
-            modulationB;
-
-          let crossbarIntensity = 0;
-          if (crossbars > 0) {
-            const crossing = Math.exp(-(Math.cos(phaseA) ** 2) * 15);
-            const low = Math.min(strandA, strandB);
-            const high = Math.max(strandA, strandB);
-            if (crossing > 0.04 && normalizedY > low && normalizedY < high) {
-              const center = (low + high) / 2;
-              const halfHeight = (high - low) / 2;
-              if (halfHeight > 0.002) {
-                const inside = (normalizedY - center) / halfHeight;
-                crossbarIntensity =
-                  crossing *
-                  (1 - inside * inside) *
-                  (0.5 + 0.5 * Math.sin(1.3 * time + 4 * normalizedX)) *
-                  crossbars *
-                  0.7;
-              }
-            }
-          }
-
-          const centerY = normalizedY - bowlY;
-          const coreTexture =
-            0.55 +
-            0.45 *
-              Math.sin(9 * normalizedX + 0.6 * time) *
-              Math.cos(8 * normalizedY - 0.4 * time);
-          const coreIntensity =
-            Math.exp(
-              -(centeredX * centeredX + centerY * centerY) / coreSquared,
-            ) *
-            breath *
-            coreBrightness *
-            coreTexture;
-          const floor =
-            Math.exp(-((normalizedY - 0.97) ** 2) / 0.0072) *
-            floorIntensity *
-            (0.65 + 0.35 * Math.sin(5 * normalizedX + 0.4 * time));
+            (compact ? 0.055 : 0.065) *
+            (0.72 + 0.28 * Math.sin(Math.PI * shapeX));
+          const strandAY = arch + amplitude * Math.sin(phase);
+          const strandBY = arch - amplitude * Math.sin(phase);
+          const distanceA = normalizedY - strandAY;
+          const distanceB = normalizedY - strandBY;
+          const depthA = 0.36 + 0.64 * (0.5 + 0.5 * Math.cos(phase));
+          const depthB = 0.36 + 0.64 * (0.5 - 0.5 * Math.cos(phase));
+          const strandA =
+            Math.exp(-(distanceA * distanceA) / strandDenominator) * depthA;
+          const strandB =
+            Math.exp(-(distanceB * distanceB) / strandDenominator) * depthB;
+          const shapeTotal = strandA + strandB;
 
           let cursor = 0;
           if (pointerInside) {
@@ -322,16 +247,9 @@ export function HeroParticleField() {
             }
           }
 
-          const strandTotal = strandIntensityA + strandIntensityB;
           const intensity = Math.min(
             1,
-            strandTotal +
-              crossbarIntensity +
-              coreIntensity +
-              floor +
-              cursor +
-              ripple +
-              Math.min(1, clickRing),
+            shapeTotal + cursor + ripple + Math.min(1, clickRing),
           );
           if (intensity < 0.025) continue;
 
@@ -340,24 +258,20 @@ export function HeroParticleField() {
             normalizedY - 0.5,
           );
           let highlight = 0.45 * (1 - smoothstep(0, 0.4, radialDistance));
-          if (strandTotal > 0.05) {
+          if (shapeTotal > 0.05) {
             highlight = Math.max(
               highlight,
               0.3 +
-                (1 -
-                  (depthA * strandIntensityA + depthB * strandIntensityB) /
-                    strandTotal) *
-                  0.4 +
-                0.3 * smoothstep(0, 0.5, Math.abs(normalizedX - 0.5)) +
-                0.14 * Math.sin(5 * normalizedX - 0.9 * time),
+                0.28 * Math.abs(normalizedX - 0.5) +
+                0.16 * Math.sin(phase - time * 0.16),
             );
           }
 
           const radius =
             (dotMin + (dotMax - dotMin) * intensity) * (0.65 + 0.35 * random);
           const hueShift =
-            strandTotal > 0.05
-              ? 0.7 * Math.sin(3.5 * normalizedX - 0.6 * time)
+            shapeTotal > 0.05
+              ? 0.6 * Math.sin(3 * normalizedX - 0.22 * time)
               : 0;
 
           ctx.fillStyle = particleColor(
