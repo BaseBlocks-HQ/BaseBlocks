@@ -12,6 +12,7 @@ import {
   type LibraryExplorerPayload,
 } from "@/features/libraries/model";
 import { api, type Id } from "@baseblocks/backend";
+import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import type { LibraryContent } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
@@ -38,16 +39,20 @@ export function readLibrary(value: unknown): LibraryContent {
 }
 
 export function PublicLibraryViewer({ value }: { value: LibraryContent }) {
+  const actions = useSiteRenderActions();
   const libraryId = value.libraryId as Id<"documentLibraries"> | undefined;
+  const bundledExplorer = libraryId
+    ? actions.publicLibraries?.[libraryId]
+    : undefined;
   const explorer = useQuery(
     api.libraries.getPublicExplorer,
-    libraryId ? { libraryId } : "skip",
+    libraryId && !bundledExplorer ? { libraryId } : "skip",
   );
   if (!libraryId) return null;
   return (
     <ReadOnlyLibraryExplorer
       allowDownloads={value.allowDownloads !== false}
-      explorer={explorer}
+      explorer={bundledExplorer ?? explorer}
     />
   );
 }

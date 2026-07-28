@@ -52,10 +52,17 @@ export default defineSchema({
     .index("by_parent_order", ["siteId", "parentId", "order"])
     .index("by_slug", ["siteId", "slug"]),
 
-  pageContents: defineTable({
+  pageContentBlobs: defineTable({
+    content: v.string(),
+  }),
+
+  pageDocuments: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
-    content: v.string(),
+    blobId: v.id("pageContentBlobs"),
+    contentHash: v.string(),
+    contentSize: v.number(),
+    referencesKey: v.string(),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -70,6 +77,13 @@ export default defineSchema({
   })
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
+
+  publicationStates: defineTable({
+    siteId: v.id("sites"),
+    activeLibraryIds: v.array(v.id("documentLibraries")),
+    referencedFileIds: v.array(v.id("files")),
+    updatedAt: v.number(),
+  }).index("by_site", ["siteId"]),
 
   documentLibraries: defineTable({
     siteId: v.id("sites"),
@@ -94,13 +108,13 @@ export default defineSchema({
     kind: v.union(v.literal("file"), v.literal("siteAsset")),
     visibility: v.union(v.literal("public"), v.literal("private")),
     objectKey: v.string(),
-    filename: v.optional(v.string()),
+    filename: v.string(),
     contentType: v.string(),
     size: v.number(),
     checksum: v.optional(v.string()),
     libraryId: v.optional(v.id("documentLibraries")),
     folderId: v.optional(v.id("documentFolders")),
-    order: v.optional(v.number()),
+    order: v.number(),
     uploadedBy: v.string(),
     createdAt: v.number(),
   })
@@ -112,19 +126,30 @@ export default defineSchema({
   searchEntries: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("file"), v.literal("page")),
+    audience: v.union(v.literal("private"), v.literal("public")),
     sourceId: v.string(),
     title: v.string(),
     text: v.string(),
+    fileMetadata: v.optional(
+      v.object({
+        fileId: v.id("files"),
+        filename: v.string(),
+        fileContentType: v.string(),
+        size: v.number(),
+        libraryId: v.optional(v.id("documentLibraries")),
+        downloadUrl: v.string(),
+      }),
+    ),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
     .index("by_source", ["kind", "sourceId"])
     .searchIndex("search_title", {
       searchField: "title",
-      filterFields: ["siteId", "kind"],
+      filterFields: ["siteId", "kind", "audience"],
     })
     .searchIndex("search_text", {
       searchField: "text",
-      filterFields: ["siteId", "kind"],
+      filterFields: ["siteId", "kind", "audience"],
     }),
 });

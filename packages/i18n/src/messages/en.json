@@ -195,6 +195,7 @@
       "emptyNoTabs": "Add a layout to get started",
       "pageNotFound": "Page not found",
       "loading": "Loading page…",
+      "loadFailed": "Failed to load page",
       "saveFailed": "Failed to save page"
     },
     "pageTabBar": {

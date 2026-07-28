@@ -32,7 +32,7 @@ import {
   OpenEditorThemeProvider,
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation } from "convex/react";
 import { ArrowLeft, PanelsTopLeft } from "lucide-react";
 import {
   useEffect,
@@ -71,7 +71,7 @@ export function OpenEditorPageEditor({
   const t = useTranslations("editor.pageEditor");
   const { canEdit } = useEditorSite();
   const { canGoBack, goBack, openPage } = useEditorUi();
-  const content = useQuery(api.pageContent.get, { pageId });
+  const convex = useConvex();
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
   const saveContent = useMutation(api.pageContent.save);
@@ -79,12 +79,37 @@ export function OpenEditorPageEditor({
   const imageRuntime = useBaseBlocksImageRuntime(siteId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDocument = useRef<OpenEditorDocument | null>(null);
+  const savedContentByPage = useRef(new Map<string, string>());
   const [localDocument, setLocalDocument] = useState<{
     pageId: Id<"pages">;
     document: OpenEditorDocument;
   } | null>(null);
+  const [loadedDocument, setLoadedDocument] = useState<{
+    pageId: Id<"pages">;
+    document: OpenEditorDocument;
+  } | null>(null);
 
-  const initialDocument = content as OpenEditorDocument | undefined;
+  useEffect(() => {
+    let active = true;
+    setLoadedDocument(null);
+    void convex
+      .query(api.pageContent.get, { pageId })
+      .then((document) => {
+        if (!active || !document) return;
+        const parsed = document as OpenEditorDocument;
+        savedContentByPage.current.set(pageId, JSON.stringify(parsed));
+        setLoadedDocument({ pageId, document: parsed });
+      })
+      .catch(() => {
+        if (active) toast.error(t("loadFailed"));
+      });
+    return () => {
+      active = false;
+    };
+  }, [convex, pageId, t]);
+
+  const initialDocument =
+    loadedDocument?.pageId === pageId ? loadedDocument.document : undefined;
   const resolvedDocument =
     localDocument?.pageId === pageId ? localDocument.document : initialDocument;
   const handleConvertToTabs = (document: OpenEditorDocument) =>
@@ -185,6 +210,7 @@ export function OpenEditorPageEditor({
           pageRuntime={pageRuntime}
           preview={preview}
           saveContent={saveContent}
+          savedContentByPage={savedContentByPage}
           saveFailedMessage={t("saveFailed")}
         />
       ) : (
@@ -200,6 +226,7 @@ export function OpenEditorPageEditor({
           pageRuntime={pageRuntime}
           preview={preview}
           saveContent={saveContent}
+          savedContentByPage={savedContentByPage}
           saveTimer={saveTimer}
           pendingDocument={pendingDocument}
           saveFailedMessage={t("saveFailed")}
@@ -220,6 +247,7 @@ function OpenEditorTabbedPageEditor({
   pageRuntime,
   preview,
   saveContent,
+  savedContentByPage,
   saveFailedMessage,
 }: {
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
@@ -234,16 +262,23 @@ function OpenEditorTabbedPageEditor({
   saveContent: (args: {
     pageId: Id<"pages">;
     content: OpenEditorDocument;
-  }) => Promise<null>;
+  }) => Promise<string>;
+  savedContentByPage: RefObject<Map<string, string>>;
   saveFailedMessage: string;
 }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDocument = useRef<OpenEditorDocument | null>(null);
   const saveRevision = useRef(0);
   const persist = async (document: OpenEditorDocument, revision: number) => {
+    const serialized = JSON.stringify(document);
+    if (serialized === savedContentByPage.current.get(pageId)) {
+      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
+      return;
+    }
     if (revision === saveRevision.current) onSaveStatusChange?.("saving");
     try {
       await saveContent({ pageId, content: document });
+      savedContentByPage.current.set(pageId, serialized);
       if (revision === saveRevision.current) onSaveStatusChange?.("saved");
     } catch (_error) {
       toast.error(saveFailedMessage);
@@ -259,7 +294,7 @@ function OpenEditorTabbedPageEditor({
       const nextDocument = pendingDocument.current;
       pendingDocument.current = null;
       if (nextDocument) void persist(nextDocument, revision);
-    }, 750);
+    }, 2_000);
   };
   const flushPendingSave = useEffectEvent(persist);
 
@@ -308,6 +343,7 @@ function OpenEditorDocumentEditor({
   preview,
   pendingDocument,
   saveContent,
+  savedContentByPage,
   saveTimer,
   saveFailedMessage,
 }: {
@@ -325,15 +361,22 @@ function OpenEditorDocumentEditor({
   saveContent: (args: {
     pageId: Id<"pages">;
     content: OpenEditorDocument;
-  }) => Promise<null>;
+  }) => Promise<string>;
+  savedContentByPage: RefObject<Map<string, string>>;
   saveTimer: RefObject<ReturnType<typeof setTimeout> | null>;
   saveFailedMessage: string;
 }) {
   const saveRevision = useRef(0);
   const persist = async (document: OpenEditorDocument, revision: number) => {
+    const serialized = JSON.stringify(document);
+    if (serialized === savedContentByPage.current.get(pageId)) {
+      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
+      return;
+    }
     if (revision === saveRevision.current) onSaveStatusChange?.("saving");
     try {
       await saveContent({ pageId, content: document });
+      savedContentByPage.current.set(pageId, serialized);
       if (revision === saveRevision.current) onSaveStatusChange?.("saved");
     } catch (_error) {
       toast.error(saveFailedMessage);
@@ -380,7 +423,7 @@ function OpenEditorDocumentEditor({
         const nextDocument = pendingDocument.current;
         pendingDocument.current = null;
         if (nextDocument) void persist(nextDocument, revision);
-      }, 750);
+      }, 2_000);
     },
   });
   useRegisterEditorBlockPicker(controller, canEdit && !preview);

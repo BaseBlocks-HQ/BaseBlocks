@@ -71,6 +71,9 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
   const navigationIcon = readNavigationIcon(searchParams.get("icon"));
   const pageTargets = buildPublishedPageTargets(result.navigation);
+  const publicLibraries = Object.fromEntries(
+    result.libraries.map((library) => [library.library._id, library]),
+  );
   const navigateToPage = (pageId: string) => {
     const target = pageTargets.get(pageId);
     if (!target || target.pageId === page?._id) return;
@@ -110,6 +113,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
           siteSlug: site.slug,
           openPage: navigateToPage,
           publicSearch: true,
+          publicLibraries,
         }}
       >
         <SidebarProvider>

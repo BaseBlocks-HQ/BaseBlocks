@@ -8,6 +8,7 @@ import {
 import { deleteFileRows } from "./files";
 import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
+import { refreshPublicationState } from "./model/publication";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -212,6 +213,7 @@ export const setPublished = mutation({
       publishedAt: published ? (site.publishedAt ?? now) : site.publishedAt,
       updatedAt: now,
     });
+    await refreshPublicationState(ctx, siteId);
 
     return siteId;
   },
@@ -296,13 +298,14 @@ export const remove = mutation({
       await ctx.db.delete(entry._id);
     }
 
-    const pageContents = await ctx.db
-      .query("pageContents")
+    const pageDocuments = await ctx.db
+      .query("pageDocuments")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
-    await Promise.all(
-      pageContents.map((content) => ctx.db.delete("pageContents", content._id)),
-    );
+    for (const document of pageDocuments) {
+      await ctx.db.delete(document.blobId);
+      await ctx.db.delete(document._id);
+    }
     const pageReferences = await ctx.db
       .query("pageReferences")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -310,6 +313,11 @@ export const remove = mutation({
     for (const reference of pageReferences) {
       await ctx.db.delete(reference._id);
     }
+    const publicationState = await ctx.db
+      .query("publicationStates")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .unique();
+    if (publicationState) await ctx.db.delete(publicationState._id);
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

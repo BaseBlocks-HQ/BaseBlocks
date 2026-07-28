@@ -1,24 +1,11 @@
-import type { GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Doc } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireOrganizationPermission } from "./permissions";
-
-type QueryCtx = GenericQueryCtx<DataModel>;
+import { refreshPublicationState } from "./model/publication";
 
 export function canAccessPublishedSite(site: Doc<"sites">): boolean {
   return site.isPublished && site.visibility === "public";
-}
-
-export async function getAccessiblePublishedPages(
-  ctx: QueryCtx,
-  site: Doc<"sites">,
-): Promise<Doc<"pages">[]> {
-  if (!canAccessPublishedSite(site)) return [];
-  return ctx.db
-    .query("pages")
-    .withIndex("by_site", (q) => q.eq("siteId", site._id))
-    .collect();
 }
 
 export const getSettings = query({
@@ -47,6 +34,7 @@ export const updateVisibility = mutation({
       action: "manage",
     });
     await ctx.db.patch(siteId, { visibility, updatedAt: Date.now() });
+    await refreshPublicationState(ctx, siteId);
     return siteId;
   },
 });

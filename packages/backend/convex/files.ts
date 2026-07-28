@@ -10,9 +10,11 @@ import {
   type MutationCtx,
   mutation,
   query,
-  type QueryCtx,
 } from "./_generated/server";
-import { getActiveLibraryIds, resolveSiteContext } from "./model/sites";
+import {
+  getPublicationState,
+  getPublishedLibraryIds,
+} from "./model/publication";
 import {
   checkOrganizationPermission,
   requireOrganizationMember,
@@ -24,7 +26,7 @@ export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
 }
 
-export function normalizeFileSearchMetadata(file: Doc<"files">) {
+function fileSearchMetadata(file: Doc<"files">) {
   return {
     fileId: file._id,
     filename: file.filename,
@@ -56,17 +58,8 @@ function isUploadedFile(file: Doc<"files">) {
 function mapFile(file: Doc<"files">) {
   return {
     ...file,
-    filename: file.filename ?? "file",
     downloadUrl: buildFileUrl(file._id),
   };
-}
-
-async function isReferencedFile(ctx: QueryCtx, file: Doc<"files">) {
-  const references = await ctx.db
-    .query("pageReferences")
-    .withIndex("by_site", (q) => q.eq("siteId", file.siteId))
-    .collect();
-  return references.some((reference) => reference.fileIds.includes(file._id));
 }
 
 export const canUploadToSite = query({
@@ -125,12 +118,11 @@ export const getPublic = query({
     if (file.kind === "siteAsset") {
       return file.visibility === "public" ? file : null;
     }
-    if (file.libraryId) {
-      const activeLibraryIds = await getActiveLibraryIds(ctx, file.siteId);
-      if (!activeLibraryIds.has(file.libraryId)) return null;
-    } else if (!(await isReferencedFile(ctx, file))) {
-      return null;
-    }
+    const state = await getPublicationState(ctx, file.siteId);
+    const isPublished = file.libraryId
+      ? state?.activeLibraryIds.includes(file.libraryId)
+      : state?.referencedFileIds.includes(file._id);
+    if (!isPublished) return null;
     return file;
   },
 });
@@ -196,6 +188,7 @@ async function createUploadedFile(
     checksum?: string;
     libraryId?: Id<"documentLibraries">;
     folderId?: Id<"documentFolders">;
+    audience: "private" | "public";
   },
 ) {
   const createdAt = Date.now();
@@ -215,11 +208,9 @@ async function createUploadedFile(
           .collect(),
       ])
     : [[], []];
-  const legacyOrder = Number.MAX_SAFE_INTEGER / 2;
   const order =
     [...folderSiblings, ...fileSiblings].reduce(
-      (maximum, sibling, index) =>
-        Math.max(maximum, sibling.order ?? legacyOrder + index),
+      (maximum, sibling) => Math.max(maximum, sibling.order),
       -1,
     ) + 1;
   const fileId = await ctx.db.insert("files", {
@@ -240,9 +231,18 @@ async function createUploadedFile(
   await ctx.db.insert("searchEntries", {
     siteId: args.siteId,
     kind: "file",
+    audience: args.audience,
     sourceId: fileId,
     title: args.filename,
     text: args.filename,
+    fileMetadata: {
+      fileId,
+      filename: args.filename,
+      fileContentType: args.contentType,
+      size: args.size,
+      libraryId: args.libraryId,
+      downloadUrl: buildFileUrl(fileId),
+    },
     updatedAt: createdAt,
   });
   return fileId;
@@ -261,7 +261,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const contentType = validateUpload({ ...args, purpose: "file" });
-    const site = await resolveSiteContext(ctx, args.siteId);
+    const site = await ctx.db.get(args.siteId);
     if (!site) throw new ConvexError("Site not found");
     const { auth } = await requireOrganizationPermission(
       ctx,
@@ -280,10 +280,17 @@ export const create = mutation({
         throw new ConvexError("Folder not found");
       }
     }
+    const activeLibraryIds = await getPublishedLibraryIds(ctx, args.siteId);
     return createUploadedFile(ctx, {
       ...args,
       contentType,
       uploadedBy: auth.userId,
+      audience:
+        canAccessPublishedSite(site) &&
+        args.libraryId !== undefined &&
+        activeLibraryIds.has(args.libraryId)
+          ? "public"
+          : "private",
     });
   },
 });
@@ -293,7 +300,7 @@ export const rename = mutation({
   handler: async (ctx, { fileId, filename }) => {
     const file = await ctx.db.get(fileId);
     if (!file || !isUploadedFile(file)) throw new ConvexError("File not found");
-    const site = await resolveSiteContext(ctx, file.siteId);
+    const site = await ctx.db.get(file.siteId);
     if (!site) throw new ConvexError("Site not found");
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "library",
@@ -310,6 +317,7 @@ export const rename = mutation({
       await ctx.db.patch(entry._id, {
         title: filename,
         text: filename,
+        fileMetadata: fileSearchMetadata({ ...file, filename }),
         updatedAt: Date.now(),
       });
     }
@@ -322,7 +330,7 @@ export const remove = mutation({
   handler: async (ctx, { fileId }) => {
     const file = await ctx.db.get(fileId);
     if (!file || !isUploadedFile(file)) throw new ConvexError("File not found");
-    const site = await resolveSiteContext(ctx, file.siteId);
+    const site = await ctx.db.get(file.siteId);
     if (!site) throw new ConvexError("Site not found");
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "library",
@@ -343,7 +351,7 @@ export const createSiteAsset = mutation({
   },
   handler: async (ctx, args) => {
     const contentType = validateUpload({ ...args, purpose: "siteAsset" });
-    const site = await resolveSiteContext(ctx, args.siteId);
+    const site = await ctx.db.get(args.siteId);
     if (!site) throw new ConvexError("Site not found");
     const { auth } = await requireOrganizationPermission(
       ctx,
@@ -359,6 +367,7 @@ export const createSiteAsset = mutation({
       contentType,
       size: args.size,
       checksum: args.checksum,
+      order: 0,
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });

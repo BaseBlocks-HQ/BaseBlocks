@@ -1,15 +1,13 @@
-import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
+import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
-import { normalizeFileSearchMetadata } from "./files";
-import { getAccessiblePublishedPages, canAccessPublishedSite } from "./sharing";
-import { getActiveLibraryIdsForPageIds } from "./model/sites";
+import { readPageContent } from "./model/pageDocuments";
+import { canAccessPublishedSite } from "./sharing";
 import {
   extractOpenEditorText,
   type OpenEditorDocument,
-  parseOpenEditorDocument,
 } from "./pageContentFormat";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
@@ -21,16 +19,12 @@ export async function indexPageContent(
 ): Promise<void> {
   const page = await ctx.db.get(pageId);
   if (!page) return;
+  const site = await ctx.db.get(page.siteId);
+  if (!site) return;
 
   let searchableDocument = document;
   if (!searchableDocument) {
-    const content = await ctx.db
-      .query("pageContents")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .unique();
-    searchableDocument = content
-      ? parseOpenEditorDocument(content.content)
-      : undefined;
+    searchableDocument = (await readPageContent(ctx, pageId)).document;
   }
   const extractedText = searchableDocument
     ? extractOpenEditorText(searchableDocument)
@@ -47,6 +41,9 @@ export async function indexPageContent(
   const indexData = {
     siteId: page.siteId,
     kind: "page" as const,
+    audience: canAccessPublishedSite(site)
+      ? ("public" as const)
+      : ("private" as const),
     sourceId: pageId,
     title: page.title,
     text: combinedText,
@@ -115,7 +112,6 @@ function formatSearchResult(
   doc: Doc<"searchEntries">,
   matchType: "title" | "content",
   searchTerm: string,
-  file?: Doc<"files"> | null,
 ) {
   const snippetData =
     matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
@@ -124,25 +120,17 @@ function formatSearchResult(
     _id: doc._id,
     contentType: doc.kind,
     sourceId: doc.sourceId,
-    title: file?.filename ?? doc.title,
+    title: doc.fileMetadata?.filename ?? doc.title,
     matchType,
     snippet: snippetData?.snippet ?? null,
     snippetMatchStart: snippetData?.matchStart ?? null,
     snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata: file
-      ? normalizeFileSearchMetadata(file)
+    metadata: doc.fileMetadata
+      ? doc.fileMetadata
       : doc.kind === "page"
         ? { pageId: doc.sourceId as Id<"pages"> }
         : {},
   };
-}
-
-async function getFileForSearchResult(
-  ctx: Pick<GenericQueryCtx<DataModel>, "db">,
-  doc: Doc<"searchEntries">,
-) {
-  if (doc.kind !== "file") return null;
-  return await ctx.db.get(doc.sourceId as Id<"files">);
 }
 
 function contentTypeMatches(
@@ -190,31 +178,18 @@ export const searchAll = query({
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleFile = async (doc: Doc<"searchEntries">) => {
-      if (!contentTypeMatches(doc, contentTypes)) return null;
-      if (doc.kind !== "file") return null;
-      return await getFileForSearchResult(ctx, doc);
-    };
-
-    const shouldIncludePage = (doc: Doc<"searchEntries">) => {
-      if (doc.kind !== "page") return false;
-      return contentTypeMatches(doc, contentTypes);
-    };
-
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
-      const file = await getVisibleFile(doc);
-      if (!file && !shouldIncludePage(doc)) continue;
+      if (!contentTypeMatches(doc, contentTypes)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed, file));
+      combined.push(formatSearchResult(doc, "content", trimmed));
     }
 
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
-      const file = await getVisibleFile(doc);
-      if (!file && !shouldIncludePage(doc)) continue;
+      if (!contentTypeMatches(doc, contentTypes)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed, file));
+      combined.push(formatSearchResult(doc, "title", trimmed));
     }
 
     return combined.slice(0, limit);
@@ -242,61 +217,41 @@ export const searchAllPublic = query({
       return [];
     }
 
-    const accessiblePages = await getAccessiblePublishedPages(ctx, site);
-    const accessiblePageIds = new Set(accessiblePages.map((page) => page._id));
-    const activeLibraryIds = await getActiveLibraryIdsForPageIds(
-      ctx,
-      siteId,
-      accessiblePageIds,
-    );
-
     const titleResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_title", (q) =>
-        q.search("title", trimmed).eq("siteId", siteId),
+        q
+          .search("title", trimmed)
+          .eq("siteId", siteId)
+          .eq("audience", "public"),
       )
       .take(limit * 2);
 
     const contentResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("siteId", siteId),
+        q
+          .search("text", trimmed)
+          .eq("siteId", siteId)
+          .eq("audience", "public"),
       )
       .take(limit * 2);
 
     const seen = new Set<string>();
     const combined: ReturnType<typeof formatSearchResult>[] = [];
 
-    const getVisibleFile = async (doc: Doc<"searchEntries">) => {
-      if (!contentTypeMatches(doc, contentTypes)) return null;
-      if (doc.kind !== "file") return null;
-      const file = await getFileForSearchResult(ctx, doc);
-      if (!file?.libraryId || !activeLibraryIds.has(file.libraryId)) {
-        return null;
-      }
-      return file;
-    };
-
-    const shouldIncludePage = (doc: Doc<"searchEntries">) => {
-      if (!contentTypeMatches(doc, contentTypes)) return false;
-      if (doc.kind !== "page") return false;
-      return accessiblePageIds.has(doc.sourceId as Id<"pages">);
-    };
-
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
-      const file = await getVisibleFile(doc);
-      if (!file && !shouldIncludePage(doc)) continue;
+      if (!contentTypeMatches(doc, contentTypes)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed, file));
+      combined.push(formatSearchResult(doc, "content", trimmed));
     }
 
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
-      const file = await getVisibleFile(doc);
-      if (!file && !shouldIncludePage(doc)) continue;
+      if (!contentTypeMatches(doc, contentTypes)) continue;
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed, file));
+      combined.push(formatSearchResult(doc, "title", trimmed));
     }
 
     return combined.slice(0, limit);

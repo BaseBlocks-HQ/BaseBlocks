@@ -9,7 +9,7 @@ import {
 } from "./permissions";
 import { buildFileUrl, deleteFileRows } from "./files";
 import { canAccessPublishedSite } from "./sharing";
-import { getActiveLibraryIds } from "./model/sites";
+import { getPublishedLibraryIds } from "./model/publication";
 import {
   requireFolderManagement,
   requireLibraryManagement,
@@ -52,7 +52,7 @@ const explorerPayload = v.object({
   files: v.array(libraryFileSummary),
 });
 
-async function buildExplorerPayload(
+export async function buildExplorerPayload(
   ctx: QueryCtx,
   library: {
     _id: Id<"documentLibraries">;
@@ -73,25 +73,6 @@ async function buildExplorerPayload(
     .query("files")
     .withIndex("by_folder", (q) => q.eq("libraryId", library._id))
     .collect();
-
-  const fileOrderFallback = new Map<string, number>();
-  const filesByFolder = new Map<string | undefined, typeof files>();
-  for (const file of files) {
-    const siblings = filesByFolder.get(file.folderId) ?? [];
-    siblings.push(file);
-    filesByFolder.set(file.folderId, siblings);
-  }
-  for (const siblings of filesByFolder.values()) {
-    siblings
-      .sort(
-        (a, b) =>
-          (a.filename ?? "file").localeCompare(b.filename ?? "file") ||
-          a._id.localeCompare(b._id),
-      )
-      .forEach((file, index) => {
-        fileOrderFallback.set(file._id, index);
-      });
-  }
 
   return {
     library: {
@@ -116,14 +97,12 @@ async function buildExplorerPayload(
     files: files
       .map((file) => ({
         _id: file._id,
-        filename: file.filename ?? "file",
+        filename: file.filename,
         contentType: file.contentType,
         size: file.size,
         downloadUrl: buildFileUrl(file._id),
         folderId: file.folderId,
-        order:
-          file.order ??
-          Number.MAX_SAFE_INTEGER / 2 + (fileOrderFallback.get(file._id) ?? 0),
+        order: file.order,
       }))
       .sort(
         (a, b) => a.order - b.order || a.filename.localeCompare(b.filename),
@@ -174,7 +153,7 @@ export const getPublicExplorer = query({
       return null;
     }
 
-    const activeLibraryIds = await getActiveLibraryIds(ctx, library.siteId);
+    const activeLibraryIds = await getPublishedLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return null;
 
     return await buildExplorerPayload(ctx, library, site);
@@ -261,10 +240,8 @@ export const createFolder = mutation({
       );
     }
 
-    const legacyOrder = Number.MAX_SAFE_INTEGER / 2;
     const maxOrder = [...siblings, ...siblingFiles].reduce(
-      (maximum, sibling, index) =>
-        Math.max(maximum, sibling.order ?? legacyOrder + index),
+      (maximum, sibling) => Math.max(maximum, sibling.order),
       -1,
     );
 
@@ -410,7 +387,6 @@ export const moveInTree = mutation({
       throw new Error("Files can only be moved inside folders");
     }
 
-    const fallbackOrder = Number.MAX_SAFE_INTEGER / 2;
     const plan = planTreeMove(
       [
         ...folders.map((folder) => ({
@@ -418,10 +394,10 @@ export const moveInTree = mutation({
           parentId: folder.parentId ?? null,
           order: folder.order,
         })),
-        ...files.map((file, index) => ({
+        ...files.map((file) => ({
           id: file._id,
           parentId: file.folderId ?? null,
-          order: file.order ?? fallbackOrder + index,
+          order: file.order,
         })),
       ],
       {

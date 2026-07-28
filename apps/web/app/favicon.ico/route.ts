@@ -65,20 +65,10 @@ export async function GET(request: Request) {
       mapping?.organizationSlug ??
       ("organizationSlug" in parsedHost ? parsedHost.organizationSlug : null);
     if (!teamSlug) return getDefaultFavicon();
-    const result = await client.query(api.published.resolve, {
+    const favicon = await client.query(api.published.getFavicon, {
       organizationSlug: teamSlug,
       siteSlug: mapping?.siteSlug,
-      pagePath: [],
     });
-    const site = result?.site;
-
-    const visibility = site?.visibility ?? "public";
-    if (visibility === "private") {
-      return getDefaultFavicon();
-    }
-
-    const favicon = (site?.settings as Record<string, unknown> | undefined)
-      ?.favicon as string | undefined;
     if (!favicon) {
       return getDefaultFavicon();
     }

@@ -195,6 +195,7 @@
       "emptyNoTabs": "Ajoutez une mise en page pour commencer",
       "pageNotFound": "Page introuvable",
       "loading": "Chargement de la page…",
+      "loadFailed": "Impossible de charger la page",
       "saveFailed": "Impossible d’enregistrer la page"
     },
     "pageTabBar": {

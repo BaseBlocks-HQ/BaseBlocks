@@ -3,6 +3,7 @@ import "server-only";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { normalizeHostname } from "@/lib/routing/hosts";
 import { api } from "@baseblocks/backend";
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import {
   resolveSeoAuditCustomDomain,
@@ -10,17 +11,37 @@ import {
   resolveSeoAuditSitemap,
 } from "./seo-audit-fixtures";
 
-async function queryPublishedPage(
-  organizationSlug: string,
-  siteSlug: string | undefined,
-  pagePath: string[],
-) {
-  return getServerConvexClient().query(api.published.resolve, {
-    organizationSlug,
-    siteSlug,
-    pagePath,
-  });
-}
+const queryPublishedPage = unstable_cache(
+  (
+    organizationSlug: string,
+    siteSlug: string | undefined,
+    pagePath: string[],
+  ) =>
+    getServerConvexClient().query(api.published.resolve, {
+      organizationSlug,
+      siteSlug,
+      pagePath,
+    }),
+  ["published-page"],
+  { revalidate: 60 },
+);
+
+const queryCustomDomain = unstable_cache(
+  (hostname: string) =>
+    getServerConvexClient().query(api.siteDomains.resolve, { hostname }),
+  ["published-custom-domain"],
+  { revalidate: 300 },
+);
+
+const queryPublishedSitemap = unstable_cache(
+  (organizationSlug: string, siteSlug?: string) =>
+    getServerConvexClient().query(api.published.sitemap, {
+      organizationSlug,
+      siteSlug,
+    }),
+  ["published-sitemap"],
+  { revalidate: 300 },
+);
 
 export type PublishedPageResult = NonNullable<
   Awaited<ReturnType<typeof queryPublishedPage>>
@@ -41,21 +62,17 @@ export const resolvePublishedPage = cache(
 );
 
 export const resolveCustomDomain = cache((hostname: string) => {
-  const fixture = resolveSeoAuditCustomDomain(normalizeHostname(hostname));
+  const normalizedHostname = normalizeHostname(hostname);
+  const fixture = resolveSeoAuditCustomDomain(normalizedHostname);
   if (fixture) return Promise.resolve(fixture);
-  return getServerConvexClient().query(api.siteDomains.resolve, {
-    hostname: normalizeHostname(hostname),
-  });
+  return queryCustomDomain(normalizedHostname);
 });
 
 export const resolvePublishedSitemap = cache(
   (organizationSlug: string, siteSlug?: string) => {
     const fixture = resolveSeoAuditSitemap(organizationSlug, siteSlug);
     if (fixture) return Promise.resolve(fixture);
-    return getServerConvexClient().query(api.published.sitemap, {
-      organizationSlug,
-      siteSlug,
-    }) as Promise<
+    return queryPublishedSitemap(organizationSlug, siteSlug) as Promise<
       Array<{
         siteSlug: string;
         updatedAt: number;

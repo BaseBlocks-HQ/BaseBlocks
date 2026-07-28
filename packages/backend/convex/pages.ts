@@ -7,6 +7,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
+import { refreshPublicationState } from "./model/publication";
 
 export type PageTreeNode = {
   _id: string;
@@ -320,12 +321,12 @@ export const remove = mutation({
       await removePageContentIndex(ctx, id as Id<"pages">);
     }
 
-    const contents = await ctx.db
-      .query("pageContents")
+    const documents = await ctx.db
+      .query("pageDocuments")
       .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
       .collect();
-    const contentByPageId = new Map(
-      contents.map((content) => [content.pageId, content]),
+    const documentByPageId = new Map(
+      documents.map((document) => [document.pageId, document]),
     );
     const references = await ctx.db
       .query("pageReferences")
@@ -335,12 +336,16 @@ export const remove = mutation({
       references.map((reference) => [reference.pageId, reference]),
     );
     for (const id of pagesToDelete) {
-      const content = contentByPageId.get(id as Id<"pages">);
-      if (content) await ctx.db.delete(content._id);
+      const document = documentByPageId.get(id as Id<"pages">);
+      if (document) {
+        await ctx.db.delete(document.blobId);
+        await ctx.db.delete(document._id);
+      }
       const reference = referencesByPageId.get(id as Id<"pages">);
       if (reference) await ctx.db.delete(reference._id);
       await ctx.db.delete(id as Id<"pages">);
     }
+    await refreshPublicationState(ctx, page.siteId);
 
     return { success: true };
   },

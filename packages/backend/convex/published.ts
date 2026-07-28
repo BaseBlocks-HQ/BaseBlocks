@@ -1,14 +1,44 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { query, type QueryCtx } from "./_generated/server";
 import { getAuthOrganizationBySlug } from "./authComponent/model";
 import { buildPageTree } from "./pages";
 import {
   emptyOpenEditorDocument,
-  parseOpenEditorDocument,
+  extractOpenEditorReferences,
   referencesOpenEditorPage,
 } from "./pageContentFormat";
 import { canAccessPublishedSite } from "./sharing";
+import { readPageContent } from "./model/pageDocuments";
+import { buildExplorerPayload } from "./libraries";
+
+async function resolvePublishedSite(
+  ctx: QueryCtx,
+  organizationSlug: string,
+  siteSlug?: string,
+) {
+  const organization = await getAuthOrganizationBySlug(ctx, organizationSlug);
+  if (!organization?.slug) return null;
+  const resolvedOrganization = { ...organization, slug: organization.slug };
+  const site = siteSlug
+    ? await ctx.db
+        .query("sites")
+        .withIndex("by_organization_slug", (q) =>
+          q.eq("organizationId", resolvedOrganization._id).eq("slug", siteSlug),
+        )
+        .first()
+    : (
+        await ctx.db
+          .query("sites")
+          .withIndex("by_organization", (q) =>
+            q.eq("organizationId", resolvedOrganization._id),
+          )
+          .collect()
+      ).find((candidate) => candidate.isPublished);
+  return site?.isPublished
+    ? { organization: resolvedOrganization, site }
+    : null;
+}
 
 function resolvePage(
   pages: Doc<"pages">[],
@@ -80,16 +110,28 @@ export const sitemap = query({
 
     return Promise.all(
       sites.map(async (site) => {
-        const pages = await ctx.db
-          .query("pages")
-          .withIndex("by_site", (q) => q.eq("siteId", site._id))
-          .collect();
+        const [pages, documents] = await Promise.all([
+          ctx.db
+            .query("pages")
+            .withIndex("by_site", (q) => q.eq("siteId", site._id))
+            .collect(),
+          ctx.db
+            .query("pageDocuments")
+            .withIndex("by_site", (q) => q.eq("siteId", site._id))
+            .collect(),
+        ]);
+        const updatedAtByPage = new Map(
+          documents.map((document) => [document.pageId, document.updatedAt]),
+        );
         return {
           siteSlug: site.slug,
           updatedAt: site.updatedAt,
           pages: pages.map((page) => ({
             path: getCanonicalPagePath(pages, page, site.defaultPageId),
-            updatedAt: page.updatedAt,
+            updatedAt: Math.max(
+              page.updatedAt,
+              updatedAtByPage.get(page._id) ?? 0,
+            ),
           })),
         };
       }),
@@ -105,27 +147,13 @@ export const resolve = query({
   },
   returns: v.any(),
   handler: async (ctx, args) => {
-    const organization = await getAuthOrganizationBySlug(
+    const resolved = await resolvePublishedSite(
       ctx,
       args.organizationSlug,
+      args.siteSlug,
     );
-    if (!organization?.slug) return null;
-    const site = args.siteSlug
-      ? await ctx.db
-          .query("sites")
-          .withIndex("by_organization_slug", (q) =>
-            q.eq("organizationId", organization._id).eq("slug", args.siteSlug!),
-          )
-          .first()
-      : (
-          await ctx.db
-            .query("sites")
-            .withIndex("by_organization", (q) =>
-              q.eq("organizationId", organization._id),
-            )
-            .collect()
-        ).find((candidate) => candidate.isPublished);
-    if (!site?.isPublished) return null;
+    if (!resolved) return null;
+    const { organization, site } = resolved;
     const canAccess = canAccessPublishedSite(site);
     const allPages = await ctx.db
       .query("pages")
@@ -143,24 +171,29 @@ export const resolve = query({
       : resolvePage(allPages, site.defaultPageId, args.pagePath)
         ? "forbidden"
         : "missing";
-    const contentRow = page
-      ? await ctx.db
-          .query("pageContents")
-          .withIndex("by_page", (q) => q.eq("pageId", page._id))
-          .unique()
-      : null;
-    const parentContentRow = page?.parentId
-      ? await ctx.db
-          .query("pageContents")
-          .withIndex("by_page", (q) => q.eq("pageId", page.parentId!))
-          .unique()
-      : null;
-    const content = contentRow
-      ? parseOpenEditorDocument(contentRow.content)
-      : emptyOpenEditorDocument();
-    const isOpenEditorPageBlock = parentContentRow
+    const [contentResult, parentContentResult] = await Promise.all([
+      page ? readPageContent(ctx, page._id) : null,
+      page?.parentId ? readPageContent(ctx, page.parentId) : null,
+    ]);
+    const content = contentResult?.document ?? emptyOpenEditorDocument();
+    const libraryIds = Array.from(
+      extractOpenEditorReferences(content).libraryIds,
+    ).flatMap((value) => {
+      const id = ctx.db.normalizeId("documentLibraries", value);
+      return id ? [id] : [];
+    });
+    const libraries = (
+      await Promise.all(
+        libraryIds.map(async (libraryId) => {
+          const library = await ctx.db.get(libraryId);
+          if (!library || library.siteId !== site._id) return null;
+          return buildExplorerPayload(ctx, library, site);
+        }),
+      )
+    ).filter((library) => library !== null);
+    const isOpenEditorPageBlock = parentContentResult
       ? referencesOpenEditorPage(
-          parseOpenEditorDocument(parentContentRow.content),
+          parentContentResult.document,
           page?._id ?? "",
         )
       : false;
@@ -192,6 +225,7 @@ export const resolve = query({
           }
         : null,
       content,
+      libraries,
       navigation: buildPageTree(
         accessiblePages.map((item) => ({
           _id: item._id,
@@ -214,9 +248,26 @@ export const resolve = query({
       updatedAt: Math.max(
         site.updatedAt,
         page?.updatedAt ?? 0,
-        contentRow?.updatedAt ?? 0,
+        contentResult?.record?.updatedAt ?? 0,
       ),
     };
+  },
+});
+
+export const getFavicon = query({
+  args: {
+    organizationSlug: v.string(),
+    siteSlug: v.optional(v.string()),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const resolved = await resolvePublishedSite(
+      ctx,
+      args.organizationSlug,
+      args.siteSlug,
+    );
+    if (!resolved || !canAccessPublishedSite(resolved.site)) return null;
+    return resolved.site.settings.favicon ?? null;
   },
 });
 
@@ -230,10 +281,7 @@ export const getPageById = query({
     if (!site || !canAccessPublishedSite(site)) {
       return null;
     }
-    const content = await ctx.db
-      .query("pageContents")
-      .withIndex("by_page", (q) => q.eq("pageId", pageId))
-      .unique();
+    const content = await readPageContent(ctx, pageId);
     return {
       page: {
         _id: page._id,
@@ -242,9 +290,7 @@ export const getPageById = query({
         icon: page.icon,
         parentId: page.parentId,
       },
-      content: content
-        ? parseOpenEditorDocument(content.content)
-        : emptyOpenEditorDocument(),
+      content: content.document,
     };
   },
 });

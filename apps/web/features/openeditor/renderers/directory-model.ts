@@ -89,13 +89,10 @@ export function directoryToHtml(
     .join("");
 }
 
-function migrateDirectory(value: unknown, index: number): Directory {
+function normalizeDirectory(value: unknown, index: number): Directory {
   const candidate =
     value && typeof value === "object"
-      ? (value as Partial<Directory> & {
-          columns?: Array<{ id?: unknown }>;
-          settings?: { pageSize?: unknown };
-        })
+      ? (value as Partial<Directory>)
       : {};
   const id =
     typeof candidate.id === "string"
@@ -107,13 +104,7 @@ function migrateDirectory(value: unknown, index: number): Directory {
     ? candidate.columnIds.filter(
         (columnId): columnId is string => typeof columnId === "string",
       )
-    : Array.isArray(candidate.columns)
-      ? candidate.columns
-          .map((column) => column?.id)
-          .filter(
-            (columnId): columnId is string => typeof columnId === "string",
-          )
-      : [];
+    : [];
   const normalizedColumnIds = columnIds.length ? columnIds : [`${id}-column-1`];
   const rows = Array.isArray(candidate.rows)
     ? candidate.rows.filter(
@@ -124,13 +115,11 @@ function migrateDirectory(value: unknown, index: number): Directory {
           typeof row.cells === "object",
       )
     : [];
-  const persistedPageSize =
-    "pageSize" in candidate ? candidate.pageSize : candidate.settings?.pageSize;
   const pageSize =
-    typeof persistedPageSize === "number" &&
-    Number.isInteger(persistedPageSize) &&
-    persistedPageSize > 0
-      ? persistedPageSize
+    typeof candidate.pageSize === "number" &&
+    Number.isInteger(candidate.pageSize) &&
+    candidate.pageSize > 0
+      ? candidate.pageSize
       : null;
 
   return {
@@ -156,18 +145,13 @@ function migrateDirectory(value: unknown, index: number): Directory {
 
 export function readDirectoryContent(value: unknown): DirectoryContent {
   if (!value || typeof value !== "object") return createDirectoryContent();
-  const candidate = value as Partial<DirectoryContent> & {
-    columns?: unknown[];
-    rows?: unknown[];
-  };
+  const candidate = value as Partial<DirectoryContent>;
   const directories =
     Array.isArray(candidate.directories) && candidate.directories.length
       ? candidate.directories
-      : Array.isArray(candidate.columns) || Array.isArray(candidate.rows)
-        ? [candidate]
-        : [];
+      : [];
   return directories.length
-    ? { directories: directories.map(migrateDirectory) }
+    ? { directories: directories.map(normalizeDirectory) }
     : createDirectoryContent();
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Id } from "@baseblocks/backend";
+import type { LibraryExplorerPayload } from "@/features/libraries/model";
 import { type ReactNode, createContext, use } from "react";
 
 export interface SiteRenderActions {
@@ -8,6 +9,7 @@ export interface SiteRenderActions {
   siteSlug?: string;
   openPage?: (pageId: string) => void;
   publicSearch?: boolean;
+  publicLibraries?: Readonly<Record<string, LibraryExplorerPayload>>;
 }
 
 const SiteRenderActionsContext = createContext<SiteRenderActions>({});
