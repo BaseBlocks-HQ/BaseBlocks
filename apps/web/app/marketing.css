@@ -334,9 +334,9 @@
 
 .landing-step-rails {
   position: relative;
-  width: min(calc(100% - 3rem), 88rem);
+  width: 100%;
   margin-inline: auto;
-  border-inline: 1px solid var(--landing-line);
+  border-inline: 0;
 }
 
 .landing-step-rails::before {
@@ -402,7 +402,7 @@
 .landing-step-grid {
   position: relative;
   z-index: 1;
-  width: min(calc(100% - clamp(5rem, 14vw, 12rem)), 72rem);
+  width: min(calc(100% - 8rem), 68.75rem);
   margin-inline: auto;
   border-inline: 1px solid var(--landing-line);
   background: var(--background);
@@ -411,18 +411,18 @@
 .landing-step-row {
   position: relative;
   display: grid;
-  min-height: 28rem;
+  min-height: 27.5rem;
   grid-template-columns: 5fr 7fr;
   border-bottom: 1px solid var(--landing-line);
 }
 
 .landing-step-row:not(:last-child) {
-  margin-bottom: clamp(4.5rem, 8vw, 7rem);
+  margin-bottom: 7.125rem;
 }
 
 .landing-step-row:not(:last-child)::after {
   position: absolute;
-  bottom: clamp(-7rem, -8vw, -4.5rem);
+  bottom: -7.125rem;
   left: 0;
   width: 100%;
   height: 1px;
@@ -438,8 +438,8 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(2rem, 5vw, 4rem);
+  justify-content: center;
+  padding: 3rem;
   border-right: 1px solid var(--landing-line);
 }
 
@@ -448,9 +448,19 @@
 }
 
 .landing-step-copy h3 {
-  font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+  margin-bottom: 0.75rem;
+  font-size: clamp(1.625rem, 3.5vw, 2.5rem);
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03125rem;
+  line-height: 1.1;
+}
+
+.landing-step-copy p {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 450;
+  letter-spacing: -0.01875rem;
+  line-height: 1.375rem;
 }
 
 .landing-step-row-reverse {
@@ -467,6 +477,16 @@
   position: relative;
   min-width: 0;
   overflow: hidden;
+  -webkit-mask-image: radial-gradient(
+    ellipse 60% 160% at 50% 50%,
+    #000 65%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 60% 160% at 50% 50%,
+    #000 65%,
+    transparent 100%
+  );
 }
 
 .landing-step-marker {
@@ -1210,6 +1230,215 @@
   text-align: right;
 }
 
+.step-publish-scene {
+  position: relative;
+  width: 100%;
+  height: 27.5rem;
+  font-family: var(--font-landing-sans), Arial, sans-serif;
+  font-weight: 450;
+  letter-spacing: -0.01875rem;
+}
+
+.step-publish-choice {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(18.75rem, calc(100% - 7.5rem));
+  min-height: 5.625rem;
+  align-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 3rem 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--background);
+  box-shadow:
+    inset 0 0 0 1px var(--landing-line-strong),
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+}
+
+.step-publish-question {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1rem;
+}
+
+.step-publish-options {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.step-publish-options > span {
+  display: flex;
+  height: 1.625rem;
+  align-items: center;
+  gap: 0.35rem;
+  padding-inline: 0.5rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  transition:
+    color 300ms cubic-bezier(0.23, 1, 0.32, 1),
+    background-color 300ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 300ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.step-publish-options > span.is-active {
+  border-color: transparent;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  box-shadow: inset 0 0 0 1px var(--landing-line-strong);
+  color: var(--foreground);
+}
+
+.step-publish-options svg {
+  width: 0.7rem;
+  height: 0.7rem;
+  stroke-width: 1.6;
+}
+
+.step-publish-choice > i {
+  position: absolute;
+  right: 0.625rem;
+  bottom: 0.625rem;
+  display: grid;
+  width: 1.625rem;
+  height: 1.625rem;
+  place-items: center;
+  border-radius: 0.5rem;
+  background: var(--foreground);
+  color: var(--background);
+  font-style: normal;
+}
+
+.step-publish-choice > i svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 1.6;
+}
+
+.step-publish-choice > i > span,
+.step-publish-live > i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: step-three-spin 700ms linear infinite;
+}
+
+.step-publish-globe {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.step-publish-globe canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 17rem;
+  height: 17rem;
+  transform: translate(-50%, -55%);
+}
+
+.step-publish-live {
+  position: absolute;
+  left: 50%;
+  bottom: 1.65rem;
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.75rem;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--background) 94%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--landing-line-strong),
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  backdrop-filter: blur(0.75rem);
+}
+
+.step-publish-live svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 1.8;
+}
+
+.step-publish-chart {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: min(18.75rem, calc(100% - 7.5rem));
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--background);
+  box-shadow:
+    inset 0 0 0 1px var(--landing-line-strong),
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+}
+
+.step-publish-chart > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.75rem 0;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+}
+
+.step-publish-chart > div small {
+  font-size: inherit;
+}
+
+.step-publish-chart > strong {
+  display: block;
+  margin: 0.25rem 0.75rem 0;
+  color: var(--foreground);
+  font-size: 1.625rem;
+  font-weight: 450;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.step-publish-chart svg {
+  display: block;
+  width: 100%;
+  height: 7rem;
+  margin-top: 0.5rem;
+  overflow: visible;
+}
+
+.step-publish-chart-area {
+  fill: color-mix(in oklab, var(--foreground) 6%, transparent);
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.23, 1, 0.32, 1) 180ms;
+}
+
+.step-publish-chart-line {
+  fill: none;
+  stroke: color-mix(in oklab, var(--foreground) 72%, transparent);
+  stroke-dasharray: 360;
+  stroke-dashoffset: 360;
+  stroke-linecap: round;
+  stroke-width: 1.35;
+  transition: stroke-dashoffset 1200ms cubic-bezier(0.23, 1, 0.32, 1) 120ms;
+}
+
+.step-publish-chart.is-visible .step-publish-chart-area {
+  opacity: 1;
+}
+
+.step-publish-chart.is-visible .step-publish-chart-line {
+  stroke-dashoffset: 0;
+}
+
 @keyframes step-three-spin {
   to {
     transform: rotate(360deg);
@@ -1757,8 +1986,257 @@
   font-size: 0.78rem;
 }
 
+.step-motion-caret {
+  display: inline-block;
+  width: 1px;
+  height: 0.85rem;
+  margin-left: 0.08rem;
+  background: currentColor;
+  vertical-align: -0.1rem;
+  animation: step-editor-caret-blink 900ms steps(1) infinite;
+}
+
+.step-connect-scene,
+.step-audit-scene {
+  position: relative;
+  width: 100%;
+  height: 27.5rem;
+  font-family: var(--font-landing-sans), Arial, sans-serif;
+  font-weight: 450;
+  letter-spacing: -0.01875rem;
+}
+
+.step-connect-composer {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  width: min(18.75rem, calc(100% - 7.5rem));
+  height: 5.625rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem 0.625rem 0.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--background);
+  box-shadow:
+    inset 0 0 0 1px var(--landing-line-strong),
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+}
+
+.step-connect-input {
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1rem;
+}
+
+.step-connect-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step-connect-actions > span,
+.step-connect-actions > i {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 0.45rem;
+}
+
+.step-connect-actions > span {
+  border: 1px solid var(--landing-line);
+  color: var(--muted-foreground);
+}
+
+.step-connect-actions > i {
+  background: var(--foreground);
+  color: var(--background);
+  font-style: normal;
+}
+
+.step-connect-actions svg {
+  width: 0.72rem;
+  height: 0.72rem;
+  stroke-width: 1.6;
+}
+
+.step-connect-results {
+  position: absolute;
+  z-index: 1;
+  top: calc(50% - 4rem);
+  left: 50%;
+  width: min(18.75rem, calc(100% - 7.5rem));
+}
+
+.step-connect-results > div {
+  display: flex;
+  height: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--landing-line);
+}
+
+.step-connect-results > div > span {
+  min-width: 0;
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-connect-results > div > small {
+  color: var(--muted-foreground);
+  font-size: 0.625rem;
+  opacity: 0.62;
+}
+
+.step-connect-results > div > i {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: var(--muted-foreground);
+  font-style: normal;
+}
+
+.step-connect-results > div > i svg {
+  width: 0.55rem;
+  height: 0.55rem;
+  stroke-width: 1.7;
+}
+
+.step-audit-scene {
+  display: flex;
+  align-items: center;
+}
+
+.step-audit-thread {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  max-height: 27.5rem;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding: 4.25rem 3.75rem 1.75rem;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 12%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 12%,
+    #000 92%,
+    transparent
+  );
+}
+
+.step-audit-message {
+  max-width: 85%;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.step-audit-message.is-right {
+  align-self: flex-end;
+  padding: 0.5rem 0.75rem 0.5rem;
+  border: 0;
+  border-radius: 0.75rem 0.25rem 0.75rem 0.75rem;
+  background: var(--background);
+  box-shadow:
+    inset 0 0 0 1px var(--landing-line-strong),
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+  color: var(--foreground);
+}
+
+.step-audit-message.is-right small {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.3rem;
+  color: var(--muted-foreground);
+  font-size: 0.625rem;
+}
+
+.step-audit-message.is-right small svg {
+  width: 0.58rem;
+  height: 0.58rem;
+}
+
+.step-audit-message strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.step-audit-message strong svg {
+  display: inline;
+  width: 0.72rem;
+  height: 0.72rem;
+  margin-right: 0.2rem;
+  vertical-align: -0.12rem;
+}
+
+.step-audit-options {
+  display: grid;
+  width: 75%;
+  gap: 0.28rem;
+  overflow: hidden;
+}
+
+.step-audit-options > div {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.55rem;
+  border: 1px solid var(--landing-line);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.step-audit-options > div.is-selected {
+  border-color: var(--landing-line-strong);
+  background: color-mix(in oklab, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+}
+
+.step-audit-options i {
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  border-radius: 0.28rem;
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  font-size: 0.48rem;
+  font-style: normal;
+}
+
+.step-audit-options .is-selected i {
+  background: var(--foreground);
+  color: var(--background);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .step-editor-caret {
+  .step-editor-caret,
+  .step-motion-caret {
     animation: none;
   }
 
@@ -1770,6 +2248,14 @@
 
   .step-three-scene *,
   .step-three-scene::before {
+    animation: none !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .step-connect-scene *,
+  .step-audit-scene *,
+  .step-publish-scene * {
     animation: none !important;
     transition-delay: 0ms !important;
     transition-duration: 0.01ms !important;
@@ -1924,6 +2410,24 @@
     transform: scale(0.68);
   }
 
+  .step-connect-scene,
+  .step-audit-scene,
+  .step-publish-scene {
+    width: 100%;
+    transform: none;
+  }
+
+  .step-connect-composer,
+  .step-connect-results,
+  .step-publish-choice,
+  .step-publish-chart {
+    width: calc(100% - 1.5rem);
+  }
+
+  .step-audit-thread {
+    padding: 0.75rem;
+  }
+
   .step-three-scene {
     width: 30rem;
     transform: scale(0.68);
@@ -1995,24 +2499,37 @@
   }
 
   .landing-step-row:not(:last-child) {
-    margin-bottom: 3.5rem;
+    margin-bottom: 2.5rem;
   }
 
   .landing-step-row:not(:last-child)::after {
-    bottom: -3.5rem;
+    bottom: -2.5rem;
   }
 
   .landing-step-copy,
   .landing-step-row-reverse .landing-step-copy {
-    min-height: 17rem;
+    min-height: 0;
     order: 0;
+    padding: 2rem 1.25rem 1rem;
     border-right: 0;
     border-bottom: 1px solid var(--landing-line);
     border-left: 0;
   }
 
+  .landing-step-copy h3 {
+    margin-bottom: 0.625rem;
+    font-size: 1.625rem;
+    letter-spacing: -0.01875rem;
+  }
+
+  .landing-step-copy p {
+    font-size: 0.9375rem;
+    letter-spacing: -0.01875rem;
+    line-height: 1.45;
+  }
+
   .landing-step-visual {
-    min-height: 20rem;
+    min-height: 25rem;
   }
 
   .landing-footer-cta {

@@ -6,22 +6,18 @@ import { StepTwoMotion } from "./step-two-motion";
 type TranslateFn = (key: string) => string;
 
 const steps: readonly {
-  num: string;
   titleKey: string;
   descKey: string;
 }[] = [
   {
-    num: "01",
     titleKey: "step1Title",
     descKey: "step1Desc",
   },
   {
-    num: "02",
     titleKey: "step2Title",
     descKey: "step2Desc",
   },
   {
-    num: "03",
     titleKey: "step3Title",
     descKey: "step3Desc",
   },
@@ -58,9 +54,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                 </div>
               </div>
               <div
-                className={`landing-step-visual ${
-                  index < 3 ? "landing-step-visual-motion" : ""
-                } ${index > 0 ? "landing-step-visual-presence" : ""}`}
+                className="landing-step-visual landing-step-visual-motion"
                 aria-hidden="true"
               >
                 {index === 0 ? (
@@ -69,9 +63,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                   <StepTwoMotion />
                 ) : index === 2 ? (
                   <StepThreeMotion />
-                ) : (
-                  <div className="landing-step-marker">{step.num}</div>
-                )}
+                ) : null}
               </div>
             </article>
           ))}

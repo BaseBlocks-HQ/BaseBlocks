@@ -1,121 +1,148 @@
 "use client";
 
-import { BookOpen, FileText, Home, Library } from "lucide-react";
-import { useInView, useReducedMotion } from "motion/react";
+import { Check, FileText } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "motion/react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
-type TimelineMode =
-  | "document"
-  | "documentExit"
-  | "placeEnter"
-  | "placeHold"
-  | "fade";
+const EASE = [0.23, 1, 0.32, 1] as const;
+const options = ["Every page", "Selected pages", "Team only"] as const;
 
-interface TimelineEvent {
-  duration: number;
-  mode: TimelineMode;
-}
+type Scene =
+  | "request"
+  | "question"
+  | "options"
+  | "optionsClose"
+  | "answer"
+  | "complete"
+  | "fade"
+  | "reset";
 
-const firstEvent: TimelineEvent = { duration: 1800, mode: "document" };
-const timeline: readonly TimelineEvent[] = [
-  firstEvent,
-  { duration: 320, mode: "documentExit" },
-  { duration: 450, mode: "placeEnter" },
-  { duration: 3200, mode: "placeHold" },
-  { duration: 400, mode: "fade" },
+const timeline: readonly { duration: number; scene: Scene }[] = [
+  { duration: 1050, scene: "request" },
+  { duration: 900, scene: "question" },
+  { duration: 1200, scene: "options" },
+  { duration: 420, scene: "optionsClose" },
+  { duration: 850, scene: "answer" },
+  { duration: 2800, scene: "complete" },
+  { duration: 620, scene: "fade" },
+  { duration: 650, scene: "reset" },
 ];
-
-const navigationItems = [
-  { icon: Home, label: "Overview" },
-  { icon: BookOpen, label: "Product handbook" },
-  { icon: Library, label: "Resources" },
-] as const;
 
 export function StepTwoMotion() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { amount: 0.35 });
+  const inView = useInView(ref, { amount: 0.35 });
   const reduceMotion = useReducedMotion();
-  const [eventIndex, setEventIndex] = useState(0);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (!(isInView && !reduceMotion)) {
-      return;
-    }
+    if (!(inView && !reduceMotion)) return;
 
-    const event = timeline[eventIndex] ?? firstEvent;
     const timer = window.setTimeout(() => {
-      setEventIndex((current) => (current + 1) % timeline.length);
-    }, event.duration);
+      setStep((current) => (current + 1) % timeline.length);
+    }, timeline[step]?.duration ?? 1050);
 
     return () => window.clearTimeout(timer);
-  }, [eventIndex, isInView, reduceMotion]);
+  }, [inView, reduceMotion, step]);
 
-  const mode = reduceMotion
-    ? ("placeHold" satisfies TimelineMode)
-    : (timeline[eventIndex]?.mode ?? firstEvent.mode);
-  const placeReady = ["placeEnter", "placeHold", "fade"].includes(mode);
-  const hidden = mode === "documentExit" || mode === "fade";
+  const scene = reduceMotion
+    ? "complete"
+    : (timeline[step]?.scene ?? "request");
+  const rank = timeline.findIndex((item) => item.scene === scene);
+  const resetting = scene === "reset";
+  const visibleThrough = (target: Scene) =>
+    !resetting && rank >= timeline.findIndex((item) => item.scene === target);
 
   return (
-    <div
-      className={`step-two-scene ${placeReady ? "is-place" : ""} ${
-        hidden ? "is-hidden" : ""
-      }`}
+    <motion.div
+      animate={{ opacity: scene === "fade" || resetting ? 0 : 1 }}
+      className="step-audit-scene"
       ref={ref}
+      transition={{ duration: 0.36, ease: EASE }}
     >
-      <div className="step-two-site-shell">
-        <aside className="step-two-published-sidebar">
-          <div className="step-two-brand">
-            <span className="step-two-brand-mark">A</span>
-            <span className="step-two-brand-name">Atlas Handbook</span>
-          </div>
+      <div className="step-audit-thread">
+        <Message align="right" visible={scene === "request" || !resetting}>
+          <span>Turn handbook into a site</span>
+          <small>
+            <FileText aria-hidden="true" /> /handbook
+          </small>
+        </Message>
 
-          <nav className="step-two-navigation">
-            {navigationItems.map(({ icon: Icon, label }, index) => (
-              <span
-                className={index === 1 ? "is-active" : ""}
-                key={label}
-                style={{ transitionDelay: `${index * 55}ms` }}
-              >
-                <Icon aria-hidden="true" />
-                <i>{label}</i>
-              </span>
-            ))}
-          </nav>
-        </aside>
+        <Message visible={visibleThrough("question")}>
+          Which pages should be visible?
+        </Message>
 
-        <main className="step-two-page-content">
-          <div className="step-two-page-heading">
-            <span aria-hidden="true">
-              <FileText />
-            </span>
-            <h4>Product handbook</h4>
-          </div>
+        <AnimatePresence initial={false}>
+          {scene === "options" ? (
+            <motion.div
+              animate={{ height: "6.85rem", opacity: 1 }}
+              className="step-audit-options"
+              exit={{ height: 0, opacity: 0, y: -4 }}
+              initial={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: EASE }}
+            >
+              {options.map((option, index) => (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className={index === 0 ? "is-selected" : ""}
+                  initial={{ opacity: 0, y: 5 }}
+                  key={option}
+                  transition={{
+                    delay: index * 0.08,
+                    duration: 0.3,
+                    ease: EASE,
+                  }}
+                >
+                  <i>{String.fromCharCode(65 + index)}</i>
+                  <span>{option}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
-          <p>
-            Keep every decision, resource, and update in one clear place so the
-            whole team can move with confidence.
-          </p>
+        <Message align="right" visible={visibleThrough("answer")}>
+          Every page
+        </Message>
 
-          <div className="step-two-document-blocks">
-            <h5>Working together</h5>
-            <p>
-              Use this handbook as the shared source for product principles,
-              plans, and decisions.
-            </p>
-            <ul>
-              <li>
-                <FileText aria-hidden="true" />
-                Product principles
-              </li>
-              <li>
-                <FileText aria-hidden="true" />
-                Planning and decisions
-              </li>
-            </ul>
-          </div>
-        </main>
+        <Message visible={visibleThrough("complete")}>
+          <strong>
+            <Check aria-hidden="true" /> Done.
+          </strong>{" "}
+          Added navigation, responsive spacing, and reading styles across every
+          page.
+        </Message>
       </div>
-    </div>
+    </motion.div>
+  );
+}
+
+function Message({
+  align = "left",
+  children,
+  visible,
+}: {
+  align?: "left" | "right";
+  children: ReactNode;
+  visible: boolean;
+}) {
+  return (
+    <AnimatePresence initial={false}>
+      {visible ? (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className={`step-audit-message is-${align}`}
+          initial={{ opacity: 0, y: 7 }}
+          transition={{ duration: 0.38, ease: EASE }}
+        >
+          {children}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

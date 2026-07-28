@@ -31,70 +31,255 @@ const sandboxBlocks = [
   "table",
   "divider",
   "columns",
+  "page",
 ] as const;
 
 const initialDocument = createDocument([
-  textBlock("heading", "Website launch brief", { level: 1 }),
+  textBlock("heading", "A site, assembled", { level: 1 }),
   textBlock(
     "paragraph",
-    "A shared plan for taking the new website from final review to a calm, coordinated launch.",
+    "A closer look at the layers that give a site its structure, content, context, and reach.",
   ),
   {
     type: "callout",
-    attrs: { emoji: "🎯" },
+    attrs: { emoji: "🧩" },
     content: [
       textBlock(
         "paragraph",
-        "The goal: give customers a clearer path to understand the product and start using it.",
+        "Four layers, one site: content, structure, connections, and access.",
       ),
     ],
   },
-  textBlock("heading", "Before we publish", { level: 2 }),
+  textBlock("heading", "The page", { level: 2 }),
   {
-    type: "taskList",
+    type: "columns",
     content: [
       {
-        type: "taskItem",
-        attrs: { checked: true },
-        content: [textBlock("paragraph", "Approve the final page copy")],
-      },
-      {
-        type: "taskItem",
-        attrs: { checked: false },
-        content: [textBlock("paragraph", "Test every primary call to action")],
-      },
-      {
-        type: "taskItem",
-        attrs: { checked: false },
+        type: "column",
         content: [
-          textBlock("paragraph", "Share the launch note with the team"),
+          textBlock("heading", "Content", { level: 3 }),
+          textBlock(
+            "paragraph",
+            "Words, media, files, tables, and interactive blocks share the same surface.",
+          ),
+        ],
+      },
+      {
+        type: "column",
+        content: [
+          textBlock("heading", "Structure", { level: 3 }),
+          textBlock(
+            "paragraph",
+            "Pages sit inside navigation, search, and clear relationships.",
+          ),
         ],
       },
     ],
   },
-  textBlock("heading", "What ships in version one", { level: 2 }),
+  {
+    type: "blockquote",
+    content: [
+      textBlock(
+        "paragraph",
+        "One page can move from narrative to reference to interaction without becoming a stack of disconnected documents.",
+      ),
+    ],
+  },
+  textBlock("heading", "Related pages", { level: 2 }),
+  {
+    type: "page",
+    attrs: {
+      pageId: "landing-content-and-media",
+      icon: "📝",
+      href: null,
+    },
+    content: [{ type: "text", text: "Content and media" }],
+  },
+  {
+    type: "page",
+    attrs: {
+      pageId: "landing-connected-sources",
+      icon: "🔗",
+      href: null,
+    },
+    content: [{ type: "text", text: "Connected sources" }],
+  },
+  {
+    type: "page",
+    attrs: {
+      pageId: "landing-navigation-and-access",
+      icon: "🧭",
+      href: null,
+    },
+    content: [{ type: "text", text: "Navigation and access" }],
+  },
+  { type: "horizontalRule" },
+  textBlock("heading", "Content has more than one shape", { level: 2 }),
   {
     type: "bulletList",
     content: [
       {
         type: "listItem",
-        content: [textBlock("paragraph", "A focused product story")],
+        content: [
+          textBlock("paragraph", "Narrative: headings, paragraphs, and lists"),
+        ],
       },
       {
         type: "listItem",
-        content: [textBlock("paragraph", "Clear documentation and examples")],
+        content: [
+          textBlock("paragraph", "Reference: tables, files, and callouts"),
+        ],
       },
       {
         type: "listItem",
-        content: [textBlock("paragraph", "A faster path to getting started")],
+        content: [
+          textBlock(
+            "paragraph",
+            "Interaction: tasks, toggles, and connected blocks",
+          ),
+        ],
+      },
+      {
+        type: "listItem",
+        content: [textBlock("paragraph", "Media: images, video, and embeds")],
       },
     ],
   },
-  textBlock("heading", "Notes", { level: 2 }),
+  textBlock("heading", "The layers around it", { level: 2 }),
+  {
+    type: "table",
+    content: [
+      {
+        type: "tableRow",
+        content: [
+          {
+            type: "tableHeader",
+            content: [textBlock("paragraph", "Layer")],
+          },
+          {
+            type: "tableHeader",
+            content: [textBlock("paragraph", "Contains")],
+          },
+          {
+            type: "tableHeader",
+            content: [textBlock("paragraph", "Appears as")],
+          },
+        ],
+      },
+      {
+        type: "tableRow",
+        content: [
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Content")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Text, media, files")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Blocks")],
+          },
+        ],
+      },
+      {
+        type: "tableRow",
+        content: [
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Structure")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Pages, relationships")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Navigation")],
+          },
+        ],
+      },
+      {
+        type: "tableRow",
+        content: [
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Connections")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Files, data, tools")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Live content")],
+          },
+        ],
+      },
+      {
+        type: "tableRow",
+        content: [
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Access")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Visibility, domain")],
+          },
+          {
+            type: "tableCell",
+            content: [textBlock("paragraph", "Published site")],
+          },
+        ],
+      },
+    ],
+  },
+  textBlock("heading", "From source to surface", { level: 2 }),
   textBlock(
-    "paragraph",
-    "This is a live document. Change the words, check off a task, drag a block, or type / on a new line to add something.",
+    "codeBlock",
+    "FILES + DATA + TOOLS\n          ↓\n        BLOCKS\n          ↓\n         PAGES\n          ↓\n          SITE",
+    { language: "text" },
   ),
+  {
+    type: "toggleList",
+    content: [
+      {
+        type: "toggleListItem",
+        attrs: { open: true },
+        content: [
+          textBlock("paragraph", "Content"),
+          textBlock(
+            "paragraph",
+            "Each block keeps its own purpose while remaining part of the same reading flow.",
+          ),
+        ],
+      },
+      {
+        type: "toggleListItem",
+        attrs: { open: false },
+        content: [
+          textBlock("paragraph", "Connections"),
+          textBlock(
+            "paragraph",
+            "Files, data, and tools can remain connected to the pages where they are used.",
+          ),
+        ],
+      },
+      {
+        type: "toggleListItem",
+        attrs: { open: false },
+        content: [
+          textBlock("paragraph", "Access"),
+          textBlock(
+            "paragraph",
+            "A finished site can move from private work to a published destination.",
+          ),
+        ],
+      },
+    ],
+  },
 ] satisfies OpenEditorBlock[]);
 
 export function OpenEditorDemo() {
