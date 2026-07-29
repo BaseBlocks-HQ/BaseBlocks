@@ -1,6 +1,7 @@
 import { getMarketingSiteUrl } from "@/lib/seo/site-url";
 import type { Metadata, Viewport } from "next";
 import { Manrope, Newsreader } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import "./globals.css";
 
@@ -54,9 +55,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${landingSans.variable} ${landingSerif.variable} min-h-screen flex flex-col`}
       >

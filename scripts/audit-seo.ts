@@ -51,18 +51,16 @@ async function waitForServer() {
 
 async function validateMarketingSite() {
   const home = await getHtml("/");
+  expectHtmlLanguage(home, "en");
   expectTag(home, "canonical", origin);
   expectAlternate(home, "en", origin);
   expectAlternate(home, "fr", `${origin}/fr`);
   expectAlternate(home, "x-default", origin);
   expectIncludes(home, '"@type":"SoftwareApplication"', "JSON-LD");
-  expectIncludes(
-    home,
-    "Build internal sites your team will actually use",
-    "server HTML",
-  );
+  expectIncludes(home, "Build the sites you need", "server HTML");
 
   const french = await getHtml("/fr");
+  expectHtmlLanguage(french, "fr");
   expectTag(french, "canonical", `${origin}/fr`);
   expectAlternate(french, "en", origin);
   expectAlternate(french, "fr", `${origin}/fr`);
@@ -79,6 +77,11 @@ async function validateMarketingSite() {
   for (const url of [origin, `${origin}/fr`, `${origin}/docs`]) {
     expectIncludes(sitemap, `<loc>${url}`, "marketing sitemap");
   }
+  expectSitemapAlternate(sitemap, origin, "en", origin);
+  expectSitemapAlternate(sitemap, origin, "fr", `${origin}/fr`);
+  expectSitemapAlternate(sitemap, origin, "x-default", origin);
+  expectSitemapAlternate(sitemap, `${origin}/fr`, "en", origin);
+  expectSitemapAlternate(sitemap, `${origin}/fr`, "fr", `${origin}/fr`);
   await validateSitemapPages(sitemap);
 }
 
@@ -274,6 +277,32 @@ function expectAlternate(html: string, language: string, expectedHref: string) {
   }
 }
 
+function expectSitemapAlternate(
+  sitemap: string,
+  location: string,
+  language: string,
+  expectedHref: string,
+) {
+  const urlBlocks = sitemap.match(/<url>[\s\S]*?<\/url>/gi) ?? [];
+  const block = urlBlocks.find((candidate) => {
+    const candidateLocation = candidate.match(/<loc>([^<]+)<\/loc>/i)?.[1];
+    return normalizeUrl(candidateLocation) === normalizeUrl(location);
+  });
+  const alternateTags = block?.match(/<xhtml:link\b[^>]*>/gi) ?? [];
+  const found = alternateTags.some(
+    (tag) =>
+      readAttribute(tag, "rel") === "alternate" &&
+      readAttribute(tag, "hreflang")?.toLowerCase() ===
+        language.toLowerCase() &&
+      normalizeUrl(readAttribute(tag, "href")) === normalizeUrl(expectedHref),
+  );
+  if (!found) {
+    throw new Error(
+      `Missing sitemap ${language} alternate ${expectedHref} for ${location}`,
+    );
+  }
+}
+
 function expectMeta(html: string, name: string, expectedContent: string) {
   const tags = html.match(/<meta\b[^>]*>/gi) ?? [];
   const found = tags.some(
@@ -283,6 +312,16 @@ function expectMeta(html: string, name: string, expectedContent: string) {
         expectedContent.toLowerCase(),
   );
   if (!found) throw new Error(`Missing ${name}=${expectedContent}`);
+}
+
+function expectHtmlLanguage(html: string, expectedLanguage: string) {
+  const tag = html.match(/<html\b[^>]*>/i)?.[0];
+  const actualLanguage = tag ? readAttribute(tag, "lang") : undefined;
+  if (actualLanguage?.toLowerCase() !== expectedLanguage.toLowerCase()) {
+    throw new Error(
+      `Expected html lang=${expectedLanguage}, received ${actualLanguage ?? "missing"}`,
+    );
+  }
 }
 
 function readAttribute(tag: string, attribute: string) {

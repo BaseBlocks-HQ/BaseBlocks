@@ -75,6 +75,7 @@ export function resolveSeoAuditPage(
       },
       page: null,
       content: { type: "doc", version: 1, content: [] },
+      libraries: [],
       navigation: [],
       access: { status: "forbidden", visibility: "private" },
       canonicalUrlInputs: {
@@ -132,6 +133,7 @@ export function resolveSeoAuditPage(
         },
       ],
     },
+    libraries: [],
     navigation,
     access: { status: "accessible", visibility: "public" },
     canonicalUrlInputs: {

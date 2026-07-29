@@ -15,11 +15,25 @@ function marketingSitemap(): MetadataRoute.Sitemap {
 
   for (const page of source.getPages()) urls.add(page.url);
 
-  return [...urls].sort().map((pathname) => ({
-    url: new URL(pathname || "/", ORIGIN).toString(),
-    changeFrequency: pathname.includes("/docs/legal") ? "yearly" : "monthly",
-    priority: pathname === "/" || pathname === "/fr" ? 1 : 0.7,
-  }));
+  return [...urls].sort().map((pathname) => {
+    const unlocalizedPath =
+      pathname === "/fr" ? "/" : pathname.replace(/^\/fr(?=\/)/, "");
+    const frenchPath =
+      unlocalizedPath === "/" ? "/fr" : `/fr${unlocalizedPath}`;
+
+    return {
+      url: new URL(pathname || "/", ORIGIN).toString(),
+      changeFrequency: pathname.includes("/docs/legal") ? "yearly" : "monthly",
+      priority: pathname === "/" || pathname === "/fr" ? 1 : 0.7,
+      alternates: {
+        languages: {
+          en: new URL(unlocalizedPath, ORIGIN).toString(),
+          fr: new URL(frenchPath, ORIGIN).toString(),
+          "x-default": new URL(unlocalizedPath, ORIGIN).toString(),
+        },
+      },
+    };
+  });
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
