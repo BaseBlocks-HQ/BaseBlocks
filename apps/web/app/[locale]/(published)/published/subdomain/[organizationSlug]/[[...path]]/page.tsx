@@ -1,6 +1,9 @@
 import { buildPublicSiteMetadata } from "@/features/published-sites/favicon-metadata";
 import { PublicSite } from "@/features/published-sites/public-site";
-import { resolvePublishedPage } from "@/features/published-sites/read-model";
+import {
+  isAccessiblePublishedPage,
+  resolvePublishedPage,
+} from "@/features/published-sites/read-model";
 import { getSiteUrl } from "@/features/published-sites/urls";
 import type { Metadata } from "next";
 
@@ -21,7 +24,7 @@ async function resolveRoute(params: Props["params"]) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { result } = await resolveRoute(params);
-  const canonicalUrl = result
+  const canonicalUrl = isAccessiblePublishedPage(result)
     ? getSiteUrl(
         result.canonicalUrlInputs.organizationSlug,
         result.canonicalUrlInputs.siteSlug,
@@ -33,5 +36,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublishedSubdomainPage({ params }: Props) {
   const { organizationSlug, result } = await resolveRoute(params);
-  return <PublicSite result={result} organizationSlug={organizationSlug} />;
+  return (
+    <PublicSite
+      result={result}
+      organizationSlug={organizationSlug}
+      privateAccessUrl={null}
+    />
+  );
 }

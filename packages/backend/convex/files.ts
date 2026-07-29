@@ -6,11 +6,7 @@ import {
 } from "@baseblocks/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  type MutationCtx,
-  mutation,
-  query,
-} from "./_generated/server";
+import { type MutationCtx, mutation, query } from "./_generated/server";
 import {
   getPublicationState,
   getPublishedLibraryIds,
@@ -20,7 +16,7 @@ import {
   requireOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { canAccessPublishedSite } from "./sharing";
+import { isPubliclyPublishedSite } from "./sharing";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -114,7 +110,7 @@ export const getPublic = query({
     const file = await ctx.db.get(id);
     if (!file) return null;
     const site = await ctx.db.get(file.siteId);
-    if (!site || !canAccessPublishedSite(site)) return null;
+    if (!site || !isPubliclyPublishedSite(site)) return null;
     if (file.kind === "siteAsset") {
       return file.visibility === "public" ? file : null;
     }
@@ -286,7 +282,7 @@ export const create = mutation({
       contentType,
       uploadedBy: auth.userId,
       audience:
-        canAccessPublishedSite(site) &&
+        isPubliclyPublishedSite(site) &&
         args.libraryId !== undefined &&
         activeLibraryIds.has(args.libraryId)
           ? "public"

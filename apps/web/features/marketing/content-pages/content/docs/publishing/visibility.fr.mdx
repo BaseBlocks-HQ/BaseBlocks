@@ -1,67 +1,65 @@
 ---
 title: Visibilité du site
-description: Contrôlez qui peut accéder à votre site publié. Quatre modes — public, privé, accessible par lien et protégé par mot de passe.
+description: Choisissez si un site publié est public ou réservé aux membres connectés de l'équipe.
 icon: Eye
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+La visibilité contrôle qui peut lire un site **publié**. Elle ne publie ni ne
+retire le site par elle-même. Ce réglage se trouve dans **Paramètres du site →
+Visibilité**.
 
-La visibilité du site contrôle qui peut ouvrir l'URL de votre site publié. Trouvez-la dans **Paramètres du site → Visibilité**.
+## Public
 
-<Tabs items={['Public', 'Privé', 'Par lien', 'Mot de passe']}>
+Tout le monde peut ouvrir un site public sans se connecter.
 
-<Tab value="Public">
+- Les pages peuvent apparaître dans le sitemap XML du site.
+- Les moteurs de recherche peuvent indexer les pages accessibles.
+- La recherche publiée, les bibliothèques, les aperçus de fichiers et les
+  exports sont accessibles lorsqu'ils figurent sur la page.
+- Un domaine personnalisé vérifié sert le même contenu public que l'adresse
+  BaseBlocks générée.
 
-### Public
+Utilisez Public pour la documentation, les bases de connaissances et les
+informations destinées au Web ouvert.
 
-Toute personne avec l'URL peut voir le site. Aucune connexion requise. Les moteurs de recherche peuvent l'indexer.
+## Privé
 
-Utilisez pour : documentation externe, bases de connaissances publiques ou tout ce que vous voulez rendre ouvertement accessible.
+Un site privé exige un compte BaseBlocks connecté qui appartient à l'équipe du
+site.
 
-</Tab>
+- Un visiteur anonyme reçoit un écran d'accès générique, jamais le contenu.
+- Un utilisateur connecté qui n'appartient pas à l'équipe est refusé.
+- Les pages privées sont absentes des sitemaps XML et marquées
+  `noindex, nofollow`.
+- Le contenu, la navigation, la recherche, les bibliothèques, les fichiers et
+  les exports sont tous contrôlés séparément côté serveur.
+- Le passage de Public à Privé s'applique immédiatement aux nouvelles requêtes.
 
-<Tab value="Privé">
+L'adresse authentifiée d'un site privé est :
 
-### Privé
+```text
+https://votre-equipe.baseblocks.dev/[identifiant-site]
+```
 
-Seuls les membres de l'équipe connectés peuvent voir le site. Les visiteurs non authentifiés sont redirigés vers la page de connexion.
+L'accès privé utilise actuellement cette adresse BaseBlocks afin que le cookie
+de session soit vérifié de façon sûre entre les sous-domaines BaseBlocks. Si un
+site privé possède aussi un domaine personnalisé, celui-ci dirige les membres
+vers l'adresse BaseBlocks authentifiée.
 
-Utilisez pour : documentation d'équipe interne, guides de processus sensibles ou tout ce qui doit rester dans l'espace de travail.
+Utilisez Privé pour la documentation interne ou les informations sensibles qui
+doivent rester dans l'équipe.
 
-</Tab>
-
-<Tab value="Par lien">
-
-### Accessible par lien
-
-Toute personne avec l'URL exacte peut voir le site. Il n'est pas répertorié ni découvrable via la plateforme BaseBlocks. Les moteurs de recherche ne sont pas empêchés de l'indexer, mais le site n'apparaîtra dans aucun répertoire BaseBlocks.
-
-Utilisez pour : références partagées que vous souhaitez envoyer à des personnes spécifiques sans ouvrir complètement au public.
-
-</Tab>
-
-<Tab value="Mot de passe">
-
-### Protégé par mot de passe
-
-Les visiteurs sont invités à entrer un code d'accès avant de voir le site. Le code d'accès est distinct de tout compte BaseBlocks — toute personne avec le code peut entrer, qu'elle ait un compte BaseBlocks ou non.
-
-**Comment ça fonctionne :**
-- Générez un code d'accès depuis Paramètres du site → Visibilité
-- Partagez le code avec les personnes qui ont besoin d'accès
-- Les codes sont limités dans le temps et peuvent être révoqués à tout moment
-- Les tentatives échouées sont limitées en débit pour empêcher les accès par force brute
-
-Utilisez pour : portails partenaires, contenu destiné aux clients ou tout ce qui nécessite un contrôle d'accès simple sans connexion requise.
-
-<Callout type="info">
-  Les codes d'accès ne sont pas des comptes utilisateur. Ils ne connectent pas une personne spécifique — ils accordent un accès temporaire au site. Pour un vrai contrôle d'accès par utilisateur, utilisez la visibilité Privée avec l'appartenance à l'équipe.
+<Callout type="warn" title="Une URL n'est pas un contrôle d'accès">
+  BaseBlocks ne propose pas actuellement de mode « accessible par lien ». Ce
+  partage ne convient pas aux données sensibles, car un lien peut être
+  transféré, journalisé ou exposé. L'accès par mot de passe n'est pas encore
+  implémenté.
 </Callout>
-
-</Tab>
-
-</Tabs>
 
 ## Changer la visibilité
 
-Allez dans **Paramètres du site → Visibilité**, sélectionnez un mode et sauvegardez. Le changement prend effet immédiatement sur le site publié. Le brouillon n'est pas affecté.
+Choisissez Public ou Privé dans **Paramètres du site → Visibilité**. Ce réglage
+est indépendant de l'état publié ou non publié.
+
+Pour une fermeture stricte, choisissez Privé puis retirez le site. Le retrait
+coupe toute la surface publiée sans supprimer le contenu de l'éditeur.

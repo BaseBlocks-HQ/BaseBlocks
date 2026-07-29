@@ -1,5 +1,6 @@
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Id } from "../_generated/dataModel";
+import { isPubliclyPublishedSite } from "../sharing";
 
 type ReadCtx = Pick<
   GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
@@ -7,10 +8,7 @@ type ReadCtx = Pick<
 >;
 type WriteCtx = Pick<GenericMutationCtx<DataModel>, "db">;
 
-export async function getPublicationState(
-  ctx: ReadCtx,
-  siteId: Id<"sites">,
-) {
+export async function getPublicationState(ctx: ReadCtx, siteId: Id<"sites">) {
   return ctx.db
     .query("publicationStates")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -62,7 +60,7 @@ export async function refreshPublicationState(
     await ctx.db.insert("publicationStates", stateValue);
   }
 
-  const siteIsPublic = site.isPublished && site.visibility === "public";
+  const siteIsPublic = isPubliclyPublishedSite(site);
   const publicLibraries = new Set<string>(activeLibraryIds);
   const publicFiles = new Set<string>(referencedFileIds);
   for (const entry of searchEntries) {

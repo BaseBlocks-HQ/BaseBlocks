@@ -8,7 +8,9 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## Publication status
 
-A site is either **published** or **unpublished**. Publishing makes its pages available at the generated site URL and any verified custom domain. Unpublishing removes public access.
+A site is either **published** or **unpublished**. Publishing enables its live
+surface. Visibility then determines whether that surface is public or restricted
+to signed-in team members. Unpublishing disables the live surface completely.
 
 <Callout type="warn" title="Current publishing model">
   Published sites currently read the latest saved page content. Editing a published site can therefore change what visitors see without a separate snapshot deployment. Historical snapshots and rollback are not currently available.
@@ -28,19 +30,23 @@ Create pages and edit content. Changes save automatically.
 
 ### Publish
 
-Click **Deploy** in the editor header. The site becomes available immediately.
+Click **Deploy** in the editor header. A Public site becomes available to
+everyone. A Private site becomes available only to authenticated team members
+at its generated BaseBlocks address.
 
 </Step>
 </Steps>
 
 ## Unpublishing
 
-Open the deployment menu and choose **Unpublish**. The generated URL and custom domain stop serving the site until it is published again. Saved content is not deleted.
+Open the deployment menu and choose **Unpublish**. The generated URL and custom
+domain stop serving site content until it is published again. Saved editor
+content is not deleted.
 
 ## What's next
 
 <Cards>
   <Card href="/docs/publishing/visibility" title="Site Visibility">
-    Control who can access your live site — public, private, link-only, or password-protected.
+    Understand the implemented Public and Private access modes.
   </Card>
 </Cards>

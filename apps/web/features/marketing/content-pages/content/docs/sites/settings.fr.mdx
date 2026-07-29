@@ -32,20 +32,24 @@ Ajoutez un nom d'hôte comme `docs.exemple.com` dans la section Domaine personna
 
 ## Visibilité
 
-Contrôle qui peut voir le site publié. Quatre options :
+Contrôle qui peut voir le site publié :
 
 | Mode | Qui peut voir |
 |---|---|
 | Public | Toute personne avec l'URL |
 | Privé | Membres de l'équipe connectés uniquement |
-| Par lien | Toute personne avec l'URL exacte (non découvrable) |
-| Mot de passe | Toute personne avec le code d'accès |
 
-Voir [Visibilité du site](/docs/publishing/visibility) pour les détails sur chaque mode.
+L'accès par lien et l'accès par mot de passe ne sont pas encore implémentés.
+Voir [Visibilité du site](/docs/publishing/visibility) pour le comportement
+complet d'accès et d'indexation.
 
 ## Supprimer un site
 
-La suppression est disponible depuis les contrôles du site. Elle efface définitivement les pages, le contenu, les documents, les ressources, les domaines, les sessions d'accès et les entrées de recherche.
+La suppression est disponible depuis les contrôles du site après le retrait de
+tous les domaines personnalisés. Elle supprime les enregistrements de base de
+données du site, notamment les pages, le contenu, les métadonnées des documents
+et ressources, les bibliothèques, l'état de publication et les entrées de
+recherche.
 
 <Callout type="error">
   La suppression d'un site est permanente et ne peut pas être annulée. Il n'y a pas de chemin de récupération après la suppression.

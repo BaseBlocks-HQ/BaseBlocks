@@ -2,7 +2,7 @@ import "server-only";
 
 import { extractOpenEditorText } from "@baseblocks/backend";
 import type { Metadata } from "next";
-import type { PublishedPageResult } from "./read-model";
+import type { PublishedPageResolution } from "./read-model";
 
 function truncateDescription(value: string, maxLength = 160) {
   if (value.length <= maxLength) return value;
@@ -12,12 +12,12 @@ function truncateDescription(value: string, maxLength = 160) {
 }
 
 export function buildPublicSiteMetadata(
-  result: PublishedPageResult | null,
+  result: PublishedPageResolution | null,
   canonicalUrl: string | null,
 ): Metadata {
   const isIndexable =
+    result?.access.status === "accessible" &&
     result?.access.visibility === "public" &&
-    result.access.status === "accessible" &&
     result.page !== null;
 
   if (!result || !isIndexable || !result.page) {

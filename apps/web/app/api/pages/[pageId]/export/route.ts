@@ -1,3 +1,4 @@
+import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import {
   buildPageExportText,
@@ -28,10 +29,13 @@ export async function GET(
       );
     }
 
-    const publicClient = getServerConvexClient();
-    const result = await publicClient.query(api.published.getPageById, {
-      pageId: pageId as never,
-    });
+    const token = await getToken();
+    const result = await getServerConvexClient(token).query(
+      api.published.getPageById,
+      {
+        pageId: pageId as never,
+      },
+    );
 
     if (!result) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });

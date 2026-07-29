@@ -8,7 +8,11 @@ import {
   extractOpenEditorReferences,
   referencesOpenEditorPage,
 } from "./pageContentFormat";
-import { canAccessPublishedSite } from "./sharing";
+import {
+  canRenderPublishedSite,
+  isPubliclyPublishedSite,
+  resolvePublishedSiteAccess,
+} from "./sharing";
 import { readPageContent } from "./model/pageDocuments";
 import { buildExplorerPayload } from "./libraries";
 
@@ -103,8 +107,7 @@ export const sitemap = query({
         .collect()
     ).filter(
       (site) =>
-        site.isPublished &&
-        site.visibility === "public" &&
+        isPubliclyPublishedSite(site) &&
         (!args.siteSlug || site.slug === args.siteSlug),
     );
 
@@ -154,25 +157,36 @@ export const resolve = query({
     );
     if (!resolved) return null;
     const { organization, site } = resolved;
-    const canAccess = canAccessPublishedSite(site);
+    const access = await resolvePublishedSiteAccess(ctx, site);
+    if (
+      access.kind === "authentication-required" ||
+      access.kind === "forbidden"
+    ) {
+      return {
+        access: {
+          status: access.kind,
+          visibility: "private" as const,
+        },
+      };
+    }
+    if (!canRenderPublishedSite(access)) return null;
+
     const allPages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", site._id))
       .collect();
-    const accessiblePages = canAccess ? allPages : [];
-    const visibility = canAccess ? "public" : "private";
-    const page = resolvePage(
-      accessiblePages,
-      site.defaultPageId,
-      args.pagePath,
-    );
-    const status = page
-      ? "accessible"
-      : resolvePage(allPages, site.defaultPageId, args.pagePath)
-        ? "forbidden"
-        : "missing";
+    const page = resolvePage(allPages, site.defaultPageId, args.pagePath);
+    if (!page) {
+      return {
+        access: {
+          status: "missing" as const,
+          visibility: site.visibility,
+        },
+      };
+    }
+
     const [contentResult, parentContentResult] = await Promise.all([
-      page ? readPageContent(ctx, page._id) : null,
+      readPageContent(ctx, page._id),
       page?.parentId ? readPageContent(ctx, page.parentId) : null,
     ]);
     const content = contentResult?.document ?? emptyOpenEditorDocument();
@@ -192,10 +206,7 @@ export const resolve = query({
       )
     ).filter((library) => library !== null);
     const isOpenEditorPageBlock = parentContentResult
-      ? referencesOpenEditorPage(
-          parentContentResult.document,
-          page?._id ?? "",
-        )
+      ? referencesOpenEditorPage(parentContentResult.document, page?._id ?? "")
       : false;
     return {
       organization: {
@@ -209,25 +220,23 @@ export const resolve = query({
         name: site.name,
         slug: site.slug,
         logoUrl: site.logoUrl,
-        visibility,
+        visibility: site.visibility,
         settings: site.settings,
         updatedAt: site.updatedAt,
       },
-      page: page
-        ? {
-            _id: page._id,
-            title: page.title,
-            slug: page.slug,
-            icon: page.icon,
-            parentId: page.parentId,
-            isOpenEditorPageBlock,
-            updatedAt: page.updatedAt,
-          }
-        : null,
+      page: {
+        _id: page._id,
+        title: page.title,
+        slug: page.slug,
+        icon: page.icon,
+        parentId: page.parentId,
+        isOpenEditorPageBlock,
+        updatedAt: page.updatedAt,
+      },
       content,
       libraries,
       navigation: buildPageTree(
-        accessiblePages.map((item) => ({
+        allPages.map((item) => ({
           _id: item._id,
           siteId: item.siteId,
           title: item.title,
@@ -237,17 +246,18 @@ export const resolve = query({
           parentId: item.parentId,
         })),
       ),
-      access: { status, visibility },
+      access: {
+        status: "accessible" as const,
+        visibility: site.visibility,
+      },
       canonicalUrlInputs: {
         organizationSlug: organization.slug,
         siteSlug: site.slug,
-        pagePath: page
-          ? getCanonicalPagePath(allPages, page, site.defaultPageId)
-          : args.pagePath,
+        pagePath: getCanonicalPagePath(allPages, page, site.defaultPageId),
       },
       updatedAt: Math.max(
         site.updatedAt,
-        page?.updatedAt ?? 0,
+        page.updatedAt,
         contentResult?.record?.updatedAt ?? 0,
       ),
     };
@@ -266,7 +276,7 @@ export const getFavicon = query({
       args.organizationSlug,
       args.siteSlug,
     );
-    if (!resolved || !canAccessPublishedSite(resolved.site)) return null;
+    if (!resolved || !isPubliclyPublishedSite(resolved.site)) return null;
     return resolved.site.settings.favicon ?? null;
   },
 });
@@ -278,9 +288,9 @@ export const getPageById = query({
     const page = await ctx.db.get(pageId);
     if (!page) return null;
     const site = await ctx.db.get(page.siteId);
-    if (!site || !canAccessPublishedSite(site)) {
-      return null;
-    }
+    if (!site) return null;
+    const access = await resolvePublishedSiteAccess(ctx, site);
+    if (!canRenderPublishedSite(access)) return null;
     const content = await readPageContent(ctx, pageId);
     return {
       page: {

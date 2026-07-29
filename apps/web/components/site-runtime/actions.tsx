@@ -8,8 +8,8 @@ export interface SiteRenderActions {
   siteId?: Id<"sites">;
   siteSlug?: string;
   openPage?: (pageId: string) => void;
-  publicSearch?: boolean;
-  publicLibraries?: Readonly<Record<string, LibraryExplorerPayload>>;
+  publishedSurface?: boolean;
+  publishedLibraries?: Readonly<Record<string, LibraryExplorerPayload>>;
 }
 
 const SiteRenderActionsContext = createContext<SiteRenderActions>({});

@@ -43,7 +43,7 @@ function SearchPreview({ value }: { value: Required<SearchContent> }) {
       showFileType={value.showFileType}
       siteId={siteId}
       surface="soft"
-      usePublicQuery={false}
+      publishedMode={false}
     />
   );
 }

@@ -458,7 +458,15 @@
     "serverError": "Erreur serveur",
     "serverErrorDescription": "Quelque chose s'est mal passe. Veuillez reessayer plus tard.",
     "siteNotFound": "Site non trouvé",
-    "siteNotFoundDescription": "Le site que vous recherchez n'existe pas."
+    "siteNotFoundDescription": "Le site que vous recherchez n'existe pas.",
+    "privateSiteTitle": "Ce site est privé",
+    "privateSiteDescription": "Connectez-vous avec un compte BaseBlocks appartenant à l'équipe de ce site.",
+    "privateSiteForbiddenTitle": "Vous n'avez pas accès",
+    "privateSiteForbiddenDescription": "Votre compte ne fait pas partie de l'équipe propriétaire de ce site.",
+    "privateSiteCustomDomainDescription": "Les sites privés utilisent leur adresse BaseBlocks sécurisée pour authentifier les membres de l'équipe.",
+    "privateSiteOpenSecureUrl": "Ouvrir le site privé",
+    "privateSiteSignIn": "Se connecter pour continuer",
+    "privateSiteBack": "Retour à BaseBlocks"
   },
   "language": {
     "select": "Choisir la langue",

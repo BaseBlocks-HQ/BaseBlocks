@@ -8,7 +8,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { buildFileUrl, deleteFileRows } from "./files";
-import { canAccessPublishedSite } from "./sharing";
+import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 import { getPublishedLibraryIds } from "./model/publication";
 import {
   requireFolderManagement,
@@ -141,7 +141,7 @@ export const getExplorer = query({
   },
 });
 
-export const getPublicExplorer = query({
+export const getPublishedExplorer = query({
   args: { libraryId: v.id("documentLibraries") },
   returns: v.union(explorerPayload, v.null()),
   handler: async (ctx, { libraryId }) => {
@@ -149,9 +149,9 @@ export const getPublicExplorer = query({
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
-    if (!site || !canAccessPublishedSite(site)) {
-      return null;
-    }
+    if (!site) return null;
+    const access = await resolvePublishedSiteAccess(ctx, site);
+    if (!canRenderPublishedSite(access)) return null;
 
     const activeLibraryIds = await getPublishedLibraryIds(ctx, library.siteId);
     if (!activeLibraryIds.has(libraryId)) return null;

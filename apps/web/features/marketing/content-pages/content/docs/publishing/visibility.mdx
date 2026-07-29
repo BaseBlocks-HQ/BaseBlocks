@@ -1,67 +1,62 @@
 ---
 title: Site Visibility
-description: Control who can access your live site. Four modes — public, private, link-only, and password-protected.
+description: Choose whether a published site is public or restricted to signed-in team members.
 icon: Eye
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+Site visibility controls who can read a **published** site. It does not publish
+or unpublish the site by itself. Find it in **Site Settings → Visibility**.
 
-Site visibility controls who can open your live site URL. Find it in **Site Settings → Visibility**.
+## Public
 
-<Tabs items={['Public', 'Private', 'Link-only', 'Password']}>
+Anyone can open a public site without signing in.
 
-<Tab value="Public">
+- Pages can appear in the site's XML sitemap.
+- Search engines are allowed to index accessible pages.
+- Published search, document libraries, file previews, and exports are
+  available to visitors when those features are present on the page.
+- A verified custom domain serves the same public content as the generated
+  BaseBlocks address.
 
-### Public
+Use Public for documentation, knowledge bases, and other information intended
+for the open web.
 
-Anyone with the URL can view the site. No login required. Search engines can index it.
+## Private
 
-Use for: external-facing documentation, public knowledge bases, or anything you want openly accessible.
+Private sites require a signed-in BaseBlocks account that belongs to the
+site's team.
 
-</Tab>
+- Anonymous visitors receive a generic access screen, never the site content.
+- Signed-in users outside the team are denied.
+- Private pages are omitted from XML sitemaps and marked `noindex, nofollow`.
+- Page content, navigation, search results, libraries, files, and document
+  exports are checked independently at the server boundary.
+- Switching from Public to Private takes effect on new requests immediately.
 
-<Tab value="Private">
+The authenticated private-site address is:
 
-### Private
+```text
+https://your-team.baseblocks.dev/[site-slug]
+```
 
-Only team members who are signed in can view the site. Visitors who aren't authenticated are redirected to the login page.
+Private access currently uses this BaseBlocks address because the BaseBlocks
+session cookie can be verified securely across BaseBlocks subdomains. If a
+private site also has a custom domain, that domain directs team members to the
+authenticated BaseBlocks address.
 
-Use for: internal team documentation, sensitive process guides, or anything that should stay inside the workspace.
+Use Private for internal documentation or sensitive information that must stay
+inside the team.
 
-</Tab>
-
-<Tab value="Link-only">
-
-### Link-only
-
-Anyone with the exact URL can view the site. It is not listed or discoverable through the BaseBlocks platform. Search engines are not prevented from indexing it, but the site won't appear in any BaseBlocks directory.
-
-Use for: shared references you want to send to specific people without fully opening to the public.
-
-</Tab>
-
-<Tab value="Password">
-
-### Password-protected
-
-Visitors are prompted for an access code before seeing the site. The access code is separate from any BaseBlocks account — anyone with the code can enter, whether or not they have a BaseBlocks account.
-
-**How it works:**
-- Generate an access code from Site Settings → Visibility
-- Share the code with the people who need access
-- Codes are time-limited and can be revoked at any time
-- Failed attempts are rate-limited to prevent brute-force access
-
-Use for: partner portals, client-facing content, or anything that needs simple access control without requiring sign-in.
-
-<Callout type="info">
-  Access codes are not user accounts. They don't log a specific person in — they grant temporary access to the site. For proper per-user access control, use Private visibility with team membership.
+<Callout type="warn" title="A URL is not an access control">
+  BaseBlocks does not currently offer a “link-only” mode. Anyone-with-the-link
+  sharing is not suitable for sensitive data because links can be forwarded,
+  logged, or exposed. Password access is also not currently implemented.
 </Callout>
-
-</Tab>
-
-</Tabs>
 
 ## Changing visibility
 
-Go to **Site Settings → Visibility**, select a mode, and save. The change takes effect immediately on the live site. Draft is not affected.
+Choose Public or Private in **Site Settings → Visibility**. The access change
+is applied independently of the draft/published status.
+
+For the strictest shutdown, choose Private and then Unpublish. Unpublishing
+removes the entire published surface while keeping the editor content.

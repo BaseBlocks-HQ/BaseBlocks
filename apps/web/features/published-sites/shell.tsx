@@ -71,7 +71,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
   const previousPageUrl = readPreviousPageUrl(searchParams.get("from"));
   const navigationIcon = readNavigationIcon(searchParams.get("icon"));
   const pageTargets = buildPublishedPageTargets(result.navigation);
-  const publicLibraries = Object.fromEntries(
+  const publishedLibraries = Object.fromEntries(
     result.libraries.map((library) => [library.library._id, library]),
   );
   const navigateToPage = (pageId: string) => {
@@ -112,8 +112,8 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
           siteId: site._id,
           siteSlug: site.slug,
           openPage: navigateToPage,
-          publicSearch: true,
-          publicLibraries,
+          publishedSurface: true,
+          publishedLibraries,
         }}
       >
         <SidebarProvider>
@@ -185,7 +185,7 @@ function PublicSiteHeader({
             {site.settings.showHeaderSearch === true ? (
               <SearchBox
                 siteId={site._id}
-                usePublicQuery
+                publishedMode
                 placeholder="Search..."
                 maxResults={5}
                 className="w-64"

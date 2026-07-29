@@ -72,8 +72,8 @@ interface SearchBoxProps {
   placeholder?: string;
   maxResults?: number;
   showFileType?: boolean;
-  /** Use public query (for published sites) vs authenticated query (for editor) */
-  usePublicQuery?: boolean;
+  /** Search the published surface instead of the authenticated editor index. */
+  publishedMode?: boolean;
   /** Additional content to render in the input area (e.g., settings button) */
   inputAddon?: ReactNode;
   onOpenPageResult?: (pageId: string) => void;
@@ -86,7 +86,7 @@ export function SearchBox({
   placeholder = "Search...",
   maxResults = 10,
   showFileType = true,
-  usePublicQuery = false,
+  publishedMode = false,
   inputAddon,
   onOpenPageResult,
   surface = "default",
@@ -117,14 +117,14 @@ export function SearchBox({
   // Server full-text search queries
   const authResults = useQuery(
     api.search.searchAll,
-    !usePublicQuery && shouldSearch
+    !publishedMode && shouldSearch
       ? { siteId, query: debouncedQuery, limit: maxResults }
       : "skip",
   );
 
-  const publicResults = useQuery(
-    api.search.searchAllPublic,
-    usePublicQuery && shouldSearch
+  const publishedResults = useQuery(
+    api.search.searchPublished,
+    publishedMode && shouldSearch
       ? {
           siteId,
           query: debouncedQuery,
@@ -133,7 +133,7 @@ export function SearchBox({
       : "skip",
   );
 
-  const serverResults = usePublicQuery ? publicResults : authResults;
+  const serverResults = publishedMode ? publishedResults : authResults;
 
   const searchResults = shouldSearch ? serverResults : undefined;
 

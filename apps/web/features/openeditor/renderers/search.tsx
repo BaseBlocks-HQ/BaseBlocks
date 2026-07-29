@@ -34,7 +34,7 @@ export function SearchViewer({ value }: { value: Required<SearchContent> }) {
       showFileType={value.showFileType}
       siteId={actions.siteId}
       surface="soft"
-      usePublicQuery={actions.publicSearch === true}
+      publishedMode={actions.publishedSurface === true}
     />
   );
 }

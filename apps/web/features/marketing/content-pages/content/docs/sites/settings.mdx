@@ -32,20 +32,23 @@ Add a hostname such as `docs.example.com` from the Custom Domain section. BaseBl
 
 ## Visibility
 
-Controls who can view the live (published) site. Four options:
+Controls who can view the live published site:
 
 | Mode | Who can view |
 |---|---|
 | Public | Anyone with the URL |
 | Private | Signed-in team members only |
-| Link-only | Anyone with the exact URL (not discoverable) |
-| Password | Anyone with the access code |
 
-See [Site Visibility](/docs/publishing/visibility) for details on each mode.
+Link-only and password access are not currently implemented. See
+[Site Visibility](/docs/publishing/visibility) for the complete access and
+indexing behavior.
 
 ## Deleting a site
 
-Site deletion is available from the site controls. Deleting a site removes its pages, content, documents, assets, domains, access sessions, and search entries permanently.
+Site deletion is available from the site controls after all custom domains have
+been removed. Deleting the site removes its database records, including pages,
+content, document metadata, asset metadata, libraries, publication state, and
+search entries.
 
 <Callout type="error">
   Site deletion is permanent and cannot be undone. There is no recovery path after deletion.

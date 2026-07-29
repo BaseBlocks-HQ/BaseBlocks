@@ -60,30 +60,10 @@ export function resolveSeoAuditPage(
   if (organizationSlug !== "acme") return null;
   if (siteSlug === "private") {
     return {
-      organization: {
-        id: "audit-organization",
-        name: "Acme",
-        slug: "acme",
-      },
-      site: {
-        _id: "audit-private-site",
-        name: "Private Handbook",
-        slug: "private",
+      access: {
+        status: "authentication-required",
         visibility: "private",
-        settings: {},
-        updatedAt: 1_700_000_100_000,
       },
-      page: null,
-      content: { type: "doc", version: 1, content: [] },
-      libraries: [],
-      navigation: [],
-      access: { status: "forbidden", visibility: "private" },
-      canonicalUrlInputs: {
-        organizationSlug: "acme",
-        siteSlug: "private",
-        pagePath,
-      },
-      updatedAt: 1_700_000_100_000,
     };
   }
   if (siteSlug !== undefined && siteSlug !== "handbook") return null;

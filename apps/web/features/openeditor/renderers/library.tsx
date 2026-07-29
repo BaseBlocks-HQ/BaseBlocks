@@ -42,10 +42,10 @@ export function PublicLibraryViewer({ value }: { value: LibraryContent }) {
   const actions = useSiteRenderActions();
   const libraryId = value.libraryId as Id<"documentLibraries"> | undefined;
   const bundledExplorer = libraryId
-    ? actions.publicLibraries?.[libraryId]
+    ? actions.publishedLibraries?.[libraryId]
     : undefined;
   const explorer = useQuery(
-    api.libraries.getPublicExplorer,
+    api.libraries.getPublishedExplorer,
     libraryId && !bundledExplorer ? { libraryId } : "skip",
   );
   if (!libraryId) return null;

@@ -103,6 +103,10 @@ async function validatePublishedSites() {
 
   const privatePage = await getHtml("/private", subdomainOrigin);
   expectMeta(privatePage, "robots", "noindex, nofollow");
+  expectIncludes(privatePage, "This site is private", "private access screen");
+  if (privatePage.includes("Private Handbook")) {
+    throw new Error("Private site names must not leak to anonymous visitors");
+  }
 
   const missingPage = await getHtml("/handbook/missing", subdomainOrigin);
   expectMeta(missingPage, "robots", "noindex, nofollow");

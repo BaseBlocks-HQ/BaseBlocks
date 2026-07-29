@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { normalizeHostname } from "@/lib/routing/hosts";
 import { api } from "@baseblocks/backend";
@@ -11,20 +12,18 @@ import {
   resolveSeoAuditSitemap,
 } from "./seo-audit-fixtures";
 
-const queryPublishedPage = unstable_cache(
-  (
-    organizationSlug: string,
-    siteSlug: string | undefined,
-    pagePath: string[],
-  ) =>
-    getServerConvexClient().query(api.published.resolve, {
-      organizationSlug,
-      siteSlug,
-      pagePath,
-    }),
-  ["published-page"],
-  { revalidate: 60 },
-);
+async function queryPublishedPage(
+  organizationSlug: string,
+  siteSlug: string | undefined,
+  pagePath: string[],
+) {
+  const token = await getToken();
+  return getServerConvexClient(token).query(api.published.resolve, {
+    organizationSlug,
+    siteSlug,
+    pagePath,
+  });
+}
 
 const queryCustomDomain = unstable_cache(
   (hostname: string) =>
@@ -43,19 +42,29 @@ const queryPublishedSitemap = unstable_cache(
   { revalidate: 300 },
 );
 
-export type PublishedPageResult = NonNullable<
+export type PublishedPageResolution = NonNullable<
   Awaited<ReturnType<typeof queryPublishedPage>>
 >;
+export type PublishedPageResult = Extract<
+  PublishedPageResolution,
+  { access: { status: "accessible" } }
+>;
+
+export function isAccessiblePublishedPage(
+  result: PublishedPageResolution | null,
+): result is PublishedPageResult {
+  return result?.access.status === "accessible";
+}
 
 export const resolvePublishedPage = cache(
   async (
     organizationSlug: string,
     siteSlug: string | undefined,
     pagePath: string[],
-  ): Promise<PublishedPageResult | null> => {
+  ): Promise<PublishedPageResolution | null> => {
     const fixture = resolveSeoAuditPage(organizationSlug, siteSlug, pagePath);
     if (fixture !== undefined) {
-      return fixture as PublishedPageResult | null;
+      return fixture as PublishedPageResolution | null;
     }
     return queryPublishedPage(organizationSlug, siteSlug, pagePath);
   },

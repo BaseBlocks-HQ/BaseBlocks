@@ -2,95 +2,76 @@
 
 import { PublicSiteShell } from "@/features/published-sites/shell";
 import { getDisplayDomain } from "@/features/published-sites/urls";
-import { Link } from "@/i18n/navigation";
-import type { PublishedPageResult } from "./read-model";
+import { getMarketingSiteUrl } from "@/lib/seo/site-url";
+import type {
+  PublishedPageResolution,
+  PublishedPageResult,
+} from "./read-model";
 import { Button } from "@baseblocks/ui/button";
-import { Lock } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type Props = {
-  result: PublishedPageResult | null;
+  result: PublishedPageResolution | null;
   organizationSlug: string;
+  privateAccessUrl: string | null;
 };
 
-export function PublicSite({ result, organizationSlug }: Props) {
+function isAccessibleResult(
+  result: PublishedPageResolution,
+): result is PublishedPageResult {
+  return result.access.status === "accessible";
+}
+
+export function PublicSite({
+  result,
+  organizationSlug,
+  privateAccessUrl,
+}: Props) {
   if (!result) {
     return (
       <PublicSiteState kind="site-not-found" teamSlug={organizationSlug} />
     );
   }
-
-  const visibility = result.access.visibility;
-  if (visibility === "private") {
-    return <PublicSiteState kind="site-private" siteName={result.site.name} />;
+  if (isAccessibleResult(result)) {
+    return <ResolvedPublicSite result={result} />;
   }
 
-  return <ResolvedPublicSite result={result} />;
-}
-
-function ResolvedPublicSite({ result }: { result: PublishedPageResult }) {
+  if (result.access.status === "authentication-required") {
+    return (
+      <PrivateSiteGate
+        kind="authentication-required"
+        privateAccessUrl={privateAccessUrl}
+      />
+    );
+  }
   if (result.access.status === "forbidden") {
-    return <PublicSiteState kind="page-forbidden" />;
+    return (
+      <PrivateSiteGate kind="forbidden" privateAccessUrl={privateAccessUrl} />
+    );
   }
   if (result.access.status === "missing") {
     return <PublicSiteState kind="page-not-found" />;
   }
+
+  return <PublicSiteState kind="site-not-found" />;
+}
+
+function ResolvedPublicSite({ result }: { result: PublishedPageResult }) {
   if (!result.page) return <PublicSiteState kind="empty" />;
   return <PublicSiteShell result={result} />;
 }
 
-type PublicSiteStateKind =
-  | "site-not-found"
-  | "site-private"
-  | "page-not-found"
-  | "page-forbidden"
-  | "empty";
+type PublicSiteStateKind = "site-not-found" | "page-not-found" | "empty";
 
 function PublicSiteState({
   kind,
-  siteName,
   teamSlug,
 }: {
   kind: PublicSiteStateKind;
-  siteName?: string;
   teamSlug?: string;
 }) {
   const t = useTranslations("errors");
-
-  if (kind === "site-private") {
-    return (
-      <CenteredState>
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-          <Lock className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {siteName ? `${siteName} is private` : "This site is private"}
-        </h1>
-        <p className="max-w-md text-muted-foreground">
-          This site is only accessible to team members. Please contact the site
-          owner if you need access.
-        </p>
-      </CenteredState>
-    );
-  }
-
-  if (kind === "page-forbidden") {
-    return (
-      <CenteredState>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          This page is restricted
-        </h1>
-        <p className="text-muted-foreground">
-          You must have access to view this page.
-        </p>
-        <Button asChild>
-          <Link href="/login" target="_blank" rel="noreferrer">
-            Log in
-          </Link>
-        </Button>
-      </CenteredState>
-    );
-  }
 
   if (kind === "site-not-found") {
     return (
@@ -101,7 +82,7 @@ function PublicSiteState({
           {teamSlug ? <strong>{getDisplayDomain(teamSlug)}</strong> : null}
         </p>
         <Button asChild>
-          <Link href="/">BaseBlocks</Link>
+          <a href={getMarketingSiteUrl().toString()}>BaseBlocks</a>
         </Button>
       </CenteredState>
     );
@@ -120,6 +101,58 @@ function PublicSiteState({
   return (
     <CenteredState>
       <p className="text-muted-foreground">Page not found</p>
+    </CenteredState>
+  );
+}
+
+function PrivateSiteGate({
+  kind,
+  privateAccessUrl,
+}: {
+  kind: "authentication-required" | "forbidden";
+  privateAccessUrl: string | null;
+}) {
+  const t = useTranslations("errors");
+  const openSignIn = () => {
+    const signInUrl = new URL("/login", getMarketingSiteUrl());
+    signInUrl.searchParams.set("redirectTo", window.location.href);
+    window.location.assign(signInUrl);
+  };
+
+  return (
+    <CenteredState>
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+        <Lock className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {kind === "forbidden"
+          ? t("privateSiteForbiddenTitle")
+          : t("privateSiteTitle")}
+      </h1>
+      <p className="max-w-md text-muted-foreground">
+        {privateAccessUrl
+          ? t("privateSiteCustomDomainDescription")
+          : kind === "forbidden"
+            ? t("privateSiteForbiddenDescription")
+            : t("privateSiteDescription")}
+      </p>
+      {privateAccessUrl ? (
+        <Button asChild>
+          <a href={privateAccessUrl}>
+            {t("privateSiteOpenSecureUrl")}
+            <ArrowRight className="size-4" />
+          </a>
+        </Button>
+      ) : kind === "authentication-required" ? (
+        <Button onClick={openSignIn}>
+          {t("privateSiteSignIn")}
+          <ArrowRight className="size-4" />
+        </Button>
+      ) : (
+        <Button asChild variant="outline">
+          <a href={getMarketingSiteUrl().toString()}>{t("privateSiteBack")}</a>
+        </Button>
+      )}
     </CenteredState>
   );
 }

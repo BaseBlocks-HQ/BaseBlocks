@@ -1,5 +1,9 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
+import {
+  fileCacheControl,
+  type FileAccessScope,
+} from "@/lib/files/cache-policy";
 import { deleteObject, signedDownloadUrl } from "@/lib/files/server";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
@@ -12,19 +16,27 @@ type FileAsset = {
   filename?: string;
 };
 
-async function resolveFile(fileId: string): Promise<FileAsset | null> {
+type ResolvedFile = {
+  asset: FileAsset;
+  access: FileAccessScope;
+};
+
+async function resolveFile(fileId: string): Promise<ResolvedFile | null> {
   const token = await getToken();
   const authorized = token
     ? await getServerConvexClient(token)
         .query(api.files.getAuthorized, { fileId: fileId as never })
         .catch(() => null)
     : null;
-  return (
-    authorized ??
-    (await getServerConvexClient().query(api.files.getPublic, {
-      fileId: fileId as never,
-    }))
+  if (authorized) return { asset: authorized, access: "member" };
+
+  const publiclyAvailable = await getServerConvexClient().query(
+    api.files.getPublic,
+    { fileId: fileId as never },
   );
+  return publiclyAvailable
+    ? { asset: publiclyAvailable, access: "public" }
+    : null;
 }
 
 export async function GET(
@@ -33,10 +45,11 @@ export async function GET(
 ) {
   try {
     const { fileId } = await params;
-    const file = await resolveFile(fileId);
-    if (!file) {
+    const resolved = await resolveFile(fileId);
+    if (!resolved) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
+    const { access, asset: file } = resolved;
 
     const download = request.nextUrl.searchParams.get("download") === "1";
     const signedUrl = await signedDownloadUrl(file.objectKey, {
@@ -52,9 +65,7 @@ export async function GET(
     }
 
     const headers = new Headers({
-      "Cache-Control": file.contentType.startsWith("image/")
-        ? "public, max-age=300, stale-while-revalidate=3600"
-        : "private, no-store",
+      "Cache-Control": fileCacheControl(access, file.contentType),
       "Content-Type": file.contentType || "application/octet-stream",
     });
     const contentLength = upstream.headers.get("Content-Length");

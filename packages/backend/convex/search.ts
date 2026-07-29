@@ -4,7 +4,12 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { readPageContent } from "./model/pageDocuments";
-import { canAccessPublishedSite } from "./sharing";
+import { getPublicationState } from "./model/publication";
+import {
+  canRenderPublishedSite,
+  isPubliclyPublishedSite,
+  resolvePublishedSiteAccess,
+} from "./sharing";
 import {
   extractOpenEditorText,
   type OpenEditorDocument,
@@ -41,7 +46,7 @@ export async function indexPageContent(
   const indexData = {
     siteId: page.siteId,
     kind: "page" as const,
-    audience: canAccessPublishedSite(site)
+    audience: isPubliclyPublishedSite(site)
       ? ("public" as const)
       : ("private" as const),
     sourceId: pageId,
@@ -140,6 +145,17 @@ function contentTypeMatches(
   return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
+function isEntryOnPublishedSurface(
+  doc: Doc<"searchEntries">,
+  publishedLibraryIds: ReadonlySet<string>,
+  publishedFileIds: ReadonlySet<string>,
+) {
+  if (doc.kind === "page") return true;
+  return doc.fileMetadata?.libraryId
+    ? publishedLibraryIds.has(doc.fileMetadata.libraryId)
+    : publishedFileIds.has(doc.sourceId);
+}
+
 export const searchAll = query({
   args: {
     siteId: v.id("sites"),
@@ -196,7 +212,7 @@ export const searchAll = query({
   },
 });
 
-export const searchAllPublic = query({
+export const searchPublished = query({
   args: {
     siteId: v.id("sites"),
     query: v.string(),
@@ -213,9 +229,17 @@ export const searchAllPublic = query({
     if (!trimmed) return [];
 
     const site = await ctx.db.get(siteId);
-    if (!site || !canAccessPublishedSite(site)) {
+    if (!site) {
       return [];
     }
+    const access = await resolvePublishedSiteAccess(ctx, site);
+    if (!canRenderPublishedSite(access)) return [];
+    const audience = site.visibility;
+    const publicationState = await getPublicationState(ctx, siteId);
+    const publishedLibraryIds = new Set(
+      publicationState?.activeLibraryIds ?? [],
+    );
+    const publishedFileIds = new Set(publicationState?.referencedFileIds ?? []);
 
     const titleResults = await ctx.db
       .query("searchEntries")
@@ -223,17 +247,14 @@ export const searchAllPublic = query({
         q
           .search("title", trimmed)
           .eq("siteId", siteId)
-          .eq("audience", "public"),
+          .eq("audience", audience),
       )
       .take(limit * 2);
 
     const contentResults = await ctx.db
       .query("searchEntries")
       .withSearchIndex("search_text", (q) =>
-        q
-          .search("text", trimmed)
-          .eq("siteId", siteId)
-          .eq("audience", "public"),
+        q.search("text", trimmed).eq("siteId", siteId).eq("audience", audience),
       )
       .take(limit * 2);
 
@@ -243,6 +264,11 @@ export const searchAllPublic = query({
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       if (!contentTypeMatches(doc, contentTypes)) continue;
+      if (
+        !isEntryOnPublishedSurface(doc, publishedLibraryIds, publishedFileIds)
+      ) {
+        continue;
+      }
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "content", trimmed));
     }
@@ -250,6 +276,11 @@ export const searchAllPublic = query({
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       if (!contentTypeMatches(doc, contentTypes)) continue;
+      if (
+        !isEntryOnPublishedSurface(doc, publishedLibraryIds, publishedFileIds)
+      ) {
+        continue;
+      }
       seen.add(doc._id);
       combined.push(formatSearchResult(doc, "title", trimmed));
     }

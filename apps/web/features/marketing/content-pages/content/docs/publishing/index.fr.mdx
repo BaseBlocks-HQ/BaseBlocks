@@ -8,7 +8,10 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 ## État de publication
 
-Un site est soit **publié**, soit **non publié**. La publication rend ses pages accessibles à l'URL générée et sur tout domaine personnalisé vérifié. Le retrait coupe l'accès public.
+Un site est soit **publié**, soit **non publié**. La publication active sa
+surface en ligne. La visibilité détermine ensuite si elle est publique ou
+réservée aux membres connectés de l'équipe. Le retrait coupe entièrement la
+surface en ligne.
 
 <Callout type="warn" title="Modèle de publication actuel">
   Les sites publiés lisent actuellement le dernier contenu enregistré. Modifier un site publié peut donc changer ce que voient les visiteurs sans déploiement d'un instantané séparé. L'historique des instantanés et la restauration ne sont pas disponibles actuellement.
@@ -28,19 +31,23 @@ Créez des pages et modifiez le contenu. Les changements sont enregistrés autom
 
 ### Publier
 
-Cliquez sur **Déployer** dans l'en-tête de l'éditeur. Le site devient immédiatement accessible.
+Cliquez sur **Déployer** dans l'en-tête de l'éditeur. Un site Public devient
+accessible à tous. Un site Privé devient accessible uniquement aux membres
+authentifiés depuis son adresse BaseBlocks générée.
 
 </Step>
 </Steps>
 
 ## Retirer un site
 
-Ouvrez le menu de déploiement et choisissez **Retirer**. L'URL générée et le domaine personnalisé cessent de servir le site jusqu'à sa prochaine publication. Le contenu enregistré n'est pas supprimé.
+Ouvrez le menu de déploiement et choisissez **Retirer**. L'URL générée et le
+domaine personnalisé cessent de servir le contenu jusqu'à la prochaine
+publication. Le contenu enregistré dans l'éditeur n'est pas supprimé.
 
 ## Et ensuite
 
 <Cards>
   <Card href="/docs/publishing/visibility" title="Visibilité du site">
-    Contrôlez qui peut accéder à votre site publié — public, privé, accessible par lien ou protégé par mot de passe.
+    Comprenez les modes d'accès Public et Privé actuellement implémentés.
   </Card>
 </Cards>
