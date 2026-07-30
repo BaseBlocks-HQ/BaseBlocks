@@ -16,6 +16,7 @@ Teams create structured sites with a block editor, organize pages and document l
 - **Access control** — public, private, unlisted, and access-code-protected sites
 - **Custom domains** — DNS verification and managed TLS through Vercel
 - **Document libraries** — uploads, folders, search, text extraction, previews, and downloads
+- **Integrations** — workspace-owned connections with managed OAuth and durable external-content sync
 - **Workspace management** — multiple teams, invitations, roles, and workspace switching
 - **Internationalization** — English and French product UI and documentation
 - **Self-hosting** — Convex backend and S3-compatible file storage
@@ -102,6 +103,7 @@ baseblocks/
 │       ├── features/
 │       │   ├── authentication/   # Session and workspace access
 │       │   ├── dashboard/        # Sites, members, and workspace shell
+│       │   ├── dashboard/integrations/ # Connected apps and lifecycle UI
 │       │   ├── editor/           # Editor chrome, sidebar, pages, and settings
 │       │   ├── openeditor/       # OpenEditor integration and extensions
 │       │   ├── libraries/        # Document-library management

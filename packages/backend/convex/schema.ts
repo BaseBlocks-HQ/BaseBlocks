@@ -1,5 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import {
+  integrationConnectionStatus,
+  integrationProvider,
+  integrationSyncStatus,
+} from "./validators/integrations";
 import { siteSettings } from "./validators/sites";
 
 export default defineSchema({
@@ -290,4 +295,59 @@ export default defineSchema({
     actorId: v.string(),
     createdAt: v.number(),
   }).index("by_site", ["siteId"]),
+
+  integrationConnections: defineTable({
+    organizationId: v.string(),
+    provider: integrationProvider,
+    adapter: v.literal("nango"),
+    adapterConnectionId: v.optional(v.string()),
+    status: integrationConnectionStatus,
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    connectedAt: v.optional(v.number()),
+    disconnectedAt: v.optional(v.number()),
+    lastSyncAt: v.optional(v.number()),
+    resourceCount: v.number(),
+    errorCode: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_provider", ["organizationId", "provider"])
+    .index("by_adapter_connection", ["adapter", "adapterConnectionId"]),
+
+  integrationSyncStates: defineTable({
+    connectionId: v.id("integrationConnections"),
+    stream: v.string(),
+    model: v.string(),
+    status: integrationSyncStatus,
+    cursor: v.optional(v.string()),
+    rerunRequested: v.boolean(),
+    attempt: v.number(),
+    updatedAt: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_connection_stream", ["connectionId", "stream"])
+    .index("by_status_updated", ["status", "updatedAt"]),
+
+  integrationResources: defineTable({
+    organizationId: v.string(),
+    connectionId: v.id("integrationConnections"),
+    provider: integrationProvider,
+    externalId: v.string(),
+    resourceType: v.string(),
+    title: v.string(),
+    url: v.optional(v.string()),
+    parentExternalId: v.optional(v.string()),
+    providerCreatedAt: v.optional(v.string()),
+    providerUpdatedAt: v.optional(v.string()),
+    deletedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_connection", ["connectionId"])
+    .index("by_connection_external", ["connectionId", "externalId"])
+    .index("by_organization_provider", ["organizationId", "provider"]),
 });

@@ -16,6 +16,7 @@ import {
 } from "@baseblocks/domain";
 import {
   getTeamDashboardPath,
+  getTeamIntegrationsPath,
   getTeamMembersPath,
 } from "@/features/dashboard/routes";
 import { useTeamAccess } from "@/features/authentication/team-access";
@@ -48,6 +49,7 @@ import {
   ChevronsUpDown,
   Earth,
   House,
+  Link as LinkIcon,
   LogOut,
   Moon,
   Sun,
@@ -103,6 +105,7 @@ export function DashboardSidebar() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
 
   const teamMembersPath = getTeamMembersPath(team.slug);
+  const teamIntegrationsPath = getTeamIntegrationsPath(team.slug);
 
   const navItems: {
     title: string;
@@ -121,6 +124,12 @@ export function DashboardSidebar() {
       href: teamMembersPath,
       icon: UsersRound,
       isActive: pathname.startsWith(teamMembersPath),
+    },
+    {
+      title: t("integrations.title"),
+      href: teamIntegrationsPath,
+      icon: LinkIcon,
+      isActive: pathname.startsWith(teamIntegrationsPath),
     },
   ];
 

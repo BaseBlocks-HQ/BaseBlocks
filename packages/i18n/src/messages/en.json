@@ -553,6 +553,49 @@
     "deleting": "Deleting…",
     "deleteAccountError": "Could not delete account"
   },
+  "integrations": {
+    "title": "Integrations",
+    "connectedApps": "Connected apps",
+    "availableApps": "Available apps",
+    "comingSoon": "Coming soon",
+    "adminRequired": "Only workspace owners and admins can manage integrations.",
+    "resourcesSynced": "{count, plural, =0 {No resources synced yet} =1 {1 resource synced} other {# resources synced}}",
+    "finishAuthorization": "Complete authorization in the connection window.",
+    "popupBlocked": "Allow popups to connect this app.",
+    "connectFailed": "Could not start the connection.",
+    "disconnectFailed": "Could not disconnect the app.",
+    "disconnected": "App disconnected.",
+    "syncRequested": "Sync requested.",
+    "syncFailed": "Could not retry the sync.",
+    "providers": {
+      "notion": "Discover shared pages and keep their metadata synchronized.",
+      "confluence": "Bring Confluence spaces and pages into BaseBlocks.",
+      "googleDrive": "Sync documents and files from shared drives.",
+      "sharePoint": "Bring Microsoft 365 sites and documents into BaseBlocks.",
+      "github": "Connect repositories, issues, discussions, and documentation.",
+      "linear": "Sync projects, issues, and product planning context.",
+      "jira": "Connect projects, tickets, and delivery knowledge."
+    },
+    "status": {
+      "connected": "Connected",
+      "syncing": "Syncing",
+      "awaitingAuthorization": "Setup incomplete",
+      "disconnecting": "Disconnecting",
+      "needsAttention": "Needs attention"
+    },
+    "actions": {
+      "connect": "Connect",
+      "continue": "Continue setup",
+      "reconnect": "Reconnect",
+      "retrySync": "Retry sync",
+      "disconnect": "Disconnect"
+    },
+    "disconnect": {
+      "title": "Disconnect {provider}?",
+      "description": "BaseBlocks will stop syncing this account. Previously discovered resources remain until the connection is replaced or removed.",
+      "cancel": "Keep connected"
+    }
+  },
   "team": {
     "title": "Team",
     "description": "Manage your organization's team members and their access roles",

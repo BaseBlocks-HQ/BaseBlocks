@@ -14,6 +14,7 @@ interface TeamAccessValue {
   capabilities: {
     canEditContent: boolean;
     canManageLibraries: boolean;
+    canManageIntegrations: boolean;
     canManageSites: boolean;
     canManageTeam: boolean;
     canPublish: boolean;
@@ -47,6 +48,10 @@ export function TeamAccessProvider({
     }),
     canManageLibraries: roleHasPermission(role, {
       resource: "library",
+      action: "manage",
+    }),
+    canManageIntegrations: roleHasPermission(role, {
+      resource: "integration",
       action: "manage",
     }),
     canManageSites: roleHasPermission(role, {

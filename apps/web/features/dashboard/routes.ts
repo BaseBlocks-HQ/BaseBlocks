@@ -6,6 +6,10 @@ export function getTeamMembersPath(teamSlug: string): string {
   return `${getTeamDashboardPath(teamSlug)}/team`;
 }
 
+export function getTeamIntegrationsPath(teamSlug: string): string {
+  return `${getTeamDashboardPath(teamSlug)}/integrations`;
+}
+
 export function getTeamSiteEditorPath(
   teamSlug: string,
   siteId: string,

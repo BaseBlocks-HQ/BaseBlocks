@@ -36,6 +36,7 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
         "elements",
         "errors",
         "inbox",
+        "integrations",
         "language",
         "libraries",
         "navigation",

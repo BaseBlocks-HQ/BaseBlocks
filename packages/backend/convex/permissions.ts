@@ -1,4 +1,8 @@
-import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
+import type {
+  GenericActionCtx,
+  GenericMutationCtx,
+  GenericQueryCtx,
+} from "convex/server";
 import { ConvexError } from "convex/values";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -7,7 +11,11 @@ import {
   roleHasPermission,
 } from "./authComponent/permissions";
 
-type AuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
+type AuthCtx =
+  | GenericQueryCtx<DataModel>
+  | GenericMutationCtx<DataModel>
+  | GenericActionCtx<DataModel>;
+type DbAuthCtx = GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>;
 
 export type ServerAuthContext = {
   userId: string;
@@ -116,7 +124,7 @@ export async function requireOrganizationPermission(
 }
 
 export async function isOrganizationMember(
-  ctx: AuthCtx,
+  ctx: DbAuthCtx,
   organizationId: string,
 ): Promise<boolean> {
   const auth = await getAuthContextOrNull(ctx);

@@ -553,6 +553,49 @@
     "deleting": "Suppression…",
     "deleteAccountError": "Impossible de supprimer le compte"
   },
+  "integrations": {
+    "title": "Intégrations",
+    "connectedApps": "Applications connectées",
+    "availableApps": "Applications disponibles",
+    "comingSoon": "Bientôt",
+    "adminRequired": "Seuls les propriétaires et administrateurs de l’espace peuvent gérer les intégrations.",
+    "resourcesSynced": "{count, plural, =0 {Aucune ressource synchronisée} =1 {1 ressource synchronisée} other {# ressources synchronisées}}",
+    "finishAuthorization": "Terminez l’autorisation dans la fenêtre de connexion.",
+    "popupBlocked": "Autorisez les fenêtres contextuelles pour connecter cette application.",
+    "connectFailed": "Impossible de démarrer la connexion.",
+    "disconnectFailed": "Impossible de déconnecter l’application.",
+    "disconnected": "Application déconnectée.",
+    "syncRequested": "Synchronisation demandée.",
+    "syncFailed": "Impossible de relancer la synchronisation.",
+    "providers": {
+      "notion": "Découvrez les pages partagées et synchronisez leurs métadonnées.",
+      "confluence": "Importez les espaces et pages Confluence dans BaseBlocks.",
+      "googleDrive": "Synchronisez les documents et fichiers des Drives partagés.",
+      "sharePoint": "Importez les sites et documents Microsoft 365 dans BaseBlocks.",
+      "github": "Connectez les dépôts, issues, discussions et documentations.",
+      "linear": "Synchronisez les projets, issues et le contexte produit.",
+      "jira": "Connectez les projets, tickets et connaissances de livraison."
+    },
+    "status": {
+      "connected": "Connecté",
+      "syncing": "Synchronisation",
+      "awaitingAuthorization": "Configuration incomplète",
+      "disconnecting": "Déconnexion",
+      "needsAttention": "Intervention requise"
+    },
+    "actions": {
+      "connect": "Connecter",
+      "continue": "Continuer",
+      "reconnect": "Reconnecter",
+      "retrySync": "Relancer",
+      "disconnect": "Déconnecter"
+    },
+    "disconnect": {
+      "title": "Déconnecter {provider} ?",
+      "description": "BaseBlocks cessera de synchroniser ce compte. Les ressources déjà découvertes sont conservées jusqu’au remplacement ou à la suppression de la connexion.",
+      "cancel": "Garder connecté"
+    }
+  },
   "team": {
     "title": "Équipe",
     "description": "Gerez les membres de votre organisation et leurs roles d'acces",

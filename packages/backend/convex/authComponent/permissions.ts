@@ -12,6 +12,7 @@ export const baseBlocksStatements = {
   content: ["edit"],
   publication: ["publish"],
   library: ["manage"],
+  integration: ["manage"],
 } as const;
 
 export const baseBlocksAccessControl =
@@ -23,6 +24,7 @@ export const ownerRole = baseBlocksAccessControl.newRole({
   content: ["edit"],
   publication: ["publish"],
   library: ["manage"],
+  integration: ["manage"],
 });
 
 export const adminRole = baseBlocksAccessControl.newRole({
@@ -31,6 +33,7 @@ export const adminRole = baseBlocksAccessControl.newRole({
   content: ["edit"],
   publication: ["publish"],
   library: ["manage"],
+  integration: ["manage"],
 });
 
 export const editorRole = baseBlocksAccessControl.newRole({
@@ -39,6 +42,7 @@ export const editorRole = baseBlocksAccessControl.newRole({
   content: ["edit"],
   publication: ["publish"],
   library: ["manage"],
+  integration: [],
 });
 
 export const viewerRole = baseBlocksAccessControl.newRole({
@@ -47,6 +51,7 @@ export const viewerRole = baseBlocksAccessControl.newRole({
   content: [],
   publication: [],
   library: [],
+  integration: [],
 });
 
 export const baseBlocksRoles = {
@@ -65,7 +70,8 @@ export type OrganizationPermission =
   | { resource: "site"; action: "manage" }
   | { resource: "content"; action: "edit" }
   | { resource: "publication"; action: "publish" }
-  | { resource: "library"; action: "manage" };
+  | { resource: "library"; action: "manage" }
+  | { resource: "integration"; action: "manage" };
 
 export function roleHasPermission(
   role: string,

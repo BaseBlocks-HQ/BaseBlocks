@@ -9,8 +9,14 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as integrationModel from "../integrationModel.js";
+import type * as integrationNango from "../integrationNango.js";
+import type * as integrationWebhookSignature from "../integrationWebhookSignature.js";
+import type * as integrationWebhooks from "../integrationWebhooks.js";
+import type * as integrations from "../integrations.js";
 import type * as libraries from "../libraries.js";
 import type * as model_draft from "../model/draft.js";
 import type * as model_libraryAccess from "../model/libraryAccess.js";
@@ -29,6 +35,7 @@ import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
 import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
+import type * as validators_integrations from "../validators/integrations.js";
 import type * as validators_sites from "../validators/sites.js";
 
 import type {
@@ -39,8 +46,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  crons: typeof crons;
   files: typeof files;
   http: typeof http;
+  integrationModel: typeof integrationModel;
+  integrationNango: typeof integrationNango;
+  integrationWebhookSignature: typeof integrationWebhookSignature;
+  integrationWebhooks: typeof integrationWebhooks;
+  integrations: typeof integrations;
   libraries: typeof libraries;
   "model/draft": typeof model_draft;
   "model/libraryAccess": typeof model_libraryAccess;
@@ -59,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   sharing: typeof sharing;
   siteDomains: typeof siteDomains;
   sites: typeof sites;
+  "validators/integrations": typeof validators_integrations;
   "validators/sites": typeof validators_sites;
 }>;
 

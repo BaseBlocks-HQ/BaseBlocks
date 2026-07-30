@@ -62,3 +62,15 @@ export {
   sanitizeFilename,
   toFilesKind,
 } from "./files/file-keys";
+
+export type {
+  IntegrationProviderAvailability,
+  IntegrationProviderDefinition,
+  IntegrationProviderKey,
+} from "./integrations/catalog";
+export {
+  getIntegrationProvider,
+  integrationProviderKeys,
+  integrationProviders,
+  isIntegrationProviderKey,
+} from "./integrations/catalog";
