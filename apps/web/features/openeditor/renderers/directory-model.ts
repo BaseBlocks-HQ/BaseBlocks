@@ -91,9 +91,7 @@ export function directoryToHtml(
 
 function normalizeDirectory(value: unknown, index: number): Directory {
   const candidate =
-    value && typeof value === "object"
-      ? (value as Partial<Directory>)
-      : {};
+    value && typeof value === "object" ? (value as Partial<Directory>) : {};
   const id =
     typeof candidate.id === "string"
       ? candidate.id
