@@ -1,6 +1,7 @@
 "use client";
 
 import { useTeamAccess } from "@/features/authentication/team-access";
+import { DashboardPageHeader } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
@@ -74,38 +75,43 @@ export function TeamPage() {
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
-          <div className="mb-8 flex items-end justify-between gap-4 border-b border-foreground/10 pb-5">
-            <div className="min-w-0">
-              <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
-                {t("title")}
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {capabilities.canManageTeam && (
+          <DashboardPageHeader
+            action={
+              capabilities.canManageTeam ? (
                 <InviteMemberDialog organizationId={team._id} />
-              )}
-            </div>
-          </div>
+              ) : null
+            }
+            title={t("title")}
+          />
 
           {members && members.length > 0 ? (
-            <div className="overflow-hidden rounded-xl border bg-card">
-              <Table>
-                <TableHeader className="bg-muted/45 text-muted-foreground">
+            <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+              <Table className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-3 [&_th:first-child]:pl-4 [&_th:last-child]:pr-3">
+                <TableHeader className="text-xs text-muted-foreground [&_tr]:border-foreground/[0.07]">
                   <TableRow>
-                    <TableHead>{t("member.email")}</TableHead>
-                    <TableHead>{t("member.role")}</TableHead>
-                    <TableHead>{t("member.joined")}</TableHead>
+                    <TableHead className="h-9 font-normal">
+                      {t("member.email")}
+                    </TableHead>
+                    <TableHead className="h-9 font-normal">
+                      {t("member.role")}
+                    </TableHead>
+                    <TableHead className="h-9 font-normal">
+                      {t("member.joined")}
+                    </TableHead>
                     {capabilities.canManageTeam && members.length > 1 && (
-                      <TableHead className="w-[70px]" />
+                      <TableHead className="h-9 w-12" />
                     )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members.map((member: MemberListItem) => (
-                    <TableRow key={member._id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
+                    <TableRow
+                      className="border-foreground/[0.06] hover:bg-muted/30"
+                      key={member._id}
+                    >
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="size-7">
                             <AvatarImage src={member.imageUrl} />
                             <AvatarFallback>
                               {getInitials(member.name, member.email)}
@@ -114,7 +120,7 @@ export function TeamPage() {
                           <span className="font-medium">{member.email}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         <Badge variant={getRoleBadgeVariant(member.role)}>
                           {member.role === "admin"
                             ? t("roles.admin")
@@ -123,11 +129,11 @@ export function TeamPage() {
                               : t("roles.viewer")}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="py-2 text-muted-foreground">
                         {formatDate(member.joinedAt)}
                       </TableCell>
                       {capabilities.canManageTeam && members.length > 1 && (
-                        <TableCell>
+                        <TableCell className="py-2 text-right">
                           <MemberActions
                             member={member}
                             organizationId={team._id}

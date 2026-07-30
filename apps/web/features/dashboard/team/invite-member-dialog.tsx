@@ -142,7 +142,11 @@ export function InviteMemberDialog({
   return (
     <Dialog open={dialogState.open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" className="gap-2">
+        <Button
+          className="product-primary-action rounded-[0.625rem]"
+          size="sm"
+          type="button"
+        >
           <UserPlus className="h-4 w-4" />
           {t("inviteMember")}
         </Button>

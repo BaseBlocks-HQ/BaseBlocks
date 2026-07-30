@@ -274,6 +274,7 @@
     "sites": "Sites",
     "settings": "Parametres",
     "help": "Aide",
+    "toggleSidebar": "Afficher ou masquer la barre latérale",
     "tree": {
       "defaultBadge": "Par defaut",
       "breadcrumbShowMore": "Afficher plus"

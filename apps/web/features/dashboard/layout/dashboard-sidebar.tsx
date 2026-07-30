@@ -38,9 +38,11 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import {
   Bolt,
@@ -179,6 +181,31 @@ export function DashboardSidebar() {
       mobileClassName="!top-2 !bottom-2 !left-2 !max-h-[calc(100svh-1rem)] !w-[min(13.5rem,calc(100vw-1rem))] rounded-xl !border !border-sidebar-foreground/[0.06] !bg-sidebar shadow-sm"
       variant="floating"
     >
+      <SidebarHeader className="shrink-0 p-1">
+        <div className="flex h-9 items-center justify-between px-2">
+          <Link
+            aria-label="BaseBlocks"
+            className="flex size-4 items-center justify-center"
+            href={getTeamDashboardPath(team.slug)}
+            prefetch={false}
+          >
+            {/* biome-ignore lint/performance/noImgElement: This local SVG logo does not need image optimization. */}
+            <img
+              alt=""
+              className="product-brand-mark h-auto w-4"
+              height="228"
+              src="/brand/baseblocks-mark.svg"
+              width="270"
+            />
+          </Link>
+          <SidebarTrigger
+            aria-label={t("navigation.toggleSidebar")}
+            className="size-7 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground"
+            title={t("navigation.toggleSidebar")}
+          />
+        </div>
+      </SidebarHeader>
+
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">
         <div className="h-full min-h-0 overflow-y-auto">
           <SidebarGroup className="p-0">
@@ -224,7 +251,7 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <InvitationInbox
               fullWidth
-              fullWidthTriggerClassName={pillRowClass}
+              fullWidthTriggerClassName={cn(pillRowClass, "has-[>svg]:px-2")}
             />
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -287,14 +314,16 @@ export function DashboardSidebar() {
                   type="button"
                 >
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <Avatar className="h-6 w-6 rounded-full">
-                      {user?.imageUrl ? (
-                        <AvatarImage src={user.imageUrl} />
-                      ) : null}
-                      <AvatarFallback className="text-[10px]">
-                        {profileFallback}
-                      </AvatarFallback>
-                    </Avatar>
+                    <span className="flex w-4 shrink-0 justify-center">
+                      <Avatar className="size-6 rounded-full">
+                        {user?.imageUrl ? (
+                          <AvatarImage src={user.imageUrl} />
+                        ) : null}
+                        <AvatarFallback className="text-[10px]">
+                          {profileFallback}
+                        </AvatarFallback>
+                      </Avatar>
+                    </span>
                     <span className="min-w-0 truncate text-sidebar-foreground">
                       {profileLabel}
                     </span>

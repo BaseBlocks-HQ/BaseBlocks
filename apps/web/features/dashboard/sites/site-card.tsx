@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { DashboardListRow } from "@/features/dashboard/layout/dashboard-page";
 import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
 import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { api } from "@baseblocks/backend";
@@ -20,11 +21,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Badge } from "@baseblocks/ui/badge";
-import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -78,103 +76,90 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
 
   return (
     <>
-      <article className="group relative flex min-h-[7.5rem] flex-col justify-between gap-4 rounded-xl bg-card p-4 transition-shadow duration-150 hover:shadow-sm">
+      <DashboardListRow className="group">
         <Link
           aria-label={openEditorLabel}
-          className="absolute inset-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="absolute inset-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           href={editorHref}
         />
 
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-medium text-muted-foreground">
-            {site.logoUrl ? (
-              <Image
-                src={site.logoUrl}
-                alt={site.name}
-                className="h-9 w-9 object-contain"
-                width={36}
-                height={36}
-                unoptimized
-              />
-            ) : (
-              site.name[0]?.toUpperCase() || "S"
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="truncate text-sm font-medium leading-snug">
-              {site.name}
-            </h3>
-            <p className="mt-0.5 truncate text-xs leading-relaxed text-muted-foreground">
-              /{site.slug}
-            </p>
-          </div>
-
-          <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5">
-            {isPublished ? (
-              <Button
-                asChild
-                aria-label={t("sites.viewSite")}
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                size="icon"
-                title={t("sites.viewSite")}
-                variant="ghost"
-              >
-                <a href={publishedSiteHref} rel="noreferrer" target="_blank">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : null}
-
-            {canManageSites && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    aria-label={t("common.settings")}
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                    size="icon"
-                    title={t("common.settings")}
-                    type="button"
-                    variant="ghost"
-                  >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    {t("common.edit")}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {t("common.delete")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+        <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-sm font-medium text-muted-foreground">
+          {site.logoUrl ? (
+            <Image
+              src={site.logoUrl}
+              alt=""
+              aria-hidden="true"
+              className="size-10 object-cover"
+              width={40}
+              height={40}
+              unoptimized
+            />
+          ) : (
+            site.name[0]?.toUpperCase() || "S"
+          )}
         </div>
 
-        <Badge
-          className="gap-1.5 border-0 bg-muted/60 px-2 py-1 font-normal text-muted-foreground"
-          variant="secondary"
-        >
-          <span
-            aria-hidden
-            className={cn(
-              "size-1.5 rounded-full",
-              isPublished
-                ? "bg-green-500 dark:bg-green-400"
-                : "bg-amber-500 dark:bg-amber-300",
-            )}
-          />
-          {statusLabel}
-        </Badge>
-      </article>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-medium leading-snug">
+            {site.name}
+          </h3>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+            {statusLabel}
+          </p>
+        </div>
+
+        <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5">
+          {isPublished || canManageSites ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label={
+                    canManageSites ? t("common.settings") : t("sites.viewSite")
+                  }
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  size="icon"
+                  title={
+                    canManageSites ? t("common.settings") : t("sites.viewSite")
+                  }
+                  type="button"
+                  variant="ghost"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isPublished ? (
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={publishedSiteHref}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      {t("sites.viewSite")}
+                    </a>
+                  </DropdownMenuItem>
+                ) : null}
+                {canManageSites ? (
+                  <>
+                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      {t("common.edit")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t("common.delete")}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
+      </DashboardListRow>
 
       {canManageSites && (
         <EditSiteDialog

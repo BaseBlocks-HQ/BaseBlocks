@@ -1,6 +1,11 @@
 "use client";
 
 import { useTeamAccess } from "@/features/authentication/team-access";
+import {
+  DashboardList,
+  DashboardListRow,
+  DashboardPageHeader,
+} from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -129,7 +134,7 @@ function ConnectionCard({
     (connection.status === "error" && !connection.canReconnect);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
+    <DashboardListRow>
       <ProviderMark provider={connection.provider} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -148,7 +153,7 @@ function ConnectionCard({
         ) : null}
       </div>
       {canManage ? (
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
           {canRetryAuthorization ? (
             <Button
               disabled={busy}
@@ -220,7 +225,7 @@ function ConnectionCard({
           ) : null}
         </div>
       ) : null}
-    </div>
+    </DashboardListRow>
   );
 }
 
@@ -235,6 +240,15 @@ export function IntegrationsPage() {
   const disconnect = useAction(api.integrations.disconnect);
   const retrySync = useAction(api.integrations.retrySync);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const connectedProviders = new Set(
+    connections?.map((connection) => connection.provider) ?? [],
+  );
+  const availableProviders =
+    connections === undefined
+      ? []
+      : integrationProviders.filter(
+          (provider) => !connectedProviders.has(provider.key),
+        );
 
   const openAuthorization = async (
     operationId: string,
@@ -313,11 +327,7 @@ export function IntegrationsPage() {
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
-          <div className="mb-8 border-b border-foreground/10 pb-5">
-            <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
-              {t("title")}
-            </h1>
-          </div>
+          <DashboardPageHeader title={t("title")} />
 
           {connections && connections.length > 0 ? (
             <section className="mb-10" aria-labelledby="connected-apps-title">
@@ -327,7 +337,7 @@ export function IntegrationsPage() {
               >
                 {t("connectedApps")}
               </h2>
-              <div className="space-y-3">
+              <DashboardList>
                 {connections.map((connection) => (
                   <ConnectionCard
                     key={connection._id}
@@ -340,63 +350,64 @@ export function IntegrationsPage() {
                     onRetrySync={handleRetrySync}
                   />
                 ))}
-              </div>
+              </DashboardList>
             </section>
           ) : null}
 
-          <section aria-labelledby="available-apps-title">
-            <h2 id="available-apps-title" className="mb-3 text-sm font-medium">
-              {t("availableApps")}
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {integrationProviders.map((provider) => {
-                const available = provider.availability === "available";
-                const busy = busyId === `provider:${provider.key}`;
-                return (
-                  <div
-                    className={cn(
-                      "flex min-h-40 flex-col rounded-xl border bg-card p-5",
-                      !available && "opacity-70",
-                    )}
-                    key={provider.key}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <ProviderMark provider={provider.key} />
-                      {!available ? (
-                        <Badge variant="outline">{t("comingSoon")}</Badge>
-                      ) : null}
-                    </div>
-                    <h3 className="mt-4 font-medium">{provider.name}</h3>
-                    <p className="mt-1 flex-1 text-sm text-muted-foreground">
-                      {t(`providers.${provider.key}`)}
-                    </p>
-                    <Button
-                      className="mt-4 self-start"
-                      disabled={
-                        !available ||
-                        !capabilities.canManageIntegrations ||
-                        busy
-                      }
-                      onClick={() => void handleAuthorize(provider.key)}
-                      size="sm"
+          {connections !== undefined && availableProviders.length > 0 ? (
+            <section aria-labelledby="available-apps-title">
+              <h2
+                id="available-apps-title"
+                className="mb-3 text-sm font-medium"
+              >
+                {t("availableApps")}
+              </h2>
+              <DashboardList>
+                {availableProviders.map((provider) => {
+                  const available = provider.availability === "available";
+                  const busy = busyId === `provider:${provider.key}`;
+                  return (
+                    <DashboardListRow
+                      className={cn(!available && "opacity-70")}
+                      key={provider.key}
                     >
-                      {busy ? (
-                        <LoaderCircle className="animate-spin" />
+                      <ProviderMark provider={provider.key} />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-medium">{provider.name}</h3>
+                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                          {t(`providers.${provider.key}`)}
+                        </p>
+                      </div>
+                      {available ? (
+                        <Button
+                          className="ml-auto shrink-0"
+                          disabled={!capabilities.canManageIntegrations || busy}
+                          onClick={() => void handleAuthorize(provider.key)}
+                          size="sm"
+                        >
+                          {busy ? (
+                            <LoaderCircle className="animate-spin" />
+                          ) : (
+                            <ArrowUpRight />
+                          )}
+                          {t("actions.connect")}
+                        </Button>
                       ) : (
-                        <ArrowUpRight />
+                        <Badge className="ml-auto shrink-0" variant="outline">
+                          {t("comingSoon")}
+                        </Badge>
                       )}
-                      {available ? t("actions.connect") : t("comingSoon")}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            {!capabilities.canManageIntegrations ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                {t("adminRequired")}
-              </p>
-            ) : null}
-          </section>
+                    </DashboardListRow>
+                  );
+                })}
+              </DashboardList>
+              {!capabilities.canManageIntegrations ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {t("adminRequired")}
+                </p>
+              ) : null}
+            </section>
+          ) : null}
         </div>
       </div>
     </main>

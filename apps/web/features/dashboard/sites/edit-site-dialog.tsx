@@ -329,7 +329,7 @@ function EditSiteLogoField({
             <Image
               src={logoPreview}
               alt="Site logo"
-              className="h-16 w-16 rounded-[0.85rem] border border-border/55 bg-background object-contain"
+              className="h-16 w-16 rounded-[0.85rem] border border-border/55 bg-background object-cover"
               width={64}
               height={64}
               unoptimized

@@ -13,7 +13,6 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { cn } from "@baseblocks/ui/lib/utils";
 import { useMutation } from "convex/react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -183,24 +182,15 @@ export function CreateSiteDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button
-          className={cn(
-            "group flex min-h-[7.5rem] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-muted-foreground/35 bg-transparent p-4 text-center text-muted-foreground transition-[border-color,background-color,color] duration-150",
-            "hover:border-muted-foreground/55 hover:bg-accent/10 hover:text-foreground",
-            "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-            "active:scale-[0.98]",
-            "disabled:pointer-events-none disabled:opacity-50",
-          )}
+        <Button
+          className="product-primary-action rounded-[0.625rem]"
           disabled={disabled}
+          size="sm"
           type="button"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted transition-colors duration-150 group-hover:bg-accent">
-            <Plus className="h-4 w-4 shrink-0" />
-          </span>
-          <span className="text-sm font-medium">
-            {t("dashboard.createSite")}
-          </span>
-        </button>
+          <Plus className="size-4" />
+          {t("dashboard.createSite")}
+        </Button>
       </DialogTrigger>
       <DialogContent
         className={

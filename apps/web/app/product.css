@@ -27,6 +27,58 @@
   filter: none;
 }
 
+.product-brand-mark {
+  filter: invert(1);
+}
+
+.dark .product-brand-mark {
+  filter: none;
+}
+
+.product-primary-action {
+  border: 1px solid rgb(0 0 0 / 20%);
+  border-radius: 0.625rem;
+  background:
+    radial-gradient(
+      120% 150% at 50% -55%,
+      rgb(255 255 255 / 94%) 0%,
+      rgb(255 255 255 / 28%) 42%,
+      transparent 68%
+    ),
+    linear-gradient(180deg, #f7f7f7 0%, #dedede 54%, #bdbdbd 100%);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 16%),
+    0 4px 12px rgb(0 0 0 / 8%),
+    inset 0 0 2px rgb(255 255 255 / 82%),
+    inset 0 1px 0 rgb(255 255 255 / 86%),
+    inset 0 -0.55rem 1.35rem rgb(0 0 0 / 10%),
+    inset 0 -1px 0 rgb(0 0 0 / 18%);
+  color: #111;
+  transition:
+    background 180ms ease,
+    box-shadow 240ms ease,
+    transform 180ms ease;
+}
+
+.product-primary-action:hover {
+  background:
+    radial-gradient(
+      120% 150% at 50% -55%,
+      rgb(255 255 255 / 98%) 0%,
+      rgb(255 255 255 / 34%) 42%,
+      transparent 68%
+    ),
+    linear-gradient(180deg, #fff 0%, #e8e8e8 54%, #c8c8c8 100%);
+  box-shadow:
+    0 2px 3px rgb(0 0 0 / 18%),
+    0 6px 16px rgb(0 0 0 / 10%),
+    inset 0 0 2px rgb(255 255 255 / 88%),
+    inset 0 1px 0 rgb(255 255 255 / 92%),
+    inset 0 -0.55rem 1.35rem rgb(0 0 0 / 8%),
+    inset 0 -1px 0 rgb(0 0 0 / 16%);
+  transform: translateY(-1px);
+}
+
 .auth-editor-visual .landing-editor-particle-field {
   position: absolute;
   top: 50%;

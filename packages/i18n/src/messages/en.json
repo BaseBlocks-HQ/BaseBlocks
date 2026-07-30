@@ -274,6 +274,7 @@
     "sites": "Sites",
     "settings": "Settings",
     "help": "Help",
+    "toggleSidebar": "Toggle sidebar",
     "tree": {
       "defaultBadge": "Default",
       "breadcrumbShowMore": "Show more"

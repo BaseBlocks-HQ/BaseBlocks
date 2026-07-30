@@ -1,6 +1,10 @@
 "use client";
 
 import { useTeamAccess } from "@/features/authentication/team-access";
+import {
+  DashboardList,
+  DashboardPageHeader,
+} from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { Spinner } from "@baseblocks/ui/spinner";
@@ -24,18 +28,13 @@ type SiteList = Array<{
   } | null;
 }>;
 
-const sitesGridClassName =
-  "grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3";
-
 function SitesSection({
   canManageSites,
   sites,
-  organizationId,
   teamSlug,
 }: {
   canManageSites: boolean;
   sites: SiteList | undefined;
-  organizationId: string;
   teamSlug: string;
 }) {
   const t = useTranslations("dashboard");
@@ -50,28 +49,20 @@ function SitesSection({
 
   if (sites.length === 0) {
     return (
-      <div className="flex flex-col items-stretch gap-8">
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t("noSitesDescription")}
-            </p>
-          </CardContent>
-        </Card>
-        {canManageSites && (
-          <div className={sitesGridClassName}>
-            <CreateSiteDialog organizationId={organizationId} />
-          </div>
-        )}
-      </div>
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
+          <p className="text-sm text-muted-foreground">
+            {t("noSitesDescription")}
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className={sitesGridClassName}>
-      {canManageSites && <CreateSiteDialog organizationId={organizationId} />}
+    <DashboardList>
       {sites.map((site) => (
         <SiteCard
           key={site._id}
@@ -80,7 +71,7 @@ function SitesSection({
           teamSlug={teamSlug}
         />
       ))}
-    </div>
+    </DashboardList>
   );
 }
 
@@ -95,16 +86,18 @@ export function SitesPage() {
     <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[64rem]">
-          <div className="mb-8 border-b border-foreground/10 pb-5">
-            <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
-              {t("dashboard.yourSites")}
-            </h1>
-          </div>
+          <DashboardPageHeader
+            action={
+              capabilities.canManageSites ? (
+                <CreateSiteDialog organizationId={team._id} />
+              ) : null
+            }
+            title={t("dashboard.yourSites")}
+          />
 
           <SitesSection
             canManageSites={capabilities.canManageSites}
             sites={sitesQuery}
-            organizationId={team._id}
             teamSlug={team.slug}
           />
         </div>
