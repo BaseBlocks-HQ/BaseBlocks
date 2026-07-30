@@ -22,8 +22,30 @@ BaseBlocks durable sync state
     ↓ cursor consumer
 BaseBlocks normalized resources
     ↓
-Future bindings: pages, libraries, search, and automation
+Explicit page imports and source bindings
 ```
+
+## Notion page import
+
+The metadata stream is the discovery layer. An editor chooses a shared Notion
+page and a destination site in the Integrations UI. BaseBlocks then reads the
+page's block tree through Nango's authenticated proxy, converts supported blocks
+to an OpenEditor document, and creates an ordinary BaseBlocks draft page.
+
+Imported pages use the same draft, search, release, and publishing lifecycle as
+native pages. Importing never publishes content automatically.
+
+An `integrationPageBindings` record connects the external resource to its
+BaseBlocks page and records both the Notion edit timestamp and the imported
+content hash. This lets the UI distinguish:
+
+- an unchanged import;
+- a Notion update that can be pulled safely;
+- local BaseBlocks edits;
+- changes on both sides.
+
+Reimporting over local edits requires an explicit destructive confirmation.
+BaseBlocks does not write edits back to Notion.
 
 ## Why this design
 
@@ -133,9 +155,16 @@ A lightweight provider-neutral envelope for discovered objects:
 - provider create/edit timestamps;
 - soft-deletion state.
 
-Full provider payloads and editor documents do not belong here. Future content
-import should have its own versioned snapshot model and an explicit binding
-between an external resource and a BaseBlocks target.
+Full provider payloads and editor documents do not belong here. Imported
+documents live in the normal page document store, with an explicit binding
+between the external resource and the BaseBlocks target.
+
+### `integrationPageBindings`
+
+One binding per external resource and destination site. It stores the target
+page, the source version observed during import, and the resulting OpenEditor
+content hash. The binding is operational metadata; the imported draft remains
+the content system of record inside BaseBlocks.
 
 ## Security model
 

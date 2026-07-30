@@ -568,6 +568,46 @@
     "disconnected": "Application déconnectée.",
     "syncRequested": "Synchronisation demandée.",
     "syncFailed": "Impossible de relancer la synchronisation.",
+    "content": {
+      "manage": "Parcourir les pages",
+      "title": "Importer depuis Notion",
+      "description": "Choisissez un site, puis importez les pages Notion partagées comme brouillons BaseBlocks modifiables.",
+      "searchLabel": "Rechercher des pages Notion",
+      "searchPlaceholder": "Rechercher dans les pages partagées…",
+      "siteLabel": "Site de destination",
+      "sitePlaceholder": "Choisir un site",
+      "loading": "Chargement des pages partagées…",
+      "noSitesTitle": "Créez d’abord un site",
+      "noSitesDescription": "Les pages Notion sont importées dans un site BaseBlocks sous forme de brouillons.",
+      "emptyTitle": "Aucune page partagée",
+      "emptyDescription": "Rouvrez la connexion Notion et partagez au moins une page, puis relancez la synchronisation des métadonnées.",
+      "noResultsTitle": "Aucune page correspondante",
+      "noResultsDescription": "Essayez un autre titre de page.",
+      "notImported": "Non importée sur ce site",
+      "draftPage": "Brouillon : {title}",
+      "openNotion": "Ouvrir dans Notion",
+      "imported": "« {title} » a été importée comme brouillon.",
+      "importFailed": "Impossible d’importer cette page Notion.",
+      "status": {
+        "synced": "À jour",
+        "updateAvailable": "Mise à jour disponible",
+        "localChanges": "Modifiée localement",
+        "conflict": "Modifications des deux côtés",
+        "missing": "Brouillon introuvable"
+      },
+      "actions": {
+        "import": "Importer le brouillon",
+        "sync": "Synchroniser",
+        "reimport": "Réimporter",
+        "openDraft": "Ouvrir le brouillon"
+      },
+      "overwrite": {
+        "title": "Remplacer les modifications locales ?",
+        "description": "Ce brouillon a été modifié dans BaseBlocks après son dernier import Notion. Le réimport remplacera ces modifications locales par le contenu Notion actuel.",
+        "cancel": "Conserver les modifications",
+        "confirm": "Remplacer et réimporter"
+      }
+    },
     "providers": {
       "notion": "Découvrez les pages partagées et synchronisez leurs métadonnées.",
       "confluence": "Importez les espaces et pages Confluence dans BaseBlocks.",

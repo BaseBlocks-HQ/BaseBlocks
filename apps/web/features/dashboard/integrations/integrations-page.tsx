@@ -6,6 +6,7 @@ import {
   DashboardListRow,
   DashboardPageHeader,
 } from "@/features/dashboard/layout/dashboard-page";
+import { NotionContentDialog } from "@/features/dashboard/integrations/notion-content-dialog";
 import { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
 import {
@@ -106,8 +107,11 @@ function ConnectionStatus({
 
 interface ConnectionCardProps {
   connection: IntegrationConnection;
+  canImport: boolean;
   canManage: boolean;
   busyId: string | null;
+  organizationId: string;
+  teamSlug: string;
   onAuthorize: (provider: IntegrationProviderKey) => Promise<void>;
   onDisconnect: (connectionId: IntegrationConnection["_id"]) => Promise<void>;
   onReconnect: (connectionId: IntegrationConnection["_id"]) => Promise<void>;
@@ -116,8 +120,11 @@ interface ConnectionCardProps {
 
 function ConnectionCard({
   connection,
+  canImport,
   canManage,
   busyId,
+  organizationId,
+  teamSlug,
   onAuthorize,
   onDisconnect,
   onReconnect,
@@ -152,9 +159,21 @@ function ConnectionCard({
           </p>
         ) : null}
       </div>
-      {canManage ? (
+      {canManage ||
+      (canImport &&
+        connection.provider === "notion" &&
+        connection.status === "active") ? (
         <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
-          {canRetryAuthorization ? (
+          {canImport &&
+          connection.provider === "notion" &&
+          connection.status === "active" ? (
+            <NotionContentDialog
+              connectionId={connection._id}
+              organizationId={organizationId}
+              teamSlug={teamSlug}
+            />
+          ) : null}
+          {canManage && canRetryAuthorization ? (
             <Button
               disabled={busy}
               onClick={() => void onAuthorize(connection.provider)}
@@ -169,7 +188,9 @@ function ConnectionCard({
               {t("actions.continue")}
             </Button>
           ) : null}
-          {connection.status === "error" && connection.canReconnect ? (
+          {canManage &&
+          connection.status === "error" &&
+          connection.canReconnect ? (
             <Button
               disabled={busy}
               onClick={() => void onReconnect(connection._id)}
@@ -180,7 +201,8 @@ function ConnectionCard({
               {t("actions.reconnect")}
             </Button>
           ) : null}
-          {connection.status === "active" &&
+          {canManage &&
+          connection.status === "active" &&
           connection.syncStatus === "error" ? (
             <Button
               disabled={busy}
@@ -192,7 +214,7 @@ function ConnectionCard({
               {t("actions.retrySync")}
             </Button>
           ) : null}
-          {connection.canReconnect ? (
+          {canManage && connection.canReconnect ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button disabled={busy} size="sm" variant="ghost">
@@ -348,12 +370,15 @@ export function IntegrationsPage({
                   <ConnectionCard
                     key={connection._id}
                     busyId={busyId}
+                    canImport={capabilities.canEditContent}
                     canManage={capabilities.canManageIntegrations}
                     connection={connection}
+                    organizationId={team._id}
                     onAuthorize={handleAuthorize}
                     onDisconnect={handleDisconnect}
                     onReconnect={handleReconnect}
                     onRetrySync={handleRetrySync}
+                    teamSlug={team.slug}
                   />
                 ))}
               </DashboardList>

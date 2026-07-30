@@ -25,6 +25,7 @@ import type * as model_pageDocuments from "../model/pageDocuments.js";
 import type * as model_releaseChanges from "../model/releaseChanges.js";
 import type * as model_releaseDiff from "../model/releaseDiff.js";
 import type * as model_releaseState from "../model/releaseState.js";
+import type * as notionImport from "../notionImport.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
 import type * as pageContentFormat from "../pageContentFormat.js";
@@ -63,6 +64,7 @@ declare const fullApi: ApiFromModules<{
   "model/releaseChanges": typeof model_releaseChanges;
   "model/releaseDiff": typeof model_releaseDiff;
   "model/releaseState": typeof model_releaseState;
+  notionImport: typeof notionImport;
   organizations: typeof organizations;
   pageContent: typeof pageContent;
   pageContentFormat: typeof pageContentFormat;

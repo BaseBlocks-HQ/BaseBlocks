@@ -568,6 +568,46 @@
     "disconnected": "App disconnected.",
     "syncRequested": "Sync requested.",
     "syncFailed": "Could not retry the sync.",
+    "content": {
+      "manage": "Browse pages",
+      "title": "Import from Notion",
+      "description": "Choose a site, then import shared Notion pages as editable BaseBlocks drafts.",
+      "searchLabel": "Search Notion pages",
+      "searchPlaceholder": "Search shared pages…",
+      "siteLabel": "Destination site",
+      "sitePlaceholder": "Choose a site",
+      "loading": "Loading shared pages…",
+      "noSitesTitle": "Create a site first",
+      "noSitesDescription": "Notion pages are imported into a BaseBlocks site as drafts.",
+      "emptyTitle": "No shared pages yet",
+      "emptyDescription": "Open the Notion connection again and share at least one page, then retry the metadata sync.",
+      "noResultsTitle": "No matching pages",
+      "noResultsDescription": "Try a different page title.",
+      "notImported": "Not imported to this site",
+      "draftPage": "Draft: {title}",
+      "openNotion": "Open in Notion",
+      "imported": "Imported “{title}” as a draft.",
+      "importFailed": "Could not import this Notion page.",
+      "status": {
+        "synced": "Up to date",
+        "updateAvailable": "Update available",
+        "localChanges": "Edited locally",
+        "conflict": "Changes in both",
+        "missing": "Draft missing"
+      },
+      "actions": {
+        "import": "Import draft",
+        "sync": "Sync changes",
+        "reimport": "Reimport",
+        "openDraft": "Open draft"
+      },
+      "overwrite": {
+        "title": "Replace local edits?",
+        "description": "This draft was edited in BaseBlocks after its last Notion import. Reimporting will replace those local edits with the current Notion content.",
+        "cancel": "Keep local edits",
+        "confirm": "Replace and reimport"
+      }
+    },
     "providers": {
       "notion": "Discover shared pages and keep their metadata synchronized.",
       "confluence": "Bring Confluence spaces and pages into BaseBlocks.",

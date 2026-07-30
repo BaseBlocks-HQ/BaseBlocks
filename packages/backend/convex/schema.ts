@@ -350,4 +350,22 @@ export default defineSchema({
     .index("by_connection", ["connectionId"])
     .index("by_connection_external", ["connectionId", "externalId"])
     .index("by_organization_provider", ["organizationId", "provider"]),
+
+  integrationPageBindings: defineTable({
+    organizationId: v.string(),
+    connectionId: v.id("integrationConnections"),
+    resourceId: v.id("integrationResources"),
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    importedTitle: v.string(),
+    importedContentHash: v.string(),
+    sourceUpdatedAt: v.optional(v.string()),
+    importedAt: v.number(),
+    updatedAt: v.number(),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_connection", ["connectionId"])
+    .index("by_resource", ["resourceId"])
+    .index("by_resource_site", ["resourceId", "siteId"])
+    .index("by_page", ["pageId"]),
 });
