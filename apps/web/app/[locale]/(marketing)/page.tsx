@@ -10,7 +10,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 type Props = { params: Promise<{ locale: Locale }> };
 
 const MARKETING_ORIGIN = getMarketingOrigin();
-const OG_IMAGE = `${MARKETING_ORIGIN}/opengraph-image`;
+const OG_IMAGE = `${MARKETING_ORIGIN}/opengraph-image?v=2`;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;

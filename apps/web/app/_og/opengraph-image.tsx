@@ -4,176 +4,95 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
-export const baseBlocksOgAlt =
-  "BaseBlocks - Build, publish, and share internal sites in minutes.";
+export const baseBlocksOgAlt = "BaseBlocks - From idea to site in minutes.";
 export const baseBlocksOgSize = { width: 1200, height: 630 };
 export const baseBlocksOgContentType = "image/png";
 
-interface BaseBlocksOpenGraphImageOptions {
-  name?: string;
-}
-
-const brandName = "BaseBlocks";
-const brandYellow = "#f59e0b";
-
-async function getLogoDataUrl() {
-  const logoPath = join(
-    process.cwd(),
-    "public",
-    "brand",
-    "baseblocks-logo.png",
-  );
-  const logo = await readFile(logoPath);
-
-  return `data:image/png;base64,${Buffer.from(logo).toString("base64")}`;
-}
-
-function sanitizeTitle(value: string | undefined) {
-  const title = value?.trim() || brandName;
-
-  if (title.length <= 60) {
-    return title;
+const halftoneHeight = 390;
+const halftoneWidth = baseBlocksOgSize.width;
+const newsreaderFont = fetch(
+  "https://fonts.gstatic.com/s/newsreader/v26/cY9qfjOCX1hbuyalUrK49dLac06G1ZGsZBtoBCzBDXXD9JVF438weI_ADA.ttf",
+).then((response) => {
+  if (!response.ok) {
+    throw new Error("Failed to load the Newsreader font for the OG image.");
   }
 
-  return `${title.slice(0, 57).trim()}...`;
+  return response.arrayBuffer();
+});
+const logoDataUrl = readFile(
+  join(process.cwd(), "public", "brand", "baseblocks-mark.svg"),
+  "utf8",
+).then((svg) => {
+  const blackLogo = svg.replaceAll("#FEFFFE", "#111111");
+
+  return `data:image/svg+xml;base64,${Buffer.from(blackLogo).toString("base64")}`;
+});
+
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const x = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+  return x * x * (3 - 2 * x);
 }
 
-function getTitleSize(title: string, isBrand: boolean) {
-  if (isBrand) {
-    return 76;
+function randomAt(column: number, row: number) {
+  const value = 43_758.5453 * Math.sin(12.9898 * column + 78.233 * row);
+  return value - Math.floor(value);
+}
+
+function createHalftoneDataUrl() {
+  const spacing = 9;
+  const columns = Math.ceil(halftoneWidth / spacing) + 1;
+  const rows = Math.ceil(halftoneHeight / spacing) + 1;
+  const strandThickness = 0.026;
+  const strandDenominator = 2 * strandThickness * strandThickness;
+  const circles: string[] = [];
+
+  for (let row = 0; row < rows; row += 1) {
+    const stagger = row % 2 === 0 ? 0 : spacing / 2;
+    const y = row * spacing - spacing / 2;
+    const normalizedY = y / halftoneHeight;
+
+    for (let column = 0; column < columns; column += 1) {
+      const x = column * spacing + stagger - spacing / 2;
+      const normalizedX = x / halftoneWidth;
+      const shapeX = Math.max(0, Math.min(1, normalizedX));
+      const phase = shapeX * Math.PI * 4.4;
+      const arch = 0.84 - 0.56 * Math.sin(Math.PI * shapeX) ** 1.35;
+      const amplitude = 0.1 * (0.72 + 0.28 * Math.sin(Math.PI * shapeX));
+      const strandAY = arch + amplitude * Math.sin(phase);
+      const strandBY = arch - amplitude * Math.sin(phase);
+      const distanceA = normalizedY - strandAY;
+      const distanceB = normalizedY - strandBY;
+      const depthA = 0.36 + 0.64 * (0.5 + 0.5 * Math.cos(phase));
+      const depthB = 0.36 + 0.64 * (0.5 - 0.5 * Math.cos(phase));
+      const strandA =
+        Math.exp(-(distanceA * distanceA) / strandDenominator) * depthA;
+      const strandB =
+        Math.exp(-(distanceB * distanceB) / strandDenominator) * depthB;
+      const edgeFade = smoothstep(0, 0.08, Math.min(shapeX, 1 - shapeX));
+      const intensity = Math.min(1, strandA + strandB) * edgeFade;
+
+      if (intensity < 0.025) {
+        continue;
+      }
+
+      const random = randomAt(column, row);
+      const radius = (0.3 + 4.2 * intensity) * (0.65 + 0.35 * random);
+      const opacity = 0.12 + 0.76 * intensity;
+
+      circles.push(
+        `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${radius.toFixed(2)}" fill="#111111" fill-opacity="${opacity.toFixed(3)}"/>`,
+      );
+    }
   }
 
-  if (title.length > 44) {
-    return 56;
-  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${halftoneWidth}" height="${halftoneHeight}" viewBox="0 0 ${halftoneWidth} ${halftoneHeight}">${circles.join("")}</svg>`;
 
-  if (title.length > 28) {
-    return 66;
-  }
-
-  return 76;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }
 
-function LogoDock({ logoSrc }: { logoSrc: string }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: 148,
-        left: 80,
-        display: "flex",
-        width: 360,
-        height: 190,
-        alignItems: "center",
-        justifyContent: "flex-start",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          display: "flex",
-          left: -22,
-          top: -24,
-          width: 382,
-          height: 238,
-          backgroundImage:
-            "radial-gradient(circle, #111111 1px, transparent 1px)",
-          backgroundSize: "20px 20px",
-          opacity: 0.075,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: -6,
-          top: 18,
-          display: "flex",
-          width: 174,
-          height: 174,
-          borderRadius: 48,
-          background:
-            "radial-gradient(circle at 50% 100%, rgba(245, 158, 11, 0.12), transparent 64%)",
-          filter: "blur(10px)",
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          width: 164,
-          height: 164,
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          borderRadius: 44,
-          background: "rgba(255, 255, 255, 0.84)",
-          boxShadow:
-            "0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04), 0 24px 52px -16px rgba(0, 0, 0, 0.24)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            width: 132,
-            height: 132,
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            borderRadius: 32,
-            background: "#ffffff",
-            boxShadow:
-              "0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-          }}
-        >
-          {/* ImageResponse/Satori requires a native img element. */}
-          {/* biome-ignore lint/performance/noImgElement: next/image cannot render inside ImageResponse. */}
-          <img
-            src={logoSrc}
-            alt=""
-            width={116}
-            height={116}
-            style={{
-              width: 116,
-              height: 116,
-              borderRadius: 28,
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BrandHeadline() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "0 16px",
-        color: "#111111",
-        fontSize: 76,
-        fontWeight: 700,
-        letterSpacing: 0,
-        lineHeight: 1,
-      }}
-    >
-      <span>Build,</span>
-      <span style={{ color: brandYellow, marginLeft: 16 }}>publish,</span>
-      <span style={{ marginLeft: 16 }}>and share.</span>
-    </div>
-  );
-}
-
-export async function createBaseBlocksOpenGraphImage({
-  name,
-}: BaseBlocksOpenGraphImageOptions = {}) {
-  // Failure modes:
-  // - Logo asset is unavailable in local or deployed rendering.
-  // - Long public site names need to stay inside the 1200x630 frame.
-  // - ImageResponse supports a constrained subset of CSS layout.
-  const logoSrc = await getLogoDataUrl();
-  const title = sanitizeTitle(name);
-  const isBrand = title === brandName;
+export async function createBaseBlocksOpenGraphImage() {
+  const [fontData, logoSrc] = await Promise.all([newsreaderFont, logoDataUrl]);
+  const halftoneSrc = createHalftoneDataUrl();
 
   return new ImageResponse(
     <div
@@ -183,62 +102,71 @@ export async function createBaseBlocksOpenGraphImage({
         width: "100%",
         position: "relative",
         overflow: "hidden",
-        background: "#fafafa",
+        alignItems: "center",
+        flexDirection: "column",
+        background: "#ffffff",
         color: "#111111",
-        fontFamily: "Arial, Helvetica, sans-serif",
+        fontFamily: "Newsreader",
       }}
     >
-      <LogoDock logoSrc={logoSrc} />
+      {/* ImageResponse/Satori requires a native img element. */}
+      {/* biome-ignore lint/performance/noImgElement: next/image cannot render inside ImageResponse. */}
+      <img
+        src={logoSrc}
+        alt=""
+        width={64}
+        height={54}
+        style={{
+          position: "absolute",
+          top: 44,
+          width: 64,
+          height: 54,
+        }}
+      />
+
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "64px 80px",
-          width: "100%",
-          height: "100%",
+          alignItems: "center",
+          marginTop: 120,
+          fontSize: 76,
+          fontWeight: 400,
+          letterSpacing: -2.5,
+          lineHeight: 0.96,
+          textAlign: "center",
         }}
       >
-        <div style={{ display: "flex" }}>
-          <span
-            style={{
-              color: "#111111",
-              fontSize: 22,
-              fontWeight: 600,
-              letterSpacing: 0,
-            }}
-          >
-            BaseBlocks
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          {isBrand ? (
-            <BrandHeadline />
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                maxWidth: 760,
-                color: "#111111",
-                fontSize: getTitleSize(title, isBrand),
-                fontWeight: 700,
-                letterSpacing: 0,
-                lineHeight: 1,
-              }}
-            >
-              {title}
-            </div>
-          )}
-        </div>
+        <span>From idea to</span>
+        <span>site in minutes</span>
       </div>
+
+      {/* ImageResponse/Satori requires a native img element. */}
+      {/* biome-ignore lint/performance/noImgElement: next/image cannot render inside ImageResponse. */}
+      <img
+        src={halftoneSrc}
+        alt=""
+        width={halftoneWidth}
+        height={halftoneHeight}
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: -8,
+          width: halftoneWidth,
+          height: halftoneHeight,
+        }}
+      />
     </div>,
-    baseBlocksOgSize,
+    {
+      ...baseBlocksOgSize,
+      fonts: [
+        {
+          name: "Newsreader",
+          data: fontData,
+          style: "normal",
+          weight: 400,
+        },
+      ],
+    },
   );
 }
