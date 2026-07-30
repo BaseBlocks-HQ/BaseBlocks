@@ -151,6 +151,34 @@ between an external resource and a BaseBlocks target.
   does not break delivery.
 - Provider credentials never pass through the browser or persist in BaseBlocks.
 
+## Release controls
+
+The Integrations page is always public to signed-in workspace members as a
+product roadmap. Functional controls are released separately:
+
+- Next.js evaluates the Vercel boolean flag `notion-integration` on the server.
+  When it is off, every provider—including Notion—renders as `Coming soon`, no
+  connection query runs, and no connect or management controls are rendered.
+- Convex independently requires `INTEGRATIONS_ENABLED=true` before it lists
+  connections, begins or reconnects authorization, retries a sync, or consumes
+  sync records. The disconnect action remains available as an administrative
+  cleanup path for an already-known connection.
+- Development is on. Preview and production are off. Convex project defaults
+  use the same values so newly created deployments fail closed.
+
+The two controls are intentional. A frontend flag is a release decision, not
+an authorization boundary, so Convex must enforce the disabled state even when
+a client calls a function directly.
+
+For launch, deploy and verify the complete code while production remains off,
+set the production Convex variable to `true`, and then enable the Vercel
+production flag. For rollback, disable the Vercel flag first and then set the
+Convex variable to `false`.
+
+Local development should run through `vercel env run` so the server receives
+the development Vercel Flags configuration without copying SDK credentials
+into tracked files.
+
 ## Notion setup
 
 1. Create a Nango environment.
@@ -200,7 +228,10 @@ replication.
 - [Nango Notion templates](https://nango.dev/docs/api-integrations/notion)
 - [Notion public connections](https://developers.notion.com/guides/get-started/public-connections)
 - [Convex actions](https://docs.convex.dev/functions/actions)
+- [Convex environment variables](https://docs.convex.dev/production/environment-variables)
 - [Convex scheduled-function guarantees](https://docs.convex.dev/scheduling/scheduled-functions)
+- [Vercel Flags](https://vercel.com/docs/flags/vercel-flags)
+- [Vercel Flags SDK](https://vercel.com/docs/flags/vercel-flags/sdks/flags-sdk)
 - [Pipedream Connect](https://pipedream.com/docs/connect)
 - [Airbyte Embedded](https://reference.airbyte.com/reference/powered-by-airbyte)
 - [Merge unified API concepts](https://docs.merge.dev/merge-unified/concepts)

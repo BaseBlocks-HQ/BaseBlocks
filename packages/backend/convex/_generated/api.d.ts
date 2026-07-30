@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
+import type * as integrationAccess from "../integrationAccess.js";
 import type * as integrationModel from "../integrationModel.js";
 import type * as integrationNango from "../integrationNango.js";
 import type * as integrationWebhookSignature from "../integrationWebhookSignature.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   files: typeof files;
   http: typeof http;
+  integrationAccess: typeof integrationAccess;
   integrationModel: typeof integrationModel;
   integrationNango: typeof integrationNango;
   integrationWebhookSignature: typeof integrationWebhookSignature;

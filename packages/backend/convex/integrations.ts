@@ -10,6 +10,10 @@ import {
   toPublicIntegrationError,
 } from "./integrationNango";
 import {
+  areIntegrationsEnabled,
+  requireIntegrationsEnabled,
+} from "./integrationAccess";
+import {
   requireOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
@@ -39,6 +43,8 @@ export const listConnections = query({
   args: { organizationId: v.string() },
   handler: async (ctx, args) => {
     await requireOrganizationMember(ctx, args.organizationId);
+    if (!areIntegrationsEnabled()) return [];
+
     const connections = await ctx.db
       .query("integrationConnections")
       .withIndex("by_organization", (q) =>
@@ -83,6 +89,7 @@ export const beginAuthorization = action({
     provider: integrationProvider,
   },
   handler: async (ctx, args): Promise<{ connectUrl: string }> => {
+    requireIntegrationsEnabled();
     if (args.provider !== "notion") {
       return throwProviderUnavailable(args.provider);
     }
@@ -139,6 +146,7 @@ export const beginAuthorization = action({
 export const reconnect = action({
   args: { connectionId: v.id("integrationConnections") },
   handler: async (ctx, args): Promise<{ connectUrl: string }> => {
+    requireIntegrationsEnabled();
     const connection = await ctx.runQuery(
       internal.integrationModel.getConnectionForOperation,
       args,
@@ -225,6 +233,7 @@ export const disconnect = action({
 export const retrySync = action({
   args: { connectionId: v.id("integrationConnections") },
   handler: async (ctx, args) => {
+    requireIntegrationsEnabled();
     const connection = await ctx.runQuery(
       internal.integrationModel.getConnectionForOperation,
       args,
@@ -265,6 +274,8 @@ export const pullNangoRecords = internalAction({
     stream: v.string(),
   },
   handler: async (ctx, args) => {
+    if (!areIntegrationsEnabled()) return;
+
     const claimed = await ctx.runMutation(
       internal.integrationModel.claimSync,
       args,

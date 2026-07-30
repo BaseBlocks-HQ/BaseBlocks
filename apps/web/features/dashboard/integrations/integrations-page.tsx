@@ -229,12 +229,17 @@ function ConnectionCard({
   );
 }
 
-export function IntegrationsPage() {
+export function IntegrationsPage({
+  notionEnabled,
+}: {
+  notionEnabled: boolean;
+}) {
   const t = useTranslations("integrations");
   const { capabilities, team } = useTeamAccess();
-  const connections = useQuery(api.integrations.listConnections, {
-    organizationId: team._id,
-  });
+  const connections = useQuery(
+    api.integrations.listConnections,
+    notionEnabled ? { organizationId: team._id } : "skip",
+  );
   const beginAuthorization = useAction(api.integrations.beginAuthorization);
   const reconnect = useAction(api.integrations.reconnect);
   const disconnect = useAction(api.integrations.disconnect);
@@ -243,12 +248,13 @@ export function IntegrationsPage() {
   const connectedProviders = new Set(
     connections?.map((connection) => connection.provider) ?? [],
   );
-  const availableProviders =
-    connections === undefined
+  const availableProviders = notionEnabled
+    ? connections === undefined
       ? []
       : integrationProviders.filter(
           (provider) => !connectedProviders.has(provider.key),
-        );
+        )
+    : integrationProviders;
 
   const openAuthorization = async (
     operationId: string,
@@ -329,7 +335,7 @@ export function IntegrationsPage() {
         <div className="mx-auto w-full max-w-[64rem]">
           <DashboardPageHeader title={t("title")} />
 
-          {connections && connections.length > 0 ? (
+          {notionEnabled && connections && connections.length > 0 ? (
             <section className="mb-10" aria-labelledby="connected-apps-title">
               <h2
                 id="connected-apps-title"
@@ -354,7 +360,8 @@ export function IntegrationsPage() {
             </section>
           ) : null}
 
-          {connections !== undefined && availableProviders.length > 0 ? (
+          {(!notionEnabled || connections !== undefined) &&
+          availableProviders.length > 0 ? (
             <section aria-labelledby="available-apps-title">
               <h2
                 id="available-apps-title"
@@ -364,7 +371,8 @@ export function IntegrationsPage() {
               </h2>
               <DashboardList>
                 {availableProviders.map((provider) => {
-                  const available = provider.availability === "available";
+                  const available =
+                    notionEnabled && provider.availability === "available";
                   const busy = busyId === `provider:${provider.key}`;
                   return (
                     <DashboardListRow
@@ -401,7 +409,7 @@ export function IntegrationsPage() {
                   );
                 })}
               </DashboardList>
-              {!capabilities.canManageIntegrations ? (
+              {notionEnabled && !capabilities.canManageIntegrations ? (
                 <p className="mt-3 text-sm text-muted-foreground">
                   {t("adminRequired")}
                 </p>
