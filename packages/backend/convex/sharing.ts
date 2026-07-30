@@ -6,7 +6,6 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { refreshPublicationState } from "./model/publication";
 
 export type PublishedSiteAccess =
   | { kind: "unpublished" }
@@ -16,7 +15,7 @@ export type PublishedSiteAccess =
   | { kind: "forbidden" };
 
 export function isPubliclyPublishedSite(site: Doc<"sites">): boolean {
-  return site.isPublished && site.visibility === "public";
+  return site.liveReleaseId !== undefined && site.visibility === "public";
 }
 
 export function canRenderPublishedSite(access: PublishedSiteAccess): boolean {
@@ -24,10 +23,10 @@ export function canRenderPublishedSite(access: PublishedSiteAccess): boolean {
 }
 
 export function classifyPublishedSiteAccess(
-  site: Pick<Doc<"sites">, "isPublished" | "visibility">,
+  site: { liveReleaseId?: string; visibility: "private" | "public" },
   identity: { isAuthenticated: boolean; isMember: boolean },
 ): PublishedSiteAccess {
-  if (!site.isPublished) return { kind: "unpublished" };
+  if (!site.liveReleaseId) return { kind: "unpublished" };
   if (site.visibility === "public") return { kind: "public" };
   if (!identity.isAuthenticated) return { kind: "authentication-required" };
   return identity.isMember ? { kind: "private-member" } : { kind: "forbidden" };
@@ -37,7 +36,7 @@ export async function resolvePublishedSiteAccess(
   ctx: QueryCtx,
   site: Doc<"sites">,
 ): Promise<PublishedSiteAccess> {
-  if (!site.isPublished || site.visibility === "public") {
+  if (!site.liveReleaseId || site.visibility === "public") {
     return classifyPublishedSiteAccess(site, {
       isAuthenticated: false,
       isMember: false,
@@ -80,7 +79,6 @@ export const updateVisibility = mutation({
       action: "manage",
     });
     await ctx.db.patch(siteId, { visibility, updatedAt: Date.now() });
-    await refreshPublicationState(ctx, siteId);
     return siteId;
   },
 });

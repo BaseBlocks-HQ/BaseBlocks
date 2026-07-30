@@ -10,13 +10,14 @@ export default defineSchema({
     logoUrl: v.optional(v.string()),
     logoFileId: v.optional(v.id("files")),
     defaultPageId: v.optional(v.id("pages")),
-    isPublished: v.boolean(),
-    publishedAt: v.optional(v.number()),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
     visibility: v.union(v.literal("private"), v.literal("public")),
     settings: siteSettings,
+    draftRevision: v.number(),
+    nextReleaseNumber: v.number(),
+    liveReleaseId: v.optional(v.id("siteReleases")),
   })
     .index("by_organization", ["organizationId"])
     .index("by_organization_slug", ["organizationId", "slug"]),
@@ -46,6 +47,7 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
     .index("by_parent", ["siteId", "parentId"])
@@ -78,19 +80,13 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
 
-  publicationStates: defineTable({
-    siteId: v.id("sites"),
-    activeLibraryIds: v.array(v.id("documentLibraries")),
-    referencedFileIds: v.array(v.id("files")),
-    updatedAt: v.number(),
-  }).index("by_site", ["siteId"]),
-
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
   }).index("by_site", ["siteId"]),
 
   documentFolders: defineTable({
@@ -101,6 +97,7 @@ export default defineSchema({
     createdBy: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
   }).index("by_parent", ["libraryId", "parentId"]),
 
   files: defineTable({
@@ -117,6 +114,7 @@ export default defineSchema({
     order: v.number(),
     uploadedBy: v.string(),
     createdAt: v.number(),
+    deletedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
     .index("by_site_kind", ["siteId", "kind"])
@@ -152,4 +150,144 @@ export default defineSchema({
       searchField: "text",
       filterFields: ["siteId", "kind", "audience"],
     }),
+
+  siteReleases: defineTable({
+    siteId: v.id("sites"),
+    number: v.number(),
+    name: v.string(),
+    logoFileId: v.optional(v.id("files")),
+    defaultPageId: v.optional(v.id("pages")),
+    settings: siteSettings,
+    sourceDraftRevision: v.number(),
+    previousReleaseId: v.optional(v.id("siteReleases")),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    pageCount: v.number(),
+    changeCount: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_number", ["siteId", "number"]),
+
+  releasePages: defineTable({
+    releaseId: v.id("siteReleases"),
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    parentId: v.optional(v.id("pages")),
+    title: v.string(),
+    slug: v.string(),
+    icon: v.optional(v.string()),
+    order: v.number(),
+    blobId: v.optional(v.id("pageContentBlobs")),
+    contentHash: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_release", ["releaseId"])
+    .index("by_release_page", ["releaseId", "pageId"])
+    .index("by_blob", ["blobId"])
+    .index("by_release_parent_slug", ["releaseId", "parentId", "slug"]),
+
+  releaseLibraries: defineTable({
+    releaseId: v.id("siteReleases"),
+    siteId: v.id("sites"),
+    libraryId: v.id("documentLibraries"),
+    name: v.string(),
+  })
+    .index("by_release", ["releaseId"])
+    .index("by_release_library", ["releaseId", "libraryId"]),
+
+  releaseFolders: defineTable({
+    releaseId: v.id("siteReleases"),
+    siteId: v.id("sites"),
+    libraryId: v.id("documentLibraries"),
+    folderId: v.id("documentFolders"),
+    parentId: v.optional(v.id("documentFolders")),
+    name: v.string(),
+    order: v.number(),
+  })
+    .index("by_release", ["releaseId"])
+    .index("by_release_library", ["releaseId", "libraryId"]),
+
+  releaseFiles: defineTable({
+    releaseId: v.id("siteReleases"),
+    siteId: v.id("sites"),
+    fileId: v.id("files"),
+    kind: v.union(v.literal("file"), v.literal("siteAsset")),
+    objectKey: v.string(),
+    filename: v.string(),
+    contentType: v.string(),
+    size: v.number(),
+    checksum: v.optional(v.string()),
+    libraryId: v.optional(v.id("documentLibraries")),
+    folderId: v.optional(v.id("documentFolders")),
+    order: v.number(),
+    uploadedBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_release", ["releaseId"])
+    .index("by_release_file", ["releaseId", "fileId"])
+    .index("by_release_library", ["releaseId", "libraryId"]),
+
+  releaseSearchEntries: defineTable({
+    releaseId: v.id("siteReleases"),
+    siteId: v.id("sites"),
+    kind: v.union(v.literal("file"), v.literal("page")),
+    sourceId: v.string(),
+    title: v.string(),
+    text: v.string(),
+    fileMetadata: v.optional(
+      v.object({
+        fileId: v.id("files"),
+        filename: v.string(),
+        fileContentType: v.string(),
+        size: v.number(),
+        libraryId: v.optional(v.id("documentLibraries")),
+        downloadUrl: v.string(),
+      }),
+    ),
+  })
+    .index("by_release", ["releaseId"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["releaseId", "kind"],
+    })
+    .searchIndex("search_text", {
+      searchField: "text",
+      filterFields: ["releaseId", "kind"],
+    }),
+
+  releaseChanges: defineTable({
+    releaseId: v.id("siteReleases"),
+    entityType: v.union(
+      v.literal("site"),
+      v.literal("page"),
+      v.literal("library"),
+      v.literal("folder"),
+      v.literal("file"),
+    ),
+    entityId: v.string(),
+    changeType: v.union(
+      v.literal("added"),
+      v.literal("updated"),
+      v.literal("deleted"),
+      v.literal("moved"),
+    ),
+    label: v.string(),
+    details: v.array(v.string()),
+  }).index("by_release", ["releaseId"]),
+
+  publicationEvents: defineTable({
+    siteId: v.id("sites"),
+    action: v.union(
+      v.literal("publish"),
+      v.literal("update"),
+      v.literal("rollback"),
+      v.literal("republish"),
+      v.literal("unpublish"),
+      v.literal("restoreDraft"),
+    ),
+    fromReleaseId: v.optional(v.id("siteReleases")),
+    toReleaseId: v.optional(v.id("siteReleases")),
+    actorId: v.string(),
+    createdAt: v.number(),
+  }).index("by_site", ["siteId"]),
 });

@@ -16,7 +16,7 @@ type SiteList = Array<{
   slug: string;
   description?: string;
   logoUrl?: string;
-  isPublished: boolean;
+  liveReleaseId?: string;
   team?: {
     _id: string;
     name: string;

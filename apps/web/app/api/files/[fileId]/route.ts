@@ -4,7 +4,7 @@ import {
   fileCacheControl,
   type FileAccessScope,
 } from "@/lib/files/cache-policy";
-import { deleteObject, signedDownloadUrl } from "@/lib/files/server";
+import { signedDownloadUrl } from "@/lib/files/server";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -110,7 +110,6 @@ export async function DELETE(
         { status: 405 },
       );
     }
-    await deleteObject(file.objectKey);
     await client.mutation(api.files.remove, {
       fileId: fileId as never,
     });

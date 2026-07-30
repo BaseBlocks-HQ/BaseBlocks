@@ -5,10 +5,9 @@ import {
   requireOrganizationPermission,
   isOrganizationMember,
 } from "./permissions";
-import { deleteFileRows } from "./files";
 import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
-import { refreshPublicationState } from "./model/publication";
+import { touchSiteDraft } from "./model/draft";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -84,12 +83,13 @@ export const create = mutation({
       organizationId,
       name,
       slug: slug.toLowerCase(),
-      isPublished: false,
       visibility: "private",
       createdBy: auth.userId,
       createdAt: now,
       updatedAt: now,
       settings: {},
+      draftRevision: 0,
+      nextReleaseNumber: 1,
     });
 
     const homePageId = await ctx.db.insert("pages", {
@@ -161,7 +161,7 @@ export const update = mutation({
       site.logoFileId &&
       site.logoFileId !== logoFileId
     ) {
-      await ctx.db.delete(site.logoFileId);
+      await ctx.db.patch(site.logoFileId, { deletedAt: Date.now() });
     }
 
     if (logoFileId !== undefined) {
@@ -170,7 +170,9 @@ export const update = mutation({
     }
 
     if (clearLogo) {
-      if (site.logoFileId) await ctx.db.delete(site.logoFileId);
+      if (site.logoFileId) {
+        await ctx.db.patch(site.logoFileId, { deletedAt: Date.now() });
+      }
       updates.logoFileId = undefined;
       updates.logoUrl = undefined;
     }
@@ -191,29 +193,7 @@ export const update = mutation({
     }
 
     await ctx.db.patch(siteId, updates);
-
-    return siteId;
-  },
-});
-
-export const setPublished = mutation({
-  args: { siteId: v.id("sites"), published: v.boolean() },
-  handler: async (ctx, { siteId, published }) => {
-    const site = await ctx.db.get(siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "publication",
-      action: "publish",
-    });
-
-    const now = Date.now();
-    await ctx.db.patch(siteId, {
-      isPublished: published,
-      publishedAt: published ? (site.publishedAt ?? now) : site.publishedAt,
-      updatedAt: now,
-    });
-    await refreshPublicationState(ctx, siteId);
+    await touchSiteDraft(ctx, siteId);
 
     return siteId;
   },
@@ -242,6 +222,7 @@ export const setDefaultPage = mutation({
       defaultPageId: pageId,
       updatedAt: Date.now(),
     });
+    await touchSiteDraft(ctx, siteId);
 
     return siteId;
   },
@@ -287,7 +268,7 @@ export const remove = mutation({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const file of files) {
-      await deleteFileRows(ctx, file);
+      await ctx.db.delete(file._id);
     }
 
     const searchEntries = await ctx.db
@@ -298,12 +279,71 @@ export const remove = mutation({
       await ctx.db.delete(entry._id);
     }
 
+    const releases = await ctx.db
+      .query("siteReleases")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    const releaseBlobIds = new Set<string>();
+    for (const release of releases) {
+      const [
+        releasePages,
+        releaseLibraries,
+        releaseFolders,
+        releaseFiles,
+        releaseSearch,
+        releaseChanges,
+      ] = await Promise.all([
+        ctx.db
+          .query("releasePages")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+        ctx.db
+          .query("releaseLibraries")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+        ctx.db
+          .query("releaseFolders")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+        ctx.db
+          .query("releaseFiles")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+        ctx.db
+          .query("releaseSearchEntries")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+        ctx.db
+          .query("releaseChanges")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .collect(),
+      ]);
+      for (const page of releasePages) {
+        if (page.blobId) releaseBlobIds.add(page.blobId);
+        await ctx.db.delete(page._id);
+      }
+      for (const row of [
+        ...releaseLibraries,
+        ...releaseFolders,
+        ...releaseFiles,
+        ...releaseSearch,
+        ...releaseChanges,
+      ]) {
+        await ctx.db.delete(row._id);
+      }
+    }
+    const publicationEvents = await ctx.db
+      .query("publicationEvents")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const event of publicationEvents) await ctx.db.delete(event._id);
+
     const pageDocuments = await ctx.db
       .query("pageDocuments")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const document of pageDocuments) {
-      await ctx.db.delete(document.blobId);
+      releaseBlobIds.add(document.blobId);
       await ctx.db.delete(document._id);
     }
     const pageReferences = await ctx.db
@@ -313,17 +353,17 @@ export const remove = mutation({
     for (const reference of pageReferences) {
       await ctx.db.delete(reference._id);
     }
-    const publicationState = await ctx.db
-      .query("publicationStates")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .unique();
-    if (publicationState) await ctx.db.delete(publicationState._id);
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const page of pages) {
       await ctx.db.delete(page._id);
+    }
+    for (const release of releases) await ctx.db.delete(release._id);
+    for (const blobId of releaseBlobIds) {
+      const normalized = ctx.db.normalizeId("pageContentBlobs", blobId);
+      if (normalized) await ctx.db.delete(normalized);
     }
 
     await ctx.db.delete(siteId);

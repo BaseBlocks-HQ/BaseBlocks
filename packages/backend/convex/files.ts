@@ -8,15 +8,12 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 import {
-  getPublicationState,
-  getPublishedLibraryIds,
-} from "./model/publication";
-import {
   checkOrganizationPermission,
   requireOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
 import { isPubliclyPublishedSite } from "./sharing";
+import { touchSiteDraft } from "./model/draft";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -44,7 +41,8 @@ export async function deleteFileRows(
     )
     .first();
   if (searchEntry) await ctx.db.delete(searchEntry._id);
-  await ctx.db.delete(file._id);
+  await ctx.db.patch(file._id, { deletedAt: Date.now() });
+  await touchSiteDraft(ctx, file.siteId);
 }
 
 function isUploadedFile(file: Doc<"files">) {
@@ -80,7 +78,9 @@ export const get = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file)) return null;
+    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
+      return null;
+    }
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
@@ -94,7 +94,9 @@ export const getDownloadAsset = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file)) return null;
+    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
+      return null;
+    }
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
@@ -110,16 +112,21 @@ export const getPublic = query({
     const file = await ctx.db.get(id);
     if (!file) return null;
     const site = await ctx.db.get(file.siteId);
-    if (!site || !isPubliclyPublishedSite(site)) return null;
-    if (file.kind === "siteAsset") {
-      return file.visibility === "public" ? file : null;
-    }
-    const state = await getPublicationState(ctx, file.siteId);
-    const isPublished = file.libraryId
-      ? state?.activeLibraryIds.includes(file.libraryId)
-      : state?.referencedFileIds.includes(file._id);
-    if (!isPublished) return null;
-    return file;
+    if (!site?.liveReleaseId || !isPubliclyPublishedSite(site)) return null;
+    const snapshot = await ctx.db
+      .query("releaseFiles")
+      .withIndex("by_release_file", (q) =>
+        q.eq("releaseId", site.liveReleaseId!).eq("fileId", file._id),
+      )
+      .unique();
+    return snapshot
+      ? {
+          objectKey: snapshot.objectKey,
+          filename: snapshot.filename,
+          contentType: snapshot.contentType,
+          size: snapshot.size,
+        }
+      : null;
   },
 });
 
@@ -132,16 +139,43 @@ export const getAuthorized = query({
     if (!file) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
+    const released =
+      site.liveReleaseId &&
+      (await ctx.db
+        .query("releaseFiles")
+        .withIndex("by_release_file", (q) =>
+          q.eq("releaseId", site.liveReleaseId!).eq("fileId", file._id),
+        )
+        .unique());
     if (file.kind === "siteAsset") {
       const canManage = await checkOrganizationPermission(
         ctx,
         site.organizationId,
         { resource: "site", action: "manage" },
       );
-      return canManage ? file : null;
+      if (!canManage) return null;
+      return released
+        ? {
+            objectKey: released.objectKey,
+            filename: released.filename,
+            contentType: released.contentType,
+            size: released.size,
+          }
+        : file.deletedAt === undefined
+          ? file
+          : null;
     }
     await requireOrganizationMember(ctx, site.organizationId);
-    return file;
+    return released
+      ? {
+          objectKey: released.objectKey,
+          filename: released.filename,
+          contentType: released.contentType,
+          size: released.size,
+        }
+      : file.deletedAt === undefined
+        ? file
+        : null;
   },
 });
 
@@ -241,6 +275,7 @@ async function createUploadedFile(
     },
     updatedAt: createdAt,
   });
+  await touchSiteDraft(ctx, args.siteId, createdAt);
   return fileId;
 }
 
@@ -266,27 +301,29 @@ export const create = mutation({
     );
     if (args.libraryId) {
       const library = await ctx.db.get(args.libraryId);
-      if (!library || library.siteId !== args.siteId) {
+      if (
+        !library ||
+        library.siteId !== args.siteId ||
+        library.deletedAt !== undefined
+      ) {
         throw new ConvexError("Library not found");
       }
     }
     if (args.folderId) {
       const folder = await ctx.db.get(args.folderId);
-      if (!folder || folder.libraryId !== args.libraryId) {
+      if (
+        !folder ||
+        folder.libraryId !== args.libraryId ||
+        folder.deletedAt !== undefined
+      ) {
         throw new ConvexError("Folder not found");
       }
     }
-    const activeLibraryIds = await getPublishedLibraryIds(ctx, args.siteId);
     return createUploadedFile(ctx, {
       ...args,
       contentType,
       uploadedBy: auth.userId,
-      audience:
-        isPubliclyPublishedSite(site) &&
-        args.libraryId !== undefined &&
-        activeLibraryIds.has(args.libraryId)
-          ? "public"
-          : "private",
+      audience: "private",
     });
   },
 });
@@ -295,7 +332,9 @@ export const rename = mutation({
   args: { fileId: v.id("files"), filename: v.string() },
   handler: async (ctx, { fileId, filename }) => {
     const file = await ctx.db.get(fileId);
-    if (!file || !isUploadedFile(file)) throw new ConvexError("File not found");
+    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
+      throw new ConvexError("File not found");
+    }
     const site = await ctx.db.get(file.siteId);
     if (!site) throw new ConvexError("Site not found");
     await requireOrganizationPermission(ctx, site.organizationId, {
@@ -303,6 +342,7 @@ export const rename = mutation({
       action: "manage",
     });
     await ctx.db.patch(fileId, { filename });
+    await touchSiteDraft(ctx, file.siteId);
     const entry = await ctx.db
       .query("searchEntries")
       .withIndex("by_source", (q) =>
@@ -325,7 +365,9 @@ export const remove = mutation({
   args: { fileId: v.id("files") },
   handler: async (ctx, { fileId }) => {
     const file = await ctx.db.get(fileId);
-    if (!file || !isUploadedFile(file)) throw new ConvexError("File not found");
+    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
+      throw new ConvexError("File not found");
+    }
     const site = await ctx.db.get(file.siteId);
     if (!site) throw new ConvexError("Site not found");
     await requireOrganizationPermission(ctx, site.organizationId, {
@@ -367,6 +409,7 @@ export const createSiteAsset = mutation({
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
+    await touchSiteDraft(ctx, args.siteId);
     return { fileId, url: buildFileUrl(fileId) };
   },
 });

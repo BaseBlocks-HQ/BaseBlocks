@@ -9,11 +9,11 @@ import {
 } from "./permissions";
 import { buildFileUrl, deleteFileRows } from "./files";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
-import { getPublishedLibraryIds } from "./model/publication";
 import {
   requireFolderManagement,
   requireLibraryManagement,
 } from "./model/libraryAccess";
+import { touchSiteDraft } from "./model/draft";
 
 const librarySummary = v.object({
   _id: v.id("documentLibraries"),
@@ -86,6 +86,7 @@ export async function buildExplorerPayload(
       organizationId: site.organizationId,
     },
     folders: folders
+      .filter((folder) => folder.deletedAt === undefined)
       .map((folder) => ({
         _id: folder._id,
         libraryId: folder.libraryId,
@@ -95,12 +96,79 @@ export async function buildExplorerPayload(
       }))
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
     files: files
+      .filter((file) => file.deletedAt === undefined)
       .map((file) => ({
         _id: file._id,
         filename: file.filename,
         contentType: file.contentType,
         size: file.size,
         downloadUrl: buildFileUrl(file._id),
+        folderId: file.folderId,
+        order: file.order,
+      }))
+      .sort(
+        (a, b) => a.order - b.order || a.filename.localeCompare(b.filename),
+      ),
+  };
+}
+
+export async function buildReleaseExplorerPayload(
+  ctx: QueryCtx,
+  release: {
+    _id: Id<"siteReleases">;
+    siteId: Id<"sites">;
+    name: string;
+  },
+  library: {
+    libraryId: Id<"documentLibraries">;
+    name: string;
+  },
+  site: {
+    organizationId: string;
+  },
+) {
+  const [folders, files] = await Promise.all([
+    ctx.db
+      .query("releaseFolders")
+      .withIndex("by_release_library", (q) =>
+        q.eq("releaseId", release._id).eq("libraryId", library.libraryId),
+      )
+      .collect(),
+    ctx.db
+      .query("releaseFiles")
+      .withIndex("by_release_library", (q) =>
+        q.eq("releaseId", release._id).eq("libraryId", library.libraryId),
+      )
+      .collect(),
+  ]);
+  return {
+    library: {
+      _id: library.libraryId,
+      name: library.name,
+      siteId: release.siteId,
+    },
+    site: {
+      _id: release.siteId,
+      name: release.name,
+      organizationId: site.organizationId,
+    },
+    folders: folders
+      .map((folder) => ({
+        _id: folder.folderId,
+        libraryId: folder.libraryId,
+        parentId: folder.parentId,
+        name: folder.name,
+        order: folder.order,
+      }))
+      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
+    files: files
+      .filter((file) => file.kind === "file")
+      .map((file) => ({
+        _id: file.fileId,
+        filename: file.filename,
+        contentType: file.contentType,
+        size: file.size,
+        downloadUrl: buildFileUrl(file.fileId),
         folderId: file.folderId,
         order: file.order,
       }))
@@ -118,10 +186,11 @@ export const listLibraries = query({
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
 
-    return await ctx.db
+    const libraries = await ctx.db
       .query("documentLibraries")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
+    return libraries.filter((library) => library.deletedAt === undefined);
   },
 });
 
@@ -130,7 +199,7 @@ export const getExplorer = query({
   returns: v.union(explorerPayload, v.null()),
   handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
-    if (!library) return null;
+    if (!library || library.deletedAt !== undefined) return null;
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
@@ -149,14 +218,19 @@ export const getPublishedExplorer = query({
     if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
-    if (!site) return null;
+    if (!site?.liveReleaseId) return null;
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return null;
-
-    const activeLibraryIds = await getPublishedLibraryIds(ctx, library.siteId);
-    if (!activeLibraryIds.has(libraryId)) return null;
-
-    return await buildExplorerPayload(ctx, library, site);
+    const release = await ctx.db.get(site.liveReleaseId);
+    if (!release) return null;
+    const releasedLibrary = await ctx.db
+      .query("releaseLibraries")
+      .withIndex("by_release_library", (q) =>
+        q.eq("releaseId", release._id).eq("libraryId", libraryId),
+      )
+      .unique();
+    if (!releasedLibrary) return null;
+    return buildReleaseExplorerPayload(ctx, release, releasedLibrary, site);
   },
 });
 
@@ -181,7 +255,7 @@ export const createLibrary = mutation({
       .filter((q) => q.eq(q.field("name"), name.trim()))
       .first();
 
-    if (existingLibrary) {
+    if (existingLibrary?.deletedAt === undefined) {
       throw new Error(
         `A library named "${name}" already exists. Please choose a different name.`,
       );
@@ -195,6 +269,7 @@ export const createLibrary = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await touchSiteDraft(ctx, siteId, now);
 
     return libraryId;
   },
@@ -207,7 +282,7 @@ export const createFolder = mutation({
     name: v.string(),
   },
   handler: async (ctx, { libraryId, parentId, name }) => {
-    const { auth } = await requireLibraryManagement(ctx, libraryId);
+    const { auth, site } = await requireLibraryManagement(ctx, libraryId);
 
     if (parentId) {
       const parent = await ctx.db.get(parentId);
@@ -232,7 +307,9 @@ export const createFolder = mutation({
     ]);
 
     const duplicateFolder = siblings.find(
-      (f) => f.name.toLowerCase() === name.trim().toLowerCase(),
+      (f) =>
+        f.deletedAt === undefined &&
+        f.name.toLowerCase() === name.trim().toLowerCase(),
     );
     if (duplicateFolder) {
       throw new Error(
@@ -255,6 +332,7 @@ export const createFolder = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await touchSiteDraft(ctx, site._id, now);
 
     return folderId;
   },
@@ -266,7 +344,7 @@ export const updateFolder = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, { folderId, name }) => {
-    const { folder } = await requireFolderManagement(ctx, folderId);
+    const { folder, site } = await requireFolderManagement(ctx, folderId);
 
     if (
       name !== undefined &&
@@ -282,6 +360,7 @@ export const updateFolder = mutation({
       const duplicateFolder = siblings.find(
         (f) =>
           f._id !== folderId &&
+          f.deletedAt === undefined &&
           f.name.toLowerCase() === name.trim().toLowerCase(),
       );
       if (duplicateFolder) {
@@ -295,6 +374,7 @@ export const updateFolder = mutation({
     if (name !== undefined) updates.name = name.trim();
 
     await ctx.db.patch(folderId, updates);
+    await touchSiteDraft(ctx, site._id);
     return folderId;
   },
 });
@@ -311,7 +391,7 @@ async function deleteFolderRecursively(
     )
     .collect();
 
-  for (const file of files) {
+  for (const file of files.filter((value) => value.deletedAt === undefined)) {
     await deleteFileRows(ctx, file);
   }
 
@@ -322,19 +402,25 @@ async function deleteFolderRecursively(
     )
     .collect();
 
-  for (const child of children) {
+  for (const child of children.filter(
+    (value) => value.deletedAt === undefined,
+  )) {
     await deleteFolderRecursively(ctx, child._id, libraryId);
   }
 
-  await ctx.db.delete(folderId);
+  await ctx.db.patch(folderId, {
+    deletedAt: Date.now(),
+    updatedAt: Date.now(),
+  });
 }
 
 export const removeFolder = mutation({
   args: { folderId: v.id("documentFolders") },
   handler: async (ctx, { folderId }) => {
-    const { folder } = await requireFolderManagement(ctx, folderId);
+    const { folder, site } = await requireFolderManagement(ctx, folderId);
 
     await deleteFolderRecursively(ctx, folderId, folder.libraryId);
+    await touchSiteDraft(ctx, site._id);
 
     return { success: true };
   },
@@ -353,7 +439,7 @@ export const moveInTree = mutation({
     ),
   },
   handler: async (ctx, { libraryId, entityId, targetId, placement }) => {
-    await requireLibraryManagement(ctx, libraryId);
+    const { site } = await requireLibraryManagement(ctx, libraryId);
 
     const [folders, files] = await Promise.all([
       ctx.db
@@ -365,8 +451,12 @@ export const moveInTree = mutation({
         .withIndex("by_folder", (q) => q.eq("libraryId", libraryId))
         .collect(),
     ]);
-    const folderIds = new Set(folders.map((folder) => folder._id));
-    const fileIds = new Set(files.map((file) => file._id));
+    const activeFolders = folders.filter(
+      (value) => value.deletedAt === undefined,
+    );
+    const activeFiles = files.filter((value) => value.deletedAt === undefined);
+    const folderIds = new Set(activeFolders.map((folder) => folder._id));
+    const fileIds = new Set(activeFiles.map((file) => file._id));
     if (
       !folderIds.has(entityId as Id<"documentFolders">) &&
       !fileIds.has(entityId as Id<"files">)
@@ -389,12 +479,12 @@ export const moveInTree = mutation({
 
     const plan = planTreeMove(
       [
-        ...folders.map((folder) => ({
+        ...activeFolders.map((folder) => ({
           id: folder._id,
           parentId: folder.parentId ?? null,
           order: folder.order,
         })),
-        ...files.map((file) => ({
+        ...activeFiles.map((file) => ({
           id: file._id,
           parentId: file.folderId ?? null,
           order: file.order,
@@ -426,6 +516,7 @@ export const moveInTree = mutation({
         });
       }
     }
+    await touchSiteDraft(ctx, site._id, now);
 
     return { entityId, parentId: plan.parentId, order: plan.index };
   },

@@ -40,6 +40,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  FileClock,
   Globe2,
   LoaderCircle,
   PencilLine,
@@ -68,8 +69,11 @@ interface EditorHeaderProps {
   siteLogoUrl?: string;
   saveStatus?: SaveStatus;
   onPublish: () => void;
+  onOpenHistory: () => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
+  hasUnpublishedChanges: boolean;
+  liveReleaseNumber?: number;
 }
 
 export function EditorHeader({
@@ -83,8 +87,11 @@ export function EditorHeader({
   siteLogoUrl,
   saveStatus = "idle",
   onPublish,
+  onOpenHistory,
   onTogglePreview,
   onUnpublish,
+  hasUnpublishedChanges,
+  liveReleaseNumber,
 }: EditorHeaderProps) {
   const { canEdit } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -117,11 +124,14 @@ export function EditorHeader({
               canEdit={canEdit}
               isPreviewing={isPreviewing}
               onOpenShare={() => setShareDialogOpen(true)}
+              onOpenHistory={onOpenHistory}
               onPublish={onPublish}
               onTogglePreview={onTogglePreview}
               onUnpublish={onUnpublish}
               saveStatus={saveStatus}
               sitePublished={sitePublished}
+              hasUnpublishedChanges={hasUnpublishedChanges}
+              liveReleaseNumber={liveReleaseNumber}
               siteSlug={siteSlug}
               teamSlug={teamSlug}
             />
@@ -336,22 +346,28 @@ function EditorHeaderActions({
   canEdit,
   isPreviewing,
   onOpenShare,
+  onOpenHistory,
   onPublish,
   onTogglePreview,
   onUnpublish,
   saveStatus,
   sitePublished,
+  hasUnpublishedChanges,
+  liveReleaseNumber,
   siteSlug,
   teamSlug,
 }: {
   canEdit: boolean;
   isPreviewing: boolean;
   onOpenShare: () => void;
+  onOpenHistory: () => void;
   onPublish: () => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
   saveStatus: SaveStatus;
   sitePublished: boolean;
+  hasUnpublishedChanges: boolean;
+  liveReleaseNumber?: number;
   siteSlug: string;
   teamSlug: string;
 }) {
@@ -381,10 +397,13 @@ function EditorHeaderActions({
       {canEdit ? (
         <DeployAction
           onOpenShare={onOpenShare}
+          onOpenHistory={onOpenHistory}
           onPublish={onPublish}
           onUnpublish={onUnpublish}
           saveStatus={saveStatus}
           sitePublished={sitePublished}
+          hasUnpublishedChanges={hasUnpublishedChanges}
+          liveReleaseNumber={liveReleaseNumber}
         />
       ) : (
         <Badge className="ml-1 hidden xl:flex" variant="secondary">
@@ -430,36 +449,42 @@ function ViewSiteAction({
 
 function DeployAction({
   onOpenShare,
+  onOpenHistory,
   onPublish,
   onUnpublish,
   saveStatus,
   sitePublished,
+  hasUnpublishedChanges,
+  liveReleaseNumber,
 }: {
   onOpenShare: () => void;
+  onOpenHistory: () => void;
   onPublish: () => void;
   onUnpublish?: () => void;
   saveStatus: SaveStatus;
   sitePublished: boolean;
+  hasUnpublishedChanges: boolean;
+  liveReleaseNumber?: number;
 }) {
   const t = useTranslations("editor");
   const tHeader = useTranslations("editor.header");
   const isSaving = saveStatus === "pending" || saveStatus === "saving";
 
-  if (isSaving) {
-    return (
-      <Button
-        aria-live="polite"
-        className={headerActionClassName}
-        disabled
-        size="sm"
-      >
-        <LoaderCircle className="animate-spin" />
-        <HeaderActionLabel>{tHeader("saving")}</HeaderActionLabel>
-      </Button>
-    );
-  }
-
   if (!sitePublished) {
+    if (isSaving) {
+      return (
+        <Button
+          aria-live="polite"
+          className={headerActionClassName}
+          disabled
+          size="sm"
+        >
+          <LoaderCircle className="animate-spin" />
+          <HeaderActionLabel>{tHeader("saving")}</HeaderActionLabel>
+        </Button>
+      );
+    }
+
     return (
       <Button className={headerActionClassName} onClick={onPublish} size="sm">
         <Globe2 />
@@ -469,15 +494,65 @@ function DeployAction({
   }
 
   return (
+    <>
+      <PublishedDeploymentMenu
+        liveReleaseNumber={liveReleaseNumber}
+        onOpenHistory={onOpenHistory}
+        onOpenShare={onOpenShare}
+        onUnpublish={onUnpublish}
+      />
+      {isSaving ? (
+        <Button
+          aria-live="polite"
+          className={headerActionClassName}
+          disabled
+          size="sm"
+        >
+          <LoaderCircle className="animate-spin" />
+          <HeaderActionLabel>{tHeader("saving")}</HeaderActionLabel>
+        </Button>
+      ) : hasUnpublishedChanges ? (
+        <Button className={headerActionClassName} onClick={onPublish} size="sm">
+          <Globe2 />
+          <HeaderActionLabel>{tHeader("deployChanges")}</HeaderActionLabel>
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
+function PublishedDeploymentMenu({
+  liveReleaseNumber,
+  onOpenHistory,
+  onOpenShare,
+  onUnpublish,
+}: {
+  liveReleaseNumber?: number;
+  onOpenHistory: () => void;
+  onOpenShare: () => void;
+  onUnpublish?: () => void;
+}) {
+  const t = useTranslations("editor");
+  const tHeader = useTranslations("editor.header");
+
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button className={headerActionClassName} size="sm" variant="ghost">
           <Globe2 />
-          <HeaderActionLabel>{tHeader("publishedStatus")}</HeaderActionLabel>
+          <HeaderActionLabel>
+            {liveReleaseNumber
+              ? `Version ${liveReleaseNumber} live`
+              : tHeader("publishedStatus")}
+          </HeaderActionLabel>
           <ChevronDown className="hidden @2xl/header:block" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onOpenHistory}>
+          <FileClock />
+          {tHeader("deploymentHistory")}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onOpenShare}>
           <Send />
           {tHeader("share")}

@@ -1,13 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import {
-  canRenderPublishedSite,
-  classifyPublishedSiteAccess,
-} from "./sharing";
+import { canRenderPublishedSite, classifyPublishedSiteAccess } from "./sharing";
 
 describe("published site access", () => {
   test("unpublished sites are unavailable to every audience", () => {
     const access = classifyPublishedSiteAccess(
-      { isPublished: false, visibility: "public" },
+      { visibility: "public" },
       { isAuthenticated: true, isMember: true },
     );
     expect(access).toEqual({ kind: "unpublished" });
@@ -16,7 +13,7 @@ describe("published site access", () => {
 
   test("public sites are available without authentication", () => {
     const access = classifyPublishedSiteAccess(
-      { isPublished: true, visibility: "public" },
+      { liveReleaseId: "release-1", visibility: "public" },
       { isAuthenticated: false, isMember: false },
     );
     expect(access).toEqual({ kind: "public" });
@@ -25,7 +22,7 @@ describe("published site access", () => {
 
   test("private sites require authentication", () => {
     const access = classifyPublishedSiteAccess(
-      { isPublished: true, visibility: "private" },
+      { liveReleaseId: "release-1", visibility: "private" },
       { isAuthenticated: false, isMember: false },
     );
     expect(access).toEqual({ kind: "authentication-required" });
@@ -34,7 +31,7 @@ describe("published site access", () => {
 
   test("private sites reject authenticated non-members", () => {
     const access = classifyPublishedSiteAccess(
-      { isPublished: true, visibility: "private" },
+      { liveReleaseId: "release-1", visibility: "private" },
       { isAuthenticated: true, isMember: false },
     );
     expect(access).toEqual({ kind: "forbidden" });
@@ -43,7 +40,7 @@ describe("published site access", () => {
 
   test("private sites render for authenticated team members", () => {
     const access = classifyPublishedSiteAccess(
-      { isPublished: true, visibility: "private" },
+      { liveReleaseId: "release-1", visibility: "private" },
       { isAuthenticated: true, isMember: true },
     );
     expect(access).toEqual({ kind: "private-member" });

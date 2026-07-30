@@ -4,12 +4,7 @@ import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { readPageContent } from "./model/pageDocuments";
-import { getPublicationState } from "./model/publication";
-import {
-  canRenderPublishedSite,
-  isPubliclyPublishedSite,
-  resolvePublishedSiteAccess,
-} from "./sharing";
+import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 import {
   extractOpenEditorText,
   type OpenEditorDocument,
@@ -46,9 +41,7 @@ export async function indexPageContent(
   const indexData = {
     siteId: page.siteId,
     kind: "page" as const,
-    audience: isPubliclyPublishedSite(site)
-      ? ("public" as const)
-      : ("private" as const),
+    audience: "private" as const,
     sourceId: pageId,
     title: page.title,
     text: combinedText,
@@ -122,7 +115,31 @@ function formatSearchResult(
     matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
 
   return {
-    _id: doc._id,
+    _id: String(doc._id),
+    contentType: doc.kind,
+    sourceId: doc.sourceId,
+    title: doc.fileMetadata?.filename ?? doc.title,
+    matchType,
+    snippet: snippetData?.snippet ?? null,
+    snippetMatchStart: snippetData?.matchStart ?? null,
+    snippetMatchEnd: snippetData?.matchEnd ?? null,
+    metadata: doc.fileMetadata
+      ? doc.fileMetadata
+      : doc.kind === "page"
+        ? { pageId: doc.sourceId as Id<"pages"> }
+        : {},
+  };
+}
+
+function formatReleaseSearchResult(
+  doc: Doc<"releaseSearchEntries">,
+  matchType: "title" | "content",
+  searchTerm: string,
+) {
+  const snippetData =
+    matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
+  return {
+    _id: String(doc._id),
     contentType: doc.kind,
     sourceId: doc.sourceId,
     title: doc.fileMetadata?.filename ?? doc.title,
@@ -139,21 +156,10 @@ function formatSearchResult(
 }
 
 function contentTypeMatches(
-  doc: Doc<"searchEntries">,
+  doc: Pick<Doc<"searchEntries"> | Doc<"releaseSearchEntries">, "kind">,
   contentTypes?: Array<"file" | "page">,
 ) {
   return !contentTypes?.length || contentTypes.includes(doc.kind);
-}
-
-function isEntryOnPublishedSurface(
-  doc: Doc<"searchEntries">,
-  publishedLibraryIds: ReadonlySet<string>,
-  publishedFileIds: ReadonlySet<string>,
-) {
-  if (doc.kind === "page") return true;
-  return doc.fileMetadata?.libraryId
-    ? publishedLibraryIds.has(doc.fileMetadata.libraryId)
-    : publishedFileIds.has(doc.sourceId);
 }
 
 export const searchAll = query({
@@ -234,55 +240,37 @@ export const searchPublished = query({
     }
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return [];
-    const audience = site.visibility;
-    const publicationState = await getPublicationState(ctx, siteId);
-    const publishedLibraryIds = new Set(
-      publicationState?.activeLibraryIds ?? [],
-    );
-    const publishedFileIds = new Set(publicationState?.referencedFileIds ?? []);
+    if (!site.liveReleaseId) return [];
 
     const titleResults = await ctx.db
-      .query("searchEntries")
+      .query("releaseSearchEntries")
       .withSearchIndex("search_title", (q) =>
-        q
-          .search("title", trimmed)
-          .eq("siteId", siteId)
-          .eq("audience", audience),
+        q.search("title", trimmed).eq("releaseId", site.liveReleaseId!),
       )
       .take(limit * 2);
 
     const contentResults = await ctx.db
-      .query("searchEntries")
+      .query("releaseSearchEntries")
       .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("siteId", siteId).eq("audience", audience),
+        q.search("text", trimmed).eq("releaseId", site.liveReleaseId!),
       )
       .take(limit * 2);
 
     const seen = new Set<string>();
-    const combined: ReturnType<typeof formatSearchResult>[] = [];
+    const combined: ReturnType<typeof formatReleaseSearchResult>[] = [];
 
     for (const doc of contentResults) {
       if (seen.has(doc._id)) continue;
       if (!contentTypeMatches(doc, contentTypes)) continue;
-      if (
-        !isEntryOnPublishedSurface(doc, publishedLibraryIds, publishedFileIds)
-      ) {
-        continue;
-      }
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed));
+      combined.push(formatReleaseSearchResult(doc, "content", trimmed));
     }
 
     for (const doc of titleResults) {
       if (seen.has(doc._id)) continue;
       if (!contentTypeMatches(doc, contentTypes)) continue;
-      if (
-        !isEntryOnPublishedSurface(doc, publishedLibraryIds, publishedFileIds)
-      ) {
-        continue;
-      }
       seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed));
+      combined.push(formatReleaseSearchResult(doc, "title", trimmed));
     }
 
     return combined.slice(0, limit);

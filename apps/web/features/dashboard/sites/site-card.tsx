@@ -39,7 +39,7 @@ interface SiteCardProps {
     name: string;
     slug: string;
     logoUrl?: string;
-    isPublished: boolean;
+    liveReleaseId?: string;
     team?: {
       _id: string;
       name: string;
@@ -60,7 +60,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
   const effectiveTeamSlug = site.team?.slug ?? teamSlug;
   const editorHref = getTeamSiteEditorPath(effectiveTeamSlug, site._id);
   const publishedSiteHref = getSiteOpenUrl(effectiveTeamSlug, site.slug);
-  const isPublished = site.isPublished;
+  const isPublished = Boolean(site.liveReleaseId);
   const statusLabel = isPublished ? t("sites.published") : t("sites.draft");
 
   const handleDelete = async () => {
@@ -111,7 +111,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
           </div>
 
           <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5">
-            {site.isPublished && (
+            {isPublished ? (
               <Button
                 asChild
                 aria-label={t("sites.viewSite")}
@@ -124,7 +124,7 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </Button>
-            )}
+            ) : null}
 
             {canManageSites && (
               <DropdownMenu>

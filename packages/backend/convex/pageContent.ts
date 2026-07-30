@@ -8,7 +8,6 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { readPageContent, getPageDocument } from "./model/pageDocuments";
-import { refreshPublicationState } from "./model/publication";
 import {
   extractOpenEditorReferences,
   hashOpenEditorContent,
@@ -20,6 +19,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent } from "./search";
+import { touchSiteDraft } from "./model/draft";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
 const SEARCH_INDEX_DELAY_MS = 10_000;
@@ -70,7 +70,7 @@ export const get = query({
   returns: v.any(),
   handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
-    if (!page) return null;
+    if (!page || page.deletedAt !== undefined) return null;
     const site = await ctx.db.get(page.siteId);
     if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
       return null;
@@ -119,8 +119,20 @@ export const save = mutation({
       updatedAt,
     );
     if (existing) {
-      await ctx.db.replace(existing.blobId, { content: serializedDocument });
+      const releasedReference = await ctx.db
+        .query("releasePages")
+        .withIndex("by_blob", (q) => q.eq("blobId", existing.blobId))
+        .first();
+      const blobId = releasedReference
+        ? await ctx.db.insert("pageContentBlobs", {
+            content: serializedDocument,
+          })
+        : existing.blobId;
+      if (!releasedReference) {
+        await ctx.db.replace(blobId, { content: serializedDocument });
+      }
       await ctx.db.patch(existing._id, {
+        blobId,
         contentHash,
         contentSize,
         referencesKey: references.key,
@@ -140,10 +152,10 @@ export const save = mutation({
         updatedAt,
       });
     }
+    await touchSiteDraft(ctx, page.siteId, updatedAt);
 
     if (existing?.referencesKey !== references.key) {
       await writePageReferences(ctx, references.value);
-      await refreshPublicationState(ctx, page.siteId);
     }
     await ctx.scheduler.runAfter(
       SEARCH_INDEX_DELAY_MS,
@@ -162,11 +174,7 @@ export const indexIfCurrent = internalMutation({
     if (!current || current.contentHash !== contentHash) return null;
     const blob = await ctx.db.get(current.blobId);
     if (!blob) return null;
-    await indexPageContent(
-      ctx,
-      pageId,
-      parseOpenEditorDocument(blob.content),
-    );
+    await indexPageContent(ctx, pageId, parseOpenEditorDocument(blob.content));
     return null;
   },
 });

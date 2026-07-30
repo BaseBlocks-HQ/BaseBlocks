@@ -17,6 +17,11 @@ import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-edit
 import { toast } from "sonner";
 import { EditorToolDock } from "./editor-tool-dock";
 import { EditorHeader } from "./editor-header";
+import {
+  type DraftStatus,
+  HistoryDialog,
+  PublishDialog,
+} from "./release-dialogs";
 
 function buildEditorPath(
   pathname: string,
@@ -49,11 +54,16 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isToolDockExpanded, setIsToolDockExpanded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
 
   const siteQuery = useQuery(api.sites.get, {
     siteId: siteId as Id<"sites">,
   });
   const pagesQuery = useQuery(api.pages.list, {
+    siteId: siteId as Id<"sites">,
+  });
+  const draftStatusQuery = useQuery(api.releases.getDraftStatus, {
     siteId: siteId as Id<"sites">,
   });
   const site = siteQuery;
@@ -63,25 +73,12 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     null,
   );
 
-  const setSitePublished = useMutation(api.sites.setPublished);
-
-  const handlePublish = async () => {
-    try {
-      await setSitePublished({
-        siteId: siteId as Id<"sites">,
-        published: true,
-      });
-      toast.success("Site published");
-    } catch (_error) {
-      toast.error("Failed to publish site");
-    }
-  };
+  const unpublishSite = useMutation(api.releases.unpublish);
 
   const handleUnpublish = async () => {
     try {
-      await setSitePublished({
+      await unpublishSite({
         siteId: siteId as Id<"sites">,
-        published: false,
       });
       toast.success("Site unpublished");
     } catch (_error) {
@@ -103,7 +100,11 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
     ? (pages?.find((p: Doc<"pages">) => p._id === selectedPageId) ?? pages?.[0])
     : pages?.[0];
 
-  if (site === undefined || pages === undefined) {
+  if (
+    site === undefined ||
+    pages === undefined ||
+    draftStatusQuery === undefined
+  ) {
     return <EditorLoading />;
   }
 
@@ -114,6 +115,7 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
       </div>
     );
   }
+  const draftStatus = draftStatusQuery as DraftStatus;
 
   const pageEditor = selectedPage ? (
     <OpenEditorPageEditor
@@ -171,18 +173,32 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             teamSlug={team.slug}
             siteSlug={site.slug}
             siteId={site._id}
-            sitePublished={site.isPublished}
+            sitePublished={Boolean(site.liveReleaseId)}
             siteName={site.name}
             siteLogoUrl={site.logoUrl}
             saveStatus={saveStatus}
-            onPublish={handlePublish}
+            onPublish={() => setPublishDialogOpen(true)}
+            onOpenHistory={() => setHistoryDialogOpen(true)}
             isPreviewing={isPreviewing}
             onTogglePreview={() => setIsPreviewing((current) => !current)}
             onUnpublish={handleUnpublish}
+            hasUnpublishedChanges={draftStatus.hasUnpublishedChanges}
+            liveReleaseNumber={draftStatus.liveRelease?.number}
           />
           <PortalContainerProvider value={portalContainer ?? undefined}>
             <div className="overflow-visible p-4 pb-20">{themedPageEditor}</div>
           </PortalContainerProvider>
+          <PublishDialog
+            draftStatus={draftStatus}
+            open={publishDialogOpen}
+            onOpenChange={setPublishDialogOpen}
+            siteId={site._id}
+          />
+          <HistoryDialog
+            open={historyDialogOpen}
+            onOpenChange={setHistoryDialogOpen}
+            siteId={site._id}
+          />
         </main>
       </div>
     );
@@ -207,14 +223,17 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
           teamSlug={team.slug}
           siteSlug={site.slug}
           siteId={site._id}
-          sitePublished={site.isPublished}
+          sitePublished={Boolean(site.liveReleaseId)}
           siteName={site.name}
           siteLogoUrl={site.logoUrl}
           saveStatus={saveStatus}
-          onPublish={handlePublish}
+          onPublish={() => setPublishDialogOpen(true)}
+          onOpenHistory={() => setHistoryDialogOpen(true)}
           isPreviewing={isPreviewing}
           onTogglePreview={() => setIsPreviewing((current) => !current)}
           onUnpublish={handleUnpublish}
+          hasUnpublishedChanges={draftStatus.hasUnpublishedChanges}
+          liveReleaseNumber={draftStatus.liveRelease?.number}
         />
 
         <PortalContainerProvider value={portalContainer ?? undefined}>
@@ -227,6 +246,17 @@ function SiteEditorInner({ siteId }: SiteEditorProps) {
             {editorCanvas}
           </div>
         </PortalContainerProvider>
+        <PublishDialog
+          draftStatus={draftStatus}
+          open={publishDialogOpen}
+          onOpenChange={setPublishDialogOpen}
+          siteId={site._id}
+        />
+        <HistoryDialog
+          open={historyDialogOpen}
+          onOpenChange={setHistoryDialogOpen}
+          siteId={site._id}
+        />
       </main>
     </div>
   );

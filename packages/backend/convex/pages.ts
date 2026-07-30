@@ -7,7 +7,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, removePageContentIndex } from "./search";
-import { refreshPublicationState } from "./model/publication";
+import { touchSiteDraft } from "./model/draft";
 
 export type PageTreeNode = {
   _id: string;
@@ -88,7 +88,7 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    return pages;
+    return pages.filter((page) => page.deletedAt === undefined);
   },
 });
 
@@ -118,7 +118,7 @@ export const create = mutation({
       )
       .first();
 
-    if (existing) {
+    if (existing && existing.deletedAt === undefined) {
       throw new Error(
         `A page with the URL "${normalizedSlug}" already exists. Please choose a different title or URL slug.`,
       );
@@ -144,6 +144,7 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await touchSiteDraft(ctx, siteId, now);
 
     return pageId;
   },
@@ -161,7 +162,8 @@ export const update = mutation({
     const normalizedSlug =
       slug === undefined ? undefined : normalizePageSlug(slug);
     const page = await ctx.db.get(pageId);
-    if (!page) throw new Error("Page not found");
+    if (!page || page.deletedAt !== undefined)
+      throw new Error("Page not found");
 
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
@@ -179,7 +181,7 @@ export const update = mutation({
         )
         .first();
 
-      if (existing) {
+      if (existing && existing.deletedAt === undefined) {
         throw new Error(
           `A page with the URL "${normalizedSlug}" already exists. Please choose a different title or URL slug.`,
         );
@@ -193,6 +195,7 @@ export const update = mutation({
     else if (icon !== undefined) updates.icon = icon;
 
     await ctx.db.patch(pageId, updates);
+    await touchSiteDraft(ctx, page.siteId);
 
     if (title !== undefined) {
       await indexPageContent(ctx, pageId);
@@ -223,10 +226,12 @@ export const moveInTree = mutation({
       action: "edit",
     });
 
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
+    const pages = (
+      await ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect()
+    ).filter((candidate) => candidate.deletedAt === undefined);
     const page = pages.find((candidate) => candidate._id === pageId);
     if (!page) throw new Error("Page not found in site");
     if (targetId && !pages.some((candidate) => candidate._id === targetId)) {
@@ -256,6 +261,7 @@ export const moveInTree = mutation({
         updatedAt: now,
       });
     }
+    await touchSiteDraft(ctx, siteId, now);
 
     return {
       pageId,
@@ -281,10 +287,12 @@ export const remove = mutation({
 
     const isDefaultPage = site.defaultPageId === pageId;
 
-    const allPages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-      .collect();
+    const allPages = (
+      await ctx.db
+        .query("pages")
+        .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
+        .collect()
+    ).filter((candidate) => candidate.deletedAt === undefined);
 
     const pagesToDelete = new Set<string>([pageId]);
     const collectDescendants = (parentId: string) => {
@@ -321,31 +329,14 @@ export const remove = mutation({
       await removePageContentIndex(ctx, id as Id<"pages">);
     }
 
-    const documents = await ctx.db
-      .query("pageDocuments")
-      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-      .collect();
-    const documentByPageId = new Map(
-      documents.map((document) => [document.pageId, document]),
-    );
-    const references = await ctx.db
-      .query("pageReferences")
-      .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-      .collect();
-    const referencesByPageId = new Map(
-      references.map((reference) => [reference.pageId, reference]),
-    );
+    const now = Date.now();
     for (const id of pagesToDelete) {
-      const document = documentByPageId.get(id as Id<"pages">);
-      if (document) {
-        await ctx.db.delete(document.blobId);
-        await ctx.db.delete(document._id);
-      }
-      const reference = referencesByPageId.get(id as Id<"pages">);
-      if (reference) await ctx.db.delete(reference._id);
-      await ctx.db.delete(id as Id<"pages">);
+      await ctx.db.patch(id as Id<"pages">, {
+        deletedAt: now,
+        updatedAt: now,
+      });
     }
-    await refreshPublicationState(ctx, page.siteId);
+    await touchSiteDraft(ctx, page.siteId, now);
 
     return { success: true };
   },

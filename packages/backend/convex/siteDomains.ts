@@ -19,7 +19,7 @@ export const resolve = query({
     if (mapping?.status !== "verified") return null;
 
     const site = await ctx.db.get(mapping.siteId);
-    if (!site?.isPublished) return null;
+    if (!site?.liveReleaseId) return null;
     const organization = await getAuthOrganizationById(
       ctx,
       site.organizationId,
