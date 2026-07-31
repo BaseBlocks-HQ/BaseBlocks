@@ -94,7 +94,7 @@ export function SiteHeaderContent({
   return (
     <>
       <AppHeaderPortal>
-        <div className="relative flex h-14 min-w-0 items-center gap-2 px-3 sm:px-4">
+        <div className="relative flex h-full min-w-0 items-center gap-2 px-3 sm:px-4">
           <SiteHeaderIdentity
             siteId={siteId}
             siteLogoUrl={siteLogoUrl}

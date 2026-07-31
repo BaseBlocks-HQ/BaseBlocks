@@ -330,9 +330,9 @@ export function IntegrationsPage({
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-5 sm:px-6">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem]">
+        <div className="mx-auto w-full max-w-[64rem] pt-[calc(var(--app-header-height)+1.25rem)] pb-5">
           <DashboardPageHeader title={t("title")} />
 
           {notionEnabled && connections && connections.length > 0 ? (

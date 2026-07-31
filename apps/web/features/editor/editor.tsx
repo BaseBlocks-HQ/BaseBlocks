@@ -117,7 +117,7 @@ function SiteEditorScreen({ siteId }: SiteEditorProps) {
       <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
         <PortalContainerProvider value={portalContainer ?? undefined}>
           <div className="h-full min-h-0 overflow-auto">
-            <div className="p-4 md:p-8">
+            <div className="px-4 pt-[calc(var(--app-header-height)+1rem)] pb-4 md:px-8 md:pt-[calc(var(--app-header-height)+2rem)] md:pb-8">
               <SiteThemeScope
                 className="min-h-full rounded-2xl"
                 theme={site.settings.theme}

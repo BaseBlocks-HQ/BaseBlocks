@@ -19,7 +19,7 @@ export function DashboardPageHeader({
 
   return (
     <AppHeaderPortal>
-      <div className="relative flex h-14 w-full items-center px-4 sm:px-6">
+      <div className="relative flex h-full w-full items-center px-4 sm:px-6">
         <div className="mx-auto flex w-full max-w-[64rem] items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-2">
             {showSidebarTrigger ? (

@@ -410,7 +410,7 @@ export function InvitationInbox({
               )}
             >
               <Inbox
-                className="h-4 w-4 text-muted-foreground"
+                className="size-3.5 text-muted-foreground"
                 strokeWidth={SIDEBAR_ICON_STROKE}
               />
               <span>{t("title")}</span>

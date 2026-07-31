@@ -94,11 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <AppSidebar siteId={siteId} />
         <SidebarInset className="h-svh min-w-0 overflow-hidden">
-          <AppHeaderProvider>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {children}
-            </div>
-          </AppHeaderProvider>
+          <AppHeaderProvider>{children}</AppHeaderProvider>
         </SidebarInset>
       </EditorProvider>
     </SidebarProvider>

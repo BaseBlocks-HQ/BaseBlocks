@@ -20,6 +20,11 @@ import {
   getTeamMembersPath,
 } from "@/features/dashboard/routes";
 import { useTeamAccess } from "@/features/authentication/team-access";
+import {
+  APP_SIDEBAR_ICON_STROKE,
+  appSidebarIconClassName,
+  appSidebarRowClassName,
+} from "@/features/app-shell/app-sidebar-row";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import {
   DropdownMenu,
@@ -70,15 +75,6 @@ const InvitationInbox = dynamic(() =>
     (module) => module.InvitationInbox,
   ),
 );
-
-const SIDEBAR_ICON_STROKE = 1.75;
-
-const pillRowClass = cn(
-  "dashboard-sidebar-row flex h-9 w-full items-center justify-start gap-2 border-0 px-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:text-sidebar-foreground",
-  "rounded-lg",
-);
-
-const navActiveClass = "text-sidebar-foreground";
 
 const languageNames: Record<Locale, string> = {
   en: "English",
@@ -171,16 +167,13 @@ export function DashboardSidebarContent() {
         <div className="h-full min-h-0 overflow-y-auto">
           <SidebarGroup className="p-0">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-px">
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
                       isActive={item.isActive}
-                      className={cn(
-                        pillRowClass,
-                        item.isActive && navActiveClass,
-                      )}
+                      className={appSidebarRowClassName}
                     >
                       <Link
                         href={item.href}
@@ -189,12 +182,12 @@ export function DashboardSidebarContent() {
                       >
                         <item.icon
                           className={cn(
-                            "h-4 w-4 shrink-0",
+                            appSidebarIconClassName,
                             item.isActive
-                              ? undefined
-                              : "text-sidebar-foreground/55",
+                              ? "text-sidebar-foreground"
+                              : undefined,
                           )}
-                          strokeWidth={SIDEBAR_ICON_STROKE}
+                          strokeWidth={APP_SIDEBAR_ICON_STROKE}
                         />
                         <span className="truncate">{item.title}</span>
                       </Link>
@@ -208,11 +201,14 @@ export function DashboardSidebarContent() {
       </SidebarContent>
 
       <SidebarFooter className="mt-auto shrink-0 border-0 p-1">
-        <SidebarMenu className="gap-1">
+        <SidebarMenu className="gap-px">
           <SidebarMenuItem>
             <InvitationInbox
               fullWidth
-              fullWidthTriggerClassName={cn(pillRowClass, "has-[>svg]:px-2")}
+              fullWidthTriggerClassName={cn(
+                appSidebarRowClassName,
+                "has-[>svg]:px-2",
+              )}
             />
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -220,19 +216,19 @@ export function DashboardSidebarContent() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className={cn(pillRowClass, "justify-between")}
+                    className={cn(appSidebarRowClassName, "justify-between")}
                     type="button"
                   >
-                    <span className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex min-w-0 items-center gap-1.5">
                       <Building
-                        className="h-4 w-4 shrink-0 text-sidebar-foreground/55"
-                        strokeWidth={SIDEBAR_ICON_STROKE}
+                        className={appSidebarIconClassName}
+                        strokeWidth={APP_SIDEBAR_ICON_STROKE}
                       />
                       <span className="truncate">{team.name}</span>
                     </span>
                     <ChevronsUpDown
-                      className="h-4 w-4 shrink-0 text-sidebar-foreground/50"
-                      strokeWidth={SIDEBAR_ICON_STROKE}
+                      className="size-3.5 shrink-0 text-sidebar-foreground/45"
+                      strokeWidth={APP_SIDEBAR_ICON_STROKE}
                     />
                   </button>
                 </DropdownMenuTrigger>
@@ -257,7 +253,7 @@ export function DashboardSidebarContent() {
                         {workspace._id === team._id && (
                           <Check
                             className="h-4 w-4"
-                            strokeWidth={SIDEBAR_ICON_STROKE}
+                            strokeWidth={APP_SIDEBAR_ICON_STROKE}
                           />
                         )}
                       </div>
@@ -271,12 +267,15 @@ export function DashboardSidebarContent() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={cn(pillRowClass, "justify-between text-left")}
+                  className={cn(
+                    appSidebarRowClassName,
+                    "justify-between text-left",
+                  )}
                   type="button"
                 >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex w-4 shrink-0 justify-center">
-                      <Avatar className="size-6 rounded-full">
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="flex w-3.5 shrink-0 justify-center">
+                      <Avatar className="size-5 rounded-full">
                         {user?.imageUrl ? (
                           <AvatarImage src={user.imageUrl} />
                         ) : null}
@@ -290,8 +289,8 @@ export function DashboardSidebarContent() {
                     </span>
                   </span>
                   <ChevronsUpDown
-                    className="h-4 w-4 shrink-0 text-sidebar-foreground/50"
-                    strokeWidth={SIDEBAR_ICON_STROKE}
+                    className="size-3.5 shrink-0 text-sidebar-foreground/45"
+                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
                 </button>
               </DropdownMenuTrigger>
@@ -324,7 +323,7 @@ export function DashboardSidebarContent() {
                     <span className="flex min-w-0 flex-1 items-center gap-2">
                       <Earth
                         className="h-4 w-4 shrink-0 text-muted-foreground"
-                        strokeWidth={SIDEBAR_ICON_STROKE}
+                        strokeWidth={APP_SIDEBAR_ICON_STROKE}
                       />
                       <span>{t("language.menuLabel")}</span>
                     </span>
@@ -343,7 +342,7 @@ export function DashboardSidebarContent() {
                         {locale === loc ? (
                           <Check
                             className="ml-auto h-4 w-4 text-muted-foreground"
-                            strokeWidth={SIDEBAR_ICON_STROKE}
+                            strokeWidth={APP_SIDEBAR_ICON_STROKE}
                           />
                         ) : null}
                       </DropdownMenuItem>
@@ -441,7 +440,7 @@ export function DashboardSidebarContent() {
                 <DropdownMenuItem onSelect={() => setAccountSettingsOpen(true)}>
                   <Bolt
                     className="h-4 w-4 shrink-0 text-muted-foreground"
-                    strokeWidth={SIDEBAR_ICON_STROKE}
+                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
                   <span>{t("common.settings")}</span>
                 </DropdownMenuItem>
@@ -449,7 +448,7 @@ export function DashboardSidebarContent() {
                 <DropdownMenuItem onClick={handleLogout} variant="destructive">
                   <LogOut
                     className="h-4 w-4 shrink-0"
-                    strokeWidth={SIDEBAR_ICON_STROKE}
+                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
                   <span>{t("common.signOut")}</span>
                 </DropdownMenuItem>

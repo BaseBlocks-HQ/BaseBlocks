@@ -2,6 +2,11 @@
 
 import { PagesPanel } from "@/features/editor/pages-panel";
 import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
+import {
+  APP_SIDEBAR_ICON_STROKE,
+  appSidebarIconClassName,
+  appSidebarRowClassName,
+} from "@/features/app-shell/app-sidebar-row";
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { Link } from "@/i18n/navigation";
@@ -52,15 +57,12 @@ export function SiteEditorSidebarContent({ siteId }: { siteId: string }) {
         <div>
           <SidebarMenu className="gap-px">
             <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                className="h-7 rounded-md px-2 text-xs font-normal"
-              >
+              <SidebarMenuButton asChild className={appSidebarRowClassName}>
                 <Link href={getTeamDashboardPath(team.slug)} prefetch={false}>
                   <ArrowLeft
                     aria-hidden
-                    className="size-3.5 text-sidebar-foreground/55"
-                    strokeWidth={1.75}
+                    className={appSidebarIconClassName}
+                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
                   <span>Back</span>
                 </Link>
