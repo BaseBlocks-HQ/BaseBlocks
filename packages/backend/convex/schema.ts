@@ -188,6 +188,7 @@ export default defineSchema({
   })
     .index("by_release", ["releaseId"])
     .index("by_release_page", ["releaseId", "pageId"])
+    .index("by_release_parent_order", ["releaseId", "parentId", "order"])
     .index("by_blob", ["blobId"])
     .index("by_release_parent_slug", ["releaseId", "parentId", "slug"]),
 
@@ -251,6 +252,7 @@ export default defineSchema({
     ),
   })
     .index("by_release", ["releaseId"])
+    .index("by_release_kind_source", ["releaseId", "kind", "sourceId"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["releaseId", "kind"],

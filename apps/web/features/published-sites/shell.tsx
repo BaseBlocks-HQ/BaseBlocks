@@ -469,6 +469,7 @@ function PublishedPageNavigation({
                   <Link
                     className="flex h-8 min-w-0 items-center overflow-hidden pr-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     href={getPageLink(siteSlug, fullPath)}
+                    prefetch={false}
                   >
                     <span ref={textRef} className="min-w-0 truncate">
                       {page.title}

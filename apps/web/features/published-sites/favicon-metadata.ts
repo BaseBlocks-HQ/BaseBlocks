@@ -1,8 +1,10 @@
 import "server-only";
 
-import { extractOpenEditorText } from "@baseblocks/backend";
 import type { Metadata } from "next";
-import type { PublishedPageResolution } from "./read-model";
+import {
+  isAccessiblePublishedPageMetadata,
+  type PublishedPageMetadataResolution,
+} from "./read-model";
 
 function truncateDescription(value: string, maxLength = 160) {
   if (value.length <= maxLength) return value;
@@ -12,22 +14,20 @@ function truncateDescription(value: string, maxLength = 160) {
 }
 
 export function buildPublicSiteMetadata(
-  result: PublishedPageResolution | null,
+  result: PublishedPageMetadataResolution | null,
   canonicalUrl: string | null,
 ): Metadata {
-  const isIndexable =
-    result?.access.status === "accessible" &&
-    result?.access.visibility === "public" &&
-    result.page !== null;
-
-  if (!result || !isIndexable || !result.page) {
+  if (
+    !result ||
+    !isAccessiblePublishedPageMetadata(result) ||
+    result.access.visibility !== "public"
+  ) {
     return { robots: { index: false, follow: false } };
   }
 
-  const title = `${result.page.title} | ${result.site.name}`;
-  const pageText = extractOpenEditorText(result.content);
+  const title = `${result.title} | ${result.site.name}`;
   const description = truncateDescription(
-    pageText || `${result.page.title} on ${result.site.name}`,
+    result.descriptionText || `${result.title} on ${result.site.name}`,
   );
   const favicon = result?.site.settings.favicon;
 

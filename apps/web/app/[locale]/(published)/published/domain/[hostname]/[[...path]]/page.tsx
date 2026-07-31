@@ -1,9 +1,10 @@
 import { buildPublicSiteMetadata } from "@/features/published-sites/favicon-metadata";
 import { PublicSite } from "@/features/published-sites/public-site";
 import {
-  isAccessiblePublishedPage,
+  isAccessiblePublishedPageMetadata,
   resolveCustomDomain,
   resolvePublishedPage,
+  resolvePublishedPageMetadata,
 } from "@/features/published-sites/read-model";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -17,15 +18,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { hostname, path = [] } = await params;
   const mapping = await resolveCustomDomain(hostname);
   if (!mapping) return {};
-  const result = await resolvePublishedPage(
+  const result = await resolvePublishedPageMetadata(
     mapping.organizationSlug,
     mapping.siteSlug,
-    path,
+    path.join("/"),
   );
   const canonicalPath = encodePath(
-    isAccessiblePublishedPage(result)
-      ? result.canonicalUrlInputs.pagePath
-      : path,
+    isAccessiblePublishedPageMetadata(result) ? result.canonicalPath : path,
   );
   const canonicalUrl = `${getPublishedOrigin(hostname)}${canonicalPath ? `/${canonicalPath}` : "/"}`;
   return buildPublicSiteMetadata(result, canonicalUrl);
@@ -38,7 +37,7 @@ export default async function PublishedDomainPage({ params }: Props) {
   const result = await resolvePublishedPage(
     mapping.organizationSlug,
     mapping.siteSlug,
-    path,
+    path.join("/"),
   );
   const privateAccessUrl = getSiteUrl(
     mapping.organizationSlug,

@@ -64,10 +64,11 @@ export async function GET(request: Request) {
     const teamSlug =
       mapping?.organizationSlug ??
       ("organizationSlug" in parsedHost ? parsedHost.organizationSlug : null);
-    if (!teamSlug) return getDefaultFavicon();
+    const siteSlug = mapping?.siteSlug;
+    if (!teamSlug || !siteSlug) return getDefaultFavicon();
     const favicon = await client.query(api.published.getFavicon, {
       organizationSlug: teamSlug,
-      siteSlug: mapping?.siteSlug,
+      siteSlug,
     });
     if (!favicon) {
       return getDefaultFavicon();

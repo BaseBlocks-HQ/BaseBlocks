@@ -22,6 +22,7 @@ import type * as libraries from "../libraries.js";
 import type * as model_draft from "../model/draft.js";
 import type * as model_libraryAccess from "../model/libraryAccess.js";
 import type * as model_pageDocuments from "../model/pageDocuments.js";
+import type * as model_publishedRelease from "../model/publishedRelease.js";
 import type * as model_releaseChanges from "../model/releaseChanges.js";
 import type * as model_releaseDiff from "../model/releaseDiff.js";
 import type * as model_releaseState from "../model/releaseState.js";
@@ -60,6 +61,7 @@ declare const fullApi: ApiFromModules<{
   "model/draft": typeof model_draft;
   "model/libraryAccess": typeof model_libraryAccess;
   "model/pageDocuments": typeof model_pageDocuments;
+  "model/publishedRelease": typeof model_publishedRelease;
   "model/releaseChanges": typeof model_releaseChanges;
   "model/releaseDiff": typeof model_releaseDiff;
   "model/releaseState": typeof model_releaseState;
