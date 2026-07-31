@@ -50,6 +50,66 @@ export const get = query({
   },
 });
 
+export const getAnalyticsScope = query({
+  args: {
+    organizationId: v.string(),
+    siteId: v.id("sites"),
+  },
+  handler: async (ctx, { organizationId, siteId }) => {
+    const isMember = await isOrganizationMember(ctx, organizationId);
+    if (!isMember) return null;
+
+    const site = await ctx.db.get(siteId);
+    if (!site || site.organizationId !== organizationId) return null;
+
+    const organization = await getAuthOrganizationById(ctx, organizationId);
+    if (!organization?.slug) return null;
+
+    const [domains, release, pages] = await Promise.all([
+      ctx.db
+        .query("siteDomains")
+        .withIndex("by_site", (q) => q.eq("siteId", siteId))
+        .collect(),
+      site.liveReleaseId ? ctx.db.get(site.liveReleaseId) : null,
+      site.liveReleaseId
+        ? ctx.db
+            .query("releasePages")
+            .withIndex("by_release", (q) =>
+              q.eq("releaseId", site.liveReleaseId!),
+            )
+            .collect()
+        : [],
+    ]);
+
+    const pagePaths = pages.map((page) => {
+      if (page.pageId === release?.defaultPageId) return [];
+
+      const path = [page.slug];
+      let parentId = page.parentId;
+      while (parentId) {
+        const parent = pages.find((candidate) => candidate.pageId === parentId);
+        if (!parent) break;
+        path.unshift(parent.slug);
+        parentId = parent.parentId;
+      }
+      return path;
+    });
+
+    return {
+      organizationSlug: organization.slug,
+      site: {
+        _id: site._id,
+        name: site.name,
+        slug: site.slug,
+      },
+      pagePaths,
+      verifiedDomains: domains
+        .filter((domain) => domain.status === "verified")
+        .map((domain) => domain.hostname),
+    };
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),

@@ -15,6 +15,7 @@ import {
   type SiteThemeStyleId,
 } from "@baseblocks/domain";
 import {
+  getTeamAnalyticsPath,
   getTeamDashboardPath,
   getTeamIntegrationsPath,
   getTeamMembersPath,
@@ -49,6 +50,7 @@ import {
 import {
   Bolt,
   Building,
+  ChartNoAxesColumnIncreasing,
   Check,
   ChevronsUpDown,
   Earth,
@@ -98,6 +100,7 @@ export function DashboardSidebarContent() {
 
   const teamMembersPath = getTeamMembersPath(team.slug);
   const teamIntegrationsPath = getTeamIntegrationsPath(team.slug);
+  const teamAnalyticsPath = getTeamAnalyticsPath(team.slug);
 
   const navItems: {
     title: string;
@@ -110,6 +113,12 @@ export function DashboardSidebarContent() {
       href: getTeamDashboardPath(team.slug),
       icon: House,
       isActive: pathname === getTeamDashboardPath(team.slug),
+    },
+    {
+      title: "Analytics",
+      href: teamAnalyticsPath,
+      icon: ChartNoAxesColumnIncreasing,
+      isActive: pathname.startsWith(teamAnalyticsPath),
     },
     {
       title: t("team.title"),
