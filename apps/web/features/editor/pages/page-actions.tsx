@@ -13,33 +13,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
-import { Button } from "@baseblocks/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@baseblocks/ui/context-menu";
 import { useMutation } from "convex/react";
-import { FilePlus, MoreHorizontal, Star, Trash2 } from "lucide-react";
+import { FilePenLine, FilePlus, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
 
-interface PageActionsMenuProps {
+interface PageActionsContextMenuProps {
+  children: ReactNode;
   page: PageListItem;
   siteId: string;
   isDefault: boolean;
   onChildCreated?: () => void;
+  onRename: () => void;
 }
 
-export function PageActionsMenu({
+export function PageActionsContextMenu({
+  children,
   page,
   siteId,
   isDefault,
   onChildCreated,
-}: PageActionsMenuProps) {
+  onRename,
+}: PageActionsContextMenuProps) {
   const t = useTranslations("navigation.pageActions");
   const tDelete = useTranslations("navigation.deletePage");
   const tCommon = useTranslations("common");
@@ -63,39 +65,33 @@ export function PageActionsMenu({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("triggerAriaLabel")}
-            className="h-6 w-6 shrink-0 opacity-0 transition-opacity group-hover/page:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuItem onClick={() => setCreateChildOpen(true)}>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+        <ContextMenuContent className="w-52">
+          <ContextMenuItem onSelect={() => setCreateChildOpen(true)}>
             <FilePlus className="h-4 w-4" />
             {t("addChildPage")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSetDefault} disabled={isDefault}>
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={onRename}>
+            <FilePenLine className="h-4 w-4" />
+            {t("rename")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => void handleSetDefault()}
+            disabled={isDefault}
+          >
             <Star className="h-4 w-4" />
             {isDefault ? t("defaultPage") : t("setAsDefault")}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
+          </ContextMenuItem>
+          <ContextMenuItem
             variant="destructive"
-            onClick={() => setDeleteOpen(true)}
+            onSelect={() => setDeleteOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
             {t("delete")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       <CreatePageDialog
         onCreated={onChildCreated}

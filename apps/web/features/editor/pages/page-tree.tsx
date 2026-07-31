@@ -15,18 +15,21 @@ import {
 import { cn } from "@baseblocks/ui/lib/utils";
 import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { closestCenter } from "@dnd-kit/collision";
+import { PointerActivationConstraints } from "@dnd-kit/dom";
 import {
   DragDropProvider,
   DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
   useDraggable,
   useDroppable,
 } from "@dnd-kit/react";
 import { useMutation } from "convex/react";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageActionsMenu } from "./page-actions";
+import { PageActionsContextMenu } from "./page-actions";
 
 type PageTreeNode = TreeNode<PageListItem>;
 type PageTreeRow = ProjectedTreeNode<PageListItem>;
@@ -36,6 +39,15 @@ type PageDropData = {
   pageId: string | null;
   placement: TreeDropPlacement;
 };
+
+const pageDragSensors = [
+  PointerSensor.configure({
+    activationConstraints: [
+      new PointerActivationConstraints.Distance({ value: 6 }),
+    ],
+  }),
+  KeyboardSensor,
+];
 
 interface PageTreeProps {
   allPages: PageListItem[];
@@ -162,18 +174,10 @@ export function PageTree({
               return next;
             });
           }}
-          actionsMenu={
-            canEdit ? (
-              <PageActionsMenu
-                page={item.data}
-                siteId={siteId}
-                isDefault={defaultPageId === item.data._id}
-                onChildCreated={() => {
-                  setExpanded((current) => new Set(current).add(item.id));
-                }}
-              />
-            ) : null
-          }
+          siteId={siteId}
+          onChildCreated={() => {
+            setExpanded((current) => new Set(current).add(item.id));
+          }}
           renaming={renamingId === item.id}
           onRename={() => setRenamingId(item.id)}
           onRenameCancel={() => setRenamingId(null)}
@@ -198,6 +202,7 @@ export function PageTree({
 
   return (
     <DragDropProvider
+      sensors={pageDragSensors}
       onDragStart={(event) => {
         if (!canEdit) return;
         setDraggedPageId(String(event.operation.source?.id ?? "") || null);
@@ -238,7 +243,6 @@ export function PageTree({
 }
 
 function PageTreeRow({
-  actionsMenu,
   canEdit,
   defaultPageId,
   dragActive,
@@ -247,14 +251,15 @@ function PageTreeRow({
   isExpanded,
   item,
   onSelect,
+  onChildCreated,
   onToggleExpand,
   selectedPageId,
   renaming,
   onRename,
   onRenameCancel,
   onRenameSave,
+  siteId,
 }: {
-  actionsMenu?: ReactNode;
   canEdit: boolean;
   defaultPageId?: string;
   dragActive: boolean;
@@ -263,12 +268,14 @@ function PageTreeRow({
   isExpanded: boolean;
   item: PageTreeRow;
   onSelect: (pageId: string) => void;
+  onChildCreated: () => void;
   onToggleExpand: () => void;
   selectedPageId?: string;
   renaming: boolean;
   onRename: () => void;
   onRenameCancel: () => void;
   onRenameSave: (title: string) => Promise<void>;
+  siteId: string;
 }) {
   const t = useTranslations("navigation.tree");
   const page = item.data;
@@ -279,7 +286,7 @@ function PageTreeRow({
     data: { kind: "page-tree-page", pageId: item.id },
   });
 
-  return (
+  const row = (
     <SidebarMenuItem
       aria-level={item.depth + 1}
       aria-expanded={item.hasChildren ? isExpanded : undefined}
@@ -296,19 +303,25 @@ function PageTreeRow({
         isActive={selectedPageId === page._id}
         style={{ paddingInlineStart: `${item.depth * 0.75}rem` }}
         className={cn(
-          "gap-0 p-0 font-normal data-[active=true]:font-medium",
-          canEdit
-            ? "grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.75rem]"
-            : "grid grid-cols-[1.5rem_minmax(0,1fr)_1.75rem]",
+          "flex h-7 min-w-0 gap-0 overflow-hidden rounded-md p-0 text-xs font-normal transition-colors data-[active=true]:font-medium",
+          canEdit &&
+            !dragDisabled &&
+            !renaming &&
+            "cursor-grab active:cursor-grabbing",
           isDragging && "opacity-30",
         )}
       >
-        <div ref={ref}>
+        <div
+          ref={(element) => {
+            ref(element);
+            handleRef(element);
+          }}
+        >
           {item.hasChildren ? (
             <button
               type="button"
               aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-              className="flex h-8 w-6 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              className="relative z-30 flex size-5 shrink-0 items-center justify-center rounded-sm text-sidebar-foreground/45 outline-none hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
               onClick={onToggleExpand}
             >
               {isExpanded ? (
@@ -318,7 +331,7 @@ function PageTreeRow({
               )}
             </button>
           ) : (
-            <span className="h-8 w-6" />
+            <span className="size-5 shrink-0" />
           )}
 
           <OverflowTooltip content={page.title} disabled={renaming}>
@@ -326,7 +339,7 @@ function PageTreeRow({
               <button
                 type="button"
                 onClick={() => onSelect(page._id)}
-                className="flex h-8 min-w-0 items-center gap-1.5 overflow-hidden pr-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className="flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden pr-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
               >
                 {renaming ? (
                   <InlineRename
@@ -352,28 +365,23 @@ function PageTreeRow({
               </button>
             )}
           </OverflowTooltip>
-
-          {canEdit ? (
-            <button
-              ref={handleRef}
-              type="button"
-              aria-label={`Move ${page.title}`}
-              className="relative z-30 flex h-8 w-5 cursor-grab items-center justify-center text-muted-foreground opacity-0 outline-none transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/page:opacity-100 active:cursor-grabbing"
-            >
-              <GripVertical className="size-3.5" />
-            </button>
-          ) : null}
-
-          {actionsMenu ? (
-            <div className="relative z-30 flex h-8 w-7 items-center justify-center">
-              {actionsMenu}
-            </div>
-          ) : (
-            <span className="h-8 w-7" />
-          )}
         </div>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+
+  if (!canEdit) return row;
+
+  return (
+    <PageActionsContextMenu
+      isDefault={isDefault}
+      onChildCreated={onChildCreated}
+      onRename={onRename}
+      page={page}
+      siteId={siteId}
+    >
+      {row}
+    </PageActionsContextMenu>
   );
 }
 
@@ -479,8 +487,7 @@ function RootEndDropZone({
 
 function PageDragPreview({ page }: { page: PageListItem }) {
   return (
-    <div className="flex h-9 max-w-64 items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar px-3 text-sm text-sidebar-foreground shadow-xl">
-      <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+    <div className="flex h-8 max-w-64 items-center rounded-lg border border-sidebar-border bg-sidebar px-3 text-xs text-sidebar-foreground shadow-xl">
       <span className="truncate">{page.title}</span>
     </div>
   );

@@ -1,5 +1,6 @@
 import { getViewerState } from "@/features/authentication/server";
 import { TeamAccessProvider } from "@/features/authentication/team-access";
+import { AppShell } from "@/features/app-shell/app-shell";
 import { notFound, redirect } from "next/navigation";
 
 interface TeamLayoutProps {
@@ -20,7 +21,7 @@ export default async function TeamLayout({
 
   return (
     <TeamAccessProvider team={team} teams={teams} user={user}>
-      {children}
+      <AppShell>{children}</AppShell>
     </TeamAccessProvider>
   );
 }

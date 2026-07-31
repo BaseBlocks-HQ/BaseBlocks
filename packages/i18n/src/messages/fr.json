@@ -166,7 +166,6 @@
       "viewPublishedTooltipWhenDraft": "Publiez d'abord votre site",
       "share": "Partager",
       "deploymentHistory": "Historique des deploiements",
-      "deployChanges": "Publier les modifications",
       "deployShort": "Deployer",
       "publishedStatus": "Publié",
       "saving": "Enregistrement…",
@@ -174,12 +173,9 @@
       "edit": "Modifier",
       "moreActions": "Plus d’actions",
       "beta": {
-        "shortLabel": "Nouveau",
         "label": "Nouvel éditeur",
         "badge": "Bêta",
-        "title": "Découvrez le nouvel éditeur",
-        "description": "Le nouvel éditeur de blocs est conçu pour rendre la création et la mise à jour de votre site plus rapides et plus intuitives. Il est encore en bêta : vous pourrez donc rencontrer quelques imperfections pendant que nous continuons à améliorer l’expérience.",
-        "dismiss": "Compris"
+        "description": "Un éditeur de blocs plus rapide et plus intuitif. Il est encore en bêta, vous pourrez donc rencontrer quelques imperfections."
       }
     },
     "picker": {
@@ -282,6 +278,7 @@
     "pageActions": {
       "triggerAriaLabel": "Actions sur la page",
       "addChildPage": "Ajouter une sous-page",
+      "rename": "Renommer",
       "setAsDefault": "Definir par defaut",
       "defaultPage": "Page par defaut",
       "delete": "Supprimer"

@@ -21,6 +21,7 @@ import { FaviconSettings } from "./settings/favicon-settings";
 import { SiteAppearanceSettings } from "./settings/site-appearance-settings";
 
 interface SiteSettingsPanelProps {
+  showHeading?: boolean;
   siteId: Id<"sites">;
 }
 
@@ -232,7 +233,10 @@ function SiteNameSection({
   );
 }
 
-export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
+export function SiteSettingsPanel({
+  showHeading = true,
+  siteId,
+}: SiteSettingsPanelProps) {
   const site = useQuery(api.sites.get, { siteId });
   const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();
@@ -332,11 +336,13 @@ export function SiteSettingsPanel({ siteId }: SiteSettingsPanelProps) {
 
   return (
     <div className="space-y-7 p-4">
-      <header>
-        <h3 className="text-base font-semibold tracking-tight">
-          Site settings
-        </h3>
-      </header>
+      {showHeading ? (
+        <header>
+          <h3 className="text-base font-semibold tracking-tight">
+            Site settings
+          </h3>
+        </header>
+      ) : null}
 
       <SettingsSection title="Brand">
         <div className="space-y-2">

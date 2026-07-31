@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHeaderPortal } from "@/features/app-shell/app-header";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 import { useTranslations } from "next-intl";
@@ -17,21 +18,25 @@ export function DashboardPageHeader({
   const showSidebarTrigger = isMobile ? !openMobile : state === "collapsed";
 
   return (
-    <header className="relative mb-8 flex flex-wrap items-center justify-between gap-4 pb-5 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-foreground/10 after:to-transparent">
-      <div className="flex min-w-0 items-center gap-2">
-        {showSidebarTrigger ? (
-          <SidebarTrigger
-            aria-label={t("toggleSidebar")}
-            className="size-7 shrink-0 rounded-lg"
-            title={t("toggleSidebar")}
-          />
-        ) : null}
-        <h1 className="brand-display text-4xl leading-none font-normal tracking-[-0.03em] text-balance">
-          {title}
-        </h1>
+    <AppHeaderPortal>
+      <div className="relative flex h-14 w-full items-center px-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[64rem] items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-2">
+            {showSidebarTrigger ? (
+              <SidebarTrigger
+                aria-label={t("toggleSidebar")}
+                className="size-7 shrink-0 rounded-lg"
+                title={t("toggleSidebar")}
+              />
+            ) : null}
+            <h1 className="brand-display truncate text-2xl leading-none font-normal tracking-[-0.025em]">
+              {title}
+            </h1>
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
+        </div>
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </header>
+    </AppHeaderPortal>
   );
 }
 

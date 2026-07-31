@@ -33,16 +33,13 @@ import {
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
-  Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import {
   Bolt,
@@ -76,9 +73,6 @@ const InvitationInbox = dynamic(() =>
 
 const SIDEBAR_ICON_STROKE = 1.75;
 
-const sidebarFloatingInnerClass =
-  "[&_[data-slot=sidebar-inner]]:rounded-xl [&_[data-slot=sidebar-inner]]:border [&_[data-slot=sidebar-inner]]:border-sidebar-foreground/[0.06] [&_[data-slot=sidebar-inner]]:!bg-sidebar [&_[data-slot=sidebar-inner]]:text-sidebar-foreground [&_[data-slot=sidebar-inner]]:shadow-sm";
-
 const pillRowClass = cn(
   "dashboard-sidebar-row flex h-9 w-full items-center justify-start gap-2 border-0 px-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:text-sidebar-foreground",
   "rounded-lg",
@@ -91,7 +85,7 @@ const languageNames: Record<Locale, string> = {
   fr: "Français",
 };
 
-export function DashboardSidebar() {
+export function DashboardSidebarContent() {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
@@ -172,40 +166,7 @@ export function DashboardSidebar() {
     .slice(0, 1);
 
   return (
-    <Sidebar
-      className={cn(
-        "min-h-svh [--sidebar-width:13.5rem]",
-        sidebarFloatingInnerClass,
-      )}
-      collapsible="offcanvas"
-      mobileClassName="!top-2 !bottom-2 !left-2 !max-h-[calc(100svh-1rem)] !w-[min(13.5rem,calc(100vw-1rem))] rounded-xl !border !border-sidebar-foreground/[0.06] !bg-sidebar shadow-sm"
-      variant="floating"
-    >
-      <SidebarHeader className="shrink-0 p-1">
-        <div className="flex h-9 items-center justify-between px-2">
-          <Link
-            aria-label="BaseBlocks"
-            className="flex size-4 items-center justify-center"
-            href={getTeamDashboardPath(team.slug)}
-            prefetch={false}
-          >
-            {/* biome-ignore lint/performance/noImgElement: This local SVG logo does not need image optimization. */}
-            <img
-              alt=""
-              className="product-brand-mark h-auto w-4"
-              height="228"
-              src="/brand/baseblocks-mark.svg"
-              width="270"
-            />
-          </Link>
-          <SidebarTrigger
-            aria-label={t("navigation.toggleSidebar")}
-            className="size-7 rounded-lg text-sidebar-foreground/55 hover:text-sidebar-foreground"
-            title={t("navigation.toggleSidebar")}
-          />
-        </div>
-      </SidebarHeader>
-
+    <>
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">
         <div className="h-full min-h-0 overflow-y-auto">
           <SidebarGroup className="p-0">
@@ -505,7 +466,7 @@ export function DashboardSidebar() {
           user={user}
         />
       ) : null}
-    </Sidebar>
+    </>
   );
 }
 

@@ -1,11 +1,7 @@
 "use client";
 
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
-import {
-  useEditorSite,
-  useEditorUi,
-  useRegisterEditorBlockPicker,
-} from "@/features/editor/editor-state";
+import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
 import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
@@ -426,7 +422,6 @@ function OpenEditorDocumentEditor({
       }, 2_000);
     },
   });
-  useRegisterEditorBlockPicker(controller, canEdit && !preview);
   const flushPendingSave = useEffectEvent(persist);
 
   useEffect(
