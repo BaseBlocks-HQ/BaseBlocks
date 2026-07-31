@@ -11,12 +11,9 @@ export function AppSidebarFrame({
   className,
   mobileClassName,
   mobileWidthClassName = "!w-[min(13.5rem,calc(100vw-1rem))]",
-  style,
-  width = "13.5rem",
   ...props
 }: ComponentProps<typeof Sidebar> & {
   mobileWidthClassName?: string;
-  width?: string;
 }) {
   return (
     <Sidebar
@@ -27,7 +24,6 @@ export function AppSidebarFrame({
         mobileWidthClassName,
         mobileClassName,
       )}
-      style={{ "--sidebar-width": width, ...style } as React.CSSProperties}
       variant="floating"
       {...props}
     />

@@ -4,7 +4,7 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import { EditorProvider } from "@/features/editor/editor-state";
 import { SidebarInset, SidebarProvider } from "@baseblocks/ui/sidebar";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { AppHeaderProvider } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 
@@ -74,7 +74,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SidebarProvider className="brand-interface" defaultOpen={true}>
+    <SidebarProvider
+      className="brand-interface"
+      defaultOpen={true}
+      style={{ "--sidebar-width": "13.5rem" } as CSSProperties}
+    >
       <EditorProvider
         canGoBack={pageHistory.length > 0}
         onGoBack={goBack}
