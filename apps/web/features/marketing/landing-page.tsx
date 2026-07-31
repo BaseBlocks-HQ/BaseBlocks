@@ -33,8 +33,6 @@ export type LandingCopy = Record<
   | "publishingTitle"
   | "step1Desc"
   | "step1Title"
-  | "step2Desc"
-  | "step2Title"
   | "step3Desc"
   | "step3Title"
   | "stepsTitle"

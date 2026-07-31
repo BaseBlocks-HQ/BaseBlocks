@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Check, Search } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import {
   AnimatePresence,
   motion,
@@ -11,10 +11,10 @@ import { useEffect, useRef, useState } from "react";
 
 const QUERY = "Product handbook";
 const PAGES = [
-  { label: "Overview", path: "/" },
-  { label: "Product handbook", path: "/handbook" },
-  { label: "Resources", path: "/resources" },
-  { label: "Launch notes", path: "/launch-notes" },
+  { icon: "🏠", label: "Overview" },
+  { icon: "📘", label: "Product handbook" },
+  { icon: "📚", label: "Resources" },
+  { icon: "🚀", label: "Launch notes" },
 ] as const;
 const EASE = [0.23, 1, 0.32, 1] as const;
 
@@ -84,9 +84,6 @@ export function StepOneMotion() {
           </span>
         </div>
         <div className="step-connect-actions">
-          <span>
-            <Search aria-hidden="true" />
-          </span>
           <motion.i
             animate={{ scale: scene === "building" ? 0.88 : 1 }}
             transition={{ duration: 0.2, ease: EASE }}
@@ -105,22 +102,19 @@ export function StepOneMotion() {
             initial={{ opacity: 0, x: "-50%", y: 14 }}
             transition={{ duration: 0.45, ease: EASE }}
           >
-            {PAGES.map(({ label, path }, index) => (
+            {PAGES.map(({ icon, label }, index) => (
               <motion.div
                 animate={{ opacity: 1, x: 0 }}
                 initial={{ opacity: 0, x: -8 }}
-                key={path}
+                key={label}
                 transition={{
                   delay: 0.12 + index * 0.11,
                   duration: 0.38,
                   ease: EASE,
                 }}
               >
-                <span>{path}</span>
-                <small>{label}</small>
-                <i>
-                  <Check aria-hidden="true" />
-                </i>
+                <span className="step-connect-page-icon">{icon}</span>
+                <span className="step-connect-page-title">{label}</span>
               </motion.div>
             ))}
           </motion.div>

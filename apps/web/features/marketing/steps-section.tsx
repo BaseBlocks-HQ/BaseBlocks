@@ -1,7 +1,6 @@
 import { StepRailPattern } from "./step-rail-pattern";
 import { StepOneMotion } from "./step-one-motion";
 import { StepThreeMotion } from "./step-three-motion";
-import { StepTwoMotion } from "./step-two-motion";
 
 type TranslateFn = (key: string) => string;
 
@@ -12,10 +11,6 @@ const steps: readonly {
   {
     titleKey: "step1Title",
     descKey: "step1Desc",
-  },
-  {
-    titleKey: "step2Title",
-    descKey: "step2Desc",
   },
   {
     titleKey: "step3Title",
@@ -57,13 +52,7 @@ export function StepsSection({ landingTranslations }: StepsSectionProps) {
                 className="landing-step-visual landing-step-visual-motion"
                 aria-hidden="true"
               >
-                {index === 0 ? (
-                  <StepOneMotion />
-                ) : index === 1 ? (
-                  <StepTwoMotion />
-                ) : index === 2 ? (
-                  <StepThreeMotion />
-                ) : null}
+                {index === 0 ? <StepOneMotion /> : <StepThreeMotion />}
               </div>
             </article>
           ))}

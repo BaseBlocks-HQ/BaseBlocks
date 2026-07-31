@@ -1,7 +1,7 @@
 "use client";
 
 import createGlobe, { type Arc, type Marker } from "cobe";
-import { ArrowUp, Check, Globe2, LockKeyhole } from "lucide-react";
+import { ArrowUpRight, Check, Globe2, LockKeyhole, Radio } from "lucide-react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
@@ -45,6 +45,18 @@ const deploymentArcs: readonly Arc[] = [
   { from: [1.3521, 103.8198], to: [-33.8688, 151.2093] },
 ];
 
+const analyticsChartPoints = [
+  { date: "Jul 8", x: 72, y: 70 },
+  { date: "Jul 14", x: 144, y: 52 },
+  { date: "Jul 20", x: 216, y: 59 },
+  { date: "Jul 26", x: 288, y: 34 },
+] as const;
+
+const analyticsChartLine = analyticsChartPoints
+  .map(({ x, y }) => `${x},${y}`)
+  .join(" ");
+const analyticsChartArea = `72,100 ${analyticsChartLine} 288,100`;
+
 export function StepThreeMotion() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.35 });
@@ -85,29 +97,35 @@ export function StepThreeMotion() {
           x: "-50%",
           y: publishVisible ? "-50%" : "calc(-50% - 6px)",
         }}
-        className="step-publish-choice"
+        className="step-publish-panel"
         transition={{ duration: 0.48, ease: EASE }}
       >
-        <span className="step-publish-question">Who can open this site?</span>
+        <header>
+          <strong>Publish site</strong>
+        </header>
+        <span className="step-publish-visibility-label">Visibility</span>
         <div className="step-publish-options">
           <VisibilityOption
             active={!publicSelected}
+            description="Workspace members"
             icon={<LockKeyhole aria-hidden="true" />}
             label="Team"
           />
           <VisibilityOption
             active={publicSelected}
+            description="Anyone with the link"
             icon={<Globe2 aria-hidden="true" />}
             label="Public"
           />
         </div>
-        <motion.i
-          animate={{ scale: publishing ? 0.9 : 1 }}
-          className={publishing ? "is-publishing" : ""}
+        <motion.div
+          animate={{ scale: publishing ? 0.96 : 1 }}
+          className="step-publish-action"
           transition={{ duration: 0.24, ease: EASE }}
         >
-          {publishing ? <span /> : <ArrowUp aria-hidden="true" />}
-        </motion.i>
+          {publishing ? <i /> : <Globe2 aria-hidden="true" />}
+          <span>{publishing ? "Publishing…" : "Publish site"}</span>
+        </motion.div>
       </motion.div>
 
       <motion.div
@@ -141,46 +159,117 @@ export function StepThreeMotion() {
           x: chartVisible ? "-50%" : "calc(-50% + 8px)",
           y: "-50%",
         }}
-        className={`step-publish-chart ${chartVisible ? "is-visible" : ""}`}
+        className={`step-publish-analytics ${chartVisible ? "is-visible" : ""}`}
         transition={{ duration: 0.58, ease: EASE }}
       >
-        <div>
-          <span>Readers</span>
-          <small>Last 30 days</small>
+        <header>
+          <strong>Analytics</strong>
+        </header>
+        <div className="step-publish-metrics">
+          <AnalyticsMetric label="Visitors" value="1,842" change="12%" />
+          <AnalyticsMetric label="Page views" value="4,921" change="18%" />
+          <div>
+            <span>Online now</span>
+            <div>
+              <strong>24</strong>
+              <Radio aria-hidden="true" />
+            </div>
+          </div>
         </div>
-        <strong>1,842</strong>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 300 104"
-          preserveAspectRatio="none"
-        >
-          <path
-            className="step-publish-chart-area"
-            d="M0 97 C27 93 48 82 76 85 S115 63 145 70 S186 45 214 51 S258 20 300 25 L300 104 L0 104 Z"
-          />
-          <path
-            className="step-publish-chart-line"
-            d="M0 97 C27 93 48 82 76 85 S115 63 145 70 S186 45 214 51 S258 20 300 25"
-          />
-        </svg>
+        <div className="step-publish-traffic">
+          <div className="step-publish-traffic-header">
+            <div>
+              <span>Traffic over time</span>
+              <small>Page views · Last 7 days</small>
+            </div>
+          </div>
+          <svg aria-hidden="true" viewBox="0 0 360 126">
+            <defs>
+              <linearGradient
+                id="step-publish-traffic-fill"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0.16" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[18, 45, 72, 100].map((y) => (
+              <line
+                key={y}
+                className="step-publish-grid-line"
+                x1="72"
+                x2="288"
+                y1={y}
+                y2={y}
+              />
+            ))}
+            <polygon
+              className="step-publish-chart-area"
+              points={analyticsChartArea}
+            />
+            <polyline
+              className="step-publish-chart-line"
+              points={analyticsChartLine}
+            />
+            {analyticsChartPoints.map(({ date, x, y }) => (
+              <circle key={date} cx={x} cy={y} r="2.5" />
+            ))}
+            {analyticsChartPoints.map(({ date, x }) => (
+              <text key={date} x={x} y="121" textAnchor="middle">
+                {date}
+              </text>
+            ))}
+          </svg>
+        </div>
       </motion.div>
     </motion.div>
   );
 }
 
+function AnalyticsMetric({
+  change,
+  label,
+  value,
+}: {
+  change: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <span>{label}</span>
+      <div>
+        <strong>{value}</strong>
+        <small>
+          <ArrowUpRight aria-hidden="true" />
+          {change}
+        </small>
+      </div>
+    </div>
+  );
+}
+
 function VisibilityOption({
   active,
+  description,
   icon,
   label,
 }: {
   active: boolean;
+  description: string;
   icon: ReactNode;
   label: string;
 }) {
   return (
     <span className={active ? "is-active" : ""}>
-      {icon}
-      {label}
+      <i>{icon}</i>
+      <span>
+        <strong>{label}</strong>
+        <small>{description}</small>
+      </span>
     </span>
   );
 }

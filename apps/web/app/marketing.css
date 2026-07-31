@@ -1252,45 +1252,60 @@
   letter-spacing: -0.01875rem;
 }
 
-.step-publish-choice {
+.step-publish-panel {
   position: absolute;
   z-index: 3;
   top: 50%;
   left: 50%;
   display: grid;
-  width: min(18.75rem, calc(100% - 7.5rem));
-  min-height: 5.625rem;
-  align-content: space-between;
-  gap: 0.65rem;
-  padding: 0.65rem 3rem 0.65rem 0.75rem;
-  border-radius: 0.75rem;
+  width: min(21rem, calc(100% - 5rem));
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border-radius: 0.875rem;
   background: var(--background);
   box-shadow:
     inset 0 0 0 1px var(--landing-line-strong),
-    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent),
+    0 1rem 2.5rem color-mix(in oklab, #000 7%, transparent);
 }
 
-.step-publish-question {
+.step-publish-panel > header {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.step-publish-panel > header strong {
+  color: var(--foreground);
+  font-size: 0.75rem;
+  font-weight: 560;
+}
+
+.step-publish-visibility-label {
   color: var(--muted-foreground);
-  font-size: 0.8125rem;
-  line-height: 1rem;
+  font-size: 0.55rem;
+}
+
+.step-publish-visibility-label {
+  margin-top: 0.1rem;
+  font-weight: 520;
 }
 
 .step-publish-options {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.375rem;
 }
 
 .step-publish-options > span {
   display: flex;
-  height: 1.625rem;
+  min-width: 0;
+  min-height: 2.75rem;
   align-items: center;
-  gap: 0.35rem;
-  padding-inline: 0.5rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
   border: 1px solid var(--landing-line);
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
   color: var(--muted-foreground);
-  font-size: 0.6875rem;
   transition:
     color 300ms cubic-bezier(0.23, 1, 0.32, 1),
     background-color 300ms cubic-bezier(0.23, 1, 0.32, 1),
@@ -1304,33 +1319,59 @@
   color: var(--foreground);
 }
 
-.step-publish-options svg {
+.step-publish-options > span > i {
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  font-style: normal;
+}
+
+.step-publish-options > span > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.step-publish-options strong {
+  color: currentcolor;
+  font-size: 0.625rem;
+  font-weight: 550;
+}
+
+.step-publish-options small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.46rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-publish-options svg,
+.step-publish-action svg {
   width: 0.7rem;
   height: 0.7rem;
   stroke-width: 1.6;
 }
 
-.step-publish-choice > i {
-  position: absolute;
-  right: 0.625rem;
-  bottom: 0.625rem;
-  display: grid;
-  width: 1.625rem;
-  height: 1.625rem;
-  place-items: center;
-  border-radius: 0.5rem;
+.step-publish-action {
+  display: flex;
+  min-height: 1.75rem;
+  align-items: center;
+  justify-self: end;
+  gap: 0.35rem;
+  padding-inline: 0.65rem;
+  border-radius: 999px;
   background: var(--foreground);
   color: var(--background);
-  font-style: normal;
+  font-size: 0.55rem;
+  font-weight: 550;
 }
 
-.step-publish-choice > i svg {
-  width: 0.75rem;
-  height: 0.75rem;
-  stroke-width: 1.6;
-}
-
-.step-publish-choice > i > span,
+.step-publish-action > i,
 .step-publish-live > i {
   width: 0.55rem;
   height: 0.55rem;
@@ -1366,7 +1407,7 @@
   align-items: center;
   gap: 0.5rem;
   padding-inline: 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: 999px;
   background: color-mix(in oklab, var(--background) 94%, transparent);
   box-shadow:
     inset 0 0 0 1px var(--landing-line-strong),
@@ -1382,54 +1423,140 @@
   stroke-width: 1.8;
 }
 
-.step-publish-chart {
+.step-publish-analytics {
   position: absolute;
   z-index: 3;
   top: 50%;
   left: 50%;
-  width: min(18.75rem, calc(100% - 7.5rem));
-  padding: 0;
+  display: grid;
+  width: min(28rem, calc(100% - 2rem));
+  padding: 0.75rem;
   overflow: hidden;
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   background: var(--background);
   box-shadow:
     inset 0 0 0 1px var(--landing-line-strong),
-    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent);
+    inset 0 0 0 2px color-mix(in oklab, var(--foreground) 2.4%, transparent),
+    0 1.5rem 3.5rem color-mix(in oklab, #000 7%, transparent);
 }
 
-.step-publish-chart > div {
+.step-publish-analytics > header {
   display: flex;
+  grid-column: 1 / -1;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0.75rem 0;
-  color: var(--muted-foreground);
-  font-size: 0.6875rem;
+  padding: 0.125rem;
+  border: 0;
 }
 
-.step-publish-chart > div small {
-  font-size: inherit;
-}
-
-.step-publish-chart > strong {
-  display: block;
-  margin: 0.25rem 0.75rem 0;
+.step-publish-analytics > header strong {
   color: var(--foreground);
-  font-size: 1.625rem;
+  font-size: 0.6875rem;
+  font-weight: 550;
+}
+
+.step-publish-metrics {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.step-publish-metrics > div {
+  min-width: 0;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: color-mix(in oklab, var(--foreground) 3%, transparent);
+}
+
+.step-publish-metrics > div > span {
+  color: var(--muted-foreground);
+  font-size: 0.5rem;
+}
+
+.step-publish-metrics > div > div {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+.step-publish-metrics strong {
+  color: var(--foreground);
+  font-size: 1rem;
   font-weight: 450;
   letter-spacing: -0.04em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.step-publish-chart svg {
+.step-publish-metrics small {
+  display: flex;
+  align-items: center;
+  color: oklch(0.61 0.16 152);
+  font-size: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-publish-metrics svg {
+  width: 0.55rem;
+  height: 0.55rem;
+  stroke-width: 1.8;
+}
+
+.step-publish-metrics > div:last-child svg {
+  color: oklch(0.67 0.17 152);
+}
+
+.step-publish-traffic {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.625rem;
+}
+
+.step-publish-traffic-header {
+  display: grid;
+}
+
+.step-publish-traffic-header > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.step-publish-traffic-header span {
+  color: var(--foreground);
+  font-size: 0.55rem;
+  font-weight: 520;
+}
+
+.step-publish-traffic-header small {
+  margin-inline-start: 0.125rem;
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+  font-size: 0.45rem;
+  font-weight: 450;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-publish-traffic > svg {
   display: block;
   width: 100%;
-  height: 7rem;
-  margin-top: 0.5rem;
+  height: auto;
+  aspect-ratio: 360 / 126;
+  margin-top: 0.1rem;
   overflow: visible;
+  color: var(--foreground);
+}
+
+.step-publish-grid-line {
+  stroke: var(--landing-line);
+  stroke-dasharray: 3 5;
+  stroke-width: 1;
 }
 
 .step-publish-chart-area {
-  fill: color-mix(in oklab, var(--foreground) 6%, transparent);
+  fill: url("#step-publish-traffic-fill");
   opacity: 0;
   transition: opacity 700ms cubic-bezier(0.23, 1, 0.32, 1) 180ms;
 }
@@ -1440,15 +1567,31 @@
   stroke-dasharray: 360;
   stroke-dashoffset: 360;
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-width: 1.35;
   transition: stroke-dashoffset 1200ms cubic-bezier(0.23, 1, 0.32, 1) 120ms;
 }
 
-.step-publish-chart.is-visible .step-publish-chart-area {
+.step-publish-traffic circle {
+  fill: var(--background);
+  stroke: var(--foreground);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: opacity 500ms ease-out 650ms;
+}
+
+.step-publish-traffic text {
+  fill: color-mix(in oklab, var(--foreground) 34%, transparent);
+  font-size: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-publish-analytics.is-visible .step-publish-chart-area,
+.step-publish-analytics.is-visible .step-publish-traffic circle {
   opacity: 1;
 }
 
-.step-publish-chart.is-visible .step-publish-chart-line {
+.step-publish-analytics.is-visible .step-publish-chart-line {
   stroke-dashoffset: 0;
 }
 
@@ -2047,21 +2190,15 @@
 .step-connect-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
-.step-connect-actions > span,
 .step-connect-actions > i {
   display: grid;
   width: 1.65rem;
   height: 1.65rem;
   place-items: center;
   border-radius: 0.45rem;
-}
-
-.step-connect-actions > span {
-  border: 1px solid var(--landing-line);
-  color: var(--muted-foreground);
 }
 
 .step-connect-actions > i {
@@ -2086,44 +2223,36 @@
 
 .step-connect-results > div {
   display: flex;
-  height: 2rem;
+  min-height: 2.125rem;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--landing-line);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.375rem;
 }
 
-.step-connect-results > div > span {
+.step-connect-page-icon {
+  width: 1.5rem;
+  flex: 0 0 auto;
+  font-size: 1.05rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.step-connect-page-title {
   min-width: 0;
-  flex: 1;
-  color: var(--muted-foreground);
-  font-size: 0.8125rem;
-  line-height: 1rem;
   overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--foreground) 28%,
+    transparent
+  );
   text-overflow: ellipsis;
+  text-underline-offset: 0.18em;
   white-space: nowrap;
-}
-
-.step-connect-results > div > small {
-  color: var(--muted-foreground);
-  font-size: 0.625rem;
-  opacity: 0.62;
-}
-
-.step-connect-results > div > i {
-  display: grid;
-  width: 1rem;
-  height: 1rem;
-  place-items: center;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--foreground) 7%, transparent);
-  color: var(--muted-foreground);
-  font-style: normal;
-}
-
-.step-connect-results > div > i svg {
-  width: 0.55rem;
-  height: 0.55rem;
-  stroke-width: 1.7;
 }
 
 .step-audit-scene {
@@ -2432,8 +2561,8 @@
 
   .step-connect-composer,
   .step-connect-results,
-  .step-publish-choice,
-  .step-publish-chart {
+  .step-publish-panel,
+  .step-publish-analytics {
     width: calc(100% - 1.5rem);
   }
 
