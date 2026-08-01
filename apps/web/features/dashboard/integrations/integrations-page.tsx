@@ -1,5 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowUpRight01Icon,
+  Loading03Icon,
+  PlugSocketIcon,
+  Refresh01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardList,
@@ -27,13 +35,6 @@ import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useAction, useQuery } from "convex/react";
-import {
-  ArrowUpRight,
-  Check,
-  LoaderCircle,
-  RefreshCw,
-  Unplug,
-} from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -83,14 +84,14 @@ function ConnectionStatus({
     ) {
       return (
         <Badge variant="secondary">
-          <LoaderCircle className="animate-spin" />
+          <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
           {t("status.syncing")}
         </Badge>
       );
     }
     return (
       <Badge variant="secondary">
-        <Check />
+        <HugeiconsIcon icon={Tick01Icon} />
         {t("status.connected")}
       </Badge>
     );
@@ -162,9 +163,9 @@ function ConnectionCard({
               variant="outline"
             >
               {busy ? (
-                <LoaderCircle className="animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
               ) : (
-                <ArrowUpRight />
+                <HugeiconsIcon icon={ArrowUpRight01Icon} />
               )}
               {t("actions.continue")}
             </Button>
@@ -176,7 +177,11 @@ function ConnectionCard({
               size="sm"
               variant="outline"
             >
-              {busy ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
+              {busy ? (
+                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
+              ) : (
+                <HugeiconsIcon icon={Refresh01Icon} />
+              )}
               {t("actions.reconnect")}
             </Button>
           ) : null}
@@ -188,7 +193,11 @@ function ConnectionCard({
               size="sm"
               variant="outline"
             >
-              {busy ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
+              {busy ? (
+                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
+              ) : (
+                <HugeiconsIcon icon={Refresh01Icon} />
+              )}
               {t("actions.retrySync")}
             </Button>
           ) : null}
@@ -196,7 +205,7 @@ function ConnectionCard({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button disabled={busy} size="sm" variant="ghost">
-                  <Unplug />
+                  <HugeiconsIcon icon={PlugSocketIcon} />
                   {t("actions.disconnect")}
                 </Button>
               </AlertDialogTrigger>
@@ -394,9 +403,12 @@ export function IntegrationsPage({
                           size="sm"
                         >
                           {busy ? (
-                            <LoaderCircle className="animate-spin" />
+                            <HugeiconsIcon
+                              icon={Loading03Icon}
+                              className="animate-spin"
+                            />
                           ) : (
-                            <ArrowUpRight />
+                            <HugeiconsIcon icon={ArrowUpRight01Icon} />
                           )}
                           {t("actions.connect")}
                         </Button>

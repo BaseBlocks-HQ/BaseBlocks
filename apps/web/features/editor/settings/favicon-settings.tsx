@@ -1,9 +1,15 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete01Icon,
+  Image01Icon,
+  Loading02Icon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
-import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -62,7 +68,7 @@ export function FaviconSettings({
         </div>
       ) : (
         <div className="flex size-8 items-center justify-center rounded-md border border-dashed border-border/70 bg-muted/20 text-muted-foreground">
-          <ImageIcon className="size-3.5" />
+          <HugeiconsIcon icon={Image01Icon} className="size-3.5" />
         </div>
       )}
       <Button
@@ -75,9 +81,9 @@ export function FaviconSettings({
         aria-label={favicon ? "Replace favicon" : "Upload favicon"}
       >
         {uploadState.isUploading ? (
-          <Loader2 className="size-3 animate-spin" />
+          <HugeiconsIcon icon={Loading02Icon} className="size-3 animate-spin" />
         ) : (
-          <Upload className="size-3" />
+          <HugeiconsIcon icon={Upload01Icon} className="size-3" />
         )}
       </Button>
       <Button
@@ -89,7 +95,7 @@ export function FaviconSettings({
         disabled={!favicon || uploadState.isUploading}
         aria-label="Remove favicon"
       >
-        <Trash2 className="size-3.5" />
+        <HugeiconsIcon icon={Delete01Icon} className="size-3.5" />
       </Button>
     </div>
   );

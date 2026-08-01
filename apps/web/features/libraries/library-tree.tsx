@@ -1,5 +1,19 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  Delete01Icon,
+  Download01Icon,
+  DragDropVerticalIcon,
+  File01Icon,
+  Folder01Icon,
+  FolderAddIcon,
+  Link01Icon,
+  PencilEdit01Icon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
 import type { FolderId, LibraryEntity } from "@/features/libraries/model";
 import { InlineRename } from "@/components/tree/inline-rename";
 import {
@@ -16,19 +30,6 @@ import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Download,
-  File,
-  Folder,
-  FolderPlus,
-  GripVertical,
-  Link,
-  Pencil,
-  Trash2,
-  Upload,
-} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -157,7 +158,7 @@ export function LibraryTree(props: {
                 disabled={props.uploadDisabled}
                 onClick={props.onUploadFiles}
               >
-                <Upload />
+                <HugeiconsIcon icon={Upload01Icon} />
               </Button>
               <Button
                 size="icon-xs"
@@ -170,7 +171,7 @@ export function LibraryTree(props: {
                   )
                 }
               >
-                <FolderPlus />
+                <HugeiconsIcon icon={FolderAddIcon} />
               </Button>
             </div>
           ) : null}
@@ -288,18 +289,18 @@ function LibraryTreeRow({
           onClick={onToggle}
         >
           {expanded ? (
-            <ChevronDown className="size-4" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
           ) : (
-            <ChevronRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
           )}
         </button>
       ) : (
         <span className="w-4" />
       )}
       {folder ? (
-        <Folder className="size-4 shrink-0" />
+        <HugeiconsIcon icon={Folder01Icon} className="size-4 shrink-0" />
       ) : (
-        <File className="size-4 shrink-0" />
+        <HugeiconsIcon icon={File01Icon} className="size-4 shrink-0" />
       )}
       {renaming ? (
         <InlineRename
@@ -326,7 +327,7 @@ function LibraryTreeRow({
             aria-label={`Move ${node.label}`}
             className="relative z-30 flex size-7 cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
           >
-            <GripVertical className="size-3.5" />
+            <HugeiconsIcon icon={DragDropVerticalIcon} className="size-3.5" />
           </button>
         ) : null}
         {!folder ? (
@@ -336,7 +337,7 @@ function LibraryTreeRow({
             aria-label="Copy link"
             onClick={onCopy}
           >
-            <Link />
+            <HugeiconsIcon icon={Link01Icon} />
           </Button>
         ) : null}
         {!folder && allowDownloads ? (
@@ -346,7 +347,7 @@ function LibraryTreeRow({
             aria-label="Download"
             onClick={onDownload}
           >
-            <Download />
+            <HugeiconsIcon icon={Download01Icon} />
           </Button>
         ) : null}
         {canManage ? (
@@ -357,7 +358,7 @@ function LibraryTreeRow({
               aria-label="Rename"
               onClick={onRename}
             >
-              <Pencil />
+              <HugeiconsIcon icon={PencilEdit01Icon} />
             </Button>
             <Button
               size="icon-xs"
@@ -365,7 +366,7 @@ function LibraryTreeRow({
               aria-label="Delete"
               onClick={onDelete}
             >
-              <Trash2 />
+              <HugeiconsIcon icon={Delete01Icon} />
             </Button>
           </>
         ) : null}
@@ -479,7 +480,10 @@ function LibraryDragPreview({ entity }: { entity: LibraryEntity }) {
     entity.kind === "folder" ? entity.folder.name : entity.file.filename;
   return (
     <div className="flex h-9 max-w-64 items-center gap-2 rounded-lg border bg-background px-3 text-sm shadow-xl">
-      <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
+      <HugeiconsIcon
+        icon={DragDropVerticalIcon}
+        className="size-3.5 shrink-0 text-muted-foreground"
+      />
       <span className="truncate">{label}</span>
     </div>
   );

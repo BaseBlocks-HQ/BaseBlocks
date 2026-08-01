@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  InboxIcon,
+  Loading02Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
@@ -24,7 +31,6 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { Check, Inbox, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useEffectEvent, useReducer, useState } from "react";
 
@@ -263,7 +269,8 @@ export function InvitationInbox({
 
       {!isLoading && invitations.length === 0 ? (
         <div className="py-6 text-center">
-          <Inbox
+          <HugeiconsIcon
+            icon={InboxIcon}
             className="mx-auto mb-2 h-10 w-10 text-sidebar-foreground/35"
             strokeWidth={SIDEBAR_ICON_STROKE}
           />
@@ -314,10 +321,16 @@ export function InvitationInbox({
                     disabled={processingId === invitation.id}
                   >
                     {processingId === invitation.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <HugeiconsIcon
+                        icon={Loading02Icon}
+                        className="h-4 w-4 animate-spin"
+                      />
                     ) : (
                       <>
-                        <Check className="h-4 w-4 shrink-0" />
+                        <HugeiconsIcon
+                          icon={Tick01Icon}
+                          className="h-4 w-4 shrink-0"
+                        />
                         {t("accept")}
                       </>
                     )}
@@ -329,7 +342,10 @@ export function InvitationInbox({
                     onClick={() => setDeclineTarget(invitation)}
                     disabled={processingId === invitation.id}
                   >
-                    <X className="h-4 w-4 shrink-0" />
+                    <HugeiconsIcon
+                      icon={Cancel01Icon}
+                      className="h-4 w-4 shrink-0"
+                    />
                     {t("decline")}
                   </Button>
                 </div>
@@ -347,13 +363,17 @@ export function InvitationInbox({
 
   const headerTitle = (
     <span className="flex items-center gap-2">
-      <Inbox
+      <HugeiconsIcon
+        icon={InboxIcon}
         className="h-5 w-5 shrink-0 text-muted-foreground"
         strokeWidth={SIDEBAR_ICON_STROKE}
       />
       <span>{t("title")}</span>
       {isLoading ? (
-        <Loader2 className="h-4 w-4 shrink-0 animate-spin text-sidebar-foreground/50" />
+        <HugeiconsIcon
+          icon={Loading02Icon}
+          className="h-4 w-4 shrink-0 animate-spin text-sidebar-foreground/50"
+        />
       ) : null}
     </span>
   );
@@ -362,13 +382,17 @@ export function InvitationInbox({
     return (
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <Inbox
+          <HugeiconsIcon
+            icon={InboxIcon}
             className="h-5 w-5 text-muted-foreground"
             strokeWidth={SIDEBAR_ICON_STROKE}
           />
           <h3 className="font-medium">{t("title")}</h3>
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <HugeiconsIcon
+              icon={Loading02Icon}
+              className="h-4 w-4 animate-spin text-muted-foreground"
+            />
           ) : null}
           {invitations.length > 0 ? (
             <Badge
@@ -409,7 +433,8 @@ export function InvitationInbox({
                 fullWidthTriggerClassName,
               )}
             >
-              <Inbox
+              <HugeiconsIcon
+                icon={InboxIcon}
                 className="size-3.5 text-muted-foreground"
                 strokeWidth={SIDEBAR_ICON_STROKE}
               />
@@ -430,7 +455,8 @@ export function InvitationInbox({
               size="icon"
               className="relative"
             >
-              <Inbox
+              <HugeiconsIcon
+                icon={InboxIcon}
                 className="h-4 w-4 text-muted-foreground"
                 strokeWidth={SIDEBAR_ICON_STROKE}
               />

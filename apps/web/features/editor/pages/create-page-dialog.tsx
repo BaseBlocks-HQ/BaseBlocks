@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01Icon } from "@hugeicons/core-free-icons";
 import {
   SLUG_PATTERN,
   generateSlug,
@@ -19,7 +21,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation, useQuery } from "convex/react";
-import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -132,7 +133,7 @@ export function CreatePageDialog({
         <DialogTrigger asChild>
           {trigger ?? (
             <Button variant="ghost" size="icon" className="h-6 w-6">
-              <Plus className="h-4 w-4" />
+              <HugeiconsIcon icon={Add01Icon} className="h-4 w-4" />
             </Button>
           )}
         </DialogTrigger>

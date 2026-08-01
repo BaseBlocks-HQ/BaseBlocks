@@ -1,5 +1,11 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  MoreHorizontalIcon,
+  Shield01Icon,
+  UserMinus01Icon,
+} from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth/client";
 import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import {
@@ -37,7 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { MoreHorizontal, Shield, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -196,7 +201,7 @@ export function MemberActions({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+            <HugeiconsIcon icon={MoreHorizontalIcon} className="h-4 w-4" />
             <span className="sr-only">{t("member.actions")}</span>
           </Button>
         </DropdownMenuTrigger>
@@ -211,7 +216,7 @@ export function MemberActions({
               }))
             }
           >
-            <Shield className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={Shield01Icon} className="mr-2 h-4 w-4" />
             {t("actions.changeRole")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -224,7 +229,7 @@ export function MemberActions({
               }))
             }
           >
-            <UserMinus className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={UserMinus01Icon} className="mr-2 h-4 w-4" />
             {t("actions.removeMember")}
           </DropdownMenuItem>
         </DropdownMenuContent>

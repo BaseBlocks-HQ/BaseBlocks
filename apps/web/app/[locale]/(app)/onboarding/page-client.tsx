@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { EarthIcon } from "@hugeicons/core-free-icons";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
@@ -24,7 +26,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
-import { Earth } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -89,7 +90,11 @@ export function OnboardingPageClient() {
               title={t("language.select")}
               variant="ghost"
             >
-              <Earth className="h-4 w-4" strokeWidth={1.75} />
+              <HugeiconsIcon
+                icon={EarthIcon}
+                className="h-4 w-4"
+                strokeWidth={1.75}
+              />
               <span className="sr-only">{t("language.select")}</span>
             </Button>
           </DropdownMenuTrigger>

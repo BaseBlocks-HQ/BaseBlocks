@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  Loading02Icon,
+  PanelLeftIcon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   LIBRARY_FILE_SEARCH_PARAM,
   buildLibraryExplorerModel,
@@ -31,7 +38,6 @@ import {
 } from "@baseblocks/ui/resizable";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation } from "convex/react";
-import { Loader2, PanelLeft, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -97,9 +103,15 @@ function UploadDropzone({
               )}
             >
               {isDragReject ? (
-                <X className="h-3.5 w-3.5 shrink-0 opacity-90" />
+                <HugeiconsIcon
+                  icon={Cancel01Icon}
+                  className="h-3.5 w-3.5 shrink-0 opacity-90"
+                />
               ) : (
-                <Upload className="h-3.5 w-3.5 shrink-0 text-primary opacity-90" />
+                <HugeiconsIcon
+                  icon={Upload01Icon}
+                  className="h-3.5 w-3.5 shrink-0 text-primary opacity-90"
+                />
               )}
               <span className="truncate">
                 {isDragReject ? "File is too large" : "Drop to upload"}
@@ -116,7 +128,8 @@ function UploadDropzone({
           <div className="absolute inset-x-0 bottom-3 flex justify-center px-3">
             <div className="flex min-w-[11.5rem] max-w-[min(100%,20rem)] flex-col gap-2 rounded-2xl border border-border/80 bg-popover/95 px-3.5 py-2.5 text-xs text-popover-foreground shadow-md backdrop-blur-sm">
               <div className="flex items-center gap-2.5 font-medium tabular-nums">
-                <Loader2
+                <HugeiconsIcon
+                  icon={Loading02Icon}
                   className="h-3.5 w-3.5 shrink-0 animate-spin text-primary"
                   aria-hidden
                 />
@@ -432,7 +445,7 @@ export function LibraryExplorer({
       leadingActions={
         <div className="md:hidden">
           <ToolbarButton label="Files" onClick={() => setTreeDrawerOpen(true)}>
-            <PanelLeft className="h-4 w-4" />
+            <HugeiconsIcon icon={PanelLeftIcon} className="h-4 w-4" />
           </ToolbarButton>
         </div>
       }

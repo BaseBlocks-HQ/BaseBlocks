@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon, LockIcon } from "@hugeicons/core-free-icons";
 import { PublicSiteShell } from "@/features/published-sites/shell";
 import { getDisplayDomain } from "@/features/published-sites/urls";
 import { getMarketingSiteUrl } from "@/lib/seo/site-url";
@@ -8,7 +10,6 @@ import type {
   PublishedPageResult,
 } from "./read-model";
 import { Button } from "@baseblocks/ui/button";
-import { ArrowRight, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type Props = {
@@ -122,7 +123,10 @@ function PrivateSiteGate({
   return (
     <CenteredState>
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        <Lock className="h-8 w-8 text-muted-foreground" />
+        <HugeiconsIcon
+          icon={LockIcon}
+          className="h-8 w-8 text-muted-foreground"
+        />
       </div>
       <h1 className="text-2xl font-semibold tracking-tight">
         {kind === "forbidden"
@@ -140,13 +144,13 @@ function PrivateSiteGate({
         <Button asChild>
           <a href={privateAccessUrl}>
             {t("privateSiteOpenSecureUrl")}
-            <ArrowRight className="size-4" />
+            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
           </a>
         </Button>
       ) : kind === "authentication-required" ? (
         <Button onClick={openSignIn}>
           {t("privateSiteSignIn")}
-          <ArrowRight className="size-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
         </Button>
       ) : (
         <Button asChild variant="outline">

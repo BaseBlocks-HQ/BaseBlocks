@@ -1,5 +1,15 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Clock03Icon,
+  FileClockIcon,
+  Globe02Icon,
+  InformationCircleIcon,
+  Loading03Icon,
+  RotateLeft01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { api, type Id } from "@baseblocks/backend";
 import {
   AlertDialog,
@@ -39,15 +49,6 @@ import {
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Check,
-  Clock3,
-  FileClock,
-  Globe2,
-  Info,
-  LoaderCircle,
-  RotateCcw,
-} from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -155,9 +156,9 @@ export function PublishDialog({
               size="sm"
             >
               {publishing ? (
-                <LoaderCircle className="animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
               ) : (
-                <Globe2 />
+                <HugeiconsIcon icon={Globe02Icon} />
               )}
               {draftStatus.liveRelease ? "Publish changes" : "Publish site"}
             </Button>
@@ -172,7 +173,7 @@ function ChangeList({ changes }: { changes: DraftChange[] }) {
   if (changes.length === 0) {
     return (
       <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/55 p-3 text-sm text-sidebar-foreground/60">
-        <Check className="size-4" />
+        <HugeiconsIcon icon={Tick01Icon} className="size-4" />
         No unpublished changes
       </div>
     );
@@ -235,7 +236,7 @@ function VersionComparison({
   if (changes.length === 0) {
     return (
       <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/55 p-3 text-sm text-sidebar-foreground/60">
-        <Check className="size-4" />
+        <HugeiconsIcon icon={Tick01Icon} className="size-4" />
         No differences from the previous version
       </div>
     );
@@ -437,7 +438,10 @@ export function HistoryDialog({
                     ref={historyTitleRef}
                     tabIndex={-1}
                   >
-                    <FileClock className="size-4 shrink-0" />
+                    <HugeiconsIcon
+                      className="size-4 shrink-0"
+                      icon={FileClockIcon}
+                    />
                     <span className="truncate">Version history</span>
                   </DialogTitle>
                   <Tooltip>
@@ -446,7 +450,10 @@ export function HistoryDialog({
                         className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         type="button"
                       >
-                        <Info className="size-3.5" />
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          className="size-3.5"
+                        />
                         <span className="sr-only">About version history</span>
                       </button>
                     </TooltipTrigger>
@@ -462,7 +469,10 @@ export function HistoryDialog({
                   <SidebarGroupContent>
                     {releases === undefined ? (
                       <div className="grid min-h-32 place-items-center">
-                        <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+                        <HugeiconsIcon
+                          icon={Loading03Icon}
+                          className="size-5 animate-spin text-muted-foreground"
+                        />
                       </div>
                     ) : releases.length === 0 ? (
                       <p className="p-2 text-sm text-muted-foreground">
@@ -478,7 +488,10 @@ export function HistoryDialog({
                               isActive={selected?._id === release._id}
                               onClick={() => setSelectedId(release._id)}
                             >
-                              <Clock3 className="mt-0.5 text-muted-foreground" />
+                              <HugeiconsIcon
+                                icon={Clock03Icon}
+                                className="mt-0.5 text-muted-foreground"
+                              />
                               <span className="min-w-0 flex-1">
                                 <span className="flex items-center gap-1.5 font-medium">
                                   Version {release.number}
@@ -515,7 +528,10 @@ export function HistoryDialog({
                     </div>
                     {details === undefined ? (
                       <div className="grid min-h-28 place-items-center">
-                        <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+                        <HugeiconsIcon
+                          icon={Loading03Icon}
+                          className="size-5 animate-spin text-muted-foreground"
+                        />
                       </div>
                     ) : (
                       <VersionComparison
@@ -536,7 +552,7 @@ export function HistoryDialog({
                       size="sm"
                       variant="outline"
                     >
-                      <RotateCcw />
+                      <HugeiconsIcon icon={RotateLeft01Icon} />
                       Restore as draft
                     </Button>
                     {!selected.isLive ? (
@@ -545,7 +561,7 @@ export function HistoryDialog({
                         onClick={() => setConfirmAction("live")}
                         size="sm"
                       >
-                        <Globe2 />
+                        <HugeiconsIcon icon={Globe02Icon} />
                         Set as live
                       </Button>
                     ) : null}
@@ -594,7 +610,9 @@ export function HistoryDialog({
               onClick={() => void runConfirmedAction()}
               size="sm"
             >
-              {working ? <LoaderCircle className="animate-spin" /> : null}
+              {working ? (
+                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
+              ) : null}
               {confirmAction === "live" ? "Set as live" : "Restore draft"}
             </AlertDialogAction>
           </AlertDialogFooter>

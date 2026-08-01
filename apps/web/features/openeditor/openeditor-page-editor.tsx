@@ -1,8 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, LayoutTopIcon } from "@hugeicons/core-free-icons";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
@@ -29,7 +34,6 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useConvex, useMutation } from "convex/react";
-import { ArrowLeft, PanelsTopLeft } from "lucide-react";
 import {
   useEffect,
   useEffectEvent,
@@ -50,6 +54,8 @@ import {
   deleteOpenEditorTextRange,
   readOpenEditorPageTabs,
 } from "./page-tabs-model";
+
+const PageTabsMenuIcon = createOpenEditorIcon(LayoutTopIcon);
 
 export function OpenEditorPageEditor({
   onSaveStatusChange,
@@ -384,7 +390,7 @@ function OpenEditorDocumentEditor({
       key: "baseblocksPageTabs",
       label: "Tabs",
       group: "structure",
-      icon: PanelsTopLeft,
+      icon: PageTabsMenuIcon,
       keywords: ["tabs", "sections", "organize"],
       order: baseBlocksSlashMenuOrder.tabs,
       execute: ({ controller: current, range }) => {
@@ -496,7 +502,7 @@ function OpenEditorPageHeading({
           title={t("backToPreviousPage")}
           variant="ghost"
         >
-          <ArrowLeft />
+          <HugeiconsIcon icon={ArrowLeft01Icon} />
         </Button>
       ) : null}
       {editable ? (

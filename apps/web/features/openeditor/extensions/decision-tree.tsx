@@ -1,6 +1,10 @@
 "use client";
 
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
+import { GitForkIcon } from "@hugeicons/core-free-icons";
 import {
   DecisionTree,
   DecisionTreeViewer,
@@ -16,8 +20,8 @@ import {
   useOpenEditorController,
 } from "@openeditor/react";
 import { toHtml, toPlainText } from "@openeditor/exporters";
-import { GitFork } from "lucide-react";
 const nestedDocumentExtensions = [] as const;
+const DecisionTreeMenuIcon = createOpenEditorIcon(GitForkIcon);
 
 const defaultValue = (): DecisionTreeValue => ({
   trees: [{ id: "default", label: "Tree 1", nodes: [] }],
@@ -93,7 +97,7 @@ export const decisionTreeExtension = defineOpenEditorReactNode({
   },
   component: DecisionTreeNode,
   insertMenu: {
-    icon: GitFork,
+    icon: DecisionTreeMenuIcon,
     keywords: ["decision", "branch", "wizard", "guide"],
     order: baseBlocksSlashMenuOrder.decisionTree,
   },

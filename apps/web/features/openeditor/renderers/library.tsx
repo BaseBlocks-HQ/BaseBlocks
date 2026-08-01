@@ -1,5 +1,14 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  Download01Icon,
+  File01Icon,
+  Folder01Icon,
+  Link01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   FilePreview,
   type PreviewFile,
@@ -17,14 +26,6 @@ import type { LibraryContent } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Download,
-  File,
-  Folder,
-  Link,
-} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -182,18 +183,24 @@ export function ReadOnlyLibraryExplorer({
                     type="button"
                   >
                     {isExpanded ? (
-                      <ChevronDown className="size-4" />
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
+                        className="size-4"
+                      />
                     ) : (
-                      <ChevronRight className="size-4" />
+                      <HugeiconsIcon
+                        icon={ArrowRight01Icon}
+                        className="size-4"
+                      />
                     )}
                   </button>
                 ) : (
                   <span className="w-4" />
                 )}
                 {folder ? (
-                  <Folder className="size-4" />
+                  <HugeiconsIcon icon={Folder01Icon} className="size-4" />
                 ) : (
-                  <File className="size-4" />
+                  <HugeiconsIcon icon={File01Icon} className="size-4" />
                 )}
                 <button
                   className="min-w-0 flex-1 truncate text-left text-sm"
@@ -233,7 +240,7 @@ export function ReadOnlyLibraryExplorer({
                       }
                       type="button"
                     >
-                      <Link className="size-4" />
+                      <HugeiconsIcon icon={Link01Icon} className="size-4" />
                     </button>
                     {allowDownloads ? (
                       <a
@@ -242,7 +249,10 @@ export function ReadOnlyLibraryExplorer({
                         download={file.filename}
                         href={file.downloadUrl}
                       >
-                        <Download className="size-4" />
+                        <HugeiconsIcon
+                          icon={Download01Icon}
+                          className="size-4"
+                        />
                       </a>
                     ) : null}
                   </div>

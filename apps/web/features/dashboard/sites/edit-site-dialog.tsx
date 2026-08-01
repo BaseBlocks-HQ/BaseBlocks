@@ -1,5 +1,11 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete01Icon,
+  ImageAdd01Icon,
+  InformationCircleIcon,
+} from "@hugeicons/core-free-icons";
 import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -19,7 +25,6 @@ import {
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
 import { useMutation } from "convex/react";
-import { ImagePlus, Info, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -308,7 +313,7 @@ function EditSiteLogoField({
               type="button"
               className="inline-flex h-4 w-4 items-center justify-center rounded-full text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
             >
-              <Info className="h-3 w-3" />
+              <HugeiconsIcon icon={InformationCircleIcon} className="h-3 w-3" />
               <span className="sr-only">{t("dialogs.editSite.logoHint")}</span>
             </button>
           </TooltipTrigger>
@@ -342,12 +347,12 @@ function EditSiteLogoField({
               onClick={onRemoveLogo}
               disabled={isUploading}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Delete01Icon} className="h-3.5 w-3.5" />
             </Button>
           </div>
         ) : (
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1rem] border border-dashed border-sidebar-border/80 bg-background/70 text-sidebar-foreground/45">
-            <ImagePlus className="h-6 w-6" />
+            <HugeiconsIcon icon={ImageAdd01Icon} className="h-6 w-6" />
           </div>
         )}
 

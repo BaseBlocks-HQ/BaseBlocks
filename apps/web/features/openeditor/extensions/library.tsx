@@ -1,6 +1,16 @@
 "use client";
 
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon,
+  FolderAddIcon,
+  LibraryIcon,
+  CogIcon,
+} from "@hugeicons/core-free-icons";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import {
   PublicLibraryViewer,
   readLibrary,
@@ -34,8 +44,9 @@ import {
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
 import { useMutation, useQuery } from "convex/react";
-import { FolderPlus, LibraryBig, Plus, Settings } from "lucide-react";
 import { useState } from "react";
+
+const LibraryMenuIcon = createOpenEditorIcon(LibraryIcon);
 
 function LibraryEditor({
   value,
@@ -102,7 +113,7 @@ function LibraryEditor({
             onClick={() => setOpen(true)}
             type="button"
           >
-            <FolderPlus className="size-4" />
+            <HugeiconsIcon icon={FolderAddIcon} className="size-4" />
             Choose or create a library
           </button>
         )}
@@ -117,7 +128,7 @@ function LibraryEditor({
             type="button"
             variant="ghost"
           >
-            <Settings className="size-4" />
+            <HugeiconsIcon icon={CogIcon} className="size-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -184,7 +195,7 @@ function LibraryEditor({
                   size="icon"
                   type="button"
                 >
-                  <Plus className="size-4" />
+                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
                 </Button>
               </div>
               {error ? (
@@ -250,7 +261,7 @@ export const libraryExtension = defineOpenEditorReactNode({
   },
   component: LibraryNode,
   insertMenu: {
-    icon: LibraryBig,
+    icon: LibraryMenuIcon,
     keywords: ["documents", "files", "folder"],
     order: baseBlocksSlashMenuOrder.library,
   },

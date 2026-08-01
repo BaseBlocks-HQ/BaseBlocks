@@ -1,5 +1,14 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon,
+  Download01Icon,
+  Loading02Icon,
+  NotebookIcon,
+  Search01Icon,
+  ViewIcon,
+} from "@hugeicons/core-free-icons";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   FilePreview,
@@ -13,14 +22,6 @@ import { useDebounce } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import {
-  ChevronRight,
-  Download,
-  Eye,
-  Loader2,
-  NotebookText,
-  Search,
-} from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 function HighlightedSnippet({
@@ -183,7 +184,8 @@ export function SearchBox({
             : "hover:ring-2 hover:ring-muted-foreground/40",
         )}
       >
-        <Search
+        <HugeiconsIcon
+          icon={Search01Icon}
           className={cn(
             "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none",
             "text-muted-foreground",
@@ -203,7 +205,8 @@ export function SearchBox({
           )}
         />
         {isSearching && (
-          <Loader2
+          <HugeiconsIcon
+            icon={Loading02Icon}
             className={cn(
               "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
               "text-muted-foreground",
@@ -220,7 +223,10 @@ export function SearchBox({
           <div className="max-h-[400px] overflow-y-auto p-1.5">
             {isSearching ? (
               <div className="flex items-center justify-center gap-2 px-4 py-7 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
+                <HugeiconsIcon
+                  icon={Loading02Icon}
+                  className="size-4 animate-spin"
+                />
                 <span>Searching...</span>
               </div>
             ) : hasResults && searchResults ? (
@@ -241,7 +247,10 @@ export function SearchBox({
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {showFileType &&
                             (isPage ? (
-                              <NotebookText className="h-4 w-4 text-indigo-500" />
+                              <HugeiconsIcon
+                                icon={NotebookIcon}
+                                className="h-4 w-4 text-indigo-500"
+                              />
                             ) : (
                               <FileIcon
                                 contentType={
@@ -272,7 +281,10 @@ export function SearchBox({
                           </div>
                         </div>
                         {isPage ? (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <HugeiconsIcon
+                            icon={ArrowRight01Icon}
+                            className="h-4 w-4 text-muted-foreground flex-shrink-0"
+                          />
                         ) : (
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <Button
@@ -285,7 +297,10 @@ export function SearchBox({
                               }}
                               title="Preview"
                             >
-                              <Eye className="h-4 w-4" />
+                              <HugeiconsIcon
+                                icon={ViewIcon}
+                                className="h-4 w-4"
+                              />
                             </Button>
                             {documentMetadata && (
                               <Button
@@ -301,7 +316,10 @@ export function SearchBox({
                                 }}
                                 title="Download"
                               >
-                                <Download className="h-4 w-4" />
+                                <HugeiconsIcon
+                                  icon={Download01Icon}
+                                  className="h-4 w-4"
+                                />
                               </Button>
                             )}
                           </div>

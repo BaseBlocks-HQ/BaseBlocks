@@ -1,6 +1,6 @@
 "use client";
-
-import { Check, FileText } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { FileAttachmentIcon, Tick01Icon } from "@hugeicons/core-free-icons";
 import {
   AnimatePresence,
   motion,
@@ -69,7 +69,8 @@ export function StepTwoMotion() {
         <Message align="right" visible={scene === "request" || !resetting}>
           <span>Turn handbook into a site</span>
           <small>
-            <FileText aria-hidden="true" /> /handbook
+            <HugeiconsIcon icon={FileAttachmentIcon} aria-hidden="true" />{" "}
+            /handbook
           </small>
         </Message>
 
@@ -112,7 +113,7 @@ export function StepTwoMotion() {
 
         <Message visible={visibleThrough("complete")}>
           <strong>
-            <Check aria-hidden="true" /> Done.
+            <HugeiconsIcon icon={Tick01Icon} aria-hidden="true" /> Done.
           </strong>{" "}
           Added navigation, responsive spacing, and reading styles across every
           page.

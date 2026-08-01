@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  EarthIcon,
+  MoonIcon,
+  Sun01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import type { Locale } from "@baseblocks/i18n";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -9,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
-import { Check, Earth, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -43,7 +49,12 @@ export function LandingControls({ labels, locale }: LandingControlsProps) {
             title={labels.selectLanguage}
             variant="ghost"
           >
-            <Earth aria-hidden="true" className="size-4" strokeWidth={1.75} />
+            <HugeiconsIcon
+              icon={EarthIcon}
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={1.75}
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top">
@@ -53,7 +64,9 @@ export function LandingControls({ labels, locale }: LandingControlsProps) {
           >
             <span aria-hidden="true">🇺🇸</span>
             <span className="flex-1">English</span>
-            {locale === "en" ? <Check className="size-4" /> : null}
+            {locale === "en" ? (
+              <HugeiconsIcon icon={Tick01Icon} className="size-4" />
+            ) : null}
           </DropdownMenuItem>
           <DropdownMenuItem
             className={cn(locale === "fr" && "bg-accent")}
@@ -61,7 +74,9 @@ export function LandingControls({ labels, locale }: LandingControlsProps) {
           >
             <span aria-hidden="true">🇫🇷</span>
             <span className="flex-1">Français</span>
-            {locale === "fr" ? <Check className="size-4" /> : null}
+            {locale === "fr" ? (
+              <HugeiconsIcon icon={Tick01Icon} className="size-4" />
+            ) : null}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -75,11 +90,13 @@ export function LandingControls({ labels, locale }: LandingControlsProps) {
             title={labels.themeSystem}
             variant="ghost"
           >
-            <Sun
+            <HugeiconsIcon
+              icon={Sun01Icon}
               className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
               strokeWidth={1.75}
             />
-            <Moon
+            <HugeiconsIcon
+              icon={MoonIcon}
               className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
               strokeWidth={1.75}
             />
@@ -119,7 +136,7 @@ function ThemeItem({
   return (
     <DropdownMenuItem onClick={onSelect}>
       <span className="flex-1">{label}</span>
-      {active ? <Check className="size-4" /> : null}
+      {active ? <HugeiconsIcon icon={Tick01Icon} className="size-4" /> : null}
     </DropdownMenuItem>
   );
 }

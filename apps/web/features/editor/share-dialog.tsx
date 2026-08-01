@@ -1,5 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Copy01Icon,
+  GlobeIcon,
+  Tick01Icon,
+  ViewIcon,
+  ViewOffIcon,
+} from "@hugeicons/core-free-icons";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -14,7 +22,6 @@ import {
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
 import { useMutation } from "convex/react";
-import { Check, Copy, Eye, EyeOff, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -127,14 +134,24 @@ export function ShareDialog({
             >
               <VisibilityOptionCard
                 description={t("visibilityPublicDescription")}
-                icon={<Globe className="h-4 w-4 text-muted-foreground" />}
+                icon={
+                  <HugeiconsIcon
+                    icon={GlobeIcon}
+                    className="h-4 w-4 text-muted-foreground"
+                  />
+                }
                 id="public"
                 label={t("visibilityPublicLabel")}
                 value="public"
               />
               <VisibilityOptionCard
                 description={t("visibilityPrivateDescription")}
-                icon={<EyeOff className="h-4 w-4 text-muted-foreground" />}
+                icon={
+                  <HugeiconsIcon
+                    icon={ViewOffIcon}
+                    className="h-4 w-4 text-muted-foreground"
+                  />
+                }
                 id="private"
                 label={t("visibilityPrivateLabel")}
                 value="private"
@@ -151,12 +168,12 @@ export function ShareDialog({
             >
               {copied ? (
                 <>
-                  <Check className="mr-2 h-4 w-4" />
+                  <HugeiconsIcon icon={Tick01Icon} className="mr-2 h-4 w-4" />
                   {t("copied")}
                 </>
               ) : (
                 <>
-                  <Copy className="mr-2 h-4 w-4" />
+                  <HugeiconsIcon icon={Copy01Icon} className="mr-2 h-4 w-4" />
                   {t("copyLink")}
                 </>
               )}
@@ -166,7 +183,7 @@ export function ShareDialog({
               className="h-8 flex-1 rounded-full px-4 text-sm"
               onClick={() => window.open(siteUrl, "_blank")}
             >
-              <Eye className="mr-2 h-4 w-4" />
+              <HugeiconsIcon icon={ViewIcon} className="mr-2 h-4 w-4" />
               {t("viewSite")}
             </Button>
           </DialogFooter>

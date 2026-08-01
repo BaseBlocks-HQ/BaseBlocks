@@ -1,5 +1,21 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDownToLineIcon,
+  ArrowLeftToLineIcon,
+  ArrowRightToLineIcon,
+  ArrowUpToLineIcon,
+  Cancel01Icon,
+  Copy01Icon,
+  Delete01Icon,
+  DragDropHorizontalIcon,
+  DragDropVerticalIcon,
+  FilePasteIcon,
+  MoreHorizontalIcon,
+  CogIcon,
+  TaskDone01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   DirectoryPagination,
   DirectorySearch,
@@ -45,21 +61,6 @@ import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { isSortable, useSortable } from "@dnd-kit/react/sortable";
-import {
-  ArrowDownToLine,
-  ArrowLeftToLine,
-  ArrowRightToLine,
-  ArrowUpToLine,
-  ClipboardPaste,
-  Copy,
-  GripHorizontal,
-  GripVertical,
-  ListChecks,
-  MoreHorizontal,
-  Settings,
-  Trash2,
-  X,
-} from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -94,7 +95,7 @@ function DirectoryConfig({
           type="button"
           variant="ghost"
         >
-          <Settings className="size-4" />
+          <HugeiconsIcon icon={CogIcon} className="size-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -292,8 +293,8 @@ function SortableHandle({
   const [open, setOpen] = useState(false);
   const pointer = useRef<{ moved: boolean; x: number; y: number } | null>(null);
   const column = axis === "column";
-  const BeforeIcon = column ? ArrowLeftToLine : ArrowUpToLine;
-  const AfterIcon = column ? ArrowRightToLine : ArrowDownToLine;
+  const BeforeIcon = column ? ArrowLeftToLineIcon : ArrowUpToLineIcon;
+  const AfterIcon = column ? ArrowRightToLineIcon : ArrowDownToLineIcon;
 
   return (
     <DropdownMenu onOpenChange={setOpen} open={open}>
@@ -339,27 +340,27 @@ function SortableHandle({
           variant="ghost"
         >
           {column ? (
-            <GripHorizontal className="size-3.5" />
+            <HugeiconsIcon icon={DragDropHorizontalIcon} className="size-3.5" />
           ) : (
-            <GripVertical className="size-3.5" />
+            <HugeiconsIcon icon={DragDropVerticalIcon} className="size-3.5" />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={column ? "center" : "start"}>
         <DropdownMenuItem onSelect={() => onAction("copy")}>
-          <Copy />
+          <HugeiconsIcon icon={Copy01Icon} />
           Copy {axis}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onAction("paste")}>
-          <ClipboardPaste />
+          <HugeiconsIcon icon={FilePasteIcon} />
           Paste {axis}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onAction("before")}>
-          <BeforeIcon />
+          <HugeiconsIcon icon={BeforeIcon} />
           Insert {column ? "left" : "above"}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onAction("after")}>
-          <AfterIcon />
+          <HugeiconsIcon icon={AfterIcon} />
           Insert {column ? "right" : "below"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -368,7 +369,7 @@ function SortableHandle({
           onSelect={() => onAction("remove")}
           variant="destructive"
         >
-          <Trash2 />
+          <HugeiconsIcon icon={Delete01Icon} />
           Delete {axis}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -539,7 +540,7 @@ function DirectoryDragPreview({
         style={{ width }}
       >
         <div className="flex h-8 items-center justify-center border-b text-muted-foreground">
-          <GripHorizontal className="size-3.5" />
+          <HugeiconsIcon icon={DragDropHorizontalIcon} className="size-3.5" />
         </div>
         {rows.map((row) => (
           <div className={`${directoryCellClassName} border-b`} key={row.id}>
@@ -559,7 +560,7 @@ function DirectoryDragPreview({
       style={{ width }}
     >
       <div className="flex items-center justify-center bg-card text-muted-foreground">
-        <GripVertical className="size-3.5" />
+        <HugeiconsIcon icon={DragDropVerticalIcon} className="size-3.5" />
       </div>
       <div
         className="grid min-w-0 divide-x bg-card text-sm"
@@ -784,7 +785,10 @@ function DirectoryGrid({
                     type="button"
                     variant="ghost"
                   >
-                    <MoreHorizontal className="size-3.5" />
+                    <HugeiconsIcon
+                      icon={MoreHorizontalIcon}
+                      className="size-3.5"
+                    />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-52">
@@ -794,7 +798,7 @@ function DirectoryGrid({
                         {selectedCount} selected
                       </DropdownMenuLabel>
                       <DropdownMenuItem onSelect={selectAll}>
-                        <ListChecks />
+                        <HugeiconsIcon icon={TaskDone01Icon} />
                         Select all
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -802,12 +806,12 @@ function DirectoryGrid({
                         onSelect={deleteSelected}
                         variant="destructive"
                       >
-                        <Trash2 />
+                        <HugeiconsIcon icon={Delete01Icon} />
                         Delete selected
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onSelect={cancelSelection}>
-                        <X />
+                        <HugeiconsIcon icon={Cancel01Icon} />
                         Cancel selection
                       </DropdownMenuItem>
                     </>
@@ -821,7 +825,7 @@ function DirectoryGrid({
                           )
                         }
                       >
-                        <Copy />
+                        <HugeiconsIcon icon={Copy01Icon} />
                         Copy directory
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -829,7 +833,7 @@ function DirectoryGrid({
                         disabled={itemCount === 0}
                         onSelect={startSelection}
                       >
-                        <ListChecks />
+                        <HugeiconsIcon icon={TaskDone01Icon} />
                         Select rows and columns
                       </DropdownMenuItem>
                     </>

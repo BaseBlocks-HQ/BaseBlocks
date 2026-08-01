@@ -1,5 +1,13 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon,
+  ArrowUpDownIcon,
+  Copy01Icon,
+  Delete01Icon,
+  PencilEdit01Icon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -21,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Input } from "@baseblocks/ui/input";
-import { ChevronsUpDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 type NamedItem = {
@@ -79,7 +86,10 @@ export function NamedItemSwitcher({
             variant="outline"
           >
             <span className="truncate">{activeItem.label}</span>
-            <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+            <HugeiconsIcon
+              icon={ArrowUpDownIcon}
+              className="size-3.5 shrink-0 text-muted-foreground"
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-56">
@@ -97,19 +107,19 @@ export function NamedItemSwitcher({
           {hasActions ? <DropdownMenuSeparator /> : null}
           {onRename ? (
             <DropdownMenuItem onSelect={startRename}>
-              <Pencil />
+              <HugeiconsIcon icon={PencilEdit01Icon} />
               Rename {itemName}
             </DropdownMenuItem>
           ) : null}
           {onAdd ? (
             <DropdownMenuItem onSelect={onAdd}>
-              <Plus />
+              <HugeiconsIcon icon={Add01Icon} />
               Add {itemName}
             </DropdownMenuItem>
           ) : null}
           {onDuplicate ? (
             <DropdownMenuItem onSelect={onDuplicate}>
-              <Copy />
+              <HugeiconsIcon icon={Copy01Icon} />
               Duplicate {itemName}
             </DropdownMenuItem>
           ) : null}
@@ -119,7 +129,7 @@ export function NamedItemSwitcher({
               onSelect={onRemove}
               variant="destructive"
             >
-              <Trash2 />
+              <HugeiconsIcon icon={Delete01Icon} />
               Remove {itemName}
             </DropdownMenuItem>
           ) : null}

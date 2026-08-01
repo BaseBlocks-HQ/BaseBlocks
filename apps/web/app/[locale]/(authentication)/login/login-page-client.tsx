@@ -1,10 +1,11 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { EditorParticleField } from "@/features/marketing/editor-particle-field";
 import { Button } from "@baseblocks/ui/button";
-import { ArrowRight, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
@@ -123,12 +124,17 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithGitHub")}
                   </span>
                   {activeProvider === "github" ? (
-                    <LoaderCircle
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
                       aria-hidden="true"
                       className="size-4 animate-spin"
                     />
                   ) : (
-                    <ArrowRight aria-hidden="true" className="size-4" />
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
                   )}
                 </Button>
 
@@ -154,12 +160,17 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithMicrosoft")}
                   </span>
                   {activeProvider === "microsoft" ? (
-                    <LoaderCircle
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
                       aria-hidden="true"
                       className="size-4 animate-spin"
                     />
                   ) : (
-                    <ArrowRight aria-hidden="true" className="size-4" />
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
                   )}
                 </Button>
 
@@ -197,12 +208,17 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithGoogle")}
                   </span>
                   {activeProvider === "google" ? (
-                    <LoaderCircle
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
                       aria-hidden="true"
                       className="size-4 animate-spin"
                     />
                   ) : (
-                    <ArrowRight aria-hidden="true" className="size-4" />
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      aria-hidden="true"
+                      className="size-4"
+                    />
                   )}
                 </Button>
               </div>

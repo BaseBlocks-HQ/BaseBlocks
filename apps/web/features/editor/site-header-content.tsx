@@ -1,5 +1,19 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  FileClockIcon,
+  Globe02Icon,
+  LinkSquare01Icon,
+  Loading03Icon,
+  PencilEdit01Icon,
+  SentIcon,
+  CogIcon,
+  Tick01Icon,
+  ViewIcon,
+  ViewOffIcon,
+} from "@hugeicons/core-free-icons";
 import { useEditorSite } from "@/features/editor/editor-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { AppHeaderPortal } from "@/features/app-shell/app-header";
@@ -25,19 +39,6 @@ import {
 } from "@baseblocks/ui/popover";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 import { useQuery } from "convex/react";
-import {
-  Check,
-  ChevronDown,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  FileClock,
-  Globe2,
-  LoaderCircle,
-  PencilLine,
-  Send,
-  Settings2,
-} from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
@@ -218,7 +219,11 @@ function CurrentSiteIdentity({
       </span>
       {hasOtherSites ? (
         <span className="hidden shrink-0 items-center justify-center @2xl/header:flex">
-          <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            aria-hidden
+            className="size-3.5 text-muted-foreground"
+          />
         </span>
       ) : null}
     </>
@@ -283,7 +288,10 @@ function EditorSiteSwitcher({
               <SiteMark logoUrl={site.logoUrl} name={site.name} />
               <span className="min-w-0 flex-1 truncate">{site.name}</span>
               {site._id === currentSiteId ? (
-                <Check className="size-3.5 text-muted-foreground" />
+                <HugeiconsIcon
+                  icon={Tick01Icon}
+                  className="size-3.5 text-muted-foreground"
+                />
               ) : null}
             </>
           );
@@ -402,7 +410,7 @@ function ViewSiteAction({
       size="sm"
       variant="ghost"
     >
-      <ExternalLink />
+      <HugeiconsIcon icon={LinkSquare01Icon} />
       <HeaderActionLabel>{t("viewSite")}</HeaderActionLabel>
     </Button>
   );
@@ -419,7 +427,7 @@ function SiteSettingsAction({ siteId }: { siteId: Id<"sites"> }) {
           title="Site settings"
           variant="ghost"
         >
-          <Settings2 />
+          <HugeiconsIcon icon={CogIcon} />
           <HeaderActionLabel>Settings</HeaderActionLabel>
         </Button>
       </PopoverTrigger>
@@ -470,7 +478,11 @@ function DeployAction({
         onClick={onPublish}
         size="sm"
       >
-        {isSaving ? <LoaderCircle className="animate-spin" /> : <Globe2 />}
+        {isSaving ? (
+          <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
+        ) : (
+          <HugeiconsIcon icon={Globe02Icon} />
+        )}
         <HeaderActionLabel>
           {isSaving ? tHeader("saving") : publishLabel}
         </HeaderActionLabel>
@@ -483,29 +495,33 @@ function DeployAction({
             className="h-8 w-6 rounded-l-none border-l border-primary-foreground/20 px-0 focus-visible:z-10"
             size="sm"
           >
-            <ChevronDown className="size-3.5" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52" sideOffset={6}>
           {onTogglePreview ? (
             <DropdownMenuItem onSelect={onTogglePreview}>
-              {isPreviewing ? <PencilLine /> : <Eye />}
+              {isPreviewing ? (
+                <HugeiconsIcon icon={PencilEdit01Icon} />
+              ) : (
+                <HugeiconsIcon icon={ViewIcon} />
+              )}
               {isPreviewing ? tHeader("edit") : tHeader("preview")}
             </DropdownMenuItem>
           ) : null}
           {sitePublished ? (
             <>
               <DropdownMenuItem onSelect={onOpenShare}>
-                <Send />
+                <HugeiconsIcon icon={SentIcon} />
                 {tHeader("share")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onOpenHistory}>
-                <FileClock />
+                <HugeiconsIcon icon={FileClockIcon} />
                 {tHeader("deploymentHistory")}
               </DropdownMenuItem>
               {onUnpublish ? (
                 <DropdownMenuItem onSelect={onUnpublish} variant="destructive">
-                  <EyeOff />
+                  <HugeiconsIcon icon={ViewOffIcon} />
                   {t("unpublish")}
                 </DropdownMenuItem>
               ) : null}

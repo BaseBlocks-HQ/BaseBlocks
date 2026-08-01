@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { GlobeIcon } from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardList,
@@ -9,7 +11,6 @@ import { api } from "@baseblocks/backend";
 import { Card, CardContent } from "@baseblocks/ui/card";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
-import { Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CreateSiteDialog } from "./create-site-dialog";
 import { SiteCard } from "./site-card";
@@ -51,7 +52,10 @@ function SitesSection({
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Globe className="mb-4 h-12 w-12 text-muted-foreground" />
+          <HugeiconsIcon
+            icon={GlobeIcon}
+            className="mb-4 h-12 w-12 text-muted-foreground"
+          />
           <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
           <p className="text-sm text-muted-foreground">
             {t("noSitesDescription")}

@@ -1,5 +1,11 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon,
+  Cancel01Icon,
+  PencilEdit01Icon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@baseblocks/ui/tabs";
@@ -24,7 +30,6 @@ import {
   OpenEditorSlashMenu,
   OpenEditorTableMenu,
 } from "@openeditor/ui";
-import { Pencil, Plus, X } from "lucide-react";
 import { useRef, useState } from "react";
 import {
   readOpenEditorPageTabs,
@@ -104,7 +109,10 @@ function TabBar({
                         type="button"
                         variant="ghost"
                       >
-                        <Pencil className="size-3" />
+                        <HugeiconsIcon
+                          icon={PencilEdit01Icon}
+                          className="size-3"
+                        />
                       </Button>
                       <Button
                         aria-label={`Remove ${tab.label}`}
@@ -115,7 +123,7 @@ function TabBar({
                         type="button"
                         variant="ghost"
                       >
-                        <X className="size-3" />
+                        <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
                       </Button>
                     </div>
                   ) : null}
@@ -132,7 +140,7 @@ function TabBar({
               type="button"
               variant="ghost"
             >
-              <Plus className="size-3.5" />
+              <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
             </Button>
           ) : null}
         </TabsList>

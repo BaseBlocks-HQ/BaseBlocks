@@ -1,5 +1,14 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  LanguageCircleIcon,
+  MoonIcon,
+  Sun01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
@@ -30,14 +39,6 @@ import {
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Languages,
-  Moon,
-  Sun,
-} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -236,7 +237,7 @@ function PublicSiteLanguageMenu() {
           size="icon"
           variant="ghost"
         >
-          <Languages className="size-[1.2rem]" />
+          <HugeiconsIcon icon={LanguageCircleIcon} className="size-[1.2rem]" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -245,11 +246,15 @@ function PublicSiteLanguageMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => selectLocale("en")}>
           <span className="flex-1">{t("english")}</span>
-          {locale === "en" ? <Check className="size-4" /> : null}
+          {locale === "en" ? (
+            <HugeiconsIcon icon={Tick01Icon} className="size-4" />
+          ) : null}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => selectLocale("fr")}>
           <span className="flex-1">{t("french")}</span>
-          {locale === "fr" ? <Check className="size-4" /> : null}
+          {locale === "fr" ? (
+            <HugeiconsIcon icon={Tick01Icon} className="size-4" />
+          ) : null}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -348,8 +353,14 @@ function PublicSiteThemeMenu() {
           size="icon"
           variant="ghost"
         >
-          <Sun className="size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <HugeiconsIcon
+            icon={Sun01Icon}
+            className="size-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+          />
+          <HugeiconsIcon
+            icon={MoonIcon}
+            className="absolute size-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+          />
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
@@ -456,9 +467,15 @@ function PublishedPageNavigation({
                   }}
                 >
                   {isExpanded ? (
-                    <ChevronDown className="size-3.5" />
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
+                      className="size-3.5"
+                    />
                   ) : (
-                    <ChevronRight className="size-3.5" />
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      className="size-3.5"
+                    />
                   )}
                 </button>
               ) : (

@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon,
+  CursorPointer02Icon,
+  Delete01Icon,
+  GitForkIcon,
+} from "@hugeicons/core-free-icons";
 import {
   removeDecisionTreeNodesFromPath,
   resolveDecisionTree,
@@ -35,7 +42,6 @@ import {
   type OpenEditorDocument,
 } from "@openeditor/core";
 import { OpenEditorViewer } from "@openeditor/react";
-import { GitFork, MousePointerClick, Plus, Trash2 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 export type DecisionNode = {
@@ -86,13 +92,13 @@ function DecisionTreeEmptyState({
   variant: "options" | "selection";
 }) {
   const isOptionsEmpty = variant === "options";
-  const Icon = isOptionsEmpty ? GitFork : MousePointerClick;
+  const Icon = isOptionsEmpty ? GitForkIcon : CursorPointer02Icon;
 
   return (
     <Empty className="h-full min-h-0 gap-3 border-0 px-6 py-8 md:p-8">
       <EmptyHeader className="gap-1.5">
         <EmptyMedia className="mb-1 size-9 rounded-xl" variant="icon">
-          <Icon className="size-4" />
+          <HugeiconsIcon className="size-4" icon={Icon} />
         </EmptyMedia>
         <EmptyTitle className="text-sm font-medium">
           {isOptionsEmpty ? "No options yet" : "Open an option"}
@@ -324,7 +330,7 @@ export function DecisionTree({
                         type="button"
                         variant="ghost"
                       >
-                        <Trash2 className="size-4" />
+                        <HugeiconsIcon icon={Delete01Icon} className="size-4" />
                       </Button>
                     ) : null}
                   </div>
@@ -352,7 +358,7 @@ export function DecisionTree({
                 size="icon"
                 type="button"
               >
-                <Plus className="size-4" />
+                <HugeiconsIcon icon={Add01Icon} className="size-4" />
               </Button>
             </div>
           ) : null}

@@ -1,5 +1,10 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AiContentGenerator01Icon,
+  ArrowLeft01Icon,
+} from "@hugeicons/core-free-icons";
 import { PagesPanel } from "@/features/editor/pages-panel";
 import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
 import {
@@ -21,7 +26,6 @@ import {
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
-import { ArrowLeft, Astroid } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
@@ -59,7 +63,8 @@ export function SiteEditorSidebarContent({ siteId }: { siteId: string }) {
             <SidebarMenuItem>
               <SidebarMenuButton asChild className={appSidebarRowClassName}>
                 <Link href={getTeamDashboardPath(team.slug)} prefetch={false}>
-                  <ArrowLeft
+                  <HugeiconsIcon
+                    icon={ArrowLeft01Icon}
                     aria-hidden
                     className={appSidebarIconClassName}
                     strokeWidth={APP_SIDEBAR_ICON_STROKE}
@@ -91,9 +96,10 @@ function EditorBetaCard() {
     <SidebarFooter className="mt-auto shrink-0 border-0 p-1">
       <div className="rounded-lg bg-sidebar-accent/55 p-2.5 text-sidebar-foreground">
         <div className="flex items-center gap-1.5">
-          <Astroid
+          <HugeiconsIcon
             aria-hidden
             className="size-3.5 shrink-0 text-sidebar-foreground/60"
+            icon={AiContentGenerator01Icon}
             strokeWidth={1.75}
           />
           <p className="min-w-0 flex-1 truncate text-xs font-medium">

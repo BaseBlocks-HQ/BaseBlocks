@@ -1,7 +1,21 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Add01Icon,
+  AppWindowIcon,
+  ArrowUpRight01Icon,
+  Cancel01Icon,
+  Delete01Icon,
+  ImageAdd01Icon,
+  Link02Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import {
   QuickLinksViewer,
   readQuickLinks,
@@ -32,16 +46,6 @@ import {
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
 import { useMutation } from "convex/react";
-import {
-  AppWindow,
-  ArrowUpRight,
-  Check,
-  ImagePlus,
-  Link2,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
@@ -49,6 +53,8 @@ type LinkDraft = {
   originalId: string | null;
   value: QuicklinkItem;
 };
+
+const QuickLinksMenuIcon = createOpenEditorIcon(AppWindowIcon);
 
 function safeHref(link: QuicklinkItem) {
   const url = link.url.trim();
@@ -94,9 +100,9 @@ function LinkArtwork({ link }: { link: QuicklinkItem }) {
           unoptimized
         />
       ) : link.linkType === "app" ? (
-        <AppWindow className="size-5" />
+        <HugeiconsIcon className="size-5" icon={AppWindowIcon} />
       ) : (
-        <Link2 className="size-5" />
+        <HugeiconsIcon icon={Link02Icon} className="size-5" />
       )}
     </span>
   );
@@ -125,7 +131,10 @@ function QuickLinkCard({
           {destinationLabel(link)}
         </span>
       </span>
-      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground" />
+      <HugeiconsIcon
+        icon={ArrowUpRight01Icon}
+        className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+      />
     </button>
   );
 }
@@ -227,7 +236,7 @@ function QuickLinkForm({
                   unoptimized
                 />
               ) : (
-                <ImagePlus className="size-4" />
+                <HugeiconsIcon icon={ImageAdd01Icon} className="size-4" />
               )}
             </button>
             {draft.value.imageUrl ? (
@@ -239,7 +248,7 @@ function QuickLinkForm({
                 }
                 type="button"
               >
-                <X className="size-3" />
+                <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
               </button>
             ) : null}
           </div>
@@ -337,7 +346,7 @@ function QuickLinkForm({
               type="button"
               variant="ghost"
             >
-              <Trash2 className="size-4" />
+              <HugeiconsIcon icon={Delete01Icon} className="size-4" />
               Delete
             </Button>
           ) : (
@@ -358,7 +367,7 @@ function QuickLinkForm({
               onClick={onSave}
               type="button"
             >
-              <Check className="size-4" />
+              <HugeiconsIcon icon={Tick01Icon} className="size-4" />
               Save
             </Button>
           </div>
@@ -409,7 +418,7 @@ function QuickLinksGrid({
           onClick={draft ? undefined : startNew}
           type="button"
         >
-          <Plus className="size-4" />
+          <HugeiconsIcon icon={Add01Icon} className="size-4" />
           Add link
         </button>
         {links.map((link) => (
@@ -486,7 +495,7 @@ export const quickLinksExtension = defineOpenEditorReactNode({
   },
   component: QuickLinksNode,
   insertMenu: {
-    icon: AppWindow,
+    icon: QuickLinksMenuIcon,
     keywords: ["links", "cards", "bookmarks", "shortcuts"],
     order: baseBlocksSlashMenuOrder.quickLinks,
   },

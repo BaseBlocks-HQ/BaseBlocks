@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDownRight01Icon,
+  ArrowUpRight01Icon,
+  Analytics01Icon,
+  RadioIcon,
+} from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { DashboardPageHeader } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
@@ -14,12 +21,6 @@ import {
 } from "@baseblocks/ui/select";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  ChartNoAxesColumnIncreasing,
-  Radio,
-} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type {
@@ -43,7 +44,7 @@ function Comparison({
 }) {
   const positive = value > 0;
   const favorable = lowerIsBetter ? !positive : positive;
-  const Icon = positive ? ArrowUpRight : ArrowDownRight;
+  const Icon = positive ? ArrowUpRight01Icon : ArrowDownRight01Icon;
 
   return (
     <span
@@ -54,7 +55,12 @@ function Comparison({
           : "text-rose-600 dark:text-rose-400",
       )}
     >
-      <Icon aria-hidden className="size-3" strokeWidth={1.8} />
+      <HugeiconsIcon
+        aria-hidden
+        className="size-3"
+        icon={Icon}
+        strokeWidth={1.8}
+      />
       {Math.abs(value)}%
       <span className="sr-only"> compared with the previous period</span>
     </span>
@@ -256,7 +262,8 @@ function AnalyticsDashboard({ snapshot }: { snapshot: AnalyticsSnapshot }) {
               <p className="text-3xl font-medium tracking-[-0.04em] tabular-nums">
                 {snapshot.totals.online}
               </p>
-              <Radio
+              <HugeiconsIcon
+                icon={RadioIcon}
                 aria-hidden
                 className="mb-1 size-4 text-emerald-500"
                 strokeWidth={1.8}
@@ -361,9 +368,10 @@ function AnalyticsState({
   if (!analytics || analytics.status === "unavailable") {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center text-center">
-        <ChartNoAxesColumnIncreasing
+        <HugeiconsIcon
           aria-hidden
           className="mb-3 size-8 text-muted-foreground"
+          icon={Analytics01Icon}
           strokeWidth={1.5}
         />
         <p className="text-sm font-medium">Analytics isn&apos;t available</p>
@@ -489,9 +497,10 @@ export function AnalyticsPage({ initialSiteId }: { initialSiteId?: string }) {
 
           {sites?.length === 0 ? (
             <div className="flex min-h-72 flex-col items-center justify-center text-center">
-              <ChartNoAxesColumnIncreasing
+              <HugeiconsIcon
                 aria-hidden
                 className="mb-3 size-8 text-muted-foreground"
+                icon={Analytics01Icon}
                 strokeWidth={1.5}
               />
               <p className="text-sm font-medium">No sites yet</p>

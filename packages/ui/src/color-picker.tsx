@@ -1,6 +1,6 @@
 "use client";
-
-import { Pipette } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { DropperIcon } from "@hugeicons/core-free-icons";
 import {
   type ComponentProps,
   type KeyboardEvent,
@@ -121,7 +121,7 @@ function ColorPicker({
             type="button"
             variant="outline"
           >
-            <Pipette className="size-3.5" />
+            <HugeiconsIcon icon={DropperIcon} className="size-3.5" />
           </Button>
         ) : null}
       </div>

@@ -1,6 +1,6 @@
 "use client";
-
-import { ArrowUp } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import {
   AnimatePresence,
   motion,
@@ -88,7 +88,7 @@ export function StepOneMotion() {
             animate={{ scale: scene === "building" ? 0.88 : 1 }}
             transition={{ duration: 0.2, ease: EASE }}
           >
-            <ArrowUp aria-hidden="true" />
+            <HugeiconsIcon icon={ArrowUp01Icon} aria-hidden="true" />
           </motion.i>
         </div>
       </motion.div>

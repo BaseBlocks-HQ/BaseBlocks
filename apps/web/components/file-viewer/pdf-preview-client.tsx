@@ -1,9 +1,10 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SearchAddIcon, SearchMinusIcon } from "@hugeicons/core-free-icons";
 import type { PreviewFile } from "@/components/file-viewer/file-viewer";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -46,7 +47,7 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
           label={t("zoomOut")}
           onClick={() => setScale((value) => Math.max(value - 0.25, 0.5))}
         >
-          <ZoomOut className="h-4 w-4" />
+          <HugeiconsIcon icon={SearchMinusIcon} className="h-4 w-4" />
         </ToolbarButton>
         <span className="min-w-12 text-center text-xs tabular-nums text-muted-foreground">
           {Math.round(scale * 100)}%
@@ -56,7 +57,7 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
           label={t("zoomIn")}
           onClick={() => setScale((value) => Math.min(value + 0.25, 3))}
         >
-          <ZoomIn className="h-4 w-4" />
+          <HugeiconsIcon icon={SearchAddIcon} className="h-4 w-4" />
         </ToolbarButton>
       </div>
       <div ref={containerRef} className="min-h-0 flex-1 overflow-auto p-4">

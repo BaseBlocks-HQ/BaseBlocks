@@ -1,11 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
 import { PageTree } from "@/features/editor/pages/page-tree";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
-import { ChevronDown, Plus } from "lucide-react";
 import { useState } from "react";
 
 export function PagesPanel({
@@ -34,7 +35,8 @@ export function PagesPanel({
             type="button"
           >
             <span className="flex size-5 shrink-0 items-center justify-center">
-              <ChevronDown
+              <HugeiconsIcon
+                icon={ArrowDown01Icon}
                 aria-hidden
                 className={`size-3.5 transition-transform duration-150 ${
                   pagesExpanded ? "" : "-rotate-90"
@@ -52,7 +54,11 @@ export function PagesPanel({
                   className="flex size-6 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                   type="button"
                 >
-                  <Plus aria-hidden className="size-3.5" />
+                  <HugeiconsIcon
+                    icon={Add01Icon}
+                    aria-hidden
+                    className="size-3.5"
+                  />
                 </button>
               }
             />

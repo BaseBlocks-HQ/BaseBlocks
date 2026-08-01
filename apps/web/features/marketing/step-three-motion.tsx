@@ -1,7 +1,14 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowUpRight01Icon,
+  Globe02Icon,
+  LockKeyIcon,
+  RadioIcon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import createGlobe, { type Arc, type Marker } from "cobe";
-import { ArrowUpRight, Check, Globe2, LockKeyhole, Radio } from "lucide-react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
@@ -108,13 +115,13 @@ export function StepThreeMotion() {
           <VisibilityOption
             active={!publicSelected}
             description="Workspace members"
-            icon={<LockKeyhole aria-hidden="true" />}
+            icon={<HugeiconsIcon icon={LockKeyIcon} aria-hidden="true" />}
             label="Team"
           />
           <VisibilityOption
             active={publicSelected}
             description="Anyone with the link"
-            icon={<Globe2 aria-hidden="true" />}
+            icon={<HugeiconsIcon aria-hidden icon={Globe02Icon} />}
             label="Public"
           />
         </div>
@@ -123,7 +130,11 @@ export function StepThreeMotion() {
           className="step-publish-action"
           transition={{ duration: 0.24, ease: EASE }}
         >
-          {publishing ? <i /> : <Globe2 aria-hidden="true" />}
+          {publishing ? (
+            <i />
+          ) : (
+            <HugeiconsIcon aria-hidden icon={Globe02Icon} />
+          )}
           <span>{publishing ? "Publishing…" : "Publish site"}</span>
         </motion.div>
       </motion.div>
@@ -147,7 +158,11 @@ export function StepThreeMotion() {
           className="step-publish-live"
           transition={{ duration: 0.42, ease: EASE }}
         >
-          {live ? <Check aria-hidden="true" /> : <i />}
+          {live ? (
+            <HugeiconsIcon icon={Tick01Icon} aria-hidden="true" />
+          ) : (
+            <i />
+          )}
           <span>{live ? "Live" : "Publish it"}</span>
         </motion.div>
       </motion.div>
@@ -172,7 +187,7 @@ export function StepThreeMotion() {
             <span>Online now</span>
             <div>
               <strong>24</strong>
-              <Radio aria-hidden="true" />
+              <HugeiconsIcon icon={RadioIcon} aria-hidden="true" />
             </div>
           </div>
         </div>
@@ -244,7 +259,7 @@ function AnalyticsMetric({
       <div>
         <strong>{value}</strong>
         <small>
-          <ArrowUpRight aria-hidden="true" />
+          <HugeiconsIcon icon={ArrowUpRight01Icon} aria-hidden="true" />
           {change}
         </small>
       </div>

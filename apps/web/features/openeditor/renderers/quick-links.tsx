@@ -1,7 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AppWindowIcon,
+  ArrowUpRight01Icon,
+  Link02Icon,
+} from "@hugeicons/core-free-icons";
 import type { QuicklinkItem } from "@baseblocks/domain";
-import { AppWindow, ArrowUpRight, Link2 } from "lucide-react";
 import Image from "next/image";
 
 export function readQuickLinks(value: unknown): QuicklinkItem[] {
@@ -84,9 +89,9 @@ export function QuickLinksViewer({ links }: { links: QuicklinkItem[] }) {
                   unoptimized
                 />
               ) : link.linkType === "app" ? (
-                <AppWindow className="size-5" />
+                <HugeiconsIcon className="size-5" icon={AppWindowIcon} />
               ) : (
-                <Link2 className="size-5" />
+                <HugeiconsIcon icon={Link02Icon} className="size-5" />
               )}
             </span>
             <span className="min-w-0 flex-1">
@@ -97,7 +102,10 @@ export function QuickLinksViewer({ links }: { links: QuicklinkItem[] }) {
                 {destination}
               </span>
             </span>
-            <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <HugeiconsIcon
+              icon={ArrowUpRight01Icon}
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            />
           </a>
         );
       })}

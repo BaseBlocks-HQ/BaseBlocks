@@ -1,10 +1,17 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Cancel01Icon,
+  Download01Icon,
+  LinkSquare01Icon,
+  Maximize02Icon,
+  Minimize02Icon,
+} from "@hugeicons/core-free-icons";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { FileIcon, formatFileSize } from "@/components/file-viewer/file-ui";
 import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { Download, ExternalLink, Maximize2, Minimize2, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
@@ -132,11 +139,11 @@ function PreviewToolbar({
         ) : null}
       </div>
       <ToolbarButton label={t("openNewTab")} onClick={onOpenExternal}>
-        <ExternalLink className="h-4 w-4" />
+        <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
       </ToolbarButton>
       {onDownload ? (
         <ToolbarButton label={t("download")} onClick={onDownload}>
-          <Download className="h-4 w-4" />
+          <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />
         </ToolbarButton>
       ) : null}
       <ToolbarButton
@@ -144,13 +151,13 @@ function PreviewToolbar({
         onClick={onToggleFullscreen}
       >
         {fullscreen ? (
-          <Minimize2 className="h-4 w-4" />
+          <HugeiconsIcon icon={Minimize02Icon} className="h-4 w-4" />
         ) : (
-          <Maximize2 className="h-4 w-4" />
+          <HugeiconsIcon icon={Maximize02Icon} className="h-4 w-4" />
         )}
       </ToolbarButton>
       <ToolbarButton label={t("close")} onClick={onClose}>
-        <X className="h-4 w-4" />
+        <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
       </ToolbarButton>
     </header>
   );
@@ -217,7 +224,7 @@ function UnknownPreview({ file }: { file: PreviewFile }) {
       <div className="mt-6 flex items-center gap-2">
         {file.allowDownload !== false ? (
           <Button onClick={() => downloadFile(file)}>
-            <Download className="mr-2 h-4 w-4" />
+            <HugeiconsIcon icon={Download01Icon} className="mr-2 h-4 w-4" />
             {t("download")}
           </Button>
         ) : null}
@@ -225,7 +232,7 @@ function UnknownPreview({ file }: { file: PreviewFile }) {
           variant="outline"
           onClick={() => window.open(file.url, "_blank", "noopener")}
         >
-          <ExternalLink className="mr-2 h-4 w-4" />
+          <HugeiconsIcon icon={LinkSquare01Icon} className="mr-2 h-4 w-4" />
           {t("open")}
         </Button>
       </div>

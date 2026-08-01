@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowDown01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { InlineRename } from "@/components/tree/inline-rename";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { useEditorSiteOptional } from "@/features/editor/editor-state";
@@ -25,7 +27,6 @@ import {
   useDroppable,
 } from "@dnd-kit/react";
 import { useMutation } from "convex/react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -325,9 +326,9 @@ function PageTreeRow({
               onClick={onToggleExpand}
             >
               {isExpanded ? (
-                <ChevronDown className="size-3.5" />
+                <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
               ) : (
-                <ChevronRight className="size-3.5" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
               )}
             </button>
           ) : (

@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Add01Icon } from "@hugeicons/core-free-icons";
 import { SLUG_PATTERN, generateSlug } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
@@ -14,7 +16,6 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { useMutation } from "convex/react";
-import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type FormEvent, useReducer, useState } from "react";
 
@@ -188,7 +189,7 @@ export function CreateSiteDialog({
           size="sm"
           type="button"
         >
-          <Plus className="size-4" />
+          <HugeiconsIcon icon={Add01Icon} className="size-4" />
           {t("dashboard.createSite")}
         </Button>
       </DialogTrigger>

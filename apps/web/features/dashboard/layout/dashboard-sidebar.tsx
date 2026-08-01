@@ -1,5 +1,19 @@
 "use client";
 
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import {
+  Analytics01Icon,
+  ArrowDown01Icon,
+  CorporateIcon,
+  CogIcon,
+  Home01Icon,
+  LanguageSquareIcon,
+  Link01Icon,
+  Logout01Icon,
+  PaintBoardIcon,
+  Tick01Icon,
+  UserGroupIcon,
+} from "@hugeicons/core-free-icons";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
   productPaletteIds,
@@ -47,21 +61,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
-import {
-  Bolt,
-  Building,
-  ChartNoAxesColumnIncreasing,
-  Check,
-  ChevronsUpDown,
-  Earth,
-  House,
-  Link as LinkIcon,
-  LogOut,
-  Moon,
-  Sun,
-  type LucideIcon,
-  UsersRound,
-} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -105,31 +104,31 @@ export function DashboardSidebarContent() {
   const navItems: {
     title: string;
     href: string;
-    icon: LucideIcon;
+    icon: IconSvgElement;
     isActive: boolean;
   }[] = [
     {
       title: t("navigation.dashboard"),
       href: getTeamDashboardPath(team.slug),
-      icon: House,
+      icon: Home01Icon,
       isActive: pathname === getTeamDashboardPath(team.slug),
     },
     {
       title: "Analytics",
       href: teamAnalyticsPath,
-      icon: ChartNoAxesColumnIncreasing,
+      icon: Analytics01Icon,
       isActive: pathname.startsWith(teamAnalyticsPath),
     },
     {
       title: t("team.title"),
       href: teamMembersPath,
-      icon: UsersRound,
+      icon: UserGroupIcon,
       isActive: pathname.startsWith(teamMembersPath),
     },
     {
       title: t("integrations.title"),
       href: teamIntegrationsPath,
-      icon: LinkIcon,
+      icon: Link01Icon,
       isActive: pathname.startsWith(teamIntegrationsPath),
     },
   ];
@@ -141,7 +140,6 @@ export function DashboardSidebarContent() {
         ? t("common.themeDark")
         : t("common.themeLight");
 
-  const ThemeIcon = resolvedTheme === "dark" ? Moon : Sun;
   const paletteLabels: Record<ProductPaletteId, string> = {
     neutral: t("common.themeNeutral"),
     amber: t("common.themeAmber"),
@@ -189,7 +187,8 @@ export function DashboardSidebarContent() {
                         prefetch={false}
                         title={item.title}
                       >
-                        <item.icon
+                        <HugeiconsIcon
+                          icon={item.icon}
                           className={cn(
                             appSidebarIconClassName,
                             item.isActive
@@ -229,13 +228,15 @@ export function DashboardSidebarContent() {
                     type="button"
                   >
                     <span className="flex min-w-0 items-center gap-1.5">
-                      <Building
+                      <HugeiconsIcon
+                        icon={CorporateIcon}
                         className={appSidebarIconClassName}
                         strokeWidth={APP_SIDEBAR_ICON_STROKE}
                       />
                       <span className="truncate">{team.name}</span>
                     </span>
-                    <ChevronsUpDown
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
                       className="size-3.5 shrink-0 text-sidebar-foreground/45"
                       strokeWidth={APP_SIDEBAR_ICON_STROKE}
                     />
@@ -260,7 +261,8 @@ export function DashboardSidebarContent() {
                           </span>
                         </div>
                         {workspace._id === team._id && (
-                          <Check
+                          <HugeiconsIcon
+                            icon={Tick01Icon}
                             className="h-4 w-4"
                             strokeWidth={APP_SIDEBAR_ICON_STROKE}
                           />
@@ -297,7 +299,8 @@ export function DashboardSidebarContent() {
                       {profileLabel}
                     </span>
                   </span>
-                  <ChevronsUpDown
+                  <HugeiconsIcon
+                    icon={ArrowDown01Icon}
                     className="size-3.5 shrink-0 text-sidebar-foreground/45"
                     strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
@@ -330,7 +333,8 @@ export function DashboardSidebarContent() {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="w-full gap-2">
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <Earth
+                      <HugeiconsIcon
+                        icon={LanguageSquareIcon}
                         className="h-4 w-4 shrink-0 text-muted-foreground"
                         strokeWidth={APP_SIDEBAR_ICON_STROKE}
                       />
@@ -349,7 +353,8 @@ export function DashboardSidebarContent() {
                       >
                         <span className="mr-1">{languageNames[loc]}</span>
                         {locale === loc ? (
-                          <Check
+                          <HugeiconsIcon
+                            icon={Tick01Icon}
                             className="ml-auto h-4 w-4 text-muted-foreground"
                             strokeWidth={APP_SIDEBAR_ICON_STROKE}
                           />
@@ -362,7 +367,10 @@ export function DashboardSidebarContent() {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="w-full gap-2">
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <ThemeIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <HugeiconsIcon
+                        className="h-4 w-4 shrink-0 text-muted-foreground"
+                        icon={PaintBoardIcon}
+                      />
                       <span>{t("common.themeMenu")}</span>
                     </span>
                     <span className="w-[7rem] shrink-0 truncate text-right text-xs text-muted-foreground">
@@ -389,7 +397,10 @@ export function DashboardSidebarContent() {
                                 ? t("common.themeDark")
                                 : t("common.themeSystem")}
                             {theme === value ? (
-                              <Check className="ml-auto size-4 text-muted-foreground" />
+                              <HugeiconsIcon
+                                icon={Tick01Icon}
+                                className="ml-auto size-4 text-muted-foreground"
+                              />
                             ) : null}
                           </DropdownMenuItem>
                         ))}
@@ -415,7 +426,10 @@ export function DashboardSidebarContent() {
                             />
                             {paletteLabels[palette]}
                             {productPalette === palette ? (
-                              <Check className="ml-auto size-4 text-muted-foreground" />
+                              <HugeiconsIcon
+                                icon={Tick01Icon}
+                                className="ml-auto size-4 text-muted-foreground"
+                              />
                             ) : null}
                           </DropdownMenuItem>
                         ))}
@@ -437,7 +451,10 @@ export function DashboardSidebarContent() {
                           >
                             {styleLabels[style]}
                             {productStyle === style ? (
-                              <Check className="ml-auto size-4 text-muted-foreground" />
+                              <HugeiconsIcon
+                                icon={Tick01Icon}
+                                className="ml-auto size-4 text-muted-foreground"
+                              />
                             ) : null}
                           </DropdownMenuItem>
                         ))}
@@ -447,7 +464,8 @@ export function DashboardSidebarContent() {
                 </DropdownMenuSub>
 
                 <DropdownMenuItem onSelect={() => setAccountSettingsOpen(true)}>
-                  <Bolt
+                  <HugeiconsIcon
+                    icon={CogIcon}
                     className="h-4 w-4 shrink-0 text-muted-foreground"
                     strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />
@@ -455,7 +473,8 @@ export function DashboardSidebarContent() {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                  <LogOut
+                  <HugeiconsIcon
+                    icon={Logout01Icon}
                     className="h-4 w-4 shrink-0"
                     strokeWidth={APP_SIDEBAR_ICON_STROKE}
                   />

@@ -1,19 +1,19 @@
 "use client";
 
-import { cn } from "@baseblocks/ui/lib/utils";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  File,
-  FileArchive,
-  FileAudio,
-  FileCode,
-  FileSpreadsheet,
-  FileText,
-  FileVideo,
-  Image,
-  Upload,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+  Cancel01Icon,
+  File01Icon,
+  FileAttachmentIcon,
+  FileAudioIcon,
+  FileScriptIcon,
+  FileSpreadsheetIcon,
+  FileVideoIcon,
+  FileZipIcon,
+  Image01Icon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { useDropzone } from "react-dropzone";
 
 const defaultMaxSize = 50 * 1024 * 1024;
@@ -83,9 +83,13 @@ export function DropZone({
             )}
           >
             {isDragReject ? (
-              <X className="h-6 w-6 text-destructive" />
+              <HugeiconsIcon
+                icon={Cancel01Icon}
+                className="h-6 w-6 text-destructive"
+              />
             ) : (
-              <Upload
+              <HugeiconsIcon
+                icon={Upload01Icon}
                 className={cn(
                   "h-6 w-6",
                   isDragActive ? "text-primary" : "text-muted-foreground",
@@ -107,38 +111,38 @@ export function DropZone({
   );
 }
 
-const fileTypeIcons: Record<string, LucideIcon> = {
-  "application/pdf": FileText,
-  "application/msword": FileText,
+const fileTypeIcons: Record<string, IconSvgElement> = {
+  "application/pdf": FileAttachmentIcon,
+  "application/msword": FileAttachmentIcon,
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-    FileText,
-  "text/plain": FileText,
-  "text/markdown": FileText,
-  "text/rtf": FileText,
-  "application/vnd.ms-excel": FileSpreadsheet,
+    FileAttachmentIcon,
+  "text/plain": FileAttachmentIcon,
+  "text/markdown": FileAttachmentIcon,
+  "text/rtf": FileAttachmentIcon,
+  "application/vnd.ms-excel": FileSpreadsheetIcon,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-    FileSpreadsheet,
-  "text/csv": FileSpreadsheet,
-  "image/jpeg": Image,
-  "image/png": Image,
-  "image/gif": Image,
-  "image/webp": Image,
-  "image/svg+xml": Image,
-  "video/mp4": FileVideo,
-  "video/webm": FileVideo,
-  "video/quicktime": FileVideo,
-  "audio/mpeg": FileAudio,
-  "audio/wav": FileAudio,
-  "audio/ogg": FileAudio,
-  "application/json": FileCode,
-  "application/javascript": FileCode,
-  "text/html": FileCode,
-  "text/css": FileCode,
-  "application/xml": FileCode,
-  "application/zip": FileArchive,
-  "application/x-rar-compressed": FileArchive,
-  "application/x-7z-compressed": FileArchive,
-  "application/gzip": FileArchive,
+    FileSpreadsheetIcon,
+  "text/csv": FileSpreadsheetIcon,
+  "image/jpeg": Image01Icon,
+  "image/png": Image01Icon,
+  "image/gif": Image01Icon,
+  "image/webp": Image01Icon,
+  "image/svg+xml": Image01Icon,
+  "video/mp4": FileVideoIcon,
+  "video/webm": FileVideoIcon,
+  "video/quicktime": FileVideoIcon,
+  "audio/mpeg": FileAudioIcon,
+  "audio/wav": FileAudioIcon,
+  "audio/ogg": FileAudioIcon,
+  "application/json": FileScriptIcon,
+  "application/javascript": FileScriptIcon,
+  "text/html": FileScriptIcon,
+  "text/css": FileScriptIcon,
+  "application/xml": FileScriptIcon,
+  "application/zip": FileZipIcon,
+  "application/x-rar-compressed": FileZipIcon,
+  "application/x-7z-compressed": FileZipIcon,
+  "application/gzip": FileZipIcon,
 };
 
 export function FileIcon({
@@ -151,12 +155,12 @@ export function FileIcon({
   let Icon = fileTypeIcons[contentType];
 
   if (!Icon) {
-    if (contentType.startsWith("image/")) Icon = Image;
-    else if (contentType.startsWith("video/")) Icon = FileVideo;
-    else if (contentType.startsWith("audio/")) Icon = FileAudio;
-    else if (contentType.startsWith("text/")) Icon = FileText;
-    else Icon = File;
+    if (contentType.startsWith("image/")) Icon = Image01Icon;
+    else if (contentType.startsWith("video/")) Icon = FileVideoIcon;
+    else if (contentType.startsWith("audio/")) Icon = FileAudioIcon;
+    else if (contentType.startsWith("text/")) Icon = FileAttachmentIcon;
+    else Icon = File01Icon;
   }
 
-  return <Icon className={cn("h-4 w-4", className)} />;
+  return <HugeiconsIcon className={cn("h-4 w-4", className)} icon={Icon} />;
 }

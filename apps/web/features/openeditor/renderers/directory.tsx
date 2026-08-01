@@ -1,10 +1,15 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { NamedItemSwitcher } from "@/features/openeditor/renderers/named-item-switcher";
 import type { Directory, DirectoryContent } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const directoryCellClassName =
@@ -56,7 +61,10 @@ export function DirectorySearch({
 }) {
   return (
     <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+      />
       <Input
         aria-label="Search directory"
         className="!rounded-2xl !border-0 !bg-card !pl-10 !shadow-none"
@@ -89,7 +97,7 @@ export function DirectoryPagination({
         type="button"
         variant="ghost"
       >
-        <ChevronLeft />
+        <HugeiconsIcon icon={ArrowLeft01Icon} />
       </Button>
       <span className="min-w-20 text-center tabular-nums">
         Page {currentPage} of {pageCount}
@@ -102,7 +110,7 @@ export function DirectoryPagination({
         type="button"
         variant="ghost"
       >
-        <ChevronRight />
+        <HugeiconsIcon icon={ArrowRight01Icon} />
       </Button>
     </div>
   );

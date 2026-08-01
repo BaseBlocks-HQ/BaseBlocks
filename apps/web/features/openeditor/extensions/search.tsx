@@ -1,7 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { CogIcon, Search01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
 import {
   readSearch,
   SearchViewer,
@@ -25,7 +30,8 @@ import {
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
-import { Search, Settings } from "lucide-react";
+
+const SearchMenuIcon = createOpenEditorIcon(Search01Icon);
 
 function SearchPreview({ value }: { value: Required<SearchContent> }) {
   const { siteId } = useSiteRenderActions();
@@ -67,7 +73,7 @@ function SearchNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
               type="button"
               variant="ghost"
             >
-              <Settings className="size-4" />
+              <HugeiconsIcon icon={CogIcon} className="size-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -154,7 +160,7 @@ export const searchExtension = defineOpenEditorReactNode({
   },
   component: SearchNode,
   insertMenu: {
-    icon: Search,
+    icon: SearchMenuIcon,
     keywords: ["find", "query", "documents"],
     order: baseBlocksSlashMenuOrder.search,
   },

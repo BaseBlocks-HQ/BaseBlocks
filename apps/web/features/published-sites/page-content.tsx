@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-theme";
 import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
@@ -14,7 +16,6 @@ import type {
 import { OpenEditorViewer } from "@openeditor/react";
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
-import { ArrowLeft } from "lucide-react";
 import type { PublishedPageTarget } from "./page-targets";
 
 const EMPTY_PAGE_TARGETS = new Map<string, PublishedPageTarget>();
@@ -63,7 +64,7 @@ export function PublicPageContent({
               title="Back to previous page"
               variant="ghost"
             >
-              <ArrowLeft />
+              <HugeiconsIcon icon={ArrowLeft01Icon} />
             </Button>
           ) : null}
           <span aria-hidden="true" className="shrink-0 text-3xl leading-none">

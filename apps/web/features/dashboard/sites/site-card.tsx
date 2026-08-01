@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete01Icon,
+  LinkSquare01Icon,
+  MoreHorizontalIcon,
+  PencilEdit01Icon,
+} from "@hugeicons/core-free-icons";
 import { Link } from "@/i18n/navigation";
 import { DashboardListRow } from "@/features/dashboard/layout/dashboard-page";
 import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
@@ -24,7 +31,6 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { useMutation } from "convex/react";
-import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
@@ -124,7 +130,10 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                   type="button"
                   variant="ghost"
                 >
-                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  <HugeiconsIcon
+                    icon={MoreHorizontalIcon}
+                    className="h-3.5 w-3.5"
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -135,7 +144,10 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                       rel="noreferrer"
                       target="_blank"
                     >
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <HugeiconsIcon
+                        icon={LinkSquare01Icon}
+                        className="mr-2 h-4 w-4"
+                      />
                       {t("sites.viewSite")}
                     </a>
                   </DropdownMenuItem>
@@ -143,14 +155,20 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                 {canManageSites ? (
                   <>
                     <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                      <Pencil className="mr-2 h-4 w-4" />
+                      <HugeiconsIcon
+                        icon={PencilEdit01Icon}
+                        className="mr-2 h-4 w-4"
+                      />
                       {t("common.edit")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => setDeleteOpen(true)}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <HugeiconsIcon
+                        icon={Delete01Icon}
+                        className="mr-2 h-4 w-4"
+                      />
                       {t("common.delete")}
                     </DropdownMenuItem>
                   </>

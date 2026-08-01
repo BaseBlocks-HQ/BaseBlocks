@@ -1,4 +1,5 @@
-import { ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { FeaturesSection } from "./features-section";
 import { FooterSection } from "./footer-section";
 import { HeroSection } from "./hero-section";
@@ -65,7 +66,12 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
       })}
       href={`${prefix}/login`}
     >
-      {copy.getStarted} <ArrowRight aria-hidden="true" className="h-4 w-4" />
+      {copy.getStarted}{" "}
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        aria-hidden="true"
+        className="h-4 w-4"
+      />
     </a>
   );
   return (

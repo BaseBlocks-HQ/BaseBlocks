@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserGroupIcon } from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { DashboardPageHeader } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
@@ -14,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@baseblocks/ui/table";
-import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "convex/react";
 import { InviteMemberDialog } from "./invite-member-dialog";
@@ -148,7 +149,10 @@ export function TeamPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 py-12 text-center">
-              <Users className="mb-4 h-12 w-12 text-muted-foreground" />
+              <HugeiconsIcon
+                icon={UserGroupIcon}
+                className="mb-4 h-12 w-12 text-muted-foreground"
+              />
               <h3 className="text-lg font-medium">{t("noMembers")}</h3>
               <p className="mt-1 mb-4 text-muted-foreground">
                 {t("noMembersDescription")}

@@ -8,13 +8,18 @@ import {
   readDirectory,
 } from "@/features/openeditor/renderers/directory-model";
 import { DirectoryViewer } from "@/features/openeditor/renderers/directory";
-import { baseBlocksSlashMenuOrder } from "@/features/openeditor/slash-menu";
+import {
+  baseBlocksSlashMenuOrder,
+  createOpenEditorIcon,
+} from "@/features/openeditor/slash-menu";
+import { Table01Icon } from "@hugeicons/core-free-icons";
 import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
   type OpenEditorNodeViewProps,
 } from "@openeditor/react";
-import { TableProperties } from "lucide-react";
+
+const DirectoryMenuIcon = createOpenEditorIcon(Table01Icon);
 
 function DirectoryNode({
   editor,
@@ -64,7 +69,7 @@ export const directoryExtension = defineOpenEditorReactNode({
   },
   component: DirectoryNode,
   insertMenu: {
-    icon: TableProperties,
+    icon: DirectoryMenuIcon,
     keywords: ["table", "data", "list", "grid"],
     order: baseBlocksSlashMenuOrder.directory,
   },

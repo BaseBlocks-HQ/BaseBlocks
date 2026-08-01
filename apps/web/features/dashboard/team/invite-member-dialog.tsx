@@ -1,5 +1,7 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserAdd01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@baseblocks/ui/button";
 import {
@@ -20,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
-import { UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -147,7 +148,7 @@ export function InviteMemberDialog({
           size="sm"
           type="button"
         >
-          <UserPlus className="h-4 w-4" />
+          <HugeiconsIcon icon={UserAdd01Icon} className="h-4 w-4" />
           {t("inviteMember")}
         </Button>
       </DialogTrigger>

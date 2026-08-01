@@ -1,5 +1,12 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete01Icon,
+  FileAddIcon,
+  PencilEdit01Icon,
+  StarIcon,
+} from "@hugeicons/core-free-icons";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
@@ -20,7 +27,6 @@ import {
   ContextMenuTrigger,
 } from "@baseblocks/ui/context-menu";
 import { useMutation } from "convex/react";
-import { FilePenLine, FilePlus, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
@@ -69,25 +75,25 @@ export function PageActionsContextMenu({
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-52">
           <ContextMenuItem onSelect={() => setCreateChildOpen(true)}>
-            <FilePlus className="h-4 w-4" />
+            <HugeiconsIcon icon={FileAddIcon} className="h-4 w-4" />
             {t("addChildPage")}
           </ContextMenuItem>
           <ContextMenuItem onSelect={onRename}>
-            <FilePenLine className="h-4 w-4" />
+            <HugeiconsIcon className="h-4 w-4" icon={PencilEdit01Icon} />
             {t("rename")}
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={() => void handleSetDefault()}
             disabled={isDefault}
           >
-            <Star className="h-4 w-4" />
+            <HugeiconsIcon icon={StarIcon} className="h-4 w-4" />
             {isDefault ? t("defaultPage") : t("setAsDefault")}
           </ContextMenuItem>
           <ContextMenuItem
             variant="destructive"
             onSelect={() => setDeleteOpen(true)}
           >
-            <Trash2 className="h-4 w-4" />
+            <HugeiconsIcon icon={Delete01Icon} className="h-4 w-4" />
             {t("delete")}
           </ContextMenuItem>
         </ContextMenuContent>

@@ -1,5 +1,11 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Delete01Icon,
+  Loading02Icon,
+  CogIcon,
+} from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth/client";
 import type { WorkspaceUser } from "@/features/authentication/server";
 import {
@@ -21,7 +27,6 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { Loader2, Settings, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -113,7 +118,7 @@ export function AccountSettings({
         variant="ghost"
         className={cn("h-8 w-full justify-start gap-2 px-2", triggerClassName)}
       >
-        <Settings className="h-4 w-4" />
+        <HugeiconsIcon icon={CogIcon} className="h-4 w-4" />
         <span>{tCommon("settings")}</span>
       </Button>
     ));
@@ -159,7 +164,11 @@ export function AccountSettings({
               onClick={openDeleteConfirm}
               className="mt-8 h-9 w-full shrink-0 rounded-full px-4 text-sm"
             >
-              <Trash2 className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+              <HugeiconsIcon
+                icon={Delete01Icon}
+                className="mr-2 h-4 w-4 shrink-0"
+                aria-hidden
+              />
               {t("deleteAccount")}
             </Button>
           </div>
@@ -210,7 +219,8 @@ export function AccountSettings({
             >
               {isDeleting ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <Loader2
+                  <HugeiconsIcon
+                    icon={Loading02Icon}
                     className="size-3.5 shrink-0 animate-spin"
                     aria-hidden
                   />
