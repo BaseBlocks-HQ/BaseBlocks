@@ -124,3 +124,27 @@ export function resolveSeoAuditPage(
     updatedAt: page.updatedAt,
   };
 }
+
+export function resolveSeoAuditPageMetadata(
+  organizationSlug: string,
+  siteSlug: string,
+  pagePath: string[],
+) {
+  const result = resolveSeoAuditPage(organizationSlug, siteSlug, pagePath);
+  if (result === undefined || result === null) return result;
+  if (result.access.status !== "accessible") return result;
+  if (!("page" in result) || !("canonicalUrlInputs" in result)) return result;
+  if (!result.page || !result.canonicalUrlInputs) return result;
+
+  return {
+    organization: result.organization,
+    site: result.site,
+    access: result.access,
+    title: result.page.title,
+    descriptionText:
+      pages.find((page) => page.path.join("/") === pagePath.join("/"))?.text ??
+      result.page.title,
+    canonicalPath: result.canonicalUrlInputs.pagePath,
+    updatedAt: result.updatedAt,
+  };
+}

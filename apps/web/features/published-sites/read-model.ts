@@ -9,6 +9,7 @@ import { cache } from "react";
 import {
   resolveSeoAuditCustomDomain,
   resolveSeoAuditPage,
+  resolveSeoAuditPageMetadata,
   resolveSeoAuditSitemap,
 } from "./seo-audit-fixtures";
 
@@ -186,6 +187,15 @@ async function resolvePublishedPageMetadataUncached(
   siteSlug: string,
   path: string,
 ): Promise<PublishedPageMetadataResolution | null> {
+  const fixture = resolveSeoAuditPageMetadata(
+    organizationSlug,
+    siteSlug,
+    path ? path.split("/") : [],
+  );
+  if (fixture !== undefined) {
+    return fixture as PublishedPageMetadataResolution | null;
+  }
+
   let token: string | null | undefined;
   let siteResolution = await queryPublicPublishedSite(
     organizationSlug,
