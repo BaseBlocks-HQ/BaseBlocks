@@ -4,7 +4,7 @@ import { flag } from "flags/next";
 export const analytics = flag<boolean>({
   key: "analytics",
   adapter: vercelAdapter,
-  defaultValue: false,
+  defaultValue: process.env.NODE_ENV === "development",
   description: "Enable site-scoped analytics while it is under development",
   options: [
     { label: "Off", value: false },
