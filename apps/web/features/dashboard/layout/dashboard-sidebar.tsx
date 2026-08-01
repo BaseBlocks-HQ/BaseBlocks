@@ -58,6 +58,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
@@ -82,7 +83,11 @@ const languageNames: Record<Locale, string> = {
   fr: "Français",
 };
 
-export function DashboardSidebarContent() {
+export function DashboardSidebarContent({
+  analyticsEnabled,
+}: {
+  analyticsEnabled: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
@@ -102,30 +107,35 @@ export function DashboardSidebarContent() {
   const teamAnalyticsPath = getTeamAnalyticsPath(team.slug);
 
   const navItems: {
+    available: boolean;
     title: string;
     href: string;
     icon: IconSvgElement;
     isActive: boolean;
   }[] = [
     {
+      available: true,
       title: t("navigation.dashboard"),
       href: getTeamDashboardPath(team.slug),
       icon: Home01Icon,
       isActive: pathname === getTeamDashboardPath(team.slug),
     },
     {
-      title: "Analytics",
+      available: analyticsEnabled,
+      title: t("navigation.analytics"),
       href: teamAnalyticsPath,
       icon: Analytics01Icon,
       isActive: pathname.startsWith(teamAnalyticsPath),
     },
     {
+      available: true,
       title: t("team.title"),
       href: teamMembersPath,
       icon: UserGroupIcon,
       isActive: pathname.startsWith(teamMembersPath),
     },
     {
+      available: true,
       title: t("integrations.title"),
       href: teamIntegrationsPath,
       icon: Link01Icon,
@@ -177,29 +187,53 @@ export function DashboardSidebarContent() {
               <SidebarMenu className="gap-px">
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={item.isActive}
-                      className={appSidebarRowClassName}
-                    >
-                      <Link
-                        href={item.href}
-                        prefetch={false}
-                        title={item.title}
+                    {item.available ? (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={item.isActive}
+                        className={appSidebarRowClassName}
                       >
-                        <HugeiconsIcon
-                          icon={item.icon}
+                        <Link
+                          href={item.href}
+                          prefetch={false}
+                          title={item.title}
+                        >
+                          <HugeiconsIcon
+                            icon={item.icon}
+                            className={cn(
+                              appSidebarIconClassName,
+                              item.isActive
+                                ? "text-sidebar-foreground"
+                                : undefined,
+                            )}
+                            strokeWidth={APP_SIDEBAR_ICON_STROKE}
+                          />
+                          <span className="truncate">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    ) : (
+                      <>
+                        <SidebarMenuButton
+                          aria-label={`${item.title} — ${t("navigation.comingSoon")}`}
                           className={cn(
-                            appSidebarIconClassName,
-                            item.isActive
-                              ? "text-sidebar-foreground"
-                              : undefined,
+                            appSidebarRowClassName,
+                            "cursor-default pr-20",
                           )}
-                          strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                        />
-                        <span className="truncate">{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                          disabled
+                          type="button"
+                        >
+                          <HugeiconsIcon
+                            icon={item.icon}
+                            className={appSidebarIconClassName}
+                            strokeWidth={APP_SIDEBAR_ICON_STROKE}
+                          />
+                          <span className="truncate">{item.title}</span>
+                        </SidebarMenuButton>
+                        <SidebarMenuBadge className="right-2 border border-sidebar-border bg-sidebar-accent px-1.5 text-[0.625rem] font-medium text-sidebar-foreground/65">
+                          {t("navigation.comingSoon")}
+                        </SidebarMenuBadge>
+                      </>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

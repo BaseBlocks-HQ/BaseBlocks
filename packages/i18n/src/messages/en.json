@@ -262,6 +262,8 @@
     }
   },
   "navigation": {
+    "analytics": "Analytics",
+    "comingSoon": "Coming soon",
     "dashboard": "Dashboard",
     "docs": "Docs",
     "home": "Go to Homepage",

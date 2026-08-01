@@ -24,7 +24,13 @@ function buildAppPath(
   return query ? `${pathname}?${query}` : pathname;
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  analyticsEnabled,
+  children,
+}: {
+  analyticsEnabled: boolean;
+  children: ReactNode;
+}) {
   const { capabilities } = useTeamAccess();
   const params = useParams<{ siteId?: string }>();
   const pathname = usePathname();
@@ -92,7 +98,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         }}
         siteId={siteId ?? ""}
       >
-        <AppSidebar siteId={siteId} />
+        <AppSidebar analyticsEnabled={analyticsEnabled} siteId={siteId} />
         <SidebarInset className="h-svh min-w-0 overflow-hidden">
           <AppHeaderProvider>{children}</AppHeaderProvider>
         </SidebarInset>

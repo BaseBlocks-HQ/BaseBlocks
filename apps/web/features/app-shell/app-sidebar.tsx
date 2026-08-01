@@ -11,7 +11,13 @@ import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { AppSidebarFrame } from "./app-sidebar-frame";
 
-export function AppSidebar({ siteId }: { siteId: string | null }) {
+export function AppSidebar({
+  analyticsEnabled,
+  siteId,
+}: {
+  analyticsEnabled: boolean;
+  siteId: string | null;
+}) {
   const { team } = useTeamAccess();
   const t = useTranslations("navigation");
 
@@ -53,7 +59,7 @@ export function AppSidebar({ siteId }: { siteId: string | null }) {
           <SiteEditorSidebarContent siteId={siteId} />
         </Suspense>
       ) : (
-        <DashboardSidebarContent />
+        <DashboardSidebarContent analyticsEnabled={analyticsEnabled} />
       )}
     </AppSidebarFrame>
   );

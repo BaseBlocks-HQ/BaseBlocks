@@ -1,6 +1,7 @@
 import { getViewerState } from "@/features/authentication/server";
 import { TeamAccessProvider } from "@/features/authentication/team-access";
 import { AppShell } from "@/features/app-shell/app-shell";
+import { analytics } from "@/flags";
 import { notFound, redirect } from "next/navigation";
 
 interface TeamLayoutProps {
@@ -14,14 +15,17 @@ export default async function TeamLayout({
 }: TeamLayoutProps) {
   const { teamSlug } = await params;
 
-  const { team, teams, user } = await getViewerState(teamSlug);
+  const [{ team, teams, user }, analyticsEnabled] = await Promise.all([
+    getViewerState(teamSlug),
+    analytics(),
+  ]);
 
   if (teams.length === 0) redirect("/onboarding");
   if (!team) notFound();
 
   return (
     <TeamAccessProvider team={team} teams={teams} user={user}>
-      <AppShell>{children}</AppShell>
+      <AppShell analyticsEnabled={analyticsEnabled}>{children}</AppShell>
     </TeamAccessProvider>
   );
 }

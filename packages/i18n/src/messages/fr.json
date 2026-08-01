@@ -262,6 +262,8 @@
     }
   },
   "navigation": {
+    "analytics": "Analytique",
+    "comingSoon": "Bientôt",
     "dashboard": "Tableau de bord",
     "docs": "Docs",
     "home": "Aller à l'accueil",

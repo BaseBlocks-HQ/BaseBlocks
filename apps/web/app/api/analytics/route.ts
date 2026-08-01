@@ -1,4 +1,5 @@
 import { getSiteAnalytics } from "@/features/dashboard/analytics/vercel-analytics-experiment";
+import { analytics } from "@/flags";
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { api, type Id } from "@baseblocks/backend";
@@ -9,6 +10,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    if (!(await analytics())) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const token = await getToken();
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
