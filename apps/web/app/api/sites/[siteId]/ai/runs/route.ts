@@ -8,6 +8,7 @@ import {
 } from "@/features/openeditor-ai/server/orchestrator";
 import { getEditorAiReadiness } from "@/features/openeditor-ai/server/readiness";
 import { createProductionEditorAiRunner } from "@/features/openeditor-ai/server/runners";
+import { editorAi } from "@/flags";
 import { getToken } from "@/lib/auth/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -29,7 +30,18 @@ async function requireToken() {
   return token || null;
 }
 
+function unavailableResponse() {
+  return NextResponse.json(
+    { error: "Not found" },
+    {
+      status: 404,
+      headers: { "Cache-Control": "private, no-store" },
+    },
+  );
+}
+
 export async function GET() {
+  if (!(await editorAi())) return unavailableResponse();
   if (!(await requireToken())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -43,6 +55,7 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ siteId: string }> },
 ) {
+  if (!(await editorAi())) return unavailableResponse();
   const token = await requireToken();
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

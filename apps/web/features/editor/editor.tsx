@@ -28,10 +28,11 @@ const SiteAiChat = dynamic(() =>
 );
 
 interface SiteEditorProps {
+  editorAiEnabled: boolean;
   siteId: string;
 }
 
-function SiteEditorScreen({ siteId }: SiteEditorProps) {
+function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const { team } = useTeamAccess();
   const searchParams = useSearchParams();
   const selectedPageId = searchParams.get("page");
@@ -120,6 +121,7 @@ function SiteEditorScreen({ siteId }: SiteEditorProps) {
   return (
     <>
       <SiteHeaderContent
+        editorAiEnabled={editorAiEnabled}
         teamSlug={team.slug}
         siteSlug={site.slug}
         siteId={site._id}
@@ -145,7 +147,7 @@ function SiteEditorScreen({ siteId }: SiteEditorProps) {
         <main
           className={cn(
             "relative min-h-0 min-w-0 flex-1 overflow-hidden",
-            aiChatOpen && "max-lg:pointer-events-none",
+            editorAiEnabled && aiChatOpen && "max-lg:pointer-events-none",
           )}
         >
           <PortalContainerProvider value={portalContainer ?? undefined}>
@@ -161,7 +163,7 @@ function SiteEditorScreen({ siteId }: SiteEditorProps) {
             </div>
           </PortalContainerProvider>
         </main>
-        {aiChatOpen ? (
+        {editorAiEnabled && aiChatOpen ? (
           <aside className="absolute inset-y-0 right-0 z-30 w-full border-l bg-background pt-(--app-header-height) shadow-xl sm:w-[26rem] lg:static lg:z-auto lg:w-[26rem] lg:shrink-0 lg:shadow-none">
             <SiteAiChat
               onApplied={() => setAiApplyRevision((revision) => revision + 1)}
@@ -187,10 +189,10 @@ function SiteEditorScreen({ siteId }: SiteEditorProps) {
   );
 }
 
-export function SiteEditor({ siteId }: SiteEditorProps) {
+export function SiteEditor({ editorAiEnabled, siteId }: SiteEditorProps) {
   return (
     <Suspense fallback={<EditorLoading />}>
-      <SiteEditorScreen siteId={siteId} />
+      <SiteEditorScreen editorAiEnabled={editorAiEnabled} siteId={siteId} />
     </Suspense>
   );
 }

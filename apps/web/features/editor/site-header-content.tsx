@@ -54,6 +54,7 @@ const SiteSettingsPanel = dynamic(() =>
 );
 
 interface SiteHeaderContentProps {
+  editorAiEnabled: boolean;
   isPreviewing?: boolean;
   teamSlug: string;
   siteSlug: string;
@@ -72,6 +73,7 @@ interface SiteHeaderContentProps {
 }
 
 export function SiteHeaderContent({
+  editorAiEnabled,
   isPreviewing = false,
   teamSlug,
   siteSlug,
@@ -109,6 +111,7 @@ export function SiteHeaderContent({
           />
           <SiteHeaderActions
             canEdit={canEdit}
+            editorAiEnabled={editorAiEnabled}
             isPreviewing={isPreviewing}
             onOpenShare={() => setShareDialogOpen(true)}
             onOpenHistory={onOpenHistory}
@@ -330,6 +333,7 @@ function EditorSiteSwitcher({
 
 function SiteHeaderActions({
   canEdit,
+  editorAiEnabled,
   isPreviewing,
   onOpenShare,
   onOpenHistory,
@@ -346,6 +350,7 @@ function SiteHeaderActions({
   onToggleAiChat,
 }: {
   canEdit: boolean;
+  editorAiEnabled: boolean;
   isPreviewing: boolean;
   onOpenShare: () => void;
   onOpenHistory: () => void;
@@ -372,7 +377,9 @@ function SiteHeaderActions({
 
       {canEdit ? (
         <>
-          <EditorAiAction open={aiChatOpen} onToggle={onToggleAiChat} />
+          {editorAiEnabled ? (
+            <EditorAiAction open={aiChatOpen} onToggle={onToggleAiChat} />
+          ) : null}
           <SiteSettingsAction siteId={siteId} />
           <DeployAction
             isPreviewing={isPreviewing}

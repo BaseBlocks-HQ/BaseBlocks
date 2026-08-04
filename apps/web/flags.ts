@@ -12,6 +12,17 @@ export const analytics = flag<boolean>({
   ],
 });
 
+export const editorAi = flag<boolean>({
+  key: "editor-ai",
+  adapter: vercelAdapter,
+  defaultValue: process.env.NODE_ENV === "development",
+  description: "Enable editor AI while its interface is under development",
+  options: [
+    { label: "Off", value: false },
+    { label: "On", value: true },
+  ],
+});
+
 export const notionIntegration = flag<boolean>({
   key: "notion-integration",
   adapter: vercelAdapter,
