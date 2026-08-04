@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",
-    "@typescript/native-preview": "npm:typescript@7.0.2",
     "lighthouse": "13.0.1",
     "turbo": "^2.10.4",
     "typescript": "7.0.2"

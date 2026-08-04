@@ -74,15 +74,15 @@ const nextConfig = {
     "100.108.121.25",
     "naaiyys.tail2c844a.ts.net",
   ],
-  serverExternalPackages: [],
+  serverExternalPackages: [
+    "@ai-sdk/harness-claude-code",
+    "@ai-sdk/harness-codex",
+  ],
   poweredByHeader: false,
   reactCompiler: true,
   experimental: {
     inlineCss: true,
-  },
-  typescript: {
-    // CI and the build script run TypeScript 7 before Next. See docs/maintenance/typescript-7-nextjs.md.
-    ignoreBuildErrors: true,
+    useTypeScriptCli: true,
   },
   images: {
     deviceSizes: [640, 750, 828, 960, 1080, 1200, 1280, 1440, 1600, 1920],
