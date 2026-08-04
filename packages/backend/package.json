@@ -29,8 +29,11 @@
   },
   "dependencies": {
     "@baseblocks/domain": "workspace:*",
+    "@baseblocks/openeditor-contracts": "workspace:*",
     "@convex-dev/better-auth": "^0.12.5",
-    "@openeditor/core": "0.0.32",
+    "@noble/hashes": "2.0.1",
+    "@openeditor/workspace": "0.0.36",
+    "@openeditor/core": "0.0.36",
     "better-auth": "^1.6.23",
     "convex": "^1.42.1"
   }

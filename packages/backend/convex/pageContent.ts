@@ -108,7 +108,9 @@ export const save = mutation({
 
     const contentHash = hashOpenEditorContent(serializedDocument);
     const existing = await getPageDocument(ctx, pageId);
-    if (existing?.contentHash === contentHash) return contentHash;
+    if (existing?.contentHash === contentHash) {
+      return existing.contentHash;
+    }
 
     const updatedAt = Date.now();
     const references = referenceValue(

@@ -20,6 +20,7 @@ import type { LibraryId } from "@/features/libraries/model";
 import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import { api } from "@baseblocks/backend";
 import type { LibraryContent } from "@baseblocks/domain";
+import { libraryDefinition } from "@baseblocks/openeditor-contracts";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -237,28 +238,7 @@ function LibraryNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
 }
 
 export const libraryExtension = defineOpenEditorReactNode({
-  block: {
-    name: "baseblocks.library",
-    nodeType: "baseblocksLibrary",
-    label: "Library",
-    group: "embed",
-    defaultNode: () => ({
-      type: "baseblocksLibrary",
-      attrs: { library: { allowDownloads: true } },
-    }),
-    support: { web: "supported", native: "unsupported" },
-  },
-  node: {
-    group: "block",
-    atom: true,
-    draggable: true,
-    addAttributes: () => ({ library: { default: { allowDownloads: true } } }),
-    parseHTML: () => [{ tag: "section[data-baseblocks-library]" }],
-    renderHTML: ({ HTMLAttributes }) => [
-      "section",
-      { ...HTMLAttributes, "data-baseblocks-library": "" },
-    ],
-  },
+  definition: libraryDefinition,
   component: LibraryNode,
   insertMenu: {
     icon: LibraryMenuIcon,

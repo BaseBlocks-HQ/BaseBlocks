@@ -74,10 +74,6 @@ const nextConfig = {
     "100.108.121.25",
     "naaiyys.tail2c844a.ts.net",
   ],
-  serverExternalPackages: [
-    "@ai-sdk/harness-claude-code",
-    "@ai-sdk/harness-codex",
-  ],
   poweredByHeader: false,
   reactCompiler: true,
   experimental: {

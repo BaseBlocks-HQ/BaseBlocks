@@ -23,6 +23,7 @@ import {
 import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import type { QuicklinkItem } from "@baseblocks/domain";
+import { quickLinksDefinition } from "@baseblocks/openeditor-contracts";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -471,28 +472,7 @@ function QuickLinksNode({
 }
 
 export const quickLinksExtension = defineOpenEditorReactNode({
-  block: {
-    name: "baseblocks.quickLinks",
-    nodeType: "baseblocksQuickLinks",
-    label: "Quick Links",
-    group: "embed",
-    defaultNode: () => ({
-      type: "baseblocksQuickLinks",
-      attrs: { links: [] },
-    }),
-    support: { web: "supported", native: "unsupported" },
-  },
-  node: {
-    group: "block",
-    atom: true,
-    draggable: true,
-    addAttributes: () => ({ links: { default: [] } }),
-    parseHTML: () => [{ tag: "section[data-baseblocks-quick-links]" }],
-    renderHTML: ({ HTMLAttributes }) => [
-      "section",
-      { ...HTMLAttributes, "data-baseblocks-quick-links": "" },
-    ],
-  },
+  definition: quickLinksDefinition,
   component: QuickLinksNode,
   insertMenu: {
     icon: QuickLinksMenuIcon,

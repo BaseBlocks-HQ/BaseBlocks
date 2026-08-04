@@ -1,33 +1,49 @@
 import {
-  createDocument,
   parseOpenEditorDocument as parseOpenEditorDocumentStrict,
   type OpenEditorDocument,
   type ProseMirrorNode,
 } from "@openeditor/core";
+import {
+  assertBaseBlocksDocument,
+  baseBlocksDocumentContract,
+} from "@baseblocks/openeditor-contracts";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 export type { OpenEditorDocument } from "@openeditor/core";
 
 export type OpenEditorNode = ProseMirrorNode;
 
 export const emptyOpenEditorDocument = (): OpenEditorDocument =>
-  createDocument([{ type: "paragraph" }]);
+  ({
+    type: "doc",
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        // Missing pageDocuments rows are projected in multiple transactions.
+        // Their synthesized baseline must have a stable identity so optimistic
+        // AI fingerprints do not report a change where none occurred.
+        attrs: { "openeditor-id": "oe_empty_document_paragraph" },
+      },
+    ],
+  }) as OpenEditorDocument;
 
+const SHA256_CONTENT_HASH_PREFIX = "sha256:";
+
+/** Hash newly persisted content with an explicit, evolvable algorithm tag. */
 export function hashOpenEditorContent(serialized: string): string {
-  let first = 0x811c9dc5;
-  let second = 0x9e3779b9;
-  for (let index = 0; index < serialized.length; index += 1) {
-    const code = serialized.charCodeAt(index);
-    first = Math.imul(first ^ code, 0x01000193);
-    second = Math.imul(second ^ code, 0x85ebca6b);
-  }
-  return `${serialized.length.toString(36)}-${(first >>> 0).toString(36)}-${(
-    second >>> 0
-  ).toString(36)}`;
+  return `${SHA256_CONTENT_HASH_PREFIX}${bytesToHex(sha256(utf8ToBytes(serialized)))}`;
 }
 
 export function parseOpenEditorDocument(value: unknown): OpenEditorDocument {
   const decoded = typeof value === "string" ? JSON.parse(value) : value;
-  return parseOpenEditorDocumentStrict(decoded);
+  const document = parseOpenEditorDocumentStrict(decoded, {
+    contract: baseBlocksDocumentContract,
+    limits: { requireNodeIds: true },
+  });
+  assertBaseBlocksDocument(document);
+  return document;
 }
 
 export function visitOpenEditorNodes(
@@ -67,14 +83,22 @@ export function collectOpenEditorAttributeValues(
 }
 
 export function extractOpenEditorReferences(content: OpenEditorDocument) {
+  const attachmentIds = collectOpenEditorAttributeValues(
+    content,
+    "attachment",
+    ["attachmentId"],
+  );
+  const imageIds = collectOpenEditorAttributeValues(content, "image", [
+    "imageId",
+  ]);
   return {
     libraryIds: collectOpenEditorAttributeValues(content, "baseblocksLibrary", [
       "library",
       "libraryId",
     ]),
-    fileIds: collectOpenEditorAttributeValues(content, "attachment", [
-      "attachmentId",
-    ]),
+    attachmentIds,
+    imageIds,
+    fileIds: new Set([...attachmentIds, ...imageIds]),
   };
 }
 

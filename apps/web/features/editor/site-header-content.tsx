@@ -3,6 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
+  AiChat02Icon,
   FileClockIcon,
   Globe02Icon,
   LinkSquare01Icon,
@@ -66,6 +67,8 @@ interface SiteHeaderContentProps {
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
   hasUnpublishedChanges: boolean;
+  aiChatOpen: boolean;
+  onToggleAiChat: () => void;
 }
 
 export function SiteHeaderContent({
@@ -82,6 +85,8 @@ export function SiteHeaderContent({
   onTogglePreview,
   onUnpublish,
   hasUnpublishedChanges,
+  aiChatOpen,
+  onToggleAiChat,
 }: SiteHeaderContentProps) {
   const { canEdit } = useEditorSite();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -116,6 +121,8 @@ export function SiteHeaderContent({
             hasUnpublishedChanges={hasUnpublishedChanges}
             siteSlug={siteSlug}
             teamSlug={teamSlug}
+            aiChatOpen={aiChatOpen}
+            onToggleAiChat={onToggleAiChat}
           />
         </div>
       </AppHeaderPortal>
@@ -335,6 +342,8 @@ function SiteHeaderActions({
   hasUnpublishedChanges,
   siteSlug,
   teamSlug,
+  aiChatOpen,
+  onToggleAiChat,
 }: {
   canEdit: boolean;
   isPreviewing: boolean;
@@ -349,6 +358,8 @@ function SiteHeaderActions({
   hasUnpublishedChanges: boolean;
   siteSlug: string;
   teamSlug: string;
+  aiChatOpen: boolean;
+  onToggleAiChat: () => void;
 }) {
   const t = useTranslations("editor.header");
   return (
@@ -361,6 +372,7 @@ function SiteHeaderActions({
 
       {canEdit ? (
         <>
+          <EditorAiAction open={aiChatOpen} onToggle={onToggleAiChat} />
           <SiteSettingsAction siteId={siteId} />
           <DeployAction
             isPreviewing={isPreviewing}
@@ -380,6 +392,29 @@ function SiteHeaderActions({
         </Badge>
       )}
     </div>
+  );
+}
+
+function EditorAiAction({
+  open,
+  onToggle,
+}: {
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      aria-label={open ? "Close editor AI" : "Open editor AI"}
+      aria-pressed={open}
+      className={headerActionClassName}
+      onClick={onToggle}
+      size="sm"
+      title={open ? "Close editor AI" : "Open editor AI"}
+      variant={open ? "secondary" : "ghost"}
+    >
+      <HugeiconsIcon icon={AiChat02Icon} />
+      <HeaderActionLabel>AI</HeaderActionLabel>
+    </Button>
   );
 }
 

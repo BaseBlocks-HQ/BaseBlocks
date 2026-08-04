@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalPassThroughEnv": ["FLAGS", "FLAGS_SECRET"],
+  "globalPassThroughEnv": [
+    "AI_GATEWAY_API_KEY",
+    "EDITOR_AI_MODEL",
+    "FLAGS",
+    "FLAGS_SECRET",
+    "VERCEL_OIDC_TOKEN"
+  ],
   "ui": "tui",
   "tasks": {
     "build": {

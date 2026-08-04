@@ -15,7 +15,10 @@ describe("release detail diff", () => {
           },
           {
             type: "paragraph",
-            attrs: { textAlign: "center" },
+            attrs: {
+              textAlign: "center",
+              "openeditor-id": "paragraph-1",
+            },
             content: [
               {
                 type: "text",
@@ -26,7 +29,11 @@ describe("release detail diff", () => {
           },
           {
             type: "page",
-            attrs: { pageId: "page-2", icon: "📄" },
+            attrs: {
+              pageId: "page-2",
+              icon: "📄",
+              "openeditor-id": "page-link-1",
+            },
             content: [{ type: "text", text: "Linked page" }],
           },
         ],

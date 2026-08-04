@@ -85,6 +85,153 @@ export default defineSchema({
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
 
+  aiChangesetAudits: defineTable({
+    siteId: v.id("sites"),
+    runId: v.id("aiRuns"),
+    actorId: v.string(),
+    requestId: v.optional(v.string()),
+    executor: v.optional(v.string()),
+    modelId: v.string(),
+    expectedProjectFingerprint: v.string(),
+    resultProjectFingerprint: v.string(),
+    expectedSiteFingerprint: v.string(),
+    resultSiteFingerprint: v.string(),
+    expectedPageFingerprints: v.array(
+      v.object({
+        pageId: v.string(),
+        fingerprint: v.union(v.string(), v.null()),
+      }),
+    ),
+    resultPageFingerprints: v.array(
+      v.object({
+        pageId: v.string(),
+        fingerprint: v.union(v.string(), v.null()),
+      }),
+    ),
+    resultDigest: v.string(),
+    previousSiteName: v.optional(v.string()),
+    nextSiteName: v.optional(v.string()),
+    siteNameChanged: v.optional(v.boolean()),
+    baseDraftRevision: v.number(),
+    resultDraftRevision: v.number(),
+    operationCount: v.number(),
+    createdPageIds: v.array(v.id("pages")),
+    updatedPageIds: v.array(v.id("pages")),
+    deletedPageIds: v.array(v.id("pages")),
+    createdAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_created", ["siteId", "createdAt"]),
+
+  aiChangesetReverts: defineTable({
+    auditId: v.id("aiChangesetAudits"),
+    siteId: v.id("sites"),
+    runId: v.id("aiRuns"),
+    actorId: v.string(),
+    appliedDraftRevision: v.number(),
+    appliedSiteName: v.optional(v.string()),
+    appliedDefaultPageId: v.optional(v.id("pages")),
+    previousSiteName: v.string(),
+    previousDefaultPageId: v.optional(v.id("pages")),
+    createdPageIds: v.array(v.id("pages")),
+    previousPages: v.array(
+      v.object({
+        pageId: v.id("pages"),
+        parentId: v.optional(v.id("pages")),
+        title: v.string(),
+        slug: v.string(),
+        icon: v.optional(v.string()),
+        order: v.number(),
+        restoreDocument: v.boolean(),
+        documentBlobId: v.optional(v.id("pageContentBlobs")),
+      }),
+    ),
+    createdAt: v.number(),
+    revertedAt: v.optional(v.number()),
+    revertedBy: v.optional(v.string()),
+    revertDraftRevision: v.optional(v.number()),
+  })
+    .index("by_audit", ["auditId"])
+    .index("by_site_created", ["siteId", "createdAt"]),
+
+  aiRuns: defineTable({
+    siteId: v.id("sites"),
+    organizationId: v.string(),
+    actorId: v.string(),
+    requestId: v.string(),
+    promptFingerprint: v.string(),
+    modelId: v.string(),
+    mode: v.union(v.literal("preview"), v.literal("apply")),
+    status: v.union(
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    leaseExpiresAt: v.number(),
+    result: v.optional(v.any()),
+    failureCode: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_site_actor_request", ["siteId", "actorId", "requestId"])
+    .index("by_actor_status_lease", ["actorId", "status", "leaseExpiresAt"])
+    .index("by_site_status_lease", ["siteId", "status", "leaseExpiresAt"])
+    .index("by_org_status_lease", [
+      "organizationId",
+      "status",
+      "leaseExpiresAt",
+    ])
+    .index("by_org_created", ["organizationId", "createdAt"]),
+
+  aiConversations: defineTable({
+    siteId: v.id("sites"),
+    organizationId: v.string(),
+    actorId: v.string(),
+    title: v.string(),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site_actor_updated", ["siteId", "actorId", "updatedAt"])
+    .index("by_site", ["siteId"]),
+
+  aiConversationMessages: defineTable({
+    conversationId: v.id("aiConversations"),
+    siteId: v.id("sites"),
+    actorId: v.string(),
+    requestId: v.string(),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    mode: v.union(v.literal("preview"), v.literal("apply")),
+    status: v.literal("completed"),
+    operationCount: v.optional(v.number()),
+    auditId: v.optional(v.id("aiChangesetAudits")),
+    revertedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_conversation_created", ["conversationId", "createdAt"])
+    .index("by_conversation_request_role", [
+      "conversationId",
+      "requestId",
+      "role",
+    ]),
+
+  aiOrganizationEntitlements: defineTable({
+    organizationId: v.string(),
+    enabled: v.boolean(),
+    dailyRunLimit: v.number(),
+    maxActorConcurrency: v.number(),
+    maxSiteConcurrency: v.number(),
+    maxOrganizationConcurrency: v.number(),
+    maxRequestsPerRun: v.number(),
+    maxInputTokensPerRun: v.number(),
+    maxOutputTokensPerRun: v.number(),
+    maxSpendUsdPerRun: v.number(),
+    policyVersion: v.string(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
   documentLibraries: defineTable({
     siteId: v.id("sites"),
     name: v.string(),

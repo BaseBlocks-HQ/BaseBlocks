@@ -8,10 +8,10 @@ import { GitForkIcon } from "@hugeicons/core-free-icons";
 import {
   DecisionTree,
   DecisionTreeViewer,
-  type DecisionTreeValue,
   readDecisionTree,
 } from "@/features/openeditor/renderers/decision-tree";
 import type { OpenEditorDocument } from "@openeditor/core";
+import { decisionTreeDefinition } from "@baseblocks/openeditor-contracts";
 import {
   defineOpenEditorReactNode,
   NodeViewWrapper,
@@ -22,11 +22,6 @@ import {
 import { toHtml, toPlainText } from "@openeditor/exporters";
 const nestedDocumentExtensions = [] as const;
 const DecisionTreeMenuIcon = createOpenEditorIcon(GitForkIcon);
-
-const defaultValue = (): DecisionTreeValue => ({
-  trees: [{ id: "default", label: "Tree 1", nodes: [] }],
-  tabsMode: "row",
-});
 
 function NestedEditor({
   initialDocument,
@@ -73,28 +68,7 @@ function DecisionTreeNode({
 }
 
 export const decisionTreeExtension = defineOpenEditorReactNode({
-  block: {
-    name: "baseblocks.decisionTree",
-    nodeType: "baseblocksDecisionTree",
-    label: "Decision Tree",
-    group: "embed",
-    defaultNode: () => ({
-      type: "baseblocksDecisionTree",
-      attrs: { decisionTree: defaultValue() },
-    }),
-    support: { web: "supported", native: "unsupported" },
-  },
-  node: {
-    group: "block",
-    atom: true,
-    draggable: true,
-    addAttributes: () => ({ decisionTree: { default: defaultValue() } }),
-    parseHTML: () => [{ tag: "section[data-baseblocks-decision-tree]" }],
-    renderHTML: ({ HTMLAttributes }) => [
-      "section",
-      { ...HTMLAttributes, "data-baseblocks-decision-tree": "" },
-    ],
-  },
+  definition: decisionTreeDefinition,
   component: DecisionTreeNode,
   insertMenu: {
     icon: DecisionTreeMenuIcon,

@@ -10,10 +10,10 @@ import {
 import {
   readSearch,
   SearchViewer,
-  searchDefaults,
 } from "@/features/openeditor/renderers/search";
 import { SearchBox } from "@/features/search";
 import type { SearchContent } from "@baseblocks/domain";
+import { searchDefinition } from "@baseblocks/openeditor-contracts";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
@@ -136,28 +136,7 @@ function SearchNode({ node, updateAttributes }: OpenEditorNodeViewProps) {
 }
 
 export const searchExtension = defineOpenEditorReactNode({
-  block: {
-    name: "baseblocks.search",
-    nodeType: "baseblocksSearch",
-    label: "Search",
-    group: "embed",
-    defaultNode: () => ({
-      type: "baseblocksSearch",
-      attrs: { search: searchDefaults },
-    }),
-    support: { web: "supported", native: "unsupported" },
-  },
-  node: {
-    group: "block",
-    atom: true,
-    draggable: true,
-    addAttributes: () => ({ search: { default: searchDefaults } }),
-    parseHTML: () => [{ tag: "section[data-baseblocks-search]" }],
-    renderHTML: ({ HTMLAttributes }) => [
-      "section",
-      { ...HTMLAttributes, "data-baseblocks-search": "" },
-    ],
-  },
+  definition: searchDefinition,
   component: SearchNode,
   insertMenu: {
     icon: SearchMenuIcon,

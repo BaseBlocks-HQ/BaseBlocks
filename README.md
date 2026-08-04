@@ -47,9 +47,10 @@ Published sites currently read the latest saved page content. Historical deploym
 - [Node.js](https://nodejs.org/) 20.9 or newer
 - [Bun](https://bun.sh/) 1.3 or newer
 - A [Convex](https://convex.dev/) account
+- Access to the linked Vercel project for development environment variables
 - An S3-compatible bucket for file uploads
 
-Vercel credentials are only required when developing custom-domain lifecycle features. OAuth credentials are only required for the social providers you enable.
+OAuth credentials are only required for the social providers you enable.
 
 ### Setup
 
@@ -58,6 +59,7 @@ git clone https://github.com/BaseBlocks-HQ/BaseBlocks.git
 cd BaseBlocks
 
 bun install
+bunx vercel link
 
 cp .env.example apps/web/.env.local
 cp .env.example packages/backend/.env.local
@@ -71,7 +73,10 @@ Start the web application and Convex backend:
 bun run dev
 ```
 
-The web application runs at [http://localhost:3001](http://localhost:3001).
+The development command securely loads the linked project's Development
+variables and a short-lived Vercel OIDC token before starting Turborepo. This
+lets Editor AI use AI Gateway without storing a Gateway API key locally. The
+web application runs at [http://localhost:3001](http://localhost:3001).
 
 ### Authentication callbacks
 

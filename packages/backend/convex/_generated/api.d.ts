@@ -8,6 +8,11 @@
  * @module
  */
 
+import type * as aiChangesets from "../aiChangesets.js";
+import type * as aiConversations from "../aiConversations.js";
+import type * as aiEntitlements from "../aiEntitlements.js";
+import type * as aiRuns from "../aiRuns.js";
+import type * as aiWorkspaces from "../aiWorkspaces.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as files from "../files.js";
@@ -19,6 +24,13 @@ import type * as integrationWebhookSignature from "../integrationWebhookSignatur
 import type * as integrationWebhooks from "../integrationWebhooks.js";
 import type * as integrations from "../integrations.js";
 import type * as libraries from "../libraries.js";
+import type * as model_aiChangesetAudit from "../model/aiChangesetAudit.js";
+import type * as model_aiChangesetPlan from "../model/aiChangesetPlan.js";
+import type * as model_aiChangesetReferences from "../model/aiChangesetReferences.js";
+import type * as model_aiChangesetRevert from "../model/aiChangesetRevert.js";
+import type * as model_aiRunPolicy from "../model/aiRunPolicy.js";
+import type * as model_aiWorkspaceBounds from "../model/aiWorkspaceBounds.js";
+import type * as model_aiWorkspaceFingerprint from "../model/aiWorkspaceFingerprint.js";
 import type * as model_draft from "../model/draft.js";
 import type * as model_libraryAccess from "../model/libraryAccess.js";
 import type * as model_pageDocuments from "../model/pageDocuments.js";
@@ -47,6 +59,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  aiChangesets: typeof aiChangesets;
+  aiConversations: typeof aiConversations;
+  aiEntitlements: typeof aiEntitlements;
+  aiRuns: typeof aiRuns;
+  aiWorkspaces: typeof aiWorkspaces;
   auth: typeof auth;
   crons: typeof crons;
   files: typeof files;
@@ -58,6 +75,13 @@ declare const fullApi: ApiFromModules<{
   integrationWebhooks: typeof integrationWebhooks;
   integrations: typeof integrations;
   libraries: typeof libraries;
+  "model/aiChangesetAudit": typeof model_aiChangesetAudit;
+  "model/aiChangesetPlan": typeof model_aiChangesetPlan;
+  "model/aiChangesetReferences": typeof model_aiChangesetReferences;
+  "model/aiChangesetRevert": typeof model_aiChangesetRevert;
+  "model/aiRunPolicy": typeof model_aiRunPolicy;
+  "model/aiWorkspaceBounds": typeof model_aiWorkspaceBounds;
+  "model/aiWorkspaceFingerprint": typeof model_aiWorkspaceFingerprint;
   "model/draft": typeof model_draft;
   "model/libraryAccess": typeof model_libraryAccess;
   "model/pageDocuments": typeof model_pageDocuments;
