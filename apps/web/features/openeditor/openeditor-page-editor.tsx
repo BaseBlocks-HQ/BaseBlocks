@@ -12,6 +12,7 @@ import { api, type Doc, type Id } from "@baseblocks/backend";
 import { generateSlug } from "@baseblocks/domain";
 import type { SaveStatus } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
+import { Spinner } from "@baseblocks/ui/spinner";
 import type {
   OpenEditorAttachmentRuntime,
   OpenEditorDocument,
@@ -170,7 +171,7 @@ export function OpenEditorPageEditor({
   if (!document) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-        {t("loading")}
+        <Spinner className="size-6" aria-label={t("loading")} />
       </div>
     );
   }

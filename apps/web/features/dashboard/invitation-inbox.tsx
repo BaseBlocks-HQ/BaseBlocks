@@ -4,7 +4,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
   InboxIcon,
-  Loading02Icon,
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import { useRouter } from "@/i18n/navigation";
@@ -23,6 +22,7 @@ import {
 import { Avatar, AvatarFallback } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useEffect, useEffectEvent, useReducer, useState } from "react";
 
@@ -267,93 +268,91 @@ export function InvitationInbox({
         </p>
       ) : null}
 
-      {!isLoading && invitations.length === 0 ? (
-        <div className="py-6 text-center">
-          <HugeiconsIcon
-            icon={InboxIcon}
-            className="mx-auto mb-2 h-10 w-10 text-sidebar-foreground/35"
-            strokeWidth={SIDEBAR_ICON_STROKE}
-          />
-          <p className="text-sm text-sidebar-foreground/55">
-            {t("noInvitations")}
-          </p>
+      {isLoading ? (
+        <div className="flex min-h-24 items-center justify-center">
+          <Spinner className="size-5 text-sidebar-foreground/50" />
         </div>
-      ) : null}
-
-      <div className="max-h-80 overflow-y-auto">
-        <div className="space-y-3 pr-3">
-          {invitations.map((invitation) => (
-            <div
-              key={invitation.id}
-              className="flex items-start gap-3 rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-4 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]"
-            >
-              <Avatar className="h-10 w-10 shrink-0">
-                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
-                  {getInitials(invitation.inviterEmail)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1 space-y-2">
-                <div>
-                  <p className="font-medium text-sidebar-foreground">
-                    {organizationLabel(invitation, t("invitedToOrg"))}
-                  </p>
-                  <p className="text-sm text-sidebar-foreground/55">
-                    {t("invitedYou")}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-sidebar-foreground/55">
-                  <Badge
-                    variant="secondary"
-                    className="border-sidebar-border/60 bg-sidebar-accent/40 text-xs text-sidebar-foreground"
-                  >
-                    {roleLabel(invitation.role)}
-                  </Badge>
-                  <span aria-hidden>·</span>
-                  <span>
-                    {t("expires", { date: formatDate(invitation.expiresAt) })}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Button
-                    size="sm"
-                    className="h-8 gap-2 rounded-full px-3.5 text-sm"
-                    onClick={() => handleAccept(invitation)}
-                    disabled={processingId === invitation.id}
-                  >
-                    {processingId === invitation.id ? (
+      ) : invitations.length === 0 ? (
+        <Empty className="min-h-24 py-6">
+          <EmptyHeader>
+            <EmptyTitle className="font-normal text-sidebar-foreground/55">
+              {t("noInvitations")}
+            </EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className="max-h-80 overflow-y-auto">
+          <div className="space-y-3 pr-3">
+            {invitations.map((invitation) => (
+              <div
+                key={invitation.id}
+                className="flex items-start gap-3 rounded-[1.1rem] border border-sidebar-border/80 bg-background/55 p-4 shadow-[inset_0_1px_0_hsl(var(--background)/0.4)]"
+              >
+                <Avatar className="h-10 w-10 shrink-0">
+                  <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
+                    {getInitials(invitation.inviterEmail)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div>
+                    <p className="font-medium text-sidebar-foreground">
+                      {organizationLabel(invitation, t("invitedToOrg"))}
+                    </p>
+                    <p className="text-sm text-sidebar-foreground/55">
+                      {t("invitedYou")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-sidebar-foreground/55">
+                    <Badge
+                      variant="secondary"
+                      className="border-sidebar-border/60 bg-sidebar-accent/40 text-xs text-sidebar-foreground"
+                    >
+                      {roleLabel(invitation.role)}
+                    </Badge>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {t("expires", { date: formatDate(invitation.expiresAt) })}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      className="h-8 gap-2 rounded-full px-3.5 text-sm"
+                      onClick={() => handleAccept(invitation)}
+                      disabled={processingId === invitation.id}
+                    >
+                      {processingId === invitation.id ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        <>
+                          <HugeiconsIcon
+                            icon={Tick01Icon}
+                            className="h-4 w-4 shrink-0"
+                          />
+                          {t("accept")}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-2 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      onClick={() => setDeclineTarget(invitation)}
+                      disabled={processingId === invitation.id}
+                    >
                       <HugeiconsIcon
-                        icon={Loading02Icon}
-                        className="h-4 w-4 animate-spin"
+                        icon={Cancel01Icon}
+                        className="h-4 w-4 shrink-0"
                       />
-                    ) : (
-                      <>
-                        <HugeiconsIcon
-                          icon={Tick01Icon}
-                          className="h-4 w-4 shrink-0"
-                        />
-                        {t("accept")}
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-2 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    onClick={() => setDeclineTarget(invitation)}
-                    disabled={processingId === invitation.id}
-                  >
-                    <HugeiconsIcon
-                      icon={Cancel01Icon}
-                      className="h-4 w-4 shrink-0"
-                    />
-                    {t("decline")}
-                  </Button>
+                      {t("decline")}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -369,12 +368,6 @@ export function InvitationInbox({
         strokeWidth={SIDEBAR_ICON_STROKE}
       />
       <span>{t("title")}</span>
-      {isLoading ? (
-        <HugeiconsIcon
-          icon={Loading02Icon}
-          className="h-4 w-4 shrink-0 animate-spin text-sidebar-foreground/50"
-        />
-      ) : null}
     </span>
   );
 
@@ -388,12 +381,6 @@ export function InvitationInbox({
             strokeWidth={SIDEBAR_ICON_STROKE}
           />
           <h3 className="font-medium">{t("title")}</h3>
-          {isLoading ? (
-            <HugeiconsIcon
-              icon={Loading02Icon}
-              className="h-4 w-4 animate-spin text-muted-foreground"
-            />
-          ) : null}
           {invitations.length > 0 ? (
             <Badge
               variant="destructive"
@@ -414,6 +401,7 @@ export function InvitationInbox({
           cancelLabel={tCommon("cancel")}
           confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
           confirmDisabled={isDeclining}
+          confirmLoading={isDeclining}
           onConfirm={confirmDecline}
         />
       </div>
@@ -493,6 +481,7 @@ export function InvitationInbox({
         cancelLabel={tCommon("cancel")}
         confirmLabel={isDeclining ? t("declining") : t("declineConfirm")}
         confirmDisabled={isDeclining}
+        confirmLoading={isDeclining}
         onConfirm={confirmDecline}
       />
     </>
@@ -503,6 +492,7 @@ function DeclineInvitationDialog({
   cancelLabel,
   confirmDisabled,
   confirmLabel,
+  confirmLoading,
   description,
   onConfirm,
   onOpenChange,
@@ -512,6 +502,7 @@ function DeclineInvitationDialog({
   cancelLabel: string;
   confirmDisabled: boolean;
   confirmLabel: string;
+  confirmLoading: boolean;
   description: string;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
@@ -542,6 +533,7 @@ function DeclineInvitationDialog({
             className="rounded-full px-4 text-sm"
             onClick={onConfirm}
           >
+            {confirmLoading ? <Spinner /> : null}
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

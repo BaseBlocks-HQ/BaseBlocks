@@ -1,13 +1,23 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { UserGroupIcon } from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
-import { DashboardPageHeader } from "@/features/dashboard/layout/dashboard-page";
+import {
+  DashboardPage,
+  DashboardPageHeader,
+  DashboardPageState,
+} from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Table,
   TableBody,
@@ -73,97 +83,95 @@ export function TeamPage() {
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem] pt-[calc(var(--app-header-height)+1.25rem)] pb-5">
-          <DashboardPageHeader
-            action={
-              capabilities.canManageTeam ? (
-                <InviteMemberDialog organizationId={team._id} />
-              ) : null
-            }
-            title={t("title")}
-          />
+    <DashboardPage>
+      <DashboardPageHeader
+        action={
+          capabilities.canManageTeam ? (
+            <InviteMemberDialog organizationId={team._id} />
+          ) : null
+        }
+        title={t("title")}
+      />
 
-          {members && members.length > 0 ? (
-            <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/[0.06]">
-              <Table className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-3 [&_th:first-child]:pl-4 [&_th:last-child]:pr-3">
-                <TableHeader className="text-xs text-muted-foreground [&_tr]:border-foreground/[0.07]">
-                  <TableRow>
-                    <TableHead className="h-9 font-normal">
-                      {t("member.email")}
-                    </TableHead>
-                    <TableHead className="h-9 font-normal">
-                      {t("member.role")}
-                    </TableHead>
-                    <TableHead className="h-9 font-normal">
-                      {t("member.joined")}
-                    </TableHead>
-                    {capabilities.canManageTeam && members.length > 1 && (
-                      <TableHead className="h-9 w-12" />
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map((member: MemberListItem) => (
-                    <TableRow
-                      className="border-foreground/[0.06] hover:bg-muted/30"
-                      key={member._id}
-                    >
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar className="size-7">
-                            <AvatarImage src={member.imageUrl} />
-                            <AvatarFallback>
-                              {getInitials(member.name, member.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{member.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <Badge variant={getRoleBadgeVariant(member.role)}>
-                          {member.role === "admin"
-                            ? t("roles.admin")
-                            : member.role === "editor"
-                              ? t("roles.editor")
-                              : t("roles.viewer")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-2 text-muted-foreground">
-                        {formatDate(member.joinedAt)}
-                      </TableCell>
-                      {capabilities.canManageTeam && members.length > 1 && (
-                        <TableCell className="py-2 text-right">
-                          <MemberActions
-                            member={member}
-                            organizationId={team._id}
-                            isCurrentUserAdmin={capabilities.canManageTeam}
-                          />
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-muted/10 py-12 text-center">
-              <HugeiconsIcon
-                icon={UserGroupIcon}
-                className="mb-4 h-12 w-12 text-muted-foreground"
-              />
-              <h3 className="text-lg font-medium">{t("noMembers")}</h3>
-              <p className="mt-1 mb-4 text-muted-foreground">
-                {t("noMembersDescription")}
-              </p>
-              {capabilities.canManageTeam && (
-                <InviteMemberDialog organizationId={team._id} />
-              )}
-            </div>
-          )}
+      {members === undefined ? (
+        <DashboardPageState>
+          <Spinner className="size-6 text-muted-foreground" />
+        </DashboardPageState>
+      ) : members.length > 0 ? (
+        <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+          <Table className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-3 [&_th:first-child]:pl-4 [&_th:last-child]:pr-3">
+            <TableHeader className="text-xs text-muted-foreground [&_tr]:border-foreground/[0.07]">
+              <TableRow>
+                <TableHead className="h-9 font-normal">
+                  {t("member.email")}
+                </TableHead>
+                <TableHead className="h-9 font-normal">
+                  {t("member.role")}
+                </TableHead>
+                <TableHead className="h-9 font-normal">
+                  {t("member.joined")}
+                </TableHead>
+                {capabilities.canManageTeam && members.length > 1 && (
+                  <TableHead className="h-9 w-12" />
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.map((member: MemberListItem) => (
+                <TableRow
+                  className="border-foreground/[0.06] hover:bg-muted/30"
+                  key={member._id}
+                >
+                  <TableCell className="py-2">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className="size-7">
+                        <AvatarImage src={member.imageUrl} />
+                        <AvatarFallback>
+                          {getInitials(member.name, member.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{member.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <Badge variant={getRoleBadgeVariant(member.role)}>
+                      {member.role === "admin"
+                        ? t("roles.admin")
+                        : member.role === "editor"
+                          ? t("roles.editor")
+                          : t("roles.viewer")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="py-2 text-muted-foreground">
+                    {formatDate(member.joinedAt)}
+                  </TableCell>
+                  {capabilities.canManageTeam && members.length > 1 && (
+                    <TableCell className="py-2 text-right">
+                      <MemberActions
+                        member={member}
+                        organizationId={team._id}
+                        isCurrentUserAdmin={capabilities.canManageTeam}
+                      />
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </div>
-    </main>
+      ) : (
+        <Empty className="rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+          <EmptyHeader>
+            <EmptyTitle>{t("noMembers")}</EmptyTitle>
+            <EmptyDescription>{t("noMembersDescription")}</EmptyDescription>
+          </EmptyHeader>
+          {capabilities.canManageTeam ? (
+            <EmptyContent>
+              <InviteMemberDialog organizationId={team._id} />
+            </EmptyContent>
+          ) : null}
+        </Empty>
+      )}
+    </DashboardPage>
   );
 }

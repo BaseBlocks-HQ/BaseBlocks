@@ -7,6 +7,7 @@ import { PageTree } from "@/features/editor/pages/page-tree";
 import { AnimatedDisclosure } from "@/components/tree/animated-tree";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
 import { useState } from "react";
 
@@ -78,9 +79,13 @@ export function PagesPanel({
             />
           </SidebarMenu>
         ) : (
-          <p className="px-3 py-4 text-sm text-muted-foreground">
-            No pages yet.
-          </p>
+          <Empty className="min-h-20 rounded-none px-3 py-4">
+            <EmptyHeader>
+              <EmptyTitle className="font-normal text-muted-foreground">
+                No pages yet
+              </EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         )}
       </AnimatedDisclosure>
     </>

@@ -6,6 +6,45 @@ import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 import { useTranslations } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
 
+export function DashboardPage({
+  children,
+  className,
+  ...props
+}: ComponentProps<"main">) {
+  return (
+    <main
+      className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6"
+      {...props}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          className={cn(
+            "mx-auto flex min-h-full w-full max-w-[64rem] flex-col pt-[calc(var(--app-header-height)+1.25rem)] pb-5",
+            className,
+          )}
+        >
+          {children}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export function DashboardPageState({
+  className,
+  ...props
+}: ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 items-center justify-center",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export function DashboardPageHeader({
   action,
   title,

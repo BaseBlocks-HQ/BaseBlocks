@@ -1,11 +1,12 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { Link } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { EditorParticleField } from "@/features/marketing/editor-particle-field";
 import { Button } from "@baseblocks/ui/button";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
@@ -124,11 +125,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithGitHub")}
                   </span>
                   {activeProvider === "github" ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      aria-hidden="true"
-                      className="size-4 animate-spin"
-                    />
+                    <Spinner aria-hidden="true" className="size-4" />
                   ) : (
                     <HugeiconsIcon
                       icon={ArrowRight01Icon}
@@ -160,11 +157,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithMicrosoft")}
                   </span>
                   {activeProvider === "microsoft" ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      aria-hidden="true"
-                      className="size-4 animate-spin"
-                    />
+                    <Spinner aria-hidden="true" className="size-4" />
                   ) : (
                     <HugeiconsIcon
                       icon={ArrowRight01Icon}
@@ -208,11 +201,7 @@ function LoginForm({ redirectTo }: { redirectTo: string }) {
                       : t("auth.continueWithGoogle")}
                   </span>
                   {activeProvider === "google" ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      aria-hidden="true"
-                      className="size-4 animate-spin"
-                    />
+                    <Spinner aria-hidden="true" className="size-4" />
                   ) : (
                     <HugeiconsIcon
                       icon={ArrowRight01Icon}

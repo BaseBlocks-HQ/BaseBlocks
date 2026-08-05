@@ -6,9 +6,7 @@ import {
   FileClockIcon,
   Globe02Icon,
   InformationCircleIcon,
-  Loading03Icon,
   RotateLeft01Icon,
-  Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import { api, type Id } from "@baseblocks/backend";
 import {
@@ -32,6 +30,8 @@ import {
   DialogTitle,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Sidebar,
   SidebarContent,
@@ -141,11 +141,8 @@ export function PublishDialog({
 
         <div className="space-y-4 px-5 pt-4 pb-4">
           {changes === undefined ? (
-            <div className="grid min-h-24 place-items-center rounded-xl bg-sidebar-accent/55">
-              <HugeiconsIcon
-                icon={Loading03Icon}
-                className="size-5 animate-spin text-muted-foreground"
-              />
+            <div className="flex min-h-24 items-center justify-center rounded-xl bg-sidebar-accent/55">
+              <Spinner className="size-5 text-muted-foreground" />
             </div>
           ) : (
             <ChangeList changes={changes ?? []} />
@@ -167,11 +164,7 @@ export function PublishDialog({
               onClick={() => void handlePublish()}
               size="sm"
             >
-              {publishing ? (
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-              ) : (
-                <HugeiconsIcon icon={Globe02Icon} />
-              )}
+              {publishing ? <Spinner /> : <HugeiconsIcon icon={Globe02Icon} />}
               {draftSummary.liveRelease ? "Publish changes" : "Publish site"}
             </Button>
           </DialogFooter>
@@ -184,10 +177,13 @@ export function PublishDialog({
 function ChangeList({ changes }: { changes: DraftChange[] }) {
   if (changes.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/55 p-3 text-sm text-sidebar-foreground/60">
-        <HugeiconsIcon icon={Tick01Icon} className="size-4" />
-        No unpublished changes
-      </div>
+      <Empty className="min-h-24 rounded-xl bg-sidebar-accent/55 p-3">
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-sidebar-foreground/60">
+            No unpublished changes
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
   return (
@@ -247,10 +243,13 @@ function VersionComparison({
 }) {
   if (changes.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/55 p-3 text-sm text-sidebar-foreground/60">
-        <HugeiconsIcon icon={Tick01Icon} className="size-4" />
-        No differences from the previous version
-      </div>
+      <Empty className="min-h-28 rounded-xl bg-sidebar-accent/55 p-3">
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-sidebar-foreground/60">
+            No differences from the previous version
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -483,16 +482,17 @@ export function HistoryDialog({
                 <SidebarGroup className="p-2">
                   <SidebarGroupContent>
                     {releases === undefined ? (
-                      <div className="grid min-h-32 place-items-center">
-                        <HugeiconsIcon
-                          icon={Loading03Icon}
-                          className="size-5 animate-spin text-muted-foreground"
-                        />
+                      <div className="flex min-h-32 items-center justify-center">
+                        <Spinner className="size-5 text-muted-foreground" />
                       </div>
                     ) : releases.length === 0 ? (
-                      <p className="p-2 text-sm text-muted-foreground">
-                        Publish the site to create its first version.
-                      </p>
+                      <Empty className="min-h-32 rounded-none p-2">
+                        <EmptyHeader>
+                          <EmptyTitle className="font-normal text-muted-foreground">
+                            Publish the site to create its first version
+                          </EmptyTitle>
+                        </EmptyHeader>
+                      </Empty>
                     ) : (
                       <SidebarMenu>
                         {releases.map((release) => (
@@ -542,11 +542,8 @@ export function HistoryDialog({
                       </Badge>
                     </div>
                     {details === undefined ? (
-                      <div className="grid min-h-28 place-items-center">
-                        <HugeiconsIcon
-                          icon={Loading03Icon}
-                          className="size-5 animate-spin text-muted-foreground"
-                        />
+                      <div className="flex min-h-28 items-center justify-center">
+                        <Spinner className="size-5 text-muted-foreground" />
                       </div>
                     ) : (
                       <VersionComparison
@@ -583,9 +580,13 @@ export function HistoryDialog({
                   </div>
                 </>
               ) : (
-                <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                  No published versions yet
-                </div>
+                <Empty className="h-full">
+                  <EmptyHeader>
+                    <EmptyTitle className="font-normal text-muted-foreground">
+                      No published versions yet
+                    </EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
               )}
             </main>
           </SidebarProvider>
@@ -625,9 +626,7 @@ export function HistoryDialog({
               onClick={() => void runConfirmedAction()}
               size="sm"
             >
-              {working ? (
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-              ) : null}
+              {working ? <Spinner /> : null}
               {confirmAction === "live" ? "Set as live" : "Restore draft"}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -10,6 +10,13 @@ import type {
   PublishedPageResult,
 } from "./read-model";
 import { Button } from "@baseblocks/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
 import { useTranslations } from "next-intl";
 
 type Props = {
@@ -76,33 +83,43 @@ function PublicSiteState({
 
   if (kind === "site-not-found") {
     return (
-      <CenteredState>
-        <h1 className="text-4xl font-bold">{t("siteNotFound")}</h1>
-        <p className="text-muted-foreground">
-          {t("siteNotFoundDescription")}{" "}
-          {teamSlug ? <strong>{getDisplayDomain(teamSlug)}</strong> : null}
-        </p>
-        <Button asChild>
-          <a href={getMarketingSiteUrl().toString()}>BaseBlocks</a>
-        </Button>
-      </CenteredState>
+      <Empty className="min-h-screen bg-background">
+        <EmptyHeader>
+          <EmptyTitle>{t("siteNotFound")}</EmptyTitle>
+          <EmptyDescription>
+            {t("siteNotFoundDescription")}{" "}
+            {teamSlug ? <strong>{getDisplayDomain(teamSlug)}</strong> : null}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <a href={getMarketingSiteUrl().toString()}>BaseBlocks</a>
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
   if (kind === "empty") {
     return (
-      <CenteredState>
-        <p className="text-muted-foreground">
-          No accessible pages are available on this site yet.
-        </p>
-      </CenteredState>
+      <Empty className="min-h-screen bg-background">
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-muted-foreground">
+            No accessible pages are available on this site yet
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
-    <CenteredState>
-      <p className="text-muted-foreground">Page not found</p>
-    </CenteredState>
+    <Empty className="min-h-screen bg-background">
+      <EmptyHeader>
+        <EmptyTitle className="font-normal text-muted-foreground">
+          Page not found
+        </EmptyTitle>
+      </EmptyHeader>
+    </Empty>
   );
 }
 

@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -74,7 +75,14 @@ export function DeleteItemDialog({
             className="rounded-full px-4 text-sm"
             onClick={handleConfirm}
           >
-            {isDeleting ? tCommon("loading") : tCommon("delete")}
+            {isDeleting ? (
+              <>
+                <Spinner />
+                {tCommon("loading")}
+              </>
+            ) : (
+              tCommon("delete")
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

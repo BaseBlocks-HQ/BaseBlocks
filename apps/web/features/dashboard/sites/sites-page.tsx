@@ -1,14 +1,19 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { GlobeIcon } from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardList,
+  DashboardPage,
   DashboardPageHeader,
+  DashboardPageState,
 } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
-import { Card, CardContent } from "@baseblocks/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
@@ -42,26 +47,20 @@ function SitesSection({
 
   if (sites === undefined) {
     return (
-      <div className="flex min-h-48 items-center justify-center">
+      <DashboardPageState>
         <Spinner className="size-6 text-muted-foreground" />
-      </div>
+      </DashboardPageState>
     );
   }
 
   if (sites.length === 0) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <HugeiconsIcon
-            icon={GlobeIcon}
-            className="mb-4 h-12 w-12 text-muted-foreground"
-          />
-          <h3 className="mb-2 font-semibold">{t("noSites")}</h3>
-          <p className="text-sm text-muted-foreground">
-            {t("noSitesDescription")}
-          </p>
-        </CardContent>
-      </Card>
+      <Empty className="min-h-48 rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+        <EmptyHeader>
+          <EmptyTitle>{t("noSites")}</EmptyTitle>
+          <EmptyDescription>{t("noSitesDescription")}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -87,25 +86,21 @@ export function SitesPage() {
   });
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem] pt-[calc(var(--app-header-height)+1.25rem)] pb-5">
-          <DashboardPageHeader
-            action={
-              capabilities.canManageSites ? (
-                <CreateSiteDialog organizationId={team._id} />
-              ) : null
-            }
-            title={t("dashboard.yourSites")}
-          />
+    <DashboardPage>
+      <DashboardPageHeader
+        action={
+          capabilities.canManageSites ? (
+            <CreateSiteDialog organizationId={team._id} />
+          ) : null
+        }
+        title={t("dashboard.yourSites")}
+      />
 
-          <SitesSection
-            canManageSites={capabilities.canManageSites}
-            sites={sitesQuery}
-            teamSlug={team.slug}
-          />
-        </div>
-      </div>
-    </main>
+      <SitesSection
+        canManageSites={capabilities.canManageSites}
+        sites={sitesQuery}
+        teamSlug={team.slug}
+      />
+    </DashboardPage>
   );
 }

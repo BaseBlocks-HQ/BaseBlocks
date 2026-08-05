@@ -15,6 +15,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { type FormEvent, useReducer, useState } from "react";
@@ -274,9 +275,14 @@ export function CreateSiteDialog({
                 disabled={formState.isSubmitting}
                 className={"h-8 rounded-full px-4 text-sm"}
               >
-                {formState.isSubmitting
-                  ? t("dialogs.createSite.creating")
-                  : t("dialogs.createSite.create")}
+                {formState.isSubmitting ? (
+                  <>
+                    <Spinner />
+                    {t("dialogs.createSite.creating")}
+                  </>
+                ) : (
+                  t("dialogs.createSite.create")
+                )}
               </Button>
             </DialogFooter>
           </div>

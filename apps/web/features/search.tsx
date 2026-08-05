@@ -4,7 +4,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
   Download01Icon,
-  Loading02Icon,
   NotebookIcon,
   Search01Icon,
   ViewIcon,
@@ -18,8 +17,10 @@ import { FileIcon, formatFileSize } from "@/components/file-viewer/file-ui";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { useDebounce } from "@baseblocks/ui/hooks/use-debounce";
 import { Input } from "@baseblocks/ui/input";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -205,10 +206,9 @@ export function SearchBox({
           )}
         />
         {isSearching && (
-          <HugeiconsIcon
-            icon={Loading02Icon}
+          <Spinner
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-4 w-4 animate-spin",
+              "absolute top-1/2 size-4 -translate-y-1/2",
               "text-muted-foreground",
               inputAddon ? "right-10" : "right-3",
             )}
@@ -222,11 +222,8 @@ export function SearchBox({
         <div className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-2xl bg-card text-card-foreground shadow-xl ring-1 ring-border/60">
           <div className="max-h-[400px] overflow-y-auto p-1.5">
             {isSearching ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-7 text-sm text-muted-foreground">
-                <HugeiconsIcon
-                  icon={Loading02Icon}
-                  className="size-4 animate-spin"
-                />
+              <div className="flex min-h-20 items-center justify-center gap-2 px-4 text-sm text-muted-foreground">
+                <Spinner className="size-4" />
                 <span>Searching...</span>
               </div>
             ) : hasResults && searchResults ? (
@@ -340,9 +337,13 @@ export function SearchBox({
                 })}
               </div>
             ) : (
-              <div className="px-4 py-7 text-center text-sm text-muted-foreground">
-                No results found for "{debouncedQuery}"
-              </div>
+              <Empty className="min-h-20 px-4 py-7">
+                <EmptyHeader>
+                  <EmptyTitle className="font-normal text-muted-foreground">
+                    No results found for "{debouncedQuery}"
+                  </EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
         </div>

@@ -4,13 +4,22 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDownRight01Icon,
   ArrowUpRight01Icon,
-  Analytics01Icon,
   RadioIcon,
 } from "@hugeicons/core-free-icons";
 import { useTeamAccess } from "@/features/authentication/team-access";
-import { DashboardPageHeader } from "@/features/dashboard/layout/dashboard-page";
+import {
+  DashboardPage,
+  DashboardPageHeader,
+  DashboardPageState,
+} from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import { Card, CardContent, CardHeader, CardTitle } from "@baseblocks/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
@@ -186,6 +195,18 @@ function TrafficChart({ snapshot }: { snapshot: AnalyticsSnapshot }) {
 function RankedList({ items }: { items: AnalyticsRankedValue[] }) {
   const max = Math.max(...items.map((item) => item.visitors), 1);
 
+  if (items.length === 0) {
+    return (
+      <Empty className="min-h-24 p-4">
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-muted-foreground">
+            No data yet
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {items.map((item) => (
@@ -310,25 +331,39 @@ function AnalyticsDashboard({ snapshot }: { snapshot: AnalyticsSnapshot }) {
                 </tr>
               </thead>
               <tbody>
-                {snapshot.pages.map((page) => (
-                  <tr
-                    className="transition-colors hover:bg-muted/25"
-                    key={page.key}
-                  >
-                    <td
-                      className="max-w-[24rem] truncate py-3 pr-4 font-mono text-xs"
-                      title={page.key}
+                {snapshot.pages.length > 0 ? (
+                  snapshot.pages.map((page) => (
+                    <tr
+                      className="transition-colors hover:bg-muted/25"
+                      key={page.key}
                     >
-                      {page.key}
-                    </td>
-                    <td className="py-3 text-right font-medium tabular-nums">
-                      {page.visitors}
-                    </td>
-                    <td className="py-3 text-right text-muted-foreground tabular-nums">
-                      {page.pageViews}
+                      <td
+                        className="max-w-[24rem] truncate py-3 pr-4 font-mono text-xs"
+                        title={page.key}
+                      >
+                        {page.key}
+                      </td>
+                      <td className="py-3 text-right font-medium tabular-nums">
+                        {page.visitors}
+                      </td>
+                      <td className="py-3 text-right text-muted-foreground tabular-nums">
+                        {page.pageViews}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>
+                      <Empty className="min-h-24 p-4">
+                        <EmptyHeader>
+                          <EmptyTitle className="font-normal text-muted-foreground">
+                            No page data yet
+                          </EmptyTitle>
+                        </EmptyHeader>
+                      </Empty>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </CardContent>
@@ -359,28 +394,24 @@ function AnalyticsState({
 }) {
   if (loading) {
     return (
-      <div className="flex min-h-72 items-center justify-center">
+      <DashboardPageState>
         <Spinner className="size-6 text-muted-foreground" />
-      </div>
+      </DashboardPageState>
     );
   }
 
   if (!analytics || analytics.status === "unavailable") {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center text-center">
-        <HugeiconsIcon
-          aria-hidden
-          className="mb-3 size-8 text-muted-foreground"
-          icon={Analytics01Icon}
-          strokeWidth={1.5}
-        />
-        <p className="text-sm font-medium">Analytics isn&apos;t available</p>
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          {analytics?.status === "unavailable"
-            ? analytics.message
-            : "We couldn't load analytics for this site."}
-        </p>
-      </div>
+      <Empty className="min-h-72">
+        <EmptyHeader>
+          <EmptyTitle>Analytics isn&apos;t available</EmptyTitle>
+          <EmptyDescription>
+            {analytics?.status === "unavailable"
+              ? analytics.message
+              : "We couldn't load analytics for this site."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -469,53 +500,45 @@ export function AnalyticsPage({ initialSiteId }: { initialSiteId?: string }) {
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem] pt-[calc(var(--app-header-height)+1.25rem)] pb-8">
-          <DashboardPageHeader
-            action={
-              sites && sites.length > 0 ? (
-                <Select onValueChange={handleSiteChange} value={selectedSiteId}>
-                  <SelectTrigger
-                    aria-label="Select site"
-                    className="h-9 min-w-44 border-0 bg-muted/60 shadow-none"
-                  >
-                    <SelectValue placeholder="Select a site" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sites.map((site) => (
-                      <SelectItem key={site._id} value={site._id}>
-                        {site.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null
-            }
-            title="Analytics"
-          />
+    <DashboardPage className="pb-8">
+      <DashboardPageHeader
+        action={
+          sites && sites.length > 0 ? (
+            <Select onValueChange={handleSiteChange} value={selectedSiteId}>
+              <SelectTrigger
+                aria-label="Select site"
+                className="h-9 min-w-44 border-0 bg-muted/60 shadow-none"
+              >
+                <SelectValue placeholder="Select a site" />
+              </SelectTrigger>
+              <SelectContent>
+                {sites.map((site) => (
+                  <SelectItem key={site._id} value={site._id}>
+                    {site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null
+        }
+        title="Analytics"
+      />
 
-          {sites?.length === 0 ? (
-            <div className="flex min-h-72 flex-col items-center justify-center text-center">
-              <HugeiconsIcon
-                aria-hidden
-                className="mb-3 size-8 text-muted-foreground"
-                icon={Analytics01Icon}
-                strokeWidth={1.5}
-              />
-              <p className="text-sm font-medium">No sites yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Create a site to start viewing analytics.
-              </p>
-            </div>
-          ) : (
-            <AnalyticsState
-              analytics={analytics}
-              loading={sites === undefined || loading}
-            />
-          )}
-        </div>
-      </div>
-    </main>
+      {sites?.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No sites yet</EmptyTitle>
+            <EmptyDescription>
+              Create a site to start viewing analytics.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <AnalyticsState
+          analytics={analytics}
+          loading={sites === undefined || loading}
+        />
+      )}
+    </DashboardPage>
   );
 }

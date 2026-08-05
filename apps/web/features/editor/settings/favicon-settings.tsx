@@ -4,12 +4,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Delete01Icon,
   Image01Icon,
-  Loading02Icon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import type { Id } from "@baseblocks/backend";
 import { Button } from "@baseblocks/ui/button";
+import { Spinner } from "@baseblocks/ui/spinner";
 import Image from "next/image";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -81,7 +81,7 @@ export function FaviconSettings({
         aria-label={favicon ? "Replace favicon" : "Upload favicon"}
       >
         {uploadState.isUploading ? (
-          <HugeiconsIcon icon={Loading02Icon} className="size-3 animate-spin" />
+          <Spinner className="size-3" />
         ) : (
           <HugeiconsIcon icon={Upload01Icon} className="size-3" />
         )}

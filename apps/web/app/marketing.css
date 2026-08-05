@@ -917,24 +917,6 @@
   transform: scale(0.98);
 }
 
-.step-three-button-spinner {
-  width: 0;
-  height: 0.68rem;
-  border: 1px solid rgb(255 255 255 / 35%);
-  border-top-color: #fff;
-  border-radius: 50%;
-  opacity: 0;
-  transition:
-    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 250ms ease-out;
-}
-
-.step-three-scene.is-publishing .step-three-button-spinner {
-  width: 0.68rem;
-  opacity: 1;
-  animation: step-three-spin 700ms linear infinite;
-}
-
 .step-three-deployment {
   position: absolute;
   z-index: 1;
@@ -1008,15 +990,6 @@
   width: 0.62rem;
   height: 0.62rem;
   stroke-width: 2.2;
-}
-
-.step-three-deployment-status i {
-  width: 0.52rem;
-  height: 0.52rem;
-  border: 1px solid color-mix(in oklab, var(--foreground) 28%, transparent);
-  border-top-color: currentcolor;
-  border-radius: 50%;
-  animation: step-three-spin 700ms linear infinite;
 }
 
 .step-three-deployment-status > div {
@@ -1371,16 +1344,6 @@
   font-weight: 550;
 }
 
-.step-publish-action > i,
-.step-publish-live > i {
-  width: 0.55rem;
-  height: 0.55rem;
-  border: 1px solid currentcolor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: step-three-spin 700ms linear infinite;
-}
-
 .step-publish-globe {
   position: absolute;
   z-index: 2;
@@ -1593,12 +1556,6 @@
 
 .step-publish-analytics.is-visible .step-publish-chart-line {
   stroke-dashoffset: 0;
-}
-
-@keyframes step-three-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .step-one-scene {

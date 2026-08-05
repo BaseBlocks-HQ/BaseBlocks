@@ -7,7 +7,6 @@ import {
   FileClockIcon,
   Globe02Icon,
   LinkSquare01Icon,
-  Loading03Icon,
   PencilEdit01Icon,
   SentIcon,
   CogIcon,
@@ -39,6 +38,7 @@ import {
   PopoverTrigger,
 } from "@baseblocks/ui/popover";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
@@ -520,11 +520,7 @@ function DeployAction({
         onClick={onPublish}
         size="sm"
       >
-        {isSaving ? (
-          <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-        ) : (
-          <HugeiconsIcon icon={Globe02Icon} />
-        )}
+        {isSaving ? <Spinner /> : <HugeiconsIcon icon={Globe02Icon} />}
         <HeaderActionLabel>
           {isSaving ? tHeader("saving") : publishLabel}
         </HeaderActionLabel>

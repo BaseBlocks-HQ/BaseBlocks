@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
@@ -340,7 +341,14 @@ export function MemberActions({
                 }
                 className={"h-8 rounded-full px-4 text-sm"}
               >
-                {uiState.isChangingRole ? tCommon("loading") : tCommon("save")}
+                {uiState.isChangingRole ? (
+                  <>
+                    <Spinner />
+                    {tCommon("loading")}
+                  </>
+                ) : (
+                  tCommon("save")
+                )}
               </Button>
             </DialogFooter>
           </form>

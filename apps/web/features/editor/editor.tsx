@@ -8,6 +8,7 @@ import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
@@ -65,9 +66,13 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
 
   if (!site || !draftSummaryQuery || site.organizationId !== team._id) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
-        <p className="text-muted-foreground">Site not found</p>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-muted-foreground">
+            Site not found
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -82,9 +87,13 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
       siteId={site._id}
     />
   ) : (
-    <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-      Select a page to edit
-    </div>
+    <Empty className="min-h-[50vh]">
+      <EmptyHeader>
+        <EmptyTitle className="font-normal text-muted-foreground">
+          Select a page to edit
+        </EmptyTitle>
+      </EmptyHeader>
+    </Empty>
   );
 
   return (

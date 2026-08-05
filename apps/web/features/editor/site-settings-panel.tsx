@@ -1,7 +1,5 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Loading02Icon } from "@hugeicons/core-free-icons";
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import { DropZone } from "@/components/file-viewer/file-ui";
 import { useEditorWorkspace } from "@/features/editor/editor-state";
@@ -14,6 +12,7 @@ import {
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { Switch } from "@baseblocks/ui/switch";
 import { useMutation } from "convex/react";
 import Image from "next/image";
@@ -130,10 +129,7 @@ function LogoUploadSection({
           >
             {isUploading ? (
               <>
-                <HugeiconsIcon
-                  icon={Loading02Icon}
-                  className="mr-1 h-3 w-3 animate-spin"
-                />
+                <Spinner className="mr-1 size-3" />
                 {uploadProgress}%
               </>
             ) : (
@@ -158,10 +154,7 @@ function LogoUploadSection({
         <div className="flex flex-col items-center justify-center gap-1 text-center">
           {isUploading ? (
             <>
-              <HugeiconsIcon
-                icon={Loading02Icon}
-                className="h-4 w-4 animate-spin text-muted-foreground"
-              />
+              <Spinner className="size-4 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">{uploadProgress}%</p>
             </>
           ) : (
@@ -332,10 +325,7 @@ export function SiteSettingsPanel({
   if (!site) {
     return (
       <div className="flex items-center justify-center p-4">
-        <HugeiconsIcon
-          icon={Loading02Icon}
-          className="h-5 w-5 animate-spin text-muted-foreground"
-        />
+        <Spinner className="size-5 text-muted-foreground" />
       </div>
     );
   }

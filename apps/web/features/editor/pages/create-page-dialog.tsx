@@ -21,6 +21,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
@@ -226,7 +227,14 @@ export function CreatePageDialog({
                 disabled={dialogState.isSubmitting || !dialogState.title.trim()}
                 className={"h-8 rounded-full px-4 text-sm"}
               >
-                {dialogState.isSubmitting ? t("creating") : t("create")}
+                {dialogState.isSubmitting ? (
+                  <>
+                    <Spinner />
+                    {t("creating")}
+                  </>
+                ) : (
+                  t("create")
+                )}
               </Button>
             </DialogFooter>
           </div>

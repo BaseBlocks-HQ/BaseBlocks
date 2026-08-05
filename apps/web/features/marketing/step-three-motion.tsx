@@ -9,6 +9,7 @@ import {
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
 import createGlobe, { type Arc, type Marker } from "cobe";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
@@ -131,7 +132,7 @@ export function StepThreeMotion() {
           transition={{ duration: 0.24, ease: EASE }}
         >
           {publishing ? (
-            <i />
+            <Spinner aria-hidden="true" />
           ) : (
             <HugeiconsIcon aria-hidden icon={Globe02Icon} />
           )}
@@ -161,7 +162,7 @@ export function StepThreeMotion() {
           {live ? (
             <HugeiconsIcon icon={Tick01Icon} aria-hidden="true" />
           ) : (
-            <i />
+            <Spinner aria-hidden="true" />
           )}
           <span>{live ? "Live" : "Publish it"}</span>
         </motion.div>

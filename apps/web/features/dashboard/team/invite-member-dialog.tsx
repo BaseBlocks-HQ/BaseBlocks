@@ -14,6 +14,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { cn } from "@baseblocks/ui/lib/utils";
 import {
   Select,
@@ -269,9 +270,14 @@ export function InviteMemberDialog({
               }
               className={"h-8 rounded-full px-4 text-sm"}
             >
-              {dialogState.isInviting
-                ? t("invite.inviting")
-                : t("invite.invite")}
+              {dialogState.isInviting ? (
+                <>
+                  <Spinner />
+                  {t("invite.inviting")}
+                </>
+              ) : (
+                t("invite.invite")
+              )}
             </Button>
           </DialogFooter>
         </form>

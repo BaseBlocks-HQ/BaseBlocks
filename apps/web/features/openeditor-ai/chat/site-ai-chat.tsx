@@ -9,6 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@baseblocks/ui/empty";
 import { Marker, MarkerContent, MarkerIcon } from "@baseblocks/ui/marker";
 import { Message, MessageContent } from "@baseblocks/ui/message";
 import {
@@ -19,6 +26,7 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@baseblocks/ui/message-scroller";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { Textarea } from "@baseblocks/ui/textarea";
 import {
   Add01Icon,
@@ -26,7 +34,6 @@ import {
   ArrowDown01Icon,
   Cancel01Icon,
   Delete02Icon,
-  Loading03Icon,
   SentIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -296,10 +303,7 @@ export function SiteAiChat({
                   >
                     <Marker>
                       <MarkerIcon>
-                        <HugeiconsIcon
-                          className="size-4 animate-spin"
-                          icon={Loading03Icon}
-                        />
+                        <Spinner className="size-4" />
                       </MarkerIcon>
                       <MarkerContent className="shimmer">
                         Editing and validating the site…
@@ -406,7 +410,14 @@ function ConversationMessage({
                   size="xs"
                   variant="ghost"
                 >
-                  {reverting ? "Reverting…" : "Revert"}
+                  {reverting ? (
+                    <>
+                      <Spinner />
+                      Reverting…
+                    </>
+                  ) : (
+                    "Revert"
+                  )}
                 </Button>
               ) : null}
             </div>
@@ -419,16 +430,15 @@ function ConversationMessage({
 
 function ChatEmptyState({ onPrompt }: { onPrompt: (prompt: string) => void }) {
   return (
-    <div className="flex flex-col items-center px-2 py-8 text-center">
-      <span className="mb-3 flex size-10 items-center justify-center rounded-xl bg-muted">
-        <HugeiconsIcon className="size-5" icon={AiChat02Icon} />
-      </span>
-      <h2 className="text-sm font-medium">Edit this site with AI</h2>
-      <p className="mt-1 max-w-64 text-xs leading-relaxed text-muted-foreground">
-        Describe a change and the agent will apply it to the site. Every agent
-        change can be reverted from the conversation.
-      </p>
-      <div className="mt-5 grid w-full gap-2">
+    <Empty className="px-2 py-8">
+      <EmptyHeader>
+        <EmptyTitle>Edit this site with AI</EmptyTitle>
+        <EmptyDescription className="max-w-64 text-xs">
+          Describe a change and the agent will apply it to the site. Every agent
+          change can be reverted from the conversation.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent className="grid gap-2">
         {SUGGESTED_PROMPTS.map((prompt) => (
           <Button
             className="h-auto justify-start whitespace-normal p-3 text-left text-xs leading-relaxed"
@@ -440,7 +450,7 @@ function ChatEmptyState({ onPrompt }: { onPrompt: (prompt: string) => void }) {
             {prompt}
           </Button>
         ))}
-      </div>
-    </div>
+      </EmptyContent>
+    </Empty>
   );
 }

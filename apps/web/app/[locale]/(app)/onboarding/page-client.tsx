@@ -26,6 +26,7 @@ import {
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Separator } from "@baseblocks/ui/separator";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -160,9 +161,14 @@ export function OnboardingPageClient() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting
-                ? t("onboarding.creating")
-                : t("onboarding.createWorkspace")}
+              {isSubmitting ? (
+                <>
+                  <Spinner />
+                  {t("onboarding.creating")}
+                </>
+              ) : (
+                t("onboarding.createWorkspace")
+              )}
             </Button>
           </form>
         </CardContent>

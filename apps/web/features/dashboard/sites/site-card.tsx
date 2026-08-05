@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@baseblocks/ui/alert-dialog";
 import { Button } from "@baseblocks/ui/button";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -212,7 +213,14 @@ export function SiteCard({ canManageSites, site, teamSlug }: SiteCardProps) {
                 className="rounded-full px-4 text-sm"
                 onClick={handleDelete}
               >
-                {isDeleting ? t("dialogs.delete.deleting") : t("sites.delete")}
+                {isDeleting ? (
+                  <>
+                    <Spinner />
+                    {t("dialogs.delete.deleting")}
+                  </>
+                ) : (
+                  t("sites.delete")
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -16,6 +16,7 @@ import {
 import { Button } from "@baseblocks/ui/button";
 import { ColorPicker } from "@baseblocks/ui/color-picker";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Popover,
   PopoverContent,
@@ -240,7 +241,14 @@ export function SiteAppearanceSettings({
                   size="sm"
                   type="button"
                 >
-                  {isSaving ? "Applying..." : "Apply"}
+                  {isSaving ? (
+                    <>
+                      <Spinner />
+                      Applying...
+                    </>
+                  ) : (
+                    "Apply"
+                  )}
                 </Button>
               </div>
             </PopoverContent>

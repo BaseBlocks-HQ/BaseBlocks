@@ -3,7 +3,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowUpRight01Icon,
-  Loading03Icon,
   PlugSocketIcon,
   Refresh01Icon,
   Tick01Icon,
@@ -12,7 +11,9 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardList,
   DashboardListRow,
+  DashboardPage,
   DashboardPageHeader,
+  DashboardPageState,
 } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { FunctionReturnType } from "convex/server";
@@ -34,6 +35,7 @@ import {
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useAction, useQuery } from "convex/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -84,7 +86,7 @@ function ConnectionStatus({
     ) {
       return (
         <Badge variant="secondary">
-          <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
+          <Spinner />
           {t("status.syncing")}
         </Badge>
       );
@@ -162,11 +164,7 @@ function ConnectionCard({
               size="sm"
               variant="outline"
             >
-              {busy ? (
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-              ) : (
-                <HugeiconsIcon icon={ArrowUpRight01Icon} />
-              )}
+              {busy ? <Spinner /> : <HugeiconsIcon icon={ArrowUpRight01Icon} />}
               {t("actions.continue")}
             </Button>
           ) : null}
@@ -177,11 +175,7 @@ function ConnectionCard({
               size="sm"
               variant="outline"
             >
-              {busy ? (
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-              ) : (
-                <HugeiconsIcon icon={Refresh01Icon} />
-              )}
+              {busy ? <Spinner /> : <HugeiconsIcon icon={Refresh01Icon} />}
               {t("actions.reconnect")}
             </Button>
           ) : null}
@@ -193,11 +187,7 @@ function ConnectionCard({
               size="sm"
               variant="outline"
             >
-              {busy ? (
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin" />
-              ) : (
-                <HugeiconsIcon icon={Refresh01Icon} />
-              )}
+              {busy ? <Spinner /> : <HugeiconsIcon icon={Refresh01Icon} />}
               {t("actions.retrySync")}
             </Button>
           ) : null}
@@ -339,11 +329,15 @@ export function IntegrationsPage({
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 sm:px-6">
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[64rem] pt-[calc(var(--app-header-height)+1.25rem)] pb-5">
-          <DashboardPageHeader title={t("title")} />
+    <DashboardPage>
+      <DashboardPageHeader title={t("title")} />
 
+      {notionEnabled && connections === undefined ? (
+        <DashboardPageState>
+          <Spinner className="size-6 text-muted-foreground" />
+        </DashboardPageState>
+      ) : (
+        <>
           {notionEnabled && connections && connections.length > 0 ? (
             <section className="mb-10" aria-labelledby="connected-apps-title">
               <h2
@@ -403,10 +397,7 @@ export function IntegrationsPage({
                           size="sm"
                         >
                           {busy ? (
-                            <HugeiconsIcon
-                              icon={Loading03Icon}
-                              className="animate-spin"
-                            />
+                            <Spinner />
                           ) : (
                             <HugeiconsIcon icon={ArrowUpRight01Icon} />
                           )}
@@ -428,8 +419,8 @@ export function IntegrationsPage({
               ) : null}
             </section>
           ) : null}
-        </div>
-      </div>
-    </main>
+        </>
+      )}
+    </DashboardPage>
   );
 }

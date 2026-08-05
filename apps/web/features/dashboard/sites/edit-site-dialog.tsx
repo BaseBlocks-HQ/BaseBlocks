@@ -19,6 +19,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
@@ -275,9 +276,14 @@ export function EditSiteDialog({
               disabled={dialogState.isSubmitting}
               className={"h-8 rounded-full px-4 text-sm"}
             >
-              {dialogState.isSubmitting
-                ? t("dialogs.editSite.saving")
-                : t("common.save")}
+              {dialogState.isSubmitting ? (
+                <>
+                  <Spinner />
+                  {t("dialogs.editSite.saving")}
+                </>
+              ) : (
+                t("common.save")
+              )}
             </Button>
           </DialogFooter>
         </form>
@@ -383,7 +389,7 @@ function EditSiteLogoField({
             </Button>
             {isUploading ? (
               <span className="inline-flex items-center gap-1.5 text-xs text-sidebar-foreground/50">
-                <span className="h-1.5 w-1.5 rounded-full bg-sidebar-foreground/35" />
+                <Spinner className="size-3" />
                 {t("dialogs.editSite.uploading")}
               </span>
             ) : null}

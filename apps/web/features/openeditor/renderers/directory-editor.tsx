@@ -34,6 +34,7 @@ import type {
   DirectoryRow,
 } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -885,9 +886,13 @@ function DirectoryGrid({
                 />
               ))
             ) : (
-              <div className="bg-card py-10 text-center text-sm text-muted-foreground">
-                {view.query ? "No rows found." : "No rows yet."}
-              </div>
+              <Empty className="min-h-32 rounded-none bg-card p-4">
+                <EmptyHeader>
+                  <EmptyTitle className="font-normal text-muted-foreground">
+                    {view.query ? "No rows found" : "No rows yet"}
+                  </EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
           <DragOverlay dropAnimation={null}>

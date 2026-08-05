@@ -1,11 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Delete01Icon,
-  Loading02Icon,
-  CogIcon,
-} from "@hugeicons/core-free-icons";
+import { Delete01Icon, CogIcon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth/client";
 import type { WorkspaceUser } from "@/features/authentication/server";
 import {
@@ -27,6 +23,7 @@ import {
   DialogTrigger,
 } from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -219,11 +216,7 @@ export function AccountSettings({
             >
               {isDeleting ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <HugeiconsIcon
-                    icon={Loading02Icon}
-                    className="size-3.5 shrink-0 animate-spin"
-                    aria-hidden
-                  />
+                  <Spinner className="size-3.5 shrink-0" aria-hidden />
                   {t("deleting")}
                 </span>
               ) : (

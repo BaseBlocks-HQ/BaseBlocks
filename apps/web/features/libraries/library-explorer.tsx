@@ -3,7 +3,6 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
-  Loading02Icon,
   PanelLeftIcon,
   Upload01Icon,
 } from "@hugeicons/core-free-icons";
@@ -30,6 +29,7 @@ import { deleteFile } from "@/lib/files/client";
 import { fileRegistration, filesClient } from "@/lib/files/upload";
 import { api } from "@baseblocks/backend";
 import { Drawer, DrawerContent, DrawerTitle } from "@baseblocks/ui/drawer";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
@@ -128,9 +128,8 @@ function UploadDropzone({
           <div className="absolute inset-x-0 bottom-3 flex justify-center px-3">
             <div className="flex min-w-[11.5rem] max-w-[min(100%,20rem)] flex-col gap-2 rounded-2xl border border-border/80 bg-popover/95 px-3.5 py-2.5 text-xs text-popover-foreground shadow-md backdrop-blur-sm">
               <div className="flex items-center gap-2.5 font-medium tabular-nums">
-                <HugeiconsIcon
-                  icon={Loading02Icon}
-                  className="h-3.5 w-3.5 shrink-0 animate-spin text-primary"
+                <Spinner
+                  className="size-3.5 shrink-0 text-primary"
                   aria-hidden
                 />
                 <span className="min-w-0 flex-1 truncate">
@@ -384,15 +383,17 @@ export function LibraryExplorer({
 
   if (!explorer) {
     return (
-      <div
+      <Empty
         className={cn(
-          "flex min-h-72 items-center justify-center text-sm text-muted-foreground",
+          "min-h-72 text-muted-foreground",
           embedded ? "rounded-2xl bg-card" : "rounded-lg border bg-background",
           className,
         )}
       >
-        Library not found
-      </div>
+        <EmptyHeader>
+          <EmptyTitle className="font-normal">Library not found</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

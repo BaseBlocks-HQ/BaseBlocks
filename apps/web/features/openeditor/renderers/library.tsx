@@ -25,6 +25,7 @@ import { useSiteRenderActions } from "@/components/site-runtime/actions";
 import type { LibraryContent } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -125,9 +126,13 @@ export function ReadOnlyLibraryExplorer({
   }
   if (!explorer) {
     return (
-      <div className="flex min-h-72 items-center justify-center rounded-2xl bg-card text-sm text-muted-foreground">
-        Library not found
-      </div>
+      <Empty className="min-h-72 rounded-2xl bg-card">
+        <EmptyHeader>
+          <EmptyTitle className="font-normal text-muted-foreground">
+            Library not found
+          </EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

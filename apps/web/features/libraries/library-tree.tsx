@@ -23,6 +23,7 @@ import {
 } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Button } from "@baseblocks/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { closestCenter } from "@dnd-kit/collision";
 import {
   DragDropProvider,
@@ -177,36 +178,48 @@ export function LibraryTree(props: {
           ) : null}
         </div>
         <div className="min-h-0 flex-1 overflow-auto px-1 pb-2">
-          {rows.map((node) => (
-            <LibraryTreeRow
-              key={node.id}
-              node={node}
-              expanded={expanded.has(node.id)}
-              canManage={props.canManage}
-              allowDownloads={props.allowDownloads}
-              dragActive={draggedId !== null}
-              dragDisabled={pendingId !== null}
-              dropDisabled={invalidDropIds.has(node.id)}
-              renaming={renamingId === node.id}
-              onToggle={() =>
-                setExpanded((current) => {
-                  const next = new Set(current);
-                  next.has(node.id) ? next.delete(node.id) : next.add(node.id);
-                  return next;
-                })
-              }
-              onOpen={() => props.onOpenEntity(node.data)}
-              onRename={() => setRenamingId(node.id)}
-              onRenameSave={async (name: string) => {
-                await props.onRenameEntity(node.data, name);
-                setRenamingId(null);
-              }}
-              onRenameCancel={() => setRenamingId(null)}
-              onCopy={() => void props.onCopyLink(node.data)}
-              onDownload={() => props.onDownloadFile(node.data)}
-              onDelete={() => props.onDeleteEntity(node.data)}
-            />
-          ))}
+          {rows.length > 0 ? (
+            rows.map((node) => (
+              <LibraryTreeRow
+                key={node.id}
+                node={node}
+                expanded={expanded.has(node.id)}
+                canManage={props.canManage}
+                allowDownloads={props.allowDownloads}
+                dragActive={draggedId !== null}
+                dragDisabled={pendingId !== null}
+                dropDisabled={invalidDropIds.has(node.id)}
+                renaming={renamingId === node.id}
+                onToggle={() =>
+                  setExpanded((current) => {
+                    const next = new Set(current);
+                    next.has(node.id)
+                      ? next.delete(node.id)
+                      : next.add(node.id);
+                    return next;
+                  })
+                }
+                onOpen={() => props.onOpenEntity(node.data)}
+                onRename={() => setRenamingId(node.id)}
+                onRenameSave={async (name: string) => {
+                  await props.onRenameEntity(node.data, name);
+                  setRenamingId(null);
+                }}
+                onRenameCancel={() => setRenamingId(null)}
+                onCopy={() => void props.onCopyLink(node.data)}
+                onDownload={() => props.onDownloadFile(node.data)}
+                onDelete={() => props.onDeleteEntity(node.data)}
+              />
+            ))
+          ) : (
+            <Empty className="h-full min-h-32 rounded-none p-4">
+              <EmptyHeader>
+                <EmptyTitle className="font-normal text-muted-foreground">
+                  No files yet
+                </EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          )}
         </div>
         {props.canManage ? (
           <LibraryRootDropZone

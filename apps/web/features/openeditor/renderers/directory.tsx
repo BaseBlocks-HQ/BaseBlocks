@@ -9,6 +9,7 @@ import {
 import { NamedItemSwitcher } from "@/features/openeditor/renderers/named-item-switcher";
 import type { Directory, DirectoryContent } from "@baseblocks/domain";
 import { Button } from "@baseblocks/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { Input } from "@baseblocks/ui/input";
 import { useEffect, useState } from "react";
 
@@ -170,11 +171,14 @@ function DirectoryContents({ directory }: { directory: Directory }) {
               ))
             ) : (
               <tr>
-                <td
-                  className="py-10 text-center text-muted-foreground"
-                  colSpan={directory.columnIds.length}
-                >
-                  {view.query ? "No rows found." : "No rows yet."}
+                <td colSpan={directory.columnIds.length}>
+                  <Empty className="min-h-32 rounded-none p-4">
+                    <EmptyHeader>
+                      <EmptyTitle className="font-normal text-muted-foreground">
+                        {view.query ? "No rows found" : "No rows yet"}
+                      </EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
                 </td>
               </tr>
             )}
