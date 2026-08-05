@@ -99,6 +99,7 @@ export function extractOpenEditorReferences(content: OpenEditorDocument) {
     attachmentIds,
     imageIds,
     fileIds: new Set([...attachmentIds, ...imageIds]),
+    pageIds: collectOpenEditorAttributeValues(content, "page", ["pageId"]),
   };
 }
 

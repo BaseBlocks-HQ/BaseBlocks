@@ -112,7 +112,10 @@ export async function collectReleaseChanges(
       .query("documentLibraries")
       .withIndex("by_site", (q) => q.eq("siteId", site._id))
       .collect(),
-    ctx.db.query("documentFolders").collect(),
+    ctx.db
+      .query("documentFolders")
+      .withIndex("by_site", (q) => q.eq("siteId", site._id))
+      .collect(),
     ctx.db
       .query("files")
       .withIndex("by_site", (q) => q.eq("siteId", site._id))

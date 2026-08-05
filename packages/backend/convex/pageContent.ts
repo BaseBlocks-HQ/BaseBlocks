@@ -1,6 +1,5 @@
 import { ConvexError, getConvexSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import {
   internalMutation,
   mutation,
@@ -8,6 +7,10 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { readPageContent, getPageDocument } from "./model/pageDocuments";
+import {
+  contentObjectReferences,
+  getOrCreateContentObject,
+} from "./model/contentObjects";
 import {
   extractOpenEditorReferences,
   hashOpenEditorContent,
@@ -18,11 +21,10 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { indexPageContent } from "./search";
+import { indexPageContent, queuePageContentIndex } from "./search";
 import { touchSiteDraft } from "./model/draft";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
-const SEARCH_INDEX_DELAY_MS = 10_000;
 
 function referenceValue(
   ctx: Pick<MutationCtx, "db">,
@@ -79,6 +81,22 @@ export const get = query({
   },
 });
 
+// Temporary drain target for jobs scheduled by the pre-refactor deployment.
+export const indexIfCurrent = internalMutation({
+  args: { pageId: v.id("pages"), contentHash: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { pageId, contentHash }) => {
+    const current = await getPageDocument(ctx, pageId);
+    if (!current || current.contentHash !== contentHash) return null;
+    await indexPageContent(
+      ctx,
+      pageId,
+      (await readPageContent(ctx, pageId)).document,
+    );
+    return null;
+  },
+});
+
 export const save = mutation({
   args: { pageId: v.id("pages"), content: v.any() },
   returns: v.string(),
@@ -113,70 +131,54 @@ export const save = mutation({
     }
 
     const updatedAt = Date.now();
-    const references = referenceValue(
-      ctx,
-      pageId,
-      page.siteId,
-      parsedDocument,
-      updatedAt,
-    );
+    const contentObject = await getOrCreateContentObject(ctx, {
+      siteId: page.siteId,
+      content: serializedDocument,
+      contentHash,
+      contentSize,
+      document: parsedDocument,
+      createdAt: updatedAt,
+    });
+    const revisionId = contentObject.revisionId;
+    const storedReferences = contentObjectReferences(contentObject);
+    const references = {
+      key: storedReferences.key,
+      value: {
+        siteId: page.siteId,
+        pageId,
+        libraryIds: storedReferences.libraryIds,
+        fileIds: storedReferences.fileIds,
+        updatedAt,
+      },
+    };
     if (existing) {
-      const releasedReference = await ctx.db
-        .query("releasePages")
-        .withIndex("by_blob", (q) => q.eq("blobId", existing.blobId))
-        .first();
-      const blobId = releasedReference
-        ? await ctx.db.insert("pageContentBlobs", {
-            content: serializedDocument,
-          })
-        : existing.blobId;
-      if (!releasedReference) {
-        await ctx.db.replace(blobId, { content: serializedDocument });
-      }
       await ctx.db.patch(existing._id, {
-        blobId,
+        revisionId,
+        blobId: undefined,
         contentHash,
         contentSize,
         referencesKey: references.key,
         updatedAt,
       });
     } else {
-      const blobId = await ctx.db.insert("pageContentBlobs", {
-        content: serializedDocument,
-      });
       await ctx.db.insert("pageDocuments", {
         siteId: page.siteId,
         pageId,
-        blobId,
+        revisionId,
         contentHash,
         contentSize,
         referencesKey: references.key,
         updatedAt,
       });
     }
-    await touchSiteDraft(ctx, page.siteId, updatedAt);
+    await touchSiteDraft(ctx, page.siteId, updatedAt, [
+      { entityType: "page", entityId: pageId },
+    ]);
 
     if (existing?.referencesKey !== references.key) {
       await writePageReferences(ctx, references.value);
     }
-    await ctx.scheduler.runAfter(
-      SEARCH_INDEX_DELAY_MS,
-      internal.pageContent.indexIfCurrent,
-      { pageId, contentHash },
-    );
+    await queuePageContentIndex(ctx, pageId, revisionId, contentHash);
     return contentHash;
-  },
-});
-
-export const indexIfCurrent = internalMutation({
-  args: { pageId: v.id("pages"), contentHash: v.string() },
-  returns: v.null(),
-  handler: async (ctx, { pageId, contentHash }) => {
-    const current = await getPageDocument(ctx, pageId);
-    if (!current || current.contentHash !== contentHash) return null;
-    const blob = await ctx.db.get(current.blobId);
-    if (!blob) return null;
-    await indexPageContent(ctx, pageId, parseOpenEditorDocument(blob.content));
-    return null;
   },
 });

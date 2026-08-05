@@ -255,7 +255,7 @@ export const createLibrary = mutation({
       .filter((q) => q.eq(q.field("name"), name.trim()))
       .first();
 
-    if (existingLibrary?.deletedAt === undefined) {
+    if (existingLibrary && existingLibrary.deletedAt === undefined) {
       throw new Error(
         `A library named "${name}" already exists. Please choose a different name.`,
       );
@@ -269,7 +269,9 @@ export const createLibrary = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    await touchSiteDraft(ctx, siteId, now);
+    await touchSiteDraft(ctx, siteId, now, [
+      { entityType: "library", entityId: libraryId },
+    ]);
 
     return libraryId;
   },
@@ -324,6 +326,7 @@ export const createFolder = mutation({
 
     const now = Date.now();
     const folderId = await ctx.db.insert("documentFolders", {
+      siteId: site._id,
       libraryId,
       parentId,
       name: name.trim(),
@@ -332,7 +335,9 @@ export const createFolder = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    await touchSiteDraft(ctx, site._id, now);
+    await touchSiteDraft(ctx, site._id, now, [
+      { entityType: "folder", entityId: folderId },
+    ]);
 
     return folderId;
   },
@@ -374,7 +379,9 @@ export const updateFolder = mutation({
     if (name !== undefined) updates.name = name.trim();
 
     await ctx.db.patch(folderId, updates);
-    await touchSiteDraft(ctx, site._id);
+    await touchSiteDraft(ctx, site._id, Date.now(), [
+      { entityType: "folder", entityId: folderId },
+    ]);
     return folderId;
   },
 });
@@ -383,6 +390,10 @@ async function deleteFolderRecursively(
   ctx: MutationCtx,
   folderId: Id<"documentFolders">,
   libraryId: Id<"documentLibraries">,
+  touched: Array<
+    | { entityType: "folder"; entityId: Id<"documentFolders"> }
+    | { entityType: "file"; entityId: Id<"files"> }
+  >,
 ) {
   const files = await ctx.db
     .query("files")
@@ -393,6 +404,7 @@ async function deleteFolderRecursively(
 
   for (const file of files.filter((value) => value.deletedAt === undefined)) {
     await deleteFileRows(ctx, file);
+    touched.push({ entityType: "file", entityId: file._id });
   }
 
   const children = await ctx.db
@@ -405,13 +417,14 @@ async function deleteFolderRecursively(
   for (const child of children.filter(
     (value) => value.deletedAt === undefined,
   )) {
-    await deleteFolderRecursively(ctx, child._id, libraryId);
+    await deleteFolderRecursively(ctx, child._id, libraryId, touched);
   }
 
   await ctx.db.patch(folderId, {
     deletedAt: Date.now(),
     updatedAt: Date.now(),
   });
+  touched.push({ entityType: "folder", entityId: folderId });
 }
 
 export const removeFolder = mutation({
@@ -419,8 +432,12 @@ export const removeFolder = mutation({
   handler: async (ctx, { folderId }) => {
     const { folder, site } = await requireFolderManagement(ctx, folderId);
 
-    await deleteFolderRecursively(ctx, folderId, folder.libraryId);
-    await touchSiteDraft(ctx, site._id);
+    const touched: Array<
+      | { entityType: "folder"; entityId: Id<"documentFolders"> }
+      | { entityType: "file"; entityId: Id<"files"> }
+    > = [];
+    await deleteFolderRecursively(ctx, folderId, folder.libraryId, touched);
+    await touchSiteDraft(ctx, site._id, Date.now(), touched);
 
     return { success: true };
   },
@@ -516,7 +533,22 @@ export const moveInTree = mutation({
         });
       }
     }
-    await touchSiteDraft(ctx, site._id, now);
+    await touchSiteDraft(
+      ctx,
+      site._id,
+      now,
+      plan.updates.map((update) =>
+        folderIds.has(update.id as Id<"documentFolders">)
+          ? {
+              entityType: "folder" as const,
+              entityId: update.id as Id<"documentFolders">,
+            }
+          : {
+              entityType: "file" as const,
+              entityId: update.id as Id<"files">,
+            },
+      ),
+    );
 
     return { entityId, parentId: plan.parentId, order: plan.index };
   },

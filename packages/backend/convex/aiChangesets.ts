@@ -5,7 +5,6 @@ import {
 } from "@openeditor/workspace";
 import type { JsonObject } from "@openeditor/core";
 import type { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import { mutation, type MutationCtx } from "./_generated/server";
 import {
   MAX_AI_CHANGESET_CONTENT_BYTES,
@@ -44,10 +43,19 @@ import {
   type OpenEditorDocument,
 } from "./pageContentFormat";
 import { requireOrganizationPermission } from "./permissions";
-import { indexPageContent, removePageContentIndex } from "./search";
+import {
+  indexPageContent,
+  queuePageContentIndex,
+  removePageContentIndex,
+} from "./search";
+import {
+  contentObjectReferences,
+  getOrCreateContentObject,
+} from "./model/contentObjects";
+import { readPageDocumentRecord } from "./model/pageDocuments";
+import { reconcileDraftChanges } from "./model/draftChanges";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
-const SEARCH_INDEX_DELAY_MS = 10_000;
 
 function jsonMetadata(value: unknown): JsonObject {
   return JSON.parse(JSON.stringify(value)) as JsonObject;
@@ -182,7 +190,6 @@ async function writePageDocument(
     siteId: Id<"sites">;
     document: OpenEditorDocument;
     updatedAt: number;
-    preserveExistingBlob?: boolean;
   },
 ) {
   const serialized = JSON.stringify(input.document);
@@ -191,49 +198,53 @@ async function writePageDocument(
     throw new Error(`Page ${input.pageId} exceeds the 900 KB content limit`);
   }
   const contentHash = hashOpenEditorContent(serialized);
-  const references = referenceValue(
-    ctx,
-    input.pageId,
-    input.siteId,
-    input.document,
-    input.updatedAt,
-  );
   const existing = await ctx.db
     .query("pageDocuments")
     .withIndex("by_page", (q) => q.eq("pageId", input.pageId))
     .unique();
   if (existing && existing.contentHash === contentHash) {
-    await writePageReferences(ctx, references.value);
-    return { changed: false, contentHash: existing.contentHash };
+    return {
+      changed: false,
+      contentHash: existing.contentHash,
+      revisionId: existing.revisionId,
+    };
   }
 
+  const contentObject = await getOrCreateContentObject(ctx, {
+    siteId: input.siteId,
+    content: serialized,
+    contentHash,
+    contentSize,
+    document: input.document,
+    createdAt: input.updatedAt,
+  });
+  const revisionId = contentObject.revisionId;
+  const storedReferences = contentObjectReferences(contentObject);
+  const references = {
+    key: storedReferences.key,
+    value: {
+      siteId: input.siteId,
+      pageId: input.pageId,
+      libraryIds: storedReferences.libraryIds,
+      fileIds: storedReferences.fileIds,
+      updatedAt: input.updatedAt,
+    },
+  };
+
   if (existing) {
-    const releasedReference = await ctx.db
-      .query("releasePages")
-      .withIndex("by_blob", (q) => q.eq("blobId", existing.blobId))
-      .first();
-    const blobId =
-      releasedReference || input.preserveExistingBlob
-        ? await ctx.db.insert("pageContentBlobs", { content: serialized })
-        : existing.blobId;
-    if (!releasedReference && !input.preserveExistingBlob) {
-      await ctx.db.replace(blobId, { content: serialized });
-    }
     await ctx.db.patch(existing._id, {
-      blobId,
+      blobId: undefined,
+      revisionId,
       contentHash,
       contentSize,
       referencesKey: references.key,
       updatedAt: input.updatedAt,
     });
   } else {
-    const blobId = await ctx.db.insert("pageContentBlobs", {
-      content: serialized,
-    });
     await ctx.db.insert("pageDocuments", {
       siteId: input.siteId,
       pageId: input.pageId,
-      blobId,
+      revisionId,
       contentHash,
       contentSize,
       referencesKey: references.key,
@@ -241,7 +252,7 @@ async function writePageDocument(
     });
   }
   await writePageReferences(ctx, references.value);
-  return { changed: true, contentHash };
+  return { changed: true, contentHash, revisionId };
 }
 
 /**
@@ -470,21 +481,21 @@ export const apply = mutation({
         document ? [[document.pageId, document] as const] : [],
       ),
     );
-    const blobs = await Promise.all(
+    const documents = await Promise.all(
       pageDocuments.flatMap((document) =>
         document
           ? [
-              ctx.db
-                .get(document.blobId)
-                .then((blob) => [document.pageId, blob] as const),
+              readPageDocumentRecord(ctx, document).then(
+                (value) => [document.pageId, value] as const,
+              ),
             ]
           : [],
       ),
     );
-    const blobByPageId = new Map(blobs);
+    const contentByPageId = new Map(documents);
     const snapshots: AiWorkspacePageSnapshot[] = activePages.map((page) => {
       const record = documentByPageId.get(page._id);
-      const blob = blobByPageId.get(page._id);
+      const document = contentByPageId.get(page._id);
       return {
         pageId: page._id,
         parentId: page.parentId,
@@ -493,9 +504,7 @@ export const apply = mutation({
         icon: page.icon,
         order: page.order,
         contentHash: record?.contentHash ?? null,
-        document: blob
-          ? parseOpenEditorDocument(blob.content)
-          : emptyOpenEditorDocument(),
+        document: document ?? emptyOpenEditorDocument(),
       };
     });
 
@@ -667,6 +676,7 @@ export const apply = mutation({
             operation.kind === "delete" ||
             Boolean(plannedPageByRef.get(pageId)?.contentChanged),
           documentBlobId: document?.blobId,
+          contentRevisionId: document?.revisionId,
         },
       ];
     });
@@ -724,14 +734,14 @@ export const apply = mutation({
           siteId: args.siteId,
           document: resolvedDocument,
           updatedAt: now,
-          preserveExistingBlob: true,
         });
         contentHashes.push({ pageId, contentHash: result.contentHash });
-        if (result.changed) {
-          await ctx.scheduler.runAfter(
-            SEARCH_INDEX_DELAY_MS,
-            internal.pageContent.indexIfCurrent,
-            { pageId, contentHash: result.contentHash },
+        if (result.changed && result.revisionId) {
+          await queuePageContentIndex(
+            ctx,
+            pageId,
+            result.revisionId,
+            result.contentHash,
           );
         }
       } else if (page.metadataChanged && page.state === "existing") {
@@ -767,6 +777,21 @@ export const apply = mutation({
       draftRevision,
       updatedAt: now,
     });
+    const updatedSite = await ctx.db.get(site._id);
+    if (!updatedSite) throw new Error("Site not found after changeset");
+    await reconcileDraftChanges(
+      ctx,
+      updatedSite,
+      [
+        { entityType: "site", entityId: site._id },
+        ...[
+          ...createdPageIds.values(),
+          ...updatedPageIds,
+          ...deletedPageIds,
+        ].map((entityId) => ({ entityType: "page" as const, entityId })),
+      ],
+      now,
+    );
     const authoritativeProject: OpenEditorProjectSnapshot = {
       id: String(site._id),
       revision: String(draftRevision),
@@ -1018,18 +1043,23 @@ export const revert = mutation({
         updatedAt: now,
       });
       if (previous.restoreDocument) {
-        const blob = previous.documentBlobId
-          ? await ctx.db.get(previous.documentBlobId)
+        const revision = previous.contentRevisionId
+          ? await ctx.db.get(previous.contentRevisionId)
           : null;
-        const document = blob
-          ? parseOpenEditorDocument(blob.content)
-          : emptyOpenEditorDocument();
+        const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+        const blob =
+          !payload && previous.documentBlobId
+            ? await ctx.db.get(previous.documentBlobId)
+            : null;
+        const document =
+          payload || blob
+            ? parseOpenEditorDocument((payload ?? blob)!.content)
+            : emptyOpenEditorDocument();
         await writePageDocument(ctx, {
           pageId: previous.pageId,
           siteId: site._id,
           document,
           updatedAt: now,
-          preserveExistingBlob: true,
         });
       }
       await indexPageContent(ctx, previous.pageId);
@@ -1042,6 +1072,24 @@ export const revert = mutation({
       draftRevision,
       updatedAt: now,
     });
+    const updatedSite = await ctx.db.get(site._id);
+    if (!updatedSite) throw new Error("Site not found after revert");
+    await reconcileDraftChanges(
+      ctx,
+      updatedSite,
+      [
+        { entityType: "site", entityId: site._id },
+        ...rollback.previousPages.map((page) => ({
+          entityType: "page" as const,
+          entityId: page.pageId,
+        })),
+        ...rollback.createdPageIds.map((entityId) => ({
+          entityType: "page" as const,
+          entityId,
+        })),
+      ],
+      now,
+    );
     await ctx.db.patch(rollback._id, {
       revertedAt: now,
       revertedBy: auth.userId,

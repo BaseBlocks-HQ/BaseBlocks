@@ -6,7 +6,11 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { indexPageContent, removePageContentIndex } from "./search";
+import {
+  indexPageContent,
+  queuePageContentIndex,
+  removePageContentIndex,
+} from "./search";
 import { touchSiteDraft } from "./model/draft";
 
 export type PageTreeNode = {
@@ -144,7 +148,9 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    await touchSiteDraft(ctx, siteId, now);
+    await touchSiteDraft(ctx, siteId, now, [
+      { entityType: "page", entityId: pageId },
+    ]);
 
     return pageId;
   },
@@ -195,10 +201,25 @@ export const update = mutation({
     else if (icon !== undefined) updates.icon = icon;
 
     await ctx.db.patch(pageId, updates);
-    await touchSiteDraft(ctx, page.siteId);
+    await touchSiteDraft(ctx, page.siteId, Date.now(), [
+      { entityType: "page", entityId: pageId },
+    ]);
 
     if (title !== undefined) {
-      await indexPageContent(ctx, pageId);
+      const document = await ctx.db
+        .query("pageDocuments")
+        .withIndex("by_page", (q) => q.eq("pageId", pageId))
+        .unique();
+      if (document?.revisionId) {
+        await queuePageContentIndex(
+          ctx,
+          pageId,
+          document.revisionId,
+          document.contentHash,
+        );
+      } else {
+        await indexPageContent(ctx, pageId);
+      }
     }
 
     return pageId;
@@ -261,7 +282,15 @@ export const moveInTree = mutation({
         updatedAt: now,
       });
     }
-    await touchSiteDraft(ctx, siteId, now);
+    await touchSiteDraft(
+      ctx,
+      siteId,
+      now,
+      plan.updates.map((update) => ({
+        entityType: "page" as const,
+        entityId: update.id as Id<"pages">,
+      })),
+    );
 
     return {
       pageId,
@@ -336,7 +365,15 @@ export const remove = mutation({
         updatedAt: now,
       });
     }
-    await touchSiteDraft(ctx, page.siteId, now);
+    await touchSiteDraft(ctx, page.siteId, now, [
+      ...(isDefaultPage
+        ? [{ entityType: "site" as const, entityId: site._id }]
+        : []),
+      ...[...pagesToDelete].map((id) => ({
+        entityType: "page" as const,
+        entityId: id as Id<"pages">,
+      })),
+    ]);
 
     return { success: true };
   },

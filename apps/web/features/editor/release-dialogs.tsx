@@ -74,7 +74,7 @@ type ReleaseDetailedChange = Omit<DraftChange, "details"> & {
   };
 };
 
-export type DraftStatus = {
+export type DraftSummary = {
   draftRevision: number;
   hasUnpublishedChanges: boolean;
   nextReleaseNumber: number;
@@ -82,21 +82,24 @@ export type DraftStatus = {
     _id: Id<"siteReleases">;
     number: number;
   } | null;
-  changes: DraftChange[];
 };
 
 export function PublishDialog({
-  draftStatus,
+  draftSummary,
   open,
   onOpenChange,
   siteId,
 }: {
-  draftStatus: DraftStatus;
+  draftSummary: DraftSummary;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   siteId: Id<"sites">;
 }) {
   const publish = useMutation(api.releases.publish);
+  const changes = useQuery(
+    api.releases.getDraftChanges,
+    open ? { siteId } : "skip",
+  ) as DraftChange[] | null | undefined;
   const [publishing, setPublishing] = useState(false);
 
   const handlePublish = async () => {
@@ -104,7 +107,7 @@ export function PublishDialog({
     try {
       const result = await publish({
         siteId,
-        expectedDraftRevision: draftStatus.draftRevision,
+        expectedDraftRevision: draftSummary.draftRevision,
       });
       toast.success(
         result.reused
@@ -126,7 +129,7 @@ export function PublishDialog({
       <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-lg [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4">
         <DialogHeader className="px-5 pt-4 pb-0 text-left">
           <DialogTitle className="text-base font-semibold">
-            {draftStatus.liveRelease
+            {draftSummary.liveRelease
               ? "Publish draft changes"
               : "Publish this site"}
           </DialogTitle>
@@ -137,7 +140,16 @@ export function PublishDialog({
         </DialogHeader>
 
         <div className="space-y-4 px-5 pt-4 pb-4">
-          <ChangeList changes={draftStatus.changes} />
+          {changes === undefined ? (
+            <div className="grid min-h-24 place-items-center rounded-xl bg-sidebar-accent/55">
+              <HugeiconsIcon
+                icon={Loading03Icon}
+                className="size-5 animate-spin text-muted-foreground"
+              />
+            </div>
+          ) : (
+            <ChangeList changes={changes ?? []} />
+          )}
 
           <DialogFooter className="gap-2 pt-1 sm:justify-end">
             <Button
@@ -151,7 +163,7 @@ export function PublishDialog({
             </Button>
             <Button
               className="rounded-full px-4 text-sm"
-              disabled={publishing}
+              disabled={publishing || changes === undefined || changes === null}
               onClick={() => void handlePublish()}
               size="sm"
             >
@@ -160,7 +172,7 @@ export function PublishDialog({
               ) : (
                 <HugeiconsIcon icon={Globe02Icon} />
               )}
-              {draftStatus.liveRelease ? "Publish changes" : "Publish site"}
+              {draftSummary.liveRelease ? "Publish changes" : "Publish site"}
             </Button>
           </DialogFooter>
         </div>
@@ -362,7 +374,7 @@ export function HistoryDialog({
   onOpenChange: (open: boolean) => void;
   siteId: Id<"sites">;
 }) {
-  const releases = useQuery(api.releases.list, { siteId }) as
+  const releases = useQuery(api.releases.list, open ? { siteId } : "skip") as
     | ReleaseSummary[]
     | undefined;
   const makeLive = useMutation(api.releases.makeLive);

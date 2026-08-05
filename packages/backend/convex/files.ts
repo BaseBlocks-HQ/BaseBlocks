@@ -42,7 +42,6 @@ export async function deleteFileRows(
     .first();
   if (searchEntry) await ctx.db.delete(searchEntry._id);
   await ctx.db.patch(file._id, { deletedAt: Date.now() });
-  await touchSiteDraft(ctx, file.siteId);
 }
 
 function isUploadedFile(file: Doc<"files">) {
@@ -275,7 +274,9 @@ async function createUploadedFile(
     },
     updatedAt: createdAt,
   });
-  await touchSiteDraft(ctx, args.siteId, createdAt);
+  await touchSiteDraft(ctx, args.siteId, createdAt, [
+    { entityType: "file", entityId: fileId },
+  ]);
   return fileId;
 }
 
@@ -342,7 +343,9 @@ export const rename = mutation({
       action: "manage",
     });
     await ctx.db.patch(fileId, { filename });
-    await touchSiteDraft(ctx, file.siteId);
+    await touchSiteDraft(ctx, file.siteId, Date.now(), [
+      { entityType: "file", entityId: fileId },
+    ]);
     const entry = await ctx.db
       .query("searchEntries")
       .withIndex("by_source", (q) =>
@@ -375,6 +378,9 @@ export const remove = mutation({
       action: "manage",
     });
     await deleteFileRows(ctx, file);
+    await touchSiteDraft(ctx, file.siteId, Date.now(), [
+      { entityType: "file", entityId: fileId },
+    ]);
   },
 });
 
@@ -409,7 +415,9 @@ export const createSiteAsset = mutation({
       uploadedBy: auth.userId,
       createdAt: Date.now(),
     });
-    await touchSiteDraft(ctx, args.siteId);
+    await touchSiteDraft(ctx, args.siteId, Date.now(), [
+      { entityType: "file", entityId: fileId },
+    ]);
     return { fileId, url: buildFileUrl(fileId) };
   },
 });

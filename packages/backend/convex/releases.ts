@@ -2,17 +2,15 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { buildFileUrl } from "./files";
-import { collectReleaseChanges } from "./model/releaseChanges";
+import { clearDraftChanges } from "./model/draftChanges";
+import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
 import {
   changedField,
   openEditorContentLines,
   type ReleaseDetailedChange,
   type ReleaseFieldDiff,
 } from "./model/releaseDiff";
-import {
-  findReleaseForDraftRevision,
-  publicationActionForTarget,
-} from "./model/releaseState";
+import { publicationActionForTarget } from "./model/releaseState";
 import {
   extractOpenEditorText,
   parseOpenEditorDocument,
@@ -60,13 +58,12 @@ function releasePath(
   return `/${segments.join("/")}`;
 }
 
-export const getDraftStatus = query({
+export const getDraftSummary = query({
   args: { siteId: v.id("sites") },
   returns: v.any(),
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return null;
-    const changes = await collectReleaseChanges(ctx, site, site.liveReleaseId);
     const liveRelease = site.liveReleaseId
       ? await ctx.db.get(site.liveReleaseId)
       : null;
@@ -74,9 +71,40 @@ export const getDraftStatus = query({
       draftRevision: site.draftRevision ?? 0,
       liveRelease,
       nextReleaseNumber: site.nextReleaseNumber ?? 1,
-      hasUnpublishedChanges: changes.length > 0,
-      changes,
+      hasUnpublishedChanges:
+        (await ctx.db
+          .query("draftChanges")
+          .withIndex("by_site", (q) => q.eq("siteId", siteId))
+          .first()) !== null || site.draftBaseReleaseId !== site.liveReleaseId,
     };
+  },
+});
+
+export const getDraftChanges = query({
+  args: { siteId: v.id("sites") },
+  returns: v.any(),
+  handler: async (ctx, { siteId }) => {
+    const site = await requireSiteForMember(ctx, siteId);
+    if (!site) return null;
+    const changes = await ctx.db
+      .query("draftChanges")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    if (
+      changes.length === 0 &&
+      site.draftBaseReleaseId !== site.liveReleaseId
+    ) {
+      return [
+        {
+          entityType: "site",
+          entityId: siteId,
+          changeType: "updated",
+          label: "Published version",
+          details: ["Draft and live version differ"],
+        },
+      ];
+    }
+    return changes;
   },
 });
 
@@ -98,7 +126,7 @@ export const list = query({
   },
 });
 
-export const get = query({
+export const getLegacy = query({
   args: { releaseId: v.id("siteReleases") },
   returns: v.any(),
   handler: async (ctx, { releaseId }) => {
@@ -382,6 +410,32 @@ export const get = query({
   },
 });
 
+export const get = query({
+  args: { releaseId: v.id("siteReleases") },
+  returns: v.any(),
+  handler: async (ctx, { releaseId }) => {
+    const release = await ctx.db.get(releaseId);
+    if (!release) return null;
+    const site = await requireSiteForMember(ctx, release.siteId);
+    if (!site) return null;
+    const changes = await ctx.db
+      .query("releaseChanges")
+      .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
+      .collect();
+    return {
+      release: { ...release, isLive: site.liveReleaseId === releaseId },
+      changes: changes.map((change) => ({
+        entityType: change.entityType,
+        entityId: change.entityId,
+        changeType: change.changeType,
+        label: change.label,
+        fields: change.fields ?? [],
+        content: change.content,
+      })),
+    };
+  },
+});
+
 export const publish = mutation({
   args: {
     siteId: v.id("sites"),
@@ -407,16 +461,14 @@ export const publish = mutation({
       );
     }
 
-    const releases = await ctx.db
-      .query("siteReleases")
+    const matchingRelease = site.draftBaseReleaseId
+      ? await ctx.db.get(site.draftBaseReleaseId)
+      : null;
+    const pendingChange = await ctx.db
+      .query("draftChanges")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .order("desc")
-      .collect();
-    const matchingRelease = findReleaseForDraftRevision(
-      releases,
-      draftRevision,
-    );
-    if (matchingRelease) {
+      .first();
+    if (matchingRelease && !pendingChange) {
       if (site.liveReleaseId === matchingRelease._id) {
         throw new ConvexError("This draft is already live");
       }
@@ -460,7 +512,10 @@ export const publish = mutation({
           .query("documentLibraries")
           .withIndex("by_site", (q) => q.eq("siteId", siteId))
           .collect(),
-        ctx.db.query("documentFolders").collect(),
+        ctx.db
+          .query("documentFolders")
+          .withIndex("by_site", (q) => q.eq("siteId", siteId))
+          .collect(),
         ctx.db
           .query("files")
           .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -488,7 +543,10 @@ export const publish = mutation({
         value.deletedAt === undefined && libraryIds.has(value.libraryId),
     );
     const files = allFiles.filter((value) => value.deletedAt === undefined);
-    const changes = await collectReleaseChanges(ctx, site, site.liveReleaseId);
+    const changes = await ctx.db
+      .query("draftChanges")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
     if (site.liveReleaseId && changes.length === 0) {
       throw new ConvexError("There are no unpublished changes");
     }
@@ -503,7 +561,7 @@ export const publish = mutation({
       defaultPageId: site.defaultPageId,
       settings: site.settings,
       sourceDraftRevision: draftRevision,
-      previousReleaseId: site.liveReleaseId,
+      previousReleaseId: site.draftBaseReleaseId,
       createdBy: auth.userId,
       createdAt: now,
       pageCount: pages.length,
@@ -522,13 +580,25 @@ export const publish = mutation({
         icon: page.icon,
         order: page.order,
         blobId: document?.blobId,
+        contentRevisionId: document?.revisionId,
         contentHash: document?.contentHash,
         updatedAt: Math.max(page.updatedAt, document?.updatedAt ?? 0),
       });
-      const blob = document ? await ctx.db.get(document.blobId) : null;
-      const text = blob
-        ? extractOpenEditorText(parseOpenEditorDocument(blob.content))
-        : "";
+      const revision = document?.revisionId
+        ? await ctx.db.get(document.revisionId)
+        : null;
+      const blob =
+        !revision && document?.blobId
+          ? await ctx.db.get(document.blobId)
+          : null;
+      const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+      const text =
+        revision?.text ??
+        (payload || blob
+          ? extractOpenEditorText(
+              parseOpenEditorDocument((payload ?? blob)!.content),
+            )
+          : "");
       await ctx.db.insert("releaseSearchEntries", {
         releaseId,
         siteId,
@@ -595,14 +665,26 @@ export const publish = mutation({
       }
     }
     for (const change of changes) {
-      await ctx.db.insert("releaseChanges", { releaseId, ...change });
+      const detail = await buildReleaseChangeDetail(ctx, site, change);
+      await ctx.db.insert("releaseChanges", {
+        releaseId,
+        entityType: change.entityType,
+        entityId: change.entityId,
+        changeType: change.changeType,
+        label: change.label,
+        details: change.details,
+        fields: detail.fields,
+        content: detail.content,
+      });
     }
 
     await ctx.db.patch(siteId, {
       liveReleaseId: releaseId,
+      draftBaseReleaseId: releaseId,
       nextReleaseNumber: number + 1,
       updatedAt: now,
     });
+    await clearDraftChanges(ctx, siteId);
     await ctx.db.insert("publicationEvents", {
       siteId,
       action: site.liveReleaseId ? "update" : "publish",
@@ -735,7 +817,10 @@ export const restoreToDraft = mutation({
         .query("documentLibraries")
         .withIndex("by_site", (q) => q.eq("siteId", site._id))
         .collect(),
-      ctx.db.query("documentFolders").collect(),
+      ctx.db
+        .query("documentFolders")
+        .withIndex("by_site", (q) => q.eq("siteId", site._id))
+        .collect(),
       ctx.db
         .query("files")
         .withIndex("by_site", (q) => q.eq("siteId", site._id))
@@ -785,15 +870,27 @@ export const restoreToDraft = mutation({
         updatedAt: now,
       });
       const document = documentByPageId.get(snapshot.pageId);
-      if (snapshot.blobId) {
-        const blob = await ctx.db.get(snapshot.blobId);
-        if (!blob) throw new ConvexError("Historical page content is missing");
+      if (snapshot.contentRevisionId || snapshot.blobId) {
+        const revision = snapshot.contentRevisionId
+          ? await ctx.db.get(snapshot.contentRevisionId)
+          : null;
+        const blob =
+          !revision && snapshot.blobId
+            ? await ctx.db.get(snapshot.blobId)
+            : null;
+        if (!revision && !blob) {
+          throw new ConvexError("Historical page content is missing");
+        }
+        const referencesKey = revision
+          ? `${revision.libraryIds.join(",")}|${revision.fileIds.join(",")}`
+          : "";
         if (document) {
           await ctx.db.patch(document._id, {
             blobId: snapshot.blobId,
+            revisionId: snapshot.contentRevisionId,
             contentHash: snapshot.contentHash ?? "",
-            contentSize: blob.content.length,
-            referencesKey: "",
+            contentSize: revision?.contentSize ?? blob?.content.length ?? 0,
+            referencesKey,
             updatedAt: now,
           });
         } else {
@@ -801,11 +898,28 @@ export const restoreToDraft = mutation({
             siteId: site._id,
             pageId: snapshot.pageId,
             blobId: snapshot.blobId,
+            revisionId: snapshot.contentRevisionId,
             contentHash: snapshot.contentHash ?? "",
-            contentSize: blob.content.length,
-            referencesKey: "",
+            contentSize: revision?.contentSize ?? blob?.content.length ?? 0,
+            referencesKey,
             updatedAt: now,
           });
+        }
+        const existingReferences = await ctx.db
+          .query("pageReferences")
+          .withIndex("by_page", (q) => q.eq("pageId", snapshot.pageId))
+          .unique();
+        const referenceValue = {
+          siteId: site._id,
+          pageId: snapshot.pageId,
+          libraryIds: revision?.libraryIds ?? [],
+          fileIds: revision?.fileIds ?? [],
+          updatedAt: now,
+        };
+        if (existingReferences) {
+          await ctx.db.patch(existingReferences._id, referenceValue);
+        } else {
+          await ctx.db.insert("pageReferences", referenceValue);
         }
       } else if (document) {
         await ctx.db.delete(document._id);
@@ -880,8 +994,10 @@ export const restoreToDraft = mutation({
       defaultPageId: release.defaultPageId,
       settings: release.settings,
       draftRevision,
+      draftBaseReleaseId: releaseId,
       updatedAt: now,
     });
+    await clearDraftChanges(ctx, site._id);
     await ctx.db.insert("publicationEvents", {
       siteId: site._id,
       action: "restoreDraft",

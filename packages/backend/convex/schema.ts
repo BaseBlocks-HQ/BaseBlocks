@@ -21,6 +21,7 @@ export default defineSchema({
     visibility: v.union(v.literal("private"), v.literal("public")),
     settings: siteSettings,
     draftRevision: v.number(),
+    draftBaseReleaseId: v.optional(v.id("siteReleases")),
     nextReleaseNumber: v.number(),
     liveReleaseId: v.optional(v.id("siteReleases")),
   })
@@ -61,15 +62,42 @@ export default defineSchema({
 
   pageContentBlobs: defineTable({
     content: v.string(),
-  }),
+    contentHash: v.optional(v.string()),
+    contentSize: v.optional(v.number()),
+    text: v.optional(v.string()),
+    libraryIds: v.optional(v.array(v.id("documentLibraries"))),
+    fileIds: v.optional(v.array(v.id("files"))),
+    createdAt: v.optional(v.number()),
+  }).index("by_content_hash", ["contentHash"]),
+
+  contentPayloads: defineTable({
+    siteId: v.id("sites"),
+    contentHash: v.string(),
+    contentSize: v.number(),
+    content: v.string(),
+    createdAt: v.number(),
+  }).index("by_site_hash", ["siteId", "contentHash"]),
+
+  contentRevisions: defineTable({
+    siteId: v.id("sites"),
+    contentHash: v.string(),
+    contentSize: v.number(),
+    payloadId: v.id("contentPayloads"),
+    text: v.optional(v.string()),
+    libraryIds: v.array(v.id("documentLibraries")),
+    fileIds: v.array(v.id("files")),
+    pageIds: v.array(v.id("pages")),
+    createdAt: v.number(),
+  }).index("by_site_hash", ["siteId", "contentHash"]),
 
   pageDocuments: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
-    blobId: v.id("pageContentBlobs"),
+    blobId: v.optional(v.id("pageContentBlobs")),
+    revisionId: v.optional(v.id("contentRevisions")),
     contentHash: v.string(),
     contentSize: v.number(),
-    referencesKey: v.string(),
+    referencesKey: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -84,6 +112,29 @@ export default defineSchema({
   })
     .index("by_site", ["siteId"])
     .index("by_page", ["pageId"]),
+
+  draftChanges: defineTable({
+    siteId: v.id("sites"),
+    entityType: v.union(
+      v.literal("site"),
+      v.literal("page"),
+      v.literal("library"),
+      v.literal("folder"),
+      v.literal("file"),
+    ),
+    entityId: v.string(),
+    changeType: v.union(
+      v.literal("added"),
+      v.literal("updated"),
+      v.literal("deleted"),
+      v.literal("moved"),
+    ),
+    label: v.string(),
+    details: v.array(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_entity", ["siteId", "entityType", "entityId"]),
 
   aiChangesetAudits: defineTable({
     siteId: v.id("sites"),
@@ -144,6 +195,7 @@ export default defineSchema({
         order: v.number(),
         restoreDocument: v.boolean(),
         documentBlobId: v.optional(v.id("pageContentBlobs")),
+        contentRevisionId: v.optional(v.id("contentRevisions")),
       }),
     ),
     createdAt: v.number(),
@@ -242,6 +294,7 @@ export default defineSchema({
   }).index("by_site", ["siteId"]),
 
   documentFolders: defineTable({
+    siteId: v.optional(v.id("sites")),
     libraryId: v.id("documentLibraries"),
     parentId: v.optional(v.id("documentFolders")),
     name: v.string(),
@@ -250,7 +303,9 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     deletedAt: v.optional(v.number()),
-  }).index("by_parent", ["libraryId", "parentId"]),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_parent", ["libraryId", "parentId"]),
 
   files: defineTable({
     siteId: v.id("sites"),
@@ -303,6 +358,16 @@ export default defineSchema({
       filterFields: ["siteId", "kind", "audience"],
     }),
 
+  pageSearchJobs: defineTable({
+    siteId: v.id("sites"),
+    pageId: v.id("pages"),
+    revisionId: v.id("contentRevisions"),
+    contentHash: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_page", ["pageId"]),
+
   siteReleases: defineTable({
     siteId: v.id("sites"),
     number: v.number(),
@@ -330,6 +395,7 @@ export default defineSchema({
     icon: v.optional(v.string()),
     order: v.number(),
     blobId: v.optional(v.id("pageContentBlobs")),
+    contentRevisionId: v.optional(v.id("contentRevisions")),
     contentHash: v.optional(v.string()),
     updatedAt: v.number(),
   })
@@ -358,7 +424,8 @@ export default defineSchema({
     order: v.number(),
   })
     .index("by_release", ["releaseId"])
-    .index("by_release_library", ["releaseId", "libraryId"]),
+    .index("by_release_library", ["releaseId", "libraryId"])
+    .index("by_release_folder", ["releaseId", "folderId"]),
 
   releaseFiles: defineTable({
     releaseId: v.id("siteReleases"),
@@ -427,6 +494,21 @@ export default defineSchema({
     ),
     label: v.string(),
     details: v.array(v.string()),
+    fields: v.optional(
+      v.array(
+        v.object({
+          label: v.string(),
+          before: v.optional(v.string()),
+          after: v.optional(v.string()),
+        }),
+      ),
+    ),
+    content: v.optional(
+      v.object({
+        beforeLines: v.array(v.string()),
+        afterLines: v.array(v.string()),
+      }),
+    ),
   }).index("by_release", ["releaseId"]),
 
   publicationEvents: defineTable({

@@ -25,6 +25,13 @@ async function readReleasePageContent(
   ctx: QueryCtx,
   page: Doc<"releasePages"> | null,
 ) {
+  if (page?.contentRevisionId) {
+    const revision = await ctx.db.get(page.contentRevisionId);
+    const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+    return payload
+      ? parseOpenEditorDocument(payload.content)
+      : emptyOpenEditorDocument();
+  }
   if (!page?.blobId) return emptyOpenEditorDocument();
   const blob = await ctx.db.get(page.blobId);
   return blob
@@ -132,18 +139,27 @@ export const getPage = query({
     if (!resolved) return null;
 
     const parentPage = resolved.ancestors.at(-1) ?? null;
-    const [content, parentContent] = await Promise.all([
+    const [content, revision, parentRevision] = await Promise.all([
       readReleasePageContent(ctx, resolved.page),
-      readReleasePageContent(ctx, parentPage),
+      resolved.page.contentRevisionId
+        ? ctx.db.get(resolved.page.contentRevisionId)
+        : null,
+      parentPage?.contentRevisionId
+        ? ctx.db.get(parentPage.contentRevisionId)
+        : null,
     ]);
-    const libraryIds = Array.from(
-      extractOpenEditorReferences(content).libraryIds,
-    )
-      .flatMap((value) => {
-        const id = ctx.db.normalizeId("documentLibraries", value);
-        return id ? [id] : [];
-      })
-      .sort();
+    const parentContent =
+      parentPage && !parentRevision
+        ? await readReleasePageContent(ctx, parentPage)
+        : null;
+    const libraryIds =
+      revision?.libraryIds ??
+      Array.from(extractOpenEditorReferences(content).libraryIds)
+        .flatMap((value) => {
+          const id = ctx.db.normalizeId("documentLibraries", value);
+          return id ? [id] : [];
+        })
+        .sort();
 
     return {
       page: {
@@ -153,7 +169,11 @@ export const getPage = query({
         icon: resolved.page.icon,
         parentId: resolved.page.parentId,
         isOpenEditorPageBlock: parentPage
-          ? referencesOpenEditorPage(parentContent, resolved.page.pageId)
+          ? parentRevision
+            ? parentRevision.pageIds.includes(resolved.page.pageId)
+            : parentContent
+              ? referencesOpenEditorPage(parentContent, resolved.page.pageId)
+              : false
           : false,
         updatedAt: resolved.page.updatedAt,
       },

@@ -32,11 +32,23 @@ export async function readPageContent(
   if (!record) {
     return { document: emptyOpenEditorDocument(), record: null };
   }
-  const blob = await ctx.db.get(record.blobId);
   return {
-    document: blob
-      ? parseOpenEditorDocument(blob.content)
-      : emptyOpenEditorDocument(),
+    document: await readPageDocumentRecord(ctx, record),
     record,
   };
+}
+
+export async function readPageDocumentRecord(
+  ctx: DbCtx,
+  record: Doc<"pageDocuments">,
+): Promise<OpenEditorDocument> {
+  const revision = record.revisionId
+    ? await ctx.db.get(record.revisionId)
+    : null;
+  const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+  const blob =
+    !payload && record.blobId ? await ctx.db.get(record.blobId) : null;
+  return payload || blob
+    ? parseOpenEditorDocument((payload ?? blob)!.content)
+    : emptyOpenEditorDocument();
 }

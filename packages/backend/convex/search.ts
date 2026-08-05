@@ -1,16 +1,51 @@
 import type { GenericMutationCtx } from "convex/server";
 import { v } from "convex/values";
 import type { DataModel, Doc, Id } from "./_generated/dataModel";
-import { query } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { internalMutation, query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { readPageContent } from "./model/pageDocuments";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 import {
   extractOpenEditorText,
+  parseOpenEditorDocument,
   type OpenEditorDocument,
 } from "./pageContentFormat";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
+
+const SEARCH_COALESCE_MS = 10_000;
+
+export async function queuePageContentIndex(
+  ctx: MutationCtx,
+  pageId: Id<"pages">,
+  revisionId: Id<"contentRevisions">,
+  contentHash: string,
+) {
+  const page = await ctx.db.get(pageId);
+  if (!page) return;
+  const existing = await ctx.db
+    .query("pageSearchJobs")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .unique();
+  const value = {
+    siteId: page.siteId,
+    pageId,
+    revisionId,
+    contentHash,
+    updatedAt: Date.now(),
+  };
+  if (existing) await ctx.db.replace(existing._id, value);
+  else await ctx.db.insert("pageSearchJobs", value);
+  await ctx.scheduler.runAfter(
+    SEARCH_COALESCE_MS,
+    internal.search.flushPageIndex,
+    {
+      pageId,
+      revisionId,
+    },
+  );
+}
 
 export async function indexPageContent(
   ctx: MutationCtx,
@@ -55,6 +90,52 @@ export async function indexPageContent(
   }
 }
 
+export const flushPageIndex = internalMutation({
+  args: {
+    pageId: v.id("pages"),
+    revisionId: v.id("contentRevisions"),
+  },
+  returns: v.null(),
+  handler: async (ctx, { pageId, revisionId }) => {
+    const job = await ctx.db
+      .query("pageSearchJobs")
+      .withIndex("by_page", (q) => q.eq("pageId", pageId))
+      .unique();
+    if (!job || job.revisionId !== revisionId) return null;
+    const revision = await ctx.db.get(revisionId);
+    if (!revision) return null;
+    const payload = await ctx.db.get(revision.payloadId);
+    if (!payload) return null;
+    const page = await ctx.db.get(pageId);
+    if (!page || page.deletedAt !== undefined) {
+      await ctx.db.delete(job._id);
+      return null;
+    }
+    const combinedText = `${page.title} ${extractOpenEditorText(
+      parseOpenEditorDocument(payload.content),
+    )}`.trim();
+    const existing = await ctx.db
+      .query("searchEntries")
+      .withIndex("by_source", (q) =>
+        q.eq("kind", "page").eq("sourceId", pageId),
+      )
+      .first();
+    const indexData = {
+      siteId: page.siteId,
+      kind: "page" as const,
+      audience: "private" as const,
+      sourceId: pageId,
+      title: page.title,
+      text: combinedText,
+      updatedAt: Date.now(),
+    };
+    if (existing) await ctx.db.patch(existing._id, indexData);
+    else await ctx.db.insert("searchEntries", indexData);
+    await ctx.db.delete(job._id);
+    return null;
+  },
+});
+
 export async function removePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
@@ -67,6 +148,11 @@ export async function removePageContentIndex(
   if (existing) {
     await ctx.db.delete(existing._id);
   }
+  const pending = await ctx.db
+    .query("pageSearchJobs")
+    .withIndex("by_page", (q) => q.eq("pageId", pageId))
+    .unique();
+  if (pending) await ctx.db.delete(pending._id);
 }
 
 function extractSnippet(

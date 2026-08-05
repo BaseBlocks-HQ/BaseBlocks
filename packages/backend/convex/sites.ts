@@ -162,6 +162,10 @@ export const create = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(siteId, { defaultPageId: homePageId });
+    await touchSiteDraft(ctx, siteId, now, [
+      { entityType: "site", entityId: siteId },
+      { entityType: "page", entityId: homePageId },
+    ]);
 
     return siteId;
   },
@@ -253,7 +257,14 @@ export const update = mutation({
     }
 
     await ctx.db.patch(siteId, updates);
-    await touchSiteDraft(ctx, siteId);
+    await touchSiteDraft(ctx, siteId, Date.now(), [
+      { entityType: "site", entityId: siteId },
+      ...(site.logoFileId &&
+      (clearLogo ||
+        (logoFileId !== undefined && site.logoFileId !== logoFileId))
+        ? [{ entityType: "file" as const, entityId: site.logoFileId }]
+        : []),
+    ]);
 
     return siteId;
   },
@@ -338,6 +349,17 @@ export const remove = mutation({
     for (const entry of searchEntries) {
       await ctx.db.delete(entry._id);
     }
+    const searchJobs = await ctx.db
+      .query("pageSearchJobs")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const job of searchJobs) await ctx.db.delete(job._id);
+
+    const draftChanges = await ctx.db
+      .query("draftChanges")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const change of draftChanges) await ctx.db.delete(change._id);
 
     const releases = await ctx.db
       .query("siteReleases")
@@ -403,7 +425,7 @@ export const remove = mutation({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const document of pageDocuments) {
-      releaseBlobIds.add(document.blobId);
+      if (document.blobId) releaseBlobIds.add(document.blobId);
       await ctx.db.delete(document._id);
     }
     const pageReferences = await ctx.db
@@ -421,6 +443,16 @@ export const remove = mutation({
       await ctx.db.delete(page._id);
     }
     for (const release of releases) await ctx.db.delete(release._id);
+    const contentRevisions = await ctx.db
+      .query("contentRevisions")
+      .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const revision of contentRevisions) await ctx.db.delete(revision._id);
+    const contentPayloads = await ctx.db
+      .query("contentPayloads")
+      .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
+      .collect();
+    for (const payload of contentPayloads) await ctx.db.delete(payload._id);
     for (const blobId of releaseBlobIds) {
       const normalized = ctx.db.normalizeId("pageContentBlobs", blobId);
       if (normalized) await ctx.db.delete(normalized);

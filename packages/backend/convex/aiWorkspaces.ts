@@ -14,12 +14,10 @@ import {
   assertWorkspacePageFields,
   assertWorkspaceReferenceCounts,
 } from "./model/aiWorkspaceBounds";
-import {
-  emptyOpenEditorDocument,
-  parseOpenEditorDocument,
-} from "./pageContentFormat";
+import { emptyOpenEditorDocument } from "./pageContentFormat";
 import { requireOrganizationPermission } from "./permissions";
 import { fingerprintAiProjectTrustRoot } from "./model/aiWorkspaceFingerprint";
+import { readPageDocumentRecord } from "./model/pageDocuments";
 
 function jsonMetadata(value: unknown): JsonObject {
   return JSON.parse(JSON.stringify(value)) as JsonObject;
@@ -127,22 +125,25 @@ export const exportDraft = query({
     };
     assertWorkspaceMetadataSize(workspaceMetadata);
 
-    const blobIds = new Set(
-      pageDocuments.flatMap((document) => (document ? [document.blobId] : [])),
-    );
-    const blobs = await Promise.all(
-      [...blobIds].map(
-        async (blobId) => [blobId, await ctx.db.get(blobId)] as const,
+    const documents = await Promise.all(
+      pageDocuments.flatMap((document) =>
+        document
+          ? [
+              readPageDocumentRecord(ctx, document).then(
+                (value) => [document.pageId, value] as const,
+              ),
+            ]
+          : [],
       ),
     );
-    const blobById = new Map(blobs);
+    const contentByPageId = new Map(documents);
 
     const references = {
       ...workspaceMetadata.references,
     };
     const pages = activePages.map((page) => {
       const record = documentByPageId.get(page._id);
-      const blob = record ? blobById.get(record.blobId) : null;
+      const document = contentByPageId.get(page._id);
       return {
         pageId: page._id,
         parentId: page.parentId,
@@ -152,9 +153,7 @@ export const exportDraft = query({
         order: page.order,
         updatedAt: Math.max(page.updatedAt, record?.updatedAt ?? 0),
         contentHash: record?.contentHash ?? null,
-        document: blob
-          ? parseOpenEditorDocument(blob.content)
-          : emptyOpenEditorDocument(),
+        document: document ?? emptyOpenEditorDocument(),
       };
     });
     const project: OpenEditorProjectSnapshot = {

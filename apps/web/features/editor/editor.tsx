@@ -15,7 +15,7 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  type DraftStatus,
+  type DraftSummary,
   HistoryDialog,
   PublishDialog,
 } from "./release-dialogs";
@@ -52,7 +52,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const pages = useQuery(api.pages.list, {
     siteId: siteId as Id<"sites">,
   });
-  const draftStatusQuery = useQuery(api.releases.getDraftStatus, {
+  const draftSummaryQuery = useQuery(api.releases.getDraftSummary, {
     siteId: siteId as Id<"sites">,
   });
   const unpublishSite = useMutation(api.releases.unpublish);
@@ -89,12 +89,12 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   if (
     site === undefined ||
     pages === undefined ||
-    draftStatusQuery === undefined
+    draftSummaryQuery === undefined
   ) {
     return <EditorLoading />;
   }
 
-  if (!site || site.organizationId !== team._id) {
+  if (!site || !draftSummaryQuery || site.organizationId !== team._id) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <p className="text-muted-foreground">Site not found</p>
@@ -102,7 +102,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
     );
   }
 
-  const draftStatus = draftStatusQuery as DraftStatus;
+  const draftSummary = draftSummaryQuery as DraftSummary;
   const pageEditor = selectedPage ? (
     <OpenEditorPageEditor
       key={`${selectedPage._id}:${aiApplyRevision}`}
@@ -134,7 +134,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
         isPreviewing={isPreviewing}
         onTogglePreview={() => setIsPreviewing((current) => !current)}
         onUnpublish={handleUnpublish}
-        hasUnpublishedChanges={draftStatus.hasUnpublishedChanges}
+        hasUnpublishedChanges={draftSummary.hasUnpublishedChanges}
         aiChatOpen={aiChatOpen}
         onToggleAiChat={() => setAiChatOpen((current) => !current)}
       />
@@ -175,7 +175,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
       </div>
 
       <PublishDialog
-        draftStatus={draftStatus}
+        draftSummary={draftSummary}
         open={publishDialogOpen}
         onOpenChange={setPublishDialogOpen}
         siteId={site._id}

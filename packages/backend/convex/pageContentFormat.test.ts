@@ -194,6 +194,16 @@ describe("extractOpenEditorReferences", () => {
             height: null,
           },
         },
+        {
+          type: "page",
+          attrs: {
+            "openeditor-id": "page-reference-1",
+            pageId: "page-2",
+            icon: null,
+            href: null,
+          },
+          content: [{ type: "text", text: "Referenced page" }],
+        },
       ],
     });
 
@@ -201,5 +211,6 @@ describe("extractOpenEditorReferences", () => {
     expect([...references.attachmentIds]).toEqual(["file-1"]);
     expect([...references.imageIds]).toEqual(["asset-1"]);
     expect([...references.fileIds]).toEqual(["file-1", "asset-1"]);
+    expect([...references.pageIds]).toEqual(["page-2"]);
   });
 });
