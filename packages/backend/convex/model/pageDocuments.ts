@@ -1,10 +1,13 @@
+import { getConvexSize } from "convex/values";
 import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import {
   emptyOpenEditorDocument,
+  hashOpenEditorContent,
   parseOpenEditorDocument,
   type OpenEditorDocument,
 } from "../pageContentFormat";
+import { getOrCreateContentObject } from "./contentObjects";
 
 type DbCtx = Pick<
   GenericQueryCtx<DataModel> | GenericMutationCtx<DataModel>,
@@ -47,4 +50,52 @@ export async function readPageDocumentRecord(
   return payload
     ? parseOpenEditorDocument(payload.content)
     : emptyOpenEditorDocument();
+}
+
+export const MAX_PAGE_CONTENT_BYTES = 900_000;
+
+export async function writePageContent(
+  ctx: Pick<GenericMutationCtx<DataModel>, "db">,
+  pageId: Id<"pages">,
+  document: OpenEditorDocument,
+  updatedAt = Date.now(),
+) {
+  const page = await ctx.db.get(pageId);
+  if (!page || page.deletedAt !== undefined) throw new Error("Page not found");
+  const serialized = JSON.stringify(document);
+  const contentSize = getConvexSize(serialized);
+  if (contentSize > MAX_PAGE_CONTENT_BYTES) {
+    throw new Error("This page is too large. Split it into child pages.");
+  }
+  const contentHash = hashOpenEditorContent(serialized);
+  const existing = await getPageDocument(ctx, pageId);
+  if (existing?.contentHash === contentHash) {
+    return { contentHash, revisionId: existing.revisionId, changed: false };
+  }
+  const { revisionId } = await getOrCreateContentObject(ctx, {
+    siteId: page.siteId,
+    content: serialized,
+    contentHash,
+    contentSize,
+    document,
+    createdAt: updatedAt,
+  });
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      revisionId,
+      contentHash,
+      contentSize,
+      updatedAt,
+    });
+  } else {
+    await ctx.db.insert("pageDocuments", {
+      siteId: page.siteId,
+      pageId,
+      revisionId,
+      contentHash,
+      contentSize,
+      updatedAt,
+    });
+  }
+  return { contentHash, revisionId, changed: true };
 }

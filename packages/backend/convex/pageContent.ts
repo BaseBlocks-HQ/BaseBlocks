@@ -1,10 +1,12 @@
-import { ConvexError, getConvexSize, v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { readPageContent, getPageDocument } from "./model/pageDocuments";
-import { getOrCreateContentObject } from "./model/contentObjects";
+import { readPageContent, writePageContent } from "./model/pageDocuments";
+import { softDeletePageSubtree } from "./model/pageDeletion";
 import {
+  extractOpenEditorReferences,
   hashOpenEditorContent,
   parseOpenEditorDocument,
+  synchronizeOpenEditorChildPages,
   type OpenEditorDocument,
 } from "./pageContentFormat";
 import {
@@ -13,8 +15,6 @@ import {
 } from "./permissions";
 import { queuePageContentIndex } from "./search";
 import { touchSiteDraft } from "./model/draft";
-
-const MAX_PAGE_CONTENT_BYTES = 900_000;
 
 export const get = query({
   args: { pageId: v.id("pages") },
@@ -30,12 +30,36 @@ export const get = query({
   },
 });
 
-export const save = mutation({
-  args: { pageId: v.id("pages"), content: v.any() },
-  returns: v.string(),
-  handler: async (ctx, { pageId, content }) => {
+export const getVersioned = query({
+  args: { pageId: v.id("pages") },
+  handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
-    if (!page) throw new ConvexError("Page not found");
+    if (!page || page.deletedAt !== undefined) return null;
+    const site = await ctx.db.get(page.siteId);
+    if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
+      return null;
+    }
+    const current = await readPageContent(ctx, pageId);
+    return {
+      document: current.document,
+      contentHash:
+        current.record?.contentHash ??
+        hashOpenEditorContent(JSON.stringify(current.document)),
+    };
+  },
+});
+
+export const save = mutation({
+  args: {
+    pageId: v.id("pages"),
+    content: v.any(),
+    expectedContentHash: v.string(),
+  },
+  handler: async (ctx, { pageId, content, expectedContentHash }) => {
+    const page = await ctx.db.get(pageId);
+    if (!page || page.deletedAt !== undefined) {
+      throw new ConvexError("Page not found");
+    }
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new ConvexError("Site not found");
     await requireOrganizationPermission(ctx, site.organizationId, {
@@ -46,54 +70,88 @@ export const save = mutation({
     let parsedDocument: OpenEditorDocument;
     try {
       parsedDocument = parseOpenEditorDocument(content);
-    } catch {
-      throw new ConvexError("Invalid OpenEditor document");
+    } catch (error) {
+      throw new ConvexError({
+        code: "INVALID_OPENEDITOR_DOCUMENT",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Invalid OpenEditor document",
+      });
     }
-    const serializedDocument = JSON.stringify(parsedDocument);
-    const contentSize = getConvexSize(serializedDocument);
-    if (contentSize > MAX_PAGE_CONTENT_BYTES) {
-      throw new ConvexError(
-        "This page is too large. Split it into child pages.",
-      );
-    }
-
-    const contentHash = hashOpenEditorContent(serializedDocument);
-    const existing = await getPageDocument(ctx, pageId);
-    if (existing?.contentHash === contentHash) {
-      return existing.contentHash;
-    }
-
     const updatedAt = Date.now();
-    const { revisionId } = await getOrCreateContentObject(ctx, {
-      siteId: page.siteId,
-      content: serializedDocument,
-      contentHash,
-      contentSize,
-      document: parsedDocument,
-      createdAt: updatedAt,
-    });
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        revisionId,
+    const current = await readPageContent(ctx, pageId);
+    const currentContentHash =
+      current.record?.contentHash ??
+      hashOpenEditorContent(JSON.stringify(current.document));
+    if (expectedContentHash !== currentContentHash) {
+      return {
+        status: "conflict" as const,
+        document: current.document,
+        contentHash: currentContentHash,
+      };
+    }
+    let children = (
+      await ctx.db
+        .query("pages")
+        .withIndex("by_parent_order", (q) =>
+          q.eq("siteId", page.siteId).eq("parentId", pageId),
+        )
+        .collect()
+    ).filter((child) => child.deletedAt === undefined);
+    const deletedPageIds: Array<(typeof children)[number]["_id"]> = [];
+    let defaultChanged = false;
+    const submittedPageIds =
+      extractOpenEditorReferences(parsedDocument).pageIds;
+    for (const child of children) {
+      if (submittedPageIds.has(child._id)) continue;
+      const deleted = await softDeletePageSubtree(ctx, child._id, updatedAt);
+      deletedPageIds.push(...deleted.deletedPageIds);
+      defaultChanged ||= deleted.defaultChanged;
+    }
+    if (deletedPageIds.length > 0) {
+      const deleted = new Set(deletedPageIds);
+      children = children.filter((child) => !deleted.has(child._id));
+    }
+    const synchronized = synchronizeOpenEditorChildPages(
+      parsedDocument,
+      children.map((child) => ({
+        pageId: child._id,
+        title: child.title,
+        icon: child.icon,
+      })),
+    );
+    const { contentHash, revisionId, changed } = await writePageContent(
+      ctx,
+      pageId,
+      synchronized,
+      updatedAt,
+    );
+    if (!changed && deletedPageIds.length === 0) {
+      return {
+        status: "saved" as const,
+        document: synchronized,
         contentHash,
-        contentSize,
-        updatedAt,
-      });
-    } else {
-      await ctx.db.insert("pageDocuments", {
-        siteId: page.siteId,
-        pageId,
-        revisionId,
-        contentHash,
-        contentSize,
-        updatedAt,
-      });
+      };
     }
     await touchSiteDraft(ctx, page.siteId, updatedAt, [
+      ...(defaultChanged
+        ? [{ entityType: "site" as const, entityId: site._id }]
+        : []),
       { entityType: "page", entityId: pageId },
+      ...deletedPageIds.map((entityId) => ({
+        entityType: "page" as const,
+        entityId,
+      })),
     ]);
 
-    await queuePageContentIndex(ctx, pageId, revisionId, contentHash);
-    return contentHash;
+    if (changed) {
+      await queuePageContentIndex(ctx, pageId, revisionId, contentHash);
+    }
+    return {
+      status: "saved" as const,
+      document: synchronized,
+      contentHash,
+    };
   },
 });

@@ -33,15 +33,8 @@ import {
   OpenEditorThemeProvider,
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
-import { useConvex, useMutation } from "convex/react";
-import {
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
@@ -49,6 +42,7 @@ import { openEditorExtensions } from "./extensions";
 import { useBaseBlocksImageRuntime } from "./image-runtime";
 import { baseBlocksOpenEditorTheme } from "./openeditor-theme";
 import { OpenEditorTabbedPage } from "./page-tabs";
+import { useVersionedPageDocument } from "./use-versioned-page-document";
 import {
   createOpenEditorPageTabs,
   deleteOpenEditorTextRange,
@@ -73,49 +67,24 @@ export function OpenEditorPageEditor({
   const t = useTranslations("editor.pageEditor");
   const { canEdit } = useEditorSite();
   const { canGoBack, goBack, openPage } = useEditorUi();
-  const convex = useConvex();
   const createPage = useMutation(api.pages.create);
   const updatePage = useMutation(api.pages.update);
   const saveContent = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
   const imageRuntime = useBaseBlocksImageRuntime(siteId);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingDocument = useRef<OpenEditorDocument | null>(null);
-  const savedContentByPage = useRef(new Map<string, string>());
-  const [localDocument, setLocalDocument] = useState<{
-    pageId: Id<"pages">;
-    document: OpenEditorDocument;
-  } | null>(null);
-  const [loadedDocument, setLoadedDocument] = useState<{
-    pageId: Id<"pages">;
-    document: OpenEditorDocument;
-  } | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setLoadedDocument(null);
-    void convex
-      .query(api.pageContent.get, { pageId })
-      .then((document) => {
-        if (!active || !document) return;
-        const parsed = document as OpenEditorDocument;
-        savedContentByPage.current.set(pageId, JSON.stringify(parsed));
-        setLoadedDocument({ pageId, document: parsed });
-      })
-      .catch(() => {
-        if (active) toast.error(t("loadFailed"));
-      });
-    return () => {
-      active = false;
-    };
-  }, [convex, pageId, t]);
-
-  const initialDocument =
-    loadedDocument?.pageId === pageId ? loadedDocument.document : undefined;
-  const resolvedDocument =
-    localDocument?.pageId === pageId ? localDocument.document : initialDocument;
-  const handleConvertToTabs = (document: OpenEditorDocument) =>
-    setLocalDocument({ pageId, document });
+  const remoteDocument = useQuery(api.pageContent.getVersioned, { pageId });
+  const { document, onChange } = useVersionedPageDocument({
+    pageId,
+    remote: remoteDocument
+      ? {
+          document: remoteDocument.document as OpenEditorDocument,
+          contentHash: remoteDocument.contentHash,
+        }
+      : remoteDocument,
+    save: saveContent,
+    onSaveStatusChange,
+    onError: () => toast.error(t("saveFailed")),
+  });
   const activePage = pages.find((candidate) => candidate._id === pageId);
 
   const pageRuntime: OpenEditorPageRuntime = {
@@ -190,7 +159,7 @@ export function OpenEditorPageEditor({
     />
   ) : null;
 
-  if (!resolvedDocument) {
+  if (!document) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
         {t("loading")}
@@ -200,38 +169,27 @@ export function OpenEditorPageEditor({
 
   return (
     <SiteRenderActionsProvider actions={{ siteId }}>
-      {readOpenEditorPageTabs(resolvedDocument) ? (
+      {readOpenEditorPageTabs(document) ? (
         <OpenEditorTabbedPageEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
           imageRuntime={imageRuntime}
-          initialDocument={resolvedDocument}
-          onSaveStatusChange={onSaveStatusChange}
-          pageId={pageId}
+          document={document}
+          onChange={onChange}
           pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
-          saveContent={saveContent}
-          savedContentByPage={savedContentByPage}
-          saveFailedMessage={t("saveFailed")}
         />
       ) : (
         <OpenEditorDocumentEditor
           attachmentRuntime={attachmentRuntime}
           canEdit={canEdit}
           imageRuntime={imageRuntime}
-          initialDocument={resolvedDocument}
-          onConvertToTabs={handleConvertToTabs}
-          onSaveStatusChange={onSaveStatusChange}
-          pageId={pageId}
+          document={document}
+          onChange={onChange}
           pageHeading={pageHeading}
           pageRuntime={pageRuntime}
           preview={preview}
-          saveContent={saveContent}
-          savedContentByPage={savedContentByPage}
-          saveTimer={saveTimer}
-          pendingDocument={pendingDocument}
-          saveFailedMessage={t("saveFailed")}
         />
       )}
     </SiteRenderActionsProvider>
@@ -241,76 +199,22 @@ export function OpenEditorPageEditor({
 function OpenEditorTabbedPageEditor({
   attachmentRuntime,
   canEdit,
+  document,
   imageRuntime,
-  initialDocument,
-  onSaveStatusChange,
-  pageId,
+  onChange,
   pageHeading,
   pageRuntime,
   preview,
-  saveContent,
-  savedContentByPage,
-  saveFailedMessage,
 }: {
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
+  document: OpenEditorDocument;
   imageRuntime: OpenEditorImageRuntime<File>;
-  initialDocument: OpenEditorDocument;
-  onSaveStatusChange?: (status: SaveStatus) => void;
-  pageId: Id<"pages">;
+  onChange: (document: OpenEditorDocument) => void;
   pageHeading: ReactNode;
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
-  saveContent: (args: {
-    pageId: Id<"pages">;
-    content: OpenEditorDocument;
-  }) => Promise<string>;
-  savedContentByPage: RefObject<Map<string, string>>;
-  saveFailedMessage: string;
 }) {
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingDocument = useRef<OpenEditorDocument | null>(null);
-  const saveRevision = useRef(0);
-  const persist = async (document: OpenEditorDocument, revision: number) => {
-    const serialized = JSON.stringify(document);
-    if (serialized === savedContentByPage.current.get(pageId)) {
-      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
-      return;
-    }
-    if (revision === saveRevision.current) onSaveStatusChange?.("saving");
-    try {
-      await saveContent({ pageId, content: document });
-      savedContentByPage.current.set(pageId, serialized);
-      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
-    } catch (_error) {
-      toast.error(saveFailedMessage);
-      onSaveStatusChange?.("error");
-    }
-  };
-  const queueSave = (document: OpenEditorDocument) => {
-    const revision = ++saveRevision.current;
-    onSaveStatusChange?.("pending");
-    pendingDocument.current = document;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const nextDocument = pendingDocument.current;
-      pendingDocument.current = null;
-      if (nextDocument) void persist(nextDocument, revision);
-    }, 2_000);
-  };
-  const flushPendingSave = useEffectEvent(persist);
-
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      const nextDocument = pendingDocument.current;
-      pendingDocument.current = null;
-      if (nextDocument)
-        void flushPendingSave(nextDocument, saveRevision.current);
-    },
-    [],
-  );
-
   return (
     <OpenEditorThemeProvider
       className="contents"
@@ -320,11 +224,11 @@ function OpenEditorTabbedPageEditor({
         {pageHeading}
         <OpenEditorTabbedPage
           attachmentRuntime={attachmentRuntime}
+          document={document}
           editable={canEdit && !preview}
           extensions={openEditorExtensions}
           imageRuntime={imageRuntime}
-          initialDocument={initialDocument}
-          onChange={queueSave}
+          onChange={onChange}
           pageRuntime={pageRuntime}
         />
       </div>
@@ -335,56 +239,22 @@ function OpenEditorTabbedPageEditor({
 function OpenEditorDocumentEditor({
   attachmentRuntime,
   canEdit,
+  document,
   imageRuntime,
-  initialDocument,
-  onConvertToTabs,
-  onSaveStatusChange,
-  pageId,
+  onChange,
   pageHeading,
   pageRuntime,
   preview,
-  pendingDocument,
-  saveContent,
-  savedContentByPage,
-  saveTimer,
-  saveFailedMessage,
 }: {
   attachmentRuntime: OpenEditorAttachmentRuntime<File>;
   canEdit: boolean;
+  document: OpenEditorDocument;
   imageRuntime: OpenEditorImageRuntime<File>;
-  initialDocument: OpenEditorDocument;
-  onConvertToTabs: (document: OpenEditorDocument) => void;
-  onSaveStatusChange?: (status: SaveStatus) => void;
-  pageId: Id<"pages">;
+  onChange: (document: OpenEditorDocument) => void;
   pageHeading: ReactNode;
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
-  pendingDocument: RefObject<OpenEditorDocument | null>;
-  saveContent: (args: {
-    pageId: Id<"pages">;
-    content: OpenEditorDocument;
-  }) => Promise<string>;
-  savedContentByPage: RefObject<Map<string, string>>;
-  saveTimer: RefObject<ReturnType<typeof setTimeout> | null>;
-  saveFailedMessage: string;
 }) {
-  const saveRevision = useRef(0);
-  const persist = async (document: OpenEditorDocument, revision: number) => {
-    const serialized = JSON.stringify(document);
-    if (serialized === savedContentByPage.current.get(pageId)) {
-      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
-      return;
-    }
-    if (revision === saveRevision.current) onSaveStatusChange?.("saving");
-    try {
-      await saveContent({ pageId, content: document });
-      savedContentByPage.current.set(pageId, serialized);
-      if (revision === saveRevision.current) onSaveStatusChange?.("saved");
-    } catch (_error) {
-      toast.error(saveFailedMessage);
-      onSaveStatusChange?.("error");
-    }
-  };
   const slashMenuItems: readonly OpenEditorSlashMenuItem[] = [
     {
       key: "baseblocksPageTabs",
@@ -395,51 +265,40 @@ function OpenEditorDocumentEditor({
       order: baseBlocksSlashMenuOrder.tabs,
       execute: ({ controller: current, range }) => {
         if (!current.ready) return false;
-        if (saveTimer.current) clearTimeout(saveTimer.current);
-        pendingDocument.current = null;
-        const revision = ++saveRevision.current;
-        const document = createOpenEditorPageTabs(
+        const nextDocument = createOpenEditorPageTabs(
           deleteOpenEditorTextRange(current.getContent(), range),
           crypto.randomUUID(),
         );
-        void persist(document, revision);
-        onConvertToTabs(document);
+        onChange(nextDocument);
         return true;
       },
     },
   ];
   const controller = useOpenEditorController({
-    initialDocument,
+    initialDocument: document,
     editable: canEdit,
     extensions: openEditorExtensions,
     pageRuntime,
     attachmentRuntime,
     imageRuntime,
     slashMenuItems,
-    onChange: (document) => {
-      const revision = ++saveRevision.current;
-      onSaveStatusChange?.("pending");
-      pendingDocument.current = document;
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        const nextDocument = pendingDocument.current;
-        pendingDocument.current = null;
-        if (nextDocument) void persist(nextDocument, revision);
-      }, 2_000);
-    },
+    onChange,
   });
-  const flushPendingSave = useEffectEvent(persist);
-
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      const nextDocument = pendingDocument.current;
-      pendingDocument.current = null;
-      if (nextDocument)
-        void flushPendingSave(nextDocument, saveRevision.current);
-    },
-    [pendingDocument, saveTimer],
-  );
+  useEffect(() => {
+    if (!controller.ready) return;
+    const incoming = JSON.stringify(document);
+    let active = true;
+    const frame = requestAnimationFrame(() => {
+      if (!active || !controller.ready) return;
+      const current = JSON.stringify(controller.getContent());
+      if (incoming === current) return;
+      controller.setContent(document, { emitChange: false });
+    });
+    return () => {
+      active = false;
+      cancelAnimationFrame(frame);
+    };
+  }, [controller, controller.ready, document]);
 
   return (
     <OpenEditorThemeProvider

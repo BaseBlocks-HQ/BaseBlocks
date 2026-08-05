@@ -3,6 +3,7 @@ import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { buildFileUrl } from "./files";
 import { clearDraftChanges } from "./model/draftChanges";
+import { synchronizeParentDocument } from "./model/pageHierarchy";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
 import { publicationActionForTarget } from "./model/releaseState";
 import {
@@ -521,6 +522,13 @@ export const restoreToDraft = mutation({
     const documentByPageId = new Map(
       pageDocuments.map((value) => [value.pageId, value]),
     );
+    const parentsToSynchronize = new Set<Id<"pages">>();
+    for (const page of pages) {
+      if (page.parentId) parentsToSynchronize.add(page.parentId);
+    }
+    for (const page of releasePages) {
+      if (page.parentId) parentsToSynchronize.add(page.parentId);
+    }
 
     for (const page of pages) {
       if (!releasedPageIds.has(page._id) && page.deletedAt === undefined) {
@@ -627,6 +635,11 @@ export const restoreToDraft = mutation({
         folderId: snapshot.folderId,
         order: snapshot.order,
         deletedAt: undefined,
+      });
+    }
+    for (const parentId of parentsToSynchronize) {
+      await synchronizeParentDocument(ctx, parentId, now, {
+        touchDraft: false,
       });
     }
 

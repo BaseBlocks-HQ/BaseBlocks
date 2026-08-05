@@ -6,12 +6,10 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import {
-  indexPageContent,
-  queuePageContentIndex,
-  removePageContentIndex,
-} from "./search";
+import { indexPageContent, queuePageContentIndex } from "./search";
 import { touchSiteDraft } from "./model/draft";
+import { softDeletePageSubtree } from "./model/pageDeletion";
+import { synchronizeParentDocument } from "./model/pageHierarchy";
 
 export type PageTreeNode = {
   _id: string;
@@ -115,6 +113,17 @@ export const create = mutation({
       { resource: "content", action: "edit" },
     );
 
+    if (parentId) {
+      const parent = await ctx.db.get(parentId);
+      if (
+        !parent ||
+        parent.deletedAt !== undefined ||
+        parent.siteId !== siteId
+      ) {
+        throw new Error("Parent page not found in site");
+      }
+    }
+
     const existing = await ctx.db
       .query("pages")
       .withIndex("by_slug", (q) =>
@@ -151,6 +160,9 @@ export const create = mutation({
     await touchSiteDraft(ctx, siteId, now, [
       { entityType: "page", entityId: pageId },
     ]);
+    if (parentId) {
+      await synchronizeParentDocument(ctx, parentId, now);
+    }
 
     return pageId;
   },
@@ -204,6 +216,12 @@ export const update = mutation({
     await touchSiteDraft(ctx, page.siteId, Date.now(), [
       { entityType: "page", entityId: pageId },
     ]);
+    if (
+      page.parentId &&
+      (title !== undefined || icon !== undefined || clearIcon)
+    ) {
+      await synchronizeParentDocument(ctx, page.parentId);
+    }
 
     if (title !== undefined) {
       const document = await ctx.db
@@ -272,6 +290,7 @@ export const moveInTree = mutation({
       },
     );
     const now = Date.now();
+    const previousParentId = page.parentId;
 
     for (const update of plan.updates) {
       await ctx.db.patch(update.id as Id<"pages">, {
@@ -291,6 +310,12 @@ export const moveInTree = mutation({
         entityId: update.id as Id<"pages">,
       })),
     );
+    if (previousParentId) {
+      await synchronizeParentDocument(ctx, previousParentId, now);
+    }
+    if (plan.parentId && plan.parentId !== previousParentId) {
+      await synchronizeParentDocument(ctx, plan.parentId as Id<"pages">, now);
+    }
 
     return {
       pageId,
@@ -314,66 +339,24 @@ export const remove = mutation({
       action: "edit",
     });
 
-    const isDefaultPage = site.defaultPageId === pageId;
-
-    const allPages = (
-      await ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", page.siteId))
-        .collect()
-    ).filter((candidate) => candidate.deletedAt === undefined);
-
-    const pagesToDelete = new Set<string>([pageId]);
-    const collectDescendants = (parentId: string) => {
-      const children = allPages.filter((p) => p.parentId === parentId);
-      for (const child of children) {
-        pagesToDelete.add(child._id);
-        collectDescendants(child._id);
-      }
-    };
-    collectDescendants(pageId);
-
-    const remainingPages = allPages
-      .filter((p) => !pagesToDelete.has(p._id))
-      .sort((a, b) => a.order - b.order);
-
-    if (isDefaultPage) {
-      const firstRootPage = remainingPages.find((p) => !p.parentId);
-      const newDefaultPage = firstRootPage ?? remainingPages[0];
-
-      if (newDefaultPage) {
-        await ctx.db.patch(site._id, {
-          defaultPageId: newDefaultPage._id,
-          updatedAt: Date.now(),
-        });
-      } else {
-        await ctx.db.patch(site._id, {
-          defaultPageId: undefined,
-          updatedAt: Date.now(),
-        });
-      }
-    }
-
-    for (const id of pagesToDelete) {
-      await removePageContentIndex(ctx, id as Id<"pages">);
-    }
-
     const now = Date.now();
-    for (const id of pagesToDelete) {
-      await ctx.db.patch(id as Id<"pages">, {
-        deletedAt: now,
-        updatedAt: now,
-      });
-    }
+    const { deletedPageIds, defaultChanged } = await softDeletePageSubtree(
+      ctx,
+      pageId,
+      now,
+    );
     await touchSiteDraft(ctx, page.siteId, now, [
-      ...(isDefaultPage
+      ...(defaultChanged
         ? [{ entityType: "site" as const, entityId: site._id }]
         : []),
-      ...[...pagesToDelete].map((id) => ({
+      ...deletedPageIds.map((id) => ({
         entityType: "page" as const,
-        entityId: id as Id<"pages">,
+        entityId: id,
       })),
     ]);
+    if (page.parentId) {
+      await synchronizeParentDocument(ctx, page.parentId, now);
+    }
 
     return { success: true };
   },

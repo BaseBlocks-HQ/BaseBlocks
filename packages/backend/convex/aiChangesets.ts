@@ -50,6 +50,7 @@ import {
 import { getOrCreateContentObject } from "./model/contentObjects";
 import { readPageDocumentRecord } from "./model/pageDocuments";
 import { reconcileDraftChanges } from "./model/draftChanges";
+import { synchronizeParentDocument } from "./model/pageHierarchy";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
 
@@ -622,6 +623,9 @@ export const apply = mutation({
     });
 
     const now = Date.now();
+    const parentsToSynchronize = new Set<Id<"pages">>(
+      previousPages.flatMap((page) => (page.parentId ? [page.parentId] : [])),
+    );
     const createdPageIds = new Map<string, Id<"pages">>();
     for (const operation of args.operations) {
       if (operation.kind !== "create") continue;
@@ -645,9 +649,15 @@ export const apply = mutation({
     const updatedPageIds: Id<"pages">[] = [];
     for (const page of plan.pages) {
       const pageId = resolvedPageRef(ctx, page.ref, createdPageIds)!;
+      const resolvedParentId = resolvedPageRef(
+        ctx,
+        page.parentId,
+        createdPageIds,
+      );
+      if (resolvedParentId) parentsToSynchronize.add(resolvedParentId);
       if (page.metadataChanged) {
         await ctx.db.patch(pageId, {
-          parentId: resolvedPageRef(ctx, page.parentId, createdPageIds),
+          parentId: resolvedParentId,
           title: page.title,
           slug: page.slug,
           icon: page.icon,
@@ -697,6 +707,11 @@ export const apply = mutation({
     for (const pageId of deletedPageIds) {
       await ctx.db.patch(pageId, { deletedAt: now, updatedAt: now });
       await removePageContentIndex(ctx, pageId);
+    }
+    for (const parentId of parentsToSynchronize) {
+      await synchronizeParentDocument(ctx, parentId, now, {
+        touchDraft: false,
+      });
     }
 
     const defaultPageId = resolvedPageRef(
@@ -949,11 +964,13 @@ export const revert = mutation({
     }
 
     const now = Date.now();
+    const parentsToSynchronize = new Set<Id<"pages">>();
     for (const pageId of rollback.createdPageIds) {
       const page = await ctx.db.get(pageId);
       if (!page || page.siteId !== site._id) {
         throw new ConvexError("Created AI page is no longer available");
       }
+      if (page.parentId) parentsToSynchronize.add(page.parentId);
       await ctx.db.patch(pageId, { deletedAt: now, updatedAt: now });
       await removePageContentIndex(ctx, pageId);
     }
@@ -963,6 +980,8 @@ export const revert = mutation({
       if (!page || page.siteId !== site._id) {
         throw new ConvexError("Previous AI page is no longer available");
       }
+      if (page.parentId) parentsToSynchronize.add(page.parentId);
+      if (previous.parentId) parentsToSynchronize.add(previous.parentId);
       await ctx.db.patch(previous.pageId, {
         parentId: previous.parentId,
         title: previous.title,
@@ -988,6 +1007,11 @@ export const revert = mutation({
         });
       }
       await indexPageContent(ctx, previous.pageId);
+    }
+    for (const parentId of parentsToSynchronize) {
+      await synchronizeParentDocument(ctx, parentId, now, {
+        touchDraft: false,
+      });
     }
 
     const draftRevision = (site.draftRevision ?? 0) + 1;

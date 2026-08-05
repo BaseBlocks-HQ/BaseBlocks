@@ -6,6 +6,8 @@ import {
 import {
   assertBaseBlocksDocument,
   baseBlocksDocumentContract,
+  projectChildPages,
+  type ChildPageProjection,
 } from "@baseblocks/openeditor-contracts";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
@@ -110,6 +112,13 @@ export function referencesOpenEditorPage(
   return collectOpenEditorAttributeValues(content, "page", ["pageId"]).has(
     pageId,
   );
+}
+
+export function synchronizeOpenEditorChildPages(
+  document: OpenEditorDocument,
+  children: readonly ChildPageProjection[],
+): OpenEditorDocument {
+  return projectChildPages(document, children);
 }
 
 export function extractOpenEditorText(content: OpenEditorDocument): string {

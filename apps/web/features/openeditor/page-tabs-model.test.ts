@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDocument, textBlock } from "@openeditor/core";
+import { assertBaseBlocksDocument } from "@baseblocks/openeditor-contracts";
 import {
   createOpenEditorPageTabs,
   deleteOpenEditorTextRange,
@@ -13,6 +14,8 @@ describe("page tabs model", () => {
     ]);
 
     const tabbedDocument = createOpenEditorPageTabs(document, "tab-1");
+
+    expect(() => assertBaseBlocksDocument(tabbedDocument)).not.toThrow();
 
     expect(readOpenEditorPageTabs(tabbedDocument)).toEqual({
       tabs: [{ id: "tab-1", label: "Tab 1", document }],

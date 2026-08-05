@@ -30,7 +30,7 @@ import {
   OpenEditorSlashMenu,
   OpenEditorTableMenu,
 } from "@openeditor/ui";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   readOpenEditorPageTabs,
   updateOpenEditorPageTabs,
@@ -172,6 +172,23 @@ function ActiveTabEditor({
     pageRuntime,
     onChange,
   });
+  useEffect(() => {
+    if (!controller.ready) return;
+    let active = true;
+    const frame = requestAnimationFrame(() => {
+      if (!active || !controller.ready) return;
+      if (
+        JSON.stringify(controller.getContent()) ===
+        JSON.stringify(initialDocument)
+      )
+        return;
+      controller.setContent(initialDocument, { emitChange: false });
+    });
+    return () => {
+      active = false;
+      cancelAnimationFrame(frame);
+    };
+  }, [controller, controller.ready, initialDocument]);
   return (
     <>
       <OpenEditorContent controller={controller} />
@@ -185,8 +202,8 @@ function ActiveTabEditor({
 
 export function OpenEditorTabbedPage({
   attachmentRuntime,
+  document,
   imageRuntime,
-  initialDocument,
   editable,
   extensions = [],
   pageRuntime,
@@ -194,15 +211,20 @@ export function OpenEditorTabbedPage({
   onChange,
 }: {
   attachmentRuntime?: OpenEditorAttachmentRuntime<File>;
+  document: OpenEditorDocument;
   imageRuntime?: OpenEditorImageRuntime<File>;
-  initialDocument: OpenEditorDocument;
   editable: boolean;
   extensions?: readonly OpenEditorReactExtension[];
   pageRuntime: OpenEditorPageRuntime;
   renderers?: Partial<Record<string, OpenEditorViewerRenderer>>;
   onChange?: (document: OpenEditorDocument) => void;
 }) {
-  const [currentDocument, setCurrentDocument] = useState(initialDocument);
+  const [currentDocument, setCurrentDocument] = useState(document);
+  useEffect(() => {
+    setCurrentDocument((current) =>
+      JSON.stringify(current) === JSON.stringify(document) ? current : document,
+    );
+  }, [document]);
   const value = readOpenEditorPageTabs(currentDocument);
   const [activeId, setActiveId] = useState(value?.tabs[0]?.id ?? "");
   if (!value) return null;

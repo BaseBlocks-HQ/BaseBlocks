@@ -125,9 +125,19 @@ export function updateOpenEditorPageTabs(
   document: OpenEditorDocument,
   tabs: OpenEditorPageTabs,
 ): OpenEditorDocument {
+  const current = document.content[0];
+  const currentNodeId =
+    current?.type === "baseblocksPageTabs" &&
+    typeof current.attrs?.["openeditor-id"] === "string"
+      ? current.attrs["openeditor-id"]
+      : undefined;
   const node: OpenEditorBlock = {
     type: "baseblocksPageTabs",
-    attrs: { tabs },
+    attrs: {
+      "openeditor-id":
+        currentNodeId ?? `baseblocks-page-tabs-${tabs.tabs[0]?.id ?? "root"}`,
+      tabs,
+    },
   };
   return {
     ...document,

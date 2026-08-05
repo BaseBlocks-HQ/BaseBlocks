@@ -6,6 +6,7 @@ import {
   type OpenEditorDocument,
   parseOpenEditorDocument,
   referencesOpenEditorPage,
+  synchronizeOpenEditorChildPages,
 } from "./pageContentFormat";
 
 import { fingerprintOpenEditorDocument } from "@openeditor/core";
@@ -212,5 +213,109 @@ describe("extractOpenEditorReferences", () => {
     expect([...references.imageIds]).toEqual(["asset-1"]);
     expect([...references.fileIds]).toEqual(["file-1", "asset-1"]);
     expect([...references.pageIds]).toEqual(["page-2"]);
+  });
+});
+
+describe("synchronizeOpenEditorChildPages", () => {
+  test("adds missing children and removes stale or duplicate page blocks", () => {
+    const document = {
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "page",
+          attrs: {
+            "openeditor-id": "old-a",
+            pageId: "child-a",
+            icon: null,
+            href: null,
+          },
+          content: [{ type: "text", text: "Old title" }],
+        },
+        {
+          type: "page",
+          attrs: {
+            "openeditor-id": "duplicate-a",
+            pageId: "child-a",
+            icon: null,
+            href: null,
+          },
+          content: [{ type: "text", text: "Duplicate" }],
+        },
+        {
+          type: "page",
+          attrs: {
+            "openeditor-id": "stale",
+            pageId: "not-a-child",
+            icon: null,
+            href: null,
+          },
+          content: [{ type: "text", text: "Stale" }],
+        },
+      ],
+    } as OpenEditorDocument;
+
+    const synchronized = synchronizeOpenEditorChildPages(document, [
+      { pageId: "child-a", title: "Child A", icon: "🅰️" },
+      { pageId: "child-b", title: "Child B" },
+    ]);
+
+    expect(synchronized.content).toEqual([
+      {
+        type: "page",
+        attrs: {
+          "openeditor-id": "page-child-a",
+          pageId: "child-a",
+          icon: "🅰️",
+          href: "?page=child-a",
+        },
+        content: [{ type: "text", text: "Child A" }],
+      },
+      {
+        type: "page",
+        attrs: {
+          "openeditor-id": "page-child-b",
+          pageId: "child-b",
+          icon: "📄",
+          href: "?page=child-b",
+        },
+        content: [{ type: "text", text: "Child B" }],
+      },
+    ]);
+  });
+
+  test("adds missing children to the first tab document", () => {
+    const document = {
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "baseblocksPageTabs",
+          attrs: {
+            tabs: {
+              tabs: [
+                {
+                  id: "tab-1",
+                  label: "Tab 1",
+                  document: emptyOpenEditorDocument(),
+                },
+              ],
+            },
+          },
+        },
+      ],
+    } as OpenEditorDocument;
+
+    const synchronized = synchronizeOpenEditorChildPages(document, [
+      { pageId: "child-a", title: "Child A" },
+    ]);
+    const tabs = synchronized.content[0]?.attrs?.tabs as {
+      tabs: Array<{ document: OpenEditorDocument }>;
+    };
+
+    expect(tabs.tabs[0]?.document.content.at(-1)?.attrs?.pageId).toBe(
+      "child-a",
+    );
+    expect(synchronized.content).toHaveLength(1);
   });
 });

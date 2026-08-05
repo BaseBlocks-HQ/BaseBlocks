@@ -79,8 +79,8 @@ export function PublicPageContent({
           >
             {readOpenEditorPageTabs(content) ? (
               <OpenEditorTabbedPage
+                document={content}
                 editable={false}
-                initialDocument={content}
                 pageRuntime={pageRuntime}
                 renderers={publicSiteRenderers}
               />

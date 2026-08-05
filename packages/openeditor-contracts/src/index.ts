@@ -19,6 +19,8 @@ import {
   type OpenEditorTiptapBlock,
 } from "@openeditor/tiptap";
 
+export * from "./page-projection";
+
 const string = (maxLength: number): OpenEditorValueSchema => ({
   type: "string",
   maxLength,
