@@ -55,7 +55,7 @@ function SitesSection({
 
   if (sites.length === 0) {
     return (
-      <Empty className="min-h-48 rounded-xl bg-card ring-1 ring-foreground/[0.06]">
+      <Empty className="min-h-48">
         <EmptyHeader>
           <EmptyTitle>{t("noSites")}</EmptyTitle>
           <EmptyDescription>{t("noSitesDescription")}</EmptyDescription>
