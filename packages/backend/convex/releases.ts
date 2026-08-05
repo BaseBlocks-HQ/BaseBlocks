@@ -4,12 +4,6 @@ import { mutation, query } from "./_generated/server";
 import { buildFileUrl } from "./files";
 import { clearDraftChanges } from "./model/draftChanges";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
-import {
-  changedField,
-  openEditorContentLines,
-  type ReleaseDetailedChange,
-  type ReleaseFieldDiff,
-} from "./model/releaseDiff";
 import { publicationActionForTarget } from "./model/releaseState";
 import {
   extractOpenEditorText,
@@ -29,33 +23,6 @@ async function requireSiteForMember(
     return null;
   }
   return site;
-}
-
-function indexBy<T>(values: T[], id: (value: T) => string) {
-  return new Map(values.map((value) => [id(value), value]));
-}
-
-function compactFields(
-  fields: Array<ReleaseFieldDiff | null>,
-): ReleaseFieldDiff[] {
-  return fields.filter((field): field is ReleaseFieldDiff => field !== null);
-}
-
-function releasePath(
-  page: { pageId: string; parentId?: string; slug: string },
-  pagesById: Map<string, { pageId: string; parentId?: string; slug: string }>,
-): string {
-  const segments = [page.slug];
-  const visited = new Set([page.pageId]);
-  let parentId = page.parentId;
-  while (parentId && !visited.has(parentId)) {
-    visited.add(parentId);
-    const parent = pagesById.get(parentId);
-    if (!parent) break;
-    segments.unshift(parent.slug);
-    parentId = parent.parentId;
-  }
-  return `/${segments.join("/")}`;
 }
 
 export const getDraftSummary = query({
@@ -126,290 +93,6 @@ export const list = query({
   },
 });
 
-export const getLegacy = query({
-  args: { releaseId: v.id("siteReleases") },
-  returns: v.any(),
-  handler: async (ctx, { releaseId }) => {
-    const release = await ctx.db.get(releaseId);
-    if (!release) return null;
-    const site = await requireSiteForMember(ctx, release.siteId);
-    if (!site) return null;
-    const baseReleaseId = release.previousReleaseId;
-    const [
-      pages,
-      libraries,
-      folders,
-      files,
-      previousRelease,
-      previousPages,
-      previousLibraries,
-      previousFolders,
-      previousFiles,
-    ] = await Promise.all([
-      ctx.db
-        .query("releasePages")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseLibraries")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseFolders")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseFiles")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      baseReleaseId ? ctx.db.get(baseReleaseId) : null,
-      baseReleaseId
-        ? ctx.db
-            .query("releasePages")
-            .withIndex("by_release", (q) => q.eq("releaseId", baseReleaseId))
-            .collect()
-        : [],
-      baseReleaseId
-        ? ctx.db
-            .query("releaseLibraries")
-            .withIndex("by_release", (q) => q.eq("releaseId", baseReleaseId))
-            .collect()
-        : [],
-      baseReleaseId
-        ? ctx.db
-            .query("releaseFolders")
-            .withIndex("by_release", (q) => q.eq("releaseId", baseReleaseId))
-            .collect()
-        : [],
-      baseReleaseId
-        ? ctx.db
-            .query("releaseFiles")
-            .withIndex("by_release", (q) => q.eq("releaseId", baseReleaseId))
-            .collect()
-        : [],
-    ]);
-
-    const blobIds = new Set(
-      [...pages, ...previousPages]
-        .map((page) => page.blobId)
-        .filter((blobId) => blobId !== undefined),
-    );
-    const blobs = await Promise.all(
-      [...blobIds].map(async (blobId) => ({
-        blobId,
-        blob: await ctx.db.get(blobId),
-      })),
-    );
-    const blobContent = new Map(
-      blobs.map(({ blobId, blob }) => [blobId, blob?.content]),
-    );
-    const currentPagesById = indexBy(pages, (page) => page.pageId);
-    const previousPagesById = indexBy(previousPages, (page) => page.pageId);
-    const detailedChanges: ReleaseDetailedChange[] = [];
-
-    const siteFields = compactFields([
-      changedField("Site name", previousRelease?.name, release.name),
-      changedField("Logo", previousRelease?.logoFileId, release.logoFileId),
-      changedField(
-        "Default page",
-        previousRelease?.defaultPageId
-          ? previousPagesById.get(previousRelease.defaultPageId)?.title
-          : undefined,
-        release.defaultPageId
-          ? currentPagesById.get(release.defaultPageId)?.title
-          : undefined,
-      ),
-      changedField(
-        "Navigation expanded by default",
-        previousRelease?.settings.expandNavigationByDefault,
-        release.settings.expandNavigationByDefault,
-      ),
-      changedField(
-        "Sidebar",
-        previousRelease?.settings.sidebarVariant,
-        release.settings.sidebarVariant,
-      ),
-      changedField(
-        "Show logo",
-        previousRelease?.settings.showLogo,
-        release.settings.showLogo,
-      ),
-      changedField(
-        "Show site name",
-        previousRelease?.settings.showSiteName,
-        release.settings.showSiteName,
-      ),
-      changedField(
-        "Show header search",
-        previousRelease?.settings.showHeaderSearch,
-        release.settings.showHeaderSearch,
-      ),
-      changedField(
-        "Favicon",
-        previousRelease?.settings.favicon,
-        release.settings.favicon,
-      ),
-      changedField(
-        "Theme palette",
-        previousRelease?.settings.theme?.palette,
-        release.settings.theme?.palette,
-      ),
-      changedField(
-        "Theme style",
-        previousRelease?.settings.theme?.style,
-        release.settings.theme?.style,
-      ),
-      changedField(
-        "Brand color",
-        previousRelease?.settings.theme?.brandColor,
-        release.settings.theme?.brandColor,
-      ),
-    ]);
-    if (siteFields.length > 0) {
-      detailedChanges.push({
-        entityType: "site",
-        entityId: release.siteId,
-        changeType: previousRelease ? "updated" : "added",
-        label: "Site settings",
-        fields: siteFields,
-      });
-    }
-
-    for (const pageId of new Set([
-      ...currentPagesById.keys(),
-      ...previousPagesById.keys(),
-    ])) {
-      const current = currentPagesById.get(pageId);
-      const previous = previousPagesById.get(pageId);
-      const fields = compactFields([
-        changedField("Title", previous?.title, current?.title),
-        changedField(
-          "URL",
-          previous ? releasePath(previous, previousPagesById) : undefined,
-          current ? releasePath(current, currentPagesById) : undefined,
-        ),
-        changedField("Icon", previous?.icon, current?.icon),
-        changedField("Position", previous?.order, current?.order),
-      ]);
-      const contentChanged =
-        !current || !previous || current.contentHash !== previous.contentHash;
-      if (fields.length === 0 && !contentChanged) continue;
-      const beforeLines = openEditorContentLines(
-        previous?.blobId ? blobContent.get(previous.blobId) : undefined,
-      );
-      const afterLines = openEditorContentLines(
-        current?.blobId ? blobContent.get(current.blobId) : undefined,
-      );
-      const movedOnly =
-        fields.length > 0 &&
-        fields.every(
-          (field) => field.label === "URL" || field.label === "Position",
-        ) &&
-        !contentChanged;
-      detailedChanges.push({
-        entityType: "page",
-        entityId: pageId,
-        changeType: !previous
-          ? "added"
-          : !current
-            ? "deleted"
-            : movedOnly
-              ? "moved"
-              : "updated",
-        label: current?.title ?? previous?.title ?? "Untitled page",
-        fields,
-        content: contentChanged
-          ? {
-              beforeLines,
-              afterLines,
-            }
-          : undefined,
-      });
-    }
-
-    function addEntityChanges<T extends { name: string }>(options: {
-      entityType: "library" | "folder";
-      current: T[];
-      previous: T[];
-      id: (value: T) => string;
-      fields: (
-        before: T | undefined,
-        after: T | undefined,
-      ) => ReleaseFieldDiff[];
-    }) {
-      const currentById = indexBy(options.current, options.id);
-      const previousById = indexBy(options.previous, options.id);
-      for (const entityId of new Set([
-        ...currentById.keys(),
-        ...previousById.keys(),
-      ])) {
-        const current = currentById.get(entityId);
-        const previous = previousById.get(entityId);
-        const entityFields = options.fields(previous, current);
-        if (entityFields.length === 0) continue;
-        detailedChanges.push({
-          entityType: options.entityType,
-          entityId,
-          changeType: !previous ? "added" : !current ? "deleted" : "updated",
-          label: current?.name ?? previous?.name ?? "Untitled",
-          fields: entityFields,
-        });
-      }
-    }
-
-    addEntityChanges({
-      entityType: "library",
-      current: libraries,
-      previous: previousLibraries,
-      id: (library) => library.libraryId,
-      fields: (before, after) =>
-        compactFields([changedField("Name", before?.name, after?.name)]),
-    });
-    addEntityChanges({
-      entityType: "folder",
-      current: folders,
-      previous: previousFolders,
-      id: (folder) => folder.folderId,
-      fields: (before, after) =>
-        compactFields([
-          changedField("Name", before?.name, after?.name),
-          changedField("Parent folder", before?.parentId, after?.parentId),
-          changedField("Position", before?.order, after?.order),
-        ]),
-    });
-
-    const currentFilesById = indexBy(files, (file) => file.fileId);
-    const previousFilesById = indexBy(previousFiles, (file) => file.fileId);
-    for (const fileId of new Set([
-      ...currentFilesById.keys(),
-      ...previousFilesById.keys(),
-    ])) {
-      const current = currentFilesById.get(fileId);
-      const previous = previousFilesById.get(fileId);
-      const fields = compactFields([
-        changedField("Name", previous?.filename, current?.filename),
-        changedField("Folder", previous?.folderId, current?.folderId),
-        changedField("Type", previous?.contentType, current?.contentType),
-        changedField("Size", previous?.size, current?.size),
-        changedField("File content", previous?.checksum, current?.checksum),
-      ]);
-      if (fields.length === 0) continue;
-      detailedChanges.push({
-        entityType: "file",
-        entityId: fileId,
-        changeType: !previous ? "added" : !current ? "deleted" : "updated",
-        label: current?.filename ?? previous?.filename ?? "Untitled file",
-        fields,
-      });
-    }
-
-    return {
-      release: { ...release, isLive: site.liveReleaseId === releaseId },
-      changes: detailedChanges,
-    };
-  },
-});
-
 export const get = query({
   args: { releaseId: v.id("siteReleases") },
   returns: v.any(),
@@ -429,7 +112,7 @@ export const get = query({
         entityId: change.entityId,
         changeType: change.changeType,
         label: change.label,
-        fields: change.fields ?? [],
+        fields: change.fields,
         content: change.content,
       })),
     };
@@ -579,7 +262,6 @@ export const publish = mutation({
         slug: page.slug,
         icon: page.icon,
         order: page.order,
-        blobId: document?.blobId,
         contentRevisionId: document?.revisionId,
         contentHash: document?.contentHash,
         updatedAt: Math.max(page.updatedAt, document?.updatedAt ?? 0),
@@ -587,18 +269,10 @@ export const publish = mutation({
       const revision = document?.revisionId
         ? await ctx.db.get(document.revisionId)
         : null;
-      const blob =
-        !revision && document?.blobId
-          ? await ctx.db.get(document.blobId)
-          : null;
       const payload = revision ? await ctx.db.get(revision.payloadId) : null;
-      const text =
-        revision?.text ??
-        (payload || blob
-          ? extractOpenEditorText(
-              parseOpenEditorDocument((payload ?? blob)!.content),
-            )
-          : "");
+      const text = payload
+        ? extractOpenEditorText(parseOpenEditorDocument(payload.content))
+        : "";
       await ctx.db.insert("releaseSearchEntries", {
         releaseId,
         siteId,
@@ -870,56 +544,27 @@ export const restoreToDraft = mutation({
         updatedAt: now,
       });
       const document = documentByPageId.get(snapshot.pageId);
-      if (snapshot.contentRevisionId || snapshot.blobId) {
-        const revision = snapshot.contentRevisionId
-          ? await ctx.db.get(snapshot.contentRevisionId)
-          : null;
-        const blob =
-          !revision && snapshot.blobId
-            ? await ctx.db.get(snapshot.blobId)
-            : null;
-        if (!revision && !blob) {
+      if (snapshot.contentRevisionId) {
+        const revision = await ctx.db.get(snapshot.contentRevisionId);
+        if (!revision) {
           throw new ConvexError("Historical page content is missing");
         }
-        const referencesKey = revision
-          ? `${revision.libraryIds.join(",")}|${revision.fileIds.join(",")}`
-          : "";
         if (document) {
           await ctx.db.patch(document._id, {
-            blobId: snapshot.blobId,
             revisionId: snapshot.contentRevisionId,
             contentHash: snapshot.contentHash ?? "",
-            contentSize: revision?.contentSize ?? blob?.content.length ?? 0,
-            referencesKey,
+            contentSize: revision.contentSize,
             updatedAt: now,
           });
         } else {
           await ctx.db.insert("pageDocuments", {
             siteId: site._id,
             pageId: snapshot.pageId,
-            blobId: snapshot.blobId,
             revisionId: snapshot.contentRevisionId,
             contentHash: snapshot.contentHash ?? "",
-            contentSize: revision?.contentSize ?? blob?.content.length ?? 0,
-            referencesKey,
+            contentSize: revision.contentSize,
             updatedAt: now,
           });
-        }
-        const existingReferences = await ctx.db
-          .query("pageReferences")
-          .withIndex("by_page", (q) => q.eq("pageId", snapshot.pageId))
-          .unique();
-        const referenceValue = {
-          siteId: site._id,
-          pageId: snapshot.pageId,
-          libraryIds: revision?.libraryIds ?? [],
-          fileIds: revision?.fileIds ?? [],
-          updatedAt: now,
-        };
-        if (existingReferences) {
-          await ctx.db.patch(existingReferences._id, referenceValue);
-        } else {
-          await ctx.db.insert("pageReferences", referenceValue);
         }
       } else if (document) {
         await ctx.db.delete(document._id);

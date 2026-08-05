@@ -76,16 +76,3 @@ export async function getOrCreateContentObject(
   });
   return { revisionId, libraryIds, fileIds, pageIds };
 }
-
-export function contentObjectReferences(value: {
-  libraryIds?: Id<"documentLibraries">[];
-  fileIds?: Id<"files">[];
-}) {
-  const libraryIds = [...(value.libraryIds ?? [])].sort();
-  const fileIds = [...(value.fileIds ?? [])].sort();
-  return {
-    key: `${libraryIds.join(",")}|${fileIds.join(",")}`,
-    libraryIds,
-    fileIds,
-  };
-}

@@ -37,7 +37,6 @@ import { assertActiveAiRunLease } from "./model/aiRunPolicy";
 import { appendCompletedAssistantMessage } from "./aiConversations";
 import {
   emptyOpenEditorDocument,
-  extractOpenEditorReferences,
   hashOpenEditorContent,
   parseOpenEditorDocument,
   type OpenEditorDocument,
@@ -48,10 +47,7 @@ import {
   queuePageContentIndex,
   removePageContentIndex,
 } from "./search";
-import {
-  contentObjectReferences,
-  getOrCreateContentObject,
-} from "./model/contentObjects";
+import { getOrCreateContentObject } from "./model/contentObjects";
 import { readPageDocumentRecord } from "./model/pageDocuments";
 import { reconcileDraftChanges } from "./model/draftChanges";
 
@@ -145,44 +141,6 @@ function resolvedPageRef(
   return existing;
 }
 
-function referenceValue(
-  ctx: Pick<MutationCtx, "db">,
-  pageId: Id<"pages">,
-  siteId: Id<"sites">,
-  content: OpenEditorDocument,
-  updatedAt: number,
-) {
-  const references = extractOpenEditorReferences(content);
-  const libraryIds = Array.from(references.libraryIds)
-    .flatMap((id) => {
-      const normalized = ctx.db.normalizeId("documentLibraries", id);
-      return normalized ? [normalized] : [];
-    })
-    .sort();
-  const fileIds = Array.from(references.fileIds)
-    .flatMap((id) => {
-      const normalized = ctx.db.normalizeId("files", id);
-      return normalized ? [normalized] : [];
-    })
-    .sort();
-  return {
-    key: `${libraryIds.join(",")}|${fileIds.join(",")}`,
-    value: { siteId, pageId, libraryIds, fileIds, updatedAt },
-  };
-}
-
-async function writePageReferences(
-  ctx: Pick<MutationCtx, "db">,
-  value: ReturnType<typeof referenceValue>["value"],
-) {
-  const existing = await ctx.db
-    .query("pageReferences")
-    .withIndex("by_page", (q) => q.eq("pageId", value.pageId))
-    .unique();
-  if (existing) await ctx.db.patch(existing._id, value);
-  else await ctx.db.insert("pageReferences", value);
-}
-
 async function writePageDocument(
   ctx: MutationCtx,
   input: {
@@ -210,7 +168,7 @@ async function writePageDocument(
     };
   }
 
-  const contentObject = await getOrCreateContentObject(ctx, {
+  const { revisionId } = await getOrCreateContentObject(ctx, {
     siteId: input.siteId,
     content: serialized,
     contentHash,
@@ -218,26 +176,11 @@ async function writePageDocument(
     document: input.document,
     createdAt: input.updatedAt,
   });
-  const revisionId = contentObject.revisionId;
-  const storedReferences = contentObjectReferences(contentObject);
-  const references = {
-    key: storedReferences.key,
-    value: {
-      siteId: input.siteId,
-      pageId: input.pageId,
-      libraryIds: storedReferences.libraryIds,
-      fileIds: storedReferences.fileIds,
-      updatedAt: input.updatedAt,
-    },
-  };
-
   if (existing) {
     await ctx.db.patch(existing._id, {
-      blobId: undefined,
       revisionId,
       contentHash,
       contentSize,
-      referencesKey: references.key,
       updatedAt: input.updatedAt,
     });
   } else {
@@ -247,11 +190,9 @@ async function writePageDocument(
       revisionId,
       contentHash,
       contentSize,
-      referencesKey: references.key,
       updatedAt: input.updatedAt,
     });
   }
-  await writePageReferences(ctx, references.value);
   return { changed: true, contentHash, revisionId };
 }
 
@@ -675,7 +616,6 @@ export const apply = mutation({
           restoreDocument:
             operation.kind === "delete" ||
             Boolean(plannedPageByRef.get(pageId)?.contentChanged),
-          documentBlobId: document?.blobId,
           contentRevisionId: document?.revisionId,
         },
       ];
@@ -757,11 +697,6 @@ export const apply = mutation({
     for (const pageId of deletedPageIds) {
       await ctx.db.patch(pageId, { deletedAt: now, updatedAt: now });
       await removePageContentIndex(ctx, pageId);
-      const references = await ctx.db
-        .query("pageReferences")
-        .withIndex("by_page", (q) => q.eq("pageId", pageId))
-        .unique();
-      if (references) await ctx.db.delete(references._id);
     }
 
     const defaultPageId = resolvedPageRef(
@@ -1021,11 +956,6 @@ export const revert = mutation({
       }
       await ctx.db.patch(pageId, { deletedAt: now, updatedAt: now });
       await removePageContentIndex(ctx, pageId);
-      const references = await ctx.db
-        .query("pageReferences")
-        .withIndex("by_page", (q) => q.eq("pageId", pageId))
-        .unique();
-      if (references) await ctx.db.delete(references._id);
     }
 
     for (const previous of rollback.previousPages) {
@@ -1047,14 +977,9 @@ export const revert = mutation({
           ? await ctx.db.get(previous.contentRevisionId)
           : null;
         const payload = revision ? await ctx.db.get(revision.payloadId) : null;
-        const blob =
-          !payload && previous.documentBlobId
-            ? await ctx.db.get(previous.documentBlobId)
-            : null;
-        const document =
-          payload || blob
-            ? parseOpenEditorDocument((payload ?? blob)!.content)
-            : emptyOpenEditorDocument();
+        const document = payload
+          ? parseOpenEditorDocument(payload.content)
+          : emptyOpenEditorDocument();
         await writePageDocument(ctx, {
           pageId: previous.pageId,
           siteId: site._id,

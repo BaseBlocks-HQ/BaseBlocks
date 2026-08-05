@@ -23,15 +23,11 @@ function id<T extends keyof DataModel>(
 async function revisionContent(
   ctx: MutationCtx,
   revisionId: Id<"contentRevisions"> | undefined,
-  blobId: Id<"pageContentBlobs"> | undefined,
 ) {
-  if (revisionId) {
-    const revision = await ctx.db.get(revisionId);
-    const payload = revision ? await ctx.db.get(revision.payloadId) : null;
-    return payload?.content;
-  }
-  if (!blobId) return undefined;
-  return (await ctx.db.get(blobId))?.content;
+  if (!revisionId) return undefined;
+  const revision = await ctx.db.get(revisionId);
+  const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+  return payload?.content;
 }
 
 export async function buildReleaseChangeDetail(
@@ -72,12 +68,8 @@ export async function buildReleaseChangeDetail(
       : [null, null, null];
     const active = current?.deletedAt === undefined ? current : null;
     const [before, after] = await Promise.all([
-      revisionContent(ctx, base?.contentRevisionId, base?.blobId),
-      revisionContent(
-        ctx,
-        active ? currentDocument?.revisionId : undefined,
-        active ? currentDocument?.blobId : undefined,
-      ),
+      revisionContent(ctx, base?.contentRevisionId),
+      revisionContent(ctx, active ? currentDocument?.revisionId : undefined),
     ]);
     const contentChanged = currentDocument?.contentHash !== base?.contentHash;
     return {
@@ -215,8 +207,8 @@ export async function buildHistoricalReleaseChangeDetail(
         ])
       : [null, null];
     const [before, after] = await Promise.all([
-      revisionContent(ctx, previous?.contentRevisionId, previous?.blobId),
-      revisionContent(ctx, current?.contentRevisionId, current?.blobId),
+      revisionContent(ctx, previous?.contentRevisionId),
+      revisionContent(ctx, current?.contentRevisionId),
     ]);
     const contentChanged = current?.contentHash !== previous?.contentHash;
     return {

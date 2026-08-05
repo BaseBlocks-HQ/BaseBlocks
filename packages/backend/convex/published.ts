@@ -32,11 +32,7 @@ async function readReleasePageContent(
       ? parseOpenEditorDocument(payload.content)
       : emptyOpenEditorDocument();
   }
-  if (!page?.blobId) return emptyOpenEditorDocument();
-  const blob = await ctx.db.get(page.blobId);
-  return blob
-    ? parseOpenEditorDocument(blob.content)
-    : emptyOpenEditorDocument();
+  return emptyOpenEditorDocument();
 }
 
 async function getPublishedSiteBySlug(

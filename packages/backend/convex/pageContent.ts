@@ -1,18 +1,8 @@
 import { ConvexError, getConvexSize, v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
-import {
-  internalMutation,
-  mutation,
-  query,
-  type MutationCtx,
-} from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { readPageContent, getPageDocument } from "./model/pageDocuments";
+import { getOrCreateContentObject } from "./model/contentObjects";
 import {
-  contentObjectReferences,
-  getOrCreateContentObject,
-} from "./model/contentObjects";
-import {
-  extractOpenEditorReferences,
   hashOpenEditorContent,
   parseOpenEditorDocument,
   type OpenEditorDocument,
@@ -21,51 +11,10 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
-import { indexPageContent, queuePageContentIndex } from "./search";
+import { queuePageContentIndex } from "./search";
 import { touchSiteDraft } from "./model/draft";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
-
-function referenceValue(
-  ctx: Pick<MutationCtx, "db">,
-  pageId: Id<"pages">,
-  siteId: Id<"sites">,
-  content: OpenEditorDocument,
-  updatedAt: number,
-) {
-  const references = extractOpenEditorReferences(content);
-  const libraryIds = Array.from(references.libraryIds)
-    .flatMap((id) => {
-      const normalized = ctx.db.normalizeId("documentLibraries", id);
-      return normalized ? [normalized] : [];
-    })
-    .sort();
-  const fileIds = Array.from(references.fileIds)
-    .flatMap((id) => {
-      const normalized = ctx.db.normalizeId("files", id);
-      return normalized ? [normalized] : [];
-    })
-    .sort();
-  return {
-    key: `${libraryIds.join(",")}|${fileIds.join(",")}`,
-    value: { siteId, pageId, libraryIds, fileIds, updatedAt },
-  };
-}
-
-async function writePageReferences(
-  ctx: Pick<MutationCtx, "db">,
-  value: ReturnType<typeof referenceValue>["value"],
-) {
-  const existing = await ctx.db
-    .query("pageReferences")
-    .withIndex("by_page", (q) => q.eq("pageId", value.pageId))
-    .unique();
-  if (existing) {
-    await ctx.db.patch(existing._id, value);
-  } else {
-    await ctx.db.insert("pageReferences", value);
-  }
-}
 
 export const get = query({
   args: { pageId: v.id("pages") },
@@ -78,22 +27,6 @@ export const get = query({
       return null;
     }
     return (await readPageContent(ctx, pageId)).document;
-  },
-});
-
-// Temporary drain target for jobs scheduled by the pre-refactor deployment.
-export const indexIfCurrent = internalMutation({
-  args: { pageId: v.id("pages"), contentHash: v.string() },
-  returns: v.null(),
-  handler: async (ctx, { pageId, contentHash }) => {
-    const current = await getPageDocument(ctx, pageId);
-    if (!current || current.contentHash !== contentHash) return null;
-    await indexPageContent(
-      ctx,
-      pageId,
-      (await readPageContent(ctx, pageId)).document,
-    );
-    return null;
   },
 });
 
@@ -131,7 +64,7 @@ export const save = mutation({
     }
 
     const updatedAt = Date.now();
-    const contentObject = await getOrCreateContentObject(ctx, {
+    const { revisionId } = await getOrCreateContentObject(ctx, {
       siteId: page.siteId,
       content: serializedDocument,
       contentHash,
@@ -139,25 +72,11 @@ export const save = mutation({
       document: parsedDocument,
       createdAt: updatedAt,
     });
-    const revisionId = contentObject.revisionId;
-    const storedReferences = contentObjectReferences(contentObject);
-    const references = {
-      key: storedReferences.key,
-      value: {
-        siteId: page.siteId,
-        pageId,
-        libraryIds: storedReferences.libraryIds,
-        fileIds: storedReferences.fileIds,
-        updatedAt,
-      },
-    };
     if (existing) {
       await ctx.db.patch(existing._id, {
         revisionId,
-        blobId: undefined,
         contentHash,
         contentSize,
-        referencesKey: references.key,
         updatedAt,
       });
     } else {
@@ -167,7 +86,6 @@ export const save = mutation({
         revisionId,
         contentHash,
         contentSize,
-        referencesKey: references.key,
         updatedAt,
       });
     }
@@ -175,9 +93,6 @@ export const save = mutation({
       { entityType: "page", entityId: pageId },
     ]);
 
-    if (existing?.referencesKey !== references.key) {
-      await writePageReferences(ctx, references.value);
-    }
     await queuePageContentIndex(ctx, pageId, revisionId, contentHash);
     return contentHash;
   },

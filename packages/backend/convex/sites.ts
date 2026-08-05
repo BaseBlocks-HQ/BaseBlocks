@@ -365,7 +365,6 @@ export const remove = mutation({
       .query("siteReleases")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
-    const releaseBlobIds = new Set<string>();
     for (const release of releases) {
       const [
         releasePages,
@@ -401,7 +400,6 @@ export const remove = mutation({
           .collect(),
       ]);
       for (const page of releasePages) {
-        if (page.blobId) releaseBlobIds.add(page.blobId);
         await ctx.db.delete(page._id);
       }
       for (const row of [
@@ -425,15 +423,7 @@ export const remove = mutation({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
     for (const document of pageDocuments) {
-      if (document.blobId) releaseBlobIds.add(document.blobId);
       await ctx.db.delete(document._id);
-    }
-    const pageReferences = await ctx.db
-      .query("pageReferences")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const reference of pageReferences) {
-      await ctx.db.delete(reference._id);
     }
     const pages = await ctx.db
       .query("pages")
@@ -453,11 +443,6 @@ export const remove = mutation({
       .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
       .collect();
     for (const payload of contentPayloads) await ctx.db.delete(payload._id);
-    for (const blobId of releaseBlobIds) {
-      const normalized = ctx.db.normalizeId("pageContentBlobs", blobId);
-      if (normalized) await ctx.db.delete(normalized);
-    }
-
     await ctx.db.delete(siteId);
 
     return { success: true };

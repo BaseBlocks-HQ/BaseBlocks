@@ -60,16 +60,6 @@ export default defineSchema({
     .index("by_parent_order", ["siteId", "parentId", "order"])
     .index("by_slug", ["siteId", "slug"]),
 
-  pageContentBlobs: defineTable({
-    content: v.string(),
-    contentHash: v.optional(v.string()),
-    contentSize: v.optional(v.number()),
-    text: v.optional(v.string()),
-    libraryIds: v.optional(v.array(v.id("documentLibraries"))),
-    fileIds: v.optional(v.array(v.id("files"))),
-    createdAt: v.optional(v.number()),
-  }).index("by_content_hash", ["contentHash"]),
-
   contentPayloads: defineTable({
     siteId: v.id("sites"),
     contentHash: v.string(),
@@ -83,7 +73,6 @@ export default defineSchema({
     contentHash: v.string(),
     contentSize: v.number(),
     payloadId: v.id("contentPayloads"),
-    text: v.optional(v.string()),
     libraryIds: v.array(v.id("documentLibraries")),
     fileIds: v.array(v.id("files")),
     pageIds: v.array(v.id("pages")),
@@ -93,21 +82,9 @@ export default defineSchema({
   pageDocuments: defineTable({
     siteId: v.id("sites"),
     pageId: v.id("pages"),
-    blobId: v.optional(v.id("pageContentBlobs")),
-    revisionId: v.optional(v.id("contentRevisions")),
+    revisionId: v.id("contentRevisions"),
     contentHash: v.string(),
     contentSize: v.number(),
-    referencesKey: v.optional(v.string()),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"]),
-
-  pageReferences: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    libraryIds: v.array(v.id("documentLibraries")),
-    fileIds: v.array(v.id("files")),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -194,7 +171,6 @@ export default defineSchema({
         icon: v.optional(v.string()),
         order: v.number(),
         restoreDocument: v.boolean(),
-        documentBlobId: v.optional(v.id("pageContentBlobs")),
         contentRevisionId: v.optional(v.id("contentRevisions")),
       }),
     ),
@@ -294,7 +270,7 @@ export default defineSchema({
   }).index("by_site", ["siteId"]),
 
   documentFolders: defineTable({
-    siteId: v.optional(v.id("sites")),
+    siteId: v.id("sites"),
     libraryId: v.id("documentLibraries"),
     parentId: v.optional(v.id("documentFolders")),
     name: v.string(),
@@ -394,7 +370,6 @@ export default defineSchema({
     slug: v.string(),
     icon: v.optional(v.string()),
     order: v.number(),
-    blobId: v.optional(v.id("pageContentBlobs")),
     contentRevisionId: v.optional(v.id("contentRevisions")),
     contentHash: v.optional(v.string()),
     updatedAt: v.number(),
@@ -402,7 +377,6 @@ export default defineSchema({
     .index("by_release", ["releaseId"])
     .index("by_release_page", ["releaseId", "pageId"])
     .index("by_release_parent_order", ["releaseId", "parentId", "order"])
-    .index("by_blob", ["blobId"])
     .index("by_release_parent_slug", ["releaseId", "parentId", "slug"]),
 
   releaseLibraries: defineTable({
@@ -494,14 +468,12 @@ export default defineSchema({
     ),
     label: v.string(),
     details: v.array(v.string()),
-    fields: v.optional(
-      v.array(
-        v.object({
-          label: v.string(),
-          before: v.optional(v.string()),
-          after: v.optional(v.string()),
-        }),
-      ),
+    fields: v.array(
+      v.object({
+        label: v.string(),
+        before: v.optional(v.string()),
+        after: v.optional(v.string()),
+      }),
     ),
     content: v.optional(
       v.object({
