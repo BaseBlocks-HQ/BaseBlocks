@@ -26,7 +26,7 @@ import {
   TooltipTrigger,
 } from "./tooltip";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
+const DEFAULT_SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -58,6 +58,7 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
+  cookieName = DEFAULT_SIDEBAR_COOKIE_NAME,
   className,
   style,
   children,
@@ -66,6 +67,7 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  cookieName?: string | null;
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
@@ -81,10 +83,12 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // biome-ignore lint/suspicious/noDocumentCookie: the shadcn sidebar contract persists state synchronously.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      if (cookieName) {
+        // biome-ignore lint/suspicious/noDocumentCookie: the provider persists its own server-readable layout preference.
+        document.cookie = `${cookieName}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; samesite=lax`;
+      }
     },
-    [setOpenProp, open],
+    [cookieName, setOpenProp, open],
   );
 
   const toggleSidebar = React.useCallback(() => {
@@ -97,8 +101,13 @@ function SidebarProvider({
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
       ) {
-        const target = event.target as HTMLElement;
-        if (target.isContentEditable || target.closest("[contenteditable]")) {
+        const target = event.target;
+        if (
+          target instanceof HTMLElement &&
+          (target.isContentEditable ||
+            target.matches("input, textarea, select") ||
+            target.closest("[contenteditable], [data-keybinding-capture]"))
+        ) {
           return;
         }
         event.preventDefault();
@@ -592,7 +601,7 @@ function SidebarMenuAction({
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
+          "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground focus-visible:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
         className,
       )}
       {...props}

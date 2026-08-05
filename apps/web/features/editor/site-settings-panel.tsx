@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Loading02Icon } from "@hugeicons/core-free-icons";
 import { useImageUpload } from "@/lib/files/use-image-upload";
 import { DropZone } from "@/components/file-viewer/file-ui";
+import { useEditorWorkspace } from "@/features/editor/editor-state";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import {
@@ -14,7 +15,7 @@ import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
 import { Switch } from "@baseblocks/ui/switch";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -244,7 +245,8 @@ export function SiteSettingsPanel({
   showHeading = true,
   siteId,
 }: SiteSettingsPanelProps) {
-  const site = useQuery(api.sites.get, { siteId });
+  const { site: workspaceSite } = useEditorWorkspace();
+  const site = workspaceSite?._id === siteId ? workspaceSite : null;
   const updateSite = useMutation(api.sites.update);
   const { uploadImage, uploadState } = useImageUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);

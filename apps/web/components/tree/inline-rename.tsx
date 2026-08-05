@@ -7,11 +7,13 @@ export function InlineRename({
   label,
   value,
   onCancel,
+  onError,
   onSave,
 }: {
   label: string;
   value: string;
   onCancel: () => void;
+  onError?: (error: unknown) => void;
   onSave: (value: string) => Promise<void> | void;
 }) {
   const [draft, setDraft] = useState(value);
@@ -28,14 +30,20 @@ export function InlineRename({
       inputRef.current?.focus();
       return;
     }
+    if (next === value.trim()) {
+      finished.current = true;
+      onCancel();
+      return;
+    }
     finished.current = true;
     setPending(true);
     try {
       await onSave(next);
-    } catch {
+    } catch (error) {
       finished.current = false;
       setDraft(value);
       setPending(false);
+      onError?.(error);
       inputRef.current?.focus();
       inputRef.current?.select();
     }
@@ -45,7 +53,7 @@ export function InlineRename({
     <Input
       ref={inputRef}
       aria-label={label}
-      className="h-7 min-w-0 flex-1 px-1.5 py-0 text-sm"
+      className="h-7 min-w-0 flex-1 border-transparent bg-sidebar-accent/60 px-1.5 py-0 text-sm shadow-none focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
       disabled={pending}
       value={draft}
       onBlur={() => void commit()}

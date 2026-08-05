@@ -2,7 +2,6 @@
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowDown01Icon,
   ArrowRight01Icon,
   LanguageCircleIcon,
   MoonIcon,
@@ -12,15 +11,24 @@ import {
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
+import {
+  AnimatedTreeRow,
+  AnimatedTreeRows,
+} from "@/components/tree/animated-tree";
+import { useTreeDisclosure } from "@/components/tree/use-tree-disclosure";
 import { SearchBox } from "@/features/search";
 import { getPageLink } from "@/features/published-sites/urls";
 import type { Locale } from "@baseblocks/i18n";
 import {
   DEFAULT_SITE_SIDEBAR_VARIANT,
+  indexTree,
+  projectIndexedTree,
   type PageWithChildren,
+  type TreeNode,
 } from "@baseblocks/domain";
 import { BlurStack } from "@baseblocks/ui/blur-stack";
 import { Button } from "@baseblocks/ui/button";
+import { cn } from "@baseblocks/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +42,6 @@ import {
   SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from "@baseblocks/ui/sidebar";
@@ -44,7 +51,7 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
@@ -117,7 +124,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
           publishedLibraries,
         }}
       >
-        <SidebarProvider>
+        <SidebarProvider cookieName={null}>
           <PublicSiteSidebar
             site={site}
             team={team}
@@ -288,7 +295,7 @@ function PublicSiteSidebar({
         ) : null}
       </SidebarHeader>
       <SidebarContent className="overflow-hidden p-0">
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto [scrollbar-gutter:stable]">
           <nav className="p-2">
             {pages === undefined ? (
               <div className="flex min-h-24 items-center justify-center">
@@ -379,37 +386,35 @@ function PublicSiteThemeMenu() {
   );
 }
 
-interface PublishedNavigationRow {
-  depth: number;
+type PublishedNavigationItem = PageWithChildren & {
   fullPath: string;
-  hasChildren: boolean;
-  isExpanded: boolean;
-  page: PageWithChildren;
-}
+};
 
-function buildPublishedNavigationRows(
+function buildPublishedNavigationNodes(
   pages: PageWithChildren[],
-  currentPath: string,
-  expandedPages: ReadonlySet<string>,
-) {
-  const rows: PublishedNavigationRow[] = [];
+): TreeNode<PublishedNavigationItem>[] {
+  const nodes: TreeNode<PublishedNavigationItem>[] = [];
 
-  const visit = (siblings: PageWithChildren[], parentPath = "", depth = 0) => {
-    for (const page of siblings) {
+  const visit = (
+    siblings: PageWithChildren[],
+    parentId: string | null,
+    parentPath = "",
+  ) => {
+    siblings.forEach((page, order) => {
       const fullPath = parentPath ? `${parentPath}/${page.slug}` : page.slug;
-      const hasChildren = page.children.length > 0;
-      const isCurrentParent = currentPath.startsWith(`${fullPath}/`);
-      const isExpanded = expandedPages.has(page._id) || isCurrentParent;
-
-      rows.push({ depth, fullPath, hasChildren, isExpanded, page });
-      if (hasChildren && isExpanded) {
-        visit(page.children, fullPath, depth + 1);
-      }
-    }
+      nodes.push({
+        id: page._id,
+        parentId,
+        label: page.title,
+        order,
+        data: { ...page, fullPath },
+      });
+      visit(page.children, page._id, fullPath);
+    });
   };
 
-  visit(pages);
-  return rows;
+  visit(pages, null);
+  return nodes;
 }
 
 function PublishedPageNavigation({
@@ -423,81 +428,97 @@ function PublishedPageNavigation({
   pages: PageWithChildren[];
   siteSlug: string;
 }) {
-  const [expandedPages, setExpandedPages] = useState<Set<string>>(() =>
-    expandByDefault
-      ? new Set(
-          pages.flatMap(function collectExpandablePageIds(page): string[] {
-            return page.children.length > 0
-              ? [page._id, ...page.children.flatMap(collectExpandablePageIds)]
-              : [];
-          }),
+  const nodes = useMemo(() => buildPublishedNavigationNodes(pages), [pages]);
+  const treeIndex = useMemo(() => indexTree(nodes), [nodes]);
+  const selectedPageId = nodes.find(
+    (node) => node.data.fullPath === currentPath,
+  )?.id;
+  const defaultExpandedIds = expandByDefault
+    ? nodes
+        .filter(
+          (node) =>
+            (treeIndex.childrenByParentId.get(node.id)?.length ?? 0) > 0,
         )
-      : new Set(),
+        .map((node) => node.id)
+    : [];
+  const disclosure = useTreeDisclosure(
+    treeIndex,
+    selectedPageId,
+    defaultExpandedIds,
   );
-  const rows = buildPublishedNavigationRows(pages, currentPath, expandedPages);
+  const rows = projectIndexedTree(treeIndex, disclosure.expandedIds);
 
   return (
-    <SidebarMenu aria-label="Site pages" className="gap-0.5" role="tree">
-      {rows.map(({ depth, fullPath, hasChildren, isExpanded, page }) => (
-        <SidebarMenuItem
-          aria-level={depth + 1}
-          aria-expanded={hasChildren ? isExpanded : undefined}
-          key={page._id}
-          role="treeitem"
-        >
-          <SidebarMenuButton
-            asChild
-            isActive={fullPath === currentPath}
-            style={{ paddingInlineStart: `${depth * 0.75}rem` }}
-            className="grid grid-cols-[1.75rem_minmax(0,1fr)] gap-0 p-0 font-normal data-[active=true]:font-medium"
-          >
-            <div>
-              {hasChildren ? (
-                <button
-                  type="button"
-                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-                  className="flex h-8 w-7 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                  onClick={() => {
-                    setExpandedPages((current) => {
-                      const next = new Set(current);
-                      if (next.has(page._id)) next.delete(page._id);
-                      else next.add(page._id);
-                      return next;
-                    });
-                  }}
-                >
-                  {isExpanded ? (
-                    <HugeiconsIcon
-                      icon={ArrowDown01Icon}
-                      className="size-3.5"
-                    />
-                  ) : (
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="size-3.5"
-                    />
-                  )}
-                </button>
-              ) : (
-                <span className="h-8 w-7" />
-              )}
-              <OverflowTooltip content={page.title}>
-                {(textRef) => (
-                  <Link
-                    className="flex h-8 min-w-0 items-center overflow-hidden pr-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                    href={getPageLink(siteSlug, fullPath)}
-                    prefetch={false}
-                  >
-                    <span ref={textRef} className="min-w-0 truncate">
-                      {page.title}
+    <SidebarMenu aria-label="Site pages" className="gap-0" role="tree">
+      <AnimatedTreeRows>
+        {rows.map(({ data: page, depth, hasChildren, id }) => {
+          const isExpanded = disclosure.expandedIds.has(id);
+          return (
+            <AnimatedTreeRow
+              aria-level={depth + 1}
+              aria-expanded={hasChildren ? isExpanded : undefined}
+              className="group/page"
+              contentClassName="pb-0.5"
+              key={id}
+              role="treeitem"
+            >
+              <SidebarMenuButton
+                asChild
+                isActive={page.fullPath === currentPath}
+                style={{ paddingInlineStart: `${depth * 0.75}rem` }}
+                className="flex h-8 min-w-0 gap-0 p-0 font-normal data-[active=true]:font-medium"
+              >
+                <div>
+                  <span className="relative size-7 shrink-0">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "absolute inset-0 flex items-center justify-center text-sm leading-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
+                        hasChildren &&
+                          "group-hover/page:opacity-0 group-has-[button[data-page-disclosure]:focus-visible]/page:opacity-0 pointer-coarse:opacity-0",
+                      )}
+                    >
+                      {page.icon ?? "📄"}
                     </span>
-                  </Link>
-                )}
-              </OverflowTooltip>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+                        className="absolute inset-0 z-10 flex items-center justify-center text-muted-foreground opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
+                        data-page-disclosure
+                        onClick={() => {
+                          disclosure.toggle(id);
+                        }}
+                      >
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          className={cn(
+                            "size-3.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
+                            isExpanded && "rotate-90",
+                          )}
+                        />
+                      </button>
+                    ) : null}
+                  </span>
+                  <OverflowTooltip content={page.title}>
+                    {(textRef) => (
+                      <Link
+                        className="flex h-8 min-w-0 items-center overflow-hidden pr-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        href={getPageLink(siteSlug, page.fullPath)}
+                        prefetch={false}
+                      >
+                        <span ref={textRef} className="min-w-0 truncate">
+                          {page.title}
+                        </span>
+                      </Link>
+                    )}
+                  </OverflowTooltip>
+                </div>
+              </SidebarMenuButton>
+            </AnimatedTreeRow>
+          );
+        })}
+      </AnimatedTreeRows>
     </SidebarMenu>
   );
 }

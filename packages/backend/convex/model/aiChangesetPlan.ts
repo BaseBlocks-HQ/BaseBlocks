@@ -1,9 +1,9 @@
-import { SLUG_PATTERN } from "@baseblocks/domain";
+import { MAX_PAGE_TITLE_LENGTH, SLUG_PATTERN } from "@baseblocks/domain";
 
 export const MAX_AI_CHANGESET_OPERATIONS = 100;
 export const MAX_AI_CHANGESET_CONTENT_BYTES = 8_000_000;
 export const MAX_AI_SITE_PAGES = 500;
-export const MAX_AI_PAGE_TITLE_LENGTH = 200;
+export const MAX_AI_PAGE_TITLE_LENGTH = MAX_PAGE_TITLE_LENGTH;
 export const MAX_AI_PAGE_SLUG_LENGTH = 200;
 export const MAX_AI_PAGE_ICON_LENGTH = 500;
 export const MAX_AI_PAGE_REFERENCE_LENGTH = 200;

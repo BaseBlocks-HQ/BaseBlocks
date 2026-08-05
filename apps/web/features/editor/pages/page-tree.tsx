@@ -1,21 +1,27 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowDown01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, StarIcon } from "@hugeicons/core-free-icons";
 import { InlineRename } from "@/components/tree/inline-rename";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
+import {
+  AnimatedTreeRow,
+  AnimatedTreeRows,
+} from "@/components/tree/animated-tree";
+import { useTreeDisclosure } from "@/components/tree/use-tree-disclosure";
 import { useEditorSiteOptional } from "@/features/editor/editor-state";
 import { api, type Id } from "@baseblocks/backend";
 import {
-  generateSlug,
-  projectTree,
+  getTreeDescendantIds,
+  indexTree,
+  projectIndexedTree,
   type PageListItem,
   type ProjectedTreeNode,
   type TreeDropPlacement,
   type TreeNode,
 } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
-import { SidebarMenuButton, SidebarMenuItem } from "@baseblocks/ui/sidebar";
+import { SidebarMenuButton } from "@baseblocks/ui/sidebar";
 import { closestCenter } from "@dnd-kit/collision";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
 import {
@@ -28,9 +34,9 @@ import {
 } from "@dnd-kit/react";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { PageActionsContextMenu } from "./page-actions";
+import { PageActionsMenus } from "./page-actions";
 
 type PageTreeNode = TreeNode<PageListItem>;
 type PageTreeRow = ProjectedTreeNode<PageListItem>;
@@ -68,44 +74,6 @@ function toTreeNodes(pages: PageListItem[]): PageTreeNode[] {
   }));
 }
 
-function descendantIds(nodes: PageTreeNode[], nodeId: string | null) {
-  if (!nodeId) return new Set<string>();
-  const children = new Map<string, string[]>();
-  for (const node of nodes) {
-    if (!node.parentId) continue;
-    const siblings = children.get(node.parentId) ?? [];
-    siblings.push(node.id);
-    children.set(node.parentId, siblings);
-  }
-
-  const result = new Set<string>([nodeId]);
-  const queue = [...(children.get(nodeId) ?? [])];
-  while (queue.length > 0) {
-    const id = queue.shift();
-    if (!id || result.has(id)) continue;
-    result.add(id);
-    queue.push(...(children.get(id) ?? []));
-  }
-  return result;
-}
-
-function ancestorIds(nodes: PageTreeNode[], nodeId?: string) {
-  const result = new Set<string>();
-  if (!nodeId) return result;
-
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-  const visited = new Set<string>();
-  let cursor = byId.get(nodeId);
-
-  while (cursor?.parentId && !visited.has(cursor.parentId)) {
-    visited.add(cursor.parentId);
-    result.add(cursor.parentId);
-    cursor = byId.get(cursor.parentId);
-  }
-
-  return result;
-}
-
 function isPageDropData(value: unknown): value is PageDropData {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<PageDropData>;
@@ -131,67 +99,50 @@ export function PageTree({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
   const [pendingPageId, setPendingPageId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const updatePage = useMutation(api.pages.update);
+  const renamePage = useMutation(api.pages.rename);
   const movePage = useMutation(api.pages.moveInTree);
-  const nodes = toTreeNodes(allPages);
-  const rows = projectTree(nodes, expanded);
+  const nodes = useMemo(() => toTreeNodes(allPages), [allPages]);
+  const treeIndex = useMemo(() => indexTree(nodes), [nodes]);
+  const disclosure = useTreeDisclosure(treeIndex, selectedPageId);
+  const rows = projectIndexedTree(treeIndex, disclosure.expandedIds);
   const draggedPage = draggedPageId
     ? (allPages.find((page) => page._id === draggedPageId) ?? null)
     : null;
-  const invalidDropIds = descendantIds(nodes, draggedPageId);
-
-  useEffect(() => {
-    const ancestors = ancestorIds(nodes, selectedPageId);
-    if (ancestors.size === 0) return;
-
-    setExpanded((current) => {
-      if ([...ancestors].every((id) => current.has(id))) return current;
-      return new Set([...current, ...ancestors]);
-    });
-  }, [nodes, selectedPageId]);
+  const invalidDropIds = getTreeDescendantIds(treeIndex, draggedPageId);
 
   if (rows.length === 0) return null;
 
   const tree = (
     <>
-      {rows.map((item) => (
-        <PageTreeRow
-          key={item.id}
-          item={item}
-          selectedPageId={selectedPageId}
-          defaultPageId={defaultPageId}
-          canEdit={canEdit}
-          dragActive={draggedPageId !== null}
-          dragDisabled={pendingPageId !== null}
-          dropDisabled={invalidDropIds.has(item.id)}
-          isExpanded={expanded.has(item.id)}
-          onSelect={onSelect}
-          onToggleExpand={() => {
-            setExpanded((current) => {
-              const next = new Set(current);
-              if (next.has(item.id)) next.delete(item.id);
-              else next.add(item.id);
-              return next;
-            });
-          }}
-          siteId={siteId}
-          onChildCreated={() => {
-            setExpanded((current) => new Set(current).add(item.id));
-          }}
-          renaming={renamingId === item.id}
-          onRename={() => setRenamingId(item.id)}
-          onRenameCancel={() => setRenamingId(null)}
-          onRenameSave={async (title) => {
-            await updatePage({
-              pageId: item.data._id as Id<"pages">,
-              title,
-              slug: generateSlug(title),
-            });
-            setRenamingId(null);
-          }}
-        />
-      ))}
+      <AnimatedTreeRows>
+        {rows.map((item) => (
+          <PageTreeRow
+            key={item.id}
+            item={item}
+            selectedPageId={selectedPageId}
+            defaultPageId={defaultPageId}
+            canEdit={canEdit}
+            dragActive={draggedPageId !== null}
+            dragDisabled={pendingPageId !== null}
+            dropDisabled={invalidDropIds.has(item.id)}
+            isExpanded={disclosure.expandedIds.has(item.id)}
+            onSelect={onSelect}
+            onToggleExpand={() => disclosure.toggle(item.id)}
+            siteId={siteId}
+            onChildCreated={() => disclosure.expand(item.id)}
+            renaming={renamingId === item.id}
+            onRename={() => setRenamingId(item.id)}
+            onRenameCancel={() => setRenamingId(null)}
+            onRenameSave={async (title) => {
+              await renamePage({
+                pageId: item.data._id as Id<"pages">,
+                title,
+              });
+              setRenamingId(null);
+            }}
+          />
+        ))}
+      </AnimatedTreeRows>
       {canEdit ? (
         <RootEndDropZone
           active={draggedPageId !== null}
@@ -225,7 +176,7 @@ export function PageTree({
           .then(() => {
             const targetPageId = data.pageId;
             if (data.placement !== "inside" || !targetPageId) return;
-            setExpanded((current) => new Set(current).add(targetPageId));
+            disclosure.expand(targetPageId);
           })
           .catch((error) => {
             toast.error(
@@ -281,17 +232,26 @@ function PageTreeRow({
   const t = useTranslations("navigation.tree");
   const page = item.data;
   const isDefault = defaultPageId === page._id;
+  const pageButtonRef = useRef<HTMLButtonElement>(null);
   const { ref, handleRef, isDragging } = useDraggable({
     id: item.id,
     disabled: !canEdit || dragDisabled || renaming,
     data: { kind: "page-tree-page", pageId: item.id },
   });
 
-  const row = (
-    <SidebarMenuItem
+  const focusPageButtonAfterMenu = () => {
+    const button = pageButtonRef.current;
+    if (!button) return;
+    button.dataset.menuReturnFocus = "true";
+    button.focus({ preventScroll: true });
+  };
+
+  const renderRow = (actionsTrigger?: ReactNode) => (
+    <AnimatedTreeRow
       aria-level={item.depth + 1}
       aria-expanded={item.hasChildren ? isExpanded : undefined}
       className="group/page relative w-full min-w-0"
+      contentClassName="pb-px"
       role="treeitem"
     >
       <PageDropZones
@@ -302,7 +262,9 @@ function PageTreeRow({
       <SidebarMenuButton
         asChild
         isActive={selectedPageId === page._id}
-        style={{ paddingInlineStart: `${item.depth * 0.75}rem` }}
+        style={{
+          paddingInlineStart: `calc(var(--app-sidebar-leading-inset) + ${item.depth * 0.75}rem)`,
+        }}
         className={cn(
           "flex h-7 min-w-0 gap-0 overflow-hidden rounded-md p-0 text-xs font-normal transition-colors data-[active=true]:font-medium",
           canEdit &&
@@ -313,76 +275,125 @@ function PageTreeRow({
         )}
       >
         <div
-          ref={(element) => {
-            ref(element);
-            handleRef(element);
-          }}
+          ref={
+            renaming
+              ? undefined
+              : (element) => {
+                  ref(element);
+                  handleRef(element);
+                }
+          }
         >
-          {item.hasChildren ? (
-            <button
-              type="button"
-              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-              className="relative z-30 flex size-5 shrink-0 items-center justify-center rounded-sm text-sidebar-foreground/45 outline-none hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
-              onClick={onToggleExpand}
-            >
-              {isExpanded ? (
-                <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
-              ) : (
-                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+          <span className="relative size-5 shrink-0">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "absolute inset-0 flex items-center justify-center text-[0.8125rem] leading-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
+                item.hasChildren &&
+                  "group-hover/page:opacity-0 group-has-[button[data-page-disclosure]:focus-visible]/page:opacity-0 pointer-coarse:opacity-0",
               )}
-            </button>
-          ) : (
-            <span className="size-5 shrink-0" />
-          )}
-
-          <OverflowTooltip content={page.title} disabled={renaming}>
-            {(textRef) => (
+            >
+              {page.icon ?? "📄"}
+            </span>
+            {item.hasChildren ? (
               <button
                 type="button"
-                onClick={() => onSelect(page._id)}
-                className="flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden pr-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
+                aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+                className="absolute inset-0 z-30 flex items-center justify-center rounded-sm text-sidebar-foreground/45 opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
+                data-page-disclosure
+                onClick={onToggleExpand}
               >
-                {renaming ? (
-                  <InlineRename
-                    label={`Rename ${page.title}`}
-                    value={page.title}
-                    onCancel={onRenameCancel}
-                    onSave={onRenameSave}
-                  />
-                ) : (
-                  <span
-                    ref={textRef}
-                    className="min-w-0 flex-1 truncate"
-                    onDoubleClick={onRename}
-                  >
-                    {page.title}
-                  </span>
-                )}
-                {isDefault ? (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
-                    {t("defaultBadge")}
-                  </span>
-                ) : null}
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  className={cn(
+                    "size-3.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
+                    isExpanded && "rotate-90",
+                  )}
+                />
               </button>
-            )}
-          </OverflowTooltip>
+            ) : null}
+          </span>
+
+          {renaming ? (
+            <div className="flex h-7 min-w-0 flex-1 items-center pr-1">
+              <InlineRename
+                label={`Rename ${page.title}`}
+                value={page.title}
+                onCancel={onRenameCancel}
+                onError={(error) =>
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to rename page",
+                  )
+                }
+                onSave={onRenameSave}
+              />
+            </div>
+          ) : (
+            <>
+              <OverflowTooltip content={page.title}>
+                {(textRef) => (
+                  <button
+                    ref={pageButtonRef}
+                    type="button"
+                    onClick={() => onSelect(page._id)}
+                    className={cn(
+                      "flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[menu-return-focus=true]:focus-visible:ring-0",
+                      isDefault ? "pe-9" : "pe-2",
+                    )}
+                    onBlur={(event) => {
+                      delete event.currentTarget.dataset.menuReturnFocus;
+                    }}
+                  >
+                    <span
+                      ref={textRef}
+                      className="min-w-0 flex-1 truncate"
+                      onDoubleClick={onRename}
+                    >
+                      {page.title}
+                    </span>
+                  </button>
+                )}
+              </OverflowTooltip>
+              {isDefault ? (
+                <span
+                  className={cn(
+                    "pointer-events-none absolute inset-y-0 end-2 z-20 flex w-7 items-center justify-center text-sidebar-foreground/35 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
+                    actionsTrigger &&
+                      "group-hover/page:opacity-0 group-has-[button[data-page-actions-trigger]:focus-visible]/page:opacity-0 group-has-[button[data-page-actions-trigger][data-state=open]]/page:opacity-0 pointer-coarse:opacity-0",
+                  )}
+                >
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-3"
+                    icon={StarIcon}
+                    strokeWidth={1.75}
+                  />
+                  <span className="sr-only">{t("defaultBadge")}</span>
+                </span>
+              ) : null}
+              {actionsTrigger}
+            </>
+          )}
         </div>
       </SidebarMenuButton>
-    </SidebarMenuItem>
+    </AnimatedTreeRow>
   );
 
-  if (!canEdit) return row;
+  if (!canEdit) return renderRow();
 
   return (
-    <PageActionsContextMenu
+    <PageActionsMenus
       isDefault={isDefault}
       onChildCreated={onChildCreated}
       onRename={onRename}
+      onReturnFocus={focusPageButtonAfterMenu}
       page={page}
       siteId={siteId}
     >
-      {row}
-    </PageActionsContextMenu>
+      {(trigger) => renderRow(trigger)}
+    </PageActionsMenus>
   );
 }
 
@@ -488,7 +499,10 @@ function RootEndDropZone({
 
 function PageDragPreview({ page }: { page: PageListItem }) {
   return (
-    <div className="flex h-8 max-w-64 items-center rounded-lg border border-sidebar-border bg-sidebar px-3 text-xs text-sidebar-foreground shadow-xl">
+    <div className="flex h-8 max-w-64 items-center gap-1.5 rounded-lg border border-sidebar-border bg-sidebar px-3 text-xs text-sidebar-foreground shadow-xl">
+      <span aria-hidden="true" className="shrink-0 text-sm leading-none">
+        {page.icon ?? "📄"}
+      </span>
       <span className="truncate">{page.title}</span>
     </div>
   );

@@ -101,7 +101,7 @@ function TabBar({
                     {tab.label}
                   </TabsTrigger>
                   {editable ? (
-                    <div className="mr-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/tab:w-12 group-hover/tab:opacity-100 group-focus-within/tab:w-12 group-focus-within/tab:opacity-100">
+                    <div className="mr-1 flex w-0 items-center gap-0.5 overflow-hidden opacity-0 transition-[width,opacity] duration-150 group-hover/tab:w-12 group-hover/tab:opacity-100 group-has-[:focus-visible]/tab:w-12 group-has-[:focus-visible]/tab:opacity-100">
                       <Button
                         aria-label={`Rename ${tab.label}`}
                         className="rounded-[var(--radius-pill,max(0px,calc(var(--radius)-4px)))] hover:bg-transparent hover:text-foreground"

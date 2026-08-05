@@ -11,6 +11,11 @@ export type ProjectedTreeNode<T> = TreeNode<T> & {
   hasChildren: boolean;
 };
 
+export type TreeIndex<T> = {
+  byId: ReadonlyMap<string, TreeNode<T>>;
+  childrenByParentId: ReadonlyMap<string | null, readonly TreeNode<T>[]>;
+};
+
 export type OrderedTreeNode = {
   id: string;
   parentId: string | null;
@@ -45,33 +50,90 @@ function compareTreeNodes(left: OrderedTreeNode, right: OrderedTreeNode) {
   return left.order - right.order || left.id.localeCompare(right.id);
 }
 
+/**
+ * Builds the canonical read model for a flat, parent-linked tree. Missing
+ * parents are treated as roots and duplicate ids are rejected so every tree
+ * consumer gets the same deterministic structure.
+ */
+export function indexTree<T>(nodes: readonly TreeNode<T>[]): TreeIndex<T> {
+  const byId = new Map<string, TreeNode<T>>();
+  for (const node of nodes) {
+    if (byId.has(node.id)) {
+      throw new InvalidTreeMoveError(`Duplicate tree node: ${node.id}`);
+    }
+    byId.set(node.id, node);
+  }
+
+  const childrenByParentId = new Map<string | null, TreeNode<T>[]>();
+  for (const node of nodes) {
+    const parentId =
+      node.parentId && byId.has(node.parentId) ? node.parentId : null;
+    const siblings = childrenByParentId.get(parentId) ?? [];
+    siblings.push(node);
+    childrenByParentId.set(parentId, siblings);
+  }
+  for (const siblings of childrenByParentId.values()) {
+    siblings.sort(compareTreeNodes);
+  }
+
+  return { byId, childrenByParentId };
+}
+
+export function getTreeAncestorIds<T>(
+  index: TreeIndex<T>,
+  nodeId?: string | null,
+): string[] {
+  const ancestors: string[] = [];
+  const visited = new Set<string>();
+  let cursor = nodeId ? index.byId.get(nodeId) : undefined;
+
+  while (cursor?.parentId && !visited.has(cursor.parentId)) {
+    visited.add(cursor.parentId);
+    ancestors.push(cursor.parentId);
+    cursor = index.byId.get(cursor.parentId);
+  }
+  return ancestors;
+}
+
+export function getTreeDescendantIds<T>(
+  index: TreeIndex<T>,
+  nodeId?: string | null,
+): Set<string> {
+  if (!nodeId) return new Set();
+  const descendants = new Set<string>([nodeId]);
+  const queue = [...(index.childrenByParentId.get(nodeId) ?? [])];
+
+  while (queue.length > 0) {
+    const node = queue.shift();
+    if (!node || descendants.has(node.id)) continue;
+    descendants.add(node.id);
+    queue.push(...(index.childrenByParentId.get(node.id) ?? []));
+  }
+  return descendants;
+}
+
 export function projectTree<T>(
-  nodes: TreeNode<T>[],
+  nodes: readonly TreeNode<T>[],
   expanded?: ReadonlySet<string>,
   rootId: string | null = null,
 ): ProjectedTreeNode<T>[] {
-  const ids = new Set(nodes.map((node) => node.id));
-  const children = new Map<string | null, TreeNode<T>[]>();
+  return projectIndexedTree(indexTree(nodes), expanded, rootId);
+}
 
-  for (const node of nodes) {
-    const parentId =
-      node.parentId && ids.has(node.parentId) ? node.parentId : null;
-    const siblings = children.get(parentId) ?? [];
-    siblings.push(node);
-    children.set(parentId, siblings);
-  }
-
-  for (const siblings of children.values()) {
-    siblings.sort(compareTreeNodes);
-  }
+export function projectIndexedTree<T>(
+  index: TreeIndex<T>,
+  expanded?: ReadonlySet<string>,
+  rootId: string | null = null,
+): ProjectedTreeNode<T>[] {
+  const { childrenByParentId } = index;
 
   const result: ProjectedTreeNode<T>[] = [];
   const visiting = new Set<string>();
   const visit = (parentId: string | null, depth: number) => {
-    for (const node of children.get(parentId) ?? []) {
+    for (const node of childrenByParentId.get(parentId) ?? []) {
       if (visiting.has(node.id)) continue;
       visiting.add(node.id);
-      const hasChildren = (children.get(node.id)?.length ?? 0) > 0;
+      const hasChildren = (childrenByParentId.get(node.id)?.length ?? 0) > 0;
       result.push({ ...node, depth, hasChildren });
       if (!expanded || expanded.has(node.id)) visit(node.id, depth + 1);
       visiting.delete(node.id);

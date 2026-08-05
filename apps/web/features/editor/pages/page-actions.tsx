@@ -1,9 +1,10 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   Delete01Icon,
   FileAddIcon,
+  MoreHorizontalIcon,
   PencilEdit01Icon,
   StarIcon,
 } from "@hugeicons/core-free-icons";
@@ -26,33 +27,44 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@baseblocks/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@baseblocks/ui/dropdown-menu";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { CreatePageDialog } from "./create-page-dialog";
 
-interface PageActionsContextMenuProps {
-  children: ReactNode;
+interface PageActionsMenusProps {
+  children: (menuTrigger: ReactNode) => ReactNode;
   page: PageListItem;
   siteId: string;
   isDefault: boolean;
   onChildCreated?: () => void;
   onRename: () => void;
+  onReturnFocus: () => void;
 }
 
-export function PageActionsContextMenu({
+type MenuCloseFocus = "preserve" | "rename" | "row";
+
+export function PageActionsMenus({
   children,
   page,
   siteId,
   isDefault,
   onChildCreated,
   onRename,
-}: PageActionsContextMenuProps) {
+  onReturnFocus,
+}: PageActionsMenusProps) {
   const t = useTranslations("navigation.pageActions");
   const tDelete = useTranslations("navigation.deletePage");
   const tCommon = useTranslations("common");
   const [createChildOpen, setCreateChildOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const closeFocus = useRef<MenuCloseFocus>("row");
 
   const setDefaultPage = useMutation(api.sites.setDefaultPage);
   const removePage = useMutation(api.pages.remove);
@@ -69,35 +81,137 @@ export function PageActionsContextMenu({
     setDeleteOpen(false);
   };
 
+  const actions: Array<{
+    disabled?: boolean;
+    icon: IconSvgElement;
+    id: string;
+    label: string;
+    onSelect: () => void;
+    variant?: "destructive";
+  }> = [
+    {
+      id: "add-child",
+      icon: FileAddIcon,
+      label: t("addChildPage"),
+      onSelect: () => {
+        closeFocus.current = "preserve";
+        setCreateChildOpen(true);
+      },
+    },
+    {
+      id: "rename",
+      icon: PencilEdit01Icon,
+      label: t("rename"),
+      onSelect: () => {
+        closeFocus.current = "rename";
+      },
+    },
+    {
+      id: "set-default",
+      disabled: isDefault,
+      icon: StarIcon,
+      label: isDefault ? t("defaultPage") : t("setAsDefault"),
+      onSelect: () => void handleSetDefault(),
+    },
+    {
+      id: "delete",
+      icon: Delete01Icon,
+      label: t("delete"),
+      onSelect: () => {
+        closeFocus.current = "preserve";
+        setDeleteOpen(true);
+      },
+      variant: "destructive" as const,
+    },
+  ];
+
+  const prepareMenu = (open: boolean) => {
+    if (!open) return;
+    closeFocus.current = "row";
+  };
+
+  const handleInteractOutside = () => {
+    closeFocus.current = "preserve";
+  };
+
+  const handleCloseAutoFocus = (event: Event) => {
+    event.preventDefault();
+
+    if (closeFocus.current === "rename") {
+      onRename();
+    } else if (closeFocus.current === "row") {
+      onReturnFocus();
+    }
+
+    closeFocus.current = "row";
+  };
+
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-        <ContextMenuContent className="w-52">
-          <ContextMenuItem onSelect={() => setCreateChildOpen(true)}>
-            <HugeiconsIcon icon={FileAddIcon} className="h-4 w-4" />
-            {t("addChildPage")}
-          </ContextMenuItem>
-          <ContextMenuItem onSelect={onRename}>
-            <HugeiconsIcon className="h-4 w-4" icon={PencilEdit01Icon} />
-            {t("rename")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={() => void handleSetDefault()}
-            disabled={isDefault}
+      <DropdownMenu onOpenChange={prepareMenu}>
+        <ContextMenu onOpenChange={prepareMenu}>
+          <ContextMenuTrigger asChild>
+            {children(
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label={`${t("triggerAriaLabel")}: ${page.title}`}
+                  className="group/actions absolute inset-y-0 end-2 z-30 isolate flex w-7 items-center justify-center rounded-md text-sidebar-foreground/45 opacity-0 outline-none transition-[color,opacity] duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:text-sidebar-foreground focus-visible:opacity-100 group-hover/page:opacity-100 data-[state=open]:text-sidebar-foreground data-[state=open]:opacity-100 pointer-coarse:opacity-100"
+                  data-page-actions-trigger
+                  type="button"
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none invisible absolute inset-y-0 -start-6 end-0 -z-10 bg-gradient-to-r from-transparent via-sidebar-accent/90 to-sidebar-accent opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] group-hover/page:visible group-hover/page:opacity-100 group-has-[button[data-page-actions-trigger]:focus-visible]/page:visible group-has-[button[data-page-actions-trigger]:focus-visible]/page:opacity-100 group-data-[state=open]/actions:hidden"
+                  />
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-3.5"
+                    icon={MoreHorizontalIcon}
+                  />
+                </button>
+              </DropdownMenuTrigger>,
+            )}
+          </ContextMenuTrigger>
+          <ContextMenuContent
+            className="w-52"
+            onCloseAutoFocus={handleCloseAutoFocus}
+            onInteractOutside={handleInteractOutside}
           >
-            <HugeiconsIcon icon={StarIcon} className="h-4 w-4" />
-            {isDefault ? t("defaultPage") : t("setAsDefault")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            variant="destructive"
-            onSelect={() => setDeleteOpen(true)}
-          >
-            <HugeiconsIcon icon={Delete01Icon} className="h-4 w-4" />
-            {t("delete")}
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+            {actions.map((action) => (
+              <ContextMenuItem
+                disabled={action.disabled}
+                key={action.id}
+                onSelect={action.onSelect}
+                variant={action.variant}
+              >
+                <HugeiconsIcon icon={action.icon} className="size-4" />
+                {action.label}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuContent>
+        </ContextMenu>
+        <DropdownMenuContent
+          align="start"
+          collisionPadding={8}
+          className="w-52"
+          onCloseAutoFocus={handleCloseAutoFocus}
+          onInteractOutside={handleInteractOutside}
+          side="right"
+          sideOffset={6}
+        >
+          {actions.map((action) => (
+            <DropdownMenuItem
+              disabled={action.disabled}
+              key={action.id}
+              onSelect={action.onSelect}
+              variant={action.variant}
+            >
+              <HugeiconsIcon icon={action.icon} className="size-4" />
+              {action.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <CreatePageDialog
         onCreated={onChildCreated}

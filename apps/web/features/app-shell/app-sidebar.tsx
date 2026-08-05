@@ -56,7 +56,7 @@ export function AppSidebar({
             </div>
           }
         >
-          <SiteEditorSidebarContent siteId={siteId} />
+          <SiteEditorSidebarContent />
         </Suspense>
       ) : (
         <DashboardSidebarContent analyticsEnabled={analyticsEnabled} />

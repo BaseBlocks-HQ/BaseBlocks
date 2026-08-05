@@ -68,6 +68,7 @@ export function OpenEditorPageEditor({
   const { canEdit } = useEditorSite();
   const { canGoBack, goBack, openPage } = useEditorUi();
   const createPage = useMutation(api.pages.create);
+  const renamePage = useMutation(api.pages.rename);
   const updatePage = useMutation(api.pages.update);
   const saveContent = useMutation(api.pageContent.save);
   const attachmentRuntime = useBaseBlocksAttachmentRuntime(siteId);
@@ -117,12 +118,19 @@ export function OpenEditorPageEditor({
     },
     updatePage: async (targetPageId, pageUpdate) => {
       try {
-        await updatePage({
-          pageId: targetPageId as Id<"pages">,
-          title: pageUpdate.title,
-          icon: pageUpdate.icon ?? undefined,
-          clearIcon: pageUpdate.icon === null,
-        });
+        const targetId = targetPageId as Id<"pages">;
+        await Promise.all([
+          pageUpdate.title === undefined
+            ? Promise.resolve()
+            : renamePage({ pageId: targetId, title: pageUpdate.title }),
+          pageUpdate.icon === undefined
+            ? Promise.resolve()
+            : updatePage({
+                pageId: targetId,
+                icon: pageUpdate.icon ?? undefined,
+                clearIcon: pageUpdate.icon === null,
+              }),
+        ]);
       } catch (error) {
         toast.error("Failed to update page");
         throw error;

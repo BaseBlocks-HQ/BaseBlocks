@@ -1,7 +1,11 @@
-import { planTreeMove, SLUG_PATTERN } from "@baseblocks/domain";
+import {
+  normalizePageTitle,
+  planTreeMove,
+  SLUG_PATTERN,
+} from "@baseblocks/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type MutationCtx } from "./_generated/server";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
@@ -42,6 +46,40 @@ function normalizePageSlug(slug: string): string {
     );
   }
   return normalized;
+}
+
+async function requireEditablePage(ctx: MutationCtx, pageId: Id<"pages">) {
+  const page = await ctx.db.get(pageId);
+  if (!page || page.deletedAt !== undefined) throw new Error("Page not found");
+
+  const site = await ctx.db.get(page.siteId);
+  if (!site) throw new Error("Site not found");
+
+  await requireOrganizationPermission(ctx, site.organizationId, {
+    resource: "content",
+    action: "edit",
+  });
+  return page;
+}
+
+async function indexRenamedPage(
+  ctx: MutationCtx,
+  page: Doc<"pages">,
+): Promise<void> {
+  const document = await ctx.db
+    .query("pageDocuments")
+    .withIndex("by_page", (q) => q.eq("pageId", page._id))
+    .unique();
+  if (document?.revisionId) {
+    await queuePageContentIndex(
+      ctx,
+      page._id,
+      document.revisionId,
+      document.contentHash,
+    );
+  } else {
+    await indexPageContent(ctx, page._id);
+  }
 }
 
 export function buildPageTree(pages: ProjectedPage[]): PageTreeNode[] {
@@ -103,6 +141,7 @@ export const create = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, { siteId, title, slug, parentId, icon }) => {
+    const normalizedTitle = normalizePageTitle(title);
     const normalizedSlug = normalizePageSlug(slug);
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
@@ -148,7 +187,7 @@ export const create = mutation({
     const now = Date.now();
     const pageId = await ctx.db.insert("pages", {
       siteId,
-      title,
+      title: normalizedTitle,
       slug: normalizedSlug,
       parentId,
       icon,
@@ -168,28 +207,38 @@ export const create = mutation({
   },
 });
 
+export const rename = mutation({
+  args: {
+    pageId: v.id("pages"),
+    title: v.string(),
+  },
+  handler: async (ctx, { pageId, title }) => {
+    const normalizedTitle = normalizePageTitle(title);
+    const page = await requireEditablePage(ctx, pageId);
+    if (normalizedTitle === page.title) return pageId;
+
+    const now = Date.now();
+    await ctx.db.patch(pageId, { title: normalizedTitle, updatedAt: now });
+    await touchSiteDraft(ctx, page.siteId, now, [
+      { entityType: "page", entityId: pageId },
+    ]);
+    if (page.parentId) await synchronizeParentDocument(ctx, page.parentId, now);
+    await indexRenamedPage(ctx, { ...page, title: normalizedTitle });
+    return pageId;
+  },
+});
+
 export const update = mutation({
   args: {
     pageId: v.id("pages"),
-    title: v.optional(v.string()),
     slug: v.optional(v.string()),
     icon: v.optional(v.string()),
     clearIcon: v.optional(v.boolean()),
   },
-  handler: async (ctx, { pageId, title, slug, icon, clearIcon }) => {
+  handler: async (ctx, { pageId, slug, icon, clearIcon }) => {
     const normalizedSlug =
       slug === undefined ? undefined : normalizePageSlug(slug);
-    const page = await ctx.db.get(pageId);
-    if (!page || page.deletedAt !== undefined)
-      throw new Error("Page not found");
-
-    const site = await ctx.db.get(page.siteId);
-    if (!site) throw new Error("Site not found");
-
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
+    const page = await requireEditablePage(ctx, pageId);
 
     if (normalizedSlug && normalizedSlug !== page.slug) {
       const existing = await ctx.db
@@ -207,7 +256,6 @@ export const update = mutation({
     }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (title !== undefined) updates.title = title;
     if (normalizedSlug !== undefined) updates.slug = normalizedSlug;
     if (clearIcon) updates.icon = undefined;
     else if (icon !== undefined) updates.icon = icon;
@@ -216,28 +264,8 @@ export const update = mutation({
     await touchSiteDraft(ctx, page.siteId, Date.now(), [
       { entityType: "page", entityId: pageId },
     ]);
-    if (
-      page.parentId &&
-      (title !== undefined || icon !== undefined || clearIcon)
-    ) {
+    if (page.parentId && (icon !== undefined || clearIcon)) {
       await synchronizeParentDocument(ctx, page.parentId);
-    }
-
-    if (title !== undefined) {
-      const document = await ctx.db
-        .query("pageDocuments")
-        .withIndex("by_page", (q) => q.eq("pageId", pageId))
-        .unique();
-      if (document?.revisionId) {
-        await queuePageContentIndex(
-          ctx,
-          pageId,
-          document.revisionId,
-          document.contentHash,
-        );
-      } else {
-        await indexPageContent(ctx, pageId);
-      }
     }
 
     return pageId;

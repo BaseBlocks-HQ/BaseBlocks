@@ -2,17 +2,17 @@
 
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { useTeamAccess } from "@/features/authentication/team-access";
+import { useEditorWorkspace } from "@/features/editor/editor-state";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { api } from "@baseblocks/backend";
-import type { Doc, Id } from "@baseblocks/backend";
+import type { Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useMutation, useQuery } from "convex/react";
-import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import {
   type DraftSummary,
@@ -34,8 +34,7 @@ interface SiteEditorProps {
 
 function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const { team } = useTeamAccess();
-  const searchParams = useSearchParams();
-  const selectedPageId = searchParams.get("page");
+  const { pages, selectedPage, site, status } = useEditorWorkspace();
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -46,31 +45,10 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
     null,
   );
 
-  const site = useQuery(api.sites.get, {
-    siteId: siteId as Id<"sites">,
-  });
-  const pages = useQuery(api.pages.list, {
-    siteId: siteId as Id<"sites">,
-  });
   const draftSummaryQuery = useQuery(api.releases.getDraftSummary, {
     siteId: siteId as Id<"sites">,
   });
   const unpublishSite = useMutation(api.releases.unpublish);
-
-  useEffect(() => {
-    if (
-      !selectedPageId ||
-      !pages ||
-      pages.some((page) => page._id === selectedPageId)
-    ) {
-      return;
-    }
-    const params = new URLSearchParams(searchParams.toString());
-    const fallbackPageId = pages[0]?._id;
-    if (fallbackPageId) params.set("page", fallbackPageId);
-    else params.delete("page");
-    window.history.replaceState(null, "", `?${params.toString()}`);
-  }, [pages, searchParams, selectedPageId]);
 
   const handleUnpublish = async () => {
     try {
@@ -81,16 +59,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
     }
   };
 
-  const selectedPage = selectedPageId
-    ? (pages?.find((page: Doc<"pages">) => page._id === selectedPageId) ??
-      pages?.[0])
-    : pages?.[0];
-
-  if (
-    site === undefined ||
-    pages === undefined ||
-    draftSummaryQuery === undefined
-  ) {
+  if (status === "loading" || draftSummaryQuery === undefined) {
     return <EditorLoading />;
   }
 

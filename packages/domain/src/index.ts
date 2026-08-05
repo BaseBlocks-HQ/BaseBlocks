@@ -1,7 +1,12 @@
 export type { PageListItem, PageWithChildren } from "./content/pages";
+export {
+  MAX_PAGE_TITLE_LENGTH,
+  normalizePageTitle,
+} from "./content/pages";
 export type {
   OrderedTreeNode,
   ProjectedTreeNode,
+  TreeIndex,
   TreeDropPlacement,
   TreeMove,
   TreeMovePlan,
@@ -9,8 +14,12 @@ export type {
   TreeNodeUpdate,
 } from "./content/tree";
 export {
+  getTreeAncestorIds,
+  getTreeDescendantIds,
+  indexTree,
   InvalidTreeMoveError,
   planTreeMove,
+  projectIndexedTree,
   projectTree,
 } from "./content/tree";
 export { SLUG_PATTERN, generateSlug, uniqueSlugAmong } from "./sites/slug";

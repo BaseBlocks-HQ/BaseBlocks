@@ -181,7 +181,7 @@ export function DashboardSidebarContent({
   return (
     <>
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-x-visible overflow-y-hidden p-1">
-        <div className="h-full min-h-0 overflow-y-auto">
+        <div className="h-full min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
           <SidebarGroup className="p-0">
             <SidebarGroupContent>
               <SidebarMenu className="gap-px">

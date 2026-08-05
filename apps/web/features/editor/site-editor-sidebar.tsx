@@ -6,7 +6,11 @@ import {
   ArrowLeft01Icon,
 } from "@hugeicons/core-free-icons";
 import { PagesPanel } from "@/features/editor/pages-panel";
-import { useEditorSite, useEditorUi } from "@/features/editor/editor-state";
+import {
+  useEditorSite,
+  useEditorUi,
+  useEditorWorkspace,
+} from "@/features/editor/editor-state";
 import {
   APP_SIDEBAR_ICON_STROKE,
   appSidebarIconClassName,
@@ -15,8 +19,6 @@ import {
 import { getTeamDashboardPath } from "@/features/dashboard/routes";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { Link } from "@/i18n/navigation";
-import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
 import {
   SidebarContent,
   SidebarFooter,
@@ -25,23 +27,15 @@ import {
   SidebarMenuItem,
 } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 
-export function SiteEditorSidebarContent({ siteId }: { siteId: string }) {
+export function SiteEditorSidebarContent() {
   const { team } = useTeamAccess();
   const { canEdit } = useEditorSite();
   const { selectPage } = useEditorUi();
-  const searchParams = useSearchParams();
-  const site = useQuery(api.sites.get, {
-    siteId: siteId as Id<"sites">,
-  });
-  const pages = useQuery(api.pages.list, {
-    siteId: siteId as Id<"sites">,
-  });
+  const { pages, selectedPageId, site, status } = useEditorWorkspace();
 
-  if (site === undefined || pages === undefined) {
+  if (status === "loading") {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <Spinner className="size-5 text-sidebar-foreground/45" />
@@ -51,13 +45,9 @@ export function SiteEditorSidebarContent({ siteId }: { siteId: string }) {
 
   if (!site || site.organizationId !== team._id) return null;
 
-  const requestedPageId = searchParams.get("page");
-  const selectedPageId =
-    pages.find((page) => page._id === requestedPageId)?._id ?? pages[0]?._id;
-
   return (
     <>
-      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-y-auto px-1 py-1">
+      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-y-auto px-1 py-1 [--app-sidebar-leading-inset:0.375rem] [scrollbar-gutter:stable]">
         <div>
           <SidebarMenu className="gap-px">
             <SidebarMenuItem>
@@ -80,7 +70,7 @@ export function SiteEditorSidebarContent({ siteId }: { siteId: string }) {
           canEdit={canEdit}
           onSelectPage={selectPage}
           pages={pages}
-          selectedPageId={selectedPageId}
+          selectedPageId={selectedPageId ?? undefined}
           site={site}
         />
       </SidebarContent>

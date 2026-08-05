@@ -438,7 +438,10 @@ export function HistoryDialog({
             Choose what visitors see without changing your private draft. Every
             published version remains available.
           </DialogDescription>
-          <SidebarProvider className="h-full min-h-0 items-stretch">
+          <SidebarProvider
+            className="h-full min-h-0 items-stretch"
+            cookieName={null}
+          >
             <Sidebar
               className="w-40 border-e border-sidebar-border sm:w-52"
               collapsible="none"

@@ -224,7 +224,7 @@ export function ReadOnlyLibraryExplorer({
                   {node.label}
                 </button>
                 {file ? (
-                  <div className="hidden items-center gap-0.5 group-hover:flex group-focus-within:flex">
+                  <div className="hidden items-center gap-0.5 group-hover:flex group-has-[:focus-visible]:flex">
                     <button
                       aria-label="Copy link"
                       className="rounded-md p-1 text-muted-foreground hover:text-foreground"

@@ -9,6 +9,7 @@ import {
 } from "@baseblocks/domain";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
+import { useEditorWorkspace } from "@/features/editor/editor-state";
 import { Button } from "@baseblocks/ui/button";
 import {
   Dialog,
@@ -20,7 +21,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -57,10 +58,7 @@ export function CreatePageDialog({
 
   const createPage = useMutation(api.pages.create);
   const dialogOpen = open ?? dialogState.open;
-  const pages = useQuery(
-    api.pages.list,
-    dialogOpen ? { siteId: siteId as Id<"sites"> } : "skip",
-  );
+  const { pages } = useEditorWorkspace();
   const usedSlugs = new Set(
     (pages ?? []).map((page) => page.slug.toLowerCase()),
   );

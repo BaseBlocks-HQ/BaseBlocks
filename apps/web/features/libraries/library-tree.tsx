@@ -319,7 +319,7 @@ function LibraryTreeRow({
           {node.label}
         </button>
       )}
-      <div className="relative z-30 hidden items-center gap-0.5 group-hover:flex group-focus-within:flex">
+      <div className="relative z-30 hidden items-center gap-0.5 group-hover:flex group-has-[:focus-visible]:flex">
         {canManage ? (
           <button
             ref={handleRef}

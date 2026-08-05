@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { CreatePageDialog } from "@/features/editor/pages/create-page-dialog";
 import { PageTree } from "@/features/editor/pages/page-tree";
+import { AnimatedDisclosure } from "@/components/tree/animated-tree";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
 import { SidebarMenu } from "@baseblocks/ui/sidebar";
@@ -26,7 +27,7 @@ export function PagesPanel({
 
   return (
     <>
-      <div className="flex h-10 items-center">
+      <div className="flex h-10 items-center ps-[var(--app-sidebar-leading-inset)]">
         <div className="flex h-7 min-w-0 flex-1 items-center rounded-md text-sidebar-foreground/62 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
           <button
             aria-expanded={pagesExpanded}
@@ -38,7 +39,7 @@ export function PagesPanel({
               <HugeiconsIcon
                 icon={ArrowDown01Icon}
                 aria-hidden
-                className={`size-3.5 transition-transform duration-150 ${
+                className={`size-3.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
                   pagesExpanded ? "" : "-rotate-90"
                 }`}
               />
@@ -51,7 +52,7 @@ export function PagesPanel({
               trigger={
                 <button
                   aria-label="Add page"
-                  className="flex size-6 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="me-2 flex size-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                   type="button"
                 >
                   <HugeiconsIcon
@@ -65,9 +66,9 @@ export function PagesPanel({
           ) : null}
         </div>
       </div>
-      <div className="pb-2" hidden={!pagesExpanded}>
+      <AnimatedDisclosure className="pb-2" open={pagesExpanded}>
         {pages.length ? (
-          <SidebarMenu aria-label="Site pages" className="gap-px" role="tree">
+          <SidebarMenu aria-label="Site pages" className="gap-0" role="tree">
             <PageTree
               allPages={pages}
               defaultPageId={site.defaultPageId}
@@ -81,7 +82,7 @@ export function PagesPanel({
             No pages yet.
           </p>
         )}
-      </div>
+      </AnimatedDisclosure>
     </>
   );
 }
