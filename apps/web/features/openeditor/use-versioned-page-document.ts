@@ -44,15 +44,15 @@ export function useVersionedPageDocument({
   const inFlightDocumentRef = useRef<OpenEditorDocument | undefined>(undefined);
   const savingRef = useRef(false);
   const conflictRef = useRef(false);
-  const sessionRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const mountedRef = useRef(true);
-  const activePageIdRef = useRef(pageId);
-  activePageIdRef.current = pageId;
   const onErrorRef = useRef(onError);
   const onSaveStatusChangeRef = useRef(onSaveStatusChange);
-  onErrorRef.current = onError;
-  onSaveStatusChangeRef.current = onSaveStatusChange;
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+    onSaveStatusChangeRef.current = onSaveStatusChange;
+  }, [onError, onSaveStatusChange]);
 
   const apply = useCallback((next: OpenEditorDocument) => {
     documentRef.current = next;
@@ -61,88 +61,77 @@ export function useVersionedPageDocument({
 
   const persist = useCallback(async () => {
     if (savingRef.current || !baseHashRef.current) return;
-    const session = sessionRef.current;
     savingRef.current = true;
-    try {
-      while (
-        sessionRef.current === session &&
-        pendingRef.current &&
-        baseHashRef.current
-      ) {
-        const submitted = pendingRef.current;
-        if (!submitted) break;
-        pendingRef.current = undefined;
-        const expectedContentHash: string = baseHashRef.current;
-        inFlightDocumentRef.current = submitted;
-        onSaveStatusChangeRef.current?.("saving");
-        let result: SaveResult;
-        try {
-          result = await save({
-            pageId,
-            content: submitted,
-            expectedContentHash,
-          });
-        } catch {
-          if (sessionRef.current !== session) return;
-          inFlightDocumentRef.current = undefined;
-          pendingRef.current ??= submitted;
+    while (pendingRef.current && baseHashRef.current) {
+      const submitted = pendingRef.current;
+      if (!submitted) break;
+      pendingRef.current = undefined;
+      const expectedContentHash: string = baseHashRef.current;
+      inFlightDocumentRef.current = submitted;
+      onSaveStatusChangeRef.current?.("saving");
+      const result = await save({
+        pageId,
+        content: submitted,
+        expectedContentHash,
+      }).catch(() => null);
+      if (!result) {
+        inFlightDocumentRef.current = undefined;
+        if (mountedRef.current) {
+          if (!pendingRef.current) pendingRef.current = submitted;
           onSaveStatusChangeRef.current?.("error");
           onErrorRef.current();
-          return;
         }
-        if (
-          sessionRef.current !== session ||
-          activePageIdRef.current !== pageId
-        ) {
-          return;
-        }
-        inFlightDocumentRef.current = undefined;
+        savingRef.current = false;
+        return;
+      }
+      if (!mountedRef.current) {
+        savingRef.current = false;
+        return;
+      }
+      inFlightDocumentRef.current = undefined;
 
-        if (result.status === "conflict") {
-          const baseDocument = baseDocumentRef.current;
-          if (
-            baseDocument &&
-            !hasSameNonPageContent(baseDocument, result.document)
-          ) {
-            conflictRef.current = true;
-            baseHashRef.current = result.contentHash;
-            baseDocumentRef.current = result.document;
-            pendingRef.current = undefined;
-            onSaveStatusChangeRef.current?.("error");
-            onErrorRef.current();
-            return;
-          }
+      if (result.status === "conflict") {
+        const baseDocument = baseDocumentRef.current;
+        if (
+          baseDocument &&
+          !hasSameNonPageContent(baseDocument, result.document)
+        ) {
+          conflictRef.current = true;
           baseHashRef.current = result.contentHash;
           baseDocumentRef.current = result.document;
-          const local = documentRef.current ?? submitted;
-          const rebased = reconcileChildPageProjection(local, result.document);
-          apply(rebased);
-          if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
-            pendingRef.current = rebased;
-          }
-          continue;
-        }
-
-        if (baseHashRef.current !== expectedContentHash) {
-          const current = documentRef.current;
-          if (current) pendingRef.current = current;
-          continue;
+          pendingRef.current = undefined;
+          onSaveStatusChangeRef.current?.("error");
+          onErrorRef.current();
+          savingRef.current = false;
+          return;
         }
         baseHashRef.current = result.contentHash;
         baseDocumentRef.current = result.document;
-        const current = documentRef.current;
-        if (!current || JSON.stringify(current) === JSON.stringify(submitted)) {
-          apply(result.document);
-        } else {
-          pendingRef.current = current;
+        const local = documentRef.current ?? submitted;
+        const rebased = reconcileChildPageProjection(local, result.document);
+        apply(rebased);
+        if (JSON.stringify(rebased) !== JSON.stringify(result.document)) {
+          pendingRef.current = rebased;
         }
+        continue;
       }
-      if (sessionRef.current === session) {
-        onSaveStatusChangeRef.current?.("saved");
+
+      if (baseHashRef.current !== expectedContentHash) {
+        const current = documentRef.current;
+        if (current) pendingRef.current = current;
+        continue;
       }
-    } finally {
-      if (sessionRef.current === session) savingRef.current = false;
+      baseHashRef.current = result.contentHash;
+      baseDocumentRef.current = result.document;
+      const current = documentRef.current;
+      if (!current || JSON.stringify(current) === JSON.stringify(submitted)) {
+        apply(result.document);
+      } else {
+        pendingRef.current = current;
+      }
     }
+    onSaveStatusChangeRef.current?.("saved");
+    savingRef.current = false;
   }, [apply, pageId, save]);
 
   const schedule = useCallback(
@@ -155,21 +144,6 @@ export function useVersionedPageDocument({
     },
     [persist],
   );
-
-  useEffect(() => {
-    sessionRef.current += 1;
-    activePageIdRef.current = pageId;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = undefined;
-    baseHashRef.current = undefined;
-    baseDocumentRef.current = undefined;
-    pendingRef.current = undefined;
-    inFlightDocumentRef.current = undefined;
-    savingRef.current = false;
-    conflictRef.current = false;
-    documentRef.current = undefined;
-    setDocument(undefined);
-  }, [pageId]);
 
   useEffect(() => {
     if (!remote) return;

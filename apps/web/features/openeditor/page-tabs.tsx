@@ -85,6 +85,7 @@ function TabBar({
                   onBlur={finishRename}
                   onChange={(event) => setLabel(event.target.value)}
                   onKeyDown={(event) => {
+                    if (event.nativeEvent.isComposing) return;
                     if (event.key === "Enter") finishRename();
                     if (event.key === "Escape") setRenamingId(null);
                   }}
@@ -219,21 +220,14 @@ export function OpenEditorTabbedPage({
   renderers?: Partial<Record<string, OpenEditorViewerRenderer>>;
   onChange?: (document: OpenEditorDocument) => void;
 }) {
-  const [currentDocument, setCurrentDocument] = useState(document);
-  useEffect(() => {
-    setCurrentDocument((current) =>
-      JSON.stringify(current) === JSON.stringify(document) ? current : document,
-    );
-  }, [document]);
-  const value = readOpenEditorPageTabs(currentDocument);
+  const value = readOpenEditorPageTabs(document);
   const [activeId, setActiveId] = useState(value?.tabs[0]?.id ?? "");
   if (!value) return null;
   const active = value.tabs.find((tab) => tab.id === activeId) ?? value.tabs[0];
   if (!active) return null;
 
   const updateTabs = (tabs: OpenEditorPageTab[]) => {
-    const nextDocument = updateOpenEditorPageTabs(currentDocument, { tabs });
-    setCurrentDocument(nextDocument);
+    const nextDocument = updateOpenEditorPageTabs(document, { tabs });
     onChange?.(nextDocument);
   };
   const updateActive = (patch: Partial<OpenEditorPageTab>) =>
