@@ -51,6 +51,7 @@ import { getOrCreateContentObject } from "./model/contentObjects";
 import { readPageDocumentRecord } from "./model/pageDocuments";
 import { reconcileDraftChanges } from "./model/draftChanges";
 import { synchronizeParentDocument } from "./model/pageHierarchy";
+import { aiRunTelemetry } from "./validators/ai";
 
 const MAX_PAGE_CONTENT_BYTES = 900_000;
 
@@ -226,6 +227,7 @@ export const apply = mutation({
     operations: v.array(pageOperation),
     defaultPageRef: v.optional(v.string()),
     requestId: v.string(),
+    telemetry: v.optional(aiRunTelemetry),
   },
   returns: v.object({
     draftRevision: v.number(),
@@ -865,8 +867,13 @@ export const apply = mutation({
     };
     await ctx.db.patch(aiRun._id, {
       status: "completed",
+      outcome: "applied",
+      telemetry: args.telemetry,
+      failureCode: undefined,
+      failureMessage: undefined,
       result: {
         replayed: true,
+        outcome: "applied",
         summary: args.summary,
         diagnostics: [],
         applied,

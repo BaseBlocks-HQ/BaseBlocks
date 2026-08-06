@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test";
 import {
   assertRunnerBudget,
   createProductionEditorAiRunner,
-  mergeRunnerTelemetry,
-  repairInvalidWorkspace,
   sanitizeRunnerTelemetry,
 } from "./runners";
 
@@ -54,59 +52,15 @@ describe("editor AI workspace runner", () => {
     expect(JSON.stringify(telemetry)).not.toContain("sensitive site content");
   });
 
-  test("repairs an invalid workspace and revalidates the result", async () => {
-    let validationCalls = 0;
-    const diagnostics = [
-      { code: "invalid_document", message: "Missing a stable node ID" },
-    ];
-    const repairs: (typeof diagnostics)[] = [];
-    const result = await repairInvalidWorkspace({
-      result: "initial",
-      abortSignal: new AbortController().signal,
-      validate: async () => {
-        validationCalls += 1;
-        return validationCalls === 1
-          ? { valid: false, diagnostics }
-          : { valid: true, diagnostics: [] };
-      },
-      repair: async (issues) => {
-        repairs.push([...issues]);
-        return "repaired";
-      },
-    });
-
-    expect(result).toBe("repaired");
-    expect(validationCalls).toBe(2);
-    expect(repairs).toEqual([diagnostics]);
-  });
-
-  test("aggregates repair usage and enforces every admitted run limit", () => {
-    const telemetry = mergeRunnerTelemetry(
-      {
-        inputTokens: 100,
-        outputTokens: 20,
-        totalTokens: 120,
-        steps: 2,
-        toolCalls: 1,
-        gatewayCostUsd: 0.01,
-      },
-      {
-        inputTokens: 80,
-        outputTokens: 10,
-        totalTokens: 90,
-        steps: 1,
-        toolCalls: 2,
-        gatewayCostUsd: 0.02,
-      },
-    );
-    expect(telemetry).toMatchObject({
+  test("enforces every admitted run limit", () => {
+    const telemetry = {
       inputTokens: 180,
       outputTokens: 30,
       totalTokens: 210,
       steps: 3,
       toolCalls: 3,
       gatewayCostUsd: 0.03,
-    });
+    };
     expect(() =>
       assertRunnerBudget(telemetry, {
         maxRequests: 2,

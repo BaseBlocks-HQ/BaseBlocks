@@ -11,6 +11,7 @@ import {
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
 import type { PageListItem } from "@baseblocks/domain";
+import { ActionRowAction, ActionRowActions } from "@baseblocks/ui/action-row";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,24 +153,25 @@ export function PageActionsMenus({
         <ContextMenu onOpenChange={prepareMenu}>
           <ContextMenuTrigger asChild>
             {children(
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-label={`${t("triggerAriaLabel")}: ${page.title}`}
-                  className="group/actions absolute inset-y-0 end-2 z-30 isolate flex w-7 items-center justify-center rounded-md text-sidebar-foreground/45 opacity-0 outline-none transition-[color,opacity] duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:text-sidebar-foreground focus-visible:opacity-100 group-hover/page:opacity-100 data-[state=open]:text-sidebar-foreground data-[state=open]:opacity-100 pointer-coarse:opacity-100"
-                  data-page-actions-trigger
-                  type="button"
-                >
-                  <span
-                    aria-hidden
-                    className="pointer-events-none invisible absolute inset-y-0 -start-6 end-0 -z-10 bg-gradient-to-r from-transparent via-sidebar-accent/90 to-sidebar-accent opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] group-hover/page:visible group-hover/page:opacity-100 group-has-[button[data-page-actions-trigger]:focus-visible]/page:visible group-has-[button[data-page-actions-trigger]:focus-visible]/page:opacity-100 group-data-[state=open]/actions:hidden"
-                  />
-                  <HugeiconsIcon
-                    aria-hidden
-                    className="size-3.5"
-                    icon={MoreHorizontalIcon}
-                  />
-                </button>
-              </DropdownMenuTrigger>,
+              <ActionRowActions
+                className="end-[var(--app-sidebar-trailing-inset)] z-30"
+                side="end"
+              >
+                <DropdownMenuTrigger asChild>
+                  <ActionRowAction
+                    aria-label={`${t("triggerAriaLabel")}: ${page.title}`}
+                    className="flex h-full w-7 items-center justify-center rounded-md text-sidebar-foreground/45 outline-none transition-colors duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[state=open]:text-sidebar-foreground"
+                    data-page-actions-trigger
+                    type="button"
+                  >
+                    <HugeiconsIcon
+                      aria-hidden
+                      className="size-3.5"
+                      icon={MoreHorizontalIcon}
+                    />
+                  </ActionRowAction>
+                </DropdownMenuTrigger>
+              </ActionRowActions>,
             )}
           </ContextMenuTrigger>
           <ContextMenuContent

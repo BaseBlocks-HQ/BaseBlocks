@@ -9,6 +9,7 @@ import type {
   EditorAiAdmission,
   EditorAiReplayResult,
   EditorAiRunBudget,
+  EditorAiRunnerOutput,
 } from "./types";
 
 type BeginResult =
@@ -35,9 +36,22 @@ const failRun = makeFunctionReference<
   {
     runId: Id<"aiRuns">;
     failureCode: string;
+    failureMessage?: string;
+    telemetry?: EditorAiRunnerOutput["telemetry"];
   },
   null
 >("aiRuns:fail");
+
+const completeAnswerRun = makeFunctionReference<
+  "mutation",
+  {
+    runId: Id<"aiRuns">;
+    conversationId?: Id<"aiConversations">;
+    summary: string;
+    telemetry?: EditorAiRunnerOutput["telemetry"];
+  },
+  null
+>("aiRuns:completeAnswer");
 
 export function createEditorAiAdmission(
   token: string,
@@ -63,10 +77,22 @@ export function createEditorAiAdmission(
       return {
         replay: decision.state === "replay" ? decision.result : undefined,
         budget: decision.state === "admitted" ? decision.budget : undefined,
-        fail: async (failureCode) => {
+        completeAnswer: async (input) => {
+          await convex.mutation(completeAnswerRun, {
+            runId: decision.runId,
+            conversationId: input.conversationId as
+              | Id<"aiConversations">
+              | undefined,
+            summary: input.summary,
+            telemetry: input.telemetry,
+          });
+        },
+        fail: async (failureCode, details) => {
           await convex.mutation(failRun, {
             runId: decision.runId,
             failureCode,
+            failureMessage: details?.message,
+            telemetry: details?.telemetry,
           });
         },
       };

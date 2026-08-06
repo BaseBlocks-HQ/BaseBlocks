@@ -125,6 +125,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
           className={cn(
             "relative min-h-0 min-w-0 flex-1 overflow-hidden",
             editorAiEnabled && aiChatOpen && "max-lg:pointer-events-none",
+            editorAiEnabled && aiChatOpen && "lg:mr-[26rem]",
           )}
         >
           <PortalContainerProvider value={portalContainer ?? undefined}>
@@ -141,7 +142,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
           </PortalContainerProvider>
         </main>
         {editorAiEnabled && aiChatOpen ? (
-          <aside className="absolute inset-y-0 right-0 z-30 w-full border-l bg-background pt-(--app-header-height) shadow-xl sm:w-[26rem] lg:static lg:z-auto lg:w-[26rem] lg:shrink-0 lg:shadow-none">
+          <aside className="absolute top-(--app-header-height) right-0 bottom-0 z-30 w-full border-l bg-background shadow-xl sm:w-[26rem] lg:shadow-none">
             <Suspense
               fallback={
                 <div className="flex h-full items-center justify-center">
@@ -151,8 +152,8 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
             >
               <SiteAiChat
                 onApplied={() => setAiApplyRevision((revision) => revision + 1)}
-                onClose={() => setAiChatOpen(false)}
                 siteId={site._id}
+                siteName={site.name}
               />
             </Suspense>
           </aside>

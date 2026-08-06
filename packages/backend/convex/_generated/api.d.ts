@@ -25,6 +25,7 @@ import type * as integrationWebhookSignature from "../integrationWebhookSignatur
 import type * as integrationWebhooks from "../integrationWebhooks.js";
 import type * as integrations from "../integrations.js";
 import type * as libraries from "../libraries.js";
+import type * as migrations from "../migrations.js";
 import type * as model_aiChangesetAudit from "../model/aiChangesetAudit.js";
 import type * as model_aiChangesetPlan from "../model/aiChangesetPlan.js";
 import type * as model_aiChangesetReferences from "../model/aiChangesetReferences.js";
@@ -56,6 +57,7 @@ import type * as search from "../search.js";
 import type * as sharing from "../sharing.js";
 import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
+import type * as validators_ai from "../validators/ai.js";
 import type * as validators_integrations from "../validators/integrations.js";
 import type * as validators_sites from "../validators/sites.js";
 
@@ -83,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   integrationWebhooks: typeof integrationWebhooks;
   integrations: typeof integrations;
   libraries: typeof libraries;
+  migrations: typeof migrations;
   "model/aiChangesetAudit": typeof model_aiChangesetAudit;
   "model/aiChangesetPlan": typeof model_aiChangesetPlan;
   "model/aiChangesetReferences": typeof model_aiChangesetReferences;
@@ -114,6 +117,7 @@ declare const fullApi: ApiFromModules<{
   sharing: typeof sharing;
   siteDomains: typeof siteDomains;
   sites: typeof sites;
+  "validators/ai": typeof validators_ai;
   "validators/integrations": typeof validators_integrations;
   "validators/sites": typeof validators_sites;
 }>;

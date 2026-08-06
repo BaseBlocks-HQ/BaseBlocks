@@ -395,6 +395,7 @@ function ChatAction({
 
 const headerActionClassName =
   "size-8 gap-1.5 rounded-lg px-0 @2xl/header:h-8 @2xl/header:w-auto @2xl/header:px-3 [&_svg]:size-4";
+const headerIconActionClassName = "size-8 rounded-lg px-0 [&_svg]:size-4";
 
 function HeaderActionLabel({ children }: { children: ReactNode }) {
   return <span className="sr-only @2xl/header:not-sr-only">{children}</span>;
@@ -446,10 +447,11 @@ function PublishChangesAction({
   return (
     <Button
       aria-live={isSaving ? "polite" : undefined}
-      className="h-8 rounded-lg px-2.5"
+      className={headerActionClassName}
       disabled={isSaving}
       onClick={(event) => onPublish(event.currentTarget)}
       size="sm"
+      variant="ghost"
     >
       {isSaving ? <Spinner /> : <HugeiconsIcon icon={Globe02Icon} />}
       <HeaderActionLabel>
@@ -489,7 +491,7 @@ function MoreActions({
         <Button
           ref={triggerRef}
           aria-label={tHeader("moreActions")}
-          className="size-8 rounded-lg px-0"
+          className={headerIconActionClassName}
           size="sm"
           title={tHeader("moreActions")}
           variant="ghost"

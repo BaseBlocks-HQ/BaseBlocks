@@ -94,7 +94,11 @@ class EditingRunner implements EditorAiRunner {
     if (!text) throw new Error("Missing text fixture");
     text.text = "After";
     await store.writeFile(path, `${JSON.stringify(page, null, 2)}\n`);
-    return { store, summary: "Updated the home page." };
+    return {
+      store,
+      outcome: "edited" as const,
+      summary: "Updated the home page.",
+    };
   }
 }
 
@@ -115,7 +119,7 @@ class InvalidBlockRunner implements EditorAiRunner {
       ],
     });
     await store.writeFile(path, JSON.stringify(page));
-    return { store, summary: "Invalid edit" };
+    return { store, outcome: "edited" as const, summary: "Invalid edit" };
   }
 }
 
@@ -132,13 +136,42 @@ class SiteRenameRunner implements EditorAiRunner {
       OPENEDITOR_SITE_PATH,
       `${JSON.stringify(site, null, 2)}\n`,
     );
-    return { store, summary: "Renamed the site." };
+    return {
+      store,
+      outcome: "edited" as const,
+      summary: "Renamed the site.",
+    };
+  }
+}
+
+class AnsweringRunner implements EditorAiRunner {
+  readonly modelId = "test/model";
+
+  async run(input: EditorAiRunnerInput) {
+    return {
+      store: new InMemoryWorkspaceFileStore(input.materialization.files),
+      outcome: "answered" as const,
+      summary: "This site has one page: Home (/home).",
+    };
+  }
+}
+
+class NoOpEditingRunner implements EditorAiRunner {
+  readonly modelId = "test/model";
+
+  async run(input: EditorAiRunnerInput) {
+    return {
+      store: new InMemoryWorkspaceFileStore(input.materialization.files),
+      outcome: "edited" as const,
+      summary: "I changed the site.",
+    };
   }
 }
 
 const admission = {
   admit: async () => ({
     budget: TEST_BUDGET,
+    completeAnswer: async () => {},
     fail: async () => {},
   }),
 };
@@ -151,6 +184,7 @@ describe("editor AI orchestrator", () => {
       admission: {
         admit: async () => ({
           budget: TEST_BUDGET,
+          completeAnswer: async () => {},
           fail: async () => {},
         }),
       },
@@ -204,6 +238,59 @@ describe("editor AI orchestrator", () => {
     expect(backend.applied[0]?.nextSiteName).toBe("Unified terminology");
   });
 
+  test("completes a read-only answer without applying a changeset", async () => {
+    const backend = new FakeBackend();
+    const completions: Array<{ summary: string }> = [];
+    const run = createEditorAiOrchestrator({
+      backend,
+      admission: {
+        admit: async () => ({
+          budget: TEST_BUDGET,
+          completeAnswer: async (value) => {
+            completions.push(value);
+          },
+          fail: async () => {},
+        }),
+      },
+      runner: new AnsweringRunner(),
+    });
+    const result = await run({
+      siteId: "site-1",
+      prompt: "List the pages",
+      requestId: "request-answer-1",
+      conversationId: "conversation-1",
+    });
+
+    expect(result.outcome).toBe("answered");
+    expect(result.summary).toContain("Home");
+    expect(completions).toEqual([
+      {
+        conversationId: "conversation-1",
+        summary: "This site has one page: Home (/home).",
+        telemetry: undefined,
+      },
+    ]);
+    expect(backend.applied).toHaveLength(0);
+  });
+
+  test("rejects an edit completion with no semantic changes", async () => {
+    const backend = new FakeBackend();
+    const run = createEditorAiOrchestrator({
+      backend,
+      admission,
+      runner: new NoOpEditingRunner(),
+    });
+
+    await expect(
+      run({
+        siteId: "site-1",
+        prompt: "Change the home page",
+        requestId: "request-no-op-edit-1",
+      }),
+    ).rejects.toThrow("declared an edit but produced no semantic site changes");
+    expect(backend.applied).toHaveLength(0);
+  });
+
   test("rejects documents outside the BaseBlocks custom contract", async () => {
     const run = createEditorAiOrchestrator({
       backend: new FakeBackend(),
@@ -235,6 +322,7 @@ describe("editor AI orchestrator", () => {
           throw new Error("Expected cancellation");
         return {
           store: new InMemoryWorkspaceFileStore(input.materialization.files),
+          outcome: "edited",
           summary: "cancelled",
         };
       },
@@ -294,6 +382,7 @@ describe("editor AI orchestrator", () => {
         runnerCalls += 1;
         return {
           store: new InMemoryWorkspaceFileStore(input.materialization.files),
+          outcome: "edited",
           summary: "unexpected",
         };
       },
@@ -328,6 +417,7 @@ describe("editor AI orchestrator", () => {
         controller.abort(new Error("client disconnected"));
         return {
           store: new InMemoryWorkspaceFileStore(input.materialization.files),
+          outcome: "edited",
           summary: "cancelled",
         };
       },
@@ -362,9 +452,11 @@ describe("editor AI orchestrator", () => {
         admit: async () => ({
           replay: {
             replayed: true,
+            outcome: "applied",
             summary: "Previously completed",
             diagnostics: [],
           },
+          completeAnswer: async () => {},
           fail: async () => {},
         }),
       },
@@ -374,6 +466,7 @@ describe("editor AI orchestrator", () => {
           runnerCalls += 1;
           return {
             store: new InMemoryWorkspaceFileStore(input.materialization.files),
+            outcome: "edited",
             summary: "unexpected",
           };
         },
@@ -396,6 +489,7 @@ describe("editor AI orchestrator", () => {
       admission: {
         admit: async () => ({
           budget: TEST_BUDGET,
+          completeAnswer: async () => {},
           fail: async (code) => {
             failures.push(code);
           },

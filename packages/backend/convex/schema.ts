@@ -6,6 +6,7 @@ import {
   integrationSyncStatus,
 } from "./validators/integrations";
 import { siteSettings } from "./validators/sites";
+import { aiRunOutcome, aiRunTelemetry } from "./validators/ai";
 
 export default defineSchema({
   sites: defineTable({
@@ -197,7 +198,10 @@ export default defineSchema({
     ),
     leaseExpiresAt: v.number(),
     result: v.optional(v.any()),
+    outcome: v.optional(aiRunOutcome),
+    telemetry: v.optional(aiRunTelemetry),
     failureCode: v.optional(v.string()),
+    failureMessage: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
     completedAt: v.optional(v.number()),

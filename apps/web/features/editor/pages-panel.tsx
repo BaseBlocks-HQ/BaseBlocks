@@ -28,11 +28,11 @@ export function PagesPanel({
 
   return (
     <>
-      <div className="flex h-10 items-center ps-[var(--app-sidebar-leading-inset)]">
-        <div className="flex h-7 min-w-0 flex-1 items-center rounded-md text-sidebar-foreground/62 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
+      <div className="mt-px h-7 w-full">
+        <div className="group/pages relative h-7 w-full min-w-0 rounded-md text-sidebar-foreground/62 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-has-[button[data-pages-action]:focus-visible]:bg-sidebar-accent group-has-[button[data-pages-action]:focus-visible]:text-sidebar-foreground">
           <button
             aria-expanded={pagesExpanded}
-            className="flex h-full min-w-0 flex-1 items-center gap-0 rounded-md text-left text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
+            className="flex h-7 w-full min-w-0 items-center gap-0 rounded-md pe-10 ps-[var(--app-sidebar-leading-inset)] text-left text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
             onClick={() => setPagesExpanded((current) => !current)}
             type="button"
           >
@@ -53,7 +53,8 @@ export function PagesPanel({
               trigger={
                 <button
                   aria-label="Add page"
-                  className="me-2 flex size-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="absolute inset-y-0 end-[var(--app-sidebar-trailing-inset)] z-20 flex w-7 items-center justify-center rounded-md text-sidebar-foreground/45 transition-colors hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring"
+                  data-pages-action
                   type="button"
                 >
                   <HugeiconsIcon
@@ -67,7 +68,7 @@ export function PagesPanel({
           ) : null}
         </div>
       </div>
-      <AnimatedDisclosure className="pb-2" open={pagesExpanded}>
+      <AnimatedDisclosure className="pt-px pb-2" open={pagesExpanded}>
         {pages.length ? (
           <SidebarMenu aria-label="Site pages" className="gap-0" role="tree">
             <PageTree

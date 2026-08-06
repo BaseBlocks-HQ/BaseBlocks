@@ -1,21 +1,21 @@
 "use client";
 
+import { MiddleTruncate } from "@/components/tree/middle-truncate";
 import { api, type Id } from "@baseblocks/backend";
+import {
+  ActionRow,
+  ActionRowAction,
+  ActionRowActions,
+  ActionRowLabel,
+  ActionRowMain,
+} from "@baseblocks/ui/action-row";
 import { Bubble, BubbleContent } from "@baseblocks/ui/bubble";
 import { Button } from "@baseblocks/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@baseblocks/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@baseblocks/ui/empty";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@baseblocks/ui/popover";
 import { Marker, MarkerContent, MarkerIcon } from "@baseblocks/ui/marker";
 import { Message, MessageContent } from "@baseblocks/ui/message";
 import {
@@ -26,40 +26,40 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@baseblocks/ui/message-scroller";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { Textarea } from "@baseblocks/ui/textarea";
 import {
   Add01Icon,
-  AiChat02Icon,
   ArrowDown01Icon,
-  Cancel01Icon,
-  Delete02Icon,
+  BubbleChatSpark01Icon,
+  Delete01Icon,
   SentIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-
-const SUGGESTED_PROMPTS = [
-  "Make terminology consistent across every page. Replace “workspace” with “project” in user-facing content, while preserving URLs and code.",
-  "Reorganize this site into Getting started, Guides, and Reference. Preserve existing page IDs, repair internal links, and create concise section introductions.",
-] as const;
 
 export function SiteAiChat({
   onApplied,
-  onClose,
   siteId,
+  siteName,
 }: {
   onApplied: () => void;
-  onClose: () => void;
   siteId: Id<"sites">;
+  siteName: string;
 }) {
+  const chatRef = useRef<HTMLElement>(null);
+  const composerSurfaceRef = useRef<HTMLDivElement>(null);
   const conversations = useQuery(api.aiConversations.list, { siteId });
   const createConversation = useMutation(api.aiConversations.create);
   const archiveConversation = useMutation(api.aiConversations.archive);
   const revertChange = useMutation(api.aiChangesets.revert);
   const [conversationId, setConversationId] =
+    useState<Id<"aiConversations"> | null>(null);
+  const [conversationPickerOpen, setConversationPickerOpen] = useState(false);
+  const [archivingConversationId, setArchivingConversationId] =
     useState<Id<"aiConversations"> | null>(null);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState<{
@@ -80,6 +80,27 @@ export function SiteAiChat({
     if (conversationId || !firstConversation) return;
     setConversationId(firstConversation._id);
   }, [conversationId, conversations]);
+
+  useEffect(() => {
+    const chat = chatRef.current;
+    const composerSurface = composerSurfaceRef.current;
+    if (!chat || !composerSurface) return;
+
+    const syncComposerInset = () => {
+      const chatBounds = chat.getBoundingClientRect();
+      const composerBounds = composerSurface.getBoundingClientRect();
+      chat.style.setProperty(
+        "--chat-composer-inset",
+        `${Math.ceil(chatBounds.bottom - composerBounds.top)}px`,
+      );
+    };
+    syncComposerInset();
+
+    const observer = new ResizeObserver(syncComposerInset);
+    observer.observe(chat);
+    observer.observe(composerSurface);
+    return () => observer.disconnect();
+  }, []);
 
   const activeConversation = conversations?.find(
     (conversation) => conversation._id === conversationId,
@@ -109,11 +130,31 @@ export function SiteAiChat({
     return id;
   };
 
-  const archiveCurrent = async () => {
-    if (!conversationId || pending) return;
-    await archiveConversation({ conversationId });
-    setConversationId(null);
-    setError(null);
+  const archiveConversationById = async (
+    targetConversationId: Id<"aiConversations">,
+  ) => {
+    if (
+      archivingConversationId ||
+      (pending && targetConversationId === conversationId)
+    ) {
+      return;
+    }
+    setArchivingConversationId(targetConversationId);
+    try {
+      await archiveConversation({ conversationId: targetConversationId });
+      if (targetConversationId === conversationId) {
+        setConversationId(null);
+        setError(null);
+      }
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error
+          ? cause.message
+          : "The conversation could not be archived",
+      );
+    } finally {
+      setArchivingConversationId(null);
+    }
   };
 
   const send = async (content: string) => {
@@ -138,6 +179,7 @@ export function SiteAiChat({
       });
       const payload = (await response.json()) as {
         error?: string;
+        outcome?: "answered" | "applied";
         summary?: string;
         diagnostics?: Array<{ message?: unknown; path?: unknown }>;
       };
@@ -160,8 +202,10 @@ export function SiteAiChat({
             .join(": "),
         );
       }
-      onApplied();
-      toast.success("Site updated");
+      if (payload.outcome === "applied") {
+        onApplied();
+        toast.success("Site updated");
+      }
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "The editor agent failed";
@@ -200,18 +244,25 @@ export function SiteAiChat({
 
   return (
     <section
-      aria-label="Editor AI"
+      ref={chatRef}
+      aria-label="Chat"
       className="flex h-full min-h-0 flex-col bg-background"
     >
       <header className="flex h-12 shrink-0 items-center gap-2 border-b px-2.5">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Popover
+          onOpenChange={setConversationPickerOpen}
+          open={conversationPickerOpen}
+        >
+          <PopoverTrigger asChild>
             <Button
               className="min-w-0 flex-1 justify-start px-2"
               size="sm"
               variant="ghost"
             >
-              <HugeiconsIcon className="size-4 shrink-0" icon={AiChat02Icon} />
+              <HugeiconsIcon
+                className="size-4 shrink-0"
+                icon={BubbleChatSpark01Icon}
+              />
               <span className="truncate">
                 {activeConversation?.title ?? "New conversation"}
               </span>
@@ -220,22 +271,74 @@ export function SiteAiChat({
                 icon={ArrowDown01Icon}
               />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-72">
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-72 p-1" sideOffset={4}>
             {conversations?.length ? (
-              conversations.map((conversation) => (
-                <DropdownMenuItem
-                  key={conversation._id}
-                  onSelect={() => setConversationId(conversation._id)}
-                >
-                  <span className="truncate">{conversation.title}</span>
-                </DropdownMenuItem>
-              ))
+              <div
+                aria-label="Conversations"
+                className="flex flex-col gap-px"
+                role="list"
+              >
+                {conversations.map((conversation) => {
+                  const active = conversation._id === conversationId;
+                  return (
+                    <ActionRow
+                      className={cn(
+                        "group/conversation relative h-7 min-w-0 rounded-md transition-colors hover:bg-accent group-has-[button[data-conversation-actions-trigger]:focus-visible]/conversation:bg-accent",
+                        active &&
+                          "bg-accent font-medium text-accent-foreground",
+                      )}
+                      key={conversation._id}
+                      role="listitem"
+                    >
+                      <ActionRowMain
+                        aria-current={active ? "true" : undefined}
+                        className="flex h-7 w-full min-w-0 items-center overflow-hidden rounded-md px-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                        onClick={() => {
+                          setConversationId(conversation._id);
+                          setConversationPickerOpen(false);
+                        }}
+                        type="button"
+                      >
+                        <ActionRowLabel className="flex min-w-0 flex-1">
+                          <MiddleTruncate
+                            className="flex-1"
+                            text={conversation.title}
+                          />
+                        </ActionRowLabel>
+                      </ActionRowMain>
+                      <ActionRowActions className="end-1 z-30" side="end">
+                        <ActionRowAction
+                          aria-label={`Archive ${conversation.title}`}
+                          className="flex h-full w-7 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-destructive focus-visible:text-destructive focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-30"
+                          data-conversation-actions-trigger
+                          disabled={Boolean(
+                            archivingConversationId || (pending && active),
+                          )}
+                          onClick={() =>
+                            void archiveConversationById(conversation._id)
+                          }
+                          title={`Archive ${conversation.title}`}
+                          type="button"
+                        >
+                          <HugeiconsIcon
+                            aria-hidden
+                            className="size-3.5"
+                            icon={Delete01Icon}
+                          />
+                        </ActionRowAction>
+                      </ActionRowActions>
+                    </ActionRow>
+                  );
+                })}
+              </div>
             ) : (
-              <DropdownMenuItem disabled>No conversations yet</DropdownMenuItem>
+              <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                No conversations yet
+              </p>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </PopoverContent>
+        </Popover>
         <Button
           aria-label="Start a new conversation"
           disabled={Boolean(pending)}
@@ -246,35 +349,16 @@ export function SiteAiChat({
         >
           <HugeiconsIcon icon={Add01Icon} />
         </Button>
-        <Button
-          aria-label="Archive conversation"
-          disabled={!conversationId || Boolean(pending)}
-          onClick={() => void archiveCurrent()}
-          size="icon-sm"
-          title="Archive conversation"
-          variant="ghost"
-        >
-          <HugeiconsIcon icon={Delete02Icon} />
-        </Button>
-        <Button
-          aria-label="Close AI panel"
-          onClick={onClose}
-          size="icon-sm"
-          title="Close AI panel"
-          variant="ghost"
-        >
-          <HugeiconsIcon icon={Cancel01Icon} />
-        </Button>
       </header>
 
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         <MessageScrollerProvider autoScroll scrollPreviousItemPeek={48}>
           <MessageScroller>
-            <MessageScrollerViewport>
-              <MessageScrollerContent className="gap-5 px-4 py-5">
+            <MessageScrollerViewport className="[--scroll-fade-t-size:2.5rem] [--scroll-fade-b-size:calc(var(--chat-composer-inset,6rem)+1rem)]">
+              <MessageScrollerContent className="gap-5 px-4 pt-5 pb-[calc(var(--chat-composer-inset,6rem)+1.25rem)]">
                 {displayMessages.length === 0 && !pending ? (
                   <MessageScrollerItem className="my-auto">
-                    <ChatEmptyState onPrompt={(prompt) => void send(prompt)} />
+                    <ChatEmptyState siteName={siteName} />
                   </MessageScrollerItem>
                 ) : null}
                 {displayMessages.map((message) => (
@@ -320,47 +404,51 @@ export function SiteAiChat({
                 ) : null}
               </MessageScrollerContent>
             </MessageScrollerViewport>
-            <MessageScrollerButton />
+            <MessageScrollerButton className="z-20 border border-sidebar-border bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[direction=end]:bottom-[calc(var(--chat-composer-inset,6rem)+0.5rem)]" />
           </MessageScroller>
         </MessageScrollerProvider>
-      </div>
 
-      <form
-        className="shrink-0 border-t bg-background p-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void send(input);
-        }}
-      >
-        <div className="relative">
-          <Textarea
-            aria-label="Ask the editor agent"
-            className="max-h-40 min-h-20 resize-none pr-11"
-            disabled={Boolean(pending)}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                void send(input);
-              }
-            }}
-            placeholder="Describe what you want to change…"
-            value={input}
-          />
-          <Button
-            aria-label="Send message"
-            className="absolute right-2 bottom-2"
-            disabled={!input.trim() || Boolean(pending)}
-            size="icon-sm"
-            type="submit"
+        <form
+          className="absolute inset-x-0 bottom-0 z-10 px-3 pb-3 pt-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void send(input);
+          }}
+        >
+          <div
+            ref={composerSurfaceRef}
+            className="relative rounded-xl bg-sidebar/90 text-sidebar-foreground shadow-lg ring-1 ring-sidebar-border/70 backdrop-blur-xl"
           >
-            <HugeiconsIcon icon={SentIcon} />
-          </Button>
-        </div>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Enter to send · Shift+Enter for a new line
-        </p>
-      </form>
+            <Textarea
+              aria-label="Ask the editor agent"
+              className="max-h-40 min-h-20 resize-none border-0 bg-transparent pr-11 shadow-none focus-visible:ring-0 dark:bg-transparent"
+              disabled={Boolean(pending)}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  void send(input);
+                }
+              }}
+              placeholder="Describe what you want to change…"
+              value={input}
+            />
+            <Button
+              aria-label="Send message"
+              className="absolute right-2 bottom-2 rounded-full"
+              disabled={!input.trim() || Boolean(pending)}
+              size="icon-sm"
+              type="submit"
+            >
+              <HugeiconsIcon icon={SentIcon} />
+            </Button>
+          </div>
+        </form>
+      </div>
     </section>
   );
 }
@@ -397,9 +485,8 @@ function ConversationMessage({
               {message.content}
             </BubbleContent>
           </Bubble>
-          {!user ? (
+          {!user && (message.revertedAt || (message.auditId && revertable)) ? (
             <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
-              <span>Editor AI</span>
               {message.revertedAt ? (
                 <span>Reverted</span>
               ) : message.auditId && revertable ? (
@@ -428,29 +515,17 @@ function ConversationMessage({
   );
 }
 
-function ChatEmptyState({ onPrompt }: { onPrompt: (prompt: string) => void }) {
+function ChatEmptyState({ siteName }: { siteName: string }) {
   return (
-    <Empty className="px-2 py-8">
-      <EmptyHeader>
-        <EmptyTitle>Edit this site with AI</EmptyTitle>
-        <EmptyDescription className="max-w-64 text-xs">
-          Describe a change and the agent will apply it to the site. Every agent
-          change can be reverted from the conversation.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent className="grid gap-2">
-        {SUGGESTED_PROMPTS.map((prompt) => (
-          <Button
-            className="h-auto justify-start whitespace-normal p-3 text-left text-xs leading-relaxed"
-            key={prompt}
-            onClick={() => onPrompt(prompt)}
-            type="button"
-            variant="outline"
-          >
-            {prompt}
-          </Button>
-        ))}
-      </EmptyContent>
-    </Empty>
+    <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
+      <HugeiconsIcon
+        aria-hidden="true"
+        className="size-6 text-muted-foreground"
+        icon={BubbleChatSpark01Icon}
+      />
+      <p className="max-w-64 text-sm text-muted-foreground">
+        What do you want to build in {siteName}?
+      </p>
+    </div>
   );
 }

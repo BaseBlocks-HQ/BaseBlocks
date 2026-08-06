@@ -7,6 +7,8 @@ import {
   type AiRunPolicy,
 } from "./model/aiRunPolicy";
 import { requireOrganizationPermission } from "./permissions";
+import { appendCompletedAssistantMessage } from "./aiConversations";
+import { aiRunTelemetry } from "./validators/ai";
 
 const LEASE_MS = 5 * 60_000;
 
@@ -181,6 +183,8 @@ export const fail = mutation({
   args: {
     runId: v.id("aiRuns"),
     failureCode: v.string(),
+    failureMessage: v.optional(v.string()),
+    telemetry: v.optional(aiRunTelemetry),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -206,11 +210,76 @@ export const fail = mutation({
     await ctx.db.patch(run._id, {
       status: "failed",
       failureCode: args.failureCode.slice(0, 100),
+      failureMessage: args.failureMessage?.slice(0, 2_000),
+      telemetry: args.telemetry,
+      outcome: undefined,
       result: undefined,
       leaseExpiresAt: now,
       completedAt: now,
       updatedAt: now,
     });
+    return null;
+  },
+});
+
+export const completeAnswer = mutation({
+  args: {
+    runId: v.id("aiRuns"),
+    conversationId: v.optional(v.id("aiConversations")),
+    summary: v.string(),
+    telemetry: v.optional(aiRunTelemetry),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.runId);
+    if (!run) throw new ConvexError("AI run not found");
+    const site = await ctx.db.get(run.siteId);
+    if (!site) throw new ConvexError("Site not found");
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "content", action: "edit" },
+    );
+    if (auth.userId !== run.actorId) {
+      conflict("AI run belongs to another actor");
+    }
+    const summary = args.summary.trim().slice(0, 8_000);
+    if (!summary) conflict("AI answer has no content");
+    const now = Date.now();
+    try {
+      assertAiRunTransition(run, "completed", now);
+    } catch (error) {
+      conflict(
+        error instanceof Error ? error.message : "Invalid AI run transition",
+      );
+    }
+    const result = {
+      replayed: true as const,
+      outcome: "answered" as const,
+      summary,
+      diagnostics: [],
+    };
+    await ctx.db.patch(run._id, {
+      status: "completed",
+      outcome: "answered",
+      telemetry: args.telemetry,
+      failureCode: undefined,
+      failureMessage: undefined,
+      result,
+      leaseExpiresAt: now,
+      completedAt: now,
+      updatedAt: now,
+    });
+    if (args.conversationId) {
+      await appendCompletedAssistantMessage(ctx, {
+        conversationId: args.conversationId,
+        siteId: site._id,
+        actorId: auth.userId,
+        requestId: run.requestId,
+        content: summary,
+        createdAt: now,
+      });
+    }
     return null;
   },
 });

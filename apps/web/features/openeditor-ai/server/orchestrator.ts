@@ -12,6 +12,7 @@ import type {
   EditorAiAdmission,
   EditorAiAdmissionLease,
   EditorAiRunner,
+  EditorAiRunnerOutput,
   EditorAiRunResult,
   EditorAiRunOutcome,
 } from "./types";
@@ -90,7 +91,8 @@ export function createEditorAiOrchestrator(input: {
     }
     const abort = abortAfter(request.abortSignal, timeoutMs);
     let lease: EditorAiAdmissionLease | undefined;
-    let applied = false;
+    let terminal = false;
+    let telemetry: EditorAiRunnerOutput["telemetry"];
     try {
       abort.signal.throwIfAborted();
       lease = await input.admission.admit({
@@ -128,6 +130,7 @@ export function createEditorAiOrchestrator(input: {
         abortSignal: abort.signal,
         budget: lease.budget,
       });
+      telemetry = output.telemetry;
       abort.signal.throwIfAborted();
       const imported = await importProjectWorkspace(
         materialization.baseline,
@@ -144,6 +147,7 @@ export function createEditorAiOrchestrator(input: {
         );
       }
       const result: EditorAiRunResult = {
+        outcome: output.outcome === "answered" ? "answered" : "applied",
         summary: output.summary.slice(0, 20_000),
         project: imported.project,
         changeset: imported.changeset,
@@ -154,8 +158,26 @@ export function createEditorAiOrchestrator(input: {
       const projectChanged =
         imported.project.title !== snapshot.site.name ||
         nextDefaultPageId !== (snapshot.site.defaultPageId ?? null);
-      if (imported.changeset.pageChanges.length === 0 && !projectChanged) {
-        throw new EditorAiValidationError("Agent produced no page changes");
+      const hasChanges =
+        imported.changeset.pageChanges.length > 0 || projectChanged;
+      if (output.outcome === "answered") {
+        if (hasChanges) {
+          throw new EditorAiValidationError(
+            "Agent declared a read-only answer after modifying the site",
+          );
+        }
+        await lease.completeAnswer({
+          conversationId: request.conversationId,
+          summary: result.summary,
+          telemetry,
+        });
+        terminal = true;
+        return result;
+      }
+      if (!hasChanges) {
+        throw new EditorAiValidationError(
+          "Agent declared an edit but produced no semantic site changes",
+        );
       }
       abort.signal.throwIfAborted();
       result.applied = await input.backend.applyChangeset({
@@ -166,8 +188,9 @@ export function createEditorAiOrchestrator(input: {
           summary: result.summary,
         })),
         conversationId: request.conversationId,
+        telemetry,
       });
-      applied = true;
+      terminal = true;
       const persisted = await input.backend
         .exportDraft(request.siteId)
         .catch(() => null);
@@ -187,9 +210,15 @@ export function createEditorAiOrchestrator(input: {
       }
       return result;
     } catch (error) {
-      if (lease && !applied) {
+      if (lease && !terminal) {
         await lease
-          .fail(abort.signal.aborted ? "cancelled" : "run_failed")
+          .fail(abort.signal.aborted ? "cancelled" : "run_failed", {
+            message:
+              error instanceof Error
+                ? `${error.name}: ${error.message}`.slice(0, 2_000)
+                : "Unknown editor AI failure",
+            telemetry,
+          })
           .catch(() => undefined);
       }
       if (abort.signal.aborted && !request.abortSignal?.aborted) {

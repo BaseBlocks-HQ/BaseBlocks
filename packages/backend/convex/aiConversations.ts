@@ -196,8 +196,8 @@ export async function appendCompletedAssistantMessage(
     actorId: string;
     requestId: string;
     content: string;
-    operationCount: number;
-    auditId: Id<"aiChangesetAudits">;
+    operationCount?: number;
+    auditId?: Id<"aiChangesetAudits">;
     createdAt: number;
   },
 ) {

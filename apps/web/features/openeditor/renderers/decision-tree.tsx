@@ -26,6 +26,13 @@ import {
   BreadcrumbSeparator,
 } from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
+import {
+  ActionRow,
+  ActionRowAction,
+  ActionRowActions,
+  ActionRowLabel,
+  ActionRowMain,
+} from "@baseblocks/ui/action-row";
 import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
 import {
   ResizableHandle,
@@ -210,57 +217,63 @@ function SortableDecisionOption({
   });
 
   return (
-    <div
+    <ActionRow
       className={`group/option relative flex min-h-10 items-center overflow-hidden rounded-xl bg-background/60 transition-colors hover:bg-muted group-has-[button:focus-visible]/option:bg-muted pointer-coarse:bg-muted ${
         sortable.isDropTarget ? "bg-muted" : ""
       } ${sortable.isDragging ? "opacity-40" : ""}`}
       ref={sortable.ref}
     >
       {!disabled ? (
-        <div className="pointer-events-none absolute inset-y-0 start-0 z-20 flex items-center bg-muted px-1 opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] after:pointer-events-none after:absolute after:inset-y-0 after:-end-4 after:w-4 after:bg-gradient-to-r after:from-muted after:to-transparent focus-within:opacity-100 group-hover/option:opacity-100 pointer-coarse:opacity-100">
-          <Button
-            aria-label={`Move ${node.name}; position ${index + 1} of ${count}`}
-            className="pointer-events-auto touch-none cursor-grab bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground dark:hover:bg-transparent active:cursor-grabbing"
-            ref={sortable.handleRef}
-            size="icon-xs"
-            title="Drag to reorder"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon icon={DragDropVerticalIcon} className="size-4" />
-          </Button>
-        </div>
+        <ActionRowActions className="px-1" side="start">
+          <ActionRowAction asChild>
+            <Button
+              aria-label={`Move ${node.name}; position ${index + 1} of ${count}`}
+              className="touch-none cursor-grab bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground dark:hover:bg-transparent active:cursor-grabbing"
+              ref={sortable.handleRef}
+              size="icon-xs"
+              title="Drag to reorder"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon icon={DragDropVerticalIcon} className="size-4" />
+            </Button>
+          </ActionRowAction>
+        </ActionRowActions>
       ) : null}
       <OverflowTooltip content={node.name}>
         {(textRef) => (
-          <button
+          <ActionRowMain
             className="flex min-w-0 flex-1 items-center rounded-lg px-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             onClick={onOpen}
             type="button"
           >
-            <MiddleTruncate
-              className="flex-1"
-              leadingRef={textRef}
-              text={node.name}
-            />
-          </button>
+            <ActionRowLabel className="flex min-w-0 flex-1">
+              <MiddleTruncate
+                className="flex-1"
+                leadingRef={textRef}
+                text={node.name}
+              />
+            </ActionRowLabel>
+          </ActionRowMain>
         )}
       </OverflowTooltip>
       {!disabled ? (
-        <div className="pointer-events-none absolute inset-y-0 end-0 z-20 flex items-center bg-muted px-1 opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] before:pointer-events-none before:absolute before:inset-y-0 before:-start-4 before:w-4 before:bg-gradient-to-r before:from-transparent before:to-muted focus-within:opacity-100 group-hover/option:opacity-100 pointer-coarse:opacity-100">
-          <Button
-            aria-label={`Remove ${node.name}`}
-            className="pointer-events-auto bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-destructive dark:hover:bg-transparent"
-            onClick={onRemove}
-            size="icon-xs"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon icon={Delete01Icon} className="size-4" />
-          </Button>
-        </div>
+        <ActionRowActions className="px-1" side="end">
+          <ActionRowAction asChild>
+            <Button
+              aria-label={`Remove ${node.name}`}
+              className="bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-destructive dark:hover:bg-transparent"
+              onClick={onRemove}
+              size="icon-xs"
+              type="button"
+              variant="ghost"
+            >
+              <HugeiconsIcon icon={Delete01Icon} className="size-4" />
+            </Button>
+          </ActionRowAction>
+        </ActionRowActions>
       ) : null}
-    </div>
+    </ActionRow>
   );
 }
 

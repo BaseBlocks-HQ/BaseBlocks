@@ -47,18 +47,23 @@ export function SiteEditorSidebarContent() {
 
   return (
     <>
-      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-y-auto px-1 py-1 [--app-sidebar-leading-inset:0.375rem] [scrollbar-gutter:stable]">
+      <SidebarContent className="min-h-0 flex-1 gap-0 overflow-y-auto px-1 py-1 [--app-sidebar-leading-inset:0.375rem] [--app-sidebar-trailing-inset:0.5rem] [scrollbar-gutter:stable]">
         <div>
           <SidebarMenu className="gap-px">
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className={appSidebarRowClassName}>
+              <SidebarMenuButton
+                asChild
+                className={`${appSidebarRowClassName} gap-0 px-0 ps-[var(--app-sidebar-leading-inset)]`}
+              >
                 <Link href={getTeamDashboardPath(team.slug)} prefetch={false}>
-                  <HugeiconsIcon
-                    icon={ArrowLeft01Icon}
-                    aria-hidden
-                    className={appSidebarIconClassName}
-                    strokeWidth={APP_SIDEBAR_ICON_STROKE}
-                  />
+                  <span className="flex size-5 shrink-0 items-center justify-center">
+                    <HugeiconsIcon
+                      icon={ArrowLeft01Icon}
+                      aria-hidden
+                      className={appSidebarIconClassName}
+                      strokeWidth={APP_SIDEBAR_ICON_STROKE}
+                    />
+                  </span>
                   <span>Back</span>
                 </Link>
               </SidebarMenuButton>

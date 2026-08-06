@@ -13,6 +13,12 @@ import { useTreeDisclosure } from "@/components/tree/use-tree-disclosure";
 import { useEditorSiteOptional } from "@/features/editor/editor-state";
 import { api, type Id } from "@baseblocks/backend";
 import {
+  ActionRow,
+  ActionRowLabel,
+  ActionRowMain,
+  ActionRowStatus,
+} from "@baseblocks/ui/action-row";
+import {
   getTreeDescendantIds,
   indexTree,
   projectIndexedTree,
@@ -275,108 +281,106 @@ function PageTreeRow({
           isDragging && "opacity-30",
         )}
       >
-        <div
-          ref={
-            renaming
-              ? undefined
-              : (element) => {
-                  ref(element);
-                  handleRef(element);
-                }
-          }
-        >
-          <span className="relative size-5 shrink-0">
-            <span
-              aria-hidden="true"
-              className={cn(
-                "absolute inset-0 flex items-center justify-center text-[0.8125rem] leading-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
-                item.hasChildren &&
-                  "group-hover/page:opacity-0 group-has-[button[data-page-disclosure]:focus-visible]/page:opacity-0 pointer-coarse:opacity-0",
-              )}
-            >
-              {page.icon ?? "📄"}
-            </span>
-            {item.hasChildren ? (
-              <button
-                type="button"
-                aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-                className="absolute inset-0 z-30 flex items-center justify-center rounded-sm text-sidebar-foreground/45 opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
-                data-page-disclosure
-                onClick={onToggleExpand}
-              >
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  className={cn(
-                    "size-3.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
-                    isExpanded && "rotate-90",
-                  )}
-                />
-              </button>
-            ) : null}
-          </span>
-
-          {renaming ? (
-            <div className="flex h-7 min-w-0 flex-1 items-center pr-1">
-              <InlineRename
-                label={`Rename ${page.title}`}
-                value={page.title}
-                onCancel={onRenameCancel}
-                onError={(error) =>
-                  toast.error(
-                    error instanceof Error
-                      ? error.message
-                      : "Failed to rename page",
-                  )
-                }
-                onSave={onRenameSave}
-              />
-            </div>
-          ) : (
-            <>
-              <OverflowTooltip content={page.title}>
-                {(textRef) => (
-                  <button
-                    ref={pageButtonRef}
-                    type="button"
-                    onClick={() => onSelect(page._id)}
-                    className={cn(
-                      "flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[menu-return-focus=true]:focus-visible:ring-0",
-                      isDefault ? "pe-9" : "pe-2",
-                    )}
-                    onBlur={(event) => {
-                      delete event.currentTarget.dataset.menuReturnFocus;
-                    }}
-                  >
-                    <MiddleTruncate
-                      className="flex-1"
-                      leadingRef={textRef}
-                      onDoubleClick={onRename}
-                      text={page.title}
-                    />
-                  </button>
+        <ActionRow asChild>
+          <div
+            ref={
+              renaming
+                ? undefined
+                : (element) => {
+                    ref(element);
+                    handleRef(element);
+                  }
+            }
+          >
+            <span className="relative size-5 shrink-0">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute inset-0 flex items-center justify-center text-[0.8125rem] leading-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
+                  item.hasChildren &&
+                    "group-hover/page:opacity-0 group-has-[button[data-page-disclosure]:focus-visible]/page:opacity-0 pointer-coarse:opacity-0",
                 )}
-              </OverflowTooltip>
-              {isDefault ? (
-                <span
-                  className={cn(
-                    "pointer-events-none absolute inset-y-0 end-2 z-20 flex w-7 items-center justify-center text-sidebar-foreground/35 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)]",
-                    actionsTrigger &&
-                      "group-hover/page:opacity-0 group-has-[button[data-page-actions-trigger]:focus-visible]/page:opacity-0 group-has-[button[data-page-actions-trigger][data-state=open]]/page:opacity-0 pointer-coarse:opacity-0",
-                  )}
+              >
+                {page.icon ?? "📄"}
+              </span>
+              {item.hasChildren ? (
+                <button
+                  type="button"
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
+                  className="absolute inset-0 z-30 flex items-center justify-center rounded-sm text-sidebar-foreground/45 opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
+                  data-page-disclosure
+                  onClick={onToggleExpand}
                 >
                   <HugeiconsIcon
-                    aria-hidden
-                    className="size-3"
-                    icon={StarIcon}
-                    strokeWidth={1.75}
+                    icon={ArrowRight01Icon}
+                    className={cn(
+                      "size-3.5 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
+                      isExpanded && "rotate-90",
+                    )}
                   />
-                  <span className="sr-only">{t("defaultBadge")}</span>
-                </span>
+                </button>
               ) : null}
-              {actionsTrigger}
-            </>
-          )}
-        </div>
+            </span>
+
+            {renaming ? (
+              <div className="flex h-7 min-w-0 flex-1 items-center pr-1">
+                <InlineRename
+                  label={`Rename ${page.title}`}
+                  value={page.title}
+                  onCancel={onRenameCancel}
+                  onError={(error) =>
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to rename page",
+                    )
+                  }
+                  onSave={onRenameSave}
+                />
+              </div>
+            ) : (
+              <>
+                <OverflowTooltip content={page.title}>
+                  {(textRef) => (
+                    <ActionRowMain
+                      ref={pageButtonRef}
+                      type="button"
+                      onClick={() => onSelect(page._id)}
+                      className={cn(
+                        "flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[menu-return-focus=true]:focus-visible:ring-0",
+                        isDefault ? "pe-9" : "pe-2",
+                      )}
+                      onBlur={(event) => {
+                        delete event.currentTarget.dataset.menuReturnFocus;
+                      }}
+                    >
+                      <ActionRowLabel className="flex min-w-0 flex-1">
+                        <MiddleTruncate
+                          className="flex-1"
+                          leadingRef={textRef}
+                          onDoubleClick={onRename}
+                          text={page.title}
+                        />
+                      </ActionRowLabel>
+                    </ActionRowMain>
+                  )}
+                </OverflowTooltip>
+                {isDefault ? (
+                  <ActionRowStatus className="absolute inset-y-0 end-[var(--app-sidebar-trailing-inset)] z-20 flex w-7 items-center justify-center text-sidebar-foreground/35">
+                    <HugeiconsIcon
+                      aria-hidden
+                      className="size-3"
+                      icon={StarIcon}
+                      strokeWidth={1.75}
+                    />
+                    <span className="sr-only">{t("defaultBadge")}</span>
+                  </ActionRowStatus>
+                ) : null}
+                {actionsTrigger}
+              </>
+            )}
+          </div>
+        </ActionRow>
       </SidebarMenuButton>
     </AnimatedTreeRow>
   );

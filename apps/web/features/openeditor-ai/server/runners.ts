@@ -110,40 +110,6 @@ export function sanitizeRunnerTelemetry(
   };
 }
 
-export function mergeRunnerTelemetry(
-  previous: NonNullable<EditorAiRunnerOutput["telemetry"]> | undefined,
-  next: NonNullable<EditorAiRunnerOutput["telemetry"]>,
-): NonNullable<EditorAiRunnerOutput["telemetry"]> {
-  if (!previous) return next;
-  const sum = (
-    key:
-      | "inputTokens"
-      | "outputTokens"
-      | "totalTokens"
-      | "steps"
-      | "toolCalls"
-      | "warningCount"
-      | "gatewayCostUsd",
-  ) => (previous[key] ?? 0) + (next[key] ?? 0);
-  return {
-    inputTokens: sum("inputTokens"),
-    outputTokens: sum("outputTokens"),
-    totalTokens: sum("totalTokens"),
-    steps: sum("steps"),
-    toolCalls: sum("toolCalls"),
-    generationIds: [
-      ...(previous.generationIds ?? []),
-      ...(next.generationIds ?? []),
-    ],
-    ...(next.finishReason ? { finishReason: next.finishReason } : {}),
-    warningCount: sum("warningCount"),
-    toolNames: [
-      ...new Set([...(previous.toolNames ?? []), ...(next.toolNames ?? [])]),
-    ].sort(),
-    gatewayCostUsd: sum("gatewayCostUsd"),
-  };
-}
-
 export function assertRunnerBudget(
   telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]>,
   budget: EditorAiRunBudget,
@@ -170,29 +136,6 @@ export function assertRunnerBudget(
   if (telemetry.gatewayCostUsd > budget.maxSpendUsd) {
     throw new Error("Editor AI spend budget exceeded");
   }
-}
-
-export async function repairInvalidWorkspace<T>(input: {
-  result: T;
-  validate: () => Promise<WorkspaceValidationSummary>;
-  repair: (
-    diagnostics: WorkspaceValidationSummary["diagnostics"],
-  ) => PromiseLike<T>;
-  abortSignal: AbortSignal;
-  maxRepairs?: number;
-}): Promise<T> {
-  const maxRepairs = input.maxRepairs ?? 2;
-  if (!Number.isSafeInteger(maxRepairs) || maxRepairs < 0 || maxRepairs > 5) {
-    throw new RangeError("Workspace repair attempts must be between 0 and 5");
-  }
-  let result = input.result;
-  for (let repairAttempt = 0; repairAttempt < maxRepairs; repairAttempt += 1) {
-    input.abortSignal.throwIfAborted();
-    const validation = await input.validate();
-    if (validation.valid) return result;
-    result = await input.repair(validation.diagnostics);
-  }
-  return result;
 }
 
 class EditorWorkspaceRunner implements EditorAiRunner {
@@ -222,10 +165,18 @@ class EditorWorkspaceRunner implements EditorAiRunner {
           validateDocument: (document) => assertBaseBlocksDocument(document),
         },
       );
+      const hasChanges = imported.ok
+        ? imported.changeset.pageChanges.length > 0 ||
+          imported.project.title !==
+            input.materialization.baseline.project.title ||
+          imported.project.metadata?.defaultPageId !==
+            input.materialization.baseline.project.metadata?.defaultPageId
+        : false;
       return imported.ok
-        ? { valid: true, diagnostics: [] }
+        ? { valid: true, hasChanges, diagnostics: [] }
         : {
             valid: false,
+            hasChanges: false,
             diagnostics: imported.diagnostics
               .slice(0, 50)
               .map(({ code, message, path, pageId }) => ({
@@ -236,65 +187,32 @@ class EditorWorkspaceRunner implements EditorAiRunner {
               })),
           };
     };
-    const createAgent = (budget: {
-      maxRequests: number;
-      maxOutputTokens: number;
-    }) =>
-      createEditorWorkspaceAgent({
-        model: gateway(this.modelId),
-        store,
-        maxRequests: Math.min(40, budget.maxRequests),
-        maxOutputTokens: budget.maxOutputTokens,
-        validateWorkspace,
-      });
-    let agent = createAgent(input.budget);
-    let result = await agent.generate({
+    const session = createEditorWorkspaceAgent({
+      model: gateway(this.modelId),
+      store,
+      maxRequests: Math.min(40, input.budget.maxRequests),
+      maxOutputTokens: input.budget.maxOutputTokens,
+      validateWorkspace,
+    });
+    const result = await session.agent.generate({
       prompt: input.prompt,
       abortSignal: input.abortSignal,
     });
-    const initialTelemetry = sanitizeRunnerTelemetry(result);
-    if (!initialTelemetry) {
+    const telemetry = sanitizeRunnerTelemetry(result);
+    if (!telemetry) {
       throw new Error("AI Gateway did not return run telemetry");
     }
-    let telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]> =
-      initialTelemetry;
     assertRunnerBudget(telemetry, input.budget);
-    result = await repairInvalidWorkspace({
-      result,
-      validate: validateWorkspace,
-      abortSignal: input.abortSignal,
-      repair: async (diagnostics) => {
-        const remainingRequests =
-          input.budget.maxRequests - (telemetry.steps ?? 0);
-        const remainingOutputTokens =
-          input.budget.maxOutputTokens - (telemetry.outputTokens ?? 0);
-        if (remainingRequests < 1 || remainingOutputTokens < 1) {
-          throw new Error("Editor AI repair budget exhausted");
-        }
-        agent = createAgent({
-          maxRequests: remainingRequests,
-          maxOutputTokens: remainingOutputTokens,
-        });
-        const repaired = await agent.generate({
-          prompt:
-            "The host rejected the current workspace. Repair every diagnostic " +
-            "without changing the user's intent, validate the complete workspace, " +
-            "and finish only when it is valid. Diagnostics:\n" +
-            JSON.stringify(diagnostics),
-          abortSignal: input.abortSignal,
-        });
-        const repairTelemetry = sanitizeRunnerTelemetry(repaired);
-        if (!repairTelemetry) {
-          throw new Error("AI Gateway did not return repair telemetry");
-        }
-        telemetry = mergeRunnerTelemetry(telemetry, repairTelemetry);
-        assertRunnerBudget(telemetry, input.budget);
-        return repaired;
-      },
-    });
+    const completion = session.getCompletion();
+    if (!completion) {
+      throw new Error(
+        "Editor agent exhausted its request budget without completing the task",
+      );
+    }
     return {
       store,
-      summary: result.text,
+      outcome: completion.outcome,
+      summary: completion.summary,
       telemetry,
     };
   }

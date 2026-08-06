@@ -61,6 +61,7 @@ export type EditorAiRunBudget = {
 
 export type EditorAiRunnerOutput = {
   store: WorkspaceFileStore;
+  outcome: "answered" | "edited";
   summary: string;
   telemetry?: {
     inputTokens?: number;
@@ -100,7 +101,18 @@ export type EditorAiAdmissionRequest = {
 export type EditorAiAdmissionLease = {
   replay?: EditorAiReplayResult;
   budget?: EditorAiRunBudget;
-  fail(code: "cancelled" | "run_failed"): Promise<void>;
+  completeAnswer(input: {
+    conversationId?: string;
+    summary: string;
+    telemetry?: EditorAiRunnerOutput["telemetry"];
+  }): Promise<void>;
+  fail(
+    code: "cancelled" | "run_failed",
+    details?: {
+      message?: string;
+      telemetry?: EditorAiRunnerOutput["telemetry"];
+    },
+  ): Promise<void>;
 };
 
 export interface EditorAiAdmission {
@@ -151,9 +163,11 @@ export type BaseBlocksApplyChangesetInput = {
   >;
   defaultPageRef?: string;
   requestId: string;
+  telemetry?: EditorAiRunnerOutput["telemetry"];
 };
 
 export type EditorAiRunResult = {
+  outcome: "answered" | "applied";
   summary: string;
   project: OpenEditorProjectSnapshot;
   changeset: ProjectChangeset;
@@ -170,6 +184,7 @@ export type EditorAiRunResult = {
 
 export type EditorAiReplayResult = {
   replayed: true;
+  outcome: "answered" | "applied";
   summary: string;
   diagnostics: readonly unknown[];
   applied?: Awaited<ReturnType<EditorAiBackend["applyChangeset"]>>;
