@@ -5,12 +5,16 @@ import {
   Add01Icon,
   CursorPointer02Icon,
   Delete01Icon,
+  DragDropVerticalIcon,
   GitForkIcon,
 } from "@hugeicons/core-free-icons";
 import {
   removeDecisionTreeNodesFromPath,
+  reorderDecisionTreeSiblings,
   resolveDecisionTree,
 } from "@/features/openeditor/renderers/decision-tree-model";
+import { MiddleTruncate } from "@/components/tree/middle-truncate";
+import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import { NamedItemSwitcher } from "@/features/openeditor/renderers/named-item-switcher";
 import {
   Breadcrumb,
@@ -22,6 +26,16 @@ import {
   BreadcrumbSeparator,
 } from "@baseblocks/ui/breadcrumb";
 import { Button } from "@baseblocks/ui/button";
+import { useIsMobile } from "@baseblocks/ui/hooks/use-mobile";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@baseblocks/ui/resizable";
+import { closestCenter } from "@dnd-kit/collision";
+import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
+import { DragDropProvider, KeyboardSensor } from "@dnd-kit/react";
+import { isSortable, useSortable } from "@dnd-kit/react/sortable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +57,20 @@ import {
 } from "@openeditor/core";
 import { OpenEditorViewer } from "@openeditor/react";
 import { type ReactNode, useState } from "react";
+
+const decisionTreeSensors = [
+  PointerSensor.configure({
+    activationConstraints: () => [
+      new PointerActivationConstraints.Distance({ value: 5 }),
+    ],
+  }),
+  KeyboardSensor,
+];
+
+type DecisionOptionSortData = {
+  kind: "decision-option";
+  itemId: string;
+};
 
 export type DecisionNode = {
   id: string;
@@ -153,6 +181,89 @@ function TreeSwitcher({
   );
 }
 
+function SortableDecisionOption({
+  count,
+  disabled,
+  group,
+  index,
+  node,
+  onOpen,
+  onRemove,
+}: {
+  count: number;
+  disabled: boolean;
+  group: string;
+  index: number;
+  node: DecisionNode;
+  onOpen: () => void;
+  onRemove: () => void;
+}) {
+  const sortable = useSortable<DecisionOptionSortData>({
+    id: node.id,
+    index,
+    group,
+    disabled,
+    data: { kind: "decision-option", itemId: node.id },
+    collisionDetector: closestCenter,
+    type: "decision-option",
+    accept: "decision-option",
+  });
+
+  return (
+    <div
+      className={`group/option relative flex min-h-10 items-center overflow-hidden rounded-xl bg-background/60 transition-colors hover:bg-muted group-has-[button:focus-visible]/option:bg-muted pointer-coarse:bg-muted ${
+        sortable.isDropTarget ? "bg-muted" : ""
+      } ${sortable.isDragging ? "opacity-40" : ""}`}
+      ref={sortable.ref}
+    >
+      {!disabled ? (
+        <div className="pointer-events-none absolute inset-y-0 start-0 z-20 flex items-center bg-muted px-1 opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] after:pointer-events-none after:absolute after:inset-y-0 after:-end-4 after:w-4 after:bg-gradient-to-r after:from-muted after:to-transparent focus-within:opacity-100 group-hover/option:opacity-100 pointer-coarse:opacity-100">
+          <Button
+            aria-label={`Move ${node.name}; position ${index + 1} of ${count}`}
+            className="pointer-events-auto touch-none cursor-grab bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground dark:hover:bg-transparent active:cursor-grabbing"
+            ref={sortable.handleRef}
+            size="icon-xs"
+            title="Drag to reorder"
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon icon={DragDropVerticalIcon} className="size-4" />
+          </Button>
+        </div>
+      ) : null}
+      <OverflowTooltip content={node.name}>
+        {(textRef) => (
+          <button
+            className="flex min-w-0 flex-1 items-center rounded-lg px-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+            onClick={onOpen}
+            type="button"
+          >
+            <MiddleTruncate
+              className="flex-1"
+              leadingRef={textRef}
+              text={node.name}
+            />
+          </button>
+        )}
+      </OverflowTooltip>
+      {!disabled ? (
+        <div className="pointer-events-none absolute inset-y-0 end-0 z-20 flex items-center bg-muted px-1 opacity-0 transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] before:pointer-events-none before:absolute before:inset-y-0 before:-start-4 before:w-4 before:bg-gradient-to-r before:from-transparent before:to-muted focus-within:opacity-100 group-hover/option:opacity-100 pointer-coarse:opacity-100">
+          <Button
+            aria-label={`Remove ${node.name}`}
+            className="pointer-events-auto bg-transparent text-muted-foreground transition-colors hover:bg-transparent hover:text-destructive dark:hover:bg-transparent"
+            onClick={onRemove}
+            size="icon-xs"
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon icon={Delete01Icon} className="size-4" />
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function DecisionTree({
   onChange,
   renderDocument,
@@ -161,6 +272,7 @@ export function DecisionTree({
   const [treeId, setTreeId] = useState(value.trees[0]?.id ?? "default");
   const [path, setPath] = useState<string[]>([]);
   const [newName, setNewName] = useState("");
+  const isMobile = useIsMobile();
   const tree = value.trees.find((item) => item.id === treeId) ?? value.trees[0];
 
   if (!tree) return null;
@@ -232,6 +344,15 @@ export function DecisionTree({
     });
     setPath((current) => removeDecisionTreeNodesFromPath(current, removed));
   };
+  const reorderOption = (sourceId: string, targetId: string) => {
+    const nodes = reorderDecisionTreeSiblings(
+      tree.nodes,
+      activeNode?.id ?? null,
+      sourceId,
+      targetId,
+    );
+    if (nodes !== tree.nodes) updateTree({ ...tree, nodes });
+  };
 
   return (
     <section className="not-prose my-4 space-y-3">
@@ -243,163 +364,182 @@ export function DecisionTree({
         onSelect={selectTree}
         trees={value.trees}
       />
-      <div className="grid h-[500px] max-h-[70vh] gap-3 overflow-hidden md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
-        <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
-          <Breadcrumb
-            aria-label="Decision tree path"
-            className="flex h-10 min-w-0 items-center border-b border-border/50 px-2"
-          >
-            <BreadcrumbList className="w-full min-w-0 flex-nowrap overflow-hidden text-xs">
-              <BreadcrumbItem className="shrink-0">
-                {validPath.length ? (
-                  <BreadcrumbLink asChild>
-                    <button onClick={() => setPath([])} type="button">
-                      Root
-                    </button>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>Root</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-              {validPath.length > 1 ? (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem className="shrink-0">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          aria-label="Show intermediate options"
-                          className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          type="button"
-                        >
-                          <BreadcrumbEllipsis className="size-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {validPath.slice(0, -1).map((nodeId, index) => (
-                          <DropdownMenuItem
-                            key={nodeId}
-                            onSelect={() =>
-                              setPath(validPath.slice(0, index + 1))
-                            }
+      <ResizablePanelGroup
+        className="h-[500px] max-h-[70vh] min-h-0 min-w-0"
+        orientation={isMobile ? "vertical" : "horizontal"}
+      >
+        <ResizablePanel defaultSize={42} minSize={25}>
+          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl bg-card">
+            <Breadcrumb
+              aria-label="Decision tree path"
+              className="flex h-10 min-w-0 items-center border-b border-border/50 px-2"
+            >
+              <BreadcrumbList className="w-full min-w-0 flex-nowrap overflow-hidden text-xs">
+                <BreadcrumbItem className="shrink-0">
+                  {validPath.length ? (
+                    <BreadcrumbLink asChild>
+                      <button onClick={() => setPath([])} type="button">
+                        Root
+                      </button>
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>Root</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+                {validPath.length > 1 ? (
+                  <>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem className="shrink-0">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            aria-label="Show intermediate options"
+                            className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            type="button"
                           >
-                            {tree.nodes.find((node) => node.id === nodeId)
-                              ?.name ?? "Option"}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </BreadcrumbItem>
-                </>
-              ) : null}
-              {validPath.length ? (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem className="min-w-0 flex-1">
-                    <BreadcrumbPage className="block min-w-0 truncate font-medium">
-                      {activeNode?.name ?? "Option"}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              ) : null}
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
-            {visibleOptions.length === 0 ? (
-              <DecisionTreeEmptyState variant="options" />
-            ) : (
-              <div className="space-y-1.5">
-                {visibleOptions.map((node) => (
-                  <div
-                    className="group flex items-center gap-1 rounded-xl bg-background/60 p-2 transition hover:bg-muted/60"
-                    key={node.id}
-                  >
-                    <button
-                      className="flex min-w-0 flex-1 items-center justify-between gap-2 truncate rounded-lg px-1 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => setPath([...validPath, node.id])}
-                      type="button"
-                    >
-                      <span className="truncate">{node.name}</span>
-                    </button>
-                    {isEditable ? (
-                      <Button
-                        aria-label={`Remove ${node.name}`}
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => removeOption(node.id)}
-                        size="icon-xs"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <HugeiconsIcon icon={Delete01Icon} className="size-4" />
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          {isEditable ? (
-            <div className="flex gap-2 p-2.5">
-              <Input
-                aria-label="New option name"
-                className="rounded-xl border-transparent bg-background/70 shadow-none"
-                onChange={(event) => setNewName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") addOption();
-                }}
-                placeholder="Add option"
-                value={newName}
-              />
-              <Button
-                aria-label="Add option"
-                className="shrink-0 rounded-xl"
-                disabled={!newName.trim()}
-                onClick={addOption}
-                size="icon"
-                type="button"
-              >
-                <HugeiconsIcon icon={Add01Icon} className="size-4" />
-              </Button>
-            </div>
-          ) : null}
-        </div>
-        <div className="min-h-0 min-w-0 overflow-y-auto rounded-2xl bg-card p-4">
-          {activeNode ? (
-            <div className="space-y-3">
-              <Input
-                aria-label="Option name"
-                className="rounded-xl border-transparent bg-background/70 font-medium shadow-none"
-                onChange={(event) =>
-                  updateTree({
-                    ...tree,
-                    nodes: tree.nodes.map((node) =>
-                      node.id === activeNode.id
-                        ? { ...node, name: event.target.value }
-                        : node,
-                    ),
-                  })
-                }
-                readOnly={!isEditable}
-                value={activeNode.name}
-              />
-              {renderDocument ? (
-                renderDocument(activeNode, (document) =>
-                  updateTree({
-                    ...tree,
-                    nodes: tree.nodes.map((node) =>
-                      node.id === activeNode.id ? { ...node, document } : node,
-                    ),
-                  }),
-                )
+                            <BreadcrumbEllipsis className="size-5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {validPath.slice(0, -1).map((nodeId, index) => (
+                            <DropdownMenuItem
+                              key={nodeId}
+                              onSelect={() =>
+                                setPath(validPath.slice(0, index + 1))
+                              }
+                            >
+                              {tree.nodes.find((node) => node.id === nodeId)
+                                ?.name ?? "Option"}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </BreadcrumbItem>
+                  </>
+                ) : null}
+                {validPath.length ? (
+                  <>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem className="min-w-0 flex-1">
+                      <BreadcrumbPage className="block min-w-0 truncate font-medium">
+                        {activeNode?.name ?? "Option"}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                ) : null}
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+              {visibleOptions.length === 0 ? (
+                <DecisionTreeEmptyState variant="options" />
               ) : (
-                <OpenEditorViewer document={activeNode.document} />
+                <DragDropProvider
+                  sensors={decisionTreeSensors}
+                  onDragEnd={(event) => {
+                    const source = event.operation.source;
+                    const data = source?.data as
+                      | DecisionOptionSortData
+                      | undefined;
+                    if (
+                      event.canceled ||
+                      data?.kind !== "decision-option" ||
+                      !isSortable(source) ||
+                      source.initialIndex === source.index
+                    ) {
+                      return;
+                    }
+                    const target = visibleOptions[source.index];
+                    if (target) reorderOption(data.itemId, target.id);
+                  }}
+                >
+                  <div className="space-y-1.5">
+                    {visibleOptions.map((node, index) => (
+                      <SortableDecisionOption
+                        count={visibleOptions.length}
+                        disabled={!isEditable}
+                        group={`decision-options:${tree.id}:${activeNode?.id ?? "root"}`}
+                        index={index}
+                        key={node.id}
+                        node={node}
+                        onOpen={() => setPath([...validPath, node.id])}
+                        onRemove={() => removeOption(node.id)}
+                      />
+                    ))}
+                  </div>
+                </DragDropProvider>
               )}
             </div>
-          ) : (
-            <DecisionTreeEmptyState variant="selection" />
-          )}
-        </div>
-      </div>
+            {isEditable ? (
+              <div className="flex gap-2 p-2.5">
+                <Input
+                  aria-label="New option name"
+                  className="rounded-xl border-transparent bg-background/70 shadow-none"
+                  onChange={(event) => setNewName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") addOption();
+                  }}
+                  placeholder="Add option"
+                  value={newName}
+                />
+                <Button
+                  aria-label="Add option"
+                  className="shrink-0 rounded-xl"
+                  disabled={!newName.trim()}
+                  onClick={addOption}
+                  size="icon"
+                  type="button"
+                >
+                  <HugeiconsIcon icon={Add01Icon} className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </ResizablePanel>
+        <ResizableHandle
+          aria-label="Resize decision tree panels"
+          className="group/split relative z-20 flex !w-3 shrink-0 cursor-col-resize items-center justify-center bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:before:bg-ring/55 after:absolute after:inset-0 after:bg-transparent before:pointer-events-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-transparent before:transition-colors before:duration-150 data-[panel-group-direction=vertical]:!h-3 data-[panel-group-direction=vertical]:!w-full data-[panel-group-direction=vertical]:cursor-row-resize data-[panel-group-direction=vertical]:before:inset-x-0 data-[panel-group-direction=vertical]:before:top-1/2 data-[panel-group-direction=vertical]:before:h-px data-[panel-group-direction=vertical]:before:w-auto data-[panel-group-direction=vertical]:before:translate-x-0 data-[panel-group-direction=vertical]:before:-translate-y-1/2 data-[resize-handle-state=drag]:before:bg-ring/55"
+        />
+        <ResizablePanel defaultSize={58} minSize={30}>
+          <div className="h-full min-h-0 min-w-0 overflow-y-auto rounded-2xl bg-card p-4">
+            {activeNode ? (
+              <div className="space-y-3">
+                <Input
+                  aria-label="Option name"
+                  className="rounded-xl border-transparent bg-background/70 font-medium shadow-none"
+                  onChange={(event) =>
+                    updateTree({
+                      ...tree,
+                      nodes: tree.nodes.map((node) =>
+                        node.id === activeNode.id
+                          ? { ...node, name: event.target.value }
+                          : node,
+                      ),
+                    })
+                  }
+                  readOnly={!isEditable}
+                  value={activeNode.name}
+                />
+                {renderDocument ? (
+                  renderDocument(activeNode, (document) =>
+                    updateTree({
+                      ...tree,
+                      nodes: tree.nodes.map((node) =>
+                        node.id === activeNode.id
+                          ? { ...node, document }
+                          : node,
+                      ),
+                    }),
+                  )
+                ) : (
+                  <OpenEditorViewer document={activeNode.document} />
+                )}
+              </div>
+            ) : (
+              <DecisionTreeEmptyState variant="selection" />
+            )}
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </section>
   );
 }

@@ -3,6 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon, StarIcon } from "@hugeicons/core-free-icons";
 import { InlineRename } from "@/components/tree/inline-rename";
+import { MiddleTruncate } from "@/components/tree/middle-truncate";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
 import {
   AnimatedTreeRow,
@@ -346,13 +347,12 @@ function PageTreeRow({
                       delete event.currentTarget.dataset.menuReturnFocus;
                     }}
                   >
-                    <span
-                      ref={textRef}
-                      className="min-w-0 flex-1 truncate"
+                    <MiddleTruncate
+                      className="flex-1"
+                      leadingRef={textRef}
                       onDoubleClick={onRename}
-                    >
-                      {page.title}
-                    </span>
+                      text={page.title}
+                    />
                   </button>
                 )}
               </OverflowTooltip>
@@ -503,7 +503,7 @@ function PageDragPreview({ page }: { page: PageListItem }) {
       <span aria-hidden="true" className="shrink-0 text-sm leading-none">
         {page.icon ?? "📄"}
       </span>
-      <span className="truncate">{page.title}</span>
+      <MiddleTruncate className="flex-1" text={page.title} />
     </div>
   );
 }

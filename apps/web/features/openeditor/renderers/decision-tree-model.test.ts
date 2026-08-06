@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   removeDecisionTreeNodesFromPath,
+  reorderDecisionTreeSiblings,
   resolveDecisionTree,
 } from "./decision-tree-model";
 
@@ -34,5 +35,37 @@ describe("decision tree navigation", () => {
     expect(
       removeDecisionTreeNodesFromPath(["root-a", "child"], new Set(["child"])),
     ).toEqual(["root-a"]);
+  });
+});
+
+describe("decision tree ordering", () => {
+  test("reorders only the selected group of siblings", () => {
+    const nodes = [
+      { id: "root-a", parentId: null, order: 0 },
+      { id: "root-b", parentId: null, order: 1 },
+      { id: "root-c", parentId: null, order: 2 },
+      { id: "child-a", parentId: "root-a", order: 0 },
+    ];
+
+    const reordered = reorderDecisionTreeSiblings(
+      nodes,
+      null,
+      "root-c",
+      "root-a",
+    );
+
+    expect(resolveDecisionTree(reordered, []).visibleOptions).toEqual([
+      { id: "root-c", parentId: null, order: 0 },
+      { id: "root-a", parentId: null, order: 1 },
+      { id: "root-b", parentId: null, order: 2 },
+    ]);
+    expect(reordered.find((node) => node.id === "child-a")?.order).toBe(0);
+  });
+
+  test("returns the original collection for an invalid move", () => {
+    const nodes = [{ id: "root", parentId: null, order: 0 }];
+    expect(reorderDecisionTreeSiblings(nodes, null, "missing", "root")).toBe(
+      nodes,
+    );
   });
 });

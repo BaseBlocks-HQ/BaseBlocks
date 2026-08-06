@@ -4,6 +4,38 @@ interface DecisionTreeNodeLike {
   order: number;
 }
 
+export function reorderDecisionTreeSiblings<T extends DecisionTreeNodeLike>(
+  nodes: T[],
+  parentId: string | null,
+  sourceId: string,
+  targetId: string,
+) {
+  const siblings = nodes
+    .filter((node) => node.parentId === parentId)
+    .sort((left, right) => left.order - right.order);
+  const sourceIndex = siblings.findIndex((node) => node.id === sourceId);
+  const targetIndex = siblings.findIndex((node) => node.id === targetId);
+
+  if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) {
+    return nodes;
+  }
+
+  const reordered = [...siblings];
+  const [source] = reordered.splice(sourceIndex, 1);
+  if (!source) return nodes;
+  reordered.splice(targetIndex, 0, source);
+
+  const orderById = new Map(
+    reordered.map((node, order) => [node.id, order] as const),
+  );
+  return nodes.map((node) => {
+    const order = orderById.get(node.id);
+    return order === undefined || order === node.order
+      ? node
+      : { ...node, order };
+  });
+}
+
 /**
  * An option is both a content node and a branch. Opening it makes its content
  * active and reveals its children. Both edit and read-only views derive those

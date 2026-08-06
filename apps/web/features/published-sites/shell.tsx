@@ -11,6 +11,7 @@ import {
 import { SiteRenderActionsProvider } from "@/components/site-runtime/actions";
 import { SiteThemeScope } from "@/components/site-runtime/site-theme-scope";
 import { OverflowTooltip } from "@/components/tree/overflow-tooltip";
+import { MiddleTruncate } from "@/components/tree/middle-truncate";
 import {
   AnimatedTreeRow,
   AnimatedTreeRows,
@@ -507,9 +508,11 @@ function PublishedPageNavigation({
                         href={getPageLink(siteSlug, page.fullPath)}
                         prefetch={false}
                       >
-                        <span ref={textRef} className="min-w-0 truncate">
-                          {page.title}
-                        </span>
+                        <MiddleTruncate
+                          className="flex-1"
+                          leadingRef={textRef}
+                          text={page.title}
+                        />
                       </Link>
                     )}
                   </OverflowTooltip>
