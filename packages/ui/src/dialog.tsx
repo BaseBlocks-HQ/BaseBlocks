@@ -51,9 +51,12 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
+  onCloseAutoFocus,
+  returnFocusTo,
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  returnFocusTo?: HTMLElement | null;
   showCloseButton?: boolean;
 }) {
   return (
@@ -65,6 +68,12 @@ function DialogContent({
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[max(1rem,12vh)] left-[50%] z-50 grid max-h-[calc(100vh-max(1rem,12vh)-1rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] gap-4 overflow-y-auto rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-lg",
           className,
         )}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented || !returnFocusTo) return;
+          event.preventDefault();
+          returnFocusTo.focus();
+        }}
         {...props}
       >
         {children}

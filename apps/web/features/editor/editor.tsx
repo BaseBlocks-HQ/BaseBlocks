@@ -15,11 +15,8 @@ import { useMutation, useQuery } from "convex/react";
 import dynamic from "next/dynamic";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
-import {
-  type DraftSummary,
-  HistoryDialog,
-  PublishDialog,
-} from "./release-dialogs";
+import { EditorDialogs, type EditorDialogState } from "./editor-dialogs";
+import type { DraftSummary } from "./release-dialogs";
 import { SiteHeaderContent } from "./site-header-content";
 
 const SiteAiChat = dynamic(() =>
@@ -38,8 +35,9 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const { pages, selectedPage, site, status } = useEditorWorkspace();
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<EditorDialogState | null>(
+    null,
+  );
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [aiApplyRevision, setAiApplyRevision] = useState(0);
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
@@ -107,8 +105,9 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
         siteName={site.name}
         siteLogoUrl={site.logoUrl}
         saveStatus={saveStatus}
-        onPublish={() => setPublishDialogOpen(true)}
-        onOpenHistory={() => setHistoryDialogOpen(true)}
+        onOpenDialog={(name, returnFocusTo) =>
+          setActiveDialog({ name, returnFocusTo })
+        }
         isPreviewing={isPreviewing}
         onTogglePreview={() => setIsPreviewing((current) => !current)}
         onUnpublish={handleUnpublish}
@@ -143,25 +142,30 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
         </main>
         {editorAiEnabled && aiChatOpen ? (
           <aside className="absolute inset-y-0 right-0 z-30 w-full border-l bg-background pt-(--app-header-height) shadow-xl sm:w-[26rem] lg:static lg:z-auto lg:w-[26rem] lg:shrink-0 lg:shadow-none">
-            <SiteAiChat
-              onApplied={() => setAiApplyRevision((revision) => revision + 1)}
-              onClose={() => setAiChatOpen(false)}
-              siteId={site._id}
-            />
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <Spinner className="size-5 text-muted-foreground" />
+                </div>
+              }
+            >
+              <SiteAiChat
+                onApplied={() => setAiApplyRevision((revision) => revision + 1)}
+                onClose={() => setAiChatOpen(false)}
+                siteId={site._id}
+              />
+            </Suspense>
           </aside>
         ) : null}
       </div>
 
-      <PublishDialog
+      <EditorDialogs
+        activeDialog={activeDialog}
         draftSummary={draftSummary}
-        open={publishDialogOpen}
-        onOpenChange={setPublishDialogOpen}
+        onActiveDialogChange={setActiveDialog}
         siteId={site._id}
-      />
-      <HistoryDialog
-        open={historyDialogOpen}
-        onOpenChange={setHistoryDialogOpen}
-        siteId={site._id}
+        siteSlug={site.slug}
+        teamSlug={team.slug}
       />
     </>
   );

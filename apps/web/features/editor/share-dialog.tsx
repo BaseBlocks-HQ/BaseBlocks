@@ -1,6 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
+import { getSiteUrl } from "@/features/published-sites/urls";
 import {
   Copy01Icon,
   GlobeIcon,
@@ -21,25 +22,21 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Label } from "@baseblocks/ui/label";
 import { RadioGroup, RadioGroupItem } from "@baseblocks/ui/radio-group";
-import { useMutation } from "convex/react";
+import { Spinner } from "@baseblocks/ui/spinner";
+import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
 type Visibility = "private" | "public";
 
-export interface SharingSettings {
-  visibility: string;
-}
-
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  siteId: string;
+  returnFocusTo?: HTMLElement | null;
+  siteId: Id<"sites">;
   teamSlug: string;
   siteSlug: string;
-  siteUrl: string;
-  settings?: SharingSettings;
 }
 
 function VisibilityOptionCard({
@@ -72,23 +69,25 @@ function VisibilityOptionCard({
 export function ShareDialog({
   open,
   onOpenChange,
+  returnFocusTo,
   siteId,
-  teamSlug: _teamSlug,
-  siteSlug: _siteSlug,
-  siteUrl,
-  settings,
+  teamSlug,
+  siteSlug,
 }: ShareDialogProps) {
   const t = useTranslations("editor.share");
   const [copied, setCopied] = useState(false);
-
   const updateVisibilityMut = useMutation(api.sharing.updateVisibility);
-
-  const visibility = settings?.visibility ?? "public";
+  const settings = useQuery(
+    api.sharing.getSettings,
+    open ? { siteId } : "skip",
+  );
+  const siteUrl = getSiteUrl(teamSlug, siteSlug);
+  const visibility = settings?.visibility;
 
   const handleVisibilityChange = async (value: Visibility) => {
     try {
       await updateVisibilityMut({
-        siteId: siteId as Id<"sites">,
+        siteId,
         visibility: value,
       });
       toast.success(t("toastVisibilityUpdated"));
@@ -115,6 +114,7 @@ export function ShareDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-lg`}
+        returnFocusTo={returnFocusTo}
       >
         <DialogHeader className={"px-5 pt-4 pb-0"}>
           <DialogTitle className={"text-base font-semibold"}>
@@ -126,37 +126,44 @@ export function ShareDialog({
         </DialogHeader>
         <div className={"px-5 pb-3"}>
           <div className="space-y-6 py-1">
-            <RadioGroup
-              value={visibility}
-              onValueChange={(v) =>
-                void handleVisibilityChange(v as Visibility)
-              }
-            >
-              <VisibilityOptionCard
-                description={t("visibilityPublicDescription")}
-                icon={
-                  <HugeiconsIcon
-                    icon={GlobeIcon}
-                    className="h-4 w-4 text-muted-foreground"
-                  />
+            {visibility ? (
+              <RadioGroup
+                value={visibility}
+                onValueChange={(value) =>
+                  void handleVisibilityChange(value as Visibility)
                 }
-                id="public"
-                label={t("visibilityPublicLabel")}
-                value="public"
-              />
-              <VisibilityOptionCard
-                description={t("visibilityPrivateDescription")}
-                icon={
-                  <HugeiconsIcon
-                    icon={ViewOffIcon}
-                    className="h-4 w-4 text-muted-foreground"
-                  />
-                }
-                id="private"
-                label={t("visibilityPrivateLabel")}
-                value="private"
-              />
-            </RadioGroup>
+              >
+                <VisibilityOptionCard
+                  description={t("visibilityPublicDescription")}
+                  icon={
+                    <HugeiconsIcon
+                      icon={GlobeIcon}
+                      className="h-4 w-4 text-muted-foreground"
+                    />
+                  }
+                  id="public"
+                  label={t("visibilityPublicLabel")}
+                  value="public"
+                />
+                <VisibilityOptionCard
+                  description={t("visibilityPrivateDescription")}
+                  icon={
+                    <HugeiconsIcon
+                      icon={ViewOffIcon}
+                      className="h-4 w-4 text-muted-foreground"
+                    />
+                  }
+                  id="private"
+                  label={t("visibilityPrivateLabel")}
+                  value="private"
+                />
+              </RadioGroup>
+            ) : (
+              <div className="flex min-h-32 items-center justify-center">
+                <span className="sr-only">Loading sharing settings</span>
+                <Spinner className="size-5 text-muted-foreground" />
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex-col gap-2 pt-2 sm:flex-row">
@@ -164,6 +171,7 @@ export function ShareDialog({
               type="button"
               variant="outline"
               className="h-8 flex-1 rounded-full border-sidebar-border/70 bg-transparent px-3.5 text-sm"
+              disabled={!visibility}
               onClick={copyLink}
             >
               {copied ? (
@@ -181,6 +189,7 @@ export function ShareDialog({
             <Button
               type="button"
               className="h-8 flex-1 rounded-full px-4 text-sm"
+              disabled={!visibility}
               onClick={() => window.open(siteUrl, "_blank")}
             >
               <HugeiconsIcon icon={ViewIcon} className="mr-2 h-4 w-4" />

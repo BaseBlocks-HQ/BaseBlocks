@@ -88,11 +88,13 @@ export function PublishDialog({
   draftSummary,
   open,
   onOpenChange,
+  returnFocusTo,
   siteId,
 }: {
   draftSummary: DraftSummary;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
 }) {
   const publish = useMutation(api.releases.publish);
@@ -126,7 +128,10 @@ export function PublishDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-lg [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4">
+      <DialogContent
+        className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-lg [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
+        returnFocusTo={returnFocusTo}
+      >
         <DialogHeader className="px-5 pt-4 pb-0 text-left">
           <DialogTitle className="text-base font-semibold">
             {draftSummary.liveRelease
@@ -367,10 +372,12 @@ const releaseDateFormatter = new Intl.DateTimeFormat(undefined, {
 export function HistoryDialog({
   open,
   onOpenChange,
+  returnFocusTo,
   siteId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
 }) {
   const releases = useQuery(api.releases.list, open ? { siteId } : "skip") as
@@ -432,6 +439,7 @@ export function HistoryDialog({
             event.preventDefault();
             historyTitleRef.current?.focus();
           }}
+          returnFocusTo={returnFocusTo}
         >
           <DialogDescription className="sr-only">
             Choose what visitors see without changing your private draft. Every

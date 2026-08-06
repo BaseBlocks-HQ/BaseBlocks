@@ -166,6 +166,8 @@
       "deploymentHistory": "Deployment history",
       "deployShort": "Deploy",
       "publishedStatus": "Published",
+      "publishChanges": "Publish changes",
+      "publishSite": "Publish site",
       "saving": "Saving…",
       "preview": "Preview",
       "edit": "Edit",

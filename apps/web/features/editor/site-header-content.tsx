@@ -3,10 +3,11 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
-  AiChat02Icon,
+  BubbleChatSpark01Icon,
   FileClockIcon,
   Globe02Icon,
   LinkSquare01Icon,
+  MoreHorizontalIcon,
   PencilEdit01Icon,
   SentIcon,
   CogIcon,
@@ -18,7 +19,7 @@ import { useEditorSite } from "@/features/editor/editor-state";
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { AppHeaderPortal } from "@/features/app-shell/app-header";
 import { getTeamSiteEditorPath } from "@/features/dashboard/routes";
-import { getSiteOpenUrl, getSiteUrl } from "@/features/published-sites/urls";
+import { getSiteOpenUrl } from "@/features/published-sites/urls";
 import { Link } from "@/i18n/navigation";
 import { api } from "@baseblocks/backend";
 import type { Id } from "@baseblocks/backend";
@@ -29,29 +30,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@baseblocks/ui/dropdown-menu";
 import { cn } from "@baseblocks/ui/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@baseblocks/ui/popover";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
-import type { ReactNode } from "react";
-import { useState } from "react";
-import type { SharingSettings } from "./share-dialog";
-
-const ShareDialog = dynamic(() =>
-  import("./share-dialog").then((module) => module.ShareDialog),
-);
-const SiteSettingsPanel = dynamic(() =>
-  import("./site-settings-panel").then((module) => module.SiteSettingsPanel),
-);
+import { type ReactNode, useRef } from "react";
+import type { EditorDialogName } from "./editor-dialogs";
 
 interface SiteHeaderContentProps {
   editorAiEnabled: boolean;
@@ -63,8 +51,10 @@ interface SiteHeaderContentProps {
   siteName: string;
   siteLogoUrl?: string;
   saveStatus?: SaveStatus;
-  onPublish: () => void;
-  onOpenHistory: () => void;
+  onOpenDialog: (
+    dialog: EditorDialogName,
+    returnFocusTo: HTMLElement | null,
+  ) => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
   hasUnpublishedChanges: boolean;
@@ -82,8 +72,7 @@ export function SiteHeaderContent({
   siteName,
   siteLogoUrl,
   saveStatus = "idle",
-  onPublish,
-  onOpenHistory,
+  onOpenDialog,
   onTogglePreview,
   onUnpublish,
   hasUnpublishedChanges,
@@ -91,57 +80,33 @@ export function SiteHeaderContent({
   onToggleAiChat,
 }: SiteHeaderContentProps) {
   const { canEdit } = useEditorSite();
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const { siteUrl, settings } = useSiteHeaderData({
-    shareOpen: shareDialogOpen,
-    siteId,
-    teamSlug,
-    siteSlug,
-  });
 
   return (
-    <>
-      <AppHeaderPortal>
-        <div className="relative flex h-full min-w-0 items-center gap-2 px-3 sm:px-4">
-          <SiteHeaderIdentity
-            siteId={siteId}
-            siteLogoUrl={siteLogoUrl}
-            siteName={siteName}
-            teamSlug={teamSlug}
-          />
-          <SiteHeaderActions
-            canEdit={canEdit}
-            editorAiEnabled={editorAiEnabled}
-            isPreviewing={isPreviewing}
-            onOpenShare={() => setShareDialogOpen(true)}
-            onOpenHistory={onOpenHistory}
-            onPublish={onPublish}
-            onTogglePreview={onTogglePreview}
-            onUnpublish={onUnpublish}
-            saveStatus={saveStatus}
-            siteId={siteId}
-            sitePublished={sitePublished}
-            hasUnpublishedChanges={hasUnpublishedChanges}
-            siteSlug={siteSlug}
-            teamSlug={teamSlug}
-            aiChatOpen={aiChatOpen}
-            onToggleAiChat={onToggleAiChat}
-          />
-        </div>
-      </AppHeaderPortal>
-
-      {shareDialogOpen ? (
-        <ShareDialog
-          open
-          onOpenChange={setShareDialogOpen}
+    <AppHeaderPortal>
+      <div className="relative flex h-full min-w-0 items-center gap-2 px-3 sm:px-4">
+        <SiteHeaderIdentity
           siteId={siteId}
+          siteLogoUrl={siteLogoUrl}
+          siteName={siteName}
           teamSlug={teamSlug}
-          siteSlug={siteSlug}
-          siteUrl={siteUrl}
-          settings={settings}
         />
-      ) : null}
-    </>
+        <SiteHeaderActions
+          canEdit={canEdit}
+          editorAiEnabled={editorAiEnabled}
+          isPreviewing={isPreviewing}
+          onOpenDialog={onOpenDialog}
+          onTogglePreview={onTogglePreview}
+          onUnpublish={onUnpublish}
+          saveStatus={saveStatus}
+          sitePublished={sitePublished}
+          hasUnpublishedChanges={hasUnpublishedChanges}
+          siteSlug={siteSlug}
+          teamSlug={teamSlug}
+          aiChatOpen={aiChatOpen}
+          onToggleAiChat={onToggleAiChat}
+        />
+      </div>
+    </AppHeaderPortal>
   );
 }
 
@@ -335,13 +300,10 @@ function SiteHeaderActions({
   canEdit,
   editorAiEnabled,
   isPreviewing,
-  onOpenShare,
-  onOpenHistory,
-  onPublish,
+  onOpenDialog,
   onTogglePreview,
   onUnpublish,
   saveStatus,
-  siteId,
   sitePublished,
   hasUnpublishedChanges,
   siteSlug,
@@ -352,13 +314,13 @@ function SiteHeaderActions({
   canEdit: boolean;
   editorAiEnabled: boolean;
   isPreviewing: boolean;
-  onOpenShare: () => void;
-  onOpenHistory: () => void;
-  onPublish: () => void;
+  onOpenDialog: (
+    dialog: EditorDialogName,
+    returnFocusTo: HTMLElement | null,
+  ) => void;
   onTogglePreview?: () => void;
   onUnpublish?: () => void;
   saveStatus: SaveStatus;
-  siteId: Id<"sites">;
   sitePublished: boolean;
   hasUnpublishedChanges: boolean;
   siteSlug: string;
@@ -369,40 +331,46 @@ function SiteHeaderActions({
   const t = useTranslations("editor.header");
   return (
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-      <ViewSiteAction
-        sitePublished={sitePublished}
-        siteSlug={siteSlug}
-        teamSlug={teamSlug}
-      />
-
       {canEdit ? (
         <>
           {editorAiEnabled ? (
-            <EditorAiAction open={aiChatOpen} onToggle={onToggleAiChat} />
+            <ChatAction open={aiChatOpen} onToggle={onToggleAiChat} />
           ) : null}
-          <SiteSettingsAction siteId={siteId} />
-          <DeployAction
-            isPreviewing={isPreviewing}
-            onOpenShare={onOpenShare}
-            onOpenHistory={onOpenHistory}
-            onPublish={onPublish}
-            onTogglePreview={onTogglePreview}
-            onUnpublish={onUnpublish}
+          <PublishChangesAction
+            onPublish={(returnFocusTo) =>
+              onOpenDialog("publish", returnFocusTo)
+            }
             saveStatus={saveStatus}
             sitePublished={sitePublished}
             hasUnpublishedChanges={hasUnpublishedChanges}
           />
+          <MoreActions
+            isPreviewing={isPreviewing}
+            onOpenDialog={onOpenDialog}
+            onTogglePreview={onTogglePreview}
+            onUnpublish={onUnpublish}
+            sitePublished={sitePublished}
+            siteSlug={siteSlug}
+            teamSlug={teamSlug}
+          />
         </>
       ) : (
-        <Badge className="ml-1 hidden xl:flex" variant="secondary">
-          {t("viewOnlyBadge")}
-        </Badge>
+        <>
+          <ViewSiteAction
+            sitePublished={sitePublished}
+            siteSlug={siteSlug}
+            teamSlug={teamSlug}
+          />
+          <Badge className="ml-1 hidden xl:flex" variant="secondary">
+            {t("viewOnlyBadge")}
+          </Badge>
+        </>
       )}
     </div>
   );
 }
 
-function EditorAiAction({
+function ChatAction({
   open,
   onToggle,
 }: {
@@ -411,16 +379,16 @@ function EditorAiAction({
 }) {
   return (
     <Button
-      aria-label={open ? "Close editor AI" : "Open editor AI"}
+      aria-label={open ? "Close chat" : "Open chat"}
       aria-pressed={open}
       className={headerActionClassName}
       onClick={onToggle}
       size="sm"
-      title={open ? "Close editor AI" : "Open editor AI"}
+      title={open ? "Close chat" : "Open chat"}
       variant={open ? "secondary" : "ghost"}
     >
-      <HugeiconsIcon icon={AiChat02Icon} />
-      <HeaderActionLabel>AI</HeaderActionLabel>
+      <HugeiconsIcon icon={BubbleChatSpark01Icon} />
+      <HeaderActionLabel>Chat</HeaderActionLabel>
     </Button>
   );
 }
@@ -458,143 +426,142 @@ function ViewSiteAction({
   );
 }
 
-function SiteSettingsAction({ siteId }: { siteId: Id<"sites"> }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          aria-label="Site settings"
-          className={headerActionClassName}
-          size="sm"
-          title="Site settings"
-          variant="ghost"
-        >
-          <HugeiconsIcon icon={CogIcon} />
-          <HeaderActionLabel>Settings</HeaderActionLabel>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        className="max-h-[calc(100svh-4.5rem)] w-[min(24rem,calc(100vw-1rem))] overflow-y-auto rounded-xl p-0"
-        sideOffset={8}
-      >
-        <SiteSettingsPanel siteId={siteId} />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function DeployAction({
-  isPreviewing,
-  onOpenShare,
-  onOpenHistory,
+function PublishChangesAction({
   onPublish,
-  onTogglePreview,
-  onUnpublish,
   saveStatus,
   sitePublished,
   hasUnpublishedChanges,
 }: {
-  isPreviewing: boolean;
-  onOpenShare: () => void;
-  onOpenHistory: () => void;
-  onPublish: () => void;
-  onTogglePreview?: () => void;
-  onUnpublish?: () => void;
+  onPublish: (returnFocusTo: HTMLButtonElement) => void;
   saveStatus: SaveStatus;
   sitePublished: boolean;
   hasUnpublishedChanges: boolean;
 }) {
-  const t = useTranslations("editor");
   const tHeader = useTranslations("editor.header");
   const isSaving = saveStatus === "pending" || saveStatus === "saving";
-  const canPublish = !isSaving && (!sitePublished || hasUnpublishedChanges);
-  const publishLabel = t("publish");
+  const shouldShow = sitePublished && (isSaving || hasUnpublishedChanges);
+
+  if (!shouldShow) return null;
 
   return (
-    <div className="flex h-8 shrink-0 overflow-hidden rounded-lg">
-      <Button
-        aria-live={isSaving ? "polite" : undefined}
-        className="h-8 rounded-r-none px-2.5"
-        disabled={!canPublish}
-        onClick={onPublish}
-        size="sm"
-      >
-        {isSaving ? <Spinner /> : <HugeiconsIcon icon={Globe02Icon} />}
-        <HeaderActionLabel>
-          {isSaving ? tHeader("saving") : publishLabel}
-        </HeaderActionLabel>
-      </Button>
+    <Button
+      aria-live={isSaving ? "polite" : undefined}
+      className="h-8 rounded-lg px-2.5"
+      disabled={isSaving}
+      onClick={(event) => onPublish(event.currentTarget)}
+      size="sm"
+    >
+      {isSaving ? <Spinner /> : <HugeiconsIcon icon={Globe02Icon} />}
+      <HeaderActionLabel>
+        {isSaving ? tHeader("saving") : tHeader("publishChanges")}
+      </HeaderActionLabel>
+    </Button>
+  );
+}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            aria-label="More publishing options"
-            className="h-8 w-6 rounded-l-none border-l border-primary-foreground/20 px-0 focus-visible:z-10"
-            size="sm"
-          >
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52" sideOffset={6}>
-          {onTogglePreview ? (
-            <DropdownMenuItem onSelect={onTogglePreview}>
-              {isPreviewing ? (
-                <HugeiconsIcon icon={PencilEdit01Icon} />
-              ) : (
-                <HugeiconsIcon icon={ViewIcon} />
-              )}
-              {isPreviewing ? tHeader("edit") : tHeader("preview")}
+function MoreActions({
+  isPreviewing,
+  onOpenDialog,
+  onTogglePreview,
+  onUnpublish,
+  sitePublished,
+  siteSlug,
+  teamSlug,
+}: {
+  isPreviewing: boolean;
+  onOpenDialog: (
+    dialog: EditorDialogName,
+    returnFocusTo: HTMLElement | null,
+  ) => void;
+  onTogglePreview?: () => void;
+  onUnpublish?: () => void;
+  sitePublished: boolean;
+  siteSlug: string;
+  teamSlug: string;
+}) {
+  const t = useTranslations("editor");
+  const tHeader = useTranslations("editor.header");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          ref={triggerRef}
+          aria-label={tHeader("moreActions")}
+          className="size-8 rounded-lg px-0"
+          size="sm"
+          title={tHeader("moreActions")}
+          variant="ghost"
+        >
+          <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52" sideOffset={6}>
+        {sitePublished ? (
+          <DropdownMenuItem onSelect={() => openSite(teamSlug, siteSlug)}>
+            <HugeiconsIcon icon={LinkSquare01Icon} />
+            {t("viewSite")}
+          </DropdownMenuItem>
+        ) : null}
+        {onTogglePreview ? (
+          <DropdownMenuItem onSelect={onTogglePreview}>
+            {isPreviewing ? (
+              <HugeiconsIcon icon={PencilEdit01Icon} />
+            ) : (
+              <HugeiconsIcon icon={ViewIcon} />
+            )}
+            {isPreviewing ? tHeader("edit") : tHeader("preview")}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          onSelect={() => onOpenDialog("settings", triggerRef.current)}
+        >
+          <HugeiconsIcon icon={CogIcon} />
+          Settings
+        </DropdownMenuItem>
+        {!sitePublished ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => onOpenDialog("publish", triggerRef.current)}
+            >
+              <HugeiconsIcon icon={Globe02Icon} />
+              {tHeader("publishSite")}
             </DropdownMenuItem>
-          ) : null}
-          {sitePublished ? (
-            <>
-              <DropdownMenuItem onSelect={onOpenShare}>
-                <HugeiconsIcon icon={SentIcon} />
-                {tHeader("share")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={onOpenHistory}>
-                <HugeiconsIcon icon={FileClockIcon} />
-                {tHeader("deploymentHistory")}
-              </DropdownMenuItem>
-              {onUnpublish ? (
+          </>
+        ) : null}
+        {sitePublished ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => onOpenDialog("share", triggerRef.current)}
+            >
+              <HugeiconsIcon icon={SentIcon} />
+              {tHeader("share")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => onOpenDialog("history", triggerRef.current)}
+            >
+              <HugeiconsIcon icon={FileClockIcon} />
+              {tHeader("deploymentHistory")}
+            </DropdownMenuItem>
+            {onUnpublish ? (
+              <>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={onUnpublish} variant="destructive">
                   <HugeiconsIcon icon={ViewOffIcon} />
                   {t("unpublish")}
                 </DropdownMenuItem>
-              ) : null}
-            </>
-          ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
 function openSite(teamSlug: string, siteSlug: string) {
   window.open(getSiteOpenUrl(teamSlug, siteSlug), "_blank");
-}
-
-function useSiteHeaderData({
-  shareOpen,
-  siteId,
-  teamSlug,
-  siteSlug,
-}: {
-  shareOpen: boolean;
-  siteId: Id<"sites">;
-  teamSlug: string;
-  siteSlug: string;
-}) {
-  const sharingSettings = useQuery(
-    api.sharing.getSettings,
-    shareOpen ? { siteId } : "skip",
-  );
-  const settings: SharingSettings | undefined = sharingSettings
-    ? { visibility: sharingSettings.visibility }
-    : undefined;
-  return {
-    siteUrl: getSiteUrl(teamSlug, siteSlug),
-    settings,
-  };
 }
