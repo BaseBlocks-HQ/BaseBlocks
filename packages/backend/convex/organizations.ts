@@ -1,13 +1,47 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import {
   type AuthMember,
   type AuthUser,
   authPage,
   getAuthOrganizationById,
 } from "./authComponent/model";
-import { getAuthContextOrNull, requireOrganizationMember } from "./permissions";
+import {
+  getAuthContextOrNull,
+  requireOrganizationPermission,
+} from "./permissions";
+import {
+  MAX_OWNED_ORGANIZATIONS,
+  getPrimaryOrganizationRole,
+  hasOrganizationRole,
+  hasReachedOwnedOrganizationLimit,
+} from "./authComponent/organizationPolicy";
+import { deleteSiteData, readSiteDeletionManifest } from "./model/siteDeletion";
+
+const componentPage = { numItems: 250, cursor: null } as const;
+
+async function deleteAllAuthRows(
+  ctx: MutationCtx,
+  model: "member" | "invitation" | "organization",
+  field: "organizationId" | "_id",
+  organizationId: string,
+) {
+  let deletedCount: number;
+  do {
+    const result: { count: number } = await ctx.runMutation(
+      components.betterAuth.adapter.deleteMany,
+      {
+        input: {
+          model,
+          where: [{ field, operator: "eq", value: organizationId }],
+        } as never,
+        paginationOpts: componentPage,
+      },
+    );
+    deletedCount = result.count;
+  } while (deletedCount === componentPage.numItems);
+}
 
 export const getViewerState = query({
   args: { teamSlug: v.optional(v.string()) },
@@ -74,7 +108,24 @@ export const getViewerState = query({
 export const listMembers = query({
   args: { organizationId: v.string() },
   handler: async (ctx, { organizationId }) => {
-    await requireOrganizationMember(ctx, organizationId);
+    // Convex React may issue the first query before its auth token finishes
+    // loading. Treat that transient state as empty instead of surfacing an
+    // application error; the query reruns when the identity arrives.
+    const auth = await getAuthContextOrNull(ctx);
+    if (!auth) return [];
+    const viewerMembership = await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: "member",
+        where: [
+          { field: "userId", operator: "eq", value: auth.userId },
+          { field: "organizationId", operator: "eq", value: organizationId },
+        ],
+      },
+    );
+    // This also covers the brief render between deleting/leaving an
+    // organization and the browser completing its redirect.
+    if (!viewerMembership) return [];
     const memberResult = await ctx.runQuery(
       components.betterAuth.adapter.findMany,
       {
@@ -114,9 +165,224 @@ export const listMembers = query({
         email: user?.email ?? "",
         name: user?.name,
         imageUrl: user?.image ?? undefined,
-        role: member.role as "owner" | "admin" | "editor" | "viewer",
+        role: getPrimaryOrganizationRole(member.role),
         joinedAt: member.createdAt,
       };
     });
+  },
+});
+
+export const getDeletionManifest = query({
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) => {
+    await requireOrganizationPermission(ctx, organizationId, {
+      resource: "organization",
+      action: "delete",
+    });
+    const organization = await getAuthOrganizationById(ctx, organizationId);
+    if (!organization) return null;
+    const sites = await ctx.db
+      .query("sites")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .collect();
+    const siteManifests = await Promise.all(
+      sites.map((site) => readSiteDeletionManifest(ctx, site._id)),
+    );
+    const connections = await ctx.db
+      .query("integrationConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .collect();
+    return {
+      id: organization._id,
+      name: organization.name,
+      slug: organization.slug,
+      connectionIds: connections.map((connection) => connection._id),
+      hostnames: siteManifests.flatMap((manifest) => manifest.hostnames),
+      objectKeys: [
+        ...new Set(siteManifests.flatMap((manifest) => manifest.objectKeys)),
+      ],
+      siteCount: sites.length,
+      siteIds: sites.map((site) => site._id),
+    };
+  },
+});
+
+export const deleteOwnedSite = mutation({
+  args: { organizationId: v.string(), siteId: v.id("sites") },
+  handler: async (ctx, { organizationId, siteId }) => {
+    await requireOrganizationPermission(ctx, organizationId, {
+      resource: "organization",
+      action: "delete",
+    });
+    const site = await ctx.db.get(siteId);
+    if (!site) return;
+    if (site.organizationId !== organizationId) {
+      throw new Error("Site does not belong to this organization");
+    }
+    await deleteSiteData(ctx, siteId, { includeDomains: true });
+  },
+});
+
+export const transferOwnership = mutation({
+  args: {
+    organizationId: v.string(),
+    targetMemberId: v.string(),
+  },
+  handler: async (ctx, { organizationId, targetMemberId }) => {
+    const { auth, member: currentMember } = await requireOrganizationPermission(
+      ctx,
+      organizationId,
+      {
+        resource: "organization",
+        action: "delete",
+      },
+    );
+    const targetMember = (await ctx.runQuery(
+      components.betterAuth.adapter.findOne,
+      {
+        model: "member",
+        where: [{ field: "_id", operator: "eq", value: targetMemberId }],
+      },
+    )) as AuthMember | null;
+    if (
+      !targetMember ||
+      targetMember.organizationId !== organizationId ||
+      targetMember.userId === auth.userId
+    ) {
+      throw new Error("Choose another member of this organization");
+    }
+
+    const targetOwnerships = authPage<AuthMember>(
+      await ctx.runQuery(components.betterAuth.adapter.findMany, {
+        model: "member",
+        where: [
+          { field: "userId", operator: "eq", value: targetMember.userId },
+          { field: "role", operator: "contains", value: "owner" },
+        ],
+        paginationOpts: {
+          numItems: MAX_OWNED_ORGANIZATIONS + 1,
+          cursor: null,
+        },
+      }),
+    );
+    if (
+      !hasOrganizationRole(targetMember.role, "owner") &&
+      hasReachedOwnedOrganizationLimit(targetOwnerships)
+    ) {
+      throw new Error(
+        `This member already owns ${MAX_OWNED_ORGANIZATIONS} organizations`,
+      );
+    }
+
+    await ctx.runMutation(components.betterAuth.adapter.updateMany, {
+      input: {
+        model: "member",
+        update: { role: "owner" },
+        where: [{ field: "_id", operator: "eq", value: targetMemberId }],
+      },
+      paginationOpts: componentPage,
+    });
+    await ctx.runMutation(components.betterAuth.adapter.updateMany, {
+      input: {
+        model: "member",
+        update: { role: "admin" },
+        where: [{ field: "_id", operator: "eq", value: currentMember.id }],
+      },
+      paginationOpts: componentPage,
+    });
+    return { organizationId, ownerMemberId: targetMemberId };
+  },
+});
+
+export const deleteOwned = mutation({
+  args: { organizationId: v.string() },
+  handler: async (ctx, { organizationId }) => {
+    const { auth } = await requireOrganizationPermission(ctx, organizationId, {
+      resource: "organization",
+      action: "delete",
+    });
+    const remainingSite = await ctx.db
+      .query("sites")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .first();
+    if (remainingSite) {
+      throw new Error("Delete organization sites before finalizing deletion");
+    }
+
+    const connections = await ctx.db
+      .query("integrationConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .collect();
+    for (const connection of connections) {
+      const [states, resources] = await Promise.all([
+        ctx.db
+          .query("integrationSyncStates")
+          .withIndex("by_connection_stream", (q) =>
+            q.eq("connectionId", connection._id),
+          )
+          .collect(),
+        ctx.db
+          .query("integrationResources")
+          .withIndex("by_connection", (q) =>
+            q.eq("connectionId", connection._id),
+          )
+          .collect(),
+      ]);
+      for (const row of [...states, ...resources]) await ctx.db.delete(row._id);
+      await ctx.db.delete(connection._id);
+    }
+    const entitlement = await ctx.db
+      .query("aiOrganizationEntitlements")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", organizationId),
+      )
+      .unique();
+    if (entitlement) await ctx.db.delete(entitlement._id);
+
+    await ctx.runMutation(components.betterAuth.adapter.updateMany, {
+      input: {
+        model: "session",
+        update: { activeOrganizationId: null },
+        where: [
+          {
+            field: "activeOrganizationId",
+            operator: "eq",
+            value: organizationId,
+          },
+        ],
+      },
+      paginationOpts: componentPage,
+    });
+    await deleteAllAuthRows(
+      ctx,
+      "invitation",
+      "organizationId",
+      organizationId,
+    );
+    await deleteAllAuthRows(ctx, "member", "organizationId", organizationId);
+    await deleteAllAuthRows(ctx, "organization", "_id", organizationId);
+
+    const remainingMemberships = authPage<AuthMember>(
+      await ctx.runQuery(components.betterAuth.adapter.findMany, {
+        model: "member",
+        where: [{ field: "userId", operator: "eq", value: auth.userId }],
+        paginationOpts: { numItems: 1, cursor: null },
+      }),
+    );
+    const nextOrganization = remainingMemberships[0]
+      ? await getAuthOrganizationById(
+          ctx,
+          remainingMemberships[0].organizationId,
+        )
+      : null;
+    return { nextSlug: nextOrganization?.slug ?? null };
   },
 });

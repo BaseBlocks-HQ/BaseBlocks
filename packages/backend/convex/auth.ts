@@ -10,8 +10,30 @@ import {
   baseBlocksRoles,
 } from "./authComponent/permissions";
 import authSchema from "./authComponent/schema";
+import {
+  MAX_OWNED_ORGANIZATIONS,
+  hasReachedOwnedOrganizationLimit,
+} from "./authComponent/organizationPolicy";
 
 const defaultAuthOrigin = "http://localhost:3001";
+
+async function ownedOrganizationLimitReached(
+  ctx: GenericCtx<DataModel>,
+  userId: string,
+): Promise<boolean> {
+  const result = await ctx.runQuery(components.betterAuth.adapter.findMany, {
+    model: "member",
+    where: [
+      { field: "userId", operator: "eq", value: userId },
+      { field: "role", operator: "contains", value: "owner" },
+    ],
+    paginationOpts: {
+      numItems: MAX_OWNED_ORGANIZATIONS + 1,
+      cursor: null,
+    },
+  });
+  return hasReachedOwnedOrganizationLimit(result.page);
+}
 
 function parseAuthOrigin(origin: string, envName = "APP_URL"): string {
   const trimmed = origin.trim();
@@ -155,6 +177,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
         roles: baseBlocksRoles,
         creatorRole: "owner",
         allowUserToCreateOrganization: true,
+        organizationLimit: async (user) =>
+          await ownedOrganizationLimitReached(ctx, user.id),
         cancelPendingInvitationsOnReInvite: true,
         requireEmailVerificationOnInvitation: true,
       }),

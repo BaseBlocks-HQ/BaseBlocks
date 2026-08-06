@@ -12,6 +12,7 @@ import type * as adapter from "../adapter.js";
 import type * as auth from "../auth.js";
 import type * as generatedSchema from "../generatedSchema.js";
 import type * as model from "../model.js";
+import type * as organizationPolicy from "../organizationPolicy.js";
 import type * as permissions from "../permissions.js";
 
 import type {
@@ -26,6 +27,7 @@ const fullApi: ApiFromModules<{
   auth: typeof auth;
   generatedSchema: typeof generatedSchema;
   model: typeof model;
+  organizationPolicy: typeof organizationPolicy;
   permissions: typeof permissions;
 }> = anyApi as any;
 

@@ -73,6 +73,7 @@ export function TeamPage() {
   };
 
   const getRoleBadgeVariant = (role: string) => {
+    if (role === "owner") return "secondary";
     if (role === "admin") return "secondary";
     if (role === "editor") return "default";
     return "outline";
@@ -135,11 +136,13 @@ export function TeamPage() {
                   </TableCell>
                   <TableCell className="py-2">
                     <Badge variant={getRoleBadgeVariant(member.role)}>
-                      {member.role === "admin"
-                        ? t("roles.admin")
-                        : member.role === "editor"
-                          ? t("roles.editor")
-                          : t("roles.viewer")}
+                      {member.role === "owner"
+                        ? t("roles.owner")
+                        : member.role === "admin"
+                          ? t("roles.admin")
+                          : member.role === "editor"
+                            ? t("roles.editor")
+                            : t("roles.viewer")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-2 text-muted-foreground">

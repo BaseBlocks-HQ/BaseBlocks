@@ -202,6 +202,7 @@ export default defineSchema({
     updatedAt: v.number(),
     completedAt: v.optional(v.number()),
   })
+    .index("by_site", ["siteId"])
     .index("by_site_actor_request", ["siteId", "actorId", "requestId"])
     .index("by_actor_status_lease", ["actorId", "status", "leaseExpiresAt"])
     .index("by_site_status_lease", ["siteId", "status", "leaseExpiresAt"])

@@ -2,6 +2,7 @@
 
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
+  Add01Icon,
   Analytics01Icon,
   ArrowDown01Icon,
   CorporateIcon,
@@ -66,6 +67,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import type { SettingsSection } from "@/features/dashboard/account-settings";
 
 const AccountSettings = dynamic(() =>
   import("@/features/dashboard/account-settings").then(
@@ -101,6 +103,8 @@ export function DashboardSidebarContent({
   } = useProductAppearance();
   const { team, teams, user } = useTeamAccess();
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] =
+    useState<SettingsSection>("account");
 
   const teamMembersPath = getTeamMembersPath(team.slug);
   const teamIntegrationsPath = getTeamIntegrationsPath(team.slug);
@@ -304,6 +308,19 @@ export function DashboardSidebarContent({
                       </div>
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuItem
+                    className="rounded-lg"
+                    onSelect={() => {
+                      setSettingsSection("organizations");
+                      setAccountSettingsOpen(true);
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={Add01Icon}
+                      className="size-4 text-muted-foreground"
+                    />
+                    <span>{t("settings.organizations.create")}</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -497,7 +514,12 @@ export function DashboardSidebarContent({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
-                <DropdownMenuItem onSelect={() => setAccountSettingsOpen(true)}>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setSettingsSection("account");
+                    setAccountSettingsOpen(true);
+                  }}
+                >
                   <HugeiconsIcon
                     icon={CogIcon}
                     className="h-4 w-4 shrink-0 text-muted-foreground"
@@ -521,6 +543,7 @@ export function DashboardSidebarContent({
       </SidebarFooter>
       {accountSettingsOpen ? (
         <AccountSettings
+          initialSection={settingsSection}
           open
           onOpenChange={setAccountSettingsOpen}
           showTrigger={false}

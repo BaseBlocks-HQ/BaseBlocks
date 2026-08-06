@@ -7,6 +7,9 @@ const schema = defineSchema({
     "organizationId",
     "userId",
   ]),
+  session: tables.session.index("activeOrganizationId", [
+    "activeOrganizationId",
+  ]),
 });
 
 export default schema;

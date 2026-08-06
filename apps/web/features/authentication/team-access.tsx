@@ -18,6 +18,8 @@ interface TeamAccessValue {
     canManageSites: boolean;
     canManageTeam: boolean;
     canPublish: boolean;
+    canUpdateOrganization: boolean;
+    canDeleteOrganization: boolean;
   };
   role: OrganizationRole;
   team: TeamRecord;
@@ -65,6 +67,14 @@ export function TeamAccessProvider({
     canPublish: roleHasPermission(role, {
       resource: "publication",
       action: "publish",
+    }),
+    canUpdateOrganization: roleHasPermission(role, {
+      resource: "organization",
+      action: "update",
+    }),
+    canDeleteOrganization: roleHasPermission(role, {
+      resource: "organization",
+      action: "delete",
     }),
   };
 

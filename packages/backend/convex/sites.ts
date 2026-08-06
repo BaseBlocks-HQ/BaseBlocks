@@ -8,6 +8,7 @@ import {
 import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
 import { touchSiteDraft } from "./model/draft";
+import { deleteSiteData } from "./model/siteDeletion";
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -309,141 +310,7 @@ export const remove = mutation({
       resource: "site",
       action: "manage",
     });
-    const attachedDomains = await ctx.db
-      .query("siteDomains")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    if (attachedDomains.length > 0) {
-      throw new Error("Remove this site's custom domains before deleting it");
-    }
-
-    const libraries = await ctx.db
-      .query("documentLibraries")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-
-    for (const library of libraries) {
-      const folders = await ctx.db
-        .query("documentFolders")
-        .withIndex("by_parent", (q) => q.eq("libraryId", library._id))
-        .collect();
-      for (const folder of folders) {
-        await ctx.db.delete(folder._id);
-      }
-
-      await ctx.db.delete(library._id);
-    }
-
-    const files = await ctx.db
-      .query("files")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const file of files) {
-      await ctx.db.delete(file._id);
-    }
-
-    const searchEntries = await ctx.db
-      .query("searchEntries")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const entry of searchEntries) {
-      await ctx.db.delete(entry._id);
-    }
-    const searchJobs = await ctx.db
-      .query("pageSearchJobs")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const job of searchJobs) await ctx.db.delete(job._id);
-
-    const draftChanges = await ctx.db
-      .query("draftChanges")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const change of draftChanges) await ctx.db.delete(change._id);
-
-    const releases = await ctx.db
-      .query("siteReleases")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const release of releases) {
-      const [
-        releasePages,
-        releaseLibraries,
-        releaseFolders,
-        releaseFiles,
-        releaseSearch,
-        releaseChanges,
-      ] = await Promise.all([
-        ctx.db
-          .query("releasePages")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-        ctx.db
-          .query("releaseLibraries")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-        ctx.db
-          .query("releaseFolders")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-        ctx.db
-          .query("releaseFiles")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-        ctx.db
-          .query("releaseSearchEntries")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-        ctx.db
-          .query("releaseChanges")
-          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-          .collect(),
-      ]);
-      for (const page of releasePages) {
-        await ctx.db.delete(page._id);
-      }
-      for (const row of [
-        ...releaseLibraries,
-        ...releaseFolders,
-        ...releaseFiles,
-        ...releaseSearch,
-        ...releaseChanges,
-      ]) {
-        await ctx.db.delete(row._id);
-      }
-    }
-    const publicationEvents = await ctx.db
-      .query("publicationEvents")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const event of publicationEvents) await ctx.db.delete(event._id);
-
-    const pageDocuments = await ctx.db
-      .query("pageDocuments")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const document of pageDocuments) {
-      await ctx.db.delete(document._id);
-    }
-    const pages = await ctx.db
-      .query("pages")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const page of pages) {
-      await ctx.db.delete(page._id);
-    }
-    for (const release of releases) await ctx.db.delete(release._id);
-    const contentRevisions = await ctx.db
-      .query("contentRevisions")
-      .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const revision of contentRevisions) await ctx.db.delete(revision._id);
-    const contentPayloads = await ctx.db
-      .query("contentPayloads")
-      .withIndex("by_site_hash", (q) => q.eq("siteId", siteId))
-      .collect();
-    for (const payload of contentPayloads) await ctx.db.delete(payload._id);
-    await ctx.db.delete(siteId);
+    await deleteSiteData(ctx, siteId, { includeDomains: false });
 
     return { success: true };
   },

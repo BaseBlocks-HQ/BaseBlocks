@@ -44,6 +44,7 @@ import type * as model_releaseChangeDetails from "../model/releaseChangeDetails.
 import type * as model_releaseChanges from "../model/releaseChanges.js";
 import type * as model_releaseDiff from "../model/releaseDiff.js";
 import type * as model_releaseState from "../model/releaseState.js";
+import type * as model_siteDeletion from "../model/siteDeletion.js";
 import type * as organizations from "../organizations.js";
 import type * as pageContent from "../pageContent.js";
 import type * as pageContentFormat from "../pageContentFormat.js";
@@ -101,6 +102,7 @@ declare const fullApi: ApiFromModules<{
   "model/releaseChanges": typeof model_releaseChanges;
   "model/releaseDiff": typeof model_releaseDiff;
   "model/releaseState": typeof model_releaseState;
+  "model/siteDeletion": typeof model_siteDeletion;
   organizations: typeof organizations;
   pageContent: typeof pageContent;
   pageContentFormat: typeof pageContentFormat;

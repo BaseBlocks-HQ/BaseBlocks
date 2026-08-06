@@ -12,6 +12,7 @@
       "import": "./index.ts"
     },
     "./auth-permissions": "./convex/authComponent/permissions.ts",
+    "./organization-policy": "./convex/authComponent/organizationPolicy.ts",
     "./convex/*": "./convex/*"
   },
   "scripts": {
