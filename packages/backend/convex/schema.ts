@@ -367,6 +367,7 @@ export default defineSchema({
     runToken: v.string(),
     cursor: v.optional(v.string()),
     processed: v.number(),
+    updated: v.optional(v.number()),
     updatedAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_key", ["key"]),

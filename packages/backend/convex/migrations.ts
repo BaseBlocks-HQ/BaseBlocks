@@ -5,14 +5,166 @@ import {
 } from "@baseblocks/domain";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { touchSiteDraft } from "./model/draft";
 import { v } from "convex/values";
 import { queueFileExtraction } from "./fileExtraction";
 
 const canonicalPageSlugPattern = new RegExp(`^${SLUG_PATTERN}$`);
 const FILE_EXTRACTION_BACKFILL_KEY = "file-extraction-v1";
+const RELEASE_PUBLICATION_STATUS_BACKFILL_KEY = "release-publication-status-v1";
 const BACKFILL_STALL_MS = 10 * 60_000;
+
+export const getStatus = internalQuery({
+  args: {},
+  handler: async (ctx) =>
+    await ctx.db.query("maintenanceJobs").withIndex("by_key").collect(),
+});
+
+/**
+ * Mark releases created before phased publication as complete. The migration
+ * is fenced by a run token, resumable after a stale lease, and processes a
+ * bounded page per mutation so it is safe for production datasets.
+ */
+export const startReleasePublicationStatusBackfill = internalMutation({
+  args: { forceRestart: v.optional(v.boolean()) },
+  handler: async (ctx, { forceRestart = false }) => {
+    const existing = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", RELEASE_PUBLICATION_STATUS_BACKFILL_KEY),
+      )
+      .unique();
+    if (existing?.status === "complete" && !forceRestart) {
+      return {
+        started: false,
+        complete: true,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const now = Date.now();
+    if (
+      existing?.status === "running" &&
+      now - existing.updatedAt < BACKFILL_STALL_MS
+    ) {
+      return {
+        started: false,
+        complete: false,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const restart = existing?.status === "complete";
+    const runToken = restart
+      ? crypto.randomUUID()
+      : (existing?.runToken ?? crypto.randomUUID());
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: "running",
+        runToken,
+        cursor: restart ? undefined : existing.cursor,
+        processed: restart ? 0 : existing.processed,
+        updated: restart ? 0 : (existing.updated ?? 0),
+        updatedAt: now,
+        completedAt: undefined,
+      });
+    } else {
+      await ctx.db.insert("maintenanceJobs", {
+        key: RELEASE_PUBLICATION_STATUS_BACKFILL_KEY,
+        status: "running",
+        runToken,
+        processed: 0,
+        updated: 0,
+        updatedAt: now,
+      });
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.migrations.backfillReleasePublicationStatuses,
+      {
+        token: runToken,
+        cursor: restart ? undefined : existing?.cursor,
+      },
+    );
+    return {
+      started: true,
+      complete: false,
+      processed: restart ? 0 : (existing?.processed ?? 0),
+      updated: restart ? 0 : (existing?.updated ?? 0),
+    };
+  },
+});
+
+export const backfillReleasePublicationStatuses = internalMutation({
+  args: {
+    token: v.string(),
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, { token, cursor, batchSize = 50 }) => {
+    const job = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", RELEASE_PUBLICATION_STATUS_BACKFILL_KEY),
+      )
+      .unique();
+    if (
+      job?.status !== "running" ||
+      job.runToken !== token ||
+      (job.cursor ?? null) !== (cursor ?? null)
+    ) {
+      return { applied: false, processed: 0, updated: 0, isDone: false };
+    }
+    const numItems = Math.max(1, Math.min(100, Math.floor(batchSize)));
+    const page = await ctx.db.query("siteReleases").paginate({
+      cursor: cursor ?? null,
+      numItems,
+    });
+    let updated = 0;
+    for (const release of page.page) {
+      if (release.publicationStatus === undefined) {
+        await ctx.db.patch(release._id, { publicationStatus: "complete" });
+        updated += 1;
+      }
+    }
+    const now = Date.now();
+    const nextProcessed = job.processed + page.page.length;
+    const nextUpdated = (job.updated ?? 0) + updated;
+    if (page.isDone) {
+      await ctx.db.patch(job._id, {
+        status: "complete",
+        cursor: undefined,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+        completedAt: now,
+      });
+    } else {
+      await ctx.db.patch(job._id, {
+        cursor: page.continueCursor,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.migrations.backfillReleasePublicationStatuses,
+        {
+          token,
+          cursor: page.continueCursor,
+          batchSize: numItems,
+        },
+      );
+    }
+    return {
+      applied: true,
+      processed: page.page.length,
+      updated,
+      isDone: page.isDone,
+    };
+  },
+});
 
 /**
  * Canonicalize page slugs imported before page writes enforced the domain
