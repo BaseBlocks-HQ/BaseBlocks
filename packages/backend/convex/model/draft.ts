@@ -34,7 +34,7 @@ export async function touchSiteDraft(
   const site = await ctx.db.get(siteId);
   if (!site) throw new Error("Site not found");
   assertDraftWritable(site);
-  const draftRevision = (site.draftRevision ?? 0) + 1;
+  const draftRevision = site.draftRevision + 1;
   await ctx.db.patch(siteId, { draftRevision, updatedAt: now });
   await reconcileDraftChanges(ctx, site, entities, now, draftRevision);
   return draftRevision;

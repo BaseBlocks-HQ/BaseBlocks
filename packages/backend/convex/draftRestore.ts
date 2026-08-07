@@ -555,7 +555,7 @@ async function activate(ctx: MutationCtx, restore: Doc<"draftRestores">) {
   if (!site || !release || site.activeDraftRestoreId !== restore._id) {
     throw new Error("Draft restore lease was lost");
   }
-  if ((site.draftRevision ?? 0) !== restore.baseDraftRevision) {
+  if (site.draftRevision !== restore.baseDraftRevision) {
     throw new Error("The draft changed while the restore was running");
   }
   const now = Date.now();
@@ -608,7 +608,7 @@ export const applyBatch = internalMutation({
     if (
       !site ||
       site.activeDraftRestoreId !== restore._id ||
-      (site.draftRevision ?? 0) !== restore.baseDraftRevision
+      site.draftRevision !== restore.baseDraftRevision
     ) {
       throw new Error("Draft restore lease was lost");
     }

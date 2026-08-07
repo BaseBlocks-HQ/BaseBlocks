@@ -110,7 +110,7 @@ export default defineSchema({
     ),
     label: v.string(),
     details: v.array(v.string()),
-    draftRevision: v.optional(v.number()),
+    draftRevision: v.number(),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -361,17 +361,6 @@ export default defineSchema({
     .index("by_status_available", ["status", "availableAt"])
     .index("by_status_lease", ["status", "leaseExpiresAt"]),
 
-  maintenanceJobs: defineTable({
-    key: v.string(),
-    status: v.union(v.literal("running"), v.literal("complete")),
-    runToken: v.string(),
-    cursor: v.optional(v.string()),
-    processed: v.number(),
-    updated: v.optional(v.number()),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-  }).index("by_key", ["key"]),
-
   searchEntries: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("file"), v.literal("page")),
@@ -425,14 +414,12 @@ export default defineSchema({
     createdAt: v.number(),
     pageCount: v.number(),
     changeCount: v.number(),
-    publicationStatus: v.optional(
-      v.union(
-        v.literal("building"),
-        v.literal("aborting"),
-        v.literal("clearing"),
-        v.literal("complete"),
-        v.literal("failed"),
-      ),
+    publicationStatus: v.union(
+      v.literal("building"),
+      v.literal("aborting"),
+      v.literal("clearing"),
+      v.literal("complete"),
+      v.literal("failed"),
     ),
     publicationFailure: v.optional(v.string()),
     publicationToken: v.optional(v.string()),
@@ -616,7 +603,6 @@ export default defineSchema({
     details: v.array(v.string()),
     sourceDraftChangeId: v.optional(v.id("draftChanges")),
     sourceDraftRevision: v.optional(v.number()),
-    sourceUpdatedAt: v.optional(v.number()),
     fields: v.array(
       v.object({
         label: v.string(),

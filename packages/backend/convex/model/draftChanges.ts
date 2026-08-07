@@ -10,7 +10,10 @@ export type DraftEntityRef =
   | { entityType: "folder"; entityId: Id<"documentFolders"> }
   | { entityType: "file"; entityId: Id<"files"> };
 
-type DraftChangeValue = Omit<Doc<"draftChanges">, "_id" | "_creationTime">;
+type DraftChangeValue = Omit<
+  Doc<"draftChanges">,
+  "_id" | "_creationTime" | "draftRevision"
+>;
 
 function same(a: unknown, b: unknown) {
   return JSON.stringify(a) === JSON.stringify(b);
@@ -328,7 +331,7 @@ export async function reconcileDraftChanges(
   site: Doc<"sites">,
   refs: DraftEntityRef[],
   updatedAt = Date.now(),
-  draftRevision = site.draftRevision ?? 0,
+  draftRevision = site.draftRevision,
 ) {
   const unique = new Map(
     refs.map((ref) => [`${ref.entityType}:${ref.entityId}`, ref]),

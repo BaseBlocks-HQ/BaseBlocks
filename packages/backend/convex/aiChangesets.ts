@@ -280,10 +280,7 @@ export const apply = mutation({
       });
     }
     try {
-      assertAiWorkspaceRevision(
-        site.draftRevision ?? 0,
-        args.expectedDraftRevision,
-      );
+      assertAiWorkspaceRevision(site.draftRevision, args.expectedDraftRevision);
     } catch (error) {
       throw new ConvexError({
         code: "STALE_AI_WORKSPACE",
@@ -392,7 +389,7 @@ export const apply = mutation({
           name: site.name,
           slug: site.slug,
           defaultPageId: site.defaultPageId,
-          draftRevision: site.draftRevision ?? 0,
+          draftRevision: site.draftRevision,
           settings: site.settings,
         },
         pages: activePages.map((page) => ({
@@ -526,7 +523,7 @@ export const apply = mutation({
       });
       const currentProject: OpenEditorProjectSnapshot = {
         id: String(site._id),
-        revision: String(site.draftRevision ?? 0),
+        revision: String(site.draftRevision),
         title: site.name,
         metadata: projectMetadata,
         pages: snapshots.map((page) => ({
@@ -724,7 +721,7 @@ export const apply = mutation({
       createdPageIds,
     );
     if (!defaultPageId) throw new Error("Default page resolution failed");
-    const draftRevision = (site.draftRevision ?? 0) + 1;
+    const draftRevision = site.draftRevision + 1;
     await ctx.db.patch(site._id, {
       name: args.nextSiteName,
       defaultPageId,
@@ -836,7 +833,7 @@ export const apply = mutation({
       previousSiteName: site.name,
       nextSiteName: args.nextSiteName,
       siteNameChanged,
-      baseDraftRevision: site.draftRevision ?? 0,
+      baseDraftRevision: site.draftRevision,
       resultDraftRevision: draftRevision,
       operationCount: args.operations.length,
       createdPageIds: [...createdPageIds.values()],
@@ -1025,7 +1022,7 @@ export const revert = mutation({
       });
     }
 
-    const draftRevision = (site.draftRevision ?? 0) + 1;
+    const draftRevision = site.draftRevision + 1;
     await ctx.db.patch(site._id, {
       name: rollback.previousSiteName,
       defaultPageId: rollback.previousDefaultPageId,

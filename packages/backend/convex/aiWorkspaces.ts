@@ -100,7 +100,7 @@ export const exportDraft = query({
         name: site.name,
         slug: site.slug,
         defaultPageId: site.defaultPageId,
-        draftRevision: site.draftRevision ?? 0,
+        draftRevision: site.draftRevision,
         settings: site.settings,
       },
       pages: activePages.map((page) => ({
@@ -160,7 +160,7 @@ export const exportDraft = query({
     });
     const project: OpenEditorProjectSnapshot = {
       id: String(site._id),
-      revision: String(site.draftRevision ?? 0),
+      revision: String(site.draftRevision),
       title: site.name,
       metadata: jsonMetadata({
         defaultPageId: site.defaultPageId ?? null,
