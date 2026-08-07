@@ -82,7 +82,7 @@ const ingestionHandler = createConvexIngestionHandler<
   FileIngestionJob
 >({
   ingestion: { maxTextBytes: FILE_EXTRACTION_LIMITS.maxOutputBytes },
-  resolveSource: async (ctx, job) => {
+  resolveSource: async (ctx, job, attempt) => {
     const source = await ctx.runMutation(
       internal.fileExtraction.markProcessing,
       jobIdentity(job),
@@ -96,6 +96,7 @@ const ingestionHandler = createConvexIngestionHandler<
     const storage = getFiles();
     const metadata = await storage.head(source.objectKey, {
       retries: FILE_EXTRACTION_LIMITS.storageRetries,
+      signal: attempt.signal,
       timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
     });
     const failure = validateStoredSourceMetadata(source, metadata);

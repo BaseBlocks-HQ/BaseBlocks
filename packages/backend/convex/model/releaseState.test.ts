@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import {
-  findReleaseForDraftRevision,
   extractionBlocksPublication,
   extractionIsPublishable,
   extractionRetryInvalidatesDraft,
@@ -61,23 +60,5 @@ describe("release publication state machine", () => {
     expect(
       extractionIsPublishable({ sourceVersion: "v1", status: "failed" }, "v1"),
     ).toBe(true);
-  });
-});
-
-describe("release reuse", () => {
-  test("reuses the newest release created from the unchanged draft", () => {
-    const releases = [
-      { number: 7, sourceDraftRevision: 5 },
-      { number: 6, sourceDraftRevision: 5 },
-      { number: 4, sourceDraftRevision: 4 },
-    ];
-
-    expect(findReleaseForDraftRevision(releases, 5)?.number).toBe(7);
-  });
-
-  test("does not reuse a release after the draft changes", () => {
-    const releases = [{ number: 7, sourceDraftRevision: 5 }];
-
-    expect(findReleaseForDraftRevision(releases, 6)).toBeUndefined();
   });
 });

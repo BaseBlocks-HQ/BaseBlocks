@@ -7,14 +7,6 @@ export function publicationActionForTarget(
     : "republish";
 }
 
-export function findReleaseForDraftRevision<
-  T extends { sourceDraftRevision: number },
->(releasesNewestFirst: T[], draftRevision: number): T | undefined {
-  return releasesNewestFirst.find(
-    (release) => release.sourceDraftRevision === draftRevision,
-  );
-}
-
 export type PublicationStatus = "building" | "clearing" | "complete" | "failed";
 
 export function isPublicationInFlight(

@@ -5,8 +5,7 @@ import {
   start,
   type WorkflowId,
 } from "@convex-dev/workflow";
-import { internal } from "./_generated/api";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import {
