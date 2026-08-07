@@ -33,6 +33,7 @@ import {
 import { assertAiChangesetReferences } from "./model/aiChangesetReferences";
 import { createAiChangesetResultDigest } from "./model/aiChangesetAudit";
 import { assertAiChangesetCanRevert } from "./model/aiChangesetRevert";
+import { assertDraftWritable } from "./model/draft";
 import { assertActiveAiRunLease } from "./model/aiRunPolicy";
 import { appendCompletedAssistantMessage } from "./aiConversations";
 import {
@@ -245,6 +246,7 @@ export const apply = mutation({
     }
     const site = await ctx.db.get(args.siteId);
     if (!site) throw new ConvexError("Site not found");
+    assertDraftWritable(site);
     const { auth } = await requireOrganizationPermission(
       ctx,
       site.organizationId,
@@ -927,6 +929,7 @@ export const revert = mutation({
     }
     const site = await ctx.db.get(audit.siteId);
     if (!site) throw new ConvexError("Site not found");
+    assertDraftWritable(site);
     const { auth } = await requireOrganizationPermission(
       ctx,
       site.organizationId,

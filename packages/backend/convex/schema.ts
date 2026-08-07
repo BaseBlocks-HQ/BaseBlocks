@@ -23,6 +23,7 @@ export default defineSchema({
     settings: siteSettings,
     draftRevision: v.number(),
     draftBaseReleaseId: v.optional(v.id("siteReleases")),
+    activeDraftRestoreId: v.optional(v.id("draftRestores")),
     nextReleaseNumber: v.number(),
     liveReleaseId: v.optional(v.id("siteReleases")),
   })
@@ -460,6 +461,48 @@ export default defineSchema({
       "publicationStatus",
       "publicationUpdatedAt",
     ]),
+
+  draftRestores: defineTable({
+    siteId: v.id("sites"),
+    releaseId: v.id("siteReleases"),
+    requestedBy: v.string(),
+    baseDraftRevision: v.number(),
+    resultDraftRevision: v.optional(v.number()),
+    status: v.union(
+      v.literal("validating"),
+      v.literal("applying"),
+      v.literal("paused"),
+      v.literal("complete"),
+      v.literal("failed"),
+      v.literal("cancelled"),
+    ),
+    phase: v.union(
+      v.literal("validatePages"),
+      v.literal("validateLibraries"),
+      v.literal("validateFolders"),
+      v.literal("validateFiles"),
+      v.literal("archivePages"),
+      v.literal("restorePages"),
+      v.literal("archiveLibraries"),
+      v.literal("restoreLibraries"),
+      v.literal("archiveFolders"),
+      v.literal("restoreFolders"),
+      v.literal("archiveFiles"),
+      v.literal("restoreFiles"),
+      v.literal("synchronizeParents"),
+      v.literal("clearDraftChanges"),
+      v.literal("activate"),
+    ),
+    cursor: v.optional(v.string()),
+    token: v.string(),
+    attempt: v.number(),
+    failure: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_status_updated", ["status", "updatedAt"]),
 
   releasePages: defineTable({
     releaseId: v.id("siteReleases"),

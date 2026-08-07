@@ -2,10 +2,6 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { buildFileUrl, deleteFileRows } from "./files";
-import { reconcileRestoredFile } from "./fileExtraction";
-import { clearDraftChanges } from "./model/draftChanges";
-import { synchronizeParentDocument } from "./model/pageHierarchy";
 import {
   extractionBlocksPublication,
   isPublicationInFlight,
@@ -185,6 +181,11 @@ export const publish = mutation({
       { resource: "publication", action: "publish" },
     );
     const draftRevision = site.draftRevision ?? 0;
+    if (site.activeDraftRestoreId) {
+      throw new ConvexError(
+        "A historical version is currently being restored. Try publishing when it finishes.",
+      );
+    }
     if (draftRevision !== expectedDraftRevision) {
       throw new ConvexError(
         "The draft changed while publishing. Review the latest changes and try again.",
@@ -353,6 +354,11 @@ export const makeLive = mutation({
     }
     const site = await ctx.db.get(release.siteId);
     if (!site) throw new ConvexError("Site not found");
+    if (site.activeDraftRestoreId) {
+      throw new ConvexError(
+        "A historical version is currently being restored. Try again when it finishes.",
+      );
+    }
     const { auth } = await requireOrganizationPermission(
       ctx,
       site.organizationId,
@@ -389,6 +395,11 @@ export const unpublish = mutation({
   handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new ConvexError("Site not found");
+    if (site.activeDraftRestoreId) {
+      throw new ConvexError(
+        "A historical version is currently being restored. Try again when it finishes.",
+      );
+    }
     const { auth } = await requireOrganizationPermission(
       ctx,
       site.organizationId,
@@ -411,16 +422,18 @@ export const unpublish = mutation({
   },
 });
 
-function byId<T extends { _id: string }>(values: T[]) {
-  return new Map(values.map((value) => [value._id, value]));
-}
-
 export const restoreToDraft = mutation({
   args: { releaseId: v.id("siteReleases") },
-  returns: v.number(),
+  returns: v.object({ restoreId: v.id("draftRestores"), reused: v.boolean() }),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
     if (!release) throw new ConvexError("Release not found");
+    if (
+      release.publicationStatus !== undefined &&
+      release.publicationStatus !== "complete"
+    ) {
+      throw new ConvexError("Release publication is not complete");
+    }
     const site = await ctx.db.get(release.siteId);
     if (!site) throw new ConvexError("Site not found");
     const { auth } = await requireOrganizationPermission(
@@ -428,215 +441,168 @@ export const restoreToDraft = mutation({
       site.organizationId,
       { resource: "content", action: "edit" },
     );
-    const [
-      releasePages,
-      releaseLibraries,
-      releaseFolders,
-      releaseFiles,
-      pages,
-      libraries,
-      folders,
-      files,
-      pageDocuments,
-    ] = await Promise.all([
-      ctx.db
-        .query("releasePages")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseLibraries")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseFolders")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("releaseFiles")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect(),
-      ctx.db
-        .query("pages")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect(),
-      ctx.db
-        .query("documentLibraries")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect(),
-      ctx.db
-        .query("documentFolders")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect(),
-      ctx.db
-        .query("files")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect(),
-      ctx.db
-        .query("pageDocuments")
-        .withIndex("by_site", (q) => q.eq("siteId", site._id))
-        .collect(),
-    ]);
+    if (site.activeDraftRestoreId) {
+      const active = await ctx.db.get(site.activeDraftRestoreId);
+      if (
+        active?.releaseId === releaseId &&
+        active.requestedBy === auth.userId &&
+        active.status !== "failed" &&
+        active.status !== "cancelled"
+      ) {
+        return { restoreId: active._id, reused: true };
+      }
+      throw new ConvexError("Another draft restore is already in progress");
+    }
+    const activePublication = (
+      await Promise.all(
+        nonterminalPublicationStatuses.map((status) =>
+          ctx.db
+            .query("siteReleases")
+            .withIndex("by_site_publication_status", (q) =>
+              q.eq("siteId", site._id).eq("publicationStatus", status),
+            )
+            .first(),
+        ),
+      )
+    ).find(Boolean);
+    if (activePublication) {
+      throw new ConvexError(
+        "A publication is still finishing. Try restoring when it completes.",
+      );
+    }
     const now = Date.now();
-    const draftRevision = (site.draftRevision ?? 0) + 1;
-    const releasedPageIds = new Set(releasePages.map((value) => value.pageId));
-    const releasedLibraryIds = new Set(
-      releaseLibraries.map((value) => value.libraryId),
-    );
-    const releasedFolderIds = new Set(
-      releaseFolders.map((value) => value.folderId),
-    );
-    const releasedFileIds = new Set(releaseFiles.map((value) => value.fileId));
-    const pageById = byId(pages);
-    const libraryById = byId(libraries);
-    const folderById = byId(folders);
-    const fileById = byId(files);
-    const documentByPageId = new Map(
-      pageDocuments.map((value) => [value.pageId, value]),
-    );
-    const parentsToSynchronize = new Set<Id<"pages">>();
-    for (const page of pages) {
-      if (page.parentId) parentsToSynchronize.add(page.parentId);
-    }
-    for (const page of releasePages) {
-      if (page.parentId) parentsToSynchronize.add(page.parentId);
-    }
-
-    for (const page of pages) {
-      if (!releasedPageIds.has(page._id) && page.deletedAt === undefined) {
-        await ctx.db.patch(page._id, { deletedAt: now, updatedAt: now });
-      }
-    }
-    for (const snapshot of releasePages) {
-      const page = pageById.get(snapshot.pageId);
-      if (!page) {
-        throw new ConvexError(
-          "This historical page identity is missing from the draft store",
-        );
-      }
-      await ctx.db.patch(page._id, {
-        parentId: snapshot.parentId,
-        title: snapshot.title,
-        slug: snapshot.slug,
-        icon: snapshot.icon,
-        order: snapshot.order,
-        deletedAt: undefined,
-        updatedAt: now,
-      });
-      const document = documentByPageId.get(snapshot.pageId);
-      if (snapshot.contentRevisionId) {
-        const revision = await ctx.db.get(snapshot.contentRevisionId);
-        if (!revision) {
-          throw new ConvexError("Historical page content is missing");
-        }
-        if (document) {
-          await ctx.db.patch(document._id, {
-            revisionId: snapshot.contentRevisionId,
-            contentHash: snapshot.contentHash ?? "",
-            contentSize: revision.contentSize,
-            updatedAt: now,
-          });
-        } else {
-          await ctx.db.insert("pageDocuments", {
-            siteId: site._id,
-            pageId: snapshot.pageId,
-            revisionId: snapshot.contentRevisionId,
-            contentHash: snapshot.contentHash ?? "",
-            contentSize: revision.contentSize,
-            updatedAt: now,
-          });
-        }
-      } else if (document) {
-        await ctx.db.delete(document._id);
-      }
-    }
-
-    for (const library of libraries) {
-      if (
-        !releasedLibraryIds.has(library._id) &&
-        library.deletedAt === undefined
-      ) {
-        await ctx.db.patch(library._id, { deletedAt: now, updatedAt: now });
-      }
-    }
-    for (const snapshot of releaseLibraries) {
-      const library = libraryById.get(snapshot.libraryId);
-      if (!library) throw new ConvexError("Historical library is missing");
-      await ctx.db.patch(library._id, {
-        name: snapshot.name,
-        deletedAt: undefined,
-        updatedAt: now,
-      });
-    }
-    for (const folder of folders) {
-      if (
-        libraryById.has(folder.libraryId) &&
-        !releasedFolderIds.has(folder._id) &&
-        folder.deletedAt === undefined
-      ) {
-        await ctx.db.patch(folder._id, { deletedAt: now, updatedAt: now });
-      }
-    }
-    for (const snapshot of releaseFolders) {
-      const folder = folderById.get(snapshot.folderId);
-      if (!folder) throw new ConvexError("Historical folder is missing");
-      await ctx.db.patch(folder._id, {
-        libraryId: snapshot.libraryId,
-        parentId: snapshot.parentId,
-        name: snapshot.name,
-        order: snapshot.order,
-        deletedAt: undefined,
-        updatedAt: now,
-      });
-    }
-    for (const file of files) {
-      if (!releasedFileIds.has(file._id) && file.deletedAt === undefined) {
-        await deleteFileRows(ctx, file);
-      }
-    }
-    for (const snapshot of releaseFiles) {
-      const file = fileById.get(snapshot.fileId);
-      if (!file) throw new ConvexError("Historical file is missing");
-      await ctx.db.patch(file._id, {
-        objectKey: snapshot.objectKey,
-        filename: snapshot.filename,
-        contentType: snapshot.contentType,
-        size: snapshot.size,
-        checksum: snapshot.checksum,
-        libraryId: snapshot.libraryId,
-        folderId: snapshot.folderId,
-        order: snapshot.order,
-        deletedAt: undefined,
-      });
-      const restored = await ctx.db.get(file._id);
-      if (restored) await reconcileRestoredFile(ctx, restored);
-    }
-    for (const parentId of parentsToSynchronize) {
-      await synchronizeParentDocument(ctx, parentId, now, {
-        touchDraft: false,
-      });
-    }
-
-    await ctx.db.patch(site._id, {
-      name: release.name,
-      logoFileId: release.logoFileId,
-      logoUrl: release.logoFileId
-        ? buildFileUrl(release.logoFileId)
-        : undefined,
-      defaultPageId: release.defaultPageId,
-      settings: release.settings,
-      draftRevision,
-      draftBaseReleaseId: releaseId,
+    const token = crypto.randomUUID();
+    const restoreId = await ctx.db.insert("draftRestores", {
+      siteId: site._id,
+      releaseId,
+      requestedBy: auth.userId,
+      baseDraftRevision: site.draftRevision ?? 0,
+      status: "validating",
+      phase: "validatePages",
+      token,
+      attempt: 0,
+      createdAt: now,
       updatedAt: now,
     });
-    await clearDraftChanges(ctx, site._id);
-    await ctx.db.insert("publicationEvents", {
-      siteId: site._id,
-      action: "restoreDraft",
-      fromReleaseId: site.liveReleaseId,
-      toReleaseId: releaseId,
-      actorId: auth.userId,
-      createdAt: now,
+    await ctx.db.patch(site._id, { activeDraftRestoreId: restoreId });
+    await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
+      restoreId,
+      token,
+      phase: "validatePages",
+      attempt: 0,
     });
-    return draftRevision;
+    return { restoreId, reused: false };
+  },
+});
+
+export const getDraftRestoreStatus = query({
+  args: { restoreId: v.id("draftRestores") },
+  returns: v.union(
+    v.null(),
+    v.object({
+      status: v.union(
+        v.literal("validating"),
+        v.literal("applying"),
+        v.literal("paused"),
+        v.literal("complete"),
+        v.literal("failed"),
+        v.literal("cancelled"),
+      ),
+      phase: v.string(),
+      failure: v.optional(v.string()),
+      resultDraftRevision: v.optional(v.number()),
+    }),
+  ),
+  handler: async (ctx, { restoreId }) => {
+    const restore = await ctx.db.get(restoreId);
+    if (!restore || !(await requireSiteForMember(ctx, restore.siteId))) {
+      return null;
+    }
+    return {
+      status: restore.status,
+      phase: restore.phase,
+      failure: restore.failure,
+      resultDraftRevision: restore.resultDraftRevision,
+    };
+  },
+});
+
+export const resumeDraftRestore = mutation({
+  args: { restoreId: v.id("draftRestores") },
+  returns: v.null(),
+  handler: async (ctx, { restoreId }) => {
+    const restore = await ctx.db.get(restoreId);
+    if (!restore) throw new ConvexError("Draft restore not found");
+    const site = await ctx.db.get(restore.siteId);
+    if (!site) throw new ConvexError("Site not found");
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
+    if (
+      restore.status !== "paused" ||
+      site.activeDraftRestoreId !== restore._id
+    ) {
+      throw new ConvexError("This draft restore cannot be resumed");
+    }
+    const token = crypto.randomUUID();
+    await ctx.db.patch(restore._id, {
+      status: "applying",
+      token,
+      attempt: 0,
+      failure: undefined,
+      updatedAt: Date.now(),
+    });
+    await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
+      restoreId,
+      token,
+      phase: restore.phase as
+        | "archivePages"
+        | "restorePages"
+        | "archiveLibraries"
+        | "restoreLibraries"
+        | "archiveFolders"
+        | "restoreFolders"
+        | "archiveFiles"
+        | "restoreFiles"
+        | "synchronizeParents"
+        | "clearDraftChanges"
+        | "activate",
+      cursor: restore.cursor,
+      attempt: 0,
+    });
+    return null;
+  },
+});
+
+export const cancelDraftRestore = mutation({
+  args: { restoreId: v.id("draftRestores") },
+  returns: v.null(),
+  handler: async (ctx, { restoreId }) => {
+    const restore = await ctx.db.get(restoreId);
+    if (!restore) throw new ConvexError("Draft restore not found");
+    const site = await ctx.db.get(restore.siteId);
+    if (!site) throw new ConvexError("Site not found");
+    await requireOrganizationPermission(ctx, site.organizationId, {
+      resource: "content",
+      action: "edit",
+    });
+    if (restore.status !== "validating") {
+      throw new ConvexError(
+        "A restore can only be cancelled before draft application begins",
+      );
+    }
+    const now = Date.now();
+    if (site.activeDraftRestoreId === restore._id) {
+      await ctx.db.patch(site._id, { activeDraftRestoreId: undefined });
+    }
+    await ctx.db.patch(restore._id, {
+      status: "cancelled",
+      token: crypto.randomUUID(),
+      failure: undefined,
+      completedAt: now,
+      updatedAt: now,
+    });
+    return null;
   },
 });

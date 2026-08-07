@@ -5,8 +5,9 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import { useEditorWorkspace } from "@/features/editor/editor-state";
 import { OpenEditorPageEditor } from "@/features/openeditor/openeditor-page-editor";
 import { api } from "@baseblocks/backend";
-import type { Id } from "@baseblocks/backend";
+import type { Doc, Id } from "@baseblocks/backend";
 import type { SaveStatus } from "@baseblocks/domain";
+import { Button } from "@baseblocks/ui/button";
 import { PortalContainerProvider } from "@baseblocks/ui/contexts/portal-container-context";
 import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -32,7 +33,7 @@ interface SiteEditorProps {
 
 function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const { team } = useTeamAccess();
-  const { pages, selectedPage, site, status } = useEditorWorkspace();
+  const { pages, restore, selectedPage, site, status } = useEditorWorkspace();
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [activeDialog, setActiveDialog] = useState<EditorDialogState | null>(
@@ -96,69 +97,77 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
 
   return (
     <>
-      <SiteHeaderContent
-        editorAiEnabled={editorAiEnabled}
-        teamSlug={team.slug}
-        siteSlug={site.slug}
-        siteId={site._id}
-        sitePublished={Boolean(site.liveReleaseId)}
-        siteName={site.name}
-        siteLogoUrl={site.logoUrl}
-        saveStatus={saveStatus}
-        onOpenDialog={(name, returnFocusTo) =>
-          setActiveDialog({ name, returnFocusTo })
-        }
-        isPreviewing={isPreviewing}
-        onTogglePreview={() => setIsPreviewing((current) => !current)}
-        onUnpublish={handleUnpublish}
-        hasUnpublishedChanges={draftSummary.hasUnpublishedChanges}
-        aiChatOpen={aiChatOpen}
-        onToggleAiChat={() => setAiChatOpen((current) => !current)}
-      />
+      {restore ? (
+        <DraftRestoreGate restore={restore} />
+      ) : (
+        <>
+          <SiteHeaderContent
+            editorAiEnabled={editorAiEnabled}
+            teamSlug={team.slug}
+            siteSlug={site.slug}
+            siteId={site._id}
+            sitePublished={Boolean(site.liveReleaseId)}
+            siteName={site.name}
+            siteLogoUrl={site.logoUrl}
+            saveStatus={saveStatus}
+            onOpenDialog={(name, returnFocusTo) =>
+              setActiveDialog({ name, returnFocusTo })
+            }
+            isPreviewing={isPreviewing}
+            onTogglePreview={() => setIsPreviewing((current) => !current)}
+            onUnpublish={handleUnpublish}
+            hasUnpublishedChanges={draftSummary.hasUnpublishedChanges}
+            aiChatOpen={aiChatOpen}
+            onToggleAiChat={() => setAiChatOpen((current) => !current)}
+          />
 
-      <div
-        ref={setPortalContainer}
-        className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
-      />
-      <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        <main
-          className={cn(
-            "relative min-h-0 min-w-0 flex-1 overflow-hidden",
-            editorAiEnabled && aiChatOpen && "max-lg:pointer-events-none",
-            editorAiEnabled && aiChatOpen && "lg:mr-[26rem]",
-          )}
-        >
-          <PortalContainerProvider value={portalContainer ?? undefined}>
-            <div className="h-full min-h-0 overflow-auto">
-              <div className="px-4 pt-[calc(var(--app-header-height)+1rem)] pb-4 md:px-8 md:pt-[calc(var(--app-header-height)+2rem)] md:pb-8">
-                <SiteThemeScope
-                  className="min-h-full rounded-2xl"
-                  theme={site.settings.theme}
-                >
-                  {pageEditor}
-                </SiteThemeScope>
-              </div>
-            </div>
-          </PortalContainerProvider>
-        </main>
-        {editorAiEnabled && aiChatOpen ? (
-          <aside className="absolute top-(--app-header-height) right-0 bottom-0 z-30 w-full border-l bg-background shadow-xl sm:w-[26rem] lg:shadow-none">
-            <Suspense
-              fallback={
-                <div className="flex h-full items-center justify-center">
-                  <Spinner className="size-5 text-muted-foreground" />
-                </div>
-              }
+          <div
+            ref={setPortalContainer}
+            className="pointer-events-none fixed inset-0 z-50 [&>*]:pointer-events-auto"
+          />
+          <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
+            <main
+              className={cn(
+                "relative min-h-0 min-w-0 flex-1 overflow-hidden",
+                editorAiEnabled && aiChatOpen && "max-lg:pointer-events-none",
+                editorAiEnabled && aiChatOpen && "lg:mr-[26rem]",
+              )}
             >
-              <SiteAiChat
-                onApplied={() => setAiApplyRevision((revision) => revision + 1)}
-                siteId={site._id}
-                siteName={site.name}
-              />
-            </Suspense>
-          </aside>
-        ) : null}
-      </div>
+              <PortalContainerProvider value={portalContainer ?? undefined}>
+                <div className="h-full min-h-0 overflow-auto">
+                  <div className="px-4 pt-[calc(var(--app-header-height)+1rem)] pb-4 md:px-8 md:pt-[calc(var(--app-header-height)+2rem)] md:pb-8">
+                    <SiteThemeScope
+                      className="min-h-full rounded-2xl"
+                      theme={site.settings.theme}
+                    >
+                      {pageEditor}
+                    </SiteThemeScope>
+                  </div>
+                </div>
+              </PortalContainerProvider>
+            </main>
+            {editorAiEnabled && aiChatOpen ? (
+              <aside className="absolute top-(--app-header-height) right-0 bottom-0 z-30 w-full border-l bg-background shadow-xl sm:w-[26rem] lg:shadow-none">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center">
+                      <Spinner className="size-5 text-muted-foreground" />
+                    </div>
+                  }
+                >
+                  <SiteAiChat
+                    onApplied={() =>
+                      setAiApplyRevision((revision) => revision + 1)
+                    }
+                    siteId={site._id}
+                    siteName={site.name}
+                  />
+                </Suspense>
+              </aside>
+            ) : null}
+          </div>
+        </>
+      )}
 
       <EditorDialogs
         activeDialog={activeDialog}
@@ -169,6 +178,90 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
         teamSlug={team.slug}
       />
     </>
+  );
+}
+
+function DraftRestoreGate({
+  restore,
+}: {
+  restore: {
+    _id: Id<"draftRestores">;
+    status: Doc<"draftRestores">["status"];
+    phase: string;
+    failure?: string;
+  };
+}) {
+  const resume = useMutation(api.releases.resumeDraftRestore);
+  const cancel = useMutation(api.releases.cancelDraftRestore);
+  const [resuming, setResuming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center bg-background p-6">
+      <div className="max-w-md text-center">
+        {restore.status !== "paused" ? (
+          <Spinner className="mx-auto size-6 text-muted-foreground" />
+        ) : null}
+        <h1 className="mt-4 text-base font-semibold">
+          {restore.status === "paused"
+            ? "Draft restore paused"
+            : restore.status === "validating"
+              ? "Checking historical version"
+              : "Restoring draft"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {restore.status === "paused"
+            ? (restore.failure ??
+              "The restore paused after repeated failures. Resume it to continue safely.")
+            : "The editor stays locked until the historical draft is coherent and ready."}
+        </p>
+        {restore.status === "paused" ? (
+          <Button
+            className="mt-4 rounded-full"
+            disabled={resuming}
+            onClick={async () => {
+              setResuming(true);
+              try {
+                await resume({ restoreId: restore._id });
+              } catch (error) {
+                setResuming(false);
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "The restore could not resume",
+                );
+              }
+            }}
+          >
+            {resuming ? <Spinner /> : null}
+            Resume restore
+          </Button>
+        ) : null}
+        {restore.status === "validating" ? (
+          <Button
+            className="mt-4 rounded-full"
+            disabled={cancelling}
+            onClick={async () => {
+              setCancelling(true);
+              try {
+                await cancel({ restoreId: restore._id });
+              } catch (error) {
+                setCancelling(false);
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "The restore could not be cancelled",
+                );
+              }
+            }}
+            variant="outline"
+          >
+            {cancelling ? <Spinner /> : null}
+            Cancel restore
+          </Button>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

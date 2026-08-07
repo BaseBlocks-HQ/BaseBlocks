@@ -14,6 +14,22 @@ export const get = query({
     if (!site || site.organizationId !== organizationId) return null;
     if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
+    if (site.activeDraftRestoreId) {
+      const restore = await ctx.db.get(site.activeDraftRestoreId);
+      return {
+        site,
+        pages: [],
+        restore: restore
+          ? {
+              _id: restore._id,
+              status: restore.status,
+              phase: restore.phase,
+              failure: restore.failure,
+            }
+          : null,
+      };
+    }
+
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -22,6 +38,7 @@ export const get = query({
     return {
       site,
       pages: pages.filter((page) => page.deletedAt === undefined),
+      restore: null,
     };
   },
 });

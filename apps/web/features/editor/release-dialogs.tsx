@@ -418,11 +418,19 @@ export function HistoryDialog({
     | undefined;
   const makeLive = useMutation(api.releases.makeLive);
   const restoreToDraft = useMutation(api.releases.restoreToDraft);
+  const resumeDraftRestore = useMutation(api.releases.resumeDraftRestore);
   const [selectedId, setSelectedId] = useState<Id<"siteReleases"> | null>(null);
   const [confirmAction, setConfirmAction] = useState<"live" | "restore" | null>(
     null,
   );
   const [working, setWorking] = useState(false);
+  const [pendingRestoreId, setPendingRestoreId] = useState<
+    Id<"draftRestores"> | undefined
+  >();
+  const restoreStatus = useQuery(
+    api.releases.getDraftRestoreStatus,
+    pendingRestoreId ? { restoreId: pendingRestoreId } : "skip",
+  );
   const historyTitleRef = useRef<HTMLHeadingElement>(null);
   const selected =
     releases?.find((release) => release._id === selectedId) ??
@@ -439,9 +447,40 @@ export function HistoryDialog({
     | null
     | undefined;
 
+  useEffect(() => {
+    if (!pendingRestoreId || restoreStatus === undefined) return;
+    if (restoreStatus?.status === "complete") {
+      toast.success(
+        `Version ${selected?.number ?? ""} restored to the draft`.trim(),
+      );
+      window.location.reload();
+      return;
+    }
+    if (restoreStatus?.status === "paused") {
+      setWorking(false);
+      toast.error(
+        restoreStatus.failure ??
+          "The restore paused safely. Resume it to finish applying the draft.",
+      );
+      return;
+    }
+    if (
+      restoreStatus === null ||
+      restoreStatus?.status === "failed" ||
+      restoreStatus?.status === "cancelled"
+    ) {
+      setWorking(false);
+      setPendingRestoreId(undefined);
+      toast.error(
+        restoreStatus?.failure ?? "The version could not be restored",
+      );
+    }
+  }, [pendingRestoreId, restoreStatus, selected?.number]);
+
   const runConfirmedAction = async () => {
     if (!selected || !confirmAction) return;
     setWorking(true);
+    let restoreQueued = false;
     try {
       if (confirmAction === "live") {
         await makeLive({ releaseId: selected._id });
@@ -450,16 +489,20 @@ export function HistoryDialog({
         );
         setConfirmAction(null);
       } else {
-        await restoreToDraft({ releaseId: selected._id });
-        toast.success(`Version ${selected.number} restored to the draft`);
-        window.location.reload();
+        if (pendingRestoreId && restoreStatus?.status === "paused") {
+          await resumeDraftRestore({ restoreId: pendingRestoreId });
+        } else {
+          const result = await restoreToDraft({ releaseId: selected._id });
+          setPendingRestoreId(result.restoreId);
+        }
+        restoreQueued = true;
       }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "The version could not change",
       );
     } finally {
-      setWorking(false);
+      if (!restoreQueued) setWorking(false);
     }
   };
 
@@ -637,6 +680,7 @@ export function HistoryDialog({
       <AlertDialog
         open={confirmAction !== null}
         onOpenChange={(nextOpen) => {
+          if (!nextOpen && working) return;
           if (!nextOpen) setConfirmAction(null);
         }}
       >
@@ -668,7 +712,11 @@ export function HistoryDialog({
               size="sm"
             >
               {working ? <Spinner /> : null}
-              {confirmAction === "live" ? "Set as live" : "Restore draft"}
+              {confirmAction === "live"
+                ? "Set as live"
+                : restoreStatus?.status === "paused"
+                  ? "Resume restore"
+                  : "Restore draft"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -248,6 +248,32 @@ function contentTypeMatches(
   return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
+export function mergeSearchMatches<
+  TDoc extends { _id: string; kind: "file" | "page" },
+  TResult,
+>(args: {
+  titleResults: TDoc[];
+  contentResults: TDoc[];
+  contentTypes?: Array<"file" | "page">;
+  limit: number;
+  format: (doc: TDoc, matchType: "title" | "content") => TResult;
+}): TResult[] {
+  const seen = new Set<string>();
+  const combined: TResult[] = [];
+  for (const [results, matchType] of [
+    [args.titleResults, "title"],
+    [args.contentResults, "content"],
+  ] as const) {
+    for (const doc of results) {
+      if (seen.has(doc._id)) continue;
+      if (!contentTypeMatches(doc, args.contentTypes)) continue;
+      seen.add(doc._id);
+      combined.push(args.format(doc, matchType));
+    }
+  }
+  return combined.slice(0, args.limit);
+}
+
 export const searchAll = query({
   args: {
     siteId: v.id("sites"),
@@ -283,24 +309,15 @@ export const searchAll = query({
       )
       .take(limit * 2);
 
-    const seen = new Set<string>();
-    const combined: ReturnType<typeof formatSearchResult>[] = [];
-
-    for (const doc of contentResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed));
-    }
-
-    for (const doc of titleResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed));
-    }
-
-    return combined.slice(0, limit);
+    // A title is also present in legacy `text` values, so classify title hits
+    // before de-duplicating the broader content index results.
+    return mergeSearchMatches({
+      titleResults,
+      contentResults,
+      contentTypes,
+      limit,
+      format: (doc, matchType) => formatSearchResult(doc, matchType, trimmed),
+    });
   },
 });
 
@@ -342,23 +359,13 @@ export const searchPublished = query({
       )
       .take(limit * 2);
 
-    const seen = new Set<string>();
-    const combined: ReturnType<typeof formatReleaseSearchResult>[] = [];
-
-    for (const doc of contentResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatReleaseSearchResult(doc, "content", trimmed));
-    }
-
-    for (const doc of titleResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatReleaseSearchResult(doc, "title", trimmed));
-    }
-
-    return combined.slice(0, limit);
+    return mergeSearchMatches({
+      titleResults,
+      contentResults,
+      contentTypes,
+      limit,
+      format: (doc, matchType) =>
+        formatReleaseSearchResult(doc, matchType, trimmed),
+    });
   },
 });

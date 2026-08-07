@@ -40,6 +40,12 @@ interface EditorWorkspaceContextValue {
   pages: Doc<"pages">[];
   selectedPage: Doc<"pages"> | null;
   selectedPageId: string | null;
+  restore: {
+    _id: Id<"draftRestores">;
+    status: Doc<"draftRestores">["status"];
+    phase: string;
+    failure?: string;
+  } | null;
 }
 
 const EditorNavigationContext =
@@ -181,6 +187,7 @@ export function EditorProvider({
       pages,
       selectedPage,
       selectedPageId,
+      restore: workspace?.restore ?? null,
     };
   }, [pages, selectedPage, selectedPageId, siteId, workspace]);
 

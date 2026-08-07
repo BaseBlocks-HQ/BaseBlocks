@@ -16,6 +16,7 @@ import type * as aiWorkspaces from "../aiWorkspaces.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as deploymentPreflight from "../deploymentPreflight.js";
+import type * as draftRestore from "../draftRestore.js";
 import type * as editorWorkspace from "../editorWorkspace.js";
 import type * as fileExtraction from "../fileExtraction.js";
 import type * as fileExtractionAction from "../fileExtractionAction.js";
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   deploymentPreflight: typeof deploymentPreflight;
+  draftRestore: typeof draftRestore;
   editorWorkspace: typeof editorWorkspace;
   fileExtraction: typeof fileExtraction;
   fileExtractionAction: typeof fileExtractionAction;

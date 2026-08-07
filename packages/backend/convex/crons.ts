@@ -28,4 +28,10 @@ crons.interval(
   internal.releasePublication.recoverStalled,
 );
 
+crons.interval(
+  "recover stalled draft restores",
+  { minutes: 5 },
+  internal.draftRestore.recoverStalled,
+);
+
 export default crons;
