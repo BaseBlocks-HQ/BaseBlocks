@@ -3,15 +3,15 @@ import { getServerConvexClient } from "@/lib/convex/server";
 import {
   buildPageExportDocument,
   createPageExportFilename,
-  renderPageExportDocx,
+  renderPageExport,
 } from "./page-word-export";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-function isExportFormat(value: string | null): value is "docx" {
-  return value === "docx";
+function isExportFormat(value: string | null): value is "docx" | "markdown" {
+  return value === "docx" || value === "markdown";
 }
 
 export async function GET(
@@ -46,7 +46,11 @@ export async function GET(
       content: result.content,
     });
 
-    const body = await renderPageExportDocx(exportDocument);
+    const exported = await renderPageExport(exportDocument, requestedFormat);
+    const body =
+      typeof exported.data === "string"
+        ? new TextEncoder().encode(exported.data)
+        : exported.data;
     const filename = createPageExportFilename({
       title: exportDocument.title,
       format: requestedFormat,
@@ -57,8 +61,7 @@ export async function GET(
         "Cache-Control": "private, no-store",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(body.byteLength),
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Type": exported.mediaType,
       },
     });
   } catch (error) {

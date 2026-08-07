@@ -4,15 +4,11 @@ import {
   extractionDispatchCapacity,
   extractionExecutionDeadline,
   extractionRetryDelayMs,
-  ExtractionDeadlineError,
-  ExtractionInputLimitError,
   FILE_EXTRACTION_LIMITS,
   fileSourceVersion,
-  readExtractionStream,
   shouldReuseExtraction,
   validateExtractionInputSize,
   validateExtractionOutput,
-  validateDownloadedSourceChecksum,
   validateStoredSourceMetadata,
 } from "./fileExtraction";
 
@@ -91,18 +87,6 @@ describe("file extraction policy", () => {
         { size: 10, etag: "900150983cd24fb0d6963f7d28e17f72" },
       ),
     ).toBeNull();
-    expect(
-      validateDownloadedSourceChecksum(
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-      ),
-    ).toBeNull();
-    expect(
-      validateDownloadedSourceChecksum(
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      ),
-    ).toMatchObject({ code: "source_mismatch", retryable: false });
   });
 
   test("bounds dispatch capacity and execution deadlines", () => {
@@ -161,48 +145,5 @@ describe("file extraction policy", () => {
         existingSourceVersion: "v0",
       }),
     ).toBe(false);
-  });
-
-  test("streams within the cap without whole-object buffering", async () => {
-    const stream = new ReadableStream<Uint8Array>({
-      start(controller) {
-        controller.enqueue(new Uint8Array([1, 2]));
-        controller.enqueue(new Uint8Array([3, 4]));
-        controller.close();
-      },
-    });
-    expect(await readExtractionStream(stream, 4)).toEqual(
-      new Uint8Array([1, 2, 3, 4]),
-    );
-  });
-
-  test("cancels a storage stream immediately after crossing the cap", async () => {
-    let cancelled = false;
-    const stream = new ReadableStream<Uint8Array>({
-      start(controller) {
-        controller.enqueue(new Uint8Array([1, 2, 3]));
-        controller.enqueue(new Uint8Array([4, 5, 6]));
-      },
-      cancel() {
-        cancelled = true;
-      },
-    });
-    await expect(readExtractionStream(stream, 4)).rejects.toBeInstanceOf(
-      ExtractionInputLimitError,
-    );
-    expect(cancelled).toBe(true);
-  });
-
-  test("cancels a stalled storage stream at the execution deadline", async () => {
-    let cancelled = false;
-    const stream = new ReadableStream<Uint8Array>({
-      cancel() {
-        cancelled = true;
-      },
-    });
-    await expect(
-      readExtractionStream(stream, 4, Date.now() + 5),
-    ).rejects.toBeInstanceOf(ExtractionDeadlineError);
-    expect(cancelled).toBe(true);
   });
 });

@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "@baseblocks/domain": "workspace:*",
-    "@openeditor/core": "0.0.37",
-    "@openeditor/embedded-runtime": "0.0.37",
-    "@openeditor/extensions": "0.0.37",
-    "@openeditor/tiptap": "0.0.37"
+    "@openeditor/core": "0.0.39",
+    "@openeditor/embedded-runtime": "0.0.39",
+    "@openeditor/extensions": "0.0.39",
+    "@openeditor/tiptap": "0.0.39"
   },
   "devDependencies": {
     "@baseblocks/tsconfig": "workspace:*",

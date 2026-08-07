@@ -3,6 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
+  File01Icon,
   LanguageCircleIcon,
   MoonIcon,
   Sun01Icon,
@@ -176,20 +177,38 @@ function PublicSiteHeader({
           <SidebarTrigger />
           <div className="ml-auto flex items-center gap-3">
             {pageId ? (
-              <Button
-                aria-label="Export as Word"
-                onClick={() =>
-                  window.location.assign(
-                    `/api/pages/${pageId}/export?format=docx`,
-                  )
-                }
-                size="sm"
-                title="Export as Word"
-                variant="ghost"
-              >
-                <WordLogoIcon className="size-4" />
-                <span className="hidden sm:inline">Export Word</span>
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  aria-label="Export as Word"
+                  onClick={() =>
+                    window.location.assign(
+                      `/api/pages/${pageId}/export?format=docx`,
+                    )
+                  }
+                  size="sm"
+                  title="Export as Word"
+                  type="button"
+                  variant="ghost"
+                >
+                  <WordLogoIcon className="size-4" />
+                  <span className="hidden sm:inline">Export Word</span>
+                </Button>
+                <Button
+                  aria-label="Export as Markdown"
+                  onClick={() =>
+                    window.location.assign(
+                      `/api/pages/${pageId}/export?format=markdown`,
+                    )
+                  }
+                  size="sm"
+                  title="Export as Markdown"
+                  type="button"
+                  variant="ghost"
+                >
+                  <HugeiconsIcon icon={File01Icon} />
+                  <span className="hidden sm:inline">Export Markdown</span>
+                </Button>
+              </div>
             ) : null}
             {site.settings.showHeaderSearch === true ? (
               <SearchBox

@@ -66,92 +66,6 @@ export function shouldReuseExtraction(args: {
   return !args.force && args.existingStatus === "ready" && !args.hasJob;
 }
 
-export class ExtractionInputLimitError extends Error {
-  readonly actual: number;
-  readonly limit: number;
-
-  constructor(actual: number, limit: number) {
-    super("Downloaded file exceeds the extraction input limit");
-    this.name = "ExtractionInputLimitError";
-    this.actual = actual;
-    this.limit = limit;
-  }
-}
-
-export class ExtractionDeadlineError extends Error {
-  constructor() {
-    super("Extraction storage read exceeded its execution deadline");
-    this.name = "ExtractionDeadlineError";
-  }
-}
-
-async function readBeforeDeadline<T>(
-  read: Promise<T>,
-  deadlineAt?: number,
-): Promise<T> {
-  if (deadlineAt === undefined) return read;
-  const remaining = deadlineAt - Date.now();
-  if (remaining <= 0) throw new ExtractionDeadlineError();
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      read,
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(
-          () => reject(new ExtractionDeadlineError()),
-          remaining,
-        );
-      }),
-    ]);
-  } finally {
-    if (timeout !== undefined) clearTimeout(timeout);
-  }
-}
-
-/** Read a storage stream without ever retaining more than the configured cap. */
-export async function readExtractionStream(
-  stream: ReadableStream<Uint8Array>,
-  limit = FILE_EXTRACTION_LIMITS.maxInputBytes,
-  deadlineAt?: number,
-): Promise<Uint8Array> {
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  try {
-    while (true) {
-      try {
-        const { done, value } = await readBeforeDeadline(
-          reader.read(),
-          deadlineAt,
-        );
-        if (done) break;
-        if (!value?.byteLength) continue;
-        total += value.byteLength;
-        if (total > limit) {
-          await reader.cancel("extraction input limit exceeded");
-          throw new ExtractionInputLimitError(total, limit);
-        }
-        chunks.push(value);
-      } catch (error) {
-        if (!(error instanceof ExtractionInputLimitError)) {
-          await reader.cancel("extraction execution deadline exceeded");
-        }
-        throw error;
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-}
-
 export function validateExtractionInputSize(
   size: number,
 ): FileExtractionFailure | null {
@@ -206,25 +120,6 @@ export function validateStoredSourceMetadata(
 
 function isSha256Checksum(checksum: string): boolean {
   return /^[a-f\d]{64}$/iu.test(checksum);
-}
-
-export function validateDownloadedSourceChecksum(
-  registeredChecksum: string | undefined,
-  actualSha256: string,
-): FileExtractionFailure | null {
-  if (
-    !registeredChecksum ||
-    !isSha256Checksum(registeredChecksum) ||
-    registeredChecksum.toLowerCase() === actualSha256.toLowerCase()
-  ) {
-    return null;
-  }
-  return {
-    code: "source_mismatch",
-    message:
-      "Stored file checksum does not match its registered source version",
-    retryable: false,
-  };
 }
 
 export function validateExtractionOutput(

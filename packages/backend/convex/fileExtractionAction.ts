@@ -1,6 +1,6 @@
 "use node";
 
-import { createHash } from "node:crypto";
+import { iterableSource, readSource } from "@baseblocks/anydoc/sources";
 import { Files } from "files-sdk";
 import { s3 } from "files-sdk/s3";
 import { v } from "convex/values";
@@ -9,13 +9,9 @@ import type { Id } from "./_generated/dataModel";
 import { internalAction } from "./_generated/server";
 import {
   FILE_EXTRACTION_LIMITS,
-  ExtractionDeadlineError,
-  ExtractionInputLimitError,
   type FileExtractionFailure,
-  readExtractionStream,
   validateExtractionInputSize,
   validateExtractionOutput,
-  validateDownloadedSourceChecksum,
   validateStoredSourceMetadata,
 } from "./model/fileExtraction";
 import {
@@ -143,6 +139,40 @@ function deadlineFailure(): FileExtractionFailure {
   };
 }
 
+function expectedSha256(checksum: string | undefined): string | undefined {
+  return checksum && /^[a-f\d]{64}$/iu.test(checksum)
+    ? checksum.toLowerCase()
+    : undefined;
+}
+
+function sourceReadFailure(error: unknown): FileExtractionFailure {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : undefined;
+  if (code === "deadline-exceeded") return deadlineFailure();
+  if (code === "too-large") {
+    return {
+      code: "input_too_large",
+      message: safeMessage(error),
+      retryable: false,
+      limit: FILE_EXTRACTION_LIMITS.maxInputBytes,
+    };
+  }
+  if (code === "integrity-failed" || code === "source-changed") {
+    return {
+      code: "source_mismatch",
+      message: safeMessage(error),
+      retryable: false,
+    };
+  }
+  return {
+    code: code === "invalid-source" ? "invalid_source" : "storage_error",
+    message: safeMessage(error),
+    retryable: code !== "invalid-source",
+  };
+}
+
 async function extractText(
   bytes: Uint8Array,
   filename: string,
@@ -226,52 +256,30 @@ export const process = internalAction({
         timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
         retries: FILE_EXTRACTION_LIMITS.storageRetries,
       });
-      const downloadSizeFailure = validateExtractionInputSize(stored.size);
-      if (downloadSizeFailure)
-        throw new ExtractionInputLimitError(
-          stored.size,
-          FILE_EXTRACTION_LIMITS.maxInputBytes,
-        );
-      bytes = await readExtractionStream(
-        stored.stream(),
-        FILE_EXTRACTION_LIMITS.maxInputBytes,
-        claim.deadlineAt,
-      );
+      const source = iterableSource(() => stored.stream(), {
+        contentType: claim.contentType,
+        etag: metadata.etag,
+        filename: claim.filename,
+        id: claim.objectKey,
+        size: stored.size,
+      });
+      bytes = (
+        await readSource(source, {
+          deadline: claim.deadlineAt,
+          expectedSha256: expectedSha256(claim.checksum),
+          expectedSize: claim.size,
+          maxBytes: FILE_EXTRACTION_LIMITS.maxInputBytes,
+        })
+      ).bytes;
     } catch (error) {
-      if (error instanceof ExtractionDeadlineError) {
-        const failure = deadlineFailure();
-        await ctx.runMutation(internal.fileExtraction.fail, {
-          jobId,
-          runToken,
-          failure,
-        });
-        return { status: "failed" as const, failure };
-      }
-      if (error instanceof ExtractionInputLimitError) {
-        const failure: FileExtractionFailure = {
-          code: "input_too_large",
-          message: error.message,
-          retryable: false,
-          limit: error.limit,
-          actual: error.actual,
-        };
-        await ctx.runMutation(internal.fileExtraction.fail, {
-          jobId,
-          runToken,
-          failure,
-        });
-        return { status: "failed" as const, failure };
-      }
       const message = safeMessage(error);
       const configuration =
         message.startsWith("Missing FILES_") ||
         message.startsWith("Unsupported FILES_ADAPTER") ||
         message.startsWith("FILES_FORCE_PATH_STYLE");
-      const failure: FileExtractionFailure = {
-        code: configuration ? "configuration_error" : "storage_error",
-        message,
-        retryable: !configuration,
-      };
+      const failure: FileExtractionFailure = configuration
+        ? { code: "configuration_error", message, retryable: false }
+        : sourceReadFailure(error);
       await ctx.runMutation(internal.fileExtraction.fail, {
         jobId,
         runToken,
@@ -288,19 +296,6 @@ export const process = internalAction({
         failure: actualSizeFailure,
       });
       return { status: "failed" as const, failure: actualSizeFailure };
-    }
-
-    const checksumFailure = validateDownloadedSourceChecksum(
-      claim.checksum,
-      createHash("sha256").update(bytes).digest("hex"),
-    );
-    if (checksumFailure) {
-      await ctx.runMutation(internal.fileExtraction.fail, {
-        jobId,
-        runToken,
-        failure: checksumFailure,
-      });
-      return { status: "failed" as const, failure: checksumFailure };
     }
 
     if (Date.now() > claim.deadlineAt) {

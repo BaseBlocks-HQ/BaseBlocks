@@ -73,35 +73,32 @@ export async function loadBoundedDocument(
     throw new TypeError("The document byte limit must be a positive integer.");
   }
 
-  assertAllowedDocumentUrl(url);
-  options.signal?.throwIfAborted();
-  const response = await (options.fetch ?? globalThis.fetch)(url, {
-    credentials: "same-origin",
-    signal: options.signal,
-  });
-  if (!response.ok) {
-    throw new Error(`Document request failed (${response.status}).`);
+  const resolvedUrl = allowedDocumentUrl(url);
+  try {
+    const result = await readSource(
+      webSource(resolvedUrl, {
+        allowUrl: (candidate) =>
+          allowedDocumentUrl(candidate).protocol !== "blob:",
+        fetch: options.fetch,
+        request: { credentials: "same-origin" },
+      }),
+      { maxBytes, signal: options.signal },
+    );
+    return result.bytes.buffer.slice(
+      result.bytes.byteOffset,
+      result.bytes.byteOffset + result.bytes.byteLength,
+    ) as ArrayBuffer;
+  } catch (error) {
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : undefined;
+    if (code === "too-large") throw documentTooLargeError(maxBytes);
+    throw error;
   }
-
-  const declaredSize = parseContentLength(
-    response.headers.get("content-length"),
-  );
-  if (declaredSize !== null && declaredSize > maxBytes) {
-    await response.body?.cancel();
-    throw documentTooLargeError(maxBytes);
-  }
-  if (!response.body) {
-    throw new Error("The document response has no readable body.");
-  }
-
-  const reader = response.body.getReader();
-  if (declaredSize !== null) {
-    return await readDeclaredLength(reader, declaredSize, maxBytes);
-  }
-  return await readUnknownLength(reader, maxBytes);
 }
 
-function assertAllowedDocumentUrl(value: string): void {
+function allowedDocumentUrl(value: string): URL {
   let url: URL;
   try {
     url = new URL(
@@ -111,74 +108,12 @@ function assertAllowedDocumentUrl(value: string): void {
   } catch {
     throw new TypeError("The document URL is invalid.");
   }
-  if (
-    url.protocol !== "http:" &&
-    url.protocol !== "https:" &&
-    url.protocol !== "blob:"
-  ) {
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new TypeError(
       `The ${url.protocol} document URL scheme is not allowed.`,
     );
   }
-}
-
-function parseContentLength(value: string | null): number | null {
-  if (!value || !/^\d+$/.test(value)) return null;
-  const size = Number(value);
-  return Number.isSafeInteger(size) ? size : null;
-}
-
-async function readDeclaredLength(
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-  declaredSize: number,
-  maxBytes: number,
-): Promise<ArrayBuffer> {
-  const bytes = new Uint8Array(declaredSize);
-  let offset = 0;
-  for (;;) {
-    const chunk = await reader.read();
-    if (chunk.done) {
-      return offset === bytes.byteLength
-        ? bytes.buffer
-        : bytes.buffer.slice(0, offset);
-    }
-    if (offset + chunk.value.byteLength > declaredSize) {
-      await reader.cancel();
-      throw new Error("The document response exceeded its declared size.");
-    }
-    if (offset + chunk.value.byteLength > maxBytes) {
-      await reader.cancel();
-      throw documentTooLargeError(maxBytes);
-    }
-    bytes.set(chunk.value, offset);
-    offset += chunk.value.byteLength;
-  }
-}
-
-async function readUnknownLength(
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-  maxBytes: number,
-): Promise<ArrayBuffer> {
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const chunk = await reader.read();
-    if (chunk.done) break;
-    total += chunk.value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw documentTooLargeError(maxBytes);
-    }
-    chunks.push(chunk.value);
-  }
-
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes.buffer;
+  return url;
 }
 
 function documentTooLargeError(maxBytes: number): DocumentPreviewTooLargeError {
@@ -186,3 +121,4 @@ function documentTooLargeError(maxBytes: number): DocumentPreviewTooLargeError {
     `Document exceeds the ${Math.floor(maxBytes / (1024 * 1024))} MB preview limit.`,
   );
 }
+import { readSource, webSource } from "@baseblocks/anydoc/sources";
