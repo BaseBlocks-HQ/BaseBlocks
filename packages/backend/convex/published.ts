@@ -21,6 +21,8 @@ import {
   resolvePublishedSiteAccess,
 } from "./sharing";
 
+const MAX_PAGE_EXPORT_ASSETS = 64;
+
 async function readReleasePageContent(
   ctx: QueryCtx,
   page: Doc<"releasePages"> | null,
@@ -381,14 +383,26 @@ export const getPageExport = query({
     const revision = page.contentRevisionId
       ? await ctx.db.get(page.contentRevisionId)
       : null;
+    const imageIds = [...extractOpenEditorReferences(content).imageIds];
+    if (imageIds.length > MAX_PAGE_EXPORT_ASSETS) {
+      throw new Error(
+        `Page export exceeds the ${MAX_PAGE_EXPORT_ASSETS}-image limit`,
+      );
+    }
+    const revisionFileIds = new Set(revision?.fileIds ?? []);
+    const releaseImageIds = imageIds.filter((fileId) =>
+      revisionFileIds.has(fileId as Id<"files">),
+    );
     const assets = revision
       ? (
           await Promise.all(
-            revision.fileIds.map((fileId) =>
+            releaseImageIds.map((fileId) =>
               ctx.db
                 .query("releaseFiles")
                 .withIndex("by_release_file", (q) =>
-                  q.eq("releaseId", site.liveReleaseId!).eq("fileId", fileId),
+                  q
+                    .eq("releaseId", site.liveReleaseId!)
+                    .eq("fileId", fileId as Id<"files">),
                 )
                 .unique(),
             ),

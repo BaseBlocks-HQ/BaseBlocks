@@ -158,18 +158,20 @@ export const process = internalAction({
           maxEntries: 16,
           maxDepth: 8,
         },
-        resolveSource: async () => {
+        resolveSource: async (_descriptor, { signal }) => {
           const storage = getFiles();
           const metadata = await storage.head(claim.objectKey, {
-            timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
             retries: FILE_EXTRACTION_LIMITS.storageRetries,
+            signal,
+            timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
           });
           const failure = validateStoredSourceMetadata(claim, metadata);
           if (failure) throw new SourceValidationError(failure);
           const stored = await storage.download(claim.objectKey, {
             as: "stream",
-            timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
             retries: FILE_EXTRACTION_LIMITS.storageRetries,
+            signal,
+            timeout: FILE_EXTRACTION_LIMITS.storageTimeoutMs,
           });
           return iterableSource(() => stored.stream(), {
             contentType: claim.contentType,

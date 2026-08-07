@@ -3,6 +3,7 @@ import { getServerConvexClient } from "@/lib/convex/server";
 import { getFiles } from "@/lib/files/server";
 import {
   buildPageExportDocument,
+  assertStoredChecksum,
   createPageExportAssetResolver,
   createPageExportFilename,
   isPageExportFormat,
@@ -56,7 +57,10 @@ export async function GET(
       content: result.content,
     });
     const exportDeadline = Date.now() + EXPORT_ASSET_DEADLINE_MS;
-    const exportSignal = AbortSignal.timeout(EXPORT_ASSET_DEADLINE_MS);
+    const exportSignal = AbortSignal.any([
+      request.signal,
+      AbortSignal.timeout(EXPORT_ASSET_DEADLINE_MS),
+    ]);
 
     const assetResolver = createPageExportAssetResolver(
       result.assets,
@@ -64,8 +68,10 @@ export async function GET(
         const stored = await getFiles().download(asset.objectKey, {
           as: "stream",
           retries: 1,
+          signal: signal ?? exportSignal,
           timeout: EXPORT_ASSET_DEADLINE_MS,
         });
+        assertStoredChecksum(asset.checksum, stored.etag);
         return (
           await readSource(
             iterableSource(() => stored.stream(), {

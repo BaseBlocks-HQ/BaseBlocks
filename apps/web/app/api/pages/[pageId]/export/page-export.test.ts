@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  assertStoredChecksum,
   buildPageExportDocument,
   createPageExportAssetResolver,
   createPageExportFilename,
@@ -19,6 +20,19 @@ const sourceDocument = {
 };
 
 describe("BaseBlocks page export adapter", () => {
+  test("enforces snapshotted ETags while deferring SHA-256 to the byte reader", () => {
+    expect(() => assertStoredChecksum('"etag-1"', "etag-1")).not.toThrow();
+    expect(() =>
+      assertStoredChecksum(
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "provider-etag",
+      ),
+    ).not.toThrow();
+    expect(() => assertStoredChecksum("etag-1", "etag-2")).toThrow(
+      "does not match its release snapshot",
+    );
+  });
+
   test("exports the same OpenEditor document to every supported format", async () => {
     const document = buildPageExportDocument({
       content: sourceDocument,
