@@ -45,6 +45,8 @@ export function FilePreview({
   onClose: () => void;
 }) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [viewerToolbarTarget, setViewerToolbarTarget] =
+    useState<HTMLDivElement | null>(null);
 
   const fileUrl = file?.url;
 
@@ -94,9 +96,13 @@ export function FilePreview({
         onDownload={downloadEnabled ? () => downloadFile(file) : undefined}
         onOpenExternal={() => window.open(file.url, "_blank", "noopener")}
         onToggleFullscreen={() => setFullscreen((value) => !value)}
+        viewerToolbarRef={setViewerToolbarTarget}
       />
       <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
-        <FilePreviewContent file={file} />
+        <FilePreviewContent
+          file={file}
+          viewerToolbarTarget={viewerToolbarTarget}
+        />
       </main>
     </section>
   );
@@ -112,6 +118,7 @@ function PreviewToolbar({
   onDownload,
   onOpenExternal,
   onToggleFullscreen,
+  viewerToolbarRef,
 }: {
   file: PreviewFile;
   fullscreen: boolean;
@@ -120,12 +127,13 @@ function PreviewToolbar({
   onDownload?: () => void;
   onOpenExternal: () => void;
   onToggleFullscreen: () => void;
+  viewerToolbarRef: (node: HTMLDivElement | null) => void;
 }) {
   const t = useTranslations("libraries.viewer");
   return (
-    <header className="flex h-10 shrink-0 items-center gap-2 border-b bg-muted px-2 text-foreground shadow-sm">
+    <header className="flex h-10 shrink-0 items-center gap-1 overflow-hidden border-b bg-muted px-2 text-foreground shadow-sm sm:gap-2">
       {leadingActions}
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className="hidden min-w-16 max-w-sm flex-1 items-center gap-2 sm:flex">
         <FileIcon
           className="h-4 w-4 shrink-0 text-muted-foreground"
           contentType={file.contentType}
@@ -139,6 +147,10 @@ function PreviewToolbar({
           </span>
         ) : null}
       </div>
+      <div
+        className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        ref={viewerToolbarRef}
+      />
       <ToolbarButton label={t("openNewTab")} onClick={onOpenExternal}>
         <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
       </ToolbarButton>
@@ -182,7 +194,7 @@ export function ToolbarButton({
       type="button"
       aria-label={label}
       className={cn(
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40",
+        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40",
         className,
       )}
       disabled={disabled}
@@ -194,7 +206,13 @@ export function ToolbarButton({
   );
 }
 
-function FilePreviewContent({ file }: { file: PreviewFile }) {
+function FilePreviewContent({
+  file,
+  viewerToolbarTarget,
+}: {
+  file: PreviewFile;
+  viewerToolbarTarget: HTMLDivElement | null;
+}) {
   const t = useTranslations("libraries.viewer");
   if (resolveNativeDocumentFormat(file)) {
     return (
@@ -205,6 +223,7 @@ function FilePreviewContent({ file }: { file: PreviewFile }) {
           loading: t("loadingDocument"),
           tooLarge: t("documentTooLarge"),
         }}
+        toolbarTarget={viewerToolbarTarget}
       />
     );
   }

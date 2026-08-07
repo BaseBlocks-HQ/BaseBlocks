@@ -8,6 +8,9 @@ import type {
   PdfViewerProps,
   TextViewerProps,
 } from "@baseblocks/anydoc/react";
+import type { PresentationViewerControls } from "@baseblocks/anydoc/presentation";
+import type { ViewerControls } from "@baseblocks/anydoc/react";
+import type { SpreadsheetViewerControls } from "@baseblocks/anydoc/spreadsheet";
 import { Spinner } from "@baseblocks/ui/spinner";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -19,6 +22,11 @@ import {
   type NativeDocumentFormat,
   resolveNativeDocumentFormat,
 } from "./anydoc-preview";
+import {
+  DocumentViewerControlsPortal,
+  PresentationViewerControlsPortal,
+  SpreadsheetViewerControlsPortal,
+} from "./anydoc-viewer-controls";
 
 const PdfViewer = dynamic<PdfViewerProps>(
   () => import("@baseblocks/anydoc/react").then((module) => module.PdfViewer),
@@ -85,9 +93,11 @@ const DEFAULT_MESSAGES: AnyDocPreviewMessages = {
 export default function AnyDocPreview({
   file,
   messages: messageOverrides,
+  toolbarTarget,
 }: {
   file: PreviewFile;
   messages?: Partial<AnyDocPreviewMessages>;
+  toolbarTarget: HTMLDivElement | null;
 }) {
   const format = resolveNativeDocumentFormat(file);
   const messages: AnyDocPreviewMessages = {
@@ -112,6 +122,7 @@ export default function AnyDocPreview({
       format={format}
       key={`${file.url}:${file.size ?? "unknown"}:${format}`}
       messages={messages}
+      toolbarTarget={toolbarTarget}
     />
   );
 }
@@ -120,10 +131,12 @@ function DocumentLoadSession({
   file,
   format,
   messages,
+  toolbarTarget,
 }: {
   file: PreviewFile;
   format: NativeDocumentFormat;
   messages: AnyDocPreviewMessages;
+  toolbarTarget: HTMLDivElement | null;
 }) {
   const [state, setState] = useState<
     | { status: "loading" }
@@ -163,6 +176,7 @@ function DocumentLoadSession({
       filename={file.filename}
       format={format}
       source={state.source}
+      toolbarTarget={toolbarTarget}
     />
   );
 }
@@ -171,17 +185,23 @@ function NativeDocumentViewer({
   filename,
   format,
   source,
+  toolbarTarget,
 }: {
   filename: string;
   format: NativeDocumentFormat;
   source: ArrayBuffer;
+  toolbarTarget: HTMLDivElement | null;
 }) {
   const documentSource = getStableDocumentSource(source);
+  const renderDocumentControls = (controls: ViewerControls) => (
+    <DocumentViewerControlsPortal controls={controls} target={toolbarTarget} />
+  );
   if (format === "pdf") {
     return (
       <PdfViewer
         className="h-full min-h-0"
         maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
+        renderControls={renderDocumentControls}
         source={documentSource}
         title={filename}
       />
@@ -192,6 +212,7 @@ function NativeDocumentViewer({
       <DocxViewer
         className="h-full min-h-0"
         maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
+        renderControls={renderDocumentControls}
         source={documentSource}
         title={filename}
       />
@@ -202,6 +223,7 @@ function NativeDocumentViewer({
       <MarkdownViewer
         className="h-full min-h-0"
         maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
+        renderControls={renderDocumentControls}
         source={documentSource}
         title={filename}
       />
@@ -212,6 +234,7 @@ function NativeDocumentViewer({
       <TextViewer
         className="h-full min-h-0"
         maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
+        renderControls={renderDocumentControls}
         source={documentSource}
         title={filename}
       />
@@ -225,11 +248,30 @@ function NativeDocumentViewer({
             window.open(link.url, "_blank", "noopener,noreferrer");
           }
         }}
+        renderControls={(controls: PresentationViewerControls) => (
+          <div aria-hidden="true" className="h-0 min-h-0 overflow-hidden">
+            <PresentationViewerControlsPortal
+              controls={controls}
+              target={toolbarTarget}
+            />
+          </div>
+        )}
         source={source}
       />
     );
   }
-  return <SpreadsheetViewer format={format} source={source} />;
+  return (
+    <SpreadsheetViewer
+      format={format}
+      renderControls={(controls: SpreadsheetViewerControls) => (
+        <SpreadsheetViewerControlsPortal
+          controls={controls}
+          target={toolbarTarget}
+        />
+      )}
+      source={source}
+    />
+  );
 }
 
 function PreviewStatus({ message }: { message: string }) {
