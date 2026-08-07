@@ -189,10 +189,15 @@ function PublishDialogSession({
     );
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && publishing) return;
+    onOpenChange(nextOpen);
+  };
+
   return (
     <Dialog
       open={open && publicationStatus?.status !== "complete"}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
     >
       <DialogContent
         className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-lg [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
