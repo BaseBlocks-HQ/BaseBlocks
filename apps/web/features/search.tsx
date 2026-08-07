@@ -310,6 +310,7 @@ export function SearchBox({
                             onClick={() => handleResultClick(result)}
                             size="icon"
                             title="Preview"
+                            type="button"
                             variant="ghost"
                           >
                             <HugeiconsIcon
@@ -330,6 +331,7 @@ export function SearchBox({
                               }
                               size="icon"
                               title="Download"
+                              type="button"
                               variant="ghost"
                             >
                               <HugeiconsIcon

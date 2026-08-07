@@ -227,6 +227,60 @@ describe("draft restore phase recovery", () => {
     ]);
   });
 
+  test("preflight rejects a revision whose content payload is missing", async () => {
+    const restore = {
+      ...activeRestore,
+      status: "validating" as const,
+      phase: "validatePages" as const,
+      cursor: undefined,
+      attempt: 0,
+    };
+    const site = {
+      _id: restore.siteId,
+      activeDraftRestoreId: restore._id,
+      draftRevision: restore.baseDraftRevision,
+    };
+    const snapshot = {
+      pageId: "page-1",
+      contentRevisionId: "revision-1",
+    };
+    const revision = {
+      _id: snapshot.contentRevisionId,
+      siteId: restore.siteId,
+      payloadId: "missing-payload",
+    };
+    const ctx = {
+      db: {
+        get: async (id: string) => {
+          if (id === restore._id) return restore;
+          if (id === site._id) return site;
+          if (id === snapshot.pageId)
+            return { _id: id, siteId: restore.siteId };
+          if (id === revision._id) return revision;
+          return null;
+        },
+        query: () => ({
+          withIndex: () => ({
+            paginate: async () => ({
+              page: [snapshot],
+              isDone: true,
+              continueCursor: "",
+            }),
+          }),
+        }),
+      },
+    };
+
+    await expect(
+      invoke(applyBatch, ctx, {
+        restoreId: restore._id,
+        token: restore.token,
+        phase: restore.phase,
+        attempt: restore.attempt,
+      }),
+    ).rejects.toThrow("content payload is missing");
+  });
+
   test("post-application exhaustion pauses and retains the lock", async () => {
     const restore = { ...activeRestore, attempt: 4 };
     const patches: Array<[string, Record<string, unknown>]> = [];

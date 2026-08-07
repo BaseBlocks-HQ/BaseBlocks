@@ -10,6 +10,7 @@ import { deleteFileRows } from "./files";
 import { reconcileRestoredFile } from "./fileExtraction";
 import { removePageContentIndex, indexPageContent } from "./search";
 import { synchronizeParentDocument } from "./model/pageHierarchy";
+import { parseOpenEditorDocument } from "./pageContentFormat";
 
 const SMALL_BATCH = 6;
 const METADATA_BATCH = 20;
@@ -171,6 +172,11 @@ async function validatePages(
       if (!revision || revision.siteId !== restore.siteId) {
         throw new Error("Historical page content is missing");
       }
+      const payload = await ctx.db.get(revision.payloadId);
+      if (!payload || payload.siteId !== restore.siteId) {
+        throw new Error("Historical page content payload is missing");
+      }
+      parseOpenEditorDocument(payload.content);
     }
   }
   await continuePage(ctx, restore, "validatePages", page);
@@ -354,6 +360,10 @@ async function restorePages(
     } else if (document) {
       await ctx.db.delete(document._id);
     }
+    // Fence any coalesced index job created by the draft that is being
+    // replaced. Otherwise its delayed flush can overwrite this restored
+    // entry with content from the pre-restore revision.
+    await removePageContentIndex(ctx, snapshot.pageId);
     await indexPageContent(ctx, snapshot.pageId);
   }
   await continuePage(ctx, restore, "restorePages", page);
