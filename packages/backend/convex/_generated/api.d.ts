@@ -17,6 +17,7 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as deploymentPreflight from "../deploymentPreflight.js";
 import type * as draftRestore from "../draftRestore.js";
+import type * as draftRestores from "../draftRestores.js";
 import type * as editorWorkspace from "../editorWorkspace.js";
 import type * as fileExtraction from "../fileExtraction.js";
 import type * as fileExtractionAction from "../fileExtractionAction.js";
@@ -36,7 +37,6 @@ import type * as model_aiChangesetRevert from "../model/aiChangesetRevert.js";
 import type * as model_aiRunPolicy from "../model/aiRunPolicy.js";
 import type * as model_aiWorkspaceBounds from "../model/aiWorkspaceBounds.js";
 import type * as model_aiWorkspaceFingerprint from "../model/aiWorkspaceFingerprint.js";
-import type * as model_anyDocAdapter from "../model/anyDocAdapter.js";
 import type * as model_contentObjects from "../model/contentObjects.js";
 import type * as model_draft from "../model/draft.js";
 import type * as model_draftChanges from "../model/draftChanges.js";
@@ -49,6 +49,7 @@ import type * as model_publishedRelease from "../model/publishedRelease.js";
 import type * as model_releaseChangeDetails from "../model/releaseChangeDetails.js";
 import type * as model_releaseChanges from "../model/releaseChanges.js";
 import type * as model_releaseDiff from "../model/releaseDiff.js";
+import type * as model_releaseOperations from "../model/releaseOperations.js";
 import type * as model_releaseState from "../model/releaseState.js";
 import type * as model_siteDeletion from "../model/siteDeletion.js";
 import type * as organizations from "../organizations.js";
@@ -65,7 +66,9 @@ import type * as siteDomains from "../siteDomains.js";
 import type * as sites from "../sites.js";
 import type * as validators_ai from "../validators/ai.js";
 import type * as validators_integrations from "../validators/integrations.js";
+import type * as validators_releases from "../validators/releases.js";
 import type * as validators_sites from "../validators/sites.js";
+import type * as workflows from "../workflows.js";
 
 import type {
   ApiFromModules,
@@ -83,6 +86,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   deploymentPreflight: typeof deploymentPreflight;
   draftRestore: typeof draftRestore;
+  draftRestores: typeof draftRestores;
   editorWorkspace: typeof editorWorkspace;
   fileExtraction: typeof fileExtraction;
   fileExtractionAction: typeof fileExtractionAction;
@@ -102,7 +106,6 @@ declare const fullApi: ApiFromModules<{
   "model/aiRunPolicy": typeof model_aiRunPolicy;
   "model/aiWorkspaceBounds": typeof model_aiWorkspaceBounds;
   "model/aiWorkspaceFingerprint": typeof model_aiWorkspaceFingerprint;
-  "model/anyDocAdapter": typeof model_anyDocAdapter;
   "model/contentObjects": typeof model_contentObjects;
   "model/draft": typeof model_draft;
   "model/draftChanges": typeof model_draftChanges;
@@ -115,6 +118,7 @@ declare const fullApi: ApiFromModules<{
   "model/releaseChangeDetails": typeof model_releaseChangeDetails;
   "model/releaseChanges": typeof model_releaseChanges;
   "model/releaseDiff": typeof model_releaseDiff;
+  "model/releaseOperations": typeof model_releaseOperations;
   "model/releaseState": typeof model_releaseState;
   "model/siteDeletion": typeof model_siteDeletion;
   organizations: typeof organizations;
@@ -131,7 +135,9 @@ declare const fullApi: ApiFromModules<{
   sites: typeof sites;
   "validators/ai": typeof validators_ai;
   "validators/integrations": typeof validators_integrations;
+  "validators/releases": typeof validators_releases;
   "validators/sites": typeof validators_sites;
+  workflows: typeof workflows;
 }>;
 
 /**
@@ -162,4 +168,6 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("../authComponent/_generated/component.js").ComponentApi<"betterAuth">;
+  workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
+  anydoc: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"anydoc">;
 };

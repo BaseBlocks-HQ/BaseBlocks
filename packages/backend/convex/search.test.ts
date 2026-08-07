@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { mergeSearchMatches, normalizeSearchLimit } from "./search";
+import {
+  extractSearchExcerpt,
+  mergeSearchMatches,
+  normalizeSearchLimit,
+} from "./search";
 
 type SearchDoc = {
   _id: string;
@@ -11,7 +15,6 @@ function merge(titleResults: SearchDoc[], contentResults: SearchDoc[]) {
     titleResults,
     contentResults,
     limit: 20,
-    format: (doc, matchType) => ({ id: doc._id, matchType }),
   });
 }
 
@@ -19,15 +22,39 @@ describe("search result classification", () => {
   test("a duplicated filename hit is classified as a title match", () => {
     const file = { _id: "report", kind: "file" } as const;
 
-    expect(merge([file], [file])).toEqual([
-      { id: "report", matchType: "title" },
-    ]);
+    expect(merge([file], [file])).toEqual([{ doc: file, match: "title" }]);
   });
 
   test("a term found only in document text remains a content match", () => {
     const file = { _id: "report", kind: "file" } as const;
 
-    expect(merge([], [file])).toEqual([{ id: "report", matchType: "content" }]);
+    expect(merge([], [file])).toEqual([{ doc: file, match: "content" }]);
+  });
+});
+
+describe("search excerpts", () => {
+  test("returns highlight offsets for a case-insensitive match", () => {
+    expect(
+      extractSearchExcerpt("A quarterly Revenue report", "revenue"),
+    ).toEqual({
+      text: "A quarterly Revenue report",
+      matchStart: 12,
+      matchEnd: 19,
+    });
+  });
+
+  test("adds ellipses without shifting the highlighted text", () => {
+    expect(
+      extractSearchExcerpt("0123456789matchabcdefghij", "match", 3),
+    ).toEqual({
+      text: "…789matchabc…",
+      matchStart: 4,
+      matchEnd: 9,
+    });
+  });
+
+  test("returns null when content does not match", () => {
+    expect(extractSearchExcerpt("document", "missing")).toBeNull();
   });
 });
 

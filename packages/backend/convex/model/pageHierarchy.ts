@@ -43,7 +43,6 @@ export async function synchronizeParentDocument(
     ctx as GenericMutationCtx<DataModel>,
     parentId,
     result.revisionId,
-    result.contentHash,
   );
   return true;
 }

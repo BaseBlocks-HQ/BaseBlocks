@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import {
-  draftChangeMatchesPublication,
-  handleBatchFailure,
-  publicationBatchMatches,
-} from "./releasePublication";
-import { makeLive } from "./releases";
+import { draftChangeMatchesPublication } from "./releasePublication";
+import { makeLive, publish } from "./releases";
 
 type RegisteredFunction = {
   _handler: (ctx: unknown, args: unknown) => Promise<unknown>;
@@ -14,90 +10,7 @@ function invoke(fn: unknown, ctx: unknown, args: unknown): Promise<unknown> {
   return (fn as RegisteredFunction)._handler(ctx, args);
 }
 
-const activePublication = {
-  _id: "release-1",
-  publicationStatus: "building" as const,
-  publicationToken: "token-1",
-  publicationPhase: "pages" as const,
-  publicationCursor: "cursor-1",
-  publicationAttempt: 1,
-};
-
 describe("release publication fencing", () => {
-  test("rejects stale token, phase, cursor, attempt, and terminal state", () => {
-    const current = {
-      token: activePublication.publicationToken,
-      phase: activePublication.publicationPhase,
-      cursor: activePublication.publicationCursor,
-      attempt: activePublication.publicationAttempt,
-    };
-
-    expect(publicationBatchMatches(activePublication, current)).toBe(true);
-    expect(
-      publicationBatchMatches(activePublication, {
-        ...current,
-        token: "stale",
-      }),
-    ).toBe(false);
-    expect(
-      publicationBatchMatches(activePublication, {
-        ...current,
-        phase: "libraries",
-      }),
-    ).toBe(false);
-    expect(
-      publicationBatchMatches(activePublication, {
-        ...current,
-        cursor: "stale",
-      }),
-    ).toBe(false);
-    expect(
-      publicationBatchMatches(activePublication, { ...current, attempt: 0 }),
-    ).toBe(false);
-    expect(
-      publicationBatchMatches(
-        { ...activePublication, publicationStatus: "complete" },
-        current,
-      ),
-    ).toBe(false);
-  });
-
-  test("a current failure advances the persisted attempt exactly once", async () => {
-    const patches: Array<Record<string, unknown>> = [];
-    const scheduled: Array<Record<string, unknown>> = [];
-    const ctx = {
-      db: {
-        get: async () => activePublication,
-        patch: async (_id: string, value: Record<string, unknown>) => {
-          patches.push(value);
-        },
-      },
-      scheduler: {
-        runAfter: async (
-          _delay: number,
-          _function: unknown,
-          args: Record<string, unknown>,
-        ) => {
-          scheduled.push(args);
-        },
-      },
-    };
-
-    await invoke(handleBatchFailure, ctx, {
-      releaseId: activePublication._id,
-      token: activePublication.publicationToken,
-      phase: activePublication.publicationPhase,
-      cursor: activePublication.publicationCursor,
-      attempt: activePublication.publicationAttempt,
-      failure: "transient",
-    });
-
-    expect(patches).toEqual([
-      expect.objectContaining({ publicationAttempt: 2 }),
-    ]);
-    expect(scheduled).toEqual([expect.objectContaining({ attempt: 2 })]);
-  });
-
   test("authorization runs before publication state is disclosed", async () => {
     let permissionChecks = 0;
     const release = {
@@ -123,6 +36,94 @@ describe("release publication fencing", () => {
       invoke(makeLive, ctx, { releaseId: release._id }),
     ).rejects.not.toThrow("Release publication is not complete");
     expect(permissionChecks).toBe(1);
+  });
+
+  test("promotes an existing complete release without waiting for extraction", async () => {
+    const release = {
+      _id: "release-1",
+      siteId: "site-1",
+      number: 3,
+      publicationStatus: "complete",
+    };
+    const site = {
+      _id: release.siteId,
+      organizationId: "organization-1",
+      draftRevision: 9,
+      draftBaseReleaseId: release._id,
+      liveReleaseId: undefined,
+    };
+    let queriedExtractions = false;
+    const ctx = {
+      auth: { getUserIdentity: async () => ({ subject: "user-1" }) },
+      runQuery: async () => ({
+        _id: "member-1",
+        organizationId: site.organizationId,
+        role: "owner",
+        userId: "user-1",
+      }),
+      db: {
+        get: async (id: string) => (id === site._id ? site : release),
+        query: (table: string) => {
+          if (table === "fileExtractions") queriedExtractions = true;
+          return {
+            withIndex: () => ({ first: async () => null }),
+          };
+        },
+        patch: async () => undefined,
+        insert: async () => "event-1",
+      },
+    };
+
+    expect(
+      await invoke(publish, ctx, {
+        siteId: site._id,
+        expectedDraftRevision: site.draftRevision,
+      }),
+    ).toEqual({ releaseId: release._id, number: release.number, reused: true });
+    expect(queriedExtractions).toBe(false);
+  });
+
+  test("rejects an in-flight publication with no workflow identity", async () => {
+    const release = {
+      _id: "release-1",
+      siteId: "site-1",
+      number: 3,
+      sourceDraftRevision: 9,
+      publicationStatus: "building",
+    };
+    const site = {
+      _id: release.siteId,
+      organizationId: "organization-1",
+      draftRevision: release.sourceDraftRevision,
+    };
+    let publicationQuery = 0;
+    const ctx = {
+      auth: { getUserIdentity: async () => ({ subject: "user-1" }) },
+      runQuery: async () => ({
+        _id: "member-1",
+        organizationId: site.organizationId,
+        role: "owner",
+        userId: "user-1",
+      }),
+      db: {
+        get: async () => site,
+        query: () => ({
+          withIndex: () => ({
+            first: async () => {
+              publicationQuery += 1;
+              return publicationQuery === 1 ? release : null;
+            },
+          }),
+        }),
+      },
+    };
+
+    await expect(
+      invoke(publish, ctx, {
+        siteId: site._id,
+        expectedDraftRevision: site.draftRevision,
+      }),
+    ).rejects.toThrow("workflow state is missing");
   });
 });
 

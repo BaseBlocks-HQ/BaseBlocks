@@ -35,7 +35,6 @@ interface EditorWorkspaceContextValue {
   restore: {
     _id: Id<"draftRestores">;
     status: Doc<"draftRestores">["status"] | "orphaned";
-    phase: string;
     failure?: string;
   } | null;
 }

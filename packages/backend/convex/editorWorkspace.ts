@@ -11,13 +11,11 @@ export function draftRestoreView(
     ? {
         _id: restore._id,
         status: restore.status,
-        phase: restore.phase,
         failure: restore.failure,
       }
     : {
         _id: restoreId,
         status: "orphaned" as const,
-        phase: "missing",
         failure:
           "The draft restore state is missing. The draft remains locked to avoid exposing partial data. Contact support to recover it.",
       };

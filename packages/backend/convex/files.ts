@@ -15,34 +15,21 @@ import {
 import { isPubliclyPublishedSite } from "./sharing";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { cancelFileExtraction, queueFileExtraction } from "./fileExtraction";
-import { buildFileSearchContent } from "./model/fileExtraction";
+import {
+  draftSearchScope,
+  removeSearchEntry,
+  upsertDraftFileSearch,
+} from "./search";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
-}
-
-function fileSearchMetadata(file: Doc<"files">) {
-  return {
-    fileId: file._id,
-    filename: file.filename,
-    fileContentType: file.contentType,
-    size: file.size,
-    libraryId: file.libraryId,
-    downloadUrl: buildFileUrl(file._id),
-  };
 }
 
 export async function deleteFileRows(
   ctx: MutationCtx,
   file: Doc<"files">,
 ): Promise<void> {
-  const searchEntry = await ctx.db
-    .query("searchEntries")
-    .withIndex("by_source", (q) =>
-      q.eq("kind", "file").eq("sourceId", file._id),
-    )
-    .first();
-  if (searchEntry) await ctx.db.delete(searchEntry._id);
+  await removeSearchEntry(ctx, draftSearchScope(file.siteId), "file", file._id);
   await cancelFileExtraction(ctx, file._id);
   await ctx.db.patch(file._id, { deletedAt: Date.now() });
 }
@@ -227,7 +214,6 @@ async function createUploadedFile(
     checksum?: string;
     libraryId?: Id<"documentLibraries">;
     folderId?: Id<"documentFolders">;
-    audience: "private" | "public";
   },
 ) {
   const createdAt = Date.now();
@@ -267,25 +253,11 @@ async function createUploadedFile(
     uploadedBy: args.uploadedBy,
     createdAt,
   });
-  await ctx.db.insert("searchEntries", {
-    siteId: args.siteId,
-    kind: "file",
-    audience: args.audience,
-    sourceId: fileId,
-    title: args.filename,
-    text: "",
-    fileMetadata: {
-      fileId,
-      filename: args.filename,
-      fileContentType: args.contentType,
-      size: args.size,
-      libraryId: args.libraryId,
-      downloadUrl: buildFileUrl(fileId),
-    },
-    updatedAt: createdAt,
-  });
   const file = await ctx.db.get(fileId);
-  if (file) await queueFileExtraction(ctx, file);
+  if (file) {
+    await upsertDraftFileSearch(ctx, file, "");
+    await queueFileExtraction(ctx, file);
+  }
   await touchSiteDraft(ctx, args.siteId, createdAt, [
     { entityType: "file", entityId: fileId },
   ]);
@@ -336,7 +308,6 @@ export const create = mutation({
       ...args,
       contentType,
       uploadedBy: auth.userId,
-      audience: "private",
     });
   },
 });
@@ -358,26 +329,15 @@ export const rename = mutation({
     await touchSiteDraft(ctx, file.siteId, Date.now(), [
       { entityType: "file", entityId: fileId },
     ]);
-    const entry = await ctx.db
-      .query("searchEntries")
-      .withIndex("by_source", (q) =>
-        q.eq("kind", "file").eq("sourceId", fileId),
-      )
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", fileId))
       .first();
-    if (entry) {
-      const extraction = await ctx.db
-        .query("fileExtractions")
-        .withIndex("by_file", (q) => q.eq("fileId", fileId))
-        .first();
-      await ctx.db.patch(entry._id, {
-        title: filename,
-        text: buildFileSearchContent(
-          extraction?.status === "ready" ? extraction.extractedText : undefined,
-        ),
-        fileMetadata: fileSearchMetadata({ ...file, filename }),
-        updatedAt: Date.now(),
-      });
-    }
+    await upsertDraftFileSearch(
+      ctx,
+      { ...file, filename },
+      extraction?.status === "ready" ? (extraction.extractedText ?? "") : "",
+    );
     return fileId;
   },
 });

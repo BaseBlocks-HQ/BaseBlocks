@@ -688,12 +688,7 @@ export const apply = mutation({
         });
         contentHashes.push({ pageId, contentHash: result.contentHash });
         if (result.changed && result.revisionId) {
-          await queuePageContentIndex(
-            ctx,
-            pageId,
-            result.revisionId,
-            result.contentHash,
-          );
+          await queuePageContentIndex(ctx, pageId, result.revisionId);
         }
       } else if (page.metadataChanged && page.state === "existing") {
         await indexPageContent(ctx, pageId);

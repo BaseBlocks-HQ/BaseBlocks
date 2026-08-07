@@ -6,7 +6,6 @@ import {
   extractionRetryInvalidatesDraft,
   isPublicationInFlight,
   publicationActionForTarget,
-  publicationFailureOutcome,
 } from "./releaseState";
 
 describe("release promotion", () => {
@@ -24,19 +23,11 @@ describe("release promotion", () => {
 });
 
 describe("release publication state machine", () => {
-  test("treats build, abort cleanup, and draft cleanup as nonterminal", () => {
+  test("treats snapshot building and draft cleanup as nonterminal", () => {
     expect(isPublicationInFlight("building")).toBe(true);
-    expect(isPublicationInFlight("aborting")).toBe(true);
     expect(isPublicationInFlight("clearing")).toBe(true);
     expect(isPublicationInFlight("complete")).toBe(false);
     expect(isPublicationInFlight("failed")).toBe(false);
-  });
-
-  test("aborts a repeatedly failing build but keeps cleanup retryable", () => {
-    expect(publicationFailureOutcome("building", 2, 3)).toBe("retry");
-    expect(publicationFailureOutcome("building", 3, 3)).toBe("abort");
-    expect(publicationFailureOutcome("aborting", 3, 3)).toBe("retry");
-    expect(publicationFailureOutcome("clearing", 3, 3)).toBe("retry");
   });
 
   test("blocks only while document extraction is incomplete", () => {

@@ -195,19 +195,9 @@ export const getPageMetadata = query({
     if (!context) return null;
     const resolved = await resolveReleasePage(ctx, context.release, path);
     if (!resolved) return null;
-    const searchEntry = await ctx.db
-      .query("releaseSearchEntries")
-      .withIndex("by_release_kind_source", (q) =>
-        q
-          .eq("releaseId", releaseId)
-          .eq("kind", "page")
-          .eq("sourceId", resolved.page.pageId),
-      )
-      .unique();
-
     return {
       title: resolved.page.title,
-      descriptionText: searchEntry?.text ?? resolved.page.title,
+      descriptionText: resolved.page.descriptionText || resolved.page.title,
       canonicalPath: canonicalPagePath(context.release, resolved),
       updatedAt: resolved.page.updatedAt,
     };

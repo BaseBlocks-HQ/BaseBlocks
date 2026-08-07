@@ -71,12 +71,7 @@ async function indexRenamedPage(
     .withIndex("by_page", (q) => q.eq("pageId", page._id))
     .unique();
   if (document?.revisionId) {
-    await queuePageContentIndex(
-      ctx,
-      page._id,
-      document.revisionId,
-      document.contentHash,
-    );
+    await queuePageContentIndex(ctx, page._id, document.revisionId);
   } else {
     await indexPageContent(ctx, page._id);
   }

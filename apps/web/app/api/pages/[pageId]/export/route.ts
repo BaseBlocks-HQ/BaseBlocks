@@ -1,23 +1,26 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import { getFiles } from "@/lib/files/server";
-import {
-  buildPageExportDocument,
-  assertStoredChecksum,
-  createPageExportAssetResolver,
-  createPageExportFilename,
-  isPageExportFormat,
-  PageExportAssetError,
-  renderPageExport,
-} from "./page-export";
+import { assertStoredChecksum, type PageExportAsset } from "./page-export";
 import { iterableSource, readSource } from "@baseblocks/anydoc/sources";
 import { api } from "@baseblocks/backend";
+import { isOpenEditorDocument } from "@openeditor/core";
+import {
+  createOpenEditorImageAssetResolver,
+  exportOpenEditorDocument,
+  openEditorExportFormats,
+} from "@openeditor/exporters/export";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 const MAX_EXPORT_ASSET_BYTES = 10 * 1024 * 1024;
 const EXPORT_ASSET_DEADLINE_MS = 45_000;
+const ASSET_FAILURE_CODES = new Set([
+  "asset_rejected",
+  "asset_unavailable",
+  "unsafe_url",
+]);
 
 function expectedSha256(checksum: string | undefined): string | undefined {
   return checksum && /^[a-f\d]{64}$/iu.test(checksum)
@@ -32,8 +35,11 @@ export async function GET(
   try {
     const { pageId } = await context.params;
     const requestedFormat = request.nextUrl.searchParams.get("format");
+    const format = openEditorExportFormats.find(
+      (candidate) => candidate === requestedFormat,
+    );
 
-    if (!isPageExportFormat(requestedFormat)) {
+    if (!format) {
       return NextResponse.json(
         { error: "Unsupported export format" },
         { status: 400 },
@@ -52,19 +58,22 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const exportDocument = buildPageExportDocument({
-      pageTitle: result.page.title,
-      content: result.content,
-    });
+    if (!isOpenEditorDocument(result.content)) {
+      throw new TypeError("Page content is not a valid OpenEditor document");
+    }
+    const title = result.page.title.trim() || "Untitled page";
     const exportDeadline = Date.now() + EXPORT_ASSET_DEADLINE_MS;
     const exportSignal = AbortSignal.any([
       request.signal,
       AbortSignal.timeout(EXPORT_ASSET_DEADLINE_MS),
     ]);
 
-    const assetResolver = createPageExportAssetResolver(
-      result.assets,
-      async (asset, signal) => {
+    const assetsById = new Map<string, PageExportAsset>(
+      result.assets.map((asset: PageExportAsset) => [asset.fileId, asset]),
+    );
+    const assetResolver = createOpenEditorImageAssetResolver({
+      lookup: (imageId) => assetsById.get(imageId) ?? null,
+      load: async (asset, { signal }) => {
         const stored = await getFiles().download(asset.objectKey, {
           as: "stream",
           retries: 1,
@@ -72,7 +81,7 @@ export async function GET(
           timeout: EXPORT_ASSET_DEADLINE_MS,
         });
         assertStoredChecksum(asset.checksum, stored.etag);
-        return (
+        const data = (
           await readSource(
             iterableSource(() => stored.stream(), {
               contentType: asset.contentType,
@@ -89,25 +98,37 @@ export async function GET(
             },
           )
         ).bytes;
+        return {
+          data,
+          fileName: asset.filename,
+          mediaType: asset.contentType,
+        };
       },
-    );
-    const exported = await renderPageExport(exportDocument, requestedFormat, {
-      assetResolver,
-      signal: exportSignal,
     });
+    const exported = await exportOpenEditorDocument(result.content, {
+      format,
+      includeTitle: true,
+      resolveAsset: assetResolver,
+      signal: exportSignal,
+      title,
+    });
+    if (
+      exported.warnings.some((warning) => ASSET_FAILURE_CODES.has(warning.code))
+    ) {
+      return NextResponse.json(
+        { error: "One or more page images could not be exported safely." },
+        { status: 422 },
+      );
+    }
     const body =
       typeof exported.data === "string"
         ? new TextEncoder().encode(exported.data)
         : exported.data;
-    const filename = createPageExportFilename({
-      extension: exported.extension,
-      title: exportDocument.title,
-    });
 
     return new NextResponse(new Uint8Array(body), {
       headers: {
         "Cache-Control": "private, no-store",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(exported.filename)}`,
         "Content-Length": String(body.byteLength),
         "Content-Type": exported.mediaType,
       },
@@ -117,7 +138,7 @@ export async function GET(
       {
         error: error instanceof Error ? error.message : "Failed to export page",
       },
-      { status: error instanceof PageExportAssetError ? 422 : 500 },
+      { status: 500 },
     );
   }
 }

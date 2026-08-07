@@ -117,10 +117,6 @@ export async function deleteSiteData(
         .withIndex("by_release", (q) => q.eq("releaseId", release._id))
         .collect(),
       ctx.db
-        .query("releaseSearchEntries")
-        .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-        .collect(),
-      ctx.db
         .query("releaseChanges")
         .withIndex("by_release", (q) => q.eq("releaseId", release._id))
         .collect(),
@@ -135,14 +131,6 @@ export async function deleteSiteData(
       .collect(),
     ctx.db
       .query("searchEntries")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect(),
-    ctx.db
-      .query("pageSearchJobs")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .collect(),
-    ctx.db
-      .query("fileExtractionJobs")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),
     ctx.db

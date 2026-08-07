@@ -1,17 +1,33 @@
 import { ConvexError, v } from "convex/values";
+import {
+  getStatus,
+  restart,
+  start,
+  type WorkflowId,
+} from "@convex-dev/workflow";
 import { internal } from "./_generated/api";
+import { components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import {
   extractionBlocksPublication,
   isPublicationInFlight,
-  publicationActionForTarget,
 } from "./model/releaseState";
+import {
+  findActivePublication,
+  promoteRelease,
+} from "./model/releaseOperations";
 import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
 import { assertDraftReadable } from "./model/draft";
+import {
+  releaseChangeType,
+  releaseEntityType,
+  releaseSummary,
+  releaseSummaryValidator,
+} from "./validators/releases";
 
 async function requireSiteForMember(
   ctx: Parameters<typeof isOrganizationMember>[0],
@@ -24,15 +40,20 @@ async function requireSiteForMember(
   return site;
 }
 
-const nonterminalPublicationStatuses = [
-  "building",
-  "clearing",
-  "aborting",
-] as const;
-
 export const getDraftSummary = query({
   args: { siteId: v.id("sites") },
-  returns: v.any(),
+  returns: v.union(
+    v.null(),
+    v.object({
+      draftRevision: v.number(),
+      liveRelease: v.union(
+        v.null(),
+        v.object({ _id: v.id("siteReleases"), number: v.number() }),
+      ),
+      nextReleaseNumber: v.number(),
+      hasUnpublishedChanges: v.boolean(),
+    }),
+  ),
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return null;
@@ -41,8 +62,10 @@ export const getDraftSummary = query({
       : null;
     return {
       draftRevision: site.draftRevision,
-      liveRelease,
-      nextReleaseNumber: site.nextReleaseNumber ?? 1,
+      liveRelease: liveRelease
+        ? { _id: liveRelease._id, number: liveRelease.number }
+        : null,
+      nextReleaseNumber: site.nextReleaseNumber,
       hasUnpublishedChanges:
         Boolean(site.activeDraftRestoreId) ||
         (await ctx.db
@@ -56,7 +79,18 @@ export const getDraftSummary = query({
 
 export const getDraftChanges = query({
   args: { siteId: v.id("sites") },
-  returns: v.any(),
+  returns: v.union(
+    v.null(),
+    v.array(
+      v.object({
+        entityType: releaseEntityType,
+        entityId: v.string(),
+        changeType: releaseChangeType,
+        label: v.string(),
+        details: v.array(v.string()),
+      }),
+    ),
+  ),
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return null;
@@ -71,15 +105,21 @@ export const getDraftChanges = query({
     ) {
       return [
         {
-          entityType: "site",
+          entityType: "site" as const,
           entityId: siteId,
-          changeType: "updated",
+          changeType: "updated" as const,
           label: "Published version",
           details: ["Draft and live version differ"],
         },
       ];
     }
-    return changes;
+    return changes.map((change) => ({
+      entityType: change.entityType,
+      entityId: change.entityId,
+      changeType: change.changeType,
+      label: change.label,
+      details: change.details,
+    }));
   },
 });
 
@@ -90,7 +130,6 @@ export const getPublicationStatus = query({
     v.object({
       status: v.union(
         v.literal("building"),
-        v.literal("aborting"),
         v.literal("clearing"),
         v.literal("complete"),
         v.literal("failed"),
@@ -103,6 +142,28 @@ export const getPublicationStatus = query({
     if (!release || !(await requireSiteForMember(ctx, release.siteId))) {
       return null;
     }
+    if (
+      isPublicationInFlight(release.publicationStatus) &&
+      !release.publicationWorkflowId
+    ) {
+      return {
+        status: "failed" as const,
+        failure: "Publication workflow state is missing",
+      };
+    }
+    if (
+      isPublicationInFlight(release.publicationStatus) &&
+      release.publicationWorkflowId
+    ) {
+      const workflowStatus = await getStatus(
+        ctx,
+        components.workflow,
+        release.publicationWorkflowId as WorkflowId,
+      );
+      if (workflowStatus.type === "failed") {
+        return { status: "failed" as const, failure: workflowStatus.error };
+      }
+    }
     return {
       status: release.publicationStatus,
       failure: release.publicationFailure,
@@ -112,27 +173,52 @@ export const getPublicationStatus = query({
 
 export const list = query({
   args: { siteId: v.id("sites") },
-  returns: v.any(),
+  returns: v.array(releaseSummaryValidator),
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return [];
     const releases = await ctx.db
       .query("siteReleases")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .withIndex("by_site_publication_status", (q) =>
+        q.eq("siteId", siteId).eq("publicationStatus", "complete"),
+      )
       .order("desc")
       .collect();
-    return releases
-      .filter((release) => release.publicationStatus === "complete")
-      .map((release) => ({
-        ...release,
-        isLive: release._id === site.liveReleaseId,
-      }));
+    return releases.map((release) =>
+      releaseSummary(release, site.liveReleaseId),
+    );
   },
 });
 
 export const get = query({
   args: { releaseId: v.id("siteReleases") },
-  returns: v.any(),
+  returns: v.union(
+    v.null(),
+    v.object({
+      release: releaseSummaryValidator,
+      changes: v.array(
+        v.object({
+          entityType: releaseEntityType,
+          entityId: v.string(),
+          changeType: releaseChangeType,
+          label: v.string(),
+          fields: v.array(
+            v.object({
+              label: v.string(),
+              before: v.optional(v.string()),
+              after: v.optional(v.string()),
+            }),
+          ),
+          content: v.optional(
+            v.object({
+              beforeLines: v.array(v.string()),
+              afterLines: v.array(v.string()),
+            }),
+          ),
+        }),
+      ),
+    }),
+  ),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
     if (release?.publicationStatus !== "complete") {
@@ -145,7 +231,7 @@ export const get = query({
       .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
       .collect();
     return {
-      release: { ...release, isLive: site.liveReleaseId === releaseId },
+      release: releaseSummary(release, site.liveReleaseId),
       changes: changes.map((change) => ({
         entityType: change.entityType,
         entityId: change.entityId,
@@ -188,25 +274,33 @@ export const publish = mutation({
       );
     }
 
-    const activePublications = await Promise.all(
-      nonterminalPublicationStatuses.map((status) =>
-        ctx.db
-          .query("siteReleases")
-          .withIndex("by_site_publication_status", (q) =>
-            q.eq("siteId", siteId).eq("publicationStatus", status),
-          )
-          .first(),
-      ),
-    );
-    const activePublication = activePublications.find(Boolean);
+    const activePublication = await findActivePublication(ctx, siteId);
     if (
       activePublication &&
       isPublicationInFlight(activePublication.publicationStatus)
     ) {
-      if (
-        activePublication.publicationStatus === "building" &&
-        activePublication.sourceDraftRevision === draftRevision
-      ) {
+      if (!activePublication.publicationWorkflowId) {
+        throw new ConvexError("Publication workflow state is missing");
+      }
+      const workflowStatus = await getStatus(
+        ctx,
+        components.workflow,
+        activePublication.publicationWorkflowId as WorkflowId,
+      );
+      if (workflowStatus.type === "failed") {
+        await restart(
+          ctx,
+          components.workflow,
+          activePublication.publicationWorkflowId as WorkflowId,
+          { startAsync: true },
+        );
+        if (activePublication.sourceDraftRevision !== draftRevision) {
+          throw new ConvexError(
+            "A previous publication recovery was restarted. Try publishing the latest draft again shortly.",
+          );
+        }
+      }
+      if (activePublication.sourceDraftRevision === draftRevision) {
         return {
           releaseId: activePublication._id,
           number: activePublication.number,
@@ -216,6 +310,33 @@ export const publish = mutation({
       throw new ConvexError(
         "A previous publication is still finishing. Try again shortly.",
       );
+    }
+
+    const matchingRelease = site.draftBaseReleaseId
+      ? await ctx.db.get(site.draftBaseReleaseId)
+      : null;
+    const pendingChange = await ctx.db
+      .query("draftChanges")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .first();
+    if (
+      matchingRelease &&
+      matchingRelease.publicationStatus === "complete" &&
+      !pendingChange
+    ) {
+      if (site.liveReleaseId === matchingRelease._id) {
+        throw new ConvexError("This draft is already live");
+      }
+      await promoteRelease(ctx, site, matchingRelease, auth.userId);
+      return {
+        releaseId: matchingRelease._id,
+        number: matchingRelease.number,
+        reused: true,
+      };
+    }
+
+    if (site.liveReleaseId && !pendingChange) {
+      throw new ConvexError("There are no unpublished changes");
     }
 
     const [queuedExtraction, processingExtraction] = await Promise.all([
@@ -243,51 +364,6 @@ export const publish = mutation({
       );
     }
 
-    const matchingRelease = site.draftBaseReleaseId
-      ? await ctx.db.get(site.draftBaseReleaseId)
-      : null;
-    const pendingChange = await ctx.db
-      .query("draftChanges")
-      .withIndex("by_site", (q) => q.eq("siteId", siteId))
-      .first();
-    if (
-      matchingRelease &&
-      matchingRelease.publicationStatus === "complete" &&
-      !pendingChange
-    ) {
-      if (site.liveReleaseId === matchingRelease._id) {
-        throw new ConvexError("This draft is already live");
-      }
-      const currentRelease = site.liveReleaseId
-        ? await ctx.db.get(site.liveReleaseId)
-        : null;
-      const now = Date.now();
-      await ctx.db.patch(siteId, {
-        liveReleaseId: matchingRelease._id,
-        updatedAt: now,
-      });
-      await ctx.db.insert("publicationEvents", {
-        siteId,
-        action: publicationActionForTarget(
-          currentRelease?.number,
-          matchingRelease.number,
-        ),
-        fromReleaseId: site.liveReleaseId,
-        toReleaseId: matchingRelease._id,
-        actorId: auth.userId,
-        createdAt: now,
-      });
-      return {
-        releaseId: matchingRelease._id,
-        number: matchingRelease.number,
-        reused: true,
-      };
-    }
-
-    if (site.liveReleaseId && !pendingChange) {
-      throw new ConvexError("There are no unpublished changes");
-    }
-
     if (site.defaultPageId) {
       const defaultPage = await ctx.db.get(site.defaultPageId);
       if (
@@ -300,8 +376,7 @@ export const publish = mutation({
     }
 
     const now = Date.now();
-    const number = site.nextReleaseNumber ?? 1;
-    const publicationToken = crypto.randomUUID();
+    const number = site.nextReleaseNumber;
     const releaseId = await ctx.db.insert("siteReleases", {
       siteId,
       number,
@@ -316,21 +391,19 @@ export const publish = mutation({
       pageCount: 0,
       changeCount: 0,
       publicationStatus: "building",
-      publicationToken,
-      publicationPhase: "pages",
-      publicationAttempt: 0,
       publicationUpdatedAt: now,
     });
     await ctx.db.patch(siteId, {
       nextReleaseNumber: number + 1,
       updatedAt: now,
     });
-    await ctx.scheduler.runAfter(0, internal.releasePublication.processBatch, {
-      releaseId,
-      token: publicationToken,
-      phase: "pages",
-      attempt: 0,
-    });
+    const publicationWorkflowId = await start(
+      ctx,
+      internal.releasePublication.run,
+      { releaseId },
+      { startAsync: true },
+    );
+    await ctx.db.patch(releaseId, { publicationWorkflowId });
     return { releaseId, number, reused: false };
   },
 });
@@ -359,26 +432,7 @@ export const makeLive = mutation({
       );
     }
     if (site.liveReleaseId === releaseId) return null;
-    const currentRelease = site.liveReleaseId
-      ? await ctx.db.get(site.liveReleaseId)
-      : null;
-    const action = publicationActionForTarget(
-      currentRelease?.number,
-      release.number,
-    );
-    const now = Date.now();
-    await ctx.db.patch(site._id, {
-      liveReleaseId: releaseId,
-      updatedAt: now,
-    });
-    await ctx.db.insert("publicationEvents", {
-      siteId: site._id,
-      action,
-      fromReleaseId: site.liveReleaseId,
-      toReleaseId: releaseId,
-      actorId: auth.userId,
-      createdAt: now,
-    });
+    await promoteRelease(ctx, site, release, auth.userId);
     return null;
   },
 });
@@ -411,196 +465,6 @@ export const unpublish = mutation({
       fromReleaseId: site.liveReleaseId,
       actorId: auth.userId,
       createdAt: now,
-    });
-    return null;
-  },
-});
-
-export const restoreToDraft = mutation({
-  args: { releaseId: v.id("siteReleases") },
-  returns: v.object({ restoreId: v.id("draftRestores"), reused: v.boolean() }),
-  handler: async (ctx, { releaseId }) => {
-    const release = await ctx.db.get(releaseId);
-    if (!release) throw new ConvexError("Release not found or unavailable");
-    const site = await ctx.db.get(release.siteId);
-    if (!site) throw new ConvexError("Release not found or unavailable");
-    const { auth } = await requireOrganizationPermission(
-      ctx,
-      site.organizationId,
-      { resource: "content", action: "edit" },
-    );
-    if (release.publicationStatus !== "complete") {
-      throw new ConvexError("Release publication is not complete");
-    }
-    if (site.activeDraftRestoreId) {
-      const active = await ctx.db.get(site.activeDraftRestoreId);
-      if (
-        active?.releaseId === releaseId &&
-        active.requestedBy === auth.userId &&
-        active.status !== "failed" &&
-        active.status !== "cancelled"
-      ) {
-        return { restoreId: active._id, reused: true };
-      }
-      throw new ConvexError("Another draft restore is already in progress");
-    }
-    const activePublication = (
-      await Promise.all(
-        nonterminalPublicationStatuses.map((status) =>
-          ctx.db
-            .query("siteReleases")
-            .withIndex("by_site_publication_status", (q) =>
-              q.eq("siteId", site._id).eq("publicationStatus", status),
-            )
-            .first(),
-        ),
-      )
-    ).find(Boolean);
-    if (activePublication) {
-      throw new ConvexError(
-        "A publication is still finishing. Try restoring when it completes.",
-      );
-    }
-    const now = Date.now();
-    const token = crypto.randomUUID();
-    const restoreId = await ctx.db.insert("draftRestores", {
-      siteId: site._id,
-      releaseId,
-      requestedBy: auth.userId,
-      baseDraftRevision: site.draftRevision,
-      status: "validating",
-      phase: "validatePages",
-      token,
-      attempt: 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-    await ctx.db.patch(site._id, { activeDraftRestoreId: restoreId });
-    await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
-      restoreId,
-      token,
-      phase: "validatePages",
-      attempt: 0,
-    });
-    return { restoreId, reused: false };
-  },
-});
-
-export const getDraftRestoreStatus = query({
-  args: { restoreId: v.id("draftRestores") },
-  returns: v.union(
-    v.null(),
-    v.object({
-      status: v.union(
-        v.literal("validating"),
-        v.literal("applying"),
-        v.literal("paused"),
-        v.literal("complete"),
-        v.literal("failed"),
-        v.literal("cancelled"),
-      ),
-      phase: v.string(),
-      failure: v.optional(v.string()),
-      resultDraftRevision: v.optional(v.number()),
-    }),
-  ),
-  handler: async (ctx, { restoreId }) => {
-    const restore = await ctx.db.get(restoreId);
-    if (!restore || !(await requireSiteForMember(ctx, restore.siteId))) {
-      return null;
-    }
-    return {
-      status: restore.status,
-      phase: restore.phase,
-      failure: restore.failure,
-      resultDraftRevision: restore.resultDraftRevision,
-    };
-  },
-});
-
-export const resumeDraftRestore = mutation({
-  args: { restoreId: v.id("draftRestores") },
-  returns: v.null(),
-  handler: async (ctx, { restoreId }) => {
-    const restore = await ctx.db.get(restoreId);
-    if (!restore) {
-      throw new ConvexError("Draft restore not found or unavailable");
-    }
-    const site = await ctx.db.get(restore.siteId);
-    if (!site) {
-      throw new ConvexError("Draft restore not found or unavailable");
-    }
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-    if (
-      restore.status !== "paused" ||
-      site.activeDraftRestoreId !== restore._id
-    ) {
-      throw new ConvexError("This draft restore cannot be resumed");
-    }
-    const token = crypto.randomUUID();
-    await ctx.db.patch(restore._id, {
-      status: "applying",
-      token,
-      attempt: 0,
-      failure: undefined,
-      updatedAt: Date.now(),
-    });
-    await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
-      restoreId,
-      token,
-      phase: restore.phase as
-        | "archivePages"
-        | "restorePages"
-        | "archiveLibraries"
-        | "restoreLibraries"
-        | "archiveFolders"
-        | "restoreFolders"
-        | "archiveFiles"
-        | "restoreFiles"
-        | "synchronizeParents"
-        | "clearDraftChanges"
-        | "activate",
-      cursor: restore.cursor,
-      attempt: 0,
-    });
-    return null;
-  },
-});
-
-export const cancelDraftRestore = mutation({
-  args: { restoreId: v.id("draftRestores") },
-  returns: v.null(),
-  handler: async (ctx, { restoreId }) => {
-    const restore = await ctx.db.get(restoreId);
-    if (!restore) {
-      throw new ConvexError("Draft restore not found or unavailable");
-    }
-    const site = await ctx.db.get(restore.siteId);
-    if (!site) {
-      throw new ConvexError("Draft restore not found or unavailable");
-    }
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
-    if (restore.status !== "validating") {
-      throw new ConvexError(
-        "A restore can only be cancelled before draft application begins",
-      );
-    }
-    const now = Date.now();
-    if (site.activeDraftRestoreId === restore._id) {
-      await ctx.db.patch(site._id, { activeDraftRestoreId: undefined });
-    }
-    await ctx.db.patch(restore._id, {
-      status: "cancelled",
-      token: crypto.randomUUID(),
-      failure: undefined,
-      completedAt: now,
-      updatedAt: now,
     });
     return null;
   },

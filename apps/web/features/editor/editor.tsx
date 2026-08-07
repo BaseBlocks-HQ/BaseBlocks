@@ -187,12 +187,11 @@ function DraftRestoreGate({
   restore: {
     _id: Id<"draftRestores">;
     status: Doc<"draftRestores">["status"] | "orphaned";
-    phase: string;
     failure?: string;
   };
 }) {
-  const resume = useMutation(api.releases.resumeDraftRestore);
-  const cancel = useMutation(api.releases.cancelDraftRestore);
+  const resume = useMutation(api.draftRestores.resume);
+  const cancel = useMutation(api.draftRestores.cancel);
   const [resuming, setResuming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 

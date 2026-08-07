@@ -15,29 +15,12 @@ export function findReleaseForDraftRevision<
   );
 }
 
-export type PublicationStatus =
-  | "building"
-  | "aborting"
-  | "clearing"
-  | "complete"
-  | "failed";
+export type PublicationStatus = "building" | "clearing" | "complete" | "failed";
 
 export function isPublicationInFlight(
   status: PublicationStatus | undefined,
 ): boolean {
-  return (
-    status === "building" || status === "aborting" || status === "clearing"
-  );
-}
-
-export function publicationFailureOutcome(
-  status: PublicationStatus | undefined,
-  nextAttempt: number,
-  maxBuildAttempts: number,
-): "abort" | "retry" {
-  return status === "building" && nextAttempt >= maxBuildAttempts
-    ? "abort"
-    : "retry";
+  return status === "building" || status === "clearing";
 }
 
 export function extractionBlocksPublication(

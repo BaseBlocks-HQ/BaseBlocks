@@ -1,95 +1,236 @@
-import { ConvexError, v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import {
-  type MutationCtx,
+  ConvexIngestionQueue,
+  decodeConvexIngestionFailure,
+  type ConvexIngestionJob,
+  type ConvexIngestionReceipt,
+  type DurableIngestionBinding,
+  type WorkId,
+} from "@baseblocks/anydoc-convex";
+import { vOnCompleteArgs } from "@convex-dev/workpool";
+import { ConvexError, v } from "convex/values";
+import { components, internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import {
   internalMutation,
+  type MutationCtx,
   mutation,
   query,
+  type QueryCtx,
 } from "./_generated/server";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import {
-  buildFileSearchContent,
-  extractionDispatchCapacity,
-  extractionExecutionDeadline,
-  extractionRetryDelayMs,
   FILE_EXTRACTION_LIMITS,
   fileSourceVersion,
-  type FileExtractionFailure,
-  shouldReuseExtraction,
-  validateExtractionInputSize,
 } from "./model/fileExtraction";
-import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { extractionRetryInvalidatesDraft } from "./model/releaseState";
 import {
   requireOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
+import { upsertDraftFileSearch } from "./search";
 
-const failureValidator = v.object({
-  code: v.string(),
-  message: v.string(),
-  retryable: v.boolean(),
-  limit: v.optional(v.number()),
-  actual: v.optional(v.number()),
-});
+const jobIdentity = {
+  entityId: v.string(),
+  sourceVersion: v.string(),
+  generation: v.number(),
+  idempotencyKey: v.string(),
+  source: v.object({ fileId: v.id("files") }),
+};
 
-function fileMetadata(file: Doc<"files">) {
+export type FileIngestionJob = ConvexIngestionJob<{
+  fileId: Id<"files">;
+}>;
+
+export type FileIngestionResult = {
+  byteLength: number;
+  format: string;
+  output?: unknown;
+  sha256?: string;
+  status: "applied" | "superseded";
+};
+
+function receiptFor(
+  extraction: Doc<"fileExtractions">,
+): ConvexIngestionReceipt | null {
+  if (!extraction.workId) return null;
   return {
-    fileId: file._id,
-    filename: file.filename,
-    fileContentType: file.contentType,
-    size: file.size,
-    libraryId: file.libraryId,
-    downloadUrl: `/api/files/${file._id}`,
+    entityId: extraction.fileId,
+    sourceVersion: extraction.sourceVersion,
+    generation: extraction.generation,
+    idempotencyKey: extraction.idempotencyKey,
+    workId: extraction.workId as WorkId,
   };
 }
 
-async function upsertSearchEntries(
-  ctx: MutationCtx,
-  file: Doc<"files">,
-  extractedText: string,
+function identityMatches(
+  extraction: Doc<"fileExtractions"> | null,
+  identity: {
+    entityId: string;
+    sourceVersion: string;
+    generation: number;
+    idempotencyKey: string;
+  },
 ) {
-  const now = Date.now();
-  const text = buildFileSearchContent(extractedText);
-  const existing = await ctx.db
-    .query("searchEntries")
-    .withIndex("by_source", (q) =>
-      q.eq("kind", "file").eq("sourceId", file._id),
-    )
-    .first();
-  const value = {
-    siteId: file.siteId,
-    kind: "file" as const,
-    audience: "private" as const,
-    sourceId: file._id,
-    title: file.filename,
-    text,
-    fileMetadata: fileMetadata(file),
-    updatedAt: now,
-  };
-  if (existing) await ctx.db.patch(existing._id, value);
-  else await ctx.db.insert("searchEntries", value);
+  return (
+    extraction !== null &&
+    extraction.fileId === identity.entityId &&
+    extraction.sourceVersion === identity.sourceVersion &&
+    extraction.generation === identity.generation &&
+    extraction.idempotencyKey === identity.idempotencyKey
+  );
 }
+
+export const fileIngestionBinding: DurableIngestionBinding<
+  FileIngestionJob,
+  MutationCtx,
+  QueryCtx
+> = {
+  bind: async (ctx, job, candidate) => {
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", job.source.fileId))
+      .unique();
+    if (!extraction || !identityMatches(extraction, job)) {
+      throw new Error("The AnyDoc ingestion generation is no longer current");
+    }
+    if (extraction.workId) return extraction.workId as WorkId;
+    await ctx.db.patch(extraction._id, { workId: candidate });
+    return candidate;
+  },
+  cancel: async (ctx, receipt) => {
+    const fileId = receipt.entityId as Id<"files">;
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", fileId))
+      .unique();
+    if (
+      !extraction ||
+      !identityMatches(extraction, receipt) ||
+      extraction.workId !== receipt.workId
+    ) {
+      return false;
+    }
+    await ctx.db.patch(extraction._id, {
+      generation: extraction.generation + 1,
+      status: "failed",
+      workId: undefined,
+      updatedAt: Date.now(),
+    });
+    return true;
+  },
+  status: async (ctx, receipt) => {
+    const fileId = receipt.entityId as Id<"files">;
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", fileId))
+      .unique();
+    return {
+      current:
+        identityMatches(extraction, receipt) &&
+        extraction?.workId === receipt.workId,
+      status: extraction?.status,
+    };
+  },
+};
+
+export const fileIngestion: ConvexIngestionQueue<
+  FileIngestionJob,
+  FileIngestionResult,
+  MutationCtx,
+  QueryCtx
+> = new ConvexIngestionQueue(
+  components.anydoc,
+  internal.fileExtractionAction.process,
+  {
+    binding: fileIngestionBinding,
+    completionContext: (job) => ({
+      entityId: job.entityId,
+      sourceVersion: job.sourceVersion,
+      generation: job.generation,
+      idempotencyKey: job.idempotencyKey,
+      source: job.source,
+    }),
+    maxParallelism: 4,
+    onComplete: internal.fileExtraction.completed,
+    retry: { base: 2, initialBackoffMs: 1_000, maxAttempts: 4 },
+  },
+);
 
 async function resetCurrentSearchEntry(ctx: MutationCtx, file: Doc<"files">) {
-  const entry = await ctx.db
-    .query("searchEntries")
-    .withIndex("by_source", (q) =>
-      q.eq("kind", "file").eq("sourceId", file._id),
-    )
-    .first();
+  await upsertDraftFileSearch(ctx, file, "");
+}
+
+function createJob(file: Doc<"files">, generation: number): FileIngestionJob {
+  const sourceVersion = fileSourceVersion(file);
+  return {
+    entityId: file._id,
+    sourceVersion,
+    generation,
+    idempotencyKey: `${file._id}:${generation}:${sourceVersion}`,
+    source: { fileId: file._id },
+    filename: file.filename,
+    contentType: file.contentType,
+    expectedSize: file.size,
+    expectedSha256:
+      file.checksum && /^[a-f\d]{64}$/iu.test(file.checksum)
+        ? file.checksum.toLowerCase()
+        : undefined,
+    maxBytes: FILE_EXTRACTION_LIMITS.maxInputBytes,
+    attemptTimeoutMs: 8 * 60_000,
+  };
+}
+
+export async function queueFileExtraction(
+  ctx: MutationCtx,
+  file: Doc<"files">,
+  options: { force?: boolean } = {},
+): Promise<WorkId | null> {
+  if (file.kind !== "file" || file.deletedAt !== undefined) return null;
+  const sourceVersion = fileSourceVersion(file);
+  const existing = await ctx.db
+    .query("fileExtractions")
+    .withIndex("by_file", (q) => q.eq("fileId", file._id))
+    .unique();
+  const reusable =
+    !options.force &&
+    existing?.sourceVersion === sourceVersion &&
+    (existing.status === "ready" || Boolean(existing.workId));
+  if (reusable) return (existing.workId as WorkId | undefined) ?? null;
+
+  const previousReceipt = existing ? receiptFor(existing) : null;
+  if (previousReceipt) await fileIngestion.cancel(ctx, previousReceipt);
+  const generation = existing ? existing.generation + 1 : 0;
+  const job = createJob(file, generation);
+  const now = Date.now();
   const value = {
     siteId: file.siteId,
-    kind: "file" as const,
-    audience: "private" as const,
-    sourceId: file._id,
-    title: file.filename,
-    text: "",
-    fileMetadata: fileMetadata(file),
-    updatedAt: Date.now(),
+    fileId: file._id,
+    sourceVersion,
+    generation,
+    idempotencyKey: job.idempotencyKey,
+    status: "queued" as const,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
   };
-  if (entry) await ctx.db.patch(entry._id, value);
-  else await ctx.db.insert("searchEntries", value);
+  if (existing) await ctx.db.replace(existing._id, value);
+  else await ctx.db.insert("fileExtractions", value);
+  await resetCurrentSearchEntry(ctx, file);
+
+  return (await fileIngestion.enqueue(ctx, job)).workId;
+}
+
+export async function cancelFileExtraction(
+  ctx: MutationCtx,
+  fileId: Id<"files">,
+) {
+  const extraction = await ctx.db
+    .query("fileExtractions")
+    .withIndex("by_file", (q) => q.eq("fileId", fileId))
+    .unique();
+  if (!extraction) return;
+  const receipt = receiptFor(extraction);
+  if (receipt) await fileIngestion.cancel(ctx, receipt);
+  await ctx.db.delete(extraction._id);
 }
 
 export async function reconcileRestoredFile(
@@ -100,307 +241,71 @@ export async function reconcileRestoredFile(
   const extraction = await ctx.db
     .query("fileExtractions")
     .withIndex("by_file", (q) => q.eq("fileId", file._id))
-    .first();
+    .unique();
   if (
     extraction?.status === "ready" &&
     extraction.sourceVersion === fileSourceVersion(file) &&
     extraction.extractedText !== undefined
   ) {
-    await upsertSearchEntries(ctx, file, extraction.extractedText);
-  } else {
-    await resetCurrentSearchEntry(ctx, file);
+    await upsertDraftFileSearch(ctx, file, extraction.extractedText);
+    return;
   }
   await queueFileExtraction(ctx, file);
 }
 
-async function scheduleDispatch(ctx: MutationCtx, delay = 0) {
-  await ctx.scheduler.runAfter(
-    delay,
-    internal.fileExtraction.dispatchQueued,
-    {},
-  );
-}
-
-export async function queueFileExtraction(
-  ctx: MutationCtx,
-  file: Doc<"files">,
-  options: { force?: boolean; deferDispatch?: boolean } = {},
-): Promise<Id<"fileExtractionJobs"> | null> {
-  if (file.kind !== "file" || file.deletedAt !== undefined) return null;
-  const sourceVersion = fileSourceVersion(file);
-  const now = Date.now();
-  const [existingState, existingJob] = await Promise.all([
-    ctx.db
+export const markProcessing = internalMutation({
+  args: jobIdentity,
+  handler: async (ctx, args) => {
+    const extraction = await ctx.db
       .query("fileExtractions")
-      .withIndex("by_file", (q) => q.eq("fileId", file._id))
-      .first(),
-    ctx.db
-      .query("fileExtractionJobs")
-      .withIndex("by_file", (q) => q.eq("fileId", file._id))
-      .first(),
-  ]);
-
-  if (
-    shouldReuseExtraction({
-      force: options.force === true,
-      sourceVersion,
-      existingSourceVersion: existingState?.sourceVersion,
-      existingStatus: existingState?.status,
-      hasJob: Boolean(existingJob),
-    })
-  ) {
-    if (existingJob?.status === "queued" && !options.deferDispatch) {
-      await scheduleDispatch(ctx);
-    }
-    return existingJob?._id ?? null;
-  }
-
-  await resetCurrentSearchEntry(ctx, file);
-
-  const extractionValue = {
-    siteId: file.siteId,
-    fileId: file._id,
-    sourceVersion,
-    status: "queued" as const,
-    attemptCount: 0,
-    createdAt: existingState?.createdAt ?? now,
-    updatedAt: now,
-  };
-  let extractionId: Id<"fileExtractions">;
-  if (existingState) {
-    await ctx.db.replace(existingState._id, extractionValue);
-    extractionId = existingState._id;
-  } else {
-    extractionId = await ctx.db.insert("fileExtractions", extractionValue);
-  }
-
-  const jobValue = {
-    siteId: file.siteId,
-    fileId: file._id,
-    extractionId,
-    sourceVersion,
-    status: "queued" as const,
-    attempt: 0,
-    availableAt: now,
-    createdAt: existingJob?.createdAt ?? now,
-    updatedAt: now,
-  };
-  let jobId: Id<"fileExtractionJobs">;
-  if (existingJob) {
-    await ctx.db.replace(existingJob._id, jobValue);
-    jobId = existingJob._id;
-  } else {
-    jobId = await ctx.db.insert("fileExtractionJobs", jobValue);
-  }
-  if (!options.deferDispatch) await scheduleDispatch(ctx);
-  return jobId;
-}
-
-export async function cancelFileExtraction(
-  ctx: MutationCtx,
-  fileId: Id<"files">,
-) {
-  const [state, job] = await Promise.all([
-    ctx.db
-      .query("fileExtractions")
-      .withIndex("by_file", (q) => q.eq("fileId", fileId))
-      .first(),
-    ctx.db
-      .query("fileExtractionJobs")
-      .withIndex("by_file", (q) => q.eq("fileId", fileId))
-      .first(),
-  ]);
-  if (state) await ctx.db.delete(state._id);
-  if (job?.status === "queued") await ctx.db.delete(job._id);
-}
-
-export const dispatchQueued = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-    const processing = await ctx.db
-      .query("fileExtractionJobs")
-      .withIndex("by_status_lease", (q) => q.eq("status", "processing"))
-      .take(FILE_EXTRACTION_LIMITS.maxConcurrent);
-    const capacity = extractionDispatchCapacity(processing.length);
-    if (capacity === 0) return { dispatched: 0, discarded: 0 };
-
-    const candidates = await ctx.db
-      .query("fileExtractionJobs")
-      .withIndex("by_status_available", (q) =>
-        q.eq("status", "queued").lte("availableAt", now),
-      )
-      .take(FILE_EXTRACTION_LIMITS.dispatchScanSize);
-    let dispatched = 0;
-    let discarded = 0;
-    for (const job of candidates) {
-      if (dispatched >= capacity) break;
-      const [file, extraction] = await Promise.all([
-        ctx.db.get(job.fileId),
-        ctx.db.get(job.extractionId),
-      ]);
-      if (
-        file?.kind !== "file" ||
-        file.deletedAt !== undefined ||
-        !extraction ||
-        extraction.sourceVersion !== job.sourceVersion ||
-        fileSourceVersion(file) !== job.sourceVersion
-      ) {
-        await ctx.db.delete(job._id);
-        discarded += 1;
-        continue;
-      }
-
-      const declaredSizeFailure = validateExtractionInputSize(file.size);
-      if (declaredSizeFailure) {
-        await ctx.db.patch(extraction._id, {
-          status: "failed",
-          failure: declaredSizeFailure,
-          updatedAt: now,
-          completedAt: now,
-        });
-        await resetCurrentSearchEntry(ctx, file);
-        await ctx.db.delete(job._id);
-        discarded += 1;
-        continue;
-      }
-
-      const attempt = job.attempt + 1;
-      if (attempt > FILE_EXTRACTION_LIMITS.maxAttempts) {
-        const failure: FileExtractionFailure = {
-          code: "attempts_exhausted",
-          message: "Extraction retry limit was exhausted",
-          retryable: false,
-        };
-        await ctx.db.patch(extraction._id, {
-          status: "failed",
-          failure,
-          updatedAt: now,
-          completedAt: now,
-        });
-        await resetCurrentSearchEntry(ctx, file);
-        await ctx.db.delete(job._id);
-        discarded += 1;
-        continue;
-      }
-
-      const runToken = crypto.randomUUID();
-      await ctx.db.patch(job._id, {
-        status: "processing",
-        attempt,
-        runToken,
-        leaseExpiresAt: now + FILE_EXTRACTION_LIMITS.leaseMs,
-        updatedAt: now,
-      });
-      await ctx.db.patch(extraction._id, {
-        status: "processing",
-        attemptCount: attempt,
-        failure: undefined,
-        updatedAt: now,
-      });
-      await ctx.scheduler.runAfter(0, internal.fileExtractionAction.process, {
-        jobId: job._id,
-        runToken,
-      });
-      dispatched += 1;
-    }
-
+      .withIndex("by_file", (q) => q.eq("fileId", args.source.fileId))
+      .unique();
+    const file = await ctx.db.get(args.source.fileId);
     if (
-      dispatched < capacity &&
-      candidates.length === FILE_EXTRACTION_LIMITS.dispatchScanSize
-    ) {
-      await scheduleDispatch(ctx);
-    }
-    return { dispatched, discarded };
-  },
-});
-
-export const getClaimed = internalMutation({
-  args: {
-    jobId: v.id("fileExtractionJobs"),
-    runToken: v.string(),
-  },
-  handler: async (ctx, { jobId, runToken }) => {
-    const job = await ctx.db.get(jobId);
-    if (job?.status !== "processing" || job.runToken !== runToken) return null;
-    const [file, extraction] = await Promise.all([
-      ctx.db.get(job.fileId),
-      ctx.db.get(job.extractionId),
-    ]);
-    if (
+      !extraction ||
+      !identityMatches(extraction, args) ||
       file?.kind !== "file" ||
       file.deletedAt !== undefined ||
-      !extraction ||
-      extraction.sourceVersion !== job.sourceVersion ||
-      fileSourceVersion(file) !== job.sourceVersion
+      fileSourceVersion(file) !== args.sourceVersion
     ) {
-      await ctx.db.delete(job._id);
-      await scheduleDispatch(ctx);
       return null;
     }
+    await ctx.db.patch(extraction._id, {
+      status: "processing",
+      failure: undefined,
+      updatedAt: Date.now(),
+    });
     return {
-      jobId: job._id,
-      runToken,
-      fileId: file._id,
       objectKey: file.objectKey,
       filename: file.filename,
       contentType: file.contentType,
       size: file.size,
       checksum: file.checksum,
-      attempt: job.attempt,
-      deadlineAt: extractionExecutionDeadline(job.updatedAt),
     };
   },
 });
 
-export const renewLease = internalMutation({
+export const storeResult = internalMutation({
   args: {
-    jobId: v.id("fileExtractionJobs"),
-    runToken: v.string(),
-  },
-  handler: async (ctx, { jobId, runToken }) => {
-    const job = await ctx.db.get(jobId);
-    if (job?.status !== "processing" || job.runToken !== runToken) return null;
-    const now = Date.now();
-    await ctx.db.patch(job._id, {
-      leaseExpiresAt: now + FILE_EXTRACTION_LIMITS.leaseMs,
-      updatedAt: now,
-    });
-    return { deadlineAt: extractionExecutionDeadline(now) };
-  },
-});
-
-export const complete = internalMutation({
-  args: {
-    jobId: v.id("fileExtractionJobs"),
-    runToken: v.string(),
-    deadlineAt: v.number(),
+    ...jobIdentity,
     text: v.string(),
     format: v.string(),
     inputBytes: v.number(),
   },
   handler: async (ctx, args) => {
-    const job = await ctx.db.get(args.jobId);
-    if (job?.status !== "processing" || job.runToken !== args.runToken) {
-      return { applied: false };
-    }
-    if (Date.now() > args.deadlineAt) {
-      return { applied: false, deadlineExceeded: true };
-    }
-    const [file, extraction] = await Promise.all([
-      ctx.db.get(job.fileId),
-      ctx.db.get(job.extractionId),
-    ]);
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", args.source.fileId))
+      .unique();
+    const file = await ctx.db.get(args.source.fileId);
     if (
+      !extraction ||
+      !identityMatches(extraction, args) ||
       file?.kind !== "file" ||
       file.deletedAt !== undefined ||
-      !extraction ||
-      extraction.sourceVersion !== job.sourceVersion ||
-      fileSourceVersion(file) !== job.sourceVersion
+      fileSourceVersion(file) !== args.sourceVersion
     ) {
-      await ctx.db.delete(job._id);
-      await scheduleDispatch(ctx);
-      return { applied: false };
+      return { status: "superseded" as const };
     }
     const now = Date.now();
     await ctx.db.patch(extraction._id, {
@@ -413,119 +318,53 @@ export const complete = internalMutation({
       updatedAt: now,
       completedAt: now,
     });
-    await upsertSearchEntries(ctx, file, args.text);
-    await ctx.db.delete(job._id);
-    await scheduleDispatch(ctx);
-    return { applied: true };
+    await upsertDraftFileSearch(ctx, file, args.text);
+    return { status: "applied" as const };
   },
 });
 
-export const fail = internalMutation({
-  args: {
-    jobId: v.id("fileExtractionJobs"),
-    runToken: v.string(),
-    failure: failureValidator,
-  },
-  handler: async (ctx, { jobId, runToken, failure }) => {
-    const job = await ctx.db.get(jobId);
-    if (job?.status !== "processing" || job.runToken !== runToken) {
-      return { applied: false, retrying: false };
+export const completed = internalMutation({
+  args: vOnCompleteArgs(v.object(jobIdentity)),
+  handler: async (ctx, { workId, context, result }) => {
+    const extraction = await ctx.db
+      .query("fileExtractions")
+      .withIndex("by_file", (q) => q.eq("fileId", context.source.fileId))
+      .unique();
+    if (
+      !extraction ||
+      !identityMatches(extraction, context) ||
+      extraction.workId !== workId
+    ) {
+      return;
     }
-    const extraction = await ctx.db.get(job.extractionId);
-    if (!extraction || extraction.sourceVersion !== job.sourceVersion) {
-      await ctx.db.delete(job._id);
-      await scheduleDispatch(ctx);
-      return { applied: false, retrying: false };
+    if (result.kind === "success") {
+      await ctx.db.patch(extraction._id, { workId: undefined });
+      return;
     }
+    const decoded = decodeConvexIngestionFailure(result);
     const now = Date.now();
-    const retrying =
-      failure.retryable && job.attempt < FILE_EXTRACTION_LIMITS.maxAttempts;
-    if (retrying) {
-      const delay = extractionRetryDelayMs(job.attempt);
-      await ctx.db.patch(job._id, {
-        status: "queued",
-        runToken: undefined,
-        leaseExpiresAt: undefined,
-        availableAt: now + delay,
-        updatedAt: now,
-      });
-      await ctx.db.patch(extraction._id, {
-        status: "queued",
-        failure,
-        updatedAt: now,
-      });
-      await scheduleDispatch(ctx);
-      await scheduleDispatch(ctx, delay);
-    } else {
-      await ctx.db.patch(extraction._id, {
-        status: "failed",
-        failure,
-        updatedAt: now,
-        completedAt: now,
-      });
-      const file = await ctx.db.get(job.fileId);
-      if (file?.kind === "file" && file.deletedAt === undefined) {
-        await resetCurrentSearchEntry(ctx, file);
-      }
-      await ctx.db.delete(job._id);
-      await scheduleDispatch(ctx);
+    await ctx.db.patch(extraction._id, {
+      status: "failed",
+      workId: undefined,
+      failure: {
+        code:
+          result.kind === "canceled"
+            ? "cancelled"
+            : (decoded?.code ?? "ingestion_failed"),
+        message:
+          result.kind === "canceled"
+            ? "Document ingestion was cancelled"
+            : (decoded?.message ?? result.error),
+        retryable: decoded?.retryable ?? false,
+        limits: decoded?.limits,
+      },
+      updatedAt: now,
+      completedAt: now,
+    });
+    const file = await ctx.db.get(context.source.fileId);
+    if (file?.kind === "file" && file.deletedAt === undefined) {
+      await resetCurrentSearchEntry(ctx, file);
     }
-    return { applied: true, retrying };
-  },
-});
-
-export const recoverStalled = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const now = Date.now();
-    const jobs = await ctx.db
-      .query("fileExtractionJobs")
-      .withIndex("by_status_lease", (q) =>
-        q.eq("status", "processing").lt("leaseExpiresAt", now),
-      )
-      .take(50);
-    for (const job of jobs) {
-      const failure: FileExtractionFailure = {
-        code: "lease_expired",
-        message: "Extraction worker did not finish before its lease expired",
-        retryable: true,
-      };
-      const [extraction, file] = await Promise.all([
-        ctx.db.get(job.extractionId),
-        ctx.db.get(job.fileId),
-      ]);
-      if (!extraction) {
-        await ctx.db.delete(job._id);
-        continue;
-      }
-      if (job.attempt >= FILE_EXTRACTION_LIMITS.maxAttempts) {
-        await ctx.db.patch(extraction._id, {
-          status: "failed",
-          failure,
-          updatedAt: now,
-          completedAt: now,
-        });
-        if (file?.kind === "file" && file.deletedAt === undefined) {
-          await resetCurrentSearchEntry(ctx, file);
-        }
-        await ctx.db.delete(job._id);
-        continue;
-      }
-      await ctx.db.patch(job._id, {
-        status: "queued",
-        runToken: undefined,
-        leaseExpiresAt: undefined,
-        availableAt: now,
-        updatedAt: now,
-      });
-      await ctx.db.patch(extraction._id, {
-        status: "queued",
-        failure,
-        updatedAt: now,
-      });
-    }
-    await scheduleDispatch(ctx);
-    return { recovered: jobs.length };
   },
 });
 
@@ -542,11 +381,19 @@ export const getStatus = query({
     const extraction = await ctx.db
       .query("fileExtractions")
       .withIndex("by_file", (q) => q.eq("fileId", fileId))
-      .first();
+      .unique();
     if (!extraction) return null;
+    const receipt = receiptFor(extraction);
+    const durable = receipt
+      ? await fileIngestion.status(ctx, receipt)
+      : undefined;
     return {
       status: extraction.status,
-      attemptCount: extraction.attemptCount,
+      attemptCount:
+        durable?.workpool.state === "pending" ||
+        durable?.workpool.state === "running"
+          ? durable.workpool.previousAttempts
+          : undefined,
       failure: extraction.failure,
       updatedAt: extraction.updatedAt,
       completedAt: extraction.completedAt,
@@ -571,13 +418,13 @@ export const retry = mutation({
     const previous = await ctx.db
       .query("fileExtractions")
       .withIndex("by_file", (q) => q.eq("fileId", fileId))
-      .first();
-    const jobId = await queueFileExtraction(ctx, file, { force: true });
-    if (jobId && extractionRetryInvalidatesDraft(previous?.status)) {
+      .unique();
+    const workId = await queueFileExtraction(ctx, file, { force: true });
+    if (workId && extractionRetryInvalidatesDraft(previous?.status)) {
       await touchSiteDraft(ctx, file.siteId, Date.now(), [
         { entityType: "file", entityId: file._id },
       ]);
     }
-    return { queued: jobId !== null, jobId };
+    return { queued: workId !== null, workId };
   },
 });

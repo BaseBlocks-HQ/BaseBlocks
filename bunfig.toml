@@ -8,6 +8,8 @@ minimumReleaseAgeExcludes = [
   "@baseblocks/ui",
   "@baseblocks/web",
   "@baseblocks/anydoc",
+  "@baseblocks/anydoc-ingestion",
+  "@baseblocks/anydoc-convex",
   "@baseblocks/anydoc-contracts",
   "@baseblocks/anydoc-presentation-viewer",
   "@baseblocks/anydoc-react-viewer",

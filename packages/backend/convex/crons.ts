@@ -9,22 +9,4 @@ crons.interval(
   internal.integrationModel.recoverStalledSyncs,
 );
 
-crons.interval(
-  "recover stalled file extractions",
-  { minutes: 5 },
-  internal.fileExtraction.recoverStalled,
-);
-
-crons.interval(
-  "recover stalled release publications",
-  { minutes: 5 },
-  internal.releasePublication.recoverStalled,
-);
-
-crons.interval(
-  "recover stalled draft restores",
-  { minutes: 5 },
-  internal.draftRestore.recoverStalled,
-);
-
 export default crons;
