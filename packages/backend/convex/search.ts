@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { internalMutation, query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { readPageContent } from "./model/pageDocuments";
+import { assertDraftReadable } from "./model/draft";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 import {
   extractOpenEditorText,
@@ -15,6 +16,17 @@ import {
 type MutationCtx = GenericMutationCtx<DataModel>;
 
 const SEARCH_COALESCE_MS = 10_000;
+const MAX_SEARCH_RESULTS = 50;
+
+export function normalizeSearchLimit(limit: number | undefined): number {
+  if (limit === undefined || !Number.isFinite(limit)) return 20;
+  return Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit)));
+}
+
+function singleContentType(contentTypes?: Array<"file" | "page">) {
+  const unique = [...new Set(contentTypes)];
+  return unique.length === 1 ? unique[0] : undefined;
+}
 
 export async function queuePageContentIndex(
   ctx: MutationCtx,
@@ -65,9 +77,6 @@ export async function indexPageContent(
     ? extractOpenEditorText(searchableDocument)
     : "";
 
-  const combinedText = `${page.title} ${extractedText}`.trim();
-  if (!combinedText) return;
-
   const existing = await ctx.db
     .query("searchEntries")
     .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
@@ -79,7 +88,7 @@ export async function indexPageContent(
     audience: "private" as const,
     sourceId: pageId,
     title: page.title,
-    text: combinedText,
+    text: extractedText.trim(),
     updatedAt: Date.now(),
   };
 
@@ -111,9 +120,9 @@ export const flushPageIndex = internalMutation({
       await ctx.db.delete(job._id);
       return null;
     }
-    const combinedText = `${page.title} ${extractOpenEditorText(
+    const extractedText = extractOpenEditorText(
       parseOpenEditorDocument(payload.content),
-    )}`.trim();
+    ).trim();
     const existing = await ctx.db
       .query("searchEntries")
       .withIndex("by_source", (q) =>
@@ -126,7 +135,7 @@ export const flushPageIndex = internalMutation({
       audience: "private" as const,
       sourceId: pageId,
       title: page.title,
-      text: combinedText,
+      text: extractedText,
       updatedAt: Date.now(),
     };
     if (existing) await ctx.db.patch(existing._id, indexData);
@@ -248,6 +257,32 @@ function contentTypeMatches(
   return !contentTypes?.length || contentTypes.includes(doc.kind);
 }
 
+export function mergeSearchMatches<
+  TDoc extends { _id: string; kind: "file" | "page" },
+  TResult,
+>(args: {
+  titleResults: TDoc[];
+  contentResults: TDoc[];
+  contentTypes?: Array<"file" | "page">;
+  limit: number;
+  format: (doc: TDoc, matchType: "title" | "content") => TResult;
+}): TResult[] {
+  const seen = new Set<string>();
+  const combined: TResult[] = [];
+  for (const [results, matchType] of [
+    [args.titleResults, "title"],
+    [args.contentResults, "content"],
+  ] as const) {
+    for (const doc of results) {
+      if (seen.has(doc._id)) continue;
+      if (!contentTypeMatches(doc, args.contentTypes)) continue;
+      seen.add(doc._id);
+      combined.push(args.format(doc, matchType));
+    }
+  }
+  return combined.slice(0, args.limit);
+}
+
 export const searchAll = query({
   args: {
     siteId: v.id("sites"),
@@ -265,42 +300,42 @@ export const searchAll = query({
     if (!site) return [];
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+    assertDraftReadable(site);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
+    const boundedLimit = normalizeSearchLimit(limit);
+    const indexedContentType = singleContentType(contentTypes);
 
     const titleResults = await ctx.db
       .query("searchEntries")
-      .withSearchIndex("search_title", (q) =>
-        q.search("title", trimmed).eq("siteId", siteId),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_title", (q) => {
+        const search = q.search("title", trimmed).eq("siteId", siteId);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     const contentResults = await ctx.db
       .query("searchEntries")
-      .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("siteId", siteId),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_text", (q) => {
+        const search = q.search("text", trimmed).eq("siteId", siteId);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
-    const seen = new Set<string>();
-    const combined: ReturnType<typeof formatSearchResult>[] = [];
-
-    for (const doc of contentResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "content", trimmed));
-    }
-
-    for (const doc of titleResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatSearchResult(doc, "title", trimmed));
-    }
-
-    return combined.slice(0, limit);
+    // Preserve the more specific classification when a result satisfies both
+    // indexes, then de-duplicate the broader content results.
+    return mergeSearchMatches({
+      titleResults,
+      contentResults,
+      contentTypes,
+      limit: boundedLimit,
+      format: (doc, matchType) => formatSearchResult(doc, matchType, trimmed),
+    });
   },
 });
 
@@ -327,38 +362,40 @@ export const searchPublished = query({
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return [];
     if (!site.liveReleaseId) return [];
+    const boundedLimit = normalizeSearchLimit(limit);
+    const indexedContentType = singleContentType(contentTypes);
 
     const titleResults = await ctx.db
       .query("releaseSearchEntries")
-      .withSearchIndex("search_title", (q) =>
-        q.search("title", trimmed).eq("releaseId", site.liveReleaseId!),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_title", (q) => {
+        const search = q
+          .search("title", trimmed)
+          .eq("releaseId", site.liveReleaseId!);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     const contentResults = await ctx.db
       .query("releaseSearchEntries")
-      .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("releaseId", site.liveReleaseId!),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_text", (q) => {
+        const search = q
+          .search("text", trimmed)
+          .eq("releaseId", site.liveReleaseId!);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
-    const seen = new Set<string>();
-    const combined: ReturnType<typeof formatReleaseSearchResult>[] = [];
-
-    for (const doc of contentResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatReleaseSearchResult(doc, "content", trimmed));
-    }
-
-    for (const doc of titleResults) {
-      if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, contentTypes)) continue;
-      seen.add(doc._id);
-      combined.push(formatReleaseSearchResult(doc, "title", trimmed));
-    }
-
-    return combined.slice(0, limit);
+    return mergeSearchMatches({
+      titleResults,
+      contentResults,
+      contentTypes,
+      limit: boundedLimit,
+      format: (doc, matchType) =>
+        formatReleaseSearchResult(doc, matchType, trimmed),
+    });
   },
 });

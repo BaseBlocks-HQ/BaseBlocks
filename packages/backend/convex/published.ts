@@ -21,6 +21,8 @@ import {
   resolvePublishedSiteAccess,
 } from "./sharing";
 
+const MAX_PAGE_EXPORT_ASSETS = 64;
+
 async function readReleasePageContent(
   ctx: QueryCtx,
   page: Doc<"releasePages"> | null,
@@ -360,7 +362,7 @@ export const getFavicon = query({
   },
 });
 
-export const getPageById = query({
+export const getPageExport = query({
   args: { pageId: v.id("pages") },
   returns: v.any(),
   handler: async (ctx, { pageId }) => {
@@ -377,6 +379,50 @@ export const getPageById = query({
       )
       .unique();
     if (!page) return null;
+    const content = await readReleasePageContent(ctx, page);
+    const revision = page.contentRevisionId
+      ? await ctx.db.get(page.contentRevisionId)
+      : null;
+    const imageIds = [...extractOpenEditorReferences(content).imageIds];
+    if (imageIds.length > MAX_PAGE_EXPORT_ASSETS) {
+      throw new Error(
+        `Page export exceeds the ${MAX_PAGE_EXPORT_ASSETS}-image limit`,
+      );
+    }
+    const revisionFileIds = new Set(revision?.fileIds ?? []);
+    const releaseImageIds = imageIds.filter((fileId) =>
+      revisionFileIds.has(fileId as Id<"files">),
+    );
+    const assets = revision
+      ? (
+          await Promise.all(
+            releaseImageIds.map((fileId) =>
+              ctx.db
+                .query("releaseFiles")
+                .withIndex("by_release_file", (q) =>
+                  q
+                    .eq("releaseId", site.liveReleaseId!)
+                    .eq("fileId", fileId as Id<"files">),
+                )
+                .unique(),
+            ),
+          )
+        ).flatMap((asset) =>
+          asset?.kind === "siteAsset" &&
+          asset.contentType.toLowerCase().startsWith("image/")
+            ? [
+                {
+                  fileId: asset.fileId,
+                  objectKey: asset.objectKey,
+                  filename: asset.filename,
+                  contentType: asset.contentType,
+                  size: asset.size,
+                  checksum: asset.checksum,
+                },
+              ]
+            : [],
+        )
+      : [];
     return {
       page: {
         _id: page.pageId,
@@ -385,7 +431,8 @@ export const getPageById = query({
         icon: page.icon,
         parentId: page.parentId,
       },
-      content: await readReleasePageContent(ctx, page),
+      content,
+      assets,
     };
   },
 });

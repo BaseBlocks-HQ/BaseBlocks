@@ -7,7 +7,7 @@ import {
 } from "./permissions";
 import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftWritable, touchSiteDraft } from "./model/draft";
 import { deleteSiteData } from "./model/siteDeletion";
 
 export const listByTeam = query({
@@ -305,6 +305,7 @@ export const remove = mutation({
   handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
+    assertDraftWritable(site);
 
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "site",

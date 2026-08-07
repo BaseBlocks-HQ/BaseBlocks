@@ -11,7 +11,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { indexPageContent, queuePageContentIndex } from "./search";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { softDeletePageSubtree } from "./model/pageDeletion";
 import { synchronizeParentDocument } from "./model/pageHierarchy";
 
@@ -122,6 +122,7 @@ export const list = query({
     if (!site) return [];
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+    assertDraftReadable(site);
 
     const pages = await ctx.db
       .query("pages")

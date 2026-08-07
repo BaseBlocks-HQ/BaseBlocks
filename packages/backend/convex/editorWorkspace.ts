@@ -1,6 +1,27 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
+import type { Doc, Id } from "./_generated/dataModel";
+
+export function draftRestoreView(
+  restoreId: Id<"draftRestores">,
+  restore: Doc<"draftRestores"> | null,
+) {
+  return restore
+    ? {
+        _id: restore._id,
+        status: restore.status,
+        phase: restore.phase,
+        failure: restore.failure,
+      }
+    : {
+        _id: restoreId,
+        status: "orphaned" as const,
+        phase: "missing",
+        failure:
+          "The draft restore state is missing. The draft remains locked to avoid exposing partial data. Contact support to recover it.",
+      };
+}
 
 /**
  * The editor shell and canvas are one reactive surface, so they subscribe to
@@ -14,6 +35,15 @@ export const get = query({
     if (!site || site.organizationId !== organizationId) return null;
     if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
 
+    if (site.activeDraftRestoreId) {
+      const restore = await ctx.db.get(site.activeDraftRestoreId);
+      return {
+        site,
+        pages: [],
+        restore: draftRestoreView(site.activeDraftRestoreId, restore),
+      };
+    }
+
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -22,6 +52,7 @@ export const get = query({
     return {
       site,
       pages: pages.filter((page) => page.deletedAt === undefined),
+      restore: null,
     };
   },
 });

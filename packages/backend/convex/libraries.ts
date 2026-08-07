@@ -13,7 +13,7 @@ import {
   requireFolderManagement,
   requireLibraryManagement,
 } from "./model/libraryAccess";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 
 const librarySummary = v.object({
   _id: v.id("documentLibraries"),
@@ -185,6 +185,7 @@ export const listLibraries = query({
     if (!site) return [];
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+    assertDraftReadable(site);
 
     const libraries = await ctx.db
       .query("documentLibraries")
@@ -199,12 +200,14 @@ export const getExplorer = query({
   returns: v.union(explorerPayload, v.null()),
   handler: async (ctx, { libraryId }) => {
     const library = await ctx.db.get(libraryId);
-    if (!library || library.deletedAt !== undefined) return null;
+    if (!library) return null;
 
     const site = await ctx.db.get(library.siteId);
     if (!site) return null;
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return null;
+    assertDraftReadable(site);
+    if (library.deletedAt !== undefined) return null;
 
     return await buildExplorerPayload(ctx, library, site);
   },

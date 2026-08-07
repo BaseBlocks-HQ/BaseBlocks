@@ -19,7 +19,7 @@
     "lighthouse": "13.0.1",
     "turbo": "^2.10.4",
     "typescript": "7.0.2",
-    "vercel": "58.4.4"
+    "vercel": "58.5.1"
   },
   "resolutions": {
     "@convex-dev/better-auth": "0.12.5",
@@ -27,7 +27,7 @@
     "better-auth": "1.6.23",
     "defu": "6.1.7",
     "picomatch": "4.0.5",
-    "postcss": "8.5.16",
+    "postcss": "8.5.23",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "convex": "^1.42.1"

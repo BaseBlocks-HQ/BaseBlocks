@@ -234,105 +234,116 @@ export function SearchBox({
                   const documentMetadata = getDocumentMetadata(result);
 
                   return (
-                    <button
-                      type="button"
+                    <div
+                      className="flex w-full items-stretch rounded-xl transition-colors hover:bg-muted/60 focus-within:bg-muted/60"
                       key={result._id}
-                      className="w-full cursor-pointer rounded-xl p-3 text-left outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50"
-                      onClick={() => handleResultClick(result)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {showFileType &&
-                            (isPage ? (
-                              <HugeiconsIcon
-                                icon={NotebookIcon}
-                                className="h-4 w-4 text-indigo-500"
-                              />
-                            ) : (
-                              <FileIcon
-                                contentType={
-                                  documentMetadata?.fileContentType ??
-                                  "application/octet-stream"
-                                }
-                              />
-                            ))}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate text-sm text-foreground">
-                              {result.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {isPage ? (
-                                <span className="text-indigo-600 dark:text-indigo-400">
-                                  Page
-                                </span>
+                      <button
+                        className="min-w-0 flex-1 cursor-pointer rounded-xl p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        onClick={() => handleResultClick(result)}
+                        type="button"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {showFileType &&
+                              (isPage ? (
+                                <HugeiconsIcon
+                                  icon={NotebookIcon}
+                                  className="h-4 w-4 text-indigo-500"
+                                />
                               ) : (
-                                documentMetadata?.size &&
-                                formatFileSize(documentMetadata.size)
-                              )}
-                              {isContentMatch && (
-                                <span className="ml-2 text-primary">
-                                  • Content match
-                                </span>
-                              )}
-                            </p>
+                                <FileIcon
+                                  contentType={
+                                    documentMetadata?.fileContentType ??
+                                    "application/octet-stream"
+                                  }
+                                />
+                              ))}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate text-sm text-foreground">
+                                {result.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {isPage ? (
+                                  <span className="text-indigo-600 dark:text-indigo-400">
+                                    Page
+                                  </span>
+                                ) : (
+                                  documentMetadata?.size &&
+                                  formatFileSize(documentMetadata.size)
+                                )}
+                                {isContentMatch && (
+                                  <span className="ml-2 text-primary">
+                                    • Content match
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
+                          {isPage ? (
+                            <HugeiconsIcon
+                              icon={ArrowRight01Icon}
+                              className="h-4 w-4 text-muted-foreground flex-shrink-0"
+                            />
+                          ) : null}
                         </div>
-                        {isPage ? (
-                          <HugeiconsIcon
-                            icon={ArrowRight01Icon}
-                            className="h-4 w-4 text-muted-foreground flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Show snippet for content matches */}
+                        {isContentMatch && result.snippet && (
+                          <div className="mt-2 pl-7">
+                            <HighlightedSnippet
+                              snippet={result.snippet}
+                              matchStart={result.snippetMatchStart ?? -1}
+                              matchEnd={result.snippetMatchEnd ?? -1}
+                            />
+                          </div>
+                        )}
+                      </button>
+                      {!isPage ? (
+                        <div
+                          aria-label={`Actions for ${result.title}`}
+                          className="flex shrink-0 items-center gap-1 pr-3"
+                          role="group"
+                        >
+                          <Button
+                            aria-label={`Preview ${result.title}`}
+                            className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+                            onClick={() => handleResultClick(result)}
+                            size="icon"
+                            title="Preview"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <HugeiconsIcon
+                              aria-hidden="true"
+                              icon={ViewIcon}
+                              className="h-4 w-4"
+                            />
+                          </Button>
+                          {documentMetadata && (
                             <Button
-                              variant="ghost"
-                              size="icon"
+                              aria-label={`Download ${result.title}`}
                               className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleResultClick(result);
-                              }}
-                              title="Preview"
+                              onClick={() =>
+                                handleDownload(
+                                  documentMetadata.downloadUrl,
+                                  documentMetadata.filename || result.title,
+                                )
+                              }
+                              size="icon"
+                              title="Download"
+                              type="button"
+                              variant="ghost"
                             >
                               <HugeiconsIcon
-                                icon={ViewIcon}
+                                aria-hidden="true"
+                                icon={Download01Icon}
                                 className="h-4 w-4"
                               />
                             </Button>
-                            {documentMetadata && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDownload(
-                                    documentMetadata.downloadUrl,
-                                    documentMetadata.filename || result.title,
-                                  );
-                                }}
-                                title="Download"
-                              >
-                                <HugeiconsIcon
-                                  icon={Download01Icon}
-                                  className="h-4 w-4"
-                                />
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {/* Show snippet for content matches */}
-                      {isContentMatch && result.snippet && (
-                        <div className="mt-2 pl-7">
-                          <HighlightedSnippet
-                            snippet={result.snippet}
-                            matchStart={result.snippetMatchStart ?? -1}
-                            matchEnd={result.snippetMatchEnd ?? -1}
-                          />
+                          )}
                         </div>
-                      )}
-                    </button>
+                      ) : null}
+                    </div>
                   );
                 })}
               </div>

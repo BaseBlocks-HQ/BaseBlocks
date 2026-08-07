@@ -3,15 +3,7 @@
 import { api, type Doc, type Id } from "@baseblocks/backend";
 import { useQuery } from "convex/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  type ReactNode,
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type ReactNode, createContext, use, useEffect, useState } from "react";
 
 interface EditorPermissions {
   canEdit: boolean;
@@ -40,6 +32,12 @@ interface EditorWorkspaceContextValue {
   pages: Doc<"pages">[];
   selectedPage: Doc<"pages"> | null;
   selectedPageId: string | null;
+  restore: {
+    _id: Id<"draftRestores">;
+    status: Doc<"draftRestores">["status"] | "orphaned";
+    phase: string;
+    failure?: string;
+  } | null;
 }
 
 const EditorNavigationContext =
@@ -94,95 +92,83 @@ export function EditorProvider({
     pages.find((page) => page._id === requestedPageId) ?? pages[0] ?? null;
   const selectedPageId = selectedPage?._id ?? null;
 
-  const replaceEditorUrl = useCallback(
-    (pageId: string | null) => {
-      router.replace(buildAppPath(pathname, searchParamsKey, pageId), {
-        scroll: false,
-      });
-    },
-    [pathname, router, searchParamsKey],
-  );
+  const replaceEditorUrl = (pageId: string | null) => {
+    router.replace(buildAppPath(pathname, searchParamsKey, pageId), {
+      scroll: false,
+    });
+  };
 
   useEffect(() => {
     if (!siteId || !workspaceReady) return;
     if (requestedPageId === selectedPageId) return;
-    replaceEditorUrl(selectedPageId);
+    window.history.replaceState(
+      null,
+      "",
+      buildAppPath(pathname, searchParamsKey, selectedPageId),
+    );
   }, [
-    replaceEditorUrl,
+    pathname,
     requestedPageId,
+    searchParamsKey,
     selectedPageId,
     siteId,
     workspaceReady,
   ]);
 
-  const openPage = useCallback(
-    (pageId: string) => {
-      if (selectedPageId === pageId) return;
-      setHistoryState((current) => ({
-        siteId,
-        pages:
-          current.siteId === siteId
-            ? [...current.pages, selectedPageId]
-            : [selectedPageId],
-      }));
-      replaceEditorUrl(pageId);
-    },
-    [replaceEditorUrl, selectedPageId, siteId],
-  );
+  const openPage = (pageId: string) => {
+    if (selectedPageId === pageId) return;
+    setHistoryState((current) => ({
+      siteId,
+      pages:
+        current.siteId === siteId
+          ? [...current.pages, selectedPageId]
+          : [selectedPageId],
+    }));
+    replaceEditorUrl(pageId);
+  };
 
-  const selectPage = useCallback(
-    (pageId: string) => {
-      setHistoryState({ siteId, pages: [] });
-      replaceEditorUrl(pageId);
-    },
-    [replaceEditorUrl, siteId],
-  );
+  const selectPage = (pageId: string) => {
+    setHistoryState({ siteId, pages: [] });
+    replaceEditorUrl(pageId);
+  };
 
-  const goBack = useCallback(() => {
+  const goBack = () => {
     if (pageHistory.length === 0) return;
     replaceEditorUrl(pageHistory.at(-1) ?? null);
     setHistoryState({ siteId, pages: pageHistory.slice(0, -1) });
-  }, [pageHistory, replaceEditorUrl, siteId]);
+  };
 
-  const resetPageHistory = useCallback(() => {
+  const resetPageHistory = () => {
     setHistoryState({ siteId, pages: [] });
-  }, [siteId]);
+  };
 
-  const navigationValue = useMemo<EditorNavigationContextValue>(
-    () => ({
-      canGoBack: pageHistory.length > 0,
-      goBack,
-      openPage,
-      resetPageHistory,
-      selectPage,
-    }),
-    [goBack, openPage, pageHistory.length, resetPageHistory, selectPage],
-  );
-  const siteValue = useMemo<EditorSiteContextValue>(
-    () => ({
-      siteId,
-      canEdit: permissions.canEdit,
-      isAdmin: permissions.isAdmin,
-      isPermissionsLoading: permissions.isLoading,
-    }),
-    [permissions.canEdit, permissions.isAdmin, permissions.isLoading, siteId],
-  );
-  const workspaceValue = useMemo<EditorWorkspaceContextValue>(() => {
-    const status = !siteId
+  const navigationValue: EditorNavigationContextValue = {
+    canGoBack: pageHistory.length > 0,
+    goBack,
+    openPage,
+    resetPageHistory,
+    selectPage,
+  };
+  const siteValue: EditorSiteContextValue = {
+    siteId,
+    canEdit: permissions.canEdit,
+    isAdmin: permissions.isAdmin,
+    isPermissionsLoading: permissions.isLoading,
+  };
+  const workspaceValue: EditorWorkspaceContextValue = {
+    status: !siteId
       ? "idle"
       : workspace === undefined
         ? "loading"
         : workspace === null
           ? "missing"
-          : "ready";
-    return {
-      status,
-      site: workspace?.site ?? null,
-      pages,
-      selectedPage,
-      selectedPageId,
-    };
-  }, [pages, selectedPage, selectedPageId, siteId, workspace]);
+          : "ready",
+    site: workspace?.site ?? null,
+    pages,
+    selectedPage,
+    selectedPageId,
+    restore: workspace?.restore ?? null,
+  };
 
   return (
     <EditorSiteContext.Provider value={siteValue}>

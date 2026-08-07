@@ -328,6 +328,7 @@ export async function reconcileDraftChanges(
   site: Doc<"sites">,
   refs: DraftEntityRef[],
   updatedAt = Date.now(),
+  draftRevision = site.draftRevision ?? 0,
 ) {
   const unique = new Map(
     refs.map((ref) => [`${ref.entityType}:${ref.entityId}`, ref]),
@@ -342,7 +343,8 @@ export async function reconcileDraftChanges(
           .eq("entityId", ref.entityId),
       )
       .unique();
-    const change = await resolveChange(ctx, site, ref, updatedAt);
+    const resolved = await resolveChange(ctx, site, ref, updatedAt);
+    const change = resolved ? { ...resolved, draftRevision } : null;
     if (!change) {
       if (existing) await ctx.db.delete(existing._id);
     } else if (existing) {

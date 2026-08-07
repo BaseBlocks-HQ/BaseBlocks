@@ -13,7 +13,9 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { isPubliclyPublishedSite } from "./sharing";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
+import { cancelFileExtraction, queueFileExtraction } from "./fileExtraction";
+import { buildFileSearchContent } from "./model/fileExtraction";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -41,6 +43,7 @@ export async function deleteFileRows(
     )
     .first();
   if (searchEntry) await ctx.db.delete(searchEntry._id);
+  await cancelFileExtraction(ctx, file._id);
   await ctx.db.patch(file._id, { deletedAt: Date.now() });
 }
 
@@ -64,10 +67,15 @@ export const canUploadToSite = query({
   handler: async (ctx, { siteId, purpose }) => {
     const site = await ctx.db.get(siteId);
     if (!site) return false;
-    return checkOrganizationPermission(ctx, site.organizationId, {
-      resource: purpose === "file" ? "library" : "site",
-      action: "manage",
-    });
+    const permitted = await checkOrganizationPermission(
+      ctx,
+      site.organizationId,
+      {
+        resource: purpose === "file" ? "library" : "site",
+        action: "manage",
+      },
+    );
+    return permitted && !site.activeDraftRestoreId;
   },
 });
 
@@ -77,12 +85,12 @@ export const get = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
-      return null;
-    }
+    if (!file || !isUploadedFile(file)) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
+    assertDraftReadable(site);
+    if (file.deletedAt !== undefined) return null;
     return mapFile(file);
   },
 });
@@ -93,12 +101,12 @@ export const getDownloadAsset = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
-      return null;
-    }
+    if (!file || !isUploadedFile(file)) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
+    assertDraftReadable(site);
+    if (file.deletedAt !== undefined) return null;
     return file;
   },
 });
@@ -153,6 +161,7 @@ export const getAuthorized = query({
         { resource: "site", action: "manage" },
       );
       if (!canManage) return null;
+      if (!released) assertDraftReadable(site);
       return released
         ? {
             objectKey: released.objectKey,
@@ -165,6 +174,7 @@ export const getAuthorized = query({
           : null;
     }
     await requireOrganizationMember(ctx, site.organizationId);
+    if (!released) assertDraftReadable(site);
     return released
       ? {
           objectKey: released.objectKey,
@@ -263,7 +273,7 @@ async function createUploadedFile(
     audience: args.audience,
     sourceId: fileId,
     title: args.filename,
-    text: args.filename,
+    text: "",
     fileMetadata: {
       fileId,
       filename: args.filename,
@@ -274,6 +284,8 @@ async function createUploadedFile(
     },
     updatedAt: createdAt,
   });
+  const file = await ctx.db.get(fileId);
+  if (file) await queueFileExtraction(ctx, file);
   await touchSiteDraft(ctx, args.siteId, createdAt, [
     { entityType: "file", entityId: fileId },
   ]);
@@ -353,9 +365,15 @@ export const rename = mutation({
       )
       .first();
     if (entry) {
+      const extraction = await ctx.db
+        .query("fileExtractions")
+        .withIndex("by_file", (q) => q.eq("fileId", fileId))
+        .first();
       await ctx.db.patch(entry._id, {
         title: filename,
-        text: filename,
+        text: buildFileSearchContent(
+          extraction?.status === "ready" ? extraction.extractedText : undefined,
+        ),
         fileMetadata: fileSearchMetadata({ ...file, filename }),
         updatedAt: Date.now(),
       });

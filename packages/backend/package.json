@@ -29,13 +29,18 @@
     "typescript": ">=5 <8"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1084.0",
+    "@aws-sdk/s3-presigned-post": "^3.1084.0",
+    "@aws-sdk/s3-request-presigner": "^3.1084.0",
     "@baseblocks/domain": "workspace:*",
+    "@baseblocks/anydoc": "0.1.0-alpha.10",
     "@baseblocks/openeditor-contracts": "workspace:*",
     "@convex-dev/better-auth": "^0.12.5",
     "@noble/hashes": "2.0.1",
-    "@openeditor/workspace": "0.0.37",
-    "@openeditor/core": "0.0.37",
+    "@openeditor/workspace": "0.0.40",
+    "@openeditor/core": "0.0.40",
     "better-auth": "^1.6.23",
-    "convex": "^1.42.1"
+    "convex": "^1.42.1",
+    "files-sdk": "2.2.3"
   }
 }

@@ -18,6 +18,7 @@ import { emptyOpenEditorDocument } from "./pageContentFormat";
 import { requireOrganizationPermission } from "./permissions";
 import { fingerprintAiProjectTrustRoot } from "./model/aiWorkspaceFingerprint";
 import { readPageDocumentRecord } from "./model/pageDocuments";
+import { assertDraftReadable } from "./model/draft";
 
 function jsonMetadata(value: unknown): JsonObject {
   return JSON.parse(JSON.stringify(value)) as JsonObject;
@@ -40,6 +41,7 @@ export const exportDraft = query({
       resource: "content",
       action: "edit",
     });
+    assertDraftReadable(site);
 
     const [activePages, libraries, files] = await Promise.all([
       ctx.db

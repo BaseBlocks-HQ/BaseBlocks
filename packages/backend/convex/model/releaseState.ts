@@ -14,3 +14,56 @@ export function findReleaseForDraftRevision<
     (release) => release.sourceDraftRevision === draftRevision,
   );
 }
+
+export type PublicationStatus =
+  | "building"
+  | "aborting"
+  | "clearing"
+  | "complete"
+  | "failed";
+
+export function isPublicationInFlight(
+  status: PublicationStatus | undefined,
+): boolean {
+  return (
+    status === "building" || status === "aborting" || status === "clearing"
+  );
+}
+
+export function publicationFailureOutcome(
+  status: PublicationStatus | undefined,
+  nextAttempt: number,
+  maxBuildAttempts: number,
+): "abort" | "retry" {
+  return status === "building" && nextAttempt >= maxBuildAttempts
+    ? "abort"
+    : "retry";
+}
+
+export function extractionBlocksPublication(
+  status: "queued" | "processing" | "ready" | "failed",
+): boolean {
+  return status === "queued" || status === "processing";
+}
+
+export function extractionRetryInvalidatesDraft(
+  status: "queued" | "processing" | "ready" | "failed" | undefined,
+): boolean {
+  return status === undefined || status === "ready" || status === "failed";
+}
+
+export function extractionIsPublishable(
+  extraction:
+    | {
+        status: "queued" | "processing" | "ready" | "failed";
+        sourceVersion: string;
+      }
+    | null
+    | undefined,
+  expectedSourceVersion: string,
+): boolean {
+  return (
+    extraction?.sourceVersion === expectedSourceVersion &&
+    (extraction.status === "ready" || extraction.status === "failed")
+  );
+}

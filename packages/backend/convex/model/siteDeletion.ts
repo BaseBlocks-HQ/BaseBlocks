@@ -1,5 +1,6 @@
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { assertDraftWritable } from "./draft";
 
 type ReadCtx = QueryCtx | MutationCtx;
 
@@ -51,6 +52,10 @@ export async function deleteSiteData(
   siteId: Id<"sites">,
   options: { includeDomains: boolean },
 ) {
+  const site = await ctx.db.get(siteId);
+  if (!site) throw new Error("Site not found");
+  assertDraftWritable(site);
+
   const domains = await ctx.db
     .query("siteDomains")
     .withIndex("by_site", (q) => q.eq("siteId", siteId))
@@ -137,7 +142,19 @@ export async function deleteSiteData(
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),
     ctx.db
+      .query("fileExtractionJobs")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
+      .query("fileExtractions")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
       .query("draftChanges")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
+      .query("draftRestores")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),
     ctx.db
