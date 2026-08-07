@@ -13,12 +13,28 @@ import { queueFileExtraction } from "./fileExtraction";
 const canonicalPageSlugPattern = new RegExp(`^${SLUG_PATTERN}$`);
 const FILE_EXTRACTION_BACKFILL_KEY = "file-extraction-v1";
 const RELEASE_PUBLICATION_STATUS_BACKFILL_KEY = "release-publication-status-v1";
+const DRAFT_CHANGE_REVISION_BACKFILL_KEY = "draft-change-revision-v1";
+const RELEASE_CHANGE_TIMESTAMP_CLEANUP_KEY = "release-change-timestamp-v1";
 const BACKFILL_STALL_MS = 10 * 60_000;
 
 export const getStatus = internalQuery({
   args: {},
-  handler: async (ctx) =>
-    await ctx.db.query("maintenanceJobs").withIndex("by_key").collect(),
+  handler: async (ctx) => {
+    const jobs = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key")
+      .collect();
+    return jobs.map(
+      ({ key, status, processed, updated, updatedAt, completedAt }) => ({
+        key,
+        status,
+        processed,
+        updated,
+        updatedAt,
+        completedAt,
+      }),
+    );
+  },
 });
 
 /**
@@ -150,6 +166,305 @@ export const backfillReleasePublicationStatuses = internalMutation({
       await ctx.scheduler.runAfter(
         0,
         internal.migrations.backfillReleasePublicationStatuses,
+        {
+          token,
+          cursor: page.continueCursor,
+          batchSize: numItems,
+        },
+      );
+    }
+    return {
+      applied: true,
+      processed: page.page.length,
+      updated,
+      isDone: page.isDone,
+    };
+  },
+});
+
+export const startDraftChangeRevisionBackfill = internalMutation({
+  args: { forceRestart: v.optional(v.boolean()) },
+  handler: async (ctx, { forceRestart = false }) => {
+    const existing = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", DRAFT_CHANGE_REVISION_BACKFILL_KEY),
+      )
+      .unique();
+    if (existing?.status === "complete" && !forceRestart) {
+      return {
+        started: false,
+        complete: true,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const now = Date.now();
+    if (
+      existing?.status === "running" &&
+      now - existing.updatedAt < BACKFILL_STALL_MS
+    ) {
+      return {
+        started: false,
+        complete: false,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const restart = existing?.status === "complete";
+    const runToken = restart
+      ? crypto.randomUUID()
+      : (existing?.runToken ?? crypto.randomUUID());
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: "running",
+        runToken,
+        cursor: restart ? undefined : existing.cursor,
+        processed: restart ? 0 : existing.processed,
+        updated: restart ? 0 : (existing.updated ?? 0),
+        updatedAt: now,
+        completedAt: undefined,
+      });
+    } else {
+      await ctx.db.insert("maintenanceJobs", {
+        key: DRAFT_CHANGE_REVISION_BACKFILL_KEY,
+        status: "running",
+        runToken,
+        processed: 0,
+        updated: 0,
+        updatedAt: now,
+      });
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.migrations.backfillDraftChangeRevisions,
+      {
+        token: runToken,
+        cursor: restart ? undefined : existing?.cursor,
+      },
+    );
+    return {
+      started: true,
+      complete: false,
+      processed: restart ? 0 : (existing?.processed ?? 0),
+      updated: restart ? 0 : (existing?.updated ?? 0),
+    };
+  },
+});
+
+export const backfillDraftChangeRevisions = internalMutation({
+  args: {
+    token: v.string(),
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, { token, cursor, batchSize = 50 }) => {
+    const job = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", DRAFT_CHANGE_REVISION_BACKFILL_KEY),
+      )
+      .unique();
+    if (
+      job?.status !== "running" ||
+      job.runToken !== token ||
+      (job.cursor ?? null) !== (cursor ?? null)
+    ) {
+      return { applied: false, processed: 0, updated: 0, isDone: false };
+    }
+    const numItems = Math.max(1, Math.min(100, Math.floor(batchSize)));
+    const page = await ctx.db.query("draftChanges").paginate({
+      cursor: cursor ?? null,
+      numItems,
+    });
+    let updated = 0;
+    for (const change of page.page) {
+      if (change.draftRevision !== undefined) continue;
+      const site = await ctx.db.get(change.siteId);
+      if (!site) continue;
+      await ctx.db.patch(change._id, { draftRevision: site.draftRevision });
+      updated += 1;
+    }
+    const now = Date.now();
+    const nextProcessed = job.processed + page.page.length;
+    const nextUpdated = (job.updated ?? 0) + updated;
+    if (page.isDone) {
+      await ctx.db.patch(job._id, {
+        status: "complete",
+        cursor: undefined,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+        completedAt: now,
+      });
+    } else {
+      await ctx.db.patch(job._id, {
+        cursor: page.continueCursor,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.migrations.backfillDraftChangeRevisions,
+        {
+          token,
+          cursor: page.continueCursor,
+          batchSize: numItems,
+        },
+      );
+    }
+    return {
+      applied: true,
+      processed: page.page.length,
+      updated,
+      isDone: page.isDone,
+    };
+  },
+});
+
+export const startReleaseChangeTimestampCleanup = internalMutation({
+  args: { forceRestart: v.optional(v.boolean()) },
+  handler: async (ctx, { forceRestart = false }) => {
+    for (const status of ["building", "aborting", "clearing"] as const) {
+      const active = await ctx.db
+        .query("siteReleases")
+        .withIndex("by_publication_status_updated", (q) =>
+          q.eq("publicationStatus", status),
+        )
+        .first();
+      if (active) {
+        throw new Error(
+          "Cannot clean legacy publication snapshots while a publication is active",
+        );
+      }
+    }
+    const revisionJob = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", DRAFT_CHANGE_REVISION_BACKFILL_KEY),
+      )
+      .unique();
+    if (revisionJob?.status !== "complete") {
+      throw new Error("Draft change revision backfill must complete first");
+    }
+    const existing = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", RELEASE_CHANGE_TIMESTAMP_CLEANUP_KEY),
+      )
+      .unique();
+    if (existing?.status === "complete" && !forceRestart) {
+      return {
+        started: false,
+        complete: true,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const now = Date.now();
+    if (
+      existing?.status === "running" &&
+      now - existing.updatedAt < BACKFILL_STALL_MS
+    ) {
+      return {
+        started: false,
+        complete: false,
+        processed: existing.processed,
+        updated: existing.updated ?? 0,
+      };
+    }
+    const restart = existing?.status === "complete";
+    const runToken = restart
+      ? crypto.randomUUID()
+      : (existing?.runToken ?? crypto.randomUUID());
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: "running",
+        runToken,
+        cursor: restart ? undefined : existing.cursor,
+        processed: restart ? 0 : existing.processed,
+        updated: restart ? 0 : (existing.updated ?? 0),
+        updatedAt: now,
+        completedAt: undefined,
+      });
+    } else {
+      await ctx.db.insert("maintenanceJobs", {
+        key: RELEASE_CHANGE_TIMESTAMP_CLEANUP_KEY,
+        status: "running",
+        runToken,
+        processed: 0,
+        updated: 0,
+        updatedAt: now,
+      });
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.migrations.cleanupReleaseChangeTimestamps,
+      { token: runToken, cursor: restart ? undefined : existing?.cursor },
+    );
+    return {
+      started: true,
+      complete: false,
+      processed: restart ? 0 : (existing?.processed ?? 0),
+      updated: restart ? 0 : (existing?.updated ?? 0),
+    };
+  },
+});
+
+export const cleanupReleaseChangeTimestamps = internalMutation({
+  args: {
+    token: v.string(),
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, { token, cursor, batchSize = 50 }) => {
+    const job = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key", (q) =>
+        q.eq("key", RELEASE_CHANGE_TIMESTAMP_CLEANUP_KEY),
+      )
+      .unique();
+    if (
+      job?.status !== "running" ||
+      job.runToken !== token ||
+      (job.cursor ?? null) !== (cursor ?? null)
+    ) {
+      return { applied: false, processed: 0, updated: 0, isDone: false };
+    }
+    const numItems = Math.max(1, Math.min(100, Math.floor(batchSize)));
+    const page = await ctx.db.query("releaseChanges").paginate({
+      cursor: cursor ?? null,
+      numItems,
+    });
+    let updated = 0;
+    for (const change of page.page) {
+      if (change.sourceUpdatedAt === undefined) continue;
+      await ctx.db.patch(change._id, { sourceUpdatedAt: undefined });
+      updated += 1;
+    }
+    const now = Date.now();
+    const nextProcessed = job.processed + page.page.length;
+    const nextUpdated = (job.updated ?? 0) + updated;
+    if (page.isDone) {
+      await ctx.db.patch(job._id, {
+        status: "complete",
+        cursor: undefined,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+        completedAt: now,
+      });
+    } else {
+      await ctx.db.patch(job._id, {
+        cursor: page.continueCursor,
+        processed: nextProcessed,
+        updated: nextUpdated,
+        updatedAt: now,
+      });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.migrations.cleanupReleaseChangeTimestamps,
         {
           token,
           cursor: page.continueCursor,
