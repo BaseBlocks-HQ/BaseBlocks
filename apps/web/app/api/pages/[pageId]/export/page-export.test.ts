@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   buildPageExportDocument,
+  createPageExportAssetResolver,
   createPageExportFilename,
   isPageExportFormat,
   renderPageExport,
@@ -44,8 +45,8 @@ describe("BaseBlocks page export adapter", () => {
       expect(exported.mediaType).toBe(metadata.mediaType);
       expect(
         createPageExportFilename({
+          extension: metadata.extension,
           title: document.title,
-          format: format as keyof typeof expected,
         }),
       ).toBe(`product-strategy.${metadata.extension}`);
     }
@@ -71,5 +72,62 @@ describe("BaseBlocks page export adapter", () => {
         pageTitle: "Legacy",
       }),
     ).toThrow("Page content is not a valid OpenEditor document");
+  });
+
+  test("exports authorized image bytes without retaining an external URL", async () => {
+    const imageDocument = buildPageExportDocument({
+      content: {
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "image",
+            attrs: {
+              alt: "Pixel",
+              height: 1,
+              imageId: "asset-1",
+              src: "https://tracker.invalid/pixel.png",
+              width: 1,
+            },
+          },
+        ],
+      },
+      pageTitle: "Images",
+    });
+    const png = Uint8Array.of(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    const assetResolver = createPageExportAssetResolver(
+      [
+        {
+          fileId: "asset-1",
+          filename: "pixel.png",
+          contentType: "image/png",
+          objectKey: "sites/site-1/assets/pixel.png",
+          size: png.byteLength,
+        },
+      ],
+      async () => png,
+    );
+
+    const resolved = await assetResolver(imageDocument.document.content[0], {
+      path: [0],
+    });
+    expect(resolved).toEqual(
+      expect.objectContaining({
+        data: png,
+        fileName: "pixel.png",
+        mediaType: "image/png",
+      }),
+    );
+
+    const exported = await renderPageExport(imageDocument, "markdown", {
+      assetResolver,
+    });
+    expect(exported.binary).toBe(true);
+    expect(exported.extension).toBe("zip");
+    expect(exported.mediaType).toBe("application/zip");
+    expect(exported.data).toBeInstanceOf(Uint8Array);
+    expect(exported.data.slice(0, 4)).toEqual(
+      Uint8Array.of(0x50, 0x4b, 0x03, 0x04),
+    );
   });
 });

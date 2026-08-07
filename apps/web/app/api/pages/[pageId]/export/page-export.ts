@@ -2,9 +2,15 @@ import {
   isOpenEditorDocument,
   type OpenEditorDocument,
 } from "@openeditor/core";
-import { toHtml, toJson, toPlainText } from "@openeditor/exporters";
-import { exportDocx } from "@openeditor/exporters/docx";
-import { exportMarkdown } from "@openeditor/exporters/markdown";
+import {
+  createOpenEditorExporterRegistry,
+  openEditorBuiltInExporters,
+  type OpenEditorAssetResolver,
+  type OpenEditorExportResult,
+} from "@openeditor/exporters";
+import { packageOpenEditorExportResult } from "@openeditor/exporters/bundle";
+import { docxExporter } from "@openeditor/exporters/docx";
+import { markdownExporter } from "@openeditor/exporters/markdown";
 
 export const PAGE_EXPORT_FORMATS = [
   "docx",
@@ -16,19 +22,31 @@ export const PAGE_EXPORT_FORMATS = [
 
 export type PageExportFormat = (typeof PAGE_EXPORT_FORMATS)[number];
 
-const formatMetadata = {
-  html: { extension: "html", mediaType: "text/html; charset=utf-8" },
-  json: { extension: "json", mediaType: "application/json" },
-  text: { extension: "txt", mediaType: "text/plain; charset=utf-8" },
-} as const;
-
-const formatExtensions: Record<PageExportFormat, string> = {
-  docx: "docx",
-  html: "html",
-  json: "json",
-  markdown: "md",
-  text: "txt",
+export type PageExportAsset = {
+  fileId: string;
+  filename: string;
+  contentType: string;
+  objectKey: string;
+  size: number;
+  checksum?: string;
 };
+
+const pageExporterRegistry = createOpenEditorExporterRegistry({
+  exporters: [...openEditorBuiltInExporters, markdownExporter, docxExporter],
+});
+
+const ASSET_FAILURE_CODES = new Set([
+  "asset_rejected",
+  "asset_unavailable",
+  "unsafe_url",
+]);
+
+export class PageExportAssetError extends Error {
+  constructor() {
+    super("One or more page images could not be exported safely.");
+    this.name = "PageExportAssetError";
+  }
+}
 
 function normalizeText(value: string): string {
   return value.replace(/\r\n/g, "\n").trim();
@@ -52,6 +70,38 @@ export function buildPageExportDocument(args: {
   return { title, document: args.content };
 }
 
+export function createPageExportAssetResolver(
+  assets: readonly PageExportAsset[],
+  load: (asset: PageExportAsset, signal?: AbortSignal) => Promise<Uint8Array>,
+): OpenEditorAssetResolver {
+  const byId = new Map(assets.map((asset) => [asset.fileId, asset]));
+  const loads = new Map<string, Promise<Uint8Array>>();
+  return async (node, { signal }) => {
+    const imageId =
+      node.type === "image" && typeof node.attrs?.imageId === "string"
+        ? node.attrs.imageId
+        : null;
+    const asset = imageId ? byId.get(imageId) : undefined;
+    if (!asset) return null;
+    let pending = loads.get(asset.fileId);
+    if (!pending) {
+      pending = load(asset, signal);
+      loads.set(asset.fileId, pending);
+    }
+    const data = await pending;
+    signal?.throwIfAborted();
+    return {
+      data,
+      fileName: asset.filename,
+      height:
+        typeof node.attrs?.height === "number" ? node.attrs.height : undefined,
+      mediaType: asset.contentType,
+      width:
+        typeof node.attrs?.width === "number" ? node.attrs.width : undefined,
+    };
+  };
+}
+
 function withTitle(input: {
   title: string;
   document: OpenEditorDocument;
@@ -72,38 +122,55 @@ function withTitle(input: {
 export async function renderPageExport(
   input: { title: string; document: OpenEditorDocument },
   format: PageExportFormat,
+  options: {
+    assetResolver?: OpenEditorAssetResolver;
+    signal?: AbortSignal;
+  } = {},
 ) {
   const document = withTitle(input);
-  if (format === "docx")
-    return await exportDocx(document, { title: input.title });
-  if (format === "markdown") return await exportMarkdown(document);
+  let exported: OpenEditorExportResult;
+  if (format === "docx") {
+    exported = await pageExporterRegistry.export(document, "docx", {
+      assetResolver: options.assetResolver,
+      signal: options.signal,
+      title: input.title,
+    });
+  } else if (format === "markdown") {
+    exported = await pageExporterRegistry.export(document, "markdown", {
+      assetResolver: options.assetResolver,
+      signal: options.signal,
+    });
+  } else if (format === "html") {
+    exported = await pageExporterRegistry.export(document, "html", {
+      assetResolver: options.assetResolver,
+      signal: options.signal,
+    });
+  } else if (format === "json") {
+    exported = await pageExporterRegistry.export(document, "json");
+  } else {
+    exported = await pageExporterRegistry.export(document, "text");
+  }
 
-  const metadata = formatMetadata[format];
-  const data =
-    format === "html"
-      ? toHtml(document)
-      : format === "json"
-        ? toJson(document)
-        : toPlainText(document);
-  return {
-    binary: false as const,
-    data,
-    extension: metadata.extension,
-    files: [],
-    format,
-    mediaType: metadata.mediaType,
-    warnings: [],
-  };
+  if (
+    exported.warnings.some((warning) => ASSET_FAILURE_CODES.has(warning.code))
+  ) {
+    throw new PageExportAssetError();
+  }
+  return await packageOpenEditorExportResult(exported, {
+    baseFileName: input.title,
+    signal: options.signal,
+  });
 }
 
 export function createPageExportFilename(args: {
+  extension: string;
   title: string;
-  format: PageExportFormat;
 }) {
   const safeTitle = args.title
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return `${safeTitle || "untitled-page"}.${formatExtensions[args.format]}`;
+  const extension = args.extension.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return `${safeTitle || "untitled-page"}.${extension || "bin"}`;
 }

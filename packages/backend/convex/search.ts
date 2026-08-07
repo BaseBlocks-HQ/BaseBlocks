@@ -327,8 +327,8 @@ export const searchAll = query({
       })
       .take(boundedLimit * 2);
 
-    // A title is also present in legacy `text` values, so classify title hits
-    // before de-duplicating the broader content index results.
+    // Preserve the more specific classification when a result satisfies both
+    // indexes, then de-duplicate the broader content results.
     return mergeSearchMatches({
       titleResults,
       contentResults,

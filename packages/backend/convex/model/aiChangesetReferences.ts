@@ -1,4 +1,4 @@
-import { openEditorPublicUrlPolicy } from "@openeditor/core";
+import { openEditorNavigationUrlPolicy } from "@openeditor/core";
 import type { AiChangesetPlan, PlannedAiPage } from "./aiChangesetPlan";
 import {
   extractOpenEditorReferences,
@@ -59,7 +59,7 @@ function internalPath(href: string, sourcePath: string): string | null {
 function assertPublicLinkUrl(href: string, pageRef: string): void {
   if (
     href.trim().startsWith("//") ||
-    openEditorPublicUrlPolicy(href, "link") !== href.trim()
+    openEditorNavigationUrlPolicy(href, "link") !== href.trim()
   ) {
     fail(`Page ${pageRef} contains an unsafe external link ${href}`);
   }
@@ -121,7 +121,7 @@ function validateDocumentLinks(input: {
           "quick link",
         );
       } else if (
-        openEditorPublicUrlPolicy(link.url, "link") !== link.url.trim()
+        openEditorNavigationUrlPolicy(link.url, "link") !== link.url.trim()
       ) {
         fail(
           `Page ${input.pageRef} contains an unsafe external quick link ${link.url}`,

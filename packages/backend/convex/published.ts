@@ -360,7 +360,7 @@ export const getFavicon = query({
   },
 });
 
-export const getPageById = query({
+export const getPageExport = query({
   args: { pageId: v.id("pages") },
   returns: v.any(),
   handler: async (ctx, { pageId }) => {
@@ -377,6 +377,38 @@ export const getPageById = query({
       )
       .unique();
     if (!page) return null;
+    const content = await readReleasePageContent(ctx, page);
+    const revision = page.contentRevisionId
+      ? await ctx.db.get(page.contentRevisionId)
+      : null;
+    const assets = revision
+      ? (
+          await Promise.all(
+            revision.fileIds.map((fileId) =>
+              ctx.db
+                .query("releaseFiles")
+                .withIndex("by_release_file", (q) =>
+                  q.eq("releaseId", site.liveReleaseId!).eq("fileId", fileId),
+                )
+                .unique(),
+            ),
+          )
+        ).flatMap((asset) =>
+          asset?.kind === "siteAsset" &&
+          asset.contentType.toLowerCase().startsWith("image/")
+            ? [
+                {
+                  fileId: asset.fileId,
+                  objectKey: asset.objectKey,
+                  filename: asset.filename,
+                  contentType: asset.contentType,
+                  size: asset.size,
+                  checksum: asset.checksum,
+                },
+              ]
+            : [],
+        )
+      : [];
     return {
       page: {
         _id: page.pageId,
@@ -385,7 +417,8 @@ export const getPageById = query({
         icon: page.icon,
         parentId: page.parentId,
       },
-      content: await readReleasePageContent(ctx, page),
+      content,
+      assets,
     };
   },
 });
