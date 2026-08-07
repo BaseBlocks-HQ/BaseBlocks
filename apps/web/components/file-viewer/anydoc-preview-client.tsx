@@ -10,7 +10,7 @@ import type {
 } from "@baseblocks/anydoc/react";
 import { Spinner } from "@baseblocks/ui/spinner";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES,
   DocumentPreviewTooLargeError,
@@ -89,10 +89,41 @@ export default function AnyDocPreview({
   messages?: Partial<AnyDocPreviewMessages>;
 }) {
   const format = resolveNativeDocumentFormat(file);
-  const messages = useMemo(
-    () => ({ ...DEFAULT_MESSAGES, ...messageOverrides }),
-    [messageOverrides],
+  const messages: AnyDocPreviewMessages = {
+    loadError: messageOverrides?.loadError ?? DEFAULT_MESSAGES.loadError,
+    loading: messageOverrides?.loading ?? DEFAULT_MESSAGES.loading,
+    tooLarge: messageOverrides?.tooLarge ?? DEFAULT_MESSAGES.tooLarge,
+  };
+
+  if (!format) {
+    return <PreviewError message={messages.loadError} />;
+  }
+  if (
+    file.size !== undefined &&
+    file.size > DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES
+  ) {
+    return <PreviewError message={messages.tooLarge} />;
+  }
+
+  return (
+    <DocumentLoadSession
+      file={file}
+      format={format}
+      key={`${file.url}:${file.size ?? "unknown"}:${format}`}
+      messages={messages}
+    />
   );
+}
+
+function DocumentLoadSession({
+  file,
+  format,
+  messages,
+}: {
+  file: PreviewFile;
+  format: NativeDocumentFormat;
+  messages: AnyDocPreviewMessages;
+}) {
   const [state, setState] = useState<
     | { status: "loading" }
     | { status: "ready"; source: ArrayBuffer }
@@ -101,18 +132,6 @@ export default function AnyDocPreview({
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ status: "loading" });
-    if (!format) {
-      setState({ message: messages.loadError, status: "error" });
-      return () => controller.abort();
-    }
-    if (
-      file.size !== undefined &&
-      file.size > DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES
-    ) {
-      setState({ message: messages.tooLarge, status: "error" });
-      return () => controller.abort();
-    }
 
     void loadBoundedDocument(file.url, {
       maxBytes: DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES,
@@ -130,16 +149,13 @@ export default function AnyDocPreview({
         });
       });
     return () => controller.abort();
-  }, [file.size, file.url, format, messages.loadError, messages.tooLarge]);
+  }, [file.url, messages.loadError, messages.tooLarge]);
 
   if (state.status === "loading") {
     return <PreviewStatus message={messages.loading} />;
   }
   if (state.status === "error") {
     return <PreviewError message={state.message} />;
-  }
-  if (!format) {
-    return <PreviewError message={messages.loadError} />;
   }
   return (
     <NativeDocumentViewer
@@ -159,7 +175,7 @@ function NativeDocumentViewer({
   format: NativeDocumentFormat;
   source: ArrayBuffer;
 }) {
-  const documentSource = useMemo(() => ({ data: source }), [source]);
+  const documentSource = { data: source };
   if (format === "pdf") {
     return (
       <PdfViewer
