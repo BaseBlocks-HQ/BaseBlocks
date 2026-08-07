@@ -23,6 +23,9 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1);
+  const [visiblePages, setVisiblePages] = useState<Set<number>>(
+    () => new Set([1, 2]),
+  );
 
   useEffect(() => {
     const container = containerRef.current;
@@ -38,6 +41,37 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
   }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || numPages === 0) return;
+    const nodes = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-pdf-page]"),
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setVisiblePages((current) => {
+          const next = new Set(current);
+          for (const entry of entries) {
+            const pageNumber = Number(
+              (entry.target as HTMLElement).dataset.pdfPage,
+            );
+            if (entry.isIntersecting) {
+              next.add(pageNumber);
+              next.add(pageNumber - 1);
+              next.add(pageNumber + 1);
+            }
+          }
+          return next;
+        });
+      },
+      { root: container, rootMargin: "1200px 0px" },
+    );
+    nodes.forEach((node) => {
+      observer.observe(node);
+    });
+    return () => observer.disconnect();
+  }, [numPages]);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-muted/20">
@@ -71,17 +105,23 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
         >
           <div className="mx-auto flex w-fit flex-col gap-4">
             {getPdfPageNumbers(numPages).map((pageNumber) => (
-              <Page
+              <div
                 key={pageNumber}
-                className="overflow-hidden rounded-sm bg-background shadow-sm"
-                pageNumber={pageNumber}
-                renderAnnotationLayer
-                renderTextLayer
-                scale={scale}
-                width={
-                  containerWidth ? Math.min(containerWidth, 920) : undefined
-                }
-              />
+                data-pdf-page={pageNumber}
+                className="min-h-[960px] overflow-hidden rounded-sm bg-background shadow-sm"
+              >
+                {visiblePages.has(pageNumber) ? (
+                  <Page
+                    pageNumber={pageNumber}
+                    renderAnnotationLayer
+                    renderTextLayer
+                    scale={scale}
+                    width={
+                      containerWidth ? Math.min(containerWidth, 920) : undefined
+                    }
+                  />
+                ) : null}
+              </div>
             ))}
           </div>
         </Document>

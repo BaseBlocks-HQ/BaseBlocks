@@ -22,6 +22,11 @@ const PdfPreview = dynamic(() => import("./pdf-preview-client"), {
   loading: () => <PreviewLoading />,
 });
 
+const TextPreview = dynamic(() => import("./text-preview-client"), {
+  ssr: false,
+  loading: () => <PreviewLoading />,
+});
+
 export interface PreviewFile {
   url: string;
   filename: string;
@@ -197,6 +202,13 @@ function FilePreviewContent({ file }: { file: PreviewFile }) {
   const contentType = file.contentType.toLowerCase();
 
   if (contentType.includes("pdf")) return <PdfPreview file={file} />;
+  if (
+    contentType.startsWith("text/") ||
+    contentType.includes("markdown") ||
+    /\.(md|markdown|txt|csv)$/i.test(file.filename)
+  ) {
+    return <TextPreview file={file} />;
+  }
 
   return <UnknownPreview file={file} />;
 }
