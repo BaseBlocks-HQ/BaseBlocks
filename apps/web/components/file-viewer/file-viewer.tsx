@@ -4,9 +4,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
   Download01Icon,
+  ArrowExpandIcon,
+  ArrowShrinkIcon,
   LinkSquare01Icon,
-  Maximize02Icon,
-  Minimize02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { FileIcon, formatFileSize } from "@/components/file-viewer/file-ui";
@@ -14,7 +14,13 @@ import { Button } from "@baseblocks/ui/button";
 import { Spinner } from "@baseblocks/ui/spinner";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useState } from "react";
+import {
+  forwardRef,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { detectViewerFormat } from "@baseblocks/anydoc/react";
 
@@ -72,7 +78,6 @@ export function FilePreview({
 
   if (!file) return null;
 
-  const downloadEnabled = file.allowDownload !== false;
   const shellClassName =
     mode === "embedded"
       ? cn(
@@ -89,11 +94,12 @@ export function FilePreview({
   const preview = (
     <section className={shellClassName}>
       <PreviewToolbar
-        file={file}
         fullscreen={fullscreen}
         leadingActions={leadingActions}
         onClose={onClose}
-        onDownload={downloadEnabled ? () => downloadFile(file) : undefined}
+        onDownload={
+          file.allowDownload !== false ? () => downloadFile(file) : undefined
+        }
         onOpenExternal={() => window.open(file.url, "_blank", "noopener")}
         onToggleFullscreen={() => setFullscreen((value) => !value)}
         viewerToolbarRef={setViewerToolbarTarget}
@@ -111,7 +117,6 @@ export function FilePreview({
 }
 
 function PreviewToolbar({
-  file,
   fullscreen,
   leadingActions,
   onClose,
@@ -120,7 +125,6 @@ function PreviewToolbar({
   onToggleFullscreen,
   viewerToolbarRef,
 }: {
-  file: PreviewFile;
   fullscreen: boolean;
   leadingActions?: ReactNode;
   onClose: () => void;
@@ -132,79 +136,60 @@ function PreviewToolbar({
   const t = useTranslations("libraries.viewer");
   return (
     <header className="flex h-10 shrink-0 items-center gap-1 overflow-hidden border-b bg-muted px-2 text-foreground shadow-sm sm:gap-2">
-      {leadingActions}
-      <div className="hidden min-w-16 max-w-sm flex-1 items-center gap-2 sm:flex">
-        <FileIcon
-          className="h-4 w-4 shrink-0 text-muted-foreground"
-          contentType={file.contentType}
+      <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {leadingActions}
+        <div
+          className="flex shrink-0 items-center gap-1"
+          ref={viewerToolbarRef}
         />
-        <span className="truncate text-sm font-medium" title={file.filename}>
-          {file.filename}
-        </span>
-        {file.size ? (
-          <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
-            {formatFileSize(file.size)}
-          </span>
-        ) : null}
-      </div>
-      <div
-        className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        ref={viewerToolbarRef}
-      />
-      <ToolbarButton label={t("openNewTab")} onClick={onOpenExternal}>
-        <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
-      </ToolbarButton>
-      {onDownload ? (
-        <ToolbarButton label={t("download")} onClick={onDownload}>
-          <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />
+        <ToolbarButton label={t("openNewTab")} onClick={onOpenExternal}>
+          <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
         </ToolbarButton>
-      ) : null}
-      <ToolbarButton
-        label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
-        onClick={onToggleFullscreen}
-      >
-        {fullscreen ? (
-          <HugeiconsIcon icon={Minimize02Icon} className="h-4 w-4" />
-        ) : (
-          <HugeiconsIcon icon={Maximize02Icon} className="h-4 w-4" />
-        )}
-      </ToolbarButton>
-      <ToolbarButton label={t("close")} onClick={onClose}>
-        <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
-      </ToolbarButton>
+        {onDownload ? (
+          <ToolbarButton label={t("download")} onClick={onDownload}>
+            <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />
+          </ToolbarButton>
+        ) : null}
+        <ToolbarButton
+          label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
+          onClick={onToggleFullscreen}
+        >
+          {fullscreen ? (
+            <HugeiconsIcon icon={ArrowShrinkIcon} className="h-4 w-4" />
+          ) : (
+            <HugeiconsIcon icon={ArrowExpandIcon} className="h-4 w-4" />
+          )}
+        </ToolbarButton>
+        <ToolbarButton label={t("close")} onClick={onClose}>
+          <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
+        </ToolbarButton>
+      </div>
     </header>
   );
 }
 
-export function ToolbarButton({
-  children,
-  className,
-  disabled,
-  label,
-  onClick,
-}: {
-  children: ReactNode;
-  className?: string;
-  disabled?: boolean;
-  label: string;
-  onClick: () => void;
-}) {
+export const ToolbarButton = forwardRef<
+  HTMLButtonElement,
+  Omit<ComponentPropsWithoutRef<typeof Button>, "children"> & {
+    children: ReactNode;
+    label: string;
+  }
+>(function ToolbarButton({ children, className, label, ...props }, ref) {
   return (
-    <button
+    <Button
+      {...props}
+      ref={ref}
       type="button"
       aria-label={label}
-      className={cn(
-        "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40",
-        className,
-      )}
-      disabled={disabled}
-      onClick={onClick}
+      className={cn("text-muted-foreground", className)}
+      size="icon-sm"
       title={label}
+      variant="ghost"
     >
       {children}
-    </button>
+    </Button>
   );
-}
+});
 
 function FilePreviewContent({
   file,

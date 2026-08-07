@@ -16,6 +16,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import type { FolderId, LibraryEntity } from "@/features/libraries/model";
 import { InlineRename } from "@/components/tree/inline-rename";
+import { MiddleTruncate } from "@/components/tree/middle-truncate";
+import { formatFileSize } from "@/components/file-viewer/file-ui";
 import {
   projectTree,
   type TreeDropPlacement,
@@ -23,8 +25,17 @@ import {
 } from "@baseblocks/domain";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Button } from "@baseblocks/ui/button";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@baseblocks/ui/context-menu";
 import { Empty, EmptyHeader, EmptyTitle } from "@baseblocks/ui/empty";
 import { closestCenter } from "@dnd-kit/collision";
+import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import {
   DragDropProvider,
   DragOverlay,
@@ -39,6 +50,14 @@ type LibraryDropData = {
   entityId: string | null;
   placement: TreeDropPlacement;
 };
+
+const libraryDragSensors = [
+  PointerSensor.configure({
+    activationConstraints: [
+      new PointerActivationConstraints.Distance({ value: 6 }),
+    ],
+  }),
+];
 
 function isLibraryDropData(value: unknown): value is LibraryDropData {
   if (!value || typeof value !== "object") return false;
@@ -112,33 +131,38 @@ export function LibraryTree(props: {
   const invalidDropIds = descendantIds(props.nodes, draggedId);
   return (
     <DragDropProvider
+      sensors={libraryDragSensors}
       onDragStart={(event) => {
         if (!props.canManage) return;
-        setDraggedId(String(event.operation.source?.id ?? "") || null);
+        queueMicrotask(() =>
+          setDraggedId(String(event.operation.source?.id ?? "") || null),
+        );
       }}
       onDragEnd={(event) => {
         if (!props.canManage) return;
         const entityId = String(event.operation.source?.id ?? "");
         const data = event.operation.target?.data;
-        setDraggedId(null);
-        if (event.canceled || !entityId || !isLibraryDropData(data)) return;
-        setPendingId(entityId);
-        void props
-          .onMoveEntity({
-            entityId,
-            targetId: data.entityId,
-            placement: data.placement,
-          })
-          .then(() => {
-            if (data.placement !== "inside" || !data.entityId) return;
-            setExpanded((current) => new Set(current).add(data.entityId!));
-          })
-          .catch((error) => {
-            toast.error(
-              error instanceof Error ? error.message : "Failed to move item",
-            );
-          })
-          .finally(() => setPendingId(null));
+        queueMicrotask(() => {
+          setDraggedId(null);
+          if (event.canceled || !entityId || !isLibraryDropData(data)) return;
+          setPendingId(entityId);
+          void props
+            .onMoveEntity({
+              entityId,
+              targetId: data.entityId,
+              placement: data.placement,
+            })
+            .then(() => {
+              if (data.placement !== "inside" || !data.entityId) return;
+              setExpanded((current) => new Set(current).add(data.entityId!));
+            })
+            .catch((error) => {
+              toast.error(
+                error instanceof Error ? error.message : "Failed to move item",
+              );
+            })
+            .finally(() => setPendingId(null));
+        });
       }}
     >
       <div
@@ -277,114 +301,103 @@ function LibraryTreeRow({
     data: { kind: "library-tree-entity", entityId: node.id },
   });
   return (
-    <div
-      ref={ref}
-      role="treeitem"
-      tabIndex={0}
-      aria-level={node.depth + 1}
-      aria-expanded={folder ? expanded : undefined}
-      className={cn(
-        "group relative flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent",
-        isDragging && "opacity-30",
-      )}
-      style={{ paddingLeft: node.depth * 16 + 4 }}
-    >
-      <LibraryDropZones
-        active={dragActive}
-        disabled={dropDisabled}
-        entityId={node.id}
-        insideEnabled={folder}
-      />
-      {folder ? (
-        <button
-          type="button"
-          aria-label={expanded ? "Collapse" : "Expand"}
-          onClick={onToggle}
-        >
-          {expanded ? (
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
-          ) : (
-            <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={(element) => {
+            ref(element);
+            handleRef(element);
+          }}
+          role="treeitem"
+          tabIndex={0}
+          aria-level={node.depth + 1}
+          aria-expanded={folder ? expanded : undefined}
+          className={cn(
+            "group relative flex h-8 items-center gap-1 rounded-md px-1 hover:bg-accent",
+            isDragging && "opacity-30",
           )}
-        </button>
-      ) : (
-        <span className="w-4" />
-      )}
-      {folder ? (
-        <HugeiconsIcon icon={Folder01Icon} className="size-4 shrink-0" />
-      ) : (
-        <HugeiconsIcon icon={File01Icon} className="size-4 shrink-0" />
-      )}
-      {renaming ? (
-        <InlineRename
-          label={`Rename ${node.label}`}
-          value={node.label}
-          onCancel={onRenameCancel}
-          onSave={onRenameSave}
-        />
-      ) : (
-        <button
-          type="button"
-          className="min-w-0 flex-1 truncate text-left text-sm"
-          onDoubleClick={canManage ? onRename : undefined}
-          onClick={onOpen}
+          style={{ paddingLeft: node.depth * 16 + 4 }}
         >
-          {node.label}
-        </button>
-      )}
-      <div className="relative z-30 hidden items-center gap-0.5 group-hover:flex group-has-[:focus-visible]:flex">
-        {canManage ? (
-          <button
-            ref={handleRef}
-            type="button"
-            aria-label={`Move ${node.label}`}
-            className="relative z-30 flex size-7 cursor-grab items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
-          >
-            <HugeiconsIcon icon={DragDropVerticalIcon} className="size-3.5" />
-          </button>
-        ) : null}
+          <LibraryDropZones
+            active={dragActive}
+            disabled={dropDisabled}
+            entityId={node.id}
+            insideEnabled={folder}
+          />
+          {folder ? (
+            <button
+              type="button"
+              aria-label={expanded ? "Collapse" : "Expand"}
+              onClick={onToggle}
+            >
+              {expanded ? (
+                <HugeiconsIcon icon={ArrowDown01Icon} className="size-4" />
+              ) : (
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-4" />
+              )}
+            </button>
+          ) : (
+            <span className="w-4" />
+          )}
+          {folder ? (
+            <HugeiconsIcon icon={Folder01Icon} className="size-4 shrink-0" />
+          ) : (
+            <HugeiconsIcon icon={File01Icon} className="size-4 shrink-0" />
+          )}
+          {renaming ? (
+            <InlineRename
+              label={`Rename ${node.label}`}
+              value={node.label}
+              onCancel={onRenameCancel}
+              onSave={onRenameSave}
+            />
+          ) : (
+            <button
+              type="button"
+              className="min-w-0 flex-1 truncate text-left text-sm"
+              onDoubleClick={canManage ? onRename : undefined}
+              onClick={onOpen}
+            >
+              <MiddleTruncate text={node.label} />
+            </button>
+          )}
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-52">
         {!folder ? (
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            aria-label="Copy link"
-            onClick={onCopy}
-          >
-            <HugeiconsIcon icon={Link01Icon} />
-          </Button>
-        ) : null}
-        {!folder && allowDownloads ? (
-          <Button
-            size="icon-xs"
-            variant="ghost"
-            aria-label="Download"
-            onClick={onDownload}
-          >
-            <HugeiconsIcon icon={Download01Icon} />
-          </Button>
+          <>
+            <ContextMenuLabel className="max-w-full truncate font-normal text-muted-foreground">
+              {node.data.kind === "file"
+                ? formatFileSize(node.data.file.size)
+                : null}
+            </ContextMenuLabel>
+            <ContextMenuSeparator />
+            <ContextMenuItem onSelect={onCopy}>
+              <HugeiconsIcon icon={Link01Icon} />
+              Copy link
+            </ContextMenuItem>
+            {allowDownloads ? (
+              <ContextMenuItem onSelect={onDownload}>
+                <HugeiconsIcon icon={Download01Icon} />
+                Download
+              </ContextMenuItem>
+            ) : null}
+          </>
         ) : null}
         {canManage ? (
           <>
-            <Button
-              size="icon-xs"
-              variant="ghost"
-              aria-label="Rename"
-              onClick={onRename}
-            >
+            <ContextMenuItem onSelect={onRename}>
               <HugeiconsIcon icon={PencilEdit01Icon} />
-            </Button>
-            <Button
-              size="icon-xs"
-              variant="ghost"
-              aria-label="Delete"
-              onClick={onDelete}
-            >
+              Rename
+            </ContextMenuItem>
+            <ContextMenuItem onSelect={onDelete} variant="destructive">
               <HugeiconsIcon icon={Delete01Icon} />
-            </Button>
+              Delete
+            </ContextMenuItem>
           </>
         ) : null}
-      </div>
-    </div>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 

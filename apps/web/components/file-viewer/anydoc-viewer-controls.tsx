@@ -58,9 +58,11 @@ export function UnifiedViewerControls({
         />
       ) : null}
       {controls.zoom ? <ZoomControls controls={controls.zoom} /> : null}
-      {controls.actions.map((action) => (
-        <ViewerActionButton action={action} key={action.id} />
-      ))}
+      {controls.actions
+        .filter((action) => action.id !== "rotate" && action.id !== "layout")
+        .map((action) => (
+          <ViewerActionButton action={action} key={action.id} />
+        ))}
       {controls.search ? <SearchControl controls={controls.search} /> : null}
     </div>
   );
