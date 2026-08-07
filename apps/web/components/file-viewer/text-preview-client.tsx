@@ -17,8 +17,33 @@ export default function TextPreview({ file }: { file: PreviewFile }) {
       .then(async (response) => {
         if (!response.ok)
           throw new Error(`Preview request failed (${response.status})`);
-        const text = await response.text();
-        setState({ status: "ready", text: text.slice(0, 10 * 1024 * 1024) });
+        const maxBytes = 10 * 1024 * 1024;
+        const declaredLength = Number(response.headers.get("content-length"));
+        if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+          throw new Error("Text preview exceeds the 10 MB limit.");
+        }
+        if (!response.body) throw new Error("Text preview has no body.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let bytesRead = 0;
+        let text = "";
+        while (bytesRead < maxBytes) {
+          const chunk = await reader.read();
+          if (chunk.done) {
+            text += decoder.decode();
+            break;
+          }
+          const remaining = maxBytes - bytesRead;
+          const bytes = chunk.value.subarray(0, remaining);
+          bytesRead += bytes.byteLength;
+          text += decoder.decode(bytes, { stream: bytesRead < maxBytes });
+          if (bytes.byteLength < chunk.value.byteLength) {
+            await reader.cancel();
+            text += "\n\n[Preview truncated at 10 MB]";
+            break;
+          }
+        }
+        setState({ status: "ready", text });
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError")

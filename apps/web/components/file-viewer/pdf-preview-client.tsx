@@ -24,8 +24,16 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1);
   const [visiblePages, setVisiblePages] = useState<Set<number>>(
-    () => new Set([1, 2]),
+    () => new Set([1, 2, 3]),
   );
+  const [pageAspectRatio, setPageAspectRatio] = useState(8.5 / 11);
+
+  useEffect(() => {
+    if (!file.url) return;
+    setNumPages(0);
+    setVisiblePages(new Set([1, 2, 3]));
+    setPageAspectRatio(8.5 / 11);
+  }, [file.url]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -50,19 +58,19 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
     );
     const observer = new IntersectionObserver(
       (entries) => {
-        setVisiblePages((current) => {
-          const next = new Set(current);
-          for (const entry of entries) {
+        setVisiblePages(() => {
+          const next = new Set<number>();
+          const intersecting = entries.filter((entry) => entry.isIntersecting);
+          for (const entry of intersecting) {
             const pageNumber = Number(
               (entry.target as HTMLElement).dataset.pdfPage,
             );
-            if (entry.isIntersecting) {
-              next.add(pageNumber);
-              next.add(pageNumber - 1);
-              next.add(pageNumber + 1);
+            for (let offset = -2; offset <= 2; offset += 1) {
+              const candidate = pageNumber + offset;
+              if (candidate > 0 && candidate <= numPages) next.add(candidate);
             }
           }
-          return next;
+          return next.size > 0 ? next : new Set([1, 2, 3]);
         });
       },
       { root: container, rootMargin: "1200px 0px" },
@@ -108,13 +116,26 @@ export default function PdfPreview({ file }: { file: PreviewFile }) {
               <div
                 key={pageNumber}
                 data-pdf-page={pageNumber}
-                className="min-h-[960px] overflow-hidden rounded-sm bg-background shadow-sm"
+                className="overflow-hidden rounded-sm bg-background shadow-sm"
+                style={{
+                  aspectRatio: pageAspectRatio,
+                  width: containerWidth
+                    ? Math.min(containerWidth, 920)
+                    : undefined,
+                }}
               >
                 {visiblePages.has(pageNumber) ? (
                   <Page
                     pageNumber={pageNumber}
                     renderAnnotationLayer
                     renderTextLayer
+                    onLoadSuccess={(page) => {
+                      const width = page.view[2];
+                      const height = page.view[3];
+                      if (width && height && width > 0 && height > 0) {
+                        setPageAspectRatio(width / height);
+                      }
+                    }}
                     scale={scale}
                     width={
                       containerWidth ? Math.min(containerWidth, 920) : undefined
