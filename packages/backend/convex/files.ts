@@ -14,6 +14,8 @@ import {
 } from "./permissions";
 import { isPubliclyPublishedSite } from "./sharing";
 import { touchSiteDraft } from "./model/draft";
+import { cancelFileExtraction, queueFileExtraction } from "./fileExtraction";
+import { buildFileSearchText } from "./model/fileExtraction";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -41,6 +43,7 @@ export async function deleteFileRows(
     )
     .first();
   if (searchEntry) await ctx.db.delete(searchEntry._id);
+  await cancelFileExtraction(ctx, file._id);
   await ctx.db.patch(file._id, { deletedAt: Date.now() });
 }
 
@@ -274,6 +277,8 @@ async function createUploadedFile(
     },
     updatedAt: createdAt,
   });
+  const file = await ctx.db.get(fileId);
+  if (file) await queueFileExtraction(ctx, file);
   await touchSiteDraft(ctx, args.siteId, createdAt, [
     { entityType: "file", entityId: fileId },
   ]);
@@ -353,9 +358,16 @@ export const rename = mutation({
       )
       .first();
     if (entry) {
+      const extraction = await ctx.db
+        .query("fileExtractions")
+        .withIndex("by_file", (q) => q.eq("fileId", fileId))
+        .first();
       await ctx.db.patch(entry._id, {
         title: filename,
-        text: filename,
+        text: buildFileSearchText(
+          filename,
+          extraction?.status === "ready" ? extraction.extractedText : undefined,
+        ),
         fileMetadata: fileSearchMetadata({ ...file, filename }),
         updatedAt: Date.now(),
       });

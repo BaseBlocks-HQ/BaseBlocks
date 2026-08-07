@@ -16,13 +16,9 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { resolveNativeDocumentFormat } from "./anydoc-preview";
 
-const PdfPreview = dynamic(() => import("./pdf-preview-client"), {
-  ssr: false,
-  loading: () => <PreviewLoading />,
-});
-
-const TextPreview = dynamic(() => import("./text-preview-client"), {
+const AnyDocPreview = dynamic(() => import("./anydoc-preview-client"), {
   ssr: false,
   loading: () => <PreviewLoading />,
 });
@@ -199,15 +195,18 @@ export function ToolbarButton({
 }
 
 function FilePreviewContent({ file }: { file: PreviewFile }) {
-  const contentType = file.contentType.toLowerCase();
-
-  if (contentType.includes("pdf")) return <PdfPreview file={file} />;
-  if (
-    contentType.startsWith("text/") ||
-    contentType.includes("markdown") ||
-    /\.(md|markdown|txt|csv)$/i.test(file.filename)
-  ) {
-    return <TextPreview file={file} />;
+  const t = useTranslations("libraries.viewer");
+  if (resolveNativeDocumentFormat(file)) {
+    return (
+      <AnyDocPreview
+        file={file}
+        messages={{
+          loadError: t("documentLoadError"),
+          loading: t("loadingDocument"),
+          tooLarge: t("documentTooLarge"),
+        }}
+      />
+    );
   }
 
   return <UnknownPreview file={file} />;

@@ -1,7 +1,7 @@
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
 import {
-  buildPageExportText,
+  buildPageExportDocument,
   createPageExportFilename,
   renderPageExportDocx,
 } from "./page-word-export";
@@ -41,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
-    const exportDocument = buildPageExportText({
+    const exportDocument = buildPageExportDocument({
       pageTitle: result.page.title,
       content: result.content,
     });

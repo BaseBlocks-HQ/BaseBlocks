@@ -137,6 +137,14 @@ export async function deleteSiteData(
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),
     ctx.db
+      .query("fileExtractionJobs")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
+      .query("fileExtractions")
+      .withIndex("by_site", (q) => q.eq("siteId", siteId))
+      .collect(),
+    ctx.db
       .query("draftChanges")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect(),

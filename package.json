@@ -27,7 +27,7 @@
     "better-auth": "1.6.23",
     "defu": "6.1.7",
     "picomatch": "4.0.5",
-    "postcss": "8.5.16",
+    "postcss": "8.5.23",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "convex": "^1.42.1"

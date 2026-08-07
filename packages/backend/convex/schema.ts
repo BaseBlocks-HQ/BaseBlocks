@@ -309,6 +309,66 @@ export default defineSchema({
     .index("by_library", ["libraryId"])
     .index("by_folder", ["libraryId", "folderId"]),
 
+  fileExtractions: defineTable({
+    siteId: v.id("sites"),
+    fileId: v.id("files"),
+    sourceVersion: v.string(),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("processing"),
+      v.literal("ready"),
+      v.literal("failed"),
+    ),
+    attemptCount: v.number(),
+    extractedText: v.optional(v.string()),
+    format: v.optional(v.string()),
+    inputBytes: v.optional(v.number()),
+    outputChars: v.optional(v.number()),
+    failure: v.optional(
+      v.object({
+        code: v.string(),
+        message: v.string(),
+        retryable: v.boolean(),
+        limit: v.optional(v.number()),
+        actual: v.optional(v.number()),
+      }),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_site_status", ["siteId", "status"])
+    .index("by_file", ["fileId"]),
+
+  fileExtractionJobs: defineTable({
+    siteId: v.id("sites"),
+    fileId: v.id("files"),
+    extractionId: v.id("fileExtractions"),
+    sourceVersion: v.string(),
+    status: v.union(v.literal("queued"), v.literal("processing")),
+    attempt: v.number(),
+    runToken: v.optional(v.string()),
+    leaseExpiresAt: v.optional(v.number()),
+    availableAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_site", ["siteId"])
+    .index("by_file", ["fileId"])
+    .index("by_status_available", ["status", "availableAt"])
+    .index("by_status_lease", ["status", "leaseExpiresAt"]),
+
+  maintenanceJobs: defineTable({
+    key: v.string(),
+    status: v.union(v.literal("running"), v.literal("complete")),
+    runToken: v.string(),
+    cursor: v.optional(v.string()),
+    processed: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_key", ["key"]),
+
   searchEntries: defineTable({
     siteId: v.id("sites"),
     kind: v.union(v.literal("file"), v.literal("page")),
@@ -362,9 +422,44 @@ export default defineSchema({
     createdAt: v.number(),
     pageCount: v.number(),
     changeCount: v.number(),
+    publicationStatus: v.optional(
+      v.union(
+        v.literal("building"),
+        v.literal("aborting"),
+        v.literal("clearing"),
+        v.literal("complete"),
+        v.literal("failed"),
+      ),
+    ),
+    publicationFailure: v.optional(v.string()),
+    publicationToken: v.optional(v.string()),
+    publicationPhase: v.optional(
+      v.union(
+        v.literal("pages"),
+        v.literal("libraries"),
+        v.literal("folders"),
+        v.literal("files"),
+        v.literal("changes"),
+        v.literal("activate"),
+        v.literal("clearDraftChanges"),
+        v.literal("cleanupPages"),
+        v.literal("cleanupLibraries"),
+        v.literal("cleanupFolders"),
+        v.literal("cleanupFiles"),
+        v.literal("cleanupSearch"),
+        v.literal("cleanupChanges"),
+      ),
+    ),
+    publicationCursor: v.optional(v.string()),
+    publicationUpdatedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
-    .index("by_site_number", ["siteId", "number"]),
+    .index("by_site_number", ["siteId", "number"])
+    .index("by_site_publication_status", ["siteId", "publicationStatus"])
+    .index("by_publication_status_updated", [
+      "publicationStatus",
+      "publicationUpdatedAt",
+    ]),
 
   releasePages: defineTable({
     releaseId: v.id("siteReleases"),
@@ -473,6 +568,8 @@ export default defineSchema({
     ),
     label: v.string(),
     details: v.array(v.string()),
+    sourceDraftChangeId: v.optional(v.id("draftChanges")),
+    sourceUpdatedAt: v.optional(v.number()),
     fields: v.array(
       v.object({
         label: v.string(),

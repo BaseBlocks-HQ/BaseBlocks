@@ -49,7 +49,7 @@ import {
   TooltipTrigger,
 } from "@baseblocks/ui/tooltip";
 import { useMutation, useQuery } from "convex/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type DraftChange = {
@@ -103,6 +103,36 @@ export function PublishDialog({
     open ? { siteId } : "skip",
   ) as DraftChange[] | null | undefined;
   const [publishing, setPublishing] = useState(false);
+  const [pendingPublication, setPendingPublication] = useState<{
+    releaseId: Id<"siteReleases">;
+    number: number;
+  } | null>(null);
+  const publicationStatus = useQuery(
+    api.releases.getPublicationStatus,
+    pendingPublication ? { releaseId: pendingPublication.releaseId } : "skip",
+  );
+
+  useEffect(() => {
+    if (!pendingPublication || publicationStatus === undefined) return;
+    if (publicationStatus?.status === "complete") {
+      toast.success(`Version ${pendingPublication.number} is live`);
+      setPendingPublication(null);
+      setPublishing(false);
+      onOpenChange(false);
+    } else if (publicationStatus?.status === "failed") {
+      toast.error(
+        publicationStatus.failure ?? "The site could not be published.",
+      );
+      setPendingPublication(null);
+      setPublishing(false);
+    } else if (publicationStatus === null) {
+      toast.error(
+        "The draft changed before publication completed. Review it and try again.",
+      );
+      setPendingPublication(null);
+      setPublishing(false);
+    }
+  }, [onOpenChange, pendingPublication, publicationStatus]);
 
   const handlePublish = async () => {
     setPublishing(true);
@@ -111,17 +141,20 @@ export function PublishDialog({
         siteId,
         expectedDraftRevision: draftSummary.draftRevision,
       });
-      toast.success(
-        result.reused
-          ? `Version ${result.number} is live again`
-          : `Version ${result.number} is live`,
-      );
-      onOpenChange(false);
+      if (result.reused) {
+        toast.success(`Version ${result.number} is live again`);
+        onOpenChange(false);
+        setPublishing(false);
+      } else {
+        setPendingPublication({
+          releaseId: result.releaseId,
+          number: result.number,
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "The site could not publish",
       );
-    } finally {
       setPublishing(false);
     }
   };
