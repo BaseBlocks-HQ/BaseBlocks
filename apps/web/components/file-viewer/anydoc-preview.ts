@@ -7,6 +7,19 @@ export type NativeDocumentFormat =
   | "text"
   | "xlsx";
 
+const documentSources = new WeakMap<ArrayBuffer, { data: ArrayBuffer }>();
+
+export function getStableDocumentSource(source: ArrayBuffer): {
+  data: ArrayBuffer;
+} {
+  const existing = documentSources.get(source);
+  if (existing) return existing;
+
+  const documentSource = { data: source };
+  documentSources.set(source, documentSource);
+  return documentSource;
+}
+
 const FORMAT_BY_EXTENSION: Readonly<Record<string, NativeDocumentFormat>> = {
   csv: "csv",
   docx: "docx",

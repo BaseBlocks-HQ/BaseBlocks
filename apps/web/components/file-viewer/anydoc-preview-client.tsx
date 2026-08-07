@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import {
   DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES,
   DocumentPreviewTooLargeError,
+  getStableDocumentSource,
   loadBoundedDocument,
   type NativeDocumentFormat,
   resolveNativeDocumentFormat,
@@ -68,19 +69,6 @@ const SpreadsheetViewer = dynamic(
     ssr: false,
   },
 );
-
-const documentSources = new WeakMap<ArrayBuffer, { data: ArrayBuffer }>();
-
-export function getStableDocumentSource(source: ArrayBuffer): {
-  data: ArrayBuffer;
-} {
-  const existing = documentSources.get(source);
-  if (existing) return existing;
-
-  const documentSource = { data: source };
-  documentSources.set(source, documentSource);
-  return documentSource;
-}
 
 export type AnyDocPreviewMessages = {
   loadError: string;

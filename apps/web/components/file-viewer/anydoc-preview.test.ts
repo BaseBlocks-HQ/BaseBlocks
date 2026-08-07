@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+  getStableDocumentSource,
   loadBoundedDocument,
   resolveNativeDocumentFormat,
 } from "./anydoc-preview";
-import { getStableDocumentSource } from "./anydoc-preview-client";
 
 describe("AnyDoc preview format routing", () => {
   test("prefers a specific MIME type over a misleading extension", () => {
