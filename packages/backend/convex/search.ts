@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { internalMutation, query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
 import { readPageContent } from "./model/pageDocuments";
+import { assertDraftReadable } from "./model/draft";
 import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 import {
   extractOpenEditorText,
@@ -291,6 +292,7 @@ export const searchAll = query({
     if (!site) return [];
 
     if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+    assertDraftReadable(site);
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];

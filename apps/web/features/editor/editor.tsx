@@ -186,7 +186,7 @@ function DraftRestoreGate({
 }: {
   restore: {
     _id: Id<"draftRestores">;
-    status: Doc<"draftRestores">["status"];
+    status: Doc<"draftRestores">["status"] | "orphaned";
     phase: string;
     failure?: string;
   };
@@ -199,21 +199,25 @@ function DraftRestoreGate({
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center bg-background p-6">
       <div className="max-w-md text-center">
-        {restore.status !== "paused" ? (
+        {restore.status !== "paused" && restore.status !== "orphaned" ? (
           <Spinner className="mx-auto size-6 text-muted-foreground" />
         ) : null}
         <h1 className="mt-4 text-base font-semibold">
           {restore.status === "paused"
             ? "Draft restore paused"
-            : restore.status === "validating"
-              ? "Checking historical version"
-              : "Restoring draft"}
+            : restore.status === "orphaned"
+              ? "Draft restore needs recovery"
+              : restore.status === "validating"
+                ? "Checking historical version"
+                : "Restoring draft"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {restore.status === "paused"
             ? (restore.failure ??
               "The restore paused after repeated failures. Resume it to continue safely.")
-            : "The editor stays locked until the historical draft is coherent and ready."}
+            : restore.status === "orphaned"
+              ? restore.failure
+              : "The editor stays locked until the historical draft is coherent and ready."}
         </p>
         {restore.status === "paused" ? (
           <Button

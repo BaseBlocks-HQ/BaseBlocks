@@ -14,18 +14,20 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { queuePageContentIndex } from "./search";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 
 export const get = query({
   args: { pageId: v.id("pages") },
   returns: v.any(),
   handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
-    if (!page || page.deletedAt !== undefined) return null;
+    if (!page) return null;
     const site = await ctx.db.get(page.siteId);
     if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
       return null;
     }
+    assertDraftReadable(site);
+    if (page.deletedAt !== undefined) return null;
     return (await readPageContent(ctx, pageId)).document;
   },
 });
@@ -34,11 +36,13 @@ export const getVersioned = query({
   args: { pageId: v.id("pages") },
   handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
-    if (!page || page.deletedAt !== undefined) return null;
+    if (!page) return null;
     const site = await ctx.db.get(page.siteId);
     if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
       return null;
     }
+    assertDraftReadable(site);
+    if (page.deletedAt !== undefined) return null;
     const current = await readPageContent(ctx, pageId);
     return {
       document: current.document,

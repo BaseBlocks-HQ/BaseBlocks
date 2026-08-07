@@ -1,6 +1,27 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { isOrganizationMember } from "./permissions";
+import type { Doc, Id } from "./_generated/dataModel";
+
+export function draftRestoreView(
+  restoreId: Id<"draftRestores">,
+  restore: Doc<"draftRestores"> | null,
+) {
+  return restore
+    ? {
+        _id: restore._id,
+        status: restore.status,
+        phase: restore.phase,
+        failure: restore.failure,
+      }
+    : {
+        _id: restoreId,
+        status: "orphaned" as const,
+        phase: "missing",
+        failure:
+          "The draft restore state is missing. The draft remains locked to avoid exposing partial data. Contact support to recover it.",
+      };
+}
 
 /**
  * The editor shell and canvas are one reactive surface, so they subscribe to
@@ -19,14 +40,7 @@ export const get = query({
       return {
         site,
         pages: [],
-        restore: restore
-          ? {
-              _id: restore._id,
-              status: restore.status,
-              phase: restore.phase,
-              failure: restore.failure,
-            }
-          : null,
+        restore: draftRestoreView(site.activeDraftRestoreId, restore),
       };
     }
 

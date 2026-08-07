@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { assertDraftWritable } from "./model/draft";
+import { assertDraftReadable, assertDraftWritable } from "./model/draft";
 import {
   applyBatch,
   handleBatchFailure,
@@ -7,6 +7,8 @@ import {
   restoreBatchMatches,
 } from "./draftRestore";
 import { publish, restoreToDraft, resumeDraftRestore } from "./releases";
+import { list as listPages } from "./pages";
+import { draftRestoreView } from "./editorWorkspace";
 
 type RegisteredFunction = {
   _handler: (ctx: unknown, args: unknown) => Promise<unknown>;
@@ -163,6 +165,61 @@ describe("draft restore fencing", () => {
         expectedDraftRevision: site.draftRevision,
       }),
     ).rejects.toThrow("currently being restored");
+  });
+});
+
+describe("draft restore read gating", () => {
+  test("private draft reads are unavailable while a restore owns the site", () => {
+    expect(() =>
+      assertDraftReadable({ activeDraftRestoreId: activeRestore._id as never }),
+    ).toThrow("draft is unavailable");
+  });
+
+  test("page reads authorize before reporting restore unavailability", async () => {
+    const site = {
+      _id: activeRestore.siteId,
+      organizationId: "organization-1",
+      activeDraftRestoreId: activeRestore._id,
+    };
+    const baseCtx = {
+      auth: {
+        getUserIdentity: async () => ({ subject: activeRestore.requestedBy }),
+      },
+      db: {
+        get: async () => site,
+      },
+    };
+
+    expect(
+      await invoke(
+        listPages,
+        { ...baseCtx, runQuery: async () => null },
+        { siteId: site._id },
+      ),
+    ).toEqual([]);
+
+    await expect(
+      invoke(
+        listPages,
+        {
+          ...baseCtx,
+          runQuery: async () => ({
+            organizationId: site.organizationId,
+            userId: activeRestore.requestedBy,
+          }),
+        },
+        { siteId: site._id },
+      ),
+    ).rejects.toThrow("draft is unavailable");
+  });
+
+  test("a dangling restore lock is projected as an explicit recovery state", () => {
+    expect(draftRestoreView(activeRestore._id as never, null)).toEqual({
+      _id: activeRestore._id as never,
+      status: "orphaned",
+      phase: "missing",
+      failure: expect.stringContaining("remains locked"),
+    });
   });
 });
 

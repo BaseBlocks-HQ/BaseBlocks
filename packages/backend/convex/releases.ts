@@ -11,6 +11,7 @@ import {
   isOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
+import { assertDraftReadable } from "./model/draft";
 
 async function requireSiteForMember(
   ctx: Parameters<typeof isOrganizationMember>[0],
@@ -43,10 +44,12 @@ export const getDraftSummary = query({
       liveRelease,
       nextReleaseNumber: site.nextReleaseNumber ?? 1,
       hasUnpublishedChanges:
+        Boolean(site.activeDraftRestoreId) ||
         (await ctx.db
           .query("draftChanges")
           .withIndex("by_site", (q) => q.eq("siteId", siteId))
-          .first()) !== null || site.draftBaseReleaseId !== site.liveReleaseId,
+          .first()) !== null ||
+        site.draftBaseReleaseId !== site.liveReleaseId,
     };
   },
 });
@@ -57,6 +60,7 @@ export const getDraftChanges = query({
   handler: async (ctx, { siteId }) => {
     const site = await requireSiteForMember(ctx, siteId);
     if (!site) return null;
+    assertDraftReadable(site);
     const changes = await ctx.db
       .query("draftChanges")
       .withIndex("by_site", (q) => q.eq("siteId", siteId))

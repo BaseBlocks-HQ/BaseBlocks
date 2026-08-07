@@ -42,7 +42,7 @@ interface EditorWorkspaceContextValue {
   selectedPageId: string | null;
   restore: {
     _id: Id<"draftRestores">;
-    status: Doc<"draftRestores">["status"];
+    status: Doc<"draftRestores">["status"] | "orphaned";
     phase: string;
     failure?: string;
   } | null;

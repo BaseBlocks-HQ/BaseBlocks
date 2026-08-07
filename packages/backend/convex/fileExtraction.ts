@@ -18,7 +18,7 @@ import {
   shouldReuseExtraction,
   validateExtractionInputSize,
 } from "./model/fileExtraction";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { extractionRetryInvalidatesDraft } from "./model/releaseState";
 import {
   requireOrganizationMember,
@@ -529,12 +529,12 @@ export const getStatus = query({
   args: { fileId: v.id("files") },
   handler: async (ctx, { fileId }) => {
     const file = await ctx.db.get(fileId);
-    if (file?.kind !== "file" || file.deletedAt !== undefined) {
-      return null;
-    }
+    if (file?.kind !== "file") return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
+    assertDraftReadable(site);
+    if (file.deletedAt !== undefined) return null;
     const extraction = await ctx.db
       .query("fileExtractions")
       .withIndex("by_file", (q) => q.eq("fileId", fileId))

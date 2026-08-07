@@ -15,6 +15,16 @@ export function assertDraftWritable(site: {
   }
 }
 
+export function assertDraftReadable(site: {
+  activeDraftRestoreId?: Id<"draftRestores">;
+}): void {
+  if (site.activeDraftRestoreId) {
+    throw new ConvexError(
+      "The draft is unavailable while a historical version is being restored.",
+    );
+  }
+}
+
 export async function touchSiteDraft(
   ctx: MutationCtx,
   siteId: Id<"sites">,

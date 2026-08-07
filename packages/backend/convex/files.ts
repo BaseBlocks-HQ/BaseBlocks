@@ -13,7 +13,7 @@ import {
   requireOrganizationPermission,
 } from "./permissions";
 import { isPubliclyPublishedSite } from "./sharing";
-import { touchSiteDraft } from "./model/draft";
+import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { cancelFileExtraction, queueFileExtraction } from "./fileExtraction";
 import { buildFileSearchText } from "./model/fileExtraction";
 
@@ -67,10 +67,15 @@ export const canUploadToSite = query({
   handler: async (ctx, { siteId, purpose }) => {
     const site = await ctx.db.get(siteId);
     if (!site) return false;
-    return checkOrganizationPermission(ctx, site.organizationId, {
-      resource: purpose === "file" ? "library" : "site",
-      action: "manage",
-    });
+    const permitted = await checkOrganizationPermission(
+      ctx,
+      site.organizationId,
+      {
+        resource: purpose === "file" ? "library" : "site",
+        action: "manage",
+      },
+    );
+    return permitted && !site.activeDraftRestoreId;
   },
 });
 
@@ -80,12 +85,12 @@ export const get = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
-      return null;
-    }
+    if (!file || !isUploadedFile(file)) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
+    assertDraftReadable(site);
+    if (file.deletedAt !== undefined) return null;
     return mapFile(file);
   },
 });
@@ -96,12 +101,12 @@ export const getDownloadAsset = query({
     const id = ctx.db.normalizeId("files", fileId);
     if (!id) return null;
     const file = await ctx.db.get(id);
-    if (!file || !isUploadedFile(file) || file.deletedAt !== undefined) {
-      return null;
-    }
+    if (!file || !isUploadedFile(file)) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
     await requireOrganizationMember(ctx, site.organizationId);
+    assertDraftReadable(site);
+    if (file.deletedAt !== undefined) return null;
     return file;
   },
 });
@@ -156,6 +161,7 @@ export const getAuthorized = query({
         { resource: "site", action: "manage" },
       );
       if (!canManage) return null;
+      if (!released) assertDraftReadable(site);
       return released
         ? {
             objectKey: released.objectKey,
@@ -168,6 +174,7 @@ export const getAuthorized = query({
           : null;
     }
     await requireOrganizationMember(ctx, site.organizationId);
+    if (!released) assertDraftReadable(site);
     return released
       ? {
           objectKey: released.objectKey,
