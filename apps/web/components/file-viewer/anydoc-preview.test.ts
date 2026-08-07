@@ -3,6 +3,7 @@ import {
   loadBoundedDocument,
   resolveNativeDocumentFormat,
 } from "./anydoc-preview";
+import { getStableDocumentSource } from "./anydoc-preview-client";
 
 describe("AnyDoc preview format routing", () => {
   test("prefers a specific MIME type over a misleading extension", () => {
@@ -112,4 +113,17 @@ describe("bounded document loading", () => {
     ).rejects.toThrow("scheme is not allowed");
     expect(fetched).toBe(false);
   });
+});
+
+test("preserves viewer source identity until the loaded buffer changes", () => {
+  const source = Uint8Array.of(1, 2, 3).buffer;
+  const initial = getStableDocumentSource(source);
+
+  expect(getStableDocumentSource(source)).toBe(initial);
+  expect(getStableDocumentSource(source).data).toBe(source);
+
+  const changedSource = Uint8Array.of(1, 2, 3).buffer;
+  const changed = getStableDocumentSource(changedSource);
+  expect(changed).not.toBe(initial);
+  expect(changed.data).toBe(changedSource);
 });

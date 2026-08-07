@@ -69,6 +69,19 @@ const SpreadsheetViewer = dynamic(
   },
 );
 
+const documentSources = new WeakMap<ArrayBuffer, { data: ArrayBuffer }>();
+
+export function getStableDocumentSource(source: ArrayBuffer): {
+  data: ArrayBuffer;
+} {
+  const existing = documentSources.get(source);
+  if (existing) return existing;
+
+  const documentSource = { data: source };
+  documentSources.set(source, documentSource);
+  return documentSource;
+}
+
 export type AnyDocPreviewMessages = {
   loadError: string;
   loading: string;
@@ -175,7 +188,7 @@ function NativeDocumentViewer({
   format: NativeDocumentFormat;
   source: ArrayBuffer;
 }) {
-  const documentSource = { data: source };
+  const documentSource = getStableDocumentSource(source);
   if (format === "pdf") {
     return (
       <PdfViewer
