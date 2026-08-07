@@ -409,8 +409,6 @@ async function snapshotChanges(
       details: source.details,
       sourceDraftChangeId: source._id,
       sourceDraftRevision: source.draftRevision,
-      sourceUpdatedAt:
-        source.draftRevision === undefined ? source.updatedAt : undefined,
       fields: detail.fields,
       content: detail.content,
     });
@@ -427,7 +425,7 @@ async function activateRelease(ctx: MutationCtx, release: Doc<"siteReleases">) {
   const site = await ctx.db.get(release.siteId);
   if (
     !site ||
-    (site.draftRevision ?? 0) !== release.sourceDraftRevision ||
+    site.draftRevision !== release.sourceDraftRevision ||
     release.pageCount === 0 ||
     (await hasPendingFileExtraction(ctx, release.siteId))
   ) {
@@ -473,7 +471,7 @@ export function draftChangeMatchesPublication(
   current: Pick<Doc<"draftChanges">, "_id" | "draftRevision" | "updatedAt">,
   snapshot: Pick<
     Doc<"releaseChanges">,
-    "sourceDraftChangeId" | "sourceDraftRevision" | "sourceUpdatedAt"
+    "sourceDraftChangeId" | "sourceDraftRevision"
   >,
 ) {
   if (
@@ -482,12 +480,9 @@ export function draftChangeMatchesPublication(
   ) {
     return false;
   }
-  if (snapshot.sourceDraftRevision !== undefined) {
-    return current.draftRevision === snapshot.sourceDraftRevision;
-  }
   return (
-    snapshot.sourceUpdatedAt !== undefined &&
-    current.updatedAt === snapshot.sourceUpdatedAt
+    snapshot.sourceDraftRevision !== undefined &&
+    current.draftRevision === snapshot.sourceDraftRevision
   );
 }
 
@@ -627,7 +622,7 @@ export const applyBatch = internalMutation({
       return { applied: false };
     }
     const site = await ctx.db.get(release.siteId);
-    if (!site || (site.draftRevision ?? 0) !== release.sourceDraftRevision) {
+    if (!site || site.draftRevision !== release.sourceDraftRevision) {
       await beginAbort(ctx, release);
       return { applied: true };
     }

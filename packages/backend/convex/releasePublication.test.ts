@@ -131,7 +131,6 @@ describe("published draft-change cleanup", () => {
     const snapshot = {
       sourceDraftChangeId: "change-1" as never,
       sourceDraftRevision: 7,
-      sourceUpdatedAt: undefined,
     };
     expect(
       draftChangeMatchesPublication(
@@ -153,22 +152,5 @@ describe("published draft-change cleanup", () => {
         snapshot,
       ),
     ).toBe(false);
-  });
-
-  test("retains timestamp matching only for unmigrated snapshots", () => {
-    expect(
-      draftChangeMatchesPublication(
-        {
-          _id: "change-1" as never,
-          draftRevision: undefined,
-          updatedAt: 100,
-        },
-        {
-          sourceDraftChangeId: "change-1" as never,
-          sourceDraftRevision: undefined,
-          sourceUpdatedAt: 100,
-        },
-      ),
-    ).toBe(true);
   });
 });

@@ -40,7 +40,7 @@ export const getDraftSummary = query({
       ? await ctx.db.get(site.liveReleaseId)
       : null;
     return {
-      draftRevision: site.draftRevision ?? 0,
+      draftRevision: site.draftRevision,
       liveRelease,
       nextReleaseNumber: site.nextReleaseNumber ?? 1,
       hasUnpublishedChanges:
@@ -104,7 +104,7 @@ export const getPublicationStatus = query({
       return null;
     }
     return {
-      status: release.publicationStatus ?? "complete",
+      status: release.publicationStatus,
       failure: release.publicationFailure,
     };
   },
@@ -122,11 +122,7 @@ export const list = query({
       .order("desc")
       .collect();
     return releases
-      .filter(
-        (release) =>
-          release.publicationStatus === undefined ||
-          release.publicationStatus === "complete",
-      )
+      .filter((release) => release.publicationStatus === "complete")
       .map((release) => ({
         ...release,
         isLive: release._id === site.liveReleaseId,
@@ -139,11 +135,7 @@ export const get = query({
   returns: v.any(),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
-    if (
-      !release ||
-      (release.publicationStatus !== undefined &&
-        release.publicationStatus !== "complete")
-    ) {
+    if (release?.publicationStatus !== "complete") {
       return null;
     }
     const site = await requireSiteForMember(ctx, release.siteId);
@@ -184,7 +176,7 @@ export const publish = mutation({
       site.organizationId,
       { resource: "publication", action: "publish" },
     );
-    const draftRevision = site.draftRevision ?? 0;
+    const draftRevision = site.draftRevision;
     if (site.activeDraftRestoreId) {
       throw new ConvexError(
         "A historical version is currently being restored. Try publishing when it finishes.",
@@ -260,8 +252,7 @@ export const publish = mutation({
       .first();
     if (
       matchingRelease &&
-      (matchingRelease.publicationStatus === undefined ||
-        matchingRelease.publicationStatus === "complete") &&
+      matchingRelease.publicationStatus === "complete" &&
       !pendingChange
     ) {
       if (site.liveReleaseId === matchingRelease._id) {
@@ -359,10 +350,7 @@ export const makeLive = mutation({
       site.organizationId,
       { resource: "publication", action: "publish" },
     );
-    if (
-      release.publicationStatus !== undefined &&
-      release.publicationStatus !== "complete"
-    ) {
+    if (release.publicationStatus !== "complete") {
       throw new ConvexError("Release publication is not complete");
     }
     if (site.activeDraftRestoreId) {
@@ -441,10 +429,7 @@ export const restoreToDraft = mutation({
       site.organizationId,
       { resource: "content", action: "edit" },
     );
-    if (
-      release.publicationStatus !== undefined &&
-      release.publicationStatus !== "complete"
-    ) {
+    if (release.publicationStatus !== "complete") {
       throw new ConvexError("Release publication is not complete");
     }
     if (site.activeDraftRestoreId) {
@@ -482,7 +467,7 @@ export const restoreToDraft = mutation({
       siteId: site._id,
       releaseId,
       requestedBy: auth.userId,
-      baseDraftRevision: site.draftRevision ?? 0,
+      baseDraftRevision: site.draftRevision,
       status: "validating",
       phase: "validatePages",
       token,
