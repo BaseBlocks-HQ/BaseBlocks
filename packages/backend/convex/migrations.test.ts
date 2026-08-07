@@ -3,6 +3,7 @@ import {
   backfillDraftChangeRevisions,
   backfillReleasePublicationStatuses,
   cleanupReleaseChangeTimestamps,
+  removeCompletedMigrationJobs,
   startReleaseChangeTimestampCleanup,
   startReleasePublicationStatusBackfill,
 } from "./migrations";
@@ -267,4 +268,24 @@ describe("legacy publication snapshot migrations", () => {
       { sourceUpdatedAt: undefined },
     ]);
   });
+});
+
+test("migration cleanup refuses active extraction work", async () => {
+  const ctx = {
+    db: {
+      query: (table: string) => {
+        if (table === "siteReleases" || table === "draftRestores") {
+          return { withIndex: () => ({ first: async () => null }) };
+        }
+        if (table === "fileExtractionJobs") {
+          return { first: async () => ({ _id: "job-active" }) };
+        }
+        throw new Error(`Unexpected table ${table}`);
+      },
+    },
+  };
+
+  await expect(invoke(removeCompletedMigrationJobs, ctx, {})).rejects.toThrow(
+    "File extraction jobs are still active",
+  );
 });

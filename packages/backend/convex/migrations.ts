@@ -37,6 +37,54 @@ export const getStatus = internalQuery({
   },
 });
 
+export const removeCompletedMigrationJobs = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const status of ["building", "aborting", "clearing"] as const) {
+      const active = await ctx.db
+        .query("siteReleases")
+        .withIndex("by_publication_status_updated", (q) =>
+          q.eq("publicationStatus", status),
+        )
+        .first();
+      if (active) throw new Error("A publication is still active");
+    }
+    for (const status of ["validating", "applying", "paused"] as const) {
+      const active = await ctx.db
+        .query("draftRestores")
+        .withIndex("by_status_updated", (q) => q.eq("status", status))
+        .first();
+      if (active) throw new Error("A draft restore is still active");
+    }
+    const extractionJob = await ctx.db.query("fileExtractionJobs").first();
+    if (extractionJob) throw new Error("File extraction jobs are still active");
+    for (const status of ["queued", "processing"] as const) {
+      const active = await ctx.db
+        .query("fileExtractions")
+        .filter((q) => q.eq(q.field("status"), status))
+        .first();
+      if (active) throw new Error("File extraction is still active");
+    }
+    const requiredKeys = [
+      FILE_EXTRACTION_BACKFILL_KEY,
+      RELEASE_PUBLICATION_STATUS_BACKFILL_KEY,
+      DRAFT_CHANGE_REVISION_BACKFILL_KEY,
+      RELEASE_CHANGE_TIMESTAMP_CLEANUP_KEY,
+    ];
+    const jobs = await ctx.db
+      .query("maintenanceJobs")
+      .withIndex("by_key")
+      .collect();
+    for (const key of requiredKeys) {
+      if (!jobs.some((job) => job.key === key && job.status === "complete")) {
+        throw new Error(`Required migration ${key} is incomplete`);
+      }
+    }
+    for (const job of jobs) await ctx.db.delete(job._id);
+    return { removed: jobs.length };
+  },
+});
+
 /**
  * Mark releases created before phased publication as complete. The migration
  * is fenced by a run token, resumable after a stale lease, and processes a
