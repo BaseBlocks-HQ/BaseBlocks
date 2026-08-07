@@ -8,7 +8,6 @@ import {
   fileSourceVersion,
   shouldReuseExtraction,
   validateExtractionInputSize,
-  validateExtractionOutput,
   validateStoredSourceMetadata,
 } from "./fileExtraction";
 
@@ -23,7 +22,7 @@ describe("file extraction policy", () => {
     expect(buildFileSearchContent()).toBe("");
   });
 
-  test("returns structured input and output limit failures", () => {
+  test("returns structured input limit failures", () => {
     expect(validateExtractionInputSize(-1)).toMatchObject({
       code: "invalid_input_size",
       retryable: false,
@@ -39,11 +38,6 @@ describe("file extraction policy", () => {
       retryable: false,
       limit: FILE_EXTRACTION_LIMITS.maxInputBytes,
     });
-    expect(
-      validateExtractionOutput(
-        "x".repeat(FILE_EXTRACTION_LIMITS.maxOutputChars + 1),
-      ),
-    ).toMatchObject({ code: "output_too_large", retryable: false });
   });
 
   test("caps retry backoff", () => {

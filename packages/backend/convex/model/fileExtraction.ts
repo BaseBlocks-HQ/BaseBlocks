@@ -2,7 +2,6 @@ import type { Doc } from "../_generated/dataModel";
 
 export const FILE_EXTRACTION_LIMITS = {
   maxInputBytes: 20 * 1024 * 1024,
-  maxOutputChars: 200_000,
   maxOutputBytes: 750_000,
   maxAttempts: 3,
   maxConcurrent: 4,
@@ -117,28 +116,4 @@ export function validateStoredSourceMetadata(
 
 function isSha256Checksum(checksum: string): boolean {
   return /^[a-f\d]{64}$/iu.test(checksum);
-}
-
-export function validateExtractionOutput(
-  text: string,
-): FileExtractionFailure | null {
-  if (text.length > FILE_EXTRACTION_LIMITS.maxOutputChars) {
-    return {
-      code: "output_too_large",
-      message: "Extracted text exceeds the character limit",
-      retryable: false,
-      limit: FILE_EXTRACTION_LIMITS.maxOutputChars,
-      actual: text.length,
-    };
-  }
-  const bytes = new TextEncoder().encode(text).byteLength;
-  return bytes <= FILE_EXTRACTION_LIMITS.maxOutputBytes
-    ? null
-    : {
-        code: "output_too_large",
-        message: "Extracted text exceeds the encoded byte limit",
-        retryable: false,
-        limit: FILE_EXTRACTION_LIMITS.maxOutputBytes,
-        actual: bytes,
-      };
 }
