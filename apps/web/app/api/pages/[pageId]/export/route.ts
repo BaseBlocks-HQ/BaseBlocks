@@ -3,16 +3,13 @@ import { getServerConvexClient } from "@/lib/convex/server";
 import {
   buildPageExportDocument,
   createPageExportFilename,
+  isPageExportFormat,
   renderPageExport,
-} from "./page-word-export";
+} from "./page-export";
 import { api } from "@baseblocks/backend";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function isExportFormat(value: string | null): value is "docx" | "markdown" {
-  return value === "docx" || value === "markdown";
-}
 
 export async function GET(
   request: NextRequest,
@@ -22,7 +19,7 @@ export async function GET(
     const { pageId } = await context.params;
     const requestedFormat = request.nextUrl.searchParams.get("format");
 
-    if (!isExportFormat(requestedFormat)) {
+    if (!isPageExportFormat(requestedFormat)) {
       return NextResponse.json(
         { error: "Unsupported export format" },
         { status: 400 },
