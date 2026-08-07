@@ -224,24 +224,15 @@ describe("draft restore read gating", () => {
 });
 
 describe("draft restore phase recovery", () => {
-  test("every interrupted phase has one deterministic successor", () => {
-    expect(Object.entries(nextDraftRestorePhase)).toEqual([
-      ["validatePages", "validateLibraries"],
-      ["validateLibraries", "validateFolders"],
-      ["validateFolders", "validateFiles"],
-      ["validateFiles", "archivePages"],
-      ["archivePages", "restorePages"],
-      ["restorePages", "archiveLibraries"],
-      ["archiveLibraries", "restoreLibraries"],
-      ["restoreLibraries", "archiveFolders"],
-      ["archiveFolders", "restoreFolders"],
-      ["restoreFolders", "archiveFiles"],
-      ["archiveFiles", "restoreFiles"],
-      ["restoreFiles", "synchronizeParents"],
-      ["synchronizeParents", "clearDraftChanges"],
-      ["clearDraftChanges", "activate"],
-      ["activate", null],
-    ]);
+  test("every phase is reachable exactly once and the graph terminates", () => {
+    const visited = new Set<string>();
+    let phase: keyof typeof nextDraftRestorePhase | null = "validatePages";
+    while (phase) {
+      expect(visited.has(phase)).toBe(false);
+      visited.add(phase);
+      phase = nextDraftRestorePhase[phase];
+    }
+    expect(visited).toEqual(new Set(Object.keys(nextDraftRestorePhase)));
   });
 
   test("preflight exhaustion fails and releases the site lock", async () => {

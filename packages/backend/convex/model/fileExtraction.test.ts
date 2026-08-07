@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
-  buildFileSearchText,
+  buildFileSearchContent,
   extractionDispatchCapacity,
   extractionExecutionDeadline,
   extractionRetryDelayMs,
@@ -13,14 +13,14 @@ import {
 } from "./fileExtraction";
 
 describe("file extraction policy", () => {
-  test("builds stable source versions and searchable text", () => {
+  test("builds stable source versions and content-only search text", () => {
     expect(
       fileSourceVersion({ objectKey: "a", size: 12, checksum: "sum" }),
     ).toBe("a\u000012\u0000sum");
-    expect(buildFileSearchText("Report.pdf", "Quarterly revenue")).toBe(
-      "Report.pdf Quarterly revenue",
+    expect(buildFileSearchContent("Quarterly revenue")).toBe(
+      "Quarterly revenue",
     );
-    expect(buildFileSearchText("Report.pdf")).toBe("Report.pdf");
+    expect(buildFileSearchContent()).toBe("");
   });
 
   test("returns structured input and output limit failures", () => {

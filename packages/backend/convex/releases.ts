@@ -327,6 +327,7 @@ export const publish = mutation({
       publicationStatus: "building",
       publicationToken,
       publicationPhase: "pages",
+      publicationAttempt: 0,
       publicationUpdatedAt: now,
     });
     await ctx.db.patch(siteId, {
@@ -337,6 +338,7 @@ export const publish = mutation({
       releaseId,
       token: publicationToken,
       phase: "pages",
+      attempt: 0,
     });
     return { releaseId, number, reused: false };
   },
@@ -349,25 +351,25 @@ export const makeLive = mutation({
   returns: v.null(),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
-    if (!release) throw new ConvexError("Release not found");
+    if (!release) throw new ConvexError("Release not found or unavailable");
+    const site = await ctx.db.get(release.siteId);
+    if (!site) throw new ConvexError("Release not found or unavailable");
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "publication", action: "publish" },
+    );
     if (
       release.publicationStatus !== undefined &&
       release.publicationStatus !== "complete"
     ) {
       throw new ConvexError("Release publication is not complete");
     }
-    const site = await ctx.db.get(release.siteId);
-    if (!site) throw new ConvexError("Site not found");
     if (site.activeDraftRestoreId) {
       throw new ConvexError(
         "A historical version is currently being restored. Try again when it finishes.",
       );
     }
-    const { auth } = await requireOrganizationPermission(
-      ctx,
-      site.organizationId,
-      { resource: "publication", action: "publish" },
-    );
     if (site.liveReleaseId === releaseId) return null;
     const currentRelease = site.liveReleaseId
       ? await ctx.db.get(site.liveReleaseId)
@@ -398,17 +400,17 @@ export const unpublish = mutation({
   returns: v.null(),
   handler: async (ctx, { siteId }) => {
     const site = await ctx.db.get(siteId);
-    if (!site) throw new ConvexError("Site not found");
-    if (site.activeDraftRestoreId) {
-      throw new ConvexError(
-        "A historical version is currently being restored. Try again when it finishes.",
-      );
-    }
+    if (!site) throw new ConvexError("Site not found or unavailable");
     const { auth } = await requireOrganizationPermission(
       ctx,
       site.organizationId,
       { resource: "publication", action: "publish" },
     );
+    if (site.activeDraftRestoreId) {
+      throw new ConvexError(
+        "A historical version is currently being restored. Try again when it finishes.",
+      );
+    }
     if (!site.liveReleaseId) return null;
     const now = Date.now();
     await ctx.db.patch(siteId, {
@@ -431,20 +433,20 @@ export const restoreToDraft = mutation({
   returns: v.object({ restoreId: v.id("draftRestores"), reused: v.boolean() }),
   handler: async (ctx, { releaseId }) => {
     const release = await ctx.db.get(releaseId);
-    if (!release) throw new ConvexError("Release not found");
+    if (!release) throw new ConvexError("Release not found or unavailable");
+    const site = await ctx.db.get(release.siteId);
+    if (!site) throw new ConvexError("Release not found or unavailable");
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "content", action: "edit" },
+    );
     if (
       release.publicationStatus !== undefined &&
       release.publicationStatus !== "complete"
     ) {
       throw new ConvexError("Release publication is not complete");
     }
-    const site = await ctx.db.get(release.siteId);
-    if (!site) throw new ConvexError("Site not found");
-    const { auth } = await requireOrganizationPermission(
-      ctx,
-      site.organizationId,
-      { resource: "content", action: "edit" },
-    );
     if (site.activeDraftRestoreId) {
       const active = await ctx.db.get(site.activeDraftRestoreId);
       if (
@@ -536,9 +538,13 @@ export const resumeDraftRestore = mutation({
   returns: v.null(),
   handler: async (ctx, { restoreId }) => {
     const restore = await ctx.db.get(restoreId);
-    if (!restore) throw new ConvexError("Draft restore not found");
+    if (!restore) {
+      throw new ConvexError("Draft restore not found or unavailable");
+    }
     const site = await ctx.db.get(restore.siteId);
-    if (!site) throw new ConvexError("Site not found");
+    if (!site) {
+      throw new ConvexError("Draft restore not found or unavailable");
+    }
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "content",
       action: "edit",
@@ -584,9 +590,13 @@ export const cancelDraftRestore = mutation({
   returns: v.null(),
   handler: async (ctx, { restoreId }) => {
     const restore = await ctx.db.get(restoreId);
-    if (!restore) throw new ConvexError("Draft restore not found");
+    if (!restore) {
+      throw new ConvexError("Draft restore not found or unavailable");
+    }
     const site = await ctx.db.get(restore.siteId);
-    if (!site) throw new ConvexError("Site not found");
+    if (!site) {
+      throw new ConvexError("Draft restore not found or unavailable");
+    }
     await requireOrganizationPermission(ctx, site.organizationId, {
       resource: "content",
       action: "edit",

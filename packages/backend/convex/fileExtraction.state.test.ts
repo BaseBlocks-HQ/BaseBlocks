@@ -186,7 +186,7 @@ describe("file extraction state machine", () => {
       id: searchEntry._id,
       value: expect.objectContaining({
         title: file.filename,
-        text: file.filename,
+        text: "",
       }),
     });
     expect(replacements).toContainEqual({
@@ -240,7 +240,7 @@ describe("file extraction state machine", () => {
     });
     expect(patches).toContainEqual({
       id: "search-1",
-      value: expect.objectContaining({ text: file.filename }),
+      value: expect.objectContaining({ text: "" }),
     });
   });
 

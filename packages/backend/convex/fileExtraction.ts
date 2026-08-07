@@ -8,7 +8,7 @@ import {
   query,
 } from "./_generated/server";
 import {
-  buildFileSearchText,
+  buildFileSearchContent,
   extractionDispatchCapacity,
   extractionExecutionDeadline,
   extractionRetryDelayMs,
@@ -50,7 +50,7 @@ async function upsertSearchEntries(
   extractedText: string,
 ) {
   const now = Date.now();
-  const text = buildFileSearchText(file.filename, extractedText);
+  const text = buildFileSearchContent(extractedText);
   const existing = await ctx.db
     .query("searchEntries")
     .withIndex("by_source", (q) =>
@@ -84,7 +84,7 @@ async function resetCurrentSearchEntry(ctx: MutationCtx, file: Doc<"files">) {
     audience: "private" as const,
     sourceId: file._id,
     title: file.filename,
-    text: file.filename,
+    text: "",
     fileMetadata: fileMetadata(file),
     updatedAt: Date.now(),
   };

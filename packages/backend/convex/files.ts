@@ -15,7 +15,7 @@ import {
 import { isPubliclyPublishedSite } from "./sharing";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { cancelFileExtraction, queueFileExtraction } from "./fileExtraction";
-import { buildFileSearchText } from "./model/fileExtraction";
+import { buildFileSearchContent } from "./model/fileExtraction";
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -273,7 +273,7 @@ async function createUploadedFile(
     audience: args.audience,
     sourceId: fileId,
     title: args.filename,
-    text: args.filename,
+    text: "",
     fileMetadata: {
       fileId,
       filename: args.filename,
@@ -371,8 +371,7 @@ export const rename = mutation({
         .first();
       await ctx.db.patch(entry._id, {
         title: filename,
-        text: buildFileSearchText(
-          filename,
+        text: buildFileSearchContent(
           extraction?.status === "ready" ? extraction.extractedText : undefined,
         ),
         fileMetadata: fileSearchMetadata({ ...file, filename }),

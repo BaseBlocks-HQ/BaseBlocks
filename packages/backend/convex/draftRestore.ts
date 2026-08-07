@@ -521,8 +521,8 @@ async function synchronizeParents(
     .paginate({ cursor: cursor ?? null, numItems: SMALL_BATCH });
   const now = Date.now();
   for (const current of page.page) {
-    if (current.deletedAt === undefined && current.parentId) {
-      await synchronizeParentDocument(ctx, current.parentId, now, {
+    if (current.deletedAt === undefined) {
+      await synchronizeParentDocument(ctx, current._id, now, {
         touchDraft: false,
       });
     }

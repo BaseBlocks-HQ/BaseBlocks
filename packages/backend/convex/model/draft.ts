@@ -36,6 +36,6 @@ export async function touchSiteDraft(
   assertDraftWritable(site);
   const draftRevision = (site.draftRevision ?? 0) + 1;
   await ctx.db.patch(siteId, { draftRevision, updatedAt: now });
-  await reconcileDraftChanges(ctx, site, entities, now);
+  await reconcileDraftChanges(ctx, site, entities, now, draftRevision);
   return draftRevision;
 }

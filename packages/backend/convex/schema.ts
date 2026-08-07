@@ -110,6 +110,7 @@ export default defineSchema({
     ),
     label: v.string(),
     details: v.array(v.string()),
+    draftRevision: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
@@ -452,6 +453,7 @@ export default defineSchema({
       ),
     ),
     publicationCursor: v.optional(v.string()),
+    publicationAttempt: v.optional(v.number()),
     publicationUpdatedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
@@ -612,6 +614,7 @@ export default defineSchema({
     label: v.string(),
     details: v.array(v.string()),
     sourceDraftChangeId: v.optional(v.id("draftChanges")),
+    sourceDraftRevision: v.optional(v.number()),
     sourceUpdatedAt: v.optional(v.number()),
     fields: v.array(
       v.object({

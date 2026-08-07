@@ -27,11 +27,8 @@ export function fileSourceVersion(
   return `${file.objectKey}\u0000${file.size}\u0000${file.checksum ?? ""}`;
 }
 
-export function buildFileSearchText(
-  filename: string,
-  extractedText?: string,
-): string {
-  return `${filename} ${extractedText ?? ""}`.trim();
+export function buildFileSearchContent(extractedText?: string): string {
+  return extractedText?.trim() ?? "";
 }
 
 export function extractionRetryDelayMs(attempt: number): number {

@@ -745,6 +745,7 @@ export const apply = mutation({
         ].map((entityId) => ({ entityType: "page" as const, entityId })),
       ],
       now,
+      draftRevision,
     );
     const authoritativeProject: OpenEditorProjectSnapshot = {
       id: String(site._id),
@@ -1048,6 +1049,7 @@ export const revert = mutation({
         })),
       ],
       now,
+      draftRevision,
     );
     await ctx.db.patch(rollback._id, {
       revertedAt: now,

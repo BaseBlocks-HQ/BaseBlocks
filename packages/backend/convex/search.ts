@@ -16,6 +16,17 @@ import {
 type MutationCtx = GenericMutationCtx<DataModel>;
 
 const SEARCH_COALESCE_MS = 10_000;
+const MAX_SEARCH_RESULTS = 50;
+
+export function normalizeSearchLimit(limit: number | undefined): number {
+  if (limit === undefined || !Number.isFinite(limit)) return 20;
+  return Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit)));
+}
+
+function singleContentType(contentTypes?: Array<"file" | "page">) {
+  const unique = [...new Set(contentTypes)];
+  return unique.length === 1 ? unique[0] : undefined;
+}
 
 export async function queuePageContentIndex(
   ctx: MutationCtx,
@@ -66,9 +77,6 @@ export async function indexPageContent(
     ? extractOpenEditorText(searchableDocument)
     : "";
 
-  const combinedText = `${page.title} ${extractedText}`.trim();
-  if (!combinedText) return;
-
   const existing = await ctx.db
     .query("searchEntries")
     .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
@@ -80,7 +88,7 @@ export async function indexPageContent(
     audience: "private" as const,
     sourceId: pageId,
     title: page.title,
-    text: combinedText,
+    text: extractedText.trim(),
     updatedAt: Date.now(),
   };
 
@@ -112,9 +120,9 @@ export const flushPageIndex = internalMutation({
       await ctx.db.delete(job._id);
       return null;
     }
-    const combinedText = `${page.title} ${extractOpenEditorText(
+    const extractedText = extractOpenEditorText(
       parseOpenEditorDocument(payload.content),
-    )}`.trim();
+    ).trim();
     const existing = await ctx.db
       .query("searchEntries")
       .withIndex("by_source", (q) =>
@@ -127,7 +135,7 @@ export const flushPageIndex = internalMutation({
       audience: "private" as const,
       sourceId: pageId,
       title: page.title,
-      text: combinedText,
+      text: extractedText,
       updatedAt: Date.now(),
     };
     if (existing) await ctx.db.patch(existing._id, indexData);
@@ -296,20 +304,28 @@ export const searchAll = query({
 
     const trimmed = searchQuery.trim();
     if (!trimmed) return [];
+    const boundedLimit = normalizeSearchLimit(limit);
+    const indexedContentType = singleContentType(contentTypes);
 
     const titleResults = await ctx.db
       .query("searchEntries")
-      .withSearchIndex("search_title", (q) =>
-        q.search("title", trimmed).eq("siteId", siteId),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_title", (q) => {
+        const search = q.search("title", trimmed).eq("siteId", siteId);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     const contentResults = await ctx.db
       .query("searchEntries")
-      .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("siteId", siteId),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_text", (q) => {
+        const search = q.search("text", trimmed).eq("siteId", siteId);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     // A title is also present in legacy `text` values, so classify title hits
     // before de-duplicating the broader content index results.
@@ -317,7 +333,7 @@ export const searchAll = query({
       titleResults,
       contentResults,
       contentTypes,
-      limit,
+      limit: boundedLimit,
       format: (doc, matchType) => formatSearchResult(doc, matchType, trimmed),
     });
   },
@@ -346,26 +362,38 @@ export const searchPublished = query({
     const access = await resolvePublishedSiteAccess(ctx, site);
     if (!canRenderPublishedSite(access)) return [];
     if (!site.liveReleaseId) return [];
+    const boundedLimit = normalizeSearchLimit(limit);
+    const indexedContentType = singleContentType(contentTypes);
 
     const titleResults = await ctx.db
       .query("releaseSearchEntries")
-      .withSearchIndex("search_title", (q) =>
-        q.search("title", trimmed).eq("releaseId", site.liveReleaseId!),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_title", (q) => {
+        const search = q
+          .search("title", trimmed)
+          .eq("releaseId", site.liveReleaseId!);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     const contentResults = await ctx.db
       .query("releaseSearchEntries")
-      .withSearchIndex("search_text", (q) =>
-        q.search("text", trimmed).eq("releaseId", site.liveReleaseId!),
-      )
-      .take(limit * 2);
+      .withSearchIndex("search_text", (q) => {
+        const search = q
+          .search("text", trimmed)
+          .eq("releaseId", site.liveReleaseId!);
+        return indexedContentType
+          ? search.eq("kind", indexedContentType)
+          : search;
+      })
+      .take(boundedLimit * 2);
 
     return mergeSearchMatches({
       titleResults,
       contentResults,
       contentTypes,
-      limit,
+      limit: boundedLimit,
       format: (doc, matchType) =>
         formatReleaseSearchResult(doc, matchType, trimmed),
     });

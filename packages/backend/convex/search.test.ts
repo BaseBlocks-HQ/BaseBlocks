@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mergeSearchMatches } from "./search";
+import { mergeSearchMatches, normalizeSearchLimit } from "./search";
 
 type SearchDoc = {
   _id: string;
@@ -28,5 +28,15 @@ describe("search result classification", () => {
     const file = { _id: "report", kind: "file" } as const;
 
     expect(merge([], [file])).toEqual([{ id: "report", matchType: "content" }]);
+  });
+});
+
+describe("search result limits", () => {
+  test("uses a bounded positive integer limit", () => {
+    expect(normalizeSearchLimit(undefined)).toBe(20);
+    expect(normalizeSearchLimit(Number.NaN)).toBe(20);
+    expect(normalizeSearchLimit(-5)).toBe(1);
+    expect(normalizeSearchLimit(4.8)).toBe(4);
+    expect(normalizeSearchLimit(500)).toBe(50);
   });
 });
