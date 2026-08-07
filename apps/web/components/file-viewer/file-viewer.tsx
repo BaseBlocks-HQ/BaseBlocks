@@ -16,7 +16,7 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { resolveNativeDocumentFormat } from "./anydoc-preview";
+import { detectViewerFormat } from "@baseblocks/anydoc/react";
 
 const AnyDocPreview = dynamic(() => import("./anydoc-preview-client"), {
   ssr: false,
@@ -214,7 +214,13 @@ function FilePreviewContent({
   viewerToolbarTarget: HTMLDivElement | null;
 }) {
   const t = useTranslations("libraries.viewer");
-  if (resolveNativeDocumentFormat(file)) {
+  if (
+    detectViewerFormat({
+      contentType: file.contentType,
+      filename: file.filename,
+      source: file.url,
+    })
+  ) {
     return (
       <AnyDocPreview
         file={file}

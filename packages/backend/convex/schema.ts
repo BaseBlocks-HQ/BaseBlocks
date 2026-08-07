@@ -315,13 +315,15 @@ export default defineSchema({
     siteId: v.id("sites"),
     fileId: v.id("files"),
     sourceVersion: v.string(),
+    generation: v.number(),
+    idempotencyKey: v.string(),
+    workId: v.optional(v.string()),
     status: v.union(
       v.literal("queued"),
       v.literal("processing"),
       v.literal("ready"),
       v.literal("failed"),
     ),
-    attemptCount: v.number(),
     extractedText: v.optional(v.string()),
     format: v.optional(v.string()),
     inputBytes: v.optional(v.number()),
@@ -333,6 +335,9 @@ export default defineSchema({
         retryable: v.boolean(),
         limit: v.optional(v.number()),
         actual: v.optional(v.number()),
+        limits: v.optional(
+          v.record(v.string(), v.union(v.number(), v.string())),
+        ),
       }),
     ),
     createdAt: v.number(),
@@ -343,63 +348,26 @@ export default defineSchema({
     .index("by_site_status", ["siteId", "status"])
     .index("by_file", ["fileId"]),
 
-  fileExtractionJobs: defineTable({
-    siteId: v.id("sites"),
-    fileId: v.id("files"),
-    extractionId: v.id("fileExtractions"),
-    sourceVersion: v.string(),
-    status: v.union(v.literal("queued"), v.literal("processing")),
-    attempt: v.number(),
-    runToken: v.optional(v.string()),
-    leaseExpiresAt: v.optional(v.number()),
-    availableAt: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_file", ["fileId"])
-    .index("by_status_available", ["status", "availableAt"])
-    .index("by_status_lease", ["status", "leaseExpiresAt"]),
-
   searchEntries: defineTable({
     siteId: v.id("sites"),
+    scopeId: v.string(),
     kind: v.union(v.literal("file"), v.literal("page")),
-    audience: v.union(v.literal("private"), v.literal("public")),
     sourceId: v.string(),
     title: v.string(),
     text: v.string(),
-    fileMetadata: v.optional(
-      v.object({
-        fileId: v.id("files"),
-        filename: v.string(),
-        fileContentType: v.string(),
-        size: v.number(),
-        libraryId: v.optional(v.id("documentLibraries")),
-        downloadUrl: v.string(),
-      }),
-    ),
     updatedAt: v.number(),
   })
     .index("by_site", ["siteId"])
-    .index("by_source", ["kind", "sourceId"])
+    .index("by_scope", ["scopeId"])
+    .index("by_scope_source", ["scopeId", "kind", "sourceId"])
     .searchIndex("search_title", {
       searchField: "title",
-      filterFields: ["siteId", "kind", "audience"],
+      filterFields: ["scopeId"],
     })
     .searchIndex("search_text", {
       searchField: "text",
-      filterFields: ["siteId", "kind", "audience"],
+      filterFields: ["scopeId"],
     }),
-
-  pageSearchJobs: defineTable({
-    siteId: v.id("sites"),
-    pageId: v.id("pages"),
-    revisionId: v.id("contentRevisions"),
-    contentHash: v.string(),
-    updatedAt: v.number(),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_page", ["pageId"]),
 
   siteReleases: defineTable({
     siteId: v.id("sites"),
@@ -416,41 +384,17 @@ export default defineSchema({
     changeCount: v.number(),
     publicationStatus: v.union(
       v.literal("building"),
-      v.literal("aborting"),
       v.literal("clearing"),
       v.literal("complete"),
       v.literal("failed"),
     ),
     publicationFailure: v.optional(v.string()),
-    publicationToken: v.optional(v.string()),
-    publicationPhase: v.optional(
-      v.union(
-        v.literal("pages"),
-        v.literal("libraries"),
-        v.literal("folders"),
-        v.literal("files"),
-        v.literal("changes"),
-        v.literal("activate"),
-        v.literal("clearDraftChanges"),
-        v.literal("cleanupPages"),
-        v.literal("cleanupLibraries"),
-        v.literal("cleanupFolders"),
-        v.literal("cleanupFiles"),
-        v.literal("cleanupSearch"),
-        v.literal("cleanupChanges"),
-      ),
-    ),
-    publicationCursor: v.optional(v.string()),
-    publicationAttempt: v.optional(v.number()),
+    publicationWorkflowId: v.optional(v.string()),
     publicationUpdatedAt: v.optional(v.number()),
   })
     .index("by_site", ["siteId"])
     .index("by_site_number", ["siteId", "number"])
-    .index("by_site_publication_status", ["siteId", "publicationStatus"])
-    .index("by_publication_status_updated", [
-      "publicationStatus",
-      "publicationUpdatedAt",
-    ]),
+    .index("by_site_publication_status", ["siteId", "publicationStatus"]),
 
   draftRestores: defineTable({
     siteId: v.id("sites"),
@@ -466,33 +410,12 @@ export default defineSchema({
       v.literal("failed"),
       v.literal("cancelled"),
     ),
-    phase: v.union(
-      v.literal("validatePages"),
-      v.literal("validateLibraries"),
-      v.literal("validateFolders"),
-      v.literal("validateFiles"),
-      v.literal("archivePages"),
-      v.literal("restorePages"),
-      v.literal("archiveLibraries"),
-      v.literal("restoreLibraries"),
-      v.literal("archiveFolders"),
-      v.literal("restoreFolders"),
-      v.literal("archiveFiles"),
-      v.literal("restoreFiles"),
-      v.literal("synchronizeParents"),
-      v.literal("clearDraftChanges"),
-      v.literal("activate"),
-    ),
-    cursor: v.optional(v.string()),
-    token: v.string(),
-    attempt: v.number(),
     failure: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
     completedAt: v.optional(v.number()),
-  })
-    .index("by_site", ["siteId"])
-    .index("by_status_updated", ["status", "updatedAt"]),
+    workflowId: v.optional(v.string()),
+  }).index("by_site", ["siteId"]),
 
   releasePages: defineTable({
     releaseId: v.id("siteReleases"),
@@ -505,6 +428,7 @@ export default defineSchema({
     order: v.number(),
     contentRevisionId: v.optional(v.id("contentRevisions")),
     contentHash: v.optional(v.string()),
+    descriptionText: v.string(),
     updatedAt: v.number(),
   })
     .index("by_release", ["releaseId"])
@@ -553,35 +477,6 @@ export default defineSchema({
     .index("by_release", ["releaseId"])
     .index("by_release_file", ["releaseId", "fileId"])
     .index("by_release_library", ["releaseId", "libraryId"]),
-
-  releaseSearchEntries: defineTable({
-    releaseId: v.id("siteReleases"),
-    siteId: v.id("sites"),
-    kind: v.union(v.literal("file"), v.literal("page")),
-    sourceId: v.string(),
-    title: v.string(),
-    text: v.string(),
-    fileMetadata: v.optional(
-      v.object({
-        fileId: v.id("files"),
-        filename: v.string(),
-        fileContentType: v.string(),
-        size: v.number(),
-        libraryId: v.optional(v.id("documentLibraries")),
-        downloadUrl: v.string(),
-      }),
-    ),
-  })
-    .index("by_release", ["releaseId"])
-    .index("by_release_kind_source", ["releaseId", "kind", "sourceId"])
-    .searchIndex("search_title", {
-      searchField: "title",
-      filterFields: ["releaseId", "kind"],
-    })
-    .searchIndex("search_text", {
-      searchField: "text",
-      filterFields: ["releaseId", "kind"],
-    }),
 
   releaseChanges: defineTable({
     releaseId: v.id("siteReleases"),

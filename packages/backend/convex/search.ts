@@ -1,21 +1,24 @@
-import type { GenericMutationCtx } from "convex/server";
+import type { GenericMutationCtx, GenericQueryCtx } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import type { DataModel, Doc, Id } from "./_generated/dataModel";
 import { internalMutation, query } from "./_generated/server";
-import { isOrganizationMember } from "./permissions";
-import { readPageContent } from "./model/pageDocuments";
 import { assertDraftReadable } from "./model/draft";
-import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
+import { readPageContent } from "./model/pageDocuments";
 import {
   extractOpenEditorText,
   parseOpenEditorDocument,
   type OpenEditorDocument,
 } from "./pageContentFormat";
+import { isOrganizationMember } from "./permissions";
+import { canRenderPublishedSite, resolvePublishedSiteAccess } from "./sharing";
 
 type MutationCtx = GenericMutationCtx<DataModel>;
+type QueryCtx = GenericQueryCtx<DataModel>;
+type SearchKind = "file" | "page";
+type SearchMatch = "content" | "title";
 
-const SEARCH_COALESCE_MS = 10_000;
+const SEARCH_COALESCE_MS = 3_000;
 const MAX_SEARCH_RESULTS = 50;
 
 export function normalizeSearchLimit(limit: number | undefined): number {
@@ -23,39 +26,78 @@ export function normalizeSearchLimit(limit: number | undefined): number {
   return Math.max(1, Math.min(MAX_SEARCH_RESULTS, Math.floor(limit)));
 }
 
-function singleContentType(contentTypes?: Array<"file" | "page">) {
-  const unique = [...new Set(contentTypes)];
-  return unique.length === 1 ? unique[0] : undefined;
+export function draftSearchScope(siteId: Id<"sites">): string {
+  return `draft:${siteId}`;
+}
+
+export function releaseSearchScope(releaseId: Id<"siteReleases">): string {
+  return `release:${releaseId}`;
+}
+
+export async function upsertSearchEntry(
+  ctx: MutationCtx,
+  value: {
+    siteId: Id<"sites">;
+    scopeId: string;
+    kind: SearchKind;
+    sourceId: string;
+    title: string;
+    text: string;
+  },
+): Promise<void> {
+  const existing = await ctx.db
+    .query("searchEntries")
+    .withIndex("by_scope_source", (q) =>
+      q
+        .eq("scopeId", value.scopeId)
+        .eq("kind", value.kind)
+        .eq("sourceId", value.sourceId),
+    )
+    .unique();
+  const entry = { ...value, text: value.text.trim(), updatedAt: Date.now() };
+  if (existing) await ctx.db.replace(existing._id, entry);
+  else await ctx.db.insert("searchEntries", entry);
+}
+
+export async function removeSearchEntry(
+  ctx: MutationCtx,
+  scopeId: string,
+  kind: SearchKind,
+  sourceId: string,
+): Promise<void> {
+  const existing = await ctx.db
+    .query("searchEntries")
+    .withIndex("by_scope_source", (q) =>
+      q.eq("scopeId", scopeId).eq("kind", kind).eq("sourceId", sourceId),
+    )
+    .unique();
+  if (existing) await ctx.db.delete(existing._id);
+}
+
+export async function upsertDraftFileSearch(
+  ctx: MutationCtx,
+  file: Doc<"files">,
+  text: string,
+): Promise<void> {
+  await upsertSearchEntry(ctx, {
+    siteId: file.siteId,
+    scopeId: draftSearchScope(file.siteId),
+    kind: "file",
+    sourceId: file._id,
+    title: file.filename,
+    text,
+  });
 }
 
 export async function queuePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
   revisionId: Id<"contentRevisions">,
-  contentHash: string,
-) {
-  const page = await ctx.db.get(pageId);
-  if (!page) return;
-  const existing = await ctx.db
-    .query("pageSearchJobs")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  const value = {
-    siteId: page.siteId,
-    pageId,
-    revisionId,
-    contentHash,
-    updatedAt: Date.now(),
-  };
-  if (existing) await ctx.db.replace(existing._id, value);
-  else await ctx.db.insert("pageSearchJobs", value);
+): Promise<void> {
   await ctx.scheduler.runAfter(
     SEARCH_COALESCE_MS,
     internal.search.flushPageIndex,
-    {
-      pageId,
-      revisionId,
-    },
+    { pageId, revisionId },
   );
 }
 
@@ -65,38 +107,17 @@ export async function indexPageContent(
   document?: OpenEditorDocument,
 ): Promise<void> {
   const page = await ctx.db.get(pageId);
-  if (!page) return;
-  const site = await ctx.db.get(page.siteId);
-  if (!site) return;
-
-  let searchableDocument = document;
-  if (!searchableDocument) {
-    searchableDocument = (await readPageContent(ctx, pageId)).document;
-  }
-  const extractedText = searchableDocument
-    ? extractOpenEditorText(searchableDocument)
-    : "";
-
-  const existing = await ctx.db
-    .query("searchEntries")
-    .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
-    .first();
-
-  const indexData = {
+  if (!page || page.deletedAt !== undefined) return;
+  const searchableDocument =
+    document ?? (await readPageContent(ctx, pageId)).document;
+  await upsertSearchEntry(ctx, {
     siteId: page.siteId,
-    kind: "page" as const,
-    audience: "private" as const,
+    scopeId: draftSearchScope(page.siteId),
+    kind: "page",
     sourceId: pageId,
     title: page.title,
-    text: extractedText.trim(),
-    updatedAt: Date.now(),
-  };
-
-  if (existing) {
-    await ctx.db.patch(existing._id, indexData);
-  } else {
-    await ctx.db.insert("searchEntries", indexData);
-  }
+    text: searchableDocument ? extractOpenEditorText(searchableDocument) : "",
+  });
 }
 
 export const flushPageIndex = internalMutation({
@@ -106,41 +127,22 @@ export const flushPageIndex = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, { pageId, revisionId }) => {
-    const job = await ctx.db
-      .query("pageSearchJobs")
+    const current = await ctx.db
+      .query("pageDocuments")
       .withIndex("by_page", (q) => q.eq("pageId", pageId))
       .unique();
-    if (!job || job.revisionId !== revisionId) return null;
+    if (!current || current.revisionId !== revisionId) return null;
     const revision = await ctx.db.get(revisionId);
     if (!revision) return null;
     const payload = await ctx.db.get(revision.payloadId);
     if (!payload) return null;
     const page = await ctx.db.get(pageId);
-    if (!page || page.deletedAt !== undefined) {
-      await ctx.db.delete(job._id);
-      return null;
-    }
-    const extractedText = extractOpenEditorText(
+    if (!page || page.deletedAt !== undefined) return null;
+    await indexPageContent(
+      ctx,
+      pageId,
       parseOpenEditorDocument(payload.content),
-    ).trim();
-    const existing = await ctx.db
-      .query("searchEntries")
-      .withIndex("by_source", (q) =>
-        q.eq("kind", "page").eq("sourceId", pageId),
-      )
-      .first();
-    const indexData = {
-      siteId: page.siteId,
-      kind: "page" as const,
-      audience: "private" as const,
-      sourceId: pageId,
-      title: page.title,
-      text: extractedText,
-      updatedAt: Date.now(),
-    };
-    if (existing) await ctx.db.patch(existing._id, indexData);
-    else await ctx.db.insert("searchEntries", indexData);
-    await ctx.db.delete(job._id);
+    );
     return null;
   },
 });
@@ -149,253 +151,214 @@ export async function removePageContentIndex(
   ctx: MutationCtx,
   pageId: Id<"pages">,
 ): Promise<void> {
-  const existing = await ctx.db
-    .query("searchEntries")
-    .withIndex("by_source", (q) => q.eq("kind", "page").eq("sourceId", pageId))
-    .first();
-
-  if (existing) {
-    await ctx.db.delete(existing._id);
-  }
-  const pending = await ctx.db
-    .query("pageSearchJobs")
-    .withIndex("by_page", (q) => q.eq("pageId", pageId))
-    .unique();
-  if (pending) await ctx.db.delete(pending._id);
+  const page = await ctx.db.get(pageId);
+  if (!page) return;
+  await removeSearchEntry(ctx, draftSearchScope(page.siteId), "page", pageId);
 }
 
-function extractSnippet(
-  text: string | undefined,
+export function extractSearchExcerpt(
+  text: string,
   searchTerm: string,
   contextLength = 80,
-): { snippet: string; matchStart: number; matchEnd: number } | null {
-  if (!text) return null;
-
-  const lowerText = text.toLowerCase();
-  const lowerTerm = searchTerm.toLowerCase();
-  const matchIndex = lowerText.indexOf(lowerTerm);
-
+): { text: string; matchStart: number; matchEnd: number } | null {
+  const matchIndex = text
+    .toLocaleLowerCase()
+    .indexOf(searchTerm.toLocaleLowerCase());
   if (matchIndex === -1) return null;
-
   const start = Math.max(0, matchIndex - contextLength);
   const end = Math.min(
     text.length,
     matchIndex + searchTerm.length + contextLength,
   );
-
-  let snippet = text.slice(start, end);
-  const matchStart = matchIndex - start;
-  const matchEnd = matchStart + searchTerm.length;
-
-  if (start > 0) {
-    snippet = `...${snippet}`;
-  }
-  if (end < text.length) {
-    snippet = `${snippet}...`;
-  }
-
+  const prefix = start > 0 ? "…" : "";
+  const suffix = end < text.length ? "…" : "";
   return {
-    snippet,
-    matchStart: start > 0 ? matchStart + 3 : matchStart,
-    matchEnd: start > 0 ? matchEnd + 3 : matchEnd,
+    text: `${prefix}${text.slice(start, end)}${suffix}`,
+    matchStart: matchIndex - start + prefix.length,
+    matchEnd: matchIndex - start + prefix.length + searchTerm.length,
   };
 }
 
-function formatSearchResult(
-  doc: Doc<"searchEntries">,
-  matchType: "title" | "content",
-  searchTerm: string,
-) {
-  const snippetData =
-    matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
-
-  return {
-    _id: String(doc._id),
-    contentType: doc.kind,
-    sourceId: doc.sourceId,
-    title: doc.fileMetadata?.filename ?? doc.title,
-    matchType,
-    snippet: snippetData?.snippet ?? null,
-    snippetMatchStart: snippetData?.matchStart ?? null,
-    snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata: doc.fileMetadata
-      ? doc.fileMetadata
-      : doc.kind === "page"
-        ? { pageId: doc.sourceId as Id<"pages"> }
-        : {},
-  };
-}
-
-function formatReleaseSearchResult(
-  doc: Doc<"releaseSearchEntries">,
-  matchType: "title" | "content",
-  searchTerm: string,
-) {
-  const snippetData =
-    matchType === "content" ? extractSnippet(doc.text, searchTerm) : null;
-  return {
-    _id: String(doc._id),
-    contentType: doc.kind,
-    sourceId: doc.sourceId,
-    title: doc.fileMetadata?.filename ?? doc.title,
-    matchType,
-    snippet: snippetData?.snippet ?? null,
-    snippetMatchStart: snippetData?.matchStart ?? null,
-    snippetMatchEnd: snippetData?.matchEnd ?? null,
-    metadata: doc.fileMetadata
-      ? doc.fileMetadata
-      : doc.kind === "page"
-        ? { pageId: doc.sourceId as Id<"pages"> }
-        : {},
-  };
-}
-
-function contentTypeMatches(
-  doc: Pick<Doc<"searchEntries"> | Doc<"releaseSearchEntries">, "kind">,
-  contentTypes?: Array<"file" | "page">,
-) {
-  return !contentTypes?.length || contentTypes.includes(doc.kind);
-}
-
-export function mergeSearchMatches<
-  TDoc extends { _id: string; kind: "file" | "page" },
-  TResult,
->(args: {
+export function mergeSearchMatches<TDoc extends { _id: string }>(args: {
   titleResults: TDoc[];
   contentResults: TDoc[];
-  contentTypes?: Array<"file" | "page">;
   limit: number;
-  format: (doc: TDoc, matchType: "title" | "content") => TResult;
-}): TResult[] {
+}): Array<{ doc: TDoc; match: SearchMatch }> {
   const seen = new Set<string>();
-  const combined: TResult[] = [];
-  for (const [results, matchType] of [
+  const combined: Array<{ doc: TDoc; match: SearchMatch }> = [];
+  for (const [results, match] of [
     [args.titleResults, "title"],
     [args.contentResults, "content"],
   ] as const) {
     for (const doc of results) {
       if (seen.has(doc._id)) continue;
-      if (!contentTypeMatches(doc, args.contentTypes)) continue;
       seen.add(doc._id);
-      combined.push(args.format(doc, matchType));
+      combined.push({ doc, match });
+      if (combined.length === args.limit) return combined;
     }
   }
-  return combined.slice(0, args.limit);
+  return combined;
 }
 
-export const searchAll = query({
+async function searchScope(
+  ctx: QueryCtx,
+  scopeId: string,
+  searchQuery: string,
+  limit: number,
+) {
+  const [titleResults, contentResults] = await Promise.all([
+    ctx.db
+      .query("searchEntries")
+      .withSearchIndex("search_title", (q) =>
+        q.search("title", searchQuery).eq("scopeId", scopeId),
+      )
+      .take(limit),
+    ctx.db
+      .query("searchEntries")
+      .withSearchIndex("search_text", (q) =>
+        q.search("text", searchQuery).eq("scopeId", scopeId),
+      )
+      .take(limit * 2),
+  ]);
+  return mergeSearchMatches({ titleResults, contentResults, limit });
+}
+
+async function hydrateDraftResult(
+  ctx: QueryCtx,
+  entry: Doc<"searchEntries">,
+  match: SearchMatch,
+  searchTerm: string,
+) {
+  const excerpt =
+    match === "content" ? extractSearchExcerpt(entry.text, searchTerm) : null;
+  if (entry.kind === "page") {
+    const pageId = ctx.db.normalizeId("pages", entry.sourceId);
+    const page = pageId ? await ctx.db.get(pageId) : null;
+    if (!page || page.deletedAt !== undefined || page.siteId !== entry.siteId) {
+      return null;
+    }
+    return {
+      key: `page:${page._id}`,
+      kind: "page" as const,
+      pageId: page._id,
+      title: page.title,
+      match,
+      excerpt,
+    };
+  }
+  const fileId = ctx.db.normalizeId("files", entry.sourceId);
+  const file = fileId ? await ctx.db.get(fileId) : null;
+  if (
+    file?.kind !== "file" ||
+    file.deletedAt !== undefined ||
+    file.siteId !== entry.siteId
+  ) {
+    return null;
+  }
+  return {
+    key: `file:${file._id}`,
+    kind: "file" as const,
+    fileId: file._id,
+    title: file.filename,
+    contentType: file.contentType,
+    size: file.size,
+    downloadUrl: `/api/files/${file._id}`,
+    match,
+    excerpt,
+  };
+}
+
+async function hydrateReleaseResult(
+  ctx: QueryCtx,
+  releaseId: Id<"siteReleases">,
+  entry: Doc<"searchEntries">,
+  match: SearchMatch,
+  searchTerm: string,
+) {
+  const excerpt =
+    match === "content" ? extractSearchExcerpt(entry.text, searchTerm) : null;
+  if (entry.kind === "page") {
+    const pageId = ctx.db.normalizeId("pages", entry.sourceId);
+    if (!pageId) return null;
+    const page = await ctx.db
+      .query("releasePages")
+      .withIndex("by_release_page", (q) =>
+        q.eq("releaseId", releaseId).eq("pageId", pageId),
+      )
+      .unique();
+    return page
+      ? {
+          key: `page:${page.pageId}`,
+          kind: "page" as const,
+          pageId: page.pageId,
+          title: page.title,
+          match,
+          excerpt,
+        }
+      : null;
+  }
+  const fileId = ctx.db.normalizeId("files", entry.sourceId);
+  if (!fileId) return null;
+  const file = await ctx.db
+    .query("releaseFiles")
+    .withIndex("by_release_file", (q) =>
+      q.eq("releaseId", releaseId).eq("fileId", fileId),
+    )
+    .unique();
+  return file?.kind === "file"
+    ? {
+        key: `file:${file.fileId}`,
+        kind: "file" as const,
+        fileId: file.fileId,
+        title: file.filename,
+        contentType: file.contentType,
+        size: file.size,
+        downloadUrl: `/api/files/${file.fileId}`,
+        match,
+        excerpt,
+      }
+    : null;
+}
+
+export const run = query({
   args: {
     siteId: v.id("sites"),
+    surface: v.union(v.literal("draft"), v.literal("published")),
     query: v.string(),
-    contentTypes: v.optional(
-      v.array(v.union(v.literal("file"), v.literal("page"))),
-    ),
     limit: v.optional(v.number()),
   },
-  handler: async (
-    ctx,
-    { siteId, query: searchQuery, contentTypes, limit = 20 },
-  ) => {
+  handler: async (ctx, { siteId, surface, query: rawQuery, limit }) => {
+    const searchTerm = rawQuery.trim();
+    if (!searchTerm) return [];
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
-    assertDraftReadable(site);
-
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return [];
-    const boundedLimit = normalizeSearchLimit(limit);
-    const indexedContentType = singleContentType(contentTypes);
-
-    const titleResults = await ctx.db
-      .query("searchEntries")
-      .withSearchIndex("search_title", (q) => {
-        const search = q.search("title", trimmed).eq("siteId", siteId);
-        return indexedContentType
-          ? search.eq("kind", indexedContentType)
-          : search;
-      })
-      .take(boundedLimit * 2);
-
-    const contentResults = await ctx.db
-      .query("searchEntries")
-      .withSearchIndex("search_text", (q) => {
-        const search = q.search("text", trimmed).eq("siteId", siteId);
-        return indexedContentType
-          ? search.eq("kind", indexedContentType)
-          : search;
-      })
-      .take(boundedLimit * 2);
-
-    // Preserve the more specific classification when a result satisfies both
-    // indexes, then de-duplicate the broader content results.
-    return mergeSearchMatches({
-      titleResults,
-      contentResults,
-      contentTypes,
-      limit: boundedLimit,
-      format: (doc, matchType) => formatSearchResult(doc, matchType, trimmed),
-    });
-  },
-});
-
-export const searchPublished = query({
-  args: {
-    siteId: v.id("sites"),
-    query: v.string(),
-    contentTypes: v.optional(
-      v.array(v.union(v.literal("file"), v.literal("page"))),
-    ),
-    limit: v.optional(v.number()),
-  },
-  handler: async (
-    ctx,
-    { siteId, query: searchQuery, contentTypes, limit = 20 },
-  ) => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed) return [];
-
-    const site = await ctx.db.get(siteId);
-    if (!site) {
-      return [];
+    let scopeId: string;
+    let releaseId: Id<"siteReleases"> | undefined;
+    if (surface === "draft") {
+      if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+      assertDraftReadable(site);
+      scopeId = draftSearchScope(siteId);
+    } else {
+      const access = await resolvePublishedSiteAccess(ctx, site);
+      if (!canRenderPublishedSite(access) || !site.liveReleaseId) return [];
+      releaseId = site.liveReleaseId;
+      scopeId = releaseSearchScope(releaseId);
     }
-    const access = await resolvePublishedSiteAccess(ctx, site);
-    if (!canRenderPublishedSite(access)) return [];
-    if (!site.liveReleaseId) return [];
-    const boundedLimit = normalizeSearchLimit(limit);
-    const indexedContentType = singleContentType(contentTypes);
 
-    const titleResults = await ctx.db
-      .query("releaseSearchEntries")
-      .withSearchIndex("search_title", (q) => {
-        const search = q
-          .search("title", trimmed)
-          .eq("releaseId", site.liveReleaseId!);
-        return indexedContentType
-          ? search.eq("kind", indexedContentType)
-          : search;
-      })
-      .take(boundedLimit * 2);
-
-    const contentResults = await ctx.db
-      .query("releaseSearchEntries")
-      .withSearchIndex("search_text", (q) => {
-        const search = q
-          .search("text", trimmed)
-          .eq("releaseId", site.liveReleaseId!);
-        return indexedContentType
-          ? search.eq("kind", indexedContentType)
-          : search;
-      })
-      .take(boundedLimit * 2);
-
-    return mergeSearchMatches({
-      titleResults,
-      contentResults,
-      contentTypes,
-      limit: boundedLimit,
-      format: (doc, matchType) =>
-        formatReleaseSearchResult(doc, matchType, trimmed),
-    });
+    const matches = await searchScope(
+      ctx,
+      scopeId,
+      searchTerm,
+      normalizeSearchLimit(limit),
+    );
+    const hydrated = await Promise.all(
+      matches.map(({ doc, match }) =>
+        releaseId
+          ? hydrateReleaseResult(ctx, releaseId, doc, match, searchTerm)
+          : hydrateDraftResult(ctx, doc, match, searchTerm),
+      ),
+    );
+    return hydrated.filter((result) => result !== null);
   },
 });

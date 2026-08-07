@@ -481,8 +481,8 @@ function HistoryDialogSession({
     | ReleaseSummary[]
     | undefined;
   const makeLive = useMutation(api.releases.makeLive);
-  const restoreToDraft = useMutation(api.releases.restoreToDraft);
-  const resumeDraftRestore = useMutation(api.releases.resumeDraftRestore);
+  const restoreToDraft = useMutation(api.draftRestores.restore);
+  const resumeDraftRestore = useMutation(api.draftRestores.resume);
   const [selectedId, setSelectedId] = useState<Id<"siteReleases"> | null>(null);
   const [confirmAction, setConfirmAction] = useState<"live" | "restore" | null>(
     null,
@@ -492,7 +492,7 @@ function HistoryDialogSession({
     Id<"draftRestores"> | undefined
   >();
   const restoreStatus = useQuery(
-    api.releases.getDraftRestoreStatus,
+    api.draftRestores.status,
     pendingRestoreId ? { restoreId: pendingRestoreId } : "skip",
   );
   const restoreIsRunning =

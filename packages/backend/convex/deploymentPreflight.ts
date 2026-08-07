@@ -1,7 +1,6 @@
 "use node";
 
 import { internalAction } from "./_generated/server";
-import { loadAnyDocNode } from "./model/anyDocAdapter";
 
 const REQUIRED_FILE_ENV = [
   "FILES_BUCKET",
@@ -37,15 +36,8 @@ export const checkFileExtractionEnvironment = internalAction({
     ) {
       throw new Error("FILES_FORCE_PATH_STYLE must be true or false");
     }
-    const anyDoc = await loadAnyDocNode();
-    if (anyDoc.formatFromExtension("docx") !== "docx") {
-      throw new Error(
-        "AnyDoc Node format detection failed its deployment check",
-      );
-    }
     return {
       adapter,
-      anyDocNode: true,
       configured: REQUIRED_FILE_ENV.map((name) => name),
       forcePathStyle: forcePathStyle ?? "true",
     };

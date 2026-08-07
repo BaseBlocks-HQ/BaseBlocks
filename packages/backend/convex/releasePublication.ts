@@ -1,33 +1,22 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  internalAction,
-  type MutationCtx,
-  internalMutation,
-} from "./_generated/server";
-import { buildFileUrl } from "./files";
-import {
-  buildFileSearchContent,
-  fileSourceVersion,
-} from "./model/fileExtraction";
+import { type MutationCtx, internalMutation } from "./_generated/server";
+import { workflows } from "./workflows";
+import { fileSourceVersion } from "./model/fileExtraction";
 import { buildReleaseChangeDetail } from "./model/releaseChangeDetails";
-import {
-  extractionIsPublishable,
-  publicationFailureOutcome,
-} from "./model/releaseState";
+import { extractionIsPublishable } from "./model/releaseState";
 import {
   extractOpenEditorText,
   parseOpenEditorDocument,
 } from "./pageContentFormat";
+import { releaseSearchScope, upsertSearchEntry } from "./search";
 
 const PAGE_BATCH_SIZE = 6;
 const FILE_BATCH_SIZE = 8;
 const CHANGE_BATCH_SIZE = 8;
 const METADATA_BATCH_SIZE = 40;
 const CLEANUP_BATCH_SIZE = 50;
-const STALLED_PUBLICATION_MS = 10 * 60_000;
-const MAX_BUILD_ATTEMPTS = 3;
 
 const buildPhaseValidator = v.union(
   v.literal("pages"),
@@ -48,11 +37,6 @@ const cleanupPhaseValidator = v.union(
   v.literal("cleanupChanges"),
 );
 
-const publicationPhaseValidator = v.union(
-  buildPhaseValidator,
-  cleanupPhaseValidator,
-);
-
 type BuildPhase =
   | "pages"
   | "libraries"
@@ -69,43 +53,6 @@ type CleanupPhase =
   | "cleanupFiles"
   | "cleanupSearch"
   | "cleanupChanges";
-
-type PublicationPhase = BuildPhase | CleanupPhase;
-
-function cursorMatches(
-  stored: string | undefined,
-  received: string | undefined,
-) {
-  return (stored ?? null) === (received ?? null);
-}
-
-export function publicationBatchMatches(
-  release: Pick<
-    Doc<"siteReleases">,
-    | "publicationToken"
-    | "publicationPhase"
-    | "publicationCursor"
-    | "publicationAttempt"
-    | "publicationStatus"
-  > | null,
-  args: {
-    token: string;
-    phase: PublicationPhase;
-    cursor?: string;
-    attempt: number;
-  },
-) {
-  return Boolean(
-    release &&
-      release.publicationToken === args.token &&
-      release.publicationPhase === args.phase &&
-      cursorMatches(release.publicationCursor, args.cursor) &&
-      (release.publicationAttempt ?? 0) === args.attempt &&
-      (release.publicationStatus === "building" ||
-        release.publicationStatus === "aborting" ||
-        release.publicationStatus === "clearing"),
-  );
-}
 
 async function hasPendingFileExtraction(
   ctx: MutationCtx,
@@ -128,94 +75,15 @@ async function hasPendingFileExtraction(
   return Boolean(queued || processing);
 }
 
-async function scheduleBatch(
-  ctx: MutationCtx,
-  args: {
-    releaseId: Id<"siteReleases">;
-    token: string;
-    phase: PublicationPhase;
-    cursor?: string;
-    attempt: number;
-  },
-  delay = 0,
-) {
-  await ctx.scheduler.runAfter(
-    delay,
-    internal.releasePublication.processBatch,
-    args,
-  );
-}
-
-async function moveToPhase(
-  ctx: MutationCtx,
-  release: Doc<"siteReleases">,
-  token: string,
-  phase: PublicationPhase,
-) {
-  const now = Date.now();
-  await ctx.db.patch(release._id, {
-    publicationPhase: phase,
-    publicationCursor: undefined,
-    publicationAttempt: 0,
-    publicationUpdatedAt: now,
-  });
-  await scheduleBatch(ctx, {
-    releaseId: release._id,
-    token,
-    phase,
-    attempt: 0,
-  });
-}
-
-async function beginAbort(
-  ctx: MutationCtx,
-  release: Doc<"siteReleases">,
-  failure = "The draft changed before publication completed.",
-) {
-  if (release.publicationStatus === "aborting") return;
-  const token = crypto.randomUUID();
-  const phase: CleanupPhase = "cleanupPages";
-  await ctx.db.patch(release._id, {
-    publicationStatus: "aborting",
-    publicationToken: token,
-    publicationPhase: phase,
-    publicationCursor: undefined,
-    publicationAttempt: 0,
-    publicationUpdatedAt: Date.now(),
-    publicationFailure: failure,
-  });
-  await scheduleBatch(ctx, {
-    releaseId: release._id,
-    token,
-    phase,
-    attempt: 0,
-  });
-}
-
 async function continuePagination(
-  ctx: MutationCtx,
-  release: Doc<"siteReleases">,
-  token: string,
-  phase: BuildPhase,
+  _ctx: MutationCtx,
+  _release: Doc<"siteReleases">,
+  _token: string,
+  _phase: BuildPhase,
   result: { isDone: boolean; continueCursor: string },
-  nextPhase: BuildPhase,
+  _nextPhase: BuildPhase,
 ) {
-  if (result.isDone) {
-    await moveToPhase(ctx, release, token, nextPhase);
-    return;
-  }
-  await ctx.db.patch(release._id, {
-    publicationCursor: result.continueCursor,
-    publicationAttempt: 0,
-    publicationUpdatedAt: Date.now(),
-  });
-  await scheduleBatch(ctx, {
-    releaseId: release._id,
-    token,
-    phase,
-    cursor: result.continueCursor,
-    attempt: 0,
-  });
+  return result;
 }
 
 async function snapshotPages(
@@ -235,6 +103,11 @@ async function snapshotPages(
       .query("pageDocuments")
       .withIndex("by_page", (q) => q.eq("pageId", source._id))
       .unique();
+    const revision = document ? await ctx.db.get(document.revisionId) : null;
+    const payload = revision ? await ctx.db.get(revision.payloadId) : null;
+    const text = payload
+      ? extractOpenEditorText(parseOpenEditorDocument(payload.content)).trim()
+      : "";
     await ctx.db.insert("releasePages", {
       releaseId: release._id,
       siteId: release.siteId,
@@ -246,20 +119,16 @@ async function snapshotPages(
       order: source.order,
       contentRevisionId: document?.revisionId,
       contentHash: document?.contentHash,
+      descriptionText: text,
       updatedAt: Math.max(source.updatedAt, document?.updatedAt ?? 0),
     });
-    const revision = document ? await ctx.db.get(document.revisionId) : null;
-    const payload = revision ? await ctx.db.get(revision.payloadId) : null;
-    const text = payload
-      ? extractOpenEditorText(parseOpenEditorDocument(payload.content))
-      : "";
-    await ctx.db.insert("releaseSearchEntries", {
-      releaseId: release._id,
+    await upsertSearchEntry(ctx, {
       siteId: release.siteId,
+      scopeId: releaseSearchScope(release._id),
       kind: "page",
       sourceId: source._id,
       title: source.title,
-      text: text.trim(),
+      text,
     });
     inserted += 1;
   }
@@ -268,7 +137,7 @@ async function snapshotPages(
       pageCount: release.pageCount + inserted,
     });
   }
-  await continuePagination(ctx, release, token, "pages", page, "libraries");
+  return continuePagination(ctx, release, token, "pages", page, "libraries");
 }
 
 async function snapshotLibraries(
@@ -290,7 +159,7 @@ async function snapshotLibraries(
       name: source.name,
     });
   }
-  await continuePagination(ctx, release, token, "libraries", page, "folders");
+  return continuePagination(ctx, release, token, "libraries", page, "folders");
 }
 
 async function snapshotFolders(
@@ -317,7 +186,7 @@ async function snapshotFolders(
       order: source.order,
     });
   }
-  await continuePagination(ctx, release, token, "folders", page, "files");
+  return continuePagination(ctx, release, token, "folders", page, "files");
 }
 
 async function snapshotFiles(
@@ -354,33 +223,21 @@ async function snapshotFiles(
       .withIndex("by_file", (q) => q.eq("fileId", source._id))
       .unique();
     if (!extractionIsPublishable(extraction, fileSourceVersion(source))) {
-      await beginAbort(
-        ctx,
-        release,
+      throw new Error(
         "Document extraction changed before publication completed.",
       );
-      return;
     }
-    await ctx.db.insert("releaseSearchEntries", {
-      releaseId: release._id,
+    await upsertSearchEntry(ctx, {
       siteId: release.siteId,
+      scopeId: releaseSearchScope(release._id),
       kind: "file",
       sourceId: source._id,
       title: source.filename,
-      text: buildFileSearchContent(
-        extraction?.status === "ready" ? extraction.extractedText : undefined,
-      ),
-      fileMetadata: {
-        fileId: source._id,
-        filename: source.filename,
-        fileContentType: source.contentType,
-        size: source.size,
-        libraryId: source.libraryId,
-        downloadUrl: buildFileUrl(source._id),
-      },
+      text:
+        extraction?.status === "ready" ? (extraction.extractedText ?? "") : "",
     });
   }
-  await continuePagination(ctx, release, token, "files", page, "changes");
+  return continuePagination(ctx, release, token, "files", page, "changes");
 }
 
 async function snapshotChanges(
@@ -391,8 +248,7 @@ async function snapshotChanges(
 ) {
   const site = await ctx.db.get(release.siteId);
   if (!site) {
-    await beginAbort(ctx, release);
-    return;
+    throw new Error("The draft changed before publication completed.");
   }
   const page = await ctx.db
     .query("draftChanges")
@@ -418,7 +274,7 @@ async function snapshotChanges(
       changeCount: release.changeCount + page.page.length,
     });
   }
-  await continuePagination(ctx, release, token, "changes", page, "activate");
+  return continuePagination(ctx, release, token, "changes", page, "activate");
 }
 
 async function activateRelease(ctx: MutationCtx, release: Doc<"siteReleases">) {
@@ -429,19 +285,13 @@ async function activateRelease(ctx: MutationCtx, release: Doc<"siteReleases">) {
     release.pageCount === 0 ||
     (await hasPendingFileExtraction(ctx, release.siteId))
   ) {
-    await beginAbort(
-      ctx,
-      release,
+    throw new Error(
       "The draft or document extraction changed before publication completed.",
     );
-    return;
   }
   const now = Date.now();
   await ctx.db.patch(release._id, {
     publicationStatus: "clearing",
-    publicationPhase: "clearDraftChanges",
-    publicationCursor: undefined,
-    publicationAttempt: 0,
     publicationUpdatedAt: now,
   });
   await ctx.db.patch(site._id, {
@@ -457,14 +307,6 @@ async function activateRelease(ctx: MutationCtx, release: Doc<"siteReleases">) {
     actorId: release.createdBy,
     createdAt: now,
   });
-  if (release.publicationToken) {
-    await scheduleBatch(ctx, {
-      releaseId: release._id,
-      token: release.publicationToken,
-      phase: "clearDraftChanges",
-      attempt: 0,
-    });
-  }
 }
 
 export function draftChangeMatchesPublication(
@@ -489,7 +331,6 @@ export function draftChangeMatchesPublication(
 async function clearPublishedDraftChanges(
   ctx: MutationCtx,
   release: Doc<"siteReleases">,
-  token: string,
   cursor?: string,
 ) {
   const page = await ctx.db
@@ -506,29 +347,7 @@ async function clearPublishedDraftChanges(
       await ctx.db.delete(current._id);
     }
   }
-  if (!page.isDone) {
-    await ctx.db.patch(release._id, {
-      publicationCursor: page.continueCursor,
-      publicationAttempt: 0,
-      publicationUpdatedAt: Date.now(),
-    });
-    await scheduleBatch(ctx, {
-      releaseId: release._id,
-      token,
-      phase: "clearDraftChanges",
-      cursor: page.continueCursor,
-      attempt: 0,
-    });
-    return;
-  }
-  await ctx.db.patch(release._id, {
-    publicationStatus: "complete",
-    publicationToken: undefined,
-    publicationPhase: undefined,
-    publicationCursor: undefined,
-    publicationAttempt: undefined,
-    publicationUpdatedAt: Date.now(),
-  });
+  return page;
 }
 
 const cleanupTables = {
@@ -536,256 +355,196 @@ const cleanupTables = {
   cleanupLibraries: "releaseLibraries",
   cleanupFolders: "releaseFolders",
   cleanupFiles: "releaseFiles",
-  cleanupSearch: "releaseSearchEntries",
   cleanupChanges: "releaseChanges",
 } as const;
 
-const nextCleanupPhase: Record<CleanupPhase, CleanupPhase | null> = {
-  cleanupPages: "cleanupLibraries",
-  cleanupLibraries: "cleanupFolders",
-  cleanupFolders: "cleanupFiles",
-  cleanupFiles: "cleanupSearch",
-  cleanupSearch: "cleanupChanges",
-  cleanupChanges: null,
-};
+const cleanupPhases: CleanupPhase[] = [
+  "cleanupPages",
+  "cleanupLibraries",
+  "cleanupFolders",
+  "cleanupFiles",
+  "cleanupSearch",
+  "cleanupChanges",
+];
 
 async function cleanupRelease(
   ctx: MutationCtx,
   release: Doc<"siteReleases">,
-  token: string,
   phase: CleanupPhase,
 ) {
+  if (phase === "cleanupSearch") {
+    const rows = await ctx.db
+      .query("searchEntries")
+      .withIndex("by_scope", (q) =>
+        q.eq("scopeId", releaseSearchScope(release._id)),
+      )
+      .take(CLEANUP_BATCH_SIZE);
+    for (const row of rows) await ctx.db.delete(row._id);
+    return rows.length < CLEANUP_BATCH_SIZE;
+  }
   const rows = await ctx.db
     .query(cleanupTables[phase])
     .withIndex("by_release", (q) => q.eq("releaseId", release._id))
     .take(CLEANUP_BATCH_SIZE);
   for (const row of rows) await ctx.db.delete(row._id);
-  if (rows.length === CLEANUP_BATCH_SIZE) {
-    await ctx.db.patch(release._id, {
-      publicationAttempt: 0,
-      publicationUpdatedAt: Date.now(),
-    });
-    await scheduleBatch(ctx, {
-      releaseId: release._id,
-      token,
-      phase,
-      attempt: 0,
-    });
-    return;
-  }
-  const next = nextCleanupPhase[phase];
-  if (next) {
-    await moveToPhase(ctx, release, token, next);
-  } else {
-    await ctx.db.patch(release._id, {
-      publicationStatus: "failed",
-      publicationToken: undefined,
-      publicationPhase: undefined,
-      publicationCursor: undefined,
-      publicationAttempt: undefined,
-      publicationUpdatedAt: Date.now(),
-    });
-  }
+  return rows.length < CLEANUP_BATCH_SIZE;
 }
 
 export const applyBatch = internalMutation({
   args: {
     releaseId: v.id("siteReleases"),
-    token: v.string(),
-    phase: publicationPhaseValidator,
+    phase: buildPhaseValidator,
     cursor: v.optional(v.string()),
-    attempt: v.number(),
   },
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
-    if (!release || !publicationBatchMatches(release, args)) {
-      return { applied: false };
-    }
-    if (release.publicationStatus === "aborting") {
-      if (!args.phase.startsWith("cleanup")) return { applied: false };
-      await cleanupRelease(
-        ctx,
-        release,
-        args.token,
-        args.phase as CleanupPhase,
-      );
-      return { applied: true };
-    }
-    if (
-      release.publicationStatus === "clearing" &&
-      args.phase === "clearDraftChanges"
-    ) {
-      await clearPublishedDraftChanges(ctx, release, args.token, args.cursor);
-      return { applied: true };
-    }
-    if (release.publicationStatus !== "building") {
-      return { applied: false };
-    }
+    if (release?.publicationStatus !== "building") return null;
     const site = await ctx.db.get(release.siteId);
     if (!site || site.draftRevision !== release.sourceDraftRevision) {
-      await beginAbort(ctx, release);
-      return { applied: true };
+      throw new Error("The draft changed before publication completed.");
     }
 
     switch (args.phase as BuildPhase) {
       case "pages":
-        await snapshotPages(ctx, release, args.token, args.cursor);
-        break;
+        return snapshotPages(ctx, release, "", args.cursor);
       case "libraries":
-        await snapshotLibraries(ctx, release, args.token, args.cursor);
-        break;
+        return snapshotLibraries(ctx, release, "", args.cursor);
       case "folders":
-        await snapshotFolders(ctx, release, args.token, args.cursor);
-        break;
+        return snapshotFolders(ctx, release, "", args.cursor);
       case "files":
-        await snapshotFiles(ctx, release, args.token, args.cursor);
-        break;
+        return snapshotFiles(ctx, release, "", args.cursor);
       case "changes":
-        await snapshotChanges(ctx, release, args.token, args.cursor);
-        break;
+        return snapshotChanges(ctx, release, "", args.cursor);
       case "activate":
-        await activateRelease(ctx, release);
-        break;
+        return null;
       case "clearDraftChanges":
-        break;
+        return null;
     }
-    return { applied: true };
   },
 });
 
-export function publicationRetryDelayMs(attempt: number): number {
-  return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt));
-}
-
-function safePublicationFailure(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300);
-}
-
-export const handleBatchFailure = internalMutation({
-  args: {
-    releaseId: v.id("siteReleases"),
-    token: v.string(),
-    phase: publicationPhaseValidator,
-    cursor: v.optional(v.string()),
-    attempt: v.number(),
-    failure: v.string(),
+export const activate = internalMutation({
+  args: { releaseId: v.id("siteReleases") },
+  handler: async (ctx, { releaseId }) => {
+    const release = await ctx.db.get(releaseId);
+    if (release?.publicationStatus !== "building") return;
+    await activateRelease(ctx, release);
   },
-  handler: async (ctx, args) => {
-    const release = await ctx.db.get(args.releaseId);
-    if (!release || !publicationBatchMatches(release, args)) {
-      return { applied: false };
-    }
-    const nextAttempt = Math.max(0, Math.floor(args.attempt)) + 1;
-    if (
-      publicationFailureOutcome(
-        release.publicationStatus,
-        nextAttempt,
-        MAX_BUILD_ATTEMPTS,
-      ) === "abort"
-    ) {
-      await beginAbort(
-        ctx,
-        release,
-        `Publication failed after ${MAX_BUILD_ATTEMPTS} attempts: ${args.failure}`,
-      );
-      return { applied: true, aborted: true };
-    }
-    await ctx.db.patch(release._id, {
-      publicationAttempt: nextAttempt,
+});
+
+export const clearChangesBatch = internalMutation({
+  args: { releaseId: v.id("siteReleases"), cursor: v.optional(v.string()) },
+  handler: async (ctx, { releaseId, cursor }) => {
+    const release = await ctx.db.get(releaseId);
+    if (release?.publicationStatus !== "clearing") return null;
+    return clearPublishedDraftChanges(ctx, release, cursor);
+  },
+});
+
+export const finish = internalMutation({
+  args: { releaseId: v.id("siteReleases") },
+  handler: async (ctx, { releaseId }) => {
+    await ctx.db.patch(releaseId, {
+      publicationStatus: "complete",
+      publicationFailure: undefined,
       publicationUpdatedAt: Date.now(),
     });
-    await scheduleBatch(
-      ctx,
-      {
-        releaseId: release._id,
-        token: args.token,
-        phase: args.phase,
-        cursor: args.cursor,
-        attempt: nextAttempt,
-      },
-      publicationRetryDelayMs(nextAttempt),
-    );
-    return { applied: true, aborted: false };
   },
 });
 
-export const processBatch: ReturnType<typeof internalAction> = internalAction({
-  args: {
-    releaseId: v.id("siteReleases"),
-    token: v.string(),
-    phase: publicationPhaseValidator,
-    cursor: v.optional(v.string()),
-    attempt: v.optional(v.number()),
+export const cleanupBatch = internalMutation({
+  args: { releaseId: v.id("siteReleases"), phase: cleanupPhaseValidator },
+  handler: async (ctx, { releaseId, phase }) => {
+    const release = await ctx.db.get(releaseId);
+    return release ? cleanupRelease(ctx, release, phase) : true;
   },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ applied: boolean; aborted?: boolean }> => {
+});
+
+export const fail = internalMutation({
+  args: { releaseId: v.id("siteReleases"), failure: v.string() },
+  handler: async (ctx, { releaseId, failure }) => {
+    await ctx.db.patch(releaseId, {
+      publicationStatus: "failed",
+      publicationFailure: failure.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300),
+      publicationUpdatedAt: Date.now(),
+    });
+  },
+});
+
+export const recordFailure = internalMutation({
+  args: { releaseId: v.id("siteReleases"), failure: v.string() },
+  handler: async (ctx, { releaseId, failure }) => {
+    await ctx.db.patch(releaseId, {
+      publicationFailure: failure.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300),
+      publicationUpdatedAt: Date.now(),
+    });
+  },
+});
+
+export const run = workflows
+  .define({ args: { releaseId: v.id("siteReleases") } })
+  .handler(async (step, { releaseId }): Promise<void> => {
+    let activated = false;
     try {
-      return await ctx.runMutation(internal.releasePublication.applyBatch, {
-        releaseId: args.releaseId,
-        token: args.token,
-        phase: args.phase,
-        cursor: args.cursor,
-        attempt: args.attempt ?? 0,
+      for (const phase of [
+        "pages",
+        "libraries",
+        "folders",
+        "files",
+        "changes",
+      ] as const) {
+        let cursor: string | undefined;
+        do {
+          const page: { isDone: boolean; continueCursor: string } | null =
+            await step.runMutation(internal.releasePublication.applyBatch, {
+              releaseId,
+              phase,
+              cursor,
+            });
+          if (!page) return;
+          cursor = page.isDone ? undefined : page.continueCursor;
+        } while (cursor);
+      }
+      await step.runMutation(internal.releasePublication.activate, {
+        releaseId,
       });
+      activated = true;
+      let cursor: string | undefined;
+      do {
+        const page: { isDone: boolean; continueCursor: string } | null =
+          await step.runMutation(
+            internal.releasePublication.clearChangesBatch,
+            {
+              releaseId,
+              cursor,
+            },
+          );
+        if (!page) return;
+        cursor = page.isDone ? undefined : page.continueCursor;
+      } while (cursor);
+      await step.runMutation(internal.releasePublication.finish, { releaseId });
     } catch (error) {
-      return await ctx.runMutation(
-        internal.releasePublication.handleBatchFailure,
-        {
-          ...args,
-          attempt: args.attempt ?? 0,
-          failure: safePublicationFailure(error),
-        },
-      );
-    }
-  },
-});
-
-export const recoverStalled = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const cutoff = Date.now() - STALLED_PUBLICATION_MS;
-    const [building, aborting, clearing] = await Promise.all([
-      ctx.db
-        .query("siteReleases")
-        .withIndex("by_publication_status_updated", (q) =>
-          q
-            .eq("publicationStatus", "building")
-            .lt("publicationUpdatedAt", cutoff),
-        )
-        .take(10),
-      ctx.db
-        .query("siteReleases")
-        .withIndex("by_publication_status_updated", (q) =>
-          q
-            .eq("publicationStatus", "aborting")
-            .lt("publicationUpdatedAt", cutoff),
-        )
-        .take(10),
-      ctx.db
-        .query("siteReleases")
-        .withIndex("by_publication_status_updated", (q) =>
-          q
-            .eq("publicationStatus", "clearing")
-            .lt("publicationUpdatedAt", cutoff),
-        )
-        .take(10),
-    ]);
-    for (const release of [...building, ...aborting, ...clearing]) {
-      if (!release.publicationToken || !release.publicationPhase) continue;
-      await ctx.db.patch(release._id, { publicationUpdatedAt: Date.now() });
-      await scheduleBatch(ctx, {
-        releaseId: release._id,
-        token: release.publicationToken,
-        phase: release.publicationPhase,
-        cursor: release.publicationCursor,
-        attempt: release.publicationAttempt ?? 0,
+      const failure = error instanceof Error ? error.message : String(error);
+      if (!activated) {
+        for (const phase of cleanupPhases) {
+          let done = false;
+          while (!done) {
+            done = await step.runMutation(
+              internal.releasePublication.cleanupBatch,
+              { releaseId, phase },
+            );
+          }
+        }
+        await step.runMutation(internal.releasePublication.fail, {
+          releaseId,
+          failure,
+        });
+        return;
+      }
+      await step.runMutation(internal.releasePublication.recordFailure, {
+        releaseId,
+        failure,
       });
+      throw error;
     }
-    return {
-      recovered: building.length + aborting.length + clearing.length,
-    };
-  },
-});
+  });

@@ -1,11 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  internalAction,
-  internalMutation,
-  type MutationCtx,
-} from "./_generated/server";
+import { internalMutation, type MutationCtx } from "./_generated/server";
+import { workflows } from "./workflows";
 import { deleteFileRows } from "./files";
 import { reconcileRestoredFile } from "./fileExtraction";
 import { removePageContentIndex, indexPageContent } from "./search";
@@ -14,8 +11,6 @@ import { parseOpenEditorDocument } from "./pageContentFormat";
 
 const SMALL_BATCH = 6;
 const METADATA_BATCH = 20;
-const MAX_ATTEMPTS = 5;
-const STALLED_RESTORE_MS = 10 * 60_000;
 
 const phaseValidator = v.union(
   v.literal("validatePages"),
@@ -52,88 +47,8 @@ type RestorePhase =
   | "clearDraftChanges"
   | "activate";
 
-export const nextDraftRestorePhase: Record<RestorePhase, RestorePhase | null> =
-  {
-    validatePages: "validateLibraries",
-    validateLibraries: "validateFolders",
-    validateFolders: "validateFiles",
-    validateFiles: "archivePages",
-    archivePages: "restorePages",
-    restorePages: "archiveLibraries",
-    archiveLibraries: "restoreLibraries",
-    restoreLibraries: "archiveFolders",
-    archiveFolders: "restoreFolders",
-    restoreFolders: "archiveFiles",
-    archiveFiles: "restoreFiles",
-    restoreFiles: "synchronizeParents",
-    synchronizeParents: "clearDraftChanges",
-    clearDraftChanges: "activate",
-    activate: null,
-  };
-
-function cursorMatches(stored?: string, received?: string) {
-  return (stored ?? null) === (received ?? null);
-}
-
-async function schedule(
-  ctx: MutationCtx,
-  restore: Doc<"draftRestores">,
-  delay = 0,
-) {
-  await ctx.scheduler.runAfter(delay, internal.draftRestore.processBatch, {
-    restoreId: restore._id,
-    token: restore.token,
-    phase: restore.phase as RestorePhase,
-    cursor: restore.cursor,
-    attempt: restore.attempt,
-  });
-}
-
-async function moveToPhase(
-  ctx: MutationCtx,
-  restore: Doc<"draftRestores">,
-  phase: RestorePhase,
-) {
-  const status = phase.startsWith("validate") ? "validating" : "applying";
-  await ctx.db.patch(restore._id, {
-    status,
-    phase,
-    cursor: undefined,
-    attempt: 0,
-    failure: undefined,
-    updatedAt: Date.now(),
-  });
-  await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
-    restoreId: restore._id,
-    token: restore.token,
-    phase,
-    attempt: 0,
-  });
-}
-
-async function continuePage(
-  ctx: MutationCtx,
-  restore: Doc<"draftRestores">,
-  phase: RestorePhase,
-  page: { isDone: boolean; continueCursor: string },
-) {
-  if (page.isDone) {
-    const next = nextDraftRestorePhase[phase];
-    if (next) await moveToPhase(ctx, restore, next);
-    return;
-  }
-  await ctx.db.patch(restore._id, {
-    cursor: page.continueCursor,
-    attempt: 0,
-    updatedAt: Date.now(),
-  });
-  await ctx.scheduler.runAfter(0, internal.draftRestore.processBatch, {
-    restoreId: restore._id,
-    token: restore.token,
-    phase,
-    cursor: page.continueCursor,
-    attempt: 0,
-  });
+async function continuePage(page: { isDone: boolean; continueCursor: string }) {
+  return page;
 }
 
 async function requireReleasePage(
@@ -179,7 +94,7 @@ async function validatePages(
       parseOpenEditorDocument(payload.content);
     }
   }
-  await continuePage(ctx, restore, "validatePages", page);
+  return continuePage(page);
 }
 
 async function validateLibraries(
@@ -197,7 +112,7 @@ async function validateLibraries(
       throw new Error("A historical library identity is missing");
     }
   }
-  await continuePage(ctx, restore, "validateLibraries", page);
+  return continuePage(page);
 }
 
 async function validateFolders(
@@ -238,7 +153,7 @@ async function validateFolders(
       throw new Error("Historical folder hierarchy is incomplete");
     }
   }
-  await continuePage(ctx, restore, "validateFolders", page);
+  return continuePage(page);
 }
 
 async function validateFiles(
@@ -292,7 +207,7 @@ async function validateFiles(
       .unique();
     if (!logo) throw new Error("Historical logo is missing");
   }
-  await continuePage(ctx, restore, "validateFiles", page);
+  return continuePage(page);
 }
 
 async function archivePages(
@@ -317,7 +232,7 @@ async function archivePages(
       await removePageContentIndex(ctx, current._id);
     }
   }
-  await continuePage(ctx, restore, "archivePages", page);
+  return continuePage(page);
 }
 
 async function restorePages(
@@ -366,7 +281,7 @@ async function restorePages(
     await removePageContentIndex(ctx, snapshot.pageId);
     await indexPageContent(ctx, snapshot.pageId);
   }
-  await continuePage(ctx, restore, "restorePages", page);
+  return continuePage(page);
 }
 
 async function archiveLibraries(
@@ -390,7 +305,7 @@ async function archiveLibraries(
       await ctx.db.patch(current._id, { deletedAt: now, updatedAt: now });
     }
   }
-  await continuePage(ctx, restore, "archiveLibraries", page);
+  return continuePage(page);
 }
 
 async function restoreLibraries(
@@ -410,7 +325,7 @@ async function restoreLibraries(
       updatedAt: now,
     });
   }
-  await continuePage(ctx, restore, "restoreLibraries", page);
+  return continuePage(page);
 }
 
 async function archiveFolders(
@@ -434,7 +349,7 @@ async function archiveFolders(
       await ctx.db.patch(current._id, { deletedAt: now, updatedAt: now });
     }
   }
-  await continuePage(ctx, restore, "archiveFolders", page);
+  return continuePage(page);
 }
 
 async function restoreFolders(
@@ -457,7 +372,7 @@ async function restoreFolders(
       updatedAt: now,
     });
   }
-  await continuePage(ctx, restore, "restoreFolders", page);
+  return continuePage(page);
 }
 
 async function archiveFiles(
@@ -480,7 +395,7 @@ async function archiveFiles(
       await deleteFileRows(ctx, current);
     }
   }
-  await continuePage(ctx, restore, "archiveFiles", page);
+  return continuePage(page);
 }
 
 async function restoreFiles(
@@ -507,7 +422,7 @@ async function restoreFiles(
     const current = await ctx.db.get(snapshot.fileId);
     if (current) await reconcileRestoredFile(ctx, current);
   }
-  await continuePage(ctx, restore, "restoreFiles", page);
+  return continuePage(page);
 }
 
 async function synchronizeParents(
@@ -527,7 +442,7 @@ async function synchronizeParents(
       });
     }
   }
-  await continuePage(ctx, restore, "synchronizeParents", page);
+  return continuePage(page);
 }
 
 async function clearDraftChanges(
@@ -539,12 +454,7 @@ async function clearDraftChanges(
     .withIndex("by_site", (q) => q.eq("siteId", restore.siteId))
     .take(METADATA_BATCH);
   for (const row of rows) await ctx.db.delete(row._id);
-  if (rows.length === METADATA_BATCH) {
-    await ctx.db.patch(restore._id, { updatedAt: Date.now() });
-    await schedule(ctx, restore);
-    return;
-  }
-  await moveToPhase(ctx, restore, "activate");
+  return rows.length < METADATA_BATCH;
 }
 
 async function activate(ctx: MutationCtx, restore: Doc<"draftRestores">) {
@@ -584,7 +494,6 @@ async function activate(ctx: MutationCtx, restore: Doc<"draftRestores">) {
   await ctx.db.patch(restore._id, {
     status: "complete",
     resultDraftRevision,
-    cursor: undefined,
     failure: undefined,
     completedAt: now,
     updatedAt: now,
@@ -594,16 +503,16 @@ async function activate(ctx: MutationCtx, restore: Doc<"draftRestores">) {
 export const applyBatch = internalMutation({
   args: {
     restoreId: v.id("draftRestores"),
-    token: v.string(),
     phase: phaseValidator,
     cursor: v.optional(v.string()),
-    attempt: v.number(),
   },
   handler: async (ctx, args) => {
     const restore = await ctx.db.get(args.restoreId);
-    if (!restore || !restoreBatchMatches(restore, args)) {
-      return { applied: false };
-    }
+    if (!restore) return null;
+    const expectedStatus = args.phase.startsWith("validate")
+      ? "validating"
+      : "applying";
+    if (restore.status !== expectedStatus) return null;
     const site = await ctx.db.get(restore.siteId);
     if (
       !site ||
@@ -615,196 +524,141 @@ export const applyBatch = internalMutation({
 
     switch (args.phase) {
       case "validatePages":
-        await validatePages(ctx, restore, args.cursor);
-        break;
+        return validatePages(ctx, restore, args.cursor);
       case "validateLibraries":
-        await validateLibraries(ctx, restore, args.cursor);
-        break;
+        return validateLibraries(ctx, restore, args.cursor);
       case "validateFolders":
-        await validateFolders(ctx, restore, args.cursor);
-        break;
+        return validateFolders(ctx, restore, args.cursor);
       case "validateFiles":
-        await validateFiles(ctx, restore, args.cursor);
-        break;
+        return validateFiles(ctx, restore, args.cursor);
       case "archivePages":
-        await archivePages(ctx, restore, args.cursor);
-        break;
+        return archivePages(ctx, restore, args.cursor);
       case "restorePages":
-        await restorePages(ctx, restore, args.cursor);
-        break;
+        return restorePages(ctx, restore, args.cursor);
       case "archiveLibraries":
-        await archiveLibraries(ctx, restore, args.cursor);
-        break;
+        return archiveLibraries(ctx, restore, args.cursor);
       case "restoreLibraries":
-        await restoreLibraries(ctx, restore, args.cursor);
-        break;
+        return restoreLibraries(ctx, restore, args.cursor);
       case "archiveFolders":
-        await archiveFolders(ctx, restore, args.cursor);
-        break;
+        return archiveFolders(ctx, restore, args.cursor);
       case "restoreFolders":
-        await restoreFolders(ctx, restore, args.cursor);
-        break;
+        return restoreFolders(ctx, restore, args.cursor);
       case "archiveFiles":
-        await archiveFiles(ctx, restore, args.cursor);
-        break;
+        return archiveFiles(ctx, restore, args.cursor);
       case "restoreFiles":
-        await restoreFiles(ctx, restore, args.cursor);
-        break;
+        return restoreFiles(ctx, restore, args.cursor);
       case "synchronizeParents":
-        await synchronizeParents(ctx, restore, args.cursor);
-        break;
+        return synchronizeParents(ctx, restore, args.cursor);
       case "clearDraftChanges":
-        await clearDraftChanges(ctx, restore);
-        break;
+        return null;
       case "activate":
-        await activate(ctx, restore);
-        break;
+        return null;
     }
-    return { applied: true };
   },
 });
 
-function safeFailure(error: unknown) {
-  return (error instanceof Error ? error.message : String(error))
-    .replaceAll(/[\r\n\t]+/gu, " ")
-    .slice(0, 300);
-}
-
-export function restoreRetryDelayMs(attempt: number) {
-  return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt));
-}
-
-export function restoreBatchMatches(
-  restore: Pick<
-    Doc<"draftRestores">,
-    "token" | "phase" | "cursor" | "attempt" | "status"
-  > | null,
-  args: {
-    token: string;
-    phase: RestorePhase;
-    cursor?: string;
-    attempt: number;
-  },
-) {
-  return Boolean(
-    restore &&
-      restore.token === args.token &&
-      restore.phase === args.phase &&
-      restore.attempt === args.attempt &&
-      cursorMatches(restore.cursor, args.cursor) &&
-      (restore.status === "validating" || restore.status === "applying"),
-  );
-}
-
-export const handleBatchFailure = internalMutation({
-  args: {
-    restoreId: v.id("draftRestores"),
-    token: v.string(),
-    phase: phaseValidator,
-    cursor: v.optional(v.string()),
-    attempt: v.number(),
-    failure: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const restore = await ctx.db.get(args.restoreId);
-    if (!restore || !restoreBatchMatches(restore, args)) {
-      return { applied: false };
-    }
-    const nextAttempt = Math.max(0, Math.floor(args.attempt)) + 1;
-    if (nextAttempt >= MAX_ATTEMPTS) {
-      const site = await ctx.db.get(restore.siteId);
-      if (restore.status === "validating") {
-        if (site?.activeDraftRestoreId === restore._id) {
-          await ctx.db.patch(site._id, { activeDraftRestoreId: undefined });
-        }
-        await ctx.db.patch(restore._id, {
-          status: "failed",
-          failure: args.failure,
-          attempt: nextAttempt,
-          updatedAt: Date.now(),
-        });
-      } else {
-        // Once application starts, retain the lock and roll forward on an
-        // explicit resume. Exposing or rolling back a partially applied draft
-        // would be less safe than keeping it unavailable.
-        await ctx.db.patch(restore._id, {
-          status: "paused",
-          failure: args.failure,
-          attempt: nextAttempt,
-          updatedAt: Date.now(),
-        });
-      }
-      return { applied: true, paused: true };
-    }
-    await ctx.db.patch(restore._id, {
-      failure: args.failure,
-      attempt: nextAttempt,
+export const setApplying = internalMutation({
+  args: { restoreId: v.id("draftRestores") },
+  handler: async (ctx, { restoreId }) => {
+    await ctx.db.patch(restoreId, {
+      status: "applying",
       updatedAt: Date.now(),
     });
-    await ctx.scheduler.runAfter(
-      restoreRetryDelayMs(nextAttempt),
-      internal.draftRestore.processBatch,
-      {
-        restoreId: restore._id,
-        token: restore.token,
-        phase: args.phase,
-        cursor: args.cursor,
-        attempt: nextAttempt,
-      },
-    );
-    return { applied: true, paused: false };
   },
 });
 
-export const processBatch: ReturnType<typeof internalAction> = internalAction({
+export const clearChangesBatch = internalMutation({
+  args: { restoreId: v.id("draftRestores") },
+  handler: async (ctx, { restoreId }) => {
+    const restore = await ctx.db.get(restoreId);
+    return restore ? clearDraftChanges(ctx, restore) : true;
+  },
+});
+
+export const finish = internalMutation({
+  args: { restoreId: v.id("draftRestores") },
+  handler: async (ctx, { restoreId }) => {
+    const restore = await ctx.db.get(restoreId);
+    if (restore) await activate(ctx, restore);
+  },
+});
+
+export const fail = internalMutation({
   args: {
     restoreId: v.id("draftRestores"),
-    token: v.string(),
-    phase: phaseValidator,
-    cursor: v.optional(v.string()),
-    attempt: v.optional(v.number()),
+    applying: v.boolean(),
+    failure: v.string(),
   },
-  handler: async (ctx, args) => {
-    try {
-      return await ctx.runMutation(internal.draftRestore.applyBatch, {
-        restoreId: args.restoreId,
-        token: args.token,
-        phase: args.phase,
-        cursor: args.cursor,
-        attempt: args.attempt ?? 0,
-      });
-    } catch (error) {
-      return await ctx.runMutation(internal.draftRestore.handleBatchFailure, {
-        ...args,
-        attempt: args.attempt ?? 0,
-        failure: safeFailure(error),
-      });
+  handler: async (ctx, { restoreId, applying, failure }) => {
+    const restore = await ctx.db.get(restoreId);
+    if (!restore) return;
+    if (!applying) {
+      const site = await ctx.db.get(restore.siteId);
+      if (site?.activeDraftRestoreId === restoreId) {
+        await ctx.db.patch(site._id, { activeDraftRestoreId: undefined });
+      }
     }
+    await ctx.db.patch(restoreId, {
+      status: applying ? "paused" : "failed",
+      failure: failure.replaceAll(/[\r\n\t]+/gu, " ").slice(0, 300),
+      updatedAt: Date.now(),
+    });
   },
 });
 
-export const recoverStalled = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const cutoff = Date.now() - STALLED_RESTORE_MS;
-    const [validating, applying] = await Promise.all([
-      ctx.db
-        .query("draftRestores")
-        .withIndex("by_status_updated", (q) =>
-          q.eq("status", "validating").lt("updatedAt", cutoff),
-        )
-        .take(10),
-      ctx.db
-        .query("draftRestores")
-        .withIndex("by_status_updated", (q) =>
-          q.eq("status", "applying").lt("updatedAt", cutoff),
-        )
-        .take(10),
-    ]);
-    for (const restore of [...validating, ...applying]) {
-      await ctx.db.patch(restore._id, { updatedAt: Date.now() });
-      await schedule(ctx, restore);
+export const run = workflows
+  .define({ args: { restoreId: v.id("draftRestores") } })
+  .handler(async (step, { restoreId }): Promise<void> => {
+    let applying = false;
+    try {
+      const phases: RestorePhase[] = [
+        "validatePages",
+        "validateLibraries",
+        "validateFolders",
+        "validateFiles",
+        "archivePages",
+        "restorePages",
+        "archiveLibraries",
+        "restoreLibraries",
+        "archiveFolders",
+        "restoreFolders",
+        "archiveFiles",
+        "restoreFiles",
+        "synchronizeParents",
+      ];
+      for (const phase of phases) {
+        if (!applying && phase === "archivePages") {
+          applying = true;
+          await step.runMutation(internal.draftRestore.setApplying, {
+            restoreId,
+          });
+        }
+        let cursor: string | undefined;
+        do {
+          const page: { isDone: boolean; continueCursor: string } | null =
+            await step.runMutation(internal.draftRestore.applyBatch, {
+              restoreId,
+              phase,
+              cursor,
+            });
+          if (!page) return;
+          cursor = page.isDone ? undefined : page.continueCursor;
+        } while (cursor);
+      }
+      let changesCleared = false;
+      while (!changesCleared) {
+        changesCleared = await step.runMutation(
+          internal.draftRestore.clearChangesBatch,
+          { restoreId },
+        );
+      }
+      await step.runMutation(internal.draftRestore.finish, { restoreId });
+    } catch (error) {
+      await step.runMutation(internal.draftRestore.fail, {
+        restoreId,
+        applying,
+        failure: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
-    return { recovered: validating.length + applying.length };
-  },
-});
+  });

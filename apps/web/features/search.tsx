@@ -26,21 +26,18 @@ import type { FunctionReturnType } from "convex/server";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 function HighlightedSnippet({
-  snippet,
-  matchStart,
-  matchEnd,
+  excerpt,
 }: {
-  snippet: string;
-  matchStart: number;
-  matchEnd: number;
+  excerpt: { text: string; matchStart: number; matchEnd: number };
 }) {
+  const { text, matchStart, matchEnd } = excerpt;
   if (matchStart < 0 || matchEnd < 0 || matchStart >= matchEnd) {
-    return <span className="text-muted-foreground">{snippet}</span>;
+    return <span className="text-muted-foreground">{text}</span>;
   }
 
-  const before = snippet.slice(0, matchStart);
-  const match = snippet.slice(matchStart, matchEnd);
-  const after = snippet.slice(matchEnd);
+  const before = text.slice(0, matchStart);
+  const match = text.slice(matchStart, matchEnd);
+  const after = text.slice(matchEnd);
 
   return (
     <span className="text-muted-foreground text-xs leading-relaxed">
@@ -53,21 +50,7 @@ function HighlightedSnippet({
   );
 }
 
-type SearchResultItem = FunctionReturnType<typeof api.search.searchAll>[number];
-type DocumentSearchMetadata = Extract<
-  SearchResultItem["metadata"],
-  { downloadUrl: string }
->;
-
-function getDocumentMetadata(
-  result: SearchResultItem,
-): DocumentSearchMetadata | null {
-  return "downloadUrl" in result.metadata ? result.metadata : null;
-}
-
-function getPageId(result: SearchResultItem) {
-  return "pageId" in result.metadata ? result.metadata.pageId : undefined;
-}
+type SearchResultItem = FunctionReturnType<typeof api.search.run>[number];
 
 interface SearchBoxProps {
   siteId: Id<"sites">;
@@ -116,61 +99,35 @@ export function SearchBox({
 
   const shouldSearch = debouncedQuery.trim().length > 0 && !!siteId;
 
-  // Server full-text search queries
-  const authResults = useQuery(
-    api.search.searchAll,
-    !publishedMode && shouldSearch
-      ? { siteId, query: debouncedQuery, limit: maxResults }
-      : "skip",
-  );
-
-  const publishedResults = useQuery(
-    api.search.searchPublished,
-    publishedMode && shouldSearch
+  const searchResults = useQuery(
+    api.search.run,
+    shouldSearch
       ? {
           siteId,
+          surface: publishedMode ? "published" : "draft",
           query: debouncedQuery,
           limit: maxResults,
         }
       : "skip",
   );
 
-  const serverResults = publishedMode ? publishedResults : authResults;
-
-  const searchResults = shouldSearch ? serverResults : undefined;
-
   const isSearching = shouldSearch && searchResults === undefined;
   const hasResults = searchResults && searchResults.length > 0;
   const showDropdown = isFocused && debouncedQuery.trim().length > 0;
 
-  const handleDownload = (downloadUrl: string, filename: string) => {
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = filename;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleResultClick = (result: SearchResultItem) => {
-    const pageId = getPageId(result);
-    if (result.contentType === "page" && pageId) {
-      onOpenPageResult?.(pageId);
+    if (result.kind === "page") {
+      onOpenPageResult?.(result.pageId);
       setIsFocused(false);
       return;
     }
 
-    const metadata = getDocumentMetadata(result);
-    if (metadata) {
-      setPreviewFile({
-        url: metadata.downloadUrl,
-        filename: metadata.filename || result.title,
-        contentType: metadata.fileContentType || "application/octet-stream",
-        size: metadata.size || 0,
-      });
-    }
+    setPreviewFile({
+      url: result.downloadUrl,
+      filename: result.title,
+      contentType: result.contentType,
+      size: result.size,
+    });
     setIsFocused(false);
   };
 
@@ -229,14 +186,13 @@ export function SearchBox({
             ) : hasResults && searchResults ? (
               <div className="space-y-0.5">
                 {searchResults.map((result) => {
-                  const isPage = result.contentType === "page";
-                  const isContentMatch = result.matchType === "content";
-                  const documentMetadata = getDocumentMetadata(result);
+                  const isPage = result.kind === "page";
+                  const isContentMatch = result.match === "content";
 
                   return (
                     <div
                       className="flex w-full items-stretch rounded-xl transition-colors hover:bg-muted/60 focus-within:bg-muted/60"
-                      key={result._id}
+                      key={result.key}
                     >
                       <button
                         className="min-w-0 flex-1 cursor-pointer rounded-xl p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -254,8 +210,9 @@ export function SearchBox({
                               ) : (
                                 <FileIcon
                                   contentType={
-                                    documentMetadata?.fileContentType ??
-                                    "application/octet-stream"
+                                    result.kind === "file"
+                                      ? result.contentType
+                                      : "application/octet-stream"
                                   }
                                 />
                               ))}
@@ -269,8 +226,8 @@ export function SearchBox({
                                     Page
                                   </span>
                                 ) : (
-                                  documentMetadata?.size &&
-                                  formatFileSize(documentMetadata.size)
+                                  result.kind === "file" &&
+                                  formatFileSize(result.size)
                                 )}
                                 {isContentMatch && (
                                   <span className="ml-2 text-primary">
@@ -288,13 +245,9 @@ export function SearchBox({
                           ) : null}
                         </div>
                         {/* Show snippet for content matches */}
-                        {isContentMatch && result.snippet && (
+                        {isContentMatch && result.excerpt && (
                           <div className="mt-2 pl-7">
-                            <HighlightedSnippet
-                              snippet={result.snippet}
-                              matchStart={result.snippetMatchStart ?? -1}
-                              matchEnd={result.snippetMatchEnd ?? -1}
-                            />
+                            <HighlightedSnippet excerpt={result.excerpt} />
                           </div>
                         )}
                       </button>
@@ -319,26 +272,27 @@ export function SearchBox({
                               className="h-4 w-4"
                             />
                           </Button>
-                          {documentMetadata && (
+                          {result.kind === "file" && (
                             <Button
+                              asChild
                               aria-label={`Download ${result.title}`}
                               className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
-                              onClick={() =>
-                                handleDownload(
-                                  documentMetadata.downloadUrl,
-                                  documentMetadata.filename || result.title,
-                                )
-                              }
                               size="icon"
                               title="Download"
-                              type="button"
                               variant="ghost"
                             >
-                              <HugeiconsIcon
-                                aria-hidden="true"
-                                icon={Download01Icon}
-                                className="h-4 w-4"
-                              />
+                              <a
+                                download={result.title}
+                                href={result.downloadUrl}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                              >
+                                <HugeiconsIcon
+                                  aria-hidden="true"
+                                  icon={Download01Icon}
+                                  className="h-4 w-4"
+                                />
+                              </a>
                             </Button>
                           )}
                         </div>

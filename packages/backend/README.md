@@ -2,9 +2,10 @@
 
 ## AnyDoc file-extraction deployment
 
-File ingestion runs in a Convex Node action. Convex does not inherit variables
-from the web/Vercel deployment, so configure the storage credentials separately
-for every Convex deployment before enabling the extraction cron.
+File ingestion runs in a Convex Node action scheduled by the AnyDoc Convex
+adapter and Workpool. Convex does not inherit variables from the web/Vercel
+deployment, so configure the storage credentials separately for every Convex
+deployment.
 
 From `packages/backend`, set the same Files SDK S3 configuration used by the web
 application:
@@ -28,26 +29,12 @@ After deploying, run the preflight against the target Convex deployment:
 bunx convex run deploymentPreflight:checkFileExtractionEnvironment
 ```
 
-The check returns only variable names and non-secret configuration. It also
-loads the AnyDoc native Node binding so a missing registry package or platform
-binary fails before extraction jobs are processed.
+The check returns only variable names and non-secret configuration. Convex
+validates and installs the AnyDoc adapter's Node dependency closure when the
+functions are deployed.
 
-`convex.json` externalizes only `@baseblocks/anydoc`; keep that dependency pinned
-to the exact registry version verified by the application lockfile.
-
-The `start existing file extraction backfill` cron starts the one-time,
-idempotent existing-file backfill automatically. It persists its cursor in
-`maintenanceJobs`, resumes stale runs, and becomes a no-op after completion. To
-start it immediately after deployment instead of waiting for the cron interval:
-
-```sh
-bunx convex run migrations:startFileExtractionBackfill
-```
-
-If a deployment preflight initially failed after jobs had already run, restart
-the completed scan after fixing the environment. Ready extractions are reused;
-failed or missing extractions are queued again:
-
-```sh
-bunx convex run migrations:startFileExtractionBackfill '{"forceRestart":true}'
-```
+`convex.json` externalizes only `@baseblocks/anydoc-convex`; keep that adapter
+pinned to the exact registry version verified by the application lockfile.
+Uploads enqueue extraction immediately. Operators retry a terminal extraction
+through the product's file-extraction retry action; there is no polling cron or
+permanent backfill API.

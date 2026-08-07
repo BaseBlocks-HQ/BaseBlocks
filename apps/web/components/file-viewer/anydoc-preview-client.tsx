@@ -2,81 +2,16 @@
 
 import type { PreviewFile } from "@/components/file-viewer/file-viewer";
 import { isSafeExternalUrl } from "@baseblocks/anydoc";
-import type {
-  DocxViewerProps,
-  MarkdownViewerProps,
-  PdfViewerProps,
-  TextViewerProps,
+import {
+  AnyDocumentViewer,
+  type ViewerControls,
+  type ViewerError,
 } from "@baseblocks/anydoc/react";
-import type { PresentationViewerControls } from "@baseblocks/anydoc/presentation";
-import type { ViewerControls } from "@baseblocks/anydoc/react";
-import type { SpreadsheetViewerControls } from "@baseblocks/anydoc/spreadsheet";
 import { Spinner } from "@baseblocks/ui/spinner";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import {
-  DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES,
-  DocumentPreviewTooLargeError,
-  getStableDocumentSource,
-  loadBoundedDocument,
-  type NativeDocumentFormat,
-  resolveNativeDocumentFormat,
-} from "./anydoc-preview";
-import {
-  DocumentViewerControlsPortal,
-  PresentationViewerControlsPortal,
-  SpreadsheetViewerControlsPortal,
-} from "./anydoc-viewer-controls";
+import { useMemo } from "react";
+import { UnifiedViewerControls } from "./anydoc-viewer-controls";
 
-const PdfViewer = dynamic<PdfViewerProps>(
-  () => import("@baseblocks/anydoc/react").then((module) => module.PdfViewer),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
-const DocxViewer = dynamic<DocxViewerProps>(
-  () => import("@baseblocks/anydoc/react").then((module) => module.DocxViewer),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
-const TextViewer = dynamic<TextViewerProps>(
-  () => import("@baseblocks/anydoc/react").then((module) => module.TextViewer),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
-const MarkdownViewer = dynamic<MarkdownViewerProps>(
-  () =>
-    import("@baseblocks/anydoc/react").then((module) => module.MarkdownViewer),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
-const PresentationViewer = dynamic(
-  () =>
-    import("@baseblocks/anydoc/presentation").then(
-      (module) => module.PresentationViewer,
-    ),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
-const SpreadsheetViewer = dynamic(
-  () =>
-    import("@baseblocks/anydoc/spreadsheet").then(
-      (module) => module.SpreadsheetViewer,
-    ),
-  {
-    loading: () => <PreviewStatus message={DEFAULT_MESSAGES.loading} />,
-    ssr: false,
-  },
-);
+export const DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES = 100 * 1024 * 1024;
 
 export type AnyDocPreviewMessages = {
   loadError: string;
@@ -99,16 +34,29 @@ export default function AnyDocPreview({
   messages?: Partial<AnyDocPreviewMessages>;
   toolbarTarget: HTMLDivElement | null;
 }) {
-  const format = resolveNativeDocumentFormat(file);
   const messages: AnyDocPreviewMessages = {
     loadError: messageOverrides?.loadError ?? DEFAULT_MESSAGES.loadError,
     loading: messageOverrides?.loading ?? DEFAULT_MESSAGES.loading,
     tooLarge: messageOverrides?.tooLarge ?? DEFAULT_MESSAGES.tooLarge,
   };
+  const source = useMemo(
+    () => ({ credentials: "same-origin" as const, url: file.url }),
+    [file.url],
+  );
+  const controls = useMemo(
+    () => ({
+      render: (value: ViewerControls) =>
+        toolbarTarget ? <UnifiedViewerControls controls={value} /> : null,
+      target: toolbarTarget,
+      transform: (value: ViewerControls): ViewerControls => ({
+        ...value,
+        // The BaseBlocks shell owns fullscreen across every file type.
+        actions: value.actions.filter((action) => action.id !== "fullscreen"),
+      }),
+    }),
+    [toolbarTarget],
+  );
 
-  if (!format) {
-    return <PreviewError message={messages.loadError} />;
-  }
   if (
     file.size !== undefined &&
     file.size > DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES
@@ -117,159 +65,31 @@ export default function AnyDocPreview({
   }
 
   return (
-    <DocumentLoadSession
-      file={file}
-      format={format}
-      key={`${file.url}:${file.size ?? "unknown"}:${format}`}
-      messages={messages}
-      toolbarTarget={toolbarTarget}
-    />
-  );
-}
-
-function DocumentLoadSession({
-  file,
-  format,
-  messages,
-  toolbarTarget,
-}: {
-  file: PreviewFile;
-  format: NativeDocumentFormat;
-  messages: AnyDocPreviewMessages;
-  toolbarTarget: HTMLDivElement | null;
-}) {
-  const [state, setState] = useState<
-    | { status: "loading" }
-    | { status: "ready"; source: ArrayBuffer }
-    | { status: "error"; message: string }
-  >({ status: "loading" });
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    void loadBoundedDocument(file.url, {
-      maxBytes: DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES,
-      signal: controller.signal,
-    })
-      .then((source) => setState({ source, status: "ready" }))
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setState({
-          message:
-            error instanceof DocumentPreviewTooLargeError
-              ? messages.tooLarge
-              : messages.loadError,
-          status: "error",
-        });
-      });
-    return () => controller.abort();
-  }, [file.url, messages.loadError, messages.tooLarge]);
-
-  if (state.status === "loading") {
-    return <PreviewStatus message={messages.loading} />;
-  }
-  if (state.status === "error") {
-    return <PreviewError message={state.message} />;
-  }
-  return (
-    <NativeDocumentViewer
-      filename={file.filename}
-      format={format}
-      source={state.source}
-      toolbarTarget={toolbarTarget}
-    />
-  );
-}
-
-function NativeDocumentViewer({
-  filename,
-  format,
-  source,
-  toolbarTarget,
-}: {
-  filename: string;
-  format: NativeDocumentFormat;
-  source: ArrayBuffer;
-  toolbarTarget: HTMLDivElement | null;
-}) {
-  const documentSource = getStableDocumentSource(source);
-  const renderDocumentControls = (controls: ViewerControls) => (
-    <DocumentViewerControlsPortal controls={controls} target={toolbarTarget} />
-  );
-  if (format === "pdf") {
-    return (
-      <PdfViewer
-        className="h-full min-h-0"
-        maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
-        renderControls={renderDocumentControls}
-        source={documentSource}
-        title={filename}
-      />
-    );
-  }
-  if (format === "docx") {
-    return (
-      <DocxViewer
-        className="h-full min-h-0"
-        maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
-        renderControls={renderDocumentControls}
-        source={documentSource}
-        title={filename}
-      />
-    );
-  }
-  if (format === "markdown") {
-    return (
-      <MarkdownViewer
-        className="h-full min-h-0"
-        maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
-        renderControls={renderDocumentControls}
-        source={documentSource}
-        title={filename}
-      />
-    );
-  }
-  if (format === "text") {
-    return (
-      <TextViewer
-        className="h-full min-h-0"
-        maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
-        renderControls={renderDocumentControls}
-        source={documentSource}
-        title={filename}
-      />
-    );
-  }
-  if (format === "pptx") {
-    return (
-      <PresentationViewer
-        onLink={(link) => {
-          if (isSafeExternalUrl(link.url)) {
-            window.open(link.url, "_blank", "noopener,noreferrer");
+    <AnyDocumentViewer
+      className="h-full min-h-0"
+      contentType={file.contentType}
+      controls={controls}
+      error={(error: ViewerError) => (
+        <PreviewError
+          message={
+            error.code === "too-large" ? messages.tooLarge : messages.loadError
           }
-        }}
-        renderControls={(controls: PresentationViewerControls) => (
-          <div aria-hidden="true" className="h-0 min-h-0 overflow-hidden">
-            <PresentationViewerControlsPortal
-              controls={controls}
-              target={toolbarTarget}
-            />
-          </div>
-        )}
-        source={source}
-      />
-    );
-  }
-  return (
-    <SpreadsheetViewer
-      format={format}
-      renderControls={(controls: SpreadsheetViewerControls) => (
-        <SpreadsheetViewerControlsPortal
-          controls={controls}
-          target={toolbarTarget}
         />
       )}
+      filename={file.filename}
+      loading={<PreviewStatus message={messages.loading} />}
+      maxBytes={DEFAULT_DOCUMENT_PREVIEW_MAX_BYTES}
       source={source}
+      title={file.filename}
+      viewerOptions={{
+        presentation: {
+          onLink: (link) => {
+            if (isSafeExternalUrl(link.url)) {
+              window.open(link.url, "_blank", "noopener,noreferrer");
+            }
+          },
+        },
+      }}
     />
   );
 }

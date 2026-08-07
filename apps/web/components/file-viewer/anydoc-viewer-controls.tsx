@@ -5,10 +5,9 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   ArrowUp01Icon,
-  Alert02Icon,
   Copy01Icon,
-  ListTreeIcon,
   Layout01Icon,
+  ListTreeIcon,
   MoonIcon,
   RotateClockwiseIcon,
   Search01Icon,
@@ -17,13 +16,11 @@ import {
   TextWrapIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { PresentationViewerControls } from "@baseblocks/anydoc/presentation";
 import type {
   ViewerControls,
   ViewerSearchControls,
   ViewerZoomControls,
 } from "@baseblocks/anydoc/react";
-import type { SpreadsheetViewerControls } from "@baseblocks/anydoc/spreadsheet";
 import { Button } from "@baseblocks/ui/button";
 import { Input } from "@baseblocks/ui/input";
 import { cn } from "@baseblocks/ui/lib/utils";
@@ -34,53 +31,29 @@ import {
 } from "@baseblocks/ui/popover";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { createPortal } from "react-dom";
 
-type PortalProps = {
-  target: HTMLDivElement | null;
-};
-
-export function DocumentViewerControlsPortal({
+export function UnifiedViewerControls({
   controls,
-  target,
-}: PortalProps & { controls: ViewerControls }) {
-  if (!target) return null;
-  return createPortal(<DocumentViewerControls controls={controls} />, target);
-}
-
-export function PresentationViewerControlsPortal({
-  controls,
-  target,
-}: PortalProps & { controls: PresentationViewerControls }) {
-  if (!target) return null;
-  return createPortal(
-    <PresentationViewerControlsView controls={controls} />,
-    target,
-  );
-}
-
-export function SpreadsheetViewerControlsPortal({
-  controls,
-  target,
-}: PortalProps & { controls: SpreadsheetViewerControls }) {
-  if (!target) return null;
-  return createPortal(
-    <SpreadsheetViewerControlsView controls={controls} />,
-    target,
-  );
-}
-
-function DocumentViewerControls({ controls }: { controls: ViewerControls }) {
+}: {
+  controls: ViewerControls;
+}) {
   const t = useTranslations("libraries.viewer");
+  const presentation = controls.format === "pptx";
   return (
-    <ToolbarCluster label={t("documentControls")}>
+    <div
+      aria-label={
+        presentation ? t("presentationControls") : t("documentControls")
+      }
+      className="flex min-w-0 items-center gap-1"
+      role="group"
+    >
       {controls.pagination ? (
         <PageControls
           current={controls.pagination.current}
           next={controls.pagination.next}
-          nextLabel={t("nextPage")}
+          nextLabel={t(presentation ? "nextSlide" : "nextPage")}
           previous={controls.pagination.previous}
-          previousLabel={t("previousPage")}
+          previousLabel={t(presentation ? "previousSlide" : "previousPage")}
           total={controls.pagination.total}
         />
       ) : null}
@@ -89,7 +62,7 @@ function DocumentViewerControls({ controls }: { controls: ViewerControls }) {
         <ViewerActionButton action={action} key={action.id} />
       ))}
       {controls.search ? <SearchControl controls={controls.search} /> : null}
-    </ToolbarCluster>
+    </div>
   );
 }
 
@@ -99,6 +72,7 @@ function ViewerActionButton({
   action: ViewerControls["actions"][number];
 }) {
   const t = useTranslations("libraries.viewer");
+  const appearance = action.id === "appearance";
   const icon =
     action.id === "rotate"
       ? RotateClockwiseIcon
@@ -110,7 +84,13 @@ function ViewerActionButton({
             ? ListTreeIcon
             : action.id === "wrap"
               ? TextWrapIcon
-              : null;
+              : action.id === "copy"
+                ? Copy01Icon
+                : appearance
+                  ? action.pressed
+                    ? Sun01Icon
+                    : MoonIcon
+                  : null;
   const label =
     action.id === "rotate"
       ? t("rotateClockwise")
@@ -126,183 +106,41 @@ function ViewerActionButton({
             ? t("toggleOutline")
             : action.id === "wrap"
               ? t("wrapLines")
-              : action.label;
-  if (icon) {
+              : action.id === "copy"
+                ? t("copySelection")
+                : appearance
+                  ? action.pressed
+                    ? t("useLightViewer")
+                    : t("useDarkViewer")
+                  : action.label;
+  if (!icon) {
     return (
-      <IconButton
+      <Button
+        aria-pressed={action.pressed}
         disabled={action.disabled}
-        label={label}
         onClick={action.run}
-        pressed={action.pressed}
+        size="xs"
+        type="button"
+        variant="ghost"
       >
-        <HugeiconsIcon aria-hidden="true" className="size-4" icon={icon} />
-      </IconButton>
+        {label}
+      </Button>
     );
   }
   return (
-    <Button
-      aria-pressed={action.pressed}
+    <IconButton
       disabled={action.disabled}
+      label={label}
       onClick={action.run}
-      size="xs"
-      type="button"
-      variant="ghost"
+      pressed={action.pressed}
     >
-      {label}
-    </Button>
-  );
-}
-
-function PresentationViewerControlsView({
-  controls,
-}: {
-  controls: PresentationViewerControls;
-}) {
-  const t = useTranslations("libraries.viewer");
-  const search: ViewerSearchControls = {
-    current: controls.searchIndex,
-    next: controls.nextSearchResult,
-    pending: false,
-    previous: controls.previousSearchResult,
-    query: controls.query,
-    setQuery: controls.search,
-    total: controls.searchResultCount,
-  };
-  const zoom: ViewerZoomControls = {
-    max: 3,
-    min: 0.25,
-    reset: () => controls.zoomTo(1),
-    set: controls.zoomTo,
-    step: 0.1,
-    value: controls.zoom,
-    zoomIn: () => controls.zoomTo(controls.zoom + 0.1),
-    zoomOut: () => controls.zoomTo(controls.zoom - 0.1),
-  };
-  return (
-    <ToolbarCluster label={t("presentationControls")}>
-      <PageControls
-        current={controls.currentSlide}
-        disabled={!controls.ready}
-        next={controls.nextSlide}
-        nextLabel={t("nextSlide")}
-        previous={controls.previousSlide}
-        previousLabel={t("previousSlide")}
-        total={controls.slideCount}
-      />
-      <ZoomControls controls={zoom} disabled={!controls.ready} />
-      <SearchControl controls={search} disabled={!controls.ready} />
-      {controls.limitations > 0 ? (
-        <span
-          aria-label={t("presentationLimitations", {
-            count: controls.limitations,
-          })}
-          className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-xs tabular-nums text-amber-700 dark:text-amber-400"
-          role="status"
-          title={t("presentationLimitations", {
-            count: controls.limitations,
-          })}
-        >
-          <HugeiconsIcon
-            aria-hidden="true"
-            className="size-4"
-            icon={Alert02Icon}
-          />
-          {controls.limitations}
-        </span>
-      ) : null}
-    </ToolbarCluster>
-  );
-}
-
-function SpreadsheetViewerControlsView({
-  controls,
-}: {
-  controls: SpreadsheetViewerControls;
-}) {
-  const t = useTranslations("libraries.viewer");
-  const search: ViewerSearchControls = {
-    current: controls.searchResultIndex,
-    next: controls.searchNext,
-    pending: false,
-    previous: controls.searchPrevious,
-    query: controls.query,
-    setQuery: controls.search,
-    total: controls.searchResultCount,
-  };
-  const zoom: ViewerZoomControls = {
-    max: 2,
-    min: 0.5,
-    reset: () => controls.zoomTo(1),
-    set: controls.zoomTo,
-    step: 0.1,
-    value: controls.zoom,
-    zoomIn: () => controls.zoomTo(controls.zoom + 0.1),
-    zoomOut: () => controls.zoomTo(controls.zoom - 0.1),
-  };
-  const appearanceLabel =
-    controls.appearance === "dark" ? t("useLightViewer") : t("useDarkViewer");
-  return (
-    <ToolbarCluster label={t("spreadsheetControls")}>
-      <div
-        aria-label={t("activeCell")}
-        className="flex h-8 max-w-48 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs"
-        role="group"
-      >
-        <span className="min-w-10 font-mono text-muted-foreground">
-          {controls.activeCell.address || "–"}
-        </span>
-        <span aria-hidden="true" className="text-muted-foreground">
-          fx
-        </span>
-        <span
-          aria-label={t("formulaBar")}
-          className="min-w-10 truncate"
-          title={controls.activeCell.value || undefined}
-        >
-          {controls.activeCell.value}
-        </span>
-      </div>
-      <ZoomControls controls={zoom} />
-      <SearchControl controls={search} />
-      <IconButton label={t("copySelection")} onClick={controls.copySelection}>
-        <HugeiconsIcon
-          aria-hidden="true"
-          className="size-4"
-          icon={Copy01Icon}
-        />
-      </IconButton>
-      <IconButton label={appearanceLabel} onClick={controls.switchAppearance}>
-        <HugeiconsIcon
-          aria-hidden="true"
-          className="size-4"
-          icon={controls.appearance === "dark" ? Sun01Icon : MoonIcon}
-        />
-      </IconButton>
-    </ToolbarCluster>
-  );
-}
-
-function ToolbarCluster({
-  children,
-  label,
-}: {
-  children: ReactNode;
-  label: string;
-}) {
-  return (
-    <div
-      aria-label={label}
-      className="flex min-w-0 items-center gap-1"
-      role="group"
-    >
-      {children}
-    </div>
+      <HugeiconsIcon aria-hidden="true" className="size-4" icon={icon} />
+    </IconButton>
   );
 }
 
 function PageControls({
   current,
-  disabled = false,
   next,
   nextLabel,
   previous,
@@ -310,7 +148,6 @@ function PageControls({
   total,
 }: {
   current: number;
-  disabled?: boolean;
   next: () => void;
   nextLabel: string;
   previous: () => void;
@@ -320,7 +157,7 @@ function PageControls({
   return (
     <div className="flex items-center" role="group">
       <IconButton
-        disabled={disabled || current <= 1}
+        disabled={current <= 1}
         label={previousLabel}
         onClick={previous}
       >
@@ -337,7 +174,7 @@ function PageControls({
         {current || "–"} / {total || "–"}
       </span>
       <IconButton
-        disabled={disabled || total === 0 || current >= total}
+        disabled={total === 0 || current >= total}
         label={nextLabel}
         onClick={next}
       >
@@ -351,22 +188,16 @@ function PageControls({
   );
 }
 
-function ZoomControls({
-  controls,
-  disabled = false,
-}: {
-  controls: ViewerZoomControls;
-  disabled?: boolean;
-}) {
+function ZoomControls({ controls }: { controls: ViewerZoomControls }) {
   const t = useTranslations("libraries.viewer");
   return (
     <div
+      aria-label={t("zoomControls")}
       className="flex items-center"
       role="group"
-      aria-label={t("zoomControls")}
     >
       <IconButton
-        disabled={disabled || controls.value <= controls.min}
+        disabled={controls.value <= controls.min}
         label={t("zoomOut")}
         onClick={controls.zoomOut}
       >
@@ -377,7 +208,6 @@ function ZoomControls({
       <Button
         aria-label={t("resetZoom")}
         className="h-8 min-w-12 px-1.5 text-xs tabular-nums text-muted-foreground"
-        disabled={disabled}
         onClick={controls.reset}
         size="xs"
         title={t("resetZoom")}
@@ -387,7 +217,7 @@ function ZoomControls({
         {Math.round(controls.value * 100)}%
       </Button>
       <IconButton
-        disabled={disabled || controls.value >= controls.max}
+        disabled={controls.value >= controls.max}
         label={t("zoomIn")}
         onClick={controls.zoomIn}
       >
@@ -399,13 +229,7 @@ function ZoomControls({
   );
 }
 
-function SearchControl({
-  controls,
-  disabled = false,
-}: {
-  controls: ViewerSearchControls;
-  disabled?: boolean;
-}) {
+function SearchControl({ controls }: { controls: ViewerSearchControls }) {
   const t = useTranslations("libraries.viewer");
   return (
     <Popover>
@@ -413,7 +237,6 @@ function SearchControl({
         <Button
           aria-label={t("searchDocument")}
           className="relative text-muted-foreground"
-          disabled={disabled}
           size="icon-sm"
           title={t("searchDocument")}
           type="button"

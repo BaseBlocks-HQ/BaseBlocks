@@ -150,7 +150,7 @@ export const save = mutation({
     ]);
 
     if (changed) {
-      await queuePageContentIndex(ctx, pageId, revisionId, contentHash);
+      await queuePageContentIndex(ctx, pageId, revisionId);
     }
     return {
       status: "saved" as const,

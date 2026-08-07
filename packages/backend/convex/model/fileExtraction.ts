@@ -3,11 +3,6 @@ import type { Doc } from "../_generated/dataModel";
 export const FILE_EXTRACTION_LIMITS = {
   maxInputBytes: 20 * 1024 * 1024,
   maxOutputBytes: 750_000,
-  maxAttempts: 3,
-  maxConcurrent: 4,
-  dispatchScanSize: 12,
-  leaseMs: 10 * 60_000,
-  executionDeadlineMs: 8 * 60_000,
   storageTimeoutMs: 45_000,
   storageRetries: 1,
 } as const;
@@ -24,42 +19,6 @@ export function fileSourceVersion(
   file: Pick<Doc<"files">, "objectKey" | "size" | "checksum">,
 ): string {
   return `${file.objectKey}\u0000${file.size}\u0000${file.checksum ?? ""}`;
-}
-
-export function buildFileSearchContent(extractedText?: string): string {
-  return extractedText?.trim() ?? "";
-}
-
-export function extractionRetryDelayMs(attempt: number): number {
-  return Math.min(60_000, 2 ** Math.max(0, attempt - 1) * 5_000);
-}
-
-export function extractionDispatchCapacity(processingCount: number): number {
-  return Math.max(0, FILE_EXTRACTION_LIMITS.maxConcurrent - processingCount);
-}
-
-export function extractionExecutionDeadline(now: number): number {
-  return now + FILE_EXTRACTION_LIMITS.executionDeadlineMs;
-}
-
-export function shouldReuseExtraction(args: {
-  force: boolean;
-  sourceVersion: string;
-  existingSourceVersion?: string;
-  existingStatus?: "queued" | "processing" | "ready" | "failed";
-  hasJob: boolean;
-}): boolean {
-  if (args.existingSourceVersion !== args.sourceVersion) {
-    return false;
-  }
-  if (
-    (args.existingStatus === "queued" ||
-      args.existingStatus === "processing") &&
-    args.hasJob
-  ) {
-    return true;
-  }
-  return !args.force && args.existingStatus === "ready" && !args.hasJob;
 }
 
 export function validateExtractionInputSize(

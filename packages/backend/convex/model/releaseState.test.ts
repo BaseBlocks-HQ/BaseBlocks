@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import {
-  findReleaseForDraftRevision,
   extractionBlocksPublication,
   extractionIsPublishable,
   extractionRetryInvalidatesDraft,
   isPublicationInFlight,
   publicationActionForTarget,
-  publicationFailureOutcome,
 } from "./releaseState";
 
 describe("release promotion", () => {
@@ -24,19 +22,11 @@ describe("release promotion", () => {
 });
 
 describe("release publication state machine", () => {
-  test("treats build, abort cleanup, and draft cleanup as nonterminal", () => {
+  test("treats snapshot building and draft cleanup as nonterminal", () => {
     expect(isPublicationInFlight("building")).toBe(true);
-    expect(isPublicationInFlight("aborting")).toBe(true);
     expect(isPublicationInFlight("clearing")).toBe(true);
     expect(isPublicationInFlight("complete")).toBe(false);
     expect(isPublicationInFlight("failed")).toBe(false);
-  });
-
-  test("aborts a repeatedly failing build but keeps cleanup retryable", () => {
-    expect(publicationFailureOutcome("building", 2, 3)).toBe("retry");
-    expect(publicationFailureOutcome("building", 3, 3)).toBe("abort");
-    expect(publicationFailureOutcome("aborting", 3, 3)).toBe("retry");
-    expect(publicationFailureOutcome("clearing", 3, 3)).toBe("retry");
   });
 
   test("blocks only while document extraction is incomplete", () => {
@@ -70,23 +60,5 @@ describe("release publication state machine", () => {
     expect(
       extractionIsPublishable({ sourceVersion: "v1", status: "failed" }, "v1"),
     ).toBe(true);
-  });
-});
-
-describe("release reuse", () => {
-  test("reuses the newest release created from the unchanged draft", () => {
-    const releases = [
-      { number: 7, sourceDraftRevision: 5 },
-      { number: 6, sourceDraftRevision: 5 },
-      { number: 4, sourceDraftRevision: 4 },
-    ];
-
-    expect(findReleaseForDraftRevision(releases, 5)?.number).toBe(7);
-  });
-
-  test("does not reuse a release after the draft changes", () => {
-    const releases = [{ number: 7, sourceDraftRevision: 5 }];
-
-    expect(findReleaseForDraftRevision(releases, 6)).toBeUndefined();
   });
 });
