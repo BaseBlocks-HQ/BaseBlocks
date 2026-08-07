@@ -280,6 +280,7 @@ describe("file extraction state machine", () => {
       await invoke(complete, ctx, {
         jobId: job._id,
         runToken: job.runToken,
+        deadlineAt: Date.now() + 60_000,
         text: "new searchable content",
         format: "pdf",
         inputBytes: file.size,
@@ -287,6 +288,34 @@ describe("file extraction state machine", () => {
     ).toEqual({ applied: true });
     expect(queriedTables).toEqual(["searchEntries"]);
     expect(insertedTables).toEqual(["searchEntries"]);
+  });
+
+  test("completion rejects an expired attempt before reading mutable state", async () => {
+    let reads = 0;
+    const ctx = {
+      db: {
+        get: async () => {
+          reads += 1;
+          return {
+            _id: "job-1",
+            status: "processing",
+            runToken: "token-1",
+          };
+        },
+      },
+    };
+
+    expect(
+      await invoke(complete, ctx, {
+        jobId: "job-1",
+        runToken: "token-1",
+        deadlineAt: Date.now() - 1,
+        text: "late content",
+        format: "pdf",
+        inputBytes: 128,
+      }),
+    ).toEqual({ applied: false, deadlineExceeded: true });
+    expect(reads).toBe(1);
   });
 
   test("cron recovery always wakes overdue queued work", async () => {

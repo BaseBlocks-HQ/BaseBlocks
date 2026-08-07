@@ -374,6 +374,7 @@ export const complete = internalMutation({
   args: {
     jobId: v.id("fileExtractionJobs"),
     runToken: v.string(),
+    deadlineAt: v.number(),
     text: v.string(),
     format: v.string(),
     inputBytes: v.number(),
@@ -382,6 +383,9 @@ export const complete = internalMutation({
     const job = await ctx.db.get(args.jobId);
     if (job?.status !== "processing" || job.runToken !== args.runToken) {
       return { applied: false };
+    }
+    if (Date.now() > args.deadlineAt) {
+      return { applied: false, deadlineExceeded: true };
     }
     const [file, extraction] = await Promise.all([
       ctx.db.get(job.fileId),

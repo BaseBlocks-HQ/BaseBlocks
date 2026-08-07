@@ -195,13 +195,24 @@ export const process = internalAction({
             ) {
               throw new Error("AnyDoc returned an invalid extraction artifact");
             }
-            return ctx.runMutation(internal.fileExtraction.complete, {
-              jobId,
-              runToken,
-              text: artifact.content,
-              format: artifact.format,
-              inputBytes: claim.size,
-            }) as Promise<{ applied: boolean }>;
+            const completed = (await ctx.runMutation(
+              internal.fileExtraction.complete,
+              {
+                jobId,
+                runToken,
+                deadlineAt: claim.deadlineAt,
+                text: artifact.content,
+                format: artifact.format,
+                inputBytes: claim.size,
+              },
+            )) as { applied: boolean; deadlineExceeded?: boolean };
+            if (completed.deadlineExceeded) {
+              throw Object.assign(new Error("Extraction deadline elapsed"), {
+                code: "deadline-exceeded",
+                retryable: true,
+              });
+            }
+            return completed;
           },
         },
         onPhase: async () => {
