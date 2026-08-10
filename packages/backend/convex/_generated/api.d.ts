@@ -44,6 +44,7 @@ import type * as model_aiCredits from "../model/aiCredits.js";
 import type * as model_aiRunPolicy from "../model/aiRunPolicy.js";
 import type * as model_aiWorkspaceBounds from "../model/aiWorkspaceBounds.js";
 import type * as model_aiWorkspaceFingerprint from "../model/aiWorkspaceFingerprint.js";
+import type * as model_billingEventOrdering from "../model/billingEventOrdering.js";
 import type * as model_billingRetention from "../model/billingRetention.js";
 import type * as model_contentObjects from "../model/contentObjects.js";
 import type * as model_draft from "../model/draft.js";
@@ -133,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   "model/aiRunPolicy": typeof model_aiRunPolicy;
   "model/aiWorkspaceBounds": typeof model_aiWorkspaceBounds;
   "model/aiWorkspaceFingerprint": typeof model_aiWorkspaceFingerprint;
+  "model/billingEventOrdering": typeof model_billingEventOrdering;
   "model/billingRetention": typeof model_billingRetention;
   "model/contentObjects": typeof model_contentObjects;
   "model/draft": typeof model_draft;
