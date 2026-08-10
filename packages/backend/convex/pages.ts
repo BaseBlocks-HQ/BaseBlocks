@@ -7,9 +7,13 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, mutation, type MutationCtx } from "./_generated/server";
 import {
+  getAuthContextOrNull,
   isOrganizationMember,
+  listActiveGuestGrantsForSite,
+  requirePageAccess,
   requireOrganizationPermission,
 } from "./permissions";
+import { resolveGuestPagePermissions } from "./model/workspaceFoundation";
 import { indexPageContent, queuePageContentIndex } from "./search";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 import { softDeletePageSubtree } from "./model/pageDeletion";
@@ -52,13 +56,7 @@ async function requireEditablePage(ctx: MutationCtx, pageId: Id<"pages">) {
   const page = await ctx.db.get(pageId);
   if (!page || page.deletedAt !== undefined) throw new Error("Page not found");
 
-  const site = await ctx.db.get(page.siteId);
-  if (!site) throw new Error("Site not found");
-
-  await requireOrganizationPermission(ctx, site.organizationId, {
-    resource: "content",
-    action: "edit",
-  });
+  await requirePageAccess(ctx, pageId, "editor");
   return page;
 }
 
@@ -116,7 +114,12 @@ export const list = query({
     const site = await ctx.db.get(siteId);
     if (!site) return [];
 
-    if (!(await isOrganizationMember(ctx, site.organizationId))) return [];
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
+    const auth = isMember ? null : await getAuthContextOrNull(ctx);
+    if (!isMember && !auth) return [];
+    // Do not disclose restore state while determining whether an authenticated
+    // non-member has a page-scoped grant.
+    if (!isMember && site.activeDraftRestoreId) return [];
     assertDraftReadable(site);
 
     const pages = await ctx.db
@@ -124,7 +127,36 @@ export const list = query({
       .withIndex("by_site", (q) => q.eq("siteId", siteId))
       .collect();
 
-    return pages.filter((page) => page.deletedAt === undefined);
+    const activePages = pages.filter((page) => page.deletedAt === undefined);
+    if (isMember) return activePages;
+    const grants = await listActiveGuestGrantsForSite(
+      ctx,
+      siteId,
+      auth!.userId,
+    );
+    const permissions = resolveGuestPagePermissions({
+      pages: activePages.map((page) => ({
+        id: page._id,
+        parentId: page.parentId,
+      })),
+      grants: grants
+        .filter((grant) => grant.organizationId === site.organizationId)
+        .map((grant) => ({
+          pageId: grant.pageId,
+          permission: grant.permission,
+          active: grant.status === "active",
+        })),
+    });
+    return activePages
+      .filter((page) => permissions.has(page._id))
+      .map((page) => ({
+        ...page,
+        parentId:
+          page.parentId && permissions.has(page.parentId)
+            ? page.parentId
+            : undefined,
+        guestPermission: permissions.get(page._id),
+      }));
   },
 });
 
@@ -142,11 +174,18 @@ export const create = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    const { auth } = await requireOrganizationPermission(
-      ctx,
-      site.organizationId,
-      { resource: "content", action: "edit" },
-    );
+    const pageAccess = parentId
+      ? await requirePageAccess(ctx, parentId, "editor")
+      : null;
+    const { auth } = pageAccess
+      ? pageAccess
+      : await requireOrganizationPermission(ctx, site.organizationId, {
+          resource: "content",
+          action: "edit",
+        });
+    if (pageAccess && pageAccess.site._id !== siteId) {
+      throw new Error("Parent page not found in space");
+    }
 
     if (parentId) {
       const parent = await ctx.db.get(parentId);
@@ -284,10 +323,10 @@ export const moveInTree = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
+    const access = await requirePageAccess(ctx, pageId, "editor");
+    if (access.source === "guest") {
+      throw new Error("Guests cannot reorganize the page tree");
+    }
 
     const pages = (
       await ctx.db
@@ -358,10 +397,10 @@ export const remove = mutation({
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new Error("Site not found");
 
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
+    const access = await requirePageAccess(ctx, pageId, "editor");
+    if (access.source === "guest" && access.grantRootPageId === pageId) {
+      throw new Error("Guests cannot delete the page shared with them");
+    }
 
     const now = Date.now();
     const { deletedPageIds, defaultChanged } = await softDeletePageSubtree(

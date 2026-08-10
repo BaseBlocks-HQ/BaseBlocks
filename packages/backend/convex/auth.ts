@@ -2,6 +2,7 @@ import { type GenericCtx, createClient } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
+import { internal } from "./_generated/api";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authConfig from "./auth.config";
@@ -12,8 +13,11 @@ import {
 import authSchema from "./authComponent/schema";
 import {
   MAX_OWNED_ORGANIZATIONS,
+  hasOrganizationRole,
   hasReachedOwnedOrganizationLimit,
 } from "./authComponent/organizationPolicy";
+import { authPage, type AuthMember } from "./authComponent/model";
+import { parseWorkspaceCreationHint } from "./model/workspaceFoundation";
 
 const defaultAuthOrigin = "http://localhost:3001";
 
@@ -33,6 +37,48 @@ async function ownedOrganizationLimitReached(
     },
   });
   return hasReachedOwnedOrganizationLimit(result.page);
+}
+
+async function prepareAccountDeletion(
+  ctx: GenericCtx<DataModel>,
+  userId: string,
+): Promise<void> {
+  const memberships = authPage<AuthMember>(
+    await ctx.runQuery(components.betterAuth.adapter.findMany, {
+      model: "member",
+      where: [{ field: "userId", operator: "eq", value: userId }],
+      paginationOpts: { numItems: 250, cursor: null },
+    }),
+  );
+  if (
+    memberships.some((membership) =>
+      hasOrganizationRole(membership.role, "owner"),
+    )
+  ) {
+    throw new Error(
+      "Transfer or delete every owned workspace before deleting your account",
+    );
+  }
+  await (
+    ctx as unknown as {
+      runMutation: (reference: unknown, args: unknown) => Promise<unknown>;
+    }
+  ).runMutation(internal.organizations.deleteAccountApplicationAccess, {
+    userId,
+  });
+  const mutationCtx = ctx as unknown as {
+    runMutation: (
+      reference: typeof components.betterAuth.adapter.deleteMany,
+      args: unknown,
+    ) => Promise<unknown>;
+  };
+  await mutationCtx.runMutation(components.betterAuth.adapter.deleteMany, {
+    input: {
+      model: "member",
+      where: [{ field: "userId", operator: "eq", value: userId }],
+    } as never,
+    paginationOpts: { numItems: 250, cursor: null },
+  });
 }
 
 function parseAuthOrigin(origin: string, envName = "APP_URL"): string {
@@ -143,6 +189,9 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     user: {
       deleteUser: {
         enabled: true,
+        beforeDelete: async (user) => {
+          await prepareAccountDeletion(ctx, user.id);
+        },
       },
     },
     account: {
@@ -181,6 +230,33 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           await ownedOrganizationLimitReached(ctx, user.id),
         cancelPendingInvitationsOnReInvite: true,
         requireEmailVerificationOnInvitation: true,
+        organizationHooks: {
+          afterCreateOrganization: async ({ organization, user }) => {
+            const hint = parseWorkspaceCreationHint(organization.metadata) ?? {
+              intent: "work" as const,
+              source: "onboarding" as const,
+            };
+            const workspaceProfilesApi = (
+              internal as unknown as {
+                workspaceProfiles: { upsertFromAuthHook: unknown };
+              }
+            ).workspaceProfiles;
+            const mutationCtx = ctx as unknown as {
+              runMutation: (
+                reference: never,
+                args: unknown,
+              ) => Promise<unknown>;
+            };
+            await mutationCtx.runMutation(
+              workspaceProfilesApi.upsertFromAuthHook as never,
+              {
+                organizationId: organization.id,
+                createdBy: user.id,
+                ...hint,
+              },
+            );
+          },
+        },
       }),
       convex({ authConfig }),
     ],

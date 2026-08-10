@@ -6,6 +6,7 @@ import {
   Analytics01Icon,
   ArrowDown01Icon,
   CorporateIcon,
+  CreditCardIcon,
   CogIcon,
   Home01Icon,
   LanguageSquareIcon,
@@ -31,6 +32,7 @@ import {
 } from "@baseblocks/domain";
 import {
   getTeamAnalyticsPath,
+  getTeamBillingPath,
   getTeamDashboardPath,
   getTeamIntegrationsPath,
   getTeamMembersPath,
@@ -93,6 +95,7 @@ export function DashboardSidebarContent({
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
+  const billingT = useTranslations("billing");
   const locale = useLocale() as Locale;
   const { setTheme, theme, resolvedTheme } = useTheme();
   const {
@@ -109,6 +112,7 @@ export function DashboardSidebarContent({
   const teamMembersPath = getTeamMembersPath(team.slug);
   const teamIntegrationsPath = getTeamIntegrationsPath(team.slug);
   const teamAnalyticsPath = getTeamAnalyticsPath(team.slug);
+  const teamBillingPath = getTeamBillingPath(team.slug);
 
   const navItems: {
     available: boolean;
@@ -137,6 +141,13 @@ export function DashboardSidebarContent({
       href: teamMembersPath,
       icon: UserGroupIcon,
       isActive: pathname.startsWith(teamMembersPath),
+    },
+    {
+      available: true,
+      title: billingT("title"),
+      href: teamBillingPath,
+      icon: CreditCardIcon,
+      isActive: pathname.startsWith(teamBillingPath),
     },
     {
       available: true,
@@ -285,9 +296,13 @@ export function DashboardSidebarContent({
                     <DropdownMenuItem
                       key={workspace._id}
                       className="rounded-lg"
-                      onClick={() =>
-                        router.push(getTeamDashboardPath(workspace.slug))
-                      }
+                      onClick={() => {
+                        void authClient.organization
+                          .setActive({ organizationId: workspace._id })
+                          .then(() =>
+                            router.push(getTeamDashboardPath(workspace.slug)),
+                          );
+                      }}
                     >
                       <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
                         <div className="min-w-0">

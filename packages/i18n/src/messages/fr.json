@@ -45,7 +45,7 @@
     "description": "Créez des pages à partir de contenu, de données et d'outils connectés, puis publiez-les sous forme de sites complets."
   },
   "landing": {
-    "badge": "Open source & licence MIT",
+    "badge": "Fair Source · FSL-1.1-MIT",
     "heroTitle": "Créez les sites dont vous avez besoin",
     "heroDescription": "Pages, fichiers, données et outils connectés sont réunis dans un site prêt à publier.",
     "getStarted": "Commencer",
@@ -73,7 +73,7 @@
     "ctaTitle": "Commencez à construire en quelques minutes",
     "footerProduct": "Produit",
     "footerCommunity": "Communauté",
-    "footerCopyright": "\u00a9 2026 BaseBlocks. Licence MIT.",
+    "footerCopyright": "Copyright 2026 BaseBlocks contributors. Fair Source sous FSL-1.1-MIT.",
     "footerDocumentation": "Documentation",
     "footerDocsOverview": "Vue d'ensemble",
     "footerQuickStart": "Démarrage rapide",
@@ -233,7 +233,22 @@
       "toastLinkCopied": "Lien copie dans le presse-papiers",
       "copyLink": "Copier le lien",
       "copied": "Copie !",
-      "viewSite": "Voir le site"
+      "viewSite": "Voir le site",
+      "guests": {
+        "title": "Invites de la page",
+        "description": "Invitez des personnes sur cette page et ses sous-pages sans les ajouter a l'espace de travail.",
+        "email": "E-mail de l'invite",
+        "permission": "Autorisation",
+        "viewer": "Peut consulter",
+        "editor": "Peut modifier",
+        "createLink": "Creer un lien d'invitation",
+        "linkCopied": "Lien d'invitation copie",
+        "inviteFailed": "Impossible de creer l'invitation",
+        "permissionFor": "Autorisation pour {name}",
+        "remove": "Retirer",
+        "pending": "En attente",
+        "revoke": "Revoquer"
+      }
     },
     "rollback": {
       "title": "Revenir a la v{version}",
@@ -379,11 +394,32 @@
     "step2Description": "Ajoutez des membres pour collaborer",
     "step3Title": "Creez votre premier site",
     "step3Description": "Commencez a construire votre site interne",
-    "teamName": "Nom de l'equipe",
-    "teamNamePlaceholder": "Mon equipe",
+    "intentLabel": "Comment utiliserez-vous BaseBlocks ?",
+    "personalTitle": "Pour un usage personnel",
+    "personalDescription": "Des notes et des pages pour votre propre travail.",
+    "workTitle": "Pour le travail ou une equipe",
+    "workDescription": "Un espace de travail partage pour collaborer.",
+    "personalDefaultName": "Espace de {name}",
+    "personalFallbackName": "Espace personnel",
+    "workspaceName": "Nom de l'espace de travail",
+    "teamName": "Nom de l'espace de travail",
+    "teamNamePlaceholder": "Mon espace de travail",
     "createWorkspace": "Creer l'espace de travail",
     "creating": "Creation en cours...",
-    "orCreateOwn": "Ou creez votre propre espace de travail"
+    "orCreateOwn": "Ou creez votre propre espace de travail",
+    "createFailed": "Impossible de creer l'espace de travail"
+  },
+  "guests": {
+    "invitation": {
+      "title": "Invitation a une page",
+      "unavailable": "Cette invitation n'est pas disponible. Connectez-vous avec l'adresse e-mail invitee.",
+      "description": "Vous etes invite a {permission} {page}.",
+      "view": "consulter",
+      "edit": "modifier",
+      "accept": "Accepter l'invitation",
+      "open": "Ouvrir la page partagee",
+      "acceptFailed": "Impossible d'accepter cette invitation"
+    }
   },
   "dialogs": {
     "createSite": {
@@ -476,6 +512,82 @@
     "english": "English",
     "french": "Français"
   },
+  "billing": {
+    "title": "Facturation",
+    "adminRequired": "Seuls les propriétaires et administrateurs de l’espace peuvent gérer la facturation.",
+    "current": {
+      "title": "Offre actuelle",
+      "freeDescription": "Votre espace utilise l’offre gratuite.",
+      "plusDescription": "Votre espace bénéficie des fonctionnalités Plus.",
+      "members": "Membres actifs",
+      "paidSeats": "Sièges payants",
+      "ai": "Fonctionnalités IA",
+      "aiBalance": "{balance} disponibles",
+      "available": "Disponibles",
+      "unavailable": "Indisponibles",
+      "additionalSeats": "{count, plural, =1 {1 membre nécessite un siège payant} other {# membres nécessitent des sièges payants}}",
+      "effectiveThrough": "Droits confirmés jusqu’au {date}"
+    },
+    "plans": {
+      "title": "Offres disponibles",
+      "current": "Offre actuelle",
+      "free": {
+        "name": "Gratuite",
+        "description": "L’essentiel pour un petit espace de travail.",
+        "features": {
+          "sites": "Créez et organisez des sites internes",
+          "publishing": "Publiez des pages pour votre équipe",
+          "collaboration": "Invitez vos collègues et collaborez",
+          "ai": "Utilisez l’IA avec des crédits prépayés"
+        }
+      },
+      "plus": {
+        "name": "Plus",
+        "description": "Plus de capacité et des workflows assistés par l’IA pour les équipes en croissance.",
+        "features": {
+          "everything": "Tout ce qui est inclus dans l’offre gratuite",
+          "ai": "Crédits IA mensuels réinitialisés à chaque période de facturation",
+          "seats": "Sièges payants pour les membres actifs de l’espace"
+        }
+      }
+    },
+    "credits": {
+      "title": "Crédits IA",
+      "freeDescription": "Achetez des crédits prépayés pour utiliser l’IA avec l’offre gratuite. 1 $ payé ajoute 1 $ à votre solde IA.",
+      "plusDescription": "Plus inclut des crédits récurrents. Ajoutez des crédits prépayés si nécessaire ; ils n’expirent pas avec la période de facturation.",
+      "quickAmounts": "Choisissez un montant",
+      "customAmount": "Montant personnalisé",
+      "customMinimum": "Le montant personnalisé est saisi de façon sécurisée sur Polar. Minimum ${minimum}."
+    },
+    "actions": {
+      "upgrade": "Passer à Plus",
+      "manage": "Gérer l’abonnement",
+      "resolve": "Vérifier la facturation",
+      "unavailable": "Facturation indisponible"
+    },
+    "callouts": {
+      "pending": {
+        "title": "Votre abonnement est en cours de confirmation",
+        "description": "Cette page sera mise à jour une fois la confirmation terminée."
+      },
+      "grace": {
+        "title": "Le paiement nécessite votre attention",
+        "description": "Mettez à jour vos informations de paiement pour conserver les fonctionnalités Plus."
+      },
+      "suspended": {
+        "title": "Les fonctionnalités Plus sont suspendues",
+        "description": "Vérifiez votre abonnement pour rétablir l’accès."
+      },
+      "terminated": {
+        "title": "Votre abonnement Plus est terminé",
+        "description": "Votre espace utilise désormais l’offre gratuite."
+      },
+      "unknown": {
+        "title": "Le statut de facturation est temporairement indisponible",
+        "description": "Les fonctionnalités payantes restent protégées pendant la vérification de votre abonnement."
+      }
+    }
+  },
   "blocks": {
     "heading": "Titre",
     "paragraph": "Paragraphe",
@@ -557,10 +669,10 @@
   },
   "inbox": {
     "title": "Invitations",
-    "description": "Invitations en attente pour rejoindre des organisations",
+    "description": "Invitations en attente pour rejoindre des espaces de travail",
     "noInvitations": "Aucune invitation en attente",
-    "invitedToOrg": "Invitation d'organisation",
-    "invitedYou": "vous a invite a rejoindre son organisation",
+    "invitedToOrg": "Invitation a un espace de travail",
+    "invitedYou": "vous a invite a rejoindre son espace de travail",
     "asRole": "en tant que {role}",
     "expires": "Expire le {date}",
     "accept": "Accepter",
@@ -575,59 +687,64 @@
   },
   "settings": {
     "title": "Paramètres",
-    "description": "Gérez votre compte et vos organisations.",
+    "description": "Gérez votre compte et vos espaces de travail.",
     "accountNav": "Compte",
-    "organizationsNav": "Organisations",
+    "organizationsNav": "Espaces de travail",
     "accountTitle": "Compte",
     "anonymous": "Invité",
     "dangerZone": "Zone dangereuse",
     "deleteAccount": "Supprimer le compte",
-    "deleteAccountDescription": "Supprimez définitivement votre compte personnel et ses données.",
-    "deleteAccountOwnerBlocked": "Transférez ou supprimez {count, plural, =1 {l’organisation dont vous êtes propriétaire} other {les # organisations dont vous êtes propriétaire}} avant de supprimer votre compte.",
+    "deleteAccountDescription": "Supprimez définitivement votre compte{count, plural, =0 {.} =1 { et l’espace de travail dont vous êtes propriétaire.} other { et les # espaces de travail dont vous êtes propriétaire.}}",
+    "deleteAccountTransferRequired": "Transférez la propriété {count, plural, =1 {de l’espace de travail ci-dessous} other {des # espaces de travail ci-dessous}} avant de supprimer votre compte.",
     "deleteConfirmTitle": "Supprimer le compte ?",
-    "deleteConfirmDescription": "Votre compte et toutes les données seront supprimés définitivement.",
-    "deleteConfirmAction": "Supprimer",
+    "deleteConfirmDescription": "Votre compte sera supprimé définitivement. {count, plural, =0 {Aucun espace de travail ne sera supprimé.} =1 {L’espace de travail ci-dessous sera également supprimé.} other {Les # espaces de travail ci-dessous seront également supprimés.}} Vous serez retiré des espaces de travail que vous avez rejoints.",
+    "deleteConfirmEmailLabel": "Saisissez l’adresse e-mail du compte pour confirmer",
+    "deleteConfirmAction": "{count, plural, =0 {Supprimer le compte} =1 {Supprimer le compte et 1 espace} other {Supprimer le compte et # espaces}}",
     "deleting": "Suppression…",
     "deleteAccountError": "Impossible de supprimer le compte",
     "organizations": {
-      "title": "Organisations",
+      "title": "Espaces de travail",
       "ownedCount": "{count} sur {limit} possédés",
-      "manage": "Organisation à gérer",
+      "manage": "Espace de travail à gérer",
       "create": "Créer un espace",
       "createTitle": "Créer un espace",
-      "createDescription": "Donnez à votre nouvelle organisation un nom et une URL unique.",
+      "createDescription": "Donnez à votre nouvel espace de travail un nom et une URL unique.",
+      "createPersonal": "Créer un espace personnel",
+      "createPersonalTitle": "Créer un espace de travail personnel",
+      "createPersonalDescription": "Créez un espace privé pour vos propres notes et pages.",
+      "personalAlreadyExists": "Vous possédez déjà un espace personnel.",
       "creating": "Création…",
       "created": "{name} a été créé",
       "createFailed": "Impossible de créer l’espace",
-      "limitReached": "Vous pouvez posséder jusqu’à {limit} organisations. Les organisations rejointes ne comptent pas dans cette limite.",
+      "limitReached": "Vous pouvez posséder jusqu’à {limit} espaces de travail. Les espaces rejoints ne comptent pas dans cette limite.",
       "name": "Nom",
       "slug": "Identifiant URL",
       "slugHint": "Uniquement des lettres minuscules, chiffres et tirets.",
       "save": "Enregistrer",
-      "saved": "Organisation mise à jour",
-      "saveFailed": "Impossible de mettre à jour l’organisation",
-      "readOnly": "Seuls les propriétaires et administrateurs peuvent modifier l’organisation.",
+      "saved": "Espace de travail mis à jour",
+      "saveFailed": "Impossible de mettre à jour l’espace de travail",
+      "readOnly": "Seuls les propriétaires et administrateurs peuvent modifier l’espace de travail.",
       "ownership": "Propriété",
-      "ownershipDescription": "Transférez la propriété avant de quitter cette organisation.",
+      "ownershipDescription": "Transférez la propriété avant de quitter cet espace de travail.",
       "selectOwner": "Sélectionner le nouveau propriétaire",
       "transfer": "Transférer la propriété",
       "transferred": "Propriété transférée",
       "transferFailed": "Impossible de transférer la propriété",
       "inviteBeforeTransfer": "Invitez un autre membre avant de transférer la propriété.",
       "dangerZone": "Zone dangereuse",
-      "deleteDescription": "La suppression retire définitivement tous les sites, contenus, domaines, intégrations, membres et invitations.",
-      "leaveDescription": "Quitter retire votre accès sans modifier les données de l’organisation.",
-      "leave": "Quitter l’organisation",
+      "deleteDescription": "La suppression retire définitivement toutes les pages, tous les contenus, domaines, intégrations, membres et invitations.",
+      "leaveDescription": "Quitter retire votre accès sans modifier les données de l’espace de travail.",
+      "leave": "Quitter l’espace de travail",
       "left": "Vous avez quitté {name}",
-      "leaveFailed": "Impossible de quitter l’organisation",
-      "delete": "Supprimer l’organisation",
+      "leaveFailed": "Impossible de quitter l’espace de travail",
+      "delete": "Supprimer l’espace de travail",
       "deleted": "{name} a été supprimée",
-      "deleteFailed": "Impossible de supprimer l’organisation",
-      "deleteTitle": "Supprimer cette organisation ?",
+      "deleteFailed": "Impossible de supprimer l’espace de travail",
+      "deleteTitle": "Supprimer cet espace de travail ?",
       "deleteConfirm": "Cette action supprime définitivement {name} et toutes ses données. Elle est irréversible.",
       "transferTitle": "Transférer la propriété ?",
       "transferConfirm": "Le membre sélectionné deviendra propriétaire et vous deviendrez administrateur.",
-      "leaveTitle": "Quitter cette organisation ?",
+      "leaveTitle": "Quitter cet espace de travail ?",
       "leaveConfirm": "Vous perdrez l’accès à {name}.",
       "cancel": "Annuler",
       "roles": {
@@ -683,7 +800,7 @@
   },
   "team": {
     "title": "Équipe",
-    "description": "Gerez les membres de votre organisation et leurs roles d'acces",
+    "description": "Gerez les membres de l'espace de travail et leurs roles d'acces",
     "inviteMember": "Inviter un membre",
     "memberCount": "{count} membres",
     "syncMembers": "Synchroniser les membres",
@@ -713,7 +830,7 @@
       "title": "Inviter un membre",
       "emailPlaceholder": "nom@exemple.com",
       "emailRequired": "Saisissez une adresse e-mail.",
-      "organizationRequired": "Cette equipe n'est pas liee a une organisation.",
+      "organizationRequired": "Cette equipe n'est pas liee a un espace de travail.",
       "invitationFailed": "L'invitation a echoue",
       "searchPlaceholder": "Rechercher par email ou nom d'utilisateur...",
       "searching": "Recherche...",
@@ -732,7 +849,7 @@
       "confirmRemove": "Etes-vous sur de vouloir retirer {name} de l'equipe ?",
       "removing": "Suppression...",
       "cannotRemoveSelf": "Vous ne pouvez pas vous retirer vous-meme",
-      "cannotRemoveOwner": "Impossible de retirer le proprietaire de l'organisation"
+      "cannotRemoveOwner": "Impossible de retirer le proprietaire de l'espace de travail"
     },
     "pendingInvitations": {
       "title": "Invitations en attente",

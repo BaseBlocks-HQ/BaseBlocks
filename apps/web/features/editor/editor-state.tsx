@@ -207,3 +207,42 @@ export function useEditorSite() {
 export function useEditorSiteOptional() {
   return use(EditorSiteContext);
 }
+
+export function GuestEditorProvider({
+  canEdit,
+  children,
+  siteId,
+}: {
+  canEdit: boolean;
+  children: ReactNode;
+  siteId: string;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const openPage = (pageId: string) => {
+    const nextPath = pathname.replace(/\/pages\/[^/]+$/, `/pages/${pageId}`);
+    router.push(nextPath);
+  };
+  return (
+    <EditorSiteContext.Provider
+      value={{
+        siteId,
+        canEdit,
+        isAdmin: false,
+        isPermissionsLoading: false,
+      }}
+    >
+      <EditorNavigationContext.Provider
+        value={{
+          canGoBack: false,
+          goBack: () => router.back(),
+          openPage,
+          resetPageHistory: () => undefined,
+          selectPage: openPage,
+        }}
+      >
+        {children}
+      </EditorNavigationContext.Provider>
+    </EditorSiteContext.Provider>
+  );
+}

@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { mutation, query, type MutationCtx } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  query,
+  type MutationCtx,
+} from "./_generated/server";
 import {
   type AuthMember,
   type AuthUser,
@@ -9,17 +14,42 @@ import {
 } from "./authComponent/model";
 import {
   getAuthContextOrNull,
+  requireUser,
   requireOrganizationPermission,
 } from "./permissions";
 import {
   MAX_OWNED_ORGANIZATIONS,
+  classifyAccountDeletionWorkspaces,
   getPrimaryOrganizationRole,
   hasOrganizationRole,
   hasReachedOwnedOrganizationLimit,
 } from "./authComponent/organizationPolicy";
 import { deleteSiteData, readSiteDeletionManifest } from "./model/siteDeletion";
+import {
+  cleanupBillingDerivedData,
+  getBillingDeletionState,
+} from "./model/billingRetention";
+import {
+  deleteWorkspaceFoundationData,
+  findProfile,
+} from "./workspaceProfiles";
 
 const componentPage = { numItems: 250, cursor: null } as const;
+
+async function listOrganizationMembers(
+  ctx: Parameters<typeof getAuthOrganizationById>[0],
+  organizationId: string,
+) {
+  return authPage<AuthMember>(
+    await ctx.runQuery(components.betterAuth.adapter.findMany, {
+      model: "member",
+      where: [
+        { field: "organizationId", operator: "eq", value: organizationId },
+      ],
+      paginationOpts: componentPage,
+    }),
+  );
+}
 
 async function deleteAllAuthRows(
   ctx: MutationCtx,
@@ -74,6 +104,7 @@ export const getViewerState = query({
           membership.organizationId,
         );
         if (!organization?.slug) return null;
+        const profile = await findProfile(ctx as never, organization._id);
         return {
           _id: organization._id,
           joinedAt: membership.createdAt,
@@ -81,6 +112,8 @@ export const getViewerState = query({
           memberRole: membership.role,
           name: organization.name,
           slug: organization.slug,
+          intent: profile?.intent ?? null,
+          profileSource: profile?.source ?? null,
         };
       }),
     );
@@ -102,6 +135,60 @@ export const getViewerState = query({
         name: auth.name ?? null,
       },
     };
+  },
+});
+
+export const getAccountDeletionPlan = query({
+  args: {},
+  handler: async (ctx) => {
+    const auth = await requireUser(ctx);
+    const memberships = authPage<AuthMember>(
+      await ctx.runQuery(components.betterAuth.adapter.findMany, {
+        model: "member",
+        where: [{ field: "userId", operator: "eq", value: auth.userId }],
+        paginationOpts: componentPage,
+      }),
+    );
+    const ownedWorkspaces = (
+      await Promise.all(
+        memberships
+          .filter((membership) => hasOrganizationRole(membership.role, "owner"))
+          .map(async (membership) => {
+            const [organization, members] = await Promise.all([
+              getAuthOrganizationById(ctx, membership.organizationId),
+              listOrganizationMembers(ctx, membership.organizationId),
+            ]);
+            if (!organization) return null;
+            return {
+              id: organization._id,
+              name: organization.name,
+              slug: organization.slug ?? null,
+              memberCount: members.length,
+            };
+          }),
+      )
+    ).filter(
+      (workspace): workspace is NonNullable<typeof workspace> =>
+        workspace !== null,
+    );
+    const classification = classifyAccountDeletionWorkspaces(ownedWorkspaces);
+    return {
+      email: auth.email ?? null,
+      ...classification,
+      sharedWorkspaceCount: memberships.length - ownedWorkspaces.length,
+    };
+  },
+});
+
+export const deleteAccountApplicationAccess = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
+    const guestGrants = await ctx.db
+      .query("pageGuestGrants")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    for (const grant of guestGrants) await ctx.db.delete(grant._id);
+    return { deletedGuestGrantCount: guestGrants.length };
   },
 });
 
@@ -173,14 +260,34 @@ export const listMembers = query({
 });
 
 export const getDeletionManifest = query({
-  args: { organizationId: v.string() },
-  handler: async (ctx, { organizationId }) => {
+  args: {
+    organizationId: v.string(),
+    mode: v.union(v.literal("workspace"), v.literal("account")),
+  },
+  handler: async (ctx, { organizationId, mode }) => {
     await requireOrganizationPermission(ctx, organizationId, {
       resource: "organization",
       action: "delete",
     });
     const organization = await getAuthOrganizationById(ctx, organizationId);
     if (!organization) return null;
+    if (mode === "account") {
+      const members = await listOrganizationMembers(ctx, organizationId);
+      if (members.length !== 1) {
+        throw new Error(
+          "Transfer ownership before deleting this workspace with your account",
+        );
+      }
+    }
+    const billingDeletionState = await getBillingDeletionState(
+      ctx,
+      organizationId,
+    );
+    if (billingDeletionState.unsettledReservationCount > 0) {
+      throw new Error(
+        "Wait for active AI work to finish before deleting this workspace",
+      );
+    }
     const sites = await ctx.db
       .query("sites")
       .withIndex("by_organization", (q) =>
@@ -221,7 +328,7 @@ export const deleteOwnedSite = mutation({
     const site = await ctx.db.get(siteId);
     if (!site) return;
     if (site.organizationId !== organizationId) {
-      throw new Error("Site does not belong to this organization");
+      throw new Error("Space does not belong to this workspace");
     }
     await deleteSiteData(ctx, siteId, { includeDomains: true });
   },
@@ -253,7 +360,7 @@ export const transferOwnership = mutation({
       targetMember.organizationId !== organizationId ||
       targetMember.userId === auth.userId
     ) {
-      throw new Error("Choose another member of this organization");
+      throw new Error("Choose another member of this workspace");
     }
 
     const targetOwnerships = authPage<AuthMember>(
@@ -274,7 +381,7 @@ export const transferOwnership = mutation({
       hasReachedOwnedOrganizationLimit(targetOwnerships)
     ) {
       throw new Error(
-        `This member already owns ${MAX_OWNED_ORGANIZATIONS} organizations`,
+        `This member already owns ${MAX_OWNED_ORGANIZATIONS} workspaces`,
       );
     }
 
@@ -299,8 +406,11 @@ export const transferOwnership = mutation({
 });
 
 export const deleteOwned = mutation({
-  args: { organizationId: v.string() },
-  handler: async (ctx, { organizationId }) => {
+  args: {
+    organizationId: v.string(),
+    mode: v.union(v.literal("workspace"), v.literal("account")),
+  },
+  handler: async (ctx, { organizationId, mode }) => {
     const { auth } = await requireOrganizationPermission(ctx, organizationId, {
       resource: "organization",
       action: "delete",
@@ -312,7 +422,15 @@ export const deleteOwned = mutation({
       )
       .first();
     if (remainingSite) {
-      throw new Error("Delete organization sites before finalizing deletion");
+      throw new Error("Delete all spaces in this workspace before continuing");
+    }
+    if (mode === "account") {
+      const members = await listOrganizationMembers(ctx, organizationId);
+      if (members.length !== 1 || members[0]?.userId !== auth.userId) {
+        throw new Error(
+          "Transfer ownership before deleting this workspace with your account",
+        );
+      }
     }
 
     const connections = await ctx.db
@@ -339,13 +457,17 @@ export const deleteOwned = mutation({
       for (const row of [...states, ...resources]) await ctx.db.delete(row._id);
       await ctx.db.delete(connection._id);
     }
-    const entitlement = await ctx.db
+    const legacyEntitlement = await ctx.db
       .query("aiOrganizationEntitlements")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", organizationId),
       )
       .unique();
-    if (entitlement) await ctx.db.delete(entitlement._id);
+    if (legacyEntitlement) await ctx.db.delete(legacyEntitlement._id);
+
+    await cleanupBillingDerivedData(ctx, organizationId);
+
+    await deleteWorkspaceFoundationData(ctx as never, organizationId);
 
     await ctx.runMutation(components.betterAuth.adapter.updateMany, {
       input: {

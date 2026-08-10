@@ -2,6 +2,7 @@
   "name": "@baseblocks/domain",
   "version": "0.0.0",
   "private": true,
+  "license": "FSL-1.1-MIT",
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",

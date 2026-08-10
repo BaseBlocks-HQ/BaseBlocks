@@ -34,7 +34,10 @@ import { assertAiChangesetReferences } from "./model/aiChangesetReferences";
 import { createAiChangesetResultDigest } from "./model/aiChangesetAudit";
 import { assertAiChangesetCanRevert } from "./model/aiChangesetRevert";
 import { assertDraftWritable } from "./model/draft";
-import { assertActiveAiRunLease } from "./model/aiRunPolicy";
+import {
+  assertActiveAiRunLease,
+  assertAiRunCreditDeliveryStatus,
+} from "./model/aiRunPolicy";
 import { appendCompletedAssistantMessage } from "./aiConversations";
 import {
   emptyOpenEditorDocument,
@@ -269,6 +272,7 @@ export const apply = mutation({
       if (aiRun?.mode !== "apply") {
         throw new Error("AI changeset does not belong to an apply run");
       }
+      assertAiRunCreditDeliveryStatus(aiRun.creditStatus ?? "reserved");
       assertActiveAiRunLease(aiRun, Date.now());
     } catch (error) {
       throw new ConvexError({

@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { workflows } from "./workflows";
 import { deleteFileRows } from "./files";
+import { recordStorageUsageEvent } from "./model/storageTelemetry";
 import { reconcileRestoredFile } from "./fileExtraction";
 import { removePageContentIndex, indexPageContent } from "./search";
 import { synchronizeParentDocument } from "./model/pageHierarchy";
@@ -407,7 +408,20 @@ async function restoreFiles(
     .query("releaseFiles")
     .withIndex("by_release", (q) => q.eq("releaseId", restore.releaseId))
     .paginate({ cursor: cursor ?? null, numItems: SMALL_BATCH });
+  const site = await ctx.db.get(restore.siteId);
+  if (!site) throw new Error("Site not found while restoring files");
   for (const snapshot of page.page) {
+    const previous = await ctx.db.get(snapshot.fileId);
+    if (previous?.deletedAt !== undefined) {
+      await recordStorageUsageEvent(ctx, {
+        organizationId: site.organizationId,
+        siteId: site._id,
+        fileId: previous._id,
+        kind: "restore",
+        bytes: previous.size,
+        idempotencyKey: `file:restore:${restore._id}:${previous._id}`,
+      });
+    }
     await ctx.db.patch(snapshot.fileId, {
       objectKey: snapshot.objectKey,
       filename: snapshot.filename,

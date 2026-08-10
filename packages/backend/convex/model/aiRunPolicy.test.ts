@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   assertActiveAiRunLease,
   assertAiRunCapacity,
+  assertAiRunCreditDeliveryStatus,
   assertAiRunTransition,
   resolveAiRunPolicy,
 } from "./aiRunPolicy";
@@ -81,5 +82,16 @@ describe("AI run admission policy", () => {
         now,
       ),
     ).toThrow("already failed");
+  });
+
+  test("permits delivery while an authoritative cost remains fully reserved", () => {
+    expect(() => assertAiRunCreditDeliveryStatus("settled")).not.toThrow();
+    expect(() => assertAiRunCreditDeliveryStatus("released")).not.toThrow();
+    expect(() =>
+      assertAiRunCreditDeliveryStatus("reconcilePending"),
+    ).not.toThrow();
+    expect(() => assertAiRunCreditDeliveryStatus("reserved")).toThrow(
+      "recorded before delivery",
+    );
   });
 });

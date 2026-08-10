@@ -18,6 +18,11 @@ export type AiRunLease = {
 };
 
 export type AiRunTerminalStatus = Exclude<AiRunLease["status"], "running">;
+export type AiRunCreditStatus =
+  | "reserved"
+  | "settled"
+  | "released"
+  | "reconcilePending";
 
 const HARD_MAX_DAILY_RUNS = 10_000;
 const HARD_MAX_CONCURRENCY = 20;
@@ -109,6 +114,21 @@ export function assertAiRunTransition(
   assertActiveAiRunLease(run, now);
   if (nextStatus !== "completed" && nextStatus !== "failed") {
     throw new Error("Invalid Editor AI run transition");
+  }
+}
+
+/**
+ * A held maximum-cost reservation is sufficient to deliver an AI result.
+ * Exact provider cost may arrive later; reconciliation remains fail-closed
+ * because the reserved funds cannot be spent by another run in the meantime.
+ */
+export function assertAiRunCreditDeliveryStatus(status: AiRunCreditStatus) {
+  if (
+    status !== "settled" &&
+    status !== "released" &&
+    status !== "reconcilePending"
+  ) {
+    throw new Error("AI credit usage must be recorded before delivery");
   }
 }
 

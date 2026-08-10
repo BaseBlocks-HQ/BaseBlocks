@@ -19,9 +19,13 @@ function deletionContext({
       deleted.push(id);
     },
     get: async (id: string) => (id === site._id ? site : null),
+    insert: async () => "inserted",
+    patch: async () => {},
     query: (table: string) => ({
       withIndex: () => ({
         collect: async () => rows[table] ?? [],
+        first: async () => null,
+        unique: async () => null,
       }),
     }),
   };

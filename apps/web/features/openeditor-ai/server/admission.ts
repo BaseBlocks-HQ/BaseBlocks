@@ -17,6 +17,13 @@ type BeginResult =
       state: "admitted";
       runId: Id<"aiRuns">;
       budget: EditorAiRunBudget;
+      attribution: {
+        organizationId: string;
+        actorId: string;
+        feature: string;
+        environment: "sandbox" | "production";
+        policyVersion: string;
+      };
     }
   | { state: "replay"; runId: Id<"aiRuns">; result: EditorAiReplayResult };
 
@@ -41,6 +48,15 @@ const failRun = makeFunctionReference<
   },
   null
 >("aiRuns:fail");
+
+const settleRun = makeFunctionReference<
+  "mutation",
+  {
+    runId: Id<"aiRuns">;
+    telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]>;
+  },
+  "settled" | "released" | "reconcilePending"
+>("aiRuns:settle");
 
 const completeAnswerRun = makeFunctionReference<
   "mutation",
@@ -77,6 +93,15 @@ export function createEditorAiAdmission(
       return {
         replay: decision.state === "replay" ? decision.result : undefined,
         budget: decision.state === "admitted" ? decision.budget : undefined,
+        attribution:
+          decision.state === "admitted"
+            ? {
+                runId: decision.runId,
+                ...decision.attribution,
+              }
+            : undefined,
+        settle: (telemetry) =>
+          convex.mutation(settleRun, { runId: decision.runId, telemetry }),
         completeAnswer: async (input) => {
           await convex.mutation(completeAnswerRun, {
             runId: decision.runId,

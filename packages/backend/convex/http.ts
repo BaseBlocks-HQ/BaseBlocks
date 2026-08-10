@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { authComponent, createAuth } from "./auth";
 import { handleNangoWebhook } from "./integrationWebhooks";
+import { handlePolarWebhook } from "./billingWebhooks";
 
 const http = httpRouter();
 
@@ -9,6 +10,11 @@ http.route({
   path: "/integrations/webhooks/nango",
   method: "POST",
   handler: handleNangoWebhook,
+});
+http.route({
+  path: "/billing/webhooks/polar",
+  method: "POST",
+  handler: handlePolarWebhook,
 });
 
 export default http;

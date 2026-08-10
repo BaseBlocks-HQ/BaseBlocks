@@ -8,9 +8,11 @@ import {
 } from "@/features/openeditor-ai/server/orchestrator";
 import { getEditorAiReadiness } from "@/features/openeditor-ai/server/readiness";
 import { createProductionEditorAiRunner } from "@/features/openeditor-ai/server/runners";
+import { reconcileHostedAiReservationsWithBackoff } from "@/features/openeditor-ai/server/reconciliation";
 import { editorAi } from "@/flags";
 import { getToken } from "@/lib/auth/server";
-import { NextResponse } from "next/server";
+import type { Id } from "@baseblocks/backend";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -40,13 +42,18 @@ function unavailableResponse() {
   );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await editorAi())) return unavailableResponse();
   if (!(await requireToken())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return NextResponse.json(
-    { editorAi: getEditorAiReadiness() },
+    {
+      editorAi: getEditorAiReadiness(
+        process.env,
+        request.headers.get("x-vercel-oidc-token"),
+      ),
+    },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }
@@ -85,6 +92,7 @@ export async function POST(
     }
     const body = requestSchema.parse(JSON.parse(raw));
     const { siteId } = await context.params;
+    const requestOidcToken = request.headers.get("x-vercel-oidc-token");
     const conversation = body.conversationId
       ? createEditorAiConversationBackend(token)
       : null;
@@ -98,7 +106,19 @@ export async function POST(
     const orchestrator = createEditorAiOrchestrator({
       backend: createConvexEditorAiBackend(token),
       admission: createEditorAiAdmission(token),
-      runner: createProductionEditorAiRunner(),
+      runner: createProductionEditorAiRunner({
+        ...process.env,
+        ...(requestOidcToken ? { VERCEL_OIDC_TOKEN: requestOidcToken } : {}),
+      }),
+      onReconciliationPending: (runId) => {
+        after(async () => {
+          await reconcileHostedAiReservationsWithBackoff(
+            process.env,
+            undefined,
+            runId as Id<"aiRuns">,
+          ).catch(() => undefined);
+        });
+      },
     });
     const result = await orchestrator({
       siteId,
@@ -116,7 +136,13 @@ export async function POST(
     }
     if (error instanceof EditorAiConfigurationError) {
       return NextResponse.json(
-        { error: error.message, readiness: getEditorAiReadiness() },
+        {
+          error: error.message,
+          readiness: getEditorAiReadiness(
+            process.env,
+            request.headers.get("x-vercel-oidc-token"),
+          ),
+        },
         { status: 503 },
       );
     }

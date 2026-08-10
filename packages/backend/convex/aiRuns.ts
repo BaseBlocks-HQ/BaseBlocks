@@ -1,19 +1,98 @@
 import { ConvexError, v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { mutation } from "./_generated/server";
 import {
   assertAiRunTransition,
   assertAiRunCapacity,
-  resolveAiRunPolicy,
+  assertAiRunCreditDeliveryStatus,
   type AiRunPolicy,
 } from "./model/aiRunPolicy";
 import { requireOrganizationPermission } from "./permissions";
 import { appendCompletedAssistantMessage } from "./aiConversations";
 import { aiRunTelemetry } from "./validators/ai";
+import {
+  finalizeAiReservation,
+  reserveAiCredits,
+  resolveBillingEnvironment,
+} from "./model/aiCredits";
 
 const LEASE_MS = 5 * 60_000;
 
 function conflict(message: string): never {
   throw new ConvexError({ code: "AI_RUN_CONFLICT", message });
+}
+
+async function recordGatewayGenerations(
+  ctx: Parameters<typeof finalizeAiReservation>[0],
+  run: Doc<"aiRuns">,
+  telemetry: {
+    generationIds?: string[];
+    generationSummaries?: Array<{
+      generationId: string;
+      totalCostUnits: bigint;
+      retailChargeUnits: bigint;
+      resolvedModelId: string;
+      provider: string;
+      inputTokens: number;
+      outputTokens: number;
+      reasoningTokens: number;
+      cachedInputTokens: number;
+      cacheCreationTokens: number;
+      webSearchCalls: number;
+      latencyMs: number;
+      finishReason: string;
+    }>;
+  },
+  now: number,
+) {
+  if (!run.creditReservationId) return;
+  const summaries = new Map(
+    (telemetry.generationSummaries ?? []).map((summary) => [
+      summary.generationId,
+      summary,
+    ]),
+  );
+  for (const generationId of new Set(telemetry.generationIds ?? [])) {
+    const existing = await ctx.db
+      .query("aiGatewayGenerations")
+      .withIndex("by_generation", (q) => q.eq("generationId", generationId))
+      .unique();
+    if (existing) {
+      if (existing.reservationId !== run.creditReservationId) {
+        conflict("AI Gateway generation is linked to another reservation");
+      }
+      continue;
+    }
+    const summary = summaries.get(generationId);
+    await ctx.db.insert("aiGatewayGenerations", {
+      generationId,
+      reservationId: run.creditReservationId,
+      runId: run._id,
+      organizationId: run.organizationId,
+      actorId: run.actorId,
+      siteId: run.siteId,
+      requestId: run.requestId,
+      feature: run.feature ?? "editorAgent",
+      providerEnvironment: run.providerEnvironment ?? "sandbox",
+      requestedModelId: run.modelId,
+      resolvedModelId: summary?.resolvedModelId,
+      provider: summary?.provider,
+      status: summary ? "costed" : "reconcilePending",
+      totalCostUnits: summary?.totalCostUnits,
+      retailChargeUnits: summary?.retailChargeUnits,
+      inputTokens: summary?.inputTokens,
+      outputTokens: summary?.outputTokens,
+      reasoningTokens: summary?.reasoningTokens,
+      cachedInputTokens: summary?.cachedInputTokens,
+      cacheCreationTokens: summary?.cacheCreationTokens,
+      webSearchCalls: summary?.webSearchCalls,
+      latencyMs: summary?.latencyMs,
+      finishReason: summary?.finishReason,
+      observedAt: now,
+      reconciledAt: summary ? now : undefined,
+      updatedAt: now,
+    });
+  }
 }
 
 export const begin = mutation({
@@ -41,28 +120,6 @@ export const begin = mutation({
       site.organizationId,
       { resource: "content", action: "edit" },
     );
-    const entitlement = await ctx.db
-      .query("aiOrganizationEntitlements")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", site.organizationId),
-      )
-      .unique();
-    let policy: AiRunPolicy;
-    try {
-      policy = resolveAiRunPolicy(entitlement);
-    } catch (error) {
-      throw new ConvexError({
-        code: "AI_ADMISSION_NOT_CONFIGURED",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Invalid Editor AI entitlement",
-      });
-    }
-    const actorLimit = policy.maxActorConcurrency;
-    const siteLimit = policy.maxSiteConcurrency;
-    const organizationLimit = policy.maxOrganizationConcurrency;
-    const dailyRunLimit = policy.dailyRunLimit;
     const existing = await ctx.db
       .query("aiRuns")
       .withIndex("by_site_actor_request", (q) =>
@@ -93,9 +150,44 @@ export const begin = mutation({
       ) {
         conflict("An identical Editor AI run is already in progress");
       }
+      conflict("This AI request ID has already reached a terminal state");
     }
 
     const now = Date.now();
+    const providerEnvironment = resolveBillingEnvironment(
+      process.env.BASEBLOCKS_BILLING_ENVIRONMENT,
+    );
+    const creditDecision = await reserveAiCredits(ctx, {
+      organizationId: site.organizationId,
+      actorId: auth.userId,
+      siteId: site._id,
+      requestId: args.requestId,
+      promptFingerprint: args.promptFingerprint,
+      feature: "editorAgent",
+      providerEnvironment,
+      modelId: args.modelId,
+      now,
+      expiresAt: now + LEASE_MS,
+    });
+    if (creditDecision.replay) {
+      conflict("This paid AI reservation already exists");
+    }
+    const policy: AiRunPolicy = {
+      dailyRunLimit: creditDecision.rateCard.dailyRunLimit,
+      maxActorConcurrency: creditDecision.rateCard.maxActorConcurrency,
+      maxSiteConcurrency: creditDecision.rateCard.maxSiteConcurrency,
+      maxOrganizationConcurrency:
+        creditDecision.rateCard.maxOrganizationConcurrency,
+      maxRequestsPerRun: creditDecision.rateCard.maxRequestsPerRun,
+      maxInputTokensPerRun: creditDecision.rateCard.maxInputTokensPerRun,
+      maxOutputTokensPerRun: creditDecision.rateCard.maxOutputTokensPerRun,
+      maxSpendUsdPerRun:
+        Number(creditDecision.rateCard.maxChargeUnits) / 1_000_000,
+    };
+    const actorLimit = policy.maxActorConcurrency;
+    const siteLimit = policy.maxSiteConcurrency;
+    const organizationLimit = policy.maxOrganizationConcurrency;
+    const dailyRunLimit = policy.dailyRunLimit;
     const dayStart = now - 24 * 60 * 60_000;
     const [actorActive, siteActive, organizationActive, recentRuns] =
       await Promise.all([
@@ -159,13 +251,17 @@ export const begin = mutation({
       mode: "apply" as const,
       status: "running" as const,
       leaseExpiresAt: now + LEASE_MS,
-      createdAt: existing?.createdAt ?? now,
+      creditReservationId: creditDecision.reservation._id,
+      maximumCreditUnits: creditDecision.reservation.maximumUnits,
+      creditStatus: "reserved" as const,
+      creditPolicyVersion: creditDecision.reservation.policyVersion,
+      feature: "editorAgent",
+      providerEnvironment,
+      createdAt: now,
       updatedAt: now,
     };
-    const runId = existing?._id ?? (await ctx.db.insert("aiRuns", value));
-    if (existing) {
-      await ctx.db.replace(existing._id, value);
-    }
+    const runId = await ctx.db.insert("aiRuns", value);
+    await ctx.db.patch(creditDecision.reservation._id, { aiRunId: runId });
     return {
       state: "admitted",
       runId,
@@ -173,9 +269,65 @@ export const begin = mutation({
         maxRequests: policy.maxRequestsPerRun,
         maxInputTokens: policy.maxInputTokensPerRun,
         maxOutputTokens: policy.maxOutputTokensPerRun,
-        maxSpendUsd: policy.maxSpendUsdPerRun,
+        maxChargeUnits: creditDecision.reservation.maximumUnits,
+      },
+      attribution: {
+        organizationId: site.organizationId,
+        actorId: auth.userId,
+        feature: "editorAgent",
+        environment: providerEnvironment,
+        policyVersion: creditDecision.reservation.policyVersion,
       },
     };
+  },
+});
+
+export const settle = mutation({
+  args: {
+    runId: v.id("aiRuns"),
+    telemetry: aiRunTelemetry,
+  },
+  returns: v.union(
+    v.literal("settled"),
+    v.literal("released"),
+    v.literal("reconcilePending"),
+  ),
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.runId);
+    if (!run) throw new ConvexError("AI run not found");
+    const site = await ctx.db.get(run.siteId);
+    if (!site) throw new ConvexError("Site not found");
+    const { auth } = await requireOrganizationPermission(
+      ctx,
+      site.organizationId,
+      { resource: "content", action: "edit" },
+    );
+    if (auth.userId !== run.actorId)
+      conflict("AI run belongs to another actor");
+    if (!run.creditReservationId) {
+      throw new ConvexError({
+        code: "AI_CREDIT_RESERVATION_MISSING",
+        message: "AI run has no paid-credit reservation",
+      });
+    }
+    const now = Date.now();
+    await recordGatewayGenerations(ctx, run, args.telemetry, now);
+    const status = await finalizeAiReservation(ctx, {
+      reservationId: run.creditReservationId,
+      actualUnits: args.telemetry.retailChargeUnits,
+      generationIds: args.telemetry.generationIds ?? [],
+      now,
+    });
+    await ctx.db.patch(run._id, {
+      telemetry: args.telemetry,
+      creditStatus: status,
+      settledCreditUnits:
+        status === "settled" || status === "released"
+          ? (args.telemetry.retailChargeUnits ?? 0n)
+          : undefined,
+      updatedAt: now,
+    });
+    return status;
   },
 });
 
@@ -207,11 +359,31 @@ export const fail = mutation({
         error instanceof Error ? error.message : "Invalid AI run transition",
       );
     }
+    let creditStatus = run.creditStatus;
+    let settledCreditUnits = run.settledCreditUnits;
+    if (run.creditReservationId && creditStatus === "reserved") {
+      if (args.telemetry) {
+        await recordGatewayGenerations(ctx, run, args.telemetry, now);
+      }
+      creditStatus = await finalizeAiReservation(ctx, {
+        reservationId: run.creditReservationId,
+        actualUnits: args.telemetry?.retailChargeUnits,
+        generationIds: args.telemetry?.generationIds ?? [],
+        failureCode: args.failureCode.slice(0, 100),
+        now,
+      });
+      settledCreditUnits =
+        creditStatus === "settled" || creditStatus === "released"
+          ? (args.telemetry?.retailChargeUnits ?? 0n)
+          : undefined;
+    }
     await ctx.db.patch(run._id, {
       status: "failed",
       failureCode: args.failureCode.slice(0, 100),
       failureMessage: args.failureMessage?.slice(0, 2_000),
       telemetry: args.telemetry,
+      creditStatus,
+      settledCreditUnits,
       outcome: undefined,
       result: undefined,
       leaseExpiresAt: now,
@@ -252,6 +424,11 @@ export const completeAnswer = mutation({
       conflict(
         error instanceof Error ? error.message : "Invalid AI run transition",
       );
+    }
+    try {
+      assertAiRunCreditDeliveryStatus(run.creditStatus ?? "reserved");
+    } catch (error) {
+      conflict(error instanceof Error ? error.message : "Invalid AI credits");
     }
     const result = {
       replayed: true as const,

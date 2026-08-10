@@ -16,7 +16,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 
 | | **BaseBlocks** | SharePoint | Confluence | Notion | GitBook | Outline |
 |---|---|---|---|---|---|---|
-| Open source | **Yes (MIT)** | No | No | No | Frontend only | Yes (MIT) |
+| Source model | **Fair Source (FSL-1.1-MIT)** | Closed | Closed | Closed | Open-source frontend only | Open source (MIT) |
 | Self-hostable | **Yes** | On-prem (complex) | Deprecated 2026 | No | Frontend only | Yes (Docker) |
 | Block editor | **Yes** | Partial | Yes | Yes | Yes | Yes |
 | Draft / publish flow | **Yes** | Page-level | Yes + Live Docs | No (immediate) | Change requests | No (immediate) |
@@ -43,7 +43,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Large ecosystem of third-party add-ins
 
 **Where BaseBlocks wins:**
-- No per-user licensing cost — BaseBlocks is free and open source
+- No per-user licensing cost — BaseBlocks is free to start and Fair Source
 - Cleaner block editor vs SharePoint's web-part system
 - Per-site custom branding without enterprise admin overhead
 - Multi-tenant by design — manage separate team workspaces from one deployment
@@ -55,7 +55,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - If your organization already pays for Microsoft 365, SharePoint has zero additional cost and its integrations are hard to replicate elsewhere.
 
 **Choose SharePoint if** your organization is Microsoft 365-first and needs enterprise compliance tooling.  
-**Choose BaseBlocks if** you want a lightweight, open-source site builder without enterprise overhead.
+**Choose BaseBlocks if** you want a lightweight, source-available site builder without enterprise overhead.
 
 </Accordion>
 
@@ -70,7 +70,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Strong page hierarchy and full-text search
 
 **Where BaseBlocks wins:**
-- Open source and free — Confluence Cloud starts at $6.40/user/month; for 50 users that's $320/month
+- Fair Source and free to start — Confluence Cloud starts at $6.40/user/month; for 50 users that's $320/month
 - Self-hostable: Confluence is deprecating new Data Center (self-hosted) license sales from March 2026 — this path is being eliminated
 - Open, extensible block editor with BaseBlocks-specific interactive blocks
 - Public site publishing — Confluence has no native public-facing site output
@@ -81,7 +81,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - The Data Center (self-hosted) path is ending: Atlassian will not sell new Data Center licenses after March 2026. Teams relying on self-hosting will need to migrate to Cloud or switch tools.
 
 **Choose Confluence if** you're deep in the Atlassian ecosystem and Jira integration is a priority.  
-**Choose BaseBlocks if** you need a self-hostable, open-source alternative with a visual editor and public publishing.
+**Choose BaseBlocks if** you need a self-hostable, source-available alternative with a visual editor and public publishing.
 
 </Accordion>
 
@@ -97,7 +97,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Notion AI included in Business plan
 
 **Where BaseBlocks wins:**
-- Open source and self-hostable — Notion is a closed SaaS with no self-hosted option
+- Fair Source and self-hostable — Notion is a closed SaaS with no self-hosted option
 - True draft / publish workflow — Notion changes to shared pages go live immediately with no staging step
 - Purpose-built published-site navigation and draft/publish controls
 - Multi-tenant design — manage separate team workspaces; Notion's teamspace model is a single workspace per organization
@@ -108,7 +108,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Notion Sites with custom domain is available on Plus and above; Notion branding is removed only when a custom domain is connected.
 
 **Choose Notion if** your team needs a flexible all-in-one workspace with databases, project views, and a large existing user base.  
-**Choose BaseBlocks if** you want a dedicated site builder with a proper publish workflow, open-source codebase, and self-hosting.
+**Choose BaseBlocks if** you want a dedicated site builder with a proper publish workflow, a source-available codebase, and self-hosting.
 
 </Accordion>
 
@@ -124,7 +124,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Free for open-source projects with public content
 
 **Where BaseBlocks wins:**
-- Fully open source and self-hostable — GitBook's content platform is proprietary; only the rendering frontend is open source
+- Fair Source and self-hostable — GitBook's content platform is proprietary; only the rendering frontend is open source
 - No per-site pricing — GitBook Pro costs $65/site/month base plus $12/user/month; multi-site setups become expensive quickly
 - Extensible editor with interactive site, directory, library, search, and decision-tree blocks
 - Multi-tenant by design; GitBook is not designed for managing separate customer/team workspaces
@@ -134,7 +134,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - GitBook is purpose-built for documentation; BaseBlocks covers a broader definition of internal site (portals, onboarding, hubs).
 
 **Choose GitBook if** you're building technical documentation with a Git-centric workflow and need multi-version support.  
-**Choose BaseBlocks if** you need a fully open-source, self-hostable platform with visual editing and multi-site management.
+**Choose BaseBlocks if** you need a source-available, self-hostable platform with visual editing and multi-site management.
 
 </Accordion>
 
@@ -157,7 +157,7 @@ BaseBlocks is one of several tools teams use to publish internal content. This p
 - Per-site names and logos managed directly in the editor
 
 **Things to know:**
-- Both are MIT licensed and self-hostable. Outline uses Docker + a database (PostgreSQL) + object storage. BaseBlocks uses the same stack pattern.
+- Both are self-hostable. Outline is MIT licensed; current BaseBlocks versions use FSL-1.1-MIT and transition individually to MIT after two years. Outline uses Docker + a database (PostgreSQL) + object storage. BaseBlocks uses the same stack pattern.
 - Outline is an excellent choice for a team wiki. BaseBlocks is more appropriate when you need to publish sites to external audiences or need per-site publishing control.
 
 **Choose Outline if** you need a fast, collaborative internal wiki with flat-rate pricing and real-time editing.  

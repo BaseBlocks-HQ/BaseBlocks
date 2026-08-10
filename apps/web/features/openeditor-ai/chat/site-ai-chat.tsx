@@ -1,6 +1,8 @@
 "use client";
 
 import { MiddleTruncate } from "@/components/tree/middle-truncate";
+import { getTeamBillingPath } from "@/features/dashboard/routes";
+import { Link } from "@/i18n/navigation";
 import { api, type Id } from "@baseblocks/backend";
 import {
   ActionRow,
@@ -42,6 +44,81 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export function SiteAiChat({
+  availabilityReason,
+  onApplied,
+  siteId,
+  siteName,
+  teamSlug,
+}: {
+  availabilityReason:
+    | "available"
+    | "creditsRequired"
+    | "reconciliationRequired"
+    | "policyUnavailable"
+    | "siteNotFound";
+  onApplied: () => void;
+  siteId: Id<"sites">;
+  siteName: string;
+  teamSlug: string;
+}) {
+  if (availabilityReason !== "available") {
+    return (
+      <AiUnavailableState reason={availabilityReason} teamSlug={teamSlug} />
+    );
+  }
+  return (
+    <EnabledSiteAiChat
+      onApplied={onApplied}
+      siteId={siteId}
+      siteName={siteName}
+    />
+  );
+}
+
+function AiUnavailableState({
+  reason,
+  teamSlug,
+}: {
+  reason: Exclude<
+    Parameters<typeof SiteAiChat>[0]["availabilityReason"],
+    "available"
+  >;
+  teamSlug: string;
+}) {
+  const needsCredits = reason === "creditsRequired";
+  return (
+    <section
+      aria-label="Chat"
+      className="flex h-full min-h-0 flex-col bg-background"
+    >
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 text-sm font-medium">
+        <HugeiconsIcon className="size-4" icon={BubbleChatSpark01Icon} />
+        Chat
+      </header>
+      <div className="flex flex-1 items-center justify-center p-6 text-center">
+        <div className="max-w-xs space-y-3">
+          <h2 className="font-semibold">
+            {needsCredits
+              ? "Add AI credits to continue"
+              : "AI is temporarily unavailable"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {needsCredits
+              ? "Buy prepaid credits from Billing, or upgrade to Plus for included credits."
+              : "The AI credit policy is not ready for this workspace yet."}
+          </p>
+          {needsCredits ? (
+            <Button asChild>
+              <Link href={getTeamBillingPath(teamSlug)}>Open Billing</Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EnabledSiteAiChat({
   onApplied,
   siteId,
   siteName,

@@ -35,3 +35,30 @@ export function hasReachedOwnedOrganizationLimit(
 ): boolean {
   return countOwnedOrganizations(memberships) >= limit;
 }
+
+export type AccountDeletionWorkspace = {
+  id: string;
+  name: string;
+  slug: string | null;
+  memberCount: number;
+};
+
+export function classifyAccountDeletionWorkspaces(
+  ownedWorkspaces: readonly AccountDeletionWorkspace[],
+) {
+  const workspaces = ownedWorkspaces.map((workspace) => ({
+    ...workspace,
+    canDeleteWithAccount: workspace.memberCount === 1,
+  }));
+  const blockedWorkspaces = workspaces.filter(
+    (workspace) => !workspace.canDeleteWithAccount,
+  );
+  return {
+    ownedWorkspaces: workspaces,
+    deletableWorkspaces: workspaces.filter(
+      (workspace) => workspace.canDeleteWithAccount,
+    ),
+    blockedWorkspaces,
+    canDeleteAccount: blockedWorkspaces.length === 0,
+  };
+}

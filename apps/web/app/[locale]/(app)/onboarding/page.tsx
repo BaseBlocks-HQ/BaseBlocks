@@ -4,11 +4,11 @@ import { redirect } from "next/navigation";
 import { OnboardingPageClient } from "./page-client";
 
 export default async function OnboardingPage() {
-  const { team } = await getViewerState();
+  const { team, user } = await getViewerState();
 
   if (team) {
     redirect(getTeamDashboardPath(team.slug));
   }
 
-  return <OnboardingPageClient />;
+  return <OnboardingPageClient user={user} />;
 }

@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "license": "FSL-1.1-MIT",
   "sideEffects": false,
   "main": "./index.ts",
   "types": "./index.ts",

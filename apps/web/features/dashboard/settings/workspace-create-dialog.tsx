@@ -23,32 +23,61 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { workspaceApi } from "@/lib/convex/workspace-api";
 
-export function WorkspaceCreateDialog({ disabled }: { disabled: boolean }) {
+export function WorkspaceCreateDialog({
+  disabled,
+  personalAllowed,
+}: {
+  disabled: boolean;
+  personalAllowed: boolean;
+}) {
   const t = useTranslations("settings.organizations");
+  const onboarding = useTranslations("onboarding");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [intent, setIntent] = useState<"personal" | "work" | null>(null);
+  const completeOnboarding = useMutation(
+    workspaceApi.workspaceProfiles.completeOnboarding,
+  );
 
   const createWorkspace = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!intent) return;
     setSubmitting(true);
     setError(null);
     try {
       const result = await authClient.organization.create({
         name: name.trim(),
         slug: slug.trim().toLowerCase(),
+        metadata: {
+          baseblocks: {
+            intent,
+            source: intent === "personal" ? "lazyPersonal" : "onboarding",
+          },
+        },
       });
       if (result.error || !result.data) {
         throw result.error ?? new Error(t("createFailed"));
       }
+      await completeOnboarding({
+        organizationId: result.data.id,
+        intent,
+        source: intent === "personal" ? "lazyPersonal" : "onboarding",
+      });
+      await authClient.organization.setActive({
+        organizationId: result.data.id,
+      });
       toast.success(t("created", { name: result.data.name }));
       setOpen(false);
       setName("");
       setSlug("");
+      setIntent(null);
       router.push(getTeamDashboardPath(result.data.slug));
       router.refresh();
     } catch (caught) {
@@ -76,6 +105,36 @@ export function WorkspaceCreateDialog({ disabled }: { disabled: boolean }) {
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-5" onSubmit={createWorkspace}>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">
+              {onboarding("intentLabel")}
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              {(["personal", "work"] as const).map((option) => {
+                const unavailable = option === "personal" && !personalAllowed;
+                return (
+                  <Button
+                    aria-pressed={intent === option}
+                    className="h-auto min-h-20 flex-col items-start whitespace-normal p-3 text-left"
+                    disabled={unavailable}
+                    key={option}
+                    onClick={() => setIntent(option)}
+                    type="button"
+                    variant={intent === option ? "default" : "outline"}
+                  >
+                    <span className="font-medium">
+                      {onboarding(`${option}Title`)}
+                    </span>
+                    <span className="text-xs opacity-75">
+                      {unavailable
+                        ? t("personalAlreadyExists")
+                        : onboarding(`${option}Description`)}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </fieldset>
           <div className="space-y-2">
             <Label htmlFor="workspace-create-name">{t("name")}</Label>
             <Input
@@ -114,7 +173,7 @@ export function WorkspaceCreateDialog({ disabled }: { disabled: boolean }) {
             >
               {t("cancel")}
             </Button>
-            <Button disabled={submitting} type="submit">
+            <Button disabled={submitting || !intent} type="submit">
               {submitting ? <Spinner className="size-4" /> : null}
               {submitting ? t("creating") : t("create")}
             </Button>

@@ -50,13 +50,21 @@ export type EditorAiRunnerInput = {
   prompt: string;
   abortSignal: AbortSignal;
   budget: EditorAiRunBudget;
+  attribution: {
+    runId: string;
+    organizationId: string;
+    actorId: string;
+    feature: string;
+    environment: "sandbox" | "production";
+    policyVersion: string;
+  };
 };
 
 export type EditorAiRunBudget = {
   maxRequests: number;
   maxInputTokens: number;
   maxOutputTokens: number;
-  maxSpendUsd: number;
+  maxChargeUnits: bigint;
 };
 
 export type EditorAiRunnerOutput = {
@@ -70,10 +78,32 @@ export type EditorAiRunnerOutput = {
     steps?: number;
     toolCalls?: number;
     generationIds?: string[];
+    generationSummaries?: Array<{
+      generationId: string;
+      totalCostUnits: bigint;
+      retailChargeUnits: bigint;
+      resolvedModelId: string;
+      provider: string;
+      inputTokens: number;
+      outputTokens: number;
+      reasoningTokens: number;
+      cachedInputTokens: number;
+      cacheCreationTokens: number;
+      webSearchCalls: number;
+      latencyMs: number;
+      finishReason: string;
+    }>;
     finishReason?: string;
     warningCount?: number;
     toolNames?: string[];
     gatewayCostUsd?: number;
+    gatewayCostUnits?: bigint;
+    retailChargeUnits?: bigint;
+    requestedModelId?: string;
+    resolvedModelId?: string;
+    provider?: string;
+    environment?: "sandbox" | "production";
+    feature?: string;
   };
 };
 
@@ -101,6 +131,10 @@ export type EditorAiAdmissionRequest = {
 export type EditorAiAdmissionLease = {
   replay?: EditorAiReplayResult;
   budget?: EditorAiRunBudget;
+  attribution?: EditorAiRunnerInput["attribution"];
+  settle(
+    telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]>,
+  ): Promise<"settled" | "released" | "reconcilePending">;
   completeAnswer(input: {
     conversationId?: string;
     summary: string;

@@ -9,10 +9,7 @@ import {
   synchronizeOpenEditorChildPages,
   type OpenEditorDocument,
 } from "./pageContentFormat";
-import {
-  isOrganizationMember,
-  requireOrganizationPermission,
-} from "./permissions";
+import { getPageAccessOrNull, requirePageAccess } from "./permissions";
 import { queuePageContentIndex } from "./search";
 import { assertDraftReadable, touchSiteDraft } from "./model/draft";
 
@@ -22,10 +19,9 @@ export const get = query({
   handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
     if (!page) return null;
-    const site = await ctx.db.get(page.siteId);
-    if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
-      return null;
-    }
+    const access = await getPageAccessOrNull(ctx, pageId);
+    if (!access) return null;
+    const { site } = access;
     assertDraftReadable(site);
     if (page.deletedAt !== undefined) return null;
     return (await readPageContent(ctx, pageId)).document;
@@ -37,10 +33,9 @@ export const getVersioned = query({
   handler: async (ctx, { pageId }) => {
     const page = await ctx.db.get(pageId);
     if (!page) return null;
-    const site = await ctx.db.get(page.siteId);
-    if (!site || !(await isOrganizationMember(ctx, site.organizationId))) {
-      return null;
-    }
+    const access = await getPageAccessOrNull(ctx, pageId);
+    if (!access) return null;
+    const { site } = access;
     assertDraftReadable(site);
     if (page.deletedAt !== undefined) return null;
     const current = await readPageContent(ctx, pageId);
@@ -66,10 +61,7 @@ export const save = mutation({
     }
     const site = await ctx.db.get(page.siteId);
     if (!site) throw new ConvexError("Site not found");
-    await requireOrganizationPermission(ctx, site.organizationId, {
-      resource: "content",
-      action: "edit",
-    });
+    const access = await requirePageAccess(ctx, pageId, "editor");
 
     let parsedDocument: OpenEditorDocument;
     try {
@@ -107,6 +99,22 @@ export const save = mutation({
     let defaultChanged = false;
     const submittedPageIds =
       extractOpenEditorReferences(parsedDocument).pageIds;
+    if (access.source === "guest") {
+      for (const referencedPageId of submittedPageIds) {
+        const normalizedPageId = ctx.db.normalizeId("pages", referencedPageId);
+        if (!normalizedPageId) {
+          throw new ConvexError("Referenced page is outside shared access");
+        }
+        const referencedAccess = await requirePageAccess(
+          ctx,
+          normalizedPageId,
+          "viewer",
+        );
+        if (referencedAccess.site._id !== site._id) {
+          throw new ConvexError("Referenced page is outside shared access");
+        }
+      }
+    }
     for (const child of children) {
       if (submittedPageIds.has(child._id)) continue;
       const deleted = await softDeletePageSubtree(ctx, child._id, updatedAt);

@@ -14,6 +14,10 @@ export function getTeamAnalyticsPath(teamSlug: string): string {
   return `${getTeamDashboardPath(teamSlug)}/analytics`;
 }
 
+export function getTeamBillingPath(teamSlug: string): string {
+  return `${getTeamDashboardPath(teamSlug)}/billing`;
+}
+
 export function getTeamSiteEditorPath(
   teamSlug: string,
   siteId: string,

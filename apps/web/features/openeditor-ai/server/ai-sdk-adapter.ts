@@ -44,6 +44,26 @@ export type EditorWorkspaceAgentSession = {
   getCompletion(): EditorAgentCompletion | undefined;
 };
 
+export function assertEditorAgentInputBudget(input: {
+  messages: unknown;
+  steps: readonly { usage: { inputTokens?: number } }[];
+  maxInputTokens: number;
+}) {
+  const consumedTokens = input.steps.reduce(
+    (total, step) => total + (step.usage.inputTokens ?? 0),
+    0,
+  );
+  // AI SDK recommends JSON character length / 4 for pre-flight estimation.
+  // UTF-8 bytes preserve that estimate while remaining safer for non-ASCII
+  // content. Completed steps use the provider's authoritative token counts.
+  const nextStepEstimate = Math.ceil(
+    new TextEncoder().encode(JSON.stringify(input.messages)).byteLength / 4,
+  );
+  if (consumedTokens + nextStepEstimate > input.maxInputTokens) {
+    throw new Error("Editor AI input-token budget exhausted");
+  }
+}
+
 const pathSchema = jsonSchema<{ path: string }>({
   type: "object",
   additionalProperties: false,
@@ -166,15 +186,33 @@ export function createEditorWorkspaceAgent({
   model,
   store,
   maxRequests,
+  maxInputTokens,
   maxOutputTokens,
   validateWorkspace,
+  providerOptions,
 }: {
   model: LanguageModel;
   store: WorkspaceFileStore;
   maxRequests: number;
+  maxInputTokens: number;
   maxOutputTokens: number;
   validateWorkspace?: () => Promise<WorkspaceValidationSummary>;
+  providerOptions?: {
+    gateway: {
+      user: string;
+      tags: string[];
+    };
+  };
 }): EditorWorkspaceAgentSession {
+  if (
+    !Number.isSafeInteger(maxInputTokens) ||
+    maxInputTokens < 1 ||
+    maxInputTokens > 2_000_000
+  ) {
+    throw new RangeError(
+      "maxInputTokens must be an integer between 1 and 2000000",
+    );
+  }
   if (
     !Number.isSafeInteger(maxRequests) ||
     maxRequests < 1 ||
@@ -205,7 +243,14 @@ export function createEditorWorkspaceAgent({
       },
     ),
     maxOutputTokens,
-    prepareStep: ({ steps }) => {
+    providerOptions,
+    experimental_telemetry: {
+      functionId: "baseblocks.editorAgent",
+      recordInputs: false,
+      recordOutputs: false,
+    },
+    prepareStep: ({ messages, steps }) => {
+      assertEditorAgentInputBudget({ messages, steps, maxInputTokens });
       const used = steps.reduce(
         (total, step) => total + (step.usage.outputTokens ?? 0),
         0,

@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "license": "FSL-1.1-MIT",
   "scripts": {
     "dev": "next dev --port 3001 -H 0.0.0.0",
     "build": "next build",
+    "build:vercel": "next build",
     "start": "next start",
     "lint": "biome check --write .",
     "check-types": "fumadocs-mdx && next typegen && tsc --noEmit --incremental false"

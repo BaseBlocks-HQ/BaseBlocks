@@ -65,6 +65,7 @@ export function createEditorAiOrchestrator(input: {
   admission: EditorAiAdmission;
   runner: EditorAiRunner;
   timeoutMs?: number;
+  onReconciliationPending?: (runId: string) => void;
 }) {
   const timeoutMs = input.timeoutMs ?? MAX_EDITOR_AI_RUN_MS;
   if (
@@ -101,7 +102,7 @@ export function createEditorAiOrchestrator(input: {
         prompt,
       });
       if (lease.replay) return lease.replay;
-      if (!lease.budget) {
+      if (!lease.budget || !lease.attribution) {
         throw new EditorAiConfigurationError(
           "Editor AI admission did not provide a run budget",
         );
@@ -129,8 +130,18 @@ export function createEditorAiOrchestrator(input: {
         prompt,
         abortSignal: abort.signal,
         budget: lease.budget,
+        attribution: lease.attribution,
       });
       telemetry = output.telemetry;
+      if (!telemetry) {
+        throw new EditorAiConfigurationError(
+          "Editor AI did not return billable usage telemetry",
+        );
+      }
+      const creditStatus = await lease.settle(telemetry);
+      if (creditStatus === "reconcilePending") {
+        input.onReconciliationPending?.(lease.attribution.runId);
+      }
       abort.signal.throwIfAborted();
       const imported = await importProjectWorkspace(
         materialization.baseline,
@@ -210,6 +221,15 @@ export function createEditorAiOrchestrator(input: {
       }
       return result;
     } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "telemetry" in error &&
+        (error as { telemetry?: EditorAiRunnerOutput["telemetry"] }).telemetry
+      ) {
+        telemetry = (error as { telemetry: EditorAiRunnerOutput["telemetry"] })
+          .telemetry;
+      }
       if (lease && !terminal) {
         await lease
           .fail(abort.signal.aborted ? "cancelled" : "run_failed", {

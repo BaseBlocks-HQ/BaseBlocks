@@ -1,6 +1,6 @@
 # BaseBlocks
 
-BaseBlocks is an open-source, multi-workspace site builder for documentation, knowledge bases, internal portals, onboarding hubs, and public resources.
+BaseBlocks is a Fair Source, multi-workspace site builder for documentation, knowledge bases, internal portals, onboarding hubs, and public resources.
 
 Teams create structured sites with a block editor, organize pages and document libraries, publish a consistent site experience, and control who can access it.
 
@@ -182,4 +182,8 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for local development, code standards, 
 
 ## License
 
-[MIT](./LICENSE)
+Current versions of BaseBlocks are source-available under the [Functional Source License, Version 1.1, MIT Future License (FSL-1.1-MIT)](./LICENSE). FSL is a Fair Source license, not an OSI-approved open-source license.
+
+Each version becomes available under the MIT License on the second anniversary of the date that specific version was first made available under FSL-1.1-MIT. The transition is rolling: later versions have their own two-year period. Versions distributed under MIT before this change remain available under the MIT terms that accompanied them.
+
+The license does not grant rights to use the BaseBlocks name, logos, or other brand identifiers except as the license expressly permits. See the [licensing documentation](https://baseblocks.dev/docs/legal/licensing) for details.

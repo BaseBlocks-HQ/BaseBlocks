@@ -38,6 +38,15 @@ export function OrganizationsSection({
         .length,
     [teams],
   );
+  const hasPersonalWorkspace = teams.some(
+    (team) =>
+      team.intent === "personal" &&
+      hasOrganizationRole(team.memberRole, "owner"),
+  );
+  const hasUnclassifiedOwnedWorkspace = teams.some(
+    (team) =>
+      team.intent === null && hasOrganizationRole(team.memberRole, "owner"),
+  );
   const selected =
     teams.find((team) => team._id === selectedId) ??
     teams.find((team) => team._id === currentOrganizationId) ??
@@ -65,9 +74,14 @@ export function OrganizationsSection({
             </Badge>
           </div>
         </div>
-        <WorkspaceCreateDialog
-          disabled={ownedCount >= MAX_OWNED_ORGANIZATIONS}
-        />
+        <div className="flex flex-wrap gap-2">
+          <WorkspaceCreateDialog
+            disabled={ownedCount >= MAX_OWNED_ORGANIZATIONS}
+            personalAllowed={
+              !hasPersonalWorkspace && !hasUnclassifiedOwnedWorkspace
+            }
+          />
+        </div>
       </div>
 
       {ownedCount >= MAX_OWNED_ORGANIZATIONS ? (
@@ -101,6 +115,9 @@ export function OrganizationsSection({
         <OrganizationManagement
           currentOrganizationId={currentOrganizationId}
           organization={selected}
+          remainingWorkspaceSlug={
+            teams.find((team) => team._id !== selected._id)?.slug ?? null
+          }
           user={user}
         />
       ) : null}

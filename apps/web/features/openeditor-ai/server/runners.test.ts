@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   assertRunnerBudget,
   createProductionEditorAiRunner,
+  resolveGatewayAccounting,
   sanitizeRunnerTelemetry,
 } from "./runners";
 
@@ -46,7 +47,6 @@ describe("editor AI workspace runner", () => {
       finishReason: "stop",
       warningCount: 1,
       toolNames: ["readWorkspaceFile"],
-      gatewayCostUsd: 0.0123,
     });
     expect(JSON.stringify(telemetry)).not.toContain("secret.txt");
     expect(JSON.stringify(telemetry)).not.toContain("sensitive site content");
@@ -59,14 +59,15 @@ describe("editor AI workspace runner", () => {
       totalTokens: 210,
       steps: 3,
       toolCalls: 3,
-      gatewayCostUsd: 0.03,
+      gatewayCostUnits: 30_000n,
+      retailChargeUnits: 37_500n,
     };
     expect(() =>
       assertRunnerBudget(telemetry, {
         maxRequests: 2,
         maxInputTokens: 1_000,
         maxOutputTokens: 1_000,
-        maxSpendUsd: 1,
+        maxChargeUnits: 1_000_000n,
       }),
     ).toThrow("request budget exceeded");
     expect(() =>
@@ -74,8 +75,48 @@ describe("editor AI workspace runner", () => {
         maxRequests: 10,
         maxInputTokens: 1_000,
         maxOutputTokens: 1_000,
-        maxSpendUsd: 0.02,
+        maxChargeUnits: 20_000n,
       }),
     ).toThrow("spend budget exceeded");
+  });
+
+  test("retries generation accounting while Gateway metadata propagates", async () => {
+    let attempts = 0;
+    const accounting = await resolveGatewayAccounting(
+      ["gen_eventual"],
+      "openai/gpt-5.4-mini",
+      "sandbox",
+      {
+        retryDelaysMs: [0, 0],
+        sleep: async () => {},
+        getGenerationInfo: async (id) => {
+          attempts += 1;
+          if (attempts < 3) throw new Error("Generation not found yet");
+          return {
+            id,
+            totalCost: 0.004,
+            upstreamInferenceCost: 0.004,
+            usage: 0.004,
+            createdAt: new Date(0).toISOString(),
+            model: "openai/gpt-5.4-mini",
+            isByok: false,
+            providerName: "openai",
+            streamed: false,
+            finishReason: "stop",
+            latency: 100,
+            generationTime: 200,
+            promptTokens: 100,
+            completionTokens: 20,
+            reasoningTokens: 0,
+            cachedTokens: 0,
+            cacheCreationTokens: 0,
+            billableWebSearchCalls: 0,
+          };
+        },
+      },
+    );
+
+    expect(attempts).toBe(3);
+    expect(accounting.retailChargeUnits).toBe(5_000n);
   });
 });

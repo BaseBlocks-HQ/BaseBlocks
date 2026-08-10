@@ -45,7 +45,7 @@
     "description": "Build pages from content, data, and connected tools, then publish them as complete sites."
   },
   "landing": {
-    "badge": "Open source & MIT licensed",
+    "badge": "Fair Source · FSL-1.1-MIT",
     "heroTitle": "Build the sites you need",
     "heroDescription": "Pages, files, data, and connected tools are brought together in a site ready to publish.",
     "getStarted": "Get Started",
@@ -73,7 +73,7 @@
     "ctaTitle": "Start building in minutes",
     "footerProduct": "Product",
     "footerCommunity": "Community",
-    "footerCopyright": "\u00a9 2026 BaseBlocks. MIT License.",
+    "footerCopyright": "Copyright 2026 BaseBlocks contributors. Fair Source under FSL-1.1-MIT.",
     "footerDocumentation": "Documentation",
     "footerDocsOverview": "Overview",
     "footerQuickStart": "Quick start",
@@ -233,7 +233,22 @@
       "toastLinkCopied": "Link copied to clipboard",
       "copyLink": "Copy link",
       "copied": "Copied!",
-      "viewSite": "View site"
+      "viewSite": "View site",
+      "guests": {
+        "title": "Page guests",
+        "description": "Invite people to this page and its subpages without adding them to the workspace.",
+        "email": "Guest email",
+        "permission": "Permission",
+        "viewer": "Can view",
+        "editor": "Can edit",
+        "createLink": "Create invite link",
+        "linkCopied": "Invite link copied",
+        "inviteFailed": "Unable to create the invitation",
+        "permissionFor": "Permission for {name}",
+        "remove": "Remove",
+        "pending": "Pending",
+        "revoke": "Revoke"
+      }
     },
     "rollback": {
       "title": "Rollback to v{version}",
@@ -379,11 +394,32 @@
     "step2Description": "Add team members to collaborate",
     "step3Title": "Create your first site",
     "step3Description": "Start building your internal site",
-    "teamName": "Team name",
-    "teamNamePlaceholder": "My Team",
+    "intentLabel": "How will you use BaseBlocks?",
+    "personalTitle": "For personal use",
+    "personalDescription": "Notes and pages for your own work.",
+    "workTitle": "For work or a team",
+    "workDescription": "A shared workspace for collaboration.",
+    "personalDefaultName": "{name}'s workspace",
+    "personalFallbackName": "Personal workspace",
+    "workspaceName": "Workspace name",
+    "teamName": "Workspace name",
+    "teamNamePlaceholder": "My workspace",
     "createWorkspace": "Create workspace",
     "creating": "Creating...",
-    "orCreateOwn": "Or create your own workspace"
+    "orCreateOwn": "Or create your own workspace",
+    "createFailed": "Unable to create the workspace"
+  },
+  "guests": {
+    "invitation": {
+      "title": "Page invitation",
+      "unavailable": "This invitation is unavailable. Sign in with the invited email address.",
+      "description": "You were invited to {permission} {page}.",
+      "view": "view",
+      "edit": "edit",
+      "accept": "Accept invitation",
+      "open": "Open shared page",
+      "acceptFailed": "Unable to accept this invitation"
+    }
   },
   "dialogs": {
     "createSite": {
@@ -476,6 +512,82 @@
     "english": "English",
     "french": "Français"
   },
+  "billing": {
+    "title": "Billing",
+    "adminRequired": "Only workspace owners and admins can manage billing.",
+    "current": {
+      "title": "Current plan",
+      "freeDescription": "Your workspace is using the free plan.",
+      "plusDescription": "Your workspace has access to Plus features.",
+      "members": "Active members",
+      "paidSeats": "Paid seats",
+      "ai": "AI features",
+      "aiBalance": "{balance} available",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "additionalSeats": "{count, plural, =1 {1 member needs a paid seat} other {# members need paid seats}}",
+      "effectiveThrough": "Entitlement confirmed through {date}"
+    },
+    "plans": {
+      "title": "Available plans",
+      "current": "Current plan",
+      "free": {
+        "name": "Free",
+        "description": "The essentials for a small workspace.",
+        "features": {
+          "sites": "Create and organize internal sites",
+          "publishing": "Publish pages for your team",
+          "collaboration": "Invite teammates and collaborate",
+          "ai": "Use AI with prepaid credits"
+        }
+      },
+      "plus": {
+        "name": "Plus",
+        "description": "More capacity and AI-assisted workflows for growing teams.",
+        "features": {
+          "everything": "Everything in Free",
+          "ai": "Monthly AI credits that reset each billing period",
+          "seats": "Paid seats for active workspace members"
+        }
+      }
+    },
+    "credits": {
+      "title": "AI credits",
+      "freeDescription": "Buy prepaid credits to use AI on Free. $1 paid adds $1 to your AI balance.",
+      "plusDescription": "Plus includes recurring credits. Add prepaid credits when you need more; purchased credits do not expire with the billing period.",
+      "quickAmounts": "Choose an amount",
+      "customAmount": "Custom amount",
+      "customMinimum": "Custom amounts are entered securely on Polar. Minimum ${minimum}."
+    },
+    "actions": {
+      "upgrade": "Upgrade to Plus",
+      "manage": "Manage subscription",
+      "resolve": "Review billing",
+      "unavailable": "Billing unavailable"
+    },
+    "callouts": {
+      "pending": {
+        "title": "Your subscription is being confirmed",
+        "description": "This page will update when confirmation is complete."
+      },
+      "grace": {
+        "title": "Payment needs attention",
+        "description": "Update your billing details to keep Plus features active."
+      },
+      "suspended": {
+        "title": "Plus features are paused",
+        "description": "Review your subscription to restore access."
+      },
+      "terminated": {
+        "title": "Your Plus subscription ended",
+        "description": "Your workspace is now using the free plan."
+      },
+      "unknown": {
+        "title": "Billing status is temporarily unavailable",
+        "description": "Paid features remain protected while we verify your subscription."
+      }
+    }
+  },
   "blocks": {
     "heading": "Heading",
     "paragraph": "Paragraph",
@@ -557,10 +669,10 @@
   },
   "inbox": {
     "title": "Invitations",
-    "description": "Pending invitations to join organizations",
+    "description": "Pending invitations to join workspaces",
     "noInvitations": "No pending invitations",
-    "invitedToOrg": "Organization invitation",
-    "invitedYou": "invited you to join their organization",
+    "invitedToOrg": "Workspace invitation",
+    "invitedYou": "invited you to join their workspace",
     "asRole": "as {role}",
     "expires": "Expires {date}",
     "accept": "Accept",
@@ -575,59 +687,64 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your account and organizations.",
+    "description": "Manage your account and workspaces.",
     "accountNav": "Account",
-    "organizationsNav": "Organizations",
+    "organizationsNav": "Workspaces",
     "accountTitle": "Account",
     "anonymous": "Guest",
     "dangerZone": "Danger zone",
     "deleteAccount": "Delete account",
-    "deleteAccountDescription": "Permanently delete your personal account and its data.",
-    "deleteAccountOwnerBlocked": "Transfer or delete the {count, plural, =1 {organization you own} other {# organizations you own}} before deleting your account.",
+    "deleteAccountDescription": "Permanently delete your account{count, plural, =0 {.} =1 { and the workspace you own.} other { and the # workspaces you own.}}",
+    "deleteAccountTransferRequired": "Transfer ownership of the {count, plural, =1 {workspace below} other {# workspaces below}} before deleting your account.",
     "deleteConfirmTitle": "Delete your account?",
-    "deleteConfirmDescription": "Your account and all data will be removed permanently.",
-    "deleteConfirmAction": "Delete",
+    "deleteConfirmDescription": "Your account will be permanently deleted. {count, plural, =0 {No owned workspaces will be deleted.} =1 {The workspace below will also be deleted.} other {The # workspaces below will also be deleted.}} You will be removed from workspaces you joined.",
+    "deleteConfirmEmailLabel": "Enter your account email to confirm",
+    "deleteConfirmAction": "{count, plural, =0 {Delete account} =1 {Delete account and 1 workspace} other {Delete account and # workspaces}}",
     "deleting": "Deleting…",
     "deleteAccountError": "Could not delete account",
     "organizations": {
-      "title": "Organizations",
+      "title": "Workspaces",
       "ownedCount": "{count} of {limit} owned",
-      "manage": "Organization to manage",
+      "manage": "Workspace to manage",
       "create": "Create workspace",
       "createTitle": "Create a workspace",
-      "createDescription": "Give your new organization a name and a unique URL.",
+      "createDescription": "Give your new workspace a name and a unique URL.",
+      "createPersonal": "Create personal workspace",
+      "createPersonalTitle": "Create a personal workspace",
+      "createPersonalDescription": "Create a private workspace for your own notes and pages.",
+      "personalAlreadyExists": "You already own a personal workspace.",
       "creating": "Creating…",
       "created": "{name} created",
       "createFailed": "Could not create the workspace",
-      "limitReached": "You can own up to {limit} organizations. Joined organizations do not count toward this limit.",
+      "limitReached": "You can own up to {limit} workspaces. Workspaces you joined do not count toward this limit.",
       "name": "Name",
       "slug": "URL slug",
       "slugHint": "Lowercase letters, numbers, and hyphens only.",
       "save": "Save changes",
-      "saved": "Organization updated",
-      "saveFailed": "Could not update the organization",
-      "readOnly": "Only owners and admins can change organization details.",
+      "saved": "Workspace updated",
+      "saveFailed": "Could not update the workspace",
+      "readOnly": "Only owners and admins can change workspace details.",
       "ownership": "Ownership",
-      "ownershipDescription": "Transfer ownership before leaving this organization.",
+      "ownershipDescription": "Transfer ownership before leaving this workspace.",
       "selectOwner": "Select the new owner",
       "transfer": "Transfer ownership",
       "transferred": "Ownership transferred",
       "transferFailed": "Could not transfer ownership",
       "inviteBeforeTransfer": "Invite another member before transferring ownership.",
       "dangerZone": "Danger zone",
-      "deleteDescription": "Deleting this organization permanently removes all of its sites, content, domains, integrations, members, and invitations.",
-      "leaveDescription": "Leaving removes your access. The organization's data is not changed.",
-      "leave": "Leave organization",
+      "deleteDescription": "Deleting this workspace permanently removes all of its pages, content, domains, integrations, members, and invitations.",
+      "leaveDescription": "Leaving removes your access. The workspace data is not changed.",
+      "leave": "Leave workspace",
       "left": "You left {name}",
-      "leaveFailed": "Could not leave the organization",
-      "delete": "Delete organization",
+      "leaveFailed": "Could not leave the workspace",
+      "delete": "Delete workspace",
       "deleted": "{name} deleted",
-      "deleteFailed": "Could not delete the organization",
-      "deleteTitle": "Delete this organization?",
+      "deleteFailed": "Could not delete the workspace",
+      "deleteTitle": "Delete this workspace?",
       "deleteConfirm": "This permanently deletes {name} and all of its data. This cannot be undone.",
       "transferTitle": "Transfer ownership?",
       "transferConfirm": "The selected member will become owner and you will become an admin.",
-      "leaveTitle": "Leave this organization?",
+      "leaveTitle": "Leave this workspace?",
       "leaveConfirm": "You will lose access to {name}.",
       "cancel": "Cancel",
       "roles": {
@@ -683,7 +800,7 @@
   },
   "team": {
     "title": "Team",
-    "description": "Manage your organization's team members and their access roles",
+    "description": "Manage workspace members and their access roles",
     "inviteMember": "Invite Member",
     "memberCount": "{count} members",
     "syncMembers": "Sync Members",
@@ -713,7 +830,7 @@
       "title": "Invite Team Member",
       "emailPlaceholder": "name@example.com",
       "emailRequired": "Enter an email address.",
-      "organizationRequired": "This team is not linked to an organization.",
+      "organizationRequired": "This team is not linked to a workspace.",
       "invitationFailed": "Invitation failed",
       "searchPlaceholder": "Search by email or username...",
       "searching": "Searching...",
@@ -732,7 +849,7 @@
       "confirmRemove": "Are you sure you want to remove {name} from the team?",
       "removing": "Removing...",
       "cannotRemoveSelf": "You cannot remove yourself",
-      "cannotRemoveOwner": "Cannot remove the organization owner"
+      "cannotRemoveOwner": "Cannot remove the workspace owner"
     },
     "pendingInvitations": {
       "title": "Pending Invitations",

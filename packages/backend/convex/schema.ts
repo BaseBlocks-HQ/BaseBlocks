@@ -7,8 +7,16 @@ import {
 } from "./validators/integrations";
 import { siteSettings } from "./validators/sites";
 import { aiRunOutcome, aiRunTelemetry } from "./validators/ai";
+import { workspaceTables } from "./schema/workspaces";
+import { billingTables } from "./schema/billing";
+import { aiCreditTables } from "./schema/aiCredits";
+import { storageTelemetryTables } from "./schema/storageTelemetry";
 
 export default defineSchema({
+  ...workspaceTables,
+  ...billingTables,
+  ...aiCreditTables,
+  ...storageTelemetryTables,
   sites: defineTable({
     organizationId: v.string(),
     name: v.string(),
@@ -199,6 +207,22 @@ export default defineSchema({
       v.literal("failed"),
     ),
     leaseExpiresAt: v.number(),
+    creditReservationId: v.optional(v.id("aiCreditReservations")),
+    maximumCreditUnits: v.optional(v.int64()),
+    settledCreditUnits: v.optional(v.int64()),
+    creditStatus: v.optional(
+      v.union(
+        v.literal("reserved"),
+        v.literal("settled"),
+        v.literal("released"),
+        v.literal("reconcilePending"),
+      ),
+    ),
+    creditPolicyVersion: v.optional(v.string()),
+    feature: v.optional(v.string()),
+    providerEnvironment: v.optional(
+      v.union(v.literal("sandbox"), v.literal("production")),
+    ),
     result: v.optional(v.any()),
     outcome: v.optional(aiRunOutcome),
     telemetry: v.optional(aiRunTelemetry),
@@ -217,7 +241,8 @@ export default defineSchema({
       "status",
       "leaseExpiresAt",
     ])
-    .index("by_org_created", ["organizationId", "createdAt"]),
+    .index("by_org_created", ["organizationId", "createdAt"])
+    .index("by_credit_reservation", ["creditReservationId"]),
 
   aiConversations: defineTable({
     siteId: v.id("sites"),
@@ -263,6 +288,7 @@ export default defineSchema({
     maxInputTokensPerRun: v.number(),
     maxOutputTokensPerRun: v.number(),
     maxSpendUsdPerRun: v.number(),
+    maxChargeUnits: v.optional(v.int64()),
     policyVersion: v.string(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),

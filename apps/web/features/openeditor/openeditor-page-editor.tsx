@@ -53,12 +53,14 @@ import {
 const PageTabsMenuIcon = createOpenEditorIcon(LayoutTopIcon);
 
 export function OpenEditorPageEditor({
+  authoritativeRefreshRevision,
   onSaveStatusChange,
   pageId,
   pages,
   preview = false,
   siteId,
 }: {
+  authoritativeRefreshRevision?: number;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
   pages: Doc<"pages">[];
@@ -76,6 +78,7 @@ export function OpenEditorPageEditor({
   const imageRuntime = useBaseBlocksImageRuntime(siteId);
   const remoteDocument = useQuery(api.pageContent.getVersioned, { pageId });
   const { document, onChange } = useVersionedPageDocument({
+    authoritativeRefreshRevision,
     pageId,
     remote: remoteDocument
       ? {

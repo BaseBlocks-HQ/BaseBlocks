@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "commonjs",
-  "license": "MIT",
+  "license": "FSL-1.1-MIT",
   "scripts": {
     "build": "turbo run build",
     "dev": "vercel env run -e development -- turbo run dev",

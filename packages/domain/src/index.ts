@@ -72,6 +72,18 @@ export {
   toFilesKind,
 } from "./files/file-keys";
 
+export {
+  AI_CREDIT_UNITS_PER_USD,
+  AI_RETAIL_MARKUP_BPS,
+  AI_TOP_UP_DEFAULT_AMOUNT_MINOR,
+  AI_TOP_UP_MIN_AMOUNT_MINOR,
+  AI_TOP_UP_QUICK_AMOUNTS_MINOR,
+  aiTopUpAmountToCreditUnits,
+  moneyAmountMinorToCreditUnits,
+  providerCostUsdToRetailCreditUnits,
+  validateAiTopUpAmountMinor,
+} from "./billing/ai-credit-pricing";
+
 export type {
   IntegrationProviderAvailability,
   IntegrationProviderDefinition,

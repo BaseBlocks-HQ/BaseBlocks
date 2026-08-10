@@ -21,6 +21,7 @@ interface EditorDialogsProps {
   activeDialog: EditorDialogState | null;
   draftSummary: DraftSummary;
   onActiveDialogChange: (dialog: EditorDialogState | null) => void;
+  pageId?: Id<"pages">;
   siteId: Id<"sites">;
   siteSlug: string;
   teamSlug: string;
@@ -30,6 +31,7 @@ export function EditorDialogs({
   activeDialog,
   draftSummary,
   onActiveDialogChange,
+  pageId,
   siteId,
   siteSlug,
   teamSlug,
@@ -58,6 +60,7 @@ export function EditorDialogs({
       <ShareDialog
         open={activeDialog?.name === "share"}
         onOpenChange={handleOpenChange}
+        pageId={pageId}
         returnFocusTo={returnFocusTo}
         siteId={siteId}
         siteSlug={siteSlug}

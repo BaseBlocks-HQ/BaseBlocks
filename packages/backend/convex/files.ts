@@ -9,6 +9,8 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 import {
   checkOrganizationPermission,
+  getPageAccessOrNull,
+  isOrganizationMember,
   requireOrganizationMember,
   requireOrganizationPermission,
 } from "./permissions";
@@ -20,6 +22,23 @@ import {
   removeSearchEntry,
   upsertDraftFileSearch,
 } from "./search";
+import { recordStorageUsageEvent } from "./model/storageTelemetry";
+
+async function isFileReferencedByAccessiblePage(
+  ctx: Parameters<typeof getPageAccessOrNull>[0],
+  file: Doc<"files">,
+): Promise<boolean> {
+  const documents = await ctx.db
+    .query("pageDocuments")
+    .withIndex("by_site", (q) => q.eq("siteId", file.siteId))
+    .collect();
+  for (const document of documents) {
+    const revision = await ctx.db.get(document.revisionId);
+    if (!revision?.fileIds.includes(file._id)) continue;
+    if (await getPageAccessOrNull(ctx, document.pageId)) return true;
+  }
+  return false;
+}
 
 export function buildFileUrl(fileId: Id<"files">): string {
   return `/api/files/${fileId}`;
@@ -29,9 +48,22 @@ export async function deleteFileRows(
   ctx: MutationCtx,
   file: Doc<"files">,
 ): Promise<void> {
+  const site = await ctx.db.get(file.siteId);
+  const deletedAt = Date.now();
+  if (site && file.deletedAt === undefined) {
+    await recordStorageUsageEvent(ctx, {
+      organizationId: site.organizationId,
+      siteId: site._id,
+      fileId: file._id,
+      kind: "softDelete",
+      bytes: file.size,
+      idempotencyKey: `file:delete:${file._id}:${deletedAt}`,
+      now: deletedAt,
+    });
+  }
   await removeSearchEntry(ctx, draftSearchScope(file.siteId), "file", file._id);
   await cancelFileExtraction(ctx, file._id);
-  await ctx.db.patch(file._id, { deletedAt: Date.now() });
+  await ctx.db.patch(file._id, { deletedAt });
 }
 
 function isUploadedFile(file: Doc<"files">) {
@@ -75,7 +107,11 @@ export const get = query({
     if (!file || !isUploadedFile(file)) return null;
     const site = await ctx.db.get(file.siteId);
     if (!site) return null;
-    await requireOrganizationMember(ctx, site.organizationId);
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
+    const isGuestReference = isMember
+      ? false
+      : await isFileReferencedByAccessiblePage(ctx, file);
+    if (!isMember && !isGuestReference) return null;
     assertDraftReadable(site);
     if (file.deletedAt !== undefined) return null;
     return mapFile(file);
@@ -147,7 +183,10 @@ export const getAuthorized = query({
         site.organizationId,
         { resource: "site", action: "manage" },
       );
-      if (!canManage) return null;
+      const guestReference = canManage
+        ? false
+        : await isFileReferencedByAccessiblePage(ctx, file);
+      if (!canManage && !guestReference) return null;
       if (!released) assertDraftReadable(site);
       return released
         ? {
@@ -160,7 +199,10 @@ export const getAuthorized = query({
           ? file
           : null;
     }
-    await requireOrganizationMember(ctx, site.organizationId);
+    const member = await isOrganizationMember(ctx, site.organizationId);
+    if (!member && !(await isFileReferencedByAccessiblePage(ctx, file))) {
+      return null;
+    }
     if (!released) assertDraftReadable(site);
     return released
       ? {
@@ -252,6 +294,18 @@ async function createUploadedFile(
     order,
     uploadedBy: args.uploadedBy,
     createdAt,
+  });
+  const site = await ctx.db.get(args.siteId);
+  if (!site) throw new Error("Site disappeared while recording upload");
+  await recordStorageUsageEvent(ctx, {
+    organizationId: site.organizationId,
+    siteId: site._id,
+    actorId: args.uploadedBy,
+    fileId,
+    kind: "upload",
+    bytes: args.size,
+    idempotencyKey: `file:upload:${fileId}`,
+    now: createdAt,
   });
   const file = await ctx.db.get(fileId);
   if (file) {
@@ -392,6 +446,15 @@ export const createSiteAsset = mutation({
       order: 0,
       uploadedBy: auth.userId,
       createdAt: Date.now(),
+    });
+    await recordStorageUsageEvent(ctx, {
+      organizationId: site.organizationId,
+      siteId: site._id,
+      actorId: auth.userId,
+      fileId,
+      kind: "upload",
+      bytes: args.size,
+      idempotencyKey: `file:upload:${fileId}`,
     });
     await touchSiteDraft(ctx, args.siteId, Date.now(), [
       { entityType: "file", entityId: fileId },

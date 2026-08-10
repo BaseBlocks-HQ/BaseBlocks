@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { normalizeBrandColor } from "@baseblocks/domain/site-theme";
-import { query, mutation } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import { query, mutation, type MutationCtx } from "./_generated/server";
 import {
   requireOrganizationPermission,
   isOrganizationMember,
@@ -9,6 +10,27 @@ import { getAuthOrganizationById } from "./authComponent/model";
 import { siteSidebarVariant, siteThemeSettings } from "./validators/sites";
 import { assertDraftWritable, touchSiteDraft } from "./model/draft";
 import { deleteSiteData } from "./model/siteDeletion";
+import { recordStorageUsageEvent } from "./model/storageTelemetry";
+
+async function softDeleteSiteAsset(
+  ctx: MutationCtx,
+  site: Doc<"sites">,
+  fileId: Id<"files">,
+) {
+  const file = await ctx.db.get(fileId);
+  if (!file || file.deletedAt !== undefined) return;
+  const now = Date.now();
+  await recordStorageUsageEvent(ctx, {
+    organizationId: site.organizationId,
+    siteId: site._id,
+    fileId: file._id,
+    kind: "softDelete",
+    bytes: file.size,
+    idempotencyKey: `file:delete:${file._id}:${now}`,
+    now,
+  });
+  await ctx.db.patch(file._id, { deletedAt: now });
+}
 
 export const listByTeam = query({
   args: { organizationId: v.string() },
@@ -226,7 +248,7 @@ export const update = mutation({
       site.logoFileId &&
       site.logoFileId !== logoFileId
     ) {
-      await ctx.db.patch(site.logoFileId, { deletedAt: Date.now() });
+      await softDeleteSiteAsset(ctx, site, site.logoFileId);
     }
 
     if (logoFileId !== undefined) {
@@ -236,7 +258,7 @@ export const update = mutation({
 
     if (clearLogo) {
       if (site.logoFileId) {
-        await ctx.db.patch(site.logoFileId, { deletedAt: Date.now() });
+        await softDeleteSiteAsset(ctx, site, site.logoFileId);
       }
       updates.logoFileId = undefined;
       updates.logoUrl = undefined;

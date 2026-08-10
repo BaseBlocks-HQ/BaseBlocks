@@ -21,7 +21,25 @@ const TEST_BUDGET = {
   maxRequests: 40,
   maxInputTokens: 100_000,
   maxOutputTokens: 20_000,
-  maxSpendUsd: 10,
+  maxChargeUnits: 10_000_000n,
+};
+
+const TEST_ATTRIBUTION = {
+  runId: "run-1",
+  organizationId: "organization-1",
+  actorId: "actor-1",
+  feature: "editorAgent",
+  environment: "sandbox" as const,
+  policyVersion: "test-v1",
+};
+
+const TEST_TELEMETRY = {
+  inputTokens: 100,
+  outputTokens: 50,
+  steps: 1,
+  generationIds: ["gen_test"],
+  gatewayCostUnits: 100n,
+  retailChargeUnits: 125n,
 };
 
 function snapshot(): BaseBlocksWorkspaceSnapshot {
@@ -98,6 +116,7 @@ class EditingRunner implements EditorAiRunner {
       store,
       outcome: "edited" as const,
       summary: "Updated the home page.",
+      telemetry: TEST_TELEMETRY,
     };
   }
 }
@@ -119,7 +138,12 @@ class InvalidBlockRunner implements EditorAiRunner {
       ],
     });
     await store.writeFile(path, JSON.stringify(page));
-    return { store, outcome: "edited" as const, summary: "Invalid edit" };
+    return {
+      store,
+      outcome: "edited" as const,
+      summary: "Invalid edit",
+      telemetry: TEST_TELEMETRY,
+    };
   }
 }
 
@@ -140,6 +164,7 @@ class SiteRenameRunner implements EditorAiRunner {
       store,
       outcome: "edited" as const,
       summary: "Renamed the site.",
+      telemetry: TEST_TELEMETRY,
     };
   }
 }
@@ -152,6 +177,7 @@ class AnsweringRunner implements EditorAiRunner {
       store: new InMemoryWorkspaceFileStore(input.materialization.files),
       outcome: "answered" as const,
       summary: "This site has one page: Home (/home).",
+      telemetry: TEST_TELEMETRY,
     };
   }
 }
@@ -164,6 +190,7 @@ class NoOpEditingRunner implements EditorAiRunner {
       store: new InMemoryWorkspaceFileStore(input.materialization.files),
       outcome: "edited" as const,
       summary: "I changed the site.",
+      telemetry: TEST_TELEMETRY,
     };
   }
 }
@@ -171,6 +198,8 @@ class NoOpEditingRunner implements EditorAiRunner {
 const admission = {
   admit: async () => ({
     budget: TEST_BUDGET,
+    attribution: TEST_ATTRIBUTION,
+    settle: async () => "settled" as const,
     completeAnswer: async () => {},
     fail: async () => {},
   }),
@@ -184,6 +213,8 @@ describe("editor AI orchestrator", () => {
       admission: {
         admit: async () => ({
           budget: TEST_BUDGET,
+          attribution: TEST_ATTRIBUTION,
+          settle: async () => "settled" as const,
           completeAnswer: async () => {},
           fail: async () => {},
         }),
@@ -246,6 +277,8 @@ describe("editor AI orchestrator", () => {
       admission: {
         admit: async () => ({
           budget: TEST_BUDGET,
+          attribution: TEST_ATTRIBUTION,
+          settle: async () => "settled" as const,
           completeAnswer: async (value) => {
             completions.push(value);
           },
@@ -267,10 +300,48 @@ describe("editor AI orchestrator", () => {
       {
         conversationId: "conversation-1",
         summary: "This site has one page: Home (/home).",
-        telemetry: undefined,
+        telemetry: TEST_TELEMETRY,
       },
     ]);
     expect(backend.applied).toHaveLength(0);
+  });
+
+  test("delivers an answer while authoritative Gateway cost is still reconciling", async () => {
+    const completions: Array<{ summary: string }> = [];
+    const failures: string[] = [];
+    const reconciliationRuns: string[] = [];
+    const run = createEditorAiOrchestrator({
+      backend: new FakeBackend(),
+      admission: {
+        admit: async () => ({
+          budget: TEST_BUDGET,
+          attribution: TEST_ATTRIBUTION,
+          settle: async () => "reconcilePending" as const,
+          completeAnswer: async (value) => {
+            completions.push(value);
+          },
+          fail: async (code) => {
+            failures.push(code);
+          },
+        }),
+      },
+      runner: new AnsweringRunner(),
+      onReconciliationPending: (runId) => {
+        reconciliationRuns.push(runId);
+      },
+    });
+
+    const result = await run({
+      siteId: "site-1",
+      prompt: "List the pages",
+      requestId: "request-pending-cost-1",
+      conversationId: "conversation-1",
+    });
+
+    expect(result.outcome).toBe("answered");
+    expect(completions).toHaveLength(1);
+    expect(failures).toEqual([]);
+    expect(reconciliationRuns).toEqual(["run-1"]);
   });
 
   test("rejects an edit completion with no semantic changes", async () => {
@@ -489,6 +560,8 @@ describe("editor AI orchestrator", () => {
       admission: {
         admit: async () => ({
           budget: TEST_BUDGET,
+          attribution: TEST_ATTRIBUTION,
+          settle: async () => "settled" as const,
           completeAnswer: async () => {},
           fail: async (code) => {
             failures.push(code);

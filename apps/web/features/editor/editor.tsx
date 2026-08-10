@@ -27,11 +27,23 @@ const SiteAiChat = dynamic(() =>
 );
 
 interface SiteEditorProps {
+  aiAvailabilityReason:
+    | "available"
+    | "creditsRequired"
+    | "reconciliationRequired"
+    | "policyUnavailable"
+    | "siteNotFound";
   editorAiEnabled: boolean;
   siteId: string;
+  teamSlug: string;
 }
 
-function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
+function SiteEditorScreen({
+  aiAvailabilityReason,
+  editorAiEnabled,
+  siteId,
+  teamSlug,
+}: SiteEditorProps) {
   const { team } = useTeamAccess();
   const { pages, restore, selectedPage, site, status } = useEditorWorkspace();
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -78,7 +90,8 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
   const draftSummary = draftSummaryQuery as DraftSummary;
   const pageEditor = selectedPage ? (
     <OpenEditorPageEditor
-      key={`${selectedPage._id}:${aiApplyRevision}`}
+      authoritativeRefreshRevision={aiApplyRevision}
+      key={selectedPage._id}
       onSaveStatusChange={setSaveStatus}
       pageId={selectedPage._id}
       pages={pages}
@@ -156,11 +169,13 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
                   }
                 >
                   <SiteAiChat
+                    availabilityReason={aiAvailabilityReason}
                     onApplied={() =>
                       setAiApplyRevision((revision) => revision + 1)
                     }
                     siteId={site._id}
                     siteName={site.name}
+                    teamSlug={teamSlug}
                   />
                 </Suspense>
               </aside>
@@ -173,6 +188,7 @@ function SiteEditorScreen({ editorAiEnabled, siteId }: SiteEditorProps) {
         activeDialog={activeDialog}
         draftSummary={draftSummary}
         onActiveDialogChange={setActiveDialog}
+        pageId={selectedPage?._id}
         siteId={site._id}
         siteSlug={site.slug}
         teamSlug={team.slug}
@@ -268,10 +284,10 @@ function DraftRestoreGate({
   );
 }
 
-export function SiteEditor({ editorAiEnabled, siteId }: SiteEditorProps) {
+export function SiteEditor(props: SiteEditorProps) {
   return (
     <Suspense fallback={<EditorLoading />}>
-      <SiteEditorScreen editorAiEnabled={editorAiEnabled} siteId={siteId} />
+      <SiteEditorScreen {...props} />
     </Suspense>
   );
 }

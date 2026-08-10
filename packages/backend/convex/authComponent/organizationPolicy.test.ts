@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  classifyAccountDeletionWorkspaces,
   MAX_OWNED_ORGANIZATIONS,
   countOwnedOrganizations,
   getPrimaryOrganizationRole,
@@ -44,5 +45,34 @@ describe("organization ownership policy", () => {
         ...Array.from({ length: 100 }, () => ({ role: "admin" })),
       ]),
     ).toBe(false);
+  });
+});
+
+describe("account deletion ownership policy", () => {
+  test("deletes every solely owned workspace with the account", () => {
+    const plan = classifyAccountDeletionWorkspaces([
+      { id: "personal", name: "Personal", slug: "personal", memberCount: 1 },
+      { id: "solo", name: "Solo", slug: "solo", memberCount: 1 },
+    ]);
+    expect(plan.canDeleteAccount).toBe(true);
+    expect(plan.deletableWorkspaces.map((workspace) => workspace.id)).toEqual([
+      "personal",
+      "solo",
+    ]);
+    expect(plan.blockedWorkspaces).toEqual([]);
+  });
+
+  test("blocks account deletion until shared ownership is transferred", () => {
+    const plan = classifyAccountDeletionWorkspaces([
+      { id: "personal", name: "Personal", slug: "personal", memberCount: 1 },
+      { id: "team", name: "Team", slug: "team", memberCount: 3 },
+    ]);
+    expect(plan.canDeleteAccount).toBe(false);
+    expect(plan.deletableWorkspaces.map((workspace) => workspace.id)).toEqual([
+      "personal",
+    ]);
+    expect(plan.blockedWorkspaces.map((workspace) => workspace.id)).toEqual([
+      "team",
+    ]);
   });
 });

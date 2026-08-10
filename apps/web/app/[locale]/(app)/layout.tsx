@@ -28,6 +28,7 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
   return (
     <NextIntlClientProvider
       messages={selectMessages(messages, [
+        "billing",
         "blocks",
         "common",
         "dashboard",
@@ -35,6 +36,7 @@ export default async function AppLayout({ children, params }: AppLayoutProps) {
         "editor",
         "elements",
         "errors",
+        "guests",
         "inbox",
         "integrations",
         "language",

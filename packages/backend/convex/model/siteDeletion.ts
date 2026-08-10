@@ -1,6 +1,7 @@
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { assertDraftWritable } from "./draft";
+import { recordSiteStoragePurge } from "./storageTelemetry";
 
 type ReadCtx = QueryCtx | MutationCtx;
 
@@ -63,6 +64,12 @@ export async function deleteSiteData(
   if (!options.includeDomains && domains.length > 0) {
     throw new Error("Remove this site's custom domains before deleting it");
   }
+
+  await recordSiteStoragePurge(ctx, {
+    organizationId: site.organizationId,
+    siteId,
+    idempotencyKey: `site:purge:${siteId}`,
+  });
 
   const libraries = await ctx.db
     .query("documentLibraries")

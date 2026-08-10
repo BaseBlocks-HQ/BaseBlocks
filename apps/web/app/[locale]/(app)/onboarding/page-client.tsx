@@ -29,6 +29,10 @@ import { Separator } from "@baseblocks/ui/separator";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { workspaceApi } from "@/lib/convex/workspace-api";
+
+type WorkspaceIntent = "personal" | "work";
 
 const languageNames: Record<Locale, string> = {
   fr: "Français",
@@ -40,8 +44,13 @@ const languageFlags: Record<Locale, string> = {
   en: "🇺🇸",
 };
 
-export function OnboardingPageClient() {
+export function OnboardingPageClient({
+  user,
+}: {
+  user: { name: string | null; email: string | null } | null;
+}) {
   const router = useRouter();
+  const [intent, setIntent] = useState<WorkspaceIntent | null>(null);
   const [teamName, setTeamName] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,6 +58,20 @@ export function OnboardingPageClient() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const pathname = usePathname();
+  const completeOnboarding = useMutation(
+    workspaceApi.workspaceProfiles.completeOnboarding,
+  );
+
+  const selectIntent = (nextIntent: WorkspaceIntent) => {
+    setIntent(nextIntent);
+    if (teamName) return;
+    const personalName = user?.name
+      ? t("onboarding.personalDefaultName", { name: user.name })
+      : t("onboarding.personalFallbackName");
+    const nextName = nextIntent === "personal" ? personalName : "";
+    setTeamName(nextName);
+    setSlug(generateSlug(nextName));
+  };
 
   const handleTeamNameChange = (value: string) => {
     setTeamName(value);
@@ -57,6 +80,7 @@ export function OnboardingPageClient() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!intent) return;
     setError("");
     setIsSubmitting(true);
 
@@ -64,12 +88,21 @@ export function OnboardingPageClient() {
       .create({
         name: teamName,
         slug,
+        metadata: { baseblocks: { intent, source: "onboarding" } },
       })
-      .then((orgResult) => {
+      .then(async (orgResult) => {
         if (!orgResult.data?.id) {
-          setError("Failed to create organization");
+          setError(t("onboarding.createFailed"));
           return;
         }
+        await completeOnboarding({
+          organizationId: orgResult.data.id,
+          intent,
+          source: "onboarding",
+        });
+        await authClient.organization.setActive({
+          organizationId: orgResult.data.id,
+        });
         router.push(getTeamDashboardPath(slug));
       })
       .catch((err) => {
@@ -130,14 +163,40 @@ export function OnboardingPageClient() {
               {t("onboarding.orCreateOwn")}
             </p>
 
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">
+                {t("onboarding.intentLabel")}
+              </legend>
+              <div className="grid grid-cols-2 gap-2">
+                {(["personal", "work"] as const).map((option) => (
+                  <Button
+                    key={option}
+                    aria-pressed={intent === option}
+                    className="h-auto min-h-20 flex-col items-start whitespace-normal p-3 text-left"
+                    onClick={() => selectIntent(option)}
+                    type="button"
+                    variant={intent === option ? "default" : "outline"}
+                  >
+                    <span className="font-medium">
+                      {t(`onboarding.${option}Title`)}
+                    </span>
+                    <span className="text-xs opacity-80">
+                      {t(`onboarding.${option}Description`)}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </fieldset>
+
             <div className="space-y-2">
-              <Label htmlFor="teamName">{t("onboarding.teamName")}</Label>
+              <Label htmlFor="teamName">{t("onboarding.workspaceName")}</Label>
               <Input
                 id="teamName"
                 placeholder={t("onboarding.teamNamePlaceholder")}
                 value={teamName}
                 onChange={(e) => handleTeamNameChange(e.target.value)}
                 required
+                disabled={!intent}
               />
             </div>
 
@@ -150,6 +209,7 @@ export function OnboardingPageClient() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase())}
                   required
+                  disabled={!intent}
                   pattern={SLUG_PATTERN}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -160,7 +220,11 @@ export function OnboardingPageClient() {
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || !intent}
+            >
               {isSubmitting ? (
                 <>
                   <Spinner />

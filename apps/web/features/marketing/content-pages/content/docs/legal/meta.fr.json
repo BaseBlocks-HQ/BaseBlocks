@@ -1,4 +1,10 @@
 {
   "title": "Legal",
-  "pages": ["index", "cookie-policy", "legal-notice", "subprocessors"]
+  "pages": [
+    "index",
+    "licensing",
+    "cookie-policy",
+    "legal-notice",
+    "subprocessors"
+  ]
 }

@@ -19,6 +19,28 @@ import type {
   EditorAiRunnerOutput,
   EditorAiRunBudget,
 } from "./types";
+import {
+  gatewayUsdToProviderCostUnits,
+  gatewayUsdToRetailCreditUnits,
+} from "./gateway-accounting";
+
+export class EditorAiRunnerFailure extends Error {
+  readonly telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]>;
+
+  constructor(
+    cause: unknown,
+    telemetry: NonNullable<EditorAiRunnerOutput["telemetry"]>,
+  ) {
+    super(
+      cause instanceof Error ? cause.message : "AI Gateway request failed",
+      {
+        cause,
+      },
+    );
+    this.name = "EditorAiRunnerFailure";
+    this.telemetry = telemetry;
+  }
+}
 
 export function sanitizeRunnerTelemetry(
   result: unknown,
@@ -59,22 +81,6 @@ export function sanitizeRunnerTelemetry(
       : [];
   });
   const toolCalls = Array.isArray(value.toolCalls) ? value.toolCalls : [];
-  const gatewayCosts = steps.flatMap((step) => {
-    if (!step || typeof step !== "object") return [];
-    const metadata = (step as { providerMetadata?: unknown }).providerMetadata;
-    if (!metadata || typeof metadata !== "object") return [];
-    const gatewayMetadata = (metadata as Record<string, unknown>).gateway;
-    if (!gatewayMetadata || typeof gatewayMetadata !== "object") return [];
-    const rawCost = (gatewayMetadata as Record<string, unknown>).cost;
-    const cost =
-      typeof rawCost === "number"
-        ? rawCost
-        : typeof rawCost === "string"
-          ? Number(rawCost)
-          : Number.NaN;
-    return Number.isFinite(cost) && cost >= 0 ? [cost] : [];
-  });
-  const gatewayCostUsd = gatewayCosts.reduce((total, cost) => total + cost, 0);
   const toolNames = [
     ...new Set(
       toolCalls.flatMap((call) =>
@@ -106,7 +112,112 @@ export function sanitizeRunnerTelemetry(
       ? { warningCount: value.warnings.length }
       : {}),
     ...(toolNames.length ? { toolNames } : {}),
-    ...(gatewayCosts.length ? { gatewayCostUsd } : {}),
+  };
+}
+
+type GatewayGenerationInfo = Awaited<
+  ReturnType<typeof gateway.getGenerationInfo>
+>;
+
+type GatewayAccountingDependencies = {
+  getGenerationInfo?: (id: string) => Promise<GatewayGenerationInfo>;
+  retryDelaysMs?: readonly number[];
+  sleep?: (milliseconds: number) => Promise<void>;
+};
+
+export async function resolveGatewayAccounting(
+  generationIds: string[],
+  requestedModelId: string,
+  environment: "sandbox" | "production",
+  dependencies: GatewayAccountingDependencies = {},
+) {
+  const uniqueGenerationIds = [...new Set(generationIds)];
+  if (uniqueGenerationIds.length === 0) return {};
+  const getGenerationInfo =
+    dependencies.getGenerationInfo ??
+    ((id: string) => gateway.getGenerationInfo({ id }));
+  const retryDelaysMs = dependencies.retryDelaysMs ?? [];
+  const sleep =
+    dependencies.sleep ??
+    ((milliseconds: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, milliseconds)));
+  const generationsById = new Map<string, GatewayGenerationInfo>();
+  let pendingIds = uniqueGenerationIds;
+
+  for (let attempt = 0; pendingIds.length > 0; attempt += 1) {
+    const results = await Promise.allSettled(
+      pendingIds.map((id) => getGenerationInfo(id)),
+    );
+    const unresolved: string[] = [];
+    results.forEach((result, index) => {
+      const id = pendingIds[index];
+      if (!id) return;
+      if (result.status === "fulfilled") {
+        generationsById.set(id, result.value);
+      } else {
+        unresolved.push(id);
+      }
+    });
+    pendingIds = unresolved;
+    if (pendingIds.length === 0 || attempt >= retryDelaysMs.length) break;
+    await sleep(retryDelaysMs[attempt] ?? 0);
+  }
+
+  if (pendingIds.length > 0) {
+    return {
+      requestedModelId,
+      environment,
+      feature: "editorAgent" as const,
+    };
+  }
+  const generations = uniqueGenerationIds.map((id) => {
+    const generation = generationsById.get(id);
+    if (!generation)
+      throw new Error("Gateway generation accounting is incomplete");
+    return generation;
+  });
+  return {
+    generationSummaries: generations.map((generation) => ({
+      generationId: generation.id,
+      totalCostUnits: gatewayUsdToProviderCostUnits(generation.totalCost),
+      retailChargeUnits: gatewayUsdToRetailCreditUnits(generation.totalCost),
+      resolvedModelId: generation.model,
+      provider: generation.providerName,
+      inputTokens: generation.promptTokens,
+      outputTokens: generation.completionTokens,
+      reasoningTokens: generation.reasoningTokens,
+      cachedInputTokens: generation.cachedTokens,
+      cacheCreationTokens: generation.cacheCreationTokens,
+      webSearchCalls: generation.billableWebSearchCalls,
+      latencyMs: generation.latency,
+      finishReason: generation.finishReason,
+    })),
+    gatewayCostUnits: generations.reduce(
+      (sum, generation) =>
+        sum + gatewayUsdToProviderCostUnits(generation.totalCost),
+      0n,
+    ),
+    retailChargeUnits: generations.reduce(
+      (sum, generation) =>
+        sum + gatewayUsdToRetailCreditUnits(generation.totalCost),
+      0n,
+    ),
+    gatewayCostUsd: generations.reduce(
+      (sum, generation) => sum + generation.totalCost,
+      0,
+    ),
+    requestedModelId,
+    resolvedModelId:
+      new Set(generations.map((generation) => generation.model)).size === 1
+        ? generations[0]?.model
+        : undefined,
+    provider:
+      new Set(generations.map((generation) => generation.providerName)).size ===
+      1
+        ? generations[0]?.providerName
+        : "multiple",
+    environment,
+    feature: "editorAgent",
   };
 }
 
@@ -117,8 +228,7 @@ export function assertRunnerBudget(
   if (
     telemetry.inputTokens === undefined ||
     telemetry.outputTokens === undefined ||
-    telemetry.steps === undefined ||
-    telemetry.gatewayCostUsd === undefined
+    telemetry.steps === undefined
   ) {
     throw new Error(
       "AI Gateway did not return complete usage and cost accounting",
@@ -133,7 +243,10 @@ export function assertRunnerBudget(
   if (telemetry.outputTokens > budget.maxOutputTokens) {
     throw new Error("Editor AI output-token budget exceeded");
   }
-  if (telemetry.gatewayCostUsd > budget.maxSpendUsd) {
+  if (
+    telemetry.retailChargeUnits !== undefined &&
+    telemetry.retailChargeUnits > budget.maxChargeUnits
+  ) {
     throw new Error("Editor AI spend budget exceeded");
   }
 }
@@ -191,14 +304,58 @@ class EditorWorkspaceRunner implements EditorAiRunner {
       model: gateway(this.modelId),
       store,
       maxRequests: Math.min(40, input.budget.maxRequests),
+      maxInputTokens: input.budget.maxInputTokens,
       maxOutputTokens: input.budget.maxOutputTokens,
       validateWorkspace,
+      providerOptions: {
+        gateway: {
+          user: input.attribution.actorId,
+          tags: [
+            `workspace:${input.attribution.organizationId}`,
+            `feature:${input.attribution.feature}`,
+            `env:${input.attribution.environment}`,
+            `run:${input.attribution.runId}`,
+            `policy:${input.attribution.policyVersion}`,
+          ],
+        },
+      },
     });
-    const result = await session.agent.generate({
-      prompt: input.prompt,
-      abortSignal: input.abortSignal,
-    });
-    const telemetry = sanitizeRunnerTelemetry(result);
+    let result: Awaited<ReturnType<typeof session.agent.generate>>;
+    try {
+      result = await session.agent.generate({
+        prompt: input.prompt,
+        abortSignal: input.abortSignal,
+      });
+    } catch (error) {
+      const generationId =
+        error &&
+        typeof error === "object" &&
+        typeof (error as { generationId?: unknown }).generationId === "string"
+          ? (error as { generationId: string }).generationId
+          : undefined;
+      if (generationId) {
+        throw new EditorAiRunnerFailure(error, {
+          generationIds: [generationId],
+          ...(await resolveGatewayAccounting(
+            [generationId],
+            this.modelId,
+            input.attribution.environment,
+          )),
+        });
+      }
+      throw error;
+    }
+    const baseTelemetry = sanitizeRunnerTelemetry(result);
+    const telemetry = baseTelemetry
+      ? {
+          ...baseTelemetry,
+          ...(await resolveGatewayAccounting(
+            baseTelemetry.generationIds ?? [],
+            this.modelId,
+            input.attribution.environment,
+          )),
+        }
+      : undefined;
     if (!telemetry) {
       throw new Error("AI Gateway did not return run telemetry");
     }

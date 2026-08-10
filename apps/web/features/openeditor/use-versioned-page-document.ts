@@ -20,12 +20,14 @@ type SaveResult = VersionedDocument & {
 };
 
 export function useVersionedPageDocument({
+  authoritativeRefreshRevision = 0,
   onError,
   onSaveStatusChange,
   pageId,
   remote,
   save,
 }: {
+  authoritativeRefreshRevision?: number;
   onError: () => void;
   onSaveStatusChange?: (status: SaveStatus) => void;
   pageId: Id<"pages">;
@@ -43,6 +45,8 @@ export function useVersionedPageDocument({
   const pendingRef = useRef<OpenEditorDocument | undefined>(undefined);
   const inFlightDocumentRef = useRef<OpenEditorDocument | undefined>(undefined);
   const savingRef = useRef(false);
+  const writeGenerationRef = useRef(0);
+  const authoritativeRefreshRevisionRef = useRef(authoritativeRefreshRevision);
   const conflictRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const mountedRef = useRef(true);
@@ -61,8 +65,13 @@ export function useVersionedPageDocument({
 
   const persist = useCallback(async () => {
     if (savingRef.current || !baseHashRef.current) return;
+    const writeGeneration = writeGenerationRef.current;
     savingRef.current = true;
-    while (pendingRef.current && baseHashRef.current) {
+    while (
+      writeGeneration === writeGenerationRef.current &&
+      pendingRef.current &&
+      baseHashRef.current
+    ) {
       const submitted = pendingRef.current;
       if (!submitted) break;
       pendingRef.current = undefined;
@@ -74,6 +83,7 @@ export function useVersionedPageDocument({
         content: submitted,
         expectedContentHash,
       }).catch(() => null);
+      if (writeGeneration !== writeGenerationRef.current) return;
       if (!result) {
         inFlightDocumentRef.current = undefined;
         if (mountedRef.current) {
@@ -133,6 +143,25 @@ export function useVersionedPageDocument({
     onSaveStatusChangeRef.current?.("saved");
     savingRef.current = false;
   }, [apply, pageId, save]);
+
+  useEffect(() => {
+    if (
+      authoritativeRefreshRevisionRef.current === authoritativeRefreshRevision
+    ) {
+      return;
+    }
+    authoritativeRefreshRevisionRef.current = authoritativeRefreshRevision;
+    writeGenerationRef.current += 1;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = undefined;
+    }
+    pendingRef.current = undefined;
+    inFlightDocumentRef.current = undefined;
+    savingRef.current = false;
+    conflictRef.current = false;
+    onSaveStatusChangeRef.current?.("saved");
+  });
 
   const schedule = useCallback(
     (delay: number) => {

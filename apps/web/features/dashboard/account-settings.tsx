@@ -4,7 +4,6 @@ import { useTeamAccess } from "@/features/authentication/team-access";
 import type { WorkspaceUser } from "@/features/authentication/model";
 import { AccountSection } from "@/features/dashboard/settings/account-section";
 import { OrganizationsSection } from "@/features/dashboard/settings/organizations-section";
-import { hasOrganizationRole } from "@baseblocks/backend/organization-policy";
 import { CogIcon, CorporateIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@baseblocks/ui/button";
@@ -134,14 +133,7 @@ export function AccountSettings({
           </Sidebar>
           <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7">
             {section === "account" ? (
-              <AccountSection
-                ownedOrganizationCount={
-                  teams.filter((candidate) =>
-                    hasOrganizationRole(candidate.memberRole, "owner"),
-                  ).length
-                }
-                user={user}
-              />
+              <AccountSection user={user} />
             ) : (
               <OrganizationsSection
                 currentOrganizationId={team._id}

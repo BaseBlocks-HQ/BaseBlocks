@@ -52,10 +52,12 @@ type Member = {
 export function OrganizationManagement({
   organization,
   currentOrganizationId,
+  remainingWorkspaceSlug,
   user,
 }: {
   organization: TeamRecord;
   currentOrganizationId: string;
+  remainingWorkspaceSlug: string | null;
   user: WorkspaceUser | null;
 }) {
   const t = useTranslations("settings.organizations");
@@ -126,7 +128,9 @@ export function OrganizationManagement({
       });
       if (result.error) throw result.error;
       toast.success(t("left", { name: organization.name }));
-      window.location.href = "/dashboard";
+      window.location.href = remainingWorkspaceSlug
+        ? getTeamDashboardPath(remainingWorkspaceSlug)
+        : "/onboarding";
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("leaveFailed"));
       setWorking(null);

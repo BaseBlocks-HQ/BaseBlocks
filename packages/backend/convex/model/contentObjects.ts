@@ -4,6 +4,7 @@ import {
   extractOpenEditorReferences,
   type OpenEditorDocument,
 } from "../pageContentFormat";
+import { recordStorageUsageEvent } from "./storageTelemetry";
 
 type MutationCtx = Pick<GenericMutationCtx<DataModel>, "db">;
 
@@ -73,6 +74,17 @@ export async function getOrCreateContentObject(
     fileIds,
     pageIds,
     createdAt: value.createdAt,
+  });
+  const site = await ctx.db.get(value.siteId);
+  if (!site) throw new Error("Site disappeared while recording content");
+  await recordStorageUsageEvent(ctx, {
+    organizationId: site.organizationId,
+    siteId: site._id,
+    contentRevisionId: revisionId,
+    kind: "contentCreate",
+    bytes: value.contentSize,
+    idempotencyKey: `content:create:${revisionId}`,
+    now: value.createdAt,
   });
   return { revisionId, libraryIds, fileIds, pageIds };
 }
