@@ -1,4 +1,5 @@
 import { SiteEditor } from "@/features/editor/editor";
+import { editorAi } from "@/flags";
 import { getEditorAiReadiness } from "@/features/openeditor-ai/server/readiness";
 import { getToken } from "@/lib/auth/server";
 import { getServerConvexClient } from "@/lib/convex/server";
@@ -11,14 +12,18 @@ type Props = {
 };
 
 export default async function TeamSiteEditorPage({ params }: Props) {
-  const [{ siteId, teamSlug }, token] = await Promise.all([params, getToken()]);
+  const [{ siteId, teamSlug }, editorAiEnabled, token] = await Promise.all([
+    params,
+    editorAi(),
+    getToken(),
+  ]);
   const requestHeaders = await headers();
   const readiness = getEditorAiReadiness(
     process.env,
     requestHeaders.get("x-vercel-oidc-token"),
   );
   const editorAiReady = Boolean(
-    readiness.ready && token && process.env.EDITOR_AI_MODEL,
+    editorAiEnabled && readiness.ready && token && process.env.EDITOR_AI_MODEL,
   );
   const availability =
     editorAiReady && token && process.env.EDITOR_AI_MODEL
@@ -33,6 +38,7 @@ export default async function TeamSiteEditorPage({ params }: Props) {
   return (
     <SiteEditor
       aiAvailabilityReason={availability?.reason ?? "policyUnavailable"}
+      editorAiEnabled={editorAiEnabled}
       siteId={siteId}
       teamSlug={teamSlug}
     />

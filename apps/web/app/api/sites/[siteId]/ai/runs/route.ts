@@ -9,6 +9,7 @@ import {
 import { getEditorAiReadiness } from "@/features/openeditor-ai/server/readiness";
 import { createProductionEditorAiRunner } from "@/features/openeditor-ai/server/runners";
 import { reconcileHostedAiReservationsWithBackoff } from "@/features/openeditor-ai/server/reconciliation";
+import { editorAi } from "@/flags";
 import { getToken } from "@/lib/auth/server";
 import type { Id } from "@baseblocks/backend";
 import { after, NextResponse } from "next/server";
@@ -35,6 +36,9 @@ export async function GET(request: Request) {
   if (!(await requireToken())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!(await editorAi())) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   return NextResponse.json(
     {
       editorAi: getEditorAiReadiness(
@@ -53,6 +57,9 @@ export async function POST(
   const token = await requireToken();
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await editorAi())) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   const requestOidcToken = request.headers.get("x-vercel-oidc-token");
   const readiness = getEditorAiReadiness(process.env, requestOidcToken);

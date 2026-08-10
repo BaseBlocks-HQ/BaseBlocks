@@ -58,6 +58,7 @@ interface SiteHeaderContentProps {
   onUnpublish?: () => void;
   hasUnpublishedChanges: boolean;
   aiChatOpen: boolean;
+  editorAiEnabled: boolean;
   onToggleAiChat: () => void;
 }
 
@@ -75,6 +76,7 @@ export function SiteHeaderContent({
   onUnpublish,
   hasUnpublishedChanges,
   aiChatOpen,
+  editorAiEnabled,
   onToggleAiChat,
 }: SiteHeaderContentProps) {
   const { canEdit } = useEditorSite();
@@ -100,6 +102,7 @@ export function SiteHeaderContent({
           siteSlug={siteSlug}
           teamSlug={teamSlug}
           aiChatOpen={aiChatOpen}
+          editorAiEnabled={editorAiEnabled}
           onToggleAiChat={onToggleAiChat}
         />
       </div>
@@ -305,6 +308,7 @@ function SiteHeaderActions({
   siteSlug,
   teamSlug,
   aiChatOpen,
+  editorAiEnabled,
   onToggleAiChat,
 }: {
   canEdit: boolean;
@@ -321,6 +325,7 @@ function SiteHeaderActions({
   siteSlug: string;
   teamSlug: string;
   aiChatOpen: boolean;
+  editorAiEnabled: boolean;
   onToggleAiChat: () => void;
 }) {
   const t = useTranslations("editor.header");
@@ -328,7 +333,9 @@ function SiteHeaderActions({
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
       {canEdit ? (
         <>
-          <ChatAction open={aiChatOpen} onToggle={onToggleAiChat} />
+          {editorAiEnabled ? (
+            <ChatAction open={aiChatOpen} onToggle={onToggleAiChat} />
+          ) : null}
           <PublishChangesAction
             onPublish={(returnFocusTo) =>
               onOpenDialog("publish", returnFocusTo)

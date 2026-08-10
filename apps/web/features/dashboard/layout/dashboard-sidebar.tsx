@@ -89,8 +89,10 @@ const languageNames: Record<Locale, string> = {
 
 export function DashboardSidebarContent({
   analyticsEnabled,
+  billingEnabled,
 }: {
   analyticsEnabled: boolean;
+  billingEnabled: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -143,7 +145,7 @@ export function DashboardSidebarContent({
       isActive: pathname.startsWith(teamMembersPath),
     },
     {
-      available: true,
+      available: billingEnabled,
       title: billingT("title"),
       href: teamBillingPath,
       icon: CreditCardIcon,
