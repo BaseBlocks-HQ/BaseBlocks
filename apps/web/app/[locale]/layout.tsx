@@ -1,14 +1,27 @@
-import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/theme-provider";
-import type { Locale } from "@baseblocks/i18n";
-import type { Metadata, ResolvingMetadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
+import { getMarketingSiteUrl } from "@/lib/seo/site-url";
+import type { Metadata, Viewport } from "next";
+import { Manrope, Newsreader } from "next/font/google";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import "../globals.css";
 
-type Props = {
-  children: ReactNode;
-  params: Promise<{ locale: string }>;
+const MARKETING_SITE_URL = getMarketingSiteUrl();
+const landingSans = Manrope({
+  subsets: ["latin"],
+  variable: "--font-landing-sans",
+});
+const landingSerif = Newsreader({
+  axes: ["opsz"],
+  subsets: ["latin"],
+  variable: "--font-landing-serif",
+});
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "black",
 };
 
 export function generateStaticParams() {
@@ -20,52 +33,82 @@ const OG_LOCALE_MAP: Record<string, string> = {
   fr: "fr_FR",
 };
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  const { locale } = await params;
-  setRequestLocale(locale);
-  const t = await getTranslations({ locale, namespace: "metadata" });
-  const parentMetadata = await parent;
-  const parentOpenGraph = parentMetadata.openGraph;
+export async function generateMetadata(): Promise<Metadata> {
+  const [locale, t] = await Promise.all([
+    getLocale(),
+    getTranslations("metadata"),
+  ]);
 
   return {
-    title: t("title"),
+    metadataBase: MARKETING_SITE_URL,
+    title: {
+      default: t("title"),
+      template: "%s | BaseBlocks",
+    },
     description: t("description"),
-    openGraph: parentOpenGraph
-      ? {
-          ...parentOpenGraph,
-          url: parentOpenGraph.url ?? undefined,
-          locale: OG_LOCALE_MAP[locale] ?? "en_US",
-        }
-      : {
-          locale: OG_LOCALE_MAP[locale] ?? "en_US",
+    keywords: [
+      "site builder",
+      "internal sites",
+      "team collaboration",
+      "documentation",
+      "knowledge base",
+    ],
+    openGraph: {
+      type: "website",
+      locale: OG_LOCALE_MAP[locale] ?? "en_US",
+      url: MARKETING_SITE_URL,
+      siteName: "BaseBlocks",
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    manifest: "/site.webmanifest",
+    icons: {
+      icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+      apple: [
+        {
+          url: "/apple-touch-icon.png",
+          sizes: "180x180",
+          type: "image/png",
         },
+      ],
+    },
   };
 }
 
-export default async function LocaleLayout({ children, params }: Props) {
-  const { locale } = await params;
-
-  // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  // Enable static rendering
-  setRequestLocale(locale);
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const locale = await getLocale();
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      disableTransitionOnChange
-      enableSystem
-    >
-      <div className="contents" lang={locale}>
-        {children}
-      </div>
-    </ThemeProvider>
+    <html lang={locale} suppressHydrationWarning>
+      <body
+        className={`${landingSans.variable} ${landingSerif.variable} min-h-screen flex flex-col`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          {children}
+        </ThemeProvider>
+        {process.env.VERCEL === "1" ? (
+          <>
+            <script
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: Static Vercel Analytics bootstrap; no user data is interpolated.
+              dangerouslySetInnerHTML={{
+                __html:
+                  "window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};",
+              }}
+            />
+            <script defer src="/_vercel/insights/script.js" />
+          </>
+        ) : null}
+      </body>
+    </html>
   );
 }

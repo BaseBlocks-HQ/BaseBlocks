@@ -4,18 +4,15 @@ import "@/app/fumadocs.css";
 import { GithubInfo } from "fumadocs-ui/components/github-info";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { getLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 
 type LayoutProps = {
   children: ReactNode;
-  params: Promise<{ locale: string }>;
 };
 
-export default async function DocsSectionLayout({
-  children,
-  params,
-}: LayoutProps) {
-  const { locale } = await params;
+export default async function DocsSectionLayout({ children }: LayoutProps) {
+  const locale = await getLocale();
   const homeUrl = locale === "fr" ? "/fr" : "/";
 
   return (
