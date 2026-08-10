@@ -17,7 +17,7 @@ export function BillingPage() {
   const beginCheckout = useAction(api.billing.beginCheckout);
   const openCustomerPortal = useAction(api.billing.openCustomerPortal);
   const [actionPending, setActionPending] = useState(false);
-  const checkoutKeyRef = useRef<string | null>(null);
+  const checkoutKeysRef = useRef(new Map<string, string>());
   const creditCheckoutKeysRef = useRef(new Map<string, string>());
 
   useEffect(() => {
@@ -45,11 +45,18 @@ export function BillingPage() {
     );
   }
 
-  const plusOption =
-    options.find(
-      (option) =>
-        option.kind === "plus" && option.recurringInterval === "month",
-    ) ?? options.find((option) => option.kind === "plus");
+  const plusOptions = options.flatMap((option) =>
+    option.kind === "plus" && option.recurringInterval
+      ? [
+          {
+            sku: option.sku,
+            recurringInterval: option.recurringInterval,
+            priceAmountMinor: option.priceAmountMinor,
+            currency: option.currency,
+          },
+        ]
+      : [],
+  );
   const creditTopUpOption = options.find(
     (option) =>
       option.kind === "aiCreditPack" &&
@@ -86,16 +93,18 @@ export function BillingPage() {
       canManageBilling={entitlement.canManageBilling}
       entitlement={entitlement}
       creditTopUp={creditTopUp}
+      plusOptions={plusOptions}
       onCheckout={
-        plusOption
-          ? () => {
-              const checkoutKey = checkoutKeyRef.current ?? crypto.randomUUID();
-              checkoutKeyRef.current = checkoutKey;
+        plusOptions.length > 0
+          ? (sku) => {
+              const checkoutKey =
+                checkoutKeysRef.current.get(sku) ?? crypto.randomUUID();
+              checkoutKeysRef.current.set(sku, checkoutKey);
               const returnUrl = window.location.href;
               void redirectToBilling(() =>
                 beginCheckout({
                   organizationId: team._id,
-                  sku: plusOption.sku,
+                  sku,
                   idempotencyKey: checkoutKey,
                   successUrl: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}checkout=success`,
                   returnUrl,

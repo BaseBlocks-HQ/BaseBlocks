@@ -42,7 +42,6 @@ import { type ReactNode, useRef } from "react";
 import type { EditorDialogName } from "./editor-dialogs";
 
 interface SiteHeaderContentProps {
-  editorAiEnabled: boolean;
   isPreviewing?: boolean;
   teamSlug: string;
   siteSlug: string;
@@ -63,7 +62,6 @@ interface SiteHeaderContentProps {
 }
 
 export function SiteHeaderContent({
-  editorAiEnabled,
   isPreviewing = false,
   teamSlug,
   siteSlug,
@@ -92,7 +90,6 @@ export function SiteHeaderContent({
         />
         <SiteHeaderActions
           canEdit={canEdit}
-          editorAiEnabled={editorAiEnabled}
           isPreviewing={isPreviewing}
           onOpenDialog={onOpenDialog}
           onTogglePreview={onTogglePreview}
@@ -298,7 +295,6 @@ function EditorSiteSwitcher({
 
 function SiteHeaderActions({
   canEdit,
-  editorAiEnabled,
   isPreviewing,
   onOpenDialog,
   onTogglePreview,
@@ -312,7 +308,6 @@ function SiteHeaderActions({
   onToggleAiChat,
 }: {
   canEdit: boolean;
-  editorAiEnabled: boolean;
   isPreviewing: boolean;
   onOpenDialog: (
     dialog: EditorDialogName,
@@ -333,9 +328,7 @@ function SiteHeaderActions({
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
       {canEdit ? (
         <>
-          {editorAiEnabled ? (
-            <ChatAction open={aiChatOpen} onToggle={onToggleAiChat} />
-          ) : null}
+          <ChatAction open={aiChatOpen} onToggle={onToggleAiChat} />
           <PublishChangesAction
             onPublish={(returnFocusTo) =>
               onOpenDialog("publish", returnFocusTo)

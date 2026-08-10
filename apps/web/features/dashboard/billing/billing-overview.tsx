@@ -1,14 +1,12 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
-  CheckmarkCircle02Icon,
   CreditCardIcon,
   SparklesIcon,
   UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
-import { Label } from "@baseblocks/ui/label";
 import {
   Card,
   CardAction,
@@ -20,6 +18,15 @@ import {
 } from "@baseblocks/ui/card";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
+import {
+  BillingCreditCard,
+  type AiCreditTopUpOption,
+} from "@/features/dashboard/billing/billing-credit-card";
+import {
+  BillingPlanCards,
+  type PlusBillingOption,
+} from "@/features/dashboard/billing/billing-plan-cards";
 import {
   DashboardPage,
   DashboardPageHeader,
@@ -34,14 +41,10 @@ import {
 
 export interface BillingOverviewProps {
   entitlement: WorkspaceBillingEntitlement;
-  creditTopUp?: {
-    sku: string;
-    currency: string;
-    minimumAmountMinor: bigint;
-    quickAmountsMinor: bigint[];
-  };
+  creditTopUp?: AiCreditTopUpOption;
   canManageBilling: boolean;
-  onCheckout?: () => void;
+  plusOptions: PlusBillingOption[];
+  onCheckout?: (sku: string) => void;
   onCreditCheckout?: (sku: string, amountMinor?: bigint) => void;
   onOpenPortal?: () => void;
   actionPending?: boolean;
@@ -102,23 +105,11 @@ function BillingStatusCallout({
   );
 }
 
-function PlanFeature({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex gap-2 text-sm text-muted-foreground">
-      <HugeiconsIcon
-        aria-hidden="true"
-        className="mt-0.5 size-4 shrink-0 text-foreground"
-        icon={CheckmarkCircle02Icon}
-      />
-      <span>{children}</span>
-    </li>
-  );
-}
-
 export function BillingOverview({
   entitlement,
   creditTopUp,
   canManageBilling,
+  plusOptions,
   onCheckout,
   onCreditCheckout,
   onOpenPortal,
@@ -129,6 +120,13 @@ export function BillingOverview({
   const isPlus = canUsePaidFeatures(entitlement);
   const additionalSeats = getAdditionalSeatCount(entitlement);
   const callout = getBillingCallout(entitlement);
+  const [selectedPlusSku, setSelectedPlusSku] = useState(
+    plusOptions.find((option) => option.recurringInterval === "year")?.sku ??
+      plusOptions[0]?.sku,
+  );
+  const selectedPlusOption =
+    plusOptions.find((option) => option.sku === selectedPlusSku) ??
+    plusOptions[0];
 
   const effectiveThrough = entitlement.effectiveThrough
     ? new Intl.DateTimeFormat(locale, {
@@ -224,154 +222,26 @@ export function BillingOverview({
         </Card>
       </section>
 
-      <section
-        aria-labelledby="billing-plans"
-        className="grid gap-4 md:grid-cols-2"
-      >
-        <h2 className="sr-only" id="billing-plans">
-          {t("plans.title")}
-        </h2>
-        <Card
-          className={cn(
-            "gap-5 shadow-none",
-            !isPlus ? "border-foreground/20" : "border-foreground/[0.07]",
-          )}
-        >
-          <CardHeader>
-            <CardTitle>{t("plans.free.name")}</CardTitle>
-            <CardDescription>{t("plans.free.description")}</CardDescription>
-            {!isPlus ? (
-              <CardAction>
-                <Badge variant="outline">{t("plans.current")}</Badge>
-              </CardAction>
-            ) : null}
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              <PlanFeature>{t("plans.free.features.sites")}</PlanFeature>
-              <PlanFeature>{t("plans.free.features.publishing")}</PlanFeature>
-              <PlanFeature>
-                {t("plans.free.features.collaboration")}
-              </PlanFeature>
-              <PlanFeature>{t("plans.free.features.ai")}</PlanFeature>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card
-          className={cn(
-            "gap-5 shadow-none",
-            isPlus ? "border-primary/40" : "border-foreground/[0.07]",
-          )}
-        >
-          <CardHeader>
-            <CardTitle>{t("plans.plus.name")}</CardTitle>
-            <CardDescription>{t("plans.plus.description")}</CardDescription>
-            {isPlus ? (
-              <CardAction>
-                <Badge>{t("plans.current")}</Badge>
-              </CardAction>
-            ) : null}
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              <PlanFeature>{t("plans.plus.features.everything")}</PlanFeature>
-              <PlanFeature>{t("plans.plus.features.ai")}</PlanFeature>
-              <PlanFeature>{t("plans.plus.features.seats")}</PlanFeature>
-            </ul>
-          </CardContent>
-          {canManageBilling ? (
-            <CardFooter>
-              {isPlus && onOpenPortal ? (
-                <Button
-                  className="w-full"
-                  disabled={actionPending}
-                  onClick={onOpenPortal}
-                  type="button"
-                  variant="outline"
-                >
-                  {t("actions.manage")}
-                </Button>
-              ) : !isPlus && onCheckout ? (
-                <Button
-                  className="w-full"
-                  disabled={actionPending}
-                  onClick={onCheckout}
-                  type="button"
-                >
-                  {t("actions.upgrade")}
-                </Button>
-              ) : (
-                <Button className="w-full" disabled variant="outline">
-                  {t("actions.unavailable")}
-                </Button>
-              )}
-            </CardFooter>
-          ) : (
-            <CardFooter>
-              <p className="text-sm text-muted-foreground">
-                {t("adminRequired")}
-              </p>
-            </CardFooter>
-          )}
-        </Card>
-      </section>
+      <BillingPlanCards
+        actionPending={actionPending}
+        canManageBilling={canManageBilling}
+        isPlus={isPlus}
+        locale={locale}
+        onCheckout={onCheckout}
+        onOpenPortal={onOpenPortal}
+        onSelectPlusSku={setSelectedPlusSku}
+        plusOptions={plusOptions}
+        selectedPlusOption={selectedPlusOption}
+      />
 
       {creditTopUp ? (
-        <section aria-labelledby="billing-ai-credits" className="space-y-3">
-          <div>
-            <h2 className="font-semibold" id="billing-ai-credits">
-              {t("credits.title")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t(
-                isPlus ? "credits.plusDescription" : "credits.freeDescription",
-              )}
-            </p>
-          </div>
-          <Card className="gap-5 shadow-none">
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label>{t("credits.quickAmounts")}</Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {creditTopUp.quickAmountsMinor.map((amountMinor) => {
-                    const amount = new Intl.NumberFormat(locale, {
-                      style: "currency",
-                      currency: creditTopUp.currency.toUpperCase(),
-                      maximumFractionDigits: 0,
-                    }).format(Number(amountMinor) / 100);
-                    return (
-                      <Button
-                        disabled={actionPending || !onCreditCheckout}
-                        key={String(amountMinor)}
-                        onClick={() =>
-                          onCreditCheckout?.(creditTopUp.sku, amountMinor)
-                        }
-                        type="button"
-                        variant="outline"
-                      >
-                        {amount}
-                      </Button>
-                    );
-                  })}
-                  <Button
-                    disabled={actionPending || !onCreditCheckout}
-                    onClick={() => onCreditCheckout?.(creditTopUp.sku)}
-                    type="button"
-                    variant="outline"
-                  >
-                    {t("credits.customAmount")}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("credits.customMinimum", {
-                    minimum: Number(creditTopUp.minimumAmountMinor) / 100,
-                  })}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        <BillingCreditCard
+          actionPending={actionPending}
+          creditTopUp={creditTopUp}
+          isPlus={isPlus}
+          locale={locale}
+          onCreditCheckout={onCreditCheckout}
+        />
       ) : null}
     </DashboardPage>
   );

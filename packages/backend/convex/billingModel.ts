@@ -17,6 +17,7 @@ import {
   revokeAiCreditGrant,
 } from "./model/aiCredits";
 import { parsePolarOrderAmounts } from "./model/polarOrderAmounts";
+import { shouldApplyProviderUpdate } from "./model/billingEventOrdering";
 import {
   normalizeSubscriptionLifecycle,
   parsePolarSubscription,
@@ -599,7 +600,10 @@ async function upsertSubscription(
         .eq("providerSubscriptionId", subscription.id),
     )
     .unique();
-  if (existing && existing.providerModifiedAt > providerModifiedAt)
+  if (
+    existing &&
+    !shouldApplyProviderUpdate(existing.providerModifiedAt, providerModifiedAt)
+  )
     return existing;
   const catalog = await ctx.db
     .query("billingCatalogItems")
@@ -786,7 +790,10 @@ async function processOrder(
     .unique();
   const now = Date.now();
   const providerModifiedAt = timestamp(data.modified_at, event.eventOccurredAt);
-  if (existing && existing.providerModifiedAt > providerModifiedAt) {
+  if (
+    existing &&
+    !shouldApplyProviderUpdate(existing.providerModifiedAt, providerModifiedAt)
+  ) {
     return existing._id;
   }
   const providerSubscriptionId = string(data.subscription_id);

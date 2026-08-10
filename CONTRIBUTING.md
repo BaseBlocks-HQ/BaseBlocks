@@ -2,14 +2,6 @@
 
 Thanks for your interest in contributing to BaseBlocks! This document covers the setup, workflow, and standards for contributing.
 
-## Licensing of Contributions
-
-BaseBlocks is source-available under the [Functional Source License, Version 1.1, MIT Future License (FSL-1.1-MIT)](./LICENSE). FSL is a Fair Source license, not an OSI-approved open-source license. By submitting a contribution, you agree that it may be distributed under the repository's current license, including its rolling MIT future-license grant. You represent that you have the right to submit the contribution on those terms.
-
-Each version transitions to MIT on the second anniversary of the date that specific version was first made available under FSL-1.1-MIT. Versions previously distributed under MIT remain MIT licensed. Contributions do not grant permission to use the BaseBlocks name, logos, or other brand identifiers beyond the uses permitted by the license.
-
-If you are contributing on behalf of an employer or another rights holder, confirm that you have authorization before opening a pull request. This contribution language is not a copyright assignment or a contributor license agreement; project maintainers may request additional documentation where chain of title is unclear.
-
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 20.9

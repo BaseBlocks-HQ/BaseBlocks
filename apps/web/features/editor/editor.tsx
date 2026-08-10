@@ -33,14 +33,12 @@ interface SiteEditorProps {
     | "reconciliationRequired"
     | "policyUnavailable"
     | "siteNotFound";
-  editorAiEnabled: boolean;
   siteId: string;
   teamSlug: string;
 }
 
 function SiteEditorScreen({
   aiAvailabilityReason,
-  editorAiEnabled,
   siteId,
   teamSlug,
 }: SiteEditorProps) {
@@ -115,7 +113,6 @@ function SiteEditorScreen({
       ) : (
         <>
           <SiteHeaderContent
-            editorAiEnabled={editorAiEnabled}
             teamSlug={team.slug}
             siteSlug={site.slug}
             siteId={site._id}
@@ -142,8 +139,8 @@ function SiteEditorScreen({
             <main
               className={cn(
                 "relative min-h-0 min-w-0 flex-1 overflow-hidden",
-                editorAiEnabled && aiChatOpen && "max-lg:pointer-events-none",
-                editorAiEnabled && aiChatOpen && "lg:mr-[26rem]",
+                aiChatOpen && "max-lg:pointer-events-none",
+                aiChatOpen && "lg:mr-[26rem]",
               )}
             >
               <PortalContainerProvider value={portalContainer ?? undefined}>
@@ -159,7 +156,7 @@ function SiteEditorScreen({
                 </div>
               </PortalContainerProvider>
             </main>
-            {editorAiEnabled && aiChatOpen ? (
+            {aiChatOpen ? (
               <aside className="absolute top-(--app-header-height) right-0 bottom-0 z-30 w-full border-l bg-background shadow-xl sm:w-[26rem] lg:shadow-none">
                 <Suspense
                   fallback={

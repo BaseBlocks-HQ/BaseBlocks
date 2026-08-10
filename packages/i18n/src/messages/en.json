@@ -544,6 +544,15 @@
       "plus": {
         "name": "Plus",
         "description": "More capacity and AI-assisted workflows for growing teams.",
+        "intervals": {
+          "month": "Monthly",
+          "year": "Annual"
+        },
+        "intervalUnits": {
+          "month": "month",
+          "year": "year"
+        },
+        "pricePerMember": "{price} per member / {interval}",
         "features": {
           "everything": "Everything in Free",
           "ai": "Monthly AI credits that reset each billing period",

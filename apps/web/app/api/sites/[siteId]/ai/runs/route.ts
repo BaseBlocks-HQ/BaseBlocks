@@ -9,7 +9,6 @@ import {
 import { getEditorAiReadiness } from "@/features/openeditor-ai/server/readiness";
 import { createProductionEditorAiRunner } from "@/features/openeditor-ai/server/runners";
 import { reconcileHostedAiReservationsWithBackoff } from "@/features/openeditor-ai/server/reconciliation";
-import { editorAi } from "@/flags";
 import { getToken } from "@/lib/auth/server";
 import type { Id } from "@baseblocks/backend";
 import { after, NextResponse } from "next/server";
@@ -32,18 +31,7 @@ async function requireToken() {
   return token || null;
 }
 
-function unavailableResponse() {
-  return NextResponse.json(
-    { error: "Not found" },
-    {
-      status: 404,
-      headers: { "Cache-Control": "private, no-store" },
-    },
-  );
-}
-
 export async function GET(request: Request) {
-  if (!(await editorAi())) return unavailableResponse();
   if (!(await requireToken())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -62,10 +50,20 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ siteId: string }> },
 ) {
-  if (!(await editorAi())) return unavailableResponse();
   const token = await requireToken();
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const requestOidcToken = request.headers.get("x-vercel-oidc-token");
+  const readiness = getEditorAiReadiness(process.env, requestOidcToken);
+  if (!readiness.ready) {
+    return NextResponse.json(
+      { error: "AI is temporarily unavailable" },
+      {
+        status: 503,
+        headers: { "Cache-Control": "private, no-store" },
+      },
+    );
   }
   const requestId = request.headers.get("idempotency-key")?.trim();
   if (!requestId || requestId.length < 16 || requestId.length > 200) {
@@ -92,7 +90,6 @@ export async function POST(
     }
     const body = requestSchema.parse(JSON.parse(raw));
     const { siteId } = await context.params;
-    const requestOidcToken = request.headers.get("x-vercel-oidc-token");
     const conversation = body.conversationId
       ? createEditorAiConversationBackend(token)
       : null;

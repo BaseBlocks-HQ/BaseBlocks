@@ -544,6 +544,15 @@
       "plus": {
         "name": "Plus",
         "description": "Plus de capacité et des workflows assistés par l’IA pour les équipes en croissance.",
+        "intervals": {
+          "month": "Mensuel",
+          "year": "Annuel"
+        },
+        "intervalUnits": {
+          "month": "mois",
+          "year": "an"
+        },
+        "pricePerMember": "{price} par membre / {interval}",
         "features": {
           "everything": "Tout ce qui est inclus dans l’offre gratuite",
           "ai": "Crédits IA mensuels réinitialisés à chaque période de facturation",
