@@ -1,6 +1,8 @@
-import type { AppMessages } from "@baseblocks/i18n";
+import type { AppMessages, Locale as BaseBlocksLocale } from "@baseblocks/i18n";
 
-declare global {
-  // Use type safe message keys with `next-intl`
-  type IntlMessages = AppMessages;
+declare module "next-intl" {
+  interface AppConfig {
+    Locale: BaseBlocksLocale;
+    Messages: AppMessages;
+  }
 }

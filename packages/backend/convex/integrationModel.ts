@@ -300,6 +300,40 @@ export const recordConnectionAuthFailure = internalMutation({
   },
 });
 
+export const recordSyncRequestFailed = internalMutation({
+  args: {
+    connectionId: v.id("integrationConnections"),
+    errorMessage: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection || connection.status === "disconnected") return;
+    const state = await ctx.db
+      .query("integrationSyncStates")
+      .withIndex("by_connection_stream", (q) =>
+        q.eq("connectionId", args.connectionId).eq("stream", SYNC_STREAM),
+      )
+      .unique();
+    const update = {
+      status: "error" as const,
+      errorMessage: args.errorMessage,
+      updatedAt: Date.now(),
+    };
+    if (state) {
+      await ctx.db.patch(state._id, update);
+      return;
+    }
+    await ctx.db.insert("integrationSyncStates", {
+      connectionId: args.connectionId,
+      stream: SYNC_STREAM,
+      model: NANGO_MODEL,
+      rerunRequested: false,
+      attempt: 0,
+      ...update,
+    });
+  },
+});
+
 export const claimSync = internalMutation({
   args: {
     connectionId: v.id("integrationConnections"),

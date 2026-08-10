@@ -165,24 +165,34 @@ function ActiveTabEditor({
   pageRuntime: OpenEditorPageRuntime;
   onChange: (document: OpenEditorDocument) => void;
 }) {
+  const onChangeRef = useRef(onChange);
+  const locallyEmittedDocumentRef = useRef<OpenEditorDocument | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  const handleChange = (nextDocument: OpenEditorDocument) => {
+    locallyEmittedDocumentRef.current = nextDocument;
+    onChangeRef.current(nextDocument);
+  };
   const controller = useOpenEditorController({
     initialDocument,
     attachmentRuntime,
     imageRuntime,
     extensions,
     pageRuntime,
-    onChange,
+    onChange: handleChange,
   });
   useEffect(() => {
     if (!controller.ready) return;
+    if (initialDocument === locallyEmittedDocumentRef.current) {
+      locallyEmittedDocumentRef.current = undefined;
+      return;
+    }
     let active = true;
     const frame = requestAnimationFrame(() => {
       if (!active || !controller.ready) return;
-      if (
-        JSON.stringify(controller.getContent()) ===
-        JSON.stringify(initialDocument)
-      )
-        return;
       controller.setContent(initialDocument, { emitChange: false });
     });
     return () => {

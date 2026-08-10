@@ -3,17 +3,14 @@ import {
   type LandingCopy,
 } from "@/features/marketing/landing-page";
 import { getMarketingOrigin } from "@/lib/seo/site-url";
-import type { Locale } from "@baseblocks/i18n";
 import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-
-type Props = { params: Promise<{ locale: Locale }> };
+import { getLocale, getTranslations } from "next-intl/server";
 
 const MARKETING_ORIGIN = getMarketingOrigin();
 const OG_IMAGE = `${MARKETING_ORIGIN}/opengraph-image?v=2`;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params;
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
   const canonical = locale === "fr" ? "/fr" : "/";
   return {
     title: "BaseBlocks - Idea to site in minutes",
@@ -69,14 +66,13 @@ const landingKeys = [
   "viewDocs",
 ] as const satisfies readonly (keyof LandingCopy)[];
 
-export default async function Page({ params }: Props) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+export default async function Page() {
+  const locale = await getLocale();
   const [landing, common, language, navigation] = await Promise.all([
-    getTranslations({ locale, namespace: "landing" }),
-    getTranslations({ locale, namespace: "common" }),
-    getTranslations({ locale, namespace: "language" }),
-    getTranslations({ locale, namespace: "navigation" }),
+    getTranslations("landing"),
+    getTranslations("common"),
+    getTranslations("language"),
+    getTranslations("navigation"),
   ]);
   const copy = Object.fromEntries(
     landingKeys.map((key) => [key, landing(key)]),

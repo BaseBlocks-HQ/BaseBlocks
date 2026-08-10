@@ -1,9 +1,8 @@
 import type { PropsWithChildren } from "react";
+import { getLocale } from "next-intl/server";
 import "@/app/marketing.css";
 
-type Props = PropsWithChildren<{ params: Promise<{ locale: string }> }>;
-
-export default async function MarketingLayout({ children, params }: Props) {
-  const { locale } = await params;
+export default async function MarketingLayout({ children }: PropsWithChildren) {
+  const locale = await getLocale();
   return <div data-marketing-locale={locale}>{children}</div>;
 }

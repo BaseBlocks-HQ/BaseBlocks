@@ -6,7 +6,7 @@ import { redirect } from "@/i18n/navigation";
 import { selectMessages } from "@/i18n/messages";
 import { NextIntlClientProvider } from "next-intl";
 import { Toaster } from "@baseblocks/ui/sonner";
-import { getMessages } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
 import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 
@@ -14,13 +14,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type AppLayoutProps = PropsWithChildren<{
-  params: Promise<{ locale: string }>;
-}>;
-
-export default async function AppLayout({ children, params }: AppLayoutProps) {
+export default async function AppLayout({ children }: PropsWithChildren) {
   if (!(await getToken())) {
-    const { locale } = await params;
+    const locale = await getLocale();
     redirect({ href: "/login", locale });
   }
 

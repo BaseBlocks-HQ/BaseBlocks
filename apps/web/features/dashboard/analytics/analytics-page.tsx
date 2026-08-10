@@ -51,6 +51,15 @@ function Comparison({
   lowerIsBetter?: boolean;
   value: number;
 }) {
+  if (value === 0) {
+    return (
+      <span className="inline-flex items-center text-xs font-medium text-muted-foreground tabular-nums">
+        0%
+        <span className="sr-only"> change from the previous period</span>
+      </span>
+    );
+  }
+
   const positive = value > 0;
   const favorable = lowerIsBetter ? !positive : positive;
   const Icon = positive ? ArrowUpRight01Icon : ArrowDownRight01Icon;
@@ -71,7 +80,7 @@ function Comparison({
         strokeWidth={1.8}
       />
       {Math.abs(value)}%
-      <span className="sr-only"> compared with the previous period</span>
+      <span className="sr-only"> change from the previous period</span>
     </span>
   );
 }

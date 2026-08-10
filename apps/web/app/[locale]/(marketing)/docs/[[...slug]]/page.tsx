@@ -5,19 +5,16 @@ import {
 import { source } from "@/features/marketing/content-pages/source";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 
 type PageProps = {
-  params: Promise<{ locale: string; slug?: string[] }>;
+  params: Promise<{ slug?: string[] }>;
 };
-
-export function generateStaticParams() {
-  return source.generateParams("slug", "locale");
-}
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { locale, slug } = await params;
+  const [{ slug }, locale] = await Promise.all([params, getLocale()]);
   const page = source.getPage(slug, locale);
 
   if (!page) {
@@ -42,7 +39,7 @@ export async function generateMetadata({
 }
 
 export default async function DocsPageRoute({ params }: PageProps) {
-  const { locale, slug } = await params;
+  const [{ slug }, locale] = await Promise.all([params, getLocale()]);
   const page = source.getPage(slug, locale);
 
   if (!page) {

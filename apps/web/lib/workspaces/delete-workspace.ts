@@ -27,7 +27,7 @@ export async function deleteWorkspace(
   });
 
   for (const connectionId of manifest.connectionIds) {
-    await convex.action(api.integrations.disconnect, {
+    await convex.action(api.integrations.disconnectImmediately, {
       connectionId: connectionId as Id<"integrationConnections">,
     });
   }

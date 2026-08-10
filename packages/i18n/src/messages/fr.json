@@ -766,7 +766,7 @@
     "popupBlocked": "Autorisez les fenêtres contextuelles pour connecter cette application.",
     "connectFailed": "Impossible de démarrer la connexion.",
     "disconnectFailed": "Impossible de déconnecter l’application.",
-    "disconnected": "Application déconnectée.",
+    "disconnectRequested": "Déconnexion demandée.",
     "syncRequested": "Synchronisation demandée.",
     "syncFailed": "Impossible de relancer la synchronisation.",
     "providers": {
