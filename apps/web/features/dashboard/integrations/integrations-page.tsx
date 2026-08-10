@@ -36,7 +36,7 @@ import { Badge } from "@baseblocks/ui/badge";
 import { Button } from "@baseblocks/ui/button";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -241,8 +241,8 @@ export function IntegrationsPage({
   );
   const beginAuthorization = useAction(api.integrations.beginAuthorization);
   const reconnect = useAction(api.integrations.reconnect);
-  const disconnect = useAction(api.integrations.disconnect);
-  const retrySync = useAction(api.integrations.retrySync);
+  const disconnect = useMutation(api.integrations.disconnect);
+  const retrySync = useMutation(api.integrations.retrySync);
   const [busyId, setBusyId] = useState<string | null>(null);
   const connectedProviders = new Set(
     connections?.map((connection) => connection.provider) ?? [],
@@ -304,7 +304,7 @@ export function IntegrationsPage({
     setBusyId(connectionId);
     try {
       await disconnect({ connectionId });
-      toast.success(t("disconnected"));
+      toast.success(t("disconnectRequested"));
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("disconnectFailed"),

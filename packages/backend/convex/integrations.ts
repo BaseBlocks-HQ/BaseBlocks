@@ -1,7 +1,7 @@
 import type { IntegrationProviderKey } from "@baseblocks/domain";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import { action, internalAction, query } from "./_generated/server";
+import { action, internalAction, mutation, query } from "./_generated/server";
 import {
   type NangoContentMetadataRecord,
   getNangoIntegrationId,
@@ -37,6 +37,24 @@ function throwProviderUnavailable(provider: IntegrationProviderKey): never {
     code: "PROVIDER_UNAVAILABLE",
     message: `${provider} is not available yet`,
   });
+}
+
+async function deleteNangoConnection(connection: {
+  adapterConnectionId: string;
+  provider: IntegrationProviderKey;
+}) {
+  const search = new URLSearchParams({
+    provider_config_key: getNangoIntegrationId(connection.provider),
+  });
+  try {
+    await nangoRequest(
+      `/connections/${encodeURIComponent(connection.adapterConnectionId)}?${search}`,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    const rawMessage = error instanceof Error ? error.message : "";
+    if (!rawMessage.includes("(404)")) throw error;
+  }
 }
 
 export const listConnections = query({
@@ -183,7 +201,69 @@ export const reconnect = action({
   },
 });
 
-export const disconnect = action({
+export const disconnect = mutation({
+  args: { connectionId: v.id("integrationConnections") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection) return null;
+    await requireOrganizationPermission(ctx, connection.organizationId, {
+      resource: "integration",
+      action: "manage",
+    });
+    if (!connection.adapterConnectionId) {
+      await ctx.db.patch(args.connectionId, {
+        status: "disconnected",
+        disconnectedAt: Date.now(),
+        errorCode: undefined,
+        errorMessage: undefined,
+        updatedAt: Date.now(),
+      });
+      return null;
+    }
+
+    await ctx.db.patch(args.connectionId, {
+      status: "disconnecting",
+      updatedAt: Date.now(),
+      errorCode: undefined,
+      errorMessage: undefined,
+    });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.integrations.disconnectAdapter,
+      args,
+    );
+    return null;
+  },
+});
+
+export const disconnectAdapter = internalAction({
+  args: { connectionId: v.id("integrationConnections") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.runQuery(
+      internal.integrationModel.getConnectionForOperation,
+      args,
+    );
+    if (!connection?.adapterConnectionId) return;
+    try {
+      await deleteNangoConnection({
+        adapterConnectionId: connection.adapterConnectionId,
+        provider: connection.provider,
+      });
+      await ctx.runMutation(internal.integrationModel.finishDisconnect, args);
+    } catch (error) {
+      await ctx.runMutation(internal.integrationModel.finishDisconnect, {
+        ...args,
+        errorMessage: toPublicIntegrationError(error),
+      });
+    }
+  },
+});
+
+/**
+ * Synchronous variant for the organization-deletion route, which must finish
+ * external cleanup before it deletes the local connection records.
+ */
+export const disconnectImmediately = action({
   args: { connectionId: v.id("integrationConnections") },
   handler: async (ctx, args) => {
     const connection = await ctx.runQuery(
@@ -195,49 +275,22 @@ export const disconnect = action({
       resource: "integration",
       action: "manage",
     });
-    if (!connection.adapterConnectionId) {
-      await ctx.runMutation(internal.integrationModel.finishDisconnect, args);
-      return null;
-    }
-
-    await ctx.runMutation(internal.integrationModel.markDisconnecting, args);
-    try {
-      const integrationId = getNangoIntegrationId(connection.provider);
-      const search = new URLSearchParams({
-        provider_config_key: integrationId,
-      });
-      await nangoRequest(
-        `/connections/${encodeURIComponent(connection.adapterConnectionId)}?${search}`,
-        { method: "DELETE" },
-      );
-      await ctx.runMutation(internal.integrationModel.finishDisconnect, args);
-    } catch (error) {
-      const rawMessage = error instanceof Error ? error.message : "";
-      if (rawMessage.includes("(404)")) {
-        await ctx.runMutation(internal.integrationModel.finishDisconnect, args);
-        return null;
-      }
-      await ctx.runMutation(internal.integrationModel.finishDisconnect, {
-        ...args,
-        errorMessage: toPublicIntegrationError(error),
-      });
-      throw new ConvexError({
-        code: "INTEGRATION_SERVICE_ERROR",
-        message: toPublicIntegrationError(error),
+    if (connection.adapterConnectionId) {
+      await deleteNangoConnection({
+        adapterConnectionId: connection.adapterConnectionId,
+        provider: connection.provider,
       });
     }
+    await ctx.runMutation(internal.integrationModel.finishDisconnect, args);
     return null;
   },
 });
 
-export const retrySync = action({
+export const retrySync = mutation({
   args: { connectionId: v.id("integrationConnections") },
   handler: async (ctx, args) => {
     requireIntegrationsEnabled();
-    const connection = await ctx.runQuery(
-      internal.integrationModel.getConnectionForOperation,
-      args,
-    );
+    const connection = await ctx.db.get(args.connectionId);
     if (connection?.status !== "active" || !connection.adapterConnectionId) {
       throw new ConvexError({
         code: "CONNECTION_NOT_ACTIVE",
@@ -248,7 +301,21 @@ export const retrySync = action({
       resource: "integration",
       action: "manage",
     });
+    await ctx.scheduler.runAfter(0, internal.integrations.triggerSync, args);
+    return null;
+  },
+});
 
+export const triggerSync = internalAction({
+  args: { connectionId: v.id("integrationConnections") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.runQuery(
+      internal.integrationModel.getConnectionForOperation,
+      args,
+    );
+    if (connection?.status !== "active" || !connection.adapterConnectionId) {
+      return;
+    }
     try {
       await nangoRequest<{ success: boolean }>("/sync/trigger", {
         method: "POST",
@@ -258,11 +325,10 @@ export const retrySync = action({
           connection_id: connection.adapterConnectionId,
         }),
       });
-      return null;
     } catch (error) {
-      throw new ConvexError({
-        code: "INTEGRATION_SERVICE_ERROR",
-        message: toPublicIntegrationError(error),
+      await ctx.runMutation(internal.integrationModel.recordSyncRequestFailed, {
+        connectionId: args.connectionId,
+        errorMessage: toPublicIntegrationError(error),
       });
     }
   },

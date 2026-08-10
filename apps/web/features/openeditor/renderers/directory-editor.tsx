@@ -25,8 +25,14 @@ import {
 } from "@/features/openeditor/renderers/directory";
 import {
   createDirectory,
+  createDirectoryRow,
   directoryToTsv,
+  insertDirectoryColumn,
+  insertDirectoryRow,
   moveDirectoryItem,
+  pasteDirectoryColumn,
+  pasteDirectoryRow,
+  removeDirectoryColumn,
 } from "@/features/openeditor/renderers/directory-model";
 import type {
   Directory,
@@ -147,114 +153,6 @@ function DirectoryConfig({
       </PopoverContent>
     </Popover>
   );
-}
-
-function blankRow(columnIds: string[]): DirectoryRow {
-  return {
-    id: makeId("row"),
-    cells: Object.fromEntries(columnIds.map((id) => [id, ""])),
-  };
-}
-
-function insertAt<T>(items: T[], target: T, item: T, after: boolean) {
-  const index = items.indexOf(target);
-  if (index < 0) return items;
-  const next = [...items];
-  next.splice(index + Number(after), 0, item);
-  return next;
-}
-
-function insertRow(
-  directory: Directory,
-  targetId: string,
-  after: boolean,
-): Directory {
-  const target = directory.rows.find((row) => row.id === targetId);
-  return target
-    ? {
-        ...directory,
-        rows: insertAt(
-          directory.rows,
-          target,
-          blankRow(directory.columnIds),
-          after,
-        ),
-      }
-    : directory;
-}
-
-function insertColumn(
-  directory: Directory,
-  targetId: string,
-  after: boolean,
-): Directory {
-  const columnId = makeId("column");
-  const columnIds = insertAt(directory.columnIds, targetId, columnId, after);
-  return columnIds === directory.columnIds
-    ? directory
-    : {
-        ...directory,
-        columnIds,
-        rows: directory.rows.map((row) => ({
-          ...row,
-          cells: { ...row.cells, [columnId]: "" },
-        })),
-      };
-}
-
-function removeColumn(directory: Directory, columnId: string): Directory {
-  return {
-    ...directory,
-    columnIds: directory.columnIds.filter((id) => id !== columnId),
-    rows: directory.rows.map(({ cells, ...row }) => {
-      const { [columnId]: _, ...nextCells } = cells;
-      return { ...row, cells: nextCells };
-    }),
-  };
-}
-
-function pasteRow(
-  directory: Directory,
-  rowId: string,
-  values: string[],
-): Directory {
-  const missing = Math.max(0, values.length - directory.columnIds.length);
-  const columnIds = [
-    ...directory.columnIds,
-    ...Array.from({ length: missing }, () => makeId("column")),
-  ];
-  return {
-    ...directory,
-    columnIds,
-    rows: directory.rows.map((row) => ({
-      ...row,
-      cells: Object.fromEntries(
-        columnIds.map((id, index) => [
-          id,
-          row.id === rowId ? (values[index] ?? "") : (row.cells[id] ?? ""),
-        ]),
-      ),
-    })),
-  };
-}
-
-function pasteColumn(
-  directory: Directory,
-  columnId: string,
-  values: string[],
-): Directory {
-  const missing = Math.max(0, values.length - directory.rows.length);
-  const rows = [
-    ...directory.rows,
-    ...Array.from({ length: missing }, () => blankRow(directory.columnIds)),
-  ];
-  return {
-    ...directory,
-    rows: rows.map((row, index) => ({
-      ...row,
-      cells: { ...row.cells, [columnId]: values[index] ?? "" },
-    })),
-  };
 }
 
 async function copyText(text: string, success: string) {
@@ -649,7 +547,9 @@ function DirectoryGrid({
     onChange({
       ...value,
       columnIds: nextColumnIds,
-      rows: remainingRows.length ? remainingRows : [blankRow(nextColumnIds)],
+      rows: remainingRows.length
+        ? remainingRows
+        : [createDirectoryRow(nextColumnIds, makeId("row"))],
     });
     cancelSelection();
   };
@@ -674,7 +574,7 @@ function DirectoryGrid({
     if (action === "copy") return copyRow(row);
     if (action === "paste") {
       void readClipboard("row").then((values) => {
-        if (values) onChange(pasteRow(value, row.id, values));
+        if (values) onChange(pasteDirectoryRow(value, row.id, values, makeId));
       });
       return;
     }
@@ -686,23 +586,27 @@ function DirectoryGrid({
       return;
     }
     if (action === "before" || action === "after") {
-      onChange(insertRow(value, row.id, action === "after"));
+      onChange(insertDirectoryRow(value, row.id, action === "after", makeId));
     }
   };
   const columnAction = (columnId: string, action: Action) => {
     if (action === "copy") return copyColumn(columnId);
     if (action === "paste") {
       void readClipboard("column").then((values) => {
-        if (values) onChange(pasteColumn(value, columnId, values));
+        if (values) {
+          onChange(pasteDirectoryColumn(value, columnId, values, makeId));
+        }
       });
       return;
     }
     if (action === "remove") {
-      onChange(removeColumn(value, columnId));
+      onChange(removeDirectoryColumn(value, columnId));
       return;
     }
     if (action === "before" || action === "after") {
-      onChange(insertColumn(value, columnId, action === "after"));
+      onChange(
+        insertDirectoryColumn(value, columnId, action === "after", makeId),
+      );
     }
   };
 

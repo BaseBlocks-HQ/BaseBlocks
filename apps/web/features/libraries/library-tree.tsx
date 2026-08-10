@@ -19,7 +19,10 @@ import { InlineRename } from "@/components/tree/inline-rename";
 import { MiddleTruncate } from "@/components/tree/middle-truncate";
 import { formatFileSize } from "@/components/file-viewer/file-ui";
 import {
-  projectTree,
+  getTreeDescendantIds,
+  indexTree,
+  projectIndexedTree,
+  type ProjectedTreeNode,
   type TreeDropPlacement,
   type TreeNode,
 } from "@baseblocks/domain";
@@ -72,29 +75,6 @@ function isLibraryDropData(value: unknown): value is LibraryDropData {
   );
 }
 
-function descendantIds(
-  nodes: TreeNode<LibraryEntity>[],
-  nodeId: string | null,
-) {
-  if (!nodeId) return new Set<string>();
-  const children = new Map<string, string[]>();
-  for (const node of nodes) {
-    if (!node.parentId) continue;
-    const siblings = children.get(node.parentId) ?? [];
-    siblings.push(node.id);
-    children.set(node.parentId, siblings);
-  }
-  const result = new Set<string>([nodeId]);
-  const queue = [...(children.get(nodeId) ?? [])];
-  while (queue.length > 0) {
-    const id = queue.shift();
-    if (!id || result.has(id)) continue;
-    result.add(id);
-    queue.push(...(children.get(id) ?? []));
-  }
-  return result;
-}
-
 export function LibraryTree(props: {
   allowDownloads: boolean;
   canManage: boolean;
@@ -124,11 +104,12 @@ export function LibraryTree(props: {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const rows = projectTree(props.nodes, expanded);
+  const treeIndex = indexTree(props.nodes);
+  const rows = projectIndexedTree(treeIndex, expanded);
   const draggedEntity = draggedId
-    ? (props.nodes.find((node) => node.id === draggedId)?.data ?? null)
+    ? (treeIndex.byId.get(draggedId)?.data ?? null)
     : null;
-  const invalidDropIds = descendantIds(props.nodes, draggedId);
+  const invalidDropIds = getTreeDescendantIds(treeIndex, draggedId);
   return (
     <DragDropProvider
       sensors={libraryDragSensors}
@@ -277,7 +258,7 @@ function LibraryTreeRow({
   onDownload,
   onDelete,
 }: {
-  node: ReturnType<typeof projectTree<LibraryEntity>>[number];
+  node: ProjectedTreeNode<LibraryEntity>;
   expanded: boolean;
   canManage: boolean;
   allowDownloads: boolean;

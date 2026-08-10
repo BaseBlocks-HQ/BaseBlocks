@@ -1,4 +1,128 @@
-import type { Directory, DirectoryContent } from "@baseblocks/domain";
+import type {
+  Directory,
+  DirectoryContent,
+  DirectoryRow,
+} from "@baseblocks/domain";
+
+export type DirectoryIdFactory = (kind: "column" | "row") => string;
+
+export function createDirectoryRow(
+  columnIds: readonly string[],
+  rowId: string,
+): DirectoryRow {
+  return {
+    id: rowId,
+    cells: Object.fromEntries(columnIds.map((id) => [id, ""])),
+  };
+}
+
+function insertAt<T>(items: T[], target: T, item: T, after: boolean) {
+  const index = items.indexOf(target);
+  if (index < 0) return items;
+  const next = [...items];
+  next.splice(index + Number(after), 0, item);
+  return next;
+}
+
+export function insertDirectoryRow(
+  directory: Directory,
+  targetId: string,
+  after: boolean,
+  createId: DirectoryIdFactory,
+): Directory {
+  const target = directory.rows.find((row) => row.id === targetId);
+  if (!target) return directory;
+  return {
+    ...directory,
+    rows: insertAt(
+      directory.rows,
+      target,
+      createDirectoryRow(directory.columnIds, createId("row")),
+      after,
+    ),
+  };
+}
+
+export function insertDirectoryColumn(
+  directory: Directory,
+  targetId: string,
+  after: boolean,
+  createId: DirectoryIdFactory,
+): Directory {
+  const columnId = createId("column");
+  const columnIds = insertAt(directory.columnIds, targetId, columnId, after);
+  if (columnIds === directory.columnIds) return directory;
+  return {
+    ...directory,
+    columnIds,
+    rows: directory.rows.map((row) => ({
+      ...row,
+      cells: { ...row.cells, [columnId]: "" },
+    })),
+  };
+}
+
+export function removeDirectoryColumn(
+  directory: Directory,
+  columnId: string,
+): Directory {
+  return {
+    ...directory,
+    columnIds: directory.columnIds.filter((id) => id !== columnId),
+    rows: directory.rows.map(({ cells, ...row }) => {
+      const { [columnId]: _, ...nextCells } = cells;
+      return { ...row, cells: nextCells };
+    }),
+  };
+}
+
+export function pasteDirectoryRow(
+  directory: Directory,
+  rowId: string,
+  values: readonly string[],
+  createId: DirectoryIdFactory,
+): Directory {
+  const missing = Math.max(0, values.length - directory.columnIds.length);
+  const columnIds = [
+    ...directory.columnIds,
+    ...Array.from({ length: missing }, () => createId("column")),
+  ];
+  return {
+    ...directory,
+    columnIds,
+    rows: directory.rows.map((row) => ({
+      ...row,
+      cells: Object.fromEntries(
+        columnIds.map((id, index) => [
+          id,
+          row.id === rowId ? (values[index] ?? "") : (row.cells[id] ?? ""),
+        ]),
+      ),
+    })),
+  };
+}
+
+export function pasteDirectoryColumn(
+  directory: Directory,
+  columnId: string,
+  values: readonly string[],
+  createId: DirectoryIdFactory,
+): Directory {
+  const missing = Math.max(0, values.length - directory.rows.length);
+  const rows = [
+    ...directory.rows,
+    ...Array.from({ length: missing }, () =>
+      createDirectoryRow(directory.columnIds, createId("row")),
+    ),
+  ];
+  return {
+    ...directory,
+    rows: rows.map((row, index) => ({
+      ...row,
+      cells: { ...row.cells, [columnId]: values[index] ?? "" },
+    })),
+  };
+}
 
 export function createDirectory(
   id: string,

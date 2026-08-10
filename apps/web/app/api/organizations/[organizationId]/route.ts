@@ -36,7 +36,7 @@ export async function DELETE(
     // External cleanup is deliberately idempotent. The transactional deletion
     // below only runs after every external resource has been removed.
     for (const connectionId of manifest.connectionIds) {
-      await convex.action(api.integrations.disconnect, {
+      await convex.action(api.integrations.disconnectImmediately, {
         connectionId: connectionId as Id<"integrationConnections">,
       });
     }

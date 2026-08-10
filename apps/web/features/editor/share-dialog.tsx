@@ -31,7 +31,6 @@ import { toast } from "sonner";
 type Visibility = "private" | "public";
 
 interface ShareDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
@@ -67,7 +66,6 @@ function VisibilityOptionCard({
 }
 
 export function ShareDialog({
-  open,
   onOpenChange,
   returnFocusTo,
   siteId,
@@ -77,10 +75,7 @@ export function ShareDialog({
   const t = useTranslations("editor.share");
   const [copied, setCopied] = useState(false);
   const updateVisibilityMut = useMutation(api.sharing.updateVisibility);
-  const settings = useQuery(
-    api.sharing.getSettings,
-    open ? { siteId } : "skip",
-  );
+  const settings = useQuery(api.sharing.getSettings, { siteId });
   const siteUrl = getSiteUrl(teamSlug, siteSlug);
   const visibility = settings?.visibility;
 
@@ -103,15 +98,8 @@ export function ShareDialog({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!newOpen) {
-      setCopied(false);
-    }
-    onOpenChange(newOpen);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent
         className={`overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[46rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4 sm:max-w-lg`}
         returnFocusTo={returnFocusTo}

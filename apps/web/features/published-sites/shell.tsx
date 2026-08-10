@@ -53,7 +53,6 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 import { PublicPageContent } from "./page-content";
 import { buildPublishedPageTargets } from "./page-targets";
 import type { PublishedPageResult } from "./read-model";
@@ -101,9 +100,15 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
     });
     router.push(`${targetUrl}?${targetSearchParams.toString()}`);
   };
-
   const goBack = () => {
     if (previousPageUrl) router.push(previousPageUrl);
+  };
+  const renderActions = {
+    siteId: site._id,
+    siteSlug: site.slug,
+    openPage: navigateToPage,
+    publishedSurface: true,
+    publishedLibraries,
   };
 
   if (!page) return null;
@@ -117,15 +122,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
       theme={site.settings.theme}
       withPortalContainer
     >
-      <SiteRenderActionsProvider
-        actions={{
-          siteId: site._id,
-          siteSlug: site.slug,
-          openPage: navigateToPage,
-          publishedSurface: true,
-          publishedLibraries,
-        }}
-      >
+      <SiteRenderActionsProvider actions={renderActions}>
         <SidebarProvider cookieName={null}>
           <PublicSiteSidebar
             site={site}
@@ -448,8 +445,8 @@ function PublishedPageNavigation({
   pages: PageWithChildren[];
   siteSlug: string;
 }) {
-  const nodes = useMemo(() => buildPublishedNavigationNodes(pages), [pages]);
-  const treeIndex = useMemo(() => indexTree(nodes), [nodes]);
+  const nodes = buildPublishedNavigationNodes(pages);
+  const treeIndex = indexTree(nodes);
   const selectedPageId = nodes.find(
     (node) => node.data.fullPath === currentPath,
   )?.id;

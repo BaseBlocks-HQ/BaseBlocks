@@ -1,14 +1,21 @@
 "use client";
 
 import type { Id } from "@baseblocks/backend";
-import { useEffect, useRef } from "react";
-import {
-  type DraftSummary,
-  HistoryDialog,
-  PublishDialog,
-} from "./release-dialogs";
-import { ShareDialog } from "./share-dialog";
-import { SiteSettingsDialog } from "./site-settings-dialog";
+import dynamic from "next/dynamic";
+import type { DraftSummary } from "./release-dialogs";
+
+const PublishDialog = dynamic(() =>
+  import("./release-dialogs").then((module) => module.PublishDialog),
+);
+const HistoryDialog = dynamic(() =>
+  import("./release-dialogs").then((module) => module.HistoryDialog),
+);
+const ShareDialog = dynamic(() =>
+  import("./share-dialog").then((module) => module.ShareDialog),
+);
+const SiteSettingsDialog = dynamic(() =>
+  import("./site-settings-dialog").then((module) => module.SiteSettingsDialog),
+);
 
 export type EditorDialogName = "history" | "publish" | "settings" | "share";
 
@@ -34,47 +41,49 @@ export function EditorDialogs({
   siteSlug,
   teamSlug,
 }: EditorDialogsProps) {
-  const returnFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (activeDialog?.returnFocusTo) {
-      returnFocusRef.current = activeDialog.returnFocusTo;
-    }
-  }, [activeDialog]);
-
+  if (!activeDialog) return null;
   const handleOpenChange = (open: boolean) => {
-    if (!open) onActiveDialogChange(null);
+    if (open) return;
+    const returnFocusTo = activeDialog.returnFocusTo;
+    onActiveDialogChange(null);
+    queueMicrotask(() => returnFocusTo?.focus());
   };
-  const returnFocusTo = activeDialog?.returnFocusTo ?? returnFocusRef.current;
 
-  return (
-    <>
-      <PublishDialog
-        draftSummary={draftSummary}
-        open={activeDialog?.name === "publish"}
-        onOpenChange={handleOpenChange}
-        returnFocusTo={returnFocusTo}
-        siteId={siteId}
-      />
-      <ShareDialog
-        open={activeDialog?.name === "share"}
-        onOpenChange={handleOpenChange}
-        returnFocusTo={returnFocusTo}
-        siteId={siteId}
-        siteSlug={siteSlug}
-        teamSlug={teamSlug}
-      />
-      <SiteSettingsDialog
-        open={activeDialog?.name === "settings"}
-        onOpenChange={handleOpenChange}
-        returnFocusTo={returnFocusTo}
-        siteId={siteId}
-      />
-      <HistoryDialog
-        open={activeDialog?.name === "history"}
-        onOpenChange={handleOpenChange}
-        returnFocusTo={returnFocusTo}
-        siteId={siteId}
-      />
-    </>
-  );
+  switch (activeDialog.name) {
+    case "publish":
+      return (
+        <PublishDialog
+          draftSummary={draftSummary}
+          onOpenChange={handleOpenChange}
+          returnFocusTo={activeDialog.returnFocusTo}
+          siteId={siteId}
+        />
+      );
+    case "share":
+      return (
+        <ShareDialog
+          onOpenChange={handleOpenChange}
+          returnFocusTo={activeDialog.returnFocusTo}
+          siteId={siteId}
+          siteSlug={siteSlug}
+          teamSlug={teamSlug}
+        />
+      );
+    case "settings":
+      return (
+        <SiteSettingsDialog
+          onOpenChange={handleOpenChange}
+          returnFocusTo={activeDialog.returnFocusTo}
+          siteId={siteId}
+        />
+      );
+    case "history":
+      return (
+        <HistoryDialog
+          onOpenChange={handleOpenChange}
+          returnFocusTo={activeDialog.returnFocusTo}
+          siteId={siteId}
+        />
+      );
+  }
 }

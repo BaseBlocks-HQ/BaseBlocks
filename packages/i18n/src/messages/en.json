@@ -649,7 +649,7 @@
     "popupBlocked": "Allow popups to connect this app.",
     "connectFailed": "Could not start the connection.",
     "disconnectFailed": "Could not disconnect the app.",
-    "disconnected": "App disconnected.",
+    "disconnectRequested": "Disconnect requested.",
     "syncRequested": "Sync requested.",
     "syncFailed": "Could not retry the sync.",
     "providers": {

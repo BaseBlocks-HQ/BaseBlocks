@@ -35,7 +35,7 @@ import {
 } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useBaseBlocksAttachmentRuntime } from "./attachment-runtime";
@@ -264,6 +264,13 @@ function OpenEditorDocumentEditor({
   pageRuntime: OpenEditorPageRuntime;
   preview: boolean;
 }) {
+  const locallyEmittedDocumentRef = useRef<OpenEditorDocument | undefined>(
+    undefined,
+  );
+  const handleChange = (nextDocument: OpenEditorDocument) => {
+    locallyEmittedDocumentRef.current = nextDocument;
+    onChange(nextDocument);
+  };
   const slashMenuItems: readonly OpenEditorSlashMenuItem[] = [
     {
       key: "baseblocksPageTabs",
@@ -278,7 +285,7 @@ function OpenEditorDocumentEditor({
           deleteOpenEditorTextRange(current.getContent(), range),
           crypto.randomUUID(),
         );
-        onChange(nextDocument);
+        handleChange(nextDocument);
         return true;
       },
     },
@@ -291,16 +298,17 @@ function OpenEditorDocumentEditor({
     attachmentRuntime,
     imageRuntime,
     slashMenuItems,
-    onChange,
+    onChange: handleChange,
   });
   useEffect(() => {
     if (!controller.ready) return;
-    const incoming = JSON.stringify(document);
+    if (document === locallyEmittedDocumentRef.current) {
+      locallyEmittedDocumentRef.current = undefined;
+      return;
+    }
     let active = true;
     const frame = requestAnimationFrame(() => {
       if (!active || !controller.ready) return;
-      const current = JSON.stringify(controller.getContent());
-      if (incoming === current) return;
       controller.setContent(document, { emitChange: false });
     });
     return () => {

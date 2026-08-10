@@ -86,47 +86,20 @@ export type DraftSummary = {
 
 export function PublishDialog({
   draftSummary,
-  open,
   onOpenChange,
   returnFocusTo,
   siteId,
 }: {
   draftSummary: DraftSummary;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  returnFocusTo?: HTMLElement | null;
-  siteId: Id<"sites">;
-}) {
-  return (
-    <PublishDialogSession
-      draftSummary={draftSummary}
-      key={open ? siteId : "closed"}
-      onOpenChange={onOpenChange}
-      open={open}
-      returnFocusTo={returnFocusTo}
-      siteId={siteId}
-    />
-  );
-}
-
-function PublishDialogSession({
-  draftSummary,
-  open,
-  onOpenChange,
-  returnFocusTo,
-  siteId,
-}: {
-  draftSummary: DraftSummary;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
 }) {
   const publish = useMutation(api.releases.publish);
-  const changes = useQuery(
-    api.releases.getDraftChanges,
-    open ? { siteId } : "skip",
-  ) as DraftChange[] | null | undefined;
+  const changes = useQuery(api.releases.getDraftChanges, { siteId }) as
+    | DraftChange[]
+    | null
+    | undefined;
   const [requesting, setRequesting] = useState(false);
   const [pendingPublication, setPendingPublication] = useState<{
     releaseId: Id<"siteReleases">;
@@ -196,7 +169,7 @@ function PublishDialogSession({
 
   return (
     <Dialog
-      open={open && publicationStatus?.status !== "complete"}
+      open={publicationStatus?.status !== "complete"}
       onOpenChange={handleOpenChange}
     >
       <DialogContent
@@ -445,39 +418,15 @@ const releaseDateFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 export function HistoryDialog({
-  open,
   onOpenChange,
   returnFocusTo,
   siteId,
 }: {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
 }) {
-  return (
-    <HistoryDialogSession
-      key={open ? siteId : "closed"}
-      onOpenChange={onOpenChange}
-      open={open}
-      returnFocusTo={returnFocusTo}
-      siteId={siteId}
-    />
-  );
-}
-
-function HistoryDialogSession({
-  open,
-  onOpenChange,
-  returnFocusTo,
-  siteId,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  returnFocusTo?: HTMLElement | null;
-  siteId: Id<"sites">;
-}) {
-  const releases = useQuery(api.releases.list, open ? { siteId } : "skip") as
+  const releases = useQuery(api.releases.list, { siteId }) as
     | ReleaseSummary[]
     | undefined;
   const makeLive = useMutation(api.releases.makeLive);
@@ -601,7 +550,6 @@ function HistoryDialogSession({
         onAction={setConfirmAction}
         onOpenChange={onOpenChange}
         onSelect={setSelectedId}
-        open={open}
         previousRelease={previousRelease}
         releases={releases}
         returnFocusTo={returnFocusTo}
@@ -624,7 +572,6 @@ function HistoryDialogView({
   onAction,
   onOpenChange,
   onSelect,
-  open,
   previousRelease,
   releases,
   returnFocusTo,
@@ -637,7 +584,6 @@ function HistoryDialogView({
   onAction: (action: "live" | "restore") => void;
   onOpenChange: (open: boolean) => void;
   onSelect: (releaseId: Id<"siteReleases">) => void;
-  open: boolean;
   previousRelease: ReleaseSummary | undefined;
   releases: ReleaseSummary[] | undefined;
   returnFocusTo?: HTMLElement | null;
@@ -645,7 +591,7 @@ function HistoryDialogView({
 }) {
   const historyTitleRef = useRef<HTMLHeadingElement>(null);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent
         className="h-[min(88vh,42rem)] w-[calc(100%-2rem)] max-w-[56rem] overflow-hidden rounded-[1.5rem] border-sidebar-border bg-background p-0 text-foreground shadow-2xl sm:max-w-[56rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
         onOpenAutoFocus={(event) => {

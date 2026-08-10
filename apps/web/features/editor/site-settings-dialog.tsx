@@ -39,13 +39,12 @@ import {
 } from "@baseblocks/ui/sidebar";
 import { useMutation } from "convex/react";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FaviconSettings } from "./settings/favicon-settings";
 import { SiteAppearanceSettings } from "./settings/site-appearance-settings";
 
 interface SiteSettingsDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   returnFocusTo?: HTMLElement | null;
   siteId: Id<"sites">;
@@ -262,7 +261,6 @@ function SiteNameSection({
 }
 
 export function SiteSettingsDialog({
-  open,
   onOpenChange,
   returnFocusTo,
   siteId,
@@ -277,12 +275,6 @@ export function SiteSettingsDialog({
   const [isEditingName, setIsEditingName] = useState(false);
   const [isResettingAppearance, setIsResettingAppearance] = useState(false);
   const [section, setSection] = useState<SiteSettingsSection>("brand");
-
-  useEffect(() => {
-    if (!open) return;
-    setSection("brand");
-    setIsEditingName(false);
-  }, [open]);
 
   const isUploading = uploadState.isUploading;
   const uploadProgress = uploadState.progress?.percentage || 0;
@@ -380,7 +372,7 @@ export function SiteSettingsDialog({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent
         className="h-[min(88vh,42rem)] w-[calc(100%-2rem)] max-w-[56rem] overflow-hidden rounded-[1.5rem] border-sidebar-border bg-background p-0 text-foreground shadow-2xl sm:max-w-[56rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4"
         onOpenAutoFocus={(event) => {

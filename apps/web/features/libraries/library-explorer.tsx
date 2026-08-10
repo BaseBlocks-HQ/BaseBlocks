@@ -203,15 +203,19 @@ export function LibraryExplorer({
     LIBRARY_FILE_SEARCH_PARAM,
   ) as FileId | null;
 
-  useEffect(() => {
-    if (!selectedFileId) return;
+  const selectedEntity = selectedFileId
+    ? model.entityByFileId.get(selectedFileId)
+    : undefined;
+  const selectedEntityFile =
+    selectedEntity?.kind === "file" ? selectedEntity.file : undefined;
+  const selectedEntityFileId = selectedEntityFile?._id;
+  const selectedEntityFolderId = selectedEntityFile?.folderId;
 
-    const entity = model.entityByFileId.get(selectedFileId);
-    if (entity?.kind === "file") {
-      setOpenFileId(entity.file._id);
-      setCurrentFolderId(entity.file.folderId ?? null);
-    }
-  }, [model.entityByFileId, selectedFileId]);
+  useEffect(() => {
+    if (!selectedEntityFileId) return;
+    setOpenFileId(selectedEntityFileId);
+    setCurrentFolderId(selectedEntityFolderId ?? null);
+  }, [selectedEntityFileId, selectedEntityFolderId]);
 
   const syncFileUrl = (fileId: string | null) => {
     const nextUrl = buildLibraryFilePath(
