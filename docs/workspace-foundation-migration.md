@@ -56,9 +56,9 @@ bunx convex run workspaceMigrations:getReport '{"runId":"workspace-intent-apply-
 Run a second dry run with another run ID. It should report all successfully
 classified organizations as skipped and create no profiles.
 
-## Production preparation
+## Production execution
 
-Production execution requires explicit approval. Before approval:
+Production execution requires explicit approval. Before applying:
 
 1. Deploy code that treats a missing profile as an unmigrated workspace.
 2. Take and verify a Convex backup.
@@ -66,7 +66,7 @@ Production execution requires explicit approval. Before approval:
 4. Complete a production dry run and save its report.
 5. Resolve all zero-member anomalies.
 
-Prepared production commands (do not run without approval):
+Production commands:
 
 ```sh
 bunx convex run --prod workspaceMigrations:runBatch '{"runId":"workspace-intent-prod-dry-YYYYMMDD","mode":"dryRun"}'
@@ -74,6 +74,18 @@ bunx convex run --prod workspaceMigrations:getReport '{"runId":"workspace-intent
 bunx convex run --prod workspaceMigrations:runBatch '{"runId":"workspace-intent-prod-apply-YYYYMMDD","mode":"apply"}'
 bunx convex run --prod workspaceMigrations:getReport '{"runId":"workspace-intent-prod-apply-YYYYMMDD"}'
 ```
+
+On 2026-08-11, the approved production migration completed on
+`quiet-alligator-768` after a verified 19 MB backup including file storage.
+The pre-migration component inventory contained 39 organizations and 46
+members. Results:
+
+- `workspace-intent-prod-dry-20260811`: scanned 39, personal 38, work 1,
+  skipped 0, created 0, errors 0.
+- `workspace-intent-prod-apply-20260811`: scanned 39, personal 38, work 1,
+  skipped 0, created 39, errors 0.
+- `workspace-intent-prod-dry-post-20260811`: scanned 39, skipped 39, created
+  0, errors 0.
 
 ## Failure, retry, and rollback
 

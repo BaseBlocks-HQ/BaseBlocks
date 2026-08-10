@@ -104,6 +104,37 @@ also verified before being replaced by customer-selected top-ups. Convex
 Development recorded signed negative proration orders as paid signed amounts
 without granting credits.
 
+## Production configuration
+
+On 2026-08-11, production deployment `quiet-alligator-768` was backed up,
+deployed, and configured for Polar Production and hosted Vercel AI Gateway
+funding. The verified backup, including file storage, is
+`quiet-alligator-768-pre-billing-ai-20260811.zip` in the private Codex backup
+directory. The deployment dry run reported no deleted indexes before the new
+billing, credit, guest-access, storage-telemetry, and workspace indexes were
+applied.
+
+The live Polar catalog is:
+
+- `plus_monthly`: product `70448a26-eabc-4753-8084-7ac398bb416f`, price
+  `f32858d8-d95c-4c89-ae3e-94dedc43aba1`, seat-based USD $8/member/month,
+  included `500000` credit units.
+- `plus_annual`: product `41b428b2-adfa-4b53-80cd-de5eb0ac5d51`, price
+  `0c4a64a3-98a5-4224-9fa3-6b3d3d6b0e8c`, seat-based USD $80/member/year,
+  included `6000000` credit units.
+- `ai_credit_top_up`: product `3794706c-ebf5-4324-ab25-26a975eff506`, custom
+  price `6f2658e9-e6cd-4243-81f7-412358e0bdae`, one-time USD with Polar's $5
+  minimum, $10 preset, and no maximum.
+
+The production webhook is enabled as `BaseBlocks Convex Production`, ID
+`b1f36de4-f1f4-4921-b34f-2d9d28b42efd`, at
+`https://quiet-alligator-768.convex.site/billing/webhooks/polar`. It uses raw
+payloads and subscribes to all checkout, order, and subscription lifecycle
+events. Production uses rate-card policy `gateway-2026-08-11-v3`, matching the
+verified Development limits and prices above. Access tokens, webhook signing
+secrets, reconciliation secrets, and cron secrets remain only in their
+provider environment stores.
+
 The team customer portal requires the member identity. The adapter now sends
 `external_member_id` equal to the workspace external customer ID, matching
 Polar's purchaser/owner member mapping observed in Sandbox. Keep this mapping
@@ -148,9 +179,10 @@ intentionally rejects local HTTP checkout redirects.
    dashboard.
 2. Open the AI/editor entry before purchasing credits. Confirm the request is
    denied with the no-credit/paywall state and no Gateway generation is made.
-3. Use the HTTPS owner Preview, which is connected to Convex Development and
-   Polar Sandbox with hosted Gateway funding enabled. Production provider
-   access remains disabled.
+3. Use the HTTPS owner Preview for no-charge tests against Convex Development
+   and Polar Sandbox. Use `https://baseblocks.dev` only for deliberate live
+   purchases; production provider access and hosted Gateway funding are
+   enabled.
 4. Start a Plus Monthly checkout for one member. In Polar Sandbox use Visa
    test card `4242 4242 4242 4242`, any future expiry, any three-digit CVC,
    and a valid test billing address. Sandbox payments are not processed.
