@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev --port 3001 -H 0.0.0.0",
     "build": "next build",
+    "build:vercel": "next build",
     "start": "next start",
     "lint": "biome check --write .",
     "check-types": "fumadocs-mdx && next typegen && tsc --noEmit --incremental false"
