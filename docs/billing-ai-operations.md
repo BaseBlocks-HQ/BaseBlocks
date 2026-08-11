@@ -42,8 +42,10 @@ reservations, ledger deltas, and settlement values are stored as Convex
 ## Verified development configuration
 
 On 2026-08-09, the integrated code was deployed to the Convex Development
-deployment `dutiful-aardvark-750`. Vercel Development and Preview route the
-editor through `openai/gpt-5.4-mini`; Vercel Development has
+deployment `dutiful-aardvark-750`. Local development uses that deployment;
+each Vercel Preview deployment now gets its own Convex preview deployment and
+production uses the dedicated `quiet-alligator-768` deployment. All hosted
+environments route the editor through `openai/gpt-5.4-mini`; Vercel Development has
 `BASEBLOCKS_BILLING_ENVIRONMENT=sandbox`, and Vercel deployments use OIDC rather
 than a static Gateway key. The current Gateway catalog reports 0.75 micro-USD
 per input token and 4.5 micro-USD per output token for that model. The

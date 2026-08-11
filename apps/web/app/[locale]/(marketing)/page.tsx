@@ -2,17 +2,19 @@ import {
   LandingPage,
   type LandingCopy,
 } from "@/features/marketing/landing-page";
-import { getMarketingOrigin } from "@/lib/seo/site-url";
+import { getMarketingOrigin, getMarketingSiteUrl } from "@/lib/seo/site-url";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
 const MARKETING_ORIGIN = getMarketingOrigin();
+const MARKETING_SITE_URL = getMarketingSiteUrl();
 const OG_IMAGE = `${MARKETING_ORIGIN}/opengraph-image?v=2`;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const canonical = locale === "fr" ? "/fr" : "/";
   return {
+    metadataBase: MARKETING_SITE_URL,
     title: "BaseBlocks - Idea to site in minutes",
     description:
       "Build, publish, and share internal sites in minutes. BaseBlocks is a collaborative site builder for teams.",

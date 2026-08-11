@@ -61,11 +61,14 @@ cd BaseBlocks
 bun install
 bunx vercel link
 
-cp .env.example apps/web/.env.local
-cp .env.example packages/backend/.env.local
+cp apps/web/.env.example apps/web/.env.local
+cp packages/backend/.env.example packages/backend/.env.local
 ```
 
-Edit the two environment files and fill in the values for their corresponding sections in `.env.example`. At minimum, configure Convex, `BETTER_AUTH_SECRET`, the application URLs, and file storage.
+Edit each package's environment file for local-only work. In the normal
+workflow, `bun run dev` loads the web runtime from Vercel Development and the
+backend runtime from the selected Convex Development deployment. At minimum,
+configure Convex, `BETTER_AUTH_SECRET`, the application URLs, and file storage.
 
 Start the web application and Convex backend:
 

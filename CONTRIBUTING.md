@@ -25,14 +25,17 @@ Thanks for your interest in contributing to BaseBlocks! This document covers the
 
 3. **Set up environment variables**
 
-   Copy `.env.example` and fill in your values:
+   Configure each runtime from its own example:
 
    ```bash
-   cp .env.example apps/web/.env.local
-   cp .env.example packages/backend/.env.local
+   cp apps/web/.env.example apps/web/.env.local
+   cp packages/backend/.env.example packages/backend/.env.local
    ```
 
-   Then edit each file — you'll need a Convex deployment URL from `npx convex dev`.
+   The web app reads Vercel Development variables through `bun run dev`. The
+   backend file selects the developer's Convex deployment and contains only
+   backend/provider configuration. Never copy one runtime's env file into the
+   other package.
 
    `SITE_URL` is the Convex site origin used for backend HTTP endpoints.
    `APP_URL` is the comma-separated allowlist of exact app origins that are
