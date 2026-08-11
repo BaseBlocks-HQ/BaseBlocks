@@ -118,6 +118,39 @@ export const get = query({
   },
 });
 
+export const resolveSiteAsset = query({
+  args: { siteId: v.id("sites"), fileId: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      imageId: v.id("files"),
+      url: v.string(),
+    }),
+  ),
+  handler: async (ctx, { siteId, fileId }) => {
+    const id = ctx.db.normalizeId("files", fileId);
+    if (!id) return null;
+    const file = await ctx.db.get(id);
+    if (
+      !file ||
+      file.siteId !== siteId ||
+      file.kind !== "siteAsset" ||
+      file.deletedAt !== undefined
+    ) {
+      return null;
+    }
+    const site = await ctx.db.get(siteId);
+    if (!site) return null;
+    const isMember = await isOrganizationMember(ctx, site.organizationId);
+    const isGuestReference = isMember
+      ? false
+      : await isFileReferencedByAccessiblePage(ctx, file);
+    if (!isMember && !isGuestReference) return null;
+    assertDraftReadable(site);
+    return { imageId: file._id, url: buildFileUrl(file._id) };
+  },
+});
+
 export const getDownloadAsset = query({
   args: { fileId: v.string() },
   handler: async (ctx, { fileId }) => {

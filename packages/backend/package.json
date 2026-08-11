@@ -40,8 +40,8 @@
     "@convex-dev/workflow": "^0.4.4",
     "@convex-dev/workpool": "^0.4.9",
     "@noble/hashes": "2.0.1",
-    "@openeditor/core": "0.0.43",
-    "@openeditor/workspace": "0.0.43",
+    "@openeditor/core": "0.0.44",
+    "@openeditor/workspace": "0.0.44",
     "better-auth": "^1.6.23",
     "convex": "^1.42.1",
     "files-sdk": "2.2.3"
