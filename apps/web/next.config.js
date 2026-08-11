@@ -9,6 +9,9 @@ const environmentFavicons = {
 };
 const environment = process.env.VERCEL_ENV ?? process.env.NODE_ENV;
 const environmentFavicon = environmentFavicons[environment];
+const convexSiteUrl =
+  process.env.CONVEX_SITE_URL?.trim() ||
+  process.env.NEXT_PUBLIC_CONVEX_SITE_URL?.trim();
 const filesEndpoint = process.env.FILES_ENDPOINT?.trim();
 const filesOrigin = (() => {
   if (!filesEndpoint) {
@@ -67,6 +70,9 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(convexSiteUrl
+    ? { env: { NEXT_PUBLIC_CONVEX_SITE_URL: convexSiteUrl } }
+    : {}),
   allowedDevOrigins: [
     "*.localhost",
     "*.trycloudflare.com",

@@ -5,8 +5,7 @@
     "EDITOR_AI_MODEL",
     "FLAGS",
     "FLAGS_SECRET",
-    "VERCEL_OIDC_TOKEN",
-    "CONVEX_DEPLOY_KEY"
+    "VERCEL_OIDC_TOKEN"
   ],
   "ui": "tui",
   "tasks": {

@@ -81,6 +81,18 @@ variables and a short-lived Vercel OIDC token before starting Turborepo. This
 lets Editor AI use AI Gateway without storing a Gateway API key locally. The
 web application runs at [http://localhost:3001](http://localhost:3001).
 
+### Environments and deployments
+
+- Development runs on localhost with a personal Convex development deployment.
+- Pull requests create Vercel Preview deployments and branch-specific Convex
+  preview deployments.
+- Merges to `main` deploy the production Vercel project and production Convex
+  deployment at `baseblocks.dev`.
+
+Vercel runs the Convex deployment before the Next.js build using the Build
+Command in `apps/web/vercel.json`. Keep secrets and OAuth clients isolated by
+environment; preview deployments use Vercel-generated `*.vercel.app` URLs.
+
 ### Authentication callbacks
 
 For local social authentication, configure these provider callbacks:

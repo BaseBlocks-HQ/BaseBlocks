@@ -6,7 +6,6 @@
   "license": "FSL-1.1-MIT",
   "scripts": {
     "build": "turbo run build",
-    "build:vercel": "bun scripts/vercel-build.ts",
     "dev": "vercel env run -e development -- turbo run dev",
     "lint": "biome lint .",
     "seo:audit": "NEXT_PUBLIC_SITE_URL=http://localhost:3002 NEXT_PUBLIC_ROOT_DOMAIN=localhost BASEBLOCKS_SEO_AUDIT=1 VERCEL_ENV=production bun run build && NEXT_PUBLIC_SITE_URL=http://localhost:3002 NEXT_PUBLIC_ROOT_DOMAIN=localhost BASEBLOCKS_SEO_AUDIT=1 VERCEL_ENV=production bun scripts/audit-seo.ts",
