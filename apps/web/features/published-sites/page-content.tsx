@@ -17,7 +17,6 @@ import type {
 import { OpenEditorViewer } from "@openeditor/react";
 import { OpenEditorThemeProvider } from "@openeditor/ui";
 import "@openeditor/ui/styles.css";
-import { useMemo } from "react";
 import type { PublishedPageTarget } from "./page-targets";
 
 const EMPTY_PAGE_TARGETS = new Map<string, PublishedPageTarget>();
@@ -42,10 +41,7 @@ export function PublicPageContent({
   pageTargets = EMPTY_PAGE_TARGETS,
 }: PublicPageContentProps) {
   const actions = useSiteRenderActions();
-  const imageRuntime = useMemo(
-    () => createPublishedImageRuntime(imageIds),
-    [imageIds],
-  );
+  const imageRuntime = createPublishedImageRuntime(imageIds);
   const pageRuntime: OpenEditorPageRuntime = {
     resolvePage: async (targetPageId) => {
       const target = pageTargets.get(targetPageId);
