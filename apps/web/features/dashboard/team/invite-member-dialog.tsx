@@ -146,7 +146,7 @@ export function InviteMemberDialog({
       <DialogTrigger asChild>
         <Button
           className="product-primary-action rounded-[0.625rem]"
-          size="sm"
+          size="compact"
           type="button"
         >
           <HugeiconsIcon icon={UserAdd01Icon} className="h-4 w-4" />

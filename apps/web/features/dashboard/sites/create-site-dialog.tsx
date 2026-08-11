@@ -187,7 +187,7 @@ export function CreateSiteDialog({
         <Button
           className="product-primary-action rounded-[0.625rem]"
           disabled={disabled}
-          size="sm"
+          size="compact"
           type="button"
         >
           <HugeiconsIcon icon={Add01Icon} className="size-4" />

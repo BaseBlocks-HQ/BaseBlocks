@@ -61,6 +61,7 @@ export function BillingCreditCard({
                     onClick={() =>
                       onCreditCheckout?.(creditTopUp.sku, amountMinor)
                     }
+                    size="compact"
                     type="button"
                     variant="outline"
                   >
@@ -71,6 +72,7 @@ export function BillingCreditCard({
               <Button
                 disabled={actionPending || !onCreditCheckout}
                 onClick={() => onCreditCheckout?.(creditTopUp.sku)}
+                size="compact"
                 type="button"
                 variant="outline"
               >

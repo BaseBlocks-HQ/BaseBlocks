@@ -81,8 +81,8 @@ export function AccountSection({ user }: { user: WorkspaceUser | null }) {
           {deletionPlan?.canDeleteAccount ? (
             <Button
               asChild
-              className="h-7 shrink-0 px-2.5 text-xs"
-              size="sm"
+              className="shrink-0"
+              size="compact"
               variant="destructive"
             >
               <Link href="/delete-account">
@@ -96,9 +96,9 @@ export function AccountSection({ user }: { user: WorkspaceUser | null }) {
             </Button>
           ) : (
             <Button
-              className="h-7 shrink-0 px-2.5 text-xs"
+              className="shrink-0"
               disabled
-              size="sm"
+              size="compact"
               variant="destructive"
             >
               {isLoading ? <Spinner className="size-4" /> : null}

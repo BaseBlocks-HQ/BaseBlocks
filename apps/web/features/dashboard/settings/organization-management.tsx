@@ -200,8 +200,7 @@ export function OrganizationManagement({
               <Button
                 disabled={working !== null}
                 form="workspace-details-form"
-                size="sm"
-                className="h-7 px-2.5 text-xs"
+                size="compact"
                 type="submit"
               >
                 {working === "save" ? <Spinner className="size-3.5" /> : null}
@@ -279,6 +278,7 @@ export function OrganizationManagement({
               <Button
                 disabled={!targetMemberId || working !== null}
                 onClick={() => setConfirm("transfer")}
+                size="compact"
                 type="button"
                 variant="outline"
               >
@@ -310,9 +310,10 @@ export function OrganizationManagement({
           </p>
           {!canDelete ? (
             <Button
-              className="h-7 shrink-0 px-2.5 text-xs"
+              className="shrink-0"
               disabled={working !== null}
               onClick={() => setConfirm("leave")}
+              size="compact"
               type="button"
               variant="outline"
             >
@@ -321,9 +322,10 @@ export function OrganizationManagement({
             </Button>
           ) : (
             <Button
-              className="h-7 shrink-0 px-2.5 text-xs"
+              className="shrink-0"
               disabled={working !== null}
               onClick={() => setConfirm("delete")}
+              size="compact"
               type="button"
               variant="destructive"
             >

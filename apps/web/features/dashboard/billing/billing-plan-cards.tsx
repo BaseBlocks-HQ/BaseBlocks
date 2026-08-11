@@ -106,7 +106,7 @@ export function BillingPlanCards({
         <h2 className="text-sm font-medium" id="billing-plans">
           {t("plans.title")}
         </h2>
-        <Button asChild size="xs" variant="ghost">
+        <Button asChild size="compact" variant="ghost">
           <Link href={plansHref}>{t("plans.all")}</Link>
         </Button>
       </div>
@@ -140,13 +140,13 @@ export function BillingPlanCards({
                   <Button
                     disabled={actionPending}
                     onClick={() => onCheckout(selectedPlusOption.sku)}
-                    size="xs"
+                    size="compact"
                     type="button"
                   >
                     {t("actions.upgrade")}
                   </Button>
                 ) : (
-                  <Button disabled size="xs" variant="outline">
+                  <Button disabled size="compact" variant="outline">
                     {t("actions.unavailable")}
                   </Button>
                 )

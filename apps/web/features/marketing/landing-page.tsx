@@ -61,7 +61,7 @@ export function LandingPage({ copy, labels, locale }: LandingPageProps) {
   const authCta = (
     <a
       className={marketingActionClassName({
-        size: "lg",
+        size: "compact",
         variant: "default",
       })}
       href={`${prefix}/login`}
