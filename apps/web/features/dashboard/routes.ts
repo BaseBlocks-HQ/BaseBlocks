@@ -18,6 +18,10 @@ export function getTeamBillingPath(teamSlug: string): string {
   return `${getTeamDashboardPath(teamSlug)}/billing`;
 }
 
+export function getTeamBillingPlansPath(teamSlug: string): string {
+  return `${getTeamBillingPath(teamSlug)}/plans`;
+}
+
 export function getTeamSiteEditorPath(
   teamSlug: string,
   siteId: string,

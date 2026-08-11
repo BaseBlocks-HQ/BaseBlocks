@@ -515,13 +515,16 @@
   "billing": {
     "title": "Facturation",
     "adminRequired": "Seuls les propriétaires et administrateurs de l’espace peuvent gérer la facturation.",
+    "support": {
+      "prompt": "Pour toute question sur la facturation,",
+      "contact": "contactez-nous",
+      "title": "Contactez-nous",
+      "description": "Écrivez-nous directement à"
+    },
     "current": {
       "title": "Offre actuelle",
-      "freeDescription": "Votre espace utilise l’offre gratuite.",
-      "plusDescription": "Votre espace bénéficie des fonctionnalités Plus.",
-      "members": "Membres actifs",
-      "paidSeats": "Sièges payants",
-      "ai": "Fonctionnalités IA",
+      "memberCount": "{count, plural, =1 {1 membre actif} other {# membres actifs}}",
+      "paidSeatCount": "{count, plural, =1 {1 siège payant} other {# sièges payants}}",
       "aiBalance": "{balance} disponibles",
       "available": "Disponibles",
       "unavailable": "Indisponibles",
@@ -529,11 +532,16 @@
       "effectiveThrough": "Droits confirmés jusqu’au {date}"
     },
     "plans": {
-      "title": "Offres disponibles",
+      "title": "Offres",
+      "all": "Toutes les offres",
       "current": "Offre actuelle",
+      "currentSummary": "Vous utilisez l’offre {plan}.",
+      "perMemberMonth": "par membre/mois",
+      "perMember": "par membre/{interval}",
+      "upgradeTitle": "Passer à Plus",
       "free": {
         "name": "Gratuite",
-        "description": "L’essentiel pour un petit espace de travail.",
+        "price": "0 $",
         "features": {
           "sites": "Créez et organisez des sites internes",
           "publishing": "Publiez des pages pour votre équipe",
@@ -543,7 +551,8 @@
       },
       "plus": {
         "name": "Plus",
-        "description": "Plus de capacité et des workflows assistés par l’IA pour les équipes en croissance.",
+        "billedYearly": "Facturation annuelle",
+        "billedMonthly": "Facturation mensuelle",
         "intervals": {
           "month": "Mensuel",
           "year": "Annuel"
@@ -558,18 +567,35 @@
           "ai": "Crédits IA mensuels réinitialisés à chaque période de facturation",
           "seats": "Sièges payants pour les membres actifs de l’espace"
         }
+      },
+      "comparison": {
+        "feature": "Fonctionnalité",
+        "usage": "Utilisation",
+        "core": "Fonctionnalités principales",
+        "members": "Membres",
+        "sites": "Sites",
+        "publishing": "Publication",
+        "collaboration": "Collaboration",
+        "ai": "Crédits IA",
+        "seats": "Sièges payants",
+        "included": "Inclus",
+        "unlimited": "Illimité",
+        "prepaid": "Prépayés",
+        "monthly": "Mensuels + prépayés",
+        "notIncluded": "—"
       }
     },
     "credits": {
       "title": "Crédits IA",
-      "freeDescription": "Achetez des crédits prépayés pour utiliser l’IA avec l’offre gratuite. 1 $ payé ajoute 1 $ à votre solde IA.",
-      "plusDescription": "Plus inclut des crédits récurrents. Ajoutez des crédits prépayés si nécessaire ; ils n’expirent pas avec la période de facturation.",
-      "quickAmounts": "Choisissez un montant",
-      "customAmount": "Montant personnalisé",
-      "customMinimum": "Le montant personnalisé est saisi de façon sécurisée sur Polar. Minimum ${minimum}."
+      "plusDescription": "Les crédits Plus sont renouvelés chaque mois. Les crédits achetés n’expirent jamais.",
+      "balance": "Solde disponible",
+      "quickAmounts": "Ajouter des crédits",
+      "customAmount": "Montant personnalisé"
     },
     "actions": {
       "upgrade": "Passer à Plus",
+      "change": "Changer d’offre",
+      "backToBilling": "Retour à la facturation",
       "manage": "Gérer l’abonnement",
       "resolve": "Vérifier la facturation",
       "unavailable": "Facturation indisponible"

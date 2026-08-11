@@ -1,21 +1,14 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Alert02Icon,
-  CreditCardIcon,
-  SparklesIcon,
-  UserGroupIcon,
-} from "@hugeicons/core-free-icons";
-import { Badge } from "@baseblocks/ui/badge";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@baseblocks/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@baseblocks/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@baseblocks/ui/dialog";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -43,6 +36,7 @@ export interface BillingOverviewProps {
   entitlement: WorkspaceBillingEntitlement;
   creditTopUp?: AiCreditTopUpOption;
   canManageBilling: boolean;
+  plansHref: string;
   plusOptions: PlusBillingOption[];
   onCheckout?: (sku: string) => void;
   onCreditCheckout?: (sku: string, amountMinor?: bigint) => void;
@@ -105,10 +99,49 @@ function BillingStatusCallout({
   );
 }
 
+function BillingSupportDialog() {
+  const t = useTranslations("billing.support");
+
+  return (
+    <Dialog>
+      <span>
+        {t("prompt")}{" "}
+        <DialogTrigger asChild>
+          <button
+            className="font-medium text-foreground underline decoration-foreground/30 underline-offset-2 transition-colors hover:decoration-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            type="button"
+          >
+            {t("contact")}
+          </button>
+        </DialogTrigger>
+        .
+      </span>
+      <DialogContent className="overflow-hidden rounded-[1.5rem] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-2xl sm:max-w-[28rem] [&_[data-slot='dialog-close']]:top-4 [&_[data-slot='dialog-close']]:right-4">
+        <DialogHeader className="px-5 pt-4 pb-0">
+          <DialogTitle className="text-base font-semibold">
+            {t("title")}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogDescription className="px-5 pt-3 pb-5 text-left leading-relaxed text-sidebar-foreground/65">
+          {t("description")}{" "}
+          <a
+            className="font-medium text-sidebar-foreground underline decoration-sidebar-foreground/30 underline-offset-2 transition-colors hover:decoration-sidebar-foreground focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            href="mailto:support@easylink.com"
+          >
+            support@easylink.com
+          </a>
+          .
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function BillingOverview({
   entitlement,
   creditTopUp,
   canManageBilling,
+  plansHref,
   plusOptions,
   onCheckout,
   onCreditCheckout,
@@ -139,8 +172,11 @@ export function BillingOverview({
     maximumFractionDigits: 2,
   }).format(Number(entitlement.availableAiCreditUnits) / 1_000_000);
   return (
-    <DashboardPage className="gap-5">
-      <DashboardPageHeader title={t("title")} />
+    <DashboardPage className="gap-8">
+      <DashboardPageHeader
+        description={<BillingSupportDialog />}
+        title={t("title")}
+      />
 
       <BillingStatusCallout
         callout={callout}
@@ -149,77 +185,53 @@ export function BillingOverview({
         onOpenPortal={onOpenPortal}
       />
 
-      <section aria-labelledby="billing-current-plan">
-        <Card className="gap-5 border-foreground/[0.07] shadow-none">
-          <CardHeader>
-            <CardTitle id="billing-current-plan">
-              {t("current.title")}
-            </CardTitle>
-            <CardDescription>
+      <section aria-labelledby="billing-current-plan" className="space-y-3">
+        <h2 className="text-sm font-medium" id="billing-current-plan">
+          {t("current.title")}
+        </h2>
+        <div className="flex flex-col gap-4 rounded-xl bg-card p-4 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">
+              {isPlus ? t("plans.plus.name") : t("plans.free.name")}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("current.memberCount", {
+                count: entitlement.billableSeatCount,
+              })}
               {isPlus
-                ? t("current.plusDescription")
-                : t("current.freeDescription")}
-            </CardDescription>
-            <CardAction>
-              <Badge variant={isPlus ? "default" : "secondary"}>
-                {isPlus ? t("plans.plus.name") : t("plans.free.name")}
-              </Badge>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg bg-muted/50 p-3">
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="mb-2 size-5 text-muted-foreground"
-                icon={UserGroupIcon}
-              />
-              <p className="text-sm text-muted-foreground">
-                {t("current.members")}
-              </p>
-              <p className="mt-0.5 font-medium tabular-nums">
-                {entitlement.billableSeatCount}
-              </p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3">
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="mb-2 size-5 text-muted-foreground"
-                icon={CreditCardIcon}
-              />
-              <p className="text-sm text-muted-foreground">
-                {t("current.paidSeats")}
-              </p>
-              <p className="mt-0.5 font-medium tabular-nums">
-                {entitlement.paidSeatCapacity}
-              </p>
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3">
-              <HugeiconsIcon
-                aria-hidden="true"
-                className="mb-2 size-5 text-muted-foreground"
-                icon={SparklesIcon}
-              />
-              <p className="text-sm text-muted-foreground">{t("current.ai")}</p>
-              <p className="mt-0.5 font-medium">
-                {t("current.aiBalance", { balance: aiBalance })}
-              </p>
-            </div>
-          </CardContent>
-          {additionalSeats > 0 || effectiveThrough ? (
-            <CardFooter className="flex-col items-start gap-1 text-sm text-muted-foreground">
-              {additionalSeats > 0 ? (
-                <p>
-                  {t("current.additionalSeats", { count: additionalSeats })}
-                </p>
-              ) : null}
-              {effectiveThrough ? (
-                <p>
-                  {t("current.effectiveThrough", { date: effectiveThrough })}
-                </p>
-              ) : null}
-            </CardFooter>
+                ? ` · ${t("current.paidSeatCount", {
+                    count: entitlement.paidSeatCapacity,
+                  })}`
+                : null}
+            </p>
+            {additionalSeats > 0 || effectiveThrough ? (
+              <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                {additionalSeats > 0 ? (
+                  <p>
+                    {t("current.additionalSeats", { count: additionalSeats })}
+                  </p>
+                ) : null}
+                {effectiveThrough ? (
+                  <p>
+                    {t("current.effectiveThrough", { date: effectiveThrough })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          {isPlus && canManageBilling && onOpenPortal ? (
+            <Button
+              className="shrink-0"
+              disabled={actionPending}
+              onClick={onOpenPortal}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {t("actions.manage")}
+            </Button>
           ) : null}
-        </Card>
+        </div>
       </section>
 
       <BillingPlanCards
@@ -228,8 +240,8 @@ export function BillingOverview({
         isPlus={isPlus}
         locale={locale}
         onCheckout={onCheckout}
-        onOpenPortal={onOpenPortal}
         onSelectPlusSku={setSelectedPlusSku}
+        plansHref={plansHref}
         plusOptions={plusOptions}
         selectedPlusOption={selectedPlusOption}
       />
@@ -237,6 +249,7 @@ export function BillingOverview({
       {creditTopUp ? (
         <BillingCreditCard
           actionPending={actionPending}
+          balance={aiBalance}
           creditTopUp={creditTopUp}
           isPlus={isPlus}
           locale={locale}
