@@ -33,14 +33,12 @@ interface SiteEditorProps {
     | "reconciliationRequired"
     | "policyUnavailable"
     | "siteNotFound";
-  editorAiEnabled: boolean;
   siteId: string;
   teamSlug: string;
 }
 
 function SiteEditorScreen({
   aiAvailabilityReason,
-  editorAiEnabled,
   siteId,
   teamSlug,
 }: SiteEditorProps) {
@@ -130,7 +128,6 @@ function SiteEditorScreen({
             onUnpublish={handleUnpublish}
             hasUnpublishedChanges={draftSummary.hasUnpublishedChanges}
             aiChatOpen={aiChatOpen}
-            editorAiEnabled={editorAiEnabled}
             onToggleAiChat={() => setAiChatOpen((current) => !current)}
           />
 
@@ -159,7 +156,7 @@ function SiteEditorScreen({
                 </div>
               </PortalContainerProvider>
             </main>
-            {editorAiEnabled && aiChatOpen ? (
+            {aiChatOpen ? (
               <aside className="absolute top-(--app-header-height) right-0 bottom-0 z-30 w-full border-l bg-background shadow-xl sm:w-[26rem] lg:shadow-none">
                 <Suspense
                   fallback={

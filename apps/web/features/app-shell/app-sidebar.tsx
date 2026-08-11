@@ -13,11 +13,9 @@ import { AppSidebarFrame } from "./app-sidebar-frame";
 
 export function AppSidebar({
   analyticsEnabled,
-  billingEnabled,
   siteId,
 }: {
   analyticsEnabled: boolean;
-  billingEnabled: boolean;
   siteId: string | null;
 }) {
   const { team } = useTeamAccess();
@@ -61,10 +59,7 @@ export function AppSidebar({
           <SiteEditorSidebarContent />
         </Suspense>
       ) : (
-        <DashboardSidebarContent
-          analyticsEnabled={analyticsEnabled}
-          billingEnabled={billingEnabled}
-        />
+        <DashboardSidebarContent analyticsEnabled={analyticsEnabled} />
       )}
     </AppSidebarFrame>
   );

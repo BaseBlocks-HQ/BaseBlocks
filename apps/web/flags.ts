@@ -12,32 +12,6 @@ export const analytics = flag<boolean>({
   ],
 });
 
-const enabledOutsideProduction =
-  process.env.NODE_ENV === "development" ||
-  process.env.VERCEL_ENV === "preview";
-
-export const billing = flag<boolean>({
-  key: "billing",
-  adapter: vercelAdapter,
-  defaultValue: enabledOutsideProduction,
-  description: "Enable workspace billing while merchant onboarding is pending",
-  options: [
-    { label: "Off", value: false },
-    { label: "On", value: true },
-  ],
-});
-
-export const editorAi = flag<boolean>({
-  key: "editor-ai",
-  adapter: vercelAdapter,
-  defaultValue: enabledOutsideProduction,
-  description: "Enable editor AI while merchant onboarding is pending",
-  options: [
-    { label: "Off", value: false },
-    { label: "On", value: true },
-  ],
-});
-
 export const notionIntegration = flag<boolean>({
   key: "notion-integration",
   adapter: vercelAdapter,

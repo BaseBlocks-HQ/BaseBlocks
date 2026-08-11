@@ -10,12 +10,10 @@ import { AppSidebar } from "./app-sidebar";
 
 export function AppShell({
   analyticsEnabled,
-  billingEnabled,
   children,
   defaultSidebarOpen,
 }: {
   analyticsEnabled: boolean;
-  billingEnabled: boolean;
   children: ReactNode;
   defaultSidebarOpen: boolean;
 }) {
@@ -39,11 +37,7 @@ export function AppShell({
         }}
         siteId={siteId ?? ""}
       >
-        <AppSidebar
-          analyticsEnabled={analyticsEnabled}
-          billingEnabled={billingEnabled}
-          siteId={siteId}
-        />
+        <AppSidebar analyticsEnabled={analyticsEnabled} siteId={siteId} />
         <SidebarInset className="h-svh min-w-0 overflow-hidden">
           <AppHeaderProvider>{children}</AppHeaderProvider>
         </SidebarInset>
