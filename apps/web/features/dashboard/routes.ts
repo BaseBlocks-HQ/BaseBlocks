@@ -22,6 +22,18 @@ export function getTeamBillingPlansPath(teamSlug: string): string {
   return `${getTeamBillingPath(teamSlug)}/plans`;
 }
 
+export function getTeamSettingsPath(teamSlug: string): string {
+  return `${getTeamDashboardPath(teamSlug)}/settings`;
+}
+
+export function getTeamAccountSettingsPath(teamSlug: string): string {
+  return `${getTeamSettingsPath(teamSlug)}/account`;
+}
+
+export function getTeamOrganizationsSettingsPath(teamSlug: string): string {
+  return `${getTeamSettingsPath(teamSlug)}/organizations`;
+}
+
 export function getTeamSiteEditorPath(
   teamSlug: string,
   siteId: string,

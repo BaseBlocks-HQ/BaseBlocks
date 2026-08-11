@@ -8,36 +8,23 @@ import {
   MAX_OWNED_ORGANIZATIONS,
   hasOrganizationRole,
 } from "@baseblocks/backend/organization-policy";
-import { Badge } from "@baseblocks/ui/badge";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@baseblocks/ui/select";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
 import { OrganizationManagement } from "./organization-management";
 import { WorkspaceCreateDialog } from "./workspace-create-dialog";
 
-export function OrganizationsSection({
-  currentOrganizationId,
-  teams,
-  user,
-}: {
-  currentOrganizationId: string;
-  teams: TeamRecord[];
-  user: WorkspaceUser | null;
-}) {
-  const t = useTranslations("settings.organizations");
-  const [selectedId, setSelectedId] = useState(currentOrganizationId);
-  const ownedCount = useMemo(
-    () =>
-      teams.filter((team) => hasOrganizationRole(team.memberRole, "owner"))
-        .length,
-    [teams],
-  );
+export function getWorkspaceSettingsState(teams: TeamRecord[]) {
+  const ownedCount = teams.filter((team) =>
+    hasOrganizationRole(team.memberRole, "owner"),
+  ).length;
   const hasPersonalWorkspace = teams.some(
     (team) =>
       team.intent === "personal" &&
@@ -47,69 +34,99 @@ export function OrganizationsSection({
     (team) =>
       team.intent === null && hasOrganizationRole(team.memberRole, "owner"),
   );
+
+  return {
+    hasPersonalWorkspace,
+    hasUnclassifiedOwnedWorkspace,
+    ownedCount,
+  };
+}
+
+export function WorkspaceSettingsHeaderActions({
+  onSelectedOrganizationChange,
+  selectedOrganizationId,
+  teams,
+}: {
+  onSelectedOrganizationChange: (organizationId: string) => void;
+  selectedOrganizationId: string;
+  teams: TeamRecord[];
+}) {
+  const t = useTranslations("settings.organizations");
+  const { hasPersonalWorkspace, hasUnclassifiedOwnedWorkspace, ownedCount } =
+    getWorkspaceSettingsState(teams);
+  const selected = teams.find((team) => team._id === selectedOrganizationId);
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      {selected ? (
+        <Select
+          value={selected._id}
+          onValueChange={onSelectedOrganizationChange}
+        >
+          <SelectTrigger
+            aria-label={t("manage")}
+            className="w-36 min-w-0 sm:w-52 [&>span]:min-w-0 [&>span]:truncate"
+            size="sm"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent
+            align="end"
+            className="w-[min(20rem,calc(100vw-2rem))]"
+            position="popper"
+          >
+            <SelectGroup>
+              <SelectLabel>
+                {t("ownedCount", {
+                  count: ownedCount,
+                  limit: MAX_OWNED_ORGANIZATIONS,
+                })}
+              </SelectLabel>
+              {teams.map((team) => (
+                <SelectItem key={team._id} value={team._id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      ) : null}
+      <WorkspaceCreateDialog
+        compact
+        disabled={ownedCount >= MAX_OWNED_ORGANIZATIONS}
+        personalAllowed={
+          !hasPersonalWorkspace && !hasUnclassifiedOwnedWorkspace
+        }
+      />
+    </div>
+  );
+}
+
+export function OrganizationsSection({
+  currentOrganizationId,
+  selectedOrganizationId,
+  teams,
+  user,
+}: {
+  currentOrganizationId: string;
+  selectedOrganizationId: string;
+  teams: TeamRecord[];
+  user: WorkspaceUser | null;
+}) {
+  const t = useTranslations("settings.organizations");
+  const { ownedCount } = getWorkspaceSettingsState(teams);
   const selected =
-    teams.find((team) => team._id === selectedId) ??
+    teams.find((team) => team._id === selectedOrganizationId) ??
     teams.find((team) => team._id === currentOrganizationId) ??
     teams[0];
 
-  useEffect(() => {
-    if (!teams.some((team) => team._id === selectedId)) {
-      setSelectedId(currentOrganizationId);
-    }
-  }, [currentOrganizationId, selectedId, teams]);
-
   return (
-    <div className="space-y-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">
-              {t("title")}
-            </h2>
-            <Badge variant="secondary">
-              {t("ownedCount", {
-                count: ownedCount,
-                limit: MAX_OWNED_ORGANIZATIONS,
-              })}
-            </Badge>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <WorkspaceCreateDialog
-            disabled={ownedCount >= MAX_OWNED_ORGANIZATIONS}
-            personalAllowed={
-              !hasPersonalWorkspace && !hasUnclassifiedOwnedWorkspace
-            }
-          />
-        </div>
-      </div>
-
+    <div className="space-y-10">
       {ownedCount >= MAX_OWNED_ORGANIZATIONS ? (
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
           {t("limitReached", { limit: MAX_OWNED_ORGANIZATIONS })}
         </p>
       ) : null}
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="settings-organization">
-          {t("manage")}
-        </label>
-        <Select value={selected?._id} onValueChange={setSelectedId}>
-          <SelectTrigger
-            id="settings-organization"
-            className="w-full sm:max-w-sm"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {teams.map((team) => (
-              <SelectItem key={team._id} value={team._id}>
-                {team.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       {selected ? (
         <OrganizationManagement
