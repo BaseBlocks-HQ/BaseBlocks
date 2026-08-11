@@ -143,6 +143,7 @@ export function PublicSiteShell({ result }: PublicSiteShellProps) {
                 key={page._id}
                 page={navigationIcon ? { ...page, icon: navigationIcon } : page}
                 content={result.content}
+                imageIds={result.imageIds}
                 canGoBack={previousPageUrl !== null}
                 onGoBack={goBack}
                 onOpenPageBlock={openPageBlock}
@@ -485,8 +486,14 @@ function PublishedPageNavigation({
                 style={{ paddingInlineStart: `${depth * 0.75}rem` }}
                 className="flex h-8 min-w-0 gap-0 p-0 font-normal data-[active=true]:font-medium"
               >
-                <div>
-                  <span className="relative size-7 shrink-0">
+                <div className="relative">
+                  <Link
+                    aria-label={page.title}
+                    className="absolute inset-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    href={getPageLink(siteSlug, page.fullPath)}
+                    prefetch={false}
+                  />
+                  <span className="pointer-events-none relative z-10 size-7 shrink-0">
                     <span
                       aria-hidden="true"
                       className={cn(
@@ -501,7 +508,7 @@ function PublishedPageNavigation({
                       <button
                         type="button"
                         aria-label={`${isExpanded ? "Collapse" : "Expand"} ${page.title}`}
-                        className="absolute inset-0 z-10 flex items-center justify-center text-muted-foreground opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
+                        className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center text-muted-foreground opacity-0 outline-none transition-opacity duration-100 ease-[cubic-bezier(0.2,0,0,1)] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring group-hover/page:opacity-100 pointer-coarse:opacity-100"
                         data-page-disclosure
                         onClick={() => {
                           disclosure.toggle(id);
@@ -519,17 +526,16 @@ function PublishedPageNavigation({
                   </span>
                   <OverflowTooltip content={page.title}>
                     {(textRef) => (
-                      <Link
-                        className="flex h-8 min-w-0 items-center overflow-hidden pr-2 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                        href={getPageLink(siteSlug, page.fullPath)}
-                        prefetch={false}
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none flex h-8 min-w-0 items-center overflow-hidden pr-2"
                       >
                         <MiddleTruncate
                           className="flex-1"
                           leadingRef={textRef}
                           text={page.title}
                         />
-                      </Link>
+                      </span>
                     )}
                   </OverflowTooltip>
                 </div>
