@@ -19,6 +19,7 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
+import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -27,9 +28,11 @@ import { useMutation } from "convex/react";
 import { workspaceApi } from "@/lib/convex/workspace-api";
 
 export function WorkspaceCreateDialog({
+  compact = false,
   disabled,
   personalAllowed,
 }: {
+  compact?: boolean;
   disabled: boolean;
   personalAllowed: boolean;
 }) {
@@ -90,9 +93,20 @@ export function WorkspaceCreateDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button disabled={disabled} size="sm" className="rounded-full">
+        <Button
+          aria-label={t("create")}
+          className={cn(
+            "h-7 px-2.5 text-xs",
+            compact && "size-7 px-0 sm:h-7 sm:w-auto sm:px-2.5",
+          )}
+          disabled={disabled}
+          size="sm"
+          title={compact ? t("create") : undefined}
+        >
           <HugeiconsIcon icon={Add01Icon} className="size-4" />
-          {t("create")}
+          <span className={compact ? "sr-only sm:not-sr-only" : undefined}>
+            {t("create")}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="rounded-[1.25rem] sm:max-w-md">

@@ -8,6 +8,8 @@ import type {
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth/client";
 import { api } from "@baseblocks/backend";
+import { Delete01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type OrganizationRole,
   roleHasPermission,
@@ -180,13 +182,33 @@ export function OrganizationManagement({
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="mb-5 flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold">{organization.name}</h3>
-          <Badge variant="secondary">{roleLabel}</Badge>
-        </div>
-        <form className="space-y-4" onSubmit={saveIdentity}>
+    <div className="space-y-10">
+      <section aria-labelledby="workspace-details-title" className="space-y-4">
+        <form
+          className="space-y-4"
+          id="workspace-details-form"
+          onSubmit={saveIdentity}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="text-sm font-medium" id="workspace-details-title">
+                {t("details")}
+              </h2>
+              <Badge variant="secondary">{roleLabel}</Badge>
+            </div>
+            {canUpdate ? (
+              <Button
+                disabled={working !== null}
+                form="workspace-details-form"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                type="submit"
+              >
+                {working === "save" ? <Spinner className="size-3.5" /> : null}
+                {t("save")}
+              </Button>
+            ) : null}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="organization-name">{t("name")}</Label>
             <Input
@@ -209,29 +231,41 @@ export function OrganizationManagement({
             />
             <p className="text-xs text-muted-foreground">{t("slugHint")}</p>
           </div>
-          {canUpdate ? (
-            <Button disabled={working === "save"} size="sm" type="submit">
-              {working === "save" ? <Spinner className="size-4" /> : null}
-              {t("save")}
-            </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("readOnly")}</p>
-          )}
         </form>
-      </div>
+        {!canUpdate ? (
+          <p className="text-sm text-muted-foreground">{t("readOnly")}</p>
+        ) : null}
+      </section>
 
       {canDelete ? (
-        <div className="space-y-3">
+        <section
+          aria-labelledby="workspace-ownership-title"
+          className="space-y-3"
+        >
           <div>
-            <h4 className="text-sm font-medium">{t("ownership")}</h4>
+            <h2 className="text-sm font-medium" id="workspace-ownership-title">
+              {t("ownership")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("ownershipDescription")}
             </p>
           </div>
-          {otherMembers.length > 0 ? (
+          {members === undefined ? (
+            <div
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+              role="status"
+            >
+              <Spinner className="size-4" />
+              {t("membersLoading")}
+            </div>
+          ) : otherMembers.length > 0 ? (
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Select value={targetMemberId} onValueChange={setTargetMemberId}>
-                <SelectTrigger className="min-w-0 flex-1">
+              <Select
+                disabled={working !== null}
+                value={targetMemberId}
+                onValueChange={setTargetMemberId}
+              >
+                <SelectTrigger className="min-w-0 flex-1 [&>span]:truncate">
                   <SelectValue placeholder={t("selectOwner")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,11 +277,12 @@ export function OrganizationManagement({
                 </SelectContent>
               </Select>
               <Button
-                disabled={!targetMemberId}
+                disabled={!targetMemberId || working !== null}
                 onClick={() => setConfirm("transfer")}
                 type="button"
                 variant="outline"
               >
+                {working === "transfer" ? <Spinner className="size-4" /> : null}
                 {t("transfer")}
               </Button>
             </div>
@@ -256,31 +291,53 @@ export function OrganizationManagement({
               {t("inviteBeforeTransfer")}
             </p>
           )}
-        </div>
+        </section>
       ) : null}
 
-      <div className="space-y-3 rounded-xl bg-destructive/5 p-4 ring-1 ring-destructive/15">
-        <div>
-          <h4 className="text-sm font-medium text-destructive">
-            {t("dangerZone")}
-          </h4>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <section
+        aria-labelledby="workspace-danger-zone-title"
+        className="space-y-3"
+      >
+        <h2
+          className="text-sm font-medium text-destructive"
+          id="workspace-danger-zone-title"
+        >
+          {t("dangerZone")}
+        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
             {canDelete ? t("deleteDescription") : t("leaveDescription")}
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
           {!canDelete ? (
-            <Button variant="outline" onClick={() => setConfirm("leave")}>
+            <Button
+              className="h-7 shrink-0 px-2.5 text-xs"
+              disabled={working !== null}
+              onClick={() => setConfirm("leave")}
+              type="button"
+              variant="outline"
+            >
+              {working === "leave" ? <Spinner className="size-4" /> : null}
               {t("leave")}
             </Button>
-          ) : null}
-          {canDelete ? (
-            <Button variant="destructive" onClick={() => setConfirm("delete")}>
+          ) : (
+            <Button
+              className="h-7 shrink-0 px-2.5 text-xs"
+              disabled={working !== null}
+              onClick={() => setConfirm("delete")}
+              type="button"
+              variant="destructive"
+            >
+              {working === "delete" ? <Spinner className="size-4" /> : null}
+              <HugeiconsIcon
+                aria-hidden="true"
+                className="size-3.5"
+                icon={Delete01Icon}
+              />
               {t("delete")}
             </Button>
-          ) : null}
+          )}
         </div>
-      </div>
+      </section>
 
       <AlertDialog
         open={confirm !== null}
