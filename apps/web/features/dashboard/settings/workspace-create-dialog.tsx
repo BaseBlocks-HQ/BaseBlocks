@@ -19,7 +19,6 @@ import {
 } from "@baseblocks/ui/dialog";
 import { Input } from "@baseblocks/ui/input";
 import { Label } from "@baseblocks/ui/label";
-import { cn } from "@baseblocks/ui/lib/utils";
 import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -95,12 +94,11 @@ export function WorkspaceCreateDialog({
       <DialogTrigger asChild>
         <Button
           aria-label={t("create")}
-          className={cn(
-            "h-7 px-2.5 text-xs",
-            compact && "size-7 px-0 sm:h-7 sm:w-auto sm:px-2.5",
-          )}
+          className={
+            compact ? "size-7 px-0 sm:h-7 sm:w-auto sm:px-2.5" : undefined
+          }
           disabled={disabled}
-          size="sm"
+          size="compact"
           title={compact ? t("create") : undefined}
         >
           <HugeiconsIcon icon={Add01Icon} className="size-4" />

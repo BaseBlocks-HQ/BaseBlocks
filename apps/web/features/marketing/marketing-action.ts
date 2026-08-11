@@ -1,12 +1,11 @@
 import { cn } from "@baseblocks/ui/lib/utils";
 
 const baseClassName =
-  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[0.625rem] text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[0.625rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50";
 
 const sizeClassNames = {
   icon: "size-9",
-  lg: "h-10 gap-2 px-6",
-  sm: "h-8 gap-1.5 px-3",
+  compact: "h-7 gap-1.5 px-2.5 text-xs",
 } as const;
 
 const variantClassNames = {

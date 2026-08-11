@@ -158,10 +158,10 @@ export function BillingPlansPage({
                   </div>
                   {isPlus && canManageBilling && onOpenPortal ? (
                     <Button
-                      className="h-7 w-full rounded-md px-2.5 text-xs"
+                      className="w-full"
                       disabled={actionPending}
                       onClick={onOpenPortal}
-                      size="xs"
+                      size="compact"
                       type="button"
                       variant="outline"
                     >
@@ -169,9 +169,9 @@ export function BillingPlansPage({
                     </Button>
                   ) : (
                     <Button
-                      className="h-7 w-full rounded-md px-2.5 text-xs"
+                      className="w-full"
                       disabled
-                      size="xs"
+                      size="compact"
                       variant="outline"
                     >
                       {t("plans.current")}
@@ -209,28 +209,28 @@ export function BillingPlansPage({
                   />
                   {isPlus ? (
                     <Button
-                      className="h-7 w-full rounded-md px-2.5 text-xs"
+                      className="w-full"
                       disabled
-                      size="xs"
+                      size="compact"
                       variant="secondary"
                     >
                       {t("plans.current")}
                     </Button>
                   ) : canManageBilling && onCheckout && selectedPlusOption ? (
                     <Button
-                      className="h-7 w-full rounded-md px-2.5 text-xs"
+                      className="w-full"
                       disabled={actionPending}
                       onClick={() => onCheckout(selectedPlusOption.sku)}
-                      size="xs"
+                      size="compact"
                       type="button"
                     >
                       {t("actions.upgrade")}
                     </Button>
                   ) : (
                     <Button
-                      className="h-7 w-full rounded-md px-2.5 text-xs"
+                      className="w-full"
                       disabled
-                      size="xs"
+                      size="compact"
                       variant="outline"
                     >
                       {t("actions.unavailable")}

@@ -88,7 +88,7 @@ function BillingStatusCallout({
         <Button
           disabled={actionPending}
           onClick={onOpenPortal}
-          size="sm"
+          size="compact"
           type="button"
           variant="outline"
         >
@@ -224,7 +224,7 @@ export function BillingOverview({
               className="shrink-0"
               disabled={actionPending}
               onClick={onOpenPortal}
-              size="sm"
+              size="compact"
               type="button"
               variant="outline"
             >

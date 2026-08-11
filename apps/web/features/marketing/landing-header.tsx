@@ -5,15 +5,12 @@ interface LandingHeaderProps {
   locale: "en" | "fr";
 }
 
-const headerActionClassName = "w-[5.5rem]";
-
 export function LandingHeader({ labels, locale }: LandingHeaderProps) {
   const prefix = locale === "fr" ? "/fr" : "";
   const authAction = (
     <a
       className={marketingActionClassName({
-        className: headerActionClassName,
-        size: "sm",
+        size: "compact",
         variant: "default",
       })}
       href={`${prefix}/login`}
