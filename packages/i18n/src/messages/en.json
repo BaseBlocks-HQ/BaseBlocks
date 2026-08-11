@@ -722,7 +722,6 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage your account and workspaces.",
     "accountNav": "Account",
     "organizationsNav": "Workspaces",
     "accountTitle": "Account",

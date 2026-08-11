@@ -25,10 +25,7 @@ export function AccountSection({ user }: { user: WorkspaceUser | null }) {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="text-lg font-semibold tracking-tight">
-          {t("accountTitle")}
-        </h2>
-        <div className="mt-5 flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <Avatar className="size-12 ring-1 ring-border">
             {user?.imageUrl ? <AvatarImage alt="" src={user.imageUrl} /> : null}
             <AvatarFallback>{initials}</AvatarFallback>

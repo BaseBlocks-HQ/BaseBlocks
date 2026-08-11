@@ -61,19 +61,12 @@ export function OrganizationsSection({
   return (
     <div className="space-y-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">
-              {t("title")}
-            </h2>
-            <Badge variant="secondary">
-              {t("ownedCount", {
-                count: ownedCount,
-                limit: MAX_OWNED_ORGANIZATIONS,
-              })}
-            </Badge>
-          </div>
-        </div>
+        <Badge variant="secondary">
+          {t("ownedCount", {
+            count: ownedCount,
+            limit: MAX_OWNED_ORGANIZATIONS,
+          })}
+        </Badge>
         <div className="flex flex-wrap gap-2">
           <WorkspaceCreateDialog
             disabled={ownedCount >= MAX_OWNED_ORGANIZATIONS}

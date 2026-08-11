@@ -722,7 +722,6 @@
   },
   "settings": {
     "title": "Paramètres",
-    "description": "Gérez votre compte et vos espaces de travail.",
     "accountNav": "Compte",
     "organizationsNav": "Espaces de travail",
     "accountTitle": "Compte",
