@@ -6,9 +6,18 @@ import { Spinner } from "@baseblocks/ui/spinner";
 import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  getTeamBillingPath,
+  getTeamBillingPlansPath,
+} from "@/features/dashboard/routes";
 import { BillingOverview } from "./billing-overview";
+import { BillingPlansPage } from "./billing-plans-page";
 
-export function BillingPage() {
+export function BillingPage({
+  view = "overview",
+}: {
+  view?: "overview" | "plans";
+}) {
   const { team } = useTeamAccess();
   const { isAuthenticated } = useConvexAuth();
   const queryArgs = isAuthenticated ? { organizationId: team._id } : "skip";
@@ -87,40 +96,57 @@ export function BillingPage() {
     }
   }
 
+  const onCheckout =
+    plusOptions.length > 0
+      ? (sku: string) => {
+          const checkoutKey =
+            checkoutKeysRef.current.get(sku) ?? crypto.randomUUID();
+          checkoutKeysRef.current.set(sku, checkoutKey);
+          const returnUrl = window.location.href;
+          void redirectToBilling(() =>
+            beginCheckout({
+              organizationId: team._id,
+              sku,
+              idempotencyKey: checkoutKey,
+              successUrl: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}checkout=success`,
+              returnUrl,
+            }),
+          );
+        }
+      : undefined;
+  const onOpenPortal = () => {
+    void redirectToBilling(() =>
+      openCustomerPortal({
+        organizationId: team._id,
+        returnUrl: window.location.href,
+      }),
+    );
+  };
+
+  if (view === "plans") {
+    return (
+      <BillingPlansPage
+        actionPending={actionPending}
+        billingHref={getTeamBillingPath(team.slug)}
+        canManageBilling={entitlement.canManageBilling}
+        entitlement={entitlement}
+        onCheckout={onCheckout}
+        onOpenPortal={onOpenPortal}
+        plusOptions={plusOptions}
+      />
+    );
+  }
+
   return (
     <BillingOverview
       actionPending={actionPending}
       canManageBilling={entitlement.canManageBilling}
       entitlement={entitlement}
       creditTopUp={creditTopUp}
+      plansHref={getTeamBillingPlansPath(team.slug)}
       plusOptions={plusOptions}
-      onCheckout={
-        plusOptions.length > 0
-          ? (sku) => {
-              const checkoutKey =
-                checkoutKeysRef.current.get(sku) ?? crypto.randomUUID();
-              checkoutKeysRef.current.set(sku, checkoutKey);
-              const returnUrl = window.location.href;
-              void redirectToBilling(() =>
-                beginCheckout({
-                  organizationId: team._id,
-                  sku,
-                  idempotencyKey: checkoutKey,
-                  successUrl: `${returnUrl}${returnUrl.includes("?") ? "&" : "?"}checkout=success`,
-                  returnUrl,
-                }),
-              );
-            }
-          : undefined
-      }
-      onOpenPortal={() => {
-        void redirectToBilling(() =>
-          openCustomerPortal({
-            organizationId: team._id,
-            returnUrl: window.location.href,
-          }),
-        );
-      }}
+      onCheckout={onCheckout}
+      onOpenPortal={onOpenPortal}
       onCreditCheckout={
         entitlement.canManageBilling
           ? (sku, amountMinor) => {

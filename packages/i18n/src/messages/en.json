@@ -515,13 +515,16 @@
   "billing": {
     "title": "Billing",
     "adminRequired": "Only workspace owners and admins can manage billing.",
+    "support": {
+      "prompt": "For questions about billing,",
+      "contact": "contact us",
+      "title": "Contact us",
+      "description": "Email us directly at"
+    },
     "current": {
       "title": "Current plan",
-      "freeDescription": "Your workspace is using the free plan.",
-      "plusDescription": "Your workspace has access to Plus features.",
-      "members": "Active members",
-      "paidSeats": "Paid seats",
-      "ai": "AI features",
+      "memberCount": "{count, plural, =1 {1 active member} other {# active members}}",
+      "paidSeatCount": "{count, plural, =1 {1 paid seat} other {# paid seats}}",
       "aiBalance": "{balance} available",
       "available": "Available",
       "unavailable": "Unavailable",
@@ -529,11 +532,16 @@
       "effectiveThrough": "Entitlement confirmed through {date}"
     },
     "plans": {
-      "title": "Available plans",
+      "title": "Plans",
+      "all": "All plans",
       "current": "Current plan",
+      "currentSummary": "You’re on the {plan} plan.",
+      "perMemberMonth": "per member/month",
+      "perMember": "per member/{interval}",
+      "upgradeTitle": "Upgrade to Plus",
       "free": {
         "name": "Free",
-        "description": "The essentials for a small workspace.",
+        "price": "$0",
         "features": {
           "sites": "Create and organize internal sites",
           "publishing": "Publish pages for your team",
@@ -543,7 +551,8 @@
       },
       "plus": {
         "name": "Plus",
-        "description": "More capacity and AI-assisted workflows for growing teams.",
+        "billedYearly": "Billed yearly",
+        "billedMonthly": "Billed monthly",
         "intervals": {
           "month": "Monthly",
           "year": "Annual"
@@ -558,18 +567,35 @@
           "ai": "Monthly AI credits that reset each billing period",
           "seats": "Paid seats for active workspace members"
         }
+      },
+      "comparison": {
+        "feature": "Feature",
+        "usage": "Usage",
+        "core": "Core features",
+        "members": "Members",
+        "sites": "Sites",
+        "publishing": "Publishing",
+        "collaboration": "Collaboration",
+        "ai": "AI credits",
+        "seats": "Paid seats",
+        "included": "Included",
+        "unlimited": "Unlimited",
+        "prepaid": "Prepaid",
+        "monthly": "Monthly + prepaid",
+        "notIncluded": "—"
       }
     },
     "credits": {
       "title": "AI credits",
-      "freeDescription": "Buy prepaid credits to use AI on Free. $1 paid adds $1 to your AI balance.",
-      "plusDescription": "Plus includes recurring credits. Add prepaid credits when you need more; purchased credits do not expire with the billing period.",
-      "quickAmounts": "Choose an amount",
-      "customAmount": "Custom amount",
-      "customMinimum": "Custom amounts are entered securely on Polar. Minimum ${minimum}."
+      "plusDescription": "Plus credits reset monthly. Purchased credits never expire.",
+      "balance": "Available balance",
+      "quickAmounts": "Add credits",
+      "customAmount": "Custom amount"
     },
     "actions": {
       "upgrade": "Upgrade to Plus",
+      "change": "Change plan",
+      "backToBilling": "Back to Billing",
       "manage": "Manage subscription",
       "resolve": "Review billing",
       "unavailable": "Billing unavailable"

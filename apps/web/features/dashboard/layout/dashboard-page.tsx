@@ -47,9 +47,13 @@ export function DashboardPageState({
 
 export function DashboardPageHeader({
   action,
+  description,
+  leading,
   title,
 }: {
   action?: ReactNode;
+  description?: ReactNode;
+  leading?: ReactNode;
   title: ReactNode;
 }) {
   const t = useTranslations("navigation");
@@ -68,9 +72,17 @@ export function DashboardPageHeader({
                 title={t("toggleSidebar")}
               />
             ) : null}
-            <h1 className="brand-display truncate text-2xl leading-none font-normal tracking-[-0.025em]">
-              {title}
-            </h1>
+            {leading ? <div className="shrink-0">{leading}</div> : null}
+            <div className="min-w-0">
+              <h1 className="brand-display truncate text-2xl leading-none font-normal tracking-[-0.025em]">
+                {title}
+              </h1>
+              {description ? (
+                <div className="mt-1 text-xs leading-4 text-muted-foreground">
+                  {description}
+                </div>
+              ) : null}
+            </div>
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
         </div>

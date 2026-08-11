@@ -1,6 +1,5 @@
 import { Button } from "@baseblocks/ui/button";
 import { Card, CardContent } from "@baseblocks/ui/card";
-import { Label } from "@baseblocks/ui/label";
 import { useTranslations } from "next-intl";
 
 export type AiCreditTopUpOption = {
@@ -12,12 +11,14 @@ export type AiCreditTopUpOption = {
 
 export function BillingCreditCard({
   actionPending,
+  balance,
   creditTopUp,
   isPlus,
   locale,
   onCreditCheckout,
 }: {
   actionPending?: boolean;
+  balance: string;
   creditTopUp: AiCreditTopUpOption;
   isPlus: boolean;
   locale: string;
@@ -27,18 +28,26 @@ export function BillingCreditCard({
   return (
     <section aria-labelledby="billing-ai-credits" className="space-y-3">
       <div>
-        <h2 className="font-semibold" id="billing-ai-credits">
+        <h2 className="text-sm font-medium" id="billing-ai-credits">
           {t("credits.title")}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          {t(isPlus ? "credits.plusDescription" : "credits.freeDescription")}
-        </p>
+        {isPlus ? (
+          <p className="text-sm text-muted-foreground">
+            {t("credits.plusDescription")}
+          </p>
+        ) : null}
       </div>
-      <Card className="gap-5 shadow-none">
-        <CardContent className="space-y-5">
-          <div className="space-y-2">
-            <Label>{t("credits.quickAmounts")}</Label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Card className="gap-0 border-0 py-0 shadow-none">
+        <CardContent className="p-0">
+          <div className="flex items-center justify-between gap-4 p-4">
+            <p className="text-sm font-medium">{t("credits.balance")}</p>
+            <p className="text-sm font-medium tabular-nums">
+              {t("current.aiBalance", { balance })}
+            </p>
+          </div>
+          <div className="space-y-3 border-t border-foreground/[0.06] p-4">
+            <p className="text-sm font-medium">{t("credits.quickAmounts")}</p>
+            <div className="flex flex-wrap gap-2">
               {creditTopUp.quickAmountsMinor.map((amountMinor) => {
                 const amount = new Intl.NumberFormat(locale, {
                   style: "currency",
@@ -68,11 +77,6 @@ export function BillingCreditCard({
                 {t("credits.customAmount")}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("credits.customMinimum", {
-                minimum: Number(creditTopUp.minimumAmountMinor) / 100,
-              })}
-            </p>
           </div>
         </CardContent>
       </Card>
