@@ -32,7 +32,7 @@ Published sites currently read the latest saved page content. Historical deploym
 | Layer | Technology |
 |---|---|
 | Web | [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/) |
-| Editor | [OpenEditor](https://github.com/EasyLink-HQ/openeditor), Tiptap, and BaseBlocks extensions |
+| Editor | [OpenEditor](https://github.com/BaseBlocks-HQ/openeditor), Tiptap, and BaseBlocks extensions |
 | Backend | [Convex](https://convex.dev/) |
 | Authentication | [Better Auth](https://www.better-auth.com/) with email/password and social providers |
 | Files | Files SDK with S3-compatible storage |
