@@ -76,7 +76,7 @@ async function queryReleaseLibraries(
 const queryPublicReleasePage = unstable_cache(
   (releaseId: Id<"siteReleases">, path: string) =>
     queryReleasePage(releaseId, path),
-  ["published-release-page-v2"],
+  ["published-release-page-v3"],
 );
 
 const queryPublicReleasePageMetadata = unstable_cache(
@@ -309,6 +309,7 @@ async function resolvePublishedPageUncached(
     ...siteResolution,
     page: page.page,
     content: page.content,
+    imageIds: page.imageIds ?? [],
     libraries,
     navigation,
     canonicalUrlInputs: {

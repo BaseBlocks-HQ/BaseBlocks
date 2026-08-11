@@ -7,6 +7,7 @@ import { baseBlocksOpenEditorTheme } from "@/features/openeditor/openeditor-them
 import { OpenEditorTabbedPage } from "@/features/openeditor/page-tabs";
 import { readOpenEditorPageTabs } from "@/features/openeditor/page-tabs-model";
 import { publicSiteRenderers } from "@/features/openeditor/renderers";
+import { createPublishedImageRuntime } from "@/features/published-sites/image-runtime";
 import { getPageLink } from "@/features/published-sites/urls";
 import { Button } from "@baseblocks/ui/button";
 import type {
@@ -26,6 +27,7 @@ interface PublicPageContentProps {
   onOpenPageBlock?: (pageId: string) => void;
   page: { icon?: string; title: string };
   content: OpenEditorDocument;
+  imageIds: readonly string[];
   pageTargets?: ReadonlyMap<string, PublishedPageTarget>;
 }
 
@@ -35,9 +37,11 @@ export function PublicPageContent({
   onOpenPageBlock,
   page,
   content,
+  imageIds,
   pageTargets = EMPTY_PAGE_TARGETS,
 }: PublicPageContentProps) {
   const actions = useSiteRenderActions();
+  const imageRuntime = createPublishedImageRuntime(imageIds);
   const pageRuntime: OpenEditorPageRuntime = {
     resolvePage: async (targetPageId) => {
       const target = pageTargets.get(targetPageId);
@@ -81,6 +85,7 @@ export function PublicPageContent({
               <OpenEditorTabbedPage
                 document={content}
                 editable={false}
+                imageRuntime={imageRuntime}
                 pageRuntime={pageRuntime}
                 renderers={publicSiteRenderers}
               />
@@ -88,6 +93,7 @@ export function PublicPageContent({
               <OpenEditorViewer
                 className="oe-viewer"
                 document={content}
+                imageRuntime={imageRuntime}
                 pageRuntime={pageRuntime}
                 renderers={publicSiteRenderers}
               />

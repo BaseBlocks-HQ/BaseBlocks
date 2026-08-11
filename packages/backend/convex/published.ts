@@ -158,6 +158,29 @@ export const getPage = query({
           return id ? [id] : [];
         })
         .sort();
+    const revisionFileIds = new Map(
+      (revision?.fileIds ?? []).map((fileId) => [String(fileId), fileId]),
+    );
+    const imageIds = (
+      await Promise.all(
+        Array.from(extractOpenEditorReferences(content).imageIds).map(
+          async (imageId) => {
+            const fileId = revisionFileIds.get(imageId);
+            if (!fileId) return null;
+            const asset = await ctx.db
+              .query("releaseFiles")
+              .withIndex("by_release_file", (q) =>
+                q.eq("releaseId", releaseId).eq("fileId", fileId),
+              )
+              .unique();
+            return asset?.kind === "siteAsset" &&
+              asset.contentType.toLowerCase().startsWith("image/")
+              ? imageId
+              : null;
+          },
+        ),
+      )
+    ).filter((imageId): imageId is string => imageId !== null);
 
     return {
       page: {
@@ -176,6 +199,7 @@ export const getPage = query({
         updatedAt: resolved.page.updatedAt,
       },
       content,
+      imageIds,
       libraryIds,
       canonicalPath: canonicalPagePath(context.release, resolved),
       updatedAt: resolved.page.updatedAt,
