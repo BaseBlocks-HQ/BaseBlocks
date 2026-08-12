@@ -715,7 +715,9 @@ export async function verifyPolarWebhook(
   if (tolerance < 0 || Math.abs(now - timestamp) > tolerance) return null;
 
   const signedContent = `${deliveryId}.${timestampHeader}.${rawBody}`;
-  const expected = await hmacSha256(webhookSecret, signedContent);
+  const signingKey = decodeWebhookSecret(webhookSecret);
+  if (!signingKey) return null;
+  const expected = await hmacSha256(signingKey, signedContent);
   const candidates = signatureHeader
     .split(" ")
     .map((part) => part.split(",", 2))
@@ -734,14 +736,28 @@ export async function verifyPolarWebhook(
   return { deliveryId, timestamp, payload: object(payload, "webhook payload") };
 }
 
-async function hmacSha256(secret: string, content: string): Promise<string> {
-  // Polar's SDK base64-encodes the configured secret before passing it to the
-  // Standard Webhooks implementation; the resulting HMAC key is the raw UTF-8
-  // secret entered in Polar's endpoint settings.
+function decodeWebhookSecret(secret: string): ArrayBuffer | null {
+  const encoded = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+  try {
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(new ArrayBuffer(binary.length));
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes.buffer;
+  } catch {
+    return null;
+  }
+}
+
+async function hmacSha256(
+  signingKey: ArrayBuffer,
+  content: string,
+): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(secret),
+    signingKey,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
