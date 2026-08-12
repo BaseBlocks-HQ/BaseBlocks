@@ -9,13 +9,20 @@ import {
 } from "@/features/dashboard/sites/site-management-dialogs";
 import type { SiteNavigationItem } from "@/features/dashboard/use-site-navigation";
 import {
+  sitePreviewStateEvent,
+  type SitePreviewState,
+} from "@/features/editor/site-action-event";
+import {
   useEditorUi,
   useEditorWorkspace,
 } from "@/features/editor/editor-state";
 import { useRouter } from "@/i18n/navigation";
+import { api, type Id } from "@baseblocks/backend";
 import { SidebarMenuItem } from "@baseblocks/ui/sidebar";
 import { Spinner } from "@baseblocks/ui/spinner";
-import { useState } from "react";
+import { useMutation } from "convex/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function WorkspaceSiteNavigation({
   activeSiteId,
@@ -25,11 +32,34 @@ export function WorkspaceSiteNavigation({
   sites: SiteNavigationItem[] | undefined;
 }) {
   const router = useRouter();
-  const { capabilities, team } = useTeamAccess();
+  const { analyticsEnabled, capabilities, team } = useTeamAccess();
   const { selectPage } = useEditorUi();
   const { selectedPageId } = useEditorWorkspace();
   const [siteManagement, setSiteManagement] =
     useState<SiteManagementTarget | null>(null);
+  const [previewingSiteId, setPreviewingSiteId] = useState<string | null>(null);
+  const unpublishSite = useMutation(api.releases.unpublish);
+
+  const handleUnpublish = async (siteId: string) => {
+    try {
+      await unpublishSite({ siteId: siteId as Id<"sites"> });
+      toast.success("Site unpublished");
+    } catch (_error) {
+      toast.error("Failed to unpublish site");
+    }
+  };
+
+  useEffect(() => {
+    const handlePreviewState = (event: Event) => {
+      const { isPreviewing, siteId } = (event as CustomEvent<SitePreviewState>)
+        .detail;
+      setPreviewingSiteId(isPreviewing ? siteId : null);
+    };
+
+    window.addEventListener(sitePreviewStateEvent, handlePreviewState);
+    return () =>
+      window.removeEventListener(sitePreviewStateEvent, handlePreviewState);
+  }, []);
 
   if (sites === undefined) {
     return (
@@ -45,9 +75,12 @@ export function WorkspaceSiteNavigation({
         <SiteNavigationGroup
           key={site._id}
           activeSiteId={activeSiteId}
+          analyticsEnabled={analyticsEnabled}
           canEdit={capabilities.canEditContent}
           canManageSites={capabilities.canManageSites}
           onDeleteSite={(target) => setSiteManagement(target)}
+          onUnpublishSite={handleUnpublish}
+          previewing={previewingSiteId === site._id}
           onSelectActivePage={selectPage}
           selectedPageId={selectedPageId}
           site={site}

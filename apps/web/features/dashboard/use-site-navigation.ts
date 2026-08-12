@@ -11,6 +11,8 @@ export type SiteNavigationItem = {
   logoUrl?: string;
   logoFileId?: Id<"files">;
   defaultPageId?: Id<"pages">;
+  liveReleaseId?: Id<"siteReleases">;
+  slug: string;
   updatedAt: number;
   pages: Array<PageListItem & { updatedAt: number }>;
 };
@@ -50,6 +52,8 @@ export function useSiteNavigation(
       logoUrl: site.logoUrl,
       logoFileId: site.logoFileId,
       defaultPageId: site.defaultPageId,
+      liveReleaseId: site.liveReleaseId,
+      slug: site.slug,
       updatedAt: site.updatedAt,
       pages: pages as Array<PageListItem & { updatedAt: number }>,
     });
