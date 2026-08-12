@@ -273,13 +273,12 @@ export const billingTables = {
     payload: v.any(),
     status: v.union(
       v.literal("pending"),
-      v.literal("processing"),
       v.literal("processed"),
       v.literal("ignored"),
       v.literal("failed"),
+      v.literal("deadLettered"),
     ),
     attemptCount: v.number(),
-    leaseExpiresAt: v.optional(v.number()),
     nextAttemptAt: v.optional(v.number()),
     failureCode: v.optional(v.string()),
     failureMessage: v.optional(v.string()),
@@ -288,7 +287,6 @@ export const billingTables = {
     updatedAt: v.number(),
   })
     .index("by_environment_delivery", ["providerEnvironment", "deliveryId"])
-    .index("by_status_retry", ["status", "nextAttemptAt"])
     .index("by_resource_occurred", [
       "resourceType",
       "resourceId",
