@@ -447,7 +447,8 @@ describe("subscription normalization", () => {
 });
 
 describe("Polar Standard Webhooks verification", () => {
-  const secret = "polar-webhook-secret";
+  const signingKey = "polar-webhook-secret";
+  const secret = `whsec_${Buffer.from(signingKey).toString("base64")}`;
   const body = JSON.stringify({
     type: "subscription.updated",
     timestamp: "2026-08-09T12:00:00Z",
@@ -455,7 +456,7 @@ describe("Polar Standard Webhooks verification", () => {
   });
   const timestamp = 1_786_276_800;
   const deliveryId = "evt_delivery_1";
-  const signature = createHmac("sha256", secret)
+  const signature = createHmac("sha256", signingKey)
     .update(`${deliveryId}.${timestamp}.${body}`)
     .digest("base64");
   const headers = {
