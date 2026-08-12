@@ -1,25 +1,14 @@
-import { AnalyticsPage } from "@/features/dashboard/analytics/analytics-page";
-import { getTeamDashboardPath } from "@/features/dashboard/routes";
-import { analytics } from "@/flags";
+import { getTeamAnalyticsPath } from "@/features/dashboard/routes";
 import { redirect } from "next/navigation";
 
-type Props = {
-  params: Promise<{ teamSlug: string }>;
-  searchParams: Promise<{ site?: string }>;
-};
-
-export default async function TeamAnalyticsPage({
+export default async function LegacyAnalyticsRoute({
   params,
   searchParams,
-}: Props) {
-  const [{ teamSlug }, analyticsEnabled] = await Promise.all([
-    params,
-    analytics(),
-  ]);
-
-  if (!analyticsEnabled) redirect(getTeamDashboardPath(teamSlug));
-
-  const { site } = await searchParams;
-
-  return <AnalyticsPage initialSiteId={site} />;
+}: {
+  params: Promise<{ teamSlug: string }>;
+  searchParams: Promise<{ site?: string }>;
+}) {
+  const [{ teamSlug }, { site }] = await Promise.all([params, searchParams]);
+  const suffix = site ? `?site=${encodeURIComponent(site)}` : "";
+  redirect(`${getTeamAnalyticsPath(teamSlug)}${suffix}`);
 }

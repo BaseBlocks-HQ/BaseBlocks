@@ -2,20 +2,24 @@ export function getTeamDashboardPath(teamSlug: string): string {
   return `/dashboard/${teamSlug}`;
 }
 
+export function getTeamInboxPath(teamSlug: string): string {
+  return `${getTeamDashboardPath(teamSlug)}/inbox`;
+}
+
 export function getTeamMembersPath(teamSlug: string): string {
-  return `${getTeamDashboardPath(teamSlug)}/team`;
+  return `${getTeamSettingsPath(teamSlug)}/team`;
 }
 
 export function getTeamIntegrationsPath(teamSlug: string): string {
-  return `${getTeamDashboardPath(teamSlug)}/integrations`;
+  return `${getTeamSettingsPath(teamSlug)}/integrations`;
 }
 
 export function getTeamAnalyticsPath(teamSlug: string): string {
-  return `${getTeamDashboardPath(teamSlug)}/analytics`;
+  return `${getTeamSettingsPath(teamSlug)}/analytics`;
 }
 
 export function getTeamBillingPath(teamSlug: string): string {
-  return `${getTeamDashboardPath(teamSlug)}/billing`;
+  return `${getTeamSettingsPath(teamSlug)}/billing`;
 }
 
 export function getTeamBillingPlansPath(teamSlug: string): string {

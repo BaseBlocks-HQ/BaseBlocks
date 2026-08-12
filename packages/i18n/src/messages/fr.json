@@ -99,6 +99,10 @@
   "dashboard": {
     "title": "Tableau de bord",
     "welcomeBack": "Bon retour",
+    "welcomeNamed": "Bon retour, {name}",
+    "continueWorking": "Reprendre le travail",
+    "noRecentPages": "Rien à reprendre pour le moment",
+    "createFromSidebar": "Créez un site depuis la barre latérale pour commencer.",
     "yourSites": "Vos sites",
     "manageSites": "Gerez votre documentation interne et vos ressources",
     "recentSites": "Sites recents",
@@ -109,8 +113,10 @@
   },
   "sites": {
     "title": "Sites",
+    "actions": "Actions du site",
     "create": "Creer un site",
     "edit": "Modifier",
+    "editInformation": "Modifier les informations du site",
     "delete": "Supprimer le site",
     "settings": "Parametres du site",
     "publish": "Publier",
@@ -288,6 +294,12 @@
     "settings": "Parametres",
     "help": "Aide",
     "toggleSidebar": "Afficher ou masquer la barre latérale",
+    "openSiteSidebar": "Ouvrir la barre latérale du site",
+    "expandSite": "Développer {site}",
+    "collapseSite": "Réduire {site}",
+    "addPageToSite": "Ajouter une page à {site}",
+    "sitePages": "Pages de {site}",
+    "noPages": "Aucune page pour le moment",
     "tree": {
       "defaultBadge": "Par defaut",
       "breadcrumbShowMore": "Afficher plus"
@@ -703,9 +715,9 @@
     }
   },
   "inbox": {
-    "title": "Invitations",
-    "description": "Invitations en attente pour rejoindre des espaces de travail",
-    "noInvitations": "Aucune invitation en attente",
+    "title": "Boîte de réception",
+    "description": "Invitations, mentions, commentaires et actualités des agents",
+    "empty": "Vous êtes à jour",
     "invitedToOrg": "Invitation a un espace de travail",
     "invitedYou": "vous a invite a rejoindre son espace de travail",
     "asRole": "en tant que {role}",

@@ -11,6 +11,10 @@ import {
 } from "@/components/tree/animated-tree";
 import { useTreeDisclosure } from "@/components/tree/use-tree-disclosure";
 import { useEditorSiteOptional } from "@/features/editor/editor-state";
+import {
+  appSidebarIconSlotClassName,
+  appSidebarRowHeightClassName,
+} from "@/features/app-shell/app-sidebar-row";
 import { api, type Id } from "@baseblocks/backend";
 import {
   ActionRow,
@@ -258,7 +262,6 @@ function PageTreeRow({
       aria-level={item.depth + 1}
       aria-expanded={item.hasChildren ? isExpanded : undefined}
       className="group/page relative w-full min-w-0"
-      contentClassName="pb-px"
       role="treeitem"
     >
       <PageDropZones
@@ -273,7 +276,8 @@ function PageTreeRow({
           paddingInlineStart: `calc(var(--app-sidebar-leading-inset) + ${item.depth * 0.75}rem)`,
         }}
         className={cn(
-          "flex h-7 min-w-0 gap-0 overflow-hidden rounded-md p-0 text-xs font-normal transition-colors data-[active=true]:font-medium",
+          "flex min-w-0 gap-1.5 overflow-hidden rounded-md p-0 text-xs font-normal transition-colors data-[active=true]:font-medium",
+          appSidebarRowHeightClassName,
           canEdit &&
             !dragDisabled &&
             !renaming &&
@@ -292,7 +296,7 @@ function PageTreeRow({
                   }
             }
           >
-            <span className="relative size-5 shrink-0">
+            <span className={cn("relative", appSidebarIconSlotClassName)}>
               <span
                 aria-hidden="true"
                 className={cn(
@@ -346,10 +350,7 @@ function PageTreeRow({
                       ref={pageButtonRef}
                       type="button"
                       onClick={() => onSelect(page._id)}
-                      className={cn(
-                        "flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[menu-return-focus=true]:focus-visible:ring-0",
-                        isDefault ? "pe-9" : "pe-2",
-                      )}
+                      className="flex h-7 min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sidebar-ring data-[menu-return-focus=true]:focus-visible:ring-0"
                       onBlur={(event) => {
                         delete event.currentTarget.dataset.menuReturnFocus;
                       }}
@@ -487,13 +488,14 @@ function RootEndDropZone({
     collisionDetector: closestCenter,
   });
 
+  if (!active || disabled) return null;
+
   return (
     <div
       ref={ref}
       data-page-drop="root-end"
       className={cn(
-        "relative h-3 pointer-events-none",
-        active && !disabled && "h-8 pointer-events-auto",
+        "relative h-8 pointer-events-auto",
         isDropTarget &&
           "after:absolute after:inset-x-1 after:top-2 after:h-0.5 after:rounded-full after:bg-primary",
       )}

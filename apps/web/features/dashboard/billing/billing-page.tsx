@@ -2,9 +2,14 @@
 
 import { useTeamAccess } from "@/features/authentication/team-access";
 import { api } from "@baseblocks/backend";
-import { Spinner } from "@baseblocks/ui/spinner";
+import {
+  DashboardPage,
+  DashboardPageHeader,
+  DashboardPageLoadingState,
+} from "@/features/dashboard/layout/dashboard-page";
 import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   getTeamBillingPath,
@@ -19,6 +24,7 @@ export function BillingPage({
   view?: "overview" | "plans";
 }) {
   const { team } = useTeamAccess();
+  const t = useTranslations("billing");
   const { isAuthenticated } = useConvexAuth();
   const queryArgs = isAuthenticated ? { organizationId: team._id } : "skip";
   const entitlement = useQuery(api.billing.getWorkspaceEntitlements, queryArgs);
@@ -48,9 +54,12 @@ export function BillingPage({
 
   if (!isAuthenticated || entitlement === undefined || options === undefined) {
     return (
-      <div className="grid min-h-64 place-items-center">
-        <Spinner className="size-6 text-muted-foreground" />
-      </div>
+      <DashboardPage>
+        <DashboardPageHeader
+          title={view === "plans" ? t("plans.title") : t("title")}
+        />
+        <DashboardPageLoadingState />
+      </DashboardPage>
     );
   }
 

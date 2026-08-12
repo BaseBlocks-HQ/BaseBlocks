@@ -3,21 +3,14 @@
 import { useTeamAccess } from "@/features/authentication/team-access";
 import {
   DashboardPage,
+  DashboardPageEmptyState,
   DashboardPageHeader,
-  DashboardPageState,
+  DashboardPageLoadingState,
 } from "@/features/dashboard/layout/dashboard-page";
 import { api } from "@baseblocks/backend";
 import type { OrganizationRole } from "@baseblocks/backend/auth-permissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@baseblocks/ui/avatar";
 import { Badge } from "@baseblocks/ui/badge";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@baseblocks/ui/empty";
-import { Spinner } from "@baseblocks/ui/spinner";
 import {
   Table,
   TableBody,
@@ -95,9 +88,7 @@ export function TeamPage() {
       />
 
       {members === undefined ? (
-        <DashboardPageState>
-          <Spinner className="size-6 text-muted-foreground" />
-        </DashboardPageState>
+        <DashboardPageLoadingState />
       ) : members.length > 0 ? (
         <div className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/[0.06]">
           <Table className="[&_td:first-child]:pl-4 [&_td:last-child]:pr-3 [&_th:first-child]:pl-4 [&_th:last-child]:pr-3">
@@ -163,17 +154,7 @@ export function TeamPage() {
           </Table>
         </div>
       ) : (
-        <Empty className="rounded-xl bg-card ring-1 ring-foreground/[0.06]">
-          <EmptyHeader>
-            <EmptyTitle>{t("noMembers")}</EmptyTitle>
-            <EmptyDescription>{t("noMembersDescription")}</EmptyDescription>
-          </EmptyHeader>
-          {capabilities.canManageTeam ? (
-            <EmptyContent>
-              <InviteMemberDialog organizationId={team._id} />
-            </EmptyContent>
-          ) : null}
-        </Empty>
+        <DashboardPageEmptyState message={t("noMembers")} />
       )}
     </DashboardPage>
   );

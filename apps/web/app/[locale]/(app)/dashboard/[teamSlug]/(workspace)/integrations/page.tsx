@@ -1,8 +1,11 @@
-import { IntegrationsPage } from "@/features/dashboard/integrations/integrations-page";
-import { notionIntegration } from "@/flags";
+import { getTeamIntegrationsPath } from "@/features/dashboard/routes";
+import { redirect } from "next/navigation";
 
-export default async function IntegrationsRoute() {
-  const notionEnabled = await notionIntegration();
-
-  return <IntegrationsPage notionEnabled={notionEnabled} />;
+export default async function LegacyIntegrationsRoute({
+  params,
+}: {
+  params: Promise<{ teamSlug: string }>;
+}) {
+  const { teamSlug } = await params;
+  redirect(getTeamIntegrationsPath(teamSlug));
 }

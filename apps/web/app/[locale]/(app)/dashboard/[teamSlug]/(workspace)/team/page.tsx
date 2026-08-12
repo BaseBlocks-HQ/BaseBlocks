@@ -1,7 +1,11 @@
-"use client";
+import { getTeamMembersPath } from "@/features/dashboard/routes";
+import { redirect } from "next/navigation";
 
-import { TeamPage } from "@/features/dashboard/team/team-page";
-
-export default function TeamMembersPage() {
-  return <TeamPage />;
+export default async function LegacyTeamRoute({
+  params,
+}: {
+  params: Promise<{ teamSlug: string }>;
+}) {
+  const { teamSlug } = await params;
+  redirect(getTeamMembersPath(teamSlug));
 }

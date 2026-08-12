@@ -1,5 +1,5 @@
-import { SitesPage } from "@/features/dashboard/sites/sites-page";
+import { DashboardOverview } from "@/features/dashboard/dashboard-overview";
 
 export default function TeamDashboardPage() {
-  return <SitesPage />;
+  return <DashboardOverview />;
 }

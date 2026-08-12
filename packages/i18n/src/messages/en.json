@@ -99,6 +99,10 @@
   "dashboard": {
     "title": "Dashboard",
     "welcomeBack": "Welcome back",
+    "welcomeNamed": "Welcome back, {name}",
+    "continueWorking": "Continue working",
+    "noRecentPages": "Nothing to continue yet",
+    "createFromSidebar": "Create a site from the sidebar to get started.",
     "yourSites": "Your Sites",
     "manageSites": "Manage your internal documentation and resources",
     "recentSites": "Recent sites",
@@ -109,8 +113,10 @@
   },
   "sites": {
     "title": "Sites",
+    "actions": "Site actions",
     "create": "Create site",
     "edit": "Edit",
+    "editInformation": "Edit site information",
     "delete": "Delete site",
     "settings": "Site settings",
     "publish": "Publish",
@@ -288,6 +294,12 @@
     "settings": "Settings",
     "help": "Help",
     "toggleSidebar": "Toggle sidebar",
+    "openSiteSidebar": "Open site sidebar",
+    "expandSite": "Expand {site}",
+    "collapseSite": "Collapse {site}",
+    "addPageToSite": "Add a page to {site}",
+    "sitePages": "{site} pages",
+    "noPages": "No pages yet",
     "tree": {
       "defaultBadge": "Default",
       "breadcrumbShowMore": "Show more"
@@ -703,9 +715,9 @@
     }
   },
   "inbox": {
-    "title": "Invitations",
-    "description": "Pending invitations to join workspaces",
-    "noInvitations": "No pending invitations",
+    "title": "Inbox",
+    "description": "Invitations, mentions, comments, and agent updates",
+    "empty": "You're all caught up",
     "invitedToOrg": "Workspace invitation",
     "invitedYou": "invited you to join their workspace",
     "asRole": "as {role}",

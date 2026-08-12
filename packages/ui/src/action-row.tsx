@@ -132,11 +132,42 @@ function ActionRowAction({
   );
 }
 
-function ActionRowStatus({ className, ...props }: ComponentProps<"span">) {
+function ActionRowStatus({
+  className,
+  ...props
+}: Omit<ComponentProps<"span">, "ref">) {
+  const statusRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const status = statusRef.current;
+    const row = status?.closest<HTMLElement>("[data-action-row]");
+    if (!status || !row) return;
+
+    const property = "--action-row-status-end-reserve";
+    const syncReserve = () => {
+      const reserve = getActionRowReserve(
+        "end",
+        row.getBoundingClientRect(),
+        status.getBoundingClientRect(),
+      );
+      row.style.setProperty(property, `${reserve}px`);
+    };
+
+    syncReserve();
+    const observer = new ResizeObserver(syncReserve);
+    observer.observe(status);
+    observer.observe(row);
+    return () => {
+      observer.disconnect();
+      row.style.removeProperty(property);
+    };
+  }, []);
+
   return (
     <span
       className={cn("pointer-events-none", className)}
       data-action-row-status=""
+      ref={statusRef}
       {...props}
     />
   );

@@ -3,6 +3,7 @@
 import { AppHeaderPortal } from "@/features/app-shell/app-header";
 import { cn } from "@baseblocks/ui/lib/utils";
 import { SidebarTrigger, useSidebar } from "@baseblocks/ui/sidebar";
+import { Spinner } from "@baseblocks/ui/spinner";
 import { useTranslations } from "next-intl";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -42,6 +43,28 @@ export function DashboardPageState({
       )}
       {...props}
     />
+  );
+}
+
+export function DashboardPageLoadingState({
+  label,
+  ...props
+}: Omit<ComponentProps<"div">, "children"> & { label?: string }) {
+  return (
+    <DashboardPageState aria-label={label} role="status" {...props}>
+      <Spinner className="size-6 text-muted-foreground" />
+    </DashboardPageState>
+  );
+}
+
+export function DashboardPageEmptyState({
+  message,
+  ...props
+}: Omit<ComponentProps<"div">, "children"> & { message: ReactNode }) {
+  return (
+    <DashboardPageState {...props}>
+      <p className="text-center text-sm text-muted-foreground">{message}</p>
+    </DashboardPageState>
   );
 }
 
